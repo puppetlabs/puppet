@@ -307,8 +307,8 @@ module Puppet
             end
         end
 
-        def self.list
-            self.collect do |obj| obj end
+        def self.instances
+            []
         end
 
         def self.mkdefaultschedules

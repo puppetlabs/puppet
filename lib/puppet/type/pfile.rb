@@ -259,7 +259,7 @@ module Puppet
         end
 
         # List files, but only one level deep.
-        def self.list(base = "/")
+        def self.instances(base = "/")
             unless FileTest.directory?(base)
                 return []
             end

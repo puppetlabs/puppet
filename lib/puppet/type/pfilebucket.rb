@@ -70,8 +70,8 @@ module Puppet
             end
         end
 
-        def self.list
-            self.collect do |obj| obj.name end
+        def self.instances
+            []
         end
 
         def bucket

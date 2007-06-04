@@ -124,8 +124,8 @@ class TestTransactions < Test::Unit::TestCase
 
         # Now create a provider
         type.provide(:prefetch) do
-            def self.prefetch
-                $prefetched = true
+            def self.prefetch(resources)
+                $prefetched = resources
             end
         end
 
@@ -140,7 +140,7 @@ class TestTransactions < Test::Unit::TestCase
             trans.prefetch
         end
 
-        assert_equal(true, $prefetched, "type prefetch was not called")
+        assert_equal({inst.title => inst}, $prefetched, "type prefetch was not called")
 
         # Now make sure it gets called from within evaluate()
         $prefetched = false
@@ -148,7 +148,7 @@ class TestTransactions < Test::Unit::TestCase
             trans.evaluate
         end
 
-        assert_equal(true, $prefetched, "evaluate did not call prefetch")
+        assert_equal({inst.title => inst}, $prefetched, "evaluate did not call prefetch")
     end
 
     def test_refreshes_generate_events

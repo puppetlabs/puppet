@@ -444,8 +444,8 @@ module Puppet
             end
         end
 
-        def self.list
-            self.collect { |i| i }
+        def self.instances
+            []
         end
 
         # Verify that we pass all of the checks.  The argument determines whether

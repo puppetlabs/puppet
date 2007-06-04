@@ -6,7 +6,7 @@ Puppet::Type.type(:package).provide :dpkg do
     commands :dpkg => "/usr/bin/dpkg"
     commands :dpkgquery => "/usr/bin/dpkg-query"
     
-    def self.list
+    def self.instances
         packages = []
 
         # list out all of the packages
@@ -29,7 +29,7 @@ Puppet::Type.type(:package).provide :dpkg do
 
                     hash[:provider] = self.name
 
-                    packages.push Puppet.type(:package).installedpkg(hash)
+                    packages << new(hash)
                 else
                     Puppet.warning "Failed to match dpkg-query line %s" %
                         line.inspect

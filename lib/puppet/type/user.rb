@@ -322,22 +322,6 @@ module Puppet
             autos
         end
 
-        def self.list_by_name
-            users = []
-            defaultprovider.listbyname do |user|
-                users << user
-            end
-            return users
-        end
-
-        def self.list
-            defaultprovider.list
-
-            self.collect do |user|
-                user
-            end
-        end
-
         def retrieve
             absent = false
             properties().inject({}) { |prophash, property|

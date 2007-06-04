@@ -11,7 +11,17 @@ Puppet::Type.type(:package).provide :apple do
 
     defaultfor :operatingsystem => :darwin
 
-    def self.listbyname
+    def self.instances
+        instance_by_name.collect do |name|
+            self.new(
+                :name => name,
+                :provider => :apple,
+                :ensure => :installed
+            )
+        end
+    end
+
+    def self.instance_by_name
         Dir.entries("/Library/Receipts").find_all { |f|
             f =~ /\.pkg$/
         }.collect { |f|
@@ -20,16 +30,6 @@ Puppet::Type.type(:package).provide :apple do
 
             name
         }
-    end
-
-    def self.list
-        listbyname.collect do |name|
-            Puppet.type(:package).installedpkg(
-                :name => name,
-                :provider => :apple,
-                :ensure => :installed
-            )
-        end
     end
 
     def query

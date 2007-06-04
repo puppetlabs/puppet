@@ -13,7 +13,7 @@ class TestResources < Test::Unit::TestCase
 	def add_purge_lister
         # Now define the list method
         class << @purgetype
-            def list
+            def instances
                 $purgemembers.values
             end
         end
@@ -85,21 +85,9 @@ class TestResources < Test::Unit::TestCase
             purger = @type.create :name => "purgetest", :noop => true, :loglevel => :warning
         end
         assert(purger, "did not get purger manager")
-        
-        # Make sure we throw an error, because the purger type does
-        # not support listing.
-        
-        # It should work when we set it to false
-        assert_nothing_raised do
-            purger[:purge] = false
-        end
-        # but not true
-        assert_raise(ArgumentError) do
-            purger[:purge] = true
-        end
         add_purge_lister()
         
-        assert_equal($purgemembers.values.sort, @purgetype.list.sort)
+        assert_equal($purgemembers.values.sort, @purgetype.instances.sort)
         
         # and it should now succeed
         assert_nothing_raised do

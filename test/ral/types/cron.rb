@@ -287,9 +287,11 @@ class TestCron < Test::Unit::TestCase
         # Write it to our file
         assert_apply(cron)
 
+        @crontype.clear
+
         crons = []
         assert_nothing_raised {
-            @crontype.list.each do |cron|
+            @crontype.instances.each do |cron|
                 crons << cron
             end
         }

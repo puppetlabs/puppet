@@ -109,6 +109,12 @@ class Puppet::Provider
         end
     end
 
+    # The method for returning a list of provider instances.  Note that it returns providers, preferably with values already
+    # filled in, not resources.
+    def self.instances
+        raise Puppet::DevError, "Provider %s has not defined the 'instances' class method" % self.name
+    end
+
     # Create the methods for a given command.
     def self.make_command_methods(name)
         # Now define a method for that command
@@ -323,16 +329,34 @@ class Puppet::Provider
         self.class.command(name)
     end
 
-    def initialize(resource)
-        @resource = resource
-
-        # LAK 2007-05-09: Keep the model stuff around for backward compatibility
-        @model = resource
-        @property_hash = {}
+    def initialize(resource = nil)
+        if resource.is_a?(Hash)
+            @property_hash = resource.dup
+        elsif resource
+            @resource = resource if resource
+            # LAK 2007-05-09: Keep the model stuff around for backward compatibility
+            @model = resource
+            @property_hash = {}
+        else
+            @property_hash = {}
+        end
     end
 
     def name
-        @resource.name
+        if n = @property_hash[:name]
+            return n
+        elsif self.resource
+            resource.name
+        else
+            raise Puppet::DevError, "No resource and no name in property hash"
+        end
+    end
+
+    # Set passed params as the current values.
+    def set(params)
+        params.each do |param, value|
+            @property_hash[symbolize(param)] = value
+        end
     end
 
     def to_s

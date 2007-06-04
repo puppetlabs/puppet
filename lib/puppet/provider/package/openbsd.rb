@@ -7,7 +7,7 @@ Puppet::Type.type(:package).provide :openbsd do
     defaultfor :operatingsystem => :openbsd
     confine :operatingsystem => :openbsd
 
-    def self.list
+    def self.instances
         packages = []
 
         begin
@@ -29,20 +29,13 @@ Puppet::Type.type(:package).provide :openbsd do
 
                         hash[:provider] = self.name
 
-                        pkg = Puppet.type(:package).installedpkg(hash)
-                        packages << pkg
+                        packages << new(hash)
                     else
                         # Print a warning on lines we can't match, but move
                         # on, since it should be non-fatal
                         warning("Failed to match line %s" % line)
                     end
                 }
-            end
-            # Mark as absent any packages we didn't find
-            Puppet.type(:package).each do |pkg|
-                unless packages.include? pkg
-                    pkg.is = [:ensure, :absent] 
-                end
             end
 
             return packages

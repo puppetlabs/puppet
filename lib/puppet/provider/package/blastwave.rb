@@ -23,10 +23,10 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun do
         end
     end
 
-    def self.list(hash = {})
+    def self.instances(hash = {})
         blastlist(hash).collect do |bhash|
             bhash.delete(:avail)
-            Puppet::Type.type(:package).installedpkg(bhash)
+            new(bhash)
         end
     end
 

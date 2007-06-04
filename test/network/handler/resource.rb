@@ -183,8 +183,8 @@ class TestResourceServer < Test::Unit::TestCase
         Puppet::Type.type(:schedule).mkdefaultschedules
 
         Puppet::Type.eachtype do |type|
-            unless type.respond_to? :list
-                Puppet.warning "%s does not respond to :list" % type.name
+            unless type.respond_to? :instances
+                Puppet.warning "%s does not respond to :instances" % type.name
                 next
             end
             next unless type.name == :package
@@ -212,7 +212,7 @@ class TestResourceServer < Test::Unit::TestCase
             count = 0
             described = {}
             Puppet.info "listing again"
-            type.list.each do |obj|
+            type.instances.each do |obj|
                 assert_instance_of(type, obj)
 
                 break if count > 5

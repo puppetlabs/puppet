@@ -293,6 +293,34 @@ class TestProvider < Test::Unit::TestCase
         assert_equal(:base, other.source, "source did not override")
         assert_equal(:base, other.source, "source did not override")
     end
+
+    # Make sure we can initialize with either a resource or a hash, or none at all.
+    def test_initialize
+        test = @type.provide(:test)
+
+        inst = @type.create :name => "boo"
+        prov = nil
+        assert_nothing_raised("Could not init with a resource") do
+            prov = test.new(inst)
+        end
+        assert_equal(prov.resource, inst, "did not set resource correctly")
+        assert_equal(inst.name, prov.name, "did not get resource name")
+
+        params = {:name => :one, :ensure => :present}
+        assert_nothing_raised("Could not init with a hash") do
+            prov = test.new(params)
+        end
+        assert_equal(params, prov.send(:instance_variable_get, "@property_hash"), "did not set resource correctly")
+        assert_equal(:one, prov.name, "did not get name from hash")
+
+        assert_nothing_raised("Could not init with no argument") do
+            prov = test.new()
+        end
+
+        assert_raise(Puppet::DevError, "did not fail when no name is present") do
+            prov.name
+        end
+    end
 end
 
 class TestProviderFeatures < Test::Unit::TestCase

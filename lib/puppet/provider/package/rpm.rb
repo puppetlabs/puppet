@@ -10,7 +10,7 @@ Puppet::Type.type(:package).provide :rpm do
 
     commands :rpm => "rpm"
 
-    def self.list
+    def self.instances
         packages = []
 
         # list out all of the packages
@@ -30,7 +30,7 @@ Puppet::Type.type(:package).provide :rpm do
                             hash[field] = value
                         }
                         hash[:provider] = self.name
-                        packages.push Puppet.type(:package).installedpkg(hash)
+                        packages << new(hash)
                     else
                         raise "failed to match rpm line %s" % line
                     end

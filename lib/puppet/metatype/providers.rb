@@ -86,26 +86,6 @@ class Puppet::Type
         return obj
     end
 
-    # Create a list method that just calls our providers.
-    def self.mkprovider_list
-        unless respond_to?(:list)
-            meta_def(:list) do
-                suitableprovider.find_all { |p| p.respond_to?(:list) }.collect { |prov|
-                    prov.list.each { |h| h[:provider] = prov.name }
-                }.flatten.collect do |hash|
-                    if hash.is_a?(Hash)
-                        hash2obj(hash)
-                    elsif hash.is_a?(self)
-                        hash
-                    else
-                        raise Puppet::DevError, "Provider %s returned object of type %s in list" %
-                            [prov.name, hash.class]
-                    end
-                end
-            end
-        end
-    end
-
     # Retrieve a provider by name.
     def self.provider(name)
         name = Puppet::Util.symbolize(name)
@@ -172,7 +152,6 @@ class Puppet::Type
     def self.providify
         return if @paramhash.has_key? :provider
 
-        mkprovider_list()
         newparam(:provider) do
             desc "The specific backend for #{self.name.to_s} to use. You will
                 seldom need to specify this -- Puppet will usually discover the
@@ -197,17 +176,21 @@ class Puppet::Type
                 @resource.class.defaultprovider.name
             }
 
-            validate do |value|
-                value = value[0] if value.is_a? Array
-                if provider = @resource.class.provider(value)
+            validate do |provider_class|
+                provider_class = provider_class[0] if provider_class.is_a? Array
+                if provider_class.is_a?(Puppet::Provider)
+                    provider_class = provider_class.class.name
+                end
+
+                if provider = @resource.class.provider(provider_class)
                     unless provider.suitable?
                         raise ArgumentError,
                             "Provider '%s' is not functional on this platform" %
-                            [value]
+                            [provider_class]
                     end
                 else
                     raise ArgumentError, "Invalid %s provider '%s'" %
-                        [@resource.class.name, value]
+                        [@resource.class.name, provider_class]
                 end
             end
 
@@ -244,10 +227,13 @@ class Puppet::Type
     end
 
     def provider=(name)
-        if klass = self.class.provider(name)
+        if name.is_a?(Puppet::Provider)
+            @provider = name
+            @provider.resource = self
+        elsif klass = self.class.provider(name)
             @provider = klass.new(self)
         else
-            raise UnknownProviderError, "Could not find %s provider of %s" %
+            raise ArgumentError, "Could not find %s provider of %s" %
                 [name, self.class.name]
         end
     end

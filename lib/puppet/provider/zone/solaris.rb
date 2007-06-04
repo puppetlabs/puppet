@@ -21,18 +21,11 @@ Puppet::Type.type(:zone).provide(:solaris) do
         return hash
     end
 
-    def self.list
+    def self.instances
         adm(:list, "-cp").split("\n").collect do |line|
             hash = line2hash(line)
 
-            obj = nil
-            unless obj = @resource[hash[:name]]
-                obj = @resource.create(:name => hash[:name])
-            end
-
-            obj.setstatus(hash)
-
-            obj
+            new(hash)
         end
     end
 

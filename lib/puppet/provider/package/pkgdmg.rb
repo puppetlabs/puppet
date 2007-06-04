@@ -23,7 +23,7 @@ Puppet::Type.type(:package).provide :pkgdmg do
     commands :curl => "/usr/bin/curl"
 
     # JJM We store a cookie for each installed .pkg.dmg in /var/db
-    def self.listbyname
+    def self.instance_by_name
         Dir.entries("/var/db").find_all { |f|
             f =~ /^\.puppet_pkgdmg_installed_/
         }.collect do |f|
@@ -33,9 +33,9 @@ Puppet::Type.type(:package).provide :pkgdmg do
         end
     end
 
-    def self.list
-        listbyname.collect do |name|
-            Puppet.type(:package).installedpkg(
+    def self.instances
+        instance_by_name.collect do |name|
+            new(
                 :name => name,
                 :provider => :pkgdmg,
                 :ensure => :installed

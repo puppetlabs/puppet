@@ -56,9 +56,9 @@ Puppet::Type.type(:package).provide :gem do
         end
     end
 
-    def self.list(justme = false)
+    def self.instances(justme = false)
         gemlist(:local => true).collect do |hash|
-            Puppet::Type.type(:package).installedpkg(hash)
+            new(hash)
         end
     end
 

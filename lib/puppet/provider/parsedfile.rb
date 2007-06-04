@@ -107,15 +107,11 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     end
 
     # Return a list of all of the records we can find.
-    def self.list
+    def self.instances
         prefetch()
         @records.find_all { |r| r[:record_type] == self.name }.collect { |r|
-            clean(r)
+            new(clean(r))
         }
-    end
-
-    def self.list_by_name
-        list.collect { |r| r[:name] }
     end
 
     # Override the default method with a lot more functionality.
@@ -175,11 +171,24 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     # set.  We need to turn those three locations into a list of files,
     # prefetch each one, and make sure they're associated with each appropriate
     # resource instance.
-    def self.prefetch
+    def self.prefetch(resources = nil)
         # Reset the record list.
         @records = []
-        targets().each do |target|
-            prefetch_target(target)
+        targets(resources).each do |target|
+            @records += prefetch_target(target)
+        end
+
+        if resources
+            @records.each do |record|
+                if name = record[:name] and resource = resources[name]
+                    resource.provider = new(record)
+                elsif respond_to?(:match)
+                    if instance = match(record, resources)
+                        record[:name] = instance[:name]
+                        instance.provider = new(record)
+                    end
+                end
+            end
         end
     end
 
@@ -196,25 +205,10 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         end
 
         unless target_records
-            raise Puppet::DevError, "Prefetch hook for provider %s returned nil" %
-                self.name
+            raise Puppet::DevError, "Prefetching %s for provider %s returned nil" % [target, self.name]
         end
 
-        @records += target_records
-
-        # Set current property on any existing resource instances.
-        target_records(target).find_all { |i| i.is_a?(Hash) }.each do |record|
-            # Find any resource instances whose names match our instances.
-            if instance = self.resource_type[record[:name]]
-                next unless instance.provider.is_a?(self)
-                instance.provider.property_hash = record
-            elsif respond_to?(:match)
-                if instance = match(record)
-                    record[:name] = instance[:name]
-                    instance.provider.property_hash = record
-                end
-            end
-        end
+        target_records
     end
 
     # Is there an existing record with this name?
@@ -256,7 +250,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
     # Find a list of all of the targets that we should be reading.  This is
     # used to figure out what targets we need to prefetch.
-    def self.targets
+    def self.targets(resources = nil)
         targets = []
         # First get the default target
         unless self.default_target
@@ -268,17 +262,13 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         targets += @target_objects.keys
 
         # Lastly, check the file from any resource instances
-        self.resource_type.each do |resource|
-            targets << resource.value(:target)
-
-            # This is only the case for properties, and targets should always
-            # be properties.
-            #if resource.respond_to?(:is)
-            #    targets << resource.is(:target)
-            #end
+        if resources
+            resources.each do |name, resource|
+                targets << resource.value(:target)
+            end
         end
 
-        targets.uniq.reject { |t| t.nil? }
+        targets.uniq.compact
     end
 
     def self.to_file(records)

@@ -265,20 +265,6 @@ module Puppet
             newvalues(:true, :false)
         end
 
-        # List all available services
-        def self.list
-            defprov = defaultprovider
-
-            names = []
-            if defprov.respond_to? :list
-                defprov.list(defprov.name)
-            else
-                Puppet.debug "Type %s does not respond to list" % defprov.name
-            end
-
-            self.collect { |s| s }
-        end
-
         # Add a new path to our list of paths that services could be in.
         def self.newpath(type, path)
             type = type.intern if type.is_a? String

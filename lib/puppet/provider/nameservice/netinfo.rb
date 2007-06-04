@@ -45,6 +45,12 @@ class NetInfo < Puppet::Provider::NameService
         end
     end
     
+    def self.instances
+        report(@resource_type.validproperties).collect do |hash|
+            self.new(hash)
+        end
+    end
+    
     # Convert a NetInfo line into a hash of data.
     def self.line2hash(line, params)
         values = line.split(/\t/)
@@ -59,12 +65,6 @@ class NetInfo < Puppet::Provider::NameService
             end
         end
         hash
-    end
-    
-    def self.list
-        report(@resource_type.validproperties).collect do |hash|
-            @resource_type.hash2obj(hash)
-        end
     end
     
     # What field the value is stored under.

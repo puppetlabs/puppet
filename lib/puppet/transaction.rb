@@ -473,16 +473,20 @@ class Transaction
     # Prefetch any providers that support it.  We don't support prefetching
     # types, just providers.
     def prefetch
-        @resources.collect { |obj|
-            if pro = obj.provider
-                pro.class
-            else
-                nil
+        prefetchers = {}
+        @resources.each do |resource|
+            if provider = resource.provider and provider.class.respond_to?(:prefetch)
+                prefetchers[provider.class] ||= {}
+                prefetchers[provider.class][resource.title] = resource
             end
-        }.reject { |o| o.nil? }.uniq.each do |klass|
-            # XXX We need to do something special here in case of failure.
-            if klass.respond_to?(:prefetch)
-                klass.prefetch
+        end
+
+        # Now call prefetch, passing in the resources so that the provider instances can be replaced.
+        prefetchers.each do |provider, resources|
+            begin
+                provider.prefetch(resources)
+            rescue => detail
+                Puppet.err "Could not prefetch % provider %s: %s" % [resources[0].class.name, provider.name, detail]
             end
         end
     end

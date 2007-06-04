@@ -80,7 +80,7 @@ module Puppet
         # Where to put files for brand new sections
         @defaultrepodir = nil
 
-        def self.list
+        def self.instances
             l = []
             check = validproperties
             clear

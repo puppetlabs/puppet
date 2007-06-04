@@ -31,8 +31,8 @@ Puppet::Type.newtype(:resources) do
         
         validate do |value|
             if [:true, true, "true"].include?(value)
-                unless @resource.resource_type.respond_to?(:list)
-                    raise ArgumentError, "Purging resources of type %s is not supported, since they cannot be listed" % @resource[:name]
+                unless @resource.resource_type.respond_to?(:instances)
+                    raise ArgumentError, "Purging resources of type %s is not supported, since they cannot be queried from the system" % @resource[:name]
                 end
                 unless @resource.resource_type.validproperty?(:ensure)
                     raise ArgumentError, "Purging is only supported on types that accept 'ensure'"
@@ -91,7 +91,7 @@ Puppet::Type.newtype(:resources) do
         return [] unless self.purge?
         hascheck = false
         method = 
-        resource_type.list.find_all do |resource|
+        resource_type.instances.find_all do |resource|
             ! resource.managed?
         end.find_all do |resource|
             check(resource)

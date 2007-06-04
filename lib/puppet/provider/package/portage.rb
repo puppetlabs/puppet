@@ -7,7 +7,7 @@ Puppet::Type.type(:package).provide :portage do
 
     defaultfor :operatingsystem => :gentoo
 
-    def self.list
+    def self.instances
         result_format = /(\S+) (\S+) \[(.*)\] \[[^0-9]*([^\s:]*)(:\S*)?\] ([\S]*) (.*)/
         result_fields = [:category, :name, :ensure, :version_available, :slot, :vendor, :description]
 
@@ -28,7 +28,7 @@ Puppet::Type.type(:package).provide :portage do
                     package[:provider] = :portage
                     package[:ensure] = package[:ensure].split.last
 
-                    packages.push(Puppet.type(:package).installedpkg(package))
+                    packages << new(package)
                 end
             end
 

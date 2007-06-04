@@ -90,8 +90,9 @@ class TestParsedFile < Test::Unit::TestCase
         fakeresource = fakeresource(:testparsedfiletype, "yay")
 
         file = prov.new(fakeresource)
+        assert(file, "Could not make provider")
 
-        assert_nothing_raised do
+        assert_nothing_raised("Could not set provider name") do
             file.name = :yayness
         end
 
@@ -206,31 +207,30 @@ class TestParsedFile < Test::Unit::TestCase
         resource = mkresource "bill", :target => :file1
         default = mkresource "will", :target => :default
 
+        resources = {"bill" => resource, "will" => default}
+
         assert_nothing_raised do
-            prov.prefetch
+            prov.prefetch(resources)
         end
 
         # Make sure we prefetched our resources.
-        assert_equal("b", resource.provider.one)
-        assert_equal("b", default.provider.one)
-        assert_equal("d", default.provider.two)
+        assert_equal("b", resource.provider.one, "did not prefetch resource from file1")
+        assert_equal("b", default.provider.one, "did not prefetch resource from default")
+        assert_equal("d", default.provider.two, "did not prefetch resource from default")
 
         # Now list all of them and make sure we get everything back
-        hashes = nil
+        providers = nil
         assert_nothing_raised do
-            hashes = prov.list
+            providers = prov.instances
         end
 
-        names = nil
-        assert_nothing_raised do
-            names = prov.list_by_name
+        providers.each do |provider|
+            assert_instance_of(prov, provider, "'instances' class method did not return providers")
         end
 
         %w{bill jill will}.each do |name|
-            assert(hashes.find { |r| r[:name] == name},
+            assert(providers.find { |provider| provider.name == name},
                 "Did not return %s in list" % name)
-            assert(names.include?(name),
-                "Did not return %s in list_by_name" % name)
         end
     end
 
@@ -242,25 +242,27 @@ class TestParsedFile < Test::Unit::TestCase
         target = :yayness
         prov.target_object(target).write "yay b d"
 
-        resource = mkresource "yay", :target => :yayness
-
+        records = nil
         assert_nothing_raised do
-            prov.prefetch_target(:yayness)
+            records = prov.prefetch_target(:yayness)
         end
 
         # Now make sure we correctly got the hash
-        mprov = resource.provider
-        assert_equal("b", mprov.one)
-        assert_equal("d", mprov.two)
+        record = records.find { |r| r[:name] == "yay" }
+        assert(record, "Did not get record in prefetch_target")
+        assert_equal("b", record[:one])
+        assert_equal("d", record[:two])
     end
 
     def test_prefetch_match
         prov = mkprovider
 
-        prov.meta_def(:match) do |record|
+        prov.meta_def(:match) do |record, resources|
             # Look for matches on :one
-            self.resource_type.find do |m|
-                m.should(:one).to_s == record[:one].to_s
+            if res = resources.find { |name, resource| resource.should(:one).to_s == record[:one].to_s }
+                res[1]
+            else
+                nil
             end
         end
 
@@ -271,7 +273,7 @@ class TestParsedFile < Test::Unit::TestCase
         resource = mkresource "yay", :target => :yayness, :one => "b"
 
         assert_nothing_raised do
-            prov.prefetch_target(:yayness)
+            prov.prefetch("yay" => resource)
         end
 
         # Now make sure we correctly got the hash
@@ -301,22 +303,35 @@ class TestParsedFile < Test::Unit::TestCase
 
         # Lastly, create a resource with separate is and should values
         mtarget = tempfile()
-        # istarget = tempfile()
         files[:resources] = mtarget
-        # files[:isresources] = istarget
         resource = mkresource "yay", :target => mtarget
-        # resource.is = [:target, istarget]
 
         assert(resource.should(:target), "Did not get a value for target")
-        # assert(resource.is(:target), "Did not get a value for target")
 
         list = nil
+
+        # First run it without the resource
         assert_nothing_raised do
             list = prov.targets
         end
 
+        # Make sure it got the first two, but not the resources file
         files.each do |name, file|
-            assert(list.include?(file), "Provider did not find %s file" % name)
+            if name == :resources
+                assert(! list.include?(file), "Provider somehow found resource target when no resource was passed")
+            else
+                assert(list.include?(file), "Provider did not find %s file" % name)
+            end
+        end
+
+        # Now list with the resource passed
+        assert_nothing_raised do
+            list = prov.targets("yay" => resource)
+        end
+
+        # And make sure we get all three files
+        files.each do |name, file|
+            assert(list.include?(file), "Provider did not find %s file when resource was passed" % name)
         end
     end
 
@@ -331,11 +346,12 @@ class TestParsedFile < Test::Unit::TestCase
         # Create some resources.
         one = mkresource "one", :one => "a", :two => "c", :target => :yayness
         two = mkresource "two", :one => "b", :two => "d", :target => :yayness
+        resources = {"one" => one, "two" => two}
 
         # Write out a file with different data.
         prov.target_object(:yayness).write "one b d\ntwo a c"
 
-        prov.prefetch
+        prov.prefetch(resources)
 
         # Apply and flush the first resource.
         assert_nothing_raised do
@@ -343,7 +359,7 @@ class TestParsedFile < Test::Unit::TestCase
         end
         assert_nothing_raised { one.flush }
 
-        # Make sure it changed our file
+        # Make sure it didn't clear out our property hash
         assert_equal(:a, one.provider.one)
         assert_equal(:c, one.provider.two)
 
@@ -360,7 +376,7 @@ class TestParsedFile < Test::Unit::TestCase
             "Wrote out other resource")
 
         # Now fetch the data again and make sure we're still right
-        assert_nothing_raised { prov.prefetch }
+        assert_nothing_raised { prov.prefetch(resources) }
         assert_equal("a", one.provider.one)
         assert_equal("a", two.provider.one)
 
@@ -368,9 +384,11 @@ class TestParsedFile < Test::Unit::TestCase
         assert_nothing_raised { apply(two) }
         assert_nothing_raised { two.flush }
 
+        # And make sure it didn't clear our hash
         assert_equal(:b, two.provider.one)
     end
 
+    # Make sure it works even if the file does not currently exist
     def test_creating_file
         prov = mkprovider
         prov.clear
@@ -387,7 +405,7 @@ class TestParsedFile < Test::Unit::TestCase
             resource.flush
         end
 
-        assert(prov.target_object(:basic).read.include?("yay a c"),
+        assert_equal("yay a c\n", prov.target_object(:basic).read,
             "Did not create file")
 
         # Make a change
@@ -399,8 +417,8 @@ class TestParsedFile < Test::Unit::TestCase
         end
 
         # And make sure our resource doesn't appear twice in the file.
-        assert_equal("yay b c\n",
-            prov.target_object(:basic).read)
+        assert_equal("yay b c\n", prov.target_object(:basic).read,
+            "Wrote record to file twice")
     end
 
     # Make sure a record can switch targets.
@@ -472,7 +490,7 @@ class TestParsedFile < Test::Unit::TestCase
         notdisk = mkresource "notdisk", :target => :first
 
         prov.target_object(:first).write "ondisk a c\n"
-        prov.prefetch
+        prov.prefetch("ondisk" => ondisk, "notdisk" => notdisk)
 
         assert_equal(:present, notdisk.should(:ensure),
             "Did not get default ensure value")
@@ -544,7 +562,7 @@ class TestParsedFile < Test::Unit::TestCase
 
         prov.target_object(:yayness).write "bill a c\njill b d"
 
-        list = @type.list
+        list = @type.instances
 
         bill = list.find { |r| r[:name] == "bill" }
         jill = list.find { |r| r[:name] == "jill" }
@@ -639,7 +657,6 @@ class TestParsedFile < Test::Unit::TestCase
         targeted = {:target => "target"}
         prov.send(:instance_variable_set, "@records", records)
         prov.expects(:retrieve).with(target).returns([targeted])
-        prov.expects(:target_records).with(target).returns([targeted])
 
         prov.expects(:prefetch_hook).with([targeted]).returns([targeted])
 

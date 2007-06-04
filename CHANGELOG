@@ -1,3 +1,18 @@
+    Significantly reworked the type => provider interface with respect to
+    listing existing provider instances.  The class method on both
+    class heirarchies has been renamed to 'instances', to start.  Providers
+    are now expected to return provider instances, instead of creating
+    resources, and the resource's 'instances' method is expected to
+    find the matching resource, if any, and set the resource's
+    provider appropriately.  This *significantly* reduces the reliance on
+    effectively global state (resource references in the resource classes).
+    This global state will go away soon.
+
+    Along with this change, the 'prefetch' class method on providers now
+    accepts the list of resources for prefetching.  This again reduces
+    reliance on global state, and makes the execution path much easier
+    to follow.
+
     Fixed #532 -- reparsing config files now longer throws an exception.
 
     Added some warnings and logs to the service type so

@@ -145,7 +145,7 @@ class Puppet::Network::Handler
             bucket = Puppet::TransBucket.new
             bucket.type = typeklass.name
 
-            typeklass.list.each do |obj|
+            typeklass.instances.each do |obj|
                 next if ignore.include? obj.name
 
                 #object = Puppet::TransObject.new(obj.name, typeklass.name)

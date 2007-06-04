@@ -9,7 +9,7 @@ Puppet::Type.type(:package).provide :sun do
 
     defaultfor :operatingsystem => :solaris
 
-    def self.list
+    def self.instances
         packages = []
         hash = {}
         names = {
@@ -40,7 +40,7 @@ Puppet::Type.type(:package).provide :sun do
                 when /^$/:
                     hash[:provider] = :sun
 
-                    packages.push Puppet.type(:package).installedpkg(hash)
+                    packages << new(hash)
                     hash.clear
                 when /\s*(\w+):\s+(.+)/:
                     name = $1

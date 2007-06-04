@@ -59,9 +59,9 @@ class TestSSHKey < Test::Unit::TestCase
         return key
     end
 
-    def test_list
+    def test_instances
         assert_nothing_raised {
-            Puppet.type(:sshkey).defaultprovider.list
+            Puppet.type(:sshkey).instances
         }
 
         count = 0

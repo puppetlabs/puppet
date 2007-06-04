@@ -254,8 +254,8 @@ module Puppet
         validate do
         end
 
-        def self.list
-            self.collect { |t| t }
+        def self.instances
+            []
         end
 
         @depthfirst = true

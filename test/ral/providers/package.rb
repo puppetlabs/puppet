@@ -234,17 +234,17 @@ class TestPackageProvider < Test::Unit::TestCase
 
     # Make sure all of the suitable providers on our platform can successfully
     # list.
-    def test_listing
+    def test_instances
         Puppet::Type.type(:package).suitableprovider.each do |provider|
             result = nil
             assert_nothing_raised("Could not list %s packages" % provider.name) do
-                result = provider.list
+                result = provider.instances
             end
             result.each do |pkg|
-                assert_instance_of(Puppet::Type.type(:package), pkg,
-                    "%s returned non-package" % provider.name)
-                assert_equal(provider.name, pkg.provider.class.name,
-                    "%s did not set provider correctly" % provider.name)
+                assert_instance_of(provider, pkg,
+                    "%s returned non-provider" % provider.name)
+                assert_equal(provider.name, pkg.class.name,
+                    "Provider %s returned an instance of a different provider" %  provider.name)
             end
         end
     end

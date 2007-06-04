@@ -31,12 +31,11 @@ Puppet::Type.type(:package).provide :darwinport do
         }
     end
 
-    def self.list
+    def self.instances
         packages = []
 
         eachpkgashash do |hash|
-            pkg = Puppet.type(:package).installedpkg(hash)
-            packages << pkg
+            packages << new(hash)
         end
 
         return packages

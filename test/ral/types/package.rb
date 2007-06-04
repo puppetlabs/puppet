@@ -11,7 +11,6 @@ class TestPackages < Test::Unit::TestCase
     include PuppetTest::FileTesting
     def setup
         super
-        #@list = Puppet.type(:package).getpkglist
         Puppet.type(:package).clear
         @type = Puppet::Type.type(:package)
     end

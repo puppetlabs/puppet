@@ -361,23 +361,6 @@ module Puppet
             return object
         end
 
-        # List all package instances
-        def self.list
-            # XXX For now, just list the default provider, but we should list
-            # all suitables or something, but we need to not list a parent
-            # type if a child type gets listed.
-            #suitableprovider.each do |provider|
-            #    p provider.name
-            #    provider.list
-            #end
-
-            defaultprovider.list
-
-            self.collect do |pkg|
-                pkg
-            end
-        end
-
         # Iterate across all packages of a given type and mark them absent
         # if they are not in the list
         def self.markabsent(pkgtype, packages)

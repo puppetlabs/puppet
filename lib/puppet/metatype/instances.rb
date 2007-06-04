@@ -248,6 +248,24 @@ class Puppet::Type
         return trans
     end
 
+    # Retrieve all known instances.  Either requires providers or must be overridden.
+    def self.instances
+        unless defined?(@providers) and ! @providers.empty?
+            raise Puppet::DevError, "%s has no providers and has not overridden 'instances'" % self.name
+        end
+
+        # Put the default provider first, then the rest of the suitable providers.
+        sources = []
+        [defaultprovider, suitableprovider].flatten.uniq.collect do |provider|
+            next if sources.include?(provider.source)
+
+            sources << provider.source
+            provider.instances.collect do |instance|
+                create(:name => instance.name, :provider => instance, :check => :all)
+            end
+        end.flatten.compact
+    end
+
     # Create the path for logging and such.
     def pathbuilder
         if defined? @parent and @parent
