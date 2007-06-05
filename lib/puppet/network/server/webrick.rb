@@ -2,6 +2,7 @@ require 'puppet'
 require 'puppet/daemon'
 require 'webrick'
 require 'webrick/https'
+require 'fcntl'
 
 require 'puppet/sslcertificates/support'
 require 'puppet/network/xmlrpc/webrick_servlet'
@@ -54,7 +55,12 @@ module Puppet
                     file = Puppet[:httplog]
                 end
 
-                args << file
+                # open the log manually to prevent file descriptor leak
+                file_io = open(file, "a+")
+                file_io.sync
+                file_io.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
+
+                args << file_io
                 if Puppet[:debug]
                     args << WEBrick::Log::DEBUG
                 end
@@ -86,6 +92,11 @@ module Puppet
                 setup_webrick(hash)
 
                 super(hash)
+
+                # make sure children don't inherit the sockets
+                listeners.each { |sock|
+                    sock.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
+                }
 
                 Puppet.info "Listening on port %s" % hash[:Port]
 

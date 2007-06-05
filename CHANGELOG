@@ -1,3 +1,6 @@
+    Hopefully fixing the file descriptor/open port problems, with patches
+    from Valentin Vidic.
+
     Significantly reworked the type => provider interface with respect to
     listing existing provider instances.  The class method on both
     class heirarchies has been renamed to 'instances', to start.  Providers
