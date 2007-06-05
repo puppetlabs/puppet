@@ -200,7 +200,12 @@ class Puppet::Type
                     provider = provider.intern
                 end
                 @resource.provider = provider
-                provider
+
+                if provider.is_a?(Puppet::Provider)
+                    provider.class.name
+                else
+                    provider
+                end
             end
         end.parenttype = self
     end

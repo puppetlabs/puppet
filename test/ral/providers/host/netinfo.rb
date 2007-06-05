@@ -20,17 +20,16 @@ class TestNetinfoHostProvider < Test::Unit::TestCase
 	def test_list
 	    list = nil
 	    assert_nothing_raised do
-	        list = @provider.list
+	        list = @provider.instances
         end
         assert(list.length > 0)
-        list.each do |obj|
-            prov = obj.provider
-            assert_instance_of(@host, obj)
+        list.each do |prov|
+            assert_instance_of(@provider, prov)
             assert(prov.name, "objects do not have names")
             assert(prov.ip, "Did not get value for device in %s" % prov.ip)
         end
 
-        assert(list.detect { |m| m.provider.name == "localhost"}, "Could not find localhost")
+        assert(list.detect { |provider| provider.name == "localhost"}, "Could not find localhost")
     end
     
     if Process.uid == 0

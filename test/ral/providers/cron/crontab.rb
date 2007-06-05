@@ -58,6 +58,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
         files = Dir.glob("%s/crontab.*" % crondir)
 
         setme
+        @provider.default_target = @me
         target = @provider.target_object(@me)
         files.each do |file|
             str = args = nil
@@ -82,7 +83,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
             end
             target.write(str)
             assert_nothing_raised("could not parse %s" % file) do
-                @provider.prefetch_target(@me)
+                @provider.prefetch
             end
             records = @provider.send(:instance_variable_get, "@records")
 
@@ -150,7 +151,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
         target = @provider.target_object(user)
         target.write(str)
         assert_nothing_raised {
-            @provider.prefetch_target(user)
+            @provider.prefetch
         }
 
         assert_nothing_raised {
@@ -236,7 +237,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
             assert_equal(str, target.read,
                 "Did not write correctly")
             assert_nothing_raised("Could not prefetch with %s" % str.inspect) do
-                @provider.prefetch_target(@me)
+                @provider.prefetch
             end
             assert_nothing_raised("Could not flush with %s" % str.inspect) do
                 @provider.flush_target(@me)
@@ -284,7 +285,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
             target.write(text)
 
             assert_nothing_raised("Could not parse %s" % file) do
-                @provider.prefetch_target(@me)
+                @provider.prefetch
             end
             # mark the provider modified
             @provider.modified(@me)
@@ -324,7 +325,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
             assert_equal(str, target.read,
                 "Did not write correctly")
             assert_nothing_raised("Could not prefetch with %s" % str.inspect) do
-                @provider.prefetch_target(@me)
+                @provider.prefetch
             end
             records = @provider.send(:instance_variable_get, "@records")
             records.each do |r|

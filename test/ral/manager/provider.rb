@@ -66,6 +66,7 @@ class TestTypeProviders < Test::Unit::TestCase
         end
 
         assert_equal(provinst, resource.provider, "Did not retain provider instance")
+        assert_equal(provider.name, resource[:provider], "Provider value was set to the provider instead of its name")
 
         # Now make sure unsuitable provider instances still throw errors
         provider = @type.provide(:badprov) do

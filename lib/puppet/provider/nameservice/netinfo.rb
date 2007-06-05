@@ -192,7 +192,7 @@ class NetInfo < Puppet::Provider::NameService
     
     # Get a report for a single resource, not the whole table
     def single_report(*properties)
-        self.class.report(*properties).find do |hash| hash[:name] == @resource[:name] end
+        self.class.report(*properties).find do |hash| hash[:name] == self.name end
     end
 
     def setuserlist(group, list)
