@@ -47,7 +47,7 @@ require 'resolv'
 # handler = XmlRpcHandler.new
 # handler.xmlrpc_server.add_handler("my.add") { |a, b| a.to_i + b.to_i }
 # </pre>
-class Puppet::Network::Server
+module Puppet::Network::Server
     class MongrelHandler < Mongrel::HttpHandler
         attr_reader :xmlrpc_server
 
