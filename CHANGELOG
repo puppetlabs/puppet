@@ -1,3 +1,5 @@
+    Added urpmi support (#592).
+
     Finishing up the type => provider interface work.  Basically, package
     providers now return lists of provider instances.  In the proces,
     I rewrote the interface between package types and providers, and also
