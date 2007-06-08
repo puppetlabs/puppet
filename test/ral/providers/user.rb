@@ -164,13 +164,12 @@ class TestUserProvider < Test::Unit::TestCase
 
         # Now try it by object
         assert_nothing_raised {
-            names = @provider.list
+            names = @provider.instances
         }
         assert(names.length > 0, "Listed no users as objects")
 
         names.each do |obj|
-            assert_instance_of(Puppet::Type.type(:user), obj)
-            assert(obj[:provider], "Provider was not set")
+            assert_instance_of(@provider, obj)
         end
     end
 
@@ -186,7 +185,7 @@ class TestUserProvider < Test::Unit::TestCase
         Puppet::Type.type(:user).validproperties.each do |property|
             next if property == :ensure
             # This is mostly in place for the 'password' stuff.
-            next unless user.class.supports_parameter?(property)
+            next unless user.class.supports_parameter?(property) and Puppet.features.root?
             val = nil
             assert_nothing_raised {
                 val = user.send(property)

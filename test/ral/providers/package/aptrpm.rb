@@ -28,7 +28,7 @@ class AptrpmPackageProviderTest < PuppetTest::TestCase
                             '--nodigest',
                             '--qf',
                             "%{NAME}-%{VERSION}-%{RELEASE} %{VERSION}-%{RELEASE}\n"
-                      ).raises(Puppet::ExecutionFailure, "couldn't find rpm").times(2)
+                      ).raises(Puppet::ExecutionFailure, "couldn't find rpm").times(1)
 
         pkg.provider.expects(
                          :aptget
@@ -56,7 +56,7 @@ class AptrpmPackageProviderTest < PuppetTest::TestCase
                         "%{NAME}-%{VERSION}-%{RELEASE} %{VERSION}-%{RELEASE}\n"
                     ).returns(
                         "faff-1.2.3-1 1.2.3-1\n"
-                    ).times(2)
+                    ).times(1)
         pkg.provider.expects(
                         :aptget
                     ).with(

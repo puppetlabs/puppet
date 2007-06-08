@@ -14,7 +14,9 @@
 # require 'ruby-debug'
 # Debugger.start
 
-Puppet::Type.type(:package).provide :pkgdmg do
+require 'puppet/provider/package'
+
+Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Package do
     desc "Package management based on Apple's Installer.app and DiskUtility.app"
 
     confine :exists => "/Library/Receipts"

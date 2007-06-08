@@ -26,13 +26,12 @@ Puppet::Type.type(:package).provide :freebsd, :parent => :openbsd do
     end
 
     def query
-        self.class.list
-
-        if @resource.is(:ensure)
-            return :listed
-        else
-            return nil
+        self.class.instances.each do |provider|
+            if provider.name == @resource.name
+                return provider.properties
+            end
         end
+        return nil
     end
 
     def uninstall

@@ -1,4 +1,6 @@
-Puppet::Type.type(:package).provide :portage do
+require 'puppet/provider/package'
+
+Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Package do
     desc "Provides packaging support for Gentoo's portage system."
 
     has_feature :versionable

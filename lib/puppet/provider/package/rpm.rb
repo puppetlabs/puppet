@@ -1,5 +1,6 @@
+require 'puppet/provider/package'
 # RPM packaging.  Should work anywhere that has rpm installed.
-Puppet::Type.type(:package).provide :rpm do
+Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Provider::Package do
     desc "RPM packaging support; should work anywhere with a working ``rpm``
         binary."
 
@@ -43,16 +44,6 @@ Puppet::Type.type(:package).provide :rpm do
         return packages
     end
 
-    # Get rid of our cached values.
-    def flush
-        @current_values = {}
-    end
-
-    def initialize(*args)
-        super
-        @current_values = {}
-    end
-
     # Find the fully versioned package name and the version alone. Returns
     # a hash with entries :instance => fully versioned package name, and 
     # :ensure => version-release
@@ -80,7 +71,7 @@ Puppet::Type.type(:package).provide :rpm do
 
         @nvr = hash[:instance]
 
-        @current_values = hash
+        @property_hash = hash
 
         return hash
     end
@@ -103,13 +94,13 @@ Puppet::Type.type(:package).provide :rpm do
         end
         # RPM gets pissy if you try to install an already 
         # installed package
-        if @resource.should(:ensure) == @current_values[:ensure] or
-            @resource.should(:ensure) == :latest && @current_values[:ensure] == latest
+        if @resource.should(:ensure) == @property_hash[:ensure] or
+            @resource.should(:ensure) == :latest && @property_hash[:ensure] == latest
             return
         end
 
         flag = "-i"
-        if @current_values[:ensure] and @current_values[:ensure] != :absent
+        if @property_hash[:ensure] and @property_hash[:ensure] != :absent
             flag = "-U"
         end
 

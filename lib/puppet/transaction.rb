@@ -483,6 +483,7 @@ class Transaction
 
         # Now call prefetch, passing in the resources so that the provider instances can be replaced.
         prefetchers.each do |provider, resources|
+            Puppet.debug "Prefetching %s resources for %s" % [provider.name, provider.resource_type.name]
             begin
                 provider.prefetch(resources)
             rescue => detail

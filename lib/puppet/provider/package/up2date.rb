@@ -1,4 +1,4 @@
-Puppet.type(:package).provide :up2date, :parent => :rpm do
+Puppet.type(:package).provide :up2date, :parent => :rpm, :source => :rpm do
     desc "Support for Red Hat's proprietary ``up2date`` package update
         mechanism."
 

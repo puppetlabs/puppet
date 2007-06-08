@@ -133,12 +133,13 @@ class TestParsedMounts < Test::Unit::TestCase
 
             assert(FileTest.exists?(@provider.default_target),
                 "FSTab %s does not exist" % @provider.default_target)
+
             assert_nothing_raised do
-                @provider.prefetch
+                @provider.prefetch("/" => type)
             end
 
-            assert_equal(:present, provider.property_hash[:ensure],
-                "Could not find root fs with provider %s" % provider.name)
+            assert_equal(:present, type.provider.property_hash[:ensure],
+                "Could not find root fs with provider %s" % provider.class.name)
 
             assert_nothing_raised {
                 assert(provider.mounted?, "Root is considered not mounted")

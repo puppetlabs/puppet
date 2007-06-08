@@ -1,4 +1,4 @@
-Puppet::Type.type(:package).provide :aptitude, :parent => :apt do
+Puppet::Type.type(:package).provide :aptitude, :parent => :apt, :source => :dpkg do
     desc "Package management via ``aptitude``."
 
     has_feature :versionable

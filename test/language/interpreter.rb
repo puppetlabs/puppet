@@ -193,7 +193,7 @@ class TestInterpreter < Test::Unit::TestCase
         assert(culain, "Did not find culain in ldap")
 
         assert_nothing_raised do
-            assert_equal(basenode.classname.to_s, culain.parentclass.classname.to_s,
+            assert_equal(basenode.classname.to_s, culain.parentobj.classname.to_s,
                 "Did not get parent class")
         end
     end

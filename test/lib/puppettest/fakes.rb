@@ -114,6 +114,10 @@ module PuppetTest
             end
         end
 
+        def self.source
+            self.name
+        end
+
         def self.supports_parameter?(param)
             true
         end
@@ -128,6 +132,13 @@ module PuppetTest
 
         def initialize(resource)
             @resource = resource
+        end
+
+        def properties
+            self.class.resource_type.validproperties.inject({}) do |props, name|
+                props[name] = self.send(name) || :absent
+                props
+            end
         end
     end
 

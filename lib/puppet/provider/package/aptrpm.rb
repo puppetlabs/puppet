@@ -1,4 +1,4 @@
-Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm do
+Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm, :source => :rpm do
     # Provide sorting functionality
     include Puppet::Util::Package
 

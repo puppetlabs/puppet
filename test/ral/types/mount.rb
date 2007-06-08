@@ -18,10 +18,14 @@ class TestMounts < Test::Unit::TestCase
             :yayness
         end
 
+        def self.instances
+            []
+        end
+
         def create
             @ensure = :present
-            @model.class.validproperties.each do |property|
-                if value = @model.should(property)
+            @resource.class.validproperties.each do |property|
+                if value = @resource.should(property)
                     self.send(property.to_s + "=", value)
                 end
             end
@@ -188,19 +192,19 @@ class TestMounts < Test::Unit::TestCase
     
     # Darwin doesn't put its mount table into netinfo
     unless Facter.value(:operatingsystem) == "Darwin"
-    def test_list
-        list = nil
-        assert(@mount.respond_to?(:list),
-            "No list method defined for mount")
+    def test_instances
+        instances = nil
+        assert(@mount.respond_to?(:instances),
+            "No instances method defined for mount")
 
         assert_nothing_raised do
-            list = Puppet::Type.type(:mount).list
+            instances = Puppet::Type.type(:mount).instances
         end
         
-        assert(list.length > 0, "Did not return any mounts")
+        assert(instances.length > 0, "Did not return any mounts")
 
-        root = list.find { |o| o[:name] == "/" }
-        assert(root, "Could not find root root filesystem in list results")
+        root = instances.find { |o| o[:name] == "/" }
+        assert(root, "Could not find root root filesystem in instances results")
   
         current_values = nil
         assert_nothing_raised do
@@ -245,8 +249,8 @@ class TestMounts < Test::Unit::TestCase
         assert_events([], mount)
 
         # Now try listing and making sure the object is actually gone.
-        list = mount.provider.class.list
-        assert(! list.find { |r| r[:name] == mount[:name] },
+        instances = mount.provider.class.instances
+        assert(! instances.find { |r| r[:name] == mount[:name] },
             "Mount was not actually removed")
     end
     end

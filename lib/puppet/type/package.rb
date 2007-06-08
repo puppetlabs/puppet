@@ -383,7 +383,7 @@ module Puppet
         # The 'query' method returns a hash of info if the package
         # exists and returns nil if it does not.
         def exists?
-            @provider.query
+            @provider.get(:ensure) != :absent
         end
 
         # okay, there are two ways that a package could be created...
@@ -413,48 +413,13 @@ module Puppet
         end
 
         def retrieve
-            # If the package is installed, then retrieve all of the information
-            # about it and set it appropriately.
-            if hash = @provider.query
-                if hash == :listed # Mmmm, hackalicious
-                    return {}
+            @provider.properties.inject({}) do |props, ary|
+                name, value = ary
+                if prop = @parameters[name]
+                    props[prop] = value
                 end
-                hash.each { |param, value|
-                    unless self.class.validattr?(param)
-                        hash.delete(param)
-                    end
-                }
-
-                setparams(hash)
-                
-                return properties().inject({}) { |prop_hash, property|
-                           prop_hash[property] = hash[property.name] if hash.has_key?(property.name)
-                           prop_hash
-                       }
-            else
-                # Else just mark all of the properties absent.
-                # FIXARB: Not sure why this is using validproperties instead of
-                #         properties()?
-                return self.class.validproperties.inject({}) { |h, name|
-                          h[@parameters[name]] = :absent
-                          h
-                       }
+                props
             end
-        end
-
-        # Set all of the params' "is" value.  Most are parameters, but some
-        # are properties.
-        def setparams(hash)
-            # Everything on packages is a parameter except :ensure
-            hash.each { |param, value| 
-                next if param == :ensure
-                if self.class.attrtype(param) == :property
-                    add_property_parameter(param)
-                    self.provider.send("%s=" % param, value)
-                else
-                    self[param] = value
-                end
-            }
         end
     end # Puppet.type(:package)
 end

@@ -255,15 +255,31 @@ class Puppet::Type
         end
 
         # Put the default provider first, then the rest of the suitable providers.
+        packages = {}
+        providers_by_source.collect do |provider|
+            provider.instances.collect do |instance|
+                if other = packages[instance.name]
+                    Puppet.warning "Package %s found in both %s and %s; skipping the %s version" %
+                        [instance.name, other.class.name, instance.class.name, instance.class.name]
+                    next
+                end
+                packages[instance.name] = instance
+
+                create(:name => instance.name, :provider => instance, :check => :all)
+            end
+        end.flatten.compact
+    end
+
+    # Return a list of one suitable provider per source, with the default provider first.
+    def self.providers_by_source
+        # Put the default provider first, then the rest of the suitable providers.
         sources = []
         [defaultprovider, suitableprovider].flatten.uniq.collect do |provider|
             next if sources.include?(provider.source)
 
             sources << provider.source
-            provider.instances.collect do |instance|
-                create(:name => instance.name, :provider => instance, :check => :all)
-            end
-        end.flatten.compact
+            provider
+        end.compact
     end
 
     # Create the path for logging and such.

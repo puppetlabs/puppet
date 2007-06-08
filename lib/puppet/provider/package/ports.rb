@@ -1,4 +1,4 @@
-Puppet::Type.type(:package).provide :ports, :parent => :freebsd do
+Puppet::Type.type(:package).provide :ports, :parent => :freebsd, :source => :freebsd do
     desc "Support for FreeBSD's ports.  Again, this still mixes packages
         and ports."
 
@@ -74,13 +74,13 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd do
     end
 
     def query
-        self.class.list
-
-        if @resource.is(:ensure) and @resource.is(:ensure) != :absent
-            return :listed
-        else
-            return nil
+        self.class.instances.each do |instance|
+            if instance.name == self.name
+                return instance.properties
+            end
         end
+
+        return nil
     end
 
     def uninstall

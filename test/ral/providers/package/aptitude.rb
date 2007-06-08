@@ -28,7 +28,7 @@ class AptitudePackageProviderTest < PuppetTest::TestCase
  							  'faff'
  					  ).returns(
  					        "deinstall ok config-files faff 1.2.3-1\n"
- 					  ).times(2)
+ 					  ).times(1)
 
 		pkg.provider.expects(
 		                 :aptitude
@@ -58,7 +58,7 @@ class AptitudePackageProviderTest < PuppetTest::TestCase
 					        'faff'
 					  ).returns(
 					        "install ok installed faff 1.2.3-1\n"
-					  ).times(2)
+					  ).times(1)
 		pkg.provider.expects(
 		                 :aptitude
 					  ).with(

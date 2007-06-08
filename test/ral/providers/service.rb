@@ -55,7 +55,7 @@ class TestLocalService < Test::Unit::TestCase
         }
 
         comp = newcomp("servicetst", service)
-        service[:ensure] = true
+        service[:ensure] = :running
 
         Puppet.info "Starting %s" % service.name
         assert_apply(service)
@@ -63,10 +63,15 @@ class TestLocalService < Test::Unit::TestCase
         # Some package systems background the work, so we need to give them
         # time to do their work.
         sleep(1.5)
+        props = nil
         assert_nothing_raised() {
-            service.retrieve
+            props = service.retrieve
         }
-        assert(service.insync?, "Service %s is not running" % service.name)
+        props.each do |prop, value|
+            if prop.name == :ensure
+                assert_equal(:running, value, "Service %s is not running" % service.name)
+            end
+        end
 
         # test refreshing it
         assert_nothing_raised() {
@@ -77,17 +82,22 @@ class TestLocalService < Test::Unit::TestCase
         assert_nothing_raised() {
             service[:ensure] = :stopped
         }
-        assert_nothing_raised() {
-            service.retrieve
-        }
-        assert(!service.insync?(), "Service %s is not running" % service.name)
+        props.each do |prop, value|
+            if prop.name == :ensure
+                assert_equal(:running, value, "Service %s is not running" % service.name)
+            end
+        end
         Puppet.info "stopping %s" % service.name
         assert_events([:service_stopped], comp)
         sleep(1.5)
         assert_nothing_raised() {
-            service.retrieve
+            props = service.retrieve
         }
-        assert(service.insync?, "Service %s has not stopped" % service.name)
+        props.each do |prop, value|
+            if prop.name == :ensure
+                assert_equal(:stopped, value, "Service %s is not running" % service.name)
+            end
+        end
     end
 
     def cycleenable(service)
@@ -104,26 +114,35 @@ class TestLocalService < Test::Unit::TestCase
         # Some package systems background the work, so we need to give them
         # time to do their work.
         sleep(1.5)
+        props = nil
         assert_nothing_raised() {
-            service.retrieve
+            props = service.retrieve
         }
-        assert(service.insync?, "Service %s is not enabled" % service.name)
+        props.each do |prop, value|
+            if prop.name == :enable
+                assert_equal(value, :true, "Service %s is not enabled" % service.name)
+            end
+        end
 
-        # now stop it
+        # now disable it
         assert_nothing_raised() {
             service[:enable] = false
         }
         assert_nothing_raised() {
-            service.retrieve
+            props = service.retrieve
         }
-        assert(!service.insync?(), "Service %s is not enabled" % service.name)
+        props.each do |prop, value|
+            assert_equal(value, :true, "Service %s is already disabled" % service.name)
+        end
         Puppet.info "disabling %s" % service.name
         assert_events([:service_disabled], comp)
         sleep(1.5)
         assert_nothing_raised() {
-            service.retrieve
+            props = service.retrieve
         }
-        assert(service.insync?, "Service %s has not been disabled" % service.name)
+        props.each do |prop, value|
+            assert_equal(value, :false, "Service %s is still enabled" % service.name)
+        end
     end
 
     def test_status
@@ -174,30 +193,37 @@ class TestLocalService < Test::Unit::TestCase
                 startenable = nil
                 startensure = nil
                 svc[:check] = [:ensure, :enable]
-                svc.retrieve
+                properties = nil
                 assert_nothing_raised("Could not get status") {
-                    startenable = svc.property(:enable).is
-                    startensure = svc.property(:ensure).is
+                    properties = svc.retrieve
                 }
+                initial = properties.dup
 
                 svc[:enable] = false
                 svc[:ensure] = :stopped
                 assert_apply(svc)
 
                 sleep 1
-                svc.retrieve
-                assert(svc.insync?, "Service did not sync both properties")
+                assert_nothing_raised("Could not get status") {
+                    properties = svc.retrieve
+                }
+                properties.each do |prop, value|
+                    assert(prop.insync?(value), "Service did not sync %s property" % prop.name)
+                end
 
                 svc[:enable] = true
                 svc[:ensure] = :running
                 assert_apply(svc)
 
                 sleep 1
-                svc.retrieve
-                assert(svc.insync?, "Service did not sync both properties")
+                assert_nothing_raised("Could not get status") {
+                    properties = svc.retrieve
+                }
+                assert(svc.insync?(properties), "Service did not sync both properties")
 
-                svc[:enable] = startenable
-                svc[:ensure] = startensure
+                initial.each do |prop, value|
+                    svc[prop.name] = value
+                end
                 assert_apply(svc)
                 Puppet.type(:component).clear
             end

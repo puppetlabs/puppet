@@ -1,6 +1,8 @@
-# Sun packaging.  No one else uses these package tools, AFAIK.
+# Sun packaging.
 
-Puppet::Type.type(:package).provide :sun do
+require 'puppet/provider/package'
+
+Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package do
     desc "Sun's packaging system.  Requires that you specify the source for
         the packages you're managing."
     commands :pkginfo => "/usr/bin/pkginfo",

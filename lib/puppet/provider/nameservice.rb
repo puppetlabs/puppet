@@ -25,22 +25,10 @@ class Puppet::Provider::NameService < Puppet::Provider
             super
         end
 
-        def list
+        def instances
             objects = []
             listbyname do |name|
-                obj = nil
-                check = resource_type.validproperties
-                if obj = resource_type[name]
-                    obj[:check] = check
-                else
-                    # unless it exists, create it as an unmanaged object
-                    obj = resource_type.create(:name => name, :check => check)
-                end
-
-                next unless obj # In case there was an error somewhere
-                
-                objects << obj
-                yield obj if block_given?
+                objects << new(:name => name, :ensure => :present)
             end
 
             objects

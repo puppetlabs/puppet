@@ -1,4 +1,4 @@
-Puppet::Type.type(:package).provide :yum, :parent => :rpm do
+Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     desc "Support via ``yum``."
 
     has_feature :versionable

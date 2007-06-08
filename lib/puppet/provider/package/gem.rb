@@ -1,5 +1,7 @@
+require 'puppet/provider/package'
+
 # Ruby gems support.
-Puppet::Type.type(:package).provide :gem do
+Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package do
     desc "Ruby Gem support.  By default uses remote gems, but you can specify
         the path to a local gem via ``source``."
 

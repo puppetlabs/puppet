@@ -1,4 +1,6 @@
-Puppet::Type.type(:package).provide :darwinport do
+require 'puppet/provider/package'
+
+Puppet::Type.type(:package).provide :darwinport, :parent => Puppet::Provider::Package do
     desc "Package management using DarwinPorts on OS X."
 
     commands :port => "/opt/local/bin/port"

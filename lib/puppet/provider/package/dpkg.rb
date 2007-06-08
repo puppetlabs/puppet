@@ -1,4 +1,6 @@
-Puppet::Type.type(:package).provide :dpkg do
+require 'puppet/provider/package'
+
+Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package do
     desc "Package management via ``dpkg``.  Because this only uses ``dpkg``
         and not ``apt``, you must specify the source of any packages you want
         to manage."
@@ -103,7 +105,7 @@ Puppet::Type.type(:package).provide :dpkg do
 
     def purge
         dpkg "--purge", @resource[:name]
-	 end
+    end
 end
 
 # $Id$

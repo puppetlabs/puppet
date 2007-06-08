@@ -329,6 +329,11 @@ class Puppet::Provider
         self.class.command(name)
     end
 
+    # Get a parameter value.
+    def get(param)
+        @property_hash[symbolize(param)] || :absent
+    end
+
     def initialize(resource = nil)
         if resource.is_a?(Hash)
             @property_hash = resource.dup

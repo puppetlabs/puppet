@@ -1,5 +1,7 @@
+require 'puppet/provider/package'
+
 # Packaging on OpenBSD.  Doesn't work anywhere else that I know of.
-Puppet::Type.type(:package).provide :openbsd do
+Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Package do
     desc "OpenBSD's form of ``pkg_add`` support."
 
     commands :pkginfo => "pkg_info", :pkgadd => "pkg_add", :pkgdelete => "pkg_delete"
