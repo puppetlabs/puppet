@@ -16,7 +16,7 @@ class Puppet::Parser::AST
         @name = :definition
 
         attr_accessor :classname, :arguments, :code, :scope, :keyword
-        attr_accessor :exported, :namespace, :interp
+        attr_accessor :exported, :namespace, :interp, :virtual
 
         # These are retrieved when looking up the superclass
         attr_accessor :name
@@ -35,9 +35,14 @@ class Puppet::Parser::AST
             name = args[:name] || title
 
             exported = hash[:exported]
+            virtual = hash[:virtual]
 
             pscope = origscope
             scope = subscope(pscope, title)
+
+            if virtual or origscope.virtual?
+                scope.virtual = true
+            end
 
             if exported or origscope.exported?
                 scope.exported = true

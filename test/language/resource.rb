@@ -6,7 +6,7 @@ require 'puppettest'
 require 'puppettest/resourcetesting'
 require 'puppettest/railstesting'
 
-class TestResource < Test::Unit::TestCase
+class TestResource < PuppetTest::TestCase
 	include PuppetTest
     include PuppetTest::ParserTesting
     include PuppetTest::ResourceTesting
@@ -360,99 +360,6 @@ class TestResource < Test::Unit::TestCase
 
         assert_nil(ref.builtintype, "Component was considered builtin")
     end
-    if Puppet.features.rails?
-
-    # Compare a parser resource to a rails resource.
-    def compare_resources(host, res, updating, options = {})
-        # to_rails now expects to be passed a resource, else it will create a new one
-        newobj = host.resources.find_by_restype_and_title(res.type, res.title)
-        assert_nothing_raised do
-            newobj = res.to_rails(host, newobj)
-        end
-
-        assert_instance_of(Puppet::Rails::Resource, newobj)
-        newobj.save
-
-        if updating
-            tail = "on update"
-        else
-            tail = ""
-        end
-
-        # Make sure we find our object and only our object
-        count = 0
-        obj = nil
-        Puppet::Rails::Resource.find(:all).each do |obj|
-            assert_equal(newobj.id, obj.id, "Found object has a different id than generated object %s" % tail)
-            count += 1
-            [:title, :restype, :line, :exported].each do |param|
-                if param == :restype
-                    method = :type
-                else
-                    method = param
-                end
-                assert_equal(res.send(method), obj[param], 
-                    "attribute %s was not set correctly in rails %s" % [param, tail])
-            end
-        end
-        assert_equal(1, count, "Got too many resources %s" % tail)
-        # Now make sure we can find it again
-        assert_nothing_raised do
-            obj = Puppet::Rails::Resource.find_by_restype_and_title(
-                res.type, res.title, :include => :param_names
-            )
-        end
-        assert_instance_of(Puppet::Rails::Resource, obj)
-
-        # Make sure we get the parameters back
-        params = options[:params] || [obj.param_names.collect { |p| p.name },
-            res.to_hash.keys].flatten.collect { |n| n.to_s }.uniq
-
-        params.each do |name|
-            param = obj.param_names.find_by_name(name)
-            if res[name]
-                assert(param, "resource did not keep %s %s" % [name, tail])
-            else
-                assert(! param, "resource did not delete %s %s" % [name, tail])
-            end
-            if param
-                values = param.param_values.collect { |pv| pv.value }
-                should = res[param.name]
-                should = [should] unless should.is_a?(Array)
-                assert_equal(should, values,
-                    "%s was different %s" % [param.name, tail])
-            end
-        end
-    end
-
-    def test_to_rails
-        railsteardown
-        railsinit
-        res = mkresource :type => "file", :title => "/tmp/testing",
-            :source => @source, :scope => @scope,
-            :params => {:owner => "root", :source => ["/tmp/A", "/tmp/B"],
-                :mode => "755"}
-
-        res.line = 50
-
-        # We also need a Rails Host to store under
-        host = Puppet::Rails::Host.new(:name => Facter.hostname)
-
-        compare_resources(host, res, false, :params => %w{owner source mode})
-
-        # Now make some changes to our resource.  We're removing the mode,
-        # changing the source, and adding 'check'.
-        res = mkresource :type => "file", :title => "/tmp/testing",
-            :source => @source, :scope => @scope,
-            :params => {:owner => "bin", :source => ["/tmp/A", "/tmp/C"],
-            :check => "checksum"}
-
-        res.line = 75
-        res.exported = true
-
-        compare_resources(host, res, true, :params => %w{owner source mode check})
-    end
-    end
 
     # #472.  Really, this still isn't the best behaviour, but at least
     # it's consistent with what we have elsewhere.
@@ -543,6 +450,139 @@ class TestResource < Test::Unit::TestCase
         end
 
         assert_nil(hash[:owner], "got a value for an undef parameter")
+    end
+
+    # #643 - Make sure virtual defines result in virtual resources
+    def test_virtual_defines
+        define = @interp.newdefine("yayness",
+            :code => resourcedef("file", varref("name"),
+                "mode" => "644"))
+
+        res = mkresource :type => "yayness", :title => "foo", :params => {}
+        res.virtual = true
+
+        result = nil
+        assert_nothing_raised("Could not evaluate defined resource") do
+            result = res.evaluate
+        end
+
+        scope = res.scope
+        newres = scope.findresource("File[foo]")
+        assert(newres, "Could not find resource")
+
+        assert(newres.virtual?, "Virtual defined resource generated non-virtual resources")
+
+        # Now try it with exported resources
+        res = mkresource :type => "yayness", :title => "bar", :params => {}
+        res.exported = true
+
+        result = nil
+        assert_nothing_raised("Could not evaluate exported resource") do
+            result = res.evaluate
+        end
+
+        scope = res.scope
+        newres = scope.findresource("File[bar]")
+        assert(newres, "Could not find resource")
+
+        assert(newres.exported?, "Exported defined resource generated non-exported resources")
+        assert(newres.virtual?, "Exported defined resource generated non-virtual resources")
+    end
+end
+
+# A separate class for testing rails integration
+class TestExportedResources < TestResource
+    confine "Missing rails support" => Puppet.features.rails?
+
+    # Compare a parser resource to a rails resource.
+    def compare_resources(host, res, updating, options = {})
+        # to_rails now expects to be passed a resource, else it will create a new one
+        newobj = host.resources.find_by_restype_and_title(res.type, res.title)
+        assert_nothing_raised do
+            newobj = res.to_rails(host, newobj)
+        end
+
+        assert_instance_of(Puppet::Rails::Resource, newobj)
+        newobj.save
+
+        if updating
+            tail = "on update"
+        else
+            tail = ""
+        end
+
+        # Make sure we find our object and only our object
+        count = 0
+        obj = nil
+        Puppet::Rails::Resource.find(:all).each do |obj|
+            assert_equal(newobj.id, obj.id, "Found object has a different id than generated object %s" % tail)
+            count += 1
+            [:title, :restype, :line, :exported].each do |param|
+                if param == :restype
+                    method = :type
+                else
+                    method = param
+                end
+                assert_equal(res.send(method), obj[param], 
+                    "attribute %s was not set correctly in rails %s" % [param, tail])
+            end
+        end
+        assert_equal(1, count, "Got too many resources %s" % tail)
+        # Now make sure we can find it again
+        assert_nothing_raised do
+            obj = Puppet::Rails::Resource.find_by_restype_and_title(
+                res.type, res.title, :include => :param_names
+            )
+        end
+        assert_instance_of(Puppet::Rails::Resource, obj)
+
+        # Make sure we get the parameters back
+        params = options[:params] || [obj.param_names.collect { |p| p.name },
+            res.to_hash.keys].flatten.collect { |n| n.to_s }.uniq
+
+        params.each do |name|
+            param = obj.param_names.find_by_name(name)
+            if res[name]
+                assert(param, "resource did not keep %s %s" % [name, tail])
+            else
+                assert(! param, "resource did not delete %s %s" % [name, tail])
+            end
+            if param
+                values = param.param_values.collect { |pv| pv.value }
+                should = res[param.name]
+                should = [should] unless should.is_a?(Array)
+                assert_equal(should, values,
+                    "%s was different %s" % [param.name, tail])
+            end
+        end
+    end
+
+    def test_to_rails
+        railsteardown
+        railsinit
+        res = mkresource :type => "file", :title => "/tmp/testing",
+            :source => @source, :scope => @scope,
+            :params => {:owner => "root", :source => ["/tmp/A", "/tmp/B"],
+                :mode => "755"}
+
+        res.line = 50
+
+        # We also need a Rails Host to store under
+        host = Puppet::Rails::Host.new(:name => Facter.hostname)
+
+        compare_resources(host, res, false, :params => %w{owner source mode})
+
+        # Now make some changes to our resource.  We're removing the mode,
+        # changing the source, and adding 'check'.
+        res = mkresource :type => "file", :title => "/tmp/testing",
+            :source => @source, :scope => @scope,
+            :params => {:owner => "bin", :source => ["/tmp/A", "/tmp/C"],
+            :check => "checksum"}
+
+        res.line = 75
+        res.exported = true
+
+        compare_resources(host, res, true, :params => %w{owner source mode check})
     end
 end
 

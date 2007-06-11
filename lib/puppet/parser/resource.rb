@@ -94,6 +94,7 @@ class Puppet::Parser::Resource
                                   :title => self.title,
                                   :arguments => self.to_hash,
                                   :scope => self.scope,
+                                  :virtual => self.virtual,
                                   :exported => self.exported
             )
         elsif builtin?

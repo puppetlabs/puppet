@@ -17,7 +17,7 @@ class Puppet::Parser::Scope
     include Puppet::Util::Errors
     attr_accessor :parent, :level, :interp, :source, :host
     attr_accessor :name, :type, :topscope, :base, :keyword
-    attr_accessor :top, :translated, :exported
+    attr_accessor :top, :translated, :exported, :virtual
 
     # Whether we behave declaratively.  Note that it's a class variable,
     # so all scopes behave the same.
@@ -371,9 +371,7 @@ class Puppet::Parser::Scope
         return values
     end
 
-    # Look up all of the exported objects of a given type.  Just like
-    # lookupobject, this only searches up through parent classes, not
-    # the whole scope tree.
+    # Look up all of the exported objects of a given type.
     def lookupexported(type)
         @definedtable.find_all do |name, r|
             r.type == type and r.exported?
@@ -491,6 +489,13 @@ class Puppet::Parser::Scope
         self.chkobjectclosure(obj)
 
         @children << obj
+
+        # Mark the resource as virtual or exported, as necessary.
+        if self.exported?
+            obj.exported = true
+        elsif self.virtual?
+            obj.virtual = true
+        end
 
         # The global table
         @definedtable[obj.ref] = obj
@@ -716,6 +721,10 @@ class Puppet::Parser::Scope
         else
             return ary
         end
+    end
+
+    def virtual?
+        self.virtual || self.exported?
     end
 end
 
