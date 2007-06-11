@@ -203,7 +203,8 @@ class Puppet::Network::Handler
                 when "marshal":
                     str = Marshal::dump(retobjects)
                 when "yaml":
-                    str = YAML.dump(retobjects)
+                    #str = YAML.dump(retobjects)
+                    str = retobjects.to_yaml(:UseBlock => true)
                 else
                     raise XMLRPC::FaultException.new(
                         1, "Unavailable config format %s" % format
