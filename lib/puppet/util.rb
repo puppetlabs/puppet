@@ -361,7 +361,7 @@ module Util
 
         if arguments[:failonfail]
             unless child_status == 0
-                raise ExecutionFailure, "Execution of '%s' returned %s: %s" % [str, child_status.inspect, output]
+                raise ExecutionFailure, "Execution of '%s' returned %s: %s" % [str, child_status, output]
             end
         end
 
