@@ -390,25 +390,25 @@ module Puppet
         # either through the language, in which case the hash's values should
         # be set in 'should', or through comparing against the system, in which
         # case the hash's values should be set in 'is'
-        def initialize(hash)
+        def initialize(params)
             self.initvars
-            type = nil
+            provider = nil
             [:provider, "use"].each { |label|
-                if hash.include?(label)
-                    type = hash[label]
-                    hash.delete(label)
+                if params.include?(label)
+                    provider = params[label]
+                    params.delete(label)
                 end
             }
-            if type
-                self[:provider] = type
+            if provider
+                self[:provider] = provider
             else
                 self.setdefaults(:provider)
             end
 
-            super
+            super(params)
 
             unless @parameters.include?(:provider)
-                raise Puppet::DevError, "No package type set"
+                raise Puppet::DevError, "No package provider set"
             end
         end
 
