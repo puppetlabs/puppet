@@ -115,6 +115,12 @@ module Puppet
 
         newproperty(:pass) do
             desc "The pass in which the mount is checked."
+
+            defaultto {
+                if @resource.managed?
+                    0
+                end
+            }
         end
 
         newproperty(:atboot) do
@@ -125,6 +131,12 @@ module Puppet
         newproperty(:dump) do
             desc "Whether to dump the mount.  Not all platforms
                 support this."
+
+            defaultto {
+                if @resource.managed?
+                    0
+                end
+            }
         end
 
         newproperty(:target) do

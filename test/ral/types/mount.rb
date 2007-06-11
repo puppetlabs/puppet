@@ -189,6 +189,21 @@ class TestMounts < Test::Unit::TestCase
         assert_nothing_raised { current_values =  obj.retrieve }
         assert(obj.provider.mounted?, "Object is not mounted")
     end
+
+    def test_defaults
+        obj = mkmount
+        args = mkmount_args
+        args.delete(:pass)
+        args.delete(:dump)
+        mount = nil
+
+        assert_nothing_raised {
+            mount = Puppet.type(:mount).create(args)
+        }
+
+        assert_equal(0, mount.should(:pass), "Did not set default for pass")
+        assert_equal(0, mount.should(:dump), "Did not set default for dump")
+    end
     
     # Darwin doesn't put its mount table into netinfo
     unless Facter.value(:operatingsystem) == "Darwin"

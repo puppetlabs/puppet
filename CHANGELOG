@@ -1,3 +1,5 @@
+    Mounts now default to 0 for pass and dump (#112).
+
     Added urpmi support (#592).
 
     Finishing up the type => provider interface work.  Basically, package
