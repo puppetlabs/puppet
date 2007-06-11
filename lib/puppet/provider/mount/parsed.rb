@@ -31,7 +31,7 @@ Puppet::Type.type(:mount).provide(:parsed,
     text_line :comment, :match => /^\s*#/
     text_line :blank, :match => /^\s*$/
 
-    record_line self.name, :fields => @fields, :separator => /\s+/, :joiner => "\t"
+    record_line self.name, :fields => @fields, :separator => /\s+/, :joiner => "\t", :optional => [:pass, :dump]
 end
 
 # $Id$

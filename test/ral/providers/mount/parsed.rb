@@ -122,6 +122,10 @@ class TestParsedMounts < Test::Unit::TestCase
                 assert(hashes.length > 0, "Did not create any hashes")
                 root = hashes.find { |i| i[:name] == "/" }
                 assert(root, "Could not retrieve root mount")
+
+                assert_nothing_raised("Could not rewrite file") do
+                    puts @provider.to_file(hashes)
+                end
             end
         end
 
