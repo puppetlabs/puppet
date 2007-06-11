@@ -250,7 +250,7 @@ begin
         server = Puppet::Network::Server::WEBrick.new(:Handlers => handlers)
     when "mongrel":
         require 'puppet/network/server/mongrel'
-        handler = Puppet::Network::Server::MongrelHandler.new(handlers)
+        handler = Puppet::Network::Server::Mongrel.new(handlers)
         addr = Puppet[:bindaddress]
         if addr == ""
             addr =  "127.0.0.1"

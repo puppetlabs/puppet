@@ -5,7 +5,7 @@ $:.unshift("../../lib") if __FILE__ =~ /\.rb$/
 require 'puppettest'
 require 'puppet/network/server/webrick'
 
-class TestServer < Test::Unit::TestCase
+class TestWebrickServer < Test::Unit::TestCase
     include PuppetTest::ServerTest
 
     # Make sure we can create a server, and that it knows how to create its

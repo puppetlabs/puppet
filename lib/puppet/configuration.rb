@@ -309,7 +309,11 @@ module Puppet
         :ca => [true, "Wether the master should function as a certificate authority."],
         :modulepath => [ "$confdir/modules:/usr/share/puppet/modules",
            "The search path for modules as a colon-separated list of
-            directories." ]
+            directories." ],
+        :ssl_client_header => ["HTTP_X_CLIENT_DN", "The header containing an authenticated
+            client's SSL DN.  Only used with Mongrel.  This header must be set by the proxy
+            to the authenticated client's SSL DN (e.g., ``/CN=puppet.reductivelabs.com``).
+            See the `UsingMongrel`:trac: wiki page for more information."]
     )
 
     self.setdefaults(:puppetd,

@@ -47,8 +47,8 @@ require 'resolv'
 # handler = XmlRpcHandler.new
 # handler.xmlrpc_server.add_handler("my.add") { |a, b| a.to_i + b.to_i }
 # </pre>
-module Puppet::Network::Server
-    class MongrelHandler < Mongrel::HttpHandler
+module Puppet::Network
+    class Server::Mongrel < ::Mongrel::HttpHandler
         attr_reader :xmlrpc_server
 
         def initialize(handlers)
@@ -114,7 +114,7 @@ module Puppet::Network::Server
         def client_info(request)
             params = request.params
             ip = params["REMOTE_ADDR"]
-            if dn = params["HTTP_X_CLIENT_DN"]
+            if dn = params[Puppet[:ssl_client_header]]
                 client = dn.sub("/CN=", '')
                 valid = true
             else
