@@ -3,7 +3,7 @@ module Puppet
     # If we're running the standalone puppet process as a non-root user,
     # use basedirs that are in the user's home directory.
     conf = nil
-    var = "~/.puppet/var"
+    var = nil
     name = $0.gsub(/.+#{File::SEPARATOR}/,'').sub(/\.rb$/, '')
 
     if name != "puppetmasterd" and Puppet::Util::SUIDManager.uid != 0
@@ -46,7 +46,7 @@ module Puppet
 
     self.setdefaults(:main,
         :trace => [false, "Whether to print stack traces on some errors"],
-        :autoflush => [true, "Whether log files should always flush to disk."],
+        :autoflush => [false, "Whether log files should always flush to disk."],
         :syslogfacility => ["daemon", "What syslog facility to use when logging to
             syslog.  Syslog has a fixed list of valid facilities, and you must
             choose one of those; you cannot just make one up."],
@@ -492,14 +492,14 @@ module Puppet
             :desc => "The database cache for client configurations.  Used for
                 querying within the language."
         },
-        :dbadapter => [ "postgresql", "The type of database to use." ],
+        :dbadapter => [ "sqlite3", "The type of database to use." ],
         :dbmigrate => [ false, "Whether to automatically migrate the database." ],
         :dbname => [ "puppet", "The name of the database to use." ],
         :dbserver => [ "localhost", "The database server for Client caching. Only
             used when networked databases are used."],
-        :dbuser => [ "ballman", "The database user for Client caching. Only
+        :dbuser => [ "puppet", "The database user for Client caching. Only
             used when networked databases are used."],
-        :dbpassword => [ "", "The database password for Client caching. Only
+        :dbpassword => [ "puppet", "The database password for Client caching. Only
             used when networked databases are used."],
         :railslog => {:default => "$logdir/rails.log",
             :mode => 0600,
