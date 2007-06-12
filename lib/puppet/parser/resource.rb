@@ -56,14 +56,15 @@ class Puppet::Parser::Resource
         end
     end
 
-    # Add any metaparams defined in our scope.  This actually adds any metaparams
+    # Add any metaparams defined in our scope. This actually adds any metaparams
     # from any parent scope, and there's currently no way to turn that off.
     def addmetaparams
         Puppet::Type.eachmetaparam do |name|
             next if self[name]
             if val = scope.lookupvar(name.to_s, false)
                 unless val == :undefined
-                    set Param.new(:name => name, :value => val, :source => scope.source)
+                    set Param.new(:name => name, :value => val, 
+                                  :source => scope.source)
                 end
             end
         end
@@ -172,6 +173,48 @@ class Puppet::Parser::Resource
         end
     end
 
+    def modify_rails(db_resource)
+        args = rails_args
+        args.each do |param, value|
+            db_resource[param] = value unless db_resource[param] == value
+        end
+
+        # Handle file specially
+        if (self.file and  
+            (!db_resource.file or db_resource.file != self.file))
+            db_resource.file = self.file
+        end
+        
+        updated_params = @params.inject({}) do |hash, ary|
+            hash[ary[0].to_s] = ary[1]
+            hash
+        end
+        
+        db_resource.ar_hash_merge(db_resource.get_params_hash(), updated_params,
+                                  :create => Proc.new { |name, parameter|
+                                      parameter.to_rails(db_resource)
+                                  }, :delete => Proc.new { |values|
+                                      values.each { |value| db_resource.param_values.delete(value) }
+                                  }, :modify => Proc.new { |db, mem|
+                                      mem.modify_rails_values(db)
+                                  })
+        
+        updated_tags = tags.inject({}) { |hash, tag| 
+            hash[tag] = tag
+            hash
+        }
+            
+        db_resource.ar_hash_merge(db_resource.get_tag_hash(), 
+                                  updated_tags,
+                                  :create => Proc.new { |name, tag|
+                                      db_resource.add_resource_tag(tag)
+                                  }, :delete => Proc.new { |rt|
+                                      rt.each { |tag| db_resource.resource_tags.delete(tag) }
+                                  }, :modify => Proc.new { |db, mem|
+                                      # nothing here
+                                  })
+    end
+
     # This *significantly* reduces the number of calls to Puppet.[].
     def paramcheck?
         unless defined? @@paramcheck
@@ -180,13 +223,13 @@ class Puppet::Parser::Resource
         @@paramcheck
     end
 
-    # Verify that all passed parameters are valid.  This throws an error if there's
-    # a problem, so we don't have to worry about the return value.
+    # Verify that all passed parameters are valid.  This throws an error if
+    #  there's a problem, so we don't have to worry about the return value.
     def paramcheck(param)
         param = param.to_s
         # Now make sure it's a valid argument to our class.  These checks
-        # are organized in order of commonhood -- most types, it's a valid argument
-        # and paramcheck is enabled.
+        # are organized in order of commonhood -- most types, it's a valid 
+        # argument and paramcheck is enabled.
         if @ref.typeclass.validattr?(param)
             true
         elsif %w{name title}.include?(param) # always allow these
@@ -228,7 +271,8 @@ class Puppet::Parser::Resource
                 if Puppet[:trace]
                     puts caller
                 end
-                msg = "Parameter '%s' is already set on %s" % [param.name, self.to_s]
+                msg = "Parameter '%s' is already set on %s" % 
+                    [param.name, self.to_s]
                 if param.source.to_s != ""
                     msg += " by %s" % param.source
                 end
@@ -269,46 +313,22 @@ class Puppet::Parser::Resource
         end
     end
 
-    # Turn our parser resource into a Rails resource.
-    def to_rails(host, resource = nil)
-        args = {}
-        [:type, :title, :line, :exported].each do |param|
-            # 'type' isn't a valid column name, so we have to use something else.
-            if param == :type
-                to = :restype
-            else
-                to = param
-            end
-            if value = self.send(param)
-                args[to] = value
-            end
-        end
+    # Turn our parser resource into a Rails resource.  
+    def to_rails(host)
+        args = rails_args
 
-        # If we were passed an object, just make sure all of the attributes are correct.
-        if resource
-            # We exist
-            args.each do |param, value|
-                v = resource[param]
-                unless v == value
-                    resource[param] = value
-                end
-            end
-        else
-            # Else create it anew
-            resource = host.resources.build(args)
-        end
+        db_resource = host.resources.build(args)
 
         # Handle file specially
-        if self.file and (!resource.file or resource.file != self.file)
-            resource.file = self.file
-        end
+        db_resource.file = self.file
 
-        # Either way, now add our parameters
-        updated_params = {}
-        @params.each { |name, p| updated_params[name.to_s] = p }
-        resource.collection_merge :param_names, :existing => resource.param_names, :updates => updated_params
+        @params.each { |name, param|
+            param.to_rails(db_resource)
+        }
+        
+        tags.each { |tag| db_resource.add_resource_tag(tag) }
 
-        return resource
+        return db_resource
     end
 
     def to_s
@@ -349,6 +369,18 @@ class Puppet::Parser::Resource
 
     def virtual?
         self.virtual
+    end
+    
+    private
+    def rails_args
+        return [:type, :title, :line, :exported].inject({}) do |hash, param|
+            # 'type' isn't a valid column name, so we have to use another name.
+            to = (param == :type) ? :restype : param
+            if value = self.send(param)
+                hash[to] = value 
+            end
+            hash
+        end
     end
 end
 

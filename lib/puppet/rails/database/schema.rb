@@ -22,10 +22,14 @@ class Puppet::Rails::Schema
                     t.column :updated_at, :datetime
                 end
 
-                create_table :puppet_classes do |t| 
+                create_table :resource_tags do |t|
+                    t.column :resource_id, :integer
+                    t.column :puppet_tag_id, :integer
+                    t.column :updated_at, :datetime
+                end
+
+                create_table :puppet_tags do |t| 
                     t.column :name, :string
-                    t.column :host_id, :integer
-                    t.column :source_file_id, :integer
                     t.column :updated_at, :datetime
                 end
 
@@ -42,47 +46,34 @@ class Puppet::Rails::Schema
 
                 create_table :fact_names do |t| 
                     t.column :name, :string, :null => false
-                    t.column :host_id, :integer, :null => false
                     t.column :updated_at, :datetime
                 end
 
                 create_table :fact_values do |t| 
                     t.column :value, :text, :null => false
                     t.column :fact_name_id, :integer, :null => false
+                    t.column :host_id, :integer, :null => false
                     t.column :updated_at, :datetime
                 end 
 
                 create_table :param_values do |t|
                     t.column :value,  :text, :null => false
                     t.column :param_name_id, :integer, :null => false
+                    t.column :line, :integer
+                    t.column :resource_id, :integer
                     t.column :updated_at, :datetime
                 end
          
                 create_table :param_names do |t| 
                     t.column :name, :string, :null => false
-                    t.column :resource_id, :integer
-                    t.column :line, :integer
                     t.column :updated_at, :datetime
                 end
-
-                create_table :tags do |t| 
-                    t.column :name, :string
-                    t.column :updated_at, :datetime
-                end 
-
-                create_table :taggings do |t| 
-                    t.column :tag_id, :integer
-                    t.column :taggable_id, :integer
-                    t.column :taggable_type, :string
-                    t.column :updated_at, :datetime
-                end
-            end
-            $stdout.close
-            $stdout = oldout
-            oldout = nil
+            end 
         end
     ensure
+        $stdout.close
         $stdout = oldout if oldout
+        oldout = nil
     end
 end
 

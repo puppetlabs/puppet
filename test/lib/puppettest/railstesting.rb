@@ -19,7 +19,7 @@ module PuppetTest::RailsTesting
 
     def railsteardown
         if Puppet[:dbadapter] != "sqlite3"
-            Puppet::Rails.teardown
+#            Puppet::Rails.teardown
         end
     end
 

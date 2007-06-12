@@ -15,42 +15,61 @@ class Puppet::Parser::Resource::Param
         "#<#{self.class} @name => #{self.name}, @value => #{self.value}, @source => #{self.source.type}>"
     end
 
-    # Store this parameter in a Rails db.
-    def to_rails(res, pn = nil)
+    def line_to_i
+        return line ? Integer(line) : nil
+    end
+    
+    # Store a new parameter in a Rails db.
+    def to_rails(db_resource)
         values = value.is_a?(Array) ? value : [value]
+        values.map! { |v| v.to_s }
 
-        values = values.collect { |v| v.to_s }
+        param_name = Puppet::Rails::ParamName.find_or_create_by_name(self.name.to_s)
+        line_number = line_to_i()
 
-        unless pn
-            # We're creating it anew.
-            pn = res.param_names.build(:name => self.name.to_s)
+        return values.collect do |v|
+            db_resource.param_values.create(:value => v,
+                                           :line => line_number,
+                                           :param_name => param_name)
         end
-        
-        value_objects = []
-
-        if l = self.line
-            pn.line = Integer(l)
-        end
-
-        oldvals = []
-
-        if pv = pn.param_values
-            oldvals = pv.collect { |val| val.value }
-        end
-
-        if oldvals != values
-            #pn.param_values = values.collect { |v| pn.param_values.build(:value => v.to_s) }
-            objects = values.collect do |v|
-                pn.param_values.build(:value => v.to_s)
-            end
-            pn.param_values = objects
-        end
-
-        return pn
     end
 
+    def modify_rails_values(db_values)
+        #dev_warn if db_values.nil? || db_values.empty? 
+
+        values_to_remove(db_values).each { |remove_me|
+            Puppet::Rails::ParamValue.delete(remove_me)
+        }
+        line_number = line_to_i()
+        values_to_add(db_values).each { |add_me| 
+            db_resource = db_values[0].resource
+            db_param_name = db_values[0].param_name
+            db_resource.param_values.create(:value => add_me,
+                                           :line => line_number,
+                                           :param_name => db_param_name)
+        }
+    end
+    
     def to_s
         "%s => %s" % [self.name, self.value]
+    end
+    
+    def values_to_remove(db_values)
+        values = value.is_a?(Array) ? value : [value]
+        line_number = line_to_i()
+        db_values.collect do |db|
+            db unless (db.line == line_number && 
+                       values.find { |v| v == db.value } )
+        end.compact
+    end
+
+    def values_to_add(db_values)
+        values = value.is_a?(Array) ? value : [value]
+        line_number = line_to_i()
+        values.collect do |v|
+            v unless db_values.find { |db| (v == db.value && 
+                                         line_number == db.line) }
+        end.compact
     end
 end
 

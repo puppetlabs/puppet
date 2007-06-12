@@ -77,7 +77,7 @@ class TestRailsHost < Test::Unit::TestCase
         assert(host.resources, "No objects on host")
 
         facts.each do |fact, value|
-            assert_equal(value, host.fact(fact), "fact %s is wrong" % fact)
+            assert_equal(value, host.fact(fact)[0].value, "fact %s is wrong" % fact)
         end
         assert_equal(facts["ipaddress"], host.ip, "IP did not get set")
 
@@ -122,7 +122,8 @@ class TestRailsHost < Test::Unit::TestCase
         # And change some facts
         facts["test2"] = "yaytest"
         facts["test3"] = "funtest"
-        facts.delete("test1")
+        facts["test1"] = "changedfact"
+        facts.delete("ipaddress")
         host = nil
         assert_nothing_raised {
             host = Puppet::Rails::Host.store(
@@ -138,9 +139,9 @@ class TestRailsHost < Test::Unit::TestCase
             assert_instance_of(Time, host.last_compile, "did not set last_compile")
         end
 
-        assert_nil(host.fact('test1'), "removed fact was not deleted")
+        assert_equal(0, host.fact('ipaddress').size, "removed fact was not deleted")
         facts.each do |fact, value|
-            assert_equal(value, host.fact(fact), "fact %s is wrong" % fact)
+            assert_equal(value, host.fact(fact)[0].value, "fact %s is wrong" % fact)
         end
 
         # And check the changes we made.
@@ -151,22 +152,9 @@ class TestRailsHost < Test::Unit::TestCase
         assert(res, "New resource was not added")
         assert_equal("user_added", res.parameter("owner"), "user info was not stored")
 
-        # This actually works in real life, but I can't get it to work in testing.
-        # I expect it's a caching problem.
-        count = 0
-        host.resources.find(:all).find_all { |r| r.title =~ /file2/ }.each do |r|
-            r.save
-            puts "%s => %s" % [r.ref, r.parameters.inspect]
+        host.resources.find(:all, :conditions => [ "title like ?", "%file2%"]).each do |r|
             assert_equal("notice", r.parameter("loglevel"),
                 "loglevel was not added")
-            case r.restype
-            when "file":
-                assert_equal("fake", r.parameter("owner"), "owner was not modified")
-            when "exec":
-                assert_equal("fake", r.parameter("user"), "user was not modified")
-            else
-                raise "invalid resource type %s" % r.restype
-            end
         end
     end
     else

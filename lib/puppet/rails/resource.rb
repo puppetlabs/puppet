@@ -1,14 +1,24 @@
 require 'puppet'
 require 'puppet/rails/param_name'
+require 'puppet/rails/puppet_tag'
 require 'puppet/util/rails/collection_merger'
 
 class Puppet::Rails::Resource < ActiveRecord::Base
     include Puppet::Util::CollectionMerger
 
-    has_many :param_values, :through => :param_names
-    has_many :param_names, :dependent => :destroy
+    has_many :param_values, :dependent => :destroy
+    has_many :param_names, :through => :param_values
+
+    has_many :resource_tags, :dependent => :destroy
+    has_many :puppet_tags, :through => :resource_tags
+    
     belongs_to :source_file
     belongs_to :host
+
+    def add_resource_tag(tag)
+        pt = Puppet::Rails::PuppetTag.find_or_create_by_name(tag)
+        resource_tags.create(:puppet_tag => pt)
+    end
 
     def file
         if f = self.source_file
@@ -19,7 +29,25 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     end
 
     def file=(file)
-        self.source_file = Puppet::Rails::SourceFile.new(:filename => file)
+        self.source_file = Puppet::Rails::SourceFile.find_or_create_by_filename(file)
+    end
+
+    # returns a hash of param_names.name => [param_values]
+    def get_params_hash
+        param_values = self.param_values.find(:all, :include => :param_name)
+        return param_values.inject({}) do | hash, value |
+            hash[value.param_name.name] ||= []
+            hash[value.param_name.name] << value
+            hash
+        end
+    end
+    
+    def get_tag_hash
+        tags = self.resource_tags.find(:all, :include => :puppet_tag)
+        return tags.inject({}) do |hash, tag|
+            hash[tag.puppet_tag.name] = tag.puppet_tag.name
+            hash
+        end
     end
 
     def [](param)
@@ -32,7 +60,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
 
     def parameter(param)
         if pn = param_names.find_by_name(param)
-            if pv = pn.param_values.find(:first)
+            if pv = param_values.find(:first, :conditions => [ 'param_name_id = ?', pn]                                                            )
                 return pv.value
             else
                 return nil
@@ -41,12 +69,12 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     end
 
     def parameters
-        hash = {}
-        self.param_values.find(:all).each do |pvalue|
-            pname = pvalue.param_name.name
-            hash.store(pname, pvalue.value)
+        return self.param_values.find(:all,
+                      :include => :param_name).inject({}) do |hash, pvalue|
+            hash[pvalue.param_name.name] ||= []
+            hash[pvalue.param_name.name] << pvalue.value 
+           hash
         end
-        return hash
     end
 
     def ref
@@ -73,8 +101,9 @@ class Puppet::Rails::Resource < ActiveRecord::Base
         hash[:scope] = scope
         hash[:source] = scope.source
         obj = Puppet::Parser::Resource.new(hash)
+
         self.param_names.each do |pname|
-            obj.set(pname.to_resourceparam(scope.source))
+            obj.set(pname.to_resourceparam(self, scope.source))
         end
 
         # Store the ID, so we can check if we're re-collecting the same resource.

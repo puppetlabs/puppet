@@ -9,12 +9,12 @@ class Puppet::Rails::Host < ActiveRecord::Base
     include Puppet::Util
     include Puppet::Util::CollectionMerger
 
-    has_many :fact_values, :through => :fact_names 
-    has_many :fact_names, :dependent => :destroy
+    has_many :fact_values, :dependent => :destroy
+    has_many :fact_names, :through => :fact_values
     belongs_to :puppet_classes
     has_many :source_files
     has_many :resources,
-        :include => [ :param_names, :param_values ],
+        :include => :param_values,
         :dependent => :destroy
 
     # If the host already exists, get rid of its objects
@@ -39,9 +39,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
         transaction do
             #unless host = find_by_name(name)
             seconds = Benchmark.realtime {
-                #unless host = find_by_name(name, :include => {:resources => {:param_names => :param_values}, :fact_names => :fact_values})
-                unless host = find_by_name(name, :include => {:fact_names => :fact_values})
-                #unless host = find_by_name(name)
+                unless host = find_by_name(name)
                     host = new(:name => name)
                 end
             }
@@ -56,7 +54,6 @@ class Puppet::Rails::Host < ActiveRecord::Base
             unless hash[:resources]
                 raise ArgumentError, "You must pass resources"
             end
-
 
             seconds = Benchmark.realtime {
                 host.setresources(hash[:resources])
@@ -73,46 +70,81 @@ class Puppet::Rails::Host < ActiveRecord::Base
 
     # Return the value of a fact.
     def fact(name)
-        if fv = self.fact_values.find(:first, :conditions => "fact_names.name = '#{name}'") 
-            return fv.value
+        if fv = self.fact_values.find(:all, :include => :fact_name,
+                                      :conditions => "fact_names.name = '#{name}'") 
+            return fv
         else
             return nil
         end
     end
+    
+    # returns a hash of fact_names.name => [ fact_values ] for this host.
+    def get_facts_hash
+        fact_values = self.fact_values.find(:all, :include => :fact_name)
+        return fact_values.inject({}) do | hash, value |
+            hash[value.fact_name.name] ||= []
+            hash[value.fact_name.name] << value
+            hash
+        end
+    end
+    
 
     def setfacts(facts)
         facts = facts.dup
-        remove = []
-
-        collection_merge :fact_names, :updates => facts, :modify => Proc.new { |fn, name, value|
-            fn.fact_values.each do |fv|
-                unless value == fv.value
-                    fv.value = value
-                end
-                break
-            end
-        }, :create => Proc.new { |name, value|
-            fn = fact_names.build(:name => name)
-            fn.fact_values = [fn.fact_values.build(:value => value)]
-        }
+        
+        ar_hash_merge(get_facts_hash(), facts, 
+                      :create => Proc.new { |name, values|
+                          fact_name = Puppet::Rails::FactName.find_or_create_by_name(name)
+                          values.each do |value|
+                              fact_values.build(:value => value,
+                                                :fact_name => fact_name)
+                          end
+                      }, :delete => Proc.new { |values|
+                          values.each { |value| self.fact_values.delete(value) }
+                      }, :modify => Proc.new { |db, mem|
+                          mem = [mem].flatten
+                          fact_name = db[0].fact_name
+                          db_values = db.collect { |fact_value| fact_value.value }
+                          (db_values - (db_values & mem)).each do |value|
+                              db.find_all { |fact_value| 
+                                  fact_value.value == value 
+                              }.each { |fact_value|
+                                  fact_values.delete(fact_value)
+                              }
+                          end
+                          (mem - (db_values & mem)).each do |value|
+                              fact_values.build(:value => value, 
+                                                :fact_name => fact_name)
+                          end
+                      })
     end
 
     # Set our resources.
     def setresources(list)
-        compiled = {}
-        remove = []
         existing = nil
         seconds = Benchmark.realtime {
             #existing = resources.find(:all)
-            existing = resources.find(:all, :include => {:param_names => :param_values})
-            #existing = resources
+            existing = resources.find(:all, :include => {:param_names => :param_values}).inject({}) do | hash, resource |
+                hash[resource.ref] = resource
+                hash
+            end
         }
-        Puppet.notice("Searched for resources in %0.2f seconds" % seconds) if defined?(Puppet::TIME_DEBUG)
-        list.each do |resource|
-            compiled[resource.ref] = resource
-        end
 
-        collection_merge :resources, :existing => existing, :updates => compiled
+        Puppet.notice("Searched for resources in %0.2f seconds" % seconds) if defined?(Puppet::TIME_DEBUG)
+
+        compiled = list.inject({}) do |hash, resource|
+            hash[resource.ref] = resource
+            hash
+        end
+        
+        ar_hash_merge(existing, compiled,
+                      :create => Proc.new { |ref, resource|
+                          resource.to_rails(self)
+                      }, :delete => Proc.new { |resource|
+                          self.resources.delete(resource)
+                      }, :modify => Proc.new { |db, mem|
+                          mem.modify_rails(db)
+                      })
     end
 
     def update_connect_time
