@@ -124,7 +124,9 @@ class Puppet::Rails::Host < ActiveRecord::Base
         existing = nil
         seconds = Benchmark.realtime {
             #existing = resources.find(:all)
-            existing = resources.find(:all, :include => {:param_names => :param_values}).inject({}) do | hash, resource |
+
+
+            existing = resources.find(:all, :include => [{:param_values => :param_name, :resource_tags => :puppet_tag}, :source_file]).inject({}) do | hash, resource |
                 hash[resource.ref] = resource
                 hash
             end

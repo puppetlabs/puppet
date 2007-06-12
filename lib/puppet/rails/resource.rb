@@ -34,7 +34,6 @@ class Puppet::Rails::Resource < ActiveRecord::Base
 
     # returns a hash of param_names.name => [param_values]
     def get_params_hash
-        param_values = self.param_values.find(:all, :include => :param_name)
         return param_values.inject({}) do | hash, value |
             hash[value.param_name.name] ||= []
             hash[value.param_name.name] << value
@@ -43,8 +42,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     end
     
     def get_tag_hash
-        tags = self.resource_tags.find(:all, :include => :puppet_tag)
-        return tags.inject({}) do |hash, tag|
+        return resource_tags.inject({}) do |hash, tag|
             hash[tag.puppet_tag.name] = tag.puppet_tag.name
             hash
         end
