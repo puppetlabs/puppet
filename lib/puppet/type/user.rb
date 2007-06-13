@@ -158,7 +158,7 @@ module Puppet
         end
 
         newproperty(:password, :required_features => :manages_passwords) do
-            desc "The user's password, in whatever encrypted format the local machine requires."
+            desc "The user's password, in whatever encrypted format the local machine requires. Be sure to enclose any value that includes a dollar sign ($) in single quotes (\')."
         end
 
         newproperty(:groups) do
