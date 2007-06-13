@@ -28,7 +28,7 @@ class Puppet::Parser::Resource::Param
         line_number = line_to_i()
 
         return values.collect do |v|
-            db_resource.param_values.create(:value => v,
+            db_resource.param_values.create(:value => v.to_s,
                                            :line => line_number,
                                            :param_name => param_name)
         end
@@ -44,7 +44,7 @@ class Puppet::Parser::Resource::Param
         values_to_add(db_values).each { |add_me| 
             db_resource = db_values[0].resource
             db_param_name = db_values[0].param_name
-            db_resource.param_values.create(:value => add_me,
+            db_resource.param_values.create(:value => add_me.to_s,
                                            :line => line_number,
                                            :param_name => db_param_name)
         }
@@ -59,7 +59,7 @@ class Puppet::Parser::Resource::Param
         line_number = line_to_i()
         db_values.collect do |db|
             db unless (db.line == line_number && 
-                       values.find { |v| v == db.value } )
+                       values.find { |v| v.to_s == db.value } )
         end.compact
     end
 
@@ -67,7 +67,7 @@ class Puppet::Parser::Resource::Param
         values = value.is_a?(Array) ? value : [value]
         line_number = line_to_i()
         values.collect do |v|
-            v unless db_values.find { |db| (v == db.value && 
+            v unless db_values.find { |db| (v.to_s == db.value && 
                                          line_number == db.line) }
         end.compact
     end
