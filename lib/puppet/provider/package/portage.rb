@@ -5,7 +5,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
     has_feature :versionable
 
-    commands :emerge => "/usr/bin/emerge", :eix => "/usr/bin/eix"
+    commands :emerge => "/usr/bin/emerge", :eix => "/usr/bin/eix", :update_eix => "/usr/bin/update-eix"
 
     defaultfor :operatingsystem => :gentoo
 
@@ -16,6 +16,9 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
         search_format = "{installedversionsshort}<category> <name> [<installedversionsshort>] [<best>] <homepage> <description>{}"
 
         begin
+            if !FileUtils.uptodate?("/var/cache/eix", %w(/usr/bin/eix /usr/portage/metadata/timestamp))
+                update_eix
+            end
             search_output = eix "--nocolor", "--format", search_format
 
             packages = []
@@ -72,6 +75,9 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
         search_format = "<category> <name> [<installedversionsshort>] [<best>] <homepage> <description>"
 
         begin
+            if !FileUtils.uptodate?("/var/cache/eix", %w(/usr/bin/eix /usr/portage/metadata/timestamp))
+                update_eix
+            end
             search_output = eix "--nocolor", "--format", search_format, "--exact", search_field, search_value
 
             packages = []

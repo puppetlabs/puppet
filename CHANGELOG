@@ -1,3 +1,6 @@
+    The Portage package provider now calls eix-update automatically
+    when eix's database is absent or out of sync (#666).
+
     Mounts now correctly handle existing fstabs with no pass or dump values
     (#550).
 
