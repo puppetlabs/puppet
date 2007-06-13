@@ -3,7 +3,6 @@
 $:.unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppettest'
-require 'puppet/network/server/mongrel'
 
 class TestMongrelServer < PuppetTest::TestCase
     confine "Missing mongrel" => Puppet.features.mongrel?
