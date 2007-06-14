@@ -40,7 +40,7 @@ Puppet.type(:package).provide :rug, :parent => :rpm do
         else
             # rug didn't find updates, pretend the current
             # version is the latest
-            return @resource.is(:ensure)
+            return @property_hash[:ensure]
         end
     end
 

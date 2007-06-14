@@ -28,7 +28,7 @@ Puppet.type(:package).provide :up2date, :parent => :rpm, :source => :rpm do
         else
             # up2date didn't find updates, pretend the current
             # version is the latest
-            return @resource.is(:ensure)
+            return @property_hash[:ensure]
         end
     end
 
