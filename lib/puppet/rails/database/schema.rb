@@ -15,23 +15,34 @@ class Puppet::Rails::Schema
                     t.column :line, :integer
                     t.column :updated_at, :datetime
                 end
+                add_index :resources, :id, :integer => true
+                add_index :resources, :host_id, :integer => true
+                add_index :resources, :source_file_id, :integer => true
+                add_index :resources, [:title, :restype]
 
                 create_table :source_files do |t| 
                     t.column :filename, :string
                     t.column :path, :string
                     t.column :updated_at, :datetime
                 end
+                add_index :source_files, :id, :integer => true
+                add_index :source_files, :filename
 
                 create_table :resource_tags do |t|
                     t.column :resource_id, :integer
                     t.column :puppet_tag_id, :integer
                     t.column :updated_at, :datetime
                 end
+                add_index :resource_tags, :id, :integer => true
+                add_index :resource_tags, :resource_id, :integer => true
+                add_index :resource_tags, :puppet_tag_id, :integer => true
 
                 create_table :puppet_tags do |t| 
                     t.column :name, :string
                     t.column :updated_at, :datetime
                 end
+                add_index :puppet_tags, :id, :integer => true
+                add_index :puppet_tags, :name
 
                 create_table :hosts do |t|
                     t.column :name, :string, :null => false
@@ -43,11 +54,16 @@ class Puppet::Rails::Schema
                     t.column :updated_at, :datetime
                     t.column :source_file_id, :integer
                 end
+                add_index :hosts, :id, :integer => true
+                add_index :hosts, :source_file_id, :integer => true
+                add_index :hosts, :name
 
                 create_table :fact_names do |t| 
                     t.column :name, :string, :null => false
                     t.column :updated_at, :datetime
                 end
+                add_index :fact_names, :id, :integer => true
+                add_index :fact_names, :name
 
                 create_table :fact_values do |t| 
                     t.column :value, :text, :null => false
@@ -55,6 +71,9 @@ class Puppet::Rails::Schema
                     t.column :host_id, :integer, :null => false
                     t.column :updated_at, :datetime
                 end 
+                add_index :fact_values, :id, :integer => true
+                add_index :fact_values, :fact_name_id, :integer => true
+                add_index :fact_values, :host_id, :integer => true
 
                 create_table :param_values do |t|
                     t.column :value,  :text, :null => false
@@ -63,11 +82,16 @@ class Puppet::Rails::Schema
                     t.column :resource_id, :integer
                     t.column :updated_at, :datetime
                 end
+                add_index :param_values, :id, :integer => true
+                add_index :param_values, :param_name_id, :integer => true
+                add_index :param_values, :resource_id, :integer => true
          
                 create_table :param_names do |t| 
                     t.column :name, :string, :null => false
                     t.column :updated_at, :datetime
                 end
+                add_index :param_names, :id, :integer => true
+                add_index :param_names, :name
             end 
         end
     ensure
