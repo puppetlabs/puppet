@@ -1,4 +1,3 @@
-
 #!/usr/bin/env ruby
 
 $:.unshift("../../lib") if __FILE__ =~ /\.rb$/
@@ -6,40 +5,12 @@ $:.unshift("../../lib") if __FILE__ =~ /\.rb$/
 require 'puppettest'
 require 'puppet/type/zone'
 
-class TestZone < Test::Unit::TestCase
-	include PuppetTest
-
-    def test_nothing
-    end
-
-    # Zones can only be tested on solaris.
-    if Facter["operatingsystem"].value == "Solaris"
+class TestZone < PuppetTest::TestCase
+    confine "Zones are only functional on Solaris" => (Facter["operatingsystem"].value == "Solaris")
 
     def setup
         super
         @@zones = []
-    end
-
-    def teardown
-        current = %x{zoneadm list -cp}.split("\n").inject({}) { |h, line|
-            ary = line.split(":")
-            h[ary[1]] = ary[2]
-            h
-        }
-
-        Puppet::Type.type(:zone).clear
-
-        # Get rid of any lingering zones
-        @@zones.each do |zone|
-            next unless current.include? zone
-
-            obj = Puppet::Type.type(:zone).create(:name => zone)
-            obj[:ensure] = :absent
-            assert_apply(obj)
-        end
-
-        # We can't delete the temp files until the zones are stopped and removed.
-        super
     end
 
     def mkzone(name)
@@ -62,10 +33,10 @@ class TestZone < Test::Unit::TestCase
         return zone
     end
 
-    def test_list
+    def test_instances
         list = nil
         assert_nothing_raised {
-            list = Puppet::Type.type(:zone).list
+            list = Puppet::Type.type(:zone).instances
         }
 
         assert(! list.empty?, "Got no zones back")
@@ -73,14 +44,14 @@ class TestZone < Test::Unit::TestCase
         assert(list.find { |z| z[:name] == "global" }, "Could not find global zone")
     end
 
-    def test_valueslice
+    def test_state_sequence
         zone = mkzone("slicetest")
 
         property = zone.property(:ensure)
 
         slice = nil
         assert_nothing_raised {
-            slice = property.class.valueslice(:absent, :installed).collect do |o|
+            slice = property.class.state_sequence(:absent, :installed).collect do |o|
                 o[:name]
             end
         }
@@ -89,7 +60,7 @@ class TestZone < Test::Unit::TestCase
         assert_equal([:configured, :installed], slice)
 
         assert_nothing_raised {
-            slice = property.class.valueslice(:running, :installed).collect do |o|
+            slice = property.class.state_sequence(:running, :installed).collect do |o|
                 o[:name]
             end
         }
@@ -107,11 +78,12 @@ class TestZone < Test::Unit::TestCase
 
         assert(property, "Did not get ensure property")
 
+        values = nil
         assert_nothing_raised {
-            zone.retrieve
+            values = zone.retrieve
         }
 
-        assert(! property.insync?, "Property is somehow in sync")
+        assert(! property.insync?(values[property]), "Property is somehow in sync")
 
         assert(property.up?, "Property incorrectly thinks it is not moving up")
 
@@ -128,7 +100,7 @@ class TestZone < Test::Unit::TestCase
 
         property = zone.property(:ensure)
         assert_nothing_raised {
-            property.class.valueslice(:absent, :running).each do |st|
+            property.class.state_sequence(:absent, :running).each do |st|
                 [:up, :down].each do |m|
                     if st[m]
                         methods << st[m]
@@ -161,10 +133,10 @@ class TestZone < Test::Unit::TestCase
         assert_equal("add inherit-pkg-dir\nset dir=/usr\nend", property.configtext,
             "Got incorrect config text")
 
-#        property.is = "/usr"
-#
-#        assert_equal("", property.configtext,
-#            "Got incorrect config text")
+        zone.provider.inherit = "/usr"
+
+        assert_equal("", property.configtext,
+            "Got incorrect config text")
 
         # Now we want multiple directories
         property.should = %w{/usr /sbin /lib}
@@ -180,28 +152,50 @@ end"
         assert_equal(text, property.configtext,
             "Got incorrect config text")
 
- #       property.is = %w{/usr /sbin /lib}
- #       property.should = %w{/usr /sbin}
+        zone.provider.inherit = %w{/usr /sbin /lib}
+        property.should = %w{/usr /sbin}
 
-#        text = "remove inherit-pkg-dir dir=/lib"
+        text = "remove inherit-pkg-dir dir=/lib"
 
-#        assert_equal(text, property.configtext,
-#            "Got incorrect config text")
+        assert_equal(text, property.configtext,
+            "Got incorrect config text")
     end
+end
 
-    if Puppet::Util::SUIDManager.uid == 0
+class TestZoneAsRoot < TestZone
+    confine "Not running Zone creation tests" => Puppet.features.root?
+    confine "Zones are only functional on Solaris" => (Facter["operatingsystem"].value == "Solaris")
+
+    def teardown
+        current = %x{zoneadm list -cp}.split("\n").inject({}) { |h, line|
+            ary = line.split(":")
+            h[ary[1]] = ary[2]
+            h
+        }
+
+        Puppet::Type.type(:zone).clear
+
+        # Get rid of any lingering zones
+        @@zones.each do |zone|
+            next unless current.include? zone
+
+            obj = Puppet::Type.type(:zone).create(:name => zone)
+            obj[:ensure] = :absent
+            assert_apply(obj)
+        end
+
+        # We can't delete the temp files until the zones are stopped and removed.
+        super
+    end
     # Make sure our ensure process actually works.
     def test_ensure_sync
         zone = mkzone("ensuretesting")
 
         zone[:ensure] = :configured
 
-        zone.retrieve
         assert_apply(zone)
 
-        zone.retrieve
-
-        assert(zone.insync?, "Zone is not insync")
+        assert(zone.insync?(zone.retrieve), "Zone is not insync")
     end
 
     def test_getconfig
@@ -242,25 +236,27 @@ end
 
         assert_equal(0, $?, "Did not successfully create zone")
 
-        #@@zones << "configtesting"
-
         hash = nil
         assert_nothing_raised {
             hash = zone.provider.send(:getconfig)
         }
 
-        # Now set the configuration
-        assert_nothing_raised { zone.send(:config2status, hash) }
+        zone[:check] = [:inherit, :autoboot]
+
+        values = nil
+        assert_nothing_raised("Could not retrieve zone values") do
+            values = zone.retrieve.inject({}) { |result, newvals| result[newvals[0].name] = newvals[1]; result }
+        end
 
         # And make sure it gets set correctly.
         assert_equal(%w{/sbin /usr /opt/csw /lib /platform}.sort,
-            zone.property(:inherit).retrieve.sort, "Inherited dirs did not get collected correctly."
+            values[:inherit].sort, "Inherited dirs did not get collected correctly."
         )
 
-        assert_equal(["#{interface}:#{ip}"], zone.is(:ip),
+        assert_equal(["#{interface}:#{ip}"], values[:ip],
             "IP addresses did not get collected correctly.")
 
-        assert_equal(:true, zone.property(:autoboot).retrieve,
+        assert_equal(:true, values[:autoboot],
             "Autoboot did not get collected correctly.")
     end
 
@@ -274,12 +270,9 @@ end
 
         zone[:ensure] = :configured
 
-        zone.retrieve
         assert_apply(zone)
 
-        zone.retrieve
-
-        assert(zone.insync?, "Zone is not insync")
+        assert(zone.insync?(zone.retrieve), "Zone is not insync")
 
         # Now add a new directory to inherit
         assert_nothing_raised {
@@ -287,9 +280,7 @@ end
         }
         assert_apply(zone)
 
-        zone.retrieve
-
-        assert(zone.insync?, "Zone is not insync")
+        assert(zone.insync?(zone.retrieve), "Zone is not insync")
 
         assert(%x{/usr/sbin/zonecfg -z #{zone[:name]} info} =~ /dir: \/sbin/,
             "sbin was not added")
@@ -300,9 +291,7 @@ end
         }
         assert_apply(zone)
 
-        zone.retrieve
-
-        assert(zone.insync?, "Zone is not insync")
+        assert(zone.insync?(zone.retrieve), "Zone is not insync")
 
         assert(%x{/usr/sbin/zonecfg -z #{zone[:name]} info} !~ /dir: \/sbin/,
             "sbin was not removed")
@@ -311,18 +300,15 @@ end
         # that the interface exists.
         zone[:ip] = "hme0:192.168.0.1"
 
-        zone.retrieve
-        assert(! zone.insync?, "Zone is marked as in sync")
+        assert(! zone.insync?(zone.retrieve), "Zone is marked as in sync")
 
         assert_apply(zone)
-        zone.retrieve
-        assert(zone.insync?, "Zone is not in sync")
+        assert(zone.insync?(zone.retrieve), "Zone is not in sync")
         assert(%x{/usr/sbin/zonecfg -z #{zone[:name]} info} =~ /192.168.0.1/,
             "ip was not added")
         zone[:ip] = ["hme1:192.168.0.2", "hme0:192.168.0.1"]
         assert_apply(zone)
-        zone.retrieve
-        assert(zone.insync?, "Zone is not in sync")
+        assert(zone.insync?(zone.retrieve), "Zone is not in sync")
         assert(%x{/usr/sbin/zonecfg -z #{zone[:name]} info} =~ /192.168.0.2/,
             "ip was not added")
         zone[:ip] = ["hme1:192.168.0.2"]
@@ -348,14 +334,11 @@ end
 
         zone[:ensure] = :configured
 
-        assert(! zone.insync?, "Zone is incorrectly in sync")
+        assert(! zone.insync?(zone.retrieve), "Zone is incorrectly in sync")
 
         assert_apply(zone)
 
-        assert_nothing_raised {
-            zone.retrieve
-        }
-        assert(zone.insync?, "Zone is incorrectly out of sync")
+        assert(zone.insync?(zone.retrieve), "Zone is incorrectly out of sync")
 
         zone[:ensure] = :absent
 
@@ -385,8 +368,9 @@ end
             [:unconfigure, :absent]
         ].each do |method, property|
             Puppet.info "Testing %s" % method
+            current_values = nil
             assert_nothing_raised {
-                zone.retrieve
+                current_values = zone.retrieve
             }
             assert_nothing_raised {
                 zone.provider.send(method)
@@ -418,22 +402,19 @@ end
             assert_nothing_raised {
                 zone[:ensure] = value
             }
-            assert(! zone.insync?, "Zone is incorrectly in sync")
+            assert(! zone.insync?(zone.retrieve), "Zone is incorrectly in sync")
 
             assert_apply(zone)
 
             assert_nothing_raised {
-                zone.retrieve
+                assert(zone.insync?(zone.retrieve), "Zone is incorrectly out of sync")
             }
-            assert(zone.insync?, "Zone is incorrectly out of sync")
         end
 
         currentvalues = zone.retrieve
 
         assert_equal(:absent, currentvalues[zone.property(:ensure)], 
                      "Zone is not absent")
-    end
-    end
     end
 end
 

@@ -20,7 +20,7 @@ Puppet::Type.newtype(:zone) do
 
             unless current_value.is_a? Symbol
                 if current_value.is_a? Array
-                    list += current_vlue
+                    list += current_value
                 else
                     if current_value
                         list << current_value
@@ -41,6 +41,7 @@ Puppet::Type.newtype(:zone) do
 
             rms = []
             adds = []
+
             # Collect the modifications to make
             list.sort.uniq.collect do |obj|
                 # Skip objectories that are configured and should be
@@ -52,6 +53,7 @@ Puppet::Type.newtype(:zone) do
                     adds << obj
                 end
             end
+
 
             # And then perform all of the removals before any of the adds.
             (rms.collect { |o| rm(o) } + adds.collect { |o| add(o) }).join("\n")
@@ -74,7 +76,14 @@ Puppet::Type.newtype(:zone) do
             only then can be ``running``.  Note also that ``halt`` is currently
             used to stop zones."
 
-        @properties = {}
+        @states = {}
+
+        def self.alias_state(values)
+            @state_aliases ||= {}
+            values.each do |nick, name|
+                @state_aliases[nick] = name
+            end
+        end
 
         def self.newvalue(name, hash)
             if @parametervalues.is_a? Hash
@@ -83,8 +92,16 @@ Puppet::Type.newtype(:zone) do
 
             @parametervalues << name
 
-            @properties[name] = hash
+            @states[name] = hash
             hash[:name] = name
+        end
+
+        def self.state_name(name)
+            if other = @state_aliases[name]
+                other
+            else
+                name
+            end
         end
 
         newvalue :absent, :down => :destroy
@@ -92,20 +109,22 @@ Puppet::Type.newtype(:zone) do
         newvalue :installed, :up => :install, :down => :stop
         newvalue :running, :up => :start
 
+        alias_state :incomplete => :installed, :ready => :installed, :shutting_down => :running
+
         defaultto :running
 
-        def self.valueindex(value)
-            @parametervalues.index(value)
+        def self.state_index(value)
+            @parametervalues.index(state_name(value))
         end
 
         # Return all of the states between two listed values, exclusive
         # of the first item.
-        def self.valueslice(first, second)
+        def self.state_sequence(first, second)
             findex = sindex = nil
-            unless findex = @parametervalues.index(first)
+            unless findex = @parametervalues.index(state_name(first))
                 raise ArgumentError, "'%s' is not a valid zone state" % first
             end
-            unless sindex = @parametervalues.index(second)
+            unless sindex = @parametervalues.index(state_name(second))
                 raise ArgumentError, "'%s' is not a valid zone state" % first
             end
             list = nil
@@ -114,11 +133,11 @@ Puppet::Type.newtype(:zone) do
             # the range op twice.
             if findex > sindex
                 list = @parametervalues[sindex..findex].collect do |name|
-                    @properties[name]
+                    @states[name]
                 end.reverse
             else
                 list = @parametervalues[findex..sindex].collect do |name|
-                    @properties[name]
+                    @states[name]
                 end
             end
 
@@ -126,20 +145,24 @@ Puppet::Type.newtype(:zone) do
             list[1..-1]
         end
 
+        def retrieve
+            provider.properties[:ensure]
+        end
+
         def sync
             method = nil
             if up?
-                dir = :up
+                direction = :up
             else
-                dir = :down
+                direction = :down
             end
 
             # We need to get the state we're currently in and just call
             # everything between it and us.
-            properties.each do |prop|
-                if method = prop[dir]
+            self.class.state_sequence(self.retrieve, self.should).each do |state|
+                if method = state[direction]
                     warned = false
-                    while @resource.processing?
+                    while provider.processing?
                         unless warned
                             info "Waiting for zone to finish processing"
                             warned = true
@@ -149,7 +172,7 @@ Puppet::Type.newtype(:zone) do
                     provider.send(method)
                 else
                     raise Puppet::DevError, "Cannot move %s from %s" %
-                        [dir, st[:name]]
+                        [direction, st[:name]]
                 end
             end
 
@@ -159,7 +182,7 @@ Puppet::Type.newtype(:zone) do
         # Are we moving up the property tree?
         def up?
             current_value = self.retrieve
-            self.class.valueindex(current_value) < self.class.valueindex(self.should)
+            self.class.state_index(current_value) < self.class.state_index(self.should)
         end
     end
 
@@ -196,7 +219,7 @@ Puppet::Type.newtype(:zone) do
             end
         end
 
-        # Add a directory to our list of inherited directories.
+        # Add an interface.
         def add(str)
             interface, ip = ipsplit(str)
             "add net
@@ -212,6 +235,7 @@ end
             return interface, address
         end
 
+        # Remove an interface.
         def rm(str)
             interface, ip = ipsplit(str)
             # Reality seems to disagree with the documentation here; the docs
@@ -256,7 +280,7 @@ end
 
         validate do |value|
             unless value =~ /^\//
-                raise ArgumentError, "The zone base must be fully qualified"
+                raise ArgumentError, "Inherited filesystems must be fully qualified"
             end
         end
 
@@ -347,45 +371,11 @@ end
         end
     end
 
-    # Perform all of our configuration steps.
-    def configure
-        # If the thing is entirely absent, then we need to create the config.
-        str = %{create -b
-set zonepath=%s
-} % self[:path]
-
-        # Then perform all of our configuration steps.
-        properties().each do |property|
-            if property.is_a? ZoneConfigProperty and ! property.insync?
-                str += property.configtext + "\n"
-            end
-        end
-
-        str += "commit\n"
-        provider.setconfig(str)
-    end
-
-    # We need a way to test whether a zone is in process.  Our 'ensure'
-    # property models the static states, but we need to handle the temporary ones.
-    def processing?
-        if hash = provider.statushash()
-            case hash[:ensure]
-            when "incomplete", "ready", "shutting_down"
-                true
-            else
-                false
-            end
-        else
-            false
-        end
-    end
-
     def retrieve
-        if hash = provider.statushash()
-            prophash = setstatus(hash)
-
-            # Now retrieve the configuration itself and set appropriately.
-            return config2status(provider.getconfig(), prophash)
+        provider.flush
+        if hash = provider.properties() and hash[:ensure] != :absent
+            result = setstatus(hash)
+            result
         else
             return currentpropvalues(:absent)
         end
@@ -398,41 +388,14 @@ set zonepath=%s
             next if param == :name
             case self.class.attrtype(param)
             when :property:
-                prophash[self.property(param)] = value
+                # Only try to provide values for the properties we're managing
+                if prop = self.property(param)
+                    prophash[prop] = value
+                end
             else
                 self[param] = value
             end
         end
-        return prophash
-    end
-
-    private
-    # Turn the results of getconfig into status information.
-    def config2status(config, prophash)
-        config.each do |name, value|
-            case name
-            when :autoboot:
-                prophash[self.property(:autoboot)] = value.intern
-            when :zonepath:
-                # Nothing; this is set in the zoneadm list command
-            when :pool:
-                prophash[self.property(:pool)] = value
-            when :shares:
-                prophash[self.property(:shares)] = value
-            when "inherit-pkg-dir":
-                dirs = value.collect do |hash|
-                    hash[:dir]
-                end
-
-                prophash[self.property(:inherit)] = dirs
-            when "net":
-                vals = value.collect do |hash|
-                    "%s:%s" % [hash[:physical], hash[:address]]
-                end
-                prophash[self.proeprty(:ip)] = vals
-            end
-        end
-        
         return prophash
     end
 end
