@@ -42,7 +42,6 @@ class Puppet::Rails::Schema
                     t.column :updated_at, :datetime
                 end
                 add_index :puppet_tags, :id, :integer => true
-                add_index :puppet_tags, :name
 
                 create_table :hosts do |t|
                     t.column :name, :string, :null => false

@@ -190,7 +190,7 @@ class Puppet::Parser::Resource
             hash
         end
         
-        db_resource.ar_hash_merge(db_resource.get_params_hash(), updated_params,
+        db_resource.ar_hash_merge(db_resource.get_params_hash(db_resource.param_values), updated_params,
                                   :create => Proc.new { |name, parameter|
                                       parameter.to_rails(db_resource)
                                   }, :delete => Proc.new { |values|

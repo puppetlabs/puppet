@@ -123,10 +123,12 @@ class Puppet::Rails::Host < ActiveRecord::Base
     def setresources(list)
         existing = nil
         seconds = Benchmark.realtime {
-            #existing = resources.find(:all)
 
-
-            existing = resources.find(:all, :include => [{:param_values => :param_name, :resource_tags => :puppet_tag}, :source_file]).inject({}) do | hash, resource |
+            # Preload the parameters with the resource query, but not the tags, since doing so makes the query take about 10x longer.
+            # I've left the other queries in so that it's straightforward to switch between them for testing, if we so desire.
+            #existing = resources.find(:all, :include => [{:param_values => :param_name, :resource_tags => :puppet_tag}, :source_file]).inject({}) do | hash, resource |
+            #existing = resources.find(:all, :include => [{:resource_tags => :puppet_tag}, :source_file]).inject({}) do | hash, resource |
+            existing = resources.find(:all, :include => [{:param_values => :param_name}, :source_file]).inject({}) do | hash, resource |
                 hash[resource.ref] = resource
                 hash
             end

@@ -16,7 +16,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     belongs_to :host
 
     def add_resource_tag(tag)
-        pt = Puppet::Rails::PuppetTag.find_or_create_by_name(tag)
+        pt = Puppet::Rails::PuppetTag.find_or_create_by_name(tag, :include => :puppet_tag)
         resource_tags.create(:puppet_tag => pt)
     end
 
@@ -33,16 +33,18 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     end
 
     # returns a hash of param_names.name => [param_values]
-    def get_params_hash
-        return param_values.inject({}) do | hash, value |
+    def get_params_hash(values = nil)
+        values ||= param_values.find(:all, :include => :param_name)
+        return values.inject({}) do | hash, value |
             hash[value.param_name.name] ||= []
             hash[value.param_name.name] << value
             hash
         end
     end
     
-    def get_tag_hash
-        return resource_tags.inject({}) do |hash, tag|
+    def get_tag_hash(tags = nil)
+        tags ||= resource_tags.find(:all, :include => :puppet_tag)
+        return tags.inject({}) do |hash, tag|
             hash[tag.puppet_tag.name] = tag.puppet_tag.name
             hash
         end
