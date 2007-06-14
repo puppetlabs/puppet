@@ -53,7 +53,7 @@ class Puppet::Util::Metric
         end
 
         unit = 60 * 60 * 24
-        colorstack = %w{#ff0000 #00ff00 #0000ff #ffff00 #ff99ff #ff9966 #66ffff #990000 #099000 #000990 #f00990 #0f0f0f #555555 #333333 #ffffff}
+        colorstack = %w{#00ff00 #ff0000 #0000ff #ffff00 #ff99ff #ff9966 #66ffff #990000 #099000 #000990 #f00990 #0f0f0f #555555 #333333 #ffffff}
 
         {:daily => unit, :weekly => unit * 7, :monthly => unit * 30, :yearly => unit * 365}.each do |name, time|
             file = self.path.sub(/\.rrd$/, "-%s.png" % name)
