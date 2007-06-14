@@ -34,7 +34,7 @@
 # configuration every 30 minutes.
 #
 # Some flags are meant specifically for interactive use -- in particular,
-# +test+ and +tags+ are useful.  +test+ enables verobse logging, causes
+# +test+ and +tags+ are useful.  +test+ enables verbose logging, causes
 # the daemon to stay in the foreground, exits if the server's configuration is
 # invalid (this happens if, for instance, you've left a syntax error on the
 # server), and exits after running the configuration once (rather than hanging
