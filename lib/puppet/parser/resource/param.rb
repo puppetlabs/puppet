@@ -1,4 +1,4 @@
-# The parameters we stick in Resources.
+ # The parameters we stick in Resources.
 class Puppet::Parser::Resource::Param
     attr_accessor :name, :value, :source, :line, :file
     include Puppet::Util
@@ -56,18 +56,22 @@ class Puppet::Parser::Resource::Param
     
     def values_to_remove(db_values)
         values = value.is_a?(Array) ? value : [value]
+        values.map! { |v| v.to_s }
         line_number = line_to_i()
         db_values.collect do |db|
             db unless (db.line == line_number && 
-                       values.find { |v| v.to_s == db.value } )
+                       values.find { |v| 
+                         v == db.value 
+                       } )
         end.compact
     end
 
     def values_to_add(db_values)
         values = value.is_a?(Array) ? value : [value]
+        values.map! { |v| v.to_s }
         line_number = line_to_i()
         values.collect do |v|
-            v unless db_values.find { |db| (v.to_s == db.value && 
+            v unless db_values.find { |db| (v == db.value && 
                                          line_number == db.line) }
         end.compact
     end

@@ -1,3 +1,6 @@
+    Reworked the idatbase schema used to store configurations with the
+    storeconfigs option.  
+    
     Replaced the obsolete RRD ruby library with the maintained
     RubyRRDtool library (which requires rrdtool2) (#659).
 
@@ -97,7 +100,7 @@
     from Property.  The retrieve methods now return the current value of
     the property for the system.
 
-    Rmoved acts_as_taggable from the rails models.
+    Removed acts_as_taggable from the rails models.
 
 0.22.4
     Execs now autorequire the user they run as, as long as the user
