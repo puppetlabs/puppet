@@ -5,7 +5,7 @@ require 'puppet'
 class Puppet::Util::Metric
     
     # Load the library as a feature, so we can test its presence.
-    Puppet.features.add :rrd, :libs => 'RRD'
+    Puppet.features.add :rrd, :libs => 'RRDtool'
 
     attr_accessor :type, :name, :value, :label
     attr_writer :values
@@ -25,12 +25,8 @@ class Puppet::Util::Metric
 
         start ||= Time.now.to_i - 5
 
-        path = self.path
-        args = [
-            path,
-            "--start", start,
-            "--step", Puppet[:rrdinterval]
-        ]
+        @rrd = RRDtool.new(self.path)
+        args = [] 
 
         values.each { |value|
             # the 7200 is the heartbeat -- this means that any data that isn't
@@ -40,14 +36,14 @@ class Puppet::Util::Metric
         args.push "RRA:AVERAGE:0.5:1:300"
 
         begin
-            RRD.create(*args)
+            @rrd.create( Puppet[:rrdinterval].to_i, start, args)
         rescue => detail
             raise "Could not create RRD file %s: %s" % [path,detail]
         end
     end
 
     def dump
-        puts RRD.info(self.path)
+        puts @rrd.info
     end
 
     def graph(range = nil)
@@ -57,7 +53,7 @@ class Puppet::Util::Metric
         end
 
         unit = 60 * 60 * 24
-        colorstack = %w{#ff0000 #00ff00 #0000ff #099000 #000990 #f00990 #0f0f0f}
+        colorstack = %w{#ff0000 #00ff00 #0000ff #ffff00 #ff99ff #ff9966 #66ffff #990000 #099000 #000990 #f00990 #0f0f0f #555555 #333333 #ffffff}
 
         {:daily => unit, :weekly => unit * 7, :monthly => unit * 30, :yearly => unit * 365}.each do |name, time|
             file = self.path.sub(/\.rrd$/, "-%s.png" % name)
@@ -86,7 +82,8 @@ class Puppet::Util::Metric
             end
 
             begin
-                RRD.graph(*args)
+                #Puppet.warning "args = #{args}"
+                RRDtool.graph( args )
             rescue => detail
                 Puppet.err "Failed to graph %s: %s" % [self.name,detail]
             end
@@ -125,14 +122,20 @@ class Puppet::Util::Metric
             self.create(time - 5)
         end
 
+        @rrd ||= RRDtool.new(self.path)
+
         # XXX this is not terribly error-resistant
         args = [time]
+        temps = []
         values.each { |value|
+            #Puppet.warning "value[0]: #{value[0]}; value[1]: #{value[1]}; value[2]: #{value[2]}; "
             args.push value[2]
+            temps.push value[0]
         }
         arg = args.join(":")
+        template = temps.join(":")
         begin
-            RRD.update(self.path,arg)
+            @rrd.update( template, [ arg ] )
             #system("rrdtool updatev %s '%s'" % [self.path, arg])
         rescue => detail
             raise Puppet::Error, "Failed to update %s: %s" % [self.name,detail]
