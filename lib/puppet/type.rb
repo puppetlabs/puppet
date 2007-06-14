@@ -346,11 +346,6 @@ class Type < Puppet::Element
 
     # Convert to a transportable object
     def to_trans(ret = true)
-        # Retrieve the object, if they tell use to.
-        if ret
-            retrieve()
-        end
-
         trans = TransObject.new(self.title, self.class.name)
 
         values = retrieve()

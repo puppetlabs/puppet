@@ -157,6 +157,7 @@ class Puppet::Provider
     def self.mk_resource_methods
         [resource_type.validproperties, resource_type.parameters].flatten.each do |attr|
             attr = symbolize(attr)
+            next if attr == :name
             define_method(attr) do
                 @property_hash[attr] || :absent
             end

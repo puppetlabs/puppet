@@ -968,7 +968,7 @@ module Puppet
         # We have to hack this just a little bit, because otherwise we'll get
         # an error when the target and the contents are created as properties on
         # the far side.
-        def to_trans
+        def to_trans(retrieve = true)
             obj = super
             if obj[:target] == :notlink
                 obj.delete(:target)

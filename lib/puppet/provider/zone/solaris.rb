@@ -4,28 +4,30 @@ Puppet::Type.type(:zone).provide(:solaris) do
     commands :adm => "/usr/sbin/zoneadm", :cfg => "/usr/sbin/zonecfg"
     defaultfor :operatingsystem => :solaris
 
+    mk_resource_methods
+
     # Convert the output of a list into a hash
     def self.line2hash(line)
         fields = [:id, :name, :ensure, :path]
 
-        hash = {}
+        properties = {}
         line.split(":").each_with_index { |value, index|
-            hash[fields[index]] = value
+            properties[fields[index]] = value
         }
 
         # Configured but not installed zones do not have IDs
-        if hash[:id] == "-"
-            hash.delete(:id)
+        if properties[:id] == "-"
+            properties.delete(:id)
         end
 
-        return hash
+        properties[:ensure] = symbolize(properties[:ensure])
+
+        return properties
     end
 
     def self.instances
         adm(:list, "-cp").split("\n").collect do |line|
-            hash = line2hash(line)
-
-            new(hash)
+            new(line2hash(line))
         end
     end
 
@@ -39,7 +41,7 @@ set zonepath=%s
         # Then perform all of our configuration steps.  It's annoying
         # that we need this much internal info on the resource.
         @resource.send(:properties).each do |property|
-            if property.is_a? ZoneConfigProperty and ! property.insync?
+            if property.is_a? ZoneConfigProperty and ! property.insync?(properties[property.name])
                 str += property.configtext + "\n"
             end
         end
@@ -52,14 +54,39 @@ set zonepath=%s
         zonecfg :delete, "-F"
     end
 
+    def exists?
+        properties[:ensure] != :absent
+    end
+
+    # Clear out the cached values.
+    def flush
+        @property_hash.clear
+    end
+
     def install
         zoneadm :install
+    end
+
+    # Look up the current status.
+    def properties
+        if @property_hash.empty?
+            @property_hash = status || {}
+            if @property_hash.empty?
+                @property_hash[:ensure] = :absent
+            else
+                @resource.class.validproperties.each do |name|
+                    @property_hash[name] ||= :absent
+                end
+            end
+
+        end
+        @property_hash.dup
     end
 
     # We need a way to test whether a zone is in process.  Our 'ensure'
     # property models the static states, but we need to handle the temporary ones.
     def processing?
-        if hash = statushash()
+        if hash = status()
             case hash[:ensure]
             when "incomplete", "ready", "shutting_down"
                 true
@@ -103,16 +130,8 @@ set zonepath=%s
                 debug "Ignoring zone output '%s'" % line
             end
         end
+
         return hash
-    end
-
-    def retrieve
-        if hash = statushash()
-            setstatus(hash)
-
-            # Now retrieve the configuration itself and set appropriately.
-            getconfig()
-        end
     end
 
     # Execute a configuration string.  Can't be private because it's called
@@ -152,14 +171,21 @@ set zonepath=%s
     end
 
     # Return a hash of the current status of this zone.
-    def statushash
+    def status
         begin
             output = adm "-z", @resource[:name], :list, "-p"
         rescue Puppet::ExecutionFailure
             return nil
         end
 
-        return self.class.line2hash(output.chomp)
+        main = self.class.line2hash(output.chomp)
+
+        # Now add in the configuration information
+        config_status.each do |name, value|
+            main[name] = value
+        end
+
+        main
     end
 
     def stop
@@ -176,6 +202,24 @@ set zonepath=%s
 
     private
 
+    # Turn the results of getconfig into status information.
+    def config_status
+        config = getconfig()
+        result = {}
+
+        result[:autoboot] = config[:autoboot] ? config[:autoboot].intern : :absent
+        result[:pool] = config[:pool]
+        result[:shares] = config[:shares]
+        if dir = config["inherit-pkg-dir"]
+            result[:inherit] = dir.collect { |dirs| dirs[:dir] }
+        end
+        if net = config["net"]
+            result[:ip] = net.collect { |params| "%s:%s" % [params[:physical], params[:address]] }
+        end
+
+        result
+    end
+
     def zoneadm(*cmd)
         begin
             adm("-z", @resource[:name], *cmd)
@@ -185,8 +229,11 @@ set zonepath=%s
     end
 
     def zonecfg(*cmd)
+        # You apparently can't get the configuration of the global zone
+        return "" if self.name == "global"
+
         begin
-            cfg("-z", @resource[:name], *cmd)
+            cfg("-z", self.name, *cmd)
         rescue Puppet::ExecutionFailure => detail
             self.fail "Could not %s zone: %s" % [cmd[0], detail]
         end

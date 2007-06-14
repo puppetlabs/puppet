@@ -18,6 +18,6 @@ Puppet.features.add(:libshadow, :libs => ["shadow"])
 Puppet.features.add(:root) { require 'puppet/util/suidmanager'; Puppet::Util::SUIDManager.uid == 0 }
 
 # We've got mongrel available
-Puppet.features.add(:mongrel, :libs => %w{rubygems mongrel})
+Puppet.features.add(:mongrel, :libs => %w{rubygems mongrel puppet/network/server/mongrel})
 
 # $Id$
