@@ -160,7 +160,7 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
     # Remove the old package, and install the new one.  This will probably
     # often fail.
     def update
-        if @resource.is(:ensure) != :absent
+        if (@property_hash[:ensure] || info2hash()[:ensure]) != :absent
             self.uninstall
         end
         self.install
