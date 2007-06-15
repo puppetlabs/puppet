@@ -1027,7 +1027,7 @@ module Puppet
                     self.fail "Invalid source path %s" % tmp
                 end
             else
-                self.fail "Got other recursive file proto %s from %s" %
+                self.fail "Got other URL type '%s' from %s" %
                         [uri.scheme, source]
             end
 
