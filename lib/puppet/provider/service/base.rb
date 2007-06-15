@@ -56,8 +56,6 @@ Puppet::Type.type(:service).provide :base do
             # Don't fail when the exit status is not 0.
             output = ucommand(:status, false)
 
-            self.debug "%s status returned %s" %
-                [self.name, output.inspect]
             if $? == 0
                 return :running
             else
