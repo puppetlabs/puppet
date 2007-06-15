@@ -18,7 +18,14 @@ class Puppet::Rails::Schema
                 add_index :resources, :id, :integer => true
                 add_index :resources, :host_id, :integer => true
                 add_index :resources, :source_file_id, :integer => true
-                add_index :resources, [:title, :restype]
+
+                # Thanks, mysql!  MySQL requires a length on indexes in text fields.
+                # So, we provide them for mysql and handle everything else specially.
+                if Puppet[:dbadapter] == "mysql"
+                    execute "CREATE INDEX typentitle ON resources (restype,title(50));"
+                else
+                    add_index :resources, [:title, :restype]
+                end
 
                 create_table :source_files do |t| 
                     t.column :filename, :string
