@@ -80,8 +80,12 @@ class Puppet::Type
                 next if @resource.propertydefined?(property)
 
                 unless propertyklass = @resource.class.validproperty?(property)
-                    raise Puppet::Error, "%s is not a valid attribute for %s" %
-                        [property, self.class.name]
+                    if @resource.class.validattr?(property)
+                        next
+                    else
+                        raise Puppet::Error, "%s is not a valid attribute for %s" %
+                            [property, self.class.name]
+                    end
                 end
                 next unless propertyklass.checkable?
                 @resource.newattr(property)

@@ -285,6 +285,36 @@ class TestTypeAttributes < Test::Unit::TestCase
             @logs.clear
         end
     end
+
+    # Make sure the 'check' metaparam just ignores non-properties, rather than failing.
+    def test_check_allows_parameters
+        file = Puppet::Type.type(:file)
+        klass = file.attrclass(:check)
+
+        resource = file.create(:path => tempfile)
+        inst = klass.new(:resource => resource)
+
+        {:property => [:owner, :group], :parameter => [:ignore, :recurse], :metaparam => [:require, :subscribe]}.each do |attrtype, attrs|
+            assert_nothing_raised("Could not set check to a single %s value" % attrtype) do
+                inst.value = attrs[0]
+            end
+
+            if attrtype == :property
+                assert(resource.property(attrs[0]), "Check did not create property instance during single check")
+            end
+            assert_nothing_raised("Could not set check to multiple %s values" % attrtype) do
+                inst.value = attrs
+            end
+            if attrtype == :property
+                assert(resource.property(attrs[1]), "Check did not create property instance during multiple check")
+            end
+        end
+
+        # But make sure actually invalid attributes fail
+        assert_raise(Puppet::Error, ":check did not fail on invalid attribute") do
+            inst.value = :nosuchattr
+        end
+    end
 end
 
 # $Id$
