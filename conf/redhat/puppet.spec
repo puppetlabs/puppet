@@ -12,7 +12,7 @@ Release: 1%{?dist}
 License: GPL
 Group: System Environment/Base
 
-URL: http://reductivelabs.com/projects/puppet/
+URL: http://puppet.reductivelabs.com/
 Source: http://reductivelabs.com/downloads/puppet/%{name}-%{version}.tgz
 
 Requires: ruby >= 1.8.1
@@ -78,6 +78,8 @@ find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -print0 | xargs -0 -r %
 %files
 %defattr(-, root, root, 0755)
 %{_bindir}/puppet
+%{_bindir}/ralsh
+%{_bindir}/filebucket
 %{_sbindir}/puppetd
 %{ruby_sitelibdir}/*
 %{_initrddir}/puppet
