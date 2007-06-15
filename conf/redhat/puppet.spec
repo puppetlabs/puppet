@@ -61,6 +61,8 @@ done
 %{__install} -d -m0755 %{buildroot}%{_localstatedir}/log/puppet
 %{__install} -Dp -m0755 %{pbuild}/bin/* %{buildroot}%{_sbindir}
 %{__mv} %{buildroot}%{_sbindir}/puppet %{buildroot}%{_bindir}/puppet
+%{__mv} %{buildroot}%{_sbindir}/ralsh %{buildroot}%{_bindir}/ralsh
+%{__mv} %{buildroot}%{_sbindir}/filebucket %{buildroot}%{_bindir}/filebucket
 %{__mv} %{buildroot}%{_sbindir}/puppetrun %{buildroot}%{_bindir}/puppetrun
 %{__install} -Dp -m0644 %{pbuild}/lib/puppet.rb %{buildroot}%{ruby_sitelibdir}/puppet.rb
 %{__cp} -a %{pbuild}/lib/puppet %{buildroot}%{ruby_sitelibdir}
