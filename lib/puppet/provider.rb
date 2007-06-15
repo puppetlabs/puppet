@@ -16,7 +16,7 @@ class Puppet::Provider
         # The source parameter exists so that providers using the same
         # source can specify this, so reading doesn't attempt to read the
         # same package multiple times.
-        attr_accessor :source
+        attr_writer :source
 
         # LAK 2007-05-09: Keep the model stuff around for backward compatibility
         attr_reader :model
