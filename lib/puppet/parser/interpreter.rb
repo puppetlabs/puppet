@@ -5,10 +5,54 @@
 require 'puppet'
 require 'timeout'
 require 'puppet/rails'
+require 'puppet/util/methodhelper'
 require 'puppet/parser/parser'
 require 'puppet/parser/scope'
 
 class Puppet::Parser::Interpreter
+    class NodeDef
+        include Puppet::Util::MethodHelper
+        attr_accessor :name, :classes, :parameters, :source
+
+        def evaluate(options)
+            begin
+                parameters.each do |param, value|
+                    # Don't try to override facts with these parameters
+                    options[:scope].setvar(param, value) unless options[:scope].lookupvar(param, false) != :undefined
+                end
+
+                # Also, set the 'nodename', since it might not be obvious how the node was looked up
+                options[:scope].setvar("nodename", @name) unless options[:scope].lookupvar(@nodename, false) != :undefined
+            rescue => detail
+                raise Puppet::ParseError, "Could not set parameters for %s: %s" % [name, detail]
+            end
+
+            # Then evaluate the classes.
+            begin
+                options[:scope].function_include(classes)
+            rescue => detail
+                raise Puppet::ParseError, "Could not evaluate classes for %s: %s" % [name, detail]
+            end
+        end
+
+        def initialize(args)
+            set_options(args)
+
+            raise Puppet::DevError, "NodeDefs require names" unless self.name
+
+            if self.classes.is_a?(String)
+                @classes = [@classes]
+            else
+                @classes ||= []
+            end
+            @parameters ||= {}
+        end
+
+        def safeevaluate(args)
+            evaluate(args)
+        end
+    end
+
     include Puppet::Util
 
     attr_accessor :usenodes
@@ -156,7 +200,8 @@ class Puppet::Parser::Interpreter
             klass.safeevaluate :scope => scope, :nosubscope => true
         end
 
-        # Next evaluate the node
+        # Next evaluate the node.  We pass the facts so they can be used
+        # when building the list of names for which to search.
         evalnode(client, scope, facts)
 
         # If we were passed any classes, evaluate those.
@@ -258,51 +303,6 @@ class Puppet::Parser::Interpreter
         return nil
     end
 
-    # Create a new node, just from a list of names, classes, and an optional parent.
-    def gennode(name, hash, source = nil)
-        facts = hash[:facts]
-        classes = hash[:classes]
-        parent = hash[:parentnode]
-        arghash = {
-            :name => name,
-            :interp => self,
-            :classname => name
-        }
-
-        if (classes.is_a?(Array) and classes.empty?) or classes.nil?
-            arghash[:code] = AST::ASTArray.new(:children => [])
-        else
-            classes = [classes] unless classes.is_a?(Array)
-
-            classcode = @parser.ast(AST::ASTArray, :children => classes.collect do |klass|
-                @parser.ast(AST::FlatString, :value => klass)
-            end)
-
-            # Now generate a function call.
-            code = @parser.ast(AST::Function,
-                :name => "include",
-                :arguments => classcode,
-                :ftype => :statement
-            )
-
-            arghash[:code] = code
-        end
-
-        if parent
-            arghash[:parentclass] = parent
-        end
-
-        # Create the node
-        if source
-            arghash[:file] = source
-        else
-            arghash[:file] = nil
-        end
-        arghash[:line] = nil
-        node = @parser.ast(AST::Node, arghash)
-        return node
-    end
-
     # create our interpreter
     def initialize(hash)
         if @code = hash[:Code]
@@ -317,33 +317,15 @@ class Puppet::Parser::Interpreter
             @usenodes = true
         end
 
-        # By default, we only search for parsed nodes.
-        @nodesources = []
 
         if Puppet[:ldapnodes]
             # Nodes in the file override nodes in ldap.
-            @nodesources << :ldap
-        end
-
-        if hash[:NodeSources]
-            unless hash[:NodeSources].is_a?(Array)
-                hash[:NodeSources] = [hash[:NodeSources]]
-            end
-            hash[:NodeSources].each do |src|
-                if respond_to? "nodesearch_#{src.to_s}"
-                    @nodesources << src.to_s.intern
-                else
-                    Puppet.warning "Node source '#{src}' not supported"
-                end
-            end
-        end
-
-        unless @nodesources.include?(:code)
-            @nodesources << :code
-        end
-        
-        unless Puppet[:external_nodes] == "none"
-            @nodesources << :external
+            @nodesource = :ldap
+        elsif Puppet[:external_nodes] != "none"
+            @nodesource = :external
+        else
+            # By default, we only search for parsed nodes.
+            @nodesource = :code
         end
 
         @setup = false
@@ -389,26 +371,31 @@ class Puppet::Parser::Interpreter
         @definetable = {}
     end
 
-    # Find the ldap node and extra the info, returning just
-    # the critical data.
+    # Find the ldap node, return the class list and parent node specially,
+    # and everything else in a parameter hash.
     def ldapsearch(node)
         unless defined? @ldap and @ldap
             setup_ldap()
             unless @ldap
                 Puppet.info "Skipping ldap source; no ldap connection"
-                return nil, []
+                return nil
             end
         end
 
         filter = Puppet[:ldapstring]
-        attrs = Puppet[:ldapattrs].split("\s*,\s*")
-        sattrs = attrs.dup
+        classattrs = Puppet[:ldapclassattrs].split("\s*,\s*")
+        if Puppet[:ldapattrs] == "all"
+            # A nil value here causes all attributes to be returned.
+            search_attrs = nil
+        else
+            search_attrs = classattrs + Puppet[:ldapattrs].split("\s*,\s*")
+        end
         pattr = nil
         if pattr = Puppet[:ldapparentattr]
             if pattr == ""
                 pattr = nil
             else
-                sattrs << pattr
+                search_attrs << pattr unless search_attrs.nil?
             end
         end
 
@@ -418,12 +405,14 @@ class Puppet::Parser::Interpreter
 
         parent = nil
         classes = []
+        parameters = nil
 
         found = false
         count = 0
+
         begin
             # We're always doing a sub here; oh well.
-            @ldap.search(Puppet[:ldapbase], 2, filter, sattrs) do |entry|
+            @ldap.search(Puppet[:ldapbase], 2, filter, search_attrs) do |entry|
                 found = true
                 if pattr
                     if values = entry.vals(pattr)
@@ -438,11 +427,20 @@ class Puppet::Parser::Interpreter
                     end
                 end
 
-                attrs.each { |attr|
+                classattrs.each { |attr|
                     if values = entry.vals(attr)
                         values.each do |v| classes << v end
                     end
                 }
+
+                parameters = entry.to_hash.inject({}) do |hash, ary|
+                    if ary[1].length == 1
+                        hash[ary[0]] = ary[1].shift
+                    else
+                        hash[ary[0]] = ary[1]
+                    end
+                    hash
+                end
             end
         rescue => detail
             if count == 0
@@ -461,7 +459,11 @@ class Puppet::Parser::Interpreter
             classes = nil
         end
 
-        return parent, classes
+        if parent or classes or parameters
+            return parent, classes, parameters
+        else
+            return nil
+        end
     end
 
     # Split an fq name into a namespace and name
@@ -590,21 +592,20 @@ class Puppet::Parser::Interpreter
     # Search for our node in the various locations.
     def nodesearch(*nodes)
         nodes = nodes.collect { |n| n.to_s.downcase }
-        # At this point, stop at the first source that defines
-        # the node
-        @nodesources.each do |source|
-            method = "nodesearch_%s" % source
-            if self.respond_to? method
-                # Do an inverse sort on the length, so the longest match always
-                # wins
-                nodes.sort { |a,b| b.length <=> a.length }.each do |node|
-                    node = node.to_s if node.is_a?(Symbol)
-                    if obj = self.send(method, node)
-                        nsource = obj.file || source
-                        Puppet.info "Found %s in %s" % [node, nsource]
-                        return obj
-                    end
+
+        method = "nodesearch_%s" % @nodesource
+        # Do an inverse sort on the length, so the longest match always
+        # wins
+        nodes.sort { |a,b| b.length <=> a.length }.each do |node|
+            node = node.to_s if node.is_a?(Symbol)
+            if obj = self.send(method, node)
+                if obj.is_a?(AST::Node)
+                    nsource = obj.file
+                else
+                    nsource = obj.source
                 end
+                Puppet.info "Found %s in %s" % [node, nsource]
+                return obj
             end
         end
 
@@ -640,41 +641,51 @@ class Puppet::Parser::Interpreter
             return nil
         end
         
-        if output =~ /\A\s+\Z/ # all whitespace
+        if output =~ /\A\s*\Z/ # all whitespace
             Puppet.debug "Empty response for %s from external node source" % name
             return nil
         end
-        
-        lines = output.split("\n")
-        
-        args = {}
-        parent = lines[0].gsub(/\s+/, '')
-        args[:parentnode] = parent unless parent == ""
-        
-        if lines[1]
-            classes = lines[1].sub(/^\s+/,'').sub(/\s+$/,'').split(/\s+/)
-            args[:classes] = classes unless classes.empty?
+
+        begin
+            result = YAML.load(output).inject({}) { |hash, data| hash[symbolize(data[0])] = data[1]; hash }
+        rescue => detail
+            raise Puppet::Error, "Could not load external node results for %s: %s" % [name, detail]
         end
-        
-        if args.empty?
-            Puppet.warning "Somehow got a node with no information"
-            return nil
+
+        node_args = {:source => "external node source", :name => name}
+        set = false
+        [:parameters, :classes].each do |param|
+            if value = result[param]
+                node_args[param] = value
+                set = true
+            end
+        end
+
+        if set
+            return NodeDef.new(node_args)
         else
-            return gennode(name, args, Puppet[:external_nodes])
+            return nil
         end
     end
 
     # Look for our node in ldap.
     def nodesearch_ldap(node)
-        parent, classes = ldapsearch(node)
-        if parent or classes
-            args = {}
-            args[:classes] = classes if classes
-            args[:parentnode] = parent if parent
-            return gennode(node, args, "ldap")
-        else
+        unless ary = ldapsearch(node)
             return nil
         end
+        parent, classes, parameters = ary
+
+        while parent
+            parent, tmpclasses, tmpparams = ldapsearch(parent)
+            classes += tmpclasses if tmpclasses
+            tmpparams.each do |param, value|
+                # Specifically test for whether it's set, so false values are handled
+                # correctly.
+                parameters[param] = value unless parameters.include?(param)
+            end
+        end
+
+        return NodeDef.new(:name => node, :classes => classes, :source => "ldap", :parameters => parameters)
     end
 
     def parsedate
@@ -687,15 +698,13 @@ class Puppet::Parser::Interpreter
         # We have to leave this for after initialization because there
         # seems to be a problem keeping ldap open after a fork.
         unless @setup
-            @nodesources.each { |source|
-                method = "setup_%s" % source.to_s
-                if respond_to? method
-                    exceptwrap :type => Puppet::Error,
-                            :message => "Could not set up node source %s" % source do
-                        self.send(method)
-                    end
+            method = "setup_%s" % @nodesource.to_s
+            if respond_to? method
+                exceptwrap :type => Puppet::Error,
+                        :message => "Could not set up node source %s" % @nodesource do
+                    self.send(method)
                 end
-            }
+            end
         end
         parsefiles()
 

@@ -16,13 +16,14 @@ require 'puppettest/servertest'
 require 'puppettest/railstesting'
 require 'timeout'
 
-class TestInterpreter < Test::Unit::TestCase
+class TestInterpreter < PuppetTest::TestCase
 	include PuppetTest
     include PuppetTest::ServerTest
     include PuppetTest::ParserTesting
     include PuppetTest::ResourceTesting
     include PuppetTest::RailsTesting
     AST = Puppet::Parser::AST
+    NodeDef = Puppet::Parser::Interpreter::NodeDef
 
     # create a simple manifest that uses nodes to create a file
     def mknodemanifest(node, file)
@@ -74,199 +75,6 @@ class TestInterpreter < Test::Unit::TestCase
         }
 
         assert(config != newconfig, "Configs are somehow the same")
-    end
-
-    if Puppet.features.rails?
-    def test_hoststorage
-        assert_nothing_raised {
-            Puppet[:storeconfigs] = true
-        }
-
-        file = tempfile()
-        File.open(file, "w") { |f|
-            f.puts "file { \"/etc\": owner => root }"
-        }
-
-        interp = nil
-        assert_nothing_raised {
-            interp = Puppet::Parser::Interpreter.new(
-                :Manifest => file,
-                :UseNodes => false,
-                :ForkSave => false
-            )
-        }
-
-        facts = {}
-        Facter.each { |fact, val| facts[fact] = val }
-
-        objects = nil
-        assert_nothing_raised {
-            objects = interp.run(facts["hostname"], facts)
-        }
-
-        obj = Puppet::Rails::Host.find_by_name(facts["hostname"])
-        assert(obj, "Could not find host object")
-    end
-    else
-        $stderr.puts "No ActiveRecord -- skipping collection tests"
-    end
-
-    if Facter["domain"].value == "madstop.com"
-
-    # Only test ldap stuff on luke's network, since that's the only place we
-    # have data for.
-    if Puppet.features.ldap?
-    def ldapconnect
-
-        @ldap = LDAP::Conn.new("ldap", 389)
-        @ldap.set_option( LDAP::LDAP_OPT_PROTOCOL_VERSION, 3 )
-        @ldap.simple_bind("", "")
-
-        return @ldap
-    end
-
-    def ldaphost(node)
-        parent = nil
-        classes = nil
-        @ldap.search( "ou=hosts, dc=madstop, dc=com", 2,
-            "(&(objectclass=puppetclient)(cn=%s))" % node
-        ) do |entry|
-            parent = entry.vals("parentnode").shift
-            classes = entry.vals("puppetclass") || []
-        end
-
-        return parent, classes
-    end
-
-    def test_ldapsearch
-        Puppet[:ldapbase] = "ou=hosts, dc=madstop, dc=com"
-        Puppet[:ldapnodes] = true
-
-        ldapconnect()
-
-        interp = mkinterp :NodeSources => [:ldap, :code]
-
-        # Make sure we get nil and nil back when we search for something missing
-        parent, classes = nil
-        assert_nothing_raised do
-            parent, classes = interp.ldapsearch("nosuchhost")
-        end
-
-        assert_nil(parent, "Got a parent for a non-existent host")
-        assert_nil(classes, "Got classes for a non-existent host")
-
-        # Make sure we can find 'culain' in ldap
-        assert_nothing_raised do
-            parent, classes = interp.ldapsearch("culain")
-        end
-
-        realparent, realclasses = ldaphost("culain")
-        assert_equal(realparent, parent)
-        assert_equal(realclasses, classes)
-    end
-
-    def test_ldapnodes
-        Puppet[:ldapbase] = "ou=hosts, dc=madstop, dc=com"
-        Puppet[:ldapnodes] = true
-
-        ldapconnect()
-
-        interp = mkinterp :NodeSources => [:ldap, :code]
-
-        # culain uses basenode, so create that
-        basenode = interp.newnode([:basenode])[0]
-
-        # Make sure we get nothing for nonexistent hosts
-        none = nil
-        assert_nothing_raised do
-            none = interp.nodesearch_ldap("nosuchhost")
-        end
-
-        assert_nil(none, "Got a node for a non-existent host")
-
-        # Make sure we can find 'culain' in ldap
-        culain = nil
-        assert_nothing_raised do
-            culain = interp.nodesearch_ldap("culain")
-        end
-
-        assert(culain, "Did not find culain in ldap")
-
-        assert_nothing_raised do
-            assert_equal(basenode.classname.to_s, culain.parentobj.classname.to_s,
-                "Did not get parent class")
-        end
-    end
-
-    if Puppet::Util::SUIDManager.uid == 0 and Facter["hostname"].value == "culain"
-    def test_ldapreconnect
-        Puppet[:ldapbase] = "ou=hosts, dc=madstop, dc=com"
-        Puppet[:ldapnodes] = true
-
-        interp = nil
-        assert_nothing_raised {
-            interp = Puppet::Parser::Interpreter.new(
-                :Manifest => mktestmanifest()
-            )
-        }
-        hostname = "culain.madstop.com"
-
-        # look for our host
-        assert_nothing_raised {
-            parent, classes = interp.nodesearch_ldap(hostname)
-        }
-
-        # Now restart ldap
-        system("/etc/init.d/slapd restart 2>/dev/null >/dev/null")
-        sleep(1)
-
-        # and look again
-        assert_nothing_raised {
-            parent, classes = interp.nodesearch_ldap(hostname)
-        }
-
-        # Now stop ldap
-        system("/etc/init.d/slapd stop 2>/dev/null >/dev/null")
-        cleanup do
-            system("/etc/init.d/slapd start 2>/dev/null >/dev/null")
-        end
-
-        # And make sure we actually fail here
-        assert_raise(Puppet::Error) {
-            parent, classes = interp.nodesearch_ldap(hostname)
-        }
-    end
-    else
-        $stderr.puts "Run as root for ldap reconnect tests"
-    end
-    end
-    else
-        $stderr.puts "Not in madstop.com; skipping ldap tests"
-    end
-
-    # Test that node info and default node info in different sources isn't
-    # bad.
-    def test_multiple_nodesources
-
-        # Create another node source
-        Puppet::Parser::Interpreter.send(:define_method, :nodesearch_multi) do |*names|
-            if names[0] == "default"
-                gennode("default", {:facts => {}})
-            else
-                nil
-            end
-        end
-
-        interp = mkinterp :NodeSources => [:multi, :code]
-
-        interp.newnode(["node"])
-
-        obj = nil
-        assert_nothing_raised do
-            obj = interp.nodesearch("node")
-        end
-        assert(obj, "Did not find node")
-        assert_equal("node", obj.classname)
     end
 
     # Make sure searchnode behaves as we expect.
@@ -407,54 +215,6 @@ class TestInterpreter < Test::Unit::TestCase
             assert_raise(Puppet::ParseError) {
                 interp.newnode(name, {})
             }
-        end
-    end
-
-    # Make sure we're correctly generating a node definition.
-    def test_gennode
-        interp = mkinterp
-
-        interp.newnode "base"
-        interp.newclass "yaytest"
-
-        # Go through the different iterations:
-        [
-         [nil, "yaytest"],
-         [nil, ["yaytest"]],
-         [nil, nil],
-         [nil, []],
-         ["base", nil],
-         ["base", []],
-         ["base", "yaytest"],
-         ["base", ["yaytest"]]
-        ].each do |parent, classes|
-            node = nil
-            assert_nothing_raised {
-                node = interp.gennode("nodeA", :classes => classes,
-                    :parentnode => parent)
-            }
-
-            assert_instance_of(Puppet::Parser::AST::Node, node)
-
-            assert_equal("nodeA", node.name)
-
-            scope = mkscope :interp => interp
-
-            assert_nothing_raised do
-                node.evaluate :scope => scope
-            end
-
-            # If there's a parent, make sure it got evaluated
-            if parent
-                assert(scope.classlist.include?("base"),
-                    "Did not evaluate parent node")
-            end
-
-            # If there are classes make sure they got evaluated
-            if classes == ["yaytest"] or classes == "yaytest"
-                assert(scope.classlist.include?("yaytest"),
-                    "Did not evaluate class")
-            end
         end
     end
 
@@ -955,8 +715,349 @@ class TestInterpreter < Test::Unit::TestCase
         assert(found.include?("/tmp/klass1"), "Did not evaluate klass1")
         assert(found.include?("/tmp/klass2"), "Did not evaluate klass2")
     end
+    
+    def mk_node_mapper
+        # First, make sure our nodesearch command works as we expect
+        # Make a nodemapper
+        mapper = tempfile()
+        ruby = %x{which ruby}.chomp
+        File.open(mapper, "w") { |f|
+            f.puts "#!#{ruby}
+            require 'yaml'
+            name = ARGV[0].chomp
+            result = {}
 
-    if Puppet.features.rails?
+            if name =~ /a/
+                result[:parameters] = {'one' => ARGV[0] + '1', 'two' => ARGV[0] + '2'}
+            end
+
+            if name =~ /p/
+                result['classes'] = [1,2,3].collect { |n| ARGV[0] + n.to_s }
+            end
+
+            puts YAML.dump(result)
+            "
+        }    
+        File.chmod(0755, mapper)
+        mapper
+    end
+    
+    def test_nodesearch_external
+        interp = mkinterp
+        
+        mapper = mk_node_mapper
+        # Make sure it gives the right response
+        assert_equal({'classes' => %w{apple1 apple2 apple3}, :parameters => {"one" => "apple1", "two" => "apple2"}},
+            YAML.load(%x{#{mapper} apple}))
+        
+        # First make sure we get nil back by default
+        assert_nothing_raised {
+            assert_nil(interp.nodesearch_external("apple"),
+                "Interp#nodesearch_external defaulted to a non-nil response")
+        }
+        assert_nothing_raised { Puppet[:external_nodes] = mapper }
+        
+        node = nil
+        # Both 'a' and 'p', so we get classes and parameters
+        assert_nothing_raised { node = interp.nodesearch_external("apple") }
+        assert_equal("apple", node.name, "node name was not set correctly for apple")
+        assert_equal(%w{apple1 apple2 apple3}, node.classes, "node classes were not set correctly for apple")
+        assert_equal( {"one" => "apple1", "two" => "apple2"}, node.parameters, "node parameters were not set correctly for apple")
+        
+        # A 'p' but no 'a', so we only get classes
+        assert_nothing_raised { node = interp.nodesearch_external("plum") }
+        assert_equal("plum", node.name, "node name was not set correctly for plum")
+        assert_equal(%w{plum1 plum2 plum3}, node.classes, "node classes were not set correctly for plum")
+        assert_equal({}, node.parameters, "node parameters were not set correctly for plum")
+        
+        # An 'a' but no 'p', so we only get parameters.
+        assert_nothing_raised { node = interp.nodesearch_external("guava")} # no p's, thus no classes
+        assert_equal("guava", node.name, "node name was not set correctly for guava")
+        assert_equal([], node.classes, "node classes were not set correctly for guava")
+        assert_equal({"one" => "guava1", "two" => "guava2"}, node.parameters, "node parameters were not set correctly for guava")
+        
+        assert_nothing_raised { node = interp.nodesearch_external("honeydew")} # neither, thus nil
+        assert_nil(node)
+    end
+    
+    # A wrapper test, to make sure we're correctly calling the external search method.
+    def test_nodesearch_external_functional
+        mapper = mk_node_mapper
+        
+        Puppet[:external_nodes] = mapper
+        interp = mkinterp
+        
+        node = nil
+        assert_nothing_raised do
+            node = interp.nodesearch("apple")
+        end
+        assert_instance_of(NodeDef, node, "did not create node")
+    end
+
+    def test_check_resource_collections
+        interp = mkinterp
+        scope = mkscope :interp => interp
+        coll = Puppet::Parser::Collector.new(scope, "file", nil, nil, :virtual)
+        coll.resources = ["File[/tmp/virtual1]", "File[/tmp/virtual2]"]
+        scope.newcollection(coll)
+
+        assert_raise(Puppet::ParseError, "Did not fail on remaining resource colls") do
+            interp.check_resource_collections(scope)
+        end
+    end
+
+    def test_nodedef
+        interp = mkinterp
+        interp.newclass("base")
+        interp.newclass("sub", :parent => "base")
+        interp.newclass("other")
+
+        node = nil
+        assert_nothing_raised("Could not create a node definition") do
+            node = NodeDef.new :name => "yay", :classes => "sub", :parameters => {"one" => "two", "three" => "four"}
+        end
+
+        scope = mkscope :interp => interp
+        assert_nothing_raised("Could not evaluate the node definition") do
+            node.evaluate(:scope => scope)
+        end
+
+        assert_equal("two", scope.lookupvar("one"), "NodeDef did not set variable")
+        assert_equal("four", scope.lookupvar("three"), "NodeDef did not set variable")
+
+        assert(scope.classlist.include?("sub"), "NodeDef did not evaluate class")
+        assert(scope.classlist.include?("base"), "NodeDef did not evaluate base class")
+
+        # Now try a node def with multiple classes
+        assert_nothing_raised("Could not create a node definition") do
+            node = NodeDef.new :name => "yay", :classes => %w{sub other base}, :parameters => {"one" => "two", "three" => "four"}
+        end
+
+        scope = mkscope :interp => interp
+        assert_nothing_raised("Could not evaluate the node definition") do
+            node.evaluate(:scope => scope)
+        end
+
+        assert_equal("two", scope.lookupvar("one"), "NodeDef did not set variable")
+        assert_equal("four", scope.lookupvar("three"), "NodeDef did not set variable")
+
+        assert(scope.classlist.include?("sub"), "NodeDef did not evaluate class")
+        assert(scope.classlist.include?("other"), "NodeDef did not evaluate other class")
+
+        # And a node def with no params
+        assert_nothing_raised("Could not create a node definition with no params") do
+            node = NodeDef.new :name => "yay", :classes => %w{sub other base}
+        end
+
+        scope = mkscope :interp => interp
+        assert_nothing_raised("Could not evaluate the node definition") do
+            node.evaluate(:scope => scope)
+        end
+
+        assert(scope.classlist.include?("sub"), "NodeDef did not evaluate class")
+        assert(scope.classlist.include?("other"), "NodeDef did not evaluate other class")
+    end
+
+    def test_ldapnodes
+        interp = mkinterp
+
+        nodetable = {}
+
+        # Override the ldapsearch definition, so we don't have to actually set it up.
+        interp.meta_def(:ldapsearch) do |name|
+            nodetable[name]
+        end
+
+        # Make sure we get nothing for nonexistent hosts
+        node = nil
+        assert_nothing_raised do
+            node = interp.nodesearch_ldap("nosuchhost")
+        end
+
+        assert_nil(node, "Got a node for a non-existent host")
+
+        # Now add a base node with some classes and parameters
+        nodetable["base"] = [nil, %w{one two}, {"base" => "true"}]
+
+        assert_nothing_raised do
+            node = interp.nodesearch_ldap("base")
+        end
+
+        assert_instance_of(NodeDef, node, "Did not get node from ldap nodesearch")
+        assert_equal("base", node.name, "node name was not set")
+
+        assert_equal(%w{one two}, node.classes, "node classes were not set")
+        assert_equal({"base" => "true"}, node.parameters, "node parameters were not set")
+
+        # Now use a different with this as the base
+        nodetable["middle"] = ["base", %w{three}, {"center" => "boo"}]
+        assert_nothing_raised do
+            node = interp.nodesearch_ldap("middle")
+        end
+
+        assert_instance_of(NodeDef, node, "Did not get node from ldap nodesearch")
+        assert_equal("middle", node.name, "node name was not set")
+
+        assert_equal(%w{one two three}.sort, node.classes.sort, "node classes were not set correctly with a parent node")
+        assert_equal({"base" => "true", "center" => "boo"}, node.parameters, "node parameters were not set correctly with a parent node")
+
+        # And one further, to make sure we fully recurse
+        nodetable["top"] = ["middle", %w{four five}, {"master" => "far"}]
+        assert_nothing_raised do
+            node = interp.nodesearch_ldap("top")
+        end
+
+        assert_instance_of(NodeDef, node, "Did not get node from ldap nodesearch")
+        assert_equal("top", node.name, "node name was not set")
+
+        assert_equal(%w{one two three four five}.sort, node.classes.sort, "node classes were not set correctly with the top node")
+        assert_equal({"base" => "true", "center" => "boo", "master" => "far"}, node.parameters, "node parameters were not set correctly with the top node")
+    end
+end
+
+class LdapNodeTest < PuppetTest::TestCase
+	include PuppetTest
+    include PuppetTest::ServerTest
+    include PuppetTest::ParserTesting
+    include PuppetTest::ResourceTesting
+    include PuppetTest::RailsTesting
+    AST = Puppet::Parser::AST
+    NodeDef = Puppet::Parser::Interpreter::NodeDef
+    confine "LDAP is not available" => Puppet.features.ldap?
+    confine "No LDAP test data for networks other than Luke's" => Facter.value(:domain) == "madstop.com"
+    def ldapconnect
+
+        @ldap = LDAP::Conn.new("ldap", 389)
+        @ldap.set_option( LDAP::LDAP_OPT_PROTOCOL_VERSION, 3 )
+        @ldap.simple_bind("", "")
+
+        return @ldap
+    end
+
+    def ldaphost(name)
+        node = NodeDef.new(:name => name)
+        parent = nil
+        found = false
+        @ldap.search( "ou=hosts, dc=madstop, dc=com", 2,
+            "(&(objectclass=puppetclient)(cn=%s))" % name
+        ) do |entry|
+            node.classes = entry.vals("puppetclass") || []
+            node.parameters = entry.to_hash.inject({}) do |hash, ary|
+                if ary[1].length == 1
+                    hash[ary[0]] = ary[1].shift
+                else
+                    hash[ary[0]] = ary[1]
+                end
+                hash
+            end
+            parent = node.parameters["parentnode"]
+            found = true
+        end
+        raise "Could not find node %s" % name unless found
+
+        return node, parent
+    end
+
+    def test_ldapsearch
+        Puppet[:ldapbase] = "ou=hosts, dc=madstop, dc=com"
+        Puppet[:ldapnodes] = true
+
+        ldapconnect()
+
+        interp = mkinterp :NodeSources => [:ldap, :code]
+
+        # Make sure we get nil and nil back when we search for something missing
+        parent, classes, parameters = nil
+        assert_nothing_raised do
+            parent, classes, parameters = interp.ldapsearch("nosuchhost")
+        end
+
+        assert_nil(parent, "Got a parent for a non-existent host")
+        assert_nil(classes, "Got classes for a non-existent host")
+
+        # Make sure we can find 'culain' in ldap
+        assert_nothing_raised do
+            parent, classes, parameters = interp.ldapsearch("culain")
+        end
+
+        node, realparent = ldaphost("culain")
+        assert_equal(realparent, parent, "did not get correct parent node from ldap")
+        assert_equal(node.classes, classes, "did not get correct ldap classes from ldap")
+        assert_equal(node.parameters, parameters, "did not get correct ldap parameters from ldap")
+
+        # Now compare when we specify the attributes to get.
+        Puppet[:ldapattrs] = "cn"
+        assert_nothing_raised do
+            parent, classes, parameters = interp.ldapsearch("culain")
+        end
+        assert_equal(realparent, parent, "did not get correct parent node from ldap")
+        assert_equal(node.classes, classes, "did not get correct ldap classes from ldap")
+
+        list = %w{cn puppetclass parentnode dn}
+        should = node.parameters.inject({}) { |h, a| h[a[0]] = a[1] if list.include?(a[0]); h }
+        assert_equal(should, parameters, "did not get correct ldap parameters from ldap")
+    end
+end
+
+class LdapReconnectTests < PuppetTest::TestCase
+	include PuppetTest
+    include PuppetTest::ServerTest
+    include PuppetTest::ParserTesting
+    include PuppetTest::ResourceTesting
+    include PuppetTest::RailsTesting
+    AST = Puppet::Parser::AST
+    NodeDef = Puppet::Parser::Interpreter::NodeDef
+    confine "Not running on culain as root" => (Puppet::Util::SUIDManager.uid == 0 and Facter.value("hostname") == "culain")
+
+    def test_ldapreconnect
+        Puppet[:ldapbase] = "ou=hosts, dc=madstop, dc=com"
+        Puppet[:ldapnodes] = true
+
+        interp = nil
+        assert_nothing_raised {
+            interp = Puppet::Parser::Interpreter.new(
+                :Manifest => mktestmanifest()
+            )
+        }
+        hostname = "culain.madstop.com"
+
+        # look for our host
+        assert_nothing_raised {
+            parent, classes = interp.nodesearch_ldap(hostname)
+        }
+
+        # Now restart ldap
+        system("/etc/init.d/slapd restart 2>/dev/null >/dev/null")
+        sleep(1)
+
+        # and look again
+        assert_nothing_raised {
+            parent, classes = interp.nodesearch_ldap(hostname)
+        }
+
+        # Now stop ldap
+        system("/etc/init.d/slapd stop 2>/dev/null >/dev/null")
+        cleanup do
+            system("/etc/init.d/slapd start 2>/dev/null >/dev/null")
+        end
+
+        # And make sure we actually fail here
+        assert_raise(Puppet::Error) {
+            parent, classes = interp.nodesearch_ldap(hostname)
+        }
+    end
+end
+
+class InterpreterRailsTests < PuppetTest::TestCase
+	include PuppetTest
+    include PuppetTest::ServerTest
+    include PuppetTest::ParserTesting
+    include PuppetTest::ResourceTesting
+    include PuppetTest::RailsTesting
+    AST = Puppet::Parser::AST
+    NodeDef = Puppet::Parser::Interpreter::NodeDef
+    confine "No rails support" => Puppet.features.rails?
+
     # We need to make sure finished objects are stored in the db.
     def test_finish_before_store
         railsinit
@@ -993,96 +1094,36 @@ class TestInterpreter < Test::Unit::TestCase
         pvalue = param.param_values.find_by_value("root")
         assert_equal("root", pvalue[:value])
     end
-    end
-    
-    def mk_node_mapper
-        # First, make sure our nodesearch command works as we expect
-        # Make a nodemapper
-        mapper = tempfile()
-        ruby = %x{which ruby}.chomp
-        File.open(mapper, "w") { |f|
-            f.puts "#!#{ruby}
-            name = ARGV[0]
-            if name =~ /a/
-                puts ARGV[0].gsub('a', 'b')
-            else
-                puts ''
-            end
-            if name =~ /p/
-                puts [1,2,3].collect { |n| ARGV[0] + n.to_s }.join(' ')
-            else
-                puts ''
-            end
-            "
-        }    
-        File.chmod(0755, mapper)
-        mapper
-    end
-    
-    def test_nodesearch_external
-        interp = mkinterp
-        
-        # Make a fake gennode method
-        class << interp
-            def gennode(name, args, source)
-                args[:name] = name
-                return args
-            end
-        end
-        
-        mapper = mk_node_mapper
-        # Make sure it gives the right response
-        assert_equal("bpple\napple1 apple2 apple3\n",
-            %x{#{mapper} apple})
-        
-        # First make sure we get nil back by default
+
+    def test_hoststorage
         assert_nothing_raised {
-            assert_nil(interp.nodesearch_external("apple"),
-                "Interp#nodesearch_external defaulted to a non-nil response")
+            Puppet[:storeconfigs] = true
         }
-        assert_nothing_raised { Puppet[:external_nodes] = mapper }
-        
-        node = nil
-        assert_nothing_raised { node = interp.nodesearch_external("apple") }
-        
-        assert_equal({:name => "apple", :classes => %w{apple1 apple2 apple3}, :parentnode => "bpple"},
-            node)
-        
-        assert_nothing_raised { node = interp.nodesearch_external("plum")} # no a's, thus no parent
-        assert_equal({:name => "plum", :classes => %w{plum1 plum2 plum3}},
-            node)
-        
-        assert_nothing_raised { node = interp.nodesearch_external("guava")} # no p's, thus no classes
-        assert_equal({:name => "guava", :parentnode => "gubvb"},
-            node)
-        
-        assert_nothing_raised { node = interp.nodesearch_external("honeydew")} # neither, thus nil
-        assert_nil(node)
-    end
-    
-    def test_nodesearch_external_functional
-        mapper = mk_node_mapper
-        
-        Puppet[:external_nodes] = mapper
-        interp = mkinterp
-        
-        node = nil
-        assert_nothing_raised do
-            node = interp.nodesearch("apple")
-        end
-        assert_instance_of(Puppet::Parser::AST::Node, node, "did not create node")
-    end
 
-    def test_check_resource_collections
-        interp = mkinterp
-        scope = mkscope :interp => interp
-        coll = Puppet::Parser::Collector.new(scope, "file", nil, nil, :virtual)
-        coll.resources = ["File[/tmp/virtual1]", "File[/tmp/virtual2]"]
-        scope.newcollection(coll)
+        file = tempfile()
+        File.open(file, "w") { |f|
+            f.puts "file { \"/etc\": owner => root }"
+        }
 
-        assert_raise(Puppet::ParseError, "Did not fail on remaining resource colls") do
-            interp.check_resource_collections(scope)
-        end
+        interp = nil
+        assert_nothing_raised {
+            interp = Puppet::Parser::Interpreter.new(
+                :Manifest => file,
+                :UseNodes => false,
+                :ForkSave => false
+            )
+        }
+
+        facts = {}
+        Facter.each { |fact, val| facts[fact] = val }
+
+        objects = nil
+        assert_nothing_raised {
+            objects = interp.run(facts["hostname"], facts)
+        }
+
+        obj = Puppet::Rails::Host.find_by_name(facts["hostname"])
+        assert(obj, "Could not find host object")
     end
 end
 

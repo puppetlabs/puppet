@@ -539,14 +539,14 @@ module Puppet
             should be case-sensitive.  Case insensitivity is
             handled by downcasing all values before comparison."],
         :external_nodes => ["none",
-            "An external command that can produce node information.  The
-            first line of output must be either the parent node or blank,
-            and if there is a second line of output it should be a list of
-            whitespace-separated classes to include on that node.  This command
-            makes it straightforward to store your node mapping information
-            in other data sources like databases.
-            
-            For unknown nodes, the commands should exit with an exit code of 1."])
+            "An external command that can produce node information.  The output
+            must be a YAML dump of a hash, and that hash must have one or both of
+            ``classes`` and ``parameters``, where ``classes`` is an array and
+            ``parameters`` is a hash.  For unknown nodes, the commands should
+            exit with a non-zero exit code.
+
+            This command makes it straightforward to store your node mapping
+            information in other data sources like databases."])
 
     setdefaults(:ldap,
         :ldapnodes => [false,
@@ -565,9 +565,14 @@ module Puppet
             "The LDAP port.  Only used if ``ldapnodes`` is enabled."],
         :ldapstring => ["(&(objectclass=puppetClient)(cn=%s))",
             "The search string used to find an LDAP node."],
-        :ldapattrs => ["puppetclass",
+        :ldapclassattrs => ["puppetclass",
             "The LDAP attributes to use to define Puppet classes.  Values
             should be comma-separated."],
+        :ldapattrs => ["all",
+            "The LDAP attributes to include when querying LDAP for nodes.  All
+            returned attributes are set as variables in the top-level scope.
+            Multiple values should be comma-separated.  The value 'all' returns
+            all attributes."],
         :ldapparentattr => ["parentnode",
             "The attribute to use to define the parent node."],
         :ldapuser => ["",

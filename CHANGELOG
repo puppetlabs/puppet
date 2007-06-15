@@ -1,4 +1,24 @@
-    Reworked the idatbase schema used to store configurations with the
+    COMPATIBILITY ALERT:
+    Significantly reworked external node support, in a way that's NOT
+    backward-compatible:
+
+        Only ONE node source can be used -- you can use LDAP, code, or
+        an external node program, but not more than one.
+    
+        LDAP node support has two changes:  First, the "ldapattrs" attribute is
+        now used for setting the attributes to retrieve from the server (in
+        addition to required attriutes), and second, all retrieved attributes
+        are set as variables in the top scope.  This means you can set attributes
+        on your LDAP nodes and they will automatically appear as variables
+        in your configurations.
+
+        External node support has been completely rewritten.  These programs must
+        now generate a YAML dump of a hash, with "classes" and "parameters" keys.
+        The classes should be an array, and the parameters should be a hash.  The
+        external node program has no support for parent nodes -- the script must
+        handle that on its own.
+
+    Reworked the database schema used to store configurations with the
     storeconfigs option.  
     
     Replaced the obsolete RRD ruby library with the maintained
