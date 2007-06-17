@@ -23,18 +23,14 @@ class TestPosixUtil < Test::Unit::TestCase
     end
 	
 	def test_get_posix_field
-	    {:gr => nonrootgroup, :pw => nonrootuser}.each do |space, obj|
-	        if space == :gr
-	            id = :gid
-            else
-                id = :uid
-            end
+	    {:group => nonrootgroup, :passwd => nonrootuser}.each do |space, obj|
+            id = Puppet::Util.idfield(space)
 	        [obj.name, obj.send(id), obj.send(id).to_s].each do |test|
         	    value = nil
         	    assert_nothing_raised do
         	        value = get_posix_field(space, :name, test)
         	    end
-        	    assert_equal(obj.name, value)
+        	    assert_equal(obj.name, value, "did not get correct value from get_posix_field")
     	    end
 	    end
     end

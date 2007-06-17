@@ -1,8 +1,10 @@
 # Utility methods for interacting with POSIX objects; mostly user and group
 module Puppet::Util::POSIX
+
     # Retrieve a field from a POSIX Etc object.  The id can be either an integer
-    # or a name.  This only works for users and groups.
-    def get_posix_field(space, field, id)
+    # or a name.  This only works for users and groups.  It's also broken on
+    # some platforms, unfortunately.
+    def old_get_posix_field(space, field, id)
         unless id
             raise ArgumentError, "Did not get id"
         end
@@ -27,8 +29,35 @@ module Puppet::Util::POSIX
             return nil
         end
     end
+
+    # A degenerate method of retrieving name/id mappings.  The job of this method is
+    # to find a specific entry and then return a given field from that entry.
+    def get_posix_field(type, field, id)
+        idmethod = idfield(type)
+        integer = false
+        if id =~ /^\d+$/
+            id = Integer(id)
+        end
+        if id.is_a?(Integer)
+            integer = true
+            if id > 1000000
+                Puppet.err "Tried to get %s field for silly id %s" % [field, id]
+                return nil
+            end
+        end
+
+        Etc.send(type) do |object|
+            if integer and object.send(idmethod) == id
+                return object.send(field)
+            elsif object.name == id
+                return object.send(field)
+            end
+        end
+        return nil
+    end
     
     # Look in memory for an already-managed type and use its info if available.
+    # Currently unused.
     def get_provider_value(type, field, id)
         unless typeklass = Puppet::Type.type(type)
             raise ArgumentError, "Invalid type %s" % type
@@ -70,7 +99,7 @@ module Puppet::Util::POSIX
     def idfield(space)
         case Puppet::Util.symbolize(space)
         when :gr, :group: return :gid
-        when :pw, :user: return :uid
+        when :pw, :user, :passwd: return :uid
         else
             raise ArgumentError.new("Can only handle users and groups")
         end
@@ -78,12 +107,12 @@ module Puppet::Util::POSIX
     
     # Get the GID of a given group, provided either a GID or a name
     def gid(group)
-        get_provider_value(:group, :gid, group) or get_posix_field(:gr, :gid, group)
+        get_posix_field(:group, :gid, group)
     end
 
     # Get the UID of a given user, whether a UID or name is provided
     def uid(user)
-        get_provider_value(:user, :uid, user) or get_posix_field(:pw, :uid, user)
+        get_posix_field(:passwd, :uid, user)
     end
 end
 
