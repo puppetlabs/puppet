@@ -8,6 +8,11 @@ require 'etc'
 class TestPackageProvider < Test::Unit::TestCase
 	include PuppetTest
 
+    def setup
+        super
+        Puppet.info @method_name
+    end
+
     # Load the testpackages hash.
     def self.load_test_packages
         require 'yaml'
@@ -150,12 +155,23 @@ class TestPackageProvider < Test::Unit::TestCase
 
         cleanup do
             if pkg.provider.respond_to?(:uninstall)
-                pkg[:ensure] = :absent
-                assert_apply(pkg)
+                pkg.provider.flush
+                if pkg.provider.properties[:ensure] != :absent
+                    assert_nothing_raised("Could not clean up package") do
+                        pkg.provider.uninstall
+                    end
+                end
             else
                 if cleancmd
                     system(cleancmd)
                 end
+            end
+        end
+
+        # Now call 'latest' after the package is installed
+        if provider.respond_to?(:latest)
+            assert_nothing_raised("Could not call 'latest'") do
+                provider.latest
             end
         end
 
@@ -168,24 +184,33 @@ class TestPackageProvider < Test::Unit::TestCase
         # If there are any remaining files, then test upgrading from there
         unless files.empty?
             pkg[:source] = files.shift
-            current = provider.query
+            current = provider.properties
             assert_nothing_raised("Could not upgrade") do
                 provider.update
             end
-            new = provider.query
+            provider.flush
+            new = provider.properties
             assert(current != new, "package was not upgraded: %s did not change" %
                 current.inspect)
         end
 
         unless versions.empty?
             pkg[:ensure] = versions.shift
-            current = provider.query
+            current = provider.properties
             assert_nothing_raised("Could not upgrade") do
                 provider.update
             end
-            new = provider.query
+            provider.flush
+            new = provider.properties
             assert(current != new, "package was not upgraded: %s did not change" %
                 current.inspect)
+        end
+
+        # Now call 'latest' after the package is installed
+        if provider.respond_to?(:latest)
+            assert_nothing_raised("Could not call 'latest'") do
+                provider.latest
+            end
         end
 
         # Now remove the package

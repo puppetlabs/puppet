@@ -58,10 +58,10 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
 
         regex = %r{^(\S+)\s+(\S+)}
         fields = [:instance, :ensure]
-        hash = {}
+        attrs = {}
         if match = regex.match(output)
             fields.zip(match.captures) { |field,value|
-                hash[field] = value
+                attrs[field] = value
             }
         else
             raise Puppet::DevError,
@@ -69,11 +69,9 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
                 output
         end
 
-        @nvr = hash[:instance]
+        @nvr = attrs[:instance]
 
-        @property_hash = hash
-
-        return hash
+        return attrs
     end
 
     # Here we just retrieve the version from the file specified in the source.

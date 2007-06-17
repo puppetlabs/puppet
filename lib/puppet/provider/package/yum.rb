@@ -40,10 +40,10 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
         else
             # Yum didn't find updates, pretend the current
             # version is the latest
-            unless defined?(@current_values) and @current_values[:ensure]
+            unless properties[:ensure] != :absent
                 raise Puppet::DevError, "Tried to get latest on a missing package"
             end
-            return @current_values[:ensure]
+            return @property_hash[:ensure]
         end
     end
 
