@@ -35,7 +35,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     # returns a hash of param_names.name => [param_values]
     def get_params_hash(values = nil)
         values ||= param_values.find(:all, :include => :param_name)
-        return values.inject({}) do | hash, value |
+        values.inject({}) do | hash, value |
             hash[value.param_name.name] ||= []
             hash[value.param_name.name] << value
             hash
@@ -69,12 +69,15 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     end
 
     def parameters
-        return self.param_values.find(:all,
-                      :include => :param_name).inject({}) do |hash, pvalue|
-            hash[pvalue.param_name.name] ||= []
-            hash[pvalue.param_name.name] << pvalue.value 
-           hash
+        result = get_params_hash
+        result.each do |param, value|
+            if value.is_a?(Array)
+                result[param] = value.collect { |v| v.value }
+            else
+                result[param] = value.value
+            end
         end
+        result
     end
 
     def ref

@@ -356,7 +356,16 @@ class Puppet::Parser::Resource
                     av
                 }
             end
-            obj[p.to_s] = v
+
+            # If the value is an array with only one value, then
+            # convert it to a single value.  This is largely so that
+            # the database interaction doesn't have to worry about
+            # whether it returns an array or a string.
+            obj[p.to_s] = if v.is_a?(Array) and v.length == 1
+                              v[0]
+                          else
+                              v
+                          end
         end
 
         obj.file = self.file

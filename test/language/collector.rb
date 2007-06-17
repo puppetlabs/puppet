@@ -2,17 +2,14 @@
 
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
-require 'puppet/rails'
 require 'puppettest'
 require 'puppettest/parsertesting'
 require 'puppettest/resourcetesting'
-require 'puppettest/railstesting'
 
 class TestCollector < Test::Unit::TestCase
 	include PuppetTest
     include PuppetTest::ParserTesting
     include PuppetTest::ResourceTesting
-    include PuppetTest::RailsTesting
     Parser = Puppet::Parser
     AST = Parser::AST
 

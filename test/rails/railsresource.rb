@@ -118,11 +118,17 @@ class TestExportedResources < PuppetTest::TestCase
 
     # Compare a parser resource to a rails resource.
     def compare_resources(host, res, updating, options = {})
-        # to_rails now expects to be passed a resource, else it will create a new one
-        newobj = host.resources.find_by_restype_and_title(res.type, res.title)
-        assert_nothing_raised do
-            #newobj = res.to_rails(host, newobj)
-            newobj = res.to_rails(host)
+        newobj = nil
+
+        # If the resource is in the db, then use modify_rails, else use to_rails
+        if newobj = Puppet::Rails::Resource.find_by_restype_and_title(res.type, res.title)
+            assert_nothing_raised("Call to modify_rails failed") do
+                res.modify_rails(newobj)
+            end
+        else
+            assert_nothing_raised("Call to to_rails failed") do
+                newobj = res.to_rails(host)
+            end
         end
 
         assert_instance_of(Puppet::Rails::Resource, newobj)
@@ -138,7 +144,7 @@ class TestExportedResources < PuppetTest::TestCase
         count = 0
         obj = nil
         Puppet::Rails::Resource.find(:all).each do |obj|
-            assert_equal(newobj.id, obj.id, "Found object has a different id than generated object %s" % tail)
+            assert_equal(newobj.id, obj.id, "A new resource was created instead of modifying an existing resource")
             count += 1
             [:title, :restype, :line, :exported].each do |param|
                 if param == :restype
@@ -197,19 +203,25 @@ class TestExportedResources < PuppetTest::TestCase
 
         compare_resources(host, res, false, :params => %w{owner source mode})
 
+        # Now make sure our parameters did not change
+        assert_instance_of(Array, res[:require], "Parameter array changed")
+        res[:require].each do |ref|
+            assert_instance_of(Reference, ref, "Resource reference changed")
+        end
+
         # Now make some changes to our resource.  We're removing the mode,
         # changing the source, and adding 'check'.
         res = mkresource :type => "file", :title => "/tmp/testing",
             :source => @source, :scope => @scope,
             :params => {:owner => "bin", :source => ["/tmp/A", "/tmp/C"],
-            :check => "checksum"}
+            :check => "checksum",  :require => [ref1, ref2]}
 
         res.line = 75
         res.exported = true
 
         compare_resources(host, res, true, :params => %w{owner source mode check})
 
-        # Now make sure our parameters did not change
+        # Again make sure our parameters did not change
         assert_instance_of(Array, res[:require], "Parameter array changed")
         res[:require].each do |ref|
             assert_instance_of(Reference, ref, "Resource reference changed")

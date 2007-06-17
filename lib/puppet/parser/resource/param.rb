@@ -22,7 +22,7 @@ class Puppet::Parser::Resource::Param
     # Store a new parameter in a Rails db.
     def to_rails(db_resource)
         values = value.is_a?(Array) ? value : [value]
-        values.map! { |v| v.to_s }
+        values = values.map { |v| v.to_s }
 
         param_name = Puppet::Rails::ParamName.find_or_create_by_name(self.name.to_s)
         line_number = line_to_i()

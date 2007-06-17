@@ -2,80 +2,17 @@
 
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
-require 'puppet'
-require 'puppet/rails'
+require 'puppettest'
 require 'puppet/parser/interpreter'
 require 'puppet/parser/parser'
-require 'puppet/network/client'
-require 'puppettest'
 require 'puppettest/resourcetesting'
 require 'puppettest/parsertesting'
-require 'puppettest/railstesting'
+require 'puppettest/support/collection'
 
 class TestAST < Test::Unit::TestCase
-    include PuppetTest::RailsTesting
     include PuppetTest::ParserTesting
     include PuppetTest::ResourceTesting
-    
-    if defined? ActiveRecord
-    # Verify that our collection stuff works.
-    def test_collection
-        collectable = []
-        non = []
-        # First put some objects into the database.
-        bucket = mk_transtree do |object, depth, width|
-            # and mark some of them collectable
-            if width % 2 == 1
-                object.collectable = true
-                collectable << object
-            else
-                non << object
-            end
-        end
-
-        # Now collect our facts
-        facts = {}
-        Facter.each do |fact, value| facts[fact] = value end
-
-        assert_nothing_raised {
-            Puppet::Rails.init
-        }
-
-        # Now try storing our crap
-        assert_nothing_raised {
-            host = Puppet::Rails::Host.store(
-                :objects => bucket,
-                :facts => facts,
-                :host => facts["hostname"]
-            )
-        }
-
-        # Now create an ast tree that collects that.  They should all be files.
-        coll = nil
-        assert_nothing_raised {
-            coll = AST::Collection.new(
-                :type => nameobj("file")
-            )
-        }
-
-        top = nil
-        assert_nothing_raised("Could not create top object") {
-            top = AST::ASTArray.new(
-                :children => [coll]
-            )
-        }
-
-        objects = nil
-        assert_nothing_raised("Could not evaluate") {
-            scope = mkscope
-            objects = scope.evaluate(:ast => top).flatten
-        }
-
-        assert(objects.length > 0, "Did not receive any collected objects")
-    end
-    else
-        $stderr.puts "No ActiveRecord -- skipping collection tests"
-    end
+    include PuppetTest::Support::Collection
 
     def test_if
         astif = nil
@@ -248,87 +185,6 @@ class TestAST < Test::Unit::TestCase
             assert_nothing_raised do
                 assert_equal(result, code.call(resource),
                     "'#{string}' failed")
-            end
-        end
-    end
-
-    if defined? ActiveRecord::Base
-    def test_exported_collexp
-        railsinit
-        Puppet[:storeconfigs] = true
-        @interp, @scope, @source = mkclassframing
-
-        # make a rails resource
-        railsresource "file", "/tmp/testing", :owner => "root", :group => "bin",
-            :mode => "644" 
-
-        run_collection_queries(:exported) do |string, result, query|
-            code = nil
-            str = nil
-
-            # We don't support anything but the title in rails right now
-            retval = nil
-            bad = false
-            # Figure out if the search is for anything rails will ignore
-            string.scan(/(\w+) [!=]= \w+/) do |s|
-                unless s[0] == "title"
-                    bad = true
-                    break
-                end
-            end
-
-            # And if it is, make sure we throw an error.
-            if bad
-                assert_raise(Puppet::ParseError, "Evaluated '#{string}'") do
-                    str, code = query.evaluate :scope => @scope
-                end
-                next
-            else
-                assert_nothing_raised("Could not evaluate '#{string}'") do
-                    str, code = query.evaluate :scope => @scope
-                end
-            end
-            assert_nothing_raised("Could not find resource") do
-                retval = Puppet::Rails::Resource.find(:all,
-                    :include => :param_values,
-                    :conditions => str) 
-            end
-
-            if result
-                assert_equal(1, retval.length, "Did not find resource with '#{string}'")
-                res = retval.shift
-
-                assert_equal("file", res.restype)
-                assert_equal("/tmp/testing", res.title)
-            else
-                assert_equal(0, retval.length, "found a resource with '#{string}'")
-            end
-        end
-    end
-    end
-
-    def run_collection_queries(form)
-        {true => [%{title == "/tmp/testing"}, %{(title == "/tmp/testing")},
-            %{title == "/tmp/testing" and group == bin}, %{title == bin or group == bin},
-            %{title == "/tmp/testing" or title == bin}, %{title == "/tmp/testing"},
-            %{(title == "/tmp/testing" or title == bin) and group == bin}],
-        false => [%{title == bin}, %{title == bin or (title == bin and group == bin)},
-            %{title != "/tmp/testing"}, %{title != "/tmp/testing" and group != bin}]
-        }.each do |res, ary|
-            ary.each do |str|
-                if form == :virtual
-                    code = "File <| #{str} |>"
-                else
-                    code = "File <<| #{str} |>>"
-                end
-                parser = mkparser
-                query = nil
-
-                assert_nothing_raised("Could not parse '#{str}'") do
-                    query = parser.parse(code)[0].query
-                end
-
-                yield str, res, query
             end
         end
     end

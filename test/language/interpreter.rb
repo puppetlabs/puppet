@@ -8,12 +8,10 @@ require 'puppet'
 require 'puppet/parser/interpreter'
 require 'puppet/parser/parser'
 require 'puppet/network/client'
-require 'puppet/rails'
 require 'puppettest'
 require 'puppettest/resourcetesting'
 require 'puppettest/parsertesting'
 require 'puppettest/servertest'
-require 'puppettest/railstesting'
 require 'timeout'
 
 class TestInterpreter < PuppetTest::TestCase
@@ -21,7 +19,6 @@ class TestInterpreter < PuppetTest::TestCase
     include PuppetTest::ServerTest
     include PuppetTest::ParserTesting
     include PuppetTest::ResourceTesting
-    include PuppetTest::RailsTesting
     AST = Puppet::Parser::AST
     NodeDef = Puppet::Parser::Interpreter::NodeDef
 
@@ -920,7 +917,6 @@ class LdapNodeTest < PuppetTest::TestCase
     include PuppetTest::ServerTest
     include PuppetTest::ParserTesting
     include PuppetTest::ResourceTesting
-    include PuppetTest::RailsTesting
     AST = Puppet::Parser::AST
     NodeDef = Puppet::Parser::Interpreter::NodeDef
     confine "LDAP is not available" => Puppet.features.ldap?
@@ -1004,7 +1000,6 @@ class LdapReconnectTests < PuppetTest::TestCase
     include PuppetTest::ServerTest
     include PuppetTest::ParserTesting
     include PuppetTest::ResourceTesting
-    include PuppetTest::RailsTesting
     AST = Puppet::Parser::AST
     NodeDef = Puppet::Parser::Interpreter::NodeDef
     confine "Not running on culain as root" => (Puppet::Util::SUIDManager.uid == 0 and Facter.value("hostname") == "culain")
@@ -1045,85 +1040,6 @@ class LdapReconnectTests < PuppetTest::TestCase
         assert_raise(Puppet::Error) {
             parent, classes = interp.nodesearch_ldap(hostname)
         }
-    end
-end
-
-class InterpreterRailsTests < PuppetTest::TestCase
-	include PuppetTest
-    include PuppetTest::ServerTest
-    include PuppetTest::ParserTesting
-    include PuppetTest::ResourceTesting
-    include PuppetTest::RailsTesting
-    AST = Puppet::Parser::AST
-    NodeDef = Puppet::Parser::Interpreter::NodeDef
-    confine "No rails support" => Puppet.features.rails?
-
-    # We need to make sure finished objects are stored in the db.
-    def test_finish_before_store
-        railsinit
-        interp = mkinterp
-
-        node = interp.newnode ["myhost"], :code => AST::ASTArray.new(:children => [
-            resourcedef("file", "/tmp/yay", :group => "root"),
-            defaultobj("file", :owner => "root")
-        ])
-
-        interp.newclass "myclass", :code => AST::ASTArray.new(:children => [
-        ])
-
-        interp.newclass "sub", :parent => "myclass",
-            :code => AST::ASTArray.new(:children => [
-                resourceoverride("file", "/tmp/yay", :owner => "root")
-            ]
-        )
-
-        # Now do the rails crap
-        Puppet[:storeconfigs] = true
-
-        interp.evaluate("myhost", {})
-
-        # And then retrieve the object from rails
-        res = Puppet::Rails::Resource.find_by_restype_and_title("file", "/tmp/yay")
-
-        assert(res, "Did not get resource from rails")
-
-        param = res.param_names.find_by_name("owner", :include => :param_values)
-
-        assert(param, "Did not find owner param")
-
-        pvalue = param.param_values.find_by_value("root")
-        assert_equal("root", pvalue[:value])
-    end
-
-    def test_hoststorage
-        assert_nothing_raised {
-            Puppet[:storeconfigs] = true
-        }
-
-        file = tempfile()
-        File.open(file, "w") { |f|
-            f.puts "file { \"/etc\": owner => root }"
-        }
-
-        interp = nil
-        assert_nothing_raised {
-            interp = Puppet::Parser::Interpreter.new(
-                :Manifest => file,
-                :UseNodes => false,
-                :ForkSave => false
-            )
-        }
-
-        facts = {}
-        Facter.each { |fact, val| facts[fact] = val }
-
-        objects = nil
-        assert_nothing_raised {
-            objects = interp.run(facts["hostname"], facts)
-        }
-
-        obj = Puppet::Rails::Host.find_by_name(facts["hostname"])
-        assert(obj, "Could not find host object")
     end
 end
 

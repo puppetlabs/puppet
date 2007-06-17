@@ -4,13 +4,11 @@ $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppettest'
 require 'puppettest/resourcetesting'
-require 'puppettest/railstesting'
 
 class TestResource < PuppetTest::TestCase
 	include PuppetTest
     include PuppetTest::ParserTesting
     include PuppetTest::ResourceTesting
-    include PuppetTest::RailsTesting
     Parser = Puppet::Parser
     AST = Parser::AST
     Reference = Puppet::Parser::Resource::Reference
@@ -134,10 +132,15 @@ class TestResource < PuppetTest::TestCase
     end
 
     def test_to_trans
-        # First try translating a builtin resource
+        # First try translating a builtin resource.  Make sure we use some references
+        # and arrays, to make sure they translate correctly.
+        refs = []
+        4.times { |i| refs << Puppet::Parser::Resource::Reference.new(:title => "file%s" % i, :type => "file") }
         res = Parser::Resource.new :type => "file", :title => "/tmp",
             :source => @source, :scope => @scope,
-            :params => paramify(@source, :owner => "nobody", :mode => "644")
+            :params => paramify(@source, :owner => "nobody", :group => %w{you me},
+            :require => refs[0], :ignore => %w{svn},
+            :subscribe => [refs[1], refs[2]], :notify => [refs[3]])
 
         obj = nil
         assert_nothing_raised do
@@ -150,8 +153,12 @@ class TestResource < PuppetTest::TestCase
         assert_equal(obj.name, res.title)
 
         # TransObjects use strings, resources use symbols
-        hash = obj.to_hash.inject({}) { |h,a| h[a[0].intern] = a[1]; h }
-        assert_equal(hash, res.to_hash)
+        assert_equal("nobody", obj["owner"], "Single-value string was not passed correctly")
+        assert_equal(%w{you me}, obj["group"], "Array of strings was not passed correctly")
+        assert_equal("svn", obj["ignore"], "Array with single string was not turned into single value")
+        assert_equal(["file", refs[0].title], obj["require"], "Resource reference was not passed correctly")
+        assert_equal([["file", refs[1].title], ["file", refs[2].title]], obj["subscribe"], "Array of resource references was not passed correctly")
+        assert_equal(["file", refs[3].title], obj["notify"], "Array with single resource reference was not turned into single value")
     end
 
     def test_adddefaults
