@@ -56,7 +56,7 @@ class Puppet::Parser::Resource::Param
     
     def values_to_remove(db_values)
         values = value.is_a?(Array) ? value : [value]
-        values.map! { |v| v.to_s }
+        values = values.map { |v| v.to_s }
         line_number = line_to_i()
         db_values.collect do |db|
             db unless (db.line == line_number && 
@@ -68,7 +68,7 @@ class Puppet::Parser::Resource::Param
 
     def values_to_add(db_values)
         values = value.is_a?(Array) ? value : [value]
-        values.map! { |v| v.to_s }
+        values = values.map { |v| v.to_s }
         line_number = line_to_i()
         values.collect do |v|
             v unless db_values.find { |db| (v == db.value && 
