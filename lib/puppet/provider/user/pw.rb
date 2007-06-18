@@ -4,6 +4,7 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
     desc "User management via ``pw`` on FreeBSD."
 
     commands :pw => "pw"
+    has_features :manages_homedir, :allows_duplicates
 
     defaultfor :operatingsystem => :freebsd
 
@@ -30,8 +31,12 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
             end
         end
 
-        if @resource[:allowdupe] == :true
+        if @resource.allowdupe?
             cmd << "-o"
+        end
+
+        if @resource.managehome?
+            cmd << "-m"
         end
 
         return cmd
