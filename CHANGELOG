@@ -1,3 +1,5 @@
+    Fixed environment handling in the crontab provider (#669).
+
     Added patch by trombik in #572, supporting old-style
     freebsd init scripts with '.sh' endings.
 

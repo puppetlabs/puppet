@@ -287,7 +287,7 @@ Puppet::Type.newtype(:cron) do
             the crontab, e.g., ``PATH=/bin:/usr/bin:/usr/sbin``."
 
         validate do |value|
-            unless value =~ /^\s*(\w+)\s*=\s*(.+)\s*$/
+            unless value =~ /^\s*(\w+)\s*=\s*(.+)\s*$/ or value == :absent or value == "absent"
                 raise ArgumentError, "Invalid environment setting %s" %
                     value.inspect
             end
@@ -301,8 +301,24 @@ Puppet::Type.newtype(:cron) do
             end
         end
 
+        def is_to_s(newvalue)
+            if newvalue
+                newvalue.join(",")
+            else
+                nil
+            end
+        end
+
         def should
             @should
+        end
+
+        def should_to_s(newvalue = @should)
+            if newvalue
+                newvalue.join(",")
+            else
+                nil
+            end
         end
     end
 

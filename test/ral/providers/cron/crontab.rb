@@ -342,6 +342,56 @@ class TestCronParsedProvider < Test::Unit::TestCase
             @provider.clear
         end
     end
+
+    def test_prefetch
+        cron = @type.create :command => "/bin/echo yay", :name => "test", :hour => 4
+
+        assert_nothing_raised("Could not prefetch cron") do
+            cron.provider.class.prefetch("test" => cron)
+        end
+    end
+
+    # Testing #669.
+    def test_environment_settings
+        @provider.filetype = :ram
+        setme
+
+        target = @provider.target_object(@me)
+
+        # First with no env settings
+        cron = @type.create :command => "/bin/echo yay", :name => "test", :hour => 4
+
+        assert_apply(cron)
+
+        props = cron.retrieve.inject({}) { |hash, ary| hash[ary[0]] = ary[1]; hash }
+
+        # Now set the env
+        cron[:environment] = "TEST=foo"
+        assert_apply(cron)
+
+        props = cron.retrieve.inject({}) { |hash, ary| hash[ary[0]] = ary[1]; hash }
+        assert(target.read.include?("TEST=foo"), "Did not get environment setting")
+        #assert_equal(["TEST=foo"], props[:environment], "Did not get environment setting")
+
+        # Modify it
+        cron[:environment] = ["TEST=foo", "BLAH=yay"]
+        assert_apply(cron)
+
+        props = cron.retrieve.inject({}) { |hash, ary| hash[ary[0]] = ary[1]; hash }
+        assert(target.read.include?("TEST=foo"), "Did not keep environment setting")
+        assert(target.read.include?("BLAH=yay"), "Did not get second environment setting")
+        #assert_equal(["TEST=foo", "BLAH=yay"], props[:environment], "Did not modify environment setting")
+
+        # And remove it
+        cron[:environment] = :absent
+        assert_apply(cron)
+
+        props = cron.retrieve.inject({}) { |hash, ary| hash[ary[0]] = ary[1]; hash }
+        assert(! target.read.include?("TEST=foo"), "Did not remove environment setting")
+        assert(! target.read.include?("BLAH=yay"), "Did not remove second environment setting")
+        #assert_nil(props[:environment], "Did not modify environment setting")
+
+    end
 end
 
 # $Id$

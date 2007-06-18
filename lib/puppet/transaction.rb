@@ -487,6 +487,9 @@ class Transaction
             begin
                 provider.prefetch(resources)
             rescue => detail
+                if Puppet[:trace]
+                    puts detail.backtrace
+                end
                 Puppet.err "Could not prefetch % provider %s: %s" % [resources[0].class.name, provider.name, detail]
             end
         end

@@ -62,7 +62,7 @@ Puppet::Type.type(:cron).provide(:crontab,
             if details[:name]
                 str = "# Puppet Name: %s\n" % details[:name]
             end
-            if details[:environment] and details[:environment] != :absent
+            if details[:environment] and details[:environment] != :absent and details[:environment] != [:absent]
                 details[:environment].each do |env|
                     str += env + "\n"
                 end
@@ -84,10 +84,9 @@ Puppet::Type.type(:cron).provide(:crontab,
     end
 
     # See if we can match the hash against an existing cron job.
-    def self.match(hash)
-        resource_type.find_all { |obj|
-            obj.value(:user) == hash[:user] and obj.value(:command) == hash[:command]
-        }.each do |obj|
+    def self.match(hash, resources)
+        resources.each do |name, obj|
+            p hash
             # we now have a cron job whose command exactly matches
             # let's see if the other fields match
 
@@ -152,10 +151,7 @@ Puppet::Type.type(:cron).provide(:crontab,
                     record[:name] = name
                     name = nil
                 end
-                unless envs.empty?
-                    record[:environment] = envs
-                    envs = []
-                end
+                record[:environment] = envs
             end
         }.reject { |record| record[:skip] }
     end
