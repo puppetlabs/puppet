@@ -108,6 +108,19 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
             # if we've gotten this far, we found a valid script
             return fqname
         }
+        @model[:path].each { |path|
+            fqname_sh = File.join(path,"#{name}.sh")
+            begin
+                stat = File.stat(fqname_sh)
+            rescue
+                # should probably rescue specific errors...
+                self.debug("Could not find %s.sh in %s" % [name,path])
+                next
+            end
+
+            # if we've gotten this far, we found a valid script
+            return fqname_sh
+        }
         raise Puppet::Error, "Could not find init script for '%s'" % name
     end
 

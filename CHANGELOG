@@ -1,3 +1,6 @@
+    Added patch by trombik in #572, supporting old-style
+    freebsd init scripts with '.sh' endings.
+
     Added fink package provider (#642), as provided by 'do'.
 
     Marked the dpkg package provider as versionable (#647).
