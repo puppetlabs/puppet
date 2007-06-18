@@ -229,6 +229,40 @@ class TestCA < Test::Unit::TestCase
         # And try a different host
         assert(! caserv.autosign?("other.yay.com"), "Host was autosigned")
     end
+
+    # Make sure that a CSR created with keys that don't match the existing
+    # cert throws an exception on the server.
+    def test_mismatched_public_keys_throws_exception
+        ca = Puppet::Network::Handler.ca.new()
+
+        # First initialize the server
+        client = Puppet::Network::Client.ca.new :CA => ca
+        client.request_cert
+        File.unlink(Puppet[:hostcsr])
+
+        # Now use a different cert name
+        Puppet[:certname] = "my.host.com"
+        client = Puppet::Network::Client.ca.new :CA => ca
+        firstcsr = client.csr
+        File.unlink(Puppet[:hostcsr]) if FileTest.exists?(Puppet[:hostcsr])
+
+        assert_nothing_raised("Could not get cert") do
+            ca.getcert(firstcsr.to_s)
+        end
+
+        # Now get rid of the public key, forcing a new csr
+        File.unlink(Puppet[:hostprivkey])
+
+        client = Puppet::Network::Client.ca.new :CA => ca
+
+        second_csr = client.csr
+
+        assert(firstcsr.to_s != second_csr.to_s, "CSR did not change")
+
+        assert_raise(Puppet::Error, "CA allowed mismatched keys") do
+            ca.getcert(second_csr.to_s)
+        end
+    end
 end
 
 # $Id$

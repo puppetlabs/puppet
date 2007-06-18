@@ -1,3 +1,7 @@
+    Fixed the CA server so that it refuses to send back a certificate
+    whose public key doesn't match the CSR.  Instead, it tells the
+    user to run 'puppetca --clean'.
+
     Invalid certificates are no longer written to disk (#578).
 
     Added a package provider (appdmg) able to install .app packages

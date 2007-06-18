@@ -104,7 +104,9 @@ class Puppet::Network::Handler
             cert, cacert = ca.getclientcert(hostname)
             if cert and cacert
                 Puppet.info "Retrieving existing certificate for %s" % hostname
-                #Puppet.info "Cert: %s; Cacert: %s" % [cert.class, cacert.class]
+                unless csr.public_key.to_s == cert.public_key.to_s
+                    raise Puppet::Error, "Certificate request does not match existing certificate; run 'puppetca --clean %s'." % hostname
+                end
                 return [cert.to_pem, cacert.to_pem]
             elsif @ca
                 if self.autosign?(hostname) or client.nil?

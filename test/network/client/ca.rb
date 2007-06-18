@@ -2,6 +2,7 @@
 
 $:.unshift("../../lib") if __FILE__ =~ /\.rb$/
 
+require 'mocha'
 require 'puppettest'
 require 'puppet/network/client/ca'
 require 'puppet/sslcertificates/support'
@@ -48,6 +49,7 @@ class TestClientCA < Test::Unit::TestCase
         File.unlink(Puppet[:hostprivkey])
 
         @client = Puppet::Network::Client.ca.new :CA => @ca
+        @ca.expects(:getcert).returns("yay") # not a valid cert
         # Now make sure it fails, since we'll get the old cert but have new keys
         assert_raise(Puppet::Network::Client::CA::InvalidCertificate, "Did not fail on invalid cert") do
             @client.request_cert
