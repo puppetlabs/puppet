@@ -34,8 +34,6 @@ class Puppet::Network::Client::CA < Puppet::Network::Client
         if cert.nil? or cert == ""
             return nil
         end
-        Puppet.config.write(:hostcert) do |f| f.print cert end
-        Puppet.config.write(:localcacert) do |f| f.print cacert end
 
         begin
             @cert = OpenSSL::X509::Certificate.new(cert)
@@ -47,8 +45,13 @@ class Puppet::Network::Client::CA < Puppet::Network::Client
         end
 
         unless @cert.check_private_key(key)
-            raise InvalidCertificate, "Certificate does not match private key"
+            raise InvalidCertificate, "Certificate does not match private key.  Try 'puppetca --clean %s' on the server." % Facter.value(:fqdn)
         end
+
+        # Only write the cert out if it passes validating.
+        Puppet.config.write(:hostcert) do |f| f.print cert end
+        Puppet.config.write(:localcacert) do |f| f.print cacert end
+
         return @cert
     end
 end

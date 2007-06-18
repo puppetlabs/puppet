@@ -1,3 +1,5 @@
+    Invalid certificates are no longer written to disk (#578).
+
     Added a package provider (appdmg) able to install .app packages
     on .dmg files on OS X (#641).
 

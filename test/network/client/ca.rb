@@ -33,6 +33,30 @@ class TestClientCA < Test::Unit::TestCase
             client = Puppet::Network::Client.ca.new
         end
     end
+
+    # #578
+    def test_invalid_certs_are_not_written
+        # Run the get once, which should be valid
+
+        assert_nothing_raised("Could not get a certificate") do
+            @client.request_cert
+        end
+
+        # Now remove the cert and keys, so we get a broken cert
+        File.unlink(Puppet[:hostcert])
+        File.unlink(Puppet[:localcacert])
+        File.unlink(Puppet[:hostprivkey])
+
+        @client = Puppet::Network::Client.ca.new :CA => @ca
+        # Now make sure it fails, since we'll get the old cert but have new keys
+        assert_raise(Puppet::Network::Client::CA::InvalidCertificate, "Did not fail on invalid cert") do
+            @client.request_cert
+        end
+
+        # And then make sure the cert isn't written to disk
+        assert(! FileTest.exists?(Puppet[:hostcert]),
+            "Invalid cert got written to disk")
+    end
 end
 
 # $Id$
