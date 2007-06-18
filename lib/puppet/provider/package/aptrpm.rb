@@ -4,6 +4,8 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm, :source => :rpm do
 
     desc "Package management via ``apt-get`` ported to ``rpm``."
 
+    has_feature :versionable
+
     commands :aptget => "/usr/bin/apt-get"
     commands :aptcache => "/usr/bin/apt-cache"
     commands :rpm => "/usr/bin/rpm"

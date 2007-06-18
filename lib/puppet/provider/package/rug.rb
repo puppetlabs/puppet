@@ -1,6 +1,8 @@
 Puppet.type(:package).provide :rug, :parent => :rpm do
     desc "Support for suse ``rug`` package manager."
 
+    has_feature :versionable
+
     commands :rug => "/usr/bin/rug"
     defaultfor :operatingsystem => :suse 
     confine    :operatingsystem => :suse
