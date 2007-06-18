@@ -95,6 +95,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
         ar_hash_merge(get_facts_hash(), facts, 
                       :create => Proc.new { |name, values|
                           fact_name = Puppet::Rails::FactName.find_or_create_by_name(name)
+                          values = [values] unless values.is_a?(Array)
                           values.each do |value|
                               fact_values.build(:value => value,
                                                 :fact_name => fact_name)

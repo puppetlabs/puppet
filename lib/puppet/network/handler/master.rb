@@ -71,7 +71,7 @@ class Puppet::Network::Handler
 
                 host = Puppet::Rails::Host.find_or_create_by_name(client)
                 host.last_freshcheck = Time.now
-                if clientip and (! host.ip or host.ip == "")
+                if clientip and (! host.ip or host.ip == "" or host.ip == "NULL")
                     host.ip = clientip
                 end
                 host.save

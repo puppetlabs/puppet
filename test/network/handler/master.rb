@@ -7,10 +7,6 @@ require 'puppet/network/handler/master'
 
 class TestMaster < Test::Unit::TestCase
     include PuppetTest::ServerTest
-    def teardown
-        super
-        #print "\n\n\n\n" if Puppet[:debug]
-    end
 
     # run through all of the existing test files and make sure everything
     # works
@@ -302,49 +298,6 @@ class TestMaster < Test::Unit::TestCase
 
         assert_equal(fakename, name)
         assert_equal(fakeip, ip)
-    end
-
-    if Puppet.features.rails?
-    def test_freshness_connect_update
-        Puppet::Rails.init
-        Puppet[:storeconfigs] = true
-
-        # this is the default server setup
-        master = Puppet::Network::Handler.master.new(
-            :Code => "",
-            :UseNodes => true,
-            :Local => true
-        )
-
-        # Create a host
-        Puppet::Rails::Host.new(:name => "test", :ip => "192.168.0.3").save
-
-        assert_nothing_raised("Failed to update last_connect for unknown host") do
-            master.freshness("created",'192.168.0.1')
-        end
-        
-        # Make sure it created the host
-        created = Puppet::Rails::Host.find_by_name("created")
-        assert(created, "Freshness did not create host")
-        assert(created.last_freshcheck,
-            "Did not set last_freshcheck on created host")
-        assert_equal("192.168.0.1", created.ip,
-            "Did not set IP address on created host")
-
-        # Now check on the existing host
-        assert_nothing_raised("Failed to update last_connect for unknown host") do
-            master.freshness("test",'192.168.0.2')
-        end
-
-        # Recreate it, so we're not using the cached object.
-        host = Puppet::Rails::Host.find_by_name("test")
-        
-        # Make sure it created the host
-        assert(host.last_freshcheck,
-            "Did not set last_freshcheck on existing host")
-        assert_equal("192.168.0.3", host.ip,
-            "Overrode IP on found host")
-    end
     end
 end
 
