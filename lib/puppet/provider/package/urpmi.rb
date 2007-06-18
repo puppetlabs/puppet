@@ -4,8 +4,6 @@ Puppet::Type.type(:package).provide :urpmi, :parent => :rpm, :source => :rpm do
 
     defaultfor :operatingsystem => [:mandriva, :mandrake]
 
-    has_feature :versionable
-
     def install
         should = @resource.should(:ensure)
         self.debug "Ensuring => #{should}"

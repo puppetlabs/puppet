@@ -5,8 +5,6 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     desc "Ruby Gem support.  By default uses remote gems, but you can specify
         the path to a local gem via ``source``."
 
-    has_feature :versionable
-
     commands :gemcmd => "gem"
 
     def self.gemlist(hash)

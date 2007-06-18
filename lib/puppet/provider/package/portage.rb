@@ -3,8 +3,6 @@ require 'puppet/provider/package'
 Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Package do
     desc "Provides packaging support for Gentoo's portage system."
 
-    has_feature :versionable
-
     commands :emerge => "/usr/bin/emerge", :eix => "/usr/bin/eix", :update_eix => "/usr/bin/update-eix"
 
     defaultfor :operatingsystem => :gentoo

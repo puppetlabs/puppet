@@ -1,8 +1,6 @@
 Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     desc "Support via ``yum``."
 
-    has_feature :versionable
-
     commands :yum => "yum", :rpm => "rpm"
 
     defaultfor :operatingsystem => [:fedora, :centos, :redhat]

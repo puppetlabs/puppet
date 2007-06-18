@@ -4,8 +4,6 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
 
     desc "Package management via ``apt-get``."
 
-    has_feature :versionable
-
     commands :aptget => "/usr/bin/apt-get"
     commands :aptcache => "/usr/bin/apt-cache"
     commands :preseed => "/usr/bin/debconf-set-selections"

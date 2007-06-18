@@ -6,6 +6,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
         to manage."
 
     commands :dpkg => "/usr/bin/dpkg"
+    commands :dpkg_deb => "/usr/bin/dpkg-deb"
     commands :dpkgquery => "/usr/bin/dpkg-query"
     
     def self.instances
@@ -47,6 +48,11 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
             raise ArgumentError, "You cannot install dpkg packages without a source"
         end
         dpkg "-i", file
+    end
+
+    # Return the version from the package.
+    def latest
+        output = dpkg_deb "--show", @resource[:source]
     end
 
     def query
