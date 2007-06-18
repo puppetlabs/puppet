@@ -83,15 +83,21 @@ fstatement:   NAME LPAREN funcvalues RPAREN {
 funcvalues:       namestrings
                 | resourcerefs
 
-namestrings:       namestring
+namestrings:      namestring
                 | namestrings COMMA namestring {
     result = aryfy(val[0], val[2])
     result.line = @lexer.line
     result.file = @lexer.file
 }
 
-namestring:        name
+# This is *almost* an rvalue, but I couldn't get a full
+# rvalue to work without scads of shift/reduce conflicts.
+namestring:       name
                 | variable
+                | type
+                | boolean
+                | funcrvalue
+                | selector
                 | quotedtext
                 | CLASSNAME {
                     result = ast AST::Name, :value => val[0]
@@ -332,7 +338,7 @@ rvalue:       quotedtext
             | undef
 
 # We currently require arguments in these functions.
-funcrvalue:   NAME LPAREN namestrings RPAREN {
+funcrvalue:   NAME LPAREN funcvalues RPAREN {
     args = aryfy(val[2])
     result = ast AST::Function,
         :name => val[0],

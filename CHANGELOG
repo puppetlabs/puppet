@@ -1,3 +1,6 @@
+    Fixed functions so that they accept most other rvalues as valid values
+    (#548).
+
     COMPATIBILITY ALERT:
     Significantly reworked external node support, in a way that's NOT
     backward-compatible:
