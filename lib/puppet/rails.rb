@@ -9,7 +9,7 @@ module Puppet::Rails
         # This global init does not work for testing, because we remove
         # the state dir on every test.
         unless ActiveRecord::Base.connected?
-            Puppet.config.use(:main)
+            Puppet.config.use(:main, :rails, :puppetmasterd)
 
             ActiveRecord::Base.logger = Logger.new(Puppet[:railslog])
             ActiveRecord::Base.allow_concurrency = true
@@ -61,13 +61,6 @@ module Puppet::Rails
         if Puppet[:dbmigrate]
             migrate()
         end
-
-        # For now, we have to use :puppet, too, since non-puppetmasterd processes
-        # (including testing) put the logdir in :puppet, not in :puppetmasterd.
-        Puppet.config.use(:rails, :main, :puppetmasterd)
-
-        # This has to come after we create the logdir with the :use above.
-        ActiveRecord::Base.logger = Logger.new(Puppet[:railslog])
     end
 
     # Migrate to the latest db schema.
