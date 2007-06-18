@@ -37,8 +37,7 @@ module Puppet
         feature :versionable, "The provider is capable of interrogating the
                 package database for installed version(s), and can select
                 which out of a set of available versions of a package to
-                install if asked.",
-            :methods => [:latest]
+                install if asked."
 
         ensurable do
             desc "What state the package should be in.
