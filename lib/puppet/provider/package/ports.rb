@@ -20,7 +20,8 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd, :source => :fre
         # -p: create a package
         # -N: install if the package is missing, otherwise upgrade
         # -P: prefer binary packages
-        cmd = %w{-p -N -P} << @resource[:name]
+        # -M: yes, we're a batch, so don't ask any questions
+        cmd = %w{-p -N -P  -M BATCH=yes} << @resource[:name]
 
         output = portupgrade(*cmd)
         if output =~ /\*\* No such /
