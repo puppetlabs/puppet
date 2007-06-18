@@ -175,10 +175,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     def getconfig
         dostorage()
 
-        facts = nil
-        Puppet::Util.benchmark(:notice, "Retrieved facts") do
-            facts = self.class.facts
-        end
+        facts = self.class.facts
 
         if self.objects or FileTest.exists?(self.cachefile)
             if self.fresh?(facts)
