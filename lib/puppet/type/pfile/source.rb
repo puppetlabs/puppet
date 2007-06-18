@@ -22,7 +22,16 @@ module Puppet
                         source => \"puppet://server/module/sendmail.cf\"
                     }
                 }
-            
+
+            Currently, only the ``puppet`` scheme is supported for source 
+            URL's. Puppet will connect to the file server running on 
+            ``server`` to retrieve the contents of the file. If the 
+            ``server`` part is empty, the behavior of the command-line 
+            interpreter (``puppet``) and the client demon (``puppetd``) differs
+            slightly: ``puppet`` will look such a file up on the module path
+            on the local host, whereas ``puppetd`` will connect to the 
+            puppet server that it received the manifest from.
+     
             See the `FileServingConfiguration fileserver configuration documentation`:trac: for information on how to configure
             and use file services within Puppet.
 

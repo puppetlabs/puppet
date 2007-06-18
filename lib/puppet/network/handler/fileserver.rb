@@ -102,6 +102,7 @@ class Puppet::Network::Handler
                         self.mount(dir, name)
                     end
                 }
+                self.mount(nil, MODULES)
             else
                 @passedconfig = false
                 readconfig(false) # don't check the file the first time.

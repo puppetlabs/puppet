@@ -976,6 +976,18 @@ module Puppet
             obj
         end
 
+        def localfileserver
+            unless defined? @@localfileserver
+                args = {
+                    :Local => true,
+                    :Mount => { "/" => "localhost" },
+                    :Config => false
+                }
+                @@localfileserver = Puppet::Network::Handler.handler(:fileserver).new(args)
+            end
+            @@localfileserver
+        end
+
         def uri2obj(source)
             sourceobj = FileSource.new
             path = nil
@@ -996,25 +1008,24 @@ module Puppet
 
             case uri.scheme
             when "file":
-                unless defined? @@localfileserver
-                    @@localfileserver = Puppet::Network::Handler.handler(:fileserver).new(
-                        :Local => true,
-                        :Mount => { "/" => "localhost" },
-                        :Config => false
-                    )
-                    #@@localfileserver.mount("/", "localhost")
-                end
-                sourceobj.server = @@localfileserver
+                sourceobj.server = localfileserver
                 path = "/localhost" + uri.path
             when "puppet":
-                args = { :Server => uri.host }
-                if uri.port
-                    args[:Port] = uri.port
-                end
-                # FIXME We should cache a copy of this server
-                #sourceobj.server = Puppet::Network::NetworkClient.new(args)
+                # FIXME: We should cache clients by uri.host + uri.port
+                # not by the full source path
                 unless @clients.include?(source)
-                    @clients[source] = Puppet::Network::Client.file.new(args)
+                    host = uri.host
+                    host ||= Puppet[:server] unless Puppet[:name] == "puppet"
+                    if host.nil?
+                        server = localfileserver
+                    else
+                        args = { :Server => host }
+                        if uri.port
+                            args[:Port] = uri.port
+                        end
+                        server = Puppet::Network::Client.file.new(args)
+                    end
+                    @clients[source] = server
                 end
                 sourceobj.server = @clients[source]
 
