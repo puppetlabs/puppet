@@ -1,6 +1,20 @@
-# Jeff McCune <mccune.jeff@gmail.com>
-# Mac OS X Package Installer which handles .pkg and .mpkg
-# bundles inside an Apple Disk Image.
+#
+# pkgdmg.rb
+#
+# Install Installer.app packages wrapped up inside a DMG image file.
+#
+# Copyright (C) 2007 Jeff McCune Jeff McCune <jeff@northstarlabs.net>
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation (version 2 of the License)
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston MA  02110-1301 USA
 #
 # Motivation: DMG files provide a true HFS file system
 # and are easier to manage and .pkg bundles.
@@ -11,13 +25,71 @@
 # As a result, we store installed .pkg.dmg file names
 # in /var/db/.puppet_pkgdmg_installed_<name>
 
-# require 'ruby-debug'
-# Debugger.start
-
 require 'puppet/provider/package'
 
 Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Package do
-    desc "Package management based on Apple's Installer.app and DiskUtility.app"
+    desc "Package management based on Apple's Installer.app and DiskUtility.app
+    
+Author: Jeff McCune <jeff@northstarlabs.net>
+
+Please direct questions about this provider to the puppet-users mailing list.
+
+This package works by checking the contents of a DMG image for Apple pkg or
+mpkg files. Any number of pkg or mpkg files may exist in the root directory of
+the DMG file system. Sub directories are not checked for packages.
+
+This provider always assumes the label (formerly called 'name') attribute
+declared in the manifest will always exactly match the file name (without
+path) of the DMG file itself. Therefore, if you want to install packages in
+'Foobar.pkg.dmg' you must explicitly specify the label:
+
+ package { Foobar.pkg.dmg: ensure => installed, provider => pkgdmg }
+
+Only the dmg file name itself is used when puppet determines if the packages
+contained within are currently installed. For example, if a package resource
+named 'Foobar.pkg.dmg' is named for installation and contains multiple
+packages, this provider will install all packages in the root directory of
+this file system, then create a small cookie for the whole bundle, located at
+/var/db/.puppet_pkgdmg_installed_Foobar.pkg.dmg
+
+As a result, if you change the contents of the DMG file in any way, Puppet
+will not update or re-install the packages contained within unless you change
+the file name of the DMG wrapper itself. Therefore, if you use this provider,
+I recommend you name the DMG wrapper files in a manner that lends itself to
+incremental version changes. I include some version or date string in the DMG
+name, like so:
+
+ Firefox-2.0.0.3-1.pkg.dmg
+
+If I realize I've mis-packaged this DMG, then I have the option to increment
+the package version, yielding Firefox-2.0.0.3-2.pkg.dmg.
+
+This provider allows you to host DMG files within an FTP or HTTP server. This
+is primarily how the author provider distributes software. Any URL mechanism
+curl or Ruby's open-uri module supports is supported by this provider. Curl
+supported URL's yield much faster data throughput than open-uri, so I
+recommend HTTP, HTTPS, or FTP for source package repositories.
+
+Because the provider assumes packages will be transfered via CURL, a two stage
+process occurs. First, if a URL is detected, curl is invoked to transfer the
+file into a temporary directory. If no URL is present, the provider skips
+straight to step 2. In step two, the source file is mounted, then packages
+installed, and finally the DMG file is removed.
+
+WARNING: Because I assume files will be downloaded to /tmp, the current
+implementation attempts to delete DMG files if you install directly from the
+file system and not via a URL method.
+
+If this is a problem for you, please patch the code, or bug Jeff to fix this.
+
+Example usage:
+
+package { Thunderbird-2.0.0.4-1.pkg.dmg:
+  provider => pkgdmg, ensure => present
+  source => 'http://0.0.0.0:8000/packages/Thunderbird-2.0.0.4-1.pkg.dmg',
+}
+"
+  
 
     confine :exists => "/Library/Receipts"
     commands :installer => "/usr/sbin/installer"
