@@ -295,69 +295,52 @@ module Util
         @@os ||= Facter.value(:operatingsystem)
         output = nil
         child_pid, child_status = nil
+        # There are problems with read blocking with badly behaved children
+        # read.partialread doesn't seem to capture either stdout or stderr
+        # We hack around this using a temporary file
+
         # The idea here is to avoid IO#read whenever possible.
-        if arguments[:squelch]
-            child_pid = Kernel.fork
-            if child_pid
-                # Parent process executes this
-                child_status = Process.waitpid2(child_pid)[1]
-            else
-                # Child process executes this
-                begin
-                    $stdin.reopen("/dev/null")
-                    $stdout.reopen("/dev/null")
-                    $stderr.reopen("/dev/null")
-                    if arguments[:gid]
-                        Process.egid = arguments[:gid]
-                        Process.gid = arguments[:gid] unless @@os == "Darwin"
-                    end
-                    if arguments[:uid]
-                        Process.euid = arguments[:uid]
-                        Process.uid = arguments[:uid] unless @@os == "Darwin"
-                    end
-                    if command.is_a?(Array)
-                        Kernel.exec(*command)
-                    else
-                        Kernel.exec(command)
-                    end
-                rescue => detail
-                    puts detail.to_s
-                    exit!(1)
-                end # begin; rescue
-            end # if child_pid; else
+        output_file="/dev/null"
+        if ! arguments[:squelch]
+            require "tempfile"
+            output_file = Tempfile.new("puppet")
+        end
+
+        child_pid = Kernel.fork
+        if child_pid
+            # Parent process executes this
+            child_status = Process.waitpid2(child_pid)[1]
         else
-            IO.popen("-") do |f|
-                if f
-                    # Parent process executes this
-                    output = f.read
+            # Child process executes this
+            begin
+                $stdin.reopen("/dev/null")
+                $stdout.reopen(output_file)
+                $stderr.reopen(output_file)
+                if arguments[:gid]
+                    Process.egid = arguments[:gid]
+                    Process.gid = arguments[:gid] unless @@os == "Darwin"
+                end
+                if arguments[:uid]
+                    Process.euid = arguments[:uid]
+                    Process.uid = arguments[:uid] unless @@os == "Darwin"
+                end
+                ENV['LANG'] = ENV['LC_ALL'] = ENV['LC_MESSAGES'] = ENV['LANGUAGE'] = 'C'
+                if command.is_a?(Array)
+                    Kernel.exec(*command)
                 else
-                    # Parent process executes this
-                    begin
-                        $stdin.reopen("/dev/null")
-                        $stderr.close
-                        $stderr = $stdout.dup
-                        if arguments[:gid]
-                            Process.egid = arguments[:gid]
-                            Process.gid = arguments[:gid] unless @@os == "Darwin"
-                        end
-                        if arguments[:uid]
-                            Process.euid = arguments[:uid]
-                            Process.uid = arguments[:uid] unless @@os == "Darwin"
-                        end
-								ENV['LANG'] = ENV['LC_ALL'] = ENV['LC_MESSAGES'] = ENV['LANGUAGE'] = 'C'
-                        if command.is_a?(Array)
-                            Kernel.exec(*command)
-                        else
-                            Kernel.exec(command)
-                        end
-                    rescue => detail
-                        puts detail.to_s
-                        exit!(1)
-                    end # begin; rescue
-                end # if f; else
-            end # IO.popen do |f|
-            child_status = $?
-        end # if arguments[:squelch]; else
+                    Kernel.exec(command)
+                end
+            rescue => detail
+                puts detail.to_s
+                exit!(1)
+            end # begin; rescue
+        end # if child_pid
+ 	
+        # read output in if required
+        if ! arguments[:squelch]
+            output = output_file.open.read
+            output_file.delete
+        end
 
         if arguments[:failonfail]
             unless child_status == 0

@@ -1,3 +1,6 @@
+    Applied the patch from #667 to hopefully kill the client hanging
+    problems (permanently, this time).
+
     Fixed functions so that they accept most other rvalues as valid values
     (#548).
 
