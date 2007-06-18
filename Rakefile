@@ -45,7 +45,7 @@ if project.has?(:gem)
 
         task.bindir = "bin"                               # Use these for applications.
         task.executables = ["puppet", "puppetd", "puppetmasterd", "puppetdoc",
-                         "puppetca"]
+                         "puppetca", "puppetrun", "ralsh"]
         task.default_executable = "puppet"
         task.autorequire = 'puppet'
 
