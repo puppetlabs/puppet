@@ -339,6 +339,7 @@ module Util
         # read output in if required
         if ! arguments[:squelch]
             output = output_file.open.read
+            output_file.close
             output_file.delete
         end
 
