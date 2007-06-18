@@ -1,3 +1,5 @@
+    Applied patches by trombik to fix FreeBSD ports (#624 and #628).
+
     Fixed the CA server so that it refuses to send back a certificate
     whose public key doesn't match the CSR.  Instead, it tells the
     user to run 'puppetca --clean'.

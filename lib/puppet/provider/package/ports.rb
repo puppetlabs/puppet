@@ -49,7 +49,7 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd, :source => :fre
         match = $2
         info = $3
 
-        unless pkgstuff =~ /^(\w+)-([0-9].+)$/
+        unless pkgstuff =~ /^(\S+)-([^-\s]+)$/
             raise Puppet::PackageError,
                 "Could not match package info '%s'" % pkgstuff
         end
