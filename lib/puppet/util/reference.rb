@@ -173,7 +173,7 @@ class Puppet::Util::Reference
         end
 
         puts "Writing %s reference to trac as %s" % [@name, @page]
-        cmd = %{sudo trac-admin /export/svn/trac/puppet wiki import %s /tmp/puppetdoc.txt} % self.page
+        cmd = %{sudo trac-admin /opt/rl/trac/puppet wiki import %s /tmp/puppetdoc.txt} % self.page
         output = %x{#{cmd}}
         unless $? == 0
             $stderr.puts "trac-admin failed"
