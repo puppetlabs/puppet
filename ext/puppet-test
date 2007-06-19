@@ -6,9 +6,9 @@
 #
 # = Usage
 #
-#   puppet-test  [-c|--compile] [-D|--describe] [-d|--debug] [-f|--file <file>]
+#   puppet-test  [-c|--compile] [-D|--describe <file>] [-d|--debug]
 #       [--fork <num>] [-h|--help] [-H|--hostname <host name>] [-r|--repeat <number=1>]
-#       [-V|--version] [-v|--verbose]
+#       [-R|--retrieve <file>] [-V|--version] [-v|--verbose]
 #
 # = Description
 #
@@ -34,11 +34,9 @@
 #   Enable full debugging.
 #
 # describe::
-#   Describe the file being tested, rather than retrieve it.
-#
-# file::
-#   Test file performance.  Defaults to retrieving the file, but you can use
-#   --describe to instead describe the file.
+#   Describe the file being tested.  This is a query to get information about
+#   the file from the server, to determine if it should be copied, and is the
+#   first half of every file transfer.
 #
 # fork::
 #   Fork the specified number of times, thus acting as multiple clients.
@@ -54,6 +52,13 @@
 # repeat::
 #  How many times to perform the test.
 #
+# retrieve::
+#   Test file retrieval performance.  Retrieves the specified file from the
+#   remote system.  Note that the server should be specified via --server,
+#   so the argument to this option is just the remote module name and path,
+#   e.g., "/dist/apps/myapp/myfile", where "dist" is the module and
+#   "apps/myapp/myfile" is the path to the file relative to the module.
+#
 # verbose::
 #   Turn on verbose reporting.
 #
@@ -62,7 +67,7 @@
 #
 # = Example
 #
-#   puppet-test --file /module/path/to/file
+#   puppet-test --retrieve /module/path/to/file
 #
 # = Author
 #
@@ -85,8 +90,8 @@ require 'getoptlong'
 
 $cmdargs = [
 	[ "--compile",    "-c",			GetoptLong::NO_ARGUMENT ],
-	[ "--describe",  "-D",			GetoptLong::NO_ARGUMENT ],
-	[ "--file",      "-f",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--describe",  "-D",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--retrieve",  "-R",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--fork",          			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--fqdn",      "-F",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--repeat",    "-r",			GetoptLong::REQUIRED_ARGUMENT ],
@@ -114,7 +119,7 @@ begin
             # if so, set it.
             when "--compile"
                 $options[:test] = :compile
-            when "--file"
+            when "--retrieve"
                 $options[:file] = arg
                 # Allow --describe to set this.
                 $options[:test] ||= :retrieve
@@ -126,6 +131,7 @@ begin
                     exit(14)
                 end
             when "--describe"
+                $options[:file] = arg
                 $options[:test] = :describe
             when "--fqdn"
                 $options[:fqdn] = arg
@@ -212,7 +218,11 @@ class Test
                 msg = @doc
             end
             Puppet::Util.benchmark(:notice, msg) do
-                execute()
+                begin
+                    execute()
+                rescue => detail
+                    Puppet.err "%s failed: %s" % [@name, detail.to_s]
+                end
             end
         end
     end
@@ -275,7 +285,7 @@ newtest :retrieve, "Retrieved file" do
     end
 
     def execute
-        client.retrieve($options[:file], :ignore)
+        @client.retrieve($options[:file], :ignore)
     end
 end
 
