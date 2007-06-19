@@ -810,8 +810,6 @@ class Puppet::Parser::Interpreter
 
         unless ActiveRecord::Base.connected?
             Puppet::Rails.connect
-        else
-            Puppet.warning "Already connected"
         end
 
         # Fork the storage, since we don't need the client waiting
