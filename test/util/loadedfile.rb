@@ -101,6 +101,22 @@ class TestLoadedFile < Test::Unit::TestCase
             assert(obj.changed?, "File was not considered changed when missing")
         }
     end
+
+    # Make sure negative values always result in change notifications.
+    def test_negative_always_changes
+        file = tempfile()
+        File.open(file, "w") { |f| f.puts "" }
+        obj = nil
+        assert_nothing_raised {
+            obj = Puppet::Util::LoadedFile.new(file)
+        }
+
+        assert(! obj.changed?, "file with no change considered changed")
+        # Now set a negative value
+        Puppet[:filetimeout] = -1
+
+        assert(obj.changed?, "negative file timeout did not disable checking")
+    end
 end
 
 # $Id$

@@ -702,6 +702,8 @@ class TestFileServer < Test::Unit::TestCase
     end
 
     def test_servinglinks
+        # Disable the checking, so changes propagate immediately.
+        Puppet[:filetimeout] = -5
         server = nil
         source = tempfile()
         file = File.join(source, "file")

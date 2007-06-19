@@ -16,6 +16,7 @@ class TestFileSources < Test::Unit::TestCase
             @port = 12345
         end
         @file = Puppet::Type.type(:file)
+        Puppet[:filetimeout] = -1
     end
     
     def use_storage

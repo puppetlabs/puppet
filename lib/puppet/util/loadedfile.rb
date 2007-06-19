@@ -15,6 +15,10 @@ module Puppet
         # Determine whether the file has changed and thus whether it should
         # be reparsed.
         def changed?
+            # Allow the timeout to be disabled entirely.
+            if Puppet[:filetimeout] < 0
+                return true
+            end
             tmp = stamp()
 
             # We use a different internal variable than the stamp method

@@ -165,21 +165,15 @@ module Puppet
                 else
                     begin
                         File.open(@resource[:path]) { |file|
-                            text = nil
-                            case checktype
-                            when :md5
-                                text = file.read
-                            when :md5lite
-                                text = file.read(512)
-                            end
-
-                            if text.nil?
-                                self.debug "Not checksumming empty file %s" %
-                                    @resource[:path]
-                                sum = 0
-                            else
-                                sum = Digest::MD5.hexdigest(text)
-                            end
+                            hashfunc = Digest::MD5.new
+                            while (!file.eof)
+                                readBuf = file.read(512)
+                                hashfunc.update(readBuf)
+                                if checktype == :md5lite then
+                                   break
+                                end
+                             end
+                            sum = hashfunc.hexdigest
                         }
                     rescue Errno::EACCES => detail
                         self.notice "Cannot checksum %s: permission denied" %

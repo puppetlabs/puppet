@@ -1,3 +1,8 @@
+    Modified the fileserver to cache file information, so that
+    each file isn't being read on every connection.  Also,
+    added londo's patch from #678 to avoid reading entire files
+    into memory.
+
     Fixed environment handling in the crontab provider (#669).
 
     Added patch by trombik in #572, supporting old-style

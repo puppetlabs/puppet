@@ -3,6 +3,7 @@ require 'puppet/network/authstore'
 require 'webrick/httpstatus'
 require 'cgi'
 require 'delegate'
+require 'sync'
 
 class Puppet::Network::Handler
     AuthStoreError = Puppet::AuthStoreError
@@ -51,15 +52,10 @@ class Puppet::Network::Handler
     
             desc = []
             CHECKPARAMS.each { |check|
-                if property = obj.property(check)
-                    if currentvalues[property]
-                        desc << currentvalues[property]
-                    else
-                        mount.debug "Manually retrieving info for %s" % check
-                        desc << property.retrieve
-                    end
+                if value = currentvalues[check]
+                    desc << value
                 else
-                    if check == "checksum" and currentvalues[obj.property(:type)] == "file"
+                    if check == "checksum" and currentvalues[:type] == "file"
                         mount.notice "File %s does not have data for %s" %
                             [obj.name, check]
                     end
@@ -427,6 +423,10 @@ class Puppet::Network::Handler
         class Mount < Puppet::Network::AuthStore
             attr_reader :name
 
+            @@syncs = {}
+
+            @@files = {}
+
             Puppet::Util.logmethods(self, true)
 
             def getfileobject(dir, links)
@@ -441,17 +441,44 @@ class Puppet::Network::Handler
             # Run 'retrieve' on a file.  This gets the actual parameters, so
             # we can pass them to the client.
             def check(obj)
-                # FIXME we should really have a timeout here -- we don't
-                # want to actually check on every connection, maybe no more
-                # than every 60 seconds or something.  It'd be nice if we
-                # could use the builtin scheduling to do this.
-
                 # Retrieval is enough here, because we don't want to cache
                 # any information in the state file, and we don't want to generate
                 # any state changes or anything.  We don't even need to sync
                 # the checksum, because we're always going to hit the disk
                 # directly.
-                return obj.retrieve
+
+                # We're now caching file data, using the LoadedFile to check the
+                # disk no more frequently than the :filetimeout.
+                path = obj[:path]
+                sync = sync(path)
+                unless data = @@files[path]
+                    data = {}
+                    sync.synchronize(Sync::EX) do
+                        @@files[path] = data
+                        data[:loaded_obj] = Puppet::Util::LoadedFile.new(path)
+                        Puppet.notice "Initializing values for %s" % path
+                        data[:values] = properties(obj)
+                        return data[:values]
+                    end
+                end
+
+                changed = nil
+                sync.synchronize(Sync::SH) do
+                    changed = data[:loaded_obj].changed?
+                end
+
+                if changed
+                    sync.synchronize(Sync::EX) do
+                        Puppet.notice "Getting values for %s" % path
+                        data[:values] = properties(obj)
+                        return data[:values]
+                    end
+                else
+                    sync.synchronize(Sync::SH) do
+                        Puppet.info "Using cached values for %s" % path
+                        return data[:values]
+                    end
+                end
             end
 
             # Create a map for a specific client.
@@ -583,6 +610,11 @@ class Puppet::Network::Handler
                 @path = path
             end
 
+            # Return the current values for the object.
+            def properties(obj)
+                obj.retrieve.inject({}) { |props, ary| props[ary[0].name] = ary[1]; props }
+            end
+
             # Retrieve a specific directory relative to a mount point.
             # If they pass in a client, then expand as necessary.
             def subdir(dir = nil, client = nil)
@@ -595,6 +627,11 @@ class Puppet::Network::Handler
                 end
 
                 dirname
+            end
+
+            def sync(path)
+                @@syncs[path] ||= Sync.new
+                @@syncs[path]
             end
 
             def to_s

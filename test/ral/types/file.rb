@@ -31,6 +31,7 @@ class TestFile < Test::Unit::TestCase
         super
         @file = Puppet::Type.type(:file)
         $method = @method_name
+        Puppet[:filetimeout] = -1
     end
 
     def teardown
