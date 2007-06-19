@@ -76,7 +76,7 @@ class TestSUIDManager < Test::Unit::TestCase
         if @run 
             user = nonrootuser
             status = Puppet::Util::SUIDManager.system("exit $EUID", user.uid, user.gid)
-            assert_equal(user.uid, status.exitstatus)
+            assert_equal(user.uid, status.exitstatus, "EUID does not seem to be inherited.  This test consistently fails on RedHat-like machines.")
         end
     end
 
