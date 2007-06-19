@@ -7,6 +7,7 @@ require 'puppet/network/xmlrpc/client'
 require 'mocha'
 
 class TestXMLRPCClient < Test::Unit::TestCase
+    include PuppetTest
     def test_set_backtrace
         error = Puppet::Network::XMLRPCClientError.new("An error")
         assert_nothing_raised do

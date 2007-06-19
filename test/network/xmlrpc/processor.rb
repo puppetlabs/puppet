@@ -7,6 +7,7 @@ require 'puppet/network/xmlrpc/processor'
 require 'mocha'
 
 class TestXMLRPCProcessor < Test::Unit::TestCase
+    include PuppetTest
     class BaseProcessor
         def add_handler(interface, handler)
             @handlers ||= {}

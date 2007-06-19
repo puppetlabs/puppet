@@ -86,7 +86,6 @@ Puppet::Type.type(:cron).provide(:crontab,
     # See if we can match the hash against an existing cron job.
     def self.match(hash, resources)
         resources.each do |name, obj|
-            p hash
             # we now have a cron job whose command exactly matches
             # let's see if the other fields match
 
@@ -151,7 +150,11 @@ Puppet::Type.type(:cron).provide(:crontab,
                     record[:name] = name
                     name = nil
                 end
-                record[:environment] = envs
+                if envs.empty?
+                    record[:environment] = :absent
+                else
+                    record[:environment] = envs
+                end
             end
         }.reject { |record| record[:skip] }
     end

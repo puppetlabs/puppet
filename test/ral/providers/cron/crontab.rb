@@ -91,6 +91,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
                 # Make the values a bit more equal.
                 should[:target] = @me
                 should[:ensure] = :present
+                #should[:environment] ||= []
                 should[:on_disk] = true
                 is = sis.dup
                 sis.dup.each do |p,v|
@@ -270,7 +271,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
         hash = @provider.parse_line(str)
         hash[:user] = @me
 
-        instance = @provider.match(hash)
+        instance = @provider.match(hash, "yaycron" => cron)
         assert(instance, "did not match cron")
         assert_equal(cron, instance,
             "Did not match cron job")
