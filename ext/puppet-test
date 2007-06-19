@@ -7,13 +7,14 @@
 # = Usage
 #
 #   puppet-test  [-c|--compile] [-D|--describe <file>] [-d|--debug]
-#       [--fork <num>] [-h|--help] [-H|--hostname <host name>] [-r|--repeat <number=1>]
-#       [-R|--retrieve <file>] [-V|--version] [-v|--verbose]
+#       [--fork <num>] [-h|--help] [-H|--hostname <host name>] [-l|--list] [-r|--repeat <number=1>]
+#       [-R|--retrieve <file>] [-t|--test <test>] [-V|--version] [-v|--verbose]
 #
 # = Description
 #
 # This is a simple script meant for doing performance tests with Puppet.  By
-# default it pulls down a compiled configuration.
+# default it pulls down a compiled configuration, but it supports multiple
+# other tests.
 #
 # = Options
 #
@@ -49,6 +50,9 @@
 # help::
 #   Print this help message
 #
+# list::
+#   List all available tests.
+#
 # repeat::
 #  How many times to perform the test.
 #
@@ -58,6 +62,9 @@
 #   so the argument to this option is just the remote module name and path,
 #   e.g., "/dist/apps/myapp/myfile", where "dist" is the module and
 #   "apps/myapp/myfile" is the path to the file relative to the module.
+#
+# test::
+#   Specify the test to run.  You can see the list of tests by running this command with --list.
 #
 # verbose::
 #   Turn on verbose reporting.
@@ -88,104 +95,46 @@ require 'puppet'
 require 'puppet/network/client'
 require 'getoptlong'
 
-$cmdargs = [
-	[ "--compile",    "-c",			GetoptLong::NO_ARGUMENT ],
-	[ "--describe",  "-D",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--retrieve",  "-R",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--fork",          			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--fqdn",      "-F",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--repeat",    "-r",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
-	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
-	[ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
-	[ "--version",	"-V",			GetoptLong::NO_ARGUMENT ],
-]
-
-# Add all of the config parameters as valid $options.
-Puppet.config.addargs($cmdargs)
-Puppet::Util::Log.newdestination(:console)
-
-result = GetoptLong.new(*$cmdargs)
-
-$args = {}
-
-$options = {:repeat => 1, :fork => 0}
-
-begin
-    explicit_waitforcert = false
-    result.each { |opt,arg|
-        case opt
-            # First check to see if the argument is a valid configuration parameter;
-            # if so, set it.
-            when "--compile"
-                $options[:test] = :compile
-            when "--retrieve"
-                $options[:file] = arg
-                # Allow --describe to set this.
-                $options[:test] ||= :retrieve
-            when "--fork"
-                begin
-                    $options[:fork] = Integer(arg)
-                rescue => detail
-                    $stderr.puts "The argument to 'fork' must be an integer"
-                    exit(14)
-                end
-            when "--describe"
-                $options[:file] = arg
-                $options[:test] = :describe
-            when "--fqdn"
-                $options[:fqdn] = arg
-            when "--repeat"
-                $options[:repeat] = Integer(arg)
-            when "--help"
-                if Puppet.features.usage?
-                    RDoc::usage && exit
-                else
-                    puts "No help available unless you have RDoc::usage installed"
-                    exit
-                end
-            when "--version"
-                puts "%s" % Puppet.version
-                exit
-            when "--verbose"
-                Puppet::Util::Log.level = :info
-                Puppet::Util::Log.newdestination(:console)
-            when "--debug"
-                Puppet::Util::Log.level = :debug
-                Puppet::Util::Log.newdestination(:console)
-            else
-                Puppet.config.handlearg(opt, arg)
-        end
-    }
-rescue GetoptLong::InvalidOption => detail
-    $stderr.puts detail
-    $stderr.puts "Try '#{$0} --help'"
-    exit(1)
-end
-
-# Now parse the config
-Puppet.parse_config
-
-$args[:Server] = Puppet[:server]
-
-$options[:test] ||= :compile
-
-$pids = []
-
-class Test
+class Suite
     attr_reader :name, :doc
 
-    def execute
-        raise "Test %s did not override 'execute'" % @name
+    @@suites = {}
+    @@tests = {}
+
+    def self.[](name)
+        @@suites[name]
+    end
+
+    # Run a test by first finding the suite then running the appropriate test.
+    def self.run(test)
+        unless suite_name = @@tests[test]
+            raise "Unknown test %s" % test
+
+        end
+        unless suite = @@suites[suite_name]
+            raise "Unknown test suite %s from test %s" % [suite_name, test]
+        end
+
+        suite.run(test)
+    end
+
+    # What suites are available?
+    def self.suites
+        @@suites.keys
     end
 
     def forked?
         defined? @forking
     end
 
+    # Create a new test suite.
     def initialize(name, doc, &block)
         @name = name
         @doc = doc
+
+        @tests = {}
+
+        @@suites[name] = self
 
         raise "You must pass a block to the Test" unless block_given?
         instance_eval(&block)
@@ -195,9 +144,25 @@ class Test
         raise "Test %s did not override 'prepare'" % @name
     end
 
+    # Define a new type of test on this suite.
+    def newtest(name, doc, &block)
+        @tests[name] = doc
+
+        if @@tests[name]
+            raise "Test names must be unique; cannot redefine %s" % name
+        end
+
+        @@tests[name] = @name
+
+        meta_def(name, &block)
+    end
+
     # Run the actual test.
-    def run
-        puts "Running %s test" % @name
+    def run(test)
+        unless doc = @tests[test]
+            raise "Suite %s only supports tests %s; not %s" % [@name, @tests.keys.collect { |k| k.to_s }.join(","), test]
+        end
+        puts "Running %s %s test" % [@name, test]
         prepare()
 
         if $options[:fork] > 0
@@ -213,27 +178,28 @@ class Test
 
         $options[:repeat].times do
             if forked?
-                msg = @doc + " in PID %s" % Process.pid
+                msg = doc + " in PID %s" % Process.pid
             else
-                msg = @doc
+                msg = doc
             end
             Puppet::Util.benchmark(:notice, msg) do
                 begin
-                    execute()
+                    send(test)
                 rescue => detail
+                    puts detail.backtrace if Puppet[:trace]
                     Puppet.err "%s failed: %s" % [@name, detail.to_s]
                 end
             end
         end
     end
+
+    # What tests are available on this suite?
+    def tests
+        @tests.keys
+    end
 end
 
-$tests = {}
-def newtest(name, desc,&block)
-    $tests[name] = Test.new(name, desc, &block)
-end
-
-newtest :compile, "Retrieved configuration" do
+Suite.new :configuration, "Configuration handling" do
     def prepare
         $args[:cache] = false
         # Create a config client and pull the config down
@@ -256,44 +222,150 @@ newtest :compile, "Retrieved configuration" do
             @facts["hostname"] = host.sub(/\..+/, '')
             @facts["domain"] = host.sub(/^[^.]+\./, '')
         end
+
+        @facts = YAML.dump(@facts)
     end
 
-    def execute
-        @client.send(:get_actual_config, @facts)
+    newtest :compile, "Compiled configuration" do
+        @client.driver.getconfig(@facts, "yaml")
+    end
+
+    # This test will always force a false answer.
+    newtest :fresh, "Checked freshness" do
+        @client.driver.freshness
     end
 end
 
-newtest :describe, "Described file" do
+Suite.new :file, "File interactions" do
     def prepare
+        unless $options[:file]
+            fail "You must specify a file (using --file <file>) to interact with on the server"
+        end
         @client = Puppet::Network::Client.file.new($args)
         unless @client.read_cert
             fail "Could not read client certificate"
         end
     end
 
-    def execute
+    newtest :describe, "Described file" do
         @client.describe($options[:file], :ignore)
     end
-end
 
-newtest :retrieve, "Retrieved file" do
-    def prepare
-        @client = Puppet::Network::Client.file.new($args)
-        unless @client.read_cert
-            fail "Could not read client certificate"
-        end
-    end
-
-    def execute
+    newtest :retrieve, "Retrieved file" do
         @client.retrieve($options[:file], :ignore)
     end
 end
 
-unless test = $tests[$options[:test]]
-    raise "Invalid test %s; valid tests are %s" % [options[:test], $tests.keys.collect { |t| t.to_s }.join(", ")]
+$cmdargs = [
+	[ "--compile",    "-c",			GetoptLong::NO_ARGUMENT ],
+	[ "--describe",  "-D",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--retrieve",  "-R",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--fork",          			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--fqdn",      "-F",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--suite",     "-s",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--test",      "-t",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--repeat",    "-r",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--debug",	 "-d",			GetoptLong::NO_ARGUMENT ],
+	[ "--help",		 "-h",			GetoptLong::NO_ARGUMENT ],
+	[ "--list",	     "-l",			GetoptLong::NO_ARGUMENT ],
+	[ "--verbose",	 "-v",			GetoptLong::NO_ARGUMENT ],
+	[ "--version",	 "-V",			GetoptLong::NO_ARGUMENT ],
+]
+
+# Add all of the config parameters as valid $options.
+Puppet.config.addargs($cmdargs)
+Puppet::Util::Log.newdestination(:console)
+
+result = GetoptLong.new(*$cmdargs)
+
+$args = {}
+
+$options = {:repeat => 1, :fork => 0}
+
+begin
+    explicit_waitforcert = false
+    result.each { |opt,arg|
+        case opt
+            # First check to see if the argument is a valid configuration parameter;
+            # if so, set it.
+            when "--compile"
+                $options[:suite] = :configuration
+                $options[:test] = :compile
+            when "--retrieve"
+                $options[:suite] = :file
+                $options[:test] = :retrieve
+                $options[:file] = arg
+            when "--fork"
+                begin
+                    $options[:fork] = Integer(arg)
+                rescue => detail
+                    $stderr.puts "The argument to 'fork' must be an integer"
+                    exit(14)
+                end
+            when "--describe"
+                $options[:suite] = :file
+                $options[:test] = :describe
+                $options[:file] = arg
+            when "--fqdn"
+                $options[:fqdn] = arg
+            when "--repeat"
+                $options[:repeat] = Integer(arg)
+            when "--help"
+                if Puppet.features.usage?
+                    RDoc::usage && exit
+                else
+                    puts "No help available unless you have RDoc::usage installed"
+                    exit
+                end
+            when "--version"
+                puts "%s" % Puppet.version
+                exit
+            when "--verbose"
+                Puppet::Util::Log.level = :info
+                Puppet::Util::Log.newdestination(:console)
+            when "--debug"
+                Puppet::Util::Log.level = :debug
+                Puppet::Util::Log.newdestination(:console)
+            when "--suite"
+                $options[:suite] = arg.intern
+            when "--test"
+                $options[:test] = arg.intern
+            when "--file"
+                $options[:file] = arg
+            when "--list"
+                Suite.suites.sort { |a,b| a.to_s <=> b.to_s }.each do |suite_name|
+                    suite = Suite[suite_name]
+                    tests = suite.tests.sort { |a,b| a.to_s <=> b.to_s }.join(", ")
+                    puts "%20s: %s" % [suite_name, tests]
+                end
+                exit(0)
+            else
+                Puppet.config.handlearg(opt, arg)
+        end
+    }
+rescue GetoptLong::InvalidOption => detail
+    $stderr.puts detail
+    $stderr.puts "Try '#{$0} --help'"
+    exit(1)
 end
 
-test.run
+# Now parse the config
+Puppet.parse_config
+
+$args[:Server] = Puppet[:server]
+
+unless $options[:test]
+    $options[:suite] = :configuration
+    $options[:test] = :compile
+end
+
+unless $options[:test]
+    raise "A suite was specified without a test"
+end
+
+$pids = []
+
+Suite.run($options[:test])
 
 if $options[:fork] > 0
     Process.waitall
