@@ -111,7 +111,7 @@ def daily(package)
 end
 
 def downdir
-    ENV['DOWNLOAD_DIR'] || "/export/docroots/reductivelabs.com/htdocs/downloads"
+    ENV['DOWNLOAD_DIR'] || "/opt/rl/docroots/reductivelabs.com/htdocs/downloads"
 end
 
 def stamp
