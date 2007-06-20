@@ -46,25 +46,23 @@ Specifying Configuration Parameters
 On The Command-Line
 +++++++++++++++++++
 Every Puppet executable (with the exception of ``puppetdoc``) accepts all of
-the arguments below, but not all of the arguments make sense for every executable.
-Each argument has a section listed with it in parentheses; often, that section
+the parameters below, but not all of the arguments make sense for every executable.
+Each parameter has a section listed with it in parentheses; often, that section
 will map to an executable (e.g., ``puppetd``), in which case it probably only
-makes sense for that one executable.  If ``puppet`` is listed as the section,
+makes sense for that one executable.  If ``main`` is listed as the section,
 it is most likely an option that is valid for everyone.
 
-This will not always be the case.  I have tried to be as thorough as possible
-in the descriptions of the arguments, so it should be obvious whether an
-argument is appropriate or not.
+I have tried to be as thorough as possible in the descriptions of the
+arguments, so it should be obvious whether an argument is appropriate or not.
 
-These arguments can be supplied to the executables either as command-line 
-arugments or in the configuration file for the appropriate executable.  For 
-instance, the command-line invocation below would set the configuration directory
-to ``/private/puppet``::
+These parameters can be supplied to the executables either as command-line 
+options or in the configuration file.  For instance, the command-line
+invocation below would set the configuration directory to ``/private/puppet``::
   
     $ puppetd --confdir=/private/puppet
   
-Note that boolean options are turned on and off with a slightly different syntax
-on the command line::
+Note that boolean options are turned on and off with a slightly different
+syntax on the command line::
 
     $ puppetd --storeconfigs
       
@@ -76,14 +74,14 @@ the client configuration.
 Configuration Files
 +++++++++++++++++++
 As mentioned above, the configuration parameters can also be stored in a 
-configuration file located in the configuration directory (`/etc/puppet` 
-by default).  All executables look for ``puppet.conf`` in their
-configuration directory (although they used to each look to separate files).
+configuration file, located in the configuration directory (`/etc/puppet` 
+by default).  As of 0.23.0, all executables look for ``puppet.conf`` in their
+configuration directory (although they previously looked for separate files).
 
 All executables will set any parameters set within the ``main`` section,
 while each executable will also look for a section named for the executable
 and load those parameters.  For example, ``puppetd`` will look for a
-section named ``puppetd`, and ``puppetmasterd`` looks for a section
+section named ``puppetd``, and ``puppetmasterd`` looks for a section
 named ``puppetmasterd``.  This allows you to use a single configuration file
 to customize the settings for all of your executables.
 

@@ -52,6 +52,7 @@ class Puppet::Network::Handler
             docs = ""
 
             # Use this method so they all get loaded
+            instance_loader(:report).loadall
             loaded_instances(:report).sort { |a,b| a.to_s <=> b.to_s }.each do |name|
                 mod = self.report(name)
                 docs += "%s\n%s\n" % [name, "-" * name.to_s.length]
