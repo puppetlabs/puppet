@@ -43,6 +43,8 @@ The server can also function as a certificate authority and file server.
 
 %prep
 %setup -q
+cp -p conf/redhat/puppetd.conf conf/redhat/puppet.conf
+sed -i -e 's/^\[puppet\]$/[main]/' conf/redhat/puppet.conf
 
 %build
 for f in bin/* ; do 
@@ -72,7 +74,10 @@ install -Dp -m0755 %{confdir}/client.init %{buildroot}%{_initrddir}/puppet
 install -Dp -m0644 %{confdir}/server.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppetmaster
 install -Dp -m0755 %{confdir}/server.init %{buildroot}%{_initrddir}/puppetmaster
 install -Dp -m0644 %{confdir}/fileserver.conf %{buildroot}%{_sysconfdir}/puppet/fileserver.conf
-install -Dp -m0644 %{confdir}/puppetd.conf %{buildroot}%{_sysconfdir}/puppet/puppet.conf
+install -Dp -m0644 %{confdir}/puppet.conf %{buildroot}%{_sysconfdir}/puppet/puppet.conf
+ln -s puppetd.conf %{buildroot}%{_sysconfdir}/puppet/puppetmasterd.conf
+ln -s puppetd.conf %{buildroot}%{_sysconfdir}/puppet/puppetca.conf
+install -Dp -m0644 %{confdir}/puppetd.conf %{buildroot}%{_sysconfdir}/puppet/puppetd.conf
 install -Dp -m0644 %{confdir}/logrotate %{buildroot}%{_sysconfdir}/logrotate.d/puppet
 
 %files
@@ -86,6 +91,7 @@ install -Dp -m0644 %{confdir}/logrotate %{buildroot}%{_sysconfdir}/logrotate.d/p
 %dir %{_sysconfdir}/puppet
 %config(noreplace) %{_sysconfdir}/sysconfig/puppet
 %config(noreplace) %{_sysconfdir}/puppet/puppet.conf
+%ghost %config(noreplace,missingok) %{_sysconfdir}/puppet/puppetd.conf
 %doc CHANGELOG COPYING LICENSE README examples
 %exclude %{_sbindir}/puppetdoc
 %config(noreplace) %{_sysconfdir}/logrotate.d/puppet
@@ -100,8 +106,11 @@ install -Dp -m0644 %{confdir}/logrotate %{buildroot}%{_sysconfdir}/logrotate.d/p
 %{_sbindir}/puppetmasterd
 %{_bindir}/puppetrun
 %{_initrddir}/puppetmaster
-%config(noreplace) %{_sysconfdir}/puppet/*
+%config(noreplace) %{_sysconfdir}/puppet/fileserver.conf
+%dir %{_sysconfdir}/puppet/manifests
 %config(noreplace) %{_sysconfdir}/sysconfig/puppetmaster
+%ghost %config(noreplace,missingok) %{_sysconfdir}/puppet/puppetca.conf
+%ghost %config(noreplace,missingok) %{_sysconfdir}/puppet/puppetmasterd.conf
 %{_sbindir}/puppetca
 
 %pre
@@ -140,7 +149,8 @@ rm -rf %{buildroot}
 
 %changelog
 * Wed Jun 20 2007 David Lutterkort <dlutter@redhat.com> - 0.23.0-1
-- Install one puppet.conf instead of old config files
+- Install one puppet.conf instead of old config files, keep old configs 
+  around to ease update
 - Use plain shell commands in install instead of macros
 
 * Wed May  2 2007 David Lutterkort <dlutter@redhat.com> - 0.22.4-1
