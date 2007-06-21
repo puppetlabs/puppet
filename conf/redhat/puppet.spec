@@ -72,9 +72,7 @@ find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -print0 | xargs -0 -r %
 %{__install} -Dp -m0644 %{confdir}/server.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppetmaster
 %{__install} -Dp -m0755 %{confdir}/server.init %{buildroot}%{_initrddir}/puppetmaster
 %{__install} -Dp -m0644 %{confdir}/fileserver.conf %{buildroot}%{_sysconfdir}/puppet/fileserver.conf
-%{__install} -Dp -m0644 %{confdir}/puppetd.conf %{buildroot}%{_sysconfdir}/puppet/puppetd.conf
-%{__ln_s} puppetd.conf %{buildroot}%{_sysconfdir}/puppet/puppetmasterd.conf
-%{__ln_s} puppetd.conf %{buildroot}%{_sysconfdir}/puppet/puppetca.conf
+%{__install} -Dp -m0644 %{confdir}/puppetd.conf %{buildroot}%{_sysconfdir}/puppet/puppet.conf
 %{__install} -Dp -m0644 %{confdir}/logrotate %{buildroot}%{_sysconfdir}/logrotate.d/puppet
 
 %files
@@ -87,8 +85,8 @@ find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -print0 | xargs -0 -r %
 %{_initrddir}/puppet
 %dir %{_sysconfdir}/puppet
 %config(noreplace) %{_sysconfdir}/sysconfig/puppet
-%config(noreplace) %{_sysconfdir}/puppet/puppetd.conf
-%doc CHANGELOG COPYING LICENSE README TODO examples
+%config(noreplace) %{_sysconfdir}/puppet/puppet.conf
+%doc CHANGELOG COPYING LICENSE README examples
 %exclude %{_sbindir}/puppetdoc
 %config(noreplace) %{_sysconfdir}/logrotate.d/puppet
 # These need to be owned by puppet so the server can
@@ -141,6 +139,9 @@ fi
 %{__rm} -rf %{buildroot}
 
 %changelog
+* Wed Jun 20 2007 David Lutterkort <dlutter@redhat.com> - 0.23.0-1
+- Install one puppet.conf instead of old config files
+
 * Wed May  2 2007 David Lutterkort <dlutter@redhat.com> - 0.22.4-1
 - New version
 
