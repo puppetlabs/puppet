@@ -50,30 +50,30 @@ for f in bin/* ; do
 done
 
 %install
-%{__rm} -rf %{buildroot}
-%{__install} -d -m0755 %{buildroot}%{_sbindir}
-%{__install} -d -m0755 %{buildroot}%{_bindir}
-%{__install} -d -m0755 %{buildroot}%{ruby_sitelibdir}
-%{__install} -d -m0755 %{buildroot}%{_sysconfdir}/puppet/manifests
-%{__install} -d -m0755 %{buildroot}%{_docdir}/%{name}-%{version}
-%{__install} -d -m0755 %{buildroot}%{_localstatedir}/lib/puppet
-%{__install} -d -m0755 %{buildroot}%{_localstatedir}/run/puppet
-%{__install} -d -m0755 %{buildroot}%{_localstatedir}/log/puppet
-%{__install} -Dp -m0755 %{pbuild}/bin/* %{buildroot}%{_sbindir}
-%{__mv} %{buildroot}%{_sbindir}/puppet %{buildroot}%{_bindir}/puppet
-%{__mv} %{buildroot}%{_sbindir}/ralsh %{buildroot}%{_bindir}/ralsh
-%{__mv} %{buildroot}%{_sbindir}/filebucket %{buildroot}%{_bindir}/filebucket
-%{__mv} %{buildroot}%{_sbindir}/puppetrun %{buildroot}%{_bindir}/puppetrun
-%{__install} -Dp -m0644 %{pbuild}/lib/puppet.rb %{buildroot}%{ruby_sitelibdir}/puppet.rb
-%{__cp} -a %{pbuild}/lib/puppet %{buildroot}%{ruby_sitelibdir}
-find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -print0 | xargs -0 -r %{__chmod} a-x
-%{__install} -Dp -m0644 %{confdir}/client.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppet
-%{__install} -Dp -m0755 %{confdir}/client.init %{buildroot}%{_initrddir}/puppet
-%{__install} -Dp -m0644 %{confdir}/server.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppetmaster
-%{__install} -Dp -m0755 %{confdir}/server.init %{buildroot}%{_initrddir}/puppetmaster
-%{__install} -Dp -m0644 %{confdir}/fileserver.conf %{buildroot}%{_sysconfdir}/puppet/fileserver.conf
-%{__install} -Dp -m0644 %{confdir}/puppetd.conf %{buildroot}%{_sysconfdir}/puppet/puppet.conf
-%{__install} -Dp -m0644 %{confdir}/logrotate %{buildroot}%{_sysconfdir}/logrotate.d/puppet
+rm -rf %{buildroot}
+install -d -m0755 %{buildroot}%{_sbindir}
+install -d -m0755 %{buildroot}%{_bindir}
+install -d -m0755 %{buildroot}%{ruby_sitelibdir}
+install -d -m0755 %{buildroot}%{_sysconfdir}/puppet/manifests
+install -d -m0755 %{buildroot}%{_docdir}/%{name}-%{version}
+install -d -m0755 %{buildroot}%{_localstatedir}/lib/puppet
+install -d -m0755 %{buildroot}%{_localstatedir}/run/puppet
+install -d -m0755 %{buildroot}%{_localstatedir}/log/puppet
+install -Dp -m0755 %{pbuild}/bin/* %{buildroot}%{_sbindir}
+mv %{buildroot}%{_sbindir}/puppet %{buildroot}%{_bindir}/puppet
+mv %{buildroot}%{_sbindir}/ralsh %{buildroot}%{_bindir}/ralsh
+mv %{buildroot}%{_sbindir}/filebucket %{buildroot}%{_bindir}/filebucket
+mv %{buildroot}%{_sbindir}/puppetrun %{buildroot}%{_bindir}/puppetrun
+install -Dp -m0644 %{pbuild}/lib/puppet.rb %{buildroot}%{ruby_sitelibdir}/puppet.rb
+cp -a %{pbuild}/lib/puppet %{buildroot}%{ruby_sitelibdir}
+find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -print0 | xargs -0 -r chmod a-x
+install -Dp -m0644 %{confdir}/client.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppet
+install -Dp -m0755 %{confdir}/client.init %{buildroot}%{_initrddir}/puppet
+install -Dp -m0644 %{confdir}/server.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppetmaster
+install -Dp -m0755 %{confdir}/server.init %{buildroot}%{_initrddir}/puppetmaster
+install -Dp -m0644 %{confdir}/fileserver.conf %{buildroot}%{_sysconfdir}/puppet/fileserver.conf
+install -Dp -m0644 %{confdir}/puppetd.conf %{buildroot}%{_sysconfdir}/puppet/puppet.conf
+install -Dp -m0644 %{confdir}/logrotate %{buildroot}%{_sysconfdir}/logrotate.d/puppet
 
 %files
 %defattr(-, root, root, 0755)
@@ -136,11 +136,12 @@ if [ "$1" -ge 1 ]; then
 fi
 
 %clean
-%{__rm} -rf %{buildroot}
+rm -rf %{buildroot}
 
 %changelog
 * Wed Jun 20 2007 David Lutterkort <dlutter@redhat.com> - 0.23.0-1
 - Install one puppet.conf instead of old config files
+- Use plain shell commands in install instead of macros
 
 * Wed May  2 2007 David Lutterkort <dlutter@redhat.com> - 0.22.4-1
 - New version
