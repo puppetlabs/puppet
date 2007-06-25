@@ -78,6 +78,7 @@ case "$1" in
 	;;
   status)
 	status $PUPPETMASTER
+        RETVAL=$?
 	;;
   *)
 	echo $"Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart}"

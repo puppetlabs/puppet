@@ -80,6 +80,7 @@ case "$1" in
 	;;
   status)
         status $puppetd
+        RETVAL=$?
 	;;
   once)
         shift
