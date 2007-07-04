@@ -115,11 +115,19 @@ class Puppet::Parser::Scope
     # that subclasses can set their parent scopes to be the scope of
     # their parent class.
     def class_scope(klass)
-        if klass.respond_to?(:classname)
+        scope = if klass.respond_to?(:classname)
             @classtable[klass.classname]
         else
             @classtable[klass]
         end
+
+        return nil unless scope
+
+        if scope.nodescope? and ! klass.is_a?(AST::Node)
+            raise Puppet::ParseError, "Node %s has already been evaluated; cannot evaluate class with same name" % [klass.classname]
+        end
+
+        scope
     end
 
     # Return the list of collections.
@@ -442,6 +450,14 @@ class Puppet::Parser::Scope
         return Puppet::Parser::Scope.new(hash)
     end
 
+    # Is this class for a node?  This is used to make sure that
+    # nodes and classes with the same name conflict (#620), which
+    # is required because of how often the names are used throughout
+    # the system, including on the client.
+    def nodescope?
+        defined?(@nodescope) and @nodescope
+    end
+
     # Return the list of remaining overrides.
     def overrides
         #@overridetable.collect { |name, overs| overs }.flatten
@@ -450,14 +466,6 @@ class Puppet::Parser::Scope
 
     def resources
         @definedtable.values
-    end
-
-    def setclass?(obj)
-        if obj.respond_to?(:classname)
-            @classtable.has_key?(obj.classname)
-        else
-            @classtable[obj]
-        end
     end
 
     # Store the fact that we've evaluated a given class.  We use a hash
@@ -474,6 +482,10 @@ class Puppet::Parser::Scope
         else
             raise Puppet::DevError, "Invalid class %s" % obj.inspect
         end
+        if obj.is_a?(AST::Node)
+            @nodescope = true
+        end
+        nil
     end
 
     # Set all of our facts in the top-level scope.

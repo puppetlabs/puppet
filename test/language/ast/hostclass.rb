@@ -34,7 +34,7 @@ class TestASTHostClass < Test::Unit::TestCase
             klass.evaluate(:scope => scope)
         end
 
-        assert(scope.setclass?(klass), "Class was not considered evaluated")
+        assert(scope.class_scope(klass), "Class was not considered evaluated")
 
         tmp = scope.findresource("File[/tmp]")
         assert(tmp, "Could not find file /tmp")
@@ -74,8 +74,8 @@ class TestASTHostClass < Test::Unit::TestCase
             moresub.evaluate(:scope => scope)
         end
 
-        assert(scope.setclass?(newbase), "Did not eval newbase")
-        assert(scope.setclass?(newsub), "Did not eval newsub")
+        assert(scope.class_scope(newbase), "Did not eval newbase")
+        assert(scope.class_scope(newsub), "Did not eval newsub")
 
         yay = scope.findresource("File[/tmp/yay]")
         assert(yay, "Did not find file /tmp/yay")

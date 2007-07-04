@@ -25,7 +25,7 @@ class Puppet::Parser::AST
             args = hash[:arguments]
 
             # Verify that we haven't already been evaluated
-            if scope.setclass?(self)
+            if scope.class_scope(self)
                 Puppet.debug "%s class already evaluated" % @type
                 return nil
             end

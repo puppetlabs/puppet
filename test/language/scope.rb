@@ -325,13 +325,13 @@ class TestScope < Test::Unit::TestCase
 
         base = scope.findclass("base")
         assert(base, "Could not find base class")
-        assert(! scope.setclass?(base), "Class incorrectly set")
+        assert(! scope.class_scope(base), "Class incorrectly set")
         assert(! scope.classlist.include?("base"), "Class incorrectly in classlist")
         assert_nothing_raised do
             scope.setclass base
         end
 
-        assert(scope.setclass?(base), "Class incorrectly unset")
+        assert(scope.class_scope(base), "Class incorrectly unset")
         assert(scope.classlist.include?("base"), "Class not in classlist")
 
         # Make sure we can retrieve the scope.
@@ -344,7 +344,7 @@ class TestScope < Test::Unit::TestCase
             scope.setclass "string"
         end
 
-        assert(! scope.setclass?("string"), "string incorrectly set")
+        assert(! scope.class_scope("string"), "string incorrectly set")
 
         # Set "" in the class list, and make sure it doesn't show up in the return
         top = scope.findclass("")
@@ -411,7 +411,7 @@ class TestScope < Test::Unit::TestCase
         end
 
         [myclass, otherclass].each do |klass|
-            assert(scope.setclass?(klass),
+            assert(scope.class_scope(klass),
                 "%s was not set" % klass.classname)
         end
     end
@@ -759,6 +759,26 @@ Host <<||>>"
 
         assert_equal("", scope.lookupvar("testing", true),
             "undef was not returned as '' when string")
+    end
+
+    # #620 - Nodes and classes should conflict, else classes don't get evaluated
+    def test_nodes_and_classes_name_conflict
+        scope = mkscope
+        
+        node = AST::Node.new :classname => "test", :namespace => ""
+        scope.setclass(node)
+
+        assert(scope.nodescope?, "Scope was not marked a node scope when a node was set")
+
+        # Now make a subscope that will be a class scope
+        klass = AST::HostClass.new :classname => "test", :namespace => ""
+        kscope = klass.subscope(scope)
+
+        # Now make sure we throw a failure, because we're trying to do a class and node
+        # with the same name
+        assert_raise(Puppet::ParseError, "Did not fail on class and node with same name") do
+            kscope.class_scope(klass)
+        end
     end
 end
 
