@@ -30,8 +30,8 @@
 require 'rubygems'
 require 'mongrel'
 require 'xmlrpc/server'
-require 'puppet/network/server'
 require 'puppet/network/xmlrpc/server'
+require 'puppet/network/server'
 require 'puppet/network/client_request'
 
 require 'resolv'
