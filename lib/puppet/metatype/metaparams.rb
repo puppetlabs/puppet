@@ -38,14 +38,6 @@ class Puppet::Type
 
             The creation of the schedule object does not need to appear in the
             configuration before objects that use it."
-
-        munge do |name|
-            if schedule = Puppet.type(:schedule)[name]
-                return schedule
-            else
-                return name
-            end
-        end
     end
 
     newmetaparam(:check) do

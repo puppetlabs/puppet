@@ -835,6 +835,34 @@ end
 
         obj.evaluate
     end
+
+    # Partially test #704, but also cover the rest of the schedule management bases.
+    def test_schedule
+        Puppet::Type.type(:schedule).create(:name => "maint")
+
+        {"maint" => true, nil => false, :fail => :fail}.each do |name, should|
+            args = {:name => tempfile, :ensure => :file}
+            if name
+                args[:schedule] = name
+            end
+            resource = Puppet::Type.type(:file).create(args)
+
+            if should == :fail
+                assert_raise(Puppet::Error, "Did not fail on missing schedule") do
+                    resource.schedule
+                end
+            else
+                sched = nil
+                assert_nothing_raised("Failed when schedule was %s" % sched) do
+                    sched = resource.schedule
+                end
+
+                if should
+                    assert_equal(name, sched.name, "did not get correct schedule back")
+                end
+            end
+        end
+    end
 end
 
 # $Id$
