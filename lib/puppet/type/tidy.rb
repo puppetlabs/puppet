@@ -1,6 +1,5 @@
 
 require 'etc'
-require 'puppet/type/property'
 require 'puppet/type/pfile'
 
 module Puppet

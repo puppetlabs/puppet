@@ -123,7 +123,7 @@ class TestParameter < Test::Unit::TestCase
         assert(obj, "did not get alias parameter")
         assert(obj.shadow, "shadow was not created for alias param")
 
-        assert(obj.is_a?(Puppet::Type::Property),
+        assert(obj.is_a?(Puppet::Property),
             "alias instance is not a property")
         assert_instance_of(param, obj, "alias is an instance of the wrong class")
 
@@ -141,7 +141,7 @@ class TestParameter < Test::Unit::TestCase
         assert(obj.shadow, "shadow was not created for alias param")
 
         assert_instance_of(param, obj, "alias is an instance of the wrong class")
-        assert(obj.is_a?(Puppet::Type::Property),
+        assert(obj.is_a?(Puppet::Property),
             "alias instance is not a property")
 
         # Now change the alias and make sure it works out well
@@ -152,7 +152,7 @@ class TestParameter < Test::Unit::TestCase
         obj = params[:alias]
         assert(obj, "did not get alias parameter")
         assert_instance_of(param, obj, "alias is now an instance of the wrong class")
-        assert(obj.is_a?(Puppet::Type::Property),
+        assert(obj.is_a?(Puppet::Property),
             "alias instance is now not a property")
     end
 

@@ -261,6 +261,7 @@ class TestMasterClient < Test::Unit::TestCase
     end
 
     def test_getplugins
+        Puppet[:filetimeout] = -1
         Puppet[:pluginsource] = tempfile()
         Dir.mkdir(Puppet[:pluginsource])
 
@@ -328,6 +329,7 @@ end
     end
 
     def test_getfacts
+        Puppet[:filetimeout] = -1
         Puppet[:factsource] = tempfile()
         Dir.mkdir(Puppet[:factsource])
         hostname = Facter.value(:hostname)

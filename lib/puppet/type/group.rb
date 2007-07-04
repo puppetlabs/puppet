@@ -8,7 +8,6 @@
 
 require 'etc'
 require 'facter'
-require 'puppet/type/property'
 
 module Puppet
     newtype(:group) do

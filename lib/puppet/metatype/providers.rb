@@ -1,3 +1,4 @@
+require 'puppet/provider'
 require 'puppet/util/provider_features'
 class Puppet::Type
     # Add the feature handling module.
@@ -127,7 +128,7 @@ class Puppet::Type
                 end
             end
         else
-            Puppet::Type::Provider
+            Puppet::Provider
         end
 
         options[:resource_type] ||= self

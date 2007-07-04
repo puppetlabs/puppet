@@ -9,7 +9,7 @@ require 'puppettest'
 
 class TestPropertyChange < Test::Unit::TestCase
 	include PuppetTest
-	class FakeProperty < Puppet::Type::Property
+	class FakeProperty < Puppet::Property
 	    attr_accessor :is, :should, :resource
 	    attr_reader :noop
 	    def change_to_s(currentvalue, newvalue)

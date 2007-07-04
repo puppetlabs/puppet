@@ -131,10 +131,10 @@ Puppet::Type.newtype(:component) do
             if parentof?(child)
                 devfail "Already the parent of %s[%s]" % [child.class.name, child.title]
             end
-            unless child.is_a?(Puppet::Element)
+            unless child.is_a?(Puppet::Type)
                 self.debug "Got object of type %s" % child.class
                 self.devfail(
-                    "Containers can only contain Puppet::Elements, not %s" %
+                    "Containers can only contain Puppet resources, not %s" %
                     child.class
                 )
             end

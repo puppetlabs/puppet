@@ -12,7 +12,7 @@ require 'puppettest/support/resources'
 class TestTransactions < Test::Unit::TestCase
     include PuppetTest::FileTesting
     include PuppetTest::Support::Resources
-    class Fakeprop <Puppet::Type::Property
+    class Fakeprop <Puppet::Property
         attr_accessor :path, :is, :should, :name
         def should_to_s
             @should.to_s

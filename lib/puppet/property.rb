@@ -2,7 +2,6 @@
 # blocks for actually doing work on the system.
 
 require 'puppet'
-require 'puppet/element'
 require 'puppet/propertychange'
 require 'puppet/parameter'
 
@@ -13,6 +12,8 @@ class Property < Puppet::Parameter
     # it.  We also want to keep copies of the original values, so that
     # they can be retrieved and compared later when merging.
     attr_reader :shouldorig
+
+    attr_writer :noop
 
     class << self
         attr_accessor :unmanaged

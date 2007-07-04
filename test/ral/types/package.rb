@@ -70,7 +70,7 @@ class TestPackages < Test::Unit::TestCase
         when "Solaris": :sun
         end
 
-        unless default = Puppet.type(:package).defaultprovider
+        unless default = Puppet::Type.type(:package).defaultprovider
             $stderr.puts "no default provider for %s" %
                 Facter["operatingsystem"].value
             return

@@ -236,7 +236,6 @@ class Puppet::Type
     # @parameters array, and does some basic checking on it.
     def self.newparam(name, options = {}, &block)
         options[:attributes] ||= {}
-        options[:attributes][:element] = self
         param = genclass(name,
             :parent => options[:parent] || Puppet::Parameter,
             :attributes => options[:attributes],
@@ -485,7 +484,7 @@ class Puppet::Type
         if obj = @parameters[name]
             # We throw a failure here, because this method is too
             # ambiguous when used with properties.
-            if obj.is_a?(Puppet::Type::Property)
+            if obj.is_a?(Puppet::Property)
                 fail "[] called on a property"
             else
                 return obj.value
@@ -544,7 +543,7 @@ class Puppet::Type
     # retrieve the 'should' value for a specified property
     def should(name)
         name = attr_alias(name)
-        if prop = @parameters[name] and prop.is_a?(Puppet::Type::Property)
+        if prop = @parameters[name] and prop.is_a?(Puppet::Property)
             return prop.should
         else
             return nil
@@ -608,7 +607,7 @@ class Puppet::Type
     # return an actual type by name; to return the value, use 'inst[name]'
     # FIXME this method should go away
     def property(name)
-        if obj = @parameters[symbolize(name)] and obj.is_a?(Puppet::Type::Property)
+        if obj = @parameters[symbolize(name)] and obj.is_a?(Puppet::Property)
             return obj
         else
             return nil
@@ -683,7 +682,7 @@ class Puppet::Type
         }.find_all { |p|
             ! p.nil?
         }.each do |prop|
-            unless prop.is_a?(Puppet::Type::Property)
+            unless prop.is_a?(Puppet::Property)
                 raise Puppet::DevError, "got a non-property %s(%s)" %
                     [prop.class, prop.class.name]
             end

@@ -53,7 +53,7 @@ module Puppet
         end
 
         def initialize(property, currentvalue)
-            unless property.is_a?(Puppet::Type::Property)
+            unless property.is_a?(Puppet::Property)
                 raise Puppet::DevError, "Got a %s instead of a property" %
                     property.class
             end

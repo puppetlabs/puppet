@@ -1,6 +1,5 @@
 require 'etc'
 require 'facter'
-require 'puppet/type/property'
 require 'puppet/util/filetype'
 
 Puppet::Type.newtype(:cron) do

@@ -51,7 +51,6 @@ module Puppet
             you to get a native element type for the work you are doing."
 
         require 'open3'
-        require 'puppet/type/property'
 
         # Create a new check mechanism.  It's basically just a parameter that
         # provides one extra 'check' method.

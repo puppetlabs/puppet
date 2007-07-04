@@ -3,7 +3,6 @@ require 'cgi'
 require 'etc'
 require 'uri'
 require 'fileutils'
-require 'puppet/type/property'
 require 'puppet/network/handler'
 
 module Puppet

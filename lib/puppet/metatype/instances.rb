@@ -1,3 +1,5 @@
+require 'puppet/transportable'
+
 class Puppet::Type
     # Make 'new' private, so people have to use create instead.
     class << self
@@ -89,7 +91,7 @@ class Puppet::Type
         # If we're the base class, then pass the info on appropriately
         if self == Puppet::Type
             type = nil
-            if hash.is_a? TransObject
+            if hash.is_a? Puppet::TransObject
                 type = hash.type
             else
                 # If we're using the type to determine object type, then delete it
@@ -116,7 +118,7 @@ class Puppet::Type
         end
 
         name = nil
-        unless hash.is_a? TransObject
+        unless hash.is_a? Puppet::TransObject
             hash = self.hash2trans(hash)
         end
 
@@ -236,7 +238,7 @@ class Puppet::Type
         end
         # okay, now make a transobject out of hash
         begin
-            trans = TransObject.new(title, self.name.to_s)
+            trans = Puppet::TransObject.new(title, self.name.to_s)
             hash.each { |param, value|
                 trans[param] = value
             }

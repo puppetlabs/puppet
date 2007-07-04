@@ -3,8 +3,6 @@
 # This allows packages to exist on the same machine using different packaging
 # systems.
 
-require 'puppet/type/property'
-
 module Puppet
     class PackageError < Puppet::Error; end
     newtype(:package) do

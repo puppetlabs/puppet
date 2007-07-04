@@ -96,6 +96,15 @@ class Puppet::Type
                    prophash
                }
     end
+
+    # Are we running in noop mode?
+    def noop
+        if self.noop?
+            return true
+        else
+            return Puppet[:noop]
+        end
+    end
      
     # Retrieve the changes associated with all of the properties.
     def propertychanges(currentvalues)

@@ -1,18 +1,25 @@
 require 'puppet'
 require 'puppet/util/log'
-require 'puppet/element'
 require 'puppet/event'
 require 'puppet/util/metric'
-require 'puppet/type/property'
+require 'puppet/property'
 require 'puppet/parameter'
 require 'puppet/util'
 require 'puppet/util/autoload'
 require 'puppet/metatype/manager'
+require 'puppet/util/errors'
+require 'puppet/util/log_paths'
+require 'puppet/util/logging'
 
 # see the bottom of the file for the rest of the inclusions
 
 module Puppet
-class Type < Puppet::Element
+class Type
+    include Puppet::Util
+    include Puppet::Util::Errors
+    include Puppet::Util::LogPaths
+    include Puppet::Util::Logging
+
     # Nearly all of the code in this class is stored in files in the
     # metatype/ directory.  This is a temporary measure until I get a chance
     # to refactor this class entirely.  There's still more simplification to
@@ -40,6 +47,7 @@ class Type < Puppet::Element
     attr_reader :parent
 
     attr_writer :title
+    attr_writer :noop
 
     include Enumerable
     
@@ -53,6 +61,9 @@ class Type < Puppet::Element
         attr_accessor :self_refresh
         include Enumerable, Puppet::Util::ClassGen
         include Puppet::MetaType::Manager
+
+        include Puppet::Util
+        include Puppet::Util::Logging
     end
 
     # all of the variables that must be initialized for each subclass

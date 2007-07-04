@@ -1,10 +1,17 @@
 require 'puppet/util/methodhelper'
+require 'puppet/util/log_paths'
+require 'puppet/util/logging'
 
-class Puppet::Parameter < Puppet::Element
+class Puppet::Parameter
+    include Puppet::Util
+    include Puppet::Util::Errors
+    include Puppet::Util::LogPaths
+    include Puppet::Util::Logging
     include Puppet::Util::MethodHelper
     class << self
+        include Puppet::Util
         attr_reader :validater, :munger, :name, :default, :required_features
-        attr_accessor :metaparam, :element
+        attr_accessor :metaparam
 
         # Define the default value for a given parameter or parameter.  This
         # means that 'nil' is an invalid default value.  This defines
