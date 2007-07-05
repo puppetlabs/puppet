@@ -45,7 +45,8 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     def get_tag_hash(tags = nil)
         tags ||= resource_tags.find(:all, :include => :puppet_tag)
         return tags.inject({}) do |hash, tag|
-            hash[tag.puppet_tag.name] = tag.puppet_tag.name
+            # We have to store the tag object, not just the tag name.
+            hash[tag.puppet_tag.name] = tag
             hash
         end
     end

@@ -207,9 +207,9 @@ class Puppet::Parser::Resource
         db_resource.ar_hash_merge(db_resource.get_tag_hash(), 
                                   updated_tags,
                                   :create => Proc.new { |name, tag|
-                                      db_resource.add_resource_tag(tag)
-                                  }, :delete => Proc.new { |rt|
-                                      rt.each { |tag| db_resource.resource_tags.delete(tag) }
+                                      db_resource.add_resource_tag(name)
+                                  }, :delete => Proc.new { |tag|
+                                      db_resource.resource_tags.delete(tag)
                                   }, :modify => Proc.new { |db, mem|
                                       # nothing here
                                   })
