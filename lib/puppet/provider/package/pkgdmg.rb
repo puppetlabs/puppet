@@ -146,7 +146,7 @@ package { Thunderbird-2.0.0.4-1.pkg.dmg:
         
         begin
             open(cached_source) do |dmg|
-                xml_str = hdiutil "mount", "-plist", "-nobrowse", "-readonly", "-mountrandom", "/tmp", dmg.path
+                xml_str = hdiutil "mount", "-plist", "-nobrowse", "-readonly", "-mountrandom", "-noidme", "/tmp", dmg.path
                 ptable = Plist::parse_xml xml_str
                 # JJM Filter out all mount-paths into a single array, discard the rest.
                 mounts = ptable['system-entities'].collect { |entity|
