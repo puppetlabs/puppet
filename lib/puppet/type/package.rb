@@ -185,7 +185,7 @@ module Puppet
 
             # This retrieves the current state. LAK: I think this method is unused.
             def retrieve
-                return @resource.retrieve
+                return provider.properties[:ensure]
             end
 
             # Provide a bit more information when logging upgrades.

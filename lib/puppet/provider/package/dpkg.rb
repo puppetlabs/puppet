@@ -17,8 +17,8 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
         Puppet.debug "Executing '%s'" % cmd
         execpipe(cmd) do |process|
             # our regex for matching dpkg output
-            regex = %r{^(\S+ +\S+ +\S+) (\S+) (\S*)$}
-            fields = [:status, :name, :ensure]
+            regex = %r{^(\S+) +(\S+) +(\S+) (\S+) (\S*)$}
+            fields = [:desired, :error, :status, :name, :ensure]
             hash = {}
 
             # now turn each returned line into a package object
@@ -31,6 +31,10 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
                     }
 
                     hash[:provider] = self.name
+
+                    unless hash[:status] == "installed"
+                        hash[:ensure] = :absent
+                    end
 
                     packages << new(hash)
                 else
