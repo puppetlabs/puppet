@@ -456,7 +456,6 @@ class Puppet::Network::Handler
                     sync.synchronize(Sync::EX) do
                         @@files[path] = data
                         data[:loaded_obj] = Puppet::Util::LoadedFile.new(path)
-                        Puppet.notice "Initializing values for %s" % path
                         data[:values] = properties(obj)
                         return data[:values]
                     end
@@ -469,13 +468,11 @@ class Puppet::Network::Handler
 
                 if changed
                     sync.synchronize(Sync::EX) do
-                        Puppet.notice "Getting values for %s" % path
                         data[:values] = properties(obj)
                         return data[:values]
                     end
                 else
                     sync.synchronize(Sync::SH) do
-                        Puppet.info "Using cached values for %s" % path
                         return data[:values]
                     end
                 end
