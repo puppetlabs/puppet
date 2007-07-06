@@ -393,7 +393,7 @@ class Puppet::Network::Handler
 
                 mod = Puppet::Module::find(tmp)
                 if mod
-                    mount = @mounts[MODULES].copy(mod, mod.files)
+                    mount = @mounts[MODULES].copy(mod.name, mod.files)
                 else
                     unless mount = @mounts[tmp]
                         raise FileServerError, "Fileserver module '%s' not mounted" % tmp
@@ -632,7 +632,7 @@ class Puppet::Network::Handler
             end
 
             def to_s
-                "mount[#{@name}]"
+                "mount[%s]" % @name
             end
 
             # Verify our configuration is valid.  This should really check to
