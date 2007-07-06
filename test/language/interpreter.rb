@@ -855,6 +855,8 @@ class TestInterpreter < PuppetTest::TestCase
         assert(scope.classlist.include?("other"), "NodeDef did not evaluate other class")
     end
 
+    # This can stay in the main test suite because it doesn't actually use ldapsearch,
+    # it just overrides the method so it behaves as though it were hitting ldap.
     def test_ldapnodes
         interp = mkinterp
 
@@ -909,6 +911,114 @@ class TestInterpreter < PuppetTest::TestCase
 
         assert_equal(%w{one two three four five}.sort, node.classes.sort, "node classes were not set correctly with the top node")
         assert_equal({"base" => "true", "center" => "boo", "master" => "far"}, node.parameters, "node parameters were not set correctly with the top node")
+    end
+
+    # Setup a module.
+    def mk_module(name, files = {})
+        mdir = File.join(@dir, name)
+        mandir = File.join(mdir, "manifests")
+        FileUtils.mkdir_p mandir
+
+        if defs = files[:define]
+            files.delete(:define)
+        end
+        Dir.chdir(mandir) do
+            files.each do |file, classes|
+                File.open("%s.pp" % file, "w") do |f|
+                    classes.each { |klass|
+                        if defs
+                            f.puts "define %s {}" % klass
+                        else
+                            f.puts "class %s {}" % klass
+                        end
+                    }
+                end
+            end
+        end
+    end
+
+    # #596 - make sure classes and definitions load automatically if they're in modules, so we don't have to manually load each one.
+    def test_module_autoloading
+        @dir = tempfile
+        Puppet[:modulepath] = @dir
+
+        FileUtils.mkdir_p @dir
+
+        interp = mkinterp
+
+        # Make sure we fail like normal for actually missing classes
+        assert_nil(interp.findclass("", "nosuchclass"), "Did not return nil on missing classes")
+
+        # test the simple case -- the module class itself
+        name = "simple"
+        mk_module(name, :init => [name])
+
+        # Try to load the module automatically now
+        klass = interp.findclass("", name)
+        assert_instance_of(AST::HostClass, klass, "Did not autoload class from module init file")
+        assert_equal(name, klass.classname, "Incorrect class was returned")
+
+        # Now try it with a definition as the base file
+        name = "simpdef"
+        mk_module(name, :define => true, :init => [name])
+
+        klass = interp.finddefine("", name)
+        assert_instance_of(AST::Component, klass, "Did not autoload class from module init file")
+        assert_equal(name, klass.classname, "Incorrect class was returned")
+
+        # Now try it with namespace classes where both classes are in the init file
+        interp = mkinterp
+        modname = "both"
+        name = "sub"
+        mk_module(modname, :init => %w{both both::sub})
+
+        # First try it with a namespace
+        klass = interp.findclass("both", name)
+        assert_instance_of(AST::HostClass, klass, "Did not autoload sub class from module init file with a namespace")
+        assert_equal("both::sub", klass.classname, "Incorrect class was returned")
+
+        # Now try it using the fully qualified name
+        interp = mkinterp
+        klass = interp.findclass("", "both::sub")
+        assert_instance_of(AST::HostClass, klass, "Did not autoload sub class from module init file with no namespace")
+        assert_equal("both::sub", klass.classname, "Incorrect class was returned")
+
+
+        # Now try it with the class in a different file
+        interp = mkinterp
+        modname = "separate"
+        name = "sub"
+        mk_module(modname, :init => %w{separate}, :sub => %w{separate::sub})
+
+        # First try it with a namespace
+        klass = interp.findclass("separate", name)
+        assert_instance_of(AST::HostClass, klass, "Did not autoload sub class from separate file with a namespace")
+        assert_equal("separate::sub", klass.classname, "Incorrect class was returned")
+
+        # Now try it using the fully qualified name
+        interp = mkinterp
+        klass = interp.findclass("", "separate::sub")
+        assert_instance_of(AST::HostClass, klass, "Did not autoload sub class from separate file with no namespace")
+        assert_equal("separate::sub", klass.classname, "Incorrect class was returned")
+
+        # Now make sure we don't get a failure when there's no module file
+        interp = mkinterp
+        modname = "alone"
+        name = "sub"
+        mk_module(modname, :sub => %w{alone::sub})
+
+        # First try it with a namespace
+        assert_nothing_raised("Could not autoload file when module file is missing") do
+            klass = interp.findclass("alone", name)
+        end
+        assert_instance_of(AST::HostClass, klass, "Did not autoload sub class from alone file with a namespace")
+        assert_equal("alone::sub", klass.classname, "Incorrect class was returned")
+
+        # Now try it using the fully qualified name
+        interp = mkinterp
+        klass = interp.findclass("", "alone::sub")
+        assert_instance_of(AST::HostClass, klass, "Did not autoload sub class from alone file with no namespace")
+        assert_equal("alone::sub", klass.classname, "Incorrect class was returned")
     end
 end
 

@@ -421,7 +421,7 @@ module Puppet
 end
 
 require 'puppet/type'
-require 'puppet/modules'
+require 'puppet/module'
 require 'puppet/util/storage'
 require 'puppet/parser/interpreter'
 if Puppet[:storeconfigs]

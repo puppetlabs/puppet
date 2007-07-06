@@ -1,7 +1,3 @@
-# The interepreter's job is to convert from a parsed file to the configuration
-# for a given client.  It really doesn't do any work on its own, it just collects
-# and calls out to other objects.
-
 require 'puppet'
 require 'timeout'
 require 'puppet/rails'
@@ -9,6 +5,9 @@ require 'puppet/util/methodhelper'
 require 'puppet/parser/parser'
 require 'puppet/parser/scope'
 
+# The interpreter's job is to convert from a parsed file to the configuration
+# for a given client.  It really doesn't do any work on its own, it just collects
+# and calls out to other objects.
 class Puppet::Parser::Interpreter
     class NodeDef
         include Puppet::Util::MethodHelper
@@ -267,12 +266,65 @@ class Puppet::Parser::Interpreter
 
     # Find a class definition, relative to the current namespace.
     def findclass(namespace, name)
-        fqfind namespace, name, @classtable
+        find_or_load namespace, name, @classtable
     end
 
     # Find a component definition, relative to the current namespace.
     def finddefine(namespace, name)
-        fqfind namespace, name, @definetable
+        find_or_load namespace, name, @definetable
+    end
+
+    # Attempt to find the requested object.  If it's not yet loaded,
+    # attempt to load it.
+    def find_or_load(namespace, name, table)
+        if namespace == ""
+            fullname = name.gsub("::", File::SEPARATOR)
+        else
+            fullname = ("%s::%s" % [namespace, name]).gsub("::", File::SEPARATOR)
+        end
+        
+        # See if it's already loaded
+        if result = fqfind(namespace, name, table)
+            return result
+        end
+
+        if fullname == ""
+            return nil
+        end
+
+        # Nope.  Try to load the module itself, to see if that
+        # loads it.
+        mod = fullname.scan(/^[\w-]+/).shift
+        # We couldn't find it, so try to load the base module
+        begin
+            @parser.import(mod)
+            Puppet.info "Autoloaded module %s" % mod
+            if result = fqfind(namespace, name, table)
+                return result
+            end
+        rescue Puppet::ImportError => detail
+            # We couldn't load the module
+        end
+
+
+        # If they haven't specified a subclass, then there's no point in looking for
+        # a separate file.
+        if ! fullname.include?("/")
+            return nil
+        end
+
+        # Nope.  Try to load the individual file
+        begin
+            @parser.import(fullname)
+            Puppet.info "Autloaded file %s from module %s" % [fullname, mod]
+            if result = fqfind(namespace, name, table)
+                return result
+            end
+        rescue Puppet::ImportError => detail
+            # We couldn't load the file
+        end
+
+        return nil
     end
 
     # The recursive method used to actually look these objects up.

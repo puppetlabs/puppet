@@ -2,7 +2,6 @@
 
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
-require 'puppet'
 require 'puppettest'
 
 class TestModules < Test::Unit::TestCase
@@ -56,3 +55,5 @@ class TestModules < Test::Unit::TestCase
         assert_equal(templ_path, mod.template(templ))
     end
 end
+
+# $Id$

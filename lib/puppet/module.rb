@@ -111,3 +111,5 @@ class Puppet::Module
 
     private :initialize
 end
+
+# $Id$

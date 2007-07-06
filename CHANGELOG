@@ -1,3 +1,6 @@
+    Adding module autoloading (#596) -- you can now 'include' classes
+    from modules without ever needing to specifically load them.
+
     Class names and node names now conflict (#620).
 
 0.23.0
