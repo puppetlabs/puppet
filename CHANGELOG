@@ -1,3 +1,7 @@
+    The parser now throws an error when a resource reference
+    is created for an unknown type.  Also, resource references
+    look up defined types and translate their type accordingly. (#706)
+
     Hostnames can now be double quoted.
 
     Adding module autoloading (#596) -- you can now 'include' classes
