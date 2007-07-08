@@ -300,8 +300,12 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
                     lockfile.lockfile
             else
                 got_lock = true
-                @configtime = thinmark do
-                    self.getconfig
+                begin
+                    @configtime = thinmark do
+                        self.getconfig
+                    end
+                rescue => detail
+                    Puppet.err "Could not retrieve configuration: %s" % detail
                 end
 
                 if defined? @objects and @objects

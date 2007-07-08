@@ -618,9 +618,7 @@ end
             end
         end
 
-        assert_raise(ArgumentError, "did not fail") do
-            master.run
-        end
+        master.run
 
         assert(! master.send(:lockfile).locked?,
             "Master is still locked after failure")
@@ -724,6 +722,17 @@ end
 
         assert(FileTest.exists?(@createdfile), "File does not exist on disk")
         assert_nil(ftype[@createdfile], "file object was not removed from memory")
+    end
+
+    # #685
+    def test_http_failures_do_not_kill_puppetd
+        client = mkclient
+
+        client.meta_def(:getconfig) { raise "A failure" }
+
+        assert_nothing_raised("Failure in getconfig threw an error") do
+            client.run
+        end
     end
 end
 
