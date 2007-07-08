@@ -339,6 +339,11 @@ module Puppet
             :mode => 0640,
             :desc => "Where the puppetd web server logs."
         },
+        :http_proxy_host => ["none",
+            "The HTTP proxy host to use for outgoing connections.  Note: You
+            may need to use a FQDN for the server hostname when using a proxy."],
+        :http_proxy_port => [3128,
+            "The HTTP proxy port to use for outgoing connections"],
         :server => ["puppet",
             "The server to which server puppetd should connect"],
         :ignoreschedules => [false,

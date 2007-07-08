@@ -99,6 +99,13 @@ module Puppet::Network
             hash[:Path] ||= "/RPC2"
             hash[:Server] ||= Puppet[:server]
             hash[:Port] ||= Puppet[:masterport]
+            hash[:HTTPProxyHost] ||= Puppet[:http_proxy_host]
+            hash[:HTTPProxyPort] ||= Puppet[:http_proxy_port]
+
+            if "none" == hash[:HTTPProxyHost]
+                hash[:HTTPProxyHost] = nil
+                hash[:HTTPProxyPort] = nil
+            end
 
             @puppet_server = hash[:Server]
             @puppet_port = hash[:Port]
@@ -107,8 +114,8 @@ module Puppet::Network
                 hash[:Server],
                 hash[:Path],
                 hash[:Port],
-                nil, # proxy_host
-                nil, # proxy_port
+                hash[:HTTPProxyHost], # proxy_host
+                hash[:HTTPProxyPort], # proxy_port
                 nil, # user
                 nil, # password
                 true, # use_ssl
