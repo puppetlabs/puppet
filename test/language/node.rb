@@ -17,16 +17,26 @@ class TestParser < Test::Unit::TestCase
     def test_simple_hostname
         check_parseable "host1"
         check_parseable "'host2'"
+        check_parseable "\"host3\""
         check_parseable [ "'host1'",  "host2" ]
         check_parseable [ "'host1'",  "'host2'" ]
+        check_parseable [ "'host1'",  "\"host2\"" ]
+        check_parseable [ "\"host1\"",  "host2" ]
+        check_parseable [ "\"host1\"",  "'host2'" ]
+        check_parseable [ "\"host1\"",  "\"host2\"" ]
     end
 
     def test_qualified_hostname
         check_parseable "'host.example.com'"
+        check_parseable "\"host.example.com\""
         check_parseable [ "'host.example.com'", "host1" ]
+        check_parseable [ "\"host.example.com\"", "host1" ]
         check_parseable "'host-1.37examples.example.com'"
+        check_parseable "\"host-1.37examples.example.com\""
         check_parseable "'svn.23.nu'"
+        check_parseable "\"svn.23.nu\""
         check_parseable "'HOST'"
+        check_parseable "\"HOST\""
     end
     
     def test_inherits_from_default
@@ -37,7 +47,9 @@ class TestParser < Test::Unit::TestCase
         check_nonparseable "host.example.com"
         check_nonparseable "host@example.com"
         check_nonparseable "'$foo.example.com'"
+        check_nonparseable "\"$foo.example.com\""
         check_nonparseable "'host1 host2'"
+        check_nonparseable "\"host1 host2\""
         check_nonparseable "HOST"
     end
 
@@ -53,7 +65,7 @@ class TestParser < Test::Unit::TestCase
             interp = mkinterp :Code => code
         }
         # Strip quotes
-        hostnames.map! { |s| s.sub(/^'(.*)'$/, "\\1") }
+        hostnames.map! { |s| s.sub(/^['"](.*)['"]$/, "\\1") }
 
         # parse
         assert_nothing_raised {
