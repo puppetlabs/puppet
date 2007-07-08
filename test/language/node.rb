@@ -36,7 +36,6 @@ class TestParser < Test::Unit::TestCase
     def test_reject_hostname
         check_nonparseable "host.example.com"
         check_nonparseable "host@example.com"
-        check_nonparseable "\"host\""
         check_nonparseable "'$foo.example.com'"
         check_nonparseable "'host1 host2'"
         check_nonparseable "HOST"

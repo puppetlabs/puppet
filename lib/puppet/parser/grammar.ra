@@ -522,6 +522,7 @@ hostnames:    hostname
 
 hostname: NAME
         | SQTEXT
+        | DQTEXT
         | DEFAULT
 
 nil:    {

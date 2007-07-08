@@ -1,3 +1,5 @@
+    Hostnames can now be double quoted.
+
     Adding module autoloading (#596) -- you can now 'include' classes
     from modules without ever needing to specifically load them.
 
