@@ -242,21 +242,22 @@ if fs.include?(:Config)
     handlers[:FileServer] = fs
 end
 
+webserver = server = nil
 begin
     case Puppet[:servertype]
     when "webrick"
         # use the default, um, everything
         require 'puppet/network/server/webrick'
-        server = Puppet::Network::Server::WEBrick.new(:Handlers => handlers)
+        webserver = server = Puppet::Network::Server::WEBrick.new(:Handlers => handlers)
     when "mongrel":
         require 'puppet/network/server/mongrel'
-        handler = Puppet::Network::Server::Mongrel.new(handlers)
+        server = Puppet::Network::Server::Mongrel.new(handlers)
         addr = Puppet[:bindaddress]
         if addr == ""
             addr =  "127.0.0.1"
         end
-        server = Mongrel::HttpServer.new(addr, Puppet[:masterport])
-        server.register("/", handler)
+        webserver = Mongrel::HttpServer.new(addr, Puppet[:masterport])
+        webserver.register("/", server)
     else
         Puppet.err "Invalid server type %s" % Puppet[:servertype]
         exit(45)
@@ -296,7 +297,7 @@ case Puppet[:servertype]
 when "webrick"
     Puppet.start
 when "mongrel":
-    server.run.join
+    webserver.run.join
 end
 
 # $Id$

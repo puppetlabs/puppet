@@ -33,6 +33,7 @@ require 'xmlrpc/server'
 require 'puppet/network/xmlrpc/server'
 require 'puppet/network/server'
 require 'puppet/network/client_request'
+require 'puppet/daemon'
 
 require 'resolv'
 
@@ -49,6 +50,7 @@ require 'resolv'
 # </pre>
 module Puppet::Network
     class Server::Mongrel < ::Mongrel::HttpHandler
+        include Puppet::Daemon
         attr_reader :xmlrpc_server
 
         def initialize(handlers)
