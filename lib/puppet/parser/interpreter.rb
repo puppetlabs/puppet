@@ -316,7 +316,7 @@ class Puppet::Parser::Interpreter
         # Nope.  Try to load the individual file
         begin
             @parser.import(fullname)
-            Puppet.info "Autloaded file %s from module %s" % [fullname, mod]
+            Puppet.info "Autoloaded file %s from module %s" % [fullname, mod]
             if result = fqfind(namespace, name, table)
                 return result
             end
