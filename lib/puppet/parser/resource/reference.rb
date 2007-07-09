@@ -32,7 +32,7 @@ class Puppet::Parser::Resource::Reference
             if tmp = @scope.finddefine(self.type)
                 @definedtype = tmp
             else
-                fail Puppet::ParseError, "Could not find definition %s" % self.type
+                fail Puppet::ParseError, "Could not find resource type '%s'" % self.type
             end
         end
 
