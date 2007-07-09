@@ -511,7 +511,10 @@ module Puppet
             :owner => "$user",
             :group => "$group",
             :desc => "Where Rails-specific logs are sent"
-        }
+        },
+        :rails_loglevel => ["info", "The log level for Rails connections.  The value must be
+            a valid log level within Rails.  Production environments normally use ``info``
+            and other environments normally use ``debug``."]
     )
 
     setdefaults(:graphing,

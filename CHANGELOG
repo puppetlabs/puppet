@@ -1,3 +1,8 @@
+    The Rails log level can now be set via (shockingly!) the
+    'rails_loglevel' parameter (#710).  Note that this isn't
+    exactly the feature asked for, but I could not find a
+    way to directly copy ActiveRecord's concept of an environment.
+
     External node sources can now return undefined classes (#687). 
 
     Puppet clients now have http proxy support (#701).

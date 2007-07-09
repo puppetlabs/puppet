@@ -12,6 +12,13 @@ module Puppet::Rails
             Puppet.config.use(:main, :rails, :puppetmasterd)
 
             ActiveRecord::Base.logger = Logger.new(Puppet[:railslog])
+            begin
+                loglevel = Logger.const_get(Puppet[:rails_loglevel].upcase)
+                ActiveRecord::Base.logger.level = loglevel
+            rescue => detail
+                Puppet.warning "'%s' is not a valid Rails log level; using debug" % Puppet[:rails_loglevel]
+                ActiveRecord::Base.logger.level = Logger::DEBUG
+            end
             ActiveRecord::Base.allow_concurrency = true
             ActiveRecord::Base.verify_active_connections!
 
@@ -28,7 +35,7 @@ module Puppet::Rails
 
     # The arguments for initializing the database connection.
     def self.database_arguments
-        args = {:adapter => Puppet[:dbadapter]}
+        args = {:adapter => Puppet[:dbadapter], :log_level => Puppet[:rails_loglevel]}
 
         case Puppet[:dbadapter]
         when "sqlite3":
