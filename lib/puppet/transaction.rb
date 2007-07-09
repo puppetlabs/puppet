@@ -495,7 +495,7 @@ class Transaction
         end
     end
     
-    # Prepare to evaluate the elements in a transaction.
+    # Prepare to evaluate the resources in a transaction.
     def prepare
         prefetch()
     

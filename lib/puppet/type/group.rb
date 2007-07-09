@@ -12,7 +12,7 @@ require 'facter'
 module Puppet
     newtype(:group) do
         @doc = "Manage groups.  This type can only create groups.  Group
-            membership must be managed on individual users.  This element type
+            membership must be managed on individual users.  This resource type
             uses the prescribed native tools for creating groups and generally
             uses POSIX APIs for retrieving information about them.  It does
             not directly modify ``/etc/group`` or anything.

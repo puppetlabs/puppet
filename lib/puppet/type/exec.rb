@@ -48,7 +48,7 @@ module Puppet
             to native Puppet types as quickly as possible.  If you find that
             you are doing a lot of work with ``exec``, please at least notify
             us at Reductive Labs what you are doing, and hopefully we can work with
-            you to get a native element type for the work you are doing."
+            you to get a native resource type for the work you are doing."
 
         require 'open3'
 
@@ -196,7 +196,7 @@ module Puppet
 
         newparam(:logoutput) do
             desc "Whether to log output.  Defaults to logging output at the
-                loglevel for the ``exec`` element.  Values are **true**, *false*,
+                loglevel for the ``exec`` resource.  Values are **true**, *false*,
                 and any legal log level."
 
             values = [:true, :false]

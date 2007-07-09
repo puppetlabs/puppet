@@ -188,7 +188,7 @@ module Puppet
             super
         end
 
-        # Return the Puppet::Util::IniConfig::Section for this yumrepo element
+        # Return the Puppet::Util::IniConfig::Section for this yumrepo resource
         def section
             self.class.section(self[:name])
         end
@@ -217,7 +217,7 @@ module Puppet
             return changes
         end
 
-        # Store modifications to this yumrepo element back to disk
+        # Store modifications to this yumrepo resource back to disk
         def store
             self.class.store
         end

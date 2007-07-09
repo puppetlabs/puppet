@@ -7,7 +7,7 @@ module Puppet
             users, so it is lacking some features useful for managing normal
             users.
             
-            This element type uses the prescribed native tools for creating
+            This resource type uses the prescribed native tools for creating
             groups and generally uses POSIX APIs for retrieving information
             about them.  It does not directly modify /etc/passwd or anything."
 

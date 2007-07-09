@@ -35,7 +35,7 @@ class Type
     require 'puppet/metatype/schedules'
     require 'puppet/metatype/tags'
 
-    # Types (which map to elements in the languages) are entirely composed of
+    # Types (which map to resources in the languages) are entirely composed of
     # attribute value pairs.  Generally, Puppet calls any of these things an
     # 'attribute', but these attributes always take one of three specific
     # forms:  parameters, metaparams, or properties.

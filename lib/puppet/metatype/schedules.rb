@@ -23,7 +23,7 @@ class Puppet::Type
         return true unless schedule = self.schedule
 
         # We use 'checked' here instead of 'synced' because otherwise we'll
-        # end up checking most elements most times, because they will generally
+        # end up checking most resources most times, because they will generally
         # have been synced a long time ago (e.g., a file only gets updated
         # once a month on the server and its schedule is daily; the last sync time
         # will have been a month ago, so we'd end up checking every run).

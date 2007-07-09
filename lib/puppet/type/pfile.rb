@@ -11,13 +11,13 @@ module Puppet
         @doc = "Manages local files, including setting ownership and
             permissions, creation of both files and directories, and
             retrieving entire files from remote servers.  As Puppet matures, it
-            expected that the ``file`` element will be used less and less to
-            manage content, and instead native elements will be used to do so.
+            expected that the ``file`` resource will be used less and less to
+            manage content, and instead native resources will be used to do so.
             
             If you find that you are often copying files in from a central
-            location, rather than using native elements, please contact
+            location, rather than using native resources, please contact
             Reductive Labs and we can hopefully work with you to develop a
-            native element to support what you are doing."
+            native resource to support what you are doing."
 
         newparam(:path) do
             desc "The path to the file to manage.  Must be fully qualified."

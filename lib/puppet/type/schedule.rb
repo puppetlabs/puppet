@@ -2,20 +2,20 @@ module Puppet
     newtype(:schedule) do
         @doc = "Defined schedules for Puppet.  The important thing to understand
             about how schedules are currently implemented in Puppet is that they
-            can only be used to stop an element from being applied, they never
+            can only be used to stop a resource from being applied, they never
             guarantee that it is applied.
             
             Every time Puppet applies its configuration, it will collect the
-            list of elements whose schedule does not eliminate them from
+            list of resources whose schedule does not eliminate them from
             running right then, but there is currently no system in place to
-            guarantee that a given element runs at a given time.  If you
+            guarantee that a given resource runs at a given time.  If you
             specify a very  restrictive schedule and Puppet happens to run at a
-            time within that schedule, then the elements will get applied;
+            time within that schedule, then the resources will get applied;
             otherwise, that work may never get done.
             
             Thus, it behooves you to use wider scheduling (e.g., over a couple of
             hours) combined with periods and repetitions.  For instance, if you
-            wanted to restrict certain elements to only running once, between
+            wanted to restrict certain resources to only running once, between
             the hours of two and 4 AM, then you would use this schedule::
                 
                 schedule { maint:
@@ -25,7 +25,7 @@ module Puppet
                 }
 
             With this schedule, the first time that Puppet runs between 2 and 4 AM,
-            all elements with this schedule will get applied, but they won't
+            all resources with this schedule will get applied, but they won't
             get applied again between 2 and 4 because they will have already
             run once that day, and they won't get applied outside that schedule
             because they will be outside the scheduled range.
@@ -40,7 +40,7 @@ module Puppet
                     repeat => 2
                 }
 
-            This will cause elements to be applied every 30 minutes by default.
+            This will cause resources to be applied every 30 minutes by default.
             "
 
         newparam(:name) do
@@ -61,7 +61,7 @@ module Puppet
         end
 
         newparam(:range) do
-            desc "The earliest and latest that an element can be applied.  This
+            desc "The earliest and latest that a resource can be applied.  This
                 is always a range within a 24 hour period, and hours must be
                 specified in numbers between 0 and 23, inclusive.  Minutes and
                 seconds can be provided, using the normal colon as a separator.
@@ -71,7 +71,7 @@ module Puppet
                         range => \"1:30 - 4:30\"
                     }
                 
-                This is mostly useful for restricting certain elements to being
+                This is mostly useful for restricting certain resources to being
                 applied in maintenance windows or during off-peak hours."
 
             # This is lame; properties all use arrays as values, but parameters don't.
@@ -197,19 +197,19 @@ module Puppet
         end
 
         newparam(:period) do
-            desc "The period of repetition for an element.  Choose from among
+            desc "The period of repetition for a resource.  Choose from among
                 a fixed list of *hourly*, *daily*, *weekly*, and *monthly*.
-                The default is for an element to get applied every time that
+                The default is for a resource to get applied every time that
                 Puppet runs, whatever that period is.
 
-                Note that the period defines how often a given element will get
+                Note that the period defines how often a given resource will get
                 applied but not when; if you would like to restrict the hours
-                that a given element can be applied (e.g., only at night during
+                that a given resource can be applied (e.g., only at night during
                 a maintenance window) then use the ``range`` attribute.
 
                 If the provided periods are not sufficient, you can provide a
                 value to the *repeat* attribute, which will cause Puppet to
-                schedule the affected elements evenly in the period the
+                schedule the affected resources evenly in the period the
                 specified number of times.  Take this schedule::
 
                     schedule { veryoften:
@@ -217,7 +217,7 @@ module Puppet
                         repeat => 6
                     }
 
-                This can cause Puppet to apply that element up to every 10 minutes.
+                This can cause Puppet to apply that resource up to every 10 minutes.
 
                 At the moment, Puppet cannot guarantee that level of
                 repetition; that is, it can run up to every 10 minutes, but

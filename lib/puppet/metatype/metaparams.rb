@@ -206,10 +206,10 @@ class Puppet::Type
     end
 
     newmetaparam(:tag) do
-        desc "Add the specified tags to the associated element.  While all elements
+        desc "Add the specified tags to the associated resource.  While all resources
             are automatically tagged with as much information as possible
-            (e.g., each class and component containing the element), it can
-            be useful to add your own tags to a given element.
+            (e.g., each class and definition containing the resource), it can
+            be useful to add your own tags to a given resource.
 
             Tags are currently useful for things like applying a subset of a
             host's configuration::
@@ -325,7 +325,7 @@ class Puppet::Type
                 }
 
             Note that Puppet will autorequire everything that it can, and
-            there are hooks in place so that it's easy for elements to add new
+            there are hooks in place so that it's easy for resources to add new
             ways to autorequire objects, so if you think Puppet could be
             smarter here, let us know.
 
@@ -334,7 +334,7 @@ class Puppet::Type
             automatically realize that the parent directory should be created
             before the script is pulled down.
             
-            Currently, exec elements will autorequire their CWD (if it is
+            Currently, exec resources will autorequire their CWD (if it is
             specified) plus any fully qualified paths that appear in the
             command.   For instance, if you had an ``exec`` command that ran
             the ``myscript`` mentioned above, the above code that pulls the
