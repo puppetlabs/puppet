@@ -853,6 +853,18 @@ class TestInterpreter < PuppetTest::TestCase
 
         assert(scope.classlist.include?("sub"), "NodeDef did not evaluate class")
         assert(scope.classlist.include?("other"), "NodeDef did not evaluate other class")
+
+        # Now make sure nodedef doesn't fail when some classes are not defined (#687).
+        assert_nothing_raised("Could not create a node definition with some invalid classes") do
+            node = NodeDef.new :name => "yay", :classes => %w{base unknown}
+        end
+
+        scope = mkscope :interp => interp
+        assert_nothing_raised("Could not evaluate the node definition with some invalid classes") do
+            node.evaluate(:scope => scope)
+        end
+
+        assert(scope.classlist.include?("base"), "NodeDef did not evaluate class")
     end
 
     # This can stay in the main test suite because it doesn't actually use ldapsearch,

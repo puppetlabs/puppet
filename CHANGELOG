@@ -1,3 +1,5 @@
+    External node sources can now return undefined classes (#687). 
+
     Puppet clients now have http proxy support (#701).
 
     The parser now throws an error when a resource reference

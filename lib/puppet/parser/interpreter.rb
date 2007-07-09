@@ -28,7 +28,7 @@ class Puppet::Parser::Interpreter
 
             # Then evaluate the classes.
             begin
-                options[:scope].function_include(classes)
+                options[:scope].function_include(classes.find_all { |c| options[:scope].findclass(c) })
             rescue => detail
                 raise Puppet::ParseError, "Could not evaluate classes for %s: %s" % [name, detail]
             end
