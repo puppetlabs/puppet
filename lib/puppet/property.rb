@@ -19,6 +19,24 @@ class Property < Puppet::Parameter
         attr_accessor :unmanaged
         attr_reader :name
 
+        # Return array matching info, defaulting to just matching
+        # the first value.
+        def array_matching
+            unless defined?(@array_matching)
+                @array_matching = :first
+            end
+            @array_matching
+        end
+
+        # Set whether properties should match all values or just the first one.
+        def array_matching=(value)
+            value = value.intern if value.is_a?(String)
+            unless [:first, :all].include?(value)
+                raise ArgumentError, "Supported values for Property#array_matching are 'first' and 'all'"
+            end
+            @array_matching = value
+        end
+
         def checkable
             @checkable = true
         end
@@ -255,11 +273,15 @@ class Property < Puppet::Parameter
         end
 
         # Look for a matching value
-        @should.each { |val|
-            if is == val or is == val.to_s
-                return true
-            end
-        }
+        if match_all?
+            return (is == @should or is == @should.collect { |v| v.to_s })
+        else
+            @should.each { |val|
+                if is == val or is == val.to_s
+                    return true
+                end
+            }
+        end
 
         # otherwise, return false
         return false
@@ -284,6 +306,11 @@ class Property < Puppet::Parameter
             :message => msg,
             :source => self
         )
+    end
+
+    # Should we match all values, or just the first?
+    def match_all?
+        self.class.array_matching == :all
     end
 
     # each property class must define the name() method, and property instances
@@ -352,7 +379,11 @@ class Property < Puppet::Parameter
                 self.devfail "should for %s on %s is not an array" %
                     [self.class.name, @resource.name]
             end
-            return @should[0]
+            if match_all?
+                return @should
+            else
+                return @should[0]
+            end
         else
             return nil
         end

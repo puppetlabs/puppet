@@ -345,6 +345,44 @@ class TestProperty < Test::Unit::TestCase
             $setting.clear
         end
     end
+
+    # Make sure we can specify that we want to use the whole array, rather
+    # than just individual values.
+    def test_array_handling
+        property = newproperty(:arraytests)
+
+        prov, model = newmodel(:array_testing)
+        inst = newinst(property, model)
+
+        # Make sure it defaults to first
+        assert_equal(:first, property.array_matching, "Property did not default to matching first value in an array")
+        assert(! inst.match_all?, "match_all? returned true when array_matching is :first")
+
+        vals = %w{one two three}
+        inst.should = vals
+
+        # Make sure we only get the first value back
+        assert_equal("one", inst.should, "Returned wrong value when array_matching == first")
+
+        # And make sure any of these values is considered in sync
+        vals.each do |value|
+            assert(inst.insync?(value), "#{value} was not considered in sync when array_matching == first")
+        end
+
+        # Now change it to all
+        property.array_matching = :all
+        assert_equal(:all, property.array_matching, "Property did not change value of array_matching")
+        assert(inst.match_all?, "match_all? returned false when array_matching is :all")
+
+        # Make sure we only get the first value back
+        assert_equal(vals, inst.should, "Returned wrong value when array_matching == all")
+
+        # And make sure any of these values is considered in sync
+        %w{one two three}.each do |value|
+            assert(! inst.insync?(value), "individual value #{value} was considered in sync when array_matching == all")
+        end
+        assert(inst.insync?(vals), "value array was not considered in sync when array_matching == all")
+    end
 end
 
 # $Id$
