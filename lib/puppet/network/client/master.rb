@@ -454,18 +454,20 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     # Retrieve the plugins from the central server.  We only have to load the
     # changed plugins, because Puppet::Type loads plugins on demand.
     def self.getplugins
-        path = Puppet[:pluginpath].split(":")
         download(:dest => Puppet[:plugindest], :source => Puppet[:pluginsource],
             :ignore => Puppet[:pluginsignore], :name => "plugin") do |object|
 
-            next unless path.include?(::File.dirname(object[:path]))
+            next if FileTest.directory?(object[:path])
+            path = object[:path].sub(Puppet[:plugindest], '').sub(/^\/+/, '')
+            unless Puppet::Util::Autoload.loaded?(path)
+                next
+            end
 
             begin
-                Puppet.info "Reloading plugin %s" %
-                    ::File.basename(::File.basename(object[:path])).sub(".rb",'')
+                Puppet.info "Reloading downloaded file %s" % path
                 load object[:path]
             rescue => detail
-                Puppet.warning "Could not reload plugin %s: %s" %
+                Puppet.warning "Could not reload downloaded file %s: %s" %
                     [object[:path], detail]
             end
         end

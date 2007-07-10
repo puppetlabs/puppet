@@ -1,3 +1,10 @@
+    The configuration client now pulls libraries down to $libdir,
+    and all autoloading is done from there with full support
+    for any reloadable file, such as types and providers. (#621)
+    Note that this is not backward compatible -- if you're using
+    pluginsync right now, you'll need to disable it on your clients
+    until you can upgrade them.
+
     The Rails log level can now be set via (shockingly!) the
     'rails_loglevel' parameter (#710).  Note that this isn't
     exactly the feature asked for, but I could not find a

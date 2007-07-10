@@ -264,63 +264,38 @@ class TestMasterClient < Test::Unit::TestCase
         Puppet[:filetimeout] = -1
         Puppet[:pluginsource] = tempfile()
         Dir.mkdir(Puppet[:pluginsource])
+        Dir.mkdir(File.join(Puppet[:pluginsource], "testing"))
 
-        myplugin = File.join(Puppet[:pluginsource], "myplugin.rb")
+        $loaded = []
+        loader = Puppet::Util::Autoload.new(self, "testing")
+
+        myplugin = File.join(Puppet[:pluginsource], "testing", "myplugin.rb")
         File.open(myplugin, "w") do |f|
-            f.puts %{Puppet::Type.newtype(:myplugin) do
-    newparam(:argument) do
-        isnamevar
-    end
-end
-}
+            f.puts %{$loaded << :myplugin}
         end
 
-        assert_nothing_raised {
+        assert_nothing_raised("Could not get plugins") {
             Puppet::Network::Client.master.getplugins
         }
 
-        destfile = File.join(Puppet[:plugindest], "myplugin.rb")
+        destfile = File.join(Puppet[:plugindest], "testing", "myplugin.rb")
 
         assert(File.exists?(destfile), "Did not get plugin")
 
-        obj = Puppet::Type.type(:myplugin)
+        assert(loader.load(:myplugin), "Did not load downloaded plugin")
 
-        assert(obj, "Did not define type")
-
-        assert(obj.validattr?(:argument),
-            "Did not get namevar")
+        assert($loaded.include?(:myplugin), "Downloaded code was not evaluated")
 
         # Now modify the file and make sure the type is replaced
         File.open(myplugin, "w") do |f|
-            f.puts %{Puppet::Type.newtype(:myplugin) do
-    newparam(:yayness) do
-        isnamevar
-    end
-
-    newparam(:rahness) do
-    end
-end
-}
+            f.puts %{$loaded << :changed}
         end
 
-        assert_nothing_raised {
+        assert_nothing_raised("Could not get plugin changes") {
             Puppet::Network::Client.master.getplugins
         }
 
-        destfile = File.join(Puppet[:pluginpath], "myplugin.rb")
-
-        obj = Puppet::Type.type(:myplugin)
-
-        assert(obj, "Did not define type")
-
-        assert(obj.validattr?(:yayness),
-            "Did not get namevar")
-
-        assert(obj.validattr?(:rahness),
-            "Did not get other var")
-
-        assert(! obj.validattr?(:argument),
-            "Old namevar is still valid")
+        assert($loaded.include?(:changed), "Changed code was not evaluated")
 
         # Now try it again, to make sure we don't have any objects lying around
         assert_nothing_raised {
