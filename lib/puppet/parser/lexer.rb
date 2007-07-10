@@ -46,6 +46,7 @@ module Puppet
                 %r{\?} => :QMARK,
                 %r{\\} => :BACKSLASH,
                 %r{=>} => :FARROW,
+                %r{\+>} => :PARROW,
                 %r{[a-z][-\w]*} => :NAME,
                 %r{([a-z][-\w]*::)+[a-z][-\w]*} => :CLASSNAME,
                 %r{([A-Z][-\w]*::)+[A-Z][-\w]*} => :CLASSREF,

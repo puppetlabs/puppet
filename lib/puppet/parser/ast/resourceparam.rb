@@ -3,7 +3,7 @@ require 'puppet/parser/ast/branch'
 class Puppet::Parser::AST
     # The AST object for the parameters inside ResourceDefs and Selectors.
     class ResourceParam < AST::Branch
-        attr_accessor :value, :param
+        attr_accessor :value, :param, :add
 
         def each
             [@param,@value].each { |child| yield child }
@@ -16,7 +16,8 @@ class Puppet::Parser::AST
             return Puppet::Parser::Resource::Param.new(
                 :name => @param,
                 :value => @value.safeevaluate(:scope => scope),
-                :source => scope.source, :line => self.line, :file => self.file
+                :source => scope.source, :line => self.line, :file => self.file,
+                :add => self.add
             )
         end
 

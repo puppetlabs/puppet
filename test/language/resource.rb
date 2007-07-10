@@ -69,6 +69,31 @@ class TestResource < PuppetTest::TestCase
         end
     end
 
+    def check_paramadd(val1, val2, merged_val)
+        res = mkresource :params => {"one" => val1}
+        assert_nothing_raised do
+            res.set Parser::Resource::Param.new(
+                        :name => "one", :value => val2,
+                        :add => true, :source => @scope.findclass("sub1"))
+        end
+        assert_equal(merged_val, res[:one])
+    end
+
+    def test_paramadd
+        check_paramadd([], [], [])
+        check_paramadd([], "rah", ["rah"])
+        check_paramadd([], ["rah", "bah"], ["rah", "bah"])
+
+        check_paramadd("yay", [], ["yay"])
+        check_paramadd("yay", "rah", ["yay", "rah"])
+        check_paramadd("yay", ["rah", "bah"], ["yay", "rah", "bah"])
+
+        check_paramadd(["yay", "boo"], [], ["yay", "boo"])
+        check_paramadd(["yay", "boo"], "rah", ["yay", "boo", "rah"])
+        check_paramadd(["yay", "boo"], ["rah", "bah"],
+                       ["yay", "boo", "rah", "bah"])
+    end
+
     def test_merge
         # Start with the normal one
         res = mkresource

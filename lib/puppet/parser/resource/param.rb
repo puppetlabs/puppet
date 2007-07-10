@@ -1,6 +1,6 @@
  # The parameters we stick in Resources.
 class Puppet::Parser::Resource::Param
-    attr_accessor :name, :value, :source, :line, :file
+    attr_accessor :name, :value, :source, :line, :file, :add
     include Puppet::Util
     include Puppet::Util::Errors
     include Puppet::Util::MethodHelper

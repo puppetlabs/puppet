@@ -9,7 +9,7 @@ token FALSE EQUALS LESSEQUAL NOTEQUAL DOT COLON TYPE LLCOLLECT RRCOLLECT
 token QMARK LPAREN RPAREN ISEQUAL GREATEREQUAL GREATERTHAN LESSTHAN
 token IF ELSE IMPORT DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN
 token NAME SEMIC CASE DEFAULT AT LCOLLECT RCOLLECT CLASSNAME CLASSREF
-token NOT OR AND UNDEF
+token NOT OR AND UNDEF PARROW
 
 rule
 program:    statements {
@@ -142,7 +142,7 @@ resource:       classname LBRACE resourceinstances endsemi RBRACE {
 }
 
 # Override a value set elsewhere in the configuration.
-resourceoverride:     resourceref LBRACE params endcomma RBRACE {
+resourceoverride:     resourceref LBRACE anyparams endcomma RBRACE {
     result = ast AST::ResourceOverride, :object => val[0], :params => val[2]
 }
 
@@ -308,6 +308,28 @@ params:   # nothing
 
 param:        NAME FARROW rvalue {
     result = ast AST::ResourceParam, :param => val[0], :value => val[2]
+}
+
+addparam:     NAME PARROW rvalue {
+    result = ast AST::ResourceParam, :param => val[0], :value => val[2],
+                                     :add => true
+}
+
+anyparam:     param
+            | addparam
+
+anyparams:   # nothing
+{
+    result = ast AST::ASTArray
+}
+        | anyparam { result = val[0] }
+        | anyparams COMMA anyparam {
+    if val[0].instance_of?(AST::ASTArray)
+        val[0].push(val[2])
+        result = val[0]
+    else
+        result = ast AST::ASTArray, :children => [val[0],val[2]]
+    end
 }
 
 rvalues:      rvalue

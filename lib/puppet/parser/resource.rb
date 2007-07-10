@@ -265,6 +265,11 @@ class Puppet::Parser::Resource
         if current = @params[param.name]
             # XXX Should we ignore any settings that have the same values?
             if param.source.child_of?(current.source)
+                if param.add
+                    # Merge with previous value.
+                    param.value = [ current.value, param.value ].flatten
+                end
+
                 # Replace it, keeping all of its info.
                 @params[param.name] = param
             else

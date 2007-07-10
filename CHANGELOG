@@ -1,3 +1,6 @@
+    Added patch by Valentin Vidic that adds the '+>' syntax to
+    resources, so parameter values can be added to.
+
     The configuration client now pulls libraries down to $libdir,
     and all autoloading is done from there with full support
     for any reloadable file, such as types and providers. (#621)
