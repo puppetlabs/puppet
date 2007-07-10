@@ -490,7 +490,7 @@ class Transaction
                 if Puppet[:trace]
                     puts detail.backtrace
                 end
-                Puppet.err "Could not prefetch % provider %s: %s" % [resources[0].class.name, provider.name, detail]
+                Puppet.err "Could not prefetch %s provider '%s': %s" % [provider.resource_type.name, provider.name, detail]
             end
         end
     end
