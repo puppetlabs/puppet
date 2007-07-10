@@ -30,12 +30,7 @@ TestAutoload.newthing(:#{name.to_s})
         end
     end
 
-    def teardown
-        super
-        self.class.clear
-    end
-
-    def test_load
+    def mk_loader(name)
         dir = tempfile()
         $: << dir
         cleanup do
@@ -44,19 +39,26 @@ TestAutoload.newthing(:#{name.to_s})
 
         Dir.mkdir(dir)
 
-        rbdir = File.join(dir, "yayness")
+        rbdir = File.join(dir, name.to_s)
 
         Dir.mkdir(rbdir)
 
-        # An object for specifying autoload
-        klass = self.class
-
         loader = nil
         assert_nothing_raised {
-            loader = Puppet::Util::Autoload.new(klass, :yayness)
+            loader = Puppet::Util::Autoload.new(self.class, name)
         }
+        return rbdir, loader
+    end
 
-        assert_equal(loader.object_id, Puppet::Util::Autoload[klass].object_id,
+    def teardown
+        super
+        Puppet::Util::Autoload.clear
+    end
+
+    def test_load
+        dir, loader = mk_loader(:yayness)
+
+        assert_equal(loader.object_id, Puppet::Util::Autoload[self.class].object_id,
                     "Did not retrieve loader object by class")
 
         # Make sure we don't fail on missing files
@@ -66,9 +68,9 @@ TestAutoload.newthing(:#{name.to_s})
         }
 
         # Now create a couple of files for testing
-        path = File.join(rbdir, "mything.rb")
+        path = File.join(dir, "mything.rb")
         mkfile(:mything, path)
-        opath = File.join(rbdir, "othing.rb")
+        opath = File.join(dir, "othing.rb")
         mkfile(:othing, opath)
 
         # Now try to actually load it.
@@ -79,12 +81,12 @@ TestAutoload.newthing(:#{name.to_s})
 
         assert(loader.loaded?(:mything), "Not considered loaded")
 
-        assert(klass.thing?(:mything),
+        assert(self.class.thing?(:mything),
                 "Did not get loaded thing")
 
         # Now clear everything, and test loadall
         assert_nothing_raised {
-            loader.clear
+            Puppet::Util::Autoload.clear
         }
 
         self.class.clear
@@ -95,9 +97,22 @@ TestAutoload.newthing(:#{name.to_s})
 
         [:mything, :othing].each do |thing|
             assert(loader.loaded?(thing), "#{thing.to_s} not considered loaded")
+            assert(loader.loaded?("%s.rb" % thing), "#{thing.to_s} not considered loaded with .rb")
+            assert(Puppet::Util::Autoload.loaded?("yayness/%s" % thing), "%s not considered loaded by the main class" % thing)
+            assert(Puppet::Util::Autoload.loaded?("yayness/%s.rb" % thing), "%s not considered loaded by the main class with .rb" % thing)
 
-            assert(klass.thing?(thing),
+            loaded = Puppet::Util::Autoload.loaded?("yayness/%s.rb" % thing)
+            assert_equal("%s/%s.rb" % [dir, thing], loaded[:file], "File path was not set correctly in loaded store")
+            assert_equal(self.class, loaded[:autoloader], "Loader was not set correctly in loaded store")
+
+            assert(self.class.thing?(thing),
                     "Did not get loaded #{thing.to_s}")
+        end
+
+        Puppet::Util::Autoload.clear
+        [:mything, :othing].each do |thing|
+            assert(! loader.loaded?(thing), "#{thing.to_s} considered loaded after clear")
+            assert(! Puppet::Util::Autoload.loaded?("yayness/%s" % thing), "%s considered loaded by the main class after clear" % thing)
         end
     end
 
