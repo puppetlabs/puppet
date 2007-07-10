@@ -68,6 +68,10 @@ module Puppet
             @declarations = []
         end
 
+        def to_s
+            "authstore"
+        end
+
         private
 
         # Store the results of a pattern into our hash.  Basically just
