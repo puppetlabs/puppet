@@ -197,15 +197,13 @@ class TestParsedFile < Test::Unit::TestCase
         prov.default_target = :default
 
         # Create a couple of demo files
-        prov.target_object(:file1).write "bill b c"
+        prov.target_object(:file1).write "bill b c\njill b d"
 
-        prov.target_object(:file2).write "jill b d"
-
-        prov.target_object(:default).write "will b d"
+        prov.target_object(:default).write "will b d\n"
 
         # Create some resources for some of those demo files
-        resource = mkresource "bill", :target => :file1
-        default = mkresource "will", :target => :default
+        resource = mkresource "bill", :target => :file1, :one => "b", :two => "c"
+        default = mkresource "will", :target => :default, :one => "b", :two => "d"
 
         resources = {"bill" => resource, "will" => default}
 
@@ -215,6 +213,7 @@ class TestParsedFile < Test::Unit::TestCase
 
         # Make sure we prefetched our resources.
         assert_equal("b", resource.provider.one, "did not prefetch resource from file1")
+        assert_equal("c", resource.provider.two, "did not prefetch resource from file1")
         assert_equal("b", default.provider.one, "did not prefetch resource from default")
         assert_equal("d", default.provider.two, "did not prefetch resource from default")
 
@@ -232,6 +231,20 @@ class TestParsedFile < Test::Unit::TestCase
             assert(providers.find { |provider| provider.name == name},
                 "Did not return %s in list" % name)
         end
+
+        # Now modify our resources and write them out, making sure that prefetching
+        # hasn't somehow destroyed this ability
+        resource[:one] = "a"
+        default[:one] = "a"
+
+
+        assert_apply(resource)
+        assert_apply(default)
+
+        assert_equal("bill a c\njill b d\n", prov.target_object(:file1).read,
+            "Did not write changed resource correctly")
+        assert_equal("will a d\n", prov.target_object(:default).read,
+            "Did not write changed default resource correctly")
     end
 
     # Make sure we can correctly prefetch on a target.

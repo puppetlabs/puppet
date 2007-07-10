@@ -295,13 +295,16 @@ class Puppet::Type
                 [self.name, name]
         end
 
+        if parent = options[:parent]
+            options.delete(:parent)
+        else
+            parent = Puppet::Property
+        end
+
         # We have to create our own, new block here because we want to define
         # an initial :retrieve method, if told to, and then eval the passed
         # block if available.
-        prop = genclass(name,
-            :parent => options[:parent] || Puppet::Property,
-            :hash => @validproperties
-        ) do
+        prop = genclass(name, :parent => parent, :hash => @validproperties, :attributes => options) do
             # If they've passed a retrieve method, then override the retrieve
             # method on the class.
             if options[:retrieve]
@@ -320,15 +323,6 @@ class Puppet::Type
             @properties.unshift prop
         else
             @properties << prop
-        end
-
-        if options[:event]
-            prop.event = options[:event]
-        end
-
-        # Grr.
-        if options[:required_features]
-            prop.required_features = options[:required_features]
         end
 
 #        define_method(name) do
