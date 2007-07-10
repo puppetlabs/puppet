@@ -229,7 +229,10 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
             old = @target
             begin
                 @target = path
-                self.parse(text)
+                return self.parse(text)
+            rescue Puppet::Error => detail
+                detail.file = @target
+                raise detail
             ensure
                 @target = old
             end
