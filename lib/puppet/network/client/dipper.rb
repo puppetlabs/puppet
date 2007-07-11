@@ -19,7 +19,7 @@ class Puppet::Network::Client::Dipper < Puppet::Network::Client
     # Back up a file to our bucket
     def backup(file)
         unless FileTest.exists?(file)
-            raise(BucketError, "File %s does not exist" % file)
+            raise(ArgumentError, "File %s does not exist" % file)
         end
         contents = ::File.read(file)
         unless local?

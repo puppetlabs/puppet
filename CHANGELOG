@@ -1,3 +1,7 @@
+    Files modified using a FileType instance, as ParsedFile
+    does, will now automatically get backed up to the filebucket
+    named "puppet".
+
     Added a 'maillist' type for managing mailing lists.
 
     Added a 'mailalias' type for managing mail aliases.

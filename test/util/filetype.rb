@@ -2,9 +2,9 @@
 
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
-require 'puppet'
-require 'puppet/util/filetype'
 require 'puppettest'
+require 'puppet/util/filetype'
+require 'mocha'
 
 class TestFileType < Test::Unit::TestCase
 	include PuppetTest
@@ -51,6 +51,52 @@ class TestFileType < Test::Unit::TestCase
         }
 
         assert_equal(text, newtext, "Text was changed somehow")
+    end
+
+    # Make sure that modified files are backed up before they're changed.
+    def test_backup_is_called
+        path = tempfile
+        File.open(path, "w") { |f| f.print 'yay' }
+
+        obj = Puppet::Util::FileType.filetype(:flat).new(path)
+
+        obj.expects(:backup)
+
+        obj.write("something")
+
+        assert_equal("something", File.read(path), "File did not get changed")
+    end
+
+    def test_backup
+        path = tempfile
+        type = Puppet::Type.type(:filebucket)
+
+        obj = Puppet::Util::FileType.filetype(:flat).new(path)
+
+        # First try it when the file does not yet exist.
+        assert_nothing_raised("Could not call backup when file does not exist") do
+            obj.backup
+        end
+
+        # Then create the file
+        File.open(path, "w") { |f| f.print 'one' }
+
+        # Then try it with no filebucket objects
+        assert_nothing_raised("Could not call backup with no buckets") do
+            obj.backup
+        end
+        puppet = type["puppet"]
+        assert(puppet, "Did not create default filebucket")
+
+        assert_equal("one", puppet.bucket.getfile(Digest::MD5.hexdigest(File.read(path))), "Could not get file from backup")
+
+        # Try it again when the default already exists
+        File.open(path, "w") { |f| f.print 'two' }
+        assert_nothing_raised("Could not call backup with no buckets") do
+            obj.backup
+        end
+
+        assert_equal("two", puppet.bucket.getfile(Digest::MD5.hexdigest(File.read(path))), "Could not get file from backup")
     end
 
     if Facter["operatingsystem"].value == "Darwin"

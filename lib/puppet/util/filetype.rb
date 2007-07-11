@@ -67,6 +67,16 @@ class Puppet::Util::FileType
         @filetypes[type]
     end
 
+    # Back the file up before replacing it.
+    def backup
+        bucket.backup(@path) if FileTest.exists?(@path)
+    end
+
+    # Pick or create a filebucket to use.
+    def bucket
+        Puppet::Type.type(:filebucket).mkdefaultbucket.bucket
+    end
+
     def initialize(path)
         @path = path
     end
@@ -91,6 +101,7 @@ class Puppet::Util::FileType
 
         # Overwrite the file.
         def write(text)
+            backup()
             File.open(@path, "w") { |f| f.print text; f.flush }
         end
     end
