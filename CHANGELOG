@@ -1,3 +1,5 @@
+    Added a 'maillist' type for managing mailing lists.
+
     Added a 'mailalias' type for managing mail aliases.
 
     Added patch by Valentin Vidic that adds the '+>' syntax to
