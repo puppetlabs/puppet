@@ -68,7 +68,7 @@ class Transaction
         resourceevents = apply_changes(resource, changes)
 
         # If there were changes and the resource isn't in noop mode...
-        unless changes.empty? or changes.include?(:noop)
+        unless changes.empty? or resource.noop
             # Record when we last synced
             resource.cache(:synced, Time.now)
 

@@ -316,6 +316,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         end
         @property_hash[:name] ||= @resource.name
 
+        warning "Flushing"
         self.class.flush(@property_hash)
     end
 

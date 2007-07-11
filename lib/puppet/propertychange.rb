@@ -40,7 +40,7 @@ module Puppet
             # default to a simple event type
             unless name.is_a?(Symbol)
                 @property.warning("Property '%s' returned invalid event '%s'; resetting to default" %
-                    [@property.class,event])
+                    [@property.class, name])
 
                 event = @property.resource.class.name.id2name + "_changed"
             end

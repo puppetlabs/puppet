@@ -323,15 +323,16 @@ class Property < Puppet::Parameter
 
     # for testing whether we should actually do anything
     def noop
-        unless defined? @noop
-            @noop = false
-        end
-        if self.resource.respond_to?(:noop)
-            tmp = @noop || self.resource.noop || Puppet[:noop] || false
+        # This is only here to make testing easier.
+        if @resource.respond_to?(:noop?)
+            @resource.noop?
         else
-            tmp = @noop || Puppet[:noop] || false
+            if defined?(@noop)
+                @noop
+            else
+                Puppet[:noop]
+            end
         end
-        return tmp
     end
 
     # By default, call the method associated with the property name on our

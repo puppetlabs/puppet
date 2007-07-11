@@ -14,8 +14,8 @@ class TestTransactions < Test::Unit::TestCase
     include PuppetTest::Support::Resources
     class Fakeprop <Puppet::Property
         attr_accessor :path, :is, :should, :name
-        def should_to_s
-            @should.to_s
+        def should_to_s(value)
+            value.to_s
         end
         def insync?(foo)
             true
@@ -1147,6 +1147,45 @@ class TestTransactions < Test::Unit::TestCase
 
         assert(FileTest.exists?(paths[1]), "Deleted required purging file")
         assert(! FileTest.exists?(paths[2]), "Did not delete non-purged file")
+    end
+
+    def test_flush
+        $state = "absent"
+        $flushed = 0
+        type = Puppet::Type.newtype(:flushtest) do
+            newparam(:name)
+            newproperty(:ensure) do
+                def retrieve
+                    $state
+                end
+                def set(value)
+                    $state = value
+                    :thing_changed
+                end
+            end
+
+            def flush
+                $flushed += 1
+            end
+        end
+
+        cleanup { Puppet::Type.rmtype(:flushtest) }
+
+        obj = type.create(:name => "test", :ensure => "present")
+
+        # first make sure it runs through and flushes
+        assert_apply(obj)
+
+        assert_equal("present", $state, "Object did not make a change")
+        assert_equal(1, $flushed, "object was not flushed")
+
+        # Now run a noop and make sure we don't flush
+        obj[:ensure] = "other"
+        obj[:noop] = true
+
+        assert_apply(obj)
+        assert_equal("present", $state, "Object made a change in noop")
+        assert_equal(1, $flushed, "object was flushed in noop")
     end
 end
 

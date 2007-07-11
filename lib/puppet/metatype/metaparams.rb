@@ -9,7 +9,7 @@ class Puppet::Type
     #        non-functional."
     #end
 
-    newmetaparam(:noop, :boolean => true) do
+    newmetaparam(:noop) do
         desc "Boolean flag indicating whether work should actually
             be done."
             

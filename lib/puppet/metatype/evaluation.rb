@@ -98,12 +98,12 @@ class Puppet::Type
     end
 
     # Are we running in noop mode?
+    def noop?
+        @noop || Puppet[:noop]
+    end
+
     def noop
-        if self.noop?
-            return true
-        else
-            return Puppet[:noop]
-        end
+        noop?
     end
      
     # Retrieve the changes associated with all of the properties.
