@@ -321,8 +321,13 @@ class Puppet::Type
                 file { \"/usr/local/scripts/myscript\":
                     source => \"puppet://server/module/myscript\",
                     mode => 755,
-                    require => file[\"/usr/local/scripts\"]
+                    require => File[\"/usr/local/scripts\"]
                 }
+
+            Multiple dependencies can be specified by providing a comma-seperated list
+            of resources, enclosed in square brackets::
+
+                require => [ File[\"/usr/local\"], File[\"/usr/local/scripts\"] ]
 
             Note that Puppet will autorequire everything that it can, and
             there are hooks in place so that it's easy for resources to add new
