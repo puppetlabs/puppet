@@ -22,7 +22,7 @@ Puppet::Type.type(:maillist).provide(:mailman) do
     # Prefetch our list list, yo.
     def self.prefetch(lists)
         instances.each do |prov|
-            if list = lists[prov.name]
+            if list = lists[prov.name] || lists[prov.name.downcase]
                 list.provider = prov
             end
         end
@@ -100,8 +100,8 @@ Puppet::Type.type(:maillist).provide(:mailman) do
     # Pull the current state of the list from the full list.  We're
     # getting some double entendre here....
     def query
-        self.class.instances.each do |list|
-            if list.name == self.name
+        provider.class.instances.each do |list|
+            if list.name == self.name or list.name.downcase == self.name
                 return list.property_hash
             end
         end
