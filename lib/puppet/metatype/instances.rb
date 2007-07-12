@@ -257,17 +257,30 @@ class Puppet::Type
         end
 
         # Put the default provider first, then the rest of the suitable providers.
-        packages = {}
+        provider_instances = {}
         providers_by_source.collect do |provider|
             provider.instances.collect do |instance|
-                if other = packages[instance.name]
-                    Puppet.warning "Package %s found in both %s and %s; skipping the %s version" %
-                        [instance.name, other.class.name, instance.class.name, instance.class.name]
+                # First try to get the resource if it already exists
+                if resource = self[instance.name] and resource.provider.class != instance.class
+                    # Skip instances that map to a managed resource with a different provider
                     next
                 end
-                packages[instance.name] = instance
 
-                create(:name => instance.name, :provider => instance, :check => :all)
+                # We always want to use the "first" provider instance we find, unless the resource
+                # is already managed and has a different provider set
+                if other = provider_instances[instance.name]
+                    Puppet.warning "%s %s found in both %s and %s; skipping the %s version" %
+                        [self.name.to_s.capitalize, instance.name, other.class.name, instance.class.name, instance.class.name]
+                    next
+                end
+                provider_instances[instance.name] = instance
+
+                if resource
+                    resource.provider = instance
+                    resource
+                else
+                    create(:name => instance.name, :provider => instance, :check => :all)
+                end
             end
         end.flatten.compact
     end
