@@ -29,30 +29,6 @@ module Manager
         typeloader.loadall
     end
 
-    # Do an on-demand plugin load
-    def loadplugin(name)
-        paths = Puppet[:pluginpath].split(":")
-        unless paths.include?(Puppet[:plugindest])
-            Puppet.notice "Adding plugin destination %s to plugin search path" %
-                Puppet[:plugindest]
-            Puppet[:pluginpath] += ":" + Puppet[:plugindest]
-        end
-        paths.each do |dir|
-            file = ::File.join(dir, name.to_s + ".rb")
-            if FileTest.exists?(file)
-                begin
-                    load file
-                    Puppet.info "loaded %s" % file
-                    return true
-                rescue LoadError => detail
-                    Puppet.info "Could not load plugin %s: %s" %
-                        [file, detail]
-                    return false
-                end
-            end
-        end
-    end
-
     # Define a new type.
     def newtype(name, options = {}, &block)
         # Handle backward compatibility
@@ -144,9 +120,6 @@ module Manager
                 unless @types.include? name
                     Puppet.warning "Loaded puppet/type/#{name} but no class was created"
                 end
-            else
-                # If we can't load it from there, try loading it as a plugin.
-                loadplugin(name)
             end
 
             return @types[name]

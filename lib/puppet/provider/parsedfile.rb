@@ -179,13 +179,19 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         end
 
         if resources
+            matchers = resources.dup
             @records.each do |record|
+                # Skip things like comments and blank lines
+                next if record_type(record[:record_type]).text?
+
                 if name = record[:name] and resource = resources[name]
                     resource.provider = new(record)
                 elsif respond_to?(:match)
-                    if instance = match(record, resources)
-                        record[:name] = instance[:name]
-                        instance.provider = new(record)
+                    if resource = match(record, matchers)
+                        # Remove this resource from circulation so we don't unnecessarily try to match
+                        matchers.delete(resource.title)
+                        record[:name] = resource[:name]
+                        resource.provider = new(record)
                     end
                 end
             end

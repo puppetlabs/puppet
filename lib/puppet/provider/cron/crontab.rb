@@ -14,9 +14,9 @@ Puppet::Type.type(:cron).provide(:crontab,
 ) do
     commands :crontab => "crontab"
 
-    text_line :comment, :match => %r{^#}, :post_parse => proc { |hash|
-        if hash[:line] =~ /Puppet Name: (.+)\s*$/
-            hash[:name] = $1
+    text_line :comment, :match => %r{^#}, :post_parse => proc { |record|
+        if record[:line] =~ /Puppet Name: (.+)\s*$/
+            record[:name] = $1
         end
     }
 
@@ -25,8 +25,8 @@ Puppet::Type.type(:cron).provide(:crontab,
     text_line :environment, :match => %r{^\w+=}
 
     record_line :freebsd_special, :fields => %w{special command},
-        :match => %r{^@(\w+)\s+(.+)$}, :pre_gen => proc { |hash|
-            hash[:special] = "@" + hash[:special]
+        :match => %r{^@(\w+)\s+(.+)$}, :pre_gen => proc { |record|
+            record[:special] = "@" + record[:special]
         }
 
     crontab = record_line :crontab, :fields => %w{minute hour monthday month weekday command},
@@ -38,37 +38,37 @@ Puppet::Type.type(:cron).provide(:crontab,
         end
         # Do some post-processing of the parsed record.  Basically just
         # split the numeric fields on ','.
-        def post_parse(details)
+        def post_parse(record)
             numeric_fields.each do |field|
-                if val = details[field] and val != :absent
-                    details[field] = details[field].split(",")
+                if val = record[field] and val != :absent
+                    record[field] = record[field].split(",")
                 end
             end
         end
 
         # Join the fields back up based on ','.
-        def pre_gen(details)
+        def pre_gen(record)
             numeric_fields.each do |field|
-                if vals = details[field] and vals.is_a?(Array)
-                    details[field] = vals.join(",")
+                if vals = record[field] and vals.is_a?(Array)
+                    record[field] = vals.join(",")
                 end
             end
         end
 
 
         # Add name and environments as necessary.
-        def to_line(details)
+        def to_line(record)
             str = ""
-            if details[:name]
-                str = "# Puppet Name: %s\n" % details[:name]
+            if record[:name]
+                str = "# Puppet Name: %s\n" % record[:name]
             end
-            if details[:environment] and details[:environment] != :absent and details[:environment] != [:absent]
-                details[:environment].each do |env|
+            if record[:environment] and record[:environment] != :absent and record[:environment] != [:absent]
+                record[:environment].each do |env|
                     str += env + "\n"
                 end
             end
 
-            str += join(details)
+            str += join(record)
             str
         end
     end
@@ -83,47 +83,48 @@ Puppet::Type.type(:cron).provide(:crontab,
 # HEADER not be deleted, as doing so could cause duplicate cron jobs.\n}
     end
 
-    # See if we can match the hash against an existing cron job.
-    def self.match(hash, resources)
-        resources.each do |name, obj|
-            # we now have a cron job whose command exactly matches
-            # let's see if the other fields match
+    # See if we can match the record against an existing cron job.
+    def self.match(record, resources)
+        resources.each do |name, resource|
+            # Match the command first, since it's the most important one.
+            next unless record[:target] == resource.value(:target)
+            next unless record[:command] == resource.value(:command)
 
-            # First check the @special stuff
-            if hash[:special]
-                next unless obj.value(:special) == hash[:special]
+            # Then check the @special stuff
+            if record[:special]
+                next unless resource.value(:special) == record[:special]
             end
 
             # Then the normal fields.
             matched = true
-            record_type(hash[:record_type]).fields().each do |field|
+            record_type(record[:record_type]).fields().each do |field|
                 next if field == :command
-                if hash[field] and ! obj.value(field)
+                next if field == :special
+                if record[field] and ! resource.value(field)
                     Puppet.info "Cron is missing %s: %s and %s" %
-                        [field, hash[field].inspect, obj.value(field).inspect]
+                        [field, record[field].inspect, resource.value(field).inspect]
                     matched = false
                     break
                 end
 
-                if ! hash[field] and obj.value(field)
+                if ! record[field] and resource.value(field)
                     Puppet.info "Hash is missing %s: %s and %s" %
-                        [field, obj.value(field).inspect, hash[field].inspect]
+                        [field, resource.value(field).inspect, record[field].inspect]
                     matched = false
                     break
                 end
 
                 # Yay differing definitions of absent.
-                next if (hash[field] == :absent and obj.value(field) == "*")
+                next if (record[field] == :absent and resource.value(field) == "*")
 
                 # Everything should be in the form of arrays, not the normal text.
-                next if (hash[field] == obj.value(field))
+                next if (record[field] == resource.value(field))
                 Puppet.info "Did not match %s: %s vs %s" %
-                    [field, obj.value(field).inspect, hash[field].inspect]
+                    [field, resource.value(field).inspect, record[field].inspect]
                 matched = false 
                 break
             end
-            next unless matched
-            return obj
+            return resource if matched
         end
 
         return false

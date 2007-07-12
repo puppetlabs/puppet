@@ -117,6 +117,11 @@ module Puppet::Util::FileParsing
             meta_def(:pre_gen, &block)
         end
 
+        # Are we a text type?
+        def text?
+            type == :text
+        end
+
         def to_line=(block)
             meta_def(:to_line, &block)
         end
@@ -188,7 +193,7 @@ module Puppet::Util::FileParsing
                 end
             end
 
-            unless line_fields.empty? or ! record.rollup
+            if record.rollup and ! line_fields.empty?
                 last_field = record.fields[-1]
                 val = ([ret[last_field]] + line_fields).join(record.joiner)
                 ret[last_field] = val
@@ -379,7 +384,7 @@ module Puppet::Util::FileParsing
         return record
     end
 
-    # Retrive the record object.
+    # Retrieve the record object.
     def record_type(type)
         @record_types[symbolize(type)]
     end

@@ -6,7 +6,6 @@ require 'puppettest'
 require 'mocha'
 require 'puppettest/fileparsing'
 require 'puppet/type/cron'
-require 'puppet/provider/cron/crontab'
 
 class TestCronParsedProvider < Test::Unit::TestCase
 	include PuppetTest
@@ -254,27 +253,76 @@ class TestCronParsedProvider < Test::Unit::TestCase
     # Test that a specified cron job will be matched against an existing job
     # with no name, as long as all fields match
     def test_matchcron
-        str = "0,30 * * * * date\n"
+        mecron = "0,30 * * * * date
+
+        * * * * * funtest
+        # a comment
+        0,30 * * 1 * date
+        "
+
+        youcron = "0,30 * * * * date
+
+        * * * * * yaytest
+        # a comment
+        0,30 * * 1 * fooness
+        "
         setme
         @provider.filetype = :ram
+        you = "you"
 
-        cron = nil
-        assert_nothing_raised {
-            cron = @type.create(
+        # Write the same tab to multiple targets
+        @provider.target_object(@me).write(mecron.gsub(/^\s+/, ''))
+        @provider.target_object(you).write(youcron.gsub(/^\s+/, ''))
+
+        # Now make some crons that should match
+        matchers = [
+            @type.create(
                 :name => "yaycron",
                 :minute => [0, 30],
                 :command => "date",
                 :user => @me
+            ),
+            @type.create(
+                :name => "youtest",
+                :command => "yaytest",
+                :user => you
             )
-        }
+        ]
 
-        hash = @provider.parse_line(str)
-        hash[:user] = @me
+        nonmatchers = [
+            @type.create(
+                :name => "footest",
+                :minute => [0, 30],
+                :hour => 1,
+                :command => "fooness",
+                :user => @me # wrong target
+            ),
+            @type.create(
+                :name => "funtest2",
+                :command => "funtest",
+                :user => you # wrong target for this cron
+            )
+        ]
 
-        instance = @provider.match(hash, "yaycron" => cron)
-        assert(instance, "did not match cron")
-        assert_equal(cron, instance,
-            "Did not match cron job")
+        # Create another cron so we prefetch two of them
+        @type.create(:name => "testing", :minute => 30, :command => "whatever", :user => "you")
+
+        assert_nothing_raised("Could not prefetch cron") do
+            @provider.prefetch([matchers, nonmatchers].flatten.inject({}) { |crons, cron| crons[cron.name] = cron; crons })
+        end
+
+        matchers.each do |cron|
+            assert_equal(:present, cron.provider.ensure, "Cron %s was not matched" % cron.name)
+            if value = cron.value(:minute) and value == "*"
+                value = :absent
+            end
+            assert_equal(value, cron.provider.minute, "Minutes were not retrieved, so cron was not matched")
+            assert_equal(cron.value(:target), cron.provider.target, "Cron %s was matched from the wrong target" % cron.name)
+        end
+
+        nonmatchers.each do |cron|
+            assert_equal(:absent, cron.provider.ensure, "Cron %s was incorrectly matched" % cron.name)
+        end
     end
 
     def test_data
