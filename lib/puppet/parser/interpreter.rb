@@ -266,65 +266,14 @@ class Puppet::Parser::Interpreter
 
     # Find a class definition, relative to the current namespace.
     def findclass(namespace, name)
-        find_or_load namespace, name, @classtable
+        #find_or_load namespace, name, @classtable
+        fqfind namespace, name, @classtable
     end
 
     # Find a component definition, relative to the current namespace.
     def finddefine(namespace, name)
-        find_or_load namespace, name, @definetable
-    end
-
-    # Attempt to find the requested object.  If it's not yet loaded,
-    # attempt to load it.
-    def find_or_load(namespace, name, table)
-        if namespace == ""
-            fullname = name.gsub("::", File::SEPARATOR)
-        else
-            fullname = ("%s::%s" % [namespace, name]).gsub("::", File::SEPARATOR)
-        end
-        
-        # See if it's already loaded
-        if result = fqfind(namespace, name, table)
-            return result
-        end
-
-        if fullname == ""
-            return nil
-        end
-
-        # Nope.  Try to load the module itself, to see if that
-        # loads it.
-        mod = fullname.scan(/^[\w-]+/).shift
-        # We couldn't find it, so try to load the base module
-        begin
-            @parser.import(mod)
-            Puppet.info "Autoloaded module %s" % mod
-            if result = fqfind(namespace, name, table)
-                return result
-            end
-        rescue Puppet::ImportError => detail
-            # We couldn't load the module
-        end
-
-
-        # If they haven't specified a subclass, then there's no point in looking for
-        # a separate file.
-        if ! fullname.include?("/")
-            return nil
-        end
-
-        # Nope.  Try to load the individual file
-        begin
-            @parser.import(fullname)
-            Puppet.info "Autoloaded file %s from module %s" % [fullname, mod]
-            if result = fqfind(namespace, name, table)
-                return result
-            end
-        rescue Puppet::ImportError => detail
-            # We couldn't load the file
-        end
-
-        return nil
+        #find_or_load namespace, name, @definetable
+        fqfind namespace, name, @definetable
     end
 
     # The recursive method used to actually look these objects up.
@@ -332,13 +281,17 @@ class Puppet::Parser::Interpreter
         namespace = namespace.downcase
         name = name.downcase
         if name =~ /^::/ or namespace == ""
-            return table[name.sub(/^::/, '')]
+            classname = name.sub(/^::/, '')
+            unless table[classname]
+                self.load(classname)
+            end
+            return table[classname]
         end
         ary = namespace.split("::")
 
         while ary.length > 0
             newname = (ary + [name]).join("::").sub(/^::/, '')
-            if obj = table[newname]
+            if obj = table[newname] or (self.load(newname) and obj = table[newname])
                 return obj
             end
 
@@ -348,7 +301,7 @@ class Puppet::Parser::Interpreter
 
         # If we've gotten to this point without finding it, see if the name
         # exists at the top namespace
-        if obj = table[name]
+        if obj = table[name] or (self.load(name) and obj = table[name])
             return obj
         end
 
@@ -421,6 +374,35 @@ class Puppet::Parser::Interpreter
         @nodetable = {}
 
         @definetable = {}
+    end
+
+    # Try to load a class, since we could not find it.
+    def load(classname)
+        return false if classname == ""
+        filename = classname.gsub("::", File::SEPARATOR)
+
+        loaded = false
+        # First try to load the top-level module
+        mod = filename.scan(/^[\w-]+/).shift
+        begin
+            @parser.import(mod)
+            Puppet.info "Autoloaded module %s" % mod
+            loaded = true
+        rescue Puppet::ImportError => detail
+            # We couldn't load the module
+        end
+
+        unless filename == mod
+            # Then the individual file
+            begin
+                @parser.import(filename)
+                Puppet.info "Autoloaded file %s from module %s" % [filename, mod]
+                loaded = true
+            rescue Puppet::ImportError => detail
+                # We couldn't load the file
+            end
+        end
+        return loaded
     end
 
     # Find the ldap node, return the class list and parent node specially,

@@ -970,6 +970,12 @@ class TestInterpreter < PuppetTest::TestCase
         assert_instance_of(AST::HostClass, klass, "Did not autoload class from module init file")
         assert_equal(name, klass.classname, "Incorrect class was returned")
 
+        # Try loading the simple module when we're in something other than the base namespace.
+        interp = mkinterp
+        klass = interp.findclass("something::else", name)
+        assert_instance_of(AST::HostClass, klass, "Did not autoload class from module init file")
+        assert_equal(name, klass.classname, "Incorrect class was returned")
+
         # Now try it with a definition as the base file
         name = "simpdef"
         mk_module(name, :define => true, :init => [name])
