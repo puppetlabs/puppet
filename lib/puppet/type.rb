@@ -252,10 +252,12 @@ class Type
                 rescue ArgumentError, Puppet::Error, TypeError
                     raise
                 rescue => detail
-                    self.devfail(
+                    error = Puppet::DevError.new(
                         "Could not set %s on %s: %s" %
                             [attr, self.class.name, detail]
                     )
+                    error.set_backtrace(detail.backtrace)
+                    raise error
                 end
                 hash.delete attr
             end

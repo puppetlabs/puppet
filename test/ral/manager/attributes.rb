@@ -6,6 +6,7 @@
 $:.unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppettest'
+require 'mocha'
 
 class TestTypeAttributes < Test::Unit::TestCase
     include PuppetTest
@@ -314,6 +315,37 @@ class TestTypeAttributes < Test::Unit::TestCase
         assert_raise(Puppet::Error, ":check did not fail on invalid attribute") do
             inst.value = :nosuchattr
         end
+    end
+
+    def test_check_ignores_unsupported_params
+        type = Puppet::Type.newtype(:unsupported) do
+            feature :nosuchfeat, "testing"
+            newparam(:name) {}
+            newproperty(:yep) {}
+            newproperty(:nope,  :required_features => :nosuchfeat) {}
+        end
+        $yep = :absent
+        type.provide(:only) do
+            def self.supports_parameter?(param)
+                if param.name == :nope
+                    return false
+                else
+                    return true
+                end
+            end
+
+            def yep
+                $yep
+            end
+            def yep=(v)
+                $yep = v
+            end
+        end
+        cleanup { Puppet::Type.rmtype(:unsupported) }
+
+        obj = type.create(:name => "test", :check => :yep)
+        obj.expects(:newattr).with(:nope).never
+        obj[:check] = :all
     end
 end
 

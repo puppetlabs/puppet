@@ -51,7 +51,14 @@ class Puppet::Type
         munge do |args|
             # If they've specified all, collect all known properties
             if args == :all
-                args = @resource.class.properties.collect do |property|
+                args = @resource.class.properties.find_all do |property|
+                    # Only get properties supported by our provider
+                    if @resource.provider
+                        @resource.provider.class.supports_parameter?(property)
+                    else
+                        true
+                    end
+                end.collect do |property|
                     property.name
                 end
             end
