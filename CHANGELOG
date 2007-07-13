@@ -1,3 +1,7 @@
+    Resource references can now be fully-qualified names,
+    meaning you can list definitions with a namespace as
+    dependencies.  (#468)
+
     Files modified using a FileType instance, as ParsedFile
     does, will now automatically get backed up to the filebucket
     named "puppet".

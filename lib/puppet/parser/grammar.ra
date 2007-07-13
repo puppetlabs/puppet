@@ -386,7 +386,7 @@ boolean:    BOOLEAN {
 resourceref: NAME LBRACK rvalue RBRACK {
     Puppet.warning addcontext("Deprecation notice:  Resource references should now be capitalized")
     result = ast AST::ResourceRef, :type => val[0], :title => val[2]
-}               | TYPE LBRACK rvalue RBRACK {
+}               | classref LBRACK rvalue RBRACK {
     result = ast AST::ResourceRef, :type => val[0], :title => val[2]
 }
 
@@ -529,6 +529,9 @@ nodedef: NODE hostnames nodeparent LBRACE statements RBRACE {
     interp.newnode val[1], :parent => val[2]
     result = nil
 }
+
+classref:       TYPE
+            | CLASSREF
 
 classname:       NAME
             | CLASSNAME
