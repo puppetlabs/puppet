@@ -136,7 +136,7 @@ resource:       classname LBRACE resourceinstances endsemi RBRACE {
 }           | classname LBRACE params endcomma RBRACE {
     # This is a deprecated syntax.
     error "All resource specifications require names"
-}           | TYPE LBRACE params endcomma RBRACE {
+}           | classref LBRACE params endcomma RBRACE {
     # a defaults setting for a type
     result = ast(AST::ResourceDefaults, :type => val[0], :params => val[2])
 }

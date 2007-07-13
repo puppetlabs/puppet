@@ -1,3 +1,5 @@
+    Fully-qualified resources can now have defaults. (#589)
+
     Resource references can now be fully-qualified names,
     meaning you can list definitions with a namespace as
     dependencies.  (#468)
