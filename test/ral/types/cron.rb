@@ -487,6 +487,22 @@ class TestCron < Test::Unit::TestCase
                 "target did not default to user with crontab")
         end
     end
+
+    # #705 - make sure extra spaces don't screw things up
+    def test_spaces_in_command
+        string = "echo   multiple  spaces"
+        cron = @crontype.create(:name => "testing", :command => string)
+        assert_apply(cron)
+
+        cron.class.clear
+        cron = @crontype.create(:name => "testing", :command => string)
+        # Now make sure that it's correctly in sync
+        cron.provider.class.prefetch("testing" => cron)
+        properties = cron.retrieve
+        command, result = properties.find { |prop, value| prop.name == :command }
+        assert_equal(string, result, "Cron did not pick up extra spaces in command")
+        assert(command.insync?(string), "Command changed with multiple spaces")
+    end
 end
 
 

@@ -301,8 +301,12 @@ Puppet::Type.newtype(:cron) do
         end
 
         def is_to_s(newvalue)
-            if newvalue
-                newvalue.join(",")
+            if newvalue 
+                if newvalue.is_a?(Array)
+                    newvalue.join(",")
+                else
+                    newvalue
+                end
             else
                 nil
             end

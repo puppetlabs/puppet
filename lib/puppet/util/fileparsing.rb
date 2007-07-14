@@ -168,8 +168,12 @@ module Puppet::Util::FileParsing
             if match = regex.match(line)
                 fields = []
                 ret = {}
-                record.fields.zip(match.captures).each do |f, v|
-                    ret[f] = v
+                record.fields.zip(match.captures).each do |field, value|
+                    if value == record.absent 
+                        ret[field] = :absent
+                    else
+                        ret[field] = value
+                    end
                 end
             else
                 nil
