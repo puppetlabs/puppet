@@ -8,6 +8,9 @@ module Puppet
             Note that if a ``mount`` receives an event from another resource,
             it will try to remount the filesystems if ``ensure => mounted`` is
             set."
+
+        feature :refreshable, "The provider can remount the filesystem.",
+            :methods => [:remount]
         
         # Use the normal parent class, because we actually want to
         # call code when sync() is called.

@@ -22,6 +22,9 @@ module Puppet
             service depends on the platform. You can provide a special command
             for restarting with the ``restart`` attribute."
         
+        feature :refreshable, "The provider can restart the service.",
+            :methods => [:restart]
+        
         feature :enableable, "The provider can enable and disable the service",
             :methods => [:disable, :enable, :enabled?]
 

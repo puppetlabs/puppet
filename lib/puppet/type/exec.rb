@@ -6,7 +6,12 @@ module Puppet
         @doc = "Executes external commands.  It is critical that all commands
             executed using this mechanism can be run multiple times without
             harm, i.e., they are *idempotent*.  One useful way to create idempotent
-            commands is to use the *creates* parameter.
+            commands is to use the checks like ``creates`` to avoid running the
+            command unless some condition is met.
+
+            Note also that you can restrict an ``exec`` to only run when it receives
+            events by using the ``refreshonly`` parameter; this is a useful way to
+            have your configuration respond to events with arbitrary commands.
 
             It is worth noting that ``exec`` is special, in that it is not
             currently considered an error to have multiple ``exec`` instances
