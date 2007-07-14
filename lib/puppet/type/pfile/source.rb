@@ -23,6 +23,11 @@ module Puppet
                     }
                 }
 
+            You can also leave out the server name, in which case ``puppetd``
+            will fill in the name of its configuration server and ``puppet``
+            will use the local filesystem.  This makes it easy to use the same
+            configuration in both local and centralized forms.
+
             Currently, only the ``puppet`` scheme is supported for source 
             URL's. Puppet will connect to the file server running on 
             ``server`` to retrieve the contents of the file. If the 
@@ -50,7 +55,8 @@ module Puppet
             This will use the first found file as the source.
             
             You cannot currently copy links using this mechanism; set ``links``
-            to ``follow`` if any remote sources are links."
+            to ``follow`` if any remote sources are links.
+            "
 
         uncheckable
         
