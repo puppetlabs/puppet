@@ -263,7 +263,8 @@ class Puppet::Parser::Resource
         paramcheck(param.name)
 
         if current = @params[param.name]
-            # XXX Should we ignore any settings that have the same values?
+            # This is where we'd ignore any equivalent values if we wanted to,
+            # but that would introduce a lot of really bad ordering issues.
             if param.source.child_of?(current.source)
                 if param.add
                     # Merge with previous value.
@@ -278,17 +279,20 @@ class Puppet::Parser::Resource
                 end
                 msg = "Parameter '%s' is already set on %s" % 
                     [param.name, self.to_s]
-                if param.source.to_s != ""
-                    msg += " by %s" % param.source
+                if current.source.to_s != ""
+                    msg += " by %s" % current.source
                 end
-                if param.file or param.line
+                if current.file or current.line
                     fields = []
-                    fields << param.file if param.file
-                    fields << param.line.to_s if param.line
+                    fields << current.file if current.file
+                    fields << current.line.to_s if current.line
                     msg += " at %s" % fields.join(":")
                 end
                 msg += "; cannot redefine"
-                fail Puppet::ParseError, msg
+                error = Puppet::ParseError.new(msg)
+                error.file = param.file if param.file
+                error.line = param.line if param.line
+                raise error
             end
         else
             if self.source == param.source or param.source.child_of?(self.source)
