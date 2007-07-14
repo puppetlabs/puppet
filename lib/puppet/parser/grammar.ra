@@ -629,8 +629,8 @@ require 'puppet/parser/ast'
 
 module Puppet
     class ParseError < Puppet::Error; end
-
     class ImportError < Racc::ParseError; end
+    class AlreadyImportedError < ImportError; end
 end
 
 Puppet[:typecheck] = true
@@ -709,7 +709,7 @@ def file=(file)
         end
     end
     if @files.detect { |f| f.file == file }
-        raise Puppet::ImportError.new("Import loop detected")
+        raise Puppet::AlreadyImportedError.new("Import loop detected")
     else
         @files << Puppet::Util::LoadedFile.new(file)
         @lexer.file = file
@@ -758,11 +758,8 @@ def import(file)
         end
         begin
             parser.file = file
-        rescue Puppet::ImportError
-            Puppet.warning(
-                "Importing %s would result in an import loop" %
-                    File.join(dir, file)
-            )
+        rescue Puppet::AlreadyImportedError
+            # This file has already been imported to just move on
             next
         end
 
