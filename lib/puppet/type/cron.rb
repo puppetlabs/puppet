@@ -91,6 +91,9 @@ Puppet::Type.newtype(:cron) do
 
         def should_to_s(newvalue = @should)
             if newvalue
+                unless newvalue.is_a?(Array)
+                    newvalue = [newvalue]
+                end
                 if self.name == :command or newvalue[0].is_a? Symbol
                     newvalue[0]
                 else
