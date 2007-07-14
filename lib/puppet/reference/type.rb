@@ -66,9 +66,6 @@ Resource Types
   dependency handling), and because ``path`` is the namevar for ``file``, that
   string is assigned to the ``path`` parameter.
 
-- *Features* are abilities that some providers might not support.  You can use the list
-  of supported features to determine how a given provider can be used.
-
 - *Parameters* determine the specific configuration of the instance.  They either
   directly modify the system (internally, these are called properties) or they affect
   how the instance behaves (e.g., adding a search path for ``exec`` instances
@@ -81,6 +78,9 @@ Resource Types
   indicate that the binary must exist at that specific path and unqualified
   binaries indicate that Puppet will search for the binary using the shell
   path.
+
+- *Features* are abilities that some providers might not support.  You can use the list
+  of supported features to determine how a given provider can be used.
 
   Resource types define features they can use, and providers can be tested to see
   which features they provide.
