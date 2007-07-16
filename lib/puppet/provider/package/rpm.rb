@@ -11,14 +11,15 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
 
     commands :rpm => "rpm"
 
-    confine :true => begin
-            rpm('-ql', 'rpm')
-        rescue Puppet::ExecutionFailure
-            false
-        else
-            true
-        end
-
+    if command('rpm')
+        confine :true => begin
+                rpm('-ql', 'rpm')
+           rescue Puppet::ExecutionFailure
+               false
+           else
+               true
+           end
+    end
 
     def self.instances
         packages = []

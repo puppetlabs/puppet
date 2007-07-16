@@ -10,14 +10,15 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm, :source => :rpm do
     commands :aptcache => "apt-cache"
     commands :rpm => "rpm"
 
-    confine :true => begin
-            rpm('-ql', 'rpm')
-        rescue Puppet::ExecutionFailure
-            false
-        else
-            true
-        end
-
+    if command('rpm')
+        confine :true => begin
+                rpm('-ql', 'rpm')
+           rescue Puppet::ExecutionFailure
+               false
+           else
+               true
+           end
+    end
 
     # Install a package using 'apt-get'.  This function needs to support
     # installing a specific version.

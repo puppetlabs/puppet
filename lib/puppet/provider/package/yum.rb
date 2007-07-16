@@ -5,6 +5,16 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
     commands :yum => "yum", :rpm => "rpm"
 
+    if command('rpm')
+        confine :true => begin
+                rpm('-ql', 'rpm')
+           rescue Puppet::ExecutionFailure
+               false
+           else
+               true
+           end
+    end
+
     defaultfor :operatingsystem => [:fedora, :centos, :redhat]
 
     def install
