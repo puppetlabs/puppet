@@ -195,8 +195,18 @@ when :clean
         $stderr.puts "You must specify one or more hosts to clean"
         exit(24)
     end
+    cleaned = false
     hosts.each do |host|
+        cert = ca.getclientcert(host)[0]
+        if cert.nil?
+            $stderr.puts "Could not find client certificate for %s" % host
+            next
+        end
         ca.clean(host)
+        cleaned = true
+    end
+    unless cleaned
+        exit(27)
     end
 when :sign
     unless to_sign.length > 0 or all

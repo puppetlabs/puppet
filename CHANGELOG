@@ -1,3 +1,7 @@
+    puppetca now exits with a non-zero code if it cannot
+    find any host certificates to clean. (Patch by Dean
+    Wilson.)
+
     Fully-qualified resources can now have defaults. (#589)
 
     Resource references can now be fully-qualified names,
