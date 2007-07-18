@@ -16,7 +16,7 @@ Puppet::Type.type(:mount).provide(:parsed,
     include Puppet::Provider::Mount
     confine :exists => fstab
 
-    commands :mountcmd => "mount", :umount => "umount", :df => "df"
+    commands :mountcmd => "mount", :umount => "umount"
 
     @platform = Facter["operatingsystem"].value
     case @platform
