@@ -7,7 +7,7 @@
 #
 # = Usage
 #
-#   pbucket [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
+#   filebucket [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
 #      [-l|--local] [-r|--remote]
 #      [-s|--server <server>] [-b|--bucket <directory>] <file> <file> ...
 #
@@ -34,16 +34,16 @@
 #   to this argument; you are not restricted to restoring the content to its
 #   original location.
 #
-# Note that +pbucket+ defaults to using a network-based filebucket available on
+# Note that +filebucket+ defaults to using a network-based filebucket available on
 # the server named +puppet+.  To use this, you'll have to be running as a user
 # with valid Puppet certificates.  Alternatively, you can use your local file bucket
 # by specifying +--local+.
 #
 # = Example
 #
-#   $ pbucket backup /etc/passwd
+#   $ filebucket backup /etc/passwd
 #   /etc/passwd: 429b225650b912a2ee067b0a4cf1e949
-#   $ pbucket restore /tmp/passwd 429b225650b912a2ee067b0a4cf1e949
+#   $ filebucket restore /tmp/passwd 429b225650b912a2ee067b0a4cf1e949
 #   $
 # 
 # = Options
@@ -83,7 +83,7 @@
 #
 # = Example
 #
-#   pbucket -b /tmp/filebucket /my/file
+#   filebucket -b /tmp/filebucket /my/file
 #
 # = Author
 #
