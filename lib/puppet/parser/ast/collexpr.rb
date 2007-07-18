@@ -43,7 +43,9 @@ class CollExpr < AST::Branch
         end
 
         case @oper
-        when "and", "or": oper = @oper.upcase
+        when "and", "or":
+            raise Puppet::ParseError, "Puppet does not currently support collecting exported resources with more than one condition"
+            #oper = @oper.upcase
         when "==": oper = "="
         else
             oper = @oper
@@ -54,17 +56,13 @@ class CollExpr < AST::Branch
             if str1 == "title"
                 str = "title #{oper} '#{str2}'"
             else
-                unless self.form == :virtual or str1 == "title"
-                    parsefail "Collection from the database only supports " +
-                        "title matching currently"
-                end
-                str = "rails_parameters.name = '#{str1}' and " +
-                    "rails_parameters.value #{oper} '#{str2}'"
+                str = "param_values.value #{oper} '#{str2}' and " +
+                    "param_names.name = '#{str1}'"
             end
         else
-            str = [str1, oper, str2].join(" ")
+            str = "(%s) %s (%s)" % [str1, oper, str2]
         end
-
+        
         return str, code
     end
 

@@ -194,7 +194,7 @@ class TestExportedResources < PuppetTest::TestCase
         res = mkresource :type => "file", :title => "/tmp/testing",
             :source => @source, :scope => @scope,
             :params => {:owner => "root", :source => ["/tmp/A", "/tmp/B"],
-                :mode => "755", :require => [ref1, ref2]}
+                :mode => "755", :require => [ref1, ref2], :subscribe => ref1}
 
         res.line = 50
 
@@ -214,7 +214,7 @@ class TestExportedResources < PuppetTest::TestCase
         res = mkresource :type => "file", :title => "/tmp/testing",
             :source => @source, :scope => @scope,
             :params => {:owner => "bin", :source => ["/tmp/A", "/tmp/C"],
-            :check => "checksum",  :require => [ref1, ref2]}
+            :check => "checksum",  :require => [ref1, ref2], :subscribe => ref2}
 
         res.line = 75
         res.exported = true

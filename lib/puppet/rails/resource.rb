@@ -106,7 +106,12 @@ class Puppet::Rails::Resource < ActiveRecord::Base
         hash[:source] = scope.source
         obj = Puppet::Parser::Resource.new(hash)
 
+        names = []
         self.param_names.each do |pname|
+            # We can get the same name multiple times because of how the
+            # db layout works.
+            next if names.include?(pname.name)
+            names << pname.name
             obj.set(pname.to_resourceparam(self, scope.source))
         end
 

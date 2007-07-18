@@ -30,15 +30,14 @@ class TestRailsAST < PuppetTest::TestCase
             code = nil
             str = nil
 
-            # We don't support anything but the title in rails right now
+            # We don't support more than one search criteria at the moment.
             retval = nil
             bad = false
             # Figure out if the search is for anything rails will ignore
-            string.scan(/(\w+) [!=]= \w+/) do |s|
-                unless s[0] == "title"
-                    bad = true
-                    break
-                end
+            if string =~ /\band\b|\bor\b/
+                bad = true
+            else
+                bad = false
             end
 
             # And if it is, make sure we throw an error.
@@ -54,7 +53,7 @@ class TestRailsAST < PuppetTest::TestCase
             end
             assert_nothing_raised("Could not find resource") do
                 retval = Puppet::Rails::Resource.find(:all,
-                    :include => :param_values,
+                    :include => {:param_values => :param_name},
                     :conditions => str) 
             end
 

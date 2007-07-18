@@ -1,7 +1,7 @@
 
 module PuppetTest::Support::Collection
     def run_collection_queries(form)
-        {true => [%{title == "/tmp/testing"}, %{(title == "/tmp/testing")},
+        {true => [%{title == "/tmp/testing"}, %{(title == "/tmp/testing")}, %{group == bin},
             %{title == "/tmp/testing" and group == bin}, %{title == bin or group == bin},
             %{title == "/tmp/testing" or title == bin}, %{title == "/tmp/testing"},
             %{(title == "/tmp/testing" or title == bin) and group == bin}],

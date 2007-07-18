@@ -22,9 +22,13 @@ class Puppet::Parser::Collector
         end
         host = Puppet::Rails::Host.find_by_name(@scope.host)
 
-        args = {}
+        args = {:include => {:param_values => :param_name}}
+        args[:conditions] = "restype = '%s'" % [@type]
+        if @equery
+            args[:conditions] += " AND (%s)" % [@equery]
+        end
         if host
-            args[:conditions] = "host_id != #{host.id}"
+            args[:conditions] = "host_id != %s AND %s" % [host.id, args[:conditions]]
         else
             #Puppet.info "Host %s is uninitialized" % @scope.host
         end
@@ -33,7 +37,7 @@ class Puppet::Parser::Collector
         # and such, we'll need to vary the conditions, but this works with no
         # attributes, anyway.
         time = Puppet::Util.thinmark do
-            Puppet::Rails::Resource.find_all_by_restype_and_exported(@type, true,
+            Puppet::Rails::Resource.find(:all, @type, true,
                 args
             ).each do |obj|
                 if resource = export_resource(obj)

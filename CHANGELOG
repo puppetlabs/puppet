@@ -1,3 +1,7 @@
+    You can now do simple queries in a collection of
+    exported resources.  You still cannot do multi-condition queries,
+    though. (#703)
+
     puppetca now exits with a non-zero code if it cannot
     find any host certificates to clean. (Patch by Dean
     Wilson.)
