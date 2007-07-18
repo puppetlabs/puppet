@@ -32,7 +32,9 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
 
                     hash[:provider] = self.name
 
-                    unless hash[:status] == "installed"
+                    if hash[:status] == 'not-installed'
+                        hash[:ensure] = :purged
+                    elsif hash[:status] != "installed"
                         hash[:ensure] = :absent
                     end
 
@@ -102,7 +104,9 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
         end
 
         # DPKG can discuss packages that are no longer installed, so allow that.
-        if hash[:status] != "installed"
+        if hash[:status] == "not-installed"
+            hash[:ensure] = :purged
+        elsif hash[:status] != "installed"
             hash[:ensure] = :absent
         end
 

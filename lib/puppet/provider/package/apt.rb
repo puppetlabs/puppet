@@ -111,6 +111,8 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
 
     def purge
         aptget '-y', '-q', 'remove', '--purge', @resource[:name]
+        # workaround a "bug" in apt, that already removed packages are not purged
+        super
     end
 end
 
