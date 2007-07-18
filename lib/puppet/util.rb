@@ -306,7 +306,10 @@ module Util
             output_file = Tempfile.new("puppet")
         end
 
+        oldverb = $VERBOSE
+        $VERBOSE = false
         child_pid = Kernel.fork
+        $VERBOSE = oldverb
         if child_pid
             # Parent process executes this
             child_status = Process.waitpid2(child_pid)[1]
