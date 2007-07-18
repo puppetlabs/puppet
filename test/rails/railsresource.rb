@@ -184,6 +184,8 @@ class TestExportedResources < PuppetTest::TestCase
                     "%s was different %s" % [param.name, tail])
             end
         end
+
+        return obj
     end
 
     def test_to_rails
@@ -201,12 +203,19 @@ class TestExportedResources < PuppetTest::TestCase
         # We also need a Rails Host to store under
         host = Puppet::Rails::Host.new(:name => Facter.hostname)
 
-        compare_resources(host, res, false, :params => %w{owner source mode})
+        railsres = compare_resources(host, res, false, :params => %w{owner source mode})
 
         # Now make sure our parameters did not change
         assert_instance_of(Array, res[:require], "Parameter array changed")
         res[:require].each do |ref|
             assert_instance_of(Reference, ref, "Resource reference changed")
+        end
+        assert_instance_of(Reference, res[:subscribe], "Resource reference changed")
+
+        # And make sure that the rails resource actually has resource references
+        params = railsres.parameters
+        [params["subscribe"], params["require"]].flatten.each do |ref|
+            assert_instance_of(Reference, ref, "Resource reference is no longer a reference")
         end
 
         # Now make some changes to our resource.  We're removing the mode,
@@ -219,13 +228,20 @@ class TestExportedResources < PuppetTest::TestCase
         res.line = 75
         res.exported = true
 
-        compare_resources(host, res, true, :params => %w{owner source mode check})
+        railsres = compare_resources(host, res, true, :params => %w{owner source mode check})
 
         # Again make sure our parameters did not change
         assert_instance_of(Array, res[:require], "Parameter array changed")
         res[:require].each do |ref|
             assert_instance_of(Reference, ref, "Resource reference changed")
         end
+
+        # Again with the serialization checks
+        params = railsres.parameters
+        [params["subscribe"], params["require"]].flatten.each do |ref|
+            assert_instance_of(Reference, ref, "Resource reference is no longer a reference")
+        end
+
     end
 end
 

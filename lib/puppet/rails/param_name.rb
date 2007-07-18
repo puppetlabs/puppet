@@ -12,8 +12,7 @@ class Puppet::Rails::ParamName < ActiveRecord::Base
         hash[:value] = resource.param_values.find(:all, :conditions => [ "param_name_id = ?", self]).collect { |v| v.value }
         if hash[:value].length == 1
             hash[:value] = hash[:value].shift
-        end
-        if hash[:value].empty?
+        elsif hash[:value].empty?
             hash[:value] = nil
         end
         Puppet::Parser::Resource::Param.new hash
