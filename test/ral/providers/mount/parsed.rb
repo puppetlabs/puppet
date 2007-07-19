@@ -195,13 +195,13 @@ class TestParsedMounts < Test::Unit::TestCase
             obj.unmount
         }
         assert(! obj.mounted?, "FS still mounted")
-        # Check the actual output of df
-        assert(! obj.df().include?(fs), "%s is still listed in df" % fs)
+        # Check the actual output of mountcmd
+        assert(! obj.mountcmd().include?(fs), "%s is still listed in mountcmd" % fs)
         assert_nothing_raised {
             obj.mount
         }
         assert(obj.mounted?, "FS not mounted")
-        assert(obj.df().include?(fs), "%s is not listed in df" % fs)
+        assert(obj.mountcmd().include?(fs), "%s is not listed in mountcmd" % fs)
 
         # Now try remounting
         assert_nothing_raised("Could not remount filesystem") do
