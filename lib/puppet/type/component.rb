@@ -95,6 +95,12 @@ Puppet::Type.newtype(:component) do
     def initialize(args)
         @children = []
         super(args)
+
+        # If the title isn't a full resource reference, assume
+        # we're a class and make an alias for that.
+        unless @title.to_s.include?("[")
+            self.class.alias("class[%s]" % @title, self)
+        end
     end
 
     def initvars

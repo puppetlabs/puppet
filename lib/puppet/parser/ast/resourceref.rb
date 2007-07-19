@@ -19,16 +19,22 @@ class Puppet::Parser::AST
 
             # We want a lower-case type.
             objtype = @type.downcase
+            title = @title.safeevaluate(:scope => scope)
 
             if scope.builtintype?(objtype)
                 # nothing
             elsif dtype = scope.finddefine(objtype)
                 objtype = dtype.classname
+            elsif objtype == "class"
+                # Look up the full path to the class
+                if classobj = scope.findclass(title)
+                    title = classobj.classname
+                else
+                    raise Puppet::ParseError, "Could not find class %s" % title
+                end
             else
-                raise Puppet::ParseError, "Could not find type %s" % objtype
+                raise Puppet::ParseError, "Could not find resource type %s" % objtype
             end
-
-            title = @title.safeevaluate(:scope => scope)
 
             return Puppet::Parser::Resource::Reference.new(
                 :type => objtype, :title => title

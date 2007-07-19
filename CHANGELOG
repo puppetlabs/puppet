@@ -1,3 +1,8 @@
+    You can now specify relationships to classes, which work
+    exactly like relationships to defined types:
+        require => Class[myclass]
+    This works with qualified classes, too.
+
     You can now do simple queries in a collection of
     exported resources.  You still cannot do multi-condition queries,
     though. (#703)
