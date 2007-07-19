@@ -398,17 +398,17 @@ class TestLangFunctions < Test::Unit::TestCase
         interp = mkinterp
         scope = mkscope(:interp => interp)
         
-        fun = interp.newdefine("fun::test")
+        fun = interp.newdefine("yay::ness")
         foo = interp.newdefine("foo::bar")
 
         search = Puppet::Parser::Functions.function(:search)
         assert_nothing_raised do
-            scope.function_search(["foo", "fun"])
+            scope.function_search(["foo", "yay"])
         end
 
         ffun = ffoo = nil
-        assert_nothing_raised do
-            ffun = scope.finddefine("test")
+        assert_nothing_raised("Search path change did not work") do
+            ffun = scope.finddefine("ness")
             ffoo = scope.finddefine('bar')
         end
 

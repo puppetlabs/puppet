@@ -114,6 +114,11 @@ class Puppet::Type
     def self.provide(name, options = {}, &block)
         name = Puppet::Util.symbolize(name)
 
+        if obj = @providers[name]
+            Puppet.debug "Reloading %s %s provider" % [name, self.name]
+            unprovide(name)
+        end
+
         parent = if pname = options[:parent]
             options.delete(:parent)
             if pname.is_a? Class

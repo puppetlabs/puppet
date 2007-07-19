@@ -66,6 +66,12 @@ class AptPackageProviderTest < PuppetTest::TestCase
 					        '--purge',
 					        'faff'
 					  ).returns(0)
+		pkg.provider.expects(
+		                 :dpkg
+					  ).with(
+					        '--purge',
+					        'faff'
+					  ).returns(0)
 		
 		pkg.evaluate.each { |state| state.transaction = self; state.forward }
 	end
@@ -131,6 +137,12 @@ class AptPackageProviderTest < PuppetTest::TestCase
 					        '-y',
 					        '-q',
 					        'remove',
+					        '--purge',
+					        'faff'
+					  ).returns(0)
+		pkg.provider.expects(
+		                 :dpkg
+					  ).with(
 					        '--purge',
 					        'faff'
 					  ).returns(0)

@@ -1,7 +1,6 @@
 # Manage NetInfo POSIX objects.  Probably only used on OS X, but I suppose
 # it could be used elsewhere.
 require 'puppet/provider/nameservice/netinfo'
-require 'puppet/provider/host/netinfo'
 
 Puppet::Type.type(:host).provide :netinfo, :parent => Puppet::Provider::NameService::NetInfo,
     :netinfodir => "machines" do

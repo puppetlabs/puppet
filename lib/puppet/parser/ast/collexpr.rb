@@ -44,8 +44,10 @@ class CollExpr < AST::Branch
 
         case @oper
         when "and", "or":
-            raise Puppet::ParseError, "Puppet does not currently support collecting exported resources with more than one condition"
-            #oper = @oper.upcase
+            if form == :exported
+                raise Puppet::ParseError, "Puppet does not currently support collecting exported resources with more than one condition"
+            end
+            oper = @oper.upcase
         when "==": oper = "="
         else
             oper = @oper
