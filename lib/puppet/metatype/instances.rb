@@ -184,13 +184,22 @@ class Puppet::Type
     end
 
     # remove a specified object
-    def self.delete(object)
+    def self.delete(resource)
         return unless defined? @objects
-        if @objects.include?(object.title)
-            @objects.delete(object.title)
+        if @objects.include?(resource.title)
+            @objects.delete(resource.title)
         end
-        if @aliases.include?(object.title)
-            @aliases.delete(object.title)
+        if @aliases.include?(resource.title)
+            @aliases.delete(resource.title)
+        end
+        if @aliases.has_value?(resource)
+            names = []
+            @aliases.each do |name, otherres|
+                if otherres == resource
+                    names << name
+                end
+            end
+            names.each { |name| @aliases.delete(name) }
         end
     end
 
