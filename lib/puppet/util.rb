@@ -316,7 +316,6 @@ module Util
         else
             # Child process executes this
             Process.setsid
-            Dir.chdir("/")
             begin
                 $stdin.reopen("/dev/null")
                 $stdout.reopen(output_file)
