@@ -315,6 +315,8 @@ module Util
             child_status = Process.waitpid2(child_pid)[1]
         else
             # Child process executes this
+            Process.setsid
+            Dir.chdir("/")
             begin
                 $stdin.reopen("/dev/null")
                 $stdout.reopen(output_file)
