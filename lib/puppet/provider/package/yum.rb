@@ -45,7 +45,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     def latest
         output = yum "-d", "0", "-e", "0", :list, :available, @resource[:name]
 
-        if output =~ /^#{@resource[:name]}\S+\s+(\S+)\s/
+        if output =~ /^#{Regexp.escape(@resource[:name])}\S+\s+(\S+)\s/
             return $1
         else
             # Yum didn't find updates, pretend the current
