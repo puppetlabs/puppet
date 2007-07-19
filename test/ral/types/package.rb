@@ -137,6 +137,14 @@ class TestPackages < Test::Unit::TestCase
             end
         end
     end
+
+    # #716
+    def test_purge_is_not_installed
+        package = @type.create(:ensure => :installed, :name => "whatever")
+
+        property = package.property(:ensure)
+        assert(! property.insync?(:purged), "Package in state 'purged' was considered in sync")
+    end
 end
 
 # $Id$

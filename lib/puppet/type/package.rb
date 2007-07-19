@@ -57,27 +57,14 @@ module Puppet
                 provider.uninstall
             end
             
-            newvalue(:purged, :event => :package_purged) do
-                unless provider.purgeable?
-                    self.fail(
-                        "Package provider %s does not purging" %
-                        @resource[:provider]
-                    )
-                end
+            newvalue(:purged, :event => :package_purged, :required_features => :purgeable) do
                 provider.purge
             end
 
             # Alias the 'present' value.
             aliasvalue(:installed, :present)
 
-            newvalue(:latest) do
-                unless provider.upgradeable?
-                    self.fail(
-                        "Package provider %s does not support specifying 'latest'" %
-                        @resource[:provider]
-                    )
-                end
-
+            newvalue(:latest, :required_features => :upgradeable) do
                 # Because yum always exits with a 0 exit code, there's a retrieve
                 # in the "install" method.  So, check the current state now,
                 # to compare against later.
@@ -95,13 +82,7 @@ module Puppet
                 end
             end
 
-            newvalue(/./) do
-                unless provider.class.versionable?
-                    self.fail(
-                        "Package provider %s does not support specifying versions" %
-                        @resource[:provider]
-                     )
-                end
+            newvalue(/./, :required_features => :versionable) do
                 begin
                     provider.install
                 rescue => detail
@@ -130,7 +111,7 @@ module Puppet
                 @should.each { |should|
                     case should
                     when :present
-                        unless is == :absent
+                        unless [:absent, :purged].include?(is)
                             return true
                         end
                     when :latest
