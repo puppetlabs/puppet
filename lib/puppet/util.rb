@@ -342,9 +342,30 @@ module Util
  	
         # read output in if required
         if ! arguments[:squelch]
-            output = output_file.open.read
-            output_file.close
-            output_file.delete
+
+            # Make sure the file's actually there.  This is
+            # basically a race condition, and is probably a horrible
+            # way to handle it, but, well, oh well.
+            unless FileTest.exists?(output_file.path)
+                Puppet.warning "sleeping"
+                sleep 0.5
+                unless FileTest.exists?(output_file.path)
+                    Puppet.warning "sleeping 2"
+                    sleep 1
+                    unless FileTest.exists?(output_file.path)
+                        Puppet.warning "Could not get output"
+                        output = ""
+                    end
+                end
+            end
+            unless output
+                # We have to explicitly open here, so that it reopens
+                # after the child writes.
+                output = output_file.open.read
+
+                # The 'true' causes the file to get unlinked right away.
+                output_file.close(true)
+            end
         end
 
         if arguments[:failonfail]
