@@ -119,6 +119,15 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         [resource_type.validproperties, resource_type.parameters].flatten.each do |attr|
             attr = symbolize(attr)
             define_method(attr) do
+#                if @property_hash.empty?
+#                    # Note that this swaps the provider out from under us.
+#                    prefetch()
+#                    if @resource.provider == self
+#                        return @property_hash[attr]
+#                    else
+#                        return @resource.provider.send(attr)
+#                    end
+#                end
                 # If it's not a valid field for this record type (which can happen
                 # when different platforms support different fields), then just
                 # return the should value, so the resource shuts up.
@@ -273,7 +282,9 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         # Lastly, check the file from any resource instances
         if resources
             resources.each do |name, resource|
-                targets << resource.value(:target)
+                if value = resource.should(:target)
+                    targets << value
+                end
             end
         end
 
@@ -323,6 +334,8 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         @property_hash[:name] ||= @resource.name
 
         self.class.flush(@property_hash)
+
+        #@property_hash = {}
     end
 
     def initialize(resource)
@@ -335,6 +348,14 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         # exist.
         @property_hash = self.class.record?(resource[:name]) ||
             {:record_type => self.class.name, :ensure => :absent}
+    end
+
+    # Retrieve the current state from disk.
+    def prefetch
+        unless @resource
+            raise Puppet::DevError, "Somehow got told to prefetch with no resource set"
+        end
+        self.class.prefetch(@resource[:name] => @resource)
     end
 end
 

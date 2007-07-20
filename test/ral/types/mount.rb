@@ -5,7 +5,7 @@ $:.unshift("../../lib") if __FILE__ =~ /\.rb$/
 require 'puppettest'
 
 unless Facter.value(:operatingsystem) == "Darwin"
-class TestMounts < Test::Unit::TestCase
+class TestMounts < PuppetTest::TestCase
 	include PuppetTest
 
     p = Puppet::Type.type(:mount).provide :fake, :parent => PuppetTest::FakeParsedProvider do
@@ -322,6 +322,22 @@ class TestMounts < Test::Unit::TestCase
         mount.finish
 
         assert_nil(mount.should(:ensure), "Found default for ensure")
+    end
+
+    def disabled_test_retrieving_a_single_mount
+        @mount.defaultprovider = nil
+
+        provider = @mount.defaultprovider
+        assert(provider, "Could not retrieve default provider")
+
+        mount = Puppet::Type.type(:mount).create(:name => "/", :check => :all)
+        values = nil
+        assert_nothing_raised("Could not retrieve values for /") do
+            values = mount.retrieve
+        end
+        values.each do |property, value|
+            assert(value != :absent, "Got :absent for %s" % property.name)
+        end
     end
 end
 end
