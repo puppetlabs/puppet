@@ -6,8 +6,7 @@ module Puppet
             on the value of the 'ensure' parameter.
 	    
             Note that if a ``mount`` receives an event from another resource,
-            it will try to remount the filesystems if ``ensure => mounted`` is
-            set."
+            it will try to remount the filesystems if ``ensure`` is set to ``mounted``."
 
         feature :refreshable, "The provider can remount the filesystem.",
             :methods => [:remount]
@@ -15,12 +14,12 @@ module Puppet
         # Use the normal parent class, because we actually want to
         # call code when sync() is called.
         newproperty(:ensure) do
-            desc "Control what to do with this mount. If the value is 
-                  ``present``, the mount is entered into the mount table, 
-                  but not mounted, if it is ``absent``, the entry is removed 
-                  from the mount table and the filesystem is unmounted if 
-                  currently mounted, if it is ``mounted``, the filesystem 
-                  is entered into the mount table and mounted."
+            desc "Control what to do with this mount. Set this attribute to
+                ``present`` to make sure the filesystem is in the filesystem table
+                but not mounted (if the filesystem is currently mounted, it will be
+                unmounted).  Set it to ``absent`` to unmount (if necessary) and remove
+                the filesystem from the fstab.  Set to ``mounted`` to add it to the
+                fstab and mount it."
 
             newvalue(:present) do
                 if provider.mounted?
