@@ -361,6 +361,7 @@ class Puppet::Parser::Interpreter
         end
 
         @files = []
+        @loaded = []
 
         # Create our parser object
         parsefiles
@@ -384,15 +385,19 @@ class Puppet::Parser::Interpreter
         loaded = false
         # First try to load the top-level module
         mod = filename.scan(/^[\w-]+/).shift
-        begin
-            @parser.import(mod)
-            Puppet.info "Autoloaded module %s" % mod
-            loaded = true
-        rescue Puppet::ImportError => detail
-            # We couldn't load the module
+        unless @loaded.include?(mod)
+            @loaded << mod
+            begin
+                @parser.import(mod)
+                Puppet.info "Autoloaded module %s" % mod
+                loaded = true
+            rescue Puppet::ImportError => detail
+                # We couldn't load the module
+            end
         end
 
-        unless filename == mod
+        unless filename == mod and ! @loaded.include?(mod)
+            @loaded << mod
             # Then the individual file
             begin
                 @parser.import(filename)
