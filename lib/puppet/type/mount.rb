@@ -49,11 +49,23 @@ module Puppet
                 end
 
                 syncothers()
-                provider.mount
+                # The fs can be already mounted if it was absent but mounted
+                unless provider.mounted?
+                    provider.mount
+                end
             end
 
             def retrieve
-                return provider.mounted? ? :mounted : super()
+                # We need to special case :mounted; if we're absent, we still
+                # want 
+                curval = super()
+                if curval == :absent
+                    return curval
+                elsif provider.mounted?
+                    return :mounted
+                else
+                    return curval
+                end
             end
 
             def syncothers

@@ -3,6 +3,7 @@
 $:.unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppettest'
+require 'mocha'
 
 unless Facter.value(:operatingsystem) == "Darwin"
 class TestMounts < PuppetTest::TestCase
@@ -338,6 +339,22 @@ class TestMounts < PuppetTest::TestCase
         values.each do |property, value|
             assert(value != :absent, "Got :absent for %s" % property.name)
         end
+    end
+
+    # #726 - when filesystems are mounted but absent, Puppet does not write them out.
+    def test_mounted_but_absent
+        mount = @mount.create(:name => "/testing", :ensure => :mounted, :provider => :fake, :device => "/dev/something")
+
+        class << mount.provider
+            def mounted?
+                true
+            end
+        end
+
+        mount.provider.destroy
+        mount.provider.expects(:create)
+        mount.provider.expects(:mount).never
+        assert_apply(mount)
     end
 end
 end
