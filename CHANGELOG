@@ -1,3 +1,8 @@
+    Added an extra check to the Mongrel support so that
+    Apache can be used with optional cert checking, instead
+    of mandatory, thus allowing Mongrel to function as the CA.
+    This is thanks to work done by Marcin Owsiany.
+
     You can now specify relationships to classes, which work
     exactly like relationships to defined types:
         require => Class[myclass]
