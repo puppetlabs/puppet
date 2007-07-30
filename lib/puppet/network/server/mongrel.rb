@@ -116,7 +116,7 @@ module Puppet::Network
         def client_info(request)
             params = request.params
             ip = params["REMOTE_ADDR"]
-            if dn = params[Puppet[:ssl_client_header]]
+            if dn = params[Puppet[:ssl_client_header]] and dn.include?("/CN=")
                 client = dn.sub("/CN=", '')
                 valid = (params["HTTP_X_CLIENT_VERIFY"] == 'SUCCESS')
             else
