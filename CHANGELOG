@@ -1,3 +1,6 @@
+    Fixed #652, thanks to a patch by emerose; --fqdn again
+    works with puppetd.
+
     Added an extra check to the Mongrel support so that
     Apache can be used with optional cert checking, instead
     of mandatory, thus allowing Mongrel to function as the CA.

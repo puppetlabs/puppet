@@ -295,6 +295,7 @@ end
 args[:Server] = Puppet[:server]
 if options[:fqdn]
     args[:FQDN] = options[:fqdn]
+    Puppet[:certname] = options[:fqdn] 
 end
 
 if options[:centrallogs]
