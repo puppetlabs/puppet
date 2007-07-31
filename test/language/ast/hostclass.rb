@@ -158,22 +158,6 @@ class TestASTHostClass < Test::Unit::TestCase
         assert(result, "could not find parent-defined definition from sub")
         assert(fun == result, "found incorrect parent-defined definition from sub")
     end
-
-    # Make sure the subscopes we generate get the right type and name
-    def test_subscope
-        interp = mkinterp
-
-        klass = interp.newclass("base")
-        scope = mkscope(:interp => interp)
-        scope.expects(:newscope).with(:name => "base", :type => "class", :namespace => "base").returns(mkscope(:interp => interp))
-        klass.subscope(scope)
-
-        # Now make sure it works for namespaces
-        klass = interp.newclass("sub::type")
-        scope = mkscope(:interp => interp)
-        scope.expects(:newscope).with(:name => "sub::type", :type => "class", :namespace => "sub::type").returns(mkscope(:interp => interp))
-        klass.subscope(scope)
-    end
 end
 
 # $Id$
