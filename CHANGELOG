@@ -1,3 +1,6 @@
+    Added support for managing interfaces, thanks to work
+    by Paul Rose.
+
     Fixed #652, thanks to a patch by emerose; --fqdn again
     works with puppetd.
 
