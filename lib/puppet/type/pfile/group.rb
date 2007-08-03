@@ -36,7 +36,7 @@ module Puppet
 
         def should_to_s(newvalue = @should)
             if newvalue.is_a? Integer
-                id2name(newvalue) || newalue
+                id2name(newvalue) || newvalue
             else
                 return newvalue.to_s
             end
