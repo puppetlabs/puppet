@@ -836,7 +836,11 @@ Generated on #{Time.now}.
                 Puppet.warning "Discarded unknown configuration parameter %s" % param
                 next
             end
-            self[param] = value
+            if @config[param].setbycli
+                Puppet.debug "Ignoring %s set by config file; overridden by cli" % param
+            else
+                self[param] = value
+            end
         end
 
         if meta = params[:_meta]

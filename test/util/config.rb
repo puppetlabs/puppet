@@ -3,9 +3,8 @@
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'mocha'
-require 'puppet'
-require 'puppet/util/config'
 require 'puppettest'
+require 'puppet/util/config'
 require 'puppettest/parsertesting'
 
 class TestConfig < Test::Unit::TestCase
@@ -16,7 +15,6 @@ class TestConfig < Test::Unit::TestCase
         super
         @config = mkconfig
     end
-
 
     def check_for_users
         count = Puppet::Type.type(:user).inject(0) { |c,o|
@@ -328,16 +326,18 @@ yay = /a/path
 
     def test_parse
         result = {
-            :main => {:main => "main", :bad => "invalid"},
-            :puppet => {:other => "puppet"},
-            :puppetd => {:other => "puppetd"}
+            :main => {:main => "main", :bad => "invalid", :cliparam => "reset"},
+            :puppet => {:other => "puppet", :cliparam => "reset"},
+            :puppetd => {:other => "puppetd", :cliparam => "reset"}
         }
         # Set our defaults, so they're valid. Don't define 'bad', since we want to test for failures.
         @config.setdefaults(:main,
             :main => ["whatever", "a"],
+            :cliparam => ["default", "y"],
             :other => ["a", "b"],
             :name => ["puppet", "b"] # our default name
         )
+        @config.handlearg("--cliparam", "changed")
         @config.expects(:parse_file).returns(result).times(2)
 
         # First do it with our name being 'puppet'
@@ -349,9 +349,10 @@ yay = /a/path
 
         assert_equal("main", @config[:main], "Did not get main value")
         assert_equal("puppet", @config[:other], "Did not get name value")
+        assert_equal("changed", @config[:cliparam], "CLI values were overridden by config")
 
         # Now switch names and make sure the parsing switches, too.
-        @config.clear
+        @config.clear(true)
         @config[:name] = :puppetd
         assert_nothing_raised("Could not handle parse results") do
             @config.parse(tempfile)
@@ -360,6 +361,7 @@ yay = /a/path
 
         assert_equal("main", @config[:main], "Did not get main value")
         assert_equal("puppetd", @config[:other], "Did not get name value")
+        assert_equal("changed", @config[:cliparam], "CLI values were overridden by config")
     end
 
     # Make sure we can extract file options correctly.
@@ -1166,6 +1168,46 @@ inttest = 27
 
         assert_equal("oneval/twoval/oneval/twoval", @config[:three],
             "Did not interpolate curlied variables")
+    end
+
+    # Discovered from #734
+    def test_set_parameter_hash
+        @config.setdefaults(:section,
+            :unchanged => ["unval", "yay"],
+            :normal => ["normalval", "yay"],
+            :cliparam => ["clival", "yay"],
+            :file => ["/my/file", "yay"]
+        )
+
+        # Set the cli param using the cli method
+        @config.handlearg("--cliparam", "other")
+
+        # Make sure missing params just throw warnings, not errors
+        assert_nothing_raised("Could not call set_parameter_hash with an invalid option") do
+            @config.send(:set_parameter_hash, :missing => "something")
+        end
+
+        # Make sure normal values get set
+        assert_nothing_raised("Could not call set_parameter_hash with a normal value") do
+            @config.send(:set_parameter_hash, :normal => "abnormal")
+        end
+        assert_equal("abnormal", @config[:normal], "Value did not get set")
+        
+        # Make sure cli-set values don't get overridden
+        assert_nothing_raised("Could not call set_parameter_hash with an override of a cli value") do
+            @config.send(:set_parameter_hash, :cliparam => "something else")
+        end
+        assert_equal("other", @config[:cliparam], "CLI value was overridden by config value")
+
+        # Make sure the meta stuff works
+        assert_nothing_raised("Could not call set_parameter_hash with meta info") do
+            @config.send(:set_parameter_hash, :file => "/other/file", :_meta => {:file => {:mode => "0755"}})
+        end
+        assert_equal("/other/file", @config[:file], "value with meta info was overridden by config value")
+        assert_equal("0755", @config.element(:file).mode, "Did not set mode from meta info")
+
+        # And make sure other params are unchanged
+        assert_equal("unval", @config[:unchanged], "Unchanged value has somehow changed")
     end
 end
 
