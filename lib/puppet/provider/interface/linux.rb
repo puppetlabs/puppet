@@ -11,9 +11,9 @@ Puppet::Type.type(:interface).provide(:linux) do
     ALIAS_TEMPLATE = ERB.new <<-ALIAS
 DEVICE=<%= self.device %>
 ONBOOT=<%= self.on_boot %>
-BOOTPROTO=none
+BOOTPROTO=<%= self.bootproto %>
 IPADDR=<%= self.name %>
-NETMASK=255.255.255.255
+NETMASK=<%= self.netmask %>
 BROADCAST=
 ALIAS
 
