@@ -2,6 +2,7 @@
 
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
+require 'mocha'
 require 'puppet'
 require 'puppet/parser/parser'
 require 'puppettest'
@@ -37,12 +38,13 @@ class TestParser < Test::Unit::TestCase
     def test_failers
         failers { |file|
             parser = mkparser
+            interp = mkinterp
             Puppet.debug("parsing failer %s" % file) if __FILE__ == $0
             assert_raise(Puppet::ParseError) {
                 parser.file = file
                 ast = parser.parse
-                scope = mkscope :interp => parser.interp
-                ast.evaluate :scope => scope
+                scope = mkscope :interp => interp
+                ast.classes[""].evaluate :scope => scope
             }
             Puppet::Type.allclear
         }
@@ -275,9 +277,7 @@ class TestParser < Test::Unit::TestCase
             ret = parser.parse
         }
 
-        assert_instance_of(AST::ASTArray, ret)
-
-        ret.each do |obj|
+        ret.classes[""].code.each do |obj|
             assert_instance_of(AST::Collection, obj)
         end
     end
@@ -368,12 +368,13 @@ file { "/tmp/yayness":
         str1 = %{if true { #{exec.call("true")} }}
         ret = nil
         assert_nothing_raised {
-            ret = parser.parse(str1)[0]
+            ret = parser.parse(str1).classes[""].code[0]
         }
         assert_instance_of(Puppet::Parser::AST::IfStatement, ret)
+        parser.clear
         str2 = %{if true { #{exec.call("true")} } else { #{exec.call("false")} }}
         assert_nothing_raised {
-            ret = parser.parse(str2)[0]
+            ret = parser.parse(str2).classes[""].code[0]
         }
         assert_instance_of(Puppet::Parser::AST::IfStatement, ret)
         assert_instance_of(Puppet::Parser::AST::Else, ret.else)
@@ -381,13 +382,12 @@ file { "/tmp/yayness":
 
     def test_hostclass
         parser = mkparser
-        interp = parser.interp
 
         assert_nothing_raised {
             parser.parse %{class myclass { class other {} }}
         }
-        assert(interp.findclass("", "myclass"), "Could not find myclass")
-        assert(interp.findclass("", "myclass::other"), "Could not find myclass::other")
+        assert(parser.classes["myclass"], "Could not find myclass")
+        assert(parser.classes["myclass::other"], "Could not find myclass::other")
 
         assert_nothing_raised {
             parser.parse "class base {}
@@ -395,17 +395,16 @@ file { "/tmp/yayness":
                 class deep::sub inherits base {}
             }"
         }
-        sub = interp.findclass("", "container::deep::sub")
+        sub = parser.classes["container::deep::sub"]
         assert(sub, "Could not find sub")
-        assert_equal("base", sub.parentobj.classname)
         
         # Now try it with a parent class being a fq class
         assert_nothing_raised {
             parser.parse "class container::one inherits container::deep::sub {}"
         }
-        sub = interp.findclass("", "container::one")
+        sub = parser.classes["container::one"]
         assert(sub, "Could not find one")
-        assert_equal("container::deep::sub", sub.parentobj.classname)
+        assert_equal("container::deep::sub", sub.parentclass)
         
         # Finally, try including a qualified class
         assert_nothing_raised("Could not include fully qualified class") {
@@ -415,25 +414,23 @@ file { "/tmp/yayness":
 
     def test_topnamespace
         parser = mkparser
-        parser.interp.clear
 
         # Make sure we put the top-level code into a class called "" in
         # the "" namespace
         assert_nothing_raised do
             out = parser.parse ""
 
-            assert_nil(out)
-            assert_nil(parser.interp.findclass("", ""))
+            assert_instance_of(Puppet::Parser::Parser::ASTSet, out)
+            assert_nil(parser.classes[""], "Got a 'main' class when we had no code")
         end
 
         # Now try something a touch more complicated
-        parser.interp.clear
+        parser.initvars
         assert_nothing_raised do
             out = parser.parse "Exec { path => '/usr/bin:/usr/sbin' }"
-            assert_instance_of(AST::ASTArray, out)
-            assert_equal("", parser.interp.findclass("", "").classname)
-            assert_equal("", parser.interp.findclass("", "").namespace)
-            assert_equal(out.object_id, parser.interp.findclass("", "").code.object_id)
+            assert_instance_of(Puppet::Parser::Parser::ASTSet, out)
+            assert_equal("", parser.classes[""].classname)
+            assert_equal("", parser.classes[""].namespace)
         end
     end
 
@@ -476,18 +473,19 @@ file { "/tmp/yayness":
                 ret = parser.parse("#{at}file { '/tmp/testing': owner => root }")
             end
 
-            assert_equal("/tmp/testing", ret[0].title.value)
+            assert_instance_of(AST::ASTArray, ret.classes[""].code)
+            resdef = ret.classes[""].code[0]
+            assert_instance_of(AST::ResourceDef, resdef)
+            assert_equal("/tmp/testing", resdef.title.value)
             # We always get an astarray back, so...
-            assert_instance_of(AST::ResourceDef, ret[0])
-            check.call(ret[0], "simple resource")
+            check.call(resdef, "simple resource")
 
             # Now let's try it with multiple resources in the same spec
             assert_nothing_raised do
                 ret = parser.parse("#{at}file { ['/tmp/1', '/tmp/2']: owner => root }")
             end
 
-            assert_instance_of(AST::ASTArray, ret)
-            ret.each do |res|
+            ret.classes[""].each do |res|
                 assert_instance_of(AST::ResourceDef, res)
                 check.call(res, "multiresource")
             end
@@ -495,11 +493,11 @@ file { "/tmp/yayness":
             # Now evaluate these
             scope = mkscope
 
-            klass = scope.interp.newclass ""
+            klass = parser.newclass ""
             scope.source = klass
 
             assert_nothing_raised do
-                ret.evaluate :scope => scope
+                ret.classes[""].evaluate :scope => scope
             end
 
             # Make sure we can find both of them
@@ -527,16 +525,14 @@ file { "/tmp/yayness":
                 arrow = "<<||>>"
             end
 
-            check = proc do |coll|
-                assert_instance_of(AST::Collection, coll)
-                assert_equal(form, coll.form)
-            end
-
             ret = nil
             assert_nothing_raised do
                 ret = parser.parse("File #{arrow}")
             end
-            check.call(ret[0])
+
+            coll = ret.classes[""].code[0]
+            assert_instance_of(AST::Collection, coll)
+            assert_equal(form, coll.form)
         end
     end
 
@@ -548,7 +544,7 @@ file { "/tmp/yayness":
 
             res = nil
             assert_nothing_raised do
-                res = parser.parse(str)[0]
+                res = parser.parse(str).classes[""].code[0]
             end
 
             assert_instance_of(AST::Collection, res)
@@ -571,7 +567,7 @@ file { "/tmp/yayness":
 
             res = nil
             assert_nothing_raised do
-                res = parser.parse(str)[0]
+                res = parser.parse(str).classes[""].code[0]
             end
 
             assert_instance_of(AST::Collection, res)
@@ -595,7 +591,7 @@ file { "/tmp/yayness":
 
             res = nil
             assert_nothing_raised("Could not parse '#{test}'") do
-                res = parser.parse(str)[0]
+                res = parser.parse(str).classes[""].code[0]
             end
 
             assert_instance_of(AST::Collection, res)
@@ -634,13 +630,11 @@ file { "/tmp/yayness":
     
     def test_fully_qualified_definitions
         parser = mkparser
-        interp = parser.interp
 
         assert_nothing_raised("Could not parse fully-qualified definition") {
             parser.parse %{define one::two { }}
         }
-        assert(interp.finddefine("", "one::two"), "Could not find one::two with no namespace")
-        assert(interp.finddefine("one", "two"), "Could not find two in namespace one")
+        assert(parser.definitions["one::two"], "Could not find one::two with no namespace")
         
         # Now try using the definition
         assert_nothing_raised("Could not parse fully-qualified definition usage") {
@@ -772,9 +766,414 @@ file { "/tmp/yayness":
             result = parser.parse %{$variable = undef}
         }
 
-        children = result.children
-        assert_instance_of(AST::VarDef, result.children[0])
-        assert_instance_of(AST::Undef, result.children[0].value)
+        main = result.classes[""].code
+        children = main.children
+        assert_instance_of(AST::VarDef, main.children[0])
+        assert_instance_of(AST::Undef, main.children[0].value)
+    end
+
+    # Prompted by #729 -- parsing should not modify the interpreter.
+    def test_parse
+        parser = mkparser
+
+        str = "file { '/tmp/yay': ensure => file }\nclass yay {}\nnode foo {}\ndefine bar {}\n" 
+        result = nil
+        assert_nothing_raised("Could not parse") do
+            result = parser.parse(str)
+        end
+        assert_instance_of(Puppet::Parser::Parser::ASTSet, result, "Did not get a ASTSet back from parsing")
+
+        assert_instance_of(AST::HostClass, result.classes["yay"], "Did not create 'yay' class")
+        assert_instance_of(AST::HostClass, result.classes[""], "Did not create main class")
+        assert_instance_of(AST::Component, result.definitions["bar"], "Did not create 'bar' definition")
+        assert_instance_of(AST::Node, result.nodes["foo"], "Did not create 'foo' node")
+    end
+
+    # Make sure our node gets added to the node table.
+    def test_newnode
+        parser = mkparser
+
+        # First just try calling it directly
+        assert_nothing_raised {
+            parser.newnode("mynode", :code => :yay)
+        }
+
+        assert_equal(:yay, parser.nodes["mynode"].code)
+
+        # Now make sure that trying to redefine it throws an error.
+        assert_raise(Puppet::ParseError) {
+            parser.newnode("mynode", {})
+        }
+
+        # Now try one with no code
+        assert_nothing_raised {
+            parser.newnode("simplenode", :parent => :foo)
+        }
+
+        # Now define the parent node
+        parser.newnode(:foo)
+
+        # And make sure we get things back correctly
+        assert_equal(:foo, parser.nodes["simplenode"].parentclass)
+        assert_nil(parser.nodes["simplenode"].code)
+
+        # Now make sure that trying to redefine it throws an error.
+        assert_raise(Puppet::ParseError) {
+            parser.newnode("mynode", {})
+        }
+
+        # Test multiple names
+        names = ["one", "two", "three"]
+        assert_nothing_raised {
+            parser.newnode(names, {:code => :yay, :parent => :foo})
+        }
+
+        names.each do |name|
+            assert_equal(:yay, parser.nodes[name].code)
+            assert_equal(:foo, parser.nodes[name].parentclass)
+            # Now make sure that trying to redefine it throws an error.
+            assert_raise(Puppet::ParseError) {
+                parser.newnode(name, {})
+            }
+        end
+    end
+
+    def test_newdefine
+        parser = mkparser
+
+        assert_nothing_raised {
+            parser.newdefine("mydefine", :code => :yay,
+                :arguments => ["a", stringobj("b")])
+        }
+
+        mydefine = parser.definitions["mydefine"]
+        assert(mydefine, "Could not find definition")
+        assert_equal("", mydefine.namespace)
+        assert_equal("mydefine", mydefine.classname)
+
+        assert_raise(Puppet::ParseError) do
+            parser.newdefine("mydefine", :code => :yay,
+                :arguments => ["a", stringobj("b")])
+        end
+
+        # Now define the same thing in a different scope
+        assert_nothing_raised {
+            parser.newdefine("other::mydefine", :code => :other,
+                :arguments => ["a", stringobj("b")])
+        }
+        other = parser.definitions["other::mydefine"]
+        assert(other, "Could not find definition")
+        assert(parser.definitions["other::mydefine"],
+            "Could not find other::mydefine")
+        assert_equal(:other, other.code)
+        assert_equal("other", other.namespace)
+        assert_equal("other::mydefine", other.classname)
+    end
+
+    def test_newclass
+        parser = mkparser
+
+        mkcode = proc do |ary|
+            classes = ary.collect do |string|
+                AST::FlatString.new(:value => string)
+            end
+            AST::ASTArray.new(:children => classes)
+        end
+
+        scope = Puppet::Parser::Scope.new(:interp => mkinterp)
+
+        # First make sure that code is being appended
+        code = mkcode.call(%w{original code})
+
+        klass = nil
+        assert_nothing_raised {
+            klass = parser.newclass("myclass", :code => code)
+        }
+
+        assert(klass, "Did not return class")
+
+        assert(parser.classes["myclass"], "Could not find definition")
+        assert_equal("myclass", parser.classes["myclass"].classname)
+        assert_equal(%w{original code},
+             parser.classes["myclass"].code.evaluate(:scope => scope))
+
+        # Newclass behaves differently than the others -- it just appends
+        # the code to the existing class.
+        code = mkcode.call(%w{something new})
+        assert_nothing_raised do
+            klass = parser.newclass("myclass", :code => code)
+        end
+        assert(klass, "Did not return class when appending")
+        assert_equal(%w{original code something new},
+            parser.classes["myclass"].code.evaluate(:scope => scope))
+
+        # Now create the same class name in a different scope
+        assert_nothing_raised {
+            klass = parser.newclass("other::myclass",
+                            :code => mkcode.call(%w{something diff}))
+        }
+        assert(klass, "Did not return class")
+        other = parser.classes["other::myclass"]
+        assert(other, "Could not find class")
+        assert_equal("other::myclass", other.classname)
+        assert_equal("other::myclass", other.namespace)
+        assert_equal(%w{something diff},
+             other.code.evaluate(:scope => scope))
+
+        # Make sure newclass deals correctly with nodes with no code
+        klass = parser.newclass("nocode")
+        assert(klass, "Did not return class")
+
+        assert_nothing_raised do
+            klass = parser.newclass("nocode", :code => mkcode.call(%w{yay test}))
+        end
+        assert(klass, "Did not return class with no code")
+        assert_equal(%w{yay test},
+            parser.classes["nocode"].code.evaluate(:scope => scope))
+
+        # Then try merging something into nothing
+        parser.newclass("nocode2", :code => mkcode.call(%w{foo test}))
+        assert(klass, "Did not return class with no code")
+
+        assert_nothing_raised do
+            klass = parser.newclass("nocode2")
+        end
+        assert(klass, "Did not return class with no code")
+        assert_equal(%w{foo test},
+            parser.classes["nocode2"].code.evaluate(:scope => scope))
+
+        # And lastly, nothing and nothing
+        klass = parser.newclass("nocode3")
+        assert(klass, "Did not return class with no code")
+
+        assert_nothing_raised do
+            klass = parser.newclass("nocode3")
+        end
+        assert(klass, "Did not return class with no code")
+        assert_nil(parser.classes["nocode3"].code)
+    end
+
+    # Make sure you can't have classes and defines with the same name in the
+    # same scope.
+    def test_classes_beat_defines
+        parser = mkparser
+
+        assert_nothing_raised {
+            parser.newclass("yay::funtest")
+        }
+
+        assert_raise(Puppet::ParseError) do
+            parser.newdefine("yay::funtest")
+        end
+
+        assert_nothing_raised {
+            parser.newdefine("yay::yaytest")
+        }
+
+        assert_raise(Puppet::ParseError) do
+            parser.newclass("yay::yaytest")
+        end
+    end
+
+    def test_namesplit
+        parser = mkparser
+
+        assert_nothing_raised do
+            {"base::sub" => %w{base sub},
+                "main" => ["", "main"],
+                "one::two::three::four" => ["one::two::three", "four"],
+            }.each do |name, ary|
+                result = parser.namesplit(name)
+                assert_equal(ary, result, "%s split to %s" % [name, result])
+            end
+        end
+    end
+    
+    # Now make sure we get appropriate behaviour with parent class conflicts.
+    def test_newclass_parentage
+        parser = mkparser
+        parser.newclass("base1")
+        parser.newclass("one::two::three")
+
+        # First create it with no parentclass.
+        assert_nothing_raised {
+            parser.newclass("sub")
+        }
+        assert(parser.classes["sub"], "Could not find definition")
+        assert_nil(parser.classes["sub"].parentclass)
+
+        # Make sure we can't set the parent class to ourself.
+        assert_raise(Puppet::ParseError) {
+            parser.newclass("sub", :parent => "sub")
+        }
+
+        # Now create another one, with a parentclass.
+        assert_nothing_raised {
+            parser.newclass("sub", :parent => "base1")
+        }
+
+        # Make sure we get the right parent class, and make sure it's not an object.
+        assert_equal("base1",
+                    parser.classes["sub"].parentclass)
+
+        # Now make sure we get a failure if we try to conflict.
+        assert_raise(Puppet::ParseError) {
+            parser.newclass("sub", :parent => "one::two::three")
+        }
+
+        # Make sure that failure didn't screw us up in any way.
+        assert_equal("base1",
+                    parser.classes["sub"].parentclass)
+        # But make sure we can create a class with a fq parent
+        assert_nothing_raised {
+            parser.newclass("another", :parent => "one::two::three")
+        }
+        assert_equal("one::two::three",
+                    parser.classes["another"].parentclass)
+
+    end
+
+    def test_fqfind
+        parser = mkparser
+
+        table = {}
+        # Define a bunch of things.
+        %w{a c a::b a::b::c a::c a::b::c::d a::b::c::d::e::f c::d}.each do |string|
+            table[string] = string
+        end
+
+        check = proc do |namespace, hash|
+            hash.each do |thing, result|
+                assert_equal(result, parser.fqfind(namespace, thing, table),
+                            "Could not find %s in %s" % [thing, namespace])
+            end
+        end
+
+        # Now let's do some test lookups.
+
+        # First do something really simple
+        check.call "a", "b" => "a::b", "b::c" => "a::b::c", "d" => nil, "::c" => "c"
+
+        check.call "a::b", "c" => "a::b::c", "b" => "a::b", "a" => "a"
+
+        check.call "a::b::c::d::e", "c" => "a::b::c", "::c" => "c",
+            "c::d" => "a::b::c::d", "::c::d" => "c::d"
+
+        check.call "", "a" => "a", "a::c" => "a::c"
+    end
+
+    # Setup a module.
+    def mk_module(name, files = {})
+        mdir = File.join(@dir, name)
+        mandir = File.join(mdir, "manifests")
+        FileUtils.mkdir_p mandir
+
+        if defs = files[:define]
+            files.delete(:define)
+        end
+        Dir.chdir(mandir) do
+            files.each do |file, classes|
+                File.open("%s.pp" % file, "w") do |f|
+                    classes.each { |klass|
+                        if defs
+                            f.puts "define %s {}" % klass
+                        else
+                            f.puts "class %s {}" % klass
+                        end
+                    }
+                end
+            end
+        end
+    end
+
+    # #596 - make sure classes and definitions load automatically if they're in modules, so we don't have to manually load each one.
+    def test_module_autoloading
+        @dir = tempfile
+        Puppet[:modulepath] = @dir
+
+        FileUtils.mkdir_p @dir
+
+        parser = mkparser
+
+        # Make sure we fail like normal for actually missing classes
+        assert_nil(parser.findclass("", "nosuchclass"), "Did not return nil on missing classes")
+
+        # test the simple case -- the module class itself
+        name = "simple"
+        mk_module(name, :init => [name])
+
+        # Try to load the module automatically now
+        klass = parser.findclass("", name)
+        assert_instance_of(AST::HostClass, klass, "Did not autoload class from module init file")
+        assert_equal(name, klass.classname, "Incorrect class was returned")
+
+        # Try loading the simple module when we're in something other than the base namespace.
+        parser = mkparser
+        klass = parser.findclass("something::else", name)
+        assert_instance_of(AST::HostClass, klass, "Did not autoload class from module init file")
+        assert_equal(name, klass.classname, "Incorrect class was returned")
+
+        # Now try it with a definition as the base file
+        name = "simpdef"
+        mk_module(name, :define => true, :init => [name])
+
+        klass = parser.finddefine("", name)
+        assert_instance_of(AST::Component, klass, "Did not autoload class from module init file")
+        assert_equal(name, klass.classname, "Incorrect class was returned")
+
+        # Now try it with namespace classes where both classes are in the init file
+        parser = mkparser
+        modname = "both"
+        name = "sub"
+        mk_module(modname, :init => %w{both both::sub})
+
+        # First try it with a namespace
+        klass = parser.findclass("both", name)
+        assert_instance_of(AST::HostClass, klass, "Did not autoload sub class from module init file with a namespace")
+        assert_equal("both::sub", klass.classname, "Incorrect class was returned")
+
+        # Now try it using the fully qualified name
+        parser = mkparser
+        klass = parser.findclass("", "both::sub")
+        assert_instance_of(AST::HostClass, klass, "Did not autoload sub class from module init file with no namespace")
+        assert_equal("both::sub", klass.classname, "Incorrect class was returned")
+
+
+        # Now try it with the class in a different file
+        parser = mkparser
+        modname = "separate"
+        name = "sub"
+        mk_module(modname, :init => %w{separate}, :sub => %w{separate::sub})
+
+        # First try it with a namespace
+        klass = parser.findclass("separate", name)
+        assert_instance_of(AST::HostClass, klass, "Did not autoload sub class from separate file with a namespace")
+        assert_equal("separate::sub", klass.classname, "Incorrect class was returned")
+
+        # Now try it using the fully qualified name
+        parser = mkparser
+        klass = parser.findclass("", "separate::sub")
+        assert_instance_of(AST::HostClass, klass, "Did not autoload sub class from separate file with no namespace")
+        assert_equal("separate::sub", klass.classname, "Incorrect class was returned")
+
+        # Now make sure we don't get a failure when there's no module file
+        parser = mkparser
+        modname = "alone"
+        name = "sub"
+        mk_module(modname, :sub => %w{alone::sub})
+
+        # First try it with a namespace
+        assert_nothing_raised("Could not autoload file when module file is missing") do
+            klass = parser.findclass("alone", name)
+        end
+        assert_instance_of(AST::HostClass, klass, "Did not autoload sub class from alone file with a namespace")
+        assert_equal("alone::sub", klass.classname, "Incorrect class was returned")
+
+        # Now try it using the fully qualified name
+        parser = mkparser
+        klass = parser.findclass("", "alone::sub")
+        assert_instance_of(AST::HostClass, klass, "Did not autoload sub class from alone file with no namespace")
+        assert_equal("alone::sub", klass.classname, "Incorrect class was returned")
     end
 end
 

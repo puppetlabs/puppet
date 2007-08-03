@@ -56,7 +56,7 @@ class Puppet::Parser::AST
         private
         # Search for the object matching our parent class.
         def find_parentclass
-            @interp.nodesearch(parentclass)
+            @parser.findnode(parentclass)
         end
     end
 end

@@ -46,7 +46,7 @@ module PuppetTest::ParserTesting
     end
 
     def mkparser
-        Puppet::Parser::Parser.new(mkinterp)
+        Puppet::Parser::Parser.new()
     end
 
     def mkscope(hash = {})

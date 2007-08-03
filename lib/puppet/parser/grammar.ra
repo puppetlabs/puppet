@@ -498,13 +498,13 @@ import: IMPORT qtexts {
 # Disable definition inheritance for now. 8/27/06, luke
 #definition: DEFINE NAME argumentlist parent LBRACE statements RBRACE {
 definition: DEFINE classname argumentlist LBRACE statements RBRACE {
-    interp.newdefine classname(val[1]), :arguments => val[2], :code => val[4]
+    newdefine classname(val[1]), :arguments => val[2], :code => val[4]
     @lexer.indefine = false
     result = nil
 
 #}           | DEFINE NAME argumentlist parent LBRACE RBRACE {
 }           | DEFINE classname argumentlist LBRACE RBRACE {
-    interp.newdefine classname(val[1]), :arguments => val[2]
+    newdefine classname(val[1]), :arguments => val[2]
     @lexer.indefine = false
     result = nil
 }
@@ -513,20 +513,20 @@ definition: DEFINE classname argumentlist LBRACE statements RBRACE {
 hostclass: CLASS classname classparent LBRACE statements RBRACE {
     # Our class gets defined in the parent namespace, not our own.
     @lexer.namepop
-    interp.newclass classname(val[1]), :code => val[4], :parent => val[2]
+    newclass classname(val[1]), :code => val[4], :parent => val[2]
     result = nil
 }           | CLASS classname classparent LBRACE RBRACE {
     # Our class gets defined in the parent namespace, not our own.
     @lexer.namepop
-    interp.newclass classname(val[1]), :parent => val[2]
+    newclass classname(val[1]), :parent => val[2]
     result = nil
 }
 
 nodedef: NODE hostnames nodeparent LBRACE statements RBRACE {
-    interp.newnode val[1], :parent => val[2], :code => val[4]
+    newnode val[1], :parent => val[2], :code => val[4]
     result = nil
 }       |  NODE hostnames nodeparent LBRACE RBRACE {
-    interp.newnode val[1], :parent => val[2]
+    newnode val[1], :parent => val[2]
     result = nil
 }
 
@@ -637,226 +637,9 @@ Puppet[:typecheck] = true
 Puppet[:paramcheck] = true
 
 ---- inner ----
-require 'puppet/parser/functions'
 
-attr_reader :file, :interp
-attr_accessor :files
-
-# Add context to a message; useful for error messages and such.
-def addcontext(message, obj = nil)
-    obj ||= @lexer
-
-    message += " on line %s" % obj.line
-    if file = obj.file
-        message += " in file %s" % file
-    end
-
-    return message
-end
-
-# Create an AST array out of all of the args
-def aryfy(*args)
-    if args[0].instance_of?(AST::ASTArray)
-        result = args.shift
-        args.each { |arg|
-            result.push arg
-        }
-    else
-        result = ast AST::ASTArray, :children => args
-    end
-
-    return result
-end
-
-# Create an AST object, and automatically add the file and line information if
-# available.
-def ast(klass, hash = nil)
-    hash ||= {}
-    unless hash.include?(:line)
-        hash[:line] = @lexer.line
-    end
-
-    unless hash.include?(:file)
-        if file = @lexer.file
-            hash[:file] = file
-        end
-    end
-
-    return klass.new(hash)
-end
-
-# Raise a Parse error.
-def error(message)
-    if brace = @lexer.expected
-        message += "; expected '%s'"
-    end
-    except = Puppet::ParseError.new(message)
-    except.line = @lexer.line
-    if @lexer.file
-        except.file = @lexer.file
-    end
-
-    raise except
-end
-
-def file=(file)
-    unless FileTest.exists?(file)
-        unless file =~ /\.pp$/
-            file = file + ".pp"
-        end
-        unless FileTest.exists?(file)
-            raise Puppet::Error, "Could not find file %s" % file
-        end
-    end
-    if @files.detect { |f| f.file == file }
-        raise Puppet::AlreadyImportedError.new("Import loop detected")
-    else
-        @files << Puppet::Util::LoadedFile.new(file)
-        @lexer.file = file
-    end
-end
-
-# Import our files.
-def import(file)
-    if Puppet[:ignoreimport]
-        return AST::ASTArray.new(:children => [])
-    end
-    # use a path relative to the file doing the importing
-    if @lexer.file
-        dir = @lexer.file.sub(%r{[^/]+$},'').sub(/\/$/, '')
-    else
-        dir = "."
-    end
-    if dir == ""
-        dir = "."
-    end
-    result = ast AST::ASTArray
-
-    # We can't interpolate at this point since we don't have any
-    # scopes set up. Warn the user if they use a variable reference
-    pat = file
-    if pat.index("$")
-        Puppet.warning(
-           "The import of #{pat} contains a variable reference;" +
-           " variables are not interpolated for imports " +
-           "in file #{@lexer.file} at line #{@lexer.line}"
-        )
-    end
-    files = Puppet::Module::find_manifests(pat, dir)
-    if files.size == 0
-        raise Puppet::ImportError.new("No file(s) found for import " +
-                                      "of '#{pat}'")
-    end
-
-    files.collect { |file|
-        parser = Puppet::Parser::Parser.new(interp)
-        parser.files = self.files
-        Puppet.debug("importing '%s'" % file)
-
-        unless file =~ /^#{File::SEPARATOR}/
-            file = File.join(dir, file)
-        end
-        begin
-            parser.file = file
-        rescue Puppet::AlreadyImportedError
-            # This file has already been imported to just move on
-            next
-        end
-
-        # This will normally add code to the 'main' class.
-        parser.parse
-    }
-end
-
-def initialize(interpreter)
-    @interp = interpreter
-    initvars()
-end
-
-# Initialize or reset all of our variables.
-def initvars
-    @lexer = Puppet::Parser::Lexer.new()
-    @files = []
-end
-
-# The fully qualifed name, with the full namespace.
-def classname(name)
-    [@lexer.namespace, name].join("::").sub(/^::/, '')
-end
-
-def on_error(token,value,stack)
-    #on '%s' at '%s' in\n'%s'" % [token,value,stack]
-    #error = "line %s: parse error after '%s'" %
-    #    [@lexer.line,@lexer.last]
-    error = "Syntax error at '%s'" % [value]
-
-    if brace = @lexer.expected
-        error += "; expected '%s'" % brace
-    end
-
-    except = Puppet::ParseError.new(error)
-    except.line = @lexer.line
-    if @lexer.file
-        except.file = @lexer.file
-    end
-
-    raise except
-end
-
-# how should I do error handling here?
-def parse(string = nil)
-    if string
-        self.string = string
-    end
-    begin
-        main = yyparse(@lexer,:scan)
-    rescue Racc::ParseError => except
-        error = Puppet::ParseError.new(except)
-        error.line = @lexer.line
-        error.file = @lexer.file
-        error.set_backtrace except.backtrace
-        raise error
-    rescue Puppet::ParseError => except
-        except.line ||= @lexer.line
-        except.file ||= @lexer.file
-        raise except
-    rescue Puppet::Error => except
-        # and this is a framework error
-        except.line ||= @lexer.line
-        except.file ||= @lexer.file
-        raise except
-    rescue Puppet::DevError => except
-        except.line ||= @lexer.line
-        except.file ||= @lexer.file
-        raise except
-    rescue => except
-        error = Puppet::DevError.new(except.message)
-        error.line = @lexer.line
-        error.file = @lexer.file
-        error.set_backtrace except.backtrace
-        raise error
-    end
-    if main
-        # Store the results as the top-level class.
-        interp.newclass("", :code => main)
-        return main
-    end
-ensure
-    @lexer.clear
-end
-
-# See if any of the files have changed.
-def reparse?
-    if file = @files.detect { |file| file.changed?  }
-        return file.stamp
-    else
-        return false
-    end
-end
-
-def string=(string)
-    @lexer.string = string
-end
+# It got too annoying having code in a file that needs to be compiled.
+require 'puppet/parser/parser_support'
 
 # Make emacs happy
 # Local Variables:

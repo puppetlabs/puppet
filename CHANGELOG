@@ -1,3 +1,12 @@
+    Refactored how the parser and interpreter relate,
+    so parsing is now effectively an atomic process (thus
+    fixing #314 and #729).  This makes the interpreter less
+    prone to error and less prone to show the error to the
+    clients.  Note that this means that if a configuration
+    fails to parse, then the previous, parseable configuration
+    will be used instead, so the client will not know that
+    the configuration failed to parse.
+
     Added support for managing interfaces, thanks to work
     by Paul Rose.
 
@@ -9,6 +18,7 @@
     of mandatory, thus allowing Mongrel to function as the CA.
     This is thanks to work done by Marcin Owsiany.
 
+0.23.1
     You can now specify relationships to classes, which work
     exactly like relationships to defined types:
         require => Class[myclass]

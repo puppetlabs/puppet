@@ -61,29 +61,29 @@ class TestParser < Test::Unit::TestCase
         end
         interp = nil
         code ||= "node #{hostnames.join(", ")} { }"
-        assert_nothing_raised {
-            interp = mkinterp :Code => code
-        }
+        parser = mkparser
+        parser.string = code
         # Strip quotes
         hostnames.map! { |s| s.sub(/^['"](.*)['"]$/, "\\1") }
 
         # parse
-        assert_nothing_raised {
-            interp.send(:parsefiles)
+        assert_nothing_raised("Could not parse '%s'" % code) {
+            parser.parse
         }
 
         # Now make sure we can look up each of the names
         hostnames.each do |name|
-            assert(interp.nodesearch(name),
+            assert(parser.findnode(name),
                 "Could not find node %s" % name.inspect)
         end
     end
 
     def check_nonparseable(hostname)
         interp = nil
+        parser = mkparser
+        parser.string = "node #{hostname} { }"
         assert_raise(Puppet::DevError, Puppet::ParseError, "#{hostname} passed") {
-            interp = mkinterp :Code => "node #{hostname} { }"
-            interp.send(:parsefiles)
+            parser.parse
         }
     end
 

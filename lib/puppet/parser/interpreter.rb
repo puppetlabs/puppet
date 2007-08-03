@@ -30,6 +30,7 @@ class Puppet::Parser::Interpreter
             begin
                 options[:scope].function_include(classes.find_all { |c| options[:scope].findclass(c) })
             rescue => detail
+                puts detail.backtrace
                 raise Puppet::ParseError, "Could not evaluate classes for %s: %s" % [name, detail]
             end
         end
@@ -59,6 +60,7 @@ class Puppet::Parser::Interpreter
     class << self
         attr_writer :ldap
     end
+
     # just shorten the constant path a bit, using what amounts to an alias
     AST = Puppet::Parser::AST
 
@@ -103,10 +105,6 @@ class Puppet::Parser::Interpreter
             raise Puppet::ParseError, "Failed to find virtual resources %s" %
                 remaining.join(', ')
         end
-    end
-
-    def clear
-        initparsevars
     end
 
     # Iteratively evaluate all of the objects.  This finds all of the objects
@@ -264,48 +262,13 @@ class Puppet::Parser::Interpreter
         check_resource_collections(scope)
     end
 
-    # Find a class definition, relative to the current namespace.
+    # Create proxy methods, so the scopes can call the interpreter, since
+    # they don't have access to the parser.
     def findclass(namespace, name)
-        #find_or_load namespace, name, @classtable
-        fqfind namespace, name, @classtable
+        @parser.findclass(namespace, name)
     end
-
-    # Find a component definition, relative to the current namespace.
     def finddefine(namespace, name)
-        #find_or_load namespace, name, @definetable
-        fqfind namespace, name, @definetable
-    end
-
-    # The recursive method used to actually look these objects up.
-    def fqfind(namespace, name, table)
-        namespace = namespace.downcase
-        name = name.downcase
-        if name =~ /^::/ or namespace == ""
-            classname = name.sub(/^::/, '')
-            unless table[classname]
-                self.load(classname)
-            end
-            return table[classname]
-        end
-        ary = namespace.split("::")
-
-        while ary.length > 0
-            newname = (ary + [name]).join("::").sub(/^::/, '')
-            if obj = table[newname] or (self.load(newname) and obj = table[newname])
-                return obj
-            end
-
-            # Delete the second to last object, which reduces our namespace by one.
-            ary.pop
-        end
-
-        # If we've gotten to this point without finding it, see if the name
-        # exists at the top namespace
-        if obj = table[name] or (self.load(name) and obj = table[name])
-            return obj
-        end
-
-        return nil
+        @parser.finddefine(namespace, name)
     end
 
     # create our interpreter
@@ -335,8 +298,6 @@ class Puppet::Parser::Interpreter
 
         @setup = false
 
-        initparsevars()
-
         # Set it to either the value or nil.  This is currently only used
         # by the cfengine module.
         @classes = hash[:Classes] || []
@@ -361,53 +322,9 @@ class Puppet::Parser::Interpreter
         end
 
         @files = []
-        @loaded = []
 
         # Create our parser object
         parsefiles
-    end
-
-    # Initialize or reset the variables related to parsing.
-    def initparsevars
-        @classtable = {}
-        @namespace = "main"
-
-        @nodetable = {}
-
-        @definetable = {}
-    end
-
-    # Try to load a class, since we could not find it.
-    def load(classname)
-        return false if classname == ""
-        filename = classname.gsub("::", File::SEPARATOR)
-
-        loaded = false
-        # First try to load the top-level module
-        mod = filename.scan(/^[\w-]+/).shift
-        unless @loaded.include?(mod)
-            @loaded << mod
-            begin
-                @parser.import(mod)
-                Puppet.info "Autoloaded module %s" % mod
-                loaded = true
-            rescue Puppet::ImportError => detail
-                # We couldn't load the module
-            end
-        end
-
-        unless filename == mod and ! @loaded.include?(mod)
-            @loaded << mod
-            # Then the individual file
-            begin
-                @parser.import(filename)
-                Puppet.info "Autoloaded file %s from module %s" % [filename, mod]
-                loaded = true
-            rescue Puppet::ImportError => detail
-                # We couldn't load the file
-            end
-        end
-        return loaded
     end
 
     # Find the ldap node, return the class list and parent node specially,
@@ -505,115 +422,10 @@ class Puppet::Parser::Interpreter
         end
     end
 
-    # Split an fq name into a namespace and name
-    def namesplit(fullname)
-        ary = fullname.split("::")
-        n = ary.pop || ""
-        ns = ary.join("::")
-        return ns, n
-    end
-
-    # Create a new class, or merge with an existing class.
-    def newclass(name, options = {})
-        name = name.downcase
-        if @definetable.include?(name)
-            raise Puppet::ParseError, "Cannot redefine class %s as a definition" %
-                name
-        end
-        code = options[:code]
-        parent = options[:parent]
-
-        # If the class is already defined, then add code to it.
-        if other = @classtable[name]
-            # Make sure the parents match
-            if parent and other.parentclass and (parent != other.parentclass)
-                @parser.error("Class %s is already defined at %s:%s; cannot redefine" % [name, other.file, other.line])
-            end
-
-            # This might be dangerous...
-            if parent and ! other.parentclass
-                other.parentclass = parent
-            end
-
-            # This might just be an empty, stub class.
-            if code
-                tmp = name
-                if tmp == ""
-                    tmp = "main"
-                end
-                
-                Puppet.debug @parser.addcontext("Adding code to %s" % tmp)
-                # Else, add our code to it.
-                if other.code and code
-                    other.code.children += code.children
-                else
-                    other.code ||= code
-                end
-            end
-        else
-            # Define it anew.
-            # Note we're doing something somewhat weird here -- we're setting
-            # the class's namespace to its fully qualified name.  This means
-            # anything inside that class starts looking in that namespace first.
-            args = {:namespace => name, :classname => name, :interp => self}
-            args[:code] = code if code
-            args[:parentclass] = parent if parent
-            @classtable[name] = @parser.ast AST::HostClass, args
-        end
-
-        return @classtable[name]
-    end
-
-    # Create a new definition.
-    def newdefine(name, options = {})
-        name = name.downcase
-        if @classtable.include?(name)
-            raise Puppet::ParseError, "Cannot redefine class %s as a definition" %
-                name
-        end
-        # Make sure our definition doesn't already exist
-        if other = @definetable[name]
-            @parser.error("%s is already defined at %s:%s; cannot redefine" % [name, other.file, other.line])
-        end
-
-        ns, whatever = namesplit(name)
-        args = {
-            :namespace => ns,
-            :arguments => options[:arguments],
-            :code => options[:code],
-            :classname => name
-        }
-
-        [:code, :arguments].each do |param|
-            args[param] = options[param] if options[param]
-        end
-
-        @definetable[name] = @parser.ast AST::Component, args
-    end
-
-    # Create a new node.  Nodes are special, because they're stored in a global
-    # table, not according to namespaces.
-    def newnode(names, options = {})
-        names = [names] unless names.instance_of?(Array)
-        names.collect do |name|
-            name = name.to_s.downcase
-            if other = @nodetable[name]
-                @parser.error("Node %s is already defined at %s:%s; cannot redefine" % [other.name, other.file, other.line])
-            end
-            name = name.to_s if name.is_a?(Symbol)
-            args = {
-                :name => name,
-            }
-            if options[:code]
-                args[:code] = options[:code]
-            end
-            if options[:parent]
-                args[:parentclass] = options[:parent]
-            end
-            @nodetable[name] = @parser.ast(AST::Node, args)
-            @nodetable[name].classname = name
-            @nodetable[name].interp = self
-            @nodetable[name]
+    # Pass these methods through to the parser.
+    [:newclass, :newdefine, :newnode].each do |name|
+        define_method(name) do |*args|
+            @parser.send(name, *args)
         end
     end
 
@@ -662,7 +474,7 @@ class Puppet::Parser::Interpreter
 
     # See if our node was defined in the code.
     def nodesearch_code(name)
-        @nodetable[name]
+        @parser.nodes[name]
     end
     
     # Look for external node definitions.
@@ -815,29 +627,40 @@ class Puppet::Parser::Interpreter
             end
         end
 
-        # Reset our parse tables.
-        clear()
-
-        # Create a new parser, just to keep things fresh.
-        @parser = Puppet::Parser::Parser.new(self)
+        # Create a new parser, just to keep things fresh.  Don't replace our
+        # current parser until we know weverything works.
+        newparser = Puppet::Parser::Parser.new()
         if @code
-            @parser.string = @code
+            newparser.string = @code
         else
-            @parser.file = @file
-            # Mark when we parsed, so we can check freshness
-            @parsedate = File.stat(@file).ctime.to_i
+            newparser.file = @file
         end
 
         # Parsing stores all classes and defines and such in their
         # various tables, so we don't worry about the return.
-        if @local
-            @parser.parse
-        else
-            benchmark(:info, "Parsed manifest") do
-                @parser.parse
+        begin
+            if @local
+                newparser.parse
+            else
+                benchmark(:info, "Parsed manifest") do
+                    newparser.parse
+                end
             end
+            # We've gotten this far, so it's ok to swap the parsers.
+            oldparser = @parser
+            @parser = newparser
+            if oldparser
+                oldparser.clear
+            end
+
+            # Mark when we parsed, so we can check freshness
+            @parsedate = Time.now.to_i
+        rescue => detail
+            if Puppet[:trace]
+                puts detail.backtrace
+            end
+            Puppet.err "Could not parse; using old configuration: %s" % detail
         end
-        @parsedate = Time.now.to_i
     end
 
     # Store the configs into the database.

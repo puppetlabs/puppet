@@ -16,7 +16,7 @@ class Puppet::Parser::AST
         @name = :definition
 
         attr_accessor :classname, :arguments, :code, :scope, :keyword
-        attr_accessor :exported, :namespace, :interp, :virtual
+        attr_accessor :exported, :namespace, :parser, :virtual
 
         # These are retrieved when looking up the superclass
         attr_accessor :name
@@ -140,7 +140,7 @@ class Puppet::Parser::AST
         end
 
         def find_parentclass
-            @interp.findclass(namespace, parentclass)
+            @parser.findclass(namespace, parentclass)
         end
 
         # Set our parent class, with a little check to avoid some potential

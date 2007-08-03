@@ -160,205 +160,6 @@ class TestInterpreter < PuppetTest::TestCase
         newdate = interp.parsedate
         assert(date != newdate, "Parsedate was not updated")
     end
-
-    # Make sure our node gets added to the node table.
-    def test_newnode
-        interp = mkinterp
-
-        # First just try calling it directly
-        assert_nothing_raised {
-            interp.newnode("mynode", :code => :yay)
-        }
-
-        assert_equal(:yay, interp.nodesearch_code("mynode").code)
-
-        # Now make sure that trying to redefine it throws an error.
-        assert_raise(Puppet::ParseError) {
-            interp.newnode("mynode", {})
-        }
-
-        # Now try one with no code
-        assert_nothing_raised {
-            interp.newnode("simplenode", :parent => :foo)
-        }
-
-        # Make sure trying to get the parentclass throws an error
-        assert_raise(Puppet::ParseError) do
-            interp.nodesearch_code("simplenode").parentobj
-        end
-
-        # Now define the parent node
-        interp.newnode(:foo)
-
-        # And make sure we get things back correctly
-        assert_equal("foo", interp.nodesearch_code("simplenode").parentobj.classname)
-        assert_nil(interp.nodesearch_code("simplenode").code)
-
-        # Now make sure that trying to redefine it throws an error.
-        assert_raise(Puppet::ParseError) {
-            interp.newnode("mynode", {})
-        }
-
-        # Test multiple names
-        names = ["one", "two", "three"]
-        assert_nothing_raised {
-            interp.newnode(names, {:code => :yay, :parent => :foo})
-        }
-
-        names.each do |name|
-            assert_equal(:yay, interp.nodesearch_code(name).code)
-            assert_equal("foo", interp.nodesearch_code(name).parentobj.name)
-            # Now make sure that trying to redefine it throws an error.
-            assert_raise(Puppet::ParseError) {
-                interp.newnode(name, {})
-            }
-        end
-    end
-
-    def test_fqfind
-        interp = mkinterp
-
-        table = {}
-        # Define a bunch of things.
-        %w{a c a::b a::b::c a::c a::b::c::d a::b::c::d::e::f c::d}.each do |string|
-            table[string] = string
-        end
-
-        check = proc do |namespace, hash|
-            hash.each do |thing, result|
-                assert_equal(result, interp.fqfind(namespace, thing, table),
-                            "Could not find %s in %s" % [thing, namespace])
-            end
-        end
-
-        # Now let's do some test lookups.
-
-        # First do something really simple
-        check.call "a", "b" => "a::b", "b::c" => "a::b::c", "d" => nil, "::c" => "c"
-
-        check.call "a::b", "c" => "a::b::c", "b" => "a::b", "a" => "a"
-
-        check.call "a::b::c::d::e", "c" => "a::b::c", "::c" => "c",
-            "c::d" => "a::b::c::d", "::c::d" => "c::d"
-
-        check.call "", "a" => "a", "a::c" => "a::c"
-    end
-
-    def test_newdefine
-        interp = mkinterp
-
-        assert_nothing_raised {
-            interp.newdefine("mydefine", :code => :yay,
-                :arguments => ["a", stringobj("b")])
-        }
-
-        mydefine = interp.finddefine("", "mydefine")
-        assert(mydefine, "Could not find definition")
-        assert_equal("mydefine", interp.finddefine("", "mydefine").classname)
-        assert_equal("", mydefine.namespace)
-        assert_equal("mydefine", mydefine.classname)
-
-        assert_raise(Puppet::ParseError) do
-            interp.newdefine("mydefine", :code => :yay,
-                :arguments => ["a", stringobj("b")])
-        end
-
-        # Now define the same thing in a different scope
-        assert_nothing_raised {
-            interp.newdefine("other::mydefine", :code => :other,
-                :arguments => ["a", stringobj("b")])
-        }
-        other = interp.finddefine("other", "mydefine")
-        assert(other, "Could not find definition")
-        assert(interp.finddefine("", "other::mydefine"),
-            "Could not find other::mydefine")
-        assert_equal(:other, other.code)
-        assert_equal("other", other.namespace)
-        assert_equal("other::mydefine", other.classname)
-    end
-
-    def test_newclass
-        interp = mkinterp
-
-        mkcode = proc do |ary|
-            classes = ary.collect do |string|
-                AST::FlatString.new(:value => string)
-            end
-            AST::ASTArray.new(:children => classes)
-        end
-        scope = Puppet::Parser::Scope.new(:interp => interp)
-
-        # First make sure that code is being appended
-        code = mkcode.call(%w{original code})
-
-        klass = nil
-        assert_nothing_raised {
-            klass = interp.newclass("myclass", :code => code)
-        }
-
-        assert(klass, "Did not return class")
-
-        assert(interp.findclass("", "myclass"), "Could not find definition")
-        assert_equal("myclass", interp.findclass("", "myclass").classname)
-        assert_equal(%w{original code},
-             interp.findclass("", "myclass").code.evaluate(:scope => scope))
-
-        # Now create the same class name in a different scope
-        assert_nothing_raised {
-            klass = interp.newclass("other::myclass",
-                            :code => mkcode.call(%w{something diff}))
-        }
-        assert(klass, "Did not return class")
-        other = interp.findclass("other", "myclass")
-        assert(other, "Could not find class")
-        assert(interp.findclass("", "other::myclass"), "Could not find class")
-        assert_equal("other::myclass", other.classname)
-        assert_equal("other::myclass", other.namespace)
-        assert_equal(%w{something diff},
-             interp.findclass("other", "myclass").code.evaluate(:scope => scope))
-
-        # Newclass behaves differently than the others -- it just appends
-        # the code to the existing class.
-        code = mkcode.call(%w{something new})
-        assert_nothing_raised do
-            klass = interp.newclass("myclass", :code => code)
-        end
-        assert(klass, "Did not return class when appending")
-        assert_equal(%w{original code something new},
-            interp.findclass("", "myclass").code.evaluate(:scope => scope))
-
-        # Make sure newclass deals correctly with nodes with no code
-        klass = interp.newclass("nocode")
-        assert(klass, "Did not return class")
-
-        assert_nothing_raised do
-            klass = interp.newclass("nocode", :code => mkcode.call(%w{yay test}))
-        end
-        assert(klass, "Did not return class with no code")
-        assert_equal(%w{yay test},
-            interp.findclass("", "nocode").code.evaluate(:scope => scope))
-
-        # Then try merging something into nothing
-        interp.newclass("nocode2", :code => mkcode.call(%w{foo test}))
-        assert(klass, "Did not return class with no code")
-
-        assert_nothing_raised do
-            klass = interp.newclass("nocode2")
-        end
-        assert(klass, "Did not return class with no code")
-        assert_equal(%w{foo test},
-            interp.findclass("", "nocode2").code.evaluate(:scope => scope))
-
-        # And lastly, nothing and nothing
-        klass = interp.newclass("nocode3")
-        assert(klass, "Did not return class with no code")
-
-        assert_nothing_raised do
-            klass = interp.newclass("nocode3")
-        end
-        assert(klass, "Did not return class with no code")
-        assert_nil(interp.findclass("", "nocode3").code)
-    end
     
     # Make sure class, node, and define methods are case-insensitive
     def test_structure_case_insensitivity
@@ -387,88 +188,6 @@ class TestInterpreter < PuppetTest::TestCase
         end
         assert_equal(result, interp.nodesearch("yaYtEst.domAin.cOm"),
             "yaYtEst.domAin.cOm was not matched")
-    end
-    
-    # Now make sure we get appropriate behaviour with parent class conflicts.
-    def test_newclass_parentage
-        interp = mkinterp
-        interp.newclass("base1")
-        interp.newclass("one::two::three")
-
-        # First create it with no parentclass.
-        assert_nothing_raised {
-            interp.newclass("sub")
-        }
-        assert(interp.findclass("", "sub"), "Could not find definition")
-        assert_nil(interp.findclass("", "sub").parentclass)
-
-        # Make sure we can't set the parent class to ourself.
-        assert_raise(Puppet::ParseError) {
-            interp.newclass("sub", :parent => "sub")
-        }
-
-        # Now create another one, with a parentclass.
-        assert_nothing_raised {
-            interp.newclass("sub", :parent => "base1")
-        }
-
-        # Make sure we get the right parent class, and make sure it's not an object.
-        assert_equal("base1",
-                    interp.findclass("", "sub").parentclass)
-        assert_equal(interp.findclass("", "base1"),
-                    interp.findclass("", "sub").parentobj)
-
-        # Now make sure we get a failure if we try to conflict.
-        assert_raise(Puppet::ParseError) {
-            interp.newclass("sub", :parent => "one::two::three")
-        }
-
-        # Make sure that failure didn't screw us up in any way.
-        assert_equal(interp.findclass("", "base1"),
-                    interp.findclass("", "sub").parentobj)
-        # But make sure we can create a class with a fq parent
-        assert_nothing_raised {
-            interp.newclass("another", :parent => "one::two::three")
-        }
-        assert_equal(interp.findclass("", "one::two::three"),
-                    interp.findclass("", "another").parentobj)
-
-    end
-
-    def test_namesplit
-        interp = mkinterp
-
-        assert_nothing_raised do
-            {"base::sub" => %w{base sub},
-                "main" => ["", "main"],
-                "one::two::three::four" => ["one::two::three", "four"],
-            }.each do |name, ary|
-                result = interp.namesplit(name)
-                assert_equal(ary, result, "%s split to %s" % [name, result])
-            end
-        end
-    end
-
-    # Make sure you can't have classes and defines with the same name in the
-    # same scope.
-    def test_classes_beat_defines
-        interp = mkinterp
-
-        assert_nothing_raised {
-            interp.newclass("yay::funtest")
-        }
-
-        assert_raise(Puppet::ParseError) do
-            interp.newdefine("yay::funtest")
-        end
-
-        assert_nothing_raised {
-            interp.newdefine("yay::yaytest")
-        }
-
-        assert_raise(Puppet::ParseError) do
-            interp.newclass("yay::yaytest")
-        end
     end
 
     # Make sure our whole chain works.
@@ -925,118 +644,29 @@ class TestInterpreter < PuppetTest::TestCase
         assert_equal({"base" => "true", "center" => "boo", "master" => "far"}, node.parameters, "node parameters were not set correctly with the top node")
     end
 
-    # Setup a module.
-    def mk_module(name, files = {})
-        mdir = File.join(@dir, name)
-        mandir = File.join(mdir, "manifests")
-        FileUtils.mkdir_p mandir
+    # Make sure that reparsing is atomic -- failures don't cause a broken state, and we aren't subject
+    # to race conditions if someone contacts us while we're reparsing.
+    def test_atomic_reparsing
+        Puppet[:filetimeout] = -10
+        file = tempfile
+        File.open(file, "w") { |f| f.puts %{file { '/tmp': ensure => directory }} }
+        interp = mkinterp :Manifest => file, :UseNodes => false
 
-        if defs = files[:define]
-            files.delete(:define)
+        assert_nothing_raised("Could not compile the first time") do
+            interp.run("yay", {})
         end
-        Dir.chdir(mandir) do
-            files.each do |file, classes|
-                File.open("%s.pp" % file, "w") do |f|
-                    classes.each { |klass|
-                        if defs
-                            f.puts "define %s {}" % klass
-                        else
-                            f.puts "class %s {}" % klass
-                        end
-                    }
-                end
-            end
+
+        oldparser = interp.send(:instance_variable_get, "@parser")
+
+        # Now add a syntax failure
+        File.open(file, "w") { |f| f.puts %{file { /tmp: ensure => directory }} }
+        assert_nothing_raised("Could not compile the first time") do
+            interp.run("yay", {})
         end
-    end
 
-    # #596 - make sure classes and definitions load automatically if they're in modules, so we don't have to manually load each one.
-    def test_module_autoloading
-        @dir = tempfile
-        Puppet[:modulepath] = @dir
-
-        FileUtils.mkdir_p @dir
-
-        interp = mkinterp
-
-        # Make sure we fail like normal for actually missing classes
-        assert_nil(interp.findclass("", "nosuchclass"), "Did not return nil on missing classes")
-
-        # test the simple case -- the module class itself
-        name = "simple"
-        mk_module(name, :init => [name])
-
-        # Try to load the module automatically now
-        klass = interp.findclass("", name)
-        assert_instance_of(AST::HostClass, klass, "Did not autoload class from module init file")
-        assert_equal(name, klass.classname, "Incorrect class was returned")
-
-        # Try loading the simple module when we're in something other than the base namespace.
-        interp = mkinterp
-        klass = interp.findclass("something::else", name)
-        assert_instance_of(AST::HostClass, klass, "Did not autoload class from module init file")
-        assert_equal(name, klass.classname, "Incorrect class was returned")
-
-        # Now try it with a definition as the base file
-        name = "simpdef"
-        mk_module(name, :define => true, :init => [name])
-
-        klass = interp.finddefine("", name)
-        assert_instance_of(AST::Component, klass, "Did not autoload class from module init file")
-        assert_equal(name, klass.classname, "Incorrect class was returned")
-
-        # Now try it with namespace classes where both classes are in the init file
-        interp = mkinterp
-        modname = "both"
-        name = "sub"
-        mk_module(modname, :init => %w{both both::sub})
-
-        # First try it with a namespace
-        klass = interp.findclass("both", name)
-        assert_instance_of(AST::HostClass, klass, "Did not autoload sub class from module init file with a namespace")
-        assert_equal("both::sub", klass.classname, "Incorrect class was returned")
-
-        # Now try it using the fully qualified name
-        interp = mkinterp
-        klass = interp.findclass("", "both::sub")
-        assert_instance_of(AST::HostClass, klass, "Did not autoload sub class from module init file with no namespace")
-        assert_equal("both::sub", klass.classname, "Incorrect class was returned")
-
-
-        # Now try it with the class in a different file
-        interp = mkinterp
-        modname = "separate"
-        name = "sub"
-        mk_module(modname, :init => %w{separate}, :sub => %w{separate::sub})
-
-        # First try it with a namespace
-        klass = interp.findclass("separate", name)
-        assert_instance_of(AST::HostClass, klass, "Did not autoload sub class from separate file with a namespace")
-        assert_equal("separate::sub", klass.classname, "Incorrect class was returned")
-
-        # Now try it using the fully qualified name
-        interp = mkinterp
-        klass = interp.findclass("", "separate::sub")
-        assert_instance_of(AST::HostClass, klass, "Did not autoload sub class from separate file with no namespace")
-        assert_equal("separate::sub", klass.classname, "Incorrect class was returned")
-
-        # Now make sure we don't get a failure when there's no module file
-        interp = mkinterp
-        modname = "alone"
-        name = "sub"
-        mk_module(modname, :sub => %w{alone::sub})
-
-        # First try it with a namespace
-        assert_nothing_raised("Could not autoload file when module file is missing") do
-            klass = interp.findclass("alone", name)
-        end
-        assert_instance_of(AST::HostClass, klass, "Did not autoload sub class from alone file with a namespace")
-        assert_equal("alone::sub", klass.classname, "Incorrect class was returned")
-
-        # Now try it using the fully qualified name
-        interp = mkinterp
-        klass = interp.findclass("", "alone::sub")
-        assert_instance_of(AST::HostClass, klass, "Did not autoload sub class from alone file with no namespace")
-        assert_equal("alone::sub", klass.classname, "Incorrect class was returned")
+        # And make sure the old parser is still there
+        newparser = interp.send(:instance_variable_get, "@parser")
+        assert_equal(oldparser.object_id, newparser.object_id, "Failed parser still replaced existing parser")
     end
 end
 
