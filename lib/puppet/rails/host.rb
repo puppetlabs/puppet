@@ -3,7 +3,7 @@ require 'puppet/rails/fact_name'
 require 'puppet/rails/source_file'
 require 'puppet/util/rails/collection_merger'
 
-# Puppet::TIME_DEBUG = true
+Puppet::TIME_DEBUG = true
 
 class Puppet::Rails::Host < ActiveRecord::Base
     include Puppet::Util
@@ -43,7 +43,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
                     host = new(:name => name)
                 end
             }
-            Puppet.notice("Searched for host in %0.2f seconds" % seconds) if defined?(Puppet::TIME_DEBUG)
+            Puppet.notice("  Search host #{name} : %0.2f s" % seconds) if defined?(Puppet::TIME_DEBUG)
             if ip = hash[:facts]["ipaddress"]
                 host.ip = ip
             end
@@ -58,7 +58,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
             seconds = Benchmark.realtime {
                 host.setresources(hash[:resources])
             }
-            Puppet.notice("Handled resources in %0.2f seconds" % seconds) if defined?(Puppet::TIME_DEBUG)
+            Puppet.notice("  Handled %2d resources: %0.2f s" % [hash[:resources].size, seconds]) if defined?(Puppet::TIME_DEBUG)
 
             host.last_compile = Time.now
 
@@ -127,7 +127,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
 
             # Preload the parameters with the resource query, but not the tags, since doing so makes the query take about 10x longer.
             # I've left the other queries in so that it's straightforward to switch between them for testing, if we so desire.
-            #existing = resources.find(:all, :include => [{:param_values => :param_name, :resource_tags => :puppet_tag}, :source_file]).inject({}) do | hash, resource |
+            #existing = resources.find(:all, :include => [{:param_values => :param_name}, {:resource_tags => :puppet_tag}, :source_file]).inject({}) do | hash, resource |
             #existing = resources.find(:all, :include => [{:resource_tags => :puppet_tag}, :source_file]).inject({}) do | hash, resource |
             existing = resources.find(:all, :include => [{:param_values => :param_name}, :source_file]).inject({}) do | hash, resource |
                 hash[resource.ref] = resource
@@ -135,21 +135,40 @@ class Puppet::Rails::Host < ActiveRecord::Base
             end
         }
 
-        Puppet.notice("Searched for resources in %0.2f seconds" % seconds) if defined?(Puppet::TIME_DEBUG)
+        Puppet.notice("    Search             : %0.2f s" % seconds) if defined?(Puppet::TIME_DEBUG)
 
+        compiled = nil
+        seconds = Benchmark.realtime {
         compiled = list.inject({}) do |hash, resource|
             hash[resource.ref] = resource
             hash
         end
+        }
+        Puppet.notice("    Compile            : %0.2f s" % seconds) if defined?(Puppet::TIME_DEBUG)
+
         
+        seconds = Benchmark.realtime {
+            def mylog(msg)
+                logger.info("\e[0;41m#{msg}\e[0m")
+            end
+
         ar_hash_merge(existing, compiled,
                       :create => Proc.new { |ref, resource|
+                          mylog("** #{self.name} create #{ref}")
                           resource.to_rails(self)
+                          logger.info("****")
                       }, :delete => Proc.new { |resource|
+                          mylog("** #{self.name} delete #{resource.ref}")
                           self.resources.delete(resource)
+                          logger.info("****")
                       }, :modify => Proc.new { |db, mem|
+                          mylog("** #{self.name} modify #{db.ref}")
                           mem.modify_rails(db)
+                          logger.info("****")
                       })
+        }
+        Puppet.notice("    Merge              : %0.2f s" % seconds) if defined?(Puppet::TIME_DEBUG)
+        
     end
 
     def update_connect_time

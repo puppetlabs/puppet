@@ -20,11 +20,10 @@ if [ -f /etc/sysconfig/puppetmaster ]; then
 	. /etc/sysconfig/puppetmaster
 fi
 
-[ -z "$PUPPETMASTER_MANIFEST" ] && PUPPETMASTER_MANIFEST=/etc/puppet/manifests/site.pp
-[ -z "$PUPPETMASTER_LOG" ] && PUPPETMASTER_LOG="/var/log/puppet/puppetmaster.log"
-PUPPETMASTER_OPTS="
-	--manifest=$PUPPETMASTER_MANIFEST \
-	--logdest=${PUPPETMASTER_LOG} \
+PUPPETMASTER_OPTS=""
+[ -n "$PUPPETMASTER_MANIFEST" ] && PUPPETMASTER_OPTS="--manifest=${PUPPETMASTER_MANIFEST}"
+[ -n "$PUPPETMASTER_LOG" ] && PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} --logdest=${PUPPETMASTER_LOG}"
+PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} \
 	${PUPPETMASTER_EXTRA_OPTS}"
 
 RETVAL=0
