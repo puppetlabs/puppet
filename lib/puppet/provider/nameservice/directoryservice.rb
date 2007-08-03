@@ -199,10 +199,7 @@ class DirectoryService < Puppet::Provider::NameService
     end
 
     def ensure=(ensure_value)
-        super     
-        
-        debugger
-           
+        super
         # JJM: Modeled after nameservice/netinfo.rb, we need to
         #   loop over all valid properties for the type we're managing
         #   and call the method which sets that property value
