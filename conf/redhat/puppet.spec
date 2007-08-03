@@ -43,8 +43,6 @@ The server can also function as a certificate authority and file server.
 
 %prep
 %setup -q
-cp -p conf/redhat/puppetd.conf conf/redhat/puppet.conf
-sed -i -e 's/^\[puppet\]$/[main]/' conf/redhat/puppet.conf
 
 %build
 for f in bin/* ; do 
@@ -75,10 +73,12 @@ install -Dp -m0644 %{confdir}/server.sysconfig %{buildroot}%{_sysconfdir}/syscon
 install -Dp -m0755 %{confdir}/server.init %{buildroot}%{_initrddir}/puppetmaster
 install -Dp -m0644 %{confdir}/fileserver.conf %{buildroot}%{_sysconfdir}/puppet/fileserver.conf
 install -Dp -m0644 %{confdir}/puppet.conf %{buildroot}%{_sysconfdir}/puppet/puppet.conf
-ln -s puppetd.conf %{buildroot}%{_sysconfdir}/puppet/puppetmasterd.conf
-ln -s puppetd.conf %{buildroot}%{_sysconfdir}/puppet/puppetca.conf
-install -Dp -m0644 %{confdir}/puppetd.conf %{buildroot}%{_sysconfdir}/puppet/puppetd.conf
 install -Dp -m0644 %{confdir}/logrotate %{buildroot}%{_sysconfdir}/logrotate.d/puppet
+# We need something for these ghosted files, otherwise rpmbuild
+# will complain loudly. They won't be included in the binary packages
+touch %{buildroot}%{_sysconfdir}/puppet/puppetmasterd.conf
+touch %{buildroot}%{_sysconfdir}/puppet/puppetca.conf
+touch %{buildroot}%{_sysconfdir}/puppet/puppetd.conf
 
 %files
 %defattr(-, root, root, 0755)
@@ -148,6 +148,9 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Thu Jul 26 2007 David Lutterkort <dlutter@redhat.com> - 0.23.1-1
+- Remove old config files
+
 * Wed Jun 20 2007 David Lutterkort <dlutter@redhat.com> - 0.23.0-1
 - Install one puppet.conf instead of old config files, keep old configs 
   around to ease update
