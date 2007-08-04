@@ -16,6 +16,23 @@ class TestConfig < Test::Unit::TestCase
         @config = mkconfig
     end
 
+    def set_configs(config = nil)
+        config ||= @config
+        config.setdefaults("main",
+            :one => ["a", "one"],
+            :two => ["a", "two"],
+            :yay => ["/default/path", "boo"],
+            :mkusers => [true, "uh, yeah"],
+            :name => ["testing", "a"]
+        )
+
+        config.setdefaults("section1",
+            :attr => ["a", "one"],
+            :attrdir => ["/another/dir", "two"],
+            :attr3 => ["$attrdir/maybe", "boo"]
+        )
+    end
+
     def check_for_users
         count = Puppet::Type.type(:user).inject(0) { |c,o|
             c + 1
@@ -23,10 +40,11 @@ class TestConfig < Test::Unit::TestCase
         assert(count > 0, "Found no users")
     end
 
-    def check_to_transportable(config)
+    def test_to_transportable
+        set_configs
         trans = nil
         assert_nothing_raised("Could not convert to a transportable") {
-            trans = config.to_transportable
+            trans = @config.to_transportable
         }
 
         comp = nil
@@ -34,17 +52,16 @@ class TestConfig < Test::Unit::TestCase
             comp = trans.to_type
         }
 
-        check_for_users()
-
         assert_nothing_raised("Could not retrieve transported config") {
             comp.retrieve
         }
     end
 
-    def check_to_manifest(config)
+    def test_to_manifest
+        set_configs
         manifest = nil
         assert_nothing_raised("Could not convert to a manifest") {
-            manifest = config.to_manifest
+            manifest = @config.to_manifest
         }
 
         Puppet[:parseonly] = true
@@ -61,32 +78,51 @@ class TestConfig < Test::Unit::TestCase
         assert_nothing_raised("Could not instantiate objects") {
             trans.to_type
         }
-        check_for_users()
     end
 
-    def check_to_comp(config)
+    def test_to_comp
+        set_configs
         comp = nil
         assert_nothing_raised("Could not convert to a component") {
-            comp = config.to_component
+            comp = @config.to_component
         }
 
         assert_nothing_raised("Could not retrieve component") {
             comp.retrieve
         }
-
-        check_for_users()
     end
 
-    def check_to_config(config)
-        newc = config.dup
+    def test_to_config
+        set_configs
+
+        newc = mkconfig
+        set_configs(newc)
+
+        # Reset all of the values, so we know they're changing.
+        newc.each do |name, obj|
+            next if name == :name
+            newc[name] = true
+        end
 
         newfile = tempfile()
-        File.open(newfile, "w") { |f| f.print config.to_config }
+        File.open(newfile, "w") { |f|
+            @config.to_config.split("\n").each do |line|
+                # Uncomment the settings, so they actually take.
+                if line =~ / = /
+                    f.puts line.sub(/^\s*#/, '')
+                else
+                    f.puts line
+                end
+            end
+        }
+
         assert_nothing_raised("Could not parse generated configuration") {
             newc.parse(newfile)
         }
 
-        assert_equal(config, newc, "Configurations are not equal")
+        @config.each do |name, object|
+            assert_equal(@config[name], newc[name], "Parameter %s is not the same" % name)
+        end
     end
 
     def mkconfig
@@ -314,14 +350,6 @@ yay = /a/path
         assert_nothing_raised("Could not create transportable config") {
             @config.to_transportable
         }
-
-        check_to_comp(@config)
-        Puppet::Type.allclear
-        check_to_manifest(@config)
-        Puppet::Type.allclear
-        check_to_config(@config)
-        Puppet::Type.allclear
-        check_to_transportable(@config)
     end
 
     def test_parse
@@ -336,6 +364,12 @@ yay = /a/path
             :cliparam => ["default", "y"],
             :other => ["a", "b"],
             :name => ["puppet", "b"] # our default name
+        )
+        @config.setdefaults(:other,
+            :one => ["whatever", "a"],
+            :two => ["default", "y"],
+            :apple => ["a", "b"],
+            :shoe => ["puppet", "b"] # our default name
         )
         @config.handlearg("--cliparam", "changed")
         @config.expects(:parse_file).returns(result).times(2)

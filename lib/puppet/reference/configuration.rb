@@ -109,11 +109,14 @@ the executable in question with the `--genconfig` command.  The executable
 will print a template configuration to standard output, which can be
 redirected to a file like so::
 
-    $ puppetd --genconfig > /etc/puppet/puppetd.conf
+    $ puppetd --genconfig > /etc/puppet/puppet.conf
   
-Note that this invocation will \"clobber\" (throw away) the contents of any
-pre-existing `puppetd.conf` file, so make a backup of your present config
-if it contains valuable information.
+Note that this invocation will replace the contents of any pre-existing
+`puppet.conf` file, so make a backup of your present config if it contains
+valuable information.
+
+All parameters will be under a single section heading matching the name of
+the process used to generate the configuraiton ('puppetd', in this case).
   
 Like the `--genconfig` argument, the executables also accept a `--genmanifest`
 argument, which will generate a manifest that can be used to manage all of 

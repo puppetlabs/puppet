@@ -541,8 +541,11 @@ Generated on #{Time.now}.
 
 }.gsub(/^/, "# ")
 
+        # Add a section heading that matches our name.
+        if @config.include?(:name)
+            str += "[%s]\n" % self[:name]
+        end
         eachsection do |section|
-            str += "[#{section}]\n"
             persection(section) do |obj|
                 str += obj.to_config + "\n"
             end
