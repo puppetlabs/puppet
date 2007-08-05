@@ -23,7 +23,7 @@ class Puppet::Parser::Collector
         host = Puppet::Rails::Host.find_by_name(@scope.host)
 
         args = {:include => {:param_values => :param_name}}
-        args[:conditions] = "restype = '%s'" % [@type]
+        args[:conditions] = "(exported = 't' AND restype = '%s')" % [@type]
         if @equery
             args[:conditions] += " AND (%s)" % [@equery]
         end

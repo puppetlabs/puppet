@@ -1,3 +1,6 @@
+    Collection of resources now correctly only collects exported
+    resources again.  This was broken in 0.23.0. (#731)
+
     'gen_config' now generates a configuration with
     all parameters under a heading that matches the
     process name, rather than keeping section headings.

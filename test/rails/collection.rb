@@ -209,6 +209,39 @@ class TestRailsCollection < PuppetTest::TestCase
 
         assert(ret.empty?, "Found exports from our own host")
     end
+
+    # #731 -- we're collecting all resources, not just exported resources.
+    def test_only_collecting_exported_resources
+        railsinit
+
+        # Make our configuration
+        host = Puppet::Rails::Host.new(:name => "myhost")
+
+        host.resources.build(:title => "/tmp/exporttest1", :restype => "file",
+            :exported => true)
+        host.resources.build(:title => "/tmp/exporttest2", :restype => "file",
+            :exported => false)
+
+        host.save
+
+        @scope.host = "otherhost"
+
+        # Now make a collector
+        coll = nil
+        assert_nothing_raised do
+            coll = Puppet::Parser::Collector.new(@scope, "file", nil, nil, :exported)
+        end
+
+        # And make sure we get nada back
+        ret = nil
+        assert_nothing_raised do
+            ret = coll.collect_exported
+        end
+
+        names = ret.collect { |res| res.title }
+
+        assert_equal(%w{/tmp/exporttest1}, names, "Collected incorrect resource list")
+    end
 end
 
 # $Id$
