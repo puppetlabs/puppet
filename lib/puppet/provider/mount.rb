@@ -16,6 +16,9 @@ module Puppet::Provider::Mount
         end
         args << @resource[:name]
 
+        if respond_to?(:flush)
+            flush
+        end
         mountcmd(*args)
     end
 
