@@ -2,6 +2,8 @@ require 'puppet/provider/parsedfile'
 require 'erb'
 
 Puppet::Type.type(:interface).provide(:redhat) do
+	INTERFACE_DIR = "/etc/sysconfig/network-scripts"
+    confine :exists => INTERFACE_DIR
     defaultfor :operatingsystem => [:fedora, :centos, :redhat]
 
     # Create the setter/gettor methods to match the model.
@@ -32,14 +34,32 @@ LOOPBACKDUMMY
 	# maximum number of aliases per interface
 	MAX_ALIASES_PER_IFACE = 10
 
-	INTERFACE_DIR = "/etc/sysconfig/network-scripts"
 
 	@@dummies = []
 	@@aliases = Hash.new { |hash, key| hash[key] = [] }
 
+	# calculate which dummy interfaces are currently already in
+	# use prior to needing to call self.next_dummy later on.
+	def self.instances
+		# parse all of the config files at once
+		Dir.glob("%s/ifcfg-*" % INTERFACE_DIR).collect do |file|
+
+			record = parse(file)
+
+			# store the existing dummy interfaces
+			if record[:interface_type] == :dummy
+				@@dummies << record[:ifnum] unless @@dummies.include?(record[:ifnum])
+			end
+
+			if record[:interface_type] == :alias
+				@@aliases[record[:interface]] << record[:ifnum]
+			end
+            new(record)
+		end
+	end
+
 	# return the next avaliable dummy interface number, in the case where
 	# ifnum is not manually specified
-
 	def self.next_dummy
 		MAX_DUMMIES.times do |i|
 			unless @@dummies.include?(i.to_s)
@@ -59,110 +79,6 @@ LOOPBACKDUMMY
 			end
 		end
 	end
-
-	# calculate which dummy interfaces are currently already in
-	# use prior to needing to call self.next_dummy later on.
-	def self.prefetch
-		# parse all of the config files at once
-		Dir.glob("%s/ifcfg-*" % INTERFACE_DIR).each do |file|
-
-			record = parse(file)
-
-			# store the existing dummy interfaces
-			if record[:interface_type] == :dummy
-				@@dummies << record[:ifnum]
-			end
-
-			if record[:interface_type] == :alias
-				@@aliases[record[:interface]] << record[:ifnum]
-			end
-		end
-	end
-
-    def create
-        @model.class.validproperties.each do |property|
-            if value = @model.should(property)
-                @property_hash[property] = value
-            end
-        end
-        @property_hash[:name] = @model.name
-
-        return (@model.class.name.to_s + "_created").intern
-    end
-
-    def destroy
-        File.unlink(@model[:target])
-    end
-
-    def exists?
-        FileTest.exists?(@model[:target])
-    end
-
-    # generate the content for the interface file, so this is dependent
-    # on whether we are adding an alias to a real interface, or a loopback
-    # address (also dummy) on linux. For linux it's quite involved, and we
-    # will use an ERB template
-	def generate
-		# choose which template to use for the interface file, based on
-		# the interface type
-        case @model.should(:interface_type)
-        when :loopback
-			return LOOPBACK_TEMPLATE.result(binding)
-        when :alias
-			return ALIAS_TEMPLATE.result(binding)
-		end
-	end
-
-    # Where should the file be written out?
-	# This defaults to INTERFACE_DIR/ifcfg-<namevar>, but can have a
-	# more symbolic name by setting interface_desc in the type. 
-    def file_path
-		@model[:interface_desc] ||= @model[:name]
-       	return File.join(INTERFACE_DIR, "ifcfg-" + @model[:interface_desc])
-
-    end
-
-	# create the device name, so this based on the IP, and interface + type
-	def device
-		case @model.should(:interface_type)
-		when :loopback
-			@property_hash[:ifnum] ||= self.class.next_dummy
-        	return "dummy" + @property_hash[:ifnum]
-		when :alias
-			@property_hash[:ifnum] ||= self.class.next_alias(@model[:interface])
-        	return @model[:interface] + ":" + @property_hash[:ifnum]
-		end
-    end
-
-	# whether the device is to be brought up on boot or not. converts
-	# the true / false of the type, into yes / no values respectively
-	# writing out the ifcfg-* files
-	def on_boot
-		case @property_hash[:onboot].to_s
-		when "true"
-			return "yes"
-		when "false"
-			return "no"
-		else
-			return "neither"
-		end
-	end
-
-    # Write the new file out.
-    def flush
-        # Don't flush to disk if we're removing the config.
-        return if @model.should(:ensure) == :absent
-
-        @property_hash.each do |name, val|
-            if val == :absent
-                raise ArgumentError, "Propety %s must be provided" % val
-            end
-        end
-
-        File.open(@model[:target], "w") do |f|
-            f.puts generate()
-        end
-    end
 
     # base the ifnum, for dummy / loopback interface in linux
     # on the last octect of the IP address
@@ -198,7 +114,7 @@ LOOPBACKDUMMY
 			# creating these
 			opts[:ifnum] = opts[:device].sub("dummy",'')
 
-			@@dummies << opts[:ifnum].to_s
+			@@dummies << opts[:ifnum].to_s unless @@dummies.include?(opts[:ifnum].to_s)
         else
 			opts[:interface_type] = :normal
 			opts[:interface] = opts[:device]
@@ -233,8 +149,102 @@ LOOPBACKDUMMY
 
     end
 
+    # Prefetch our interface list, yo.
+    def self.prefetch(resources)
+        instances.each do |prov|
+            if resource = resources[prov.name]
+                resource.provider = prov
+            end
+        end
+    end
+
+    def create
+        @resource.class.validproperties.each do |property|
+            if value = @resource.should(property)
+                @property_hash[property] = value
+            end
+        end
+        @property_hash[:name] = @resource.name
+
+        return (@resource.class.name.to_s + "_created").intern
+    end
+
+    def destroy
+        File.unlink(@resource[:target])
+    end
+
+    def exists?
+        FileTest.exists?(@resource[:target])
+    end
+
+    # generate the content for the interface file, so this is dependent
+    # on whether we are adding an alias to a real interface, or a loopback
+    # address (also dummy) on linux. For linux it's quite involved, and we
+    # will use an ERB template
+	def generate
+		# choose which template to use for the interface file, based on
+		# the interface type
+        case @resource.should(:interface_type)
+        when :loopback
+			return LOOPBACK_TEMPLATE.result(binding)
+        when :alias
+			return ALIAS_TEMPLATE.result(binding)
+		end
+	end
+
+    # Where should the file be written out?
+	# This defaults to INTERFACE_DIR/ifcfg-<namevar>, but can have a
+	# more symbolic name by setting interface_desc in the type. 
+    def file_path
+		@resource[:interface_desc] ||= @resource[:name]
+       	return File.join(INTERFACE_DIR, "ifcfg-" + @resource[:interface_desc])
+
+    end
+
+	# create the device name, so this based on the IP, and interface + type
+	def device
+		case @resource.should(:interface_type)
+		when :loopback
+			@property_hash[:ifnum] ||= self.class.next_dummy
+        	return "dummy" + @property_hash[:ifnum]
+		when :alias
+			@property_hash[:ifnum] ||= self.class.next_alias(@resource[:interface])
+        	return @resource[:interface] + ":" + @property_hash[:ifnum]
+		end
+    end
+
+	# whether the device is to be brought up on boot or not. converts
+	# the true / false of the type, into yes / no values respectively
+	# writing out the ifcfg-* files
+	def on_boot
+		case @property_hash[:onboot].to_s
+		when "true"
+			return "yes"
+		when "false"
+			return "no"
+		else
+			return "neither"
+		end
+	end
+
+    # Write the new file out.
+    def flush
+        # Don't flush to disk if we're removing the config.
+        return if @resource.should(:ensure) == :absent
+
+        @property_hash.each do |name, val|
+            if val == :absent
+                raise ArgumentError, "Propety %s must be provided" % val
+            end
+        end
+
+        File.open(@resource[:target], "w") do |f|
+            f.puts generate()
+        end
+    end
+
     def prefetch
-        @property_hash = self.class.parse(@model[:target])
+        @property_hash = self.class.parse(@resource[:target])
     end
 end
 

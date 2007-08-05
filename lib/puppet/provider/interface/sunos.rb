@@ -12,10 +12,7 @@ Puppet::Type.type(:interface).provide(:sunos,
     # Two types of lines:
     #   the first line does not start with 'addif'
     #   the rest do
-
-
 	record_line :sunos, :fields => %w{interface_type name ifopts onboot}, :rts => true, :absent => "", :block_eval => :instance do
-
         # Parse our interface line
         def process(line)
             details = {:ensure => :present}
@@ -80,6 +77,14 @@ Puppet::Type.type(:interface).provide(:sunos,
 		%{}
 	end
 
+    # Get a list of interface instances.
+    def self.instances
+		Dir.glob("/etc/hostname.*").collect do |file|
+            # We really only expect one record from each file
+            parse(file).shift
+        end.collect { |record| new(record) }
+    end
+
 	def self.match(hash)
 		# see if we can match the has against an existing object
 		if model.find { |obj| obj.value(:name) == hash[:name] }
@@ -89,10 +94,22 @@ Puppet::Type.type(:interface).provide(:sunos,
 		end	
 	end
 
+    # Prefetch our interface list, yo.
+    def self.prefetch(resources)
+        instances.each do |prov|
+            if resource = resources[prov.name]
+                resource.provider = prov
+            end
+        end
+    end
+
     # Where should the file be written out?  Can be overridden by setting
     # :target in the model.
     def file_path
-       	return File.join("/etc", "hostname." + @model[:interface])
+        unless @resource[:interface]
+            raise ArgumentError, "You must provide the interface name on Solaris"
+        end
+       	return File.join("/etc", "hostname." + @resource[:interface])
     end
 end
 

@@ -50,7 +50,7 @@ Puppet::Type.newtype(:interface) do
     newparam(:target) do
         desc "The path to the file this resource creates."
 
-        defaultto { @parent.provider.file_path }
+        defaultto { @resource.provider.file_path }
     end
 end
 
