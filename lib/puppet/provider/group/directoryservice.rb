@@ -15,10 +15,9 @@
 require 'puppet/provider/nameservice/directoryservice'
 
 Puppet::Type.type(:group).provide :directoryservice, :parent => Puppet::Provider::NameService::DirectoryService do
-    desc "Group management using DirectoryService ... Fin. ;)"
+    desc "Group management using DirectoryService on OS X."
     
-    # JJM: Do we really need commands defined here?
-    # commands :dscl => "/usr/bin/dscl"
-    # defaultfor :operatingsystem => :darwin
-    
+    commands :dscl => "/usr/bin/dscl"
+    confine :operatingsystem => :darwin
+    #defaultfor :operatingsystem => :darwin
 end

@@ -15,7 +15,10 @@
 require 'puppet/provider/nameservice/directoryservice'
 
 Puppet::Type.type(:user).provide :directoryservice, :parent => Puppet::Provider::NameService::DirectoryService do
-    desc "User management using DirectoryService ... Fin. ;)"
+    desc "User management using DirectoryService on OS X."
+
+    commands :dscl => "/usr/bin/dscl"
+    confine :operatingsystem => :darwin
     
     # JJM: DirectoryService can manage passwords.
     #      This needs to be a special option to dscl though (-passwd)
