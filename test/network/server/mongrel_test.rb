@@ -3,6 +3,7 @@
 $:.unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppettest'
+require 'mocha'
 
 class TestMongrelServer < PuppetTest::TestCase
     confine "Missing mongrel" => Puppet.features.mongrel?
@@ -25,14 +26,34 @@ class TestMongrelServer < PuppetTest::TestCase
 
         ip = Facter.value(:ipaddress)
         params["REMOTE_ADDR"] = ip
-        params[Puppet[:ssl_client_header]] = "/CN=host.domain.com"
-
+        params[Puppet[:ssl_client_header]] = ""
+        params[Puppet[:ssl_client_verify_header]] = "failure"
         info = nil
+        Resolv.expects(:getname).with(ip).returns("host.domain.com").times(3)
+        assert_nothing_raised("Could not call client_info") do
+            info = mongrel.send(:client_info, obj)
+        end
+        assert(! info.authenticated?, "Client info object was marked valid even though headers were missing")
+        assert_equal(ip, info.ip, "Did not copy over ip correctly")
+
+        assert_equal("host.domain.com", info.name, "Did not copy over hostname correctly")
+
+        # Now add a valid auth header.
+        params[Puppet[:ssl_client_header]] = "/CN=host.domain.com"
+        assert_nothing_raised("Could not call client_info") do
+            info = mongrel.send(:client_info, obj)
+        end
+        assert(! info.authenticated?, "Client info object was marked valid even though the verify header was fals")
+        assert_equal(ip, info.ip, "Did not copy over ip correctly")
+        assert_equal("host.domain.com", info.name, "Did not copy over hostname correctly")
+
+        # Now change the verify header to be true
+        params[Puppet[:ssl_client_verify_header]] = "SUCCESS"
         assert_nothing_raised("Could not call client_info") do
             info = mongrel.send(:client_info, obj)
         end
 
-        assert(info.authenticated?, "Client info object was not marked valid even though the header was present")
+        assert(info.authenticated?, "Client info object was not marked valid even though all headers were correct")
         assert_equal(ip, info.ip, "Did not copy over ip correctly")
         assert_equal("host.domain.com", info.name, "Did not copy over hostname correctly")
 

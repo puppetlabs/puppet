@@ -118,7 +118,7 @@ module Puppet::Network
             ip = params["REMOTE_ADDR"]
             if dn = params[Puppet[:ssl_client_header]] and dn.include?("/CN=")
                 client = dn.sub("/CN=", '')
-                valid = (params["HTTP_X_CLIENT_VERIFY"] == 'SUCCESS')
+                valid = (params[Puppet[:ssl_client_verify_header]] == 'SUCCESS')
             else
                 client = Resolv.getname(ip)
                 valid = false
