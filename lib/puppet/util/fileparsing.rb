@@ -320,7 +320,7 @@ module Puppet::Util::FileParsing
     # Convert our parsed record into a text record.
     def to_line(details)
         unless record = record_type(details[:record_type])
-            raise ArgumentError, "Invalid record type %s" % details[:record_type]
+            raise ArgumentError, "Invalid record type %s" % details[:record_type].inspect
         end
 
         if record.respond_to?(:pre_gen)

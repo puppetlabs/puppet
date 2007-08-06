@@ -25,10 +25,12 @@ class TestCron < Test::Unit::TestCase
     end
 
     def teardown
+        super
         @crontype.defaultprovider = nil
         if defined? @oldfiletype
             @provider.filetype = @oldfiletype
         end
+        Puppet::Util::FileType.filetype(:ram).clear
     end
 
     def eachprovider
@@ -138,11 +140,17 @@ class TestCron < Test::Unit::TestCase
             property = cron.send(:property, :command)
             cron.provider.command = command
             cron.provider.ensure = :present
+            cron.provider.user = @me
             cron.provider.month = ["4"]
             cron.provider.class.prefetch
             currentvalue = cron.retrieve
 
-            assert(cron.insync?(currentvalue), "command parsing removes trailing whitespace")
+            currentvalue.each do |prop, value|
+                # We're only interested in comparing the command.
+                next unless prop.name.to_s == "command"
+                assert(prop.insync?(value), "Property %s is not considered in sync with value %s" % [prop.name, value.inspect])
+            end
+
             @crontype.clear
         end
     end
@@ -232,14 +240,18 @@ class TestCron < Test::Unit::TestCase
                 )
             }
 
-            #minute = cron.send(:property, :minute)
+
             cron.provider.ensure = :present
             cron.provider.command = '/bin/date > /dev/null'
             cron.provider.minute = %w{0 30}
             cron.provider.class.prefetch
             currentvalue = cron.retrieve
 
-            assert(cron.insync?(currentvalue), "minute is out of sync with %s" % provider.name)
+            currentvalue.each do |prop, value|
+                # We're only interested in comparing minutes.
+                next unless prop.name.to_s == "minute"
+                assert(prop.insync?(value), "Property %s is not considered in sync with value %s" % [prop.name, value.inspect])
+            end
             @crontype.clear
         end
     end
@@ -306,23 +318,6 @@ class TestCron < Test::Unit::TestCase
     def verify_failonnouser
         assert_raise(Puppet::Error) do
             @crontype.retrieve("nosuchuser")
-        end
-    end
-
-    # Disabled, since we no longer have naming requirements.
-    def disabled_test_names
-        cron = mkcron("nametest")
-
-        ["bad name", "bad.name"].each do |name|
-            assert_raise(ArgumentError) do
-                cron[:name] = name
-            end
-        end
-
-        ["good-name", "good-name", "AGoodName"].each do |name|
-            assert_nothing_raised do
-                cron[:name] = name
-            end
         end
     end
 
@@ -468,7 +463,7 @@ class TestCron < Test::Unit::TestCase
     end
 
     # Make sure the user stuff defaults correctly.
-    def  test_default_user
+    def test_default_user
         crontab = @crontype.provider(:crontab)
         if crontab.suitable?
             inst = @crontype.create(
@@ -491,11 +486,12 @@ class TestCron < Test::Unit::TestCase
     # #705 - make sure extra spaces don't screw things up
     def test_spaces_in_command
         string = "echo   multiple  spaces"
-        cron = @crontype.create(:name => "testing", :command => string)
+        cron = @crontype.create(:name => "space testing", :command => string)
         assert_apply(cron)
 
         cron.class.clear
-        cron = @crontype.create(:name => "testing", :command => string)
+        cron = @crontype.create(:name => "space testing", :command => string)
+
         # Now make sure that it's correctly in sync
         cron.provider.class.prefetch("testing" => cron)
         properties = cron.retrieve

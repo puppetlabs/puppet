@@ -6,7 +6,7 @@ require 'puppettest'
 require 'mocha'
 
 class TestInterfaceType < PuppetTest::TestCase
-	include PuppetTest
+    confine "Could not find suitable interface provider" => Puppet::Type.type(:interface).suitableprovider.length > 0
 
     def setup
         super

@@ -11,11 +11,41 @@ class TestCronParsedProvider < Test::Unit::TestCase
 	include PuppetTest
 	include PuppetTest::FileParsing
 
+
+    FIELDS = {
+        :crontab => %w{command minute hour month monthday weekday}.collect { |o| o.intern },
+        :freebsd_special => %w{special command}.collect { |o| o.intern },
+        :environment => [:line],
+        :blank => [:line],
+        :comment => [:line],
+    }
+
+    # These are potentially multi-line records; there's no one-to-one map, but they model
+    # a full cron job.  These tests assume individual record types will always be correctly
+    # parsed, so all they 
+    def sample_crons
+        unless defined? @sample_crons
+            @sample_crons = YAML.load(File.read(File.join(@crondir, "crontab_collections.yaml")))
+        end
+        @sample_crons
+    end
+
+    # These are simple lines that can appear in the files; there is a one to one
+    # mapping between records and lines.  We have plenty of redundancy here because
+    # we use these records to build up our complex, multi-line cron jobs below.
+    def sample_records
+        unless defined? @sample_records
+            @sample_records = YAML.load(File.read(File.join(@crondir, "crontab_sample_records.yaml")))
+        end
+        @sample_records
+    end
+
     def setup
         super
         @type = Puppet::Type.type(:cron)
         @provider = @type.provider(:crontab)
         @provider.initvars
+        @crondir = datadir(File.join(%w{providers cron}))
 
         @oldfiletype = @provider.filetype
     end
@@ -27,31 +57,160 @@ class TestCronParsedProvider < Test::Unit::TestCase
         super
     end
 
-    def test_parse_record
-        fields = [:month, :weekday, :monthday, :hour, :command, :minute]
-        {
-            "* * * * * /bin/echo" => {:command => "/bin/echo"},
-            "10 * * * * /bin/echo test" => {:minute => ["10"],
-                :command => "/bin/echo test"}
-        }.each do |line, should|
-            result = nil
-            assert_nothing_raised("Could not parse %s" % line.inspect) do
-                result = @provider.parse_line(line)
-            end
-            should[:record_type] = :crontab
-            fields.each do |field|
-                if should[field]
-                    assert_equal(should[field], result[field],
-                        "Did not parse %s in %s correctly" % [field, line.inspect])
-                else
-                    assert_equal(:absent, result[field],
-                        "Did not set %s absent in %s" % [field, line.inspect])
-                end
+    # Make sure a cron job matches up.  Any non-passed fields are considered absent.
+    def assert_cron_equal(msg, cron, options)
+        assert_instance_of(@provider, cron, "not an instance of provider in %s" % msg)
+        options.each do |param, value|
+            assert_equal(value, cron.send(param), "%s was not equal in %s" % [param, msg])
+        end
+        %w{command environment minute hour month monthday weekday}.each do |var|
+            unless options.include?(var.intern)
+                assert_equal(:absent, cron.send(var), "%s was not parsed absent in %s" % [var, msg])
             end
         end
     end
 
-    def test_parse_and_generate
+    # Make sure a cron record matches.  This only works for crontab records.
+    def assert_record_equal(msg, record, options)
+        unless options.include?(:record_type)
+            raise ArgumentError, "You must pass the required record type"
+        end
+        assert_instance_of(Hash, record, "not an instance of a hash in %s" % msg)
+        options.each do |param, value|
+            assert_equal(value, record[param], "%s was not equal in %s" % [param, msg])
+        end
+        FIELDS[record[:record_type]].each do |var|
+            unless options.include?(var)
+                assert_equal(:absent, record[var], "%s was not parsed absent in %s" % [var, msg])
+            end
+        end
+    end
+
+    def assert_header(file)
+        header = []
+        file.gsub! /^(# HEADER: .+$)\n/ do
+            header << $1
+            ''
+        end
+        assert_equal(4, header.length, "Did not get four header lines")
+    end
+
+    # This handles parsing every possible iteration of cron records.  Note that this is only
+    # single-line stuff and doesn't include multi-line values (e.g., with names and/or envs).
+    # Those have separate tests.
+    def test_parse_line
+        # First just do each sample record one by one
+        sample_records.each do |name, options|
+            result = nil
+            assert_nothing_raised("Could not parse %s: '%s'" % [name, options[:text]]) do
+                result = @provider.parse_line(options[:text])
+            end
+            assert_record_equal("record for %s" % name, result, options[:record])
+        end
+
+        # Then do them all at once.
+        records = []
+        text = ""
+        sample_records.each do |name, options|
+            records << options[:record]
+            text += options[:text] + "\n"
+        end
+
+        result = nil
+        assert_nothing_raised("Could not match all records in one file") do
+            result = @provider.parse(text)
+        end
+
+        records.zip(result).each do |should, record|
+            assert_record_equal("record for %s in full match" % should.inspect, record, should)
+        end
+    end
+
+    # Here we test that each record generates to the correct text.
+    def test_generate_line
+        # First just do each sample record one by one
+        sample_records.each do |name, options|
+            result = nil
+            assert_nothing_raised("Could not generate %s: '%s'" % [name, options[:record]]) do
+                result = @provider.to_line(options[:record])
+            end
+            assert_equal(options[:text], result, "Did not generate correct text for %s" % name)
+        end
+
+        # Then do them all at once.
+        records = []
+        text = ""
+        sample_records.each do |name, options|
+            records << options[:record]
+            text += options[:text] + "\n"
+        end
+
+        result = nil
+        assert_nothing_raised("Could not match all records in one file") do
+            result = @provider.to_file(records)
+        end
+
+        assert_header(result)
+
+        assert_equal(text, result, "Did not generate correct full crontab")
+    end
+
+    # Test cronjobs that are made up from multiple records.
+    def test_multi_line_cronjobs
+        fulltext = ""
+        all_records = []
+        sample_crons.each do |name, record_names|
+            records = record_names.collect do |record_name|
+                unless record = sample_records[record_name]
+                    raise "Could not find sample record %s" % record_name
+                end
+                record
+            end
+
+            text = records.collect { |r| r[:text] }.join("\n") + "\n"
+            record_list = records.collect { |r| r[:record] }
+
+            # Add it to our full collection
+            all_records += record_list
+            fulltext += text
+
+            # First make sure we generate each one correctly
+            result = nil
+            assert_nothing_raised("Could not generate multi-line cronjob %s" % [name]) do
+                result = @provider.to_file(record_list)
+            end
+            assert_header(result)
+            assert_equal(text, result, "Did not generate correct text for multi-line cronjob %s" % name)
+
+            # Now make sure we parse each one correctly
+            assert_nothing_raised("Could not parse multi-line cronjob %s" % [name]) do
+                result = @provider.parse(text)
+            end
+            record_list.zip(result).each do |should, record|
+                assert_record_equal("multiline cronjob %s" % name, record, should)
+            end
+        end
+
+        # Make sure we can generate it all correctly
+        result = nil
+        assert_nothing_raised("Could not generate all multi-line cronjobs") do
+            result = @provider.to_file(all_records)
+        end
+        assert_header(result)
+        assert_equal(fulltext, result, "Did not generate correct text for all multi-line cronjobs")
+
+        # Now make sure we parse them all correctly
+        assert_nothing_raised("Could not parse multi-line cronjobs") do
+            result = @provider.parse(fulltext)
+        end
+        all_records.zip(result).each do |should, record|
+            assert_record_equal("multiline cronjob %s", record, should)
+        end
+    end
+
+    # Take our sample files, and make sure we can entirely parse them,
+    # then that we can generate them again and we get the same data.
+    def test_parse_and_generate_sample_files
         @provider.filetype = :ram
         crondir = datadir(File.join(%w{providers cron}))
         files = Dir.glob("%s/crontab.*" % crondir)
@@ -408,38 +567,37 @@ class TestCronParsedProvider < Test::Unit::TestCase
         target = @provider.target_object(@me)
 
         # First with no env settings
-        cron = @type.create :command => "/bin/echo yay", :name => "test", :hour => 4
+        resource = @type.create :command => "/bin/echo yay", :name => "test", :hour => 4
+        cron = resource.provider
 
-        assert_apply(cron)
+        cron.ensure = :present
+        cron.command = "/bin/echo yay"
+        cron.hour = %w{4}
+        cron.flush
 
-        props = cron.retrieve.inject({}) { |hash, ary| hash[ary[0]] = ary[1]; hash }
+        result = target.read
+        assert_equal("# Puppet Name: test\n* 4 * * * /bin/echo yay\n", result, "Did not write cron out correctly")
 
         # Now set the env
-        cron[:environment] = "TEST=foo"
-        assert_apply(cron)
+        cron.environment = "TEST=foo"
+        cron.flush
 
-        props = cron.retrieve.inject({}) { |hash, ary| hash[ary[0]] = ary[1]; hash }
-        assert(target.read.include?("TEST=foo"), "Did not get environment setting")
-        #assert_equal(["TEST=foo"], props[:environment], "Did not get environment setting")
+        result = target.read
+        assert_equal("# Puppet Name: test\nTEST=foo\n* 4 * * * /bin/echo yay\n", result, "Did not write out environment setting")
 
         # Modify it
-        cron[:environment] = ["TEST=foo", "BLAH=yay"]
-        assert_apply(cron)
+        cron.environment = ["TEST=foo", "BLAH=yay"]
+        cron.flush
 
-        props = cron.retrieve.inject({}) { |hash, ary| hash[ary[0]] = ary[1]; hash }
-        assert(target.read.include?("TEST=foo"), "Did not keep environment setting")
-        assert(target.read.include?("BLAH=yay"), "Did not get second environment setting")
-        #assert_equal(["TEST=foo", "BLAH=yay"], props[:environment], "Did not modify environment setting")
+        result = target.read
+        assert_equal("# Puppet Name: test\nTEST=foo\nBLAH=yay\n* 4 * * * /bin/echo yay\n", result, "Did not write out environment setting")
 
         # And remove it
-        cron[:environment] = :absent
-        assert_apply(cron)
+        cron.environment = :absent
+        cron.flush
 
-        props = cron.retrieve.inject({}) { |hash, ary| hash[ary[0]] = ary[1]; hash }
-        assert(! target.read.include?("TEST=foo"), "Did not remove environment setting")
-        assert(! target.read.include?("BLAH=yay"), "Did not remove second environment setting")
-        #assert_nil(props[:environment], "Did not modify environment setting")
-
+        result = target.read
+        assert_equal("# Puppet Name: test\n* 4 * * * /bin/echo yay\n", result, "Did not write out environment setting")
     end
 end
 

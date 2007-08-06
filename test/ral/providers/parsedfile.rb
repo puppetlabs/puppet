@@ -35,7 +35,7 @@ class TestParsedFile < Test::Unit::TestCase
 
     # A simple block to skip the complexity of a full transaction.
     def apply(resource)
-        [:one, :two, :ensure].each do |st|
+        [:one, :two, :ensure, :target].each do |st|
             Puppet.info "Setting %s: %s => %s" %
                 [resource[:name], st, resource.should(st)]
             resource.provider.send(st.to_s + "=", resource.should(st))
@@ -202,44 +202,36 @@ class TestParsedFile < Test::Unit::TestCase
         prov.target_object(:default).write "will b d\n"
 
         # Create some resources for some of those demo files
-        resource = mkresource "bill", :target => :file1, :one => "b", :two => "c"
-        default = mkresource "will", :target => :default, :one => "b", :two => "d"
+        bill = mkresource "bill", :target => :file1, :one => "b", :two => "c"
+        will = mkresource "will", :target => :default, :one => "b", :two => "d"
 
-        resources = {"bill" => resource, "will" => default}
+        resources = {"bill" => bill, "will" => will}
+        prov_ids = {"bill" => bill.provider.object_id, "will" => will.provider.object_id}
 
         assert_nothing_raised do
             prov.prefetch(resources)
         end
 
+        assert(bill.provider.object_id != prov_ids["bill"], "provider was not replaced in resource")
+        assert(will.provider.object_id != prov_ids["will"], "provider was not replaced in resource")
+
         # Make sure we prefetched our resources.
-        assert_equal("b", resource.provider.one, "did not prefetch resource from file1")
-        assert_equal("c", resource.provider.two, "did not prefetch resource from file1")
-        assert_equal("b", default.provider.one, "did not prefetch resource from default")
-        assert_equal("d", default.provider.two, "did not prefetch resource from default")
-
-        # Now list all of them and make sure we get everything back
-        providers = nil
-        assert_nothing_raised do
-            providers = prov.instances
-        end
-
-        providers.each do |provider|
-            assert_instance_of(prov, provider, "'instances' class method did not return providers")
-        end
-
-        %w{bill jill will}.each do |name|
-            assert(providers.find { |provider| provider.name == name},
-                "Did not return %s in list" % name)
-        end
+        assert_equal("b", bill.provider.one, "did not prefetch resource from file1")
+        assert_equal("c", bill.provider.two, "did not prefetch resource from file1")
+        assert_equal("b", will.provider.one, "did not prefetch resource from default")
+        assert_equal("d", will.provider.two, "did not prefetch resource from default")
 
         # Now modify our resources and write them out, making sure that prefetching
         # hasn't somehow destroyed this ability
-        resource[:one] = "a"
-        default[:one] = "a"
+        bill[:one] = "a"
+        will[:one] = "a"
 
+        assert_apply(bill)
+        assert_apply(will)
 
-        assert_apply(resource)
-        assert_apply(default)
+        prov.prefetch(resources)
+        assert_equal("a", bill.provider.one, "did not prefetch resource from file1")
+        assert_equal("a", will.provider.one, "did not prefetch resource from default")
 
         assert_equal("bill a c\njill b d\n", prov.target_object(:file1).read,
             "Did not write changed resource correctly")

@@ -337,7 +337,9 @@ class Puppet::Provider
 
     def initialize(resource = nil)
         if resource.is_a?(Hash)
-            @property_hash = resource.dup
+            # We don't use a duplicate here, because some providers (ParsedFile, at least)
+            # use the hash here for later events.
+            @property_hash = resource
         elsif resource
             @resource = resource if resource
             # LAK 2007-05-09: Keep the model stuff around for backward compatibility

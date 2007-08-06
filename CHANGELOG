@@ -1,3 +1,6 @@
+    Fixed the problem in cron jobs where environment settings
+    tended to multiple. (#749)
+
     Collection of resources now correctly only collects exported
     resources again.  This was broken in 0.23.0. (#731)
 

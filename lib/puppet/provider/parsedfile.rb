@@ -110,7 +110,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     def self.instances
         prefetch()
         @records.find_all { |r| r[:record_type] == self.name }.collect { |r|
-            new(clean(r))
+            new(r)
         }
     end
 
@@ -134,27 +134,16 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
                 if @property_hash[attr] or self.class.valid_attr?(self.class.name, attr)
                     @property_hash[attr] || :absent
                 else
-                    @resource.should(attr)
+                    if defined? @resource
+                        @resource.should(attr)
+                    else
+                        nil
+                    end
                 end
             end
 
             define_method(attr.to_s + "=") do |val|
-                # Mark that this target was modified.
-                resourcetarget = @resource.should(:target) || self.class.default_target
-
-                # If they're the same, then just mark that one as modified
-                if @property_hash[:target] and @property_hash[:target] == resourcetarget
-                    self.class.modified(resourcetarget)
-                else
-                    # Always mark the resourcetarget as modified, and if there's
-                    # and old property_hash target, mark it as modified and replace
-                    # it.
-                    self.class.modified(resourcetarget)
-                    if @property_hash[:target]
-                        self.class.modified(@property_hash[:target])
-                    end
-                    @property_hash[:target] = resourcetarget
-                end
+                mark_target_modified
                 @property_hash[attr] = val
             end
         end
@@ -296,14 +285,13 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         header + text
     end
 
-
     def create
         @resource.class.validproperties.each do |property|
             if value = @resource.should(property)
                 @property_hash[property] = value
             end
         end
-        self.class.modified(@property_hash[:target] || self.class.default_target)
+        mark_target_modified()
         return (@resource.class.name.to_s + "_created").intern
     end
 
@@ -338,16 +326,15 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         #@property_hash = {}
     end
 
-    def initialize(resource)
+    def initialize(record)
         super
 
-        # See if there's already a matching property_hash in the records list;
-        # else, use a default value.
-        # We provide a default for 'ensure' here, because the provider will
-        # override it if the thing exists, but it won't touch it if it doesn't
-        # exist.
-        @property_hash = self.class.record?(resource[:name]) ||
-            {:record_type => self.class.name, :ensure => :absent}
+        # The 'record' could be a resource or a record, depending on how the provider
+        # is initialized.  If we got an empty property hash (probably because the resource
+        # is just being initialized), then we want to set up some defualts.
+        if @property_hash.empty?
+            @property_hash = self.class.record?(resource[:name]) || {:record_type => self.class.name, :ensure => :absent}
+        end
     end
 
     # Retrieve the current state from disk.
@@ -356,6 +343,22 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
             raise Puppet::DevError, "Somehow got told to prefetch with no resource set"
         end
         self.class.prefetch(@resource[:name] => @resource)
+    end
+
+    def record_type
+        @property_hash[:record_type]
+    end
+
+    private
+
+    # Mark both the resource and provider target as modified.
+    def mark_target_modified
+        if defined? @resource and restarget = @resource.should(:target) and restarget != @property_hash[:target]
+            self.class.modified(restarget)
+        end
+        if @property_hash[:target] != :absent
+            self.class.modified(@property_hash[:target])
+        end
     end
 end
 
