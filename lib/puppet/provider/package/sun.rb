@@ -43,7 +43,7 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
                     hash[:provider] = :sun
 
                     packages << new(hash)
-                    hash.clear
+                    hash = {}
                 when /\s*(\w+):\s+(.+)/:
                     name = $1
                     value = $2

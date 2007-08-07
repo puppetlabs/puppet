@@ -86,7 +86,11 @@ class TestPackages < Test::Unit::TestCase
     # Make sure we can prefetch and retrieve packages
     def test_package_instances
         providers = []
-        @type.instances.each do |resource|
+        instances = nil
+        assert_nothing_raised("Could not get package instances") do
+            instances = @type.instances
+        end
+        instances.each do |resource|
             # Just do one of each type
             next if providers.include?(resource.provider.class)
             providers << resource.provider.class

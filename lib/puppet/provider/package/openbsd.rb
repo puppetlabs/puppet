@@ -21,7 +21,6 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
 
                 # now turn each returned line into a package object
                 process.each { |line|
-                    hash.clear
                     if match = regex.match(line)
                         fields.zip(match.captures) { |field,value|
                             hash[field] = value
@@ -32,6 +31,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
                         hash[:provider] = self.name
 
                         packages << new(hash)
+                        hash = {}
                     else
                         # Print a warning on lines we can't match, but move
                         # on, since it should be non-fatal

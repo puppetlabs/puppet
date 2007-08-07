@@ -356,7 +356,7 @@ class Puppet::Provider
         elsif self.resource
             resource.name
         else
-            raise Puppet::DevError, "No resource and no name in property hash"
+            raise Puppet::DevError, "No resource and no name in property hash in %s instance" % self.class.name
         end
     end
 

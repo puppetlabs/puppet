@@ -24,7 +24,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
             # now turn each returned line into a package object
             process.each { |line|
                 if match = regex.match(line)
-                    hash.clear
+                    hash = {}
 
                     fields.zip(match.captures) { |field,value|
                         hash[field] = value

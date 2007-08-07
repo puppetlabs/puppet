@@ -30,13 +30,11 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
                 # our regex for matching dpkg output
                 regex = %r{^(\S+)\s+(\S+)}
                 fields = [:name, :ensure]
-                hash = {}
 
                 # now turn each returned line into a package object
                 process.each { |line|
                     if match = regex.match(line)
-                        hash.clear
-
+                        hash = {}
                         fields.zip(match.captures) { |field,value|
                             hash[field] = value
                         }
