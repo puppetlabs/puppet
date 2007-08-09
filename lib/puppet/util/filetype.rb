@@ -78,6 +78,7 @@ class Puppet::Util::FileType
     end
 
     def initialize(path)
+        raise ArgumentError.new("Path is nil") if path.nil?
         @path = path
     end
 

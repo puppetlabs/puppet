@@ -356,7 +356,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         if defined? @resource and restarget = @resource.should(:target) and restarget != @property_hash[:target]
             self.class.modified(restarget)
         end
-        if @property_hash[:target] != :absent
+        if @property_hash[:target] != :absent and @property_hash[:target]
             self.class.modified(@property_hash[:target])
         end
     end
