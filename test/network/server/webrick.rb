@@ -4,9 +4,15 @@ $:.unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppettest'
 require 'puppet/network/server/webrick'
+require 'mocha'
 
 class TestWebrickServer < Test::Unit::TestCase
     include PuppetTest::ServerTest
+
+    def setup
+        Puppet::Util::SUIDManager.stubs(:asuser).yields
+        super
+    end
 
     # Make sure we can create a server, and that it knows how to create its
     # certs by default.

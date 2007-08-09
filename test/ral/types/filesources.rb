@@ -5,6 +5,7 @@ $:.unshift("../../lib") if __FILE__ =~ /\.rb$/
 require 'puppettest'
 require 'cgi'
 require 'fileutils'
+require 'mocha'
 
 class TestFileSources < Test::Unit::TestCase
     include PuppetTest::FileTesting
@@ -17,6 +18,7 @@ class TestFileSources < Test::Unit::TestCase
         end
         @file = Puppet::Type.type(:file)
         Puppet[:filetimeout] = -1
+        Puppet::Util::SUIDManager.stubs(:asuser).yields 
     end
     
     def use_storage

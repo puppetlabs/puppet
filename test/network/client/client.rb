@@ -230,6 +230,8 @@ class TestClient < Test::Unit::TestCase
 
     # Make sure that reading the cert in also sets up the cert stuff for the driver
     def test_read_cert
+        Puppet::Util::SUIDManager.stubs(:asuser).yields
+
         ca = Puppet::Network::Handler.ca.new
         caclient = Puppet::Network::Client.ca.new :CA => ca
 

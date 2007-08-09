@@ -4,6 +4,7 @@ $:.unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppettest'
 require 'puppet/network/handler/ca'
+require 'mocha'
 
 if ARGV.length > 0 and ARGV[0] == "short"
     $short = true
@@ -13,6 +14,12 @@ end
 
 class TestCA < Test::Unit::TestCase
     include PuppetTest::ServerTest
+
+    def setup
+        Puppet::Util::SUIDManager.stubs(:asuser).yields
+        super
+    end
+
     # Verify that we're autosigning.  We have to autosign a "different" machine,
     # since we always autosign the CA server's certificate.
     def test_autocertgeneration

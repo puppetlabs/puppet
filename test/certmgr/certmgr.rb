@@ -6,6 +6,7 @@ require 'puppet'
 require 'puppet/sslcertificates.rb'
 require 'puppettest'
 require 'puppettest/certificates'
+require 'mocha'
 
 class TestCertMgr < Test::Unit::TestCase
     include PuppetTest::Certificates
@@ -14,6 +15,8 @@ class TestCertMgr < Test::Unit::TestCase
         #@dir = File.join(Puppet[:certdir], "testing")
         @dir = File.join(@configpath, "certest")
         system("mkdir -p %s" % @dir)
+
+        Puppet::Util::SUIDManager.stubs(:asuser).yields
     end
 
     def testCreateSelfSignedCertificate

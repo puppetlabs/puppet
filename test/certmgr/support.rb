@@ -4,6 +4,7 @@ $:.unshift("../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppettest'
 require 'puppet/sslcertificates/support'
+require 'mocha'
 
 class TestCertSupport < Test::Unit::TestCase
     include PuppetTest
@@ -15,6 +16,7 @@ class TestCertSupport < Test::Unit::TestCase
 
     def setup
         super
+        Puppet::Util::SUIDManager.stubs(:asuser).yields
         @user = CertUser.new
         @ca = Puppet::SSLCertificates::CA.new
         @client = Puppet::Network::Client.ca.new(:CA => @ca)

@@ -11,6 +11,7 @@ class TestClientCA < Test::Unit::TestCase
     include PuppetTest::ServerTest
 
     def setup
+        Puppet::Util::SUIDManager.stubs(:asuser).yields
         super
         @ca = Puppet::Network::Handler.ca.new
         @client = Puppet::Network::Client.ca.new :CA => @ca

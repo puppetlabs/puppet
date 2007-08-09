@@ -3,9 +3,15 @@
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppettest'
+require 'mocha'
 
 class TestPuppetCA < Test::Unit::TestCase
     include PuppetTest::ExeTest
+
+    def setup
+      super
+      Puppet::Util::SUIDManager.stubs(:asuser).yields
+    end
     
     def gen_cert(ca, host)
         runca("-g #{host}")

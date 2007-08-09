@@ -26,6 +26,7 @@ class TestXMLRPCProcessor < Test::Unit::TestCase
 
     def setup
         super
+        Puppet::Util::SUIDManager.stubs(:asuser).yields
         @processor = Processor.new
     end
 

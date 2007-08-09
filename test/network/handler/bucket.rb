@@ -5,6 +5,7 @@ $:.unshift("../../lib") if __FILE__ =~ /\.rb$/
 require 'puppettest'
 require 'puppet/network/handler/filebucket'
 require 'base64'
+require 'mocha'
 
 class TestBucket < Test::Unit::TestCase
     include PuppetTest::ServerTest
@@ -204,6 +205,8 @@ class TestBucket < Test::Unit::TestCase
 
     # test that things work over the wire
     def test_webxmlmix
+        Puppet::Util::SUIDManager.stubs(:asuser).yields
+
         files = filelist()
 
         tmpdir = File.join(tmpdir(),"tmpfiledir")

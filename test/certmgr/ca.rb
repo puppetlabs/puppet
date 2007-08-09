@@ -6,9 +6,16 @@ require 'puppet'
 require 'puppet/sslcertificates/ca.rb'
 require 'puppettest'
 require 'puppettest/certificates'
+require 'mocha'
 
 class TestCA < Test::Unit::TestCase
     include PuppetTest
+
+    def setup
+      super
+      Puppet::Util::SUIDManager.stubs(:asuser).yields
+    end
+
     def hosts
         %w{host.domain.com Other.Testing.Com}
     end
