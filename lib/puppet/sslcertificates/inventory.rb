@@ -12,10 +12,7 @@ module Puppet::SSLCertificates
             end
 
             Puppet.config.write(:cert_inventory, "a") do |f|
-                unless inited
-                    f.puts self.init
-                end
-                f.puts format(cert)
+                f.puts((inited ? nil : self.init).to_s + format(cert))
             end
         end
 

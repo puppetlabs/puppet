@@ -3,50 +3,40 @@ require 'puppet/util/warnings'
 
 module Puppet::Util::SUIDManager
     include Puppet::Util::Warnings
+    extend Forwardable
 
-    platform = Facter["kernel"].value
-    [:uid=, :gid=, :uid, :gid].each do |method|
-        define_method(method) do |*args|
-            # NOTE: 'method' is closed here.
-            newmethod = method
+    to_delegate_to_process = [ :euid=, :euid, :egid=, :egid,
+                               :uid=, :uid, :gid=, :gid ]
 
-            if platform == "Darwin" and (method == :uid= or method == :gid=)
-                Puppet::Util::Warnings.warnonce "Cannot change real UID on Darwin"
-                newmethod = ("e" + method.to_s).intern
-            end
-
-            return Process.send(newmethod, *args)
-        end
+    to_delegate_to_process.each do |method|
+        def_delegator Process, method
         module_function method
     end
 
-    [:euid=, :euid, :egid=, :egid].each do |method|
-        define_method(method) do |*args|
-            Process.send(method, *args)
-        end
-        module_function method
+    if Facter['kernel'].value == 'Darwin'
+        # Cannot change real UID on Darwin so we set euid
+        alias :uid :euid
+        alias :gid :egid
     end
 
-    def asuser(new_euid=nil, new_egid=nil)
-        # Unless we're root, don't do a damn thing.
-        unless Process.uid == 0
-            return yield
-        end
-        old_egid = old_euid = nil
-        if new_egid
-            old_egid = self.egid
-            self.egid = convert_xid(:gid, new_egid)
-        end
-        if new_euid
-            old_euid = self.euid
-            self.euid = convert_xid(:uid, new_euid)
-        end
+    # Runs block setting uid and gid if provided then restoring original ids
+    def asuser new_uid=nil, new_gid=nil
+      # We set both because some programs like to drop privs, i.e. bash.
+      old_uid, old_gid = self.uid, self.gid
+      old_euid, old_egid = self.euid, self.egid
+      begin
+          self.uid = convert_xid :uid, new_uid if new_uid
+          self.gid = convert_xid :gid, new_gid if new_gid
+          self.euid = convert_xid :uid, new_uid if new_uid
+          self.egid = convert_xid :gid, new_gid if new_gid
 
-        return yield
-    ensure
-        self.euid = old_euid if old_euid
-        self.egid = old_egid if old_egid
+          yield
+      ensure
+          self.uid, self.gid = old_uid, old_gid
+          self.euid, self.egid = old_euid, old_egid
+      end
     end
+    module_function :asuser
     
     # Make sure the passed argument is a number.
     def convert_xid(type, id)
@@ -58,17 +48,13 @@ module Puppet::Util::SUIDManager
         end
         return ret
     end
+    module_function :convert_xid
 
-    module_function :asuser, :convert_xid
 
     def run_and_capture(command, new_uid=nil, new_gid=nil)
-        output = nil
-        
         output = Puppet::Util.execute(command, :failonfail => false, :uid => new_uid, :gid => new_gid)
-
         [output, $?.dup]
     end
-
     module_function :run_and_capture
 
     def system(command, new_uid=nil, new_gid=nil)
@@ -79,7 +65,6 @@ module Puppet::Util::SUIDManager
         end
         status
     end
-            
     module_function :system
 end
 
