@@ -10,11 +10,11 @@ class TestServiceType < Test::Unit::TestCase
 
     # #199
     def test_no_refresh_when_starting
-        service = Puppet::Type.type(:service).create :name => "testing",
+        service = Puppet::Type.type(:service).create :name => "hopefully_this_isnt_in_the_process_table",
             :ensure => :running, :provider => :base
 
         assert_equal :running, service.instance_eval('@parameters[:ensure]').should
-        assert_not_equal :running, service.instance_eval('@parameters[:ensure]').retrieve
+        assert_not_equal :running, service.instance_eval('@parameters[:ensure]').retrieve, "You have something called #{service.name} in your process table"
 
         # First make sure it does not refresh
         service.provider.expects(:restart).never
