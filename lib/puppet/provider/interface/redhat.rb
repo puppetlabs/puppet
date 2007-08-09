@@ -2,14 +2,14 @@ require 'puppet/provider/parsedfile'
 require 'erb'
 
 Puppet::Type.type(:interface).provide(:redhat) do
-	INTERFACE_DIR = "/etc/sysconfig/network-scripts"
-    confine :exists => INTERFACE_DIR
+	@interface_dir = "/etc/sysconfig/network-scripts"
+    confine :exists => @interface_dir
     defaultfor :operatingsystem => [:fedora, :centos, :redhat]
 
     # Create the setter/gettor methods to match the model.
     mk_resource_methods
 
-    ALIAS_TEMPLATE = ERB.new <<-ALIAS
+    @alias_template = ERB.new <<-ALIAS
 DEVICE=<%= self.device %>
 ONBOOT=<%= self.on_boot %>
 BOOTPROTO=<%= self.bootproto %>
@@ -19,7 +19,7 @@ BROADCAST=
 ALIAS
 
 
-    LOOPBACK_TEMPLATE = ERB.new <<-LOOPBACKDUMMY
+    @loopback_template = ERB.new <<-LOOPBACKDUMMY
 DEVICE=<%= self.device %>
 ONBOOT=<%= self.on_boot %>
 BOOTPROTO=static
@@ -29,10 +29,10 @@ BROADCAST=
 LOOPBACKDUMMY
 
 	# maximum number of dummy interfaces
-	MAX_DUMMIES = 10
+	@max_dummies = 10
 
 	# maximum number of aliases per interface
-	MAX_ALIASES_PER_IFACE = 10
+	@max_aliases_per_iface = 10
 
 
 	@@dummies = []
@@ -42,7 +42,7 @@ LOOPBACKDUMMY
 	# use prior to needing to call self.next_dummy later on.
 	def self.instances
 		# parse all of the config files at once
-		Dir.glob("%s/ifcfg-*" % INTERFACE_DIR).collect do |file|
+		Dir.glob("%s/ifcfg-*" % @interface_dir).collect do |file|
 
 			record = parse(file)
 
@@ -61,7 +61,7 @@ LOOPBACKDUMMY
 	# return the next avaliable dummy interface number, in the case where
 	# ifnum is not manually specified
 	def self.next_dummy
-		MAX_DUMMIES.times do |i|
+		@max_dummies.times do |i|
 			unless @@dummies.include?(i.to_s)
 				@@dummies << i.to_s
 				return i.to_s
@@ -72,7 +72,7 @@ LOOPBACKDUMMY
 	# return the next available alias on a given interface, in the case
 	# where ifnum if not manually specified
 	def self.next_alias(interface)
-		MAX_ALIASES_PER_IFACE.times do |i|
+		@max_aliases_per_iface.times do |i|
 			unless @@aliases[interface].include?(i.to_s)
 				@@aliases[interface] << i.to_s
 				return i.to_s
@@ -186,18 +186,18 @@ LOOPBACKDUMMY
 		# the interface type
         case @resource.should(:interface_type)
         when :loopback
-			return LOOPBACK_TEMPLATE.result(binding)
+			return @loopback_template.result(binding)
         when :alias
-			return ALIAS_TEMPLATE.result(binding)
+			return @alias_template.result(binding)
 		end
 	end
 
     # Where should the file be written out?
-	# This defaults to INTERFACE_DIR/ifcfg-<namevar>, but can have a
+	# This defaults to @interface_dir/ifcfg-<namevar>, but can have a
 	# more symbolic name by setting interface_desc in the type. 
     def file_path
 		@resource[:interface_desc] ||= @resource[:name]
-       	return File.join(INTERFACE_DIR, "ifcfg-" + @resource[:interface_desc])
+       	return File.join(@interface_dir, "ifcfg-" + @resource[:interface_desc])
 
     end
 
