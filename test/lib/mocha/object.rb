@@ -3,7 +3,9 @@ require 'mocha/instance_method'
 require 'mocha/class_method'
 require 'mocha/any_instance_method'
 
-# Methods added all Objects.
+# Methods added all objects to allow mocking and stubbing on real objects.
+#
+# Methods return a Mocha::Expectation which can be further modified by methods on Mocha::Expectation.
 class Object
   
   def mocha # :nodoc:
@@ -29,6 +31,10 @@ class Object
   #   product = Product.new
   #   product.expects(:save).returns(true)
   #   assert_equal false, product.save
+  #
+  # The original implementation of <tt>Product#save</tt> is replaced temporarily.
+  #
+  # The original implementation of <tt>Product#save</tt> is restored at the end of the test.
   def expects(symbol) 
     method = stubba_method.new(stubba_object, symbol)
     $stubba.stub(method)
@@ -42,6 +48,10 @@ class Object
   #   product = Product.new
   #   product.stubs(:save).returns(true)
   #   assert_equal false, product.save
+  #
+  # The original implementation of <tt>Product#save</tt> is replaced temporarily.
+  #
+  # The original implementation of <tt>Product#save</tt> is restored at the end of the test.
   def stubs(symbol) 
     method = stubba_method.new(stubba_object, symbol)
     $stubba.stub(method)

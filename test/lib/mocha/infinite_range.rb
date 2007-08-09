@@ -12,15 +12,13 @@ class Range
     1/0.0
   end
   
-  alias_method :__to_s__, :to_s
-
-  def to_s
-    if first.to_f.infinite? then
+  def mocha_inspect
+    if first.respond_to?(:to_f) and first.to_f.infinite? then
       return "at most #{last}"
-    elsif last.to_f.infinite? then
+    elsif last.respond_to?(:to_f) and last.to_f.infinite? then
       return "at least #{first}"
     else
-      __to_s__
+      to_s
     end
   end
   

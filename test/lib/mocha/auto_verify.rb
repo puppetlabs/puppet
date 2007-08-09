@@ -1,12 +1,12 @@
 require 'mocha/mock'
 
-# Methods added to TestCase allowing creation of mock objects.
-#
-# Mocks created this way will have their expectations automatically verified at the end of the test.
-#
-# See Mocha::MockMethods for methods on mock objects.
-module Mocha
+module Mocha # :nodoc:
   
+  # Methods added to TestCase allowing creation of traditional mock objects.
+  #
+  # Mocks created this way will have their expectations automatically verified at the end of the test.
+  #
+  # See Mock for methods on mock objects.
   module AutoVerify
   
     def mocks # :nodoc:

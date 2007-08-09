@@ -1,4 +1,5 @@
 require 'mocha/auto_verify'
+require 'mocha/parameter_matchers'
 require 'mocha/setup_and_teardown'
 
 module Mocha
@@ -6,6 +7,7 @@ module Mocha
   module Standalone
     
     include AutoVerify
+    include ParameterMatchers
     include SetupAndTeardown
     
     def mocha_setup
