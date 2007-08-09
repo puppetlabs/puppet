@@ -72,7 +72,7 @@ class TestPackageProvider < Test::Unit::TestCase
         if result.nil?
             assert_nil(result)
         elsif result.is_a?(Hash)
-            assert_equal(:absent, result[:ensure], msg)
+            assert (result[:ensure] == :absent or result[:ensure] == :purged), msg
         else
             raise "dunno how to handle %s" % result.inspect
         end
