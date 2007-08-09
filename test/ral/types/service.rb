@@ -13,6 +13,9 @@ class TestServiceType < Test::Unit::TestCase
         service = Puppet::Type.type(:service).create :name => "testing",
             :ensure => :running, :provider => :base
 
+        assert_equal :running, service.instance_eval('@parameters[:ensure]').should
+        assert_not_equal :running, service.instance_eval('@parameters[:ensure]').retrieve
+
         # First make sure it does not refresh
         service.provider.expects(:restart).never
 
