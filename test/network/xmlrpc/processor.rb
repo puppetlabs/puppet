@@ -64,8 +64,7 @@ class TestXMLRPCProcessor < Test::Unit::TestCase
         request.expects(:handler=).with("myhandler")
         request.expects(:method=).with("mymethod")
 
-        # I can't get this expectation to take with the argument, for some reason.
-        @processor.expects(:verify)
+        @processor.expects(:verify).times(2)
         @processor.expects(:handle).with(request.call,
             "params", request.name, request.ip)
 

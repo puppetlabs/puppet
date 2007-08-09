@@ -52,8 +52,8 @@ class TestCertInventory < Test::Unit::TestCase
         cert = mksignedcert(ca, "host.domain.com")
 
         assert_nothing_raised do
-            file = nil
-            file.expects(:puts).times(1).with do |written|
+            file = mock()
+            file.expects(:puts).with do |written|
                 written.include? cert.subject.to_s
             end
             Puppet::Util::Config.any_instance.stubs(:write)
