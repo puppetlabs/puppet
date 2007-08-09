@@ -6,7 +6,7 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init do
 
     commands :chkconfig => "/sbin/chkconfig"
 
-    defaultfor :operatingsystem => [:redhat, :fedora, :suse]
+    defaultfor :operatingsystem => [:redhat, :fedora, :suse, :centos]
 
     def self.defpath
         superclass.defpath
