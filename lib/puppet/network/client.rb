@@ -89,6 +89,12 @@ class Puppet::Network::Client
                 @driver.cert_setup(self)
             end
 
+            # We have to start the HTTP connection manually before we start
+            # sending it requests or keep-alive won't work.
+            if @driver.respond_to? :start
+                @driver.start
+            end
+
             @local = false
         elsif hash.include?(driverparam)
             @driver = hash[driverparam]

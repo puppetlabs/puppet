@@ -11,6 +11,7 @@ module Puppet::Network
     class XMLRPCClient < ::XMLRPC::Client
         attr_accessor :puppet_server, :puppet_port
         @clients = {}
+        @@http_cache = {}
 
         class << self
             include Puppet::Util
@@ -85,14 +86,19 @@ module Puppet::Network
                 raise Puppet::SSLCertificates::Support::MissingCertificate,
                     "Could not find ca certificate %s" % Puppet[:localcacert]
             end
-            @http.ca_file = Puppet[:localcacert]
-            store = OpenSSL::X509::Store.new
-            store.add_file Puppet[:localcacert]
-            store.purpose = OpenSSL::X509::PURPOSE_SSL_CLIENT
-            @http.cert_store = store
-            @http.cert = client.cert
-            @http.verify_mode = OpenSSL::SSL::VERIFY_PEER
-            @http.key = client.key
+
+            # Don't want to overwrite certificates, @http will freeze itself
+            # once started.
+            unless @http.ca_file
+                    @http.ca_file = Puppet[:localcacert]
+                    store = OpenSSL::X509::Store.new
+                    store.add_file Puppet[:localcacert]
+                    store.purpose = OpenSSL::X509::PURPOSE_SSL_CLIENT
+                    @http.cert_store = store
+                    @http.cert = client.cert
+                    @http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+                    @http.key = client.key
+            end
         end
 
         def initialize(hash = {})
@@ -121,6 +127,18 @@ module Puppet::Network
                 true, # use_ssl
                 120 # a two minute timeout, instead of 30 seconds
             )
+
+	    # We overwrite the uninitialized @http here with a cached one.
+            key = "%s%s" % [hash[:Server], hash[:Port]]
+            if @@http_cache[key]
+                    @http = @@http_cache[key]
+            else
+                    @@http_cache[key] = @http
+            end
+        end
+
+        def start
+            @http.start unless @http.started?
         end
 
         def local

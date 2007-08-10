@@ -102,15 +102,15 @@ Puppet::Type.type(:cron).provide(:crontab,
                 next if field == :command
                 next if field == :special
                 if record[field] and ! resource.value(field)
-                    Puppet.info "Cron is missing %s: %s and %s" %
-                        [field, record[field].inspect, resource.value(field).inspect]
+                    #Puppet.info "Cron is missing %s: %s and %s" %
+                    #    [field, record[field].inspect, resource.value(field).inspect]
                     matched = false
                     break
                 end
 
                 if ! record[field] and resource.value(field)
-                    Puppet.info "Hash is missing %s: %s and %s" %
-                        [field, resource.value(field).inspect, record[field].inspect]
+                    #Puppet.info "Hash is missing %s: %s and %s" %
+                    #    [field, resource.value(field).inspect, record[field].inspect]
                     matched = false
                     break
                 end
@@ -120,8 +120,8 @@ Puppet::Type.type(:cron).provide(:crontab,
 
                 # Everything should be in the form of arrays, not the normal text.
                 next if (record[field] == resource.value(field))
-                Puppet.info "Did not match %s: %s vs %s" %
-                    [field, resource.value(field).inspect, record[field].inspect]
+                #Puppet.info "Did not match %s: %s vs %s" %
+                #    [field, resource.value(field).inspect, record[field].inspect]
                 matched = false 
                 break
             end
