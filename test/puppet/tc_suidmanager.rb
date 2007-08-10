@@ -49,6 +49,7 @@ class TestSUIDManager < Test::Unit::TestCase
 
 
     def test_system
+        set_exit_status!
         expects_id_set_and_revert @user.uid, @user.gid
         Kernel.expects(:system).with('blah')
         Puppet::Util::SUIDManager.system('blah', @user.uid, @user.gid)
@@ -58,6 +59,8 @@ class TestSUIDManager < Test::Unit::TestCase
         if (RUBY_VERSION <=> "1.8.4") < 0
             warn "Cannot run this test on ruby < 1.8.4"
         else
+            set_exit_status!
+
             Puppet::Util.expects(:execute).with( 'yay',
                                                  { :failonfail => false,
                                                    :uid => @user.uid,
@@ -90,6 +93,11 @@ class TestSUIDManager < Test::Unit::TestCase
         Process.expects(:gid=).with(99998)
         Process.expects(:euid=).with(99997)
         Process.expects(:egid=).with(99996)
+    end
+
+    def set_exit_status!
+      # We want to make sure $? is set, this is the only way I know how.
+      Kernel.system '' if $?.nil?
     end
 end
 
