@@ -252,6 +252,8 @@ class Puppet::Type
             param.required_features = options[:required_features]
         end
 
+        param.isnamevar if options[:namevar]
+
         # These might be enabled later.
 #        define_method(name) do
 #            @parameters[name].value
