@@ -1,3 +1,4 @@
+0.23.2 (misspiggy)
     Fixed the problem in cron jobs where environment settings
     tended to multiple. (#749)
 
@@ -28,7 +29,7 @@
     of mandatory, thus allowing Mongrel to function as the CA.
     This is thanks to work done by Marcin Owsiany.
 
-0.23.1
+0.23.1 (beaker)
     You can now specify relationships to classes, which work
     exactly like relationships to defined types:
         require => Class[myclass]
