@@ -480,9 +480,14 @@ class Puppet::Parser::Interpreter
     # Look for external node definitions.
     def nodesearch_external(name)
         return nil unless Puppet[:external_nodes] != "none"
-        
+  
+        # This is a very cheap way to do this, since it will break on
+        # commands that have spaces in the arguments.  But it's good
+        # enough for most cases.
+        external_node_command = Puppet[:external_nodes].split
+        external_node_command << name
         begin
-            output = Puppet::Util.execute([Puppet[:external_nodes], name])
+            output = Puppet::Util.execute(external_node_command)
         rescue Puppet::ExecutionFailure => detail
             if $?.exitstatus == 1
                 return nil
