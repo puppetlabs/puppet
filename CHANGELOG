@@ -87,7 +87,7 @@
 
     Class names and node names now conflict (#620).
 
-0.23.0 (fozzie)
+0.23.0
     Modified the fileserver to cache file information, so that
     each file isn't being read on every connection.  Also,
     added londo's patch from #678 to avoid reading entire files
