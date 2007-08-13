@@ -440,15 +440,15 @@ class TestInterpreter < PuppetTest::TestCase
         File.open(mapper, "w") { |f|
             f.puts "#!#{ruby}
             require 'yaml'
-            name = ARGV[0].chomp
+            name = ARGV.last.chomp
             result = {}
 
             if name =~ /a/
-                result[:parameters] = {'one' => ARGV[0] + '1', 'two' => ARGV[0] + '2'}
+                result[:parameters] = {'one' => ARGV.last + '1', 'two' => ARGV.last + '2'}
             end
 
             if name =~ /p/
-                result['classes'] = [1,2,3].collect { |n| ARGV[0] + n.to_s }
+                result['classes'] = [1,2,3].collect { |n| ARGV.last + n.to_s }
             end
 
             puts YAML.dump(result)
@@ -494,6 +494,18 @@ class TestInterpreter < PuppetTest::TestCase
         
         assert_nothing_raised { node = interp.nodesearch_external("honeydew")} # neither, thus nil
         assert_nil(node)
+    end
+    
+    # Make sure a nodesearch with arguments works
+    def test_nodesearch_external_arguments
+      mapper = mk_node_mapper
+      Puppet[:external_nodes] = "#{mapper} -s something -p somethingelse"
+      interp = mkinterp
+      node = nil
+      assert_nothing_raised do
+        node = interp.nodesearch("apple")
+      end
+      assert_instance_of(NodeDef, node, "did not create node")
     end
     
     # A wrapper test, to make sure we're correctly calling the external search method.
