@@ -15,35 +15,17 @@ class Puppet::Parser::Scope
 
     include Enumerable
     include Puppet::Util::Errors
-    attr_accessor :parent, :level, :interp, :source, :host
-    attr_accessor :name, :type, :topscope, :base, :keyword
-    attr_accessor :top, :translated, :exported, :virtual
+    attr_accessor :parent, :level, :interp, :source
+    attr_accessor :name, :type, :base, :keyword
+    attr_accessor :top, :translated, :exported, :virtual, :configuration
 
-    # Whether we behave declaratively.  Note that it's a class variable,
-    # so all scopes behave the same.
-    @@declarative = true
-
-    # Retrieve and set the declarative setting.
-    def self.declarative
-        return @@declarative
+    # Proxy accessors
+    def host
+        @configuration.host
     end
-
-    def self.declarative=(val)
-        @@declarative = val
+    def interpreter
+        @configuration.interpreter
     end
-
-    # This handles the shared tables that all scopes have.  They're effectively
-    # global tables, except that they're only global for a single scope tree,
-    # which is why I can't use class variables for them.
-    def self.sharedtable(*names)
-        attr_accessor(*names)
-        @@sharedtables ||= []
-        @@sharedtables += names
-    end
-
-    # This is probably not all that good of an idea, but...
-    # This way a parent can share its tables with all of its children.
-    sharedtable :classtable, :definedtable, :exportable, :overridetable, :collecttable
 
     # Is the value true?  This allows us to control the definition of truth
     # in one place.
@@ -111,44 +93,6 @@ class Puppet::Parser::Scope
         return true
     end
 
-    # Return the scope associated with a class.  This is just here so
-    # that subclasses can set their parent scopes to be the scope of
-    # their parent class.
-    def class_scope(klass)
-        scope = if klass.respond_to?(:classname)
-            @classtable[klass.classname]
-        else
-            @classtable[klass]
-        end
-
-        return nil unless scope
-
-        if scope.nodescope? and ! klass.is_a?(AST::Node)
-            raise Puppet::ParseError, "Node %s has already been evaluated; cannot evaluate class with same name" % [klass.classname]
-        end
-
-        scope
-    end
-
-    # Return the list of collections.
-    def collections
-        @collecttable
-    end
-
-    def declarative=(val)
-        self.class.declarative = val
-    end
-
-    def declarative
-        self.class.declarative
-    end
-
-    # Test whether a given scope is declarative.  Even though it's
-    # a global value, the calling objects don't need to know that.
-    def declarative?
-        @@declarative
-    end
-
     # Remove a specific child.
     def delete(child)
         @children.delete(child)
@@ -169,14 +113,6 @@ class Puppet::Parser::Scope
     # Are we the top scope?
     def topscope?
         @level == 1
-    end
-
-    # Return a list of all of the defined classes.
-    def classlist
-        unless defined? @classtable
-            raise Puppet::DevError, "Scope did not receive class table"
-        end
-        return @classtable.keys.reject { |k| k == "" }
     end
 
     # Yield each child scope in turn
@@ -239,9 +175,6 @@ class Puppet::Parser::Scope
     # Initialize our new scope.  Defaults to having no parent and to
     # being declarative.
     def initialize(hash = {})
-        @parent = nil
-        @type = nil
-        @name = nil
         @finished = false
         if hash.include?(:namespace)
             if n = hash[:namespace]
@@ -262,26 +195,6 @@ class Puppet::Parser::Scope
 
         @tags = []
 
-        if @parent.nil?
-            unless hash.include?(:declarative)
-                hash[:declarative] = true
-            end
-            self.istop(hash[:declarative])
-            @inside = nil
-        else
-            # This is here, rather than in newchild(), so that all
-            # of the later variable initialization works.
-            @parent.child = self
-
-            @level = @parent.level + 1
-            @interp = @parent.interp
-            @source = hash[:source] || @parent.source
-            @topscope = @parent.topscope
-            #@inside = @parent.inside # Used for definition inheritance
-            @host = @parent.host
-            @type ||= @parent.type
-        end
-
         # Our child scopes and objects
         @children = []
 
@@ -294,62 +207,6 @@ class Puppet::Parser::Scope
         @defaultstable = Hash.new { |dhash,type|
             dhash[type] = {}
         }
-
-        unless @interp
-            raise Puppet::DevError, "Scopes require an interpreter"
-        end
-    end
-
-    # Associate the object directly with the scope, so that contained objects
-    # can look up what container they're running within.
-    def inside(arg = nil)
-        return @inside unless arg
-
-        old = @inside
-        @inside = arg
-        yield
-    ensure
-        #Puppet.warning "exiting %s" % @inside.name
-        @inside = old
-    end
-
-    # Mark that we're the top scope, and set some hard-coded info.
-    def istop(declarative = true)
-        # the level is mostly used for debugging
-        @level = 1
-
-        # The table for storing class singletons.  This will only actually
-        # be used by top scopes and node scopes.
-        @classtable = {}
-
-        self.class.declarative = declarative
-
-        # The table for all defined objects.
-        @definedtable = {}
-
-        # The list of objects that will available for export.
-        @exportable = {}
-
-        # The list of overrides.  This is used to cache overrides on objects
-        # that don't exist yet.  We store an array of each override.
-        @overridetable = Hash.new do |overs, ref|
-            overs[ref] = []
-        end
-
-        # Eventually, if we support sites, this will allow definitions
-        # of nodes with the same name in different sites.  For now
-        # the top-level scope is always the only site scope.
-        @sitescope = true
-
-        @namespaces = [""]
-
-        # The list of collections that have been created.  This is a global list,
-        # but they each refer back to the scope that created them.
-        @collecttable = []
-
-        @topscope = self
-        @type = "puppet"
-        @name = "top"
     end
 
     # Collect all of the defaults set at any higher scopes.
@@ -360,8 +217,8 @@ class Puppet::Parser::Scope
         values = {}
 
         # first collect the values from the parents
-        unless @parent.nil?
-            @parent.lookupdefaults(type).each { |var,value|
+        unless parent.nil?
+            parent.lookupdefaults(type).each { |var,value|
                 values[var] = value
             }
         end
@@ -426,7 +283,7 @@ class Puppet::Parser::Scope
                 return @symtable[name]
             end
         elsif self.parent 
-            return @parent.lookupvar(name, usestring)
+            return parent.lookupvar(name, usestring)
         elsif usestring
             return ""
         else
@@ -436,11 +293,6 @@ class Puppet::Parser::Scope
 
     def namespaces
         @namespaces.dup
-    end
-
-    # Add a collection to the global list.
-    def newcollection(coll)
-        @collecttable << coll
     end
 
     # Create a new scope.
@@ -464,6 +316,25 @@ class Puppet::Parser::Scope
         @overridetable.values.flatten
     end
 
+    # We probably shouldn't cache this value...  But it's a lot faster
+    # than doing lots of queries.
+    def parent
+        unless defined?(@parent)
+            @parent = configuration.parent(self)
+        end
+        @parent
+    end
+
+    # Return the list of scopes up to the top scope, ordered with our own first.
+    # This is used for looking up variables and defaults.
+    def scope_path
+        if parent
+            [self, parent.scope_path].flatten.compact
+        else
+            [self]
+        end
+    end
+
     def resources
         @definedtable.values
     end
@@ -472,17 +343,17 @@ class Puppet::Parser::Scope
     # that gets inherited from the top scope down, rather than a global
     # hash.  We store the object ID, not class name, so that we
     # can support multiple unrelated classes with the same name.
-    def setclass(obj)
-        if obj.is_a?(AST::HostClass)
-            unless obj.classname
+    def setclass(klass)
+        if klass.is_a?(AST::HostClass)
+            unless klass.classname
                 raise Puppet::DevError, "Got a %s with no fully qualified name" %
-                    obj.class
+                    klass.class
             end
-            @classtable[obj.classname] = self
+            @configuration.class_set(klass.classname, self)
         else
-            raise Puppet::DevError, "Invalid class %s" % obj.inspect
+            raise Puppet::DevError, "Invalid class %s" % klass.inspect
         end
-        if obj.is_a?(AST::Node)
+        if klass.is_a?(AST::Node)
             @nodescope = true
         end
         nil
@@ -665,9 +536,9 @@ class Puppet::Parser::Scope
         unless ! defined? @type or @type.nil? or @type == ""
             tmp << @type.to_s
         end
-        if @parent
-            #info "Looking for tags in %s" % @parent.type
-            @parent.tags.each { |tag|
+        if parent
+            #info "Looking for tags in %s" % parent.type
+            parent.tags.each { |tag|
                 if tag.nil? or tag == ""
                     Puppet.debug "parent returned tag %s" % tag.inspect
                     next
@@ -719,19 +590,6 @@ class Puppet::Parser::Scope
     def unsetvar(var)
         if @symtable.include?(var)
             @symtable.delete(var)
-        end
-    end
-
-    # Return an array of all of the unevaluated objects
-    def unevaluated
-        ary = @definedtable.find_all do |name, object|
-            ! object.builtin? and ! object.evaluated?
-        end.collect { |name, object| object }
-
-        if ary.empty?
-            return nil
-        else
-            return ary
         end
     end
 

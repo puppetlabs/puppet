@@ -24,8 +24,11 @@ class Puppet::Parser::AST
             scope = hash[:scope]
             args = hash[:arguments]
 
-            # Verify that we haven't already been evaluated
-            if scope.class_scope(self)
+            # Verify that we haven't already been evaluated, and if we have been evaluated,
+            # make sure that we match the class.
+            if existing_scope = scope.class_scope(self)
+                raise "Fix this portion of the code -- check that the scopes match classes"
+                #if existing_scope.source.object_id == self.object_id
                 Puppet.debug "%s class already evaluated" % @type
                 return nil
             end
