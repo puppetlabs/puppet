@@ -122,7 +122,11 @@ module Puppet
             "The configuration file that defines the rights to the different
             namespaces and methods.  This can be used as a coarse-grained
             authorization system for both ``puppetd`` and ``puppetmasterd``."
-        ]
+        ],
+        :environment => ["", "The environment Puppet is running in.  For clients (e.g., ``puppetd``) this
+            determines the environment itself, which is used to find modules and much more.  For
+            servers (i.e., ``puppetmasterd``) this provides the default environment for nodes we
+            know nothing about."]
     )
 
     hostname = Facter["hostname"].value
@@ -544,7 +548,9 @@ module Puppet
 
     setdefaults(:parser,
         :typecheck => [true, "Whether to validate types during parsing."],
-        :paramcheck => [true, "Whether to validate parameters during parsing."]
+        :paramcheck => [true, "Whether to validate parameters during parsing."],
+        :node_source => ["", "Where to look for node configuration information.
+            See the `NodeSourceReference`:trac: for more information."]
     )
     
     setdefaults(:main,

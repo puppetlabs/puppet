@@ -1,4 +1,4 @@
-Puppet::Network::Handler::Node.newnode_source(:ldap) do
+Puppet::Network::Handler::Node.newnode_source(:ldap, :fact_merge => true) do
     desc "Search in LDAP for node configuration information."
 
     # Find the ldap node, return the class list and parent node specially,
@@ -113,6 +113,6 @@ Puppet::Network::Handler::Node.newnode_source(:ldap) do
             end
         end
 
-        return Puppet::Network::Handler::Node::SimpleNode.new(:name => node, :classes => classes, :source => "ldap", :parameters => parameters)
+        return newnode(node, :classes => classes, :source => "ldap", :parameters => parameters)
     end
 end

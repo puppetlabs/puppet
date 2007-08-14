@@ -1,4 +1,4 @@
-Puppet::Network::Handler::Node.newnode_source(:external) do
+Puppet::Network::Handler::Node.newnode_source(:external, :fact_merge => true) do
     desc "Call an external program to get node information."
 
     include Puppet::Util
@@ -33,7 +33,7 @@ Puppet::Network::Handler::Node.newnode_source(:external) do
             raise Puppet::Error, "Could not load external node results for %s: %s" % [name, detail]
         end
 
-        node = Puppet::Network::Handler::Node::SimpleNode.new(:name => name)
+        node = newnode(name)
         set = false
         [:parameters, :classes].each do |param|
             if value = result[param]

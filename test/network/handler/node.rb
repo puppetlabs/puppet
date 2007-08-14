@@ -43,31 +43,342 @@ module NodeTesting
     def mk_searcher(name)
         searcher = Object.new
         searcher.extend(Node.node_source(name))
+        searcher.meta_def(:newnode) do |name, *args|
+            SimpleNode.new(name, *args)
+        end
+        searcher
+    end
+
+    def mk_node_source
+        @node_info = {}
+        @node_source = Node.newnode_source(:testing, :fact_merge => true) do
+            def nodesearch(key)
+                if info = @node_info[key]
+                    SimpleNode.new(info)
+                else
+                    nil
+                end
+            end
+        end
+        Puppet[:node_source] = "testing"
+
+        cleanup { Node.rm_node_source(:testing) }
     end
 end
 
 class TestNodeInterface < Test::Unit::TestCase
+    include NodeTesting
+
     def setup
         super
+        mk_node_source
     end
 
-    def teardown
+    # Make sure that the handler includes the appropriate
+    # node source.
+    def test_initialize
+        # First try it when passing in the node source
+        handler = nil
+        assert_nothing_raised("Could not specify a node source") do
+            handler = Node.new(:Source => :testing)
+        end
+        assert(handler.metaclass.included_modules.include?(@node_source), "Handler did not include node source")
+
+        # Now use the Puppet[:node_source]
+        Puppet[:node_source] = "testing"
+        assert_nothing_raised("Could not specify a node source") do
+            handler = Node.new()
+        end
+        assert(handler.metaclass.included_modules.include?(@node_source), "Handler did not include node source")
+
+        # And make sure we throw an exception when an invalid node source is used
+        assert_raise(ArgumentError, "Accepted an invalid node source") do
+            handler = Node.new(:Source => "invalid")
+        end
     end
 
-    def test_node
-        raise "Failing, yo"
+    # Make sure we can find and we cache a fact handler.
+    def test_fact_handler
+        handler = Node.new
+        fhandler = nil
+        assert_nothing_raised("Could not retrieve the fact handler") do
+            fhandler = handler.send(:fact_handler)
+        end
+        assert_instance_of(Puppet::Network::Handler::Facts, fhandler, "Did not get a fact handler back")
+
+        # Now call it again, making sure we're caching the value.
+        fhandler2 = nil
+        assert_nothing_raised("Could not retrieve the fact handler") do
+            fhandler2 = handler.send(:fact_handler)
+        end
+        assert_instance_of(Puppet::Network::Handler::Facts, fhandler2, "Did not get a fact handler on the second run")
+        assert_equal(fhandler.object_id, fhandler2.object_id, "Did not cache fact handler")
     end
 
+    # Make sure we can get node facts from the fact handler.
+    def test_node_facts
+        # Check the case where we find the node.
+        handler = Node.new
+        fhandler = handler.send(:fact_handler)
+        fhandler.expects(:get).with("present").returns("a" => "b")
+
+        result = nil
+        assert_nothing_raised("Could not get facts from fact handler") do
+            result = handler.send(:node_facts, "present")
+        end
+        assert_equal({"a" => "b"}, result, "Did not get correct facts back")
+
+        # Now try the case where the fact handler knows nothing about our host
+        fhandler.expects(:get).with('missing').returns(nil)
+        result = nil
+        assert_nothing_raised("Could not get facts from fact handler when host is missing") do
+            result = handler.send(:node_facts, "missing")
+        end
+        assert_equal({}, result, "Did not get empty hash when no facts are known")
+    end
+
+    # Test our simple shorthand
+    def test_newnode
+        SimpleNode.expects(:new).with("stuff")
+        handler = Node.new
+        handler.newnode("stuff")
+    end
+
+    # Make sure we can build up the correct node names to search for
+    def test_node_names
+        handler = Node.new
+
+        # Verify that the handler asks for the facts if we don't pass them in
+        handler.expects(:node_facts).with("testing").returns({})
+        handler.send(:node_names, "testing")
+
+        handler = Node.new
+        # Test it first with no parameters
+        assert_equal(%w{testing}, handler.send(:node_names, "testing"), "Node names did not default to an array including just the node name")
+
+        # Now test it with a fully qualified name
+        assert_equal(%w{testing.domain.com testing}, handler.send(:node_names, "testing.domain.com"),
+            "Fully qualified names did not get turned into multiple names, longest first")
+
+        # And try it with a short name + domain fact
+        assert_equal(%w{testing host.domain.com host}, handler.send(:node_names, "testing", "domain" => "domain.com", "hostname" => "host"),
+            "The domain fact was not used to build up an fqdn")
+
+        # And with an fqdn
+        assert_equal(%w{testing host.domain.com host}, handler.send(:node_names, "testing", "fqdn" => "host.domain.com"),
+            "The fqdn was not used")
+
+        # And make sure the fqdn beats the domain
+        assert_equal(%w{testing host.other.com host}, handler.send(:node_names, "testing", "domain" => "domain.com", "fqdn" => "host.other.com"),
+            "The domain was used in preference to the fqdn")
+    end
+
+    # Make sure we can retrieve a whole node by name.
+    def test_details_when_we_find_nodes
+        handler = Node.new
+
+        # Make sure we get the facts first
+        handler.expects(:node_facts).with("host").returns(:facts)
+
+        # Find the node names
+        handler.expects(:node_names).with("host", :facts).returns(%w{a b c})
+
+        # Iterate across them
+        handler.expects(:nodesearch).with("a").returns(nil)
+        handler.expects(:nodesearch).with("b").returns(nil)
+
+        # Create an example node to return
+        node = SimpleNode.new("host")
+
+        # Make sure its source is set
+        node.expects(:source=).with(handler.source)
+
+        # And make sure we actually get it back
+        handler.expects(:nodesearch).with("c").returns(node)
+
+        handler.expects(:fact_merge?).returns(true)
+
+        # Make sure we merge the facts with the node's parameters.
+        node.expects(:fact_merge).with(:facts)
+
+        # Now call the method
+        result = nil
+        assert_nothing_raised("could not call 'details'") do
+            result = handler.details("host")
+        end
+        assert_equal(node, result, "Did not get correct node back")
+    end
+
+    # But make sure we pass through to creating default nodes when appropriate.
+    def test_details_using_default_node
+        handler = Node.new
+
+        # Make sure we get the facts first
+        handler.expects(:node_facts).with("host").returns(:facts)
+
+        # Find the node names
+        handler.expects(:node_names).with("host", :facts).returns([])
+
+        # Create an example node to return
+        node = SimpleNode.new("host")
+
+        # Make sure its source is set
+        node.expects(:source=).with(handler.source)
+
+        # And make sure we actually get it back
+        handler.expects(:nodesearch).with("default").returns(node)
+
+        # This time, have it return false
+        handler.expects(:fact_merge?).returns(false)
+
+        # And because fact_merge was false, we don't merge them.
+        node.expects(:fact_merge).never
+
+        # Now call the method
+        result = nil
+        assert_nothing_raised("could not call 'details'") do
+            result = handler.details("host")
+        end
+        assert_equal(node, result, "Did not get correct node back")
+    end
+
+    # Make sure our handler behaves rationally when it comes to getting environment data.
     def test_environment
-        raise "still failing"
+        # What happens when we can't find the node
+        handler = Node.new
+        handler.expects(:details).with("fake").returns(nil)
+
+        result = nil
+        assert_nothing_raised("Could not call 'Node.environment'") do
+            result = handler.environment("fake")
+        end
+        assert_nil(result, "Got an environment for a node we could not find")
+
+        # Now for nodes we can find
+        handler = Node.new
+        node = SimpleNode.new("fake")
+        handler.expects(:details).with("fake").returns(node)
+        node.expects(:environment).returns("dev")
+
+        result = nil
+        assert_nothing_raised("Could not call 'Node.environment'") do
+            result = handler.environment("fake")
+        end
+        assert_equal("dev", result, "Did not get environment back")
     end
 
+    # Make sure our handler behaves rationally when it comes to getting parameter data.
     def test_parameters
-        raise "still failing"
+        # What happens when we can't find the node
+        handler = Node.new
+        handler.expects(:details).with("fake").returns(nil)
+
+        result = nil
+        assert_nothing_raised("Could not call 'Node.parameters'") do
+            result = handler.parameters("fake")
+        end
+        assert_nil(result, "Got parameters for a node we could not find")
+
+        # Now for nodes we can find
+        handler = Node.new
+        node = SimpleNode.new("fake")
+        handler.expects(:details).with("fake").returns(node)
+        node.expects(:parameters).returns({"a" => "b"})
+
+        result = nil
+        assert_nothing_raised("Could not call 'Node.parameters'") do
+            result = handler.parameters("fake")
+        end
+        assert_equal({"a" => "b"}, result, "Did not get parameters back")
     end
 
     def test_classes
-        raise "still failing"
+        # What happens when we can't find the node
+        handler = Node.new
+        handler.expects(:details).with("fake").returns(nil)
+
+        result = nil
+        assert_nothing_raised("Could not call 'Node.classes'") do
+            result = handler.classes("fake")
+        end
+        assert_nil(result, "Got classes for a node we could not find")
+
+        # Now for nodes we can find
+        handler = Node.new
+        node = SimpleNode.new("fake")
+        handler.expects(:details).with("fake").returns(node)
+        node.expects(:classes).returns(%w{yay foo})
+
+        result = nil
+        assert_nothing_raised("Could not call 'Node.classes'") do
+            result = handler.classes("fake")
+        end
+        assert_equal(%w{yay foo}, result, "Did not get classes back")
+    end
+end
+
+class TestSimpleNode < Test::Unit::TestCase
+    include NodeTesting
+
+    # Make sure we get all the defaults correctly.
+    def test_simplenode_initialize
+        node = nil
+        assert_nothing_raised("could not create a node without classes or parameters") do
+            node = SimpleNode.new("testing")
+        end
+        assert_equal("testing", node.name, "Did not set name correctly")
+        assert_equal({}, node.parameters, "Node parameters did not default correctly")
+        assert_equal([], node.classes, "Node classes did not default correctly")
+
+        # Now test it with values for both
+        params = {"a" => "b"}
+        classes = %w{one two}
+        assert_nothing_raised("could not create a node with classes and parameters") do
+            node = SimpleNode.new("testing", :parameters => params, :classes => classes)
+        end
+        assert_equal("testing", node.name, "Did not set name correctly")
+        assert_equal(params, node.parameters, "Node parameters did not get set correctly")
+        assert_equal(classes, node.classes, "Node classes did not get set correctly")
+
+        # And make sure a single class gets turned into an array
+        assert_nothing_raised("could not create a node with a class as a string") do
+            node = SimpleNode.new("testing", :classes => "test")
+        end
+        assert_equal(%w{test}, node.classes, "A node class string was not converted to an array")
+
+        # Make sure we get environments
+        assert_nothing_raised("could not create a node with an environment") do
+            node = SimpleNode.new("testing", :environment => "test")
+        end
+        assert_equal("test", node.environment, "Environment was not set")
+
+        # Now make sure we get the default env
+        Puppet[:environment] = "prod"
+        assert_nothing_raised("could not create a node with no environment") do
+            node = SimpleNode.new("testing")
+        end
+        assert_equal("prod", node.environment, "Did not get default environment")
+
+        # But that it stays nil if there's no default env set
+        Puppet[:environment] = ""
+        assert_nothing_raised("could not create a node with no environment and no default env") do
+            node = SimpleNode.new("testing")
+        end
+        assert_nil(node.environment, "Got a default env when none was set")
+
+    end
+
+    # Verify that the node source wins over facter.
+    def test_fact_merge
+        node = SimpleNode.new("yay", :parameters => {"a" => "one", "b" => "two"})
+
+        assert_nothing_raised("Could not merge parameters") do
+            node.fact_merge("b" => "three", "c" => "yay")
+        end
+        params = node.parameters
+        assert_equal("one", params["a"], "Lost nodesource parameters in parameter merge")
+        assert_equal("two", params["b"], "Overrode nodesource parameters in parameter merge")
+        assert_equal("yay", params["c"], "Did not get facts in parameter merge")
     end
 end
 
@@ -87,12 +398,16 @@ class TestNodeSources < Test::Unit::TestCase
 
         cleanup do
             Node.rm_node_source(:testing)
+            assert(! Node.const_defined?("Testing"), "Did not remove constant")
         end
     end
     
     def test_external_node_source
+        source = Node.node_source(:external)
+        assert(source, "Could not find external node source")
         mapper = mk_node_mapper
         searcher = mk_searcher(:external)
+        assert(searcher.fact_merge?, "External node source does not merge facts")
 
         # Make sure it gives the right response
         assert_equal({'classes' => %w{apple1 apple2 apple3}, :parameters => {"one" => "apple1", "two" => "apple2"}},
@@ -157,7 +472,10 @@ class TestNodeSources < Test::Unit::TestCase
     # This can stay in the main test suite because it doesn't actually use ldapsearch,
     # it just overrides the method so it behaves as though it were hitting ldap.
     def test_ldap_nodesearch
+        source = Node.node_source(:ldap)
+        assert(source, "Could not find ldap node source")
         searcher = mk_searcher(:ldap)
+        assert(searcher.fact_merge?, "LDAP node source does not merge facts")
 
         nodetable = {}
 
