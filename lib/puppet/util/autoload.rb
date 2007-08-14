@@ -141,7 +141,13 @@ class Puppet::Util::Autoload
 
     # The list of directories to search through for loadable plugins.
     def searchpath
-        [Puppet[:libdir], $:].flatten
+        # JJM: Search for optional lib directories in each module bundle.
+        module_lib_dirs = Puppet[:modulepath].split(":").collect do |d|
+            Dir.glob("%s/*/lib" % d).select do |f|
+                FileTest.directory?(f) 
+            end
+        end.flatten
+        [module_lib_dirs, Puppet[:libdir], $:].flatten
     end
 end
 
