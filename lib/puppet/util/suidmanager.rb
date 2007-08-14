@@ -1,5 +1,6 @@
 require 'facter'
 require 'puppet/util/warnings'
+require 'forwardable'
 
 module Puppet::Util::SUIDManager
     include Puppet::Util::Warnings

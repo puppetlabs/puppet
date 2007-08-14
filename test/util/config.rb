@@ -10,6 +10,8 @@ require 'puppettest/parsertesting'
 class TestConfig < Test::Unit::TestCase
 	include PuppetTest
 	include PuppetTest::ParserTesting
+    CElement = Puppet::Util::Config::CElement
+    CBoolean = Puppet::Util::Config::CBoolean
 
     def setup
         super
@@ -535,34 +537,46 @@ yay = /a/path
         }
     end
 
-    def test_argadding
-        c = mkconfig
+    def test_addargs
+        @config.setdefaults("testing",
+                            :onboolean => [true, "An on bool"],
+                            :offboolean => [false, "An off bool"],
+                            :string => ["a string", "A string arg"],
+                            :file => ["/path/to/file", "A file arg"]
+                            )
 
-        assert_nothing_raised {
-            @config.setdefaults("testing",
-                :onboolean => [true, "An on bool"],
-                :offboolean => [false, "An off bool"],
-                :string => ["a string", "A string arg"],
-                :file => ["/path/to/file", "A file arg"]
-            )
+        should = []
+        @config.each { |name, element|
+            element.expects(:getopt_args).returns([name])
+            should << name
         }
-        options = []
+        result = []
+        assert_nothing_raised("Add args failed") do
+            @config.addargs(result)
+        end
+        assert_equal(should, result, "Did not call addargs correctly.")
 
-        @config.addargs(options)
+    end
 
-        @config.each { |param, obj|
-            opt = "--%s" % param
-            assert(options.find { |ary|
-                ary[0] == opt
-            }, "Argument %s was not added" % opt)
-
-            if @config.boolean?(param)
-                o = "--no-%s" % param
-                assert(options.find { |ary|
-                ary[0] == o
-                }, "Boolean off %s was not added" % o)
+    def test_addargs_functional
+        @config.setdefaults("testing",
+                            :onboolean => [true, "An on bool"],
+                            :string => ["a string", "A string arg"]
+                            )
+        result = []
+        should = []
+        assert_nothing_raised("Add args failed") do
+            @config.addargs(result)
+        end
+        @config.each do |name, element|
+            if name == :onboolean
+                should << ["--onboolean", GetoptLong::NO_ARGUMENT]
+                should << ["--no-onboolean", GetoptLong::NO_ARGUMENT]
+            elsif name == :string
+                should << ["--string", GetoptLong::REQUIRED_ARGUMENT]
             end
-        }
+        end
+        assert_equal(should, result, "Add args functional test failed")
     end
 
     def test_usesection
@@ -1242,6 +1256,55 @@ inttest = 27
 
         # And make sure other params are unchanged
         assert_equal("unval", @config[:unchanged], "Unchanged value has somehow changed")
+    end
+
+    # Test to make sure that we can set and get a short name
+    def test_celement_short_name
+        element = nil
+        assert_nothing_raised("Could not create celement") do
+            element = CElement.new :short => "n", :desc => "anything"
+        end
+        assert_equal("n", element.short, "Short value is not retained")
+
+        assert_raise(ArgumentError,"Allowed multicharactered short names.") do
+            element = CElement.new :short => "no", :desc => "anything"
+        end
+    end
+
+    # Test to make sure that no two celements have the same short name
+    def test_celement_short_name_not_duplicated
+        config = mkconfig
+        assert_nothing_raised("Could not create celement with short name.") do
+            config.setdefaults(:main,
+                               :one => { :default => "blah", :desc => "anything", :short => "o" })
+        end
+        assert_nothing_raised("Could not create second celement with short name.") do
+            config.setdefaults(:main,
+                               :two => { :default => "blah", :desc => "anything", :short => "i" })
+        end
+        assert_raise(ArgumentError, "Could create second celement with duplicate short name.") do
+            config.setdefaults(:main,
+                               :three => { :default => "blah", :desc => "anything", :short => "i" })
+        end
+        # make sure that when the above raises an expection that the config is not included
+        assert(!config.include?(:three), "Invalid configuration item was retained")
+    end
+
+    # Tell getopt which arguments are valid
+    def test_get_getopt_args
+        element = CElement.new :name => "foo", :desc => "anything"
+        assert_equal([["--foo", GetoptLong::REQUIRED_ARGUMENT]], element.getopt_args, "Did not produce appropriate getopt args")
+        
+        element.short = "n"
+        assert_equal([["--foo", "-n", GetoptLong::REQUIRED_ARGUMENT]], element.getopt_args, "Did not produce appropriate getopt args")
+
+        element = CBoolean.new :name => "foo", :desc => "anything"
+        assert_equal([["--foo", GetoptLong::NO_ARGUMENT], ["--no-foo", GetoptLong::NO_ARGUMENT]],
+                     element.getopt_args, "Did not produce appropriate getopt args")
+
+        element.short = "n"
+        assert_equal([["--foo", "-n", GetoptLong::NO_ARGUMENT],["--no-foo", GetoptLong::NO_ARGUMENT]],
+                      element.getopt_args, "Did not produce appropriate getopt args")
     end
 end
 
