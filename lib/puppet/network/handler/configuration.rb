@@ -8,216 +8,192 @@ require 'yaml'
 class Puppet::Network::Handler
     class Configuration < Handler
         desc "Puppet's configuration compilation interface.  Passed a node name
-            or other key, retrieves information about the node and returns a
-            compiled configuration."
+            or other key, retrieves information about the node (using the ``node_source``)
+            and returns a compiled configuration."
 
         include Puppet::Util
 
-        attr_accessor :ast, :local
-        attr_reader :ca
+        attr_accessor :local
 
         @interface = XMLRPC::Service::Interface.new("configuration") { |iface|
                 iface.add_method("string configuration(string)")
                 iface.add_method("string version()")
         }
 
-        # FIXME At some point, this should be autodocumenting.
-        def addfacts(facts)
-            # Add our server version to the fact list
-            facts["serverversion"] = Puppet.version.to_s
-
-            # And then add the server name and IP
-            {"servername" => "fqdn",
-                "serverip" => "ipaddress"
-            }.each do |var, fact|
-                if obj = Facter[fact]
-                    facts[var] = obj.value
-                else
-                    Puppet.warning "Could not retrieve fact %s" % fact
-                end
+        # Compile a node's configuration.
+        def configuration(key, client = nil, clientip = nil)
+            # Note that this is reasonable, because either their node source should actually
+            # know about the node, or they should be using the ``none`` node source, which
+            # will always return data.
+            unless node = node_handler.details(key)
+                raise Puppet::Error, "Could not find node '%s'" % key
             end
 
-            if facts["servername"].nil?
-                host = Facter.value(:hostname)
-                if domain = Facter.value(:domain)
-                    facts["servername"] = [host, domain].join(".")
-                else
-                    facts["servername"] = host
-                end
-            end
+            # Add any external data to the node.
+            add_node_data(node)
+
+            return translate(compile(node))
         end
 
-        # Manipulate the client name as appropriate.
-        def clientname(name, ip, facts)
-            # Always use the hostname from Facter.
-            client = facts["hostname"]
-            clientip = facts["ipaddress"]
-            if Puppet[:node_name] == 'cert'
-                if name
-                    client = name
-                end
-                if ip
-                    clientip = ip
-                end
-            end
-
-            return client, clientip
-        end
-
-        # Tell a client whether there's a fresh config for it
-        def freshness(client = nil, clientip = nil)
-            if Puppet.features.rails? and Puppet[:storeconfigs]
-                Puppet::Rails.connect
-
-                host = Puppet::Rails::Host.find_or_create_by_name(client)
-                host.last_freshcheck = Time.now
-                if clientip and (! host.ip or host.ip == "" or host.ip == "NULL")
-                    host.ip = clientip
-                end
-                host.save
-            end
-            if defined? @interpreter
-                return @interpreter.parsedate
-            else
-                return 0
-            end
-        end
-
-        def initialize(hash = {})
-            args = {}
-
-            # Allow specification of a code snippet or of a file
-            if code = hash[:Code]
-                args[:Code] = code
-            else
-                args[:Manifest] = hash[:Manifest] || Puppet[:manifest]
-            end
-
-            if hash[:Local]
-                @local = hash[:Local]
+        def initialize(options = {})
+            if options[:Local]
+                @local = options[:Local]
             else
                 @local = false
             end
 
-            args[:Local] = @local
+            # Just store the options, rather than creating the interpreter
+            # immediately.  Mostly, this is so we can create the interpreter
+            # on-demand, which is easier for testing.
+            @options = options
+        end
 
-            if hash.include?(:CA) and hash[:CA]
-                @ca = Puppet::SSLCertificates::CA.new()
+        # Are we running locally, or are our clients networked?
+        def local?
+            self.local
+        end
+
+        # Return the configuration version.
+        def version(client = nil, clientip = nil)
+            # If we can find the node, then store the fact that the node
+            # has checked in.
+            if node = node_handler.search(client)
+                update_node_freshness(client)
+            end
+            interpreter.parsedate
+        end
+
+        private
+
+        # Add any extra data necessary to the node.
+        def add_node_data(node)
+            # Merge in our server-side facts, so they can be used during compilation.
+            node.fact_merge(@server_facts)
+
+            # Add any specified classes to the node's class list.
+            if classes = @options[:Classes]
+                classes.each do |klass|
+                    node.classes << klass
+                end
+            end
+        end
+
+        # Compile the actual configuration.
+        def compile(node)
+            # Pick the benchmark level.
+            if local?
+                level = :none
             else
-                @ca = nil
+                level = :notice
             end
 
-            Puppet.debug("Creating interpreter")
+            # Ask the interpreter to compile the configuration.
+            config = nil
+            benchmark(level, "Compiled configuration for %s" % node.name) do
+                begin
+                    config = interpreter.compile(node)
+                rescue Puppet::Error => detail
+                    Puppet.err detail
+                    raise XMLRPC::FaultException.new(
+                        1, detail.to_s
+                    )
+                end
+            end
 
-            if hash.include?(:UseNodes)
-                args[:UseNodes] = hash[:UseNodes]
+            return config
+        end
+
+        # Create our interpreter object.
+        def create_interpreter(options)
+            args = {}
+
+            # Allow specification of a code snippet or of a file
+            if code = options[:Code]
+                args[:Code] = code
+            else
+                args[:Manifest] = options[:Manifest] || Puppet[:manifest]
+            end
+
+            args[:Local] = local?
+
+            if options.include?(:UseNodes)
+                args[:UseNodes] = options[:UseNodes]
             elsif @local
                 args[:UseNodes] = false
             end
 
             # This is only used by the cfengine module, or if --loadclasses was
             # specified in +puppet+.
-            if hash.include?(:Classes)
-                args[:Classes] = hash[:Classes]
+            if options.include?(:Classes)
+                args[:Classes] = options[:Classes]
             end
 
-            @interpreter = Puppet::Parser::Interpreter.new(args)
+            return Puppet::Parser::Interpreter.new(args)
         end
 
-        def getconfig(facts, format = "marshal", client = nil, clientip = nil)
-            if @local
-                # we don't need to do anything, since we should already
-                # have raw objects
-                Puppet.debug "Our client is local"
-            else
-                Puppet.debug "Our client is remote"
+        # Create/return our interpreter.
+        def interpreter
+            unless defined?(@interpreter) and @interpreter
+                @interpreter = create_interpreter(@options)
+            end
+            @interpreter
+        end
 
-                # XXX this should definitely be done in the protocol, somehow
-                case format
-                when "marshal":
-                    Puppet.warning "You should upgrade your client.  'Marshal' will not be supported much longer."
-                    begin
-                        facts = Marshal::load(CGI.unescape(facts))
-                    rescue => detail
-                        raise XMLRPC::FaultException.new(
-                            1, "Could not rebuild facts"
-                        )
-                    end
-                when "yaml":
-                    begin
-                        facts = YAML.load(CGI.unescape(facts))
-                    rescue => detail
-                        raise XMLRPC::FaultException.new(
-                            1, "Could not rebuild facts"
-                        )
-                    end
+        # Create a node handler instance for looking up our nodes.
+        def node_handler
+            unless defined?(@node_handler)
+                @node_handler = Puppet::Network::Handler.handler(:node).new
+            end
+            @node_handler
+        end
+
+        # Initialize our server fact hash; we add these to each client, and they
+        # won't change while we're running, so it's safe to cache the values.
+        def set_server_facts
+            @server_facts = {}
+
+            # Add our server version to the fact list
+            @server_facts["serverversion"] = Puppet.version.to_s
+
+            # And then add the server name and IP
+            {"servername" => "fqdn",
+                "serverip" => "ipaddress"
+            }.each do |var, fact|
+                if value = Facter.value(fact)
+                    @server_facts[var] = value
                 else
-                    raise XMLRPC::FaultException.new(
-                        1, "Unavailable config format %s" % format
-                    )
+                    Puppet.warning "Could not retrieve fact %s" % fact
                 end
             end
 
-            client, clientip = clientname(client, clientip, facts)
-
-            # Add any server-side facts to our server.
-            addfacts(facts)
-
-            retobjects = nil
-
-            # This is hackish, but there's no "silence" option for benchmarks
-            # right now
-            if @local
-                #begin
-                    retobjects = @interpreter.run(client, facts)
-                #rescue Puppet::Error => detail
-                #    Puppet.err detail
-                #    raise XMLRPC::FaultException.new(
-                #        1, detail.to_s
-                #    )
-                #rescue => detail
-                #    Puppet.err detail.to_s
-                #    return ""
-                #end
-            else
-                benchmark(:notice, "Compiled configuration for %s" % client) do
-                    begin
-                        retobjects = @interpreter.run(client, facts)
-                    rescue Puppet::Error => detail
-                        Puppet.err detail
-                        raise XMLRPC::FaultException.new(
-                            1, detail.to_s
-                        )
-                    rescue => detail
-                        Puppet.err detail.to_s
-                        return ""
-                    end
-                end
-            end
-
-            if @local
-                return retobjects
-            else
-                str = nil
-                case format
-                when "marshal":
-                    str = Marshal::dump(retobjects)
-                when "yaml":
-                    str = retobjects.to_yaml(:UseBlock => true)
+            if @server_facts["servername"].nil?
+                host = Facter.value(:hostname)
+                if domain = Facter.value(:domain)
+                    @server_facts["servername"] = [host, domain].join(".")
                 else
-                    raise XMLRPC::FaultException.new(
-                        1, "Unavailable config format %s" % format
-                    )
+                    @server_facts["servername"] = host
                 end
-                return CGI.escape(str)
             end
         end
 
-        def local?
-            if defined? @local and @local
-                return true
+        # Translate our configuration appropriately for sending back to a client.
+        def translate(config)
+            if local?
+                config
             else
-                return false
+                CGI.escape(config.to_yaml(:UseBlock => true))
+            end
+        end
+
+        # Mark that the node has checked in. FIXME this needs to be moved into
+        # the SimpleNode class, or somewhere that's got abstract backends.
+        def update_node_freshness(node)
+            if Puppet.features.rails? and Puppet[:storeconfigs]
+                Puppet::Rails.connect
+
+                host = Puppet::Rails::Host.find_or_create_by_name(node.name)
+                host.last_freshcheck = Time.now
+                host.save
             end
         end
     end
