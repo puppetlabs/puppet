@@ -9,7 +9,7 @@ require 'puppet/util/instance_loader'
 class Puppet::Network::Handler::Node < Puppet::Network::Handler
     # A simplistic class for managing the node information itself.
     class SimpleNode
-        attr_accessor :name, :classes, :parameters, :environment, :source, :ipaddress
+        attr_accessor :name, :classes, :parameters, :environment, :source, :ipaddress, :names
 
         def initialize(name, options = {})
             @name = name
@@ -136,6 +136,7 @@ class Puppet::Network::Handler::Node < Puppet::Network::Handler
 
         if node
             node.source = @source
+            node.names = names
 
             # Merge the facts into the parameters.
             if fact_merge?

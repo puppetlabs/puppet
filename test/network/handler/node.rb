@@ -193,6 +193,9 @@ class TestNodeInterface < Test::Unit::TestCase
         # Make sure its source is set
         node.expects(:source=).with(handler.source)
 
+        # And that the names are retained
+        node.expects(:names=).with(%w{a b c})
+
         # And make sure we actually get it back
         handler.expects(:nodesearch).with("c").returns(node)
 
