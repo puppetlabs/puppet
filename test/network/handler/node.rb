@@ -529,6 +529,24 @@ class TestNodeSources < Test::Unit::TestCase
         assert_equal(%w{one two three four five}.sort, node.classes.sort, "node classes were not set correctly with the top node")
         assert_equal({"base" => "true", "center" => "boo", "master" => "far"}, node.parameters, "node parameters were not set correctly with the top node")
     end
+
+    # Make sure we always get a node back from the 'none' nodesource.
+    def test_nodesource_none
+        source = Node.node_source(:none)
+        assert(source, "Could not find 'none' node source")
+        searcher = mk_searcher(:none)
+        assert(searcher.fact_merge?, "'none' node source does not merge facts")
+
+        # Run a couple of node names through it
+        node = nil
+        %w{192.168.0.1 0:0:0:3:a:f host host.domain.com}.each do |name|
+            assert_nothing_raised("Could not create an empty node with name '%s'" % name) do
+                node = searcher.nodesearch(name)
+            end
+            assert_instance_of(SimpleNode, node, "Did not get a simple node back for %s" % name)
+            assert_equal(name, node.name, "Name was not set correctly")
+        end
+    end
 end
 
 class LdapNodeTest < PuppetTest::TestCase

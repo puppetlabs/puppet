@@ -549,7 +549,9 @@ module Puppet
     setdefaults(:parser,
         :typecheck => [true, "Whether to validate types during parsing."],
         :paramcheck => [true, "Whether to validate parameters during parsing."],
-        :node_source => ["", "Where to look for node configuration information.
+        :node_source => ["none", "Where to look for node configuration information.
+            The default node source, ``none``, just returns a node with its facts
+            filled in, which is required for normal functionality.
             See the `NodeSourceReference`:trac: for more information."]
     )
     
