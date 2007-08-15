@@ -9,7 +9,7 @@ require 'puppet/util/instance_loader'
 class Puppet::Network::Handler::Node < Puppet::Network::Handler
     # A simplistic class for managing the node information itself.
     class SimpleNode
-        attr_accessor :name, :classes, :parameters, :environment, :source
+        attr_accessor :name, :classes, :parameters, :environment, :source, :ipaddress
 
         def initialize(name, options = {})
             @name = name
@@ -114,7 +114,7 @@ class Puppet::Network::Handler::Node < Puppet::Network::Handler
 
     # Return an entire node configuration.  This uses the 'nodesearch' method
     # defined in the node_source to look for the node.
-    def details(key)
+    def details(key, client = nil, clientip = nil)
         facts = node_facts(key)
         node = nil
         names = node_names(key, facts)
@@ -148,7 +148,7 @@ class Puppet::Network::Handler::Node < Puppet::Network::Handler
     end
 
     # Return a given node's environment.
-    def environment(key)
+    def environment(key, client = nil, clientip = nil)
         if node = details(key)
             node.environment
         else
@@ -169,14 +169,8 @@ class Puppet::Network::Handler::Node < Puppet::Network::Handler
         super
     end
 
-    # Short-hand for creating a new node, so the node sources don't need to
-    # specify the constant.
-    def newnode(options)
-        SimpleNode.new(options)
-    end
-
     # Try to retrieve a given node's parameters.
-    def parameters(key)
+    def parameters(key, client = nil, clientip = nil)
         if node = details(key)
             node.parameters
         else
@@ -192,6 +186,12 @@ class Puppet::Network::Handler::Node < Puppet::Network::Handler
             @fact_handler = Puppet::Network::Handler.handler(:facts).new
         end
         @fact_handler
+    end
+
+    # Short-hand for creating a new node, so the node sources don't need to
+    # specify the constant.
+    def newnode(options)
+        SimpleNode.new(options)
     end
 
     # Look up the node facts from our fact handler.

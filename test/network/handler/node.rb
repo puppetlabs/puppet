@@ -141,7 +141,7 @@ class TestNodeInterface < Test::Unit::TestCase
     def test_newnode
         SimpleNode.expects(:new).with("stuff")
         handler = Node.new
-        handler.newnode("stuff")
+        handler.send(:newnode, "stuff")
     end
 
     # Make sure we can build up the correct node names to search for
