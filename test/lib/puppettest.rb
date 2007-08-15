@@ -4,6 +4,7 @@ $LOAD_PATH.unshift(File.expand_path(File.dirname(__FILE__)))
 $LOAD_PATH.unshift(File.expand_path(File.join(File.dirname(__FILE__), '../../lib')))
 
 require 'puppet'
+require 'mocha'
 require 'test/unit'
 
 # Yay; hackish but it works
