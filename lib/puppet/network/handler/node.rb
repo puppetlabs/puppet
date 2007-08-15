@@ -10,6 +10,7 @@ class Puppet::Network::Handler::Node < Puppet::Network::Handler
     # A simplistic class for managing the node information itself.
     class SimpleNode
         attr_accessor :name, :classes, :parameters, :environment, :source, :ipaddress, :names
+        attr_reader :time
 
         def initialize(name, options = {})
             @name = name
@@ -31,6 +32,8 @@ class Puppet::Network::Handler::Node < Puppet::Network::Handler
                     @environment = env
                 end
             end
+
+            @time = Time.now
         end
 
         # Merge the node facts with parameters from the node source.
@@ -168,6 +171,9 @@ class Puppet::Network::Handler::Node < Puppet::Network::Handler
         extend(mod)
 
         super
+
+        # We cache node info for speed
+        @node_cache = {}
     end
 
     # Try to retrieve a given node's parameters.
@@ -180,6 +186,23 @@ class Puppet::Network::Handler::Node < Puppet::Network::Handler
     end
 
     private
+
+    # Store the node to make things a bit faster.
+    def cache(node)
+        @node_cache[node.name] = node
+    end
+
+    # If the node is cached, return it.
+    def cached?(name)
+        # Don't use cache when the filetimeout is set to 0
+        return false if [0, "0"].include?(Puppet[:filetimeout])
+
+        if node = @node_cache[name] and Time.now - node.time < Puppet[:filetimeout]
+            return node
+        else
+            return false
+        end
+    end
 
     # Create/cache a fact handler.
     def fact_handler

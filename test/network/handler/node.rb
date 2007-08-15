@@ -66,7 +66,7 @@ module NodeTesting
     end
 end
 
-class TestNodeInterface < Test::Unit::TestCase
+class TestNodeHandler < Test::Unit::TestCase
     include NodeTesting
 
     def setup
@@ -318,6 +318,28 @@ class TestNodeInterface < Test::Unit::TestCase
         end
         assert_equal(%w{yay foo}, result, "Did not get classes back")
     end
+
+    # We reuse the filetimeout for the node caching timeout.
+    def test_node_caching
+        handler = Node.new
+
+        node = Object.new
+        node.metaclass.instance_eval do
+            attr_accessor :time, :name
+        end
+        node.time = Time.now
+        node.name = "yay"
+
+        # Make sure caching works normally
+        assert_nothing_raised("Could not cache node") do
+            handler.send(:cache, node)
+        end
+        assert_equal(node.object_id, handler.send(:cached?, "yay").object_id, "Did not get node back from the cache")
+
+        # Now set the node's time to be a long time ago
+        node.time = Time.now - 50000
+        assert(! handler.send(:cached?, "yay"), "Timed-out node was returned from cache")
+    end
 end
 
 class TestSimpleNode < Test::Unit::TestCase
@@ -332,6 +354,7 @@ class TestSimpleNode < Test::Unit::TestCase
         assert_equal("testing", node.name, "Did not set name correctly")
         assert_equal({}, node.parameters, "Node parameters did not default correctly")
         assert_equal([], node.classes, "Node classes did not default correctly")
+        assert_instance_of(Time, node.time, "Did not set the creation time")
 
         # Now test it with values for both
         params = {"a" => "b"}
