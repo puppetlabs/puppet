@@ -143,7 +143,7 @@ class TestHandlerConfiguration < Test::Unit::TestCase
     end
 
     # Check that we're storing the node freshness into the rails db.  Hackilicious.
-    def test_update_node_freshness
+    def test_update_node_check
         # This is stupid.
         config = Config.new
         node = Object.new
@@ -160,8 +160,30 @@ class TestHandlerConfiguration < Test::Unit::TestCase
         Puppet::Rails.expects(:connect)
         Puppet::Rails::Host.expects(:find_or_create_by_name).with(:hostname).returns(host)
 
-        config.send(:update_node_freshness, node)
+        config.send(:update_node_check, node)
+    end
 
+    def test_version
+        # First try the case where we can't look up the node
+        config = Config.new
+        handler = Object.new
+        handler.expects(:details).with(:client).returns(false)
+        config.expects(:node_handler).returns(handler)
+        interp = Object.new
+        interp.expects(:configuration_version).returns(:version)
+        config.expects(:interpreter).returns(interp)
+        assert_equal(:version, config.version(:client), "Did not return configuration version")
 
+        # And then when we find the node.
+        config = Config.new
+        node = Object.new
+        handler = Object.new
+        handler.expects(:details).with(:client).returns(node)
+        config.expects(:update_node_check).with(node)
+        config.expects(:node_handler).returns(handler)
+        interp = Object.new
+        interp.expects(:configuration_version).returns(:version)
+        config.expects(:interpreter).returns(interp)
+        assert_equal(:version, config.version(:client), "Did not return configuration version")
     end
 end

@@ -55,12 +55,14 @@ class Puppet::Network::Handler
 
         # Return the configuration version.
         def version(client = nil, clientip = nil)
+            v = interpreter.configuration_version
             # If we can find the node, then store the fact that the node
             # has checked in.
-            if node = node_handler.search(client)
-                update_node_freshness(client)
+            if node = node_handler.details(client)
+                update_node_check(node)
             end
-            interpreter.parsedate
+
+            return v
         end
 
         private
@@ -187,7 +189,7 @@ class Puppet::Network::Handler
 
         # Mark that the node has checked in. FIXME this needs to be moved into
         # the SimpleNode class, or somewhere that's got abstract backends.
-        def update_node_freshness(node)
+        def update_node_check(node)
             if Puppet.features.rails? and Puppet[:storeconfigs]
                 Puppet::Rails.connect
 
