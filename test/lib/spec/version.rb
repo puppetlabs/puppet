@@ -15,7 +15,7 @@ module Spec
       # RELEASE_CANDIDATE = "RC1"
       
       # RANDOM_TOKEN: 0.375509844656552
-      REV = "$LastChangedRevision$".match(/LastChangedRevision: (\d+)/)[1]
+      REV = "$LastChangedRevision: 2283$".match(/LastChangedRevision: (\d+)/)[1]
 
       STRING = [MAJOR, MINOR, TINY].join('.')
       FULL_VERSION = "#{STRING} (r#{REV})"
