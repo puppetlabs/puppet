@@ -4,14 +4,6 @@ Puppet::Network::Handler::Node.newnode_source(:ldap, :fact_merge => true) do
     # Find the ldap node, return the class list and parent node specially,
     # and everything else in a parameter hash.
     def ldapsearch(node)
-        unless defined? @ldap and @ldap
-            setup_ldap()
-            unless @ldap
-                Puppet.info "Skipping ldap source; no ldap connection"
-                return nil
-            end
-        end
-
         filter = Puppet[:ldapstring]
         classattrs = Puppet[:ldapclassattrs].split("\s*,\s*")
         if Puppet[:ldapattrs] == "all"
@@ -42,7 +34,7 @@ Puppet::Network::Handler::Node.newnode_source(:ldap, :fact_merge => true) do
 
         begin
             # We're always doing a sub here; oh well.
-            @ldap.search(Puppet[:ldapbase], 2, filter, search_attrs) do |entry|
+            ldap.search(Puppet[:ldapbase], 2, filter, search_attrs) do |entry|
                 found = true
                 if pattr
                     if values = entry.vals(pattr)
@@ -76,7 +68,6 @@ Puppet::Network::Handler::Node.newnode_source(:ldap, :fact_merge => true) do
             if count == 0
                 # Try reconnecting to ldap
                 @ldap = nil
-                setup_ldap()
                 retry
             else
                 raise Puppet::Error, "LDAP Search failed: %s" % detail
@@ -114,5 +105,34 @@ Puppet::Network::Handler::Node.newnode_source(:ldap, :fact_merge => true) do
         end
 
         return newnode(node, :classes => classes, :source => "ldap", :parameters => parameters)
+    end
+
+    private
+
+    # Create an ldap connection.
+    def ldap
+        unless defined? @ldap and @ldap
+            unless Puppet.features.ldap?
+                raise Puppet::Error, "Could not set up LDAP Connection: Missing ruby/ldap libraries"
+            end
+            begin
+                if Puppet[:ldapssl]
+                    @ldap = LDAP::SSLConn.new(Puppet[:ldapserver], Puppet[:ldapport])
+                elsif Puppet[:ldaptls]
+                    @ldap = LDAP::SSLConn.new(
+                        Puppet[:ldapserver], Puppet[:ldapport], true
+                    )
+                else
+                    @ldap = LDAP::Conn.new(Puppet[:ldapserver], Puppet[:ldapport])
+                end
+                @ldap.set_option(LDAP::LDAP_OPT_PROTOCOL_VERSION, 3)
+                @ldap.set_option(LDAP::LDAP_OPT_REFERRALS, LDAP::LDAP_OPT_ON)
+                @ldap.simple_bind(Puppet[:ldapuser], Puppet[:ldappassword])
+            rescue => detail
+                raise Puppet::Error, "Could not connect to LDAP: %s" % detail
+            end
+        end
+
+        return @ldap
     end
 end

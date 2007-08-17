@@ -1,3 +1,5 @@
+# I pulled this into a separate file, because I got
+# tired of rebuilding the parser.rb file all the time.
 class Puppet::Parser::Parser
     require 'puppet/parser/functions'
 

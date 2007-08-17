@@ -5,20 +5,33 @@ require 'puppet/external/gratr/digraph'
 require 'puppet/external/gratr/import'
 require 'puppet/external/gratr/dot'
 
+require 'puppet/util/errors'
+
 # Maintain a graph of scopes, along with a bunch of data
 # about the individual configuration we're compiling.
 class Puppet::Parser::Configuration
-    attr_reader :topscope, :interpreter, :host, :facts
+    include Puppet::Util
+    include Puppet::Util::Errors
+    attr_reader :topscope, :parser, :node, :facts
+    attr_accessor :extraction_format
+
+    attr_writer :ast_nodes
 
     # Add a collection to the global list.
     def add_collection(coll)
         @collections << coll
     end
 
+    # Do we use nodes found in the code, vs. the external node sources?
+    def ast_nodes?
+        defined?(@ast_nodes) and @ast_nodes
+    end
+
     # Store the fact that we've evaluated a class, and store a reference to
     # the scope in which it was evaluated, so that we can look it up later.
     def class_set(name, scope)
         @class_scopes[name] = scope
+        tag(name)
     end
 
     # Return the scope associated with a class.  This is just here so
@@ -39,22 +52,66 @@ class Puppet::Parser::Configuration
         return @class_scopes.keys.reject { |k| k == "" }
     end
 
+    # Compile our configuration.  This mostly revolves around finding and evaluating classes.
+    # This is the main entry into our configuration.
+    def compile
+        # Set the client's parameters into the top scope.
+        set_node_parameters()
+
+        evaluate_main()
+
+        evaluate_ast_nodes()
+
+        evaluate_classes()
+
+        evaluate_generators()
+
+        fail_on_unevaluated()
+
+        finish()
+
+        return extract()
+    end
+
     # Should the scopes behave declaratively?
     def declarative?
         true
     end
 
-    # Set up our configuration.  We require an interpreter
-    # and a host name, and we normally are passed facts, too.
-    def initialize(options)
-        @interpreter = options[:interpreter] or
-            raise ArgumentError, "You must pass an interpreter to the configuration"
-        @facts = options[:facts] || {}
-        @host = options[:host] or
-            raise ArgumentError, "You must pass a host name to the configuration"
+    # Make sure we support the requested extraction format.
+    def extraction_format=(value)
+        unless respond_to?("extract_to_%s" % value)
+            raise ArgumentError, "Invalid extraction format %s" % value
+        end
+        @extraction_format = value
+    end
 
-        # Call the setup methods from the base class.
-        super()
+    # Return a resource by either its ref or its type and title.
+    def findresource(string, name = nil)
+        if name
+            string = "%s[%s]" % [string.capitalize, name]
+        end
+
+        @resource_table[string]
+    end
+
+    # Set up our configuration.  We require a parser
+    # and a node object; the parser is so we can look up classes
+    # and AST nodes, and the node has all of the client's info,
+    # like facts and environment.
+    def initialize(node, parser, options = {})
+        @node = node
+        @parser = parser
+
+        options.each do |param, value|
+            begin
+                send(param.to_s + "=", value)
+            rescue NoMethodError
+                raise ArgumentError, "Configuration objects do not accept %s" % param
+            end
+        end
+
+        @extraction_format ||= :transportable
 
         initvars()
     end
@@ -65,34 +122,253 @@ class Puppet::Parser::Configuration
     def newscope(parent = nil)
         parent ||= @topscope
         scope = Puppet::Parser::Scope.new(:configuration => self)
-        @graph.add_edge!(parent, scope)
+        @scope_graph.add_edge!(parent, scope)
         scope
     end
 
     # Find the parent of a given scope.  Assumes scopes only ever have
     # one in edge, which will always be true.
     def parent(scope)
-        if ary = @graph.adjacent(scope, :direction => :in) and ary.length > 0
+        if ary = @scope_graph.adjacent(scope, :direction => :in) and ary.length > 0
             ary[0]
         else
             nil
         end
     end
 
-    # Return an array of all of the unevaluated objects
-    def unevaluated
-        ary = @definedtable.find_all do |name, object|
-            ! object.builtin? and ! object.evaluated?
-        end.collect { |name, object| object }
+    # Return any overrides for the given resource.
+    def resource_overrides(resource)
+        @resource_overrides[resource.ref]
+    end
 
-        if ary.empty?
-            return nil
+    # Store a resource override.
+    def store_override(override)
+        override.override = true
+
+        # If possible, merge the override in immediately.
+        if resource = @resource_table[override.ref]
+            resource.merge(override)
         else
-            return ary
+            # Otherwise, store the override for later; these
+            # get evaluated in Resource#finish.
+            @resource_overrides[override.ref] << override
         end
     end
 
+    # Store a resource in our resource table.
+    def store_resource(scope, resource)
+        # This might throw an exception
+        verify_uniqueness(resource)
+
+        # Store it in the global table.
+        @resource_table[resource.ref] = resource
+
+        # And in the resource graph.  At some point, this might supercede
+        # the global resource table, but the table is a lot faster
+        # so it makes sense to maintain for now.
+        @resource_graph.add_edge!(scope, resource)
+    end
+
     private
+
+    # If ast nodes are enabled, then see if we can find and evaluate one.
+    def evaluate_ast_node
+        return unless ast_nodes?
+
+        # Now see if we can find the node.
+        astnode = nil
+        #nodes = @parser.nodes
+        @node.names.each do |name|
+            break if astnode = @parser.nodes[name]
+        end
+
+        unless astnode
+            astnode = @parser.nodes["default"]
+        end
+        unless astnode
+            raise Puppet::ParseError, "Could not find default node or by name with '%s'" % node.names.join(", ")
+        end
+
+        astnode.safeevaluate :scope => topscope
+    end
+
+    # Evaluate each class in turn.  If there are any classes we can't find,
+    # just tag the configuration and move on.
+    def evaluate_classes
+        node.classes.each do |name|
+            if klass = @parser.findclass("", name)
+                # This will result in class_set getting called, which
+                # will in turn result in tags.  Yay.
+                klass.safeevaluate(:scope => topscope)
+            else
+                Puppet.info "Could not find class %s for %s" % [name, node.name]
+                tag(name)
+            end
+        end
+    end
+
+    # Evaluate our collections and return true if anything returned an object.
+    # The 'true' is used to continue a loop, so it's important.
+    def evaluate_collections
+        return false if @collections.empty?
+
+        found_something = false
+        exceptwrap do
+            @collections.each do |collection|
+                if collection.evaluate
+                    found_something = true
+                end
+            end
+        end
+
+        return found_something
+    end
+
+    # Make sure all of our resources have been evaluated into native resources.
+    # We return true if any resources have, so that we know to continue the
+    # evaluate_generators loop.
+    def evaluate_definitions
+        exceptwrap do
+            if ary = unevaluated_resources
+                ary.each do |resource|
+                    resource.evaluate
+                end
+                # If we evaluated, let the loop know.
+                return true
+            else
+                return false
+            end
+        end
+    end
+
+    # Iterate over collections and resources until we're sure that the whole
+    # configuration is evaluated.  This is necessary because both collections
+    # and defined resources can generate new resources, which themselves could
+    # be defined resources.
+    def evaluate_generators
+        count = 0
+        loop do
+            done = true
+
+            # Call collections first, then definitions.
+            done = false if evaluate_collections
+            done = false if evaluate_definitions
+            break if done
+            if count > 1000
+                raise Puppet::ParseError, "Somehow looped more than 1000 times while evaluating host configuration"
+            end
+        end
+    end
+
+    # Find and evaluate our main object, if possible.
+    def evaluate_main
+        if klass = @parser.findclass("", "")
+            # Set the source, so objects can tell where they were defined.
+            topscope.source = klass
+            klass.safeevaluate :scope => topscope, :nosubscope => true
+        end
+    end
+
+    # Turn our configuration graph into whatever the client is expecting.
+    def extract
+        send("extract_to_%s" % extraction_format)
+    end
+
+    # Create the traditional TransBuckets and TransObjects from our configuration
+    # graph.  This will hopefully be deprecated soon.
+    def extract_to_transportable
+        top = nil
+        current = nil
+        buckets = {}
+
+        # I'm *sure* there's a simple way to do this using a breadth-first search
+        # or something, but I couldn't come up with, and this is both fast
+        # and simple, so I'm not going to worry about it too much.
+        @scope_graph.vertices.each do |scope|
+            # For each scope, we need to create a TransBucket, and then
+            # put all of the scope's resources into that bucket, translating
+            # each resource into a TransObject.
+
+            # Unless the bucket's already been created, make it now and add
+            # it to the cache.
+            unless bucket = buckets[scope]
+                bucket = buckets[scope] = scope.to_trans
+            end
+
+            # First add any contained scopes
+            @scope_graph.adjacent(scope, :direction => :out).each do |vertex|
+                # If there's not already a bucket, then create and cache it.
+                unless child_bucket = buckets[vertex]
+                    child_bucket = buckets[vertex] = vertex.to_trans
+                end
+                bucket.push child_bucket
+            end
+
+            # Then add the resources.
+            @resource_graph.adjacent(scope, :direction => :out).each do |vertex|
+                bucket.push vertex.to_trans
+            end
+        end
+
+        # Clear the cache to encourage the GC
+        result = buckets[topscope]
+        buckets.clear
+        return result
+    end
+
+    # Make sure the entire configuration is evaluated.
+    def fail_on_unevaluated
+        fail_on_unevaluated_overrides
+        fail_on_unevaluated_resource_collections
+    end
+
+    # If there are any resource overrides remaining, then we could
+    # not find the resource they were supposed to override, so we
+    # want to throw an exception.
+    def fail_on_unevaluated_overrides
+        remaining = []
+        @resource_overrides.each do |name, overrides|
+            remaining += overrides
+        end
+
+        unless remaining.empty?
+            fail Puppet::ParseError,
+                "Could not find object(s) %s" % remaining.collect { |o|
+                    o.ref
+                }.join(", ")
+        end
+    end
+
+    # Make sure we don't have any remaining collections that specifically
+    # look for resources, because we want to consider those to be
+    # parse errors.
+    def fail_on_unevaluated_resource_collections
+        remaining = []
+        @collections.each do |coll|
+            # We're only interested in the 'resource' collections,
+            # which result from direct calls of 'realize'.  Anything
+            # else is allowed not to return resources.
+            # Collect all of them, so we have a useful error.
+            if r = coll.resources
+                if r.is_a?(Array)
+                    remaining += r
+                else
+                    remaining << r
+                end
+            end
+        end
+
+        unless remaining.empty?
+            raise Puppet::ParseError, "Failed to realize virtual resources %s" %
+                remaining.join(', ')
+        end
+    end
+
+    # Make sure all of our resources and such have done any last work
+    # necessary.
+    def finish
+        @resource_table.each { |name, resource| resource.finish if resource.respond_to?(:finish) }
+    end
 
     # Set up all of our internal variables.
     def initvars
@@ -116,18 +392,114 @@ class Puppet::Parser::Configuration
         # but they each refer back to the scope that created them.
         @collections = []
 
+        # A list of tags we've generated; most class names.
+        @tags = []
+
         # Create our initial scope, our scope graph, and add the initial scope to the graph.
         @topscope = Puppet::Parser::Scope.new(:configuration => self, :type => "main", :name => "top")
-        @graph = GRATR::Digraph.new
-        @graph.add_vertex!(@topscope)
+
+        # For maintaining scope relationships.
+        @scope_graph = GRATR::Digraph.new
+        @scope_graph.add_vertex!(@topscope)
+
+        # For maintaining the relationship between scopes and their resources.
+        @resource_graph = GRATR::Digraph.new
     end
 
-    # Return the list of remaining overrides.
-    def overrides
-        @resource_overrides.values.flatten
+    # Set the node's parameters into the top-scope as variables.
+    def set_node_parameters
+        node.parameters.each do |param, value|
+            @topscope.setvar(param, value)
+        end
     end
 
-    def resources
-        @resourcetable
+    # Store the configuration into the database.
+    def store(options)
+        unless Puppet.features.rails?
+            raise Puppet::Error,
+                "storeconfigs is enabled but rails is unavailable"
+        end
+
+        unless ActiveRecord::Base.connected?
+            Puppet::Rails.connect
+        end
+
+        # We used to have hooks here for forking and saving, but I don't
+        # think it's worth retaining at this point.
+        store_to_active_record(options)
+    end
+
+    # Do the actual storage.
+    def store_to_active_record(options)
+        begin
+            # We store all of the objects, even the collectable ones
+            benchmark(:info, "Stored configuration for #{options[:name]}") do
+                Puppet::Rails::Host.transaction do
+                    Puppet::Rails::Host.store(options)
+                end
+            end
+        rescue => detail
+            if Puppet[:trace]
+                puts detail.backtrace
+            end
+            Puppet.err "Could not store configs: %s" % detail.to_s
+        end
+    end
+
+    # Add a tag.
+    def tag(*names)
+        names.each do |name|
+            name = name.to_s
+            @tags << name unless @tags.include?(name)
+        end
+        nil
+    end
+
+    # Return the list of tags.
+    def tags
+        @tags.dup
+    end
+
+    # Return an array of all of the unevaluated resources.  These will be definitions,
+    # which need to get evaluated into native resources.
+    def unevaluated_resources
+        ary = @resource_table.find_all do |name, object|
+            ! object.builtin? and ! object.evaluated?
+        end.collect { |name, object| object }
+
+        if ary.empty?
+            return nil
+        else
+            return ary
+        end
+    end
+
+    # Verify that the given resource isn't defined elsewhere.
+    def verify_uniqueness(resource)
+        # Short-curcuit the common case, 
+        unless existing_resource = @resource_table[resource.ref]
+            return true
+        end
+
+        if typeclass = Puppet::Type.type(resource.type) and ! typeclass.isomorphic?
+            Puppet.info "Allowing duplicate %s" % typeclass.name
+            return true
+        end
+
+        # Either it's a defined type, which are never
+        # isomorphic, or it's a non-isomorphic type, so
+        # we should throw an exception.
+        msg = "Duplicate definition: %s is already defined" % resource.ref
+
+        if existing_resource.file and existing_resource.line
+            msg << " in file %s at line %s" %
+                [existing_resource.file, existing_resource.line]
+        end
+
+        if resource.line or resource.file
+            msg << "; cannot redefine"
+        end
+
+        raise Puppet::ParseError.new(msg)
     end
 end

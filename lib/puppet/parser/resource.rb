@@ -72,12 +72,15 @@ class Puppet::Parser::Resource
 
     # Add any overrides for this object.
     def addoverrides
-        overrides = scope.lookupoverrides(self)
+        overrides = scope.configuration.resource_overrides(self)
+        raise "fix this test"
 
         overrides.each do |over|
             self.merge(over)
         end
 
+        # Remove the overrides, so that the configuration knows there
+        # are none left.
         overrides.clear
     end
 

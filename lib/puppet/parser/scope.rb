@@ -56,82 +56,9 @@ class Puppet::Parser::Scope
         end
     end
 
-    # Create a new child scope.
-    def child=(scope)
-        @children.push(scope)
-
-        # Copy all of the shared tables over to the child.
-        @@sharedtables.each do |name|
-            scope.send(name.to_s + "=", self.send(name))
-        end
-    end
-
-    # Verify that the given object isn't defined elsewhere.
-    def chkobjectclosure(obj)
-        if exobj = @definedtable[obj.ref]
-            typeklass = Puppet::Type.type(obj.type)
-            if typeklass and ! typeklass.isomorphic?
-                Puppet.info "Allowing duplicate %s" % type
-            else
-                # Either it's a defined type, which are never
-                # isomorphic, or it's a non-isomorphic type.
-                msg = "Duplicate definition: %s is already defined" % obj.ref
-
-                if exobj.file and exobj.line
-                    msg << " in file %s at line %s" %
-                        [exobj.file, exobj.line]
-                end
-
-                if obj.line or obj.file
-                    msg << "; cannot redefine"
-                end
-
-                raise Puppet::ParseError.new(msg)
-            end
-        end
-
-        return true
-    end
-
-    # Remove a specific child.
-    def delete(child)
-        @children.delete(child)
-    end
-
-    # Remove a resource from the various tables.  This is only used when
-    # a resource maps to a definition and gets evaluated.
-    def deleteresource(resource)
-        if @definedtable[resource.ref]
-            @definedtable.delete(resource.ref)
-        end
-
-        if @children.include?(resource)
-            @children.delete(resource)
-        end
-    end
-
     # Are we the top scope?
     def topscope?
         @level == 1
-    end
-
-    # Yield each child scope in turn
-    def each
-        @children.each { |child|
-            yield child
-        }
-    end
-
-    # Evaluate a list of classes.
-    def evalclasses(*classes)
-        retval = []
-        classes.each do |klass|
-            if obj = findclass(klass)
-                obj.safeevaluate :scope => self
-                retval << klass
-            end
-        end
-        retval
     end
 
     def exported?
@@ -157,25 +84,12 @@ class Puppet::Parser::Scope
     end
 
     def findresource(string, name = nil)
-        if name
-            string = "%s[%s]" % [string.capitalize, name]
-        end
-
-        @definedtable[string]
-    end
-
-    # Recursively complete the whole tree, in preparation for
-    # translation or storage.
-    def finish
-        self.each do |obj|
-            obj.finish
-        end
+        configuration.findresource(string, name)
     end
 
     # Initialize our new scope.  Defaults to having no parent and to
     # being declarative.
     def initialize(hash = {})
-        @finished = false
         if hash.include?(:namespace)
             if n = hash[:namespace]
                 @namespaces = [n]
@@ -194,9 +108,6 @@ class Puppet::Parser::Scope
         }
 
         @tags = []
-
-        # Our child scopes and objects
-        @children = []
 
         # The symbol table for this scope.  This is where we store variables.
         @symtable = {}
@@ -234,17 +145,6 @@ class Puppet::Parser::Scope
         #Puppet.debug "Got defaults for %s: %s" %
         #    [type,values.inspect]
         return values
-    end
-
-    # Look up all of the exported objects of a given type.
-    def lookupexported(type)
-        @definedtable.find_all do |name, r|
-            r.type == type and r.exported?
-        end
-    end
-
-    def lookupoverrides(obj)
-        @overridetable[obj.ref]
     end
 
     # Look up a defined type.
@@ -310,12 +210,6 @@ class Puppet::Parser::Scope
         defined?(@nodescope) and @nodescope
     end
 
-    # Return the list of remaining overrides.
-    def overrides
-        #@overridetable.collect { |name, overs| overs }.flatten
-        @overridetable.values.flatten
-    end
-
     # We probably shouldn't cache this value...  But it's a lot faster
     # than doing lots of queries.
     def parent
@@ -359,38 +253,28 @@ class Puppet::Parser::Scope
         nil
     end
 
-    # Set all of our facts in the top-level scope.
-    def setfacts(facts)
-        facts.each { |var, value|
-            self.setvar(var, value)
-        }
-    end
-
     # Add a new object to our object table and the global list, and do any necessary
     # checks.
-    def setresource(obj)
-        self.chkobjectclosure(obj)
-
-        @children << obj
+    def setresource(resource)
+        @configuration.store_resource(resource)
 
         # Mark the resource as virtual or exported, as necessary.
         if self.exported?
-            obj.exported = true
+            resource.exported = true
         elsif self.virtual?
-            obj.virtual = true
+            resource.virtual = true
         end
+        raise "setresource's tests aren't fixed"
 
-        # The global table
-        @definedtable[obj.ref] = obj
-
-        return obj
+        return resource
     end
 
     # Override a parameter in an existing object.  If the object does not yet
     # exist, then cache the override in a global table, so it can be flushed
     # at the end.
     def setoverride(resource)
-        resource.override = true
+        @configuration.store_override(resource)
+        raise "setoverride tests aren't fixed"
         if obj = @definedtable[resource.ref]
             obj.merge(resource)
         else
@@ -560,18 +444,9 @@ class Puppet::Parser::Scope
         end
     end
 
-    # Convert all of our objects as necessary.
-    def translate
-        ret = @children.collect do |child|
-            case child
-            when Puppet::Parser::Resource
-                child.to_trans
-            when self.class
-                child.translate
-            else
-                devfail "Got %s for translation" % child.class
-            end
-        end.reject { |o| o.nil? }
+    # Convert our resource to a TransBucket.
+    def to_trans
+        raise "Scope#to_trans needs to be tested"
         bucket = Puppet::TransBucket.new ret
 
         case self.type
