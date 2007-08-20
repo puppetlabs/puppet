@@ -27,7 +27,12 @@ class TestConfiguration < Test::Unit::TestCase
     end
 
     def mkconfig(options = {})
-        @config = Config.new(mknode, mkparser, options)
+        if node = options[:node]
+            options.delete(:node)
+        else
+            node = mknode
+        end
+        @config = Config.new(node, mkparser, options)
     end
 
     def test_initialize
@@ -111,7 +116,7 @@ class TestConfiguration < Test::Unit::TestCase
         # Now that we've got the top scope, create a new, subscope
         subscope = nil
         assert_nothing_raised("Could not create subscope") do
-            subscope = config.newscope
+            subscope = config.newscope(config.topscope)
         end
         assert_instance_of(Scope, subscope, "Did not create subscope")
         assert(graph.edge?(config.topscope, subscope), "An edge between top scope and subscope was not added")
@@ -121,11 +126,12 @@ class TestConfiguration < Test::Unit::TestCase
         assert_equal(config.topscope.object_id, config.parent(subscope).object_id, "Did not get correct parent scope from configuration")
         assert_equal(config.topscope.object_id, subscope.parent.object_id, "Scope did not correctly retrieve its parent scope")
 
-        # Now create another, this time specifying the parent scope
+        # Now create another, this time specifying options
         another = nil
         assert_nothing_raised("Could not create subscope") do
-            another = config.newscope(subscope)
+            another = config.newscope(subscope, :name => "testing")
         end
+        assert_equal("testing", another.name, "did not set scope option correctly")
         assert_instance_of(Scope, another, "Did not create second subscope")
         assert(graph.edge?(subscope, another), "An edge between parent scope and second subscope was not added")
 
@@ -142,7 +148,7 @@ class TestConfiguration < Test::Unit::TestCase
     # The heart of the action.
     def test_compile
         config = mkconfig
-        [:set_node_parameters, :evaluate_main, :evaluate_ast_nodes, :evaluate_classes, :evaluate_generators, :fail_on_unevaluated, :finish].each do |method|
+        [:set_node_parameters, :evaluate_main, :evaluate_ast_node, :evaluate_classes, :evaluate_generators, :fail_on_unevaluated, :finish].each do |method|
             config.expects(method)
         end
         config.expects(:extract).returns(:config)

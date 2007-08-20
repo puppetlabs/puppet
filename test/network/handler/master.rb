@@ -8,56 +8,6 @@ require 'puppet/network/handler/master'
 class TestMaster < Test::Unit::TestCase
     include PuppetTest::ServerTest
 
-    # run through all of the existing test files and make sure everything
-    # works
-    def test_files
-        count = 0
-        textfiles { |file|
-            Puppet.debug("parsing %s" % file)
-            client = nil
-            master = nil
-
-            # create our master
-            assert_nothing_raised() {
-                # this is the default server setup
-                master = Puppet::Network::Handler.master.new(
-                    :Manifest => file,
-                    :UseNodes => false,
-                    :Local => true
-                )
-            }
-
-            # and our client
-            assert_nothing_raised() {
-                client = Puppet::Network::Client.master.new(
-                    :Master => master
-                )
-            }
-
-            # pull our configuration a few times
-            assert_nothing_raised() {
-                client.getconfig
-                stopservices
-                Puppet::Type.allclear
-            }
-            assert_nothing_raised() {
-                client.getconfig
-                stopservices
-                Puppet::Type.allclear
-            }
-            assert_nothing_raised() {
-                client.getconfig
-                stopservices
-                Puppet::Type.allclear
-            }
-            # only test three files; that's plenty
-            if count > 3
-                break
-            end
-            count += 1
-        }
-    end
-
     def test_defaultmanifest
         textfiles { |file|
             Puppet[:manifest] = file
@@ -164,30 +114,6 @@ class TestMaster < Test::Unit::TestCase
         assert(client.fresh?(facts), "Client is not up to date")
 
         assert(FileTest.exists?(file2), "Second file %s does not exist" % file2)
-    end
-
-    def test_addfacts
-        master = nil
-        file = mktestmanifest()
-        # create our master
-        assert_nothing_raised() {
-            # this is the default server setup
-            master = Puppet::Network::Handler.master.new(
-                :Manifest => file,
-                :UseNodes => false,
-                :Local => true
-            )
-        }
-
-        facts = {}
-
-        assert_nothing_raised {
-            master.addfacts(facts)
-        }
-
-        %w{serverversion servername serverip}.each do |fact|
-            assert(facts.include?(fact), "Fact %s was not set" % fact)
-        end
     end
 
     # Make sure we're using the hostname as configured with :node_name

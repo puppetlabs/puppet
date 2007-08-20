@@ -1175,6 +1175,23 @@ file { "/tmp/yayness":
         assert_instance_of(AST::HostClass, klass, "Did not autoload sub class from alone file with no namespace")
         assert_equal("alone::sub", klass.classname, "Incorrect class was returned")
     end
+    
+    # Make sure class, node, and define methods are case-insensitive
+    def test_structure_case_insensitivity
+        parser = mkparser
+        
+        result = nil
+        assert_nothing_raised do
+            result = parser.newclass "Yayness"
+        end
+        assert_equal(result, parser.findclass("", "yayNess"))
+        
+        assert_nothing_raised do
+            result = parser.newdefine "FunTest"
+        end
+        assert_equal(result, parser.finddefine("", "fUntEst"),
+            "%s was not matched" % "fUntEst")
+    end
 end
 
 # $Id$

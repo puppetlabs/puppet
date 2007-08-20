@@ -27,7 +27,6 @@ class Puppet::Parser::AST
             # Verify that we haven't already been evaluated, and if we have been evaluated,
             # make sure that we match the class.
             if existing_scope = scope.class_scope(self)
-                raise "Fix this portion of the code -- check that the scopes match classes"
                 #if existing_scope.source.object_id == self.object_id
                 Puppet.debug "%s class already evaluated" % @type
                 return nil

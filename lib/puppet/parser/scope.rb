@@ -15,7 +15,7 @@ class Puppet::Parser::Scope
 
     include Enumerable
     include Puppet::Util::Errors
-    attr_accessor :parent, :level, :interp, :source
+    attr_accessor :parent, :level, :parser, :source
     attr_accessor :name, :type, :base, :keyword
     attr_accessor :top, :translated, :exported, :virtual, :configuration
 
@@ -56,6 +56,11 @@ class Puppet::Parser::Scope
         end
     end
 
+    # Retrieve a given class scope from the configuration.
+    def class_scope(klass)
+        configuration.class_scope(klass)
+    end
+
     # Are we the top scope?
     def topscope?
         @level == 1
@@ -67,7 +72,7 @@ class Puppet::Parser::Scope
 
     def findclass(name)
         @namespaces.each do |namespace|
-            if r = interp.findclass(namespace, name)
+            if r = parser.findclass(namespace, name)
                 return r
             end
         end
@@ -76,7 +81,7 @@ class Puppet::Parser::Scope
 
     def finddefine(name)
         @namespaces.each do |namespace|
-            if r = interp.finddefine(namespace, name)
+            if r = parser.finddefine(namespace, name)
                 return r
             end
         end
@@ -87,8 +92,7 @@ class Puppet::Parser::Scope
         configuration.findresource(string, name)
     end
 
-    # Initialize our new scope.  Defaults to having no parent and to
-    # being declarative.
+    # Initialize our new scope.  Defaults to having no parent.
     def initialize(hash = {})
         if hash.include?(:namespace)
             if n = hash[:namespace]
@@ -115,7 +119,7 @@ class Puppet::Parser::Scope
         # All of the defaults set for types.  It's a hash of hashes,
         # with the first key being the type, then the second key being
         # the parameter.
-        @defaultstable = Hash.new { |dhash,type|
+        @defaults = Hash.new { |dhash,type|
             dhash[type] = {}
         }
     end
@@ -136,8 +140,8 @@ class Puppet::Parser::Scope
 
         # then override them with any current values
         # this should probably be done differently
-        if @defaultstable.include?(type)
-            @defaultstable[type].each { |var,value|
+        if @defaults.include?(type)
+            @defaults[type].each { |var,value|
                 values[var] = value
             }
         end
@@ -195,11 +199,9 @@ class Puppet::Parser::Scope
         @namespaces.dup
     end
 
-    # Create a new scope.
-    def newscope(hash = {})
-        hash[:parent] = self
-        #debug "Creating new scope, level %s" % [self.level + 1]
-        return Puppet::Parser::Scope.new(hash)
+    # Create a new scope and set these options.
+    def newscope(options)
+        configuration.newscope(self, options)
     end
 
     # Is this class for a node?  This is used to make sure that
@@ -256,7 +258,7 @@ class Puppet::Parser::Scope
     # Add a new object to our object table and the global list, and do any necessary
     # checks.
     def setresource(resource)
-        @configuration.store_resource(resource)
+        @configuration.store_resource(self, resource)
 
         # Mark the resource as virtual or exported, as necessary.
         if self.exported?
@@ -264,7 +266,6 @@ class Puppet::Parser::Scope
         elsif self.virtual?
             resource.virtual = true
         end
-        raise "setresource's tests aren't fixed"
 
         return resource
     end
@@ -274,19 +275,13 @@ class Puppet::Parser::Scope
     # at the end.
     def setoverride(resource)
         @configuration.store_override(resource)
-        raise "setoverride tests aren't fixed"
-        if obj = @definedtable[resource.ref]
-            obj.merge(resource)
-        else
-            @overridetable[resource.ref] << resource
-        end
     end
 
     # Set defaults for a type.  The typename should already be downcased,
     # so that the syntax is isolated.  We don't do any kind of type-checking
     # here; instead we let the resource do it when the defaults are used.
     def setdefaults(type, params)
-        table = @defaultstable[type]
+        table = @defaults[type]
 
         # if we got a single param, it'll be in its own array
         params = [params] unless params.is_a?(Array)
@@ -294,17 +289,8 @@ class Puppet::Parser::Scope
         params.each { |param|
             #Puppet.debug "Default for %s is %s => %s" %
             #    [type,ary[0].inspect,ary[1].inspect]
-            if @@declarative
-                if table.include?(param.name)
-                    self.fail "Default already defined for %s { %s }" %
-                            [type,param.name]
-                end
-            else
-                if table.include?(param.name)
-                    # we should maybe allow this warning to be turned off...
-                    Puppet.warning "Replacing default for %s { %s }" %
-                        [type,param.name]
-                end
+            if table.include?(param.name)
+                raise Puppet::ParseError.new("Default already defined for %s { %s }; cannot redefine" % [type, param.name], param.line, param.file)
             end
             table[param.name] = param
         }
@@ -312,23 +298,19 @@ class Puppet::Parser::Scope
 
     # Set a variable in the current scope.  This will override settings
     # in scopes above, but will not allow variables in the current scope
-    # to be reassigned if we're declarative (which is the default).
+    # to be reassigned.
     def setvar(name,value, file = nil, line = nil)
         #Puppet.debug "Setting %s to '%s' at level %s" %
         #    [name.inspect,value,self.level]
         if @symtable.include?(name)
-            if @@declarative
-                error = Puppet::ParseError.new("Cannot reassign variable %s" % name)
-                if file
-                    error.file = file
-                end
-                if line
-                    error.line = line
-                end
-                raise error
-            else
-                Puppet.warning "Reassigning %s to %s" % [name,value]
+            error = Puppet::ParseError.new("Cannot reassign variable %s" % name)
+            if file
+                error.file = file
             end
+            if line
+                error.line = line
+            end
+            raise error
         end
         @symtable[name] = value
     end
@@ -446,8 +428,7 @@ class Puppet::Parser::Scope
 
     # Convert our resource to a TransBucket.
     def to_trans
-        raise "Scope#to_trans needs to be tested"
-        bucket = Puppet::TransBucket.new ret
+        bucket = Puppet::TransBucket.new([])
 
         case self.type
         when "": bucket.type = "main"

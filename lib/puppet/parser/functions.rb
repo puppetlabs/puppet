@@ -109,7 +109,8 @@ module Functions
 
     # Include the specified classes
     newfunction(:include, :doc => "Evaluate one or more classes.") do |vals|
-        klasses = evalclasses(*vals)
+        vals = [vals] unless vals.is_a?(Array)
+        klasses = configuration.evaluate_classes(vals)
 
         missing = vals.find_all do |klass|
             ! klasses.include?(klass)
@@ -144,7 +145,7 @@ module Functions
     tells you whether the current container is tagged with the specified tags.
     The tags are ANDed, so that all of the specified tags must be included for
     the function to return true.") do |vals|
-        classlist = self.classlist
+        classlist = configuration.classlist
 
         retval = true
         vals.each do |val|
@@ -234,7 +235,7 @@ module Functions
         vals = [vals] unless vals.is_a?(Array)
         coll.resources = vals
 
-        newcollection(coll)
+        configuration.add_collection(coll)
     end
 
     newfunction(:search, :doc => "Add another namespace for this class to search.

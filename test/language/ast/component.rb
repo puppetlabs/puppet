@@ -17,10 +17,10 @@ class TestASTComponent < Test::Unit::TestCase
 	AST = Puppet::Parser::AST
 
     def test_component
-        interp, scope, source = mkclassframing
+        parser, scope, source = mkclassframing
 
         # Create a new definition
-        klass = interp.newdefine "yayness",
+        klass = parser.newdefine "yayness",
             :arguments => [["owner", stringobj("nobody")], %w{mode}],
             :code => AST::ASTArray.new(
                 :children => [resourcedef("file", "/tmp/$name",
@@ -90,7 +90,7 @@ class TestASTComponent < Test::Unit::TestCase
 
     # #539 - definitions should support both names and titles
     def test_names_and_titles
-        interp, scope, source = mkclassframing
+        parser, scope, source = mkclassframing
 
         [
         {:name => "one", :title => "two"},
@@ -98,7 +98,7 @@ class TestASTComponent < Test::Unit::TestCase
         ].each_with_index do |hash, i|
 
             # Create a definition that uses both name and title
-            klass = interp.newdefine "yayness%s" % i
+            klass = parser.newdefine "yayness%s" % i
 
             subscope = klass.subscope(scope, "yayness%s" % i)
 
@@ -133,8 +133,8 @@ class TestASTComponent < Test::Unit::TestCase
     # Testing the root cause of #615.  We should be using the fqname for the type, instead
     # of just the short name.
     def test_fully_qualified_types
-        interp = mkinterp
-        klass = interp.newclass("one::two")
+        parser = mkparser
+        klass = parser.newclass("one::two")
 
         assert_equal("one::two", klass.classname, "Class did not get fully qualified class name")
     end

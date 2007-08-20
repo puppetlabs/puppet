@@ -46,6 +46,8 @@ class Puppet::Network::Handler
             # immediately.  Mostly, this is so we can create the interpreter
             # on-demand, which is easier for testing.
             @options = options
+
+            set_server_facts
         end
 
         # Are we running locally, or are our clients networked?
@@ -58,7 +60,7 @@ class Puppet::Network::Handler
             v = interpreter.configuration_version
             # If we can find the node, then store the fact that the node
             # has checked in.
-            if node = node_handler.details(client)
+            if client and node = node_handler.details(client)
                 update_node_check(node)
             end
 
@@ -95,6 +97,9 @@ class Puppet::Network::Handler
                 begin
                     config = interpreter.compile(node)
                 rescue Puppet::Error => detail
+                    if Puppet[:trace]
+                        puts detail.backtrace
+                    end
                     Puppet.err detail
                     raise XMLRPC::FaultException.new(
                         1, detail.to_s

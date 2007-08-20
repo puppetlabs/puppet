@@ -20,7 +20,6 @@ class TestInterpreter < PuppetTest::TestCase
     include PuppetTest::ParserTesting
     include PuppetTest::ResourceTesting
     AST = Puppet::Parser::AST
-    NodeDef = Puppet::Parser::Interpreter::NodeDef
 
     # create a simple manifest that uses nodes to create a file
     def mknodemanifest(node, file)
@@ -34,23 +33,13 @@ class TestInterpreter < PuppetTest::TestCase
         return [file, createdfile]
     end
 
-    def test_simple
-        file = tempfile()
-        File.open(file, "w") { |f|
-            f.puts "file { \"/etc\": owner => root }"
-        }
-        assert_nothing_raised {
-            Puppet::Parser::Interpreter.new(:Manifest => file)
-        }
-    end
-
     def test_reloadfiles
-        hostname = Facter["hostname"].value
+        node = mknode(Facter["hostname"].value)
 
         file = tempfile()
 
         # Create a first version
-        createdfile = mknodemanifest(hostname, file)
+        createdfile = mknodemanifest(node.name, file)
 
         interp = nil
         assert_nothing_raised {
@@ -59,59 +48,19 @@ class TestInterpreter < PuppetTest::TestCase
 
         config = nil
         assert_nothing_raised {
-            config = interp.run(hostname, {})
+            config = interp.compile(node)
         }
-        sleep(1)
+        Puppet[:filetimeout] = -5
 
         # Now create a new file
-        createdfile = mknodemanifest(hostname, file)
+        createdfile = mknodemanifest(node.name, file)
 
         newconfig = nil
         assert_nothing_raised {
-            newconfig = interp.run(hostname, {})
+            newconfig = interp.compile(node)
         }
 
         assert(config != newconfig, "Configs are somehow the same")
-    end
-
-    # Make sure searchnode behaves as we expect.
-    def test_nodesearch
-        # We use two sources here to catch a weird bug where the default
-        # node is used if the host isn't in the first source.
-        interp = mkinterp
-
-        # Make some nodes
-        names = %w{node1 node2 node2.domain.com}
-        interp.newnode names
-        interp.newnode %w{default}
-
-        nodes = {}
-        # Make sure we can find them all, using the direct method
-        names.each do |name|
-            nodes[name] = interp.nodesearch_code(name)
-            assert(nodes[name], "Could not find %s" % name)
-            nodes[name].file = __FILE__
-        end
-
-        # Now let's try it with the nodesearch method
-        names.each do |name|
-            node = interp.nodesearch(name)
-            assert(node, "Could not find #{name} via nodesearch")
-        end
-
-        # Make sure we find the default node when we search for nonexistent nodes
-        assert_nothing_raised do
-            default = interp.nodesearch("nosuchnode")
-            assert(default, "Did not find default node")
-            assert_equal("default", default.classname)
-        end
-
-        # Now make sure the longest match always wins
-        node = interp.nodesearch(*%w{node2 node2.domain.com})
-
-        assert(node, "Did not find node2")
-        assert_equal("node2.domain.com", node.classname,
-            "Did not get longest match")
     end
 
     def test_parsedate
@@ -159,35 +108,6 @@ class TestInterpreter < PuppetTest::TestCase
         updatesub.call
         newdate = interp.parsedate
         assert(date != newdate, "Parsedate was not updated")
-    end
-    
-    # Make sure class, node, and define methods are case-insensitive
-    def test_structure_case_insensitivity
-        interp = mkinterp
-        
-        result = nil
-        assert_nothing_raised do
-            result = interp.newclass "Yayness"
-        end
-        assert_equal(result, interp.findclass("", "yayNess"))
-        
-        assert_nothing_raised do
-            result = interp.newdefine "FunTest"
-        end
-        assert_equal(result, interp.finddefine("", "fUntEst"),
-            "%s was not matched" % "fUntEst")
-        
-        assert_nothing_raised do
-            result = interp.newnode("MyNode").shift
-        end
-        assert_equal(result, interp.nodesearch("mYnOde"),
-            "mYnOde was not matched")
-        
-        assert_nothing_raised do
-            result = interp.newnode("YayTest.Domain.Com").shift
-        end
-        assert_equal(result, interp.nodesearch("yaYtEst.domAin.cOm"),
-            "yaYtEst.domAin.cOm was not matched")
     end
 
     # Make sure our whole chain works.
@@ -442,70 +362,6 @@ class TestInterpreter < PuppetTest::TestCase
         assert_raise(Puppet::ParseError, "Did not fail on remaining resource colls") do
             interp.check_resource_collections(scope)
         end
-    end
-
-    def test_nodedef
-        interp = mkinterp
-        interp.newclass("base")
-        interp.newclass("sub", :parent => "base")
-        interp.newclass("other")
-
-        node = nil
-        assert_nothing_raised("Could not create a node definition") do
-            node = NodeDef.new :name => "yay", :classes => "sub", :parameters => {"one" => "two", "three" => "four"}
-        end
-
-        scope = mkscope :interp => interp
-        assert_nothing_raised("Could not evaluate the node definition") do
-            node.evaluate(:scope => scope)
-        end
-
-        assert_equal("two", scope.lookupvar("one"), "NodeDef did not set variable")
-        assert_equal("four", scope.lookupvar("three"), "NodeDef did not set variable")
-
-        assert(scope.classlist.include?("sub"), "NodeDef did not evaluate class")
-        assert(scope.classlist.include?("base"), "NodeDef did not evaluate base class")
-
-        # Now try a node def with multiple classes
-        assert_nothing_raised("Could not create a node definition") do
-            node = NodeDef.new :name => "yay", :classes => %w{sub other base}, :parameters => {"one" => "two", "three" => "four"}
-        end
-
-        scope = mkscope :interp => interp
-        assert_nothing_raised("Could not evaluate the node definition") do
-            node.evaluate(:scope => scope)
-        end
-
-        assert_equal("two", scope.lookupvar("one"), "NodeDef did not set variable")
-        assert_equal("four", scope.lookupvar("three"), "NodeDef did not set variable")
-
-        assert(scope.classlist.include?("sub"), "NodeDef did not evaluate class")
-        assert(scope.classlist.include?("other"), "NodeDef did not evaluate other class")
-
-        # And a node def with no params
-        assert_nothing_raised("Could not create a node definition with no params") do
-            node = NodeDef.new :name => "yay", :classes => %w{sub other base}
-        end
-
-        scope = mkscope :interp => interp
-        assert_nothing_raised("Could not evaluate the node definition") do
-            node.evaluate(:scope => scope)
-        end
-
-        assert(scope.classlist.include?("sub"), "NodeDef did not evaluate class")
-        assert(scope.classlist.include?("other"), "NodeDef did not evaluate other class")
-
-        # Now make sure nodedef doesn't fail when some classes are not defined (#687).
-        assert_nothing_raised("Could not create a node definition with some invalid classes") do
-            node = NodeDef.new :name => "yay", :classes => %w{base unknown}
-        end
-
-        scope = mkscope :interp => interp
-        assert_nothing_raised("Could not evaluate the node definition with some invalid classes") do
-            node.evaluate(:scope => scope)
-        end
-
-        assert(scope.classlist.include?("base"), "NodeDef did not evaluate class")
     end
 
     # Make sure that reparsing is atomic -- failures don't cause a broken state, and we aren't subject

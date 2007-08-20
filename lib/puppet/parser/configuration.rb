@@ -60,7 +60,7 @@ class Puppet::Parser::Configuration
 
         evaluate_main()
 
-        evaluate_ast_nodes()
+        evaluate_ast_node()
 
         evaluate_classes()
 
@@ -73,9 +73,32 @@ class Puppet::Parser::Configuration
         return extract()
     end
 
-    # Should the scopes behave declaratively?
-    def declarative?
-        true
+    # FIXME There are no tests for this.
+    def delete_collection(coll)
+        @collections.delete(coll) if @collections.include?(coll)
+    end
+
+    # FIXME There are no tests for this.
+    def delete_resource(resource)
+        @resource_table.delete(resource.ref) if @resource_table.include?(resource.ref)
+
+        @resource_graph.remove_vertex!(resource) if @resource_graph.vertex?(resource)
+    end
+
+    # Evaluate each class in turn.  If there are any classes we can't find,
+    # just tag the configuration and move on.
+    def evaluate_classes(classes = nil)
+        classes ||= node.classes
+        classes.each do |name|
+            if klass = @parser.findclass("", name)
+                # This will result in class_set getting called, which
+                # will in turn result in tags.  Yay.
+                klass.safeevaluate(:scope => topscope)
+            else
+                Puppet.info "Could not find class %s for %s" % [name, node.name]
+                tag(name)
+            end
+        end
     end
 
     # Make sure we support the requested extraction format.
@@ -119,9 +142,11 @@ class Puppet::Parser::Configuration
     # Create a new scope, with either a specified parent scope or
     # using the top scope.  Adds an edge between the scope and
     # its parent to the graph.
-    def newscope(parent = nil)
+    def newscope(parent, options = {})
         parent ||= @topscope
-        scope = Puppet::Parser::Scope.new(:configuration => self)
+        options[:configuration] = self
+        options[:parser] ||= self.parser
+        scope = Puppet::Parser::Scope.new(options)
         @scope_graph.add_edge!(parent, scope)
         scope
     end
@@ -139,6 +164,11 @@ class Puppet::Parser::Configuration
     # Return any overrides for the given resource.
     def resource_overrides(resource)
         @resource_overrides[resource.ref]
+    end
+
+    # Return a list of all resources.
+    def resources
+        @resource_table.values
     end
 
     # Store a resource override.
@@ -179,7 +209,7 @@ class Puppet::Parser::Configuration
         astnode = nil
         #nodes = @parser.nodes
         @node.names.each do |name|
-            break if astnode = @parser.nodes[name]
+            break if astnode = @parser.nodes[name.to_s.downcase]
         end
 
         unless astnode
@@ -190,21 +220,6 @@ class Puppet::Parser::Configuration
         end
 
         astnode.safeevaluate :scope => topscope
-    end
-
-    # Evaluate each class in turn.  If there are any classes we can't find,
-    # just tag the configuration and move on.
-    def evaluate_classes
-        node.classes.each do |name|
-            if klass = @parser.findclass("", name)
-                # This will result in class_set getting called, which
-                # will in turn result in tags.  Yay.
-                klass.safeevaluate(:scope => topscope)
-            else
-                Puppet.info "Could not find class %s for %s" % [name, node.name]
-                tag(name)
-            end
-        end
     end
 
     # Evaluate our collections and return true if anything returned an object.
@@ -305,8 +320,13 @@ class Puppet::Parser::Configuration
             end
 
             # Then add the resources.
-            @resource_graph.adjacent(scope, :direction => :out).each do |vertex|
-                bucket.push vertex.to_trans
+            if @resource_graph.vertex?(scope)
+                @resource_graph.adjacent(scope, :direction => :out).each do |vertex|
+                    # Some resources don't get translated, e.g., virtual resources.
+                    if obj = vertex.to_trans
+                        bucket.push obj
+                    end
+                end
             end
         end
 
@@ -396,7 +416,7 @@ class Puppet::Parser::Configuration
         @tags = []
 
         # Create our initial scope, our scope graph, and add the initial scope to the graph.
-        @topscope = Puppet::Parser::Scope.new(:configuration => self, :type => "main", :name => "top")
+        @topscope = Puppet::Parser::Scope.new(:configuration => self, :type => "main", :name => "top", :parser => self.parser)
 
         # For maintaining scope relationships.
         @scope_graph = GRATR::Digraph.new

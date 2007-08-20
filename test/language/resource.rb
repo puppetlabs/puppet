@@ -11,149 +11,198 @@ class TestResource < PuppetTest::TestCase
     include PuppetTest::ResourceTesting
     Parser = Puppet::Parser
     AST = Parser::AST
+    Resource = Puppet::Parser::Resource
     Reference = Puppet::Parser::Resource::Reference
 
     def setup
         super
         Puppet[:trace] = false
-        @interp, @scope, @source = mkclassframing
     end
 
     def test_initialize
         args = {:type => "resource", :title => "testing",
-            :source => @source, :scope => @scope}
+            :source => "source", :scope => "scope"}
         # Check our arg requirements
         args.each do |name, value|
             try = args.dup
             try.delete(name)
-            assert_raise(Puppet::DevError) do
+            assert_raise(ArgumentError, "Did not fail when %s was missing" % name) do
                 Parser::Resource.new(try)
             end
         end
 
-        args[:params] = paramify @source, :one => "yay", :three => "rah"
+        Reference.expects(:new).with(:type => "resource", :title => "testing", :scope => "scope").returns(:ref)
 
         res = nil
         assert_nothing_raised do
             res = Parser::Resource.new(args)
         end
-
-        # Make sure it got the parameters correctly.
-        assert_equal("yay", res[:one])
-        assert_equal("rah", res[:three])
-
-        assert_equal({:one => "yay", :three => "rah"}, res.to_hash)
-    end
-
-    def test_override
-        res = mkresource
-
-        # Now verify we can't override with any random class
-        assert_raise(Puppet::ParseError) do
-            res.set paramify(@scope.findclass("other"), "one" => "boo").shift
-        end
-
-        # And that we can with a subclass
-        assert_nothing_raised do
-            res.set paramify(@scope.findclass("sub1"), "one" => "boo").shift
-        end
-
-        # And that a different subclass can override a different parameter
-        assert_nothing_raised do
-            res.set paramify(@scope.findclass("sub2"), "three" => "boo").shift
-        end
-
-        # But not the same one
-        assert_raise(Puppet::ParseError) do
-            res.set paramify(@scope.findclass("sub2"), "one" => "something").shift
-        end
-    end
-
-    def check_paramadd(val1, val2, merged_val)
-        res = mkresource :params => {"one" => val1}
-        assert_nothing_raised do
-            res.set Parser::Resource::Param.new(
-                        :name => "one", :value => val2,
-                        :add => true, :source => @scope.findclass("sub1"))
-        end
-        assert_equal(merged_val, res[:one])
-    end
-
-    def test_paramadd
-        check_paramadd([], [], [])
-        check_paramadd([], "rah", ["rah"])
-        check_paramadd([], ["rah", "bah"], ["rah", "bah"])
-
-        check_paramadd("yay", [], ["yay"])
-        check_paramadd("yay", "rah", ["yay", "rah"])
-        check_paramadd("yay", ["rah", "bah"], ["yay", "rah", "bah"])
-
-        check_paramadd(["yay", "boo"], [], ["yay", "boo"])
-        check_paramadd(["yay", "boo"], "rah", ["yay", "boo", "rah"])
-        check_paramadd(["yay", "boo"], ["rah", "bah"],
-                       ["yay", "boo", "rah", "bah"])
     end
 
     def test_merge
-        # Start with the normal one
         res = mkresource
+        other = mkresource
 
-        # Now create a resource from a different scope
-        other = mkresource :source => other, :params => {"one" => "boo"}
-
-        # Make sure we can't merge it
-        assert_raise(Puppet::ParseError) do
+        # First try the case where the resource is not allowed to override
+        res.source = "source1"
+        other.source = "source2"
+        other.source.expects(:child_of?).with("source1").returns(false)
+        assert_raise(Puppet::ParseError, "Allowed unrelated resources to override") do
             res.merge(other)
         end
 
-        # Make one from a subscope
-        other = mkresource :source => "sub1", :params => {"one" => "boo"}
+        # Next try it when the sources are equal.
+        res.source = "source3"
+        other.source = res.source
+        other.source.expects(:child_of?).with("source3").never
+        params = {:a => :b, :c => :d}
+        other.expects(:params).returns(params)
+        res.expects(:override_parameter).with(:b)
+        res.expects(:override_parameter).with(:d)
+        res.merge(other)
 
-        # Make sure it merges
-        assert_nothing_raised do
-            res.merge(other)
+        # And then parentage is involved
+        other = mkresource
+        res.source = "source3"
+        other.source = "source4"
+        other.source.expects(:child_of?).with("source3").returns(true)
+        params = {:a => :b, :c => :d}
+        other.expects(:params).returns(params)
+        res.expects(:override_parameter).with(:b)
+        res.expects(:override_parameter).with(:d)
+        res.merge(other)
+    end
+
+    # the [] method
+    def test_array_accessors
+        res = mkresource
+        params = res.instance_variable_get("@params")
+        assert_nil(res[:missing], "Found a missing parameter somehow")
+        params[:something] = stub(:value => "yay")
+        assert_equal("yay", res[:something], "Did not correctly call value on the parameter")
+
+        res.expects(:title).returns(:mytitle)
+        assert_equal(:mytitle, res[:title], "Did not call title when asked for it as a param")
+    end
+
+    # Make sure any defaults stored in the scope get added to our resource.
+    def test_add_defaults
+        res = mkresource
+        params = res.instance_variable_get("@params")
+        params[:a] = :b
+        res.scope.expects(:lookupdefaults).with(res.type).returns(:a => :replaced, :c => :d)
+        res.expects(:debug)
+
+        res.send(:add_defaults)
+        assert_equal(:d, params[:c], "Did not set default")
+        assert_equal(:b, params[:a], "Replaced parameter with default")
+    end
+
+    def test_finish
+        res = mkresource
+        res.expects(:add_overrides)
+        res.expects(:add_defaults)
+        res.expects(:add_metaparams)
+        res.expects(:validate)
+        res.finish
+    end
+
+    # Make sure we paramcheck our params
+    def test_validate
+        res = mkresource
+        params = res.instance_variable_get("@params")
+        params[:one] = :two
+        params[:three] = :four
+        res.expects(:paramcheck).with(:one)
+        res.expects(:paramcheck).with(:three)
+        res.send(:validate)
+    end
+
+    def test_override_parameter
+        res = mkresource
+        params = res.instance_variable_get("@params")
+
+        # There are three cases, with the second having two options:
+
+        # No existing parameter.
+        param = stub(:name => "myparam")
+        res.send(:override_parameter, param)
+        assert_equal(param, params["myparam"], "Override was not added to param list")
+
+        # An existing parameter that we can override.
+        source = stub(:child_of? => true)
+        # Start out without addition
+        params["param2"] = stub(:source => :whatever)
+        param = stub(:name => "param2", :source => source, :add => false)
+        res.send(:override_parameter, param)
+        assert_equal(param, params["param2"], "Override was not added to param list")
+
+        # Try with addition.
+        params["param2"] = stub(:value => :a, :source => :whatever)
+        param = stub(:name => "param2", :source => source, :add => true, :value => :b)
+        param.expects(:value=).with([:a, :b])
+        res.send(:override_parameter, param)
+        assert_equal(param, params["param2"], "Override was not added to param list")
+
+        # And finally, make sure we throw an exception when the sources aren't related
+        source = stub(:child_of? => false)
+        params["param2"] = stub(:source => :whatever, :file => :f, :line => :l)
+        old = params["param2"]
+        param = stub(:name => "param2", :source => source, :file => :f, :line => :l)
+        assert_raise(Puppet::ParseError, "Did not fail when params conflicted") do
+            res.send(:override_parameter, param)
+        end
+        assert_equal(old, params["param2"], "Param was replaced irrespective of conflict")
+    end
+
+    def test_set_parameter
+        res = mkresource
+        params = res.instance_variable_get("@params")
+
+        # First test the simple case:  It's already a parameter
+        param = mock('param')
+        param.expects(:is_a?).with(Resource::Param).returns(true)
+        param.expects(:name).returns("pname")
+        res.send(:set_parameter, param)
+        assert_equal(param, params["pname"], "Parameter was not added to hash")
+
+        # Now the case where there's no value but it's not a param
+        param = mock('param')
+        param.expects(:is_a?).with(Resource::Param).returns(false)
+        assert_raise(ArgumentError, "Did not fail when a non-param was passed") do
+            res.send(:set_parameter, param)
         end
 
-        assert_equal("boo", res["one"])
+        # and the case where a value is passed in
+        param = stub :name => "pname", :value => "whatever"
+        Resource::Param.expects(:new).with(:name => "pname", :value => "myvalue", :source => res.source).returns(param)
+        res.send(:set_parameter, "pname", "myvalue")
+        assert_equal(param, params["pname"], "Did not put param in hash")
     end
 
     def test_paramcheck
-        # First make a builtin resource
-        res = nil
-        assert_nothing_raised do
-            res = Parser::Resource.new :type => "file", :title => tempfile(),
-                :source => @source, :scope => @scope
-        end
+        # There are three cases here:
 
-        %w{path group source schedule subscribe}.each do |param|
-            assert_nothing_raised("Param %s was considered invalid" % param) do
-                res.paramcheck(param)
-            end
-        end
+        # It's a valid parameter
+        res = mkresource
+        ref = mock('ref')
+        res.instance_variable_set("@ref", ref)
+        klass = mock("class")
+        ref.expects(:typeclass).returns(klass).times(4)
+        klass.expects(:validattr?).with("good").returns(true)
+        assert(res.send(:paramcheck, :good), "Did not allow valid param")
 
-        %w{this bad noness}.each do |param|
-            assert_raise(Puppet::ParseError, "%s was considered valid" % param) do
-                res.paramcheck(param)
-            end
-        end
+        # It's name or title
+        klass.expects(:validattr?).with("name").returns(false)
+        assert(res.send(:paramcheck, :name), "Did not allow name")
+        klass.expects(:validattr?).with("title").returns(false)
+        assert(res.send(:paramcheck, :title), "Did not allow title")
 
-        # Now create a defined resource
-        assert_nothing_raised do
-            res = Parser::Resource.new :type => "resource", :title => "yay",
-                :source => @source, :scope => @scope
-        end
-
-        %w{one two three schedule subscribe}.each do |param|
-            assert_nothing_raised("Param %s was considered invalid" % param) do
-                res.paramcheck(param)
-            end
-        end
-
-        %w{this bad noness}.each do |param|
-            assert_raise(Puppet::ParseError, "%s was considered valid" % param) do
-                res.paramcheck(param)
-            end
-        end
+        # It's not actually allowed
+        klass.expects(:validattr?).with("other").returns(false)
+        res.expects(:fail)
+        ref.expects(:type)
+        res.send(:paramcheck, :other)
     end
 
     def test_to_trans
@@ -186,62 +235,10 @@ class TestResource < PuppetTest::TestCase
         assert_equal(["file", refs[3].title], obj["notify"], "Array with single resource reference was not turned into single value")
     end
 
-    def test_adddefaults
-        # Set some defaults at the top level
-        top = {:one => "fun", :two => "shoe"}
-
-        @scope.setdefaults("resource", paramify(@source, top))
-
-        # Make a resource at that level
-        res = Parser::Resource.new :type => "resource", :title => "yay",
-            :source => @source, :scope => @scope
-
-        # Add the defaults
-        assert_nothing_raised do
-            res.adddefaults
-        end
-
-        # And make sure we got them
-        top.each do |p, v|
-            assert_equal(v, res[p])
-        end
-
-        # Now got a bit lower
-        other = @scope.newscope
-
-        # And create a resource
-        lowerres = Parser::Resource.new :type => "resource", :title => "funtest",
-            :source => @source, :scope => other
-
-        assert_nothing_raised do
-            lowerres.adddefaults
-        end
-
-        # And check
-        top.each do |p, v|
-            assert_equal(v, lowerres[p])
-        end
-
-        # Now add some of our own defaults
-        lower = {:one => "shun", :three => "free"}
-        other.setdefaults("resource", paramify(@source, lower))
-        otherres = Parser::Resource.new :type => "resource", :title => "yaytest",
-            :source => @source, :scope => other
-
-        should = top.dup
-        # Make sure the lower defaults beat the higher ones.
-        lower.each do |p, v| should[p] = v end
-
-        otherres.adddefaults
-
-        should.each do |p,v|
-            assert_equal(v, otherres[p])
-        end
-    end
-
     def test_evaluate
+        @parser = mkparser
         # Make a definition that we know will, um, do something
-        @interp.newdefine "evaltest",
+        @parser.newdefine "evaltest",
             :arguments => [%w{one}, ["two", stringobj("755")]],
             :code => resourcedef("file", "/tmp",
                 "owner" => varref("one"), "mode" => varref("two"))
@@ -272,49 +269,36 @@ class TestResource < PuppetTest::TestCase
             "Evaluated resource was not deleted")
     end
 
-    def test_addoverrides
-        # First create an override for an object that doesn't yet exist
-        over1 = mkresource :source => "sub1", :params => {:one => "yay"}
+    def test_add_overrides
+        # Try it with nil
+        res = mkresource
+        res.scope = mock('scope')
+        config = mock("config")
+        res.scope.expects(:configuration).returns(config)
+        config.expects(:resource_overrides).with(res).returns(nil)
+        res.expects(:merge).never
+        res.send(:add_overrides)
 
-        assert_nothing_raised do
-            @scope.setoverride(over1)
-        end
+        # And an empty array
+        res = mkresource
+        res.scope = mock('scope')
+        config = mock("config")
+        res.scope.expects(:configuration).returns(config)
+        config.expects(:resource_overrides).with(res).returns([])
+        res.expects(:merge).never
+        res.send(:add_overrides)
 
-        assert(over1.override, "Override was not marked so")
-
-        # Now make the resource
-        res = mkresource :source => "base", :params => {:one => "rah",
-            :three => "foo"}
-
-        # And add it to our scope
-        @scope.setresource(res)
-
-        # And make sure over1 has not yet taken affect
-        assert_equal("foo", res[:three], "Lost value")
-
-        # Now add an immediately binding override
-        over2 = mkresource :source => "sub1", :params => {:three => "yay"}
-
-        assert_nothing_raised do
-            @scope.setoverride(over2)
-        end
-
-        # And make sure it worked
-        assert_equal("yay", res[:three], "Override 2 was ignored")
-
-        # Now add our late-binding override
-        assert_nothing_raised do
-            res.addoverrides
-        end
-
-        # And make sure they're still around
-        assert_equal("yay", res[:one], "Override 1 lost")
-        assert_equal("yay", res[:three], "Override 2 lost")
-
-        # And finally, make sure that there are no remaining overrides
-        assert_nothing_raised do
-            res.addoverrides
-        end
+        # And with some overrides
+        res = mkresource
+        res.scope = mock('scope')
+        config = mock("config")
+        res.scope.expects(:configuration).returns(config)
+        returns = %w{a b}
+        config.expects(:resource_overrides).with(res).returns(returns)
+        res.expects(:merge).with("a")
+        res.expects(:merge).with("b")
+        res.send(:add_overrides)
+        assert(returns.empty?, "Did not clear overrides")
     end
 
     def test_proxymethods
@@ -326,28 +310,18 @@ class TestResource < PuppetTest::TestCase
         assert_equal(false, res.builtin?)
     end
 
-    def test_addmetaparams
-        mkevaltest @interp
-        res = Parser::Resource.new :type => "evaltest", :title => "yay",
-            :source => @source, :scope => @scope,
-            :params => paramify(@source, :tag => "yay")
+    def test_add_metaparams
+        res = mkresource
+        params = res.instance_variable_get("@params")
+        params[:a] = :b
+        Puppet::Type.expects(:eachmetaparam).multiple_yields(:a, :b, :c)
+        res.scope.expects(:lookupvar).with("b", false).returns(:something)
+        res.scope.expects(:lookupvar).with("c", false).returns(:undefined)
+        res.expects(:set_parameter).with(:b, :something)
 
-        assert_nil(res[:schedule], "Got schedule already")
-        assert_nothing_raised do
-            res.addmetaparams
-        end
-        @scope.setvar("schedule", "daily")
+        res.send(:add_metaparams)
 
-        # This is so we can test that it won't override already-set metaparams
-        @scope.setvar("tag", "funtest")
-
-        assert_nothing_raised do
-            res.addmetaparams
-        end
-
-        assert_equal("daily", res[:schedule], "Did not get metaparam")
-        assert_equal("yay", res[:tag], "Overrode explicitly-set metaparam")
-        assert_nil(res[:noop], "Got invalid metaparam")
+        assert_nil(params[:c], "A value was created somehow for an unset metaparam")
     end
 
     def test_reference_conversion
@@ -397,18 +371,19 @@ class TestResource < PuppetTest::TestCase
     # #472.  Really, this still isn't the best behaviour, but at least
     # it's consistent with what we have elsewhere.
     def test_defaults_from_parent_classes
+        @parser = mkparser
         # Make a parent class with some defaults in it
-        @interp.newclass("base",
+        @parser.newclass("base",
             :code => defaultobj("file", :owner => "root", :group => "root")
         )
 
         # Now a mid-level class with some different values
-        @interp.newclass("middle", :parent => "base",
+        @parser.newclass("middle", :parent => "base",
             :code => defaultobj("file", :owner => "bin", :mode => "755")
         )
 
         # Now a lower class with its own defaults plus a resource
-        @interp.newclass("bottom", :parent => "middle",
+        @parser.newclass("bottom", :parent => "middle",
             :code => AST::ASTArray.new(:children => [
                 defaultobj("file", :owner => "adm", :recurse => "true"),
                 resourcedef("file", "/tmp/yayness", {})
@@ -435,17 +410,18 @@ class TestResource < PuppetTest::TestCase
     # The second part of #539 - make sure resources pass the arguments
     # correctly.
     def test_title_with_definitions
-        define = @interp.newdefine "yayness",
+        @parser = mkparser
+        define = @parser.newdefine "yayness",
             :code => resourcedef("file", "/tmp",
                 "owner" => varref("name"), "mode" => varref("title"))
 
-        klass = @interp.findclass("", "")
+        klass = @parser.findclass("", "")
         should = {:name => :owner, :title => :mode}
         [
         {:name => "one", :title => "two"},
         {:title => "three"},
         ].each do |hash|
-            scope = mkscope :interp => @interp
+            scope = mkscope :parser => @parser
             args = {:type => "yayness", :title => hash[:title],
                 :source => klass, :scope => scope}
             if hash[:name]
@@ -487,7 +463,8 @@ class TestResource < PuppetTest::TestCase
 
     # #643 - Make sure virtual defines result in virtual resources
     def test_virtual_defines
-        define = @interp.newdefine("yayness",
+        @parser = mkparser
+        define = @parser.newdefine("yayness",
             :code => resourcedef("file", varref("name"),
                 "mode" => "644"))
 

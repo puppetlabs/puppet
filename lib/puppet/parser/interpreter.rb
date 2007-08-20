@@ -3,6 +3,7 @@ require 'timeout'
 require 'puppet/rails'
 require 'puppet/util/methodhelper'
 require 'puppet/parser/parser'
+require 'puppet/parser/configuration'
 require 'puppet/parser/scope'
 
 # The interpreter is a very simple entry-point class that
@@ -93,7 +94,7 @@ class Puppet::Parser::Interpreter
     def compile(node)
         parsefiles()
 
-        return Puppet::Parser::Configuration.new(node).compile
+        return Puppet::Parser::Configuration.new(node, @parser).compile
     end
 
     private
