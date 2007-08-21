@@ -38,13 +38,13 @@ class TestParser < Test::Unit::TestCase
     def test_failers
         failers { |file|
             parser = mkparser
-            interp = mkinterp
             Puppet.debug("parsing failer %s" % file) if __FILE__ == $0
-            assert_raise(Puppet::ParseError) {
+            assert_raise(Puppet::ParseError, "Did not fail while parsing %s" % file) {
                 parser.file = file
                 ast = parser.parse
-                scope = mkscope :interp => interp
-                ast.classes[""].evaluate :scope => scope
+                config = mkconfig(parser)
+                config.compile
+                #ast.classes[""].evaluate :scope => config.topscope
             }
             Puppet::Type.allclear
         }
@@ -622,7 +622,7 @@ file { "/tmp/yayness":
 
         code = nil
         assert_nothing_raised do
-            code = interp.run("hostname.domain.com", {}).flatten
+            code = interp.compile(mknode).flatten
         end
         assert(code.length == 1, "Did not get the file")
         assert_instance_of(Puppet::TransObject, code[0])
@@ -871,7 +871,8 @@ file { "/tmp/yayness":
     end
 
     def test_newclass
-        parser = mkparser
+        scope = mkscope
+        parser = scope.configuration.parser
 
         mkcode = proc do |ary|
             classes = ary.collect do |string|
@@ -880,7 +881,6 @@ file { "/tmp/yayness":
             AST::ASTArray.new(:children => classes)
         end
 
-        scope = Puppet::Parser::Scope.new(:interp => mkinterp)
 
         # First make sure that code is being appended
         code = mkcode.call(%w{original code})

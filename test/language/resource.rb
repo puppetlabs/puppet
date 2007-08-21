@@ -19,6 +19,10 @@ class TestResource < PuppetTest::TestCase
         Puppet[:trace] = false
     end
 
+    def teardown
+        mocha_verify
+    end
+
     def test_initialize
         args = {:type => "resource", :title => "testing",
             :source => "source", :scope => "scope"}
@@ -208,11 +212,14 @@ class TestResource < PuppetTest::TestCase
     def test_to_trans
         # First try translating a builtin resource.  Make sure we use some references
         # and arrays, to make sure they translate correctly.
+        source = mock("source")
+        scope = mock("scope")
+        scope.expects(:tags).returns([])
         refs = []
         4.times { |i| refs << Puppet::Parser::Resource::Reference.new(:title => "file%s" % i, :type => "file") }
         res = Parser::Resource.new :type => "file", :title => "/tmp",
-            :source => @source, :scope => @scope,
-            :params => paramify(@source, :owner => "nobody", :group => %w{you me},
+            :source => source, :scope => scope,
+            :params => paramify(source, :owner => "nobody", :group => %w{you me},
             :require => refs[0], :ignore => %w{svn},
             :subscribe => [refs[1], refs[2]], :notify => [refs[3]])
 
@@ -236,37 +243,25 @@ class TestResource < PuppetTest::TestCase
     end
 
     def test_evaluate
-        @parser = mkparser
-        # Make a definition that we know will, um, do something
-        @parser.newdefine "evaltest",
-            :arguments => [%w{one}, ["two", stringobj("755")]],
-            :code => resourcedef("file", "/tmp",
-                "owner" => varref("one"), "mode" => varref("two"))
+        # First try the most common case, we're not a builtin type.
+        res = mkresource
+        ref = res.instance_variable_get("@ref")
+        type = mock("type")
+        ref.expects(:definedtype).returns(type)
+        res.expects(:finish)
+        res.scope = mock("scope")
+        config = mock("config")
+        res.scope.expects(:configuration).returns(config)
+        config.expects(:delete_resource).with(res)
 
-        res = Parser::Resource.new :type => "evaltest", :title => "yay",
-            :source => @source, :scope => @scope,
-            :params => paramify(@source, :one => "nobody")
-
-        # Now try evaluating
-        ret = nil
-        assert_nothing_raised do
-            ret = res.evaluate
+        args = {:scope => res.scope, :arguments => res.to_hash}
+        # This is insane; FIXME we need to redesign how classes and components are evaluated.
+        [:type, :title, :virtual, :exported].each do |param|
+            args[param] = res.send(param)
         end
+        type.expects(:evaluate_resource).with(args)
 
-        # Make sure we can find our object now
-        result = @scope.findresource("File[/tmp]")
-        
-        # Now make sure we got the code we expected.
-        assert_instance_of(Puppet::Parser::Resource, result)
-
-        assert_equal("file", result.type)
-        assert_equal("/tmp", result.title)
-        assert_equal("nobody", result["owner"])
-        assert_equal("755", result["mode"])
-
-        # And that we cannot find the old resource
-        assert_nil(@scope.findresource("Evaltest[yay]"),
-            "Evaluated resource was not deleted")
+        res.evaluate
     end
 
     def test_add_overrides
@@ -303,7 +298,7 @@ class TestResource < PuppetTest::TestCase
 
     def test_proxymethods
         res = Parser::Resource.new :type => "evaltest", :title => "yay",
-            :source => @source, :scope => @scope
+            :source => mock("source"), :scope => mock('scope')
 
         assert_equal("evaltest", res.type)
         assert_equal("yay", res.title)
@@ -331,6 +326,7 @@ class TestResource < PuppetTest::TestCase
         # Now create an obj that uses it
         res = mkresource :type => "file", :title => "/tmp/resource",
             :params => {:require => ref}
+        res.scope = stub(:tags => [])
 
         trans = nil
         assert_nothing_raised do
@@ -344,6 +340,7 @@ class TestResource < PuppetTest::TestCase
         two = Parser::Resource::Reference.new(:type => "file", :title => "/tmp/ref2")
         res = mkresource :type => "file", :title => "/tmp/resource2",
             :params => {:require => [ref, two]}
+        res.scope = stub(:tags => [])
 
         trans = nil
         assert_nothing_raised do
@@ -368,62 +365,24 @@ class TestResource < PuppetTest::TestCase
         assert_nil(ref.builtintype, "Component was considered builtin")
     end
 
-    # #472.  Really, this still isn't the best behaviour, but at least
-    # it's consistent with what we have elsewhere.
-    def test_defaults_from_parent_classes
-        @parser = mkparser
-        # Make a parent class with some defaults in it
-        @parser.newclass("base",
-            :code => defaultobj("file", :owner => "root", :group => "root")
-        )
-
-        # Now a mid-level class with some different values
-        @parser.newclass("middle", :parent => "base",
-            :code => defaultobj("file", :owner => "bin", :mode => "755")
-        )
-
-        # Now a lower class with its own defaults plus a resource
-        @parser.newclass("bottom", :parent => "middle",
-            :code => AST::ASTArray.new(:children => [
-                defaultobj("file", :owner => "adm", :recurse => "true"),
-                resourcedef("file", "/tmp/yayness", {})
-            ])
-        )
-
-        # Now evaluate the class.
-        assert_nothing_raised("Failed to evaluate class tree") do
-            @scope.evalclasses("bottom")
-        end
-
-        # Make sure our resource got created.
-        res = @scope.findresource("File[/tmp/yayness]")
-        assert_nothing_raised("Could not add defaults") do
-            res.adddefaults
-        end
-        assert(res, "could not find resource")
-        {:owner => "adm", :recurse => "true", :group => "root", :mode => "755"}.each do |param, value|
-            assert_equal(value, res[param], "%s => %s did not inherit correctly" %
-                [param, value])
-        end
-    end
-
     # The second part of #539 - make sure resources pass the arguments
     # correctly.
     def test_title_with_definitions
-        @parser = mkparser
-        define = @parser.newdefine "yayness",
+        parser = mkparser
+        define = parser.newdefine "yayness",
             :code => resourcedef("file", "/tmp",
                 "owner" => varref("name"), "mode" => varref("title"))
 
-        klass = @parser.findclass("", "")
+
+        klass = parser.findclass("", "")
         should = {:name => :owner, :title => :mode}
         [
         {:name => "one", :title => "two"},
         {:title => "three"},
         ].each do |hash|
-            scope = mkscope :parser => @parser
+            config = mkconfig parser
             args = {:type => "yayness", :title => hash[:title],
-                :source => klass, :scope => scope}
+                :source => klass, :scope => config.topscope}
             if hash[:name]
                 args[:params] = {:name => hash[:name]}
             else
@@ -438,7 +397,7 @@ class TestResource < PuppetTest::TestCase
                 res.evaluate
             end
 
-            made = scope.findresource("File[/tmp]")
+            made = config.topscope.findresource("File[/tmp]")
             assert(made, "Did not create resource with %s" % hash.inspect)
             should.each do |orig, param|
                 assert_equal(hash[orig] || hash[:title], made[param],
@@ -450,7 +409,7 @@ class TestResource < PuppetTest::TestCase
     # part of #629 -- the undef keyword.  Make sure 'undef' params get skipped.
     def test_undef_and_to_hash
         res = mkresource :type => "file", :title => "/tmp/testing",
-            :source => @source, :scope => @scope,
+            :source => mock("source"), :scope => mock("scope"),
             :params => {:owner => :undef, :mode => "755"}
 
         hash = nil
@@ -463,12 +422,14 @@ class TestResource < PuppetTest::TestCase
 
     # #643 - Make sure virtual defines result in virtual resources
     def test_virtual_defines
-        @parser = mkparser
-        define = @parser.newdefine("yayness",
+        parser = mkparser
+        define = parser.newdefine("yayness",
             :code => resourcedef("file", varref("name"),
                 "mode" => "644"))
 
-        res = mkresource :type => "yayness", :title => "foo", :params => {}
+        config = mkconfig(parser)
+
+        res = mkresource :type => "yayness", :title => "foo", :params => {}, :scope => config.topscope
         res.virtual = true
 
         result = nil
@@ -483,7 +444,7 @@ class TestResource < PuppetTest::TestCase
         assert(newres.virtual?, "Virtual defined resource generated non-virtual resources")
 
         # Now try it with exported resources
-        res = mkresource :type => "yayness", :title => "bar", :params => {}
+        res = mkresource :type => "yayness", :title => "bar", :params => {}, :scope => config.topscope
         res.exported = true
 
         result = nil

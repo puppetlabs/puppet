@@ -52,11 +52,10 @@ class Puppet::Parser::Resource
         if klass = @ref.definedtype
             finish()
             scope.configuration.delete_resource(self)
-            return klass.evaluate(:scope => scope,
+            return klass.evaluate_resource(:scope => scope,
                                   :type => self.type,
                                   :title => self.title,
                                   :arguments => self.to_hash,
-                                  :scope => self.scope,
                                   :virtual => self.virtual,
                                   :exported => self.exported
             )

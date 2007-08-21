@@ -17,10 +17,11 @@ class TestASTHostClass < Test::Unit::TestCase
 	AST = Puppet::Parser::AST
 
     def test_hostclass
-        interp, scope, source = mkclassframing
+        scope = mkscope
+        parser = scope.configuration.parser
 
         # Create the class we're testing, first with no parent
-        klass = interp.newclass "first",
+        klass = parser.newclass "first",
             :code => AST::ASTArray.new(
                 :children => [resourcedef("file", "/tmp",
                         "owner" => "nobody", "mode" => "755")]
@@ -43,13 +44,13 @@ class TestASTHostClass < Test::Unit::TestCase
         assert_equal("755", tmp[:mode])
 
         # Now create a couple more classes.
-        newbase = interp.newclass "newbase",
+        newbase = parser.newclass "newbase",
             :code => AST::ASTArray.new(
                 :children => [resourcedef("file", "/tmp/other",
                         "owner" => "nobody", "mode" => "644")]
             )
 
-        newsub = interp.newclass "newsub",
+        newsub = parser.newclass "newsub",
             :parent => "newbase",
             :code => AST::ASTArray.new(
                 :children => [resourcedef("file", "/tmp/yay",
@@ -60,7 +61,7 @@ class TestASTHostClass < Test::Unit::TestCase
             )
 
         # Override a different variable in the top scope.
-        moresub = interp.newclass "moresub",
+        moresub = parser.newclass "moresub",
             :parent => "newbase",
             :code => AST::ASTArray.new(
                 :children => [resourceoverride("file", "/tmp/other",
@@ -92,19 +93,20 @@ class TestASTHostClass < Test::Unit::TestCase
     # Make sure that classes set their namespaces to themselves.  This
     # way they start looking for definitions in their own namespace.
     def test_hostclass_namespace
-        interp, scope, source = mkclassframing
+        scope = mkscope
+        parser = scope.configuration.parser
 
         # Create a new class
         klass = nil
         assert_nothing_raised do
-            klass = interp.newclass "funtest"
+            klass = parser.newclass "funtest"
         end
 
         # Now define a definition in that namespace
 
         define = nil
         assert_nothing_raised do
-            define = interp.newdefine "funtest::mydefine"
+            define = parser.newdefine "funtest::mydefine"
         end
 
         assert_equal("funtest", klass.namespace,
@@ -127,17 +129,18 @@ class TestASTHostClass < Test::Unit::TestCase
     # At the same time, make sure definitions in the parent class can be
     # found within the subclass (#517).
     def test_parent_scope_from_parentclass
-        interp = mkinterp
+        scope = mkscope
+        parser = scope.configuration.parser
 
-        interp.newclass("base")
-        fun = interp.newdefine("base::fun")
-        interp.newclass("middle", :parent => "base")
-        interp.newclass("sub", :parent => "middle")
-        scope = mkscope :interp => interp
+        parser.newclass("base")
+        fun = parser.newdefine("base::fun")
+        parser.newclass("middle", :parent => "base")
+        parser.newclass("sub", :parent => "middle")
+        scope = mkscope :parser => parser
 
         ret = nil
         assert_nothing_raised do
-            ret = scope.evalclasses("sub")
+            ret = scope.configuration.evaluate_classes(["sub"])
         end
 
         subscope = scope.class_scope(scope.findclass("sub"))

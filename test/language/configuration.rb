@@ -287,9 +287,11 @@ class TestConfiguration < Test::Unit::TestCase
         config.expects(:tag).with("four")
 
         @node.classes = %w{one two three four}
+        result = nil
         assert_nothing_raised("could not call evaluate_classes") do
-            config.send(:evaluate_classes)
+            result = config.send(:evaluate_classes)
         end
+        assert_equal(%w{one three}, result, "Did not return the list of evaluated classes")
     end
 
     def test_evaluate_collections
@@ -717,6 +719,27 @@ class TestConfiguration < Test::Unit::TestCase
         assert_nothing_raised("Could not call findresource when the resource table was not empty") do
             assert_equal(:yay, config.findresource("foo", "bar"), "Returned a non-existent resource")
             assert_equal(:yay, config.findresource("Foo[bar]"), "Returned a non-existent resource")
+        end
+    end
+
+    # #620 - Nodes and classes should conflict, else classes don't get evaluated
+    def test_nodes_and_classes_name_conflict
+        # Test node then class
+        config = mkconfig
+        node = stub :nodescope? => true
+        klass = stub :nodescope? => false
+        config.class_set("one", node)
+        assert_raise(Puppet::ParseError, "Did not fail when replacing node with class") do
+            config.class_set("one", klass)
+        end
+
+        # and class then node
+        config = mkconfig
+        node = stub :nodescope? => true
+        klass = stub :nodescope? => false
+        config.class_set("two", klass)
+        assert_raise(Puppet::ParseError, "Did not fail when replacing node with class") do
+            config.class_set("two", node)
         end
     end
 end

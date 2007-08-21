@@ -16,8 +16,8 @@ class TestASTComponent < Test::Unit::TestCase
     include PuppetTest::ResourceTesting
 	AST = Puppet::Parser::AST
 
-    def test_component
-        parser, scope, source = mkclassframing
+    def test_initialize
+        parser = mkparser
 
         # Create a new definition
         klass = parser.newdefine "yayness",
@@ -35,27 +35,41 @@ class TestASTComponent < Test::Unit::TestCase
         [:random, "random"].each do |var|
             assert(! klass.validattr?(var), "%s was considered valid" % var.inspect)
         end
+
+    end
+
+    def test_evaluate
+        parser = mkparser
+        config = mkconfig
+        scope = config.topscope
+        klass = parser.newdefine "yayness",
+            :arguments => [["owner", stringobj("nobody")], %w{mode}],
+            :code => AST::ASTArray.new(
+                :children => [resourcedef("file", "/tmp/$name",
+                        "owner" => varref("owner"), "mode" => varref("mode"))]
+            )
+
         # Now call it a couple of times
         # First try it without a required param
-        assert_raise(Puppet::ParseError) do
-            klass.evaluate(:scope => scope,
+        assert_raise(Puppet::ParseError, "Did not fail when a required parameter was not provided") do
+            klass.evaluate_resource(:scope => scope,
                 :name => "bad",
                 :arguments => {"owner" => "nobody"}
             )
         end
 
         # And make sure it didn't create the file
-        assert_nil(scope.findresource("File[/tmp/bad]"),
+        assert_nil(config.findresource("File[/tmp/bad]"),
             "Made file with invalid params")
 
         assert_nothing_raised do
-            klass.evaluate(:scope => scope,
+            klass.evaluate_resource(:scope => scope,
                 :title => "first",
                 :arguments => {"mode" => "755"}
             )
         end
 
-        firstobj = scope.findresource("File[/tmp/first]")
+        firstobj = config.findresource("File[/tmp/first]")
         assert(firstobj, "Did not create /tmp/first obj")
 
         assert_equal("file", firstobj.type)
@@ -65,7 +79,7 @@ class TestASTComponent < Test::Unit::TestCase
 
         # Make sure we can't evaluate it with the same args
         assert_raise(Puppet::ParseError) do
-            klass.evaluate(:scope => scope,
+            klass.evaluate_resource(:scope => scope,
                 :title => "first",
                 :arguments => {"mode" => "755"}
             )
@@ -73,13 +87,13 @@ class TestASTComponent < Test::Unit::TestCase
 
         # Now create another with different args
         assert_nothing_raised do
-            klass.evaluate(:scope => scope,
+            klass.evaluate_resource(:scope => scope,
                 :title => "second",
                 :arguments => {"mode" => "755", "owner" => "daemon"}
             )
         end
 
-        secondobj = scope.findresource("File[/tmp/second]")
+        secondobj = config.findresource("File[/tmp/second]")
         assert(secondobj, "Did not create /tmp/second obj")
 
         assert_equal("file", secondobj.type)
@@ -110,7 +124,7 @@ class TestASTComponent < Test::Unit::TestCase
             end
             args[:scope] = scope
             assert_nothing_raised("Could not evaluate definition with %s" % hash.inspect) do
-                klass.evaluate(args)
+                klass.evaluate_resource(args)
             end
 
             name = hash[:name] || hash[:title]

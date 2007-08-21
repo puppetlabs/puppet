@@ -12,7 +12,7 @@ require 'puppet/util/errors'
 class Puppet::Parser::Configuration
     include Puppet::Util
     include Puppet::Util::Errors
-    attr_reader :topscope, :parser, :node, :facts
+    attr_reader :topscope, :parser, :node, :facts, :collections
     attr_accessor :extraction_format
 
     attr_writer :ast_nodes
@@ -30,6 +30,13 @@ class Puppet::Parser::Configuration
     # Store the fact that we've evaluated a class, and store a reference to
     # the scope in which it was evaluated, so that we can look it up later.
     def class_set(name, scope)
+        if existing = @class_scopes[name]
+            if existing.nodescope? or scope.nodescope?
+                raise Puppet::ParseError, "Cannot have classes, nodes, or definitions with the same name"
+            else
+                raise Puppet::DevError, "Somehow evaluated the same class twice"
+            end
+        end
         @class_scopes[name] = scope
         tag(name)
     end
@@ -89,16 +96,19 @@ class Puppet::Parser::Configuration
     # just tag the configuration and move on.
     def evaluate_classes(classes = nil)
         classes ||= node.classes
+        found = []
         classes.each do |name|
             if klass = @parser.findclass("", name)
                 # This will result in class_set getting called, which
                 # will in turn result in tags.  Yay.
                 klass.safeevaluate(:scope => topscope)
+                found << name
             else
                 Puppet.info "Could not find class %s for %s" % [name, node.name]
                 tag(name)
             end
         end
+        found
     end
 
     # Make sure we support the requested extraction format.

@@ -27,74 +27,32 @@ class TestScope < Test::Unit::TestCase
     end
 
     def test_variables
-        scope = nil
-        over = "over"
+        config = mkconfig
+        topscope = config.topscope
+        midscope = config.newscope(topscope)
+        botscope = config.newscope(midscope)
 
-        scopes = []
-        vars = []
-        values = {}
-        ovalues = []
+        scopes = {:top => topscope, :mid => midscope, :bot => botscope}
 
-        10.times { |index|
-            # slap some recursion in there
-            scope = mkscope(:parent => scope)
-            scopes.push scope
+        # Set a variable in the top and make sure all three can get it
+        topscope.setvar("first", "topval")
+        scopes.each do |name, scope|
+            assert_equal("topval", scope.lookupvar("first", false), "Could not find var in %s" % name)
+        end
 
-            var = "var%s" % index
-            value = rand(1000)
-            ovalue = rand(1000)
-            
-            ovalues.push ovalue
+        # Now set a var in the midscope and make sure the mid and bottom can see it but not the top
+        midscope.setvar("second", "midval")
+        assert_equal(:undefined, scopes[:top].lookupvar("second", false), "Found child var in top scope")
+        [:mid, :bot].each do |name|
+            assert_equal("midval", scopes[name].lookupvar("second", false), "Could not find var in %s" % name)
+        end
 
-            vars.push var
-            values[var] = value
-
-            # set the variable in the current scope
-            assert_nothing_raised {
-                scope.setvar(var,value)
-            }
-
-            # this should override previous values
-            assert_nothing_raised {
-                scope.setvar(over,ovalue)
-            }
-
-            assert_equal(value,scope.lookupvar(var))
-
-            #puts "%s vars, %s scopes" % [vars.length,scopes.length]
-            i = 0
-            vars.zip(scopes) { |v,s|
-                # this recurses all the way up the tree as necessary
-                val = nil
-                oval = nil
-
-                # look up the values using the bottom scope
-                assert_nothing_raised {
-                    val = scope.lookupvar(v)
-                    oval = scope.lookupvar(over)
-                }
-
-                # verify they're correct
-                assert_equal(values[v],val)
-                assert_equal(ovalue,oval)
-
-                # verify that we get the most recent value
-                assert_equal(ovalue,scope.lookupvar(over))
-
-                # verify that they aren't available in upper scopes
-                if parent = s.parent
-                    val = nil
-                    assert_nothing_raised {
-                        val = parent.lookupvar(v)
-                    }
-                    assert_equal("", val, "Did not get empty string on missing var")
-
-                    # and verify that the parent sees its correct value
-                    assert_equal(ovalues[i - 1],parent.lookupvar(over))
-                end
-                i += 1
-            }
-        }
+        # And set something in the bottom, and make sure we only find it there.
+        botscope.setvar("third", "botval")
+        [:top, :mid].each do |name|
+            assert_equal(:undefined, scopes[name].lookupvar("third", false), "Found child var in top scope")
+        end
+        assert_equal("botval", scopes[:bot].lookupvar("third", false), "Could not find var in bottom scope")
     end
 
     def test_lookupvar
@@ -174,18 +132,18 @@ class TestScope < Test::Unit::TestCase
         defaults = scope.instance_variable_get("@defaults")
 
         # First the case where there are no defaults and we pass a single param
-        param = stub :name => "myparam"
+        param = stub :name => "myparam", :file => "f", :line => "l"
         scope.setdefaults(:mytype, param)
         assert_equal({"myparam" => param}, defaults[:mytype], "Did not set default correctly")
 
         # Now the case where we pass in multiple parameters
-        param1 = stub :name => "one"
-        param2 = stub :name => "two"
+        param1 = stub :name => "one", :file => "f", :line => "l"
+        param2 = stub :name => "two", :file => "f", :line => "l"
         scope.setdefaults(:newtype, [param1, param2])
         assert_equal({"one" => param1, "two" => param2}, defaults[:newtype], "Did not set multiple defaults correctly")
 
         # And the case where there's actually a conflict.  Use the first default for this.
-        newparam = stub :name => "myparam"
+        newparam = stub :name => "myparam", :file => "f", :line => "l"
         assert_raise(Puppet::ParseError, "Allowed resetting of defaults") do
             scope.setdefaults(:mytype, param)
         end
@@ -238,7 +196,7 @@ class TestScope < Test::Unit::TestCase
         assert_equal(:myscope, scope.class_scope(:testing), "Did not pass back the results of config.class_scope")
     end
     
-    def test_strparser
+    def test_strinterp
         # Make and evaluate our classes so the qualified lookups work
         parser = mkparser
         klass = parser.newclass("")
@@ -293,7 +251,7 @@ class TestScope < Test::Unit::TestCase
 
         tests.each do |input, output|
             assert_nothing_raised("Failed to scan %s" % input.inspect) do
-                assert_equal(output, scope.strparser(input),
+                assert_equal(output, scope.strinterp(input),
                     'did not parserret %s correctly' % input.inspect)
             end
         end
@@ -306,7 +264,7 @@ class TestScope < Test::Unit::TestCase
         %w{d f h l w z}.each do |l|
             string = "\\" + l
             assert_nothing_raised do
-                assert_equal(string, scope.strparser(string),
+                assert_equal(string, scope.strinterp(string),
                     'did not parserret %s correctly' % string)
             end
 
@@ -317,37 +275,35 @@ class TestScope < Test::Unit::TestCase
     end
 
     def test_setclass
-        parser, scope, source = mkclassframing
+        # Run through it when we're a normal class
+        config = mkconfig
+        scope = config.topscope
+        klass = mock("class")
+        klass.expects(:classname).returns(:myclass)
+        klass.expects(:is_a?).with(AST::HostClass).returns(true)
+        klass.expects(:is_a?).with(AST::Node).returns(false)
+        config.expects(:class_set).with(:myclass, scope)
+        scope.setclass(klass)
 
-        base = scope.findclass("base")
-        assert(base, "Could not find base class")
-        assert(! scope.class_scope(base), "Class incorrectly set")
-        assert(! scope.classlist.include?("base"), "Class incorrectly in classlist")
-        assert_nothing_raised do
-            scope.setclass base
+        # And when we're a node
+        config = mkconfig
+        scope = config.topscope
+        klass = mock("class2")
+        klass.expects(:classname).returns(:myclass)
+        klass.expects(:is_a?).with(AST::HostClass).returns(true)
+        klass.expects(:is_a?).with(AST::Node).returns(true)
+        config.expects(:class_set).with(:myclass, scope)
+        scope.setclass(klass)
+        assert(scope.nodescope?, "Did not set the scope as a node scope when evaluating a node")
+
+        # And when we're invalid
+        config = mkconfig
+        scope = config.topscope
+        klass = mock("class3")
+        klass.expects(:is_a?).with(AST::HostClass).returns(false)
+        assert_raise(Puppet::DevError, "Did not fail when scope got passed a non-component") do
+            scope.setclass(klass)
         end
-
-        assert(scope.class_scope(base), "Class incorrectly unset")
-        assert(scope.classlist.include?("base"), "Class not in classlist")
-
-        # Make sure we can retrieve the scope.
-        assert_equal(scope, scope.class_scope(base),
-            "class scope was not set correctly")
-
-        # Now try it with a normal string
-        Puppet[:trace] = false
-        assert_raise(Puppet::DevError) do
-            scope.setclass "string"
-        end
-
-        assert(! scope.class_scope("string"), "string incorrectly set")
-
-        # Set "" in the class list, and make sure it doesn't show up in the return
-        top = scope.findclass("")
-        assert(top, "Could not find top class")
-        scope.setclass top
-
-        assert(! scope.classlist.include?(""), "Class list included empty")
     end
 
     def test_validtags
@@ -368,7 +324,7 @@ class TestScope < Test::Unit::TestCase
     end
 
     def test_tagfunction
-        scope = mkscope()
+        scope = mkscope
         
         assert_nothing_raised {
             scope.function_tag(["yayness", "booness"])
@@ -445,62 +401,15 @@ class TestScope < Test::Unit::TestCase
             "undef considered true")
     end
 
-    # Verify scope context is handled correctly.
-    def test_scopeinside
-        scope = mkscope()
-
-        one = :one
-        two = :two
-
-        # First just test the basic functionality.
-        assert_nothing_raised {
-            scope.inside :one do
-                assert_equal(:one, scope.inside, "Context did not get set")
-            end
-            assert_nil(scope.inside, "Context did not revert")
-        }
-
-        # Now make sure error settings work.
-        assert_raise(RuntimeError) {
-            scope.inside :one do
-                raise RuntimeError, "This is a failure, yo"
-            end
-        }
-        assert_nil(scope.inside, "Context did not revert")
-
-        # Now test it a bit deeper in.
-        assert_nothing_raised {
-            scope.inside :one do
-                scope.inside :two do
-                    assert_equal(:two, scope.inside, "Context did not get set")
-                end
-                assert_equal(:one, scope.inside, "Context did not get set")
-            end
-            assert_nil(scope.inside, "Context did not revert")
-        }
-
-        # And lastly, check errors deeper in
-        assert_nothing_raised {
-            scope.inside :one do
-                begin
-                    scope.inside :two do
-                        raise "a failure"
-                    end
-                rescue
-                end
-                assert_equal(:one, scope.inside, "Context did not get set")
-            end
-            assert_nil(scope.inside, "Context did not revert")
-        }
-
-    end
-
     if defined? ActiveRecord
     # Verify that we recursively mark as exported the results of collectable
     # components.
     def test_exportedcomponents
-        parser, scope, source = mkclassframing
-        children = []
+        config = mkconfig
+        parser = config.parser
+
+        # Create a default source
+        config.topscope.source = parser.newclass "", ""
 
         args = AST::ASTArray.new(
             :file => tempfile(),
@@ -538,13 +447,14 @@ class TestScope < Test::Unit::TestCase
         # And mark it as exported
         obj.exported = true
 
-        obj.evaluate :scope => scope
-
         # And then evaluate it
-        parser.evaliterate(scope)
+        obj.evaluate :scope => config.topscope
+
+        # And run the loop.
+        config.send(:evaluate_generators)
 
         %w{file}.each do |type|
-            objects = scope.lookupexported(type)
+            objects = config.resources.find_all { |r| r.type == type and r.exported }
 
             assert(!objects.empty?, "Did not get an exported %s" % type)
         end
@@ -721,26 +631,6 @@ Host <<||>>"
 
         assert_equal("", scope.lookupvar("testing", true),
             "undef was not returned as '' when string")
-    end
-
-    # #620 - Nodes and classes should conflict, else classes don't get evaluated
-    def test_nodes_and_classes_name_conflict
-        scope = mkscope
-        
-        node = AST::Node.new :classname => "test", :namespace => ""
-        scope.setclass(node)
-
-        assert(scope.nodescope?, "Scope was not marked a node scope when a node was set")
-
-        # Now make a subscope that will be a class scope
-        klass = AST::HostClass.new :classname => "test", :namespace => ""
-        kscope = klass.subscope(scope)
-
-        # Now make sure we throw a failure, because we're trying to do a class and node
-        # with the same name
-        assert_raise(Puppet::ParseError, "Did not fail on class and node with same name") do
-            kscope.class_scope(klass)
-        end
     end
 end
 

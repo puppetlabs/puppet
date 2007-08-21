@@ -17,18 +17,6 @@ class Puppet::Parser::Interpreter
 
     include Puppet::Util::Errors
 
-    # Create proxy methods, so the scopes can call the interpreter, since
-    # they don't have access to the parser.
-    def findclass(namespace, name)
-        raise "move findclass() out of the interpreter"
-        @parser.findclass(namespace, name)
-    end
-
-    def finddefine(namespace, name)
-        raise "move finddefine() out of the interpreter"
-        @parser.finddefine(namespace, name)
-    end
-
     # create our interpreter
     def initialize(hash)
         if @code = hash[:Code]
@@ -63,26 +51,6 @@ class Puppet::Parser::Interpreter
 
         # Create our parser object
         parsefiles
-    end
-
-    # Pass these methods through to the parser.
-    [:newclass, :newdefine, :newnode].each do |name|
-        define_method(name) do |*args|
-            raise("move %s out of the interpreter" % name)
-            @parser.send(name, *args)
-        end
-    end
-
-    # Add a new file to be checked when we're checking to see if we should be
-    # reparsed.
-    def newfile(*files)
-        raise "who uses newfile?"
-        files.each do |file|
-            unless file.is_a? Puppet::Util::LoadedFile
-                file = Puppet::Util::LoadedFile.new(file)
-            end
-            @files << file
-        end
     end
 
     def parsedate

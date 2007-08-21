@@ -21,7 +21,7 @@ class Puppet::Parser::Scope
 
     # Proxy accessors
     def host
-        @configuration.host
+        @configuration.node.name
     end
     def interpreter
         @configuration.interpreter
@@ -241,11 +241,11 @@ class Puppet::Parser::Scope
     # can support multiple unrelated classes with the same name.
     def setclass(klass)
         if klass.is_a?(AST::HostClass)
-            unless klass.classname
+            unless name = klass.classname
                 raise Puppet::DevError, "Got a %s with no fully qualified name" %
                     klass.class
             end
-            @configuration.class_set(klass.classname, self)
+            @configuration.class_set(name, self)
         else
             raise Puppet::DevError, "Invalid class %s" % klass.inspect
         end
