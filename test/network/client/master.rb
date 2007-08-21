@@ -75,7 +75,7 @@ class TestMasterClient < Test::Unit::TestCase
     
     def mk_fake_client
         server = Puppet::Network::Handler.master.new :Code => ""
-        master = Puppet::Network::Client.master.new :Server => server, :Local => true
+        master = Puppet::Network::Client.master.new :Master => server, :Local => true
 
         # Now create some objects
         objects = FakeComponent.new
@@ -532,6 +532,7 @@ end
         master.local = false
         driver = master.send(:instance_variable_get, "@driver")
         driver.local = false
+        driver.send(:config_handler).local = false
         # Retrieve the configuration
         master.getconfig
 

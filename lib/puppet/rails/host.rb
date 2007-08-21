@@ -28,7 +28,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
     end
 
     # Store our host in the database.
-    def self.store(hash)
+    def self.store(node, resources)
         unless name = hash[:name]
             raise ArgumentError, "You must specify the hostname for storage"
         end
@@ -40,23 +40,19 @@ class Puppet::Rails::Host < ActiveRecord::Base
             #unless host = find_by_name(name)
             seconds = Benchmark.realtime {
                 unless host = find_by_name(name)
-                    host = new(:name => name)
+                    host = new(:name => node.name)
                 end
             }
             Puppet.notice("Searched for host in %0.2f seconds" % seconds) if defined?(Puppet::TIME_DEBUG)
-            if ip = hash[:facts]["ipaddress"]
+            if ip = node.parameters["ipaddress"]
                 host.ip = ip
             end
 
             # Store the facts into the database.
-            host.setfacts(hash[:facts])
-
-            unless hash[:resources]
-                raise ArgumentError, "You must pass resources"
-            end
+            host.setfacts node.parameters
 
             seconds = Benchmark.realtime {
-                host.setresources(hash[:resources])
+                host.setresources(resources)
             }
             Puppet.notice("Handled resources in %0.2f seconds" % seconds) if defined?(Puppet::TIME_DEBUG)
 

@@ -77,6 +77,10 @@ class Puppet::Parser::Configuration
 
         finish()
 
+        if Puppet[:storeconfigs]
+            store()
+        end
+
         return extract()
     end
 
@@ -444,7 +448,7 @@ class Puppet::Parser::Configuration
     end
 
     # Store the configuration into the database.
-    def store(options)
+    def store
         unless Puppet.features.rails?
             raise Puppet::Error,
                 "storeconfigs is enabled but rails is unavailable"
@@ -456,16 +460,16 @@ class Puppet::Parser::Configuration
 
         # We used to have hooks here for forking and saving, but I don't
         # think it's worth retaining at this point.
-        store_to_active_record(options)
+        store_to_active_record(@node, @resource_table.values)
     end
 
     # Do the actual storage.
-    def store_to_active_record(options)
+    def store_to_active_record(node, resources)
         begin
             # We store all of the objects, even the collectable ones
-            benchmark(:info, "Stored configuration for #{options[:name]}") do
+            benchmark(:info, "Stored configuration for #{node.name}") do
                 Puppet::Rails::Host.transaction do
-                    Puppet::Rails::Host.store(options)
+                    Puppet::Rails::Host.store(node, resources)
                 end
             end
         rescue => detail

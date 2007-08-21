@@ -13,7 +13,7 @@ class Puppet::Network::Handler
 
         include Puppet::Util
 
-        attr_accessor :ast, :local
+        attr_accessor :ast
         attr_reader :ca
 
         @interface = XMLRPC::Service::Interface.new("puppetmaster") { |iface|
@@ -23,7 +23,7 @@ class Puppet::Network::Handler
 
         # Tell a client whether there's a fresh config for it
         def freshness(client = nil, clientip = nil)
-            config_handler.version(client)
+            config_handler.version(client, clientip)
         end
 
         def initialize(hash = {})
@@ -42,7 +42,7 @@ class Puppet::Network::Handler
                 @local = false
             end
 
-            args[:Local] = @local
+            args[:Local] = local?
 
             if hash.include?(:CA) and hash[:CA]
                 @ca = Puppet::SSLCertificates::CA.new()
@@ -79,12 +79,10 @@ class Puppet::Network::Handler
             return config_handler.configuration(client)
         end
 
-        def local?
-            if defined? @local and @local
-                return true
-            else
-                return false
-            end
+        def local=(val)
+            @local = val
+            config_handler.local = val
+            fact_handler.local = val
         end
 
         private

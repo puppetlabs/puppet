@@ -57,7 +57,7 @@ class Puppet::Network::Handler
 
         # Return the configuration version.
         def version(client = nil, clientip = nil)
-            v = interpreter.configuration_version
+            v = interpreter.parsedate
             # If we can find the node, then store the fact that the node
             # has checked in.
             if client and node = node_handler.details(client)

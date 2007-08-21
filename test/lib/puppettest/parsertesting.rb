@@ -51,7 +51,7 @@ module PuppetTest::ParserTesting
     def mknode(name = nil)
         name ||= "nodename"
         Puppet::Network::Handler.handler(:node)
-        Puppet::Network::Handler::Node::SimpleNode.new("nodename")
+        Puppet::Network::Handler::Node::SimpleNode.new(name)
     end
 
     def mkinterp(args = {})

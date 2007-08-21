@@ -56,13 +56,10 @@ class TestRailsHost < PuppetTest::TestCase
 
         # Now try storing our crap
         host = nil
+        node = mknode(facts["hostname"])
+        node.parameters = facts
         assert_nothing_raised {
-            host = Puppet::Rails::Host.store(
-                :resources => resources,
-                :facts => facts,
-                :name => facts["hostname"],
-                :classes => ["one", "two::three", "four"]
-            )
+            host = Puppet::Rails::Host.store(node, resources)
         }
 
         assert(host, "Did not create host")
@@ -110,7 +107,7 @@ class TestRailsHost < PuppetTest::TestCase
 
         # Change a few resources
         resources.find_all { |r| r.title =~ /file2/ }.each do |r|
-            r.set("loglevel", "notice", r.source)
+            r.send(:set_parameter, "loglevel", "notice")
         end
 
         # And add a new resource
@@ -124,13 +121,10 @@ class TestRailsHost < PuppetTest::TestCase
         facts["test1"] = "changedfact"
         facts.delete("ipaddress")
         host = nil
+        node = mknode(facts["hostname"])
+        node.parameters = facts
         assert_nothing_raised {
-            host = Puppet::Rails::Host.store(
-                :resources => resources,
-                :facts => facts,
-                :name => facts["hostname"],
-                :classes => ["one", "two::three", "four"]
-            )
+            host = Puppet::Rails::Host.store(node, resources)
         }
 
         # Make sure it sets the last_compile time
@@ -162,7 +156,7 @@ class TestRailsHost < PuppetTest::TestCase
         Puppet[:storeconfigs] = true
 
         # this is the default server setup
-        master = Puppet::Network::Handler.master.new(
+        master = Puppet::Network::Handler.configuration.new(
             :Code => "",
             :UseNodes => true,
             :Local => true
@@ -172,7 +166,7 @@ class TestRailsHost < PuppetTest::TestCase
         Puppet::Rails::Host.new(:name => "test", :ip => "192.168.0.3").save
 
         assert_nothing_raised("Failed to update last_connect for unknown host") do
-            master.freshness("created",'192.168.0.1')
+            master.version("created",'192.168.0.1')
         end
         
         # Make sure it created the host
@@ -180,12 +174,10 @@ class TestRailsHost < PuppetTest::TestCase
         assert(created, "Freshness did not create host")
         assert(created.last_freshcheck,
             "Did not set last_freshcheck on created host")
-        assert_equal("192.168.0.1", created.ip,
-            "Did not set IP address on created host")
 
         # Now check on the existing host
         assert_nothing_raised("Failed to update last_connect for unknown host") do
-            master.freshness("test",'192.168.0.2')
+            master.version("test",'192.168.0.2')
         end
 
         # Recreate it, so we're not using the cached object.
@@ -194,8 +186,6 @@ class TestRailsHost < PuppetTest::TestCase
         # Make sure it created the host
         assert(host.last_freshcheck,
             "Did not set last_freshcheck on existing host")
-        assert_equal("192.168.0.3", host.ip,
-            "Overrode IP on found host")
     end
 end
 

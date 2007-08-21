@@ -15,6 +15,9 @@ class Puppet::Network::Handler::Node < Puppet::Network::Handler
         def initialize(name, options = {})
             @name = name
 
+            # Provide a default value.
+            @names = [name]
+
             if classes = options[:classes]
                 if classes.is_a?(String)
                     @classes = [classes]

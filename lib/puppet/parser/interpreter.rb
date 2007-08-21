@@ -14,6 +14,7 @@ class Puppet::Parser::Interpreter
     include Puppet::Util
 
     attr_accessor :usenodes
+    attr_reader :parser
 
     include Puppet::Util::Errors
 

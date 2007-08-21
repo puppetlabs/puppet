@@ -200,7 +200,7 @@ class Puppet::Parser::Scope
     end
 
     # Create a new scope and set these options.
-    def newscope(options)
+    def newscope(options = {})
         configuration.newscope(self, options)
     end
 

@@ -103,6 +103,8 @@ class Puppet::Parser::Resource
             end
         end
 
+        options = symbolize_options(options)
+
         # Set up our reference.
         if type = options[:type] and title = options[:title]
             options.delete(:type)
