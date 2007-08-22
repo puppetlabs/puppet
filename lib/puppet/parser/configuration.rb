@@ -5,6 +5,7 @@ require 'puppet/external/gratr/digraph'
 require 'puppet/external/gratr/import'
 require 'puppet/external/gratr/dot'
 
+require 'puppet/node'
 require 'puppet/util/errors'
 
 # Maintain a graph of scopes, along with a bunch of data

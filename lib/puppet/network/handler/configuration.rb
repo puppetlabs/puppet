@@ -193,7 +193,7 @@ class Puppet::Network::Handler
         end
 
         # Mark that the node has checked in. FIXME this needs to be moved into
-        # the SimpleNode class, or somewhere that's got abstract backends.
+        # the Node class, or somewhere that's got abstract backends.
         def update_node_check(node)
             if Puppet.features.rails? and Puppet[:storeconfigs]
                 Puppet::Rails.connect

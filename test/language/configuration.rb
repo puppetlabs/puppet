@@ -15,7 +15,7 @@ class TestConfiguration < Test::Unit::TestCase
     Config = Puppet::Parser::Configuration 
     Scope = Puppet::Parser::Scope 
     Node = Puppet::Network::Handler.handler(:node)
-    SimpleNode = Node::SimpleNode
+    SimpleNode = Puppet::Node
 
     def mknode(name = "foo")
         @node = SimpleNode.new(name)

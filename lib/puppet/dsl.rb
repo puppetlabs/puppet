@@ -257,7 +257,7 @@ module Puppet
                 @interp = Puppet::Parser::Interpreter.new :Code => ""
                 # Load the class, so the node object class is available.
                 require 'puppet/network/handler/node'
-                @node = Puppet::Network::Handler::Node::SimpleNode.new(Facter.value(:hostname))
+                @node = Puppet::Node.new(Facter.value(:hostname))
                 @node.parameters = Facter.to_hash
                 @interp = Puppet::Parser::Interpreter.new :Code => ""
                 @config = Puppet::Parser::Configuration.new(@node, @interp.parser)

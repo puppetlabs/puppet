@@ -2,73 +2,13 @@
 #  Copyright (c) 2007. All rights reserved.
 
 require 'puppet/util'
+require 'puppet/node'
 require 'puppet/util/classgen'
 require 'puppet/util/instance_loader'
 
 # Look up a node, along with all the details about it.
 class Puppet::Network::Handler::Node < Puppet::Network::Handler
-    # A simplistic class for managing the node information itself.
-    class SimpleNode
-        attr_accessor :name, :classes, :parameters, :environment, :source, :ipaddress, :names
-        attr_reader :time
-
-        def initialize(name, options = {})
-            @name = name
-
-            # Provide a default value.
-            @names = [name]
-
-            if classes = options[:classes]
-                if classes.is_a?(String)
-                    @classes = [classes]
-                else
-                    @classes = classes
-                end
-            else
-                @classes = []
-            end
-
-            @parameters = options[:parameters] || {}
-
-            unless @environment = options[:environment] 
-                if env = Puppet[:environment] and env != ""
-                    @environment = env
-                end
-            end
-
-            @time = Time.now
-        end
-
-        # Merge the node facts with parameters from the node source.
-        # This is only called if the node source has 'fact_merge' set to true.
-        def fact_merge(facts)
-            facts.each do |name, value|
-                @parameters[name] = value unless @parameters.include?(name)
-            end
-        end
-    end
-
     desc "Retrieve information about nodes."
-
-    extend Puppet::Util::ClassGen
-    extend Puppet::Util::InstanceLoader
-
-    # A simple base module we can use for modifying how our node sources work.
-    module SourceBase
-        include Puppet::Util::Docs
-    end
-
-    @interface = XMLRPC::Service::Interface.new("nodes") { |iface|
-        iface.add_method("string details(key)")
-        iface.add_method("string parameters(key)")
-        iface.add_method("string environment(key)")
-        iface.add_method("string classes(key)")
-    }
-
-    # Set up autoloading and retrieving of reports.
-    autoload :node_source, 'puppet/node_source'
-
-    attr_reader :source
 
     # Add a new node source.
     def self.newnode_source(name, options = {}, &block)
@@ -108,6 +48,26 @@ class Puppet::Network::Handler::Node < Puppet::Network::Handler
     def self.rm_node_source(name)
         rmclass(name, :hash => instance_hash(:node_source))
     end
+
+    extend Puppet::Util::ClassGen
+    extend Puppet::Util::InstanceLoader
+
+    # A simple base module we can use for modifying how our node sources work.
+    module SourceBase
+        include Puppet::Util::Docs
+    end
+
+    @interface = XMLRPC::Service::Interface.new("nodes") { |iface|
+        iface.add_method("string details(key)")
+        iface.add_method("string parameters(key)")
+        iface.add_method("string environment(key)")
+        iface.add_method("string classes(key)")
+    }
+
+    # Set up autoloading and retrieving of reports.
+    autoload :node_source, 'puppet/node_source'
+
+    attr_reader :source
 
     # Return a given node's classes.
     def classes(key)
@@ -218,7 +178,7 @@ class Puppet::Network::Handler::Node < Puppet::Network::Handler
     # Short-hand for creating a new node, so the node sources don't need to
     # specify the constant.
     def newnode(options)
-        SimpleNode.new(options)
+        Puppet::Node.new(options)
     end
 
     # Look up the node facts from our fact handler.
