@@ -1,6 +1,8 @@
 require 'puppet'
 require 'sync'
 require 'puppet/transportable'
+require 'getoptlong'
+
 
 # The class for handling configuration files.
 class Puppet::Util::Config
@@ -67,19 +69,12 @@ class Puppet::Util::Config
     # Generate the list of valid arguments, in a format that GetoptLong can
     # understand, and add them to the passed option list.
     def addargs(options)
-        require 'getoptlong'
-
         # Hackish, but acceptable.  Copy the current ARGV for restarting.
         Puppet.args = ARGV.dup
 
         # Add all of the config parameters as valid options.
-        self.each { |param, obj|
-            if self.boolean?(param)
-                options << ["--#{param}", GetoptLong::NO_ARGUMENT]
-                options << ["--no-#{param}", GetoptLong::NO_ARGUMENT]
-            else
-                options << ["--#{param}", GetoptLong::REQUIRED_ARGUMENT]
-            end
+        self.each { |name, element|
+            element.getopt_args.each { |args| options << args }
         }
 
         return options
@@ -195,10 +190,17 @@ class Puppet::Util::Config
         @config.include?(name)
     end
 
+    # check to see if a short name is already defined
+    def shortinclude?(short)
+        short = short.intern if name.is_a? String
+        @shortnames.include?(short)
+    end
+
     # Create a new config object
     def initialize
         @order = []
         @config = {}
+        @shortnames = {}
 
         @created = []
         @returned = {}
@@ -499,7 +501,14 @@ class Puppet::Util::Config
             if @config.include?(name)
                 raise Puppet::Error, "Parameter %s is already defined" % name
             end
-            @config[name] = newelement(hash)
+            tryconfig = newelement(hash)
+            if short = tryconfig.short
+                if other = @shortnames[short]
+                    raise ArgumentError, "Parameter %s is already using short name '%s'" % [other.name, short]
+                end
+                @shortnames[short] = tryconfig
+            end
+            @config[name] = tryconfig
         }
     end
 
@@ -858,7 +867,7 @@ Generated on #{Time.now}.
     # The base element type.
     class CElement
         attr_accessor :name, :section, :default, :parent, :setbycli
-        attr_reader :desc
+        attr_reader :desc, :short
 
         # Unset any set value.
         def clear
@@ -883,6 +892,15 @@ Generated on #{Time.now}.
 
         def desc=(value)
             @desc = value.gsub(/^\s*/, '')
+        end
+
+        # get the arguments in getopt format
+        def getopt_args
+            if short
+                [["--#{name}", "-#{short}", GetoptLong::REQUIRED_ARGUMENT]]
+            else
+                [["--#{name}", GetoptLong::REQUIRED_ARGUMENT]]
+            end
         end
 
         def hook=(block)
@@ -927,6 +945,14 @@ Generated on #{Time.now}.
             else
                 return false
             end
+        end
+
+        # short name for the celement
+        def short=(value)
+            if value.to_s.length != 1
+                raise ArgumentError, "Short names can only be one character."
+            end
+            @short = value.to_s
         end
 
         # Convert the object to a config statement.
@@ -1101,6 +1127,17 @@ Generated on #{Time.now}.
 
     # A simple boolean.
     class CBoolean < CElement
+        # get the arguments in getopt format
+        def getopt_args
+            if short
+                [["--#{name}", "-#{short}", GetoptLong::NO_ARGUMENT],
+                 ["--no-#{name}", GetoptLong::NO_ARGUMENT]]
+            else
+                [["--#{name}", GetoptLong::NO_ARGUMENT],
+                 ["--no-#{name}", GetoptLong::NO_ARGUMENT]]
+            end
+        end
+
         def munge(value)
             case value
             when true, "true": return true
