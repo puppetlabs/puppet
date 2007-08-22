@@ -67,5 +67,3 @@ class Puppet::Parser::Resource::Reference
         @typeclass
     end
 end
-
-# $Id$

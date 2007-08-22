@@ -3,7 +3,6 @@
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppet'
-require 'puppet/parser/interpreter'
 require 'puppet/parser/parser'
 require 'puppet/network/client'
 require 'puppettest'
@@ -204,16 +203,17 @@ class TestLangFunctions < Test::Unit::TestCase
             f.puts %{file { "#{file}": content => template("#{template}") }}
         end
 
-        interpreter = Puppet::Parser::Interpreter.new(
+        interp = Puppet::Parser::Interpreter.new(
             :Manifest => manifest,
             :UseNodes => false
         )
+        node = mknode
 
-        parsedate = interpreter.parsedate()
+        parsedate = interp.parsedate()
 
         objects = nil
         assert_nothing_raised {
-            objects = interpreter.run("myhost", {})
+            objects = interp.compile(node)
         }
 
         fileobj = objects[0]
@@ -221,7 +221,7 @@ class TestLangFunctions < Test::Unit::TestCase
         assert_equal("original text\n", fileobj["content"],
             "Template did not work")
 
-        Puppet[:filetimeout] = 0
+        Puppet[:filetimeout] = -5
         # Have to sleep because one second is the fs's time granularity.
         sleep(1)
 
@@ -231,9 +231,9 @@ class TestLangFunctions < Test::Unit::TestCase
         end
 
         assert_nothing_raised {
-            objects = interpreter.run("myhost", {})
+            objects = interp.compile(node)
         }
-        newdate = interpreter.parsedate()
+        newdate = interp.parsedate()
 
         assert(parsedate != newdate, "Parse date did not change")
     end
@@ -306,35 +306,36 @@ class TestLangFunctions < Test::Unit::TestCase
     end
 
     def test_realize
-        @interp, @scope, @source = mkclassframing
+        scope = mkscope
+        parser = scope.configuration.parser
     
         # Make a definition
-        @interp.newdefine("mytype")
+        parser.newdefine("mytype")
         
         [%w{file /tmp/virtual}, %w{mytype yay}].each do |type, title|
             # Make a virtual resource
             virtual = mkresource(:type => type, :title => title,
                 :virtual => true, :params => {})
         
-            @scope.setresource virtual
+            scope.setresource virtual
 
             ref = Puppet::Parser::Resource::Reference.new(
                 :type => type, :title => title,
-                :scope => @scope
+                :scope => scope
             )
             # Now call the realize function
             assert_nothing_raised do
-                @scope.function_realize(ref)
+                scope.function_realize(ref)
             end
 
             # Make sure it created a collection
-            assert_equal(1, @scope.collections.length,
+            assert_equal(1, scope.configuration.collections.length,
                 "Did not set collection")
 
             assert_nothing_raised do
-                @scope.collections.each do |coll| coll.evaluate end
+                scope.configuration.collections.each do |coll| coll.evaluate end
             end
-            @scope.collections.clear
+            scope.configuration.collections.clear
 
             # Now make sure the virtual resource is no longer virtual
             assert(! virtual.virtual?, "Did not make virtual resource real")
@@ -343,29 +344,29 @@ class TestLangFunctions < Test::Unit::TestCase
         # Make sure we puke on any resource that doesn't exist
         none = Puppet::Parser::Resource::Reference.new(
             :type => "file", :title => "/tmp/nosuchfile",
-            :scope => @scope
+            :scope => scope
         )
 
         # The function works
         assert_nothing_raised do
-            @scope.function_realize(none.to_s)
+            scope.function_realize(none.to_s)
         end
 
         # Make sure it created a collection
-        assert_equal(1, @scope.collections.length,
+        assert_equal(1, scope.configuration.collections.length,
             "Did not set collection")
 
         # And the collection has our resource in it
-        assert_equal([none.to_s], @scope.collections[0].resources,
+        assert_equal([none.to_s], scope.configuration.collections[0].resources,
             "Did not set resources in collection")
     end
     
     def test_defined
-        interp = mkinterp
-        scope = mkscope(:interp => interp)
+        scope = mkscope
+        parser = scope.configuration.parser
         
-        interp.newclass("yayness")
-        interp.newdefine("rahness")
+        parser.newclass("yayness")
+        parser.newdefine("rahness")
         
         assert_nothing_raised do
             assert(scope.function_defined("yayness"), "yayness class was not considered defined")
@@ -395,11 +396,11 @@ class TestLangFunctions < Test::Unit::TestCase
     end
 
     def test_search
-        interp = mkinterp
-        scope = mkscope(:interp => interp)
+        parser = mkparser
+        scope = mkscope(:parser => parser)
         
-        fun = interp.newdefine("yay::ness")
-        foo = interp.newdefine("foo::bar")
+        fun = parser.newdefine("yay::ness")
+        foo = parser.newdefine("foo::bar")
 
         search = Puppet::Parser::Functions.function(:search)
         assert_nothing_raised do
@@ -417,36 +418,36 @@ class TestLangFunctions < Test::Unit::TestCase
     end
 
     def test_include
-        interp = mkinterp
-        scope = mkscope(:interp => interp)
+        scope = mkscope
+        parser = scope.configuration.parser
 
         assert_raise(Puppet::ParseError, "did not throw error on missing class") do
             scope.function_include("nosuchclass")
         end
 
-        interp.newclass("myclass")
+        parser.newclass("myclass")
 
         assert_nothing_raised do
             scope.function_include "myclass"
         end
 
-        assert(scope.classlist.include?("myclass"),
+        assert(scope.configuration.classlist.include?("myclass"),
             "class was not evaluated")
 
         # Now try multiple classes at once
-        classes = %w{one two three}.each { |c| interp.newclass(c) }
+        classes = %w{one two three}.each { |c| parser.newclass(c) }
 
         assert_nothing_raised do
             scope.function_include classes
         end
 
         classes.each do |c|
-            assert(scope.classlist.include?(c),
+            assert(scope.configuration.classlist.include?(c),
                 "class %s was not evaluated" % c)
         end
 
         # Now try a scoped class
-        interp.newclass("os::redhat")
+        parser.newclass("os::redhat")
 
         assert_nothing_raised("Could not include qualified class name") do
             scope.function_include("os::redhat")
@@ -454,8 +455,8 @@ class TestLangFunctions < Test::Unit::TestCase
     end
 
     def test_file
-        interp = mkinterp
-        scope = mkscope(:interp => interp)
+        parser = mkparser
+        scope = mkscope(:parser => parser)
 
         file1 = tempfile
         file2 = tempfile
@@ -497,8 +498,8 @@ class TestLangFunctions < Test::Unit::TestCase
         assert_equal("yay\n", %x{#{command}}, "command did not work")
         assert_equal("yay-foo\n", %x{#{command} foo}, "command did not work")
 
-        interp = mkinterp
-        scope = mkscope(:interp => interp)
+        scope = mkscope
+        parser = scope.configuration.parser
 
         val = nil
         assert_nothing_raised("Could not call generator with no args") do

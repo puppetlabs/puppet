@@ -13,7 +13,7 @@ class Puppet::Network::Handler
 
         include Puppet::Util
 
-        attr_accessor :ast, :local
+        attr_accessor :ast
         attr_reader :ca
 
         @interface = XMLRPC::Service::Interface.new("puppetmaster") { |iface|
@@ -21,66 +21,9 @@ class Puppet::Network::Handler
                 iface.add_method("int freshness()")
         }
 
-        # FIXME At some point, this should be autodocumenting.
-        def addfacts(facts)
-            # Add our server version to the fact list
-            facts["serverversion"] = Puppet.version.to_s
-
-            # And then add the server name and IP
-            {"servername" => "fqdn",
-                "serverip" => "ipaddress"
-            }.each do |var, fact|
-                if obj = Facter[fact]
-                    facts[var] = obj.value
-                else
-                    Puppet.warning "Could not retrieve fact %s" % fact
-                end
-            end
-
-            if facts["servername"].nil?
-                host = Facter.value(:hostname)
-                if domain = Facter.value(:domain)
-                    facts["servername"] = [host, domain].join(".")
-                else
-                    facts["servername"] = host
-                end
-            end
-        end
-
-        # Manipulate the client name as appropriate.
-        def clientname(name, ip, facts)
-            # Always use the hostname from Facter.
-            client = facts["hostname"]
-            clientip = facts["ipaddress"]
-            if Puppet[:node_name] == 'cert'
-                if name
-                    client = name
-                end
-                if ip
-                    clientip = ip
-                end
-            end
-
-            return client, clientip
-        end
-
         # Tell a client whether there's a fresh config for it
         def freshness(client = nil, clientip = nil)
-            if Puppet.features.rails? and Puppet[:storeconfigs]
-                Puppet::Rails.connect
-
-                host = Puppet::Rails::Host.find_or_create_by_name(client)
-                host.last_freshcheck = Time.now
-                if clientip and (! host.ip or host.ip == "" or host.ip == "NULL")
-                    host.ip = clientip
-                end
-                host.save
-            end
-            if defined? @interpreter
-                return @interpreter.parsedate
-            else
-                return 0
-            end
+            config_handler.version(client, clientip)
         end
 
         def initialize(hash = {})
@@ -99,7 +42,7 @@ class Puppet::Network::Handler
                 @local = false
             end
 
-            args[:Local] = @local
+            args[:Local] = local?
 
             if hash.include?(:CA) and hash[:CA]
                 @ca = Puppet::SSLCertificates::CA.new()
@@ -121,10 +64,55 @@ class Puppet::Network::Handler
                 args[:Classes] = hash[:Classes]
             end
 
-            @interpreter = Puppet::Parser::Interpreter.new(args)
+            @config_handler = Puppet::Network::Handler.handler(:configuration).new(args)
         end
 
+        # Call our various handlers; this handler is getting deprecated.
         def getconfig(facts, format = "marshal", client = nil, clientip = nil)
+            facts = decode_facts(facts)
+            client, clientip = clientname(client, clientip, facts)
+
+            # Pass the facts to the fact handler
+            fact_handler.set(client, facts)
+
+            # And get the configuration from the config handler
+            return config_handler.configuration(client)
+        end
+
+        def local=(val)
+            @local = val
+            config_handler.local = val
+            fact_handler.local = val
+        end
+
+        private
+
+        # Manipulate the client name as appropriate.
+        def clientname(name, ip, facts)
+            # Always use the hostname from Facter.
+            client = facts["hostname"]
+            clientip = facts["ipaddress"]
+            if Puppet[:node_name] == 'cert'
+                if name
+                    client = name
+                end
+                if ip
+                    clientip = ip
+                end
+            end
+
+            return client, clientip
+        end
+
+        def config_handler
+            unless defined? @config_handler
+                @config_handler = Puppet::Network::Handler.handler(:config).new :local => local?
+            end
+            @config_handler
+        end
+
+        # 
+        def decode_facts(facts)
             if @local
                 # we don't need to do anything, since we should already
                 # have raw objects
@@ -132,93 +120,23 @@ class Puppet::Network::Handler
             else
                 Puppet.debug "Our client is remote"
 
-                # XXX this should definitely be done in the protocol, somehow
-                case format
-                when "marshal":
-                    Puppet.warning "You should upgrade your client.  'Marshal' will not be supported much longer."
-                    begin
-                        facts = Marshal::load(CGI.unescape(facts))
-                    rescue => detail
-                        raise XMLRPC::FaultException.new(
-                            1, "Could not rebuild facts"
-                        )
-                    end
-                when "yaml":
-                    begin
-                        facts = YAML.load(CGI.unescape(facts))
-                    rescue => detail
-                        raise XMLRPC::FaultException.new(
-                            1, "Could not rebuild facts"
-                        )
-                    end
-                else
+                begin
+                    facts = YAML.load(CGI.unescape(facts))
+                rescue => detail
                     raise XMLRPC::FaultException.new(
-                        1, "Unavailable config format %s" % format
+                        1, "Could not rebuild facts"
                     )
                 end
             end
 
-            client, clientip = clientname(client, clientip, facts)
-
-            # Add any server-side facts to our server.
-            addfacts(facts)
-
-            retobjects = nil
-
-            # This is hackish, but there's no "silence" option for benchmarks
-            # right now
-            if @local
-                #begin
-                    retobjects = @interpreter.run(client, facts)
-                #rescue Puppet::Error => detail
-                #    Puppet.err detail
-                #    raise XMLRPC::FaultException.new(
-                #        1, detail.to_s
-                #    )
-                #rescue => detail
-                #    Puppet.err detail.to_s
-                #    return ""
-                #end
-            else
-                benchmark(:notice, "Compiled configuration for %s" % client) do
-                    begin
-                        retobjects = @interpreter.run(client, facts)
-                    rescue Puppet::Error => detail
-                        Puppet.err detail
-                        raise XMLRPC::FaultException.new(
-                            1, detail.to_s
-                        )
-                    rescue => detail
-                        Puppet.err detail.to_s
-                        return ""
-                    end
-                end
-            end
-
-            if @local
-                return retobjects
-            else
-                str = nil
-                case format
-                when "marshal":
-                    str = Marshal::dump(retobjects)
-                when "yaml":
-                    str = retobjects.to_yaml(:UseBlock => true)
-                else
-                    raise XMLRPC::FaultException.new(
-                        1, "Unavailable config format %s" % format
-                    )
-                end
-                return CGI.escape(str)
-            end
+            return facts
         end
 
-        def local?
-            if defined? @local and @local
-                return true
-            else
-                return false
+        def fact_handler
+            unless defined? @fact_handler
+                @fact_handler = Puppet::Network::Handler.handler(:facts).new :local => local?
             end
+            @fact_handler
         end
     end
 end

@@ -27,7 +27,7 @@ class Puppet::Parser::AST
             false
         end
 
-        def evaluate(hash)
+        def evaluate_resource(hash)
             origscope = hash[:scope]
             title = hash[:title]
             args = symbolize_options(hash[:arguments] || {})

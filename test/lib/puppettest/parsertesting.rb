@@ -5,6 +5,8 @@ module PuppetTest::ParserTesting
     include PuppetTest
     AST = Puppet::Parser::AST
 
+    Config = Puppet::Parser::Configuration
+
     # A fake class that we can use for testing evaluation.
     class FakeAST
         attr_writer :evaluate
@@ -39,6 +41,19 @@ module PuppetTest::ParserTesting
         )
     end
 
+    def mkconfig(parser = nil)
+        require 'puppet/network/handler/node'
+        parser ||= mkparser
+        node = mknode
+        return Config.new(node, parser)
+    end
+
+    def mknode(name = nil)
+        name ||= "nodename"
+        Puppet::Network::Handler.handler(:node)
+        Puppet::Network::Handler::Node::SimpleNode.new(name)
+    end
+
     def mkinterp(args = {})
         args[:Code] ||= "" unless args.include?(:Manifest)
         args[:Local] ||= true
@@ -50,14 +65,14 @@ module PuppetTest::ParserTesting
     end
 
     def mkscope(hash = {})
-        hash[:interp] ||= mkinterp
-        hash[:source] ||= (hash[:interp].findclass("", "") ||
-            hash[:interp].newclass(""))
+        hash[:parser] ||= mkparser
+        config ||= mkconfig(hash[:parser])
+        config.topscope.source = (hash[:parser].findclass("", "") || hash[:parser].newclass(""))
 
-        unless hash[:source]
+        unless config.topscope.source
             raise "Could not find source for scope"
         end
-        Puppet::Parser::Scope.new(hash)
+        config.topscope
     end
 
     def classobj(name, hash = {})
@@ -293,7 +308,7 @@ module PuppetTest::ParserTesting
 
         config = nil
         assert_nothing_raised {
-            config = interp.run(Facter["hostname"].value, {})
+            config = interp.compile(mknode)
         }
 
         comp = nil

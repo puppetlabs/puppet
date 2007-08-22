@@ -21,45 +21,38 @@ class Puppet::Parser::AST
             # We basically always operate declaratively, and when we
             # do we need to evaluate the settor-like statements first.  This
             # is basically variable and type-default declarations.
-            if scope.declarative?
-                # This is such a stupid hack.  I've no real idea how to make a
-                # "real" declarative language, so I hack it so it looks like
-                # one, yay.
-                settors = []
-                others = []
+            # This is such a stupid hack.  I've no real idea how to make a
+            # "real" declarative language, so I hack it so it looks like
+            # one, yay.
+            settors = []
+            others = []
 
-                # Make a new array, so we don't have to deal with the details of
-                # flattening and such
-                items = []
-                
-                # First clean out any AST::ASTArrays
-                @children.each { |child|
-                    if child.instance_of?(AST::ASTArray)
-                        child.each do |ac|
-                            if ac.class.settor?
-                                settors << ac
-                            else
-                                others << ac
-                            end
-                        end
-                    else
-                        if child.class.settor?
-                            settors << child
+            # Make a new array, so we don't have to deal with the details of
+            # flattening and such
+            items = []
+            
+            # First clean out any AST::ASTArrays
+            @children.each { |child|
+                if child.instance_of?(AST::ASTArray)
+                    child.each do |ac|
+                        if ac.class.settor?
+                            settors << ac
                         else
-                            others << child
+                            others << ac
                         end
                     end
-                }
-                rets = [settors, others].flatten.collect { |child|
-                    child.safeevaluate(:scope => scope)
-                }
-                return rets.reject { |o| o.nil? }
-            else
-                # If we're not declarative, just do everything in order.
-                return @children.collect { |item|
-                    item.safeevaluate(:scope => scope)
-                }.reject { |o| o.nil? }
-            end
+                else
+                    if child.class.settor?
+                        settors << child
+                    else
+                        others << child
+                    end
+                end
+            }
+            rets = [settors, others].flatten.collect { |child|
+                child.safeevaluate(:scope => scope)
+            }
+            return rets.reject { |o| o.nil? }
         end
 
         def push(*ary)

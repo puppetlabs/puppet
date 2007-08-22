@@ -236,7 +236,7 @@ class TestResourceServer < Test::Unit::TestCase
     def test_apply
         server = nil
         assert_nothing_raised do
-            server = Puppet::Network::Handler.resource.new()
+            server = Puppet::Network::Handler.resource.new(:Local => false)
         end
 
         file = tempfile()

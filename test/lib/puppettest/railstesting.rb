@@ -40,12 +40,10 @@ module PuppetTest::RailsTesting
 
         # Now try storing our crap
         host = nil 
+        node = mknode(facts["hostname"])
+        node.parameters = facts
         assert_nothing_raised {
-            host = Puppet::Rails::Host.store(
-                :resources => resources,
-                :facts => facts,
-                :name => facts["hostname"]
-            )
+            host = Puppet::Rails::Host.store(node, resources)
         }        
 
         # Now save the whole thing

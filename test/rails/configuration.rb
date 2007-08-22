@@ -3,7 +3,6 @@
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppettest'
-require 'puppet/parser/interpreter'
 require 'puppet/parser/parser'
 require 'puppet/network/client'
 require 'puppet/rails'
@@ -13,49 +12,39 @@ require 'puppettest/servertest'
 require 'puppettest/railstesting'
 
 
-class InterpreterRailsTests < PuppetTest::TestCase
+class ConfigurationRailsTests < PuppetTest::TestCase
 	include PuppetTest
     include PuppetTest::ServerTest
     include PuppetTest::ParserTesting
     include PuppetTest::ResourceTesting
     include PuppetTest::RailsTesting
     AST = Puppet::Parser::AST
-    NodeDef = Puppet::Parser::Interpreter::NodeDef
     confine "No rails support" => Puppet.features.rails?
 
     # We need to make sure finished objects are stored in the db.
     def test_finish_before_store
         railsinit
-        interp = mkinterp
+        config = mkconfig
+        config.ast_nodes = true
+        parser = config.parser
 
-        node = interp.newnode ["myhost"], :code => AST::ASTArray.new(:children => [
+        node = parser.newnode [config.node.name], :code => AST::ASTArray.new(:children => [
             resourcedef("file", "/tmp/yay", :group => "root"),
             defaultobj("file", :owner => "root")
         ])
 
-        interp.newclass "myclass", :code => AST::ASTArray.new(:children => [
-        ])
-
-        interp.newclass "sub", :parent => "myclass",
-            :code => AST::ASTArray.new(:children => [
-                resourceoverride("file", "/tmp/yay", :owner => "root")
-            ]
-        )
-
         # Now do the rails crap
         Puppet[:storeconfigs] = true
 
-        interp.evaluate("myhost", {})
-
-        # And then retrieve the object from rails
-        #res = Puppet::Rails::Resource.find_by_restype_and_title("file", "/tmp/yay", :include => {:param_values => :param_names})
-        res = Puppet::Rails::Resource.find_by_restype_and_title("file", "/tmp/yay")
-
-        assert(res, "Did not get resource from rails")
-
-        params = res.parameters
-
-        assert_equal(["root"], params["owner"], "Did not get correct value for owner param")
+        Puppet::Rails::Host.expects(:store).with do |node, resources|
+            if res = resources.find { |r| r.type == "file" and r.title == "/tmp/yay" }
+                assert_equal("root", res["owner"], "Did not set default on resource")
+                true
+            else
+                raise "Resource was not passed to store()"
+            end
+        end
+        config.compile
     end
 
     def test_hoststorage
@@ -79,13 +68,15 @@ class InterpreterRailsTests < PuppetTest::TestCase
 
         facts = {}
         Facter.each { |fact, val| facts[fact] = val }
+        node = mknode(facts["hostname"])
+        node.parameters = facts
 
         objects = nil
         assert_nothing_raised {
-            objects = interp.run(facts["hostname"], facts)
+            objects = interp.compile(node)
         }
 
-        obj = Puppet::Rails::Host.find_by_name(facts["hostname"])
+        obj = Puppet::Rails::Host.find_by_name(node.name)
         assert(obj, "Could not find host object")
     end
 end

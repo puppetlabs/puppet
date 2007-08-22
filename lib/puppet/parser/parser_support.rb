@@ -1,3 +1,5 @@
+# I pulled this into a separate file, because I got
+# tired of rebuilding the parser.rb file all the time.
 class Puppet::Parser::Parser
     require 'puppet/parser/functions'
 
@@ -441,6 +443,17 @@ class Puppet::Parser::Parser
 
     def string=(string)
         @lexer.string = string
+    end
+
+    # Add a new file to be checked when we're checking to see if we should be
+    # reparsed.
+    def watch_file(*files)
+        files.each do |file|
+            unless file.is_a? Puppet::Util::LoadedFile
+                file = Puppet::Util::LoadedFile.new(file)
+            end
+            @files << file
+        end
     end
 end
 

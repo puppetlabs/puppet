@@ -81,7 +81,7 @@ class Puppet::Parser::Collector
         # If there are no more resources to find, delete this from the list
         # of collections.
         if @resources.empty?
-            @scope.collections.delete(self)
+            @scope.configuration.delete_collection(self)
         end
 
         return result
@@ -94,7 +94,7 @@ class Puppet::Parser::Collector
         else
             method = :virtual?
         end
-        scope.resources.find_all do |resource|
+        scope.configuration.resources.find_all do |resource|
             resource.type == @type and resource.send(method) and match?(resource)
         end
     end
@@ -117,13 +117,6 @@ class Puppet::Parser::Collector
                 return objects
             end
         end
-
-#        if objects and ! objects.empty?
-#            objects.each { |r| r.virtual = false }
-#            return objects
-#        else
-#            return false
-#        end
     end
 
     def initialize(scope, type, equery, vquery, form)

@@ -16,7 +16,8 @@ class TestCollector < Test::Unit::TestCase
     def setup
         super
         Puppet[:trace] = false
-        @interp, @scope, @source = mkclassframing
+        @scope = mkscope
+        @config = @scope.configuration
     end
 
     # Test just collecting a specific resource.  This is used by the 'realize'
@@ -32,7 +33,7 @@ class TestCollector < Test::Unit::TestCase
         assert_nothing_raised do 
             coll.resources = ["File[/tmp/virtual1]", "File[/tmp/virtual3]"]
         end
-        @scope.newcollection(coll)
+        @config.add_collection(coll)
 
         # Evaluate the collector and make sure it doesn't fail with no resources
         # found yet
@@ -62,7 +63,7 @@ class TestCollector < Test::Unit::TestCase
             "Resource got realized")
 
         # Make sure that the collection is still there
-        assert(@scope.collections.include?(coll), "collection was deleted too soon")
+        assert(@config.collections.include?(coll), "collection was deleted too soon")
 
         # Now add our third resource
         three = mkresource(:type => "file", :title => "/tmp/virtual3",
@@ -76,7 +77,7 @@ class TestCollector < Test::Unit::TestCase
         assert(! three.virtual?, "three is still virtual")
 
         # And make sure that the collection got deleted from the scope's list
-        assert(@scope.collections.empty?, "collection was not deleted")
+        assert(@config.collections.empty?, "collection was not deleted")
     end
 
     def test_virtual
@@ -102,10 +103,10 @@ class TestCollector < Test::Unit::TestCase
         end
 
         # Set it in our scope
-        @scope.newcollection(coll)
+        @config.add_collection(coll)
 
         # Make sure it's in the collections
-        assert(@scope.collections.include?(coll), "collection was not added")
+        assert(@config.collections.include?(coll), "collection was not added")
 
         # And try to collect the virtual resources.
         ret = nil
@@ -148,7 +149,7 @@ class TestCollector < Test::Unit::TestCase
             coll = Puppet::Parser::Collector.new(@scope, "file", nil, nil, :virtual)
         end
 
-        @scope.newcollection(coll)
+        @config.add_collection(coll)
 
         # run the collection and make sure it doesn't get deleted, since it
         # didn't return anything
@@ -157,7 +158,7 @@ class TestCollector < Test::Unit::TestCase
                 "Evaluate returned incorrect value")
         end
 
-        assert_equal([coll], @scope.collections, "Collection was deleted")
+        assert_equal([coll], @config.collections, "Collection was deleted")
 
         # Make a resource
         one = mkresource(:type => "file", :title => "/tmp/virtual1",
@@ -170,7 +171,7 @@ class TestCollector < Test::Unit::TestCase
                 "Evaluate returned incorrect value")
         end
 
-        assert_equal([coll], @scope.collections, "Collection was deleted")
+        assert_equal([coll], @config.collections, "Collection was deleted")
 
         assert_equal(false, one.virtual?, "One was not realized")
     end

@@ -27,79 +27,37 @@ class TestScope < Test::Unit::TestCase
     end
 
     def test_variables
-        scope = nil
-        over = "over"
+        config = mkconfig
+        topscope = config.topscope
+        midscope = config.newscope(topscope)
+        botscope = config.newscope(midscope)
 
-        scopes = []
-        vars = []
-        values = {}
-        ovalues = []
+        scopes = {:top => topscope, :mid => midscope, :bot => botscope}
 
-        10.times { |index|
-            # slap some recursion in there
-            scope = mkscope(:parent => scope)
-            scopes.push scope
+        # Set a variable in the top and make sure all three can get it
+        topscope.setvar("first", "topval")
+        scopes.each do |name, scope|
+            assert_equal("topval", scope.lookupvar("first", false), "Could not find var in %s" % name)
+        end
 
-            var = "var%s" % index
-            value = rand(1000)
-            ovalue = rand(1000)
-            
-            ovalues.push ovalue
+        # Now set a var in the midscope and make sure the mid and bottom can see it but not the top
+        midscope.setvar("second", "midval")
+        assert_equal(:undefined, scopes[:top].lookupvar("second", false), "Found child var in top scope")
+        [:mid, :bot].each do |name|
+            assert_equal("midval", scopes[name].lookupvar("second", false), "Could not find var in %s" % name)
+        end
 
-            vars.push var
-            values[var] = value
-
-            # set the variable in the current scope
-            assert_nothing_raised {
-                scope.setvar(var,value)
-            }
-
-            # this should override previous values
-            assert_nothing_raised {
-                scope.setvar(over,ovalue)
-            }
-
-            assert_equal(value,scope.lookupvar(var))
-
-            #puts "%s vars, %s scopes" % [vars.length,scopes.length]
-            i = 0
-            vars.zip(scopes) { |v,s|
-                # this recurses all the way up the tree as necessary
-                val = nil
-                oval = nil
-
-                # look up the values using the bottom scope
-                assert_nothing_raised {
-                    val = scope.lookupvar(v)
-                    oval = scope.lookupvar(over)
-                }
-
-                # verify they're correct
-                assert_equal(values[v],val)
-                assert_equal(ovalue,oval)
-
-                # verify that we get the most recent value
-                assert_equal(ovalue,scope.lookupvar(over))
-
-                # verify that they aren't available in upper scopes
-                if parent = s.parent
-                    val = nil
-                    assert_nothing_raised {
-                        val = parent.lookupvar(v)
-                    }
-                    assert_equal("", val, "Did not get empty string on missing var")
-
-                    # and verify that the parent sees its correct value
-                    assert_equal(ovalues[i - 1],parent.lookupvar(over))
-                end
-                i += 1
-            }
-        }
+        # And set something in the bottom, and make sure we only find it there.
+        botscope.setvar("third", "botval")
+        [:top, :mid].each do |name|
+            assert_equal(:undefined, scopes[name].lookupvar("third", false), "Found child var in top scope")
+        end
+        assert_equal("botval", scopes[:bot].lookupvar("third", false), "Could not find var in bottom scope")
     end
 
     def test_lookupvar
-        interp = mkinterp
-        scope = mkscope :interp => interp
+        parser = mkparser
+        scope = mkscope :parser => parser
 
         # first do the plain lookups
         assert_equal("", scope.lookupvar("var"), "scope did not default to string")
@@ -111,7 +69,7 @@ class TestScope < Test::Unit::TestCase
         assert_equal("yep", scope.lookupvar("var"), "did not retrieve value correctly")
 
         # Now test the parent lookups 
-        subscope = mkscope :interp => interp
+        subscope = mkscope :parser => parser
         subscope.parent = scope
         assert_equal("", subscope.lookupvar("nope"), "scope did not default to string with parent")
         assert_equal("", subscope.lookupvar("nope", true), "scope ignored usestring setting with parent")
@@ -129,12 +87,12 @@ class TestScope < Test::Unit::TestCase
     end
 
     def test_lookup_qualified_var
-        interp = mkinterp
-        scope = mkscope :interp => interp
+        parser = mkparser
+        scope = mkscope :parser => parser
 
         scopes = {}
         classes = ["", "one", "one::two", "one::two::three"].each do |name|
-            klass = interp.newclass(name)
+            klass = parser.newclass(name)
             klass.evaluate(:scope => scope)
             scopes[name] = scope.class_scope(klass)
         end
@@ -149,7 +107,7 @@ class TestScope < Test::Unit::TestCase
 
     def test_declarative
         # set to declarative
-        top = mkscope(:declarative => true)
+        top = mkscope
         sub = mkscope(:parent => top)
 
         assert_nothing_raised {
@@ -166,93 +124,89 @@ class TestScope < Test::Unit::TestCase
         }
     end
 
-    def test_notdeclarative
-        # set to not declarative
-        top = mkscope(:declarative => false)
-        sub = mkscope(:parent => top)
+    def test_setdefaults
+        config = mkconfig
 
-        assert_nothing_raised {
-            top.setvar("test","value")
-        }
-        assert_nothing_raised {
-            top.setvar("test","other")
-        }
-        assert_nothing_raised {
-            sub.setvar("test","later")
-        }
-        assert_nothing_raised {
-            sub.setvar("test","yayness")
-        }
+        scope = config.topscope
+
+        defaults = scope.instance_variable_get("@defaults")
+
+        # First the case where there are no defaults and we pass a single param
+        param = stub :name => "myparam", :file => "f", :line => "l"
+        scope.setdefaults(:mytype, param)
+        assert_equal({"myparam" => param}, defaults[:mytype], "Did not set default correctly")
+
+        # Now the case where we pass in multiple parameters
+        param1 = stub :name => "one", :file => "f", :line => "l"
+        param2 = stub :name => "two", :file => "f", :line => "l"
+        scope.setdefaults(:newtype, [param1, param2])
+        assert_equal({"one" => param1, "two" => param2}, defaults[:newtype], "Did not set multiple defaults correctly")
+
+        # And the case where there's actually a conflict.  Use the first default for this.
+        newparam = stub :name => "myparam", :file => "f", :line => "l"
+        assert_raise(Puppet::ParseError, "Allowed resetting of defaults") do
+            scope.setdefaults(:mytype, param)
+        end
+        assert_equal({"myparam" => param}, defaults[:mytype], "Replaced default even though there was a failure")
     end
 
-    def test_setdefaults
-        interp, scope, source = mkclassframing
+    def test_lookupdefaults
+        config = mkconfig
+        top = config.topscope
 
-        # The setdefaults method doesn't really check what we're doing,
-        # so we're just going to use fake defaults here.
+        # Make a subscope
+        sub = config.newscope(top)
 
-        # First do a simple local lookup
-        params = paramify(source, :one => "fun", :two => "shoe")
-        origshould = {}
-        params.each do |p| origshould[p.name] = p end
-        assert_nothing_raised do
-            scope.setdefaults(:file, params)
+        topdefs = top.instance_variable_get("@defaults")
+        subdefs = sub.instance_variable_get("@defaults")
+
+        # First add some defaults to our top scope
+        topdefs[:t1] = {:p1 => :p2, :p3 => :p4}
+        topdefs[:t2] = {:p5 => :p6}
+
+        # Then the sub scope
+        subdefs[:t1] = {:p1 => :p7, :p8 => :p9}
+        subdefs[:t2] = {:p5 => :p10, :p11 => :p12}
+
+        # Now make sure we get the correct list back
+        result = nil
+        assert_nothing_raised("Could not get defaults") do
+            result = sub.lookupdefaults(:t1)
         end
+        assert_equal(:p9, result[:p8], "Did not get child defaults")
+        assert_equal(:p4, result[:p3], "Did not override parent defaults with child default")
+        assert_equal(:p7, result[:p1], "Did not get parent defaults")
+    end
 
-        ret = nil
-        assert_nothing_raised do
-            ret = scope.lookupdefaults(:file)
-        end
+    def test_parent
+        config = mkconfig
+        top = config.topscope
 
-        assert_equal(origshould, ret)
+        # Make a subscope
+        sub = config.newscope(top)
 
-        # Now create a subscope and add some more params.
-        newscope = scope.newscope
+        assert_equal(top, sub.parent, "Did not find parent scope correctly")
+        assert_equal(top, sub.parent, "Did not find parent scope on second call")
+    end
 
-        newparams = paramify(source, :one => "shun", :three => "free")
-        assert_nothing_raised {
-            newscope.setdefaults(:file, newparams)
-        }
-
-        # And make sure we get the appropriate ones back
-        should = {}
-        params.each do |p| should[p.name] = p end
-        newparams.each do |p| should[p.name] = p end
-
-        assert_nothing_raised do
-            ret = newscope.lookupdefaults(:file)
-        end
-
-        assert_equal(should, ret)
-
-        # Make sure we still only get the originals from the top scope
-        assert_nothing_raised do
-            ret = scope.lookupdefaults(:file)
-        end
-
-        assert_equal(origshould, ret)
-
-        # Now create another scope and make sure we only get the top defaults
-        otherscope = scope.newscope
-        assert_equal(origshould, otherscope.lookupdefaults(:file))
-
-        # And make sure none of the scopes has defaults for other types
-        [scope, newscope, otherscope].each do |sc|
-            assert_equal({}, sc.lookupdefaults(:exec))
-        end
+    def test_class_scope
+        config = mkconfig
+        scope = config.topscope
+        config.expects(:class_scope).with(:testing).returns(:myscope)
+        assert_equal(:myscope, scope.class_scope(:testing), "Did not pass back the results of config.class_scope")
     end
     
     def test_strinterp
         # Make and evaluate our classes so the qualified lookups work
-        interp = mkinterp
-        klass = interp.newclass("")
-        scope = mkscope(:interp => interp)
+        parser = mkparser
+        klass = parser.newclass("")
+        scope = mkscope(:parser => parser)
         klass.evaluate(:scope => scope)
 
-        klass = interp.newclass("one")
+        klass = parser.newclass("one")
         klass.evaluate(:scope => scope)
 
-        klass = interp.newclass("one::two")
+        klass = parser.newclass("one::two")
         klass.evaluate(:scope => scope)
 
 
@@ -264,7 +218,7 @@ class TestScope < Test::Unit::TestCase
         scopes = {"" => scope}
 
         %w{one one::two one::two::three}.each do |name|
-            klass = interp.newclass(name)
+            klass = parser.newclass(name)
             klass.evaluate(:scope => scope)
             scopes[name] = scope.class_scope(klass)
             scopes[name].setvar("test", "value-%s" % name.sub(/.+::/,''))
@@ -298,7 +252,7 @@ class TestScope < Test::Unit::TestCase
         tests.each do |input, output|
             assert_nothing_raised("Failed to scan %s" % input.inspect) do
                 assert_equal(output, scope.strinterp(input),
-                    'did not interpret %s correctly' % input.inspect)
+                    'did not parserret %s correctly' % input.inspect)
             end
         end
 
@@ -311,7 +265,7 @@ class TestScope < Test::Unit::TestCase
             string = "\\" + l
             assert_nothing_raised do
                 assert_equal(string, scope.strinterp(string),
-                    'did not interpret %s correctly' % string)
+                    'did not parserret %s correctly' % string)
             end
 
             assert(logs.detect { |m| m.message =~ /Unrecognised escape/ },
@@ -321,37 +275,35 @@ class TestScope < Test::Unit::TestCase
     end
 
     def test_setclass
-        interp, scope, source = mkclassframing
+        # Run through it when we're a normal class
+        config = mkconfig
+        scope = config.topscope
+        klass = mock("class")
+        klass.expects(:classname).returns(:myclass)
+        klass.expects(:is_a?).with(AST::HostClass).returns(true)
+        klass.expects(:is_a?).with(AST::Node).returns(false)
+        config.expects(:class_set).with(:myclass, scope)
+        scope.setclass(klass)
 
-        base = scope.findclass("base")
-        assert(base, "Could not find base class")
-        assert(! scope.class_scope(base), "Class incorrectly set")
-        assert(! scope.classlist.include?("base"), "Class incorrectly in classlist")
-        assert_nothing_raised do
-            scope.setclass base
+        # And when we're a node
+        config = mkconfig
+        scope = config.topscope
+        klass = mock("class2")
+        klass.expects(:classname).returns(:myclass)
+        klass.expects(:is_a?).with(AST::HostClass).returns(true)
+        klass.expects(:is_a?).with(AST::Node).returns(true)
+        config.expects(:class_set).with(:myclass, scope)
+        scope.setclass(klass)
+        assert(scope.nodescope?, "Did not set the scope as a node scope when evaluating a node")
+
+        # And when we're invalid
+        config = mkconfig
+        scope = config.topscope
+        klass = mock("class3")
+        klass.expects(:is_a?).with(AST::HostClass).returns(false)
+        assert_raise(Puppet::DevError, "Did not fail when scope got passed a non-component") do
+            scope.setclass(klass)
         end
-
-        assert(scope.class_scope(base), "Class incorrectly unset")
-        assert(scope.classlist.include?("base"), "Class not in classlist")
-
-        # Make sure we can retrieve the scope.
-        assert_equal(scope, scope.class_scope(base),
-            "class scope was not set correctly")
-
-        # Now try it with a normal string
-        Puppet[:trace] = false
-        assert_raise(Puppet::DevError) do
-            scope.setclass "string"
-        end
-
-        assert(! scope.class_scope("string"), "string incorrectly set")
-
-        # Set "" in the class list, and make sure it doesn't show up in the return
-        top = scope.findclass("")
-        assert(top, "Could not find top class")
-        scope.setclass top
-
-        assert(! scope.classlist.include?(""), "Class list included empty")
     end
 
     def test_validtags
@@ -372,7 +324,7 @@ class TestScope < Test::Unit::TestCase
     end
 
     def test_tagfunction
-        scope = mkscope()
+        scope = mkscope
         
         assert_nothing_raised {
             scope.function_tag(["yayness", "booness"])
@@ -392,11 +344,11 @@ class TestScope < Test::Unit::TestCase
     end
 
     def test_includefunction
-        interp = mkinterp
-        scope = mkscope :interp => interp
+        parser = mkparser
+        scope = mkscope :parser => parser
 
-        myclass = interp.newclass "myclass"
-        otherclass = interp.newclass "otherclass"
+        myclass = parser.newclass "myclass"
+        otherclass = parser.newclass "otherclass"
 
         function = Puppet::Parser::AST::Function.new(
             :name => "include",
@@ -417,12 +369,12 @@ class TestScope < Test::Unit::TestCase
     end
 
     def test_definedfunction
-        interp = mkinterp
+        parser = mkparser
         %w{one two}.each do |name|
-            interp.newdefine name
+            parser.newdefine name
         end
 
-        scope = mkscope :interp => interp
+        scope = mkscope :parser => parser
 
         assert_nothing_raised {
             %w{one two file user}.each do |type|
@@ -449,62 +401,15 @@ class TestScope < Test::Unit::TestCase
             "undef considered true")
     end
 
-    # Verify scope context is handled correctly.
-    def test_scopeinside
-        scope = mkscope()
-
-        one = :one
-        two = :two
-
-        # First just test the basic functionality.
-        assert_nothing_raised {
-            scope.inside :one do
-                assert_equal(:one, scope.inside, "Context did not get set")
-            end
-            assert_nil(scope.inside, "Context did not revert")
-        }
-
-        # Now make sure error settings work.
-        assert_raise(RuntimeError) {
-            scope.inside :one do
-                raise RuntimeError, "This is a failure, yo"
-            end
-        }
-        assert_nil(scope.inside, "Context did not revert")
-
-        # Now test it a bit deeper in.
-        assert_nothing_raised {
-            scope.inside :one do
-                scope.inside :two do
-                    assert_equal(:two, scope.inside, "Context did not get set")
-                end
-                assert_equal(:one, scope.inside, "Context did not get set")
-            end
-            assert_nil(scope.inside, "Context did not revert")
-        }
-
-        # And lastly, check errors deeper in
-        assert_nothing_raised {
-            scope.inside :one do
-                begin
-                    scope.inside :two do
-                        raise "a failure"
-                    end
-                rescue
-                end
-                assert_equal(:one, scope.inside, "Context did not get set")
-            end
-            assert_nil(scope.inside, "Context did not revert")
-        }
-
-    end
-
     if defined? ActiveRecord
     # Verify that we recursively mark as exported the results of collectable
     # components.
     def test_exportedcomponents
-        interp, scope, source = mkclassframing
-        children = []
+        config = mkconfig
+        parser = config.parser
+
+        # Create a default source
+        config.topscope.source = parser.newclass "", ""
 
         args = AST::ASTArray.new(
             :file => tempfile(),
@@ -513,7 +418,7 @@ class TestScope < Test::Unit::TestCase
         )
 
         # Create a top-level component
-        interp.newdefine "one", :arguments => [%w{arg}],
+        parser.newdefine "one", :arguments => [%w{arg}],
             :code => AST::ASTArray.new(
                 :children => [
                     resourcedef("file", "/tmp", {"owner" => varref("arg")})
@@ -521,7 +426,7 @@ class TestScope < Test::Unit::TestCase
             )
 
         # And a component that calls it
-        interp.newdefine "two", :arguments => [%w{arg}],
+        parser.newdefine "two", :arguments => [%w{arg}],
             :code => AST::ASTArray.new(
                 :children => [
                     resourcedef("one", "ptest", {"arg" => varref("arg")})
@@ -529,7 +434,7 @@ class TestScope < Test::Unit::TestCase
             )
 
         # And then a third component that calls the second
-        interp.newdefine "three", :arguments => [%w{arg}],
+        parser.newdefine "three", :arguments => [%w{arg}],
             :code => AST::ASTArray.new(
                 :children => [
                     resourcedef("two", "yay", {"arg" => varref("arg")})
@@ -542,13 +447,14 @@ class TestScope < Test::Unit::TestCase
         # And mark it as exported
         obj.exported = true
 
-        obj.evaluate :scope => scope
-
         # And then evaluate it
-        interp.evaliterate(scope)
+        obj.evaluate :scope => config.topscope
+
+        # And run the loop.
+        config.send(:evaluate_generators)
 
         %w{file}.each do |type|
-            objects = scope.lookupexported(type)
+            objects = config.resources.find_all { |r| r.type == type and r.exported }
 
             assert(!objects.empty?, "Did not get an exported %s" % type)
         end
@@ -585,9 +491,11 @@ Host <<||>>"
         objects = nil
         # We run it twice because we want to make sure there's no conflict
         # if we pull it up from the database.
+        node = mknode
+        node.parameters = {"hostname" => node.name}
         2.times { |i|
             assert_nothing_raised {
-                objects = interp.run("localhost", {"hostname" => "localhost"})
+                objects = interp.compile(node)
             }
 
             flat = objects.flatten
@@ -603,7 +511,7 @@ Host <<||>>"
 
     # Make sure tags behave appropriately.
     def test_tags
-        interp, scope, source = mkclassframing
+        parser, scope, source = mkclassframing
 
         # First make sure we can only set legal tags
         ["an invalid tag", "-anotherinvalid", "bad*tag"].each do |tag|
@@ -637,58 +545,22 @@ Host <<||>>"
         assert_equal((ptags + %w{onemore subscope}).sort, newscope.tags.sort)
     end
 
-    # Make sure we successfully translate objects
-    def test_translate
-        interp, scope, source = mkclassframing
+    # FIXME This isn't a great test, but I need to move on.
+    def test_to_trans
+        bucket = mock("transbucket")
+        Puppet::TransBucket.expects(:new).with([]).returns(bucket)
+        scope = mkscope
+        scope.type = "mytype"
+        scope.name = "myname"
 
-        # Create a define that we'll be using
-        interp.newdefine("wrapper", :code => AST::ASTArray.new(:children => [
-            resourcedef("file", varref("name"), "owner" => "root")
-        ]))
+        bucket.expects(:name=).with("myname")
+        bucket.expects(:type=).with("mytype")
 
-        # Now create a resource that uses that define
-        define = mkresource(:type => "wrapper", :title => "/tmp/testing",
-            :scope => scope, :source => source, :params => :none)
-
-        scope.setresource define
-
-        # And a normal resource
-        scope.setresource mkresource(:type => "file", :title => "/tmp/rahness",
-            :scope => scope, :source => source,
-            :params => {:owner => "root"})
-
-        # Evaluate the the define thing.
-        define.evaluate
-
-        # Now the scope should have a resource and a subscope.  Translate the
-        # whole thing.
-        ret = nil
-        assert_nothing_raised do
-            ret = scope.translate
-        end
-
-        assert_instance_of(Puppet::TransBucket, ret)
-
-        ret.each do |obj|
-            assert(obj.is_a?(Puppet::TransBucket) || obj.is_a?(Puppet::TransObject),
-                "Got a non-transportable object %s" % obj.class)
-        end
-
-        rahness = ret.find { |c| c.type == "file" and c.name == "/tmp/rahness" }
-        assert(rahness, "Could not find top-level file")
-        assert_equal("root", rahness["owner"])
-
-        bucket = ret.find { |c| c.class == Puppet::TransBucket and c.name == "/tmp/testing" }
-        assert(bucket, "Could not find define bucket")
-
-        testing = bucket.find { |c| c.type == "file" and c.name == "/tmp/testing" }
-        assert(testing, "Could not find define file")
-        assert_equal("root", testing["owner"])
-
+        scope.to_trans
     end
 
     def test_namespaces
-        interp, scope, source = mkclassframing
+        parser, scope, source = mkclassframing
 
         assert_equal([""], scope.namespaces,
             "Started out with incorrect namespaces")
@@ -701,17 +573,17 @@ Host <<||>>"
     end
 
     def test_findclass_and_finddefine
-        interp = mkinterp
+        parser = mkparser
 
-        # Make sure our scope calls the interp findclass method with
+        # Make sure our scope calls the parser findclass method with
         # the right namespaces
-        scope = mkscope :interp => interp
+        scope = mkscope :parser => parser
 
-        interp.metaclass.send(:attr_accessor, :last)
+        parser.metaclass.send(:attr_accessor, :last)
 
         methods = [:findclass, :finddefine]
         methods.each do |m|
-            interp.meta_def(m) do |namespace, name|
+            parser.meta_def(m) do |namespace, name|
                 @checked ||= []
                 @checked << [namespace, name]
 
@@ -727,7 +599,7 @@ Host <<||>>"
         end
 
         test = proc do |should|
-            interp.last = scope.namespaces[-1]
+            parser.last = scope.namespaces[-1]
             methods.each do |method|
                 result = scope.send(method, "testing")
                 assert_equal(should, result,
@@ -759,26 +631,6 @@ Host <<||>>"
 
         assert_equal("", scope.lookupvar("testing", true),
             "undef was not returned as '' when string")
-    end
-
-    # #620 - Nodes and classes should conflict, else classes don't get evaluated
-    def test_nodes_and_classes_name_conflict
-        scope = mkscope
-        
-        node = AST::Node.new :classname => "test", :namespace => ""
-        scope.setclass(node)
-
-        assert(scope.nodescope?, "Scope was not marked a node scope when a node was set")
-
-        # Now make a subscope that will be a class scope
-        klass = AST::HostClass.new :classname => "test", :namespace => ""
-        kscope = klass.subscope(scope)
-
-        # Now make sure we throw a failure, because we're trying to do a class and node
-        # with the same name
-        assert_raise(Puppet::ParseError, "Did not fail on class and node with same name") do
-            kscope.class_scope(klass)
-        end
     end
 end
 

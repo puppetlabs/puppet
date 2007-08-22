@@ -19,13 +19,13 @@ class TestASTResourceRef < Test::Unit::TestCase
 
     def setup
         super
-        @interp = mkinterp
-        @scope = mkscope :interp => @interp
+        @scope = mkscope
+        @parser = @scope.configuration.parser
     end
 
     def test_evaluate
-        @interp.newdefine "one::two"
-        @interp.newdefine "one-two"
+        @parser.newdefine "one::two"
+        @parser.newdefine "one-two"
         [%w{file /tmp/yay}, %w{one::two three}, %w{one-two three}].each do |type, title|
             ref = newref(type, title)
 
@@ -41,9 +41,9 @@ class TestASTResourceRef < Test::Unit::TestCase
 
     # Related to #706, make sure resource references correctly translate to qualified types.
     def test_scoped_references
-        @interp.newdefine "one"
-        @interp.newdefine "one::two"
-        @interp.newdefine "three"
+        @parser.newdefine "one"
+        @parser.newdefine "one::two"
+        @parser.newdefine "three"
         twoscope = @scope.newscope(:type => "one", :namespace => "one")
         assert(twoscope.finddefine("two"), "Could not find 'two' definition")
         title = "title"
@@ -70,8 +70,8 @@ class TestASTResourceRef < Test::Unit::TestCase
         end
 
         # Now run the same tests, but with the classes
-        @interp.newclass "four"
-        @interp.newclass "one::five"
+        @parser.newclass "four"
+        @parser.newclass "one::five"
 
         # First try an unqualified type
         assert_equal("four", newref("class", "four").evaluate(:scope => twoscope).title,

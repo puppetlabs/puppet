@@ -15,8 +15,8 @@ class Puppet::Parser::TemplateWrapper
         end
 
         # We'll only ever not have an interpreter in testing, but, eh.
-        if @scope.interp
-            @scope.interp.newfile(@file)
+        if @scope.parser
+            @scope.parser.watch_file(@file)
         end
     end
 
