@@ -239,14 +239,20 @@ class TestCertMgr < Test::Unit::TestCase
 
         ca.revoke(h1.serial)
 
+        oldcert = File.read(Puppet.config[:cacert])
+        oldserial = File.read(Puppet.config[:serial])
+
         # Recreate the CA from disk
         ca = mkCA()
+        newcert = File.read(Puppet.config[:cacert])
+        newserial = File.read(Puppet.config[:serial])
+        assert_equal(oldcert, newcert, "The certs are not equal after making a new CA.")
+        assert_equal(oldserial, newserial, "The serials are not equal after making a new CA.")
         store = mkStore(ca)
-        assert( store.verify(ca.cert))
-        assert(!store.verify(h1, [ca.cert]))
-        assert( store.verify(h2, [ca.cert]))
+        assert( store.verify(ca.cert), "Could not verify CA certs after reloading certs.")
+        assert(!store.verify(h1, [ca.cert]), "Incorrectly verified revoked cert.")
+        assert( store.verify(h2, [ca.cert]), "Could not verify certs with reloaded CA.")
         
-        Puppet.err :yay
         ca.revoke(h2.serial)
         assert_equal(1, ca.crl.extensions.size)
 
