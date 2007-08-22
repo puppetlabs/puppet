@@ -344,8 +344,23 @@ class Puppet::Parser::Configuration
             end
         end
 
-        # Clear the cache to encourage the GC
+        # Retrive the bucket for the top-level scope and set the appropriate metadata.
         result = buckets[topscope]
+        case topscope.type
+        when "": result.type = "main"
+        when nil: devfail "A Scope with no type"
+        else
+            result.type = topscope.type
+        end
+        if topscope.name
+            result.name = topscope.name
+        end
+
+        unless classlist.empty?
+            result.classes = classlist
+        end
+
+        # Clear the cache to encourage the GC
         buckets.clear
         return result
     end

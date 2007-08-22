@@ -164,15 +164,10 @@ class TestClient < Test::Unit::TestCase
         # Fake that it's local, so it creates the class file
         client.local = false
 
+        client.expects(:setclasses).with(%w{yaytest bootest})
         assert_nothing_raised {
             client.getconfig
         }
-
-        assert(FileTest.exists?(Puppet[:classfile]), "Class file does not exist")
-
-        classes = File.read(Puppet[:classfile]).split("\n")
-
-        assert_equal(%w{bootest yaytest}, classes.sort)
     end
 
     def test_client_loading
