@@ -1,0 +1,9 @@
+require File.join(File.dirname(__FILE__), "spec_helper.rb")
+require 'rake'
+require 'spec/rake/spectask'
+
+desc "Run all spec unit tests"
+Spec::Rake::SpecTask.new('unit') do |t|
+    t.spec_files = FileList['unit/**/*.rb']
+end
+
