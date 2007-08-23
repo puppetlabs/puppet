@@ -57,14 +57,18 @@ class Puppet::Network::Handler
 
         # Return the configuration version.
         def version(client = nil, clientip = nil)
-            v = interpreter.parsedate
-            # If we can find the node, then store the fact that the node
-            # has checked in.
-            if client and node = node_handler.details(client)
-                update_node_check(node)
+            if client
+                if node = node_handler.details(client)
+                    update_node_check(node)
+                    return interpreter.configuration_version(node)
+                else
+                    raise Puppet::Error, "Could not find node '%s'" % client
+                end
+            else
+                # Just return something that will always result in a recompile, because
+                # this is local.
+                return 0
             end
-
-            return v
         end
 
         private

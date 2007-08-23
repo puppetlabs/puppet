@@ -208,8 +208,11 @@ class TestLangFunctions < Test::Unit::TestCase
             :UseNodes => false
         )
         node = mknode
+        node.stubs(:environment).returns("yay")
 
-        parsedate = interp.parsedate()
+        Puppet[:environment] = "yay"
+
+        version = interp.configuration_version(node)
 
         objects = nil
         assert_nothing_raised {
@@ -233,9 +236,9 @@ class TestLangFunctions < Test::Unit::TestCase
         assert_nothing_raised {
             objects = interp.compile(node)
         }
-        newdate = interp.parsedate()
+        newversion = interp.configuration_version(node)
 
-        assert(parsedate != newdate, "Parse date did not change")
+        assert(version != newversion, "Parse date did not change")
     end
 
     def test_template_defined_vars

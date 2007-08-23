@@ -15,7 +15,7 @@ class Puppet::Parser::Parser
 
     AST = Puppet::Parser::AST
 
-    attr_reader :file, :interp
+    attr_reader :file, :version
     attr_accessor :files
 
 
@@ -202,11 +202,9 @@ class Puppet::Parser::Parser
         }
     end
 
-    def initialize(astset = nil)
+    def initialize(environment)
+        @environment = environment
         initvars()
-        if astset
-            @astset = astset
-        end
     end
 
     # Initialize or reset all of our variables.
@@ -427,6 +425,7 @@ class Puppet::Parser::Parser
             # Store the results as the top-level class.
             newclass("", :code => main)
         end
+        @version = Time.now.to_i
         return @astset
     ensure
         @lexer.clear
@@ -446,7 +445,8 @@ class Puppet::Parser::Parser
     end
 
     # Add a new file to be checked when we're checking to see if we should be
-    # reparsed.
+    # reparsed.  This is basically only used by the TemplateWrapper to let the
+    # parser know about templates that should be parsed.
     def watch_file(*files)
         files.each do |file|
             unless file.is_a? Puppet::Util::LoadedFile
@@ -456,5 +456,3 @@ class Puppet::Parser::Parser
         end
     end
 end
-
-# $Id$

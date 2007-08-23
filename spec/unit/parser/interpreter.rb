@@ -2,6 +2,40 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
+describe Puppet::Parser::Interpreter, " when initializing" do
+    it "should default to neither code nor file" do
+        interp = Puppet::Parser::Interpreter.new
+        interp.code.should be_nil
+        interp.file.should be_nil
+    end
+
+    it "should set the code to parse" do
+        interp = Puppet::Parser::Interpreter.new :Code => :code
+        interp.code.should equal(:code)
+    end
+
+    it "should set the file to parse" do
+        interp = Puppet::Parser::Interpreter.new :Manifest => :file
+        interp.file.should equal(:file)
+    end
+
+    it "should set code and ignore manifest when both are present" do
+        interp = Puppet::Parser::Interpreter.new :Code => :code, :Manifest => :file
+        interp.code.should equal(:code)
+        interp.file.should be_nil
+    end
+
+    it "should default to usenodes" do
+        interp = Puppet::Parser::Interpreter.new
+        interp.usenodes?.should be_true
+    end
+
+    it "should allow disabling of usenodes" do
+        interp = Puppet::Parser::Interpreter.new :UseNodes => false
+        interp.usenodes?.should be_false
+    end
+end
+
 describe Puppet::Parser::Interpreter, " when creating parser instances" do
     before do
         @interp = Puppet::Parser::Interpreter.new
@@ -90,5 +124,47 @@ describe Puppet::Parser::Interpreter, " when managing parser instances" do
         other_parser = mock('otherparser')
         @interp.expects(:create_parser).with(:second_env).returns(other_parser)
         @interp.send(:parser, :second_env).should equal(other_parser)
+    end
+end
+
+describe Puppet::Parser::Interpreter, " when compiling configurations" do
+    before do
+        @interp = Puppet::Parser::Interpreter.new
+    end
+
+    it "should create a configuration with the node, parser, and whether to use ast nodes" do
+        node = mock('node')
+        node.expects(:environment).returns(:myenv)
+        compile = mock 'compile'
+        compile.expects(:compile).returns(:config)
+        parser = mock 'parser'
+        @interp.expects(:parser).with(:myenv).returns(parser)
+        @interp.expects(:usenodes?).returns(true)
+        Puppet::Parser::Configuration.expects(:new).with(node, parser, :ast_nodes => true).returns(compile)
+        @interp.compile(node)
+
+        # Now try it when usenodes is true
+        @interp = Puppet::Parser::Interpreter.new :UseNodes => false
+        node.expects(:environment).returns(:myenv)
+        compile.expects(:compile).returns(:config)
+        @interp.expects(:parser).with(:myenv).returns(parser)
+        @interp.expects(:usenodes?).returns(false)
+        Puppet::Parser::Configuration.expects(:new).with(node, parser, :ast_nodes => false).returns(compile)
+        @interp.compile(node).should equal(:config)
+    end
+end
+
+describe Puppet::Parser::Interpreter, " when returning configuration version" do
+    before do
+        @interp = Puppet::Parser::Interpreter.new
+    end
+
+    it "should ask the appropriate parser for the configuration version" do
+        node = mock 'node'
+        node.expects(:environment).returns(:myenv)
+        parser = mock 'parser'
+        parser.expects(:version).returns(:myvers)
+        @interp.expects(:parser).with(:myenv).returns(parser)
+        @interp.configuration_version(node).should equal(:myvers)
     end
 end

@@ -14,30 +14,31 @@ class Puppet::Parser::Interpreter
     include Puppet::Util
 
     attr_accessor :usenodes
-    attr_reader :parser
+    attr_accessor :code, :file
 
     include Puppet::Util::Errors
 
+    # Determine the configuration version for a given node's environment.
+    def configuration_version(node)
+        parser(node.environment).version
+    end
+
+    # evaluate our whole tree
+    def compile(node)
+        return Puppet::Parser::Configuration.new(node, parser(node.environment), :ast_nodes => usenodes?).compile
+    end
+
     # create our interpreter
-    def initialize(hash)
-        if @code = hash[:Code]
-            @file = nil # to avoid warnings
-        elsif ! @file = hash[:Manifest]
-            devfail "You must provide code or a manifest"
+    def initialize(options = {})
+        if @code = options[:Code]
+        elsif @file = options[:Manifest]
         end
 
-        if hash.include?(:UseNodes)
-            @usenodes = hash[:UseNodes]
+        if options.include?(:UseNodes)
+            @usenodes = options[:UseNodes]
         else
             @usenodes = true
         end
-
-        # By default, we only search for parsed nodes.
-        @nodesource = :code
-
-        @setup = false
-
-        @local = hash[:Local] || false
 
         # The class won't always be defined during testing.
         if Puppet[:storeconfigs] 
@@ -48,98 +49,47 @@ class Puppet::Parser::Interpreter
             end
         end
 
-        @files = []
-
-        # Create our parser object
-        parsefiles
+        @parsers = {}
     end
 
-    def parsedate
-        parsefiles()
-        @parsedate
-    end
-
-    # evaluate our whole tree
-    def compile(node)
-        parsefiles()
-
-        return Puppet::Parser::Configuration.new(node, @parser, :ast_nodes => @usenodes).compile
+    # Should we parse ast nodes?
+    def usenodes?
+        defined?(@usenodes) and @usenodes
     end
 
     private
 
-    # Check whether any of our files have changed.
-    def checkfiles
-        if @files.find { |f| f.changed?  }
-            @parsedate = Time.now.to_i
-        end
-    end
-
-    # Parse the files, generating our parse tree.  This automatically
-    # reparses only if files are updated, so it's safe to call multiple
-    # times.
-    def parsefiles
-        # First check whether there are updates to any non-puppet files
-        # like templates.  If we need to reparse, this will get quashed,
-        # but it needs to be done first in case there's no reparse
-        # but there are other file changes.
-        checkfiles()
-
-        # Check if the parser should reparse.
-        if @file
-            if defined? @parser
-                if stamp = @parser.reparse?
-                    Puppet.notice "Reloading files"
-                else
-                    return false
-                end
-            end
-
-            unless FileTest.exists?(@file)
-                # If we've already parsed, then we're ok.
-                if findclass("", "")
-                    return
-                else
-                    raise Puppet::Error, "Manifest %s must exist" % @file
-                end
-            end
-        end
-
-        # Create a new parser, just to keep things fresh.  Don't replace our
-        # current parser until we know weverything works.
-        newparser = Puppet::Parser::Parser.new()
-        if @code
-            newparser.string = @code
-        else
-            newparser.file = @file
-        end
-
-        # Parsing stores all classes and defines and such in their
-        # various tables, so we don't worry about the return.
+    # Create a new parser object and pre-parse the configuration.
+    def create_parser(environment)
         begin
-            if @local
-                newparser.parse
-            else
-                benchmark(:info, "Parsed manifest") do
-                    newparser.parse
-                end
+            parser = Puppet::Parser::Parser.new(environment)
+            if self.code
+                parser.code = self.code
+            elsif self.file
+                parser.file = self.file
             end
-            # We've gotten this far, so it's ok to swap the parsers.
-            oldparser = @parser
-            @parser = newparser
-            if oldparser
-                oldparser.clear
-            end
-
-            # Mark when we parsed, so we can check freshness
-            @parsedate = Time.now.to_i
+            parser.parse
+            return parser
         rescue => detail
             if Puppet[:trace]
                 puts detail.backtrace
             end
-            Puppet.err "Could not parse; using old configuration: %s" % detail
+            Puppet.err "Could not parse for environment %s: %s" % [environment, detail]
+            return nil
         end
     end
-end
 
-# $Id$
+    # Return the parser for a specific environment.
+    def parser(environment)
+        if ! @parsers[environment] or @parsers[environment].reparse?
+            if tmp = create_parser(environment)
+                @parsers[environment].clear if @parsers[environment]
+                @parsers[environment] = tmp
+            end
+            unless @parsers[environment]
+                raise Puppet::Error, "Could not parse any configurations"
+            end
+        end
+        @parsers[environment]
+    end
+end

@@ -424,17 +424,22 @@ class TestConfiguration < Test::Unit::TestCase
         Puppet.features.expects(:rails?).returns(true)
         Puppet::Rails.expects(:connect)
 
-        args = {:name => "yay"}
-        config.expects(:store_to_active_record).with(args)
-        config.send(:store, args)
+        node = mock 'node'
+        resource_table = mock 'resources'
+        resource_table.expects(:values).returns(:resources)
+        config.instance_variable_set("@node", node)
+        config.instance_variable_set("@resource_table", resource_table)
+        config.expects(:store_to_active_record).with(node, :resources)
+        config.send(:store)
     end
 
     def test_store_to_active_record
         config = mkconfig
-        args = {:name => "yay"}
+        node = mock 'node'
+        node.expects(:name).returns("myname")
         Puppet::Rails::Host.stubs(:transaction).yields
-        Puppet::Rails::Host.expects(:store).with(args)
-        config.send(:store_to_active_record, args)
+        Puppet::Rails::Host.expects(:store).with(node, :resources)
+        config.send(:store_to_active_record, node, :resources)
     end
 
     # Make sure that 'finish' gets called on all of our resources.
@@ -473,8 +478,10 @@ class TestConfiguration < Test::Unit::TestCase
         # Get rid of the topscope
         scopes.vertices.each { |v| scopes.remove_vertex!(v) }
 
+        bucket = []
         scope = mock("scope")
-        scope.expects(:to_trans).returns([])
+        bucket.expects(:copy_type_and_name).with(scope)
+        scope.expects(:to_trans).returns(bucket)
         scopes.add_vertex! scope
 
         # The topscope is the key to picking out the top of the graph.
@@ -510,7 +517,10 @@ class TestConfiguration < Test::Unit::TestCase
 
         # Create our scopes.
         top = mock("top")
-        top.expects(:to_trans).returns(fakebucket.new("top"))
+        topbucket = fakebucket.new "top"
+        topbucket.expects(:copy_type_and_name).with(top)
+        top.stubs(:copy_type_and_name)
+        top.expects(:to_trans).returns(topbucket)
         # The topscope is the key to picking out the top of the graph.
         config.instance_variable_set("@topscope", top)
         middle = mock("middle")

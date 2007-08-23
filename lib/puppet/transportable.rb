@@ -100,6 +100,19 @@ module Puppet
             end
         }
 
+        # Copy a scope's type and name.
+        def copy_type_and_name(scope)
+            case scope.type
+            when "": self.type = "main"
+            when nil: devfail "A Scope with no type"
+            else
+                self.type = scope.type
+            end
+            if scope.name
+                self.name = scope.name
+            end
+        end
+
         # Remove all collectable objects from our tree, since the client
         # should not see them.
         def collectstrip!

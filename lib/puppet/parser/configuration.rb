@@ -347,15 +347,8 @@ class Puppet::Parser::Configuration
 
         # Retrive the bucket for the top-level scope and set the appropriate metadata.
         result = buckets[topscope]
-        case topscope.type
-        when "": result.type = "main"
-        when nil: devfail "A Scope with no type"
-        else
-            result.type = topscope.type
-        end
-        if topscope.name
-            result.name = topscope.name
-        end
+
+        result.copy_type_and_name(topscope)
 
         unless classlist.empty?
             result.classes = classlist

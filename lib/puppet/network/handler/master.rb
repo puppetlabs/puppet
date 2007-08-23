@@ -32,8 +32,8 @@ class Puppet::Network::Handler
             # Allow specification of a code snippet or of a file
             if code = hash[:Code]
                 args[:Code] = code
-            else
-                args[:Manifest] = hash[:Manifest] || Puppet[:manifest]
+            elsif man = hash[:Manifest]
+                args[:Manifest] = man
             end
 
             if hash[:Local]
