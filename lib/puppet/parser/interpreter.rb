@@ -63,7 +63,7 @@ class Puppet::Parser::Interpreter
     def compile(node)
         parsefiles()
 
-        return Puppet::Parser::Configuration.new(node, @parser).compile
+        return Puppet::Parser::Configuration.new(node, @parser, :ast_nodes => @usenodes).compile
     end
 
     private

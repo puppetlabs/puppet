@@ -119,7 +119,7 @@ class TestInterpreter < PuppetTest::TestCase
         node = mock('node')
         config = mock('config')
         config.expects(:compile).returns(:config)
-        Puppet::Parser::Configuration.expects(:new).with(node, parser).returns(config)
+        Puppet::Parser::Configuration.expects(:new).with(node, parser, :ast_nodes => interp.usenodes).returns(config)
         assert_equal(:config, interp.compile(node), "Did not return the results of config.compile")
     end
 
