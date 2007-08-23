@@ -23,54 +23,56 @@ module Spec
       end
     
       def matches?(collection_owner)
-        if collection_owner.respond_to?(collection_name)
-          collection = collection_owner.send(collection_name, *@args, &@block)
+        if collection_owner.respond_to?(@collection_name)
+          collection = collection_owner.send(@collection_name, *@args, &@block)
         elsif (collection_owner.respond_to?(:length) || collection_owner.respond_to?(:size))
           collection = collection_owner
         else
-          collection_owner.send(collection_name, *@args, &@block)
+          collection_owner.send(@collection_name, *@args, &@block)
         end
-        @actual = collection.length if collection.respond_to?(:length)
         @actual = collection.size if collection.respond_to?(:size)
+        @actual = collection.length if collection.respond_to?(:length)
+        raise not_a_collection if @actual.nil?
         return @actual >= @expected if @relativity == :at_least
         return @actual <= @expected if @relativity == :at_most
         return @actual == @expected
       end
+      
+      def not_a_collection
+        "expected #{@collection_name} to be a collection but it does not respond to #length or #size"
+      end
     
       def failure_message
-        "expected #{relative_expectation} #{collection_name}, got #{@actual}"
+        "expected #{relative_expectation} #{@collection_name}, got #{@actual}"
       end
 
       def negative_failure_message
         if @relativity == :exactly
-          return "expected target not to have #{@expected} #{collection_name}, got #{@actual}"
+          return "expected target not to have #{@expected} #{@collection_name}, got #{@actual}"
         elsif @relativity == :at_most
           return <<-EOF
 Isn't life confusing enough?
 Instead of having to figure out the meaning of this:
-  should_not have_at_most(#{@expected}).#{collection_name}
+  should_not have_at_most(#{@expected}).#{@collection_name}
 We recommend that you use this instead:
-  should have_at_least(#{@expected + 1}).#{collection_name}
+  should have_at_least(#{@expected + 1}).#{@collection_name}
 EOF
         elsif @relativity == :at_least
           return <<-EOF
 Isn't life confusing enough?
 Instead of having to figure out the meaning of this:
-  should_not have_at_least(#{@expected}).#{collection_name}
+  should_not have_at_least(#{@expected}).#{@collection_name}
 We recommend that you use this instead:
-  should have_at_most(#{@expected - 1}).#{collection_name}
+  should have_at_most(#{@expected - 1}).#{@collection_name}
 EOF
         end
       end
       
       def description
-        "have #{relative_expectation} #{collection_name}"
+        "have #{relative_expectation} #{@collection_name}"
       end
       
       private
-      def collection_name
-        @collection_name
-      end
       
       def relative_expectation
         "#{relativities[@relativity]}#{@expected}"

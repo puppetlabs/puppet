@@ -1,5 +1,3 @@
-require 'spec/deprecated'
-require 'spec/callback'
 require 'spec/matchers/be'
 require 'spec/matchers/be_close'
 require 'spec/matchers/change'
@@ -13,6 +11,7 @@ require 'spec/matchers/raise_error'
 require 'spec/matchers/respond_to'
 require 'spec/matchers/satisfy'
 require 'spec/matchers/throw_symbol'
+require 'spec/matchers/operator_matcher'
 
 module Spec
 
@@ -62,9 +61,9 @@ module Spec
   # You can use this feature to invoke any predicate that begins with "has_", whether it is
   # part of the Ruby libraries (like +Hash#has_key?+) or a method you wrote on your own class.
   #
-  # == Custom Expression Matchers
+  # == Custom Expectation Matchers
   #
-  # When you find that none of the stock Expression Matchers provide a natural
+  # When you find that none of the stock Expectation Matchers provide a natural
   # feeling expectation, you can very easily write your own.
   #
   # For example, imagine that you are writing a game in which players can
@@ -87,15 +86,15 @@ module Spec
   #     def initialize(expected)
   #       @expected = expected
   #     end
-  #     def matches?(actual)
-  #       @actual = actual
-  #       bob.current_zone.eql?(Zone.new(@expected))
+  #     def matches?(target)
+  #       @target = target
+  #       @target.current_zone.eql?(Zone.new(@expected))
   #     end
   #     def failure_message
-  #       "expected #{@actual.inspect} to be in Zone #{@expected}"
+  #       "expected #{@target.inspect} to be in Zone #{@expected}"
   #     end
   #     def negative_failure_message
-  #       "expected #{@actual.inspect} not to be in Zone #{@expected}"
+  #       "expected #{@target.inspect} not to be in Zone #{@expected}"
   #     end
   #   end
   #
@@ -119,18 +118,40 @@ module Spec
   #     end
   #   end
   #
-  #   context "Player behaviour" do
+  #   describe "Player behaviour" do
   #     include CustomGameMatchers
   #     ...
   #   end
+  #
+  # or you can include in globally in a spec_helper.rb file <tt>require</tt>d
+  # from your spec file(s):
+  #
+  #   Spec::Runner.configure do |config|
+  #     config.include(CustomGameMatchers)
+  #   end
+  #
   module Matchers
-    
-    class << self
-      callback_events :description_generated
+    module ModuleMethods
+      def description_generated(callback)
+        description_generated_callbacks << callback
+      end
+
+      def unregister_description_generated(callback)
+        description_generated_callbacks.delete(callback)
+      end
+
       def generated_description=(name)
-        notify_callbacks(:description_generated, name)
+        description_generated_callbacks.each do |callback|
+          callback.call(name)
+        end
+      end
+
+      private
+      def description_generated_callbacks
+        @description_generated_callbacks ||= []
       end
     end
+    extend ModuleMethods
     
     def method_missing(sym, *args, &block) # :nodoc:
       return Matchers::Be.new(sym, *args) if sym.starts_with?("be_")
@@ -138,21 +159,6 @@ module Spec
       super
     end
 
-    deprecated do
-      # This supports sugar delegating to Matchers
-      class Matcher #:nodoc:
-        include Matchers
-
-        def respond_to?(sym)
-          if sym.to_s[0..2] == "be_"
-            return true
-          else
-            super
-          end
-        end
-      end
-    end
-    
     class MatcherError < StandardError
     end
     

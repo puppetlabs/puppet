@@ -36,8 +36,29 @@ module Spec
       def initialize(ignore)
       end
       
+      def ==(other)
+        true
+      end
+      
+      # TODO - need this?
       def matches?(value)
         true
+      end
+    end
+    
+    class AnyArgsConstraint
+      def description
+        "any args"
+      end
+    end
+    
+    class NoArgsConstraint
+      def description
+        "no args"
+      end
+      
+      def ==(args)
+        args == []
       end
     end
     
@@ -52,6 +73,10 @@ module Spec
     
     class BooleanArgConstraint
       def initialize(ignore)
+      end
+      
+      def ==(value)
+        matches?(value)
       end
       
       def matches?(value)
@@ -71,12 +96,16 @@ module Spec
     end
     
     class DuckTypeArgConstraint
-      def initialize(*methods_to_respond_do)
-        @methods_to_respond_do = methods_to_respond_do
+      def initialize(*methods_to_respond_to)
+        @methods_to_respond_to = methods_to_respond_to
       end
   
       def matches?(value)
-        @methods_to_respond_do.all? { |sym| value.respond_to?(sym) }
+        @methods_to_respond_to.all? { |sym| value.respond_to?(sym) }
+      end
+      
+      def description
+        "duck_type"
       end
     end
 
@@ -90,8 +119,14 @@ module Spec
       
       def initialize(args)
         @args = args
-        if [:any_args] == args then @expected_params = nil
-        elsif [:no_args] == args then @expected_params = []
+        if [:any_args] == args
+          @expected_params = nil
+          warn_deprecated(:any_args.inspect, "any_args()")
+        elsif args.length == 1 && args[0].is_a?(AnyArgsConstraint) then @expected_params = nil
+        elsif [:no_args] == args
+          @expected_params = []
+          warn_deprecated(:no_args.inspect, "no_args()")
+        elsif args.length == 1 && args[0].is_a?(NoArgsConstraint) then @expected_params = []
         else @expected_params = process_arg_constraints(args)
         end
       end
@@ -102,9 +137,25 @@ module Spec
         end
       end
       
+      def warn_deprecated(deprecated_method, instead)
+        STDERR.puts "The #{deprecated_method} constraint is deprecated. Use #{instead} instead."
+      end
+      
       def convert_constraint(constraint)
-        return @@constraint_classes[constraint].new(constraint) if constraint.is_a?(Symbol)
-        return constraint if constraint.is_a?(DuckTypeArgConstraint)
+        if [:anything, :numeric, :boolean, :string].include?(constraint)
+          case constraint
+          when :anything
+            instead = "anything()"
+          when :boolean
+            instead = "boolean()"
+          when :numeric
+            instead = "an_instance_of(Numeric)"
+          when :string
+            instead = "an_instance_of(String)"
+          end
+          warn_deprecated(constraint.inspect, instead)
+          return @@constraint_classes[constraint].new(constraint)
+        end
         return MatcherConstraint.new(constraint) if is_matcher?(constraint)
         return RegexpArgConstraint.new(constraint) if constraint.is_a?(Regexp)
         return LiteralArgConstraint.new(constraint)

@@ -1,25 +1,17 @@
 module Spec
   module VERSION
-    def self.build_tag
-      tag = "REL_" + [MAJOR, MINOR, TINY].join('_')
-      if defined?(RELEASE_CANDIDATE)
-        tag << "_" << RELEASE_CANDIDATE
-      end
-      tag
-    end
-
     unless defined? MAJOR
-      MAJOR  = 0
-      MINOR  = 8
-      TINY   = 2
-      # RELEASE_CANDIDATE = "RC1"
-      
-      # RANDOM_TOKEN: 0.375509844656552
-      REV = "$LastChangedRevision: 2283$".match(/LastChangedRevision: (\d+)/)[1]
+      MAJOR  = 1
+      MINOR  = 0
+      TINY   = 8
+      RELEASE_CANDIDATE = nil
+
+      # RANDOM_TOKEN: 0.510454315029681
+      REV = "$LastChangedRevision: 2338 $".match(/LastChangedRevision: (\d+)/)[1]
 
       STRING = [MAJOR, MINOR, TINY].join('.')
-      FULL_VERSION = "#{STRING} (r#{REV})"
-      TAG = build_tag
+      TAG = "REL_#{[MAJOR, MINOR, TINY, RELEASE_CANDIDATE].compact.join('_')}".upcase.gsub(/\.|-/, '_')
+      FULL_VERSION = "#{[MAJOR, MINOR, TINY, RELEASE_CANDIDATE].compact.join('.')} (r#{REV})"
 
       NAME   = "RSpec"
       URL    = "http://rspec.rubyforge.org/"  
@@ -28,3 +20,4 @@ module Spec
     end
   end
 end
+

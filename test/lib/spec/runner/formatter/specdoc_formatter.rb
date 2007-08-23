@@ -2,20 +2,26 @@ module Spec
   module Runner
     module Formatter
       class SpecdocFormatter < BaseTextFormatter      
-        def add_context(name, first)
+        def add_behaviour(name)
           @output.puts
           @output.puts name
-          STDOUT.flush
+          @output.flush
         end
       
-        def spec_failed(name, counter, failure)
-          @output.puts failure.expectation_not_met? ? red("- #{name} (FAILED - #{counter})") : magenta("- #{name} (ERROR - #{counter})")
-          STDOUT.flush
+        def example_failed(example, counter, failure)
+          @output.puts failure.expectation_not_met? ? red("- #{example.description} (FAILED - #{counter})") : magenta("- #{example.description} (ERROR - #{counter})")
+          @output.flush
         end
       
-        def spec_passed(name)
-          @output.print green("- #{name}\n")
-          STDOUT.flush
+        def example_passed(example)
+          @output.puts green("- #{example.description}")
+          @output.flush
+        end
+        
+        def example_pending(behaviour_name, example_name, message)
+          super
+          @output.puts yellow("- #{example_name} (PENDING: #{message})")
+          @output.flush
         end
       end
     end

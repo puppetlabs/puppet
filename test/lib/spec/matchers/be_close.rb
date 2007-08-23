@@ -13,11 +13,11 @@ module Spec
       end
       
       def failure_message
-        "expected #{@expected} +/- (<#{@delta}), got #{@actual}"
+        "expected #{@expected} +/- (< #{@delta}), got #{@actual}"
       end
       
       def description
-        "be close to #{@expected} (+- #{@delta})"
+        "be close to #{@expected} (within +- #{@delta})"
       end
     end
     

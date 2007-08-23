@@ -2,36 +2,39 @@ module Spec
   module Runner
     class Reporter
       
-      def initialize(formatter, backtrace_tweaker)
-        @formatter = formatter
+      def initialize(formatters, backtrace_tweaker)
+        @formatters = formatters
         @backtrace_tweaker = backtrace_tweaker
         clear!
       end
       
-      def add_context(name)
-        #TODO - @context_names.empty? tells the formatter whether this is the first context or not - that's a little slippery
-        @formatter.add_context(name, @context_names.empty?)
-        @context_names << name
+      def add_behaviour(name)
+        @formatters.each{|f| f.add_behaviour(name)}
+        @behaviour_names << name
       end
       
-      def spec_started(name)
-        @spec_names << name
-        @formatter.spec_started(name)
+      def example_started(name)
+        @formatters.each{|f| f.example_started(name)}
       end
       
-      def spec_finished(name, error=nil, failure_location=nil)
-        if error.nil?
-          spec_passed(name)
+      def example_finished(name, error=nil, failure_location=nil, not_implemented = false)
+        @example_names << name
+        
+        if not_implemented
+          example_pending(@behaviour_names.last, name)
+        elsif error.nil?
+          example_passed(name)
+        elsif Spec::DSL::ExamplePendingError === error
+          example_pending(@behaviour_names.last, name, error.message)
         else
-          @backtrace_tweaker.tweak_backtrace(error, failure_location)
-          spec_failed(name, Failure.new(@context_names.last, name, error))
+          example_failed(name, error, failure_location)
         end
       end
 
-      def start(number_of_specs)
+      def start(number_of_examples)
         clear!
         @start_time = Time.new
-        @formatter.start(number_of_specs)
+        @formatters.each{|f| f.start(number_of_examples)}
       end
   
       def end
@@ -40,18 +43,22 @@ module Spec
   
       # Dumps the summary and returns the total number of failures
       def dump
-        @formatter.start_dump
+        @formatters.each{|f| f.start_dump}
         dump_failures
-        @formatter.dump_summary(duration, @spec_names.length, @failures.length)
+        @formatters.each do |f| 
+          f.dump_summary(duration, @example_names.length, @failures.length, @pending_count)
+          f.close
+        end
         @failures.length
       end
 
-      private
+    private
   
       def clear!
-        @context_names = []
+        @behaviour_names = []
         @failures = []
-        @spec_names = []
+        @pending_count = 0
+        @example_names = []
         @start_time = nil
         @end_time = nil
       end
@@ -59,7 +66,7 @@ module Spec
       def dump_failures
         return if @failures.empty?
         @failures.inject(1) do |index, failure|
-          @formatter.dump_failure(index, failure)
+          @formatters.each{|f| f.dump_failure(index, failure)}
           index + 1
         end
       end
@@ -68,33 +75,46 @@ module Spec
         return @end_time - @start_time unless (@end_time.nil? or @start_time.nil?)
         return "0.0"
       end
-
-      def spec_passed(name)
-        @formatter.spec_passed(name)
+      
+      def example_passed(name)
+        @formatters.each{|f| f.example_passed(name)}
       end
 
-      def spec_failed(name, failure)
+      def example_failed(name, error, failure_location)
+        @backtrace_tweaker.tweak_backtrace(error, failure_location)
+        example_name = "#{@behaviour_names.last} #{name}"
+        failure = Failure.new(example_name, error)
         @failures << failure
-        @formatter.spec_failed(name, @failures.length, failure)
+        @formatters.each{|f| f.example_failed(name, @failures.length, failure)}
       end
-
+      
+      def example_pending(behaviour_name, example_name, message="Not Yet Implemented")
+        @pending_count += 1
+        @formatters.each{|f| f.example_pending(behaviour_name, example_name, message)}
+      end
+      
       class Failure
         attr_reader :exception
         
-        def initialize(context_name, spec_name, exception)
-          @context_name = context_name
-          @spec_name = spec_name
+        def initialize(example_name, exception)
+          @example_name = example_name
           @exception = exception
         end
 
         def header
           if expectation_not_met?
-            "'#{@context_name} #{@spec_name}' FAILED"
+            "'#{@example_name}' FAILED"
+          elsif pending_fixed?
+            "'#{@example_name}' FIXED"
           else
-            "#{@exception.class.name} in '#{@context_name} #{@spec_name}'"
+            "#{@exception.class.name} in '#{@example_name}'"
           end
         end
         
+        def pending_fixed?
+          @exception.is_a?(Spec::DSL::PendingFixedError)
+        end
+
         def expectation_not_met?
           @exception.is_a?(Spec::Expectations::ExpectationNotMetError)
         end

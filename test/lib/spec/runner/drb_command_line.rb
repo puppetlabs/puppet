@@ -9,8 +9,8 @@ module Spec
       def self.run(argv, stderr, stdout, exit=true, warn_if_no_files=true)
         begin
           DRb.start_service
-          rails_spec_server = DRbObject.new_with_uri("druby://localhost:8989")
-          rails_spec_server.run(argv, stderr, stdout)
+          spec_server = DRbObject.new_with_uri("druby://localhost:8989")
+          spec_server.run(argv, stderr, stdout)
         rescue DRb::DRbConnError
           stderr.puts "No server is running"
           exit 1 if exit

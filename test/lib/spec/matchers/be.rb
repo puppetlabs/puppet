@@ -2,8 +2,8 @@ module Spec
   module Matchers
     
     class Be #:nodoc:
-      def initialize(expected=nil, *args)
-        @expected = parse_expected(expected)
+      def initialize(*args)
+        @expected = parse_expected(args.shift)
         @args = args
         @comparison = ""
       end
@@ -57,7 +57,23 @@ module Spec
         return @actual <= @expected if @less_than_or_equal
         return @actual >= @expected if @greater_than_or_equal
         return @actual > @expected if @greater_than
+        return @actual == @expected if @double_equal
+        return @actual === @expected if @triple_equal
         return @actual.equal?(@expected)
+      end
+      
+      def ==(expected)
+        @double_equal = true
+        @comparison = "== "
+        @expected = expected
+        self
+      end
+
+      def ===(expected)
+        @triple_equal = true
+        @comparison = "=== "
+        @expected = expected
+        self
       end
 
       def <(expected)
@@ -89,18 +105,24 @@ module Spec
       end
       
       def description
-        "be #{@comparison}#{@expected}"
+        "#{prefix_to_sentence}#{comparison}#{expected_to_sentence}#{args_to_sentence}"
       end
 
       private
         def parse_expected(expected)
           if Symbol === expected
-            ["be_an_","be_a_","be_"].each do |prefix|
-              @handling_predicate = true
-              return "#{expected.to_s.sub(prefix,"")}".to_sym if expected.starts_with?(prefix)
+            @handling_predicate = true
+            ["be_an_","be_a_","be_"].each do |@prefix|
+              return "#{expected.to_s.sub(@prefix,"")}".to_sym if expected.starts_with?(@prefix)
             end
           end
+          @prefix = "be "
           return expected
+        end
+        
+        def handling_predicate?
+          return false if [:true, :false, :nil].include?(@expected)
+          return @handling_predicate
         end
 
         def predicate
@@ -113,14 +135,37 @@ module Spec
         
         def args_to_s
           return "" if @args.empty?
-          transformed_args = @args.collect{|a| a.inspect}
-          return "(#{transformed_args.join(', ')})"
+          inspected_args = @args.collect{|a| a.inspect}
+          return "(#{inspected_args.join(', ')})"
         end
         
-        def handling_predicate?
-          return false if [:true, :false, :nil].include?(@expected)
-          return @handling_predicate
+        def comparison
+          @comparison
         end
+        
+        def expected_to_sentence
+          split_words(@expected)
+        end
+        
+        def prefix_to_sentence
+          split_words(@prefix)
+        end
+
+        def split_words(sym)
+          sym.to_s.gsub(/_/,' ')
+        end
+
+        def args_to_sentence
+          case @args.length
+            when 0
+              ""
+            when 1
+              " #{@args[0]}"
+            else
+              " #{@args[0...-1].join(', ')} and #{@args[-1]}"
+          end
+        end
+        
     end
  
     # :call-seq:

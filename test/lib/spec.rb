@@ -1,8 +1,13 @@
-require 'spec/deprecated'
+require 'spec/extensions'
 require 'spec/version'
-require 'spec/callback'
 require 'spec/matchers'
 require 'spec/expectations'
-require 'spec/mocks'
-require 'spec/runner'
 require 'spec/translator'
+require 'spec/dsl'
+require 'spec/runner'
+
+class Object
+  def metaclass
+    class << self; self; end
+  end
+end

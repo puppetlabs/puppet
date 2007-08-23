@@ -2,24 +2,28 @@ module Spec
   module Runner
     module Formatter
       class ProgressBarFormatter < BaseTextFormatter
-        def add_context(name, first)
-          @output.puts if first
-          STDOUT.flush
+        def add_behaviour(name)
         end
       
-        def spec_failed(name, counter, failure)
-          @output.print failure.expectation_not_met? ? red('F') : magenta('F')
-          STDOUT.flush
+        def example_failed(example, counter, failure)
+          @output.print colourise('F', failure)
+          @output.flush
         end
 
-        def spec_passed(name)
+        def example_passed(example)
           @output.print green('.')
-          STDOUT.flush
+          @output.flush
         end
       
+        def example_pending(behaviour_name, example_name, message)
+          super
+          @output.print yellow('P')
+          @output.flush
+        end
+        
         def start_dump
           @output.puts
-          STDOUT.flush
+          @output.flush
         end
       end
     end

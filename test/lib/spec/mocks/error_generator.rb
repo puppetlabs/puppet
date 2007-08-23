@@ -17,8 +17,7 @@ module Spec
       end
       
       def raise_unexpected_message_args_error(expectation, *args)
-        #this is either :no_args or an Array
-        expected_args = (expectation.expected_args == :no_args ? "(no args)" : format_args(*expectation.expected_args))
+        expected_args = format_args(*expectation.expected_args)
         actual_args = args.empty? ? "(no args)" : format_args(*args)
         __raise "#{intro} expected #{expectation.sym.inspect} with #{expected_args} but received it with #{actual_args}"
       end
@@ -45,7 +44,7 @@ module Spec
       
       private
       def intro
-        @name ? "Mock '#{@name}'" : @target.to_s
+        @name ? "Mock '#{@name}'" : @target.inspect
       end
       
       def __raise(message)

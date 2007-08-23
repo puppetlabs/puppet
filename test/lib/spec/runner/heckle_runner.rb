@@ -13,9 +13,9 @@ module Spec
         @heckle_class = heckle_class
       end
       
-      # Runs all the contexts held by +context_runner+ once for each of the 
+      # Runs all the contexts held by +behaviour_runner+ once for each of the 
       # methods in the matched classes.
-      def heckle_with(context_runner)
+      def heckle_with(behaviour_runner)
         if @filter =~ /(.*)[#\.](.*)/
           heckle_method($1, $2)
         else
@@ -25,7 +25,7 @@ module Spec
       
       def heckle_method(class_name, method_name)
         verify_constant(class_name)
-        heckle = @heckle_class.new(class_name, method_name, context_runner)
+        heckle = @heckle_class.new(class_name, method_name, behaviour_runner)
         heckle.validate
       end
       
@@ -39,7 +39,7 @@ module Spec
         
         classes.each do |klass|
           klass.instance_methods(false).each do |method_name|
-            heckle = @heckle_class.new(klass.name, method_name, context_runner)
+            heckle = @heckle_class.new(klass.name, method_name, behaviour_runner)
             heckle.validate
           end
         end
@@ -57,13 +57,14 @@ module Spec
     
     #Supports Heckle 1.2 and prior (earlier versions used Heckle::Base)
     class Heckler < (Heckle.const_defined?(:Base) ? Heckle::Base : Heckle)
-      def initialize(klass_name, method_name, context_runner)
+      def initialize(klass_name, method_name, behaviour_runner)
         super(klass_name, method_name)
-        @context_runner = context_runner
+        @behaviour_runner = behaviour_runner
       end
 
       def tests_pass?
-        failure_count = @context_runner.run(false)
+        paths = [] # We can pass an empty array of paths - our specs are already loaded.
+        failure_count = @behaviour_runner.run(paths, false)
         failure_count == 0
       end
     end

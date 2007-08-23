@@ -1,9 +1,6 @@
-require 'spec/deprecated'
 require 'spec/matchers'
-require 'spec/expectations/sugar'
 require 'spec/expectations/errors'
 require 'spec/expectations/extensions'
-require 'spec/expectations/should'
 require 'spec/expectations/handler'
 
 module Spec

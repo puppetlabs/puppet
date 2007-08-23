@@ -11,11 +11,9 @@ module Spec
       class << self
         include MatcherHandlerHelper
         def handle_matcher(actual, matcher, &block)
-          unless matcher.nil?
-            match = matcher.matches?(actual, &block)
-            ::Spec::Matchers.generated_description = "should #{describe(matcher)}"
-            Spec::Expectations.fail_with(matcher.failure_message) unless match
-          end
+          match = matcher.matches?(actual, &block)
+          ::Spec::Matchers.generated_description = "should #{describe(matcher)}"
+          Spec::Expectations.fail_with(matcher.failure_message) unless match
         end
       end
     end
@@ -24,20 +22,18 @@ module Spec
       class << self
         include MatcherHandlerHelper
         def handle_matcher(actual, matcher, &block)
-          unless matcher.nil?
-            unless matcher.respond_to?(:negative_failure_message)
-              Spec::Expectations.fail_with(
-  <<-EOF
-  Matcher does not support should_not.
-  See Spec::Matchers for more information
-  about matchers.
-  EOF
-  )
-            end
-            match = matcher.matches?(actual, &block)
-            ::Spec::Matchers.generated_description = "should not #{describe(matcher)}"
-            Spec::Expectations.fail_with(matcher.negative_failure_message) if match
+          unless matcher.respond_to?(:negative_failure_message)
+            Spec::Expectations.fail_with(
+<<-EOF
+Matcher does not support should_not.
+See Spec::Matchers for more information
+about matchers.
+EOF
+)
           end
+          match = matcher.matches?(actual, &block)
+          ::Spec::Matchers.generated_description = "should not #{describe(matcher)}"
+          Spec::Expectations.fail_with(matcher.negative_failure_message) if match
         end
       end
     end

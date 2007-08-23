@@ -1,5 +1,7 @@
 require 'spec/mocks/methods'
-require 'spec/mocks/mock_handler'
+require 'spec/mocks/argument_constraint_matchers'
+require 'spec/mocks/spec_methods'
+require 'spec/mocks/proxy'
 require 'spec/mocks/mock'
 require 'spec/mocks/argument_expectation'
 require 'spec/mocks/message_expectation'
@@ -7,6 +9,8 @@ require 'spec/mocks/order_group'
 require 'spec/mocks/errors'
 require 'spec/mocks/error_generator'
 require 'spec/mocks/extensions/object'
+require 'spec/mocks/space'
+
 
 module Spec
   # == Mocks and Stubs
@@ -125,13 +129,12 @@ module Spec
   # In addition, Spec::Mocks adds some keyword Symbols that you can use to
   # specify certain kinds of arguments:
   #
-  #   my_mock.should_receive(:sym).with(:no_args)
-  #   my_mock.should_receive(:sym).with(:any_args)
-  #   my_mock.should_receive(:sym).with(1, :numeric, "b") #2nd argument can any type of Numeric
-  #   my_mock.should_receive(:sym).with(1, :boolean, "b") #2nd argument can true or false
-  #   my_mock.should_receive(:sym).with(1, :string, "b") #2nd argument can be any String
+  #   my_mock.should_receive(:sym).with(no_args())
+  #   my_mock.should_receive(:sym).with(any_args())
+  #   my_mock.should_receive(:sym).with(1, an_instance_of(Numeric), "b") #2nd argument can any type of Numeric
+  #   my_mock.should_receive(:sym).with(1, boolean(), "b") #2nd argument can true or false
   #   my_mock.should_receive(:sym).with(1, /abc/, "b") #2nd argument can be any String matching the submitted Regexp
-  #   my_mock.should_receive(:sym).with(1, :anything, "b") #2nd argument can be anything at all
+  #   my_mock.should_receive(:sym).with(1, anything(), "b") #2nd argument can be anything at all
   #   my_mock.should_receive(:sym).with(1, ducktype(:abs, :div), "b")
   #                            #2nd argument can be object that responds to #abs and #div
   #                                                                       
@@ -201,32 +204,5 @@ module Spec
   #
   #   my_mock.should_receive(:<<).with("illegal value").once.and_raise(ArgumentError)
   module Mocks
-    # Shortcut for creating an instance of Spec::Mocks::Mock.
-    def mock(name, options={})
-      Spec::Mocks::Mock.new(name, options)
-    end
-
-    # Shortcut for creating an instance of Spec::Mocks::Mock with
-    # predefined method stubs.
-    #
-    # == Examples
-    #
-    #   stub_thing = stub("thing", :a => "A")
-    #   stub_thing.a == "A" => true
-    #
-    #   stub_person = stub("thing", :name => "Joe", :email => "joe@domain.com")
-    #   stub_person.name => "Joe"
-    #   stub_person.email => "joe@domain.com"
-    def stub(name, stubs={})
-      object_stub = mock(name)
-      stubs.each { |key, value| object_stub.stub!(key).and_return(value) }
-      object_stub
-    end
-
-    # Shortcut for creating an instance of Spec::Mocks::DuckTypeArgConstraint
-    def duck_type(*args)
-      return Spec::Mocks::DuckTypeArgConstraint.new(*args)
-    end
-
   end
 end

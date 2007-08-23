@@ -10,7 +10,6 @@ module Spec
   module Expectations
     module Differs
 
-      # TODO add colour support
       # TODO add some rdoc
       class Default
         def initialize(format=:unified,context_lines=nil,colour=nil)

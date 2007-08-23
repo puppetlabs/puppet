@@ -2,19 +2,21 @@ module Spec
   module Runner
     module Formatter
       class RdocFormatter < BaseTextFormatter
-        def add_context(name, first)
-          @output.print "# #{name}\n"
-          STDOUT.flush
+        def add_behaviour(name)
+          @output.puts "# #{name}"
         end
   
-        def spec_passed(name)
-          @output.print "# * #{name}\n"
-          STDOUT.flush
+        def example_passed(example)
+          @output.puts "# * #{example.description}"
+          @output.flush
         end
 
-        def spec_failed(name, counter, failure)
-          @output.print "# * #{name} [#{counter} - FAILED]\n"
-          STDOUT.flush
+        def example_failed(example, counter, failure)
+          @output.puts "# * #{example.description} [#{counter} - FAILED]"
+        end
+        
+        def example_pending(behaviour_name, example_name, message)
+          @output.puts "# * #{behaviour_name} #{example_name} [PENDING: #{message}]"
         end
       end
     end
