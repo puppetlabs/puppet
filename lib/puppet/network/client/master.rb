@@ -38,6 +38,9 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         # in their manifests
         facts["clientversion"] = Puppet.version.to_s
 
+        # And add our environment as a fact.
+        facts["environment"] = Puppet[:environment]
+
         facts
     end
 

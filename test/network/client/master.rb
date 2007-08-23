@@ -683,6 +683,16 @@ end
         end
     end
 
+    def test_environment_is_added_to_facts
+        facts = Puppet::Network::Client::Master.facts
+        assert_equal(facts["environment"], Puppet[:environment], "Did not add environment to client facts")
+
+        # Now set it to a real value
+        Puppet[:environment] = "something"
+        facts = Puppet::Network::Client::Master.facts
+        assert_equal(facts["environment"], Puppet[:environment], "Did not add environment to client facts")
+    end
+
     # This is partially to fix #532, but also to save on memory.
     def test_remove_objects_after_every_run
         client = mkclient
