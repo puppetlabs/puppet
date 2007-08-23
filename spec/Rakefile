@@ -7,3 +7,4 @@ Spec::Rake::SpecTask.new('unit') do |t|
     t.spec_files = FileList['unit/**/*.rb']
 end
 
+task :default => [:unit]
