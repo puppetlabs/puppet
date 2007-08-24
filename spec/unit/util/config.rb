@@ -15,7 +15,7 @@ describe Puppet::Util::Config, " when specifying defaults" do
         @config.setdefaults(:section, :myvalue => ["defaultval", "my description"])
     end
 
-    it "should fail when a parameter has already been defined" do
+    it "should not allow duplicate parameter specifications" do
         @config.setdefaults(:section, :myvalue => ["a", "b"])
         lambda { @config.setdefaults(:section, :myvalue => ["c", "d"]) }.should raise_error(ArgumentError)
     end
@@ -85,12 +85,32 @@ describe Puppet::Util::Config, " when setting values" do
         #@config.set(:myval, "new value", :cli)
         #@config[:myval].should == "new value"
     end
+
+    it "should call passed blocks when values are set" do
+        values = []
+        @config.setdefaults(:section, :hooker => {:default => "yay", :desc => "boo", :hook => lambda { |v| values << v }})
+        values.should == []
+
+        @config[:hooker] = "something"
+        values.should == %w{something}
+    end
+
+    it "should munge values using the element-specific methods" do
+        @config[:bool] = "false"
+        @config[:bool].should == false
+    end
+
+    it "should prefer cli values to values set in Ruby code" do
+        @config.handlearg("--myval", "cliarg")
+        @config[:myval] = "memarg"
+        @config[:myval].should == "cliarg"
+    end
 end
 
 describe Puppet::Util::Config, " when returning values" do
     before do
         @config = Puppet::Util::Config.new
-        @config.setdefaults :section, :one => ["ONE", "a"], :two => ["$one TWO", "b"], :three => ["$one $two THREE", "c"]
+        @config.setdefaults :section, :one => ["ONE", "a"], :two => ["$one TWO", "b"], :three => ["$one $two THREE", "c"], :four => ["$two $three FOUR", "d"]
     end
 
     it "should provide a mechanism for returning set values" do
@@ -110,16 +130,38 @@ describe Puppet::Util::Config, " when returning values" do
         pending "Still no clear idea how this will work"
     end
 
-    it "should interpolate other parameters into returned parameter values" do
+    it "should interpolate default values for other parameters into returned parameter values" do
         @config[:one].should == "ONE"
         @config[:two].should == "ONE TWO"
         @config[:three].should == "ONE ONE TWO THREE"
+    end
+
+    it "should interpolate default values that themselves need to be interpolated" do
+        @config[:four].should == "ONE TWO ONE ONE TWO THREE FOUR"
+    end
+
+    it "should interpolate set values for other parameters into returned parameter values" do
+        @config[:one] = "on3"
+        @config[:two] = "$one tw0"
+        @config[:three] = "$one $two thr33"
+        @config[:four] = "$one $two $three f0ur"
+        @config[:one].should == "on3"
+        @config[:two].should == "on3 tw0"
+        @config[:three].should == "on3 on3 tw0 thr33"
+        @config[:four].should == "on3 on3 tw0 on3 on3 tw0 thr33 f0ur"
     end
 
     it "should not cache interpolated values such that stale information is returned" do
         @config[:two].should == "ONE TWO"
         @config[:one] = "one"
         @config[:two].should == "one TWO"
+    end
+
+    it "should have a name determined by the 'name' parameter" do
+        @config.setdefaults(:whatever, :name => ["something", "yayness"])
+        @config.name.should == :something
+        @config[:name] = :other
+        @config.name.should == :other
     end
 end
 
@@ -140,6 +182,14 @@ describe Puppet::Util::Config, " when parsing its configuration" do
         @config.parse(file)
         @config[:one].should == "mval"
         @config[:two].should == "mval TWO"
+    end
+
+    #484 - this should probably be in the regression area
+    it "should not throw an exception on unknown parameters" do
+        text = "[main]\nnosuchparam = mval\n"
+        file = "/some/file"
+        @config.expects(:read_file).with(file).returns(text)
+        lambda { @config.parse(file) }.should_not raise_error
     end
 
     it "should support an old parse method when per-executable configuration files still exist" do
@@ -223,27 +273,57 @@ describe Puppet::Util::Config, " when reparsing its configuration" do
     end
 
     it "should retain parameters set by cli when configuration files are reparsed" do
-        @config.handlearg("--one", "myval")
-        @config[:two] = "otherval"
+        @config.handlearg("--one", "clival")
+
+        text = "[main]\none = on-disk\n"
+        file = mock 'file'
+        file.stubs(:file).returns("/test/file")
+        @config.stubs(:read_file).with(file).returns(text)
+        @config.parse(file)
+
+        @config[:one].should == "clival"
+    end
+
+    it "should remove in-memory values that are no longer set in the file" do
+        # Init the value
+        text = "[main]\none = disk-init\n"
+        file = mock 'file'
+        file.stubs(:changed?).returns(true)
+        file.stubs(:file).returns("/test/file")
+        @config.expects(:read_file).with(file).returns(text)
+        @config.parse(file)
+        @config[:one].should == "disk-init"
+
+        # Now replace the value
+        text = "[main]\ntwo = disk-replace\n"
+        @config.expects(:read_file).with(file).returns(text)
+        @config.parse(file)
+        #@config.reparse
+
+        # The originally-overridden value should be replaced with the default
+        @config[:one].should == "ONE"
+
+        # and we should now have the new value in memory
+        @config[:two].should == "disk-replace"
     end
 end
 
-describe Puppet::Util::Config, " when being used to manage the host machine" do
-    it "should provide a method that writes files with the correct modes"
-
-    it "should provide a method that creates directories with the correct modes"
-
-    it "should provide a method to declare what directories should exist"
-
-    it "should provide a method to trigger enforcing of file modes on existing files and directories"
-
-    it "should provide a method to convert the file mode enforcement into a Puppet manifest"
-
-    it "should provide an option to create needed users and groups"
-
-    it "should provide a method to print out the current configuration"
-
-    it "should be able to provide all of its parameters in a format compatible with GetOpt::Long"
-
-    it "should not attempt to manage files within /dev"
-end
+#describe Puppet::Util::Config, " when being used to manage the host machine" do
+#    it "should provide a method that writes files with the correct modes"
+#
+#    it "should provide a method that creates directories with the correct modes"
+#
+#    it "should provide a method to declare what directories should exist"
+#
+#    it "should provide a method to trigger enforcing of file modes on existing files and directories"
+#
+#    it "should provide a method to convert the file mode enforcement into a Puppet manifest"
+#
+#    it "should provide an option to create needed users and groups"
+#
+#    it "should provide a method to print out the current configuration"
+#
+#    it "should be able to provide all of its parameters in a format compatible with GetOpt::Long"
+#
+#    it "should not attempt to manage files within /dev"
+#end

@@ -150,5 +150,3 @@ class Puppet::Util::Autoload
         [module_lib_dirs, Puppet[:libdir], $:].flatten
     end
 end
-
-# $Id$

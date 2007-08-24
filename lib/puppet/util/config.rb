@@ -16,39 +16,29 @@ class Puppet::Util::Config
 
     # Retrieve a config value
     def [](param)
-        param = symbolize(param)
-
-        # Yay, recursion.
-        self.reparse() unless param == :filetimeout
-
-        # Cache the returned values; this method was taking close to
-        # 10% of the compile time.
-        unless @returned[param]
-            if @config.include?(param)
-                if @config[param]
-                    @returned[param] = @config[param].value
-                end
-            else
-                raise ArgumentError, "Undefined configuration parameter '%s'" % param
-            end
-        end
-
-        return @returned[param]
+        value(param)
     end
 
     # Set a config value.  This doesn't set the defaults, it sets the value itself.
     def []=(param, value)
         @@sync.synchronize do # yay, thread-safe
             param = symbolize(param)
-            unless @config.include?(param)
+            unless element = @config[param]
                 raise ArgumentError,
                     "Attempt to assign a value to unknown configuration parameter %s" % param.inspect
             end
-            unless @order.include?(param)
-                @order << param
+            if element.respond_to?(:munge)
+                value = element.munge(value)
             end
-            @config[param].value = value
-            @returned.clear
+            if element.respond_to?(:handle)
+                element.handle(value)
+            end
+            # Reset the name, so it's looked up again.
+            if param == :name
+                @name = nil
+            end
+            @values[:memory][param] = value
+            @values[:cache].clear
         end
 
         return value
@@ -57,7 +47,7 @@ class Puppet::Util::Config
     # A simplified equality operator.
     def ==(other)
         self.each { |myname, myobj|
-            unless other[myname] == myobj.value
+            unless other[myname] == value(myname)
                 return false
             end
         }
@@ -112,19 +102,40 @@ class Puppet::Util::Config
                 obj.clear
             end
         }
-        @returned.clear
+        @values.each do |name, values|
+            next if name == :cli and exceptcli
+            @values.delete(name) 
+        end
 
         # Don't clear the 'used' in this case, since it's a config file reparse,
         # and we want to retain this info.
         unless exceptcli
             @used = []
         end
+
+        @name = nil
     end
 
     # This is mostly just used for testing.
     def clearused
-        @returned.clear
+        @values[:cache].clear
         @used = []
+    end
+
+    # Do variable interpolation on the value.
+    def convert(value)
+        return value unless value
+        return value unless value.is_a? String
+        newval = value.gsub(/\$(\w+)|\$\{(\w+)\}/) do |value|
+            varname = $2 || $1
+            if pval = self.value(varname)
+                pval
+            else
+                raise Puppet::DevError, "Could not find value for %s" % parent
+            end
+        end
+
+        return newval
     end
 
     # Return a value's description.
@@ -137,29 +148,21 @@ class Puppet::Util::Config
     end
 
     def each
-        @order.each { |name|
-            if @config.include?(name)
-                yield name, @config[name]
-            else
-                raise Puppet::DevError, "%s is in the order but does not exist" % name
-            end
+        @config.each { |name, object|
+            yield name, object
         }
     end
 
     # Iterate over each section name.
     def eachsection
         yielded = []
-        @order.each { |name|
-            if @config.include?(name)
-                section = @config[name].section
-                unless yielded.include? section
-                    yield section
-                    yielded << section
-                end
-            else
-                raise Puppet::DevError, "%s is in the order but does not exist" % name
+        @config.each do |name, object|
+            section = object.section
+            unless yielded.include? section
+                yield section
+                yielded << section
             end
-        }
+        end
     end
 
     # Return an object by name.
@@ -178,16 +181,13 @@ class Puppet::Util::Config
             str = newstr
             bool = false
         end
+        str = str.intern
         if self.valid?(str)
             if self.boolean?(str)
-                self[str] = bool
+                @values[:cli][str] = bool
             else
-                self[str] = value
+                @values[:cli][str] = value
             end
-
-            # Mark that this was set on the cli, so it's not overridden if the
-            # config gets reread.
-            @config[str.intern].setbycli = true
         else
             raise ArgumentError, "Invalid argument %s" % opt
         end
@@ -206,12 +206,17 @@ class Puppet::Util::Config
 
     # Create a new config object
     def initialize
-        @order = []
         @config = {}
         @shortnames = {}
 
         @created = []
-        @returned = {}
+        @searchpath = nil
+
+        # Keep track of set values.
+        @values = Hash.new { |hash, key| hash[key] = {} }
+
+        # A central concept of a name.
+        @name = nil
     end
 
     # Return a given object's file metadata.
@@ -245,6 +250,23 @@ class Puppet::Util::Config
         end
     end
 
+    # Figure out our name.
+    def name
+        unless @name
+            unless @config[:name]
+                return nil
+            end
+            searchpath.each do |source|
+                next if source == :name
+                break if @name = @values[source][:name]
+            end
+            unless @name
+                @name = convert(@config[:name].default).intern
+            end
+        end
+        @name
+    end
+
     # Return all of the parameters associated with a given section.
     def params(section = nil)
         if section
@@ -261,16 +283,18 @@ class Puppet::Util::Config
 
     # Parse the configuration file.
     def parse(file)
-        configmap = parse_file(file)
+        clear(true)
 
-        # We know we want the 'main' section
-        if main = configmap[:main]
-            set_parameter_hash(main)
+        parse_file(file).each do |area, values|
+            @values[area] = values
         end
 
-        # Otherwise, we only want our named section
-        if @config.include?(:name) and named = configmap[symbolize(self[:name])]
-            set_parameter_hash(named)
+        # We have to do it in the reverse of the search path,
+        # because multiple sections could set the same value.
+        searchpath.reverse.each do |source|
+            if meta = @values[source][:_meta]
+                set_metadata(meta)
+            end
         end
     end
 
@@ -335,7 +359,8 @@ class Puppet::Util::Config
 
                     # If the parameter is valid, then set it.
                     if section == Puppet[:name] and @config.include?(var)
-                        @config[var].value = value
+                        #@config[var].value = value
+                        @values[:main][var] = value
                     end
                     next
                 end
@@ -383,10 +408,11 @@ class Puppet::Util::Config
         hash[:parent] = self
         element = klass.new(hash)
 
-        @order << element.name
-
         return element
     end
+
+    # This has to be private, because it doesn't add the elements to @config
+    private :newelement
 
     # Iterate across all of the objects in a given section.
     def persection(section)
@@ -419,6 +445,17 @@ class Puppet::Util::Config
         end
     end
 
+    # The order in which to search for values.
+    def searchpath(environment = nil)
+        # Start with a stupid list.
+        [:cache, :cli, :memory, :name, :main]
+#        unless @searchpath
+#            @searchpath = [:cache, :memory, :cli, :name, :main].collect do |source|
+#            end
+#        end
+#        @searchpath
+    end
+
     # Get a list of objects per section
     def sectionlist
         sectionlist = []
@@ -439,7 +476,7 @@ class Puppet::Util::Config
         done ||= Hash.new { |hash, key| hash[key] = {} }
         objects = []
         persection(section) do |obj|
-            if @config[:mkusers] and @config[:mkusers].value
+            if @config[:mkusers] and value(:mkusers)
                 [:owner, :group].each do |attr|
                     type = nil
                     if attr == :owner
@@ -487,7 +524,7 @@ class Puppet::Util::Config
             end
 
             if obj.respond_to? :to_transportable
-                next if obj.value =~ /^\/dev/
+                next if value(obj.name) =~ /^\/dev/
                 transobjects = obj.to_transportable
                 transobjects = [transobjects] unless transobjects.is_a? Array
                 transobjects.each do |trans|
@@ -683,13 +720,41 @@ Generated on #{Time.now}.
         @config.has_key?(param)
     end
 
-    def value(param)
+    def value(param, environment = nil)
         param = symbolize(param)
-        if obj = @config[param]
-            obj.value
-        else
-            nil
+
+        # Short circuit to nil for undefined parameters.
+        return nil unless @config.include?(param)
+
+        # Yay, recursion.
+        self.reparse() unless param == :filetimeout
+
+        # See if we can find it within our searchable list of values
+        searchpath(environment).each do |source|
+            # Modify the source as necessary.
+            source = case source
+            when :name:
+                self.name
+            else
+                source
+            end
+
+            # Look for the value.
+            if @values[source].include?(param)
+                val = @values[source][param]
+                # Cache the value, because we do so many parameter lookups.
+                unless source == :cache
+                    val = convert(val)
+                    @values[:cache][param] = val
+                end
+                return val
+            end
         end
+
+        # No normal source, so get the default and cache it
+        val = convert(@config[param].default)
+        @values[:cache][param] = val
+        return val
     end
 
     # Open a file with the appropriate user, group, and mode
@@ -718,7 +783,7 @@ Generated on #{Time.now}.
 
             args << mode
 
-            File.open(obj.value, *args) do |file|
+            File.open(value(obj.name), *args) do |file|
                 yield file
             end
         end
@@ -897,12 +962,13 @@ Generated on #{Time.now}.
                 self[param] = value
             end
         end
+    end
 
-        if meta = params[:_meta]
-            meta.each do |var, values|
-                values.each do |param, value|
-                    @config[var].send(param.to_s + "=", value)
-                end
+    # Set file metadata.
+    def set_metadata(meta)
+        meta.each do |var, values|
+            values.each do |param, value|
+                @config[var].send(param.to_s + "=", value)
             end
         end
     end
@@ -915,22 +981,6 @@ Generated on #{Time.now}.
         # Unset any set value.
         def clear
             @value = nil
-        end
-
-        # Do variable interpolation on the value.
-        def convert(value)
-            return value unless value
-            return value unless value.is_a? String
-            newval = value.gsub(/\$(\w+)|\$\{(\w+)\}/) do |value|
-                varname = $2 || $1
-                if pval = @parent[varname]
-                    pval
-                else
-                    raise Puppet::DevError, "Could not find value for %s" % parent
-                end
-            end
-
-            return newval
         end
 
         def desc=(value)
@@ -1007,13 +1057,13 @@ Generated on #{Time.now}.
                 str += "# The default value is '%s'.\n" % @default
             end
 
-            line = "%s = %s" % [@name, self.value]
-
             # If the value has not been overridden, then print it out commented
             # and unconverted, so it's clear that that's the default and how it
             # works.
-            if defined? @value and ! @value.nil?
-                line = "%s = %s" % [@name, self.value]
+            value = @parent.value(self.name)
+
+            if value != @default
+                line = "%s = %s" % [@name, value]
             else
                 line = "# %s = %s" % [@name, @default]
             end
@@ -1025,37 +1075,7 @@ Generated on #{Time.now}.
 
         # Retrieves the value, or if it's not set, retrieves the default.
         def value
-            retval = nil
-            if defined? @value and ! @value.nil?
-                retval = @value
-            elsif defined? @default
-                retval = @default
-            else
-                return nil
-            end
-
-            if retval.is_a? String
-                return convert(retval)
-            else
-                return retval
-            end
-        end
-
-        # Set the value.
-        def value=(value)
-            if respond_to?(:validate)
-                validate(value)
-            end
-
-            if respond_to?(:munge)
-                @value = munge(value)
-            else
-                @value = value
-            end
-
-            if respond_to?(:handle)
-                handle(@value)
-            end
+            @parent.value(self.name)
         end
     end
 
@@ -1066,7 +1086,7 @@ Generated on #{Time.now}.
 
         def group
             if defined? @group
-                return convert(@group)
+                return @parent.convert(@group)
             else
                 return nil
             end
@@ -1074,7 +1094,7 @@ Generated on #{Time.now}.
 
         def owner
             if defined? @owner
-                return convert(@owner)
+                return @parent.convert(@owner)
             else
                 return nil
             end
@@ -1092,7 +1112,7 @@ Generated on #{Time.now}.
 
         # Return the appropriate type.
         def type
-            value = self.value
+            value = @parent.value(self.name)
             if @name.to_s =~ /dir/
                 return :directory
             elsif value.to_s =~ /\/$/
@@ -1111,7 +1131,7 @@ Generated on #{Time.now}.
         def to_transportable
             type = self.type
             return nil unless type
-            path = self.value.split(File::SEPARATOR)
+            path = @parent.value(self.name).split(File::SEPARATOR)
             path.shift # remove the leading nil
 
             objects = []
@@ -1124,7 +1144,7 @@ Generated on #{Time.now}.
             end
             [:mode].each { |var|
                 if value = self.send(var)
-                    # Don't both converting the mode, since the file type
+                    # Don't bother converting the mode, since the file type
                     # can handle it any old way.
                     obj[var] = value
                 end

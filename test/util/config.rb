@@ -226,7 +226,7 @@ class TestConfig < Test::Unit::TestCase
             @config.clear
         }
 
-        assert_equal(default, @config[:yayness])
+        assert_equal(default, @config[:yayness], "'clear' did not remove old values")
 
         assert_nothing_raised {
             @config[:yayness] = "not default"
@@ -375,27 +375,26 @@ yay = /a/path
             :shoe => ["puppet", "b"] # our default name
         )
         @config.handlearg("--cliparam", "changed")
-        @config.expects(:parse_file).returns(result).times(2)
+        @config.stubs(:parse_file).returns(result)
 
         # First do it with our name being 'puppet'
         assert_nothing_raised("Could not handle parse results") do
             @config.parse(tempfile)
         end
 
-        assert_logged(:warning, /unknown configuration parameter bad/, "Did not log invalid config param")
-
+        assert_equal(:puppet, @config.name, "Did not get correct name")
         assert_equal("main", @config[:main], "Did not get main value")
         assert_equal("puppet", @config[:other], "Did not get name value")
         assert_equal("changed", @config[:cliparam], "CLI values were overridden by config")
 
         # Now switch names and make sure the parsing switches, too.
         @config.clear(true)
-        @config[:name] = :puppetd
         assert_nothing_raised("Could not handle parse results") do
             @config.parse(tempfile)
         end
-        assert_logged(:warning, /unknown configuration parameter bad/, "Did not log invalid config param")
+        @config[:name] = :puppetd
 
+        assert_equal(:puppetd, @config.name, "Did not get correct name")
         assert_equal("main", @config[:main], "Did not get main value")
         assert_equal("puppetd", @config[:other], "Did not get name value")
         assert_equal("changed", @config[:cliparam], "CLI values were overridden by config")
@@ -495,7 +494,7 @@ yay = /a/path
         # Get the actual object, so we can verify metadata
         file = @config.element(:file)
 
-        assert_equal("/other", file.value, "Did not get correct value")
+        assert_equal("/other", @config[:file], "Did not get correct value")
         assert_equal("you", file.owner, "Did not pass on user")
         assert_equal("you", file.group, "Did not pass on group")
         assert_equal("644", file.mode, "Did not pass on mode")
@@ -859,37 +858,6 @@ yay = /a/path
         end
     end
 
-    def test_booleans_and_integers
-        config = mkconfig
-        config.setdefaults(:mysection,
-            :booltest => [false, "yay"],
-            :inttest => [14, "yay"]
-        )
-
-        file = tempfile()
-
-        File.open(file, "w") do |f|
-            f.puts %{
-[main]
-booltest = true
-inttest = 27
-}
-        end
-
-        assert_nothing_raised {
-            config.parse(file)
-        }
-
-        assert_equal(true, config[:booltest], "Boolean was not converted")
-        assert_equal(27, config[:inttest], "Integer was not converted")
-
-        # Now make sure that they get converted through handlearg
-        config.handlearg("--inttest", "true")
-        assert_equal(true, config[:inttest], "Boolean was not converted")
-        config.handlearg("--no-booltest", "false")
-        assert_equal(false, config[:booltest], "Boolean was not converted")
-    end
-
     # Make sure that tags are ignored when configuring
     def test_configs_ignore_tags
         config = mkconfig
@@ -945,15 +913,10 @@ inttest = 27
             ["$server/yayness.conf", file]
         ].each do |ary|
             value, type = ary
-            elem = nil
             assert_nothing_raised {
-                elem = config.newelement(
-                    :name => value,
-                    :default => value,
-                    :desc => name.to_s,
-                    :section => :yayness
-                )
+                config.setdefaults(:yayness, value => { :default => value, :desc => name.to_s})
             }
+            elem = config.element(value)
 
             assert_instance_of(type, elem,
                 "%s got created as wrong type" % value.inspect)
@@ -1079,21 +1042,17 @@ inttest = 27
         config = mkconfig()
 
         testing = nil
-        elem = nil
         assert_nothing_raised do
-            elem = config.newelement :default => "yay",
-                :name => :blocktest,
-                :desc => "boo",
-                :section => :test,
-                :hook => proc { |value| testing = value }
+            config.setdefaults :test, :blocktest => {:default => "yay", :desc => "boo", :hook => proc { |value| testing = value }}
         end
+        elem = config.element(:blocktest)
 
         assert_nothing_raised do
             assert_equal("yay", elem.value)
         end
 
         assert_nothing_raised do
-            elem.value = "yaytest"
+            config[:blocktest] = "yaytest"
         end
 
         assert_nothing_raised do
@@ -1102,7 +1061,7 @@ inttest = 27
         assert_equal("yaytest", testing)
 
         assert_nothing_raised do
-            elem.value = "another"
+            config[:blocktest] = "another"
         end
 
         assert_nothing_raised do
@@ -1196,9 +1155,6 @@ inttest = 27
         assert_nothing_raised("Unknown parameter threw an exception") do
             config.parse(file)
         end
-
-        assert(@logs.detect { |l| l.message =~ /unknown configuration/ and l.level == :warning },
-            "Did not generate warning message")
     end
 
     def test_multiple_interpolations
@@ -1222,46 +1178,6 @@ inttest = 27
 
         assert_equal("oneval/twoval/oneval/twoval", @config[:three],
             "Did not interpolate curlied variables")
-    end
-
-    # Discovered from #734
-    def test_set_parameter_hash
-        @config.setdefaults(:section,
-            :unchanged => ["unval", "yay"],
-            :normal => ["normalval", "yay"],
-            :cliparam => ["clival", "yay"],
-            :file => ["/my/file", "yay"]
-        )
-
-        # Set the cli param using the cli method
-        @config.handlearg("--cliparam", "other")
-
-        # Make sure missing params just throw warnings, not errors
-        assert_nothing_raised("Could not call set_parameter_hash with an invalid option") do
-            @config.send(:set_parameter_hash, :missing => "something")
-        end
-
-        # Make sure normal values get set
-        assert_nothing_raised("Could not call set_parameter_hash with a normal value") do
-            @config.send(:set_parameter_hash, :normal => "abnormal")
-        end
-        assert_equal("abnormal", @config[:normal], "Value did not get set")
-        
-        # Make sure cli-set values don't get overridden
-        assert_nothing_raised("Could not call set_parameter_hash with an override of a cli value") do
-            @config.send(:set_parameter_hash, :cliparam => "something else")
-        end
-        assert_equal("other", @config[:cliparam], "CLI value was overridden by config value")
-
-        # Make sure the meta stuff works
-        assert_nothing_raised("Could not call set_parameter_hash with meta info") do
-            @config.send(:set_parameter_hash, :file => "/other/file", :_meta => {:file => {:mode => "0755"}})
-        end
-        assert_equal("/other/file", @config[:file], "value with meta info was overridden by config value")
-        assert_equal("0755", @config.element(:file).mode, "Did not set mode from meta info")
-
-        # And make sure other params are unchanged
-        assert_equal("unval", @config[:unchanged], "Unchanged value has somehow changed")
     end
 
     # Test to make sure that we can set and get a short name
