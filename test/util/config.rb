@@ -74,8 +74,9 @@ class TestConfig < Test::Unit::TestCase
         end
 
         trans = nil
+        node = Puppet::Node.new("node")
         assert_nothing_raised do
-            trans = interp.evaluate(nil, {})
+            trans = interp.compile(node)
         end
         assert_nothing_raised("Could not instantiate objects") {
             trans.to_type
@@ -161,11 +162,11 @@ class TestConfig < Test::Unit::TestCase
 
         assert(! @config[:booltest], "Booltest is not false")
 
-        assert_raise(Puppet::Error) {
+        assert_raise(ArgumentError) {
             @config[:booltest] = "yayness"
         }
 
-        assert_raise(Puppet::Error) {
+        assert_raise(ArgumentError) {
             @config[:booltest] = "/some/file"
         }
     end
@@ -204,7 +205,7 @@ class TestConfig < Test::Unit::TestCase
 
     def test_getset
         initial = "an initial value"
-        assert_raise(Puppet::Error) {
+        assert_raise(ArgumentError) {
             @config[:yayness] = initial
         }
 
@@ -413,6 +414,7 @@ yay = /a/path
         )
 
         file = tempfile
+        count = 0
 
         {
             :pass => {
@@ -432,17 +434,19 @@ yay = /a/path
                 %{{owner => you}}
             ]
         }.each do |type, list|
+            count += 1
             list.each do |value|
                 if type == :pass
                     value, should = value[0], value[1]
                 end
+                path = "/other%s" % count
                 # Write our file out
                 File.open(file, "w") do |f|
-                    f.puts %{[main]\nfile = /other%s} % value
+                    f.puts %{[main]\nfile = #{path}#{value}}
                 end
 
                 if type == :fail
-                    assert_raise(Puppet::Error, "Did not fail on %s" % value.inspect) do
+                    assert_raise(ArgumentError, "Did not fail on %s" % value.inspect) do
                         @config.send(:parse_file, file)
                     end
                 else
@@ -451,6 +455,7 @@ yay = /a/path
                         result = @config.send(:parse_file, file)
                     end
                     assert_equal(should, result[:main][:_meta][:file], "Got incorrect return for %s" % value.inspect)
+                    assert_equal(path, result[:main][:file], "Got incorrect value for %s" % value.inspect)
                 end
             end
         end
@@ -490,6 +495,7 @@ yay = /a/path
         # Get the actual object, so we can verify metadata
         file = @config.element(:file)
 
+        assert_equal("/other", file.value, "Did not get correct value")
         assert_equal("you", file.owner, "Did not pass on user")
         assert_equal("you", file.group, "Did not pass on group")
         assert_equal("644", file.mode, "Did not pass on mode")

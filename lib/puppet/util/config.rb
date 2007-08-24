@@ -11,7 +11,8 @@ class Puppet::Util::Config
 
     @@sync = Sync.new
 
-    attr_reader :file, :timer
+    attr_accessor :file
+    attr_reader :timer
 
     # Retrieve a config value
     def [](param)
@@ -40,16 +41,14 @@ class Puppet::Util::Config
         @@sync.synchronize do # yay, thread-safe
             param = symbolize(param)
             unless @config.include?(param)
-                raise Puppet::Error,
+                raise ArgumentError,
                     "Attempt to assign a value to unknown configuration parameter %s" % param.inspect
             end
             unless @order.include?(param)
                 @order << param
             end
             @config[param].value = value
-            if @returned.include?(param)
-                @returned.delete(param)
-            end
+            @returned.clear
         end
 
         return value
@@ -126,6 +125,15 @@ class Puppet::Util::Config
     def clearused
         @returned.clear
         @used = []
+    end
+
+    # Return a value's description.
+    def description(name)
+        if obj = @config[symbolize(name)]
+            obj.desc
+        else
+            nil
+        end
     end
 
     def each
@@ -206,6 +214,20 @@ class Puppet::Util::Config
         @returned = {}
     end
 
+    # Return a given object's file metadata.
+    def metadata(param)
+        if obj = @config[symbolize(param)] and obj.is_a?(CFile)
+            return [:owner, :group, :mode].inject({}) do |meta, p|
+                if v = obj.send(p)
+                    meta[p] = v
+                end
+                meta
+            end
+        else
+            nil
+        end
+    end
+
     # Make a directory with the appropriate user, group, and mode
     def mkdir(default)
         obj = nil
@@ -224,13 +246,17 @@ class Puppet::Util::Config
     end
 
     # Return all of the parameters associated with a given section.
-    def params(section)
-        section = section.intern if section.is_a? String
-        @config.find_all { |name, obj|
-            obj.section == section
-        }.collect { |name, obj|
-            name
-        }
+    def params(section = nil)
+        if section
+            section = section.intern if section.is_a? String
+            @config.find_all { |name, obj|
+                obj.section == section
+            }.collect { |name, obj|
+                name
+            }
+        else
+            @config.keys
+        end
     end
 
     # Parse the configuration file.
@@ -490,6 +516,9 @@ class Puppet::Util::Config
         section = symbolize(section)
         defs.each { |name, hash|
             if hash.is_a? Array
+                unless hash.length == 2
+                    raise ArgumentError, "Defaults specified as an array must contain only the default value and the decription"
+                end
                 tmp = hash
                 hash = {}
                 [:default, :desc].zip(tmp).each { |p,v| hash[p] = v }
@@ -499,7 +528,7 @@ class Puppet::Util::Config
             hash[:section] = section
             name = hash[:name]
             if @config.include?(name)
-                raise Puppet::Error, "Parameter %s is already defined" % name
+                raise ArgumentError, "Parameter %s is already defined" % name
             end
             tryconfig = newelement(hash)
             if short = tryconfig.short
@@ -654,6 +683,15 @@ Generated on #{Time.now}.
         @config.has_key?(param)
     end
 
+    def value(param)
+        param = symbolize(param)
+        if obj = @config[param]
+            obj.value
+        else
+            nil
+        end
+    end
+
     # Open a file with the appropriate user, group, and mode
     def write(default, *args)
         obj = nil
@@ -724,30 +762,30 @@ Generated on #{Time.now}.
 
     private
 
-    # Extra extra setting information for files.
+    # Extract extra setting information for files.
     def extract_fileinfo(string)
-        paramregex = %r{(\w+)\s*=\s*([\w\d]+)}
         result = {}
-        string.scan(/\{\s*([^}]+)\s*\}/) do
+        value = string.sub(/\{\s*([^}]+)\s*\}/) do
             params = $1
             params.split(/\s*,\s*/).each do |str|
-                if str =~ /^\s*(\w+)\s*=\s*([\w\w]+)\s*$/
+                if str =~ /^\s*(\w+)\s*=\s*([\w\d]+)\s*$/
                     param, value = $1.intern, $2
                     result[param] = value
                     unless [:owner, :mode, :group].include?(param)
-                        raise Puppet::Error, "Invalid file option '%s'" % param
+                        raise ArgumentError, "Invalid file option '%s'" % param
                     end
 
                     if param == :mode and value !~ /^\d+$/
-                        raise Puppet::Error, "File modes must be numbers"
+                        raise ArgumentError, "File modes must be numbers"
                     end
                 else
-                    raise Puppet::Error, "Could not parse '%s'" % string
+                    raise ArgumentError, "Could not parse '%s'" % string
                 end
             end
-
-            return result
+            ''
         end
+        result[:value] = value.sub(/\s*$/, '')
+        return result
 
         return nil
     end
@@ -769,25 +807,11 @@ Generated on #{Time.now}.
     # support parsing old files with any section, or new files with just two
     # valid sections.
     def parse_file(file)
-        text = nil
-
-        if file.is_a? Puppet::Util::LoadedFile
-            @file = file
-        else
-            @file = Puppet::Util::LoadedFile.new(file)
-        end
+        text = read_file(file)
 
         # Create a timer so that this file will get checked automatically
         # and reparsed if necessary.
         settimer()
-
-        begin
-            text = File.read(@file.file)
-        rescue Errno::ENOENT
-            raise Puppet::Error, "No such file %s" % file
-        rescue Errno::EACCES
-            raise Puppet::Error, "Permission denied to file %s" % file
-        end
 
         result = Hash.new { |names, name|
             names[name] = {}
@@ -801,7 +825,7 @@ Generated on #{Time.now}.
         text.split(/\n/).each { |line|
             count += 1
             case line
-            when /^\[(\w+)\]$/:
+            when /^\s*\[(\w+)\]$/:
                 section = $1.intern # Section names
                 # Add a meta section
                 result[section][:_meta] ||= {}
@@ -821,6 +845,8 @@ Generated on #{Time.now}.
                 # Check to see if this is a file argument and it has extra options
                 begin
                     if value.is_a?(String) and options = extract_fileinfo(value)
+                        value = options[:value]
+                        options.delete(:value)
                         result[section][:_meta][var] = options
                     end
                     result[section][var] = value
@@ -838,6 +864,23 @@ Generated on #{Time.now}.
         }
 
         return result
+    end
+
+    # Read the file in.
+    def read_file(file)
+        if file.is_a? Puppet::Util::LoadedFile
+            @file = file
+        else
+            @file = Puppet::Util::LoadedFile.new(file)
+        end
+
+        begin
+            return File.read(@file.file)
+        rescue Errno::ENOENT
+            raise ArgumentError, "No such file %s" % file
+        rescue Errno::EACCES
+            raise ArgumentError, "Permission denied to file %s" % file
+        end
     end
 
     # Take all members of a hash and assign their values appropriately.
@@ -1143,7 +1186,7 @@ Generated on #{Time.now}.
             when true, "true": return true
             when false, "false": return false
             else
-                raise Puppet::Error, "Invalid value '%s' for %s" %
+                raise ArgumentError, "Invalid value '%s' for %s" %
                     [value.inspect, @name]
             end
         end

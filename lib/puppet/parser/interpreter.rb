@@ -64,7 +64,7 @@ class Puppet::Parser::Interpreter
         begin
             parser = Puppet::Parser::Parser.new(environment)
             if self.code
-                parser.code = self.code
+                parser.string = self.code
             elsif self.file
                 parser.file = self.file
             end
