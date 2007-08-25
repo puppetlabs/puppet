@@ -80,12 +80,6 @@ describe Puppet::Util::Config, " when setting values" do
         @config[:bool].should == true
     end
 
-    it "should support a mechanism for setting values in a specific search section" do
-        pending "This code requires the search path functionality"
-        #@config.set(:myval, "new value", :cli)
-        #@config[:myval].should == "new value"
-    end
-
     it "should call passed blocks when values are set" do
         values = []
         @config.setdefaults(:section, :hooker => {:default => "yay", :desc => "boo", :hook => lambda { |v| values << v }})
@@ -116,18 +110,6 @@ describe Puppet::Util::Config, " when returning values" do
     it "should provide a mechanism for returning set values" do
         @config[:one] = "other"
         @config[:one].should == "other"
-    end
-
-    it "should return default values if no values have been set" do
-        @config[:one].should == "ONE"
-    end
-
-    it "should support a search path for finding values" do
-        pending "I have no idea how this will work yet"
-    end
-
-    it "should return set values in the order defined in the search path" do
-        pending "Still no clear idea how this will work"
     end
 
     it "should interpolate default values for other parameters into returned parameter values" do
@@ -165,23 +147,95 @@ describe Puppet::Util::Config, " when returning values" do
     end
 end
 
+describe Puppet::Util::Config, " when choosing which value to return" do
+    before do
+        @config = Puppet::Util::Config.new
+        @config.setdefaults :section,
+            :one => ["ONE", "a"],
+            :name => ["myname", "w"]
+    end
+
+    it "should return default values if no values have been set" do
+        @config[:one].should == "ONE"
+    end
+
+    it "should return values set on the cli before values set in the configuration file" do
+        text = "[main]\none = fileval\n"
+        file = mock 'file'
+        file.stubs(:changed?).returns(true)
+        file.stubs(:file).returns("/whatever")
+        @config.stubs(:parse_file).returns(text)
+        @config.handlearg("--one", "clival")
+        @config.parse(file)
+
+        @config[:one].should == "clival"
+    end
+
+    it "should return values set on the cli before values set in Ruby" do
+        @config[:one] = "rubyval"
+        @config.handlearg("--one", "clival")
+        @config[:one].should == "clival"
+    end
+
+    it "should return values set in the executable-specific section before values set in the main section" do
+        text = "[main]\none = mainval\n[myname]\none = nameval\n"
+        file = mock 'file'
+        file.stubs(:changed?).returns(true)
+        file.stubs(:file).returns("/whatever")
+        @config.stubs(:read_file).with(file).returns(text)
+        @config.parse(file)
+
+        @config[:one].should == "nameval"
+    end
+
+    it "should not return values outside of its search path" do
+        text = "[other]\none = oval\n"
+        file = "/some/file"
+        file = mock 'file'
+        file.stubs(:changed?).returns(true)
+        file.stubs(:file).returns("/whatever")
+        @config.stubs(:read_file).with(file).returns(text)
+        @config.parse(file)
+        @config[:one].should == "ONE"
+    end
+
+    it "should return values in a specified environment" do
+        text = "[env]\none = envval\n"
+        file = "/some/file"
+        file = mock 'file'
+        file.stubs(:changed?).returns(true)
+        file.stubs(:file).returns("/whatever")
+        @config.stubs(:read_file).with(file).returns(text)
+        @config.parse(file)
+        @config.value(:one, "env").should == "envval"
+    end
+
+    it "should return values in a specified environment before values in the main or name sections" do
+        text = "[env]\none = envval\n[main]\none = mainval\n[myname]\none = nameval\n"
+        file = "/some/file"
+        file = mock 'file'
+        file.stubs(:changed?).returns(true)
+        file.stubs(:file).returns("/whatever")
+        @config.stubs(:read_file).with(file).returns(text)
+        @config.parse(file)
+        @config.value(:one, "env").should == "envval"
+    end
+end
+
 describe Puppet::Util::Config, " when parsing its configuration" do
     before do
         @config = Puppet::Util::Config.new
         @config.setdefaults :section, :one => ["ONE", "a"], :two => ["$one TWO", "b"], :three => ["$one $two THREE", "c"]
     end
 
-    it "should not return values outside of its search path" do
+    it "should return values set in the configuration file" do
         text = "[main]
-        one = mval
-        [other]
-        two = oval
+        one = fileval
         "
         file = "/some/file"
         @config.expects(:read_file).with(file).returns(text)
         @config.parse(file)
-        @config[:one].should == "mval"
-        @config[:two].should == "mval TWO"
+        @config[:one].should == "fileval"
     end
 
     #484 - this should probably be in the regression area

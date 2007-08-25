@@ -447,13 +447,11 @@ class Puppet::Util::Config
 
     # The order in which to search for values.
     def searchpath(environment = nil)
-        # Start with a stupid list.
-        [:cache, :cli, :memory, :name, :main]
-#        unless @searchpath
-#            @searchpath = [:cache, :memory, :cli, :name, :main].collect do |source|
-#            end
-#        end
-#        @searchpath
+        if environment
+            [:cache, :cli, :memory, environment, :name, :main]
+        else
+            [:cache, :cli, :memory, :name, :main]
+        end
     end
 
     # Get a list of objects per section
@@ -720,8 +718,11 @@ Generated on #{Time.now}.
         @config.has_key?(param)
     end
 
+    # Find the correct value using our search path.  Optionally accept an environment
+    # in which to search before the other configuration sections.
     def value(param, environment = nil)
         param = symbolize(param)
+        environment = symbolize(environment) if environment
 
         # Short circuit to nil for undefined parameters.
         return nil unless @config.include?(param)
