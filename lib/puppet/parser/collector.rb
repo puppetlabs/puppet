@@ -81,20 +81,20 @@ class Puppet::Parser::Collector
         # If there are no more resources to find, delete this from the list
         # of collections.
         if @resources.empty?
-            @scope.configuration.delete_collection(self)
+            @scope.compile.delete_collection(self)
         end
 
         return result
     end
 
-    # Collect just virtual objects, from our local configuration.
+    # Collect just virtual objects, from our local compile.
     def collect_virtual(exported = false)
         if exported
             method = :exported?
         else
             method = :virtual?
         end
-        scope.configuration.resources.find_all do |resource|
+        scope.compile.resources.find_all do |resource|
             resource.type == @type and resource.send(method) and match?(resource)
         end
     end

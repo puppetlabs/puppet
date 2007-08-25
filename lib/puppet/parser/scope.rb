@@ -17,14 +17,14 @@ class Puppet::Parser::Scope
     include Puppet::Util::Errors
     attr_accessor :parent, :level, :parser, :source
     attr_accessor :name, :type, :base, :keyword
-    attr_accessor :top, :translated, :exported, :virtual, :configuration
+    attr_accessor :top, :translated, :exported, :virtual, :compile
 
     # Proxy accessors
     def host
-        @configuration.node.name
+        @compile.node.name
     end
     def interpreter
-        @configuration.interpreter
+        @compile.interpreter
     end
 
     # Is the value true?  This allows us to control the definition of truth
@@ -56,9 +56,9 @@ class Puppet::Parser::Scope
         end
     end
 
-    # Retrieve a given class scope from the configuration.
+    # Retrieve a given class scope from the compile.
     def class_scope(klass)
-        configuration.class_scope(klass)
+        compile.class_scope(klass)
     end
 
     # Are we the top scope?
@@ -89,7 +89,7 @@ class Puppet::Parser::Scope
     end
 
     def findresource(string, name = nil)
-        configuration.findresource(string, name)
+        compile.findresource(string, name)
     end
 
     # Initialize our new scope.  Defaults to having no parent.
@@ -201,7 +201,7 @@ class Puppet::Parser::Scope
 
     # Create a new scope and set these options.
     def newscope(options = {})
-        configuration.newscope(self, options)
+        compile.newscope(self, options)
     end
 
     # Is this class for a node?  This is used to make sure that
@@ -216,7 +216,7 @@ class Puppet::Parser::Scope
     # than doing lots of queries.
     def parent
         unless defined?(@parent)
-            @parent = configuration.parent(self)
+            @parent = compile.parent(self)
         end
         @parent
     end
@@ -245,7 +245,7 @@ class Puppet::Parser::Scope
                 raise Puppet::DevError, "Got a %s with no fully qualified name" %
                     klass.class
             end
-            @configuration.class_set(name, self)
+            @compile.class_set(name, self)
         else
             raise Puppet::DevError, "Invalid class %s" % klass.inspect
         end
@@ -258,7 +258,7 @@ class Puppet::Parser::Scope
     # Add a new object to our object table and the global list, and do any necessary
     # checks.
     def setresource(resource)
-        @configuration.store_resource(self, resource)
+        @compile.store_resource(self, resource)
 
         # Mark the resource as virtual or exported, as necessary.
         if self.exported?
@@ -274,7 +274,7 @@ class Puppet::Parser::Scope
     # exist, then cache the override in a global table, so it can be flushed
     # at the end.
     def setoverride(resource)
-        @configuration.store_override(resource)
+        @compile.store_override(resource)
     end
 
     # Set defaults for a type.  The typename should already be downcased,

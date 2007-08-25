@@ -51,7 +51,7 @@ class Puppet::Parser::Resource
     def evaluate
         if klass = @ref.definedtype
             finish()
-            scope.configuration.delete_resource(self)
+            scope.compile.delete_resource(self)
             return klass.evaluate_resource(:scope => scope,
                                   :type => self.type,
                                   :title => self.title,
@@ -317,7 +317,7 @@ class Puppet::Parser::Resource
 
     # Add any overrides for this object.
     def add_overrides
-        if overrides = scope.configuration.resource_overrides(self)
+        if overrides = scope.compile.resource_overrides(self)
             overrides.each do |over|
                 self.merge(over)
             end

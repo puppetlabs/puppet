@@ -10,7 +10,7 @@ require 'puppet/util/errors'
 
 # Maintain a graph of scopes, along with a bunch of data
 # about the individual configuration we're compiling.
-class Puppet::Parser::Configuration
+class Puppet::Parser::Compile
     include Puppet::Util
     include Puppet::Util::Errors
     attr_reader :topscope, :parser, :node, :facts, :collections
@@ -155,7 +155,7 @@ class Puppet::Parser::Configuration
             begin
                 send(param.to_s + "=", value)
             rescue NoMethodError
-                raise ArgumentError, "Configuration objects do not accept %s" % param
+                raise ArgumentError, "Compile objects do not accept %s" % param
             end
         end
 
@@ -169,7 +169,7 @@ class Puppet::Parser::Configuration
     # its parent to the graph.
     def newscope(parent, options = {})
         parent ||= @topscope
-        options[:configuration] = self
+        options[:compile] = self
         options[:parser] ||= self.parser
         scope = Puppet::Parser::Scope.new(options)
         @scope_graph.add_edge!(parent, scope)
@@ -282,7 +282,7 @@ class Puppet::Parser::Configuration
     end
 
     # Iterate over collections and resources until we're sure that the whole
-    # configuration is evaluated.  This is necessary because both collections
+    # compile is evaluated.  This is necessary because both collections
     # and defined resources can generate new resources, which themselves could
     # be defined resources.
     def evaluate_generators
@@ -449,7 +449,7 @@ class Puppet::Parser::Configuration
         @tags = []
 
         # Create our initial scope, our scope graph, and add the initial scope to the graph.
-        @topscope = Puppet::Parser::Scope.new(:configuration => self, :type => "main", :name => "top", :parser => self.parser)
+        @topscope = Puppet::Parser::Scope.new(:compile => self, :type => "main", :name => "top", :parser => self.parser)
 
         # For maintaining scope relationships.
         @scope_graph = GRATR::Digraph.new

@@ -5,7 +5,7 @@ module PuppetTest::ParserTesting
     include PuppetTest
     AST = Puppet::Parser::AST
 
-    Config = Puppet::Parser::Configuration
+    Compile = Puppet::Parser::Compile
 
     # A fake class that we can use for testing evaluation.
     class FakeAST
@@ -45,7 +45,7 @@ module PuppetTest::ParserTesting
         require 'puppet/network/handler/node'
         parser ||= mkparser
         node = mknode
-        return Config.new(node, parser)
+        return Compile.new(node, parser)
     end
 
     def mknode(name = nil)

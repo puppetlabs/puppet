@@ -3,7 +3,7 @@ require 'timeout'
 require 'puppet/rails'
 require 'puppet/util/methodhelper'
 require 'puppet/parser/parser'
-require 'puppet/parser/configuration'
+require 'puppet/parser/compile'
 require 'puppet/parser/scope'
 
 # The interpreter is a very simple entry-point class that
