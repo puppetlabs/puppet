@@ -97,6 +97,16 @@ class Puppet::Parser::Configuration
         @resource_graph.remove_vertex!(resource) if @resource_graph.vertex?(resource)
     end
 
+    # Return the node's environment.
+    def environment
+        unless defined? @environment
+            if node.environment and node.environment != ""
+                @environment = node.environment
+            end
+        end
+        @environment
+    end
+
     # Evaluate each class in turn.  If there are any classes we can't find,
     # just tag the configuration and move on.
     def evaluate_classes(classes = nil)

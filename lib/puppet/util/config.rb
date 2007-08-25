@@ -369,7 +369,7 @@ class Puppet::Util::Config
                 # after cli arguments are handled.
                 unless @config.include?(var) and @config[var].setbycli
                     Puppet.debug "%s: Setting %s to '%s'" % [section, var, value]
-                    self[var] = value
+                    @values[:main][var] = value
                 end
                 @config[var].section = symbolize(section)
 
@@ -946,22 +946,6 @@ Generated on #{Time.now}.
             raise ArgumentError, "No such file %s" % file
         rescue Errno::EACCES
             raise ArgumentError, "Permission denied to file %s" % file
-        end
-    end
-
-    # Take all members of a hash and assign their values appropriately.
-    def set_parameter_hash(params)
-        params.each do |param, value|
-            next if param == :_meta
-            unless @config.include?(param)
-                Puppet.warning "Discarded unknown configuration parameter %s" % param
-                next
-            end
-            if @config[param].setbycli
-                Puppet.debug "Ignoring %s set by config file; overridden by cli" % param
-            else
-                self[param] = value
-            end
         end
     end
 
