@@ -212,7 +212,7 @@ class TestLangFunctions < Test::Unit::TestCase
 
         Puppet[:environment] = "yay"
 
-        version = interp.configuration_version(node)
+        version = interp.compile(node)
 
         objects = nil
         assert_nothing_raised {
@@ -236,7 +236,7 @@ class TestLangFunctions < Test::Unit::TestCase
         assert_nothing_raised {
             objects = interp.compile(node)
         }
-        newversion = interp.configuration_version(node)
+        newversion = interp.compile(node)
 
         assert(version != newversion, "Parse date did not change")
     end
@@ -310,7 +310,7 @@ class TestLangFunctions < Test::Unit::TestCase
 
     def test_realize
         scope = mkscope
-        parser = scope.configuration.parser
+        parser = scope.compile.parser
     
         # Make a definition
         parser.newdefine("mytype")
@@ -332,13 +332,13 @@ class TestLangFunctions < Test::Unit::TestCase
             end
 
             # Make sure it created a collection
-            assert_equal(1, scope.configuration.collections.length,
+            assert_equal(1, scope.compile.collections.length,
                 "Did not set collection")
 
             assert_nothing_raised do
-                scope.configuration.collections.each do |coll| coll.evaluate end
+                scope.compile.collections.each do |coll| coll.evaluate end
             end
-            scope.configuration.collections.clear
+            scope.compile.collections.clear
 
             # Now make sure the virtual resource is no longer virtual
             assert(! virtual.virtual?, "Did not make virtual resource real")
@@ -356,17 +356,17 @@ class TestLangFunctions < Test::Unit::TestCase
         end
 
         # Make sure it created a collection
-        assert_equal(1, scope.configuration.collections.length,
+        assert_equal(1, scope.compile.collections.length,
             "Did not set collection")
 
         # And the collection has our resource in it
-        assert_equal([none.to_s], scope.configuration.collections[0].resources,
+        assert_equal([none.to_s], scope.compile.collections[0].resources,
             "Did not set resources in collection")
     end
     
     def test_defined
         scope = mkscope
-        parser = scope.configuration.parser
+        parser = scope.compile.parser
         
         parser.newclass("yayness")
         parser.newdefine("rahness")
@@ -422,7 +422,7 @@ class TestLangFunctions < Test::Unit::TestCase
 
     def test_include
         scope = mkscope
-        parser = scope.configuration.parser
+        parser = scope.compile.parser
 
         assert_raise(Puppet::ParseError, "did not throw error on missing class") do
             scope.function_include("nosuchclass")
@@ -434,7 +434,7 @@ class TestLangFunctions < Test::Unit::TestCase
             scope.function_include "myclass"
         end
 
-        assert(scope.configuration.classlist.include?("myclass"),
+        assert(scope.compile.classlist.include?("myclass"),
             "class was not evaluated")
 
         # Now try multiple classes at once
@@ -445,7 +445,7 @@ class TestLangFunctions < Test::Unit::TestCase
         end
 
         classes.each do |c|
-            assert(scope.configuration.classlist.include?(c),
+            assert(scope.compile.classlist.include?(c),
                 "class %s was not evaluated" % c)
         end
 
@@ -502,7 +502,7 @@ class TestLangFunctions < Test::Unit::TestCase
         assert_equal("yay-foo\n", %x{#{command} foo}, "command did not work")
 
         scope = mkscope
-        parser = scope.configuration.parser
+        parser = scope.compile.parser
 
         val = nil
         assert_nothing_raised("Could not call generator with no args") do

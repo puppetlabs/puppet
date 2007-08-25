@@ -18,7 +18,7 @@ class TestASTHostClass < Test::Unit::TestCase
 
     def test_hostclass
         scope = mkscope
-        parser = scope.configuration.parser
+        parser = scope.compile.parser
 
         # Create the class we're testing, first with no parent
         klass = parser.newclass "first",
@@ -94,7 +94,7 @@ class TestASTHostClass < Test::Unit::TestCase
     # way they start looking for definitions in their own namespace.
     def test_hostclass_namespace
         scope = mkscope
-        parser = scope.configuration.parser
+        parser = scope.compile.parser
 
         # Create a new class
         klass = nil
@@ -130,7 +130,7 @@ class TestASTHostClass < Test::Unit::TestCase
     # found within the subclass (#517).
     def test_parent_scope_from_parentclass
         scope = mkscope
-        parser = scope.configuration.parser
+        parser = scope.compile.parser
 
         parser.newclass("base")
         fun = parser.newdefine("base::fun")
@@ -140,7 +140,7 @@ class TestASTHostClass < Test::Unit::TestCase
 
         ret = nil
         assert_nothing_raised do
-            ret = scope.configuration.evaluate_classes(["sub"])
+            ret = scope.compile.evaluate_classes(["sub"])
         end
 
         subscope = scope.class_scope(scope.findclass("sub"))

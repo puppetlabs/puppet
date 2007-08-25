@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../spec_helper'
+require File.dirname(__FILE__) + '/../../spec_helper'
 
 describe Puppet::Module, " when building its search path" do
     include PuppetTest
@@ -85,6 +85,12 @@ describe Puppet::Module, " when searching for templates" do
         Puppet.config.expects(:value).with(:templatedir, nil).returns("/my/templates")
         Puppet::Module.expects(:find).with("mymod", nil).returns(nil)
         Puppet::Module.find_template("mymod/mytemplate").should == "/my/templates/mymod/mytemplate"
+    end
+
+    it "should return unqualified templates directly in the template dir" do
+        Puppet.config.expects(:value).with(:templatedir, nil).returns("/my/templates")
+        Puppet::Module.expects(:find).never
+        Puppet::Module.find_template("mytemplate").should == "/my/templates/mytemplate"
     end
 
     it "should use the environment templatedir if no module is found and an environment is specified" do

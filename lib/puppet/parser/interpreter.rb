@@ -25,7 +25,7 @@ class Puppet::Parser::Interpreter
 
     # evaluate our whole tree
     def compile(node)
-        return Puppet::Parser::Configuration.new(node, parser(node.environment), :ast_nodes => usenodes?).compile
+        return Puppet::Parser::Compile.new(node, parser(node.environment), :ast_nodes => usenodes?).compile
     end
 
     # create our interpreter
@@ -62,7 +62,7 @@ class Puppet::Parser::Interpreter
     # Create a new parser object and pre-parse the configuration.
     def create_parser(environment)
         begin
-            parser = Puppet::Parser::Parser.new(environment)
+            parser = Puppet::Parser::Parser.new(:environment => environment)
             if self.code
                 parser.string = self.code
             elsif self.file

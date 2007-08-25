@@ -102,6 +102,8 @@ class Puppet::Parser::Compile
         unless defined? @environment
             if node.environment and node.environment != ""
                 @environment = node.environment
+            else
+                @environment = nil
             end
         end
         @environment
@@ -232,7 +234,6 @@ class Puppet::Parser::Compile
 
         # Now see if we can find the node.
         astnode = nil
-        #nodes = @parser.nodes
         @node.names.each do |name|
             break if astnode = @parser.nodes[name.to_s.downcase]
         end

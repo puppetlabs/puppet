@@ -43,17 +43,25 @@ class Puppet::Module
     # param.
     # In all cases, an absolute path is returned, which does not
     # necessarily refer to an existing file
-    def self.find_template(file, environment = nil)
-        if file =~ /^#{File::SEPARATOR}/
-            return file
+    def self.find_template(template, environment = nil)
+        if template =~ /^#{File::SEPARATOR}/
+            return template
         end
 
-        path, file = split_path(file)
-        mod = find(path, environment)
+        path, file = split_path(template)
+
+        # Because templates don't have an assumed template name, like manifests do,
+        # we treat templates with no name as being templates in the main template
+        # directory.
+        if file.nil?
+            mod = nil
+        else
+            mod = find(path, environment)
+        end
         if mod
             return mod.template(file)
         else
-            return File.join(Puppet.config.value(:templatedir, environment), path, file)
+            return File.join(Puppet.config.value(:templatedir, environment), template)
         end
     end
 

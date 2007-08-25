@@ -371,7 +371,7 @@ file { "/tmp/yayness":
             ret = parser.parse(str1).classes[""].code[0]
         }
         assert_instance_of(Puppet::Parser::AST::IfStatement, ret)
-        parser.clear
+        parser = mkparser
         str2 = %{if true { #{exec.call("true")} } else { #{exec.call("false")} }}
         assert_nothing_raised {
             ret = parser.parse(str2).classes[""].code[0]
@@ -672,7 +672,7 @@ file { "/tmp/yayness":
             targets << target
             txt = %[ file { '#{target}': content => "#{fname}" } ]
             if fname == "init.pp"
-                txt = %[import 'mani1' \nimport '#{modname}/mani2'\nimport '#{modname}/sub/*.pp' ] + txt
+                txt = %[import 'mani1' \nimport '#{modname}/mani2'\nimport '#{modname}/sub/*.pp'\n ] + txt
             end
             File::open(File::join(manipath, fname), "w") do |f|
                 f.puts txt
@@ -872,7 +872,7 @@ file { "/tmp/yayness":
 
     def test_newclass
         scope = mkscope
-        parser = scope.configuration.parser
+        parser = scope.compile.parser
 
         mkcode = proc do |ary|
             classes = ary.collect do |string|

@@ -251,7 +251,7 @@ class TestResource < PuppetTest::TestCase
         res.expects(:finish)
         res.scope = mock("scope")
         config = mock("config")
-        res.scope.expects(:configuration).returns(config)
+        res.scope.expects(:compile).returns(config)
         config.expects(:delete_resource).with(res)
 
         args = {:scope => res.scope, :arguments => res.to_hash}
@@ -269,7 +269,7 @@ class TestResource < PuppetTest::TestCase
         res = mkresource
         res.scope = mock('scope')
         config = mock("config")
-        res.scope.expects(:configuration).returns(config)
+        res.scope.expects(:compile).returns(config)
         config.expects(:resource_overrides).with(res).returns(nil)
         res.expects(:merge).never
         res.send(:add_overrides)
@@ -278,7 +278,7 @@ class TestResource < PuppetTest::TestCase
         res = mkresource
         res.scope = mock('scope')
         config = mock("config")
-        res.scope.expects(:configuration).returns(config)
+        res.scope.expects(:compile).returns(config)
         config.expects(:resource_overrides).with(res).returns([])
         res.expects(:merge).never
         res.send(:add_overrides)
@@ -287,7 +287,7 @@ class TestResource < PuppetTest::TestCase
         res = mkresource
         res.scope = mock('scope')
         config = mock("config")
-        res.scope.expects(:configuration).returns(config)
+        res.scope.expects(:compile).returns(config)
         returns = %w{a b}
         config.expects(:resource_overrides).with(res).returns(returns)
         res.expects(:merge).with("a")

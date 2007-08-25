@@ -95,7 +95,7 @@ class TestAST < Test::Unit::TestCase
 
     def test_node
         scope = mkscope
-        parser = scope.configuration.parser
+        parser = scope.compile.parser
 
         # Define a base node
         basenode = parser.newnode "basenode", :code => AST::ASTArray.new(:children => [
@@ -161,7 +161,7 @@ class TestAST < Test::Unit::TestCase
         assert_instance_of(Puppet::Parser::Collector, ret)
 
         # Now make sure we get it back from the scope
-        colls = scope.configuration.instance_variable_get("@collections")
+        colls = scope.compile.instance_variable_get("@collections")
         assert_equal([ret], colls, "Did not store collector in config's collection list")
     end
 

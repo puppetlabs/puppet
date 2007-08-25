@@ -176,14 +176,14 @@ class Puppet::Parser::Parser
                "in file #{@lexer.file} at line #{@lexer.line}"
             )
         end
-        files = Puppet::Module::find_manifests(pat, dir)
+        files = Puppet::Module::find_manifests(pat, :cwd => dir)
         if files.size == 0
             raise Puppet::ImportError.new("No file(s) found for import " +
                                           "of '#{pat}'")
         end
 
         files.collect { |file|
-            parser = Puppet::Parser::Parser.new(@astset)
+            parser = Puppet::Parser::Parser.new(:astset => @astset, :environment => @environment)
             parser.files = self.files
             Puppet.debug("importing '%s'" % file)
 
@@ -202,8 +202,9 @@ class Puppet::Parser::Parser
         }
     end
 
-    def initialize(environment)
-        @environment = environment
+    def initialize(options = {})
+        @astset = options[:astset] || ASTSet.new({}, {}, {})
+        @environment = options[:environment]
         initvars()
     end
 
@@ -212,15 +213,6 @@ class Puppet::Parser::Parser
         @lexer = Puppet::Parser::Lexer.new()
         @files = []
         @loaded = []
-
-        # This is where we store our classes and definitions and nodes.
-        # Clear each hash, just to help the GC a bit.
-        if defined?(@astset)
-            [:classes, :definitions, :nodes].each do |name|
-                @astset.send(name).clear
-            end
-        end
-        @astset = ASTSet.new({}, {}, {})
     end
 
     # Try to load a class, since we could not find it.
