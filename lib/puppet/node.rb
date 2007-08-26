@@ -1,7 +1,24 @@
 # A simplistic class for managing the node information itself.
 class Puppet::Node
-    attr_accessor :name, :classes, :parameters, :environment, :source, :ipaddress, :names
+    attr_accessor :name, :classes, :parameters, :source, :ipaddress, :names
     attr_reader :time
+    attr_writer :environment
+
+    # Do not return environments tha are empty string, and use
+    # explicitly set environments, then facts, then a central env
+    # value.
+    def environment
+        unless @environment and @environment != ""
+            if env = parameters["environment"] and env != ""
+                @environment = env
+            elsif env = Puppet[:environment] and env != ""
+                @environment = env
+            else
+                @environment = nil
+            end
+        end
+        @environment
+    end
 
     def initialize(name, options = {})
         @name = name
@@ -21,11 +38,7 @@ class Puppet::Node
 
         @parameters = options[:parameters] || {}
 
-        unless @environment = options[:environment] 
-            if env = Puppet[:environment] and env != ""
-                @environment = env
-            end
-        end
+        @environment = options[:environment] 
 
         @time = Time.now
     end
