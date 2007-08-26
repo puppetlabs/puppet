@@ -24,7 +24,15 @@ class Puppet::Node
         @name = name
 
         # Provide a default value.
-        @names = [name]
+        if names = options[:names]
+            if names.is_a?(String)
+                @names = [names]
+            else
+                @names = names
+            end
+        else
+            @names = [name]
+        end
 
         if classes = options[:classes]
             if classes.is_a?(String)

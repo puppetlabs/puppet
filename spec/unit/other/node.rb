@@ -44,6 +44,11 @@ describe Puppet::Node, " when initializing" do
         @node = Puppet::Node.new("testing", :environment => "myenv")
         @node.environment.should == "myenv"
     end
+
+    it "should accept names passed in" do
+        @node = Puppet::Node.new("testing", :names => ["myenv"])
+        @node.names.should == ["myenv"]
+    end
 end
 
 describe Puppet::Node, " when returning the environment" do
