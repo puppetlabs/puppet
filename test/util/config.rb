@@ -932,11 +932,10 @@ yay = /a/path
         config.setdefaults(:mysection, :clichange => ["clichange", "yay"])
         config.setdefaults(:mysection, :filechange => ["filechange", "yay"])
 
-        file = tempfile()
-        # Set one parameter in the file
-        File.open(file, "w") { |f|
-            f.puts %{[main]\nfilechange = filevalue}
-        }
+        config.stubs(:read_file).returns(%{[main]\nfilechange = filevalue\n})
+        file = mock 'file'
+        file.stubs(:changed?).returns(true)
+
         assert_nothing_raised {
             config.parse(file)
         }
@@ -948,16 +947,14 @@ yay = /a/path
 
         # And leave the other unset
         assert_equal("default", config[:default])
-        assert_equal("filevalue", config[:filechange])
+        assert_equal("filevalue", config[:filechange], "Did not get value from file")
         assert_equal("clivalue", config[:clichange])
 
-        # Now rewrite the file
-        File.open(file, "w") { |f|
-            f.puts %{[main]\nfilechange = newvalue}
-        }
-
-        cfile = config.file
-        cfile.send("tstamp=".intern, Time.now - 50)
+        # Now reparse
+        config.stubs(:read_file).returns(%{[main]\nfilechange = newvalue\n})
+        file = mock 'file'
+        file.stubs(:changed?).returns(true)
+        config.parse(file)
 
         # And check all of the values
         assert_equal("default", config[:default])

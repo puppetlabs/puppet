@@ -260,8 +260,8 @@ module Puppet
                 @node = Puppet::Node.new(Facter.value(:hostname))
                 @node.parameters = Facter.to_hash
                 @interp = Puppet::Parser::Interpreter.new :Code => ""
-                @config = Puppet::Parser::Configuration.new(@node, @interp.parser)
-                @scope = @config.topscope
+                @compile = Puppet::Parser::Compile.new(@node, @interp.send(:parser, Puppet[:environment]))
+                @scope = @compile.topscope
             end
             @scope
         end

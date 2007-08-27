@@ -22,6 +22,11 @@ class Puppet::Network::Handler
 
         # Compile a node's configuration.
         def configuration(key, client = nil, clientip = nil)
+            # If we want to use the cert name as our key
+            if Puppet[:node_name] == 'cert' and client
+                key = client
+            end
+
             # Note that this is reasonable, because either their node source should actually
             # know about the node, or they should be using the ``none`` node source, which
             # will always return data.

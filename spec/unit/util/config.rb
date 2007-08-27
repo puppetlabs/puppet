@@ -80,6 +80,19 @@ describe Puppet::Util::Config, " when setting values" do
         @config[:bool].should == true
     end
 
+    it "should clear the cache when setting getopt-specific values" do
+        @config.setdefaults :mysection, :one => ["whah", "yay"], :two => ["$one yay", "bah"]
+        @config[:two].should == "whah yay"
+        @config.handlearg("--one", "else")
+        @config[:two].should == "else yay"
+    end
+
+    it "should not clear other values when setting getopt-specific values" do
+        @config[:myval] = "yay"
+        @config.handlearg("--no-bool")
+        @config[:myval].should == "yay"
+    end
+
     it "should call passed blocks when values are set" do
         values = []
         @config.setdefaults(:section, :hooker => {:default => "yay", :desc => "boo", :hook => lambda { |v| values << v }})
