@@ -139,6 +139,18 @@ describe Puppet::Util::Config, " when returning values" do
         @config[:two].should == "one TWO"
     end
 
+    it "should not cache values such that information from one environment is returned for another environment" do
+        text = "[env1]\none = oneval\n[env2]\none = twoval\n"
+        file = mock 'file'
+        file.stubs(:changed?).returns(true)
+        file.stubs(:file).returns("/whatever")
+        @config.stubs(:read_file).with(file).returns(text)
+        @config.parse(file)
+
+        @config.value(:one, "env1").should == "oneval"
+        @config.value(:one, "env2").should == "twoval"
+    end
+
     it "should have a name determined by the 'name' parameter" do
         @config.setdefaults(:whatever, :name => ["something", "yayness"])
         @config.name.should == :something

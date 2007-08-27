@@ -67,6 +67,9 @@ class Puppet::Parser::Interpreter
                 parser.string = self.code
             elsif self.file
                 parser.file = self.file
+            else
+                file = Puppet.config.value(:manifest, environment)
+                parser.file = file
             end
             parser.parse
             return parser

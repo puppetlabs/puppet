@@ -15,7 +15,7 @@ class Puppet::Parser::Parser
 
     AST = Puppet::Parser::AST
 
-    attr_reader :file, :version
+    attr_reader :version, :environment
     attr_accessor :files
 
 
@@ -83,6 +83,10 @@ class Puppet::Parser::Parser
         end
 
         raise except
+    end
+
+    def file
+        @lexer.file
     end
 
     def file=(file)

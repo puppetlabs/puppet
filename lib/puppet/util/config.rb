@@ -38,7 +38,7 @@ class Puppet::Util::Config
                 @name = nil
             end
             @values[:memory][param] = value
-            @values[:cache].clear
+            @cache.clear
         end
 
         return value
@@ -113,12 +113,14 @@ class Puppet::Util::Config
             @used = []
         end
 
+        @cache.clear
+
         @name = nil
     end
 
     # This is mostly just used for testing.
     def clearused
-        @values[:cache].clear
+        @cache.clear
         @used = []
     end
 
@@ -173,6 +175,7 @@ class Puppet::Util::Config
 
     # Handle a command-line argument.
     def handlearg(opt, value = nil)
+        clear(true)
         value = munge_value(value) if value
         str = opt.sub(/^--/,'')
         bool = true
@@ -214,6 +217,9 @@ class Puppet::Util::Config
 
         # Keep track of set values.
         @values = Hash.new { |hash, key| hash[key] = {} }
+
+        # And keep a per-environment cache
+        @cache = Hash.new { |hash, key| hash[key] = {} }
 
         # A central concept of a name.
         @name = nil
@@ -448,9 +454,9 @@ class Puppet::Util::Config
     # The order in which to search for values.
     def searchpath(environment = nil)
         if environment
-            [:cache, :cli, :memory, environment, :name, :main]
+            [:cli, :memory, environment, :name, :main]
         else
-            [:cache, :cli, :memory, :name, :main]
+            [:cli, :memory, :name, :main]
         end
     end
 
@@ -730,7 +736,15 @@ Generated on #{Time.now}.
         # Yay, recursion.
         self.reparse() unless param == :filetimeout
 
+        # Check the cache first.  It needs to be a per-environment
+        # cache so that we don't spread values from one env
+        # to another.
+        if @cache[environment||"none"].include?(param)
+            return @cache[environment||"none"][param]
+        end
+
         # See if we can find it within our searchable list of values
+        val = nil
         searchpath(environment).each do |source|
             # Modify the source as necessary.
             source = case source
@@ -740,21 +754,24 @@ Generated on #{Time.now}.
                 source
             end
 
-            # Look for the value.
+            # Look for the value.  We have to test the hash for whether
+            # it exists, because the value might be false.
             if @values[source].include?(param)
                 val = @values[source][param]
-                # Cache the value, because we do so many parameter lookups.
-                unless source == :cache
-                    val = convert(val)
-                    @values[:cache][param] = val
-                end
-                return val
+                break
             end
         end
 
-        # No normal source, so get the default and cache it
-        val = convert(@config[param].default)
-        @values[:cache][param] = val
+        # If we didn't get a value, use the default
+        if val.nil?
+            val = @config[param].default
+        end
+
+        # Convert it if necessary
+        val = convert(val)
+
+        # And cache it
+        @cache[environment||"none"][param] = val
         return val
     end
 

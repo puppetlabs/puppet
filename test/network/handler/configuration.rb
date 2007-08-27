@@ -52,7 +52,7 @@ class TestHandlerConfiguration < Test::Unit::TestCase
         args = {}
 
         # Try it first with defaults.
-        Puppet::Parser::Interpreter.expects(:new).with(:Local => config.local?, :Manifest => Puppet[:manifest]).returns(:interp)
+        Puppet::Parser::Interpreter.expects(:new).with(:Local => config.local?).returns(:interp)
         assert_equal(:interp, config.send(:create_interpreter, args), "Did not return the interpreter")
 
         # Now reset it and make sure a specified manifest passes through
@@ -93,10 +93,12 @@ class TestHandlerConfiguration < Test::Unit::TestCase
         config = Config.new
 
         # First do a local
-        node = Object.new
-        node.expects(:name).returns(:mynode)
+        node = mock 'node'
+        node.stubs(:name).returns(:mynode)
+        node.stubs(:environment).returns(:myenv)
 
-        interp = Object.new
+        interp = mock 'interpreter'
+        interp.stubs(:environment)
         interp.expects(:compile).with(node).returns(:config)
         config.expects(:interpreter).returns(interp)
 
@@ -105,13 +107,15 @@ class TestHandlerConfiguration < Test::Unit::TestCase
         assert_equal(:config, config.send(:compile, node), "Did not return config")
         
         # Now try it non-local
-        config = Config.new(:Local => true)
+        node = mock 'node'
+        node.stubs(:name).returns(:mynode)
+        node.stubs(:environment).returns(:myenv)
 
-        node = Object.new
-        node.expects(:name).returns(:mynode)
-
-        interp = Object.new
+        interp = mock 'interpreter'
+        interp.stubs(:environment)
         interp.expects(:compile).with(node).returns(:config)
+
+        config = Config.new(:Local => true)
         config.expects(:interpreter).returns(interp)
 
         assert_equal(:config, config.send(:compile, node), "Did not return config")

@@ -92,6 +92,10 @@ class Puppet::Network::Handler
             end
 
             # Ask the interpreter to compile the configuration.
+            str = "Compiled configuration for %s" % node.name
+            if node.environment
+                str += " in environment %s" % node.environment
+            end
             config = nil
             benchmark(level, "Compiled configuration for %s" % node.name) do
                 begin
@@ -117,8 +121,8 @@ class Puppet::Network::Handler
             # Allow specification of a code snippet or of a file
             if code = options[:Code]
                 args[:Code] = code
-            else
-                args[:Manifest] = options[:Manifest] || Puppet[:manifest]
+            elsif options[:Manifest]
+                args[:Manifest] = options[:Manifest]
             end
 
             args[:Local] = local?

@@ -531,7 +531,7 @@ class LdapNodeTest < PuppetTest::TestCase
     end
 
     def ldaphost(name)
-        node = NodeDef.new(:name => name)
+        node = Puppet::Node.new(name)
         parent = nil
         found = false
         @ldap.search( "ou=hosts, dc=madstop, dc=com", 2,

@@ -44,29 +44,51 @@ describe Puppet::Parser::Interpreter, " when creating parser instances" do
 
     it "should create a parser with code passed in at initialization time" do
         @interp.code = :some_code
-        @parser.expects(:code=).with(:some_code)
+        @parser.expects(:string=).with(:some_code)
         @parser.expects(:parse)
-        Puppet::Parser::Parser.expects(:new).with(:environment).returns(@parser)
-        @interp.send(:create_parser, :environment).object_id.should equal(@parser.object_id)
+        Puppet::Parser::Parser.expects(:new).with(:environment => :myenv).returns(@parser)
+        @interp.send(:create_parser, :myenv).object_id.should equal(@parser.object_id)
     end
 
     it "should create a parser with a file passed in at initialization time" do
         @interp.file = :a_file
         @parser.expects(:file=).with(:a_file)
         @parser.expects(:parse)
-        Puppet::Parser::Parser.expects(:new).with(:environment).returns(@parser)
-        @interp.send(:create_parser, :environment).should equal(@parser)
+        Puppet::Parser::Parser.expects(:new).with(:environment => :myenv).returns(@parser)
+        @interp.send(:create_parser, :myenv).should equal(@parser)
     end
 
-    it "should create a parser when passed neither code nor file" do
+    it "should create a parser with the main manifest when passed neither code nor file" do
         @parser.expects(:parse)
-        Puppet::Parser::Parser.expects(:new).with(:environment).returns(@parser)
-        @interp.send(:create_parser, :environment).should equal(@parser)
+        @parser.expects(:file=).with(Puppet[:manifest])
+        Puppet::Parser::Parser.expects(:new).with(:environment => :myenv).returns(@parser)
+        @interp.send(:create_parser, :myenv).should equal(@parser)
     end
 
     it "should return nothing when new parsers fail" do
-        Puppet::Parser::Parser.expects(:new).with(:environment).raises(ArgumentError)
-        @interp.send(:create_parser, :environment).should be_nil
+        Puppet::Parser::Parser.expects(:new).with(:environment => :myenv).raises(ArgumentError)
+        @interp.send(:create_parser, :myenv).should be_nil
+    end
+
+    it "should create parsers with environment-appropriate manifests" do
+        # Set our per-environment values.  We can't just stub :value, because
+        # it's called by too much of the rest of the code.
+        text = "[env1]\nmanifest = /t/env1.pp\n[env2]\nmanifest = /t/env2.pp"
+        file = mock 'file'
+        file.stubs(:changed?).returns(true)
+        file.stubs(:file).returns("/whatever")
+        Puppet.config.stubs(:read_file).with(file).returns(text)
+        Puppet.config.parse(file)
+
+        parser1 = mock 'parser1'
+        Puppet::Parser::Parser.expects(:new).with(:environment => :env1).returns(parser1)
+        parser1.expects(:file=).with("/t/env1.pp")
+        @interp.send(:create_parser, :env1)
+
+        parser2 = mock 'parser2'
+        Puppet::Parser::Parser.expects(:new).with(:environment => :env2).returns(parser2)
+        parser2.expects(:file=).with("/t/env2.pp")
+        @interp.send(:create_parser, :env2)
     end
 end
 
@@ -77,16 +99,16 @@ describe Puppet::Parser::Interpreter, " when managing parser instances" do
     end
 
     it "it should an exception when nothing is there and nil is returned" do
-        @interp.expects(:create_parser).with(:environment).returns(nil)
-        lambda { @interp.send(:parser, :environment) }.should raise_error(Puppet::Error)
+        @interp.expects(:create_parser).with(:myenv).returns(nil)
+        lambda { @interp.send(:parser, :myenv) }.should raise_error(Puppet::Error)
     end
 
     it "should create and return a new parser and use the same parser when the parser does not need reparsing" do
-        @interp.expects(:create_parser).with(:environment).returns(@parser)
-        @interp.send(:parser, :environment).should equal(@parser)
+        @interp.expects(:create_parser).with(:myenv).returns(@parser)
+        @interp.send(:parser, :myenv).should equal(@parser)
 
         @parser.expects(:reparse?).returns(false)
-        @interp.send(:parser, :environment).should equal(@parser)
+        @interp.send(:parser, :myenv).should equal(@parser)
     end
 
     it "should create a new parser when reparse is true" do
@@ -95,25 +117,25 @@ describe Puppet::Parser::Interpreter, " when managing parser instances" do
         oldparser.expects(:reparse?).returns(true)
         oldparser.expects(:clear)
 
-        @interp.expects(:create_parser).with(:environment).returns(oldparser)
-        @interp.send(:parser, :environment).should equal(oldparser)
-        @interp.expects(:create_parser).with(:environment).returns(newparser)
-        @interp.send(:parser, :environment).should equal(newparser)
+        @interp.expects(:create_parser).with(:myenv).returns(oldparser)
+        @interp.send(:parser, :myenv).should equal(oldparser)
+        @interp.expects(:create_parser).with(:myenv).returns(newparser)
+        @interp.send(:parser, :myenv).should equal(newparser)
     end
 
     it "should keep the old parser if create_parser doesn't return anything." do
         # Get the first parser in the hash.
-        @interp.expects(:create_parser).with(:environment).returns(@parser)
-        @interp.send(:parser, :environment).should equal(@parser)
+        @interp.expects(:create_parser).with(:myenv).returns(@parser)
+        @interp.send(:parser, :myenv).should equal(@parser)
 
         # Have it indicate something has changed
         @parser.expects(:reparse?).returns(true)
 
         # But fail to create a new parser
-        @interp.expects(:create_parser).with(:environment).returns(nil)
+        @interp.expects(:create_parser).with(:myenv).returns(nil)
 
         # And make sure we still get the old valid parser
-        @interp.send(:parser, :environment).should equal(@parser)
+        @interp.send(:parser, :myenv).should equal(@parser)
     end
 
     it "should use different parsers for different environments" do
@@ -140,7 +162,7 @@ describe Puppet::Parser::Interpreter, " when compiling configurations" do
         parser = mock 'parser'
         @interp.expects(:parser).with(:myenv).returns(parser)
         @interp.expects(:usenodes?).returns(true)
-        Puppet::Parser::Configuration.expects(:new).with(node, parser, :ast_nodes => true).returns(compile)
+        Puppet::Parser::Compile.expects(:new).with(node, parser, :ast_nodes => true).returns(compile)
         @interp.compile(node)
 
         # Now try it when usenodes is true
@@ -149,7 +171,7 @@ describe Puppet::Parser::Interpreter, " when compiling configurations" do
         compile.expects(:compile).returns(:config)
         @interp.expects(:parser).with(:myenv).returns(parser)
         @interp.expects(:usenodes?).returns(false)
-        Puppet::Parser::Configuration.expects(:new).with(node, parser, :ast_nodes => false).returns(compile)
+        Puppet::Parser::Compile.expects(:new).with(node, parser, :ast_nodes => false).returns(compile)
         @interp.compile(node).should equal(:config)
     end
 end
