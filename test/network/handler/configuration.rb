@@ -170,9 +170,7 @@ class TestHandlerConfiguration < Test::Unit::TestCase
         handler.expects(:details).with(:client).returns(false)
         config.expects(:node_handler).returns(handler)
         interp = Object.new
-        interp.expects(:parsedate).returns(:version)
-        config.expects(:interpreter).returns(interp)
-        assert_equal(:version, config.version(:client), "Did not return configuration version")
+        assert_instance_of(Bignum, config.version(:client), "Did not return configuration version")
 
         # And then when we find the node.
         config = Config.new
@@ -182,7 +180,7 @@ class TestHandlerConfiguration < Test::Unit::TestCase
         config.expects(:update_node_check).with(node)
         config.expects(:node_handler).returns(handler)
         interp = Object.new
-        interp.expects(:parsedate).returns(:version)
+        interp.expects(:configuration_version).returns(:version)
         config.expects(:interpreter).returns(interp)
         assert_equal(:version, config.version(:client), "Did not return configuration version")
     end

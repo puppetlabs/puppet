@@ -239,6 +239,33 @@ class Puppet::Network::Handler
             return children
         end  
 
+        # Return the mount for the Puppet modules; allows file copying from
+        # the modules.
+        def modules_mount(module_name, client)
+            # Find our environment, if we have one.
+            if node = node_handler.details(client || Facter.value("hostname"))
+                env = node.environment
+            else
+                env = nil
+            end
+
+            # And use the environment to look up the module.
+            mod = Puppet::Module::find(module_name, env)
+            if mod
+                return @mounts[MODULES].copy(mod.name, mod.files)
+            else
+                return nil
+            end
+        end
+
+        # Create a node handler instance for looking up our nodes.
+        def node_handler
+            unless defined?(@node_handler)
+                @node_handler = Puppet::Network::Handler.handler(:node).create
+            end
+            @node_handler
+        end
+
         # Read the configuration file.
         def readconfig(check = true)
             return if @noreadconfig
@@ -388,15 +415,12 @@ class Puppet::Network::Handler
             mount = nil
             path = nil
             if dir =~ %r{/([-\w]+)/?}
-                tmp = $1
-                path = dir.sub(%r{/#{tmp}/?}, '')
+                # Strip off the mount name.
+                mount_name, path = dir.sub(%r{^/}, '').split(File::Separator, 2)
 
-                mod = Puppet::Module::find(tmp)
-                if mod
-                    mount = @mounts[MODULES].copy(mod.name, mod.files)
-                else
-                    unless mount = @mounts[tmp]
-                        raise FileServerError, "Fileserver module '%s' not mounted" % tmp
+                unless mount = modules_mount(mount_name, client)
+                    unless mount = @mounts[mount_name]
+                        raise FileServerError, "Fileserver module '%s' not mounted" % mount_name
                     end
                 end
             else
@@ -405,7 +429,7 @@ class Puppet::Network::Handler
 
             if path == ""
                 path = nil
-            else
+            elsif path
                 # Remove any double slashes that might have occurred
                 path = URI.unescape(path.gsub(/\/\//, "/"))
             end

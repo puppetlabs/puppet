@@ -57,17 +57,13 @@ class Puppet::Network::Handler
 
         # Return the configuration version.
         def version(client = nil, clientip = nil)
-            if client
-                if node = node_handler.details(client)
-                    update_node_check(node)
-                    return interpreter.configuration_version(node)
-                else
-                    raise Puppet::Error, "Could not find node '%s'" % client
-                end
+            if client and node = node_handler.details(client)
+                update_node_check(node)
+                return interpreter.configuration_version(node)
             else
                 # Just return something that will always result in a recompile, because
                 # this is local.
-                return 0
+                return (Time.now + 1000).to_i
             end
         end
 
@@ -153,7 +149,7 @@ class Puppet::Network::Handler
         # Create a node handler instance for looking up our nodes.
         def node_handler
             unless defined?(@node_handler)
-                @node_handler = Puppet::Network::Handler.handler(:node).new
+                @node_handler = Puppet::Network::Handler.handler(:node).create
             end
             @node_handler
         end

@@ -38,5 +38,3 @@ Puppet::Util::FactStore.newstore(:yaml) do
         File.join(Puppet[:yamlfactdir], node + ".yaml")
     end
 end
-
-# $Id$

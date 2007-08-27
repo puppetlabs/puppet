@@ -23,6 +23,7 @@ class Puppet::Network::Handler
 
         # Tell a client whether there's a fresh config for it
         def freshness(client = nil, clientip = nil)
+            client ||= Facter.value("hostname")
             config_handler.version(client, clientip)
         end
 

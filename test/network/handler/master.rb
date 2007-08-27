@@ -80,7 +80,7 @@ class TestMaster < Test::Unit::TestCase
         assert(client.fresh?(facts), "Client is not up to date")
 
         # Cache this value for later
-        parse1 = master.freshness
+        parse1 = master.freshness("mynode")
 
         # Verify the config got applied
         assert(FileTest.exists?(@createdfile),
@@ -95,7 +95,7 @@ class TestMaster < Test::Unit::TestCase
 
         # Verify that the master doesn't immediately reparse the file; we
         # want to wait through the timeout
-        assert_equal(parse1, master.freshness, "Master did not wait through timeout")
+        assert_equal(parse1, master.freshness("mynode"), "Master did not wait through timeout")
         assert(client.fresh?(facts), "Client is not up to date")
 
         # Then eliminate it
@@ -103,7 +103,7 @@ class TestMaster < Test::Unit::TestCase
 
         # Now make sure the master does reparse
         #Puppet.notice "%s vs %s" % [parse1, master.freshness]
-        assert(parse1 != master.freshness, "Master did not reparse file")
+        assert(parse1 != master.freshness("mynode"), "Master did not reparse file")
         assert(! client.fresh?(facts), "Client is incorrectly up to date")
 
         # Retrieve and apply the new config

@@ -10,6 +10,14 @@ require 'puppet/util/instance_loader'
 class Puppet::Network::Handler::Node < Puppet::Network::Handler
     desc "Retrieve information about nodes."
 
+    # Create a singleton node handler
+    def self.create
+        unless @handler
+            @handler = new
+        end
+        @handler
+    end
+
     # Add a new node source.
     def self.newnode_source(name, options = {}, &block)
         name = symbolize(name)
@@ -81,6 +89,10 @@ class Puppet::Network::Handler::Node < Puppet::Network::Handler
     # Return an entire node configuration.  This uses the 'nodesearch' method
     # defined in the node_source to look for the node.
     def details(key, client = nil, clientip = nil)
+        return nil unless key
+        if node = cached?(key)
+            return node
+        end
         facts = node_facts(key)
         node = nil
         names = node_names(key, facts)
@@ -108,6 +120,9 @@ class Puppet::Network::Handler::Node < Puppet::Network::Handler
             if fact_merge?
                 node.fact_merge(facts)
             end
+
+            cache(node)
+
             return node
         else
             return nil

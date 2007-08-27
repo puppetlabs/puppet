@@ -336,6 +336,9 @@ class TestNodeHandler < Test::Unit::TestCase
         end
         assert_equal(node.object_id, handler.send(:cached?, "yay").object_id, "Did not get node back from the cache")
 
+        # And that it's returned if we ask for it, instead of creating a new node.
+        assert_equal(node.object_id, handler.details("yay").object_id, "Did not use cached node")
+
         # Now set the node's time to be a long time ago
         node.time = Time.now - 50000
         assert(! handler.send(:cached?, "yay"), "Timed-out node was returned from cache")
