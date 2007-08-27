@@ -1,5 +1,7 @@
 module Puppet
     Puppet.type(:file).newproperty(:content) do
+        include Puppet::Util::Diff
+
         desc "Specify the contents of a file as a string.  Newlines, tabs, and
             spaces can be specified using the escaped syntax (e.g., \\n for a
             newline).  The primary purpose of this parameter is to provide a
@@ -28,6 +30,15 @@ module Puppet
                 currentvalue = "{md5}" + Digest::MD5.hexdigest(currentvalue)
                 return "changed file contents from %s to %s" % [currentvalue, newvalue]
             end
+        end
+
+        # Override this method to provide diffs if asked for.
+        def insync?(is)
+            result = super
+            if ! result and Puppet[:show_diff] and File.exists?(@resource[:path])
+                string_file_diff(@resource[:path], self.should)
+            end
+            return result
         end
 
         # We should probably take advantage of existing md5 sums if they're there,
@@ -62,11 +73,9 @@ module Puppet
         def sync
             return_event = @resource.stat ? :file_changed : :file_created
             
-            @resource.write { |f| f.print self.should }
+            @resource.write(:content) { |f| f.print self.should }
 
             return return_event
         end
     end
 end
-
-# $Id$

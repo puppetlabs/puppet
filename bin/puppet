@@ -134,6 +134,11 @@ end
 
 Puppet.parse_config
 
+# If noop is set, then also enable diffs
+if Puppet[:noop]
+    Puppet[:show_diff] = true
+end
+
 unless logset
     Puppet::Util::Log.newdestination(:console)
 end

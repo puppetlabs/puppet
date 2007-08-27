@@ -126,7 +126,12 @@ module Puppet
         :environment => ["", "The environment Puppet is running in.  For clients (e.g., ``puppetd``) this
             determines the environment itself, which is used to find modules and much more.  For
             servers (i.e., ``puppetmasterd``) this provides the default environment for nodes we
-            know nothing about."]
+            know nothing about."],
+        :diff_args => ["", "Which arguments to pass to the diff command when printing differences between files."],
+        :diff => ["diff", "Which diff command to use when printing differences between files."],
+        :show_diff => [false, "Whether to print a contextual diff when files are being replaced.  The diff
+            is printed on stdout, so this option is meaningless unless you are running Puppet interactively.
+            This feature currently requires the ``diff/lcs`` Ruby library."]
     )
 
     hostname = Facter["hostname"].value

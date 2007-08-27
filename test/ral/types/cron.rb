@@ -3,7 +3,6 @@
 $:.unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppettest'
-require 'spec'
 
 # Test cron job creation, modification, and destruction
 
