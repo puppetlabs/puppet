@@ -48,10 +48,10 @@ class TestRailsCollection < PuppetTest::TestCase
         end
 
         # Set it in our scope
-        @scope.configuration.add_collection(coll)
+        @scope.compile.add_collection(coll)
 
         # Make sure it's in the collections
-        assert_equal([coll], @scope.configuration.collections)
+        assert_equal([coll], @scope.compile.collections)
 
         # And try to collect the virtual resources.
         ret = nil
@@ -122,7 +122,7 @@ class TestRailsCollection < PuppetTest::TestCase
 
         # Make a new set with a different node name
         node = mknode("other")
-        config = Puppet::Parser::Configuration.new(node, mkparser)
+        config = Puppet::Parser::Compile.new(node, mkparser)
         config.topscope.source = mock("source")
 
         # It's important that it's a different name, since same-name resources are ignored.
