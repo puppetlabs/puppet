@@ -148,7 +148,7 @@ class TestCompile < Test::Unit::TestCase
     # The heart of the action.
     def test_compile
         config = mkconfig
-        [:set_node_parameters, :evaluate_main, :evaluate_ast_node, :evaluate_classes, :evaluate_generators, :fail_on_unevaluated, :finish].each do |method|
+        [:set_node_parameters, :evaluate_main, :evaluate_ast_node, :evaluate_node_classes, :evaluate_generators, :fail_on_unevaluated, :finish].each do |method|
             config.expects(method)
         end
         config.expects(:extract).returns(:config)
@@ -268,6 +268,17 @@ class TestCompile < Test::Unit::TestCase
         assert_equal(%w{one two three}, config.send(:tags), "Allowed duplicate tag")
     end
 
+    def test_evaluate_node_classes
+        config = mkconfig
+        main = mock 'main'
+        config.parser.expects(:findclass).with("", "").returns(main)
+        @node.classes = %w{one two three four}
+        config.expects(:evaluate_classes).with(%w{one two three four}, main)
+        assert_nothing_raised("could not call evaluate_node_classes") do
+            config.send(:evaluate_node_classes)
+        end
+    end
+
     def test_evaluate_classes
         config = mkconfig
         classes = {
@@ -286,10 +297,9 @@ class TestCompile < Test::Unit::TestCase
         config.expects(:tag).with("two")
         config.expects(:tag).with("four")
 
-        @node.classes = %w{one two three four}
         result = nil
-        assert_nothing_raised("could not call evaluate_classes") do
-            result = config.send(:evaluate_classes)
+        assert_nothing_raised("could not call evaluate_node_classes") do
+            result = config.send(:evaluate_classes, %w{one two three four}, config.topscope)
         end
         assert_equal(%w{one three}, result, "Did not return the list of evaluated classes")
     end

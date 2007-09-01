@@ -362,7 +362,7 @@ class TestResource < PuppetTest::TestCase
     def test_components_are_not_builtin
         ref = Parser::Resource::Reference.new(:type => "component", :title => "yay")
 
-        assert_nil(ref.builtintype, "Component was considered builtin")
+        assert_nil(ref.builtintype, "Definition was considered builtin")
     end
 
     # The second part of #539 - make sure resources pass the arguments

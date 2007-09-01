@@ -110,7 +110,7 @@ module Functions
     # Include the specified classes
     newfunction(:include, :doc => "Evaluate one or more classes.") do |vals|
         vals = [vals] unless vals.is_a?(Array)
-        klasses = compile.evaluate_classes(vals)
+        klasses = compile.evaluate_classes(vals, self)
 
         missing = vals.find_all do |klass|
             ! klasses.include?(klass)

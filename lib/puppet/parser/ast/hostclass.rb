@@ -1,10 +1,10 @@
-require 'puppet/parser/ast/component'
+require 'puppet/parser/ast/definition'
 
 class Puppet::Parser::AST
     # The code associated with a class.  This is different from components
     # in that each class is a singleton -- only one will exist for a given
     # node.
-    class HostClass < AST::Component
+    class HostClass < AST::Definition
         @name = :class
 
         # Are we a child of the passed class?  Do a recursive search up our

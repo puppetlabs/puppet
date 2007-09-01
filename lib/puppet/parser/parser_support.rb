@@ -336,7 +336,7 @@ class Puppet::Parser::Parser
             args[param] = options[param] if options[param]
         end
 
-        @astset.definitions[name] = ast AST::Component, args
+        @astset.definitions[name] = ast AST::Definition, args
     end
 
     # Create a new node.  Nodes are special, because they're stored in a global

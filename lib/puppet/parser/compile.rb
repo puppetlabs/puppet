@@ -70,7 +70,7 @@ class Puppet::Parser::Compile
 
         evaluate_ast_node()
 
-        evaluate_classes()
+        evaluate_node_classes()
 
         evaluate_generators()
 
@@ -109,10 +109,16 @@ class Puppet::Parser::Compile
         @environment
     end
 
-    # Evaluate each class in turn.  If there are any classes we can't find,
-    # just tag the configuration and move on.
-    def evaluate_classes(classes = nil)
-        classes ||= node.classes
+    # Evaluate all of the classes specified by the node.
+    def evaluate_node_classes
+        evaluate_classes(@node.classes, @parser.findclass("", ""))
+    end
+
+    # Evaluate each specified class in turn.  If there are any classes we can't
+    # find, just tag the configuration and move on.  This method really just
+    # creates resource objects that point back to the classes, and then the
+    # resources are themselves evaluated later in the process.
+    def evaluate_classes(classes, source)
         found = []
         classes.each do |name|
             if klass = @parser.findclass("", name)

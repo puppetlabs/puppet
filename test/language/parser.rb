@@ -785,7 +785,7 @@ file { "/tmp/yayness":
 
         assert_instance_of(AST::HostClass, result.classes["yay"], "Did not create 'yay' class")
         assert_instance_of(AST::HostClass, result.classes[""], "Did not create main class")
-        assert_instance_of(AST::Component, result.definitions["bar"], "Did not create 'bar' definition")
+        assert_instance_of(AST::Definition, result.definitions["bar"], "Did not create 'bar' definition")
         assert_instance_of(AST::Node, result.nodes["foo"], "Did not create 'foo' node")
     end
 
@@ -1118,7 +1118,7 @@ file { "/tmp/yayness":
         mk_module(name, :define => true, :init => [name])
 
         klass = parser.finddefine("", name)
-        assert_instance_of(AST::Component, klass, "Did not autoload class from module init file")
+        assert_instance_of(AST::Definition, klass, "Did not autoload class from module init file")
         assert_equal(name, klass.classname, "Incorrect class was returned")
 
         # Now try it with namespace classes where both classes are in the init file

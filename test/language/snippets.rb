@@ -11,7 +11,6 @@ require 'puppettest'
 
 class TestSnippets < Test::Unit::TestCase
 	include PuppetTest
-    include ObjectSpace
 
     def setup
         super
@@ -458,15 +457,28 @@ class TestSnippets < Test::Unit::TestCase
             #eval("alias %s %s" % [testname, mname])
             testname = ("test_" + mname).intern
             self.send(:define_method, testname) {
+                facts = {
+                    "hostname" => "testhost",
+                    "domain" => "domain.com",
+                    "ipaddress" => "127.0.0.1",
+                    "fqdn" => "testhost.domain.com"
+                }
+                Facter.stubs(:each)
+                facts.each do |name, value|
+                    Facter.stubs(:value).with(name).returns(value)
+                end
                 # first parse the file
                 server = Puppet::Network::Handler.master.new(
                     :Manifest => snippet(file),
                     :Local => true
                 )
+                server.send(:fact_handler).stubs(:set)
+                server.send(:fact_handler).stubs(:get).returns(facts)
                 client = Puppet::Network::Client.master.new(
                     :Master => server,
                     :Cache => false
                 )
+                client.class.stubs(:facts).returns(facts)
 
                 assert(client.local)
                 assert_nothing_raised {

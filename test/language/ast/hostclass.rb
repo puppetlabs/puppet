@@ -140,7 +140,7 @@ class TestASTHostClass < Test::Unit::TestCase
 
         ret = nil
         assert_nothing_raised do
-            ret = scope.compile.evaluate_classes(["sub"])
+            ret = scope.compile.evaluate_classes(["sub"], scope)
         end
 
         subscope = scope.class_scope(scope.findclass("sub"))
