@@ -90,13 +90,13 @@ class ResourceDef < AST::Branch
         # many times.
         objtitles.collect { |objtitle|
             exceptwrap :type => Puppet::ParseError do
-                exp = self.exported || scope.exported
+                exp = self.exported || scope.exported?
                 # We want virtual to be true if exported is true.  We can't
                 # just set :virtual => self.virtual in the initialization,
                 # because sometimes the :virtual attribute is set *after*
                 # :exported, in which case it clobbers :exported if :exported
                 # is true.  Argh, this was a very tough one to track down.
-                virt = self.virtual || exported
+                virt = self.virtual || scope.virtual? || exported
                 obj = Puppet::Parser::Resource.new(
                     :type => objtype,
                     :title => objtitle,
@@ -112,7 +112,7 @@ class ResourceDef < AST::Branch
                 # And then store the resource in the scope.
                 # XXX At some point, we need to switch all of this to return
                 # objects instead of storing them like this.
-                scope.setresource(obj)
+                scope.compile.store_resource(scope, obj)
                 obj
             end
         }.reject { |obj| obj.nil? }

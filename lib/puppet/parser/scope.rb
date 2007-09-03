@@ -255,21 +255,6 @@ class Puppet::Parser::Scope
         nil
     end
 
-    # Add a new object to our object table and the global list, and do any necessary
-    # checks.
-    def setresource(resource)
-        @compile.store_resource(self, resource)
-
-        # Mark the resource as virtual or exported, as necessary.
-        if self.exported?
-            resource.exported = true
-        elsif self.virtual?
-            resource.virtual = true
-        end
-
-        return resource
-    end
-
     # Override a parameter in an existing object.  If the object does not yet
     # exist, then cache the override in a global table, so it can be flushed
     # at the end.

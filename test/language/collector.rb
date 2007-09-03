@@ -46,8 +46,8 @@ class TestCollector < Test::Unit::TestCase
             :virtual => true, :params => {:owner => "root"})
         two = mkresource(:type => "file", :title => "/tmp/virtual2",
             :virtual => true, :params => {:owner => "root"})
-        @scope.setresource one
-        @scope.setresource two
+        @scope.compile.store_resource @scope, one
+        @scope.compile.store_resource @scope, two
 
         # Now run the collector again and make sure it finds our resource
         assert_nothing_raised do
@@ -68,7 +68,7 @@ class TestCollector < Test::Unit::TestCase
         # Now add our third resource
         three = mkresource(:type => "file", :title => "/tmp/virtual3",
             :virtual => true, :params => {:owner => "root"})
-        @scope.setresource three
+        @scope.compile.store_resource @scope, three
 
         # Run the collection
         assert_nothing_raised do
@@ -84,12 +84,12 @@ class TestCollector < Test::Unit::TestCase
         # Make a virtual resource
         virtual = mkresource(:type => "file", :title => "/tmp/virtual",
             :virtual => true, :params => {:owner => "root"})
-        @scope.setresource virtual
+        @scope.compile.store_resource @scope, virtual
 
         # And a non-virtual
         real = mkresource(:type => "file", :title => "/tmp/real",
             :params => {:owner => "root"})
-        @scope.setresource real
+        @scope.compile.store_resource @scope, real
 
         # Now make a collector
         coll = nil
@@ -163,7 +163,7 @@ class TestCollector < Test::Unit::TestCase
         # Make a resource
         one = mkresource(:type => "file", :title => "/tmp/virtual1",
             :virtual => true, :params => {:owner => "root"})
-        @scope.setresource one
+        @scope.compile.store_resource @scope, one
 
         # Now perform the collection again, and it should still be there
         assert_nothing_raised do
@@ -176,5 +176,3 @@ class TestCollector < Test::Unit::TestCase
         assert_equal(false, one.virtual?, "One was not realized")
     end
 end
-
-# $Id$
