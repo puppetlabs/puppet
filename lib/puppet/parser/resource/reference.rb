@@ -15,7 +15,7 @@ class Puppet::Parser::Resource::Reference
             end
         end
 
-        self.builtin
+        @builtin
     end
 
     def builtintype
@@ -26,13 +26,28 @@ class Puppet::Parser::Resource::Reference
         end
     end
 
-    # Return the defined type for our obj.
+    # Return the defined type for our obj.  This can return classes,
+    # definitions or nodes.
     def definedtype
         unless defined? @definedtype
-            if tmp = @scope.finddefine(self.type)
+            type = self.type.to_s.downcase
+            name = self.title
+            case type
+            when "class": # look for host classes
+                tmp = @scope.findclass(self.title)
+            when "node": # look for node definitions
+                tmp = @scope.parser.nodes[self.title]
+            else # normal definitions
+                # We have to swap these variables around so the errors are right.
+                name = type
+                type = "type"
+                tmp = @scope.finddefine(self.type)
+            end
+
+            if tmp
                 @definedtype = tmp
             else
-                fail Puppet::ParseError, "Could not find resource type '%s'" % self.type
+                fail Puppet::ParseError, "Could not find resource %s '%s'" % [type, name]
             end
         end
 

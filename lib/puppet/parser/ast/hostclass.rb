@@ -1,7 +1,7 @@
 require 'puppet/parser/ast/definition'
 
 class Puppet::Parser::AST
-    # The code associated with a class.  This is different from components
+    # The code associated with a class.  This is different from definitions
     # in that each class is a singleton -- only one will exist for a given
     # node.
     class HostClass < AST::Definition
@@ -20,14 +20,11 @@ class Puppet::Parser::AST
         end
 
         # Evaluate the code associated with this class.
-        def evaluate(hash)
-            scope = hash[:scope]
-            args = hash[:arguments]
-
-            # Verify that we haven't already been evaluated, and if we have been evaluated,
-            # make sure that we match the class.
+        def evaluate(options)
+            scope = options[:scope]
+            # Verify that we haven't already been evaluated.  This is
+            # what provides the singleton aspect.
             if existing_scope = scope.class_scope(self)
-                #if existing_scope.source.object_id == self.object_id
                 Puppet.debug "%s class already evaluated" % @type
                 return nil
             end
@@ -40,7 +37,7 @@ class Puppet::Parser::AST
                 pnames = scope.namespaces
             end
 
-            unless hash[:nosubscope]
+            unless options[:nosubscope]
                 scope = subscope(scope)
             end
 
@@ -62,7 +59,7 @@ class Puppet::Parser::AST
             end
         end
 
-        def initialize(hash)
+        def initialize(options)
             @parentclass = nil
             super
         end
@@ -76,5 +73,3 @@ class Puppet::Parser::AST
         end
     end
 end
-
-# $Id$

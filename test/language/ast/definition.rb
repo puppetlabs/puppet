@@ -49,24 +49,17 @@ class TestASTDefinition < Test::Unit::TestCase
                         "owner" => varref("owner"), "mode" => varref("mode"))]
             )
 
-        # Now call it a couple of times
-        # First try it without a required param
-        assert_raise(Puppet::ParseError, "Did not fail when a required parameter was not provided") do
-            klass.evaluate_resource(:scope => scope,
-                :name => "bad",
-                :arguments => {"owner" => "nobody"}
-            )
-        end
+        resource = stub 'resource',
+            :title => "first",
+            :name => "first",
+            :type => "yayness",
+            :to_hash => {"mode" => "755"},
+            :exported => false,
+            :virtual => false 
 
-        # And make sure it didn't create the file
-        assert_nil(config.findresource("File[/tmp/bad]"),
-            "Made file with invalid params")
-
+        resource.stubs(:title)
         assert_nothing_raised do
-            klass.evaluate_resource(:scope => scope,
-                :title => "first",
-                :arguments => {"mode" => "755"}
-            )
+            klass.evaluate(:scope => scope, :resource => resource)
         end
 
         firstobj = config.findresource("File[/tmp/first]")
@@ -79,18 +72,20 @@ class TestASTDefinition < Test::Unit::TestCase
 
         # Make sure we can't evaluate it with the same args
         assert_raise(Puppet::ParseError) do
-            klass.evaluate_resource(:scope => scope,
-                :title => "first",
-                :arguments => {"mode" => "755"}
-            )
+            klass.evaluate(:scope => scope, :resource => resource)
         end
 
         # Now create another with different args
+        resource2 = stub 'resource',
+            :title => "second",
+            :name => "second",
+            :type => "yayness",
+            :to_hash => {"mode" => "755", "owner" => "daemon"},
+            :exported => false,
+            :virtual => false 
+
         assert_nothing_raised do
-            klass.evaluate_resource(:scope => scope,
-                :title => "second",
-                :arguments => {"mode" => "755", "owner" => "daemon"}
-            )
+            klass.evaluate(:scope => scope, :resource => resource2)
         end
 
         secondobj = config.findresource("File[/tmp/second]")
@@ -104,32 +99,39 @@ class TestASTDefinition < Test::Unit::TestCase
 
     # #539 - definitions should support both names and titles
     def test_names_and_titles
-        parser, scope, source = mkclassframing
+        parser = mkparser
+        scope = mkscope :parser => parser
 
         [
-        {:name => "one", :title => "two"},
-        {:title => "mytitle"},
+            {:name => "one", :title => "two"},
+            {:title => "mytitle"}
         ].each_with_index do |hash, i|
-
-            # Create a definition that uses both name and title
+            # Create a definition that uses both name and title.  Put this
+            # inside the loop so the subscope expectations work.
             klass = parser.newdefine "yayness%s" % i
 
             subscope = klass.subscope(scope, "yayness%s" % i)
 
             klass.expects(:subscope).returns(subscope)
 
-            args = {:title => hash[:title]}
+            resource = stub 'resource',
+                :title => hash[:title],
+                :name => hash[:name] || hash[:title],
+                :type => "yayness%s" % i,
+                :to_hash => {},
+                :exported => false,
+                :virtual => false 
+
             if hash[:name]
-                args[:arguments] = {:name => hash[:name]}
+                resource.stubs(:to_hash).returns({:name => hash[:name]})
             end
-            args[:scope] = scope
+
             assert_nothing_raised("Could not evaluate definition with %s" % hash.inspect) do
-                klass.evaluate_resource(args)
+                klass.evaluate(:scope => scope, :resource => resource)
             end
 
             name = hash[:name] || hash[:title]
             title = hash[:title]
-            args[:name] ||= name
 
             assert_equal(name, subscope.lookupvar("name"),
                 "Name did not get set correctly")
@@ -137,9 +139,9 @@ class TestASTDefinition < Test::Unit::TestCase
                 "title did not get set correctly")
 
             [:name, :title].each do |param|
-                val = args[param]
+                val = resource.send(param)
                 assert(subscope.tags.include?(val),
-                    "Scope was not tagged with %s" % val)
+                    "Scope was not tagged with %s '%s'" % [param, val])
             end
         end
     end
@@ -153,4 +155,3 @@ class TestASTDefinition < Test::Unit::TestCase
         assert_equal("one::two", klass.classname, "Class did not get fully qualified class name")
     end
 end
-# $Id$

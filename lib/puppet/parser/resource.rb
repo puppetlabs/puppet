@@ -3,7 +3,6 @@
 class Puppet::Parser::Resource
     require 'puppet/parser/resource/param'
     require 'puppet/parser/resource/reference'
-    ResParam = Struct.new :name, :value, :source, :line, :file
     include Puppet::Util
     include Puppet::Util::MethodHelper
     include Puppet::Util::Errors
@@ -52,13 +51,7 @@ class Puppet::Parser::Resource
         if klass = @ref.definedtype
             finish()
             scope.compile.delete_resource(self)
-            return klass.evaluate_resource(:scope => scope,
-                                  :type => self.type,
-                                  :title => self.title,
-                                  :arguments => self.to_hash,
-                                  :virtual => self.virtual,
-                                  :exported => self.exported
-            )
+            return klass.evaluate(:scope => scope, :resource => self)
         elsif builtin?
             devfail "Cannot evaluate a builtin type"
         else
@@ -186,6 +179,15 @@ class Puppet::Parser::Resource
                                   }, :modify => Proc.new { |db, mem|
                                       # nothing here
                                   })
+    end
+
+    # Return the resource name, or the title if no name
+    # was specified.
+    def name
+        unless defined? @name
+            @name = self[:name] || self.title
+        end
+        @name
     end
 
     # This *significantly* reduces the number of calls to Puppet.[].

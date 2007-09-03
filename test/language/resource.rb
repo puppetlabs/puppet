@@ -254,12 +254,8 @@ class TestResource < PuppetTest::TestCase
         res.scope.expects(:compile).returns(config)
         config.expects(:delete_resource).with(res)
 
-        args = {:scope => res.scope, :arguments => res.to_hash}
-        # This is insane; FIXME we need to redesign how classes and components are evaluated.
-        [:type, :title, :virtual, :exported].each do |param|
-            args[param] = res.send(param)
-        end
-        type.expects(:evaluate_resource).with(args)
+        args = {:scope => res.scope, :resource => res}
+        type.expects(:evaluate).with(args)
 
         res.evaluate
     end

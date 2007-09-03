@@ -27,26 +27,14 @@ class Puppet::Parser::AST
             false
         end
 
-        def evaluate_resource(hash)
-            origscope = hash[:scope]
-            title = hash[:title]
-            args = symbolize_options(hash[:arguments] || {})
+        def evaluate(options)
+            origscope = options[:scope]
+            resource = options[:resource]
 
-            name = args[:name] || title
-
-            exported = hash[:exported]
-            virtual = hash[:virtual]
-
-            pscope = origscope
-            scope = subscope(pscope, title)
-
-            if virtual or origscope.virtual?
-                scope.virtual = true
-            end
-
-            if exported or origscope.exported?
-                scope.exported = true
-            end
+            # Create a new scope.
+            scope = subscope(origscope, resource.title)
+            scope.virtual = true if resource.virtual or origscope.virtual?
+            scope.exported = true if resource.exported or origscope.exported?
 
             # Additionally, add a tag for whatever kind of class
             # we are
@@ -54,51 +42,13 @@ class Puppet::Parser::AST
                 @classname.split(/::/).each { |tag| scope.tag(tag) }
             end
 
-            [name, title].each do |str|
+            [resource.name, resource.title].each do |str|
                 unless str.nil? or str =~ /[^\w]/ or str == ""
                     scope.tag(str)
                 end
             end
 
-            # define all of the arguments in our local scope
-            if self.arguments
-                # Verify that all required arguments are either present or
-                # have been provided with defaults.
-                self.arguments.each { |arg, default|
-                    arg = symbolize(arg)
-                    unless args.include?(arg)
-                        if defined? default and ! default.nil?
-                            default = default.safeevaluate :scope => scope
-                            args[arg] = default
-                            #Puppet.debug "Got default %s for %s in %s" %
-                            #    [default.inspect, arg.inspect, @name.inspect]
-                        else
-                            parsefail "Must pass %s to %s of type %s" %
-                                    [arg,title,@classname]
-                        end
-                    end
-                }
-            end
-
-            # Set each of the provided arguments as variables in the
-            # component's scope.
-            args.each { |arg,value|
-                unless validattr?(arg)
-                    parsefail "%s does not accept attribute %s" % [@classname, arg]
-                end
-
-                exceptwrap do
-                    scope.setvar(arg.to_s,args[arg])
-                end
-            }
-
-            unless args.include? :title
-                scope.setvar("title",title)
-            end
-
-            unless args.include? :name
-                scope.setvar("name",name)
-            end
+            set_resource_parameters(scope, resource)
 
             if self.code
                 return self.code.safeevaluate(:scope => scope)
@@ -130,7 +80,7 @@ class Puppet::Parser::AST
             @arguments.each do |arg, defvalue|
                 next unless Puppet::Type.metaparamclass(arg)
                 if defvalue
-                    warnonce "%s is a metaparam; this value will inherit to all contained elements" % arg
+                    warnonce "%s is a metaparam; this value will inherit to all contained resources" % arg
                 else
                     raise Puppet::ParseError,
                         "%s is a metaparameter; please choose another name" %
@@ -183,6 +133,7 @@ class Puppet::Parser::AST
             }
 
             args[:name] = name if name
+            oldscope = scope
             scope = scope.newscope(args)
             scope.source = self
 
@@ -220,7 +171,46 @@ class Puppet::Parser::AST
                 return false
             end
         end
+
+        private
+
+        # Set any arguments passed by the resource as variables in the scope.
+        def set_resource_parameters(scope, resource)
+            args = symbolize_options(resource.to_hash || {})
+
+            # Verify that all required arguments are either present or
+            # have been provided with defaults.
+            if self.arguments
+                self.arguments.each { |arg, default|
+                    arg = symbolize(arg)
+                    unless args.include?(arg)
+                        if defined? default and ! default.nil?
+                            default = default.safeevaluate :scope => scope
+                            args[arg] = default
+                            #Puppet.debug "Got default %s for %s in %s" %
+                            #    [default.inspect, arg.inspect, @name.inspect]
+                        else
+                            parsefail "Must pass %s to %s of type %s" %
+                                    [arg,title,@classname]
+                        end
+                    end
+                }
+            end
+
+            # Set each of the provided arguments as variables in the
+            # definition's scope.
+            args.each { |arg,value|
+                unless validattr?(arg)
+                    parsefail "%s does not accept attribute %s" % [@classname, arg]
+                end
+
+                exceptwrap do
+                    scope.setvar(arg.to_s, args[arg])
+                end
+            }
+
+            scope.setvar("title", resource.title) unless args.include? :title
+            scope.setvar("name", resource.name) unless args.include? :name
+        end
     end
 end
-
-# $Id$

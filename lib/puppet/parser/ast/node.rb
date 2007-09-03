@@ -8,10 +8,10 @@ class Puppet::Parser::AST
         attr_accessor :name
 
         #def evaluate(scope, facts = {})
-        def evaluate(hash)
-            scope = hash[:scope]
+        def evaluate(options)
+            scope = options[:scope]
 
-            #pscope = if ! Puppet[:lexical] or hash[:asparent]
+            #pscope = if ! Puppet[:lexical] or options[:asparent]
             #    @scope
             #else
             #    origscope
@@ -43,7 +43,7 @@ class Puppet::Parser::AST
             return scope
         end
 
-        def initialize(hash)
+        def initialize(options)
             @parentclass = nil
             super
 

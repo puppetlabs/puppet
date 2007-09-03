@@ -132,6 +132,7 @@ class TestASTHostClass < Test::Unit::TestCase
         scope = mkscope
         parser = scope.compile.parser
 
+        source = parser.newclass ""
         parser.newclass("base")
         fun = parser.newdefine("base::fun")
         parser.newclass("middle", :parent => "base")
@@ -140,7 +141,7 @@ class TestASTHostClass < Test::Unit::TestCase
 
         ret = nil
         assert_nothing_raised do
-            ret = scope.compile.evaluate_classes(["sub"], scope)
+            ret = scope.compile.evaluate_classes(["sub"], source)
         end
 
         subscope = scope.class_scope(scope.findclass("sub"))
@@ -162,5 +163,3 @@ class TestASTHostClass < Test::Unit::TestCase
         assert(fun == result, "found incorrect parent-defined definition from sub")
     end
 end
-
-# $Id$
