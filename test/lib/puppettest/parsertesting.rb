@@ -316,7 +316,7 @@ module PuppetTest::ParserTesting
 
         comp = nil
         assert_nothing_raised {
-            comp = config.to_type
+            comp = config.extract.to_type
         }
 
         assert_apply(comp)

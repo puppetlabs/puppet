@@ -4,8 +4,8 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 describe Puppet::Parser::Compile, " when compiling" do
     before do
-        @node = mock 'node'
-        @parser = mock 'parser'
+        @node = stub 'node', :name => 'mynode'
+        @parser = stub 'parser', :version => "1.0"
         @compile = Puppet::Parser::Compile.new(@node, @parser)
     end
 
@@ -31,10 +31,8 @@ describe Puppet::Parser::Compile, " when compiling" do
     it "should evaluate any existing classes named in the node" do
         classes = %w{one two three four}
         main = stub 'main'
-        one = stub 'one'
-        one.expects(:safeevaluate).with(:scope => @compile.topscope)
-        three = stub 'three'
-        three.expects(:safeevaluate).with(:scope => @compile.topscope)
+        one = stub 'one', :classname => "one"
+        three = stub 'three', :classname => "three"
         @node.stubs(:name).returns("whatever")
         @compile.parser.expects(:findclass).with("", "").returns(main)
         @compile.parser.expects(:findclass).with("", "one").returns(one)
@@ -42,7 +40,13 @@ describe Puppet::Parser::Compile, " when compiling" do
         @compile.parser.expects(:findclass).with("", "three").returns(three)
         @compile.parser.expects(:findclass).with("", "four").returns(nil)
         @node.stubs(:classes).returns(classes)
-        compile_stub(:evaluate_node_classes)
-        @compile.compile
+        @compile.send :evaluate_main
+        @compile.send :evaluate_node_classes
+
+        # Now make sure we've created the appropriate resources.
+        @compile.resources.find { |r| r.to_s == "Class[one]" }.should be_an_instance_of(Puppet::Parser::Resource)
+        @compile.resources.find { |r| r.to_s == "Class[three]" }.should be_an_instance_of(Puppet::Parser::Resource)
+        @compile.resources.find { |r| r.to_s == "Class[two]" }.should be_nil
+        @compile.resources.find { |r| r.to_s == "Class[four]" }.should be_nil
     end
 end

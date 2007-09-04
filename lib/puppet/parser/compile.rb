@@ -82,7 +82,7 @@ class Puppet::Parser::Compile
             store()
         end
 
-        return @configuration.extract
+        return @configuration
     end
 
     # FIXME There are no tests for this.
@@ -117,13 +117,13 @@ class Puppet::Parser::Compile
     # creates resource objects that point back to the classes, and then the
     # resources are themselves evaluated later in the process.
     def evaluate_classes(classes, scope)
+        unless scope.source
+            raise Puppet::DevError, "No source for scope passed to evaluate_classes"
+        end
         found = []
         classes.each do |name|
             # If we can find the class, then make a resource that will evaluate it.
             if klass = scope.findclass(name)
-                unless scope.source
-                    raise Puppet::DevError, "No source for %s" % scope.to_s
-                end
                 # Create a resource to model this class, and then add it to the list
                 # of resources.
                 resource = Puppet::Parser::Resource.new(:type => "class", :title => klass.classname, :scope => scope, :source => scope.source)
@@ -406,6 +406,7 @@ class Puppet::Parser::Compile
 
         # For maintaining the relationship between scopes and their resources.
         @configuration = Puppet::Node::Configuration.new(@node.name)
+        @configuration.version = @parser.version
     end
 
     # Set the node's parameters into the top-scope as variables.

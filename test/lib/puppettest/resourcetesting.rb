@@ -1,21 +1,6 @@
 module PuppetTest::ResourceTesting
     Parser = Puppet::Parser
     AST = Puppet::Parser::AST
-    def mkclassframing(parser = nil)
-        parser ||= mkparser
-
-        parser.newdefine("resource", :arguments => [%w{one}, %w{two value}, %w{three}])
-        parser.newclass("")
-        source = parser.newclass("base")
-        parser.newclass("sub1", :parent => "base")
-        parser.newclass("sub2", :parent => "base")
-        parser.newclass("other")
-
-        config = mkconfig(:parser => parser)
-        config.topscope.source = source
-
-        return parser, config.topscope, source
-    end
 
     def mkevaltest(parser = nil)
         parser ||= mkparser

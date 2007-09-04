@@ -5,7 +5,7 @@ require 'puppet/external/gratr/digraph'
 # of the information in the configuration, including the resources
 # and the relationships between them.
 class Puppet::Node::Configuration < GRATR::Digraph
-    attr_accessor :name
+    attr_accessor :name, :version
     attr_reader :extraction_format
 
     # Add classes to our class list.

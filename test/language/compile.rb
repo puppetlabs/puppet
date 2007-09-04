@@ -23,7 +23,7 @@ class TestCompile < Test::Unit::TestCase
 
     def mkparser
         # This should mock an interpreter
-        @parser = mock 'parser'
+        @parser = stub 'parser', :version => "1.0"
     end
 
     def mkcompile(options = {})
@@ -38,7 +38,7 @@ class TestCompile < Test::Unit::TestCase
     def test_initialize
         compile = nil
         node = stub 'node', :name => "foo"
-        parser = mock 'parser'
+        parser = stub 'parser', :version => "1.0"
         assert_nothing_raised("Could not init compile with all required options") do
             compile = Compile.new(node, parser)
         end
@@ -150,11 +150,10 @@ class TestCompile < Test::Unit::TestCase
     # The heart of the action.
     def test_compile
         compile = mkcompile
-        compile.instance_variable_get("@configuration").expects(:extract).returns(:config)
         [:set_node_parameters, :evaluate_main, :evaluate_ast_node, :evaluate_node_classes, :evaluate_generators, :fail_on_unevaluated, :finish].each do |method|
             compile.expects(method)
         end
-        assert_equal(:config, compile.compile, "Did not return the results of the extraction")
+        assert_instance_of(Puppet::Node::Configuration, compile.compile, "Did not return the configuration")
     end
 
     # Test setting the node's parameters into the top scope.

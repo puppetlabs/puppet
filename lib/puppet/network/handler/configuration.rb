@@ -37,7 +37,9 @@ class Puppet::Network::Handler
             # Add any external data to the node.
             add_node_data(node)
 
-            return translate(compile(node))
+            configuration = compile(node)
+
+            return translate(configuration)
         end
 
         def initialize(options = {})
@@ -214,5 +216,3 @@ class Puppet::Network::Handler
         end
     end
 end
-
-# $Id$

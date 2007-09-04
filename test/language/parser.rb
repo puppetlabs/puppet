@@ -622,7 +622,7 @@ file { "/tmp/yayness":
 
         code = nil
         assert_nothing_raised do
-            code = interp.compile(mknode).flatten
+            code = interp.compile(mknode).extract.flatten
         end
         assert(code.length == 1, "Did not get the file")
         assert_instance_of(Puppet::TransObject, code[0])

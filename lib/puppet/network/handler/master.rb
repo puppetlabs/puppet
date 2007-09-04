@@ -77,7 +77,9 @@ class Puppet::Network::Handler
             fact_handler.set(client, facts)
 
             # And get the configuration from the config handler
-            return config_handler.configuration(client)
+            config = config_handler.configuration(client)
+
+            return translate(config.extract)
         end
 
         def local=(val)
@@ -138,6 +140,15 @@ class Puppet::Network::Handler
                 @fact_handler = Puppet::Network::Handler.handler(:facts).new :local => local?
             end
             @fact_handler
+        end
+
+        # Translate our configuration appropriately for sending back to a client.
+        def translate(config)
+            if local?
+                config
+            else
+                CGI.escape(config.to_yaml(:UseBlock => true))
+            end
         end
     end
 end

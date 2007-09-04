@@ -68,7 +68,7 @@ class TestAST < Test::Unit::TestCase
 
     # make sure our resourcedefaults ast object works correctly.
     def test_resourcedefaults
-        interp, scope, source = mkclassframing
+        scope = mkscope
 
         # Now make some defaults for files
         args = {:source => "/yay/ness", :group => "yayness"}
@@ -166,16 +166,16 @@ class TestAST < Test::Unit::TestCase
     end
 
     def test_virtual_collexp
-        @interp, @scope, @source = mkclassframing
+        scope = mkscope
 
         # make a resource
         resource = mkresource(:type => "file", :title => "/tmp/testing",
-            :params => {:owner => "root", :group => "bin", :mode => "644"})
+            :scope => scope, :params => {:owner => "root", :group => "bin", :mode => "644"})
 
         run_collection_queries(:virtual) do |string, result, query|
             code = nil
             assert_nothing_raised do
-                str, code = query.evaluate :scope => @scope
+                str, code = query.evaluate :scope => scope
             end
 
             assert_instance_of(Proc, code)
@@ -186,5 +186,3 @@ class TestAST < Test::Unit::TestCase
         end
     end
 end
-
-# $Id$

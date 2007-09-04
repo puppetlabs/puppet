@@ -213,14 +213,15 @@ class TestLangFunctions < Test::Unit::TestCase
 
         Puppet[:environment] = "yay"
 
-        version = interp.compile(node)
-
-        objects = nil
+        configuration = nil
         assert_nothing_raised {
-            objects = interp.compile(node)
+            configuration = interp.compile(node)
         }
 
-        fileobj = objects[0]
+        version = configuration.version
+
+        fileobj = configuration.vertices.find { |r| r.title == file }
+        assert(fileobj, "File was not in configuration")
 
         assert_equal("original text\n", fileobj["content"],
             "Template did not work")
@@ -234,10 +235,7 @@ class TestLangFunctions < Test::Unit::TestCase
             f.puts "new text"
         end
 
-        assert_nothing_raised {
-            objects = interp.compile(node)
-        }
-        newversion = interp.compile(node)
+        newversion = interp.compile(node).version
 
         assert(version != newversion, "Parse date did not change")
     end

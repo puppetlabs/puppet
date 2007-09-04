@@ -419,17 +419,17 @@ Host <<||>>"
             )
         }
 
-        objects = nil
+        config = nil
         # We run it twice because we want to make sure there's no conflict
         # if we pull it up from the database.
         node = mknode
         node.parameters = {"hostname" => node.name}
         2.times { |i|
             assert_nothing_raised {
-                objects = interp.compile(node)
+                config = interp.compile(node)
             }
 
-            flat = objects.flatten
+            flat = config.extract.flatten
 
             %w{puppet myhost}.each do |name|
                 assert(flat.find{|o| o.name == name }, "Did not find #{name}")
@@ -441,7 +441,7 @@ Host <<||>>"
     end
 
     def test_namespaces
-        parser, scope, source = mkclassframing
+        scope = mkscope
 
         assert_equal([""], scope.namespaces,
             "Started out with incorrect namespaces")
