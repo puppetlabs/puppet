@@ -56,16 +56,5 @@ class Puppet::Parser::AST
         def evaluate(hash)
             return @statements.safeevaluate(hash)
         end
-
-        def tree(indent = 0)
-            rettree = [
-                @value.tree(indent + 1),
-                ((@@indline * indent) + self.typewrap(self.pin)),
-                @statements.tree(indent + 1)
-            ]
-            return rettree.flatten.join("\n")
-        end
     end
 end
-
-# $Id$

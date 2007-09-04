@@ -26,18 +26,5 @@ class Puppet::Parser::AST
                 end
             end
         end
-
-        def tree(indent = 0)
-            rettree = [
-                @test.tree(indent + 1),
-                ((@@indline * indent) + self.typewrap(self.pin)),
-                @statements.tree(indent + 1),
-                @else.tree(indent + 1)
-            ]
-
-            return rettree.flatten.join("\n")
-        end
     end
 end
-
-# $Id$

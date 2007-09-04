@@ -34,7 +34,11 @@ class Puppet::Parser::Resource::Reference
             name = self.title
             case type
             when "class": # look for host classes
-                tmp = @scope.findclass(self.title)
+                if self.title == :main
+                    tmp = @scope.findclass("")
+                else
+                    tmp = @scope.findclass(self.title)
+                end
             when "node": # look for node definitions
                 tmp = @scope.parser.nodes[self.title]
             else # normal definitions

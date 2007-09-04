@@ -91,5 +91,3 @@ class TestASTResourceRef < Test::Unit::TestCase
         end
     end
 end
-
-# $Id$

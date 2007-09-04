@@ -33,8 +33,6 @@ class Puppet::Parser::AST
 
             # Create a new scope.
             scope = subscope(origscope, resource)
-            scope.virtual = true if resource.virtual or origscope.virtual?
-            scope.exported = true if resource.exported or origscope.exported?
 
             # Additionally, add a tag for whatever kind of class
             # we are
@@ -126,20 +124,15 @@ class Puppet::Parser::AST
 
         # Create a new subscope in which to evaluate our code.
         def subscope(scope, resource = nil)
-            if resource
-                type = resource.type
-            else
-                type = self.classname
+            unless resource
+                raise ArgumentError, "Resources are required when creating subscopes"
             end
             args = {
                 :resource => resource,
-                :type => type,
                 :keyword => self.keyword,
                 :namespace => self.namespace,
                 :source => self
             }
-
-            args[:name] = resource.title if resource
 
             oldscope = scope
             scope = scope.newscope(args)

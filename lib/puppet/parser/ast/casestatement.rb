@@ -51,20 +51,8 @@ class Puppet::Parser::AST
             return retvalue
         end
 
-        def tree(indent = 0)
-            rettree = [
-                @test.tree(indent + 1),
-                ((@@indline * indent) + self.typewrap(self.pin)),
-                @options.tree(indent + 1)
-            ]
-
-            return rettree.flatten.join("\n")
-        end
-
         def each
             [@test,@options].each { |child| yield child }
         end
     end
 end
-
-# $Id$

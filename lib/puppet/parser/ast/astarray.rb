@@ -65,21 +65,6 @@ class Puppet::Parser::AST
 
             return self
         end
-
-        # Convert to a string.  Only used for printing the parse tree.
-        def to_s
-            return "[" + @children.collect { |child|
-                child.to_s
-            }.join(", ") + "]"
-        end
-
-        # Print the parse tree.
-        def tree(indent = 0)
-            #puts((AST.indent * indent) + self.pin)
-            self.collect { |child|
-                child.tree(indent)
-            }.join("\n" + (AST.midline * (indent+1)) + "\n")
-        end
     end
 
     # A simple container class, containing the parameters for an object.
@@ -88,5 +73,3 @@ class Puppet::Parser::AST
     # meant completely different things.
     class ResourceInst < ASTArray; end
 end
-
-# $Id$

@@ -26,5 +26,3 @@ class Collection < AST::Branch
     end
 end
 end
-
-# $Id$

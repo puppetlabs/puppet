@@ -7,7 +7,6 @@ class Puppet::Parser::AST
         @name = :node
         attr_accessor :name
 
-        #def evaluate(scope, facts = {})
         def evaluate(options)
             scope = options[:scope]
 
@@ -24,7 +23,7 @@ class Puppet::Parser::AST
             end
 
             scope = scope.newscope(
-                :type => self.name,
+                :resource => options[:resource],
                 :keyword => @keyword,
                 :source => self,
                 :namespace => "" # nodes are always in ""

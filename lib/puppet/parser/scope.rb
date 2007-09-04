@@ -19,20 +19,6 @@ class Puppet::Parser::Scope
     attr_accessor :base, :keyword, :nodescope
     attr_accessor :top, :translated, :compile
 
-    # Temporary accessors.
-    attr_accessor :name, :type, :title, :exported, :virtual
-    def exported?
-        exported
-    end
-    def virtual?
-        virtual
-    end
-    #[:name, :type, :title, :exported?, :virtual].each do |method|
-    #    define_method(method) do
-    #        @resource.send(method)
-    #    end
-    #end
-
     # Proxy accessors
     def host
         @compile.node.name
@@ -59,15 +45,6 @@ class Puppet::Parser::Scope
             @namespaces = [ns]
         else
             @namespaces << ns
-        end
-    end
-
-    # Is the type a builtin type?
-    def builtintype?(type)
-        if typeklass = Puppet::Type.type(type)
-            return typeklass
-        else
-            return false
         end
     end
 
@@ -379,27 +356,7 @@ class Puppet::Parser::Scope
 
     # Used mainly for logging
     def to_s
-        if self.name
-            return "%s[%s]" % [@type, @name]
-        else
-            return self.type.to_s
-        end
-    end
-
-    # Convert our resource to a TransBucket.
-    def to_trans
-        bucket = Puppet::TransBucket.new([])
-
-        case self.type
-        when "": bucket.type = "main"
-        when nil: devfail "A Scope with no type"
-        else
-            bucket.type = @type
-        end
-        if self.name
-            bucket.name = self.name
-        end
-        return bucket
+        "Scope(%s)" % @resource.to_s
     end
 
     # Undefine a variable; only used for testing.

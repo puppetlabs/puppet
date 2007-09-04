@@ -506,20 +506,6 @@ Host <<||>>"
         assert_equal((ptags + %w{onemore subscope}).sort, newscope.tags.sort)
     end
 
-    # FIXME This isn't a great test, but I need to move on.
-    def test_to_trans
-        bucket = mock("transbucket")
-        Puppet::TransBucket.expects(:new).with([]).returns(bucket)
-        scope = mkscope
-        scope.type = "mytype"
-        scope.name = "myname"
-
-        bucket.expects(:name=).with("myname")
-        bucket.expects(:type=).with("mytype")
-
-        scope.to_trans
-    end
-
     def test_namespaces
         parser, scope, source = mkclassframing
 

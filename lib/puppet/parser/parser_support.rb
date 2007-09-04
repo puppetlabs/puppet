@@ -125,7 +125,7 @@ class Puppet::Parser::Parser
     # The recursive method used to actually look these objects up.
     def fqfind(namespace, name, table)
         namespace = namespace.downcase
-        name = name.downcase
+        name = name.to_s.downcase
         if name =~ /^::/ or namespace == ""
             classname = name.sub(/^::/, '')
             unless table[classname]

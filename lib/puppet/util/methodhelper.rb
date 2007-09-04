@@ -33,5 +33,3 @@ module Puppet::Util::MethodHelper
         end
     end
 end
-
-# $Id$

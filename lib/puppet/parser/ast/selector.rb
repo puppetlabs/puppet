@@ -60,15 +60,5 @@ class Puppet::Parser::AST
 
             return retvalue
         end
-
-        def tree(indent = 0)
-            return [
-                @param.tree(indent + 1),
-                ((@@indline * indent) + self.typewrap(self.pin)),
-                @values.tree(indent + 1)
-            ].join("\n")
-        end
     end
 end
-
-# $Id$

@@ -1,4 +1,3 @@
-# Grr
 require 'puppet/util/autoload'
 require 'puppet/parser/scope'
 

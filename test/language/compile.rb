@@ -255,19 +255,6 @@ class TestCompile < Test::Unit::TestCase
         end
     end
 
-    # Make sure our config object handles tags appropriately.
-    def test_tags
-        config = mkconfig
-        config.send(:tag, "one")
-        assert_equal(%w{one}, config.send(:tags), "Did not add tag")
-
-        config.send(:tag, "two", "three")
-        assert_equal(%w{one two three}, config.send(:tags), "Did not add new tags")
-
-        config.send(:tag, "two")
-        assert_equal(%w{one two three}, config.send(:tags), "Allowed duplicate tag")
-    end
-
     def test_evaluate_node_classes
         config = mkconfig
         @node.classes = %w{one two three four}
@@ -467,94 +454,6 @@ class TestCompile < Test::Unit::TestCase
         table["dnf"] = dnf
 
         config.send(:finish)
-    end
-
-    def test_extract
-        config = mkconfig
-        config.expects(:extraction_format).returns(:whatever)
-        config.expects(:extract_to_whatever).returns(:result)
-        assert_equal(:result, config.send(:extract), "Did not return extraction result as the method result")
-    end
-
-    # We want to make sure that the scope and resource graphs translate correctly 
-    def test_extract_to_transportable_simple
-        # Start with a really simple graph -- one scope, one resource.
-        config = mkconfig
-        resources = config.instance_variable_get("@resource_graph")
-        scopes = config.instance_variable_get("@scope_graph")
-
-        # Get rid of the topscope
-        scopes.vertices.each { |v| scopes.remove_vertex!(v) }
-
-        bucket = []
-        scope = mock("scope")
-        bucket.expects(:copy_type_and_name).with(scope)
-        scope.expects(:to_trans).returns(bucket)
-        scopes.add_vertex! scope
-
-        # The topscope is the key to picking out the top of the graph.
-        config.instance_variable_set("@topscope", scope)
-
-        resource = mock "resource"
-        resource.expects(:to_trans).returns(:resource)
-        resources.add_edge! scope, resource
-
-        result = nil
-        assert_nothing_raised("Could not extract transportable compile") do
-            result = config.send :extract_to_transportable
-        end
-        assert_equal([:resource], result, "Did not translate simple compile correctly")
-    end
-
-    def test_extract_to_transportable_complex
-        # Now try it with a more complicated graph -- a three tier graph, each tier
-        # having a scope and a resource.
-        config = mkconfig
-        resources = config.instance_variable_get("@resource_graph")
-        scopes = config.instance_variable_get("@scope_graph")
-
-        # Get rid of the topscope
-        scopes.vertices.each { |v| scopes.remove_vertex!(v) }
-
-        fakebucket = Class.new(Array) do
-            attr_accessor :name
-            def initialize(n)
-                @name = n
-            end
-        end
-
-        # Create our scopes.
-        top = mock("top")
-        topbucket = fakebucket.new "top"
-        topbucket.expects(:copy_type_and_name).with(top)
-        top.stubs(:copy_type_and_name)
-        top.expects(:to_trans).returns(topbucket)
-        # The topscope is the key to picking out the top of the graph.
-        config.instance_variable_set("@topscope", top)
-        middle = mock("middle")
-        middle.expects(:to_trans).returns(fakebucket.new("middle"))
-        scopes.add_edge! top, middle
-        bottom = mock("bottom")
-        bottom.expects(:to_trans).returns(fakebucket.new("bottom"))
-        scopes.add_edge! middle, bottom
-
-        topres = mock "topres"
-        topres.expects(:to_trans).returns(:topres)
-        resources.add_edge! top, topres
-
-        midres = mock "midres"
-        midres.expects(:to_trans).returns(:midres)
-        resources.add_edge! middle, midres
-
-        botres = mock "botres"
-        botres.expects(:to_trans).returns(:botres)
-        resources.add_edge! bottom, botres
-
-        result = nil
-        assert_nothing_raised("Could not extract transportable compile") do
-            result = config.send :extract_to_transportable
-        end
-        assert_equal([[[:botres], :midres], :topres], result, "Did not translate medium compile correctly")
     end
 
     def test_verify_uniqueness

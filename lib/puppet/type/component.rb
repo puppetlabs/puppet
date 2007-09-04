@@ -152,19 +152,21 @@ Puppet::Type.newtype(:component) do
     # Component paths are special because they function as containers.
     def pathbuilder
         tmp = []
-        if defined? @parent and @parent
-            tmp += [@parent.pathbuilder, self.title]
-        else
-            # The top-level name is always main[top], so we don't bother with
-            # that.
-            if self.title == "main[top]"
-                tmp << "" # This empty field results in "//" in the path
-            else
-                tmp << self.title
+        myname = ""
+        if self.title =~ /^class\[(.+)\]$/
+            # 'main' is the top class, so we want to see '//' instead of
+            # its name.
+            unless $1 == "main"
+                myname = $1
             end
+        else
+            myname = self.title
         end
-        
-        tmp
+        if self.parent
+            return [@parent.pathbuilder, myname]
+        else
+            return [myname]
+        end
     end
 
     # Remove an object.  The argument determines whether the object's

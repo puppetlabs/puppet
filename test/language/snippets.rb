@@ -496,9 +496,6 @@ class TestSnippets < Test::Unit::TestCase
                 assert_nothing_raised {
                     client.getconfig()
                 }
-                #assert_nothing_raised {
-                #    trans = client.apply()
-                #}
 
                 Puppet::Type.eachtype { |type|
                     type.each { |obj|
@@ -520,5 +517,3 @@ class TestSnippets < Test::Unit::TestCase
         end
     }
 end
-
-# $Id$

@@ -6,6 +6,7 @@ require 'puppet/external/gratr/import'
 require 'puppet/external/gratr/dot'
 
 require 'puppet/node'
+require 'puppet/node/configuration'
 require 'puppet/util/errors'
 
 # Maintain a graph of scopes, along with a bunch of data
@@ -14,7 +15,6 @@ class Puppet::Parser::Compile
     include Puppet::Util
     include Puppet::Util::Errors
     attr_reader :topscope, :parser, :node, :facts, :collections
-    attr_accessor :extraction_format
 
     attr_writer :ast_nodes
 
@@ -39,7 +39,7 @@ class Puppet::Parser::Compile
             end
         end
         @class_scopes[name] = scope
-        tag(name)
+        @configuration.add_class(name) unless name == ""
     end
 
     # Return the scope associated with a class.  This is just here so
@@ -57,7 +57,7 @@ class Puppet::Parser::Compile
 
     # Return a list of all of the defined classes.
     def classlist
-        return @class_scopes.keys.reject { |k| k == "" }
+        return @configuration.classes
     end
 
     # Compile our configuration.  This mostly revolves around finding and evaluating classes.
@@ -82,7 +82,7 @@ class Puppet::Parser::Compile
             store()
         end
 
-        return extract()
+        return @configuration.extract
     end
 
     # FIXME There are no tests for this.
@@ -93,8 +93,6 @@ class Puppet::Parser::Compile
     # FIXME There are no tests for this.
     def delete_resource(resource)
         @resource_table.delete(resource.ref) if @resource_table.include?(resource.ref)
-
-        @resource_graph.remove_vertex!(resource) if @resource_graph.vertex?(resource)
     end
 
     # Return the node's environment.
@@ -122,25 +120,21 @@ class Puppet::Parser::Compile
         found = []
         classes.each do |name|
             # If we can find the class, then make a resource that will evaluate it.
-            if klass = @parser.findclass("", name)
-                # This will result in class_set getting called, which
-                # will in turn result in tags.  Yay.
-                klass.safeevaluate(:scope => scope)
+            if klass = scope.findclass(name)
+                # Create a resource to model this class, and then add it to the list
+                # of resources.
+                unless scope.source
+                    raise "No source for %s" % scope.to_s
+                end
+                resource = Puppet::Parser::Resource.new(:type => "class", :title => klass.classname, :scope => scope, :source => scope.source)
+                store_resource(scope, resource)
                 found << name
             else
                 Puppet.info "Could not find class %s for %s" % [name, node.name]
-                tag(name)
+                @configuration.tag(name)
             end
         end
         found
-    end
-
-    # Make sure we support the requested extraction format.
-    def extraction_format=(value)
-        unless respond_to?("extract_to_%s" % value)
-            raise ArgumentError, "Invalid extraction format %s" % value
-        end
-        @extraction_format = value
     end
 
     # Return a resource by either its ref or its type and title.
@@ -168,9 +162,8 @@ class Puppet::Parser::Compile
             end
         end
 
-        @extraction_format ||= :transportable
-
         initvars()
+        init_main()
     end
 
     # Create a new scope, with either a specified parent scope or
@@ -230,7 +223,7 @@ class Puppet::Parser::Compile
         # And in the resource graph.  At some point, this might supercede
         # the global resource table, but the table is a lot faster
         # so it makes sense to maintain for now.
-        @resource_graph.add_edge!(scope, resource)
+        @configuration.add_edge!(scope.resource, resource)
     end
 
     private
@@ -310,71 +303,19 @@ class Puppet::Parser::Compile
 
     # Find and evaluate our main object, if possible.
     def evaluate_main
-        if klass = @parser.findclass("", "")
-            # Set the source, so objects can tell where they were defined.
-            topscope.source = klass
-            klass.safeevaluate :scope => topscope, :nosubscope => true
-        end
-    end
+        @main = @parser.findclass("", "") || @parser.newclass("")
+        @topscope.source = @main
+        @main_resource = Puppet::Parser::Resource.new(:type => "class", :title => :main, :scope => @topscope, :source => @main)
+        @topscope.resource = @main_resource
 
-    # Turn our configuration graph into whatever the client is expecting.
-    def extract
-        send("extract_to_%s" % extraction_format)
-    end
+        @configuration.add_vertex!(@main_resource)
 
-    # Create the traditional TransBuckets and TransObjects from our configuration
-    # graph.  This will hopefully be deprecated soon.
-    def extract_to_transportable
-        top = nil
-        current = nil
-        buckets = {}
-
-        # I'm *sure* there's a simple way to do this using a breadth-first search
-        # or something, but I couldn't come up with, and this is both fast
-        # and simple, so I'm not going to worry about it too much.
-        @scope_graph.vertices.each do |scope|
-            # For each scope, we need to create a TransBucket, and then
-            # put all of the scope's resources into that bucket, translating
-            # each resource into a TransObject.
-
-            # Unless the bucket's already been created, make it now and add
-            # it to the cache.
-            unless bucket = buckets[scope]
-                bucket = buckets[scope] = scope.to_trans
-            end
-
-            # First add any contained scopes
-            @scope_graph.adjacent(scope, :direction => :out).each do |vertex|
-                # If there's not already a bucket, then create and cache it.
-                unless child_bucket = buckets[vertex]
-                    child_bucket = buckets[vertex] = vertex.to_trans
-                end
-                bucket.push child_bucket
-            end
-
-            # Then add the resources.
-            if @resource_graph.vertex?(scope)
-                @resource_graph.adjacent(scope, :direction => :out).each do |vertex|
-                    # Some resources don't get translated, e.g., virtual resources.
-                    if obj = vertex.to_trans
-                        bucket.push obj
-                    end
-                end
-            end
-        end
-
-        # Retrive the bucket for the top-level scope and set the appropriate metadata.
-        result = buckets[topscope]
-
-        result.copy_type_and_name(topscope)
-
-        unless classlist.empty?
-            result.classes = classlist
-        end
-
-        # Clear the cache to encourage the GC
-        buckets.clear
-        return result
+        @resource_table["Class[main]"] = @main_resource
+        #if klass = @parser.findclass("", "")
+        #    # Set the source, so objects can tell where they were defined.
+        #    topscope.source = klass
+        #    klass.safeevaluate :scope => topscope, :nosubscope => true
+        #end
     end
 
     # Make sure the entire configuration is evaluated.
@@ -431,6 +372,13 @@ class Puppet::Parser::Compile
         @resource_table.each { |name, resource| resource.finish if resource.respond_to?(:finish) }
     end
 
+    # Initialize the top-level scope, class, and resource.
+    def init_main
+        # Create our initial scope and a resource that will evaluate main.
+        @topscope = Puppet::Parser::Scope.new(:compile => self, :parser => self.parser)
+        @scope_graph.add_vertex!(@topscope)
+    end
+
     # Set up all of our internal variables.
     def initvars
         # The table for storing class singletons.  This will only actually
@@ -456,18 +404,12 @@ class Puppet::Parser::Compile
         # A list of tags we've generated; most class names.
         @tags = []
 
-        # Create our initial scope, our scope graph, and add the initial scope to the graph.
-        @topscope = Puppet::Parser::Scope.new(:compile => self, :type => "main", :name => "top", :parser => self.parser)
-        #@main = @parser.findclass("", "")
-        #@main_resource = Puppet::Parser::Resource.new(:type => "class", :title => :main, :scope => @topscope, :source => @main)
-        #@topscope.resource = @main_resource
-
-        # For maintaining scope relationships.
+        # A graph for maintaining scope relationships.
         @scope_graph = GRATR::Digraph.new
         @scope_graph.add_vertex!(@topscope)
 
         # For maintaining the relationship between scopes and their resources.
-        @resource_graph = GRATR::Digraph.new
+        @configuration = Puppet::Node::Configuration.new(@node.name)
     end
 
     # Set the node's parameters into the top-scope as variables.
@@ -508,20 +450,6 @@ class Puppet::Parser::Compile
             end
             Puppet.err "Could not store configs: %s" % detail.to_s
         end
-    end
-
-    # Add a tag.
-    def tag(*names)
-        names.each do |name|
-            name = name.to_s
-            @tags << name unless @tags.include?(name)
-        end
-        nil
-    end
-
-    # Return the list of tags.
-    def tags
-        @tags.dup
     end
 
     # Return an array of all of the unevaluated resources.  These will be definitions,

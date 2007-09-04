@@ -24,5 +24,3 @@ class Puppet::Parser::AST
         end
     end
 end
-
-# $Id$

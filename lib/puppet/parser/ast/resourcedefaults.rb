@@ -6,10 +6,6 @@ class Puppet::Parser::AST
     class ResourceDefaults < AST::Branch
         attr_accessor :type, :params
 
-        def each
-            [@type,@params].each { |child| yield child }
-        end
-
         # As opposed to ResourceDef, this stores each default for the given
         # object type.
         def evaluate(hash)
@@ -21,20 +17,5 @@ class Puppet::Parser::AST
                 scope.setdefaults(type, params)
             end
         end
-
-        def tree(indent = 0)
-            return [
-                @type.tree(indent + 1),
-                ((@@indline * 4 * indent) + self.typewrap(self.pin)),
-                @params.tree(indent + 1)
-            ].join("\n")
-        end
-
-        def to_s
-            return "%s { %s }" % [@type,@params]
-        end
     end
-
 end
-
-# $Id$

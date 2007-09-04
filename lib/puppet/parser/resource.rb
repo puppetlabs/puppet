@@ -211,7 +211,7 @@ class Puppet::Parser::Resource
     def tags
         unless defined? @tags
             @tags = scope.tags
-            @tags << self.type
+            @tags << self.type unless @tags.include?(self.type)
         end
         @tags
     end
@@ -251,12 +251,26 @@ class Puppet::Parser::Resource
 
     # Translate our object to a transportable object.
     def to_trans
-        unless builtin?
-            devfail "Tried to translate a non-builtin resource"
-        end
-
         return nil if virtual?
 
+        if builtin?
+            to_transobject
+        else
+            to_transbucket
+        end
+    end
+
+    def to_transbucket
+        bucket = Puppet::TransBucket.new([])
+
+        bucket.type = self.type
+        bucket.name = self.title
+
+        # TransBuckets don't support parameters, which is why they're being deprecated.
+        return bucket
+    end
+
+    def to_transobject
         # Now convert to a transobject
         obj = Puppet::TransObject.new(@ref.title, @ref.type)
         to_hash.each do |p, v|

@@ -209,7 +209,7 @@ class TestResource < PuppetTest::TestCase
         res.send(:paramcheck, :other)
     end
 
-    def test_to_trans
+    def test_to_transobject
         # First try translating a builtin resource.  Make sure we use some references
         # and arrays, to make sure they translate correctly.
         source = mock("source")
@@ -240,6 +240,21 @@ class TestResource < PuppetTest::TestCase
         assert_equal(["file", refs[0].title], obj["require"], "Resource reference was not passed correctly")
         assert_equal([["file", refs[1].title], ["file", refs[2].title]], obj["subscribe"], "Array of resource references was not passed correctly")
         assert_equal(["file", refs[3].title], obj["notify"], "Array with single resource reference was not turned into single value")
+    end
+
+    # FIXME This isn't a great test, but I need to move on.
+    def test_to_transbucket
+        bucket = mock("transbucket")
+        Puppet::TransBucket.expects(:new).with([]).returns(bucket)
+        source = mock("source")
+        scope = mock("scope")
+        res = Parser::Resource.new :type => "mydefine", :title => "yay",
+            :source => source, :scope => scope
+
+        bucket.expects(:name=).with("yay")
+        bucket.expects(:type=).with("mydefine")
+
+        assert_equal(bucket, res.to_trans, "Resource did not return the bucket")
     end
 
     def test_evaluate
