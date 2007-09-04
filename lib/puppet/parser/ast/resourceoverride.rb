@@ -44,7 +44,7 @@ class Puppet::Parser::AST
 
             # Now we tell the scope that it's an override, and it behaves as
             # necessary.
-            scope.setoverride(obj)
+            scope.compile.store_override(obj)
 
             obj
         end

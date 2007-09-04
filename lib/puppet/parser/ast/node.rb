@@ -33,7 +33,7 @@ class Puppet::Parser::AST
             # Mark our node name as a class, too, but strip it of the domain
             # name.  Make the mark before we evaluate the code, so that it is
             # marked within the code itself.
-            scope.setclass(self)
+            scope.compile.class_set(self.classname, scope)
 
             # And then evaluate our code if we have any
             if self.code
@@ -53,6 +53,12 @@ class Puppet::Parser::AST
             end
         end
 
+        # Make sure node scopes are marked as such.
+        def subscope(*args)
+            scope = super
+            scope.nodescope = true
+        end
+
         private
         # Search for the object matching our parent class.
         def find_parentclass
@@ -60,5 +66,3 @@ class Puppet::Parser::AST
         end
     end
 end
-
-# $Id$

@@ -24,7 +24,7 @@ class Puppet::Parser::AST
             scope = options[:scope]
             # Verify that we haven't already been evaluated.  This is
             # what provides the singleton aspect.
-            if existing_scope = scope.class_scope(self)
+            if existing_scope = scope.compile.class_scope(self)
                 Puppet.debug "%s class already evaluated" % @type
                 return nil
             end
@@ -38,7 +38,7 @@ class Puppet::Parser::AST
             end
 
             unless options[:nosubscope]
-                scope = subscope(scope)
+                scope = subscope(scope, options[:resource])
             end
 
             if pnames
@@ -49,7 +49,7 @@ class Puppet::Parser::AST
 
             # Set the class before we do anything else, so that it's set
             # during the evaluation and can be inspected.
-            scope.setclass(self)
+            scope.compile.class_set(self.classname, scope)
 
             # Now evaluate our code, yo.
             if self.code
@@ -65,7 +65,7 @@ class Puppet::Parser::AST
         end
 
         def parent_scope(scope, klass)
-            if s = scope.class_scope(klass)
+            if s = scope.compile.class_scope(klass)
                 return s
             else
                 raise Puppet::DevError, "Could not find scope for %s" % klass.fqname

@@ -110,10 +110,6 @@ class TestASTDefinition < Test::Unit::TestCase
             # inside the loop so the subscope expectations work.
             klass = parser.newdefine "yayness%s" % i
 
-            subscope = klass.subscope(scope, "yayness%s" % i)
-
-            klass.expects(:subscope).returns(subscope)
-
             resource = stub 'resource',
                 :title => hash[:title],
                 :name => hash[:name] || hash[:title],
@@ -121,6 +117,10 @@ class TestASTDefinition < Test::Unit::TestCase
                 :to_hash => {},
                 :exported => false,
                 :virtual => false 
+
+            subscope = klass.subscope(scope, resource)
+
+            klass.expects(:subscope).returns(subscope)
 
             if hash[:name]
                 resource.stubs(:to_hash).returns({:name => hash[:name]})

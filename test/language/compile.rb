@@ -270,10 +270,8 @@ class TestCompile < Test::Unit::TestCase
 
     def test_evaluate_node_classes
         config = mkconfig
-        main = mock 'main'
-        config.parser.expects(:findclass).with("", "").returns(main)
         @node.classes = %w{one two three four}
-        config.expects(:evaluate_classes).with(%w{one two three four}, main)
+        config.expects(:evaluate_classes).with(%w{one two three four}, config.topscope)
         assert_nothing_raised("could not call evaluate_node_classes") do
             config.send(:evaluate_node_classes)
         end

@@ -94,7 +94,7 @@ class TestScope < Test::Unit::TestCase
         classes = ["", "one", "one::two", "one::two::three"].each do |name|
             klass = parser.newclass(name)
             klass.evaluate(:scope => scope)
-            scopes[name] = scope.class_scope(klass)
+            scopes[name] = scope.compile.class_scope(klass)
         end
 
         classes.each do |name|
@@ -188,13 +188,6 @@ class TestScope < Test::Unit::TestCase
         assert_equal(top, sub.parent, "Did not find parent scope correctly")
         assert_equal(top, sub.parent, "Did not find parent scope on second call")
     end
-
-    def test_class_scope
-        config = mkconfig
-        scope = config.topscope
-        config.expects(:class_scope).with(:testing).returns(:myscope)
-        assert_equal(:myscope, scope.class_scope(:testing), "Did not pass back the results of config.class_scope")
-    end
     
     def test_strinterp
         # Make and evaluate our classes so the qualified lookups work
@@ -210,7 +203,7 @@ class TestScope < Test::Unit::TestCase
         klass.evaluate(:scope => scope)
 
 
-        scope = scope.class_scope("")
+        scope = scope.compile.class_scope("")
         assert_nothing_raised {
             scope.setvar("test","value")
         }
@@ -220,7 +213,7 @@ class TestScope < Test::Unit::TestCase
         %w{one one::two one::two::three}.each do |name|
             klass = parser.newclass(name)
             klass.evaluate(:scope => scope)
-            scopes[name] = scope.class_scope(klass)
+            scopes[name] = scope.compile.class_scope(klass)
             scopes[name].setvar("test", "value-%s" % name.sub(/.+::/,''))
         end
 
@@ -271,38 +264,6 @@ class TestScope < Test::Unit::TestCase
             assert(logs.detect { |m| m.message =~ /Unrecognised escape/ },
                 "Did not get warning about escape sequence with %s" % string)
             logs.clear
-        end
-    end
-
-    def test_setclass
-        # Run through it when we're a normal class
-        config = mkconfig
-        scope = config.topscope
-        klass = mock("class")
-        klass.expects(:classname).returns(:myclass)
-        klass.expects(:is_a?).with(AST::HostClass).returns(true)
-        klass.expects(:is_a?).with(AST::Node).returns(false)
-        config.expects(:class_set).with(:myclass, scope)
-        scope.setclass(klass)
-
-        # And when we're a node
-        config = mkconfig
-        scope = config.topscope
-        klass = mock("class2")
-        klass.expects(:classname).returns(:myclass)
-        klass.expects(:is_a?).with(AST::HostClass).returns(true)
-        klass.expects(:is_a?).with(AST::Node).returns(true)
-        config.expects(:class_set).with(:myclass, scope)
-        scope.setclass(klass)
-        assert(scope.nodescope?, "Did not set the scope as a node scope when evaluating a node")
-
-        # And when we're invalid
-        config = mkconfig
-        scope = config.topscope
-        klass = mock("class3")
-        klass.expects(:is_a?).with(AST::HostClass).returns(false)
-        assert_raise(Puppet::DevError, "Did not fail when scope got passed a non-component") do
-            scope.setclass(klass)
         end
     end
 
@@ -363,7 +324,7 @@ class TestScope < Test::Unit::TestCase
         end
 
         [myclass, otherclass].each do |klass|
-            assert(scope.class_scope(klass),
+            assert(scope.compile.class_scope(klass),
                 "%s was not set" % klass.classname)
         end
     end

@@ -36,7 +36,7 @@ class TestASTHostClass < Test::Unit::TestCase
             klass.evaluate(:scope => scope)
         end
 
-        assert(scope.class_scope(klass), "Class was not considered evaluated")
+        assert(scope.compile.class_scope(klass), "Class was not considered evaluated")
 
         tmp = scope.findresource("File[/tmp]")
         assert(tmp, "Could not find file /tmp")
@@ -76,8 +76,8 @@ class TestASTHostClass < Test::Unit::TestCase
             moresub.evaluate(:scope => scope)
         end
 
-        assert(scope.class_scope(newbase), "Did not eval newbase")
-        assert(scope.class_scope(newsub), "Did not eval newsub")
+        assert(scope.compile.class_scope(newbase), "Did not eval newbase")
+        assert(scope.compile.class_scope(newsub), "Did not eval newsub")
 
         yay = scope.findresource("File[/tmp/yay]")
         assert(yay, "Did not find file /tmp/yay")
@@ -141,14 +141,14 @@ class TestASTHostClass < Test::Unit::TestCase
 
         ret = nil
         assert_nothing_raised do
-            ret = scope.compile.evaluate_classes(["sub"], source)
+            ret = scope.compile.evaluate_classes(["sub"], scope)
         end
 
-        subscope = scope.class_scope(scope.findclass("sub"))
+        subscope = scope.compile.class_scope(scope.findclass("sub"))
         assert(subscope, "could not find sub scope")
-        mscope = scope.class_scope(scope.findclass("middle"))
+        mscope = scope.compile.class_scope(scope.findclass("middle"))
         assert(mscope, "could not find middle scope")
-        pscope = scope.class_scope(scope.findclass("base"))
+        pscope = scope.compile.class_scope(scope.findclass("base"))
         assert(pscope, "could not find parent scope")
 
         assert(pscope == mscope.parent, "parent scope of middle was not set correctly")

@@ -57,7 +57,7 @@ class TestAST < Test::Unit::TestCase
         end
 
         Puppet::Parser::Resource.expects(:new).with { |o| o.is_a?(Hash) }.returns(:override)
-        scope.expects(:setoverride).with(:override)
+        scope.compile.expects(:store_override).with(:override)
         ret = nil
         assert_nothing_raised do
             ret = ref.evaluate :scope => scope

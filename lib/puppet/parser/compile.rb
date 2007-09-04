@@ -111,20 +111,21 @@ class Puppet::Parser::Compile
 
     # Evaluate all of the classes specified by the node.
     def evaluate_node_classes
-        evaluate_classes(@node.classes, @parser.findclass("", ""))
+        evaluate_classes(@node.classes, @topscope)
     end
 
     # Evaluate each specified class in turn.  If there are any classes we can't
     # find, just tag the configuration and move on.  This method really just
     # creates resource objects that point back to the classes, and then the
     # resources are themselves evaluated later in the process.
-    def evaluate_classes(classes, source)
+    def evaluate_classes(classes, scope)
         found = []
         classes.each do |name|
+            # If we can find the class, then make a resource that will evaluate it.
             if klass = @parser.findclass("", name)
                 # This will result in class_set getting called, which
                 # will in turn result in tags.  Yay.
-                klass.safeevaluate(:scope => topscope)
+                klass.safeevaluate(:scope => scope)
                 found << name
             else
                 Puppet.info "Could not find class %s for %s" % [name, node.name]
@@ -151,7 +152,7 @@ class Puppet::Parser::Compile
         @resource_table[string]
     end
 
-    # Set up our configuration.  We require a parser
+    # Set up our compile.  We require a parser
     # and a node object; the parser is so we can look up classes
     # and AST nodes, and the node has all of the client's info,
     # like facts and environment.
@@ -457,6 +458,9 @@ class Puppet::Parser::Compile
 
         # Create our initial scope, our scope graph, and add the initial scope to the graph.
         @topscope = Puppet::Parser::Scope.new(:compile => self, :type => "main", :name => "top", :parser => self.parser)
+        #@main = @parser.findclass("", "")
+        #@main_resource = Puppet::Parser::Resource.new(:type => "class", :title => :main, :scope => @topscope, :source => @main)
+        #@topscope.resource = @main_resource
 
         # For maintaining scope relationships.
         @scope_graph = GRATR::Digraph.new

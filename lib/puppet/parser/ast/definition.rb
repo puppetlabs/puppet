@@ -32,7 +32,7 @@ class Puppet::Parser::AST
             resource = options[:resource]
 
             # Create a new scope.
-            scope = subscope(origscope, resource.title)
+            scope = subscope(origscope, resource)
             scope.virtual = true if resource.virtual or origscope.virtual?
             scope.exported = true if resource.exported or origscope.exported?
 
@@ -125,14 +125,22 @@ class Puppet::Parser::AST
         end
 
         # Create a new subscope in which to evaluate our code.
-        def subscope(scope, name = nil)
+        def subscope(scope, resource = nil)
+            if resource
+                type = resource.type
+            else
+                type = self.classname
+            end
             args = {
-                :type => self.classname,
+                :resource => resource,
+                :type => type,
                 :keyword => self.keyword,
-                :namespace => self.namespace
+                :namespace => self.namespace,
+                :source => self
             }
 
-            args[:name] = name if name
+            args[:name] = resource.title if resource
+
             oldscope = scope
             scope = scope.newscope(args)
             scope.source = self

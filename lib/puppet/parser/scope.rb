@@ -15,14 +15,29 @@ class Puppet::Parser::Scope
 
     include Enumerable
     include Puppet::Util::Errors
-    attr_accessor :parent, :level, :parser, :source
-    attr_accessor :name, :type, :base, :keyword
-    attr_accessor :top, :translated, :exported, :virtual, :compile
+    attr_accessor :parent, :level, :parser, :source, :resource
+    attr_accessor :base, :keyword, :nodescope
+    attr_accessor :top, :translated, :compile
+
+    # Temporary accessors.
+    attr_accessor :name, :type, :title, :exported, :virtual
+    def exported?
+        exported
+    end
+    def virtual?
+        virtual
+    end
+    #[:name, :type, :title, :exported?, :virtual].each do |method|
+    #    define_method(method) do
+    #        @resource.send(method)
+    #    end
+    #end
 
     # Proxy accessors
     def host
         @compile.node.name
     end
+
     def interpreter
         @compile.interpreter
     end
@@ -56,18 +71,9 @@ class Puppet::Parser::Scope
         end
     end
 
-    # Retrieve a given class scope from the compile.
-    def class_scope(klass)
-        compile.class_scope(klass)
-    end
-
     # Are we the top scope?
     def topscope?
         @level == 1
-    end
-
-    def exported?
-        self.exported
     end
 
     def findclass(name)
@@ -164,7 +170,7 @@ class Puppet::Parser::Scope
         unless klass
             raise Puppet::ParseError, "Could not find class %s" % klassname
         end
-        unless kscope = class_scope(klass)
+        unless kscope = compile.class_scope(klass)
             raise Puppet::ParseError, "Class %s has not been evaluated so its variables cannot be referenced" % klass.classname
         end
         return kscope.lookupvar(shortname, usestring)
@@ -209,7 +215,7 @@ class Puppet::Parser::Scope
     # is required because of how often the names are used throughout
     # the system, including on the client.
     def nodescope?
-        defined?(@nodescope) and @nodescope
+        self.nodescope
     end
 
     # We probably shouldn't cache this value...  But it's a lot faster
@@ -229,37 +235,6 @@ class Puppet::Parser::Scope
         else
             [self]
         end
-    end
-
-    def resources
-        @definedtable.values
-    end
-
-    # Store the fact that we've evaluated a given class.  We use a hash
-    # that gets inherited from the top scope down, rather than a global
-    # hash.  We store the object ID, not class name, so that we
-    # can support multiple unrelated classes with the same name.
-    def setclass(klass)
-        if klass.is_a?(AST::HostClass)
-            unless name = klass.classname
-                raise Puppet::DevError, "Got a %s with no fully qualified name" %
-                    klass.class
-            end
-            @compile.class_set(name, self)
-        else
-            raise Puppet::DevError, "Invalid class %s" % klass.inspect
-        end
-        if klass.is_a?(AST::Node)
-            @nodescope = true
-        end
-        nil
-    end
-
-    # Override a parameter in an existing object.  If the object does not yet
-    # exist, then cache the override in a global table, so it can be flushed
-    # at the end.
-    def setoverride(resource)
-        @compile.store_override(resource)
     end
 
     # Set defaults for a type.  The typename should already be downcased,
@@ -433,10 +408,4 @@ class Puppet::Parser::Scope
             @symtable.delete(var)
         end
     end
-
-    def virtual?
-        self.virtual || self.exported?
-    end
 end
-
-# $Id$
