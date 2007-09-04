@@ -37,12 +37,12 @@ class Puppet::Parser::AST
             # Additionally, add a tag for whatever kind of class
             # we are
             if @classname != "" and ! @classname.nil?
-                @classname.split(/::/).each { |tag| scope.tag(tag) }
+                @classname.split(/::/).each { |tag| scope.resource.tag(tag) }
             end
 
             [resource.name, resource.title].each do |str|
                 unless str.nil? or str =~ /[^\w]/ or str == ""
-                    scope.tag(str)
+                    scope.resource.tag(str)
                 end
             end
 
@@ -123,10 +123,7 @@ class Puppet::Parser::AST
         end
 
         # Create a new subscope in which to evaluate our code.
-        def subscope(scope, resource = nil)
-            unless resource
-                raise ArgumentError, "Resources are required when creating subscopes"
-            end
+        def subscope(scope, resource)
             args = {
                 :resource => resource,
                 :keyword => self.keyword,
@@ -192,7 +189,7 @@ class Puppet::Parser::AST
                             #    [default.inspect, arg.inspect, @name.inspect]
                         else
                             parsefail "Must pass %s to %s of type %s" %
-                                    [arg,title,@classname]
+                                    [arg, resource.title, @classname]
                         end
                     end
                 }

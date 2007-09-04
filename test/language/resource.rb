@@ -25,7 +25,7 @@ class TestResource < PuppetTest::TestCase
 
     def test_initialize
         args = {:type => "resource", :title => "testing",
-            :source => "source", :scope => "scope"}
+            :scope => mkscope}
         # Check our arg requirements
         args.each do |name, value|
             try = args.dup
@@ -35,12 +35,14 @@ class TestResource < PuppetTest::TestCase
             end
         end
 
-        Reference.expects(:new).with(:type => "resource", :title => "testing", :scope => "scope").returns(:ref)
-
         res = nil
         assert_nothing_raised do
             res = Parser::Resource.new(args)
         end
+
+        ref = res.instance_variable_get("@ref")
+        assert_equal("resource", ref.type, "did not set resource type")
+        assert_equal("testing", ref.title, "did not set resource title")
     end
 
     def test_merge
@@ -213,8 +215,8 @@ class TestResource < PuppetTest::TestCase
         # First try translating a builtin resource.  Make sure we use some references
         # and arrays, to make sure they translate correctly.
         source = mock("source")
-        scope = mock("scope")
-        scope.expects(:tags).returns([])
+        scope = mkscope
+        scope.stubs(:tags).returns([])
         refs = []
         4.times { |i| refs << Puppet::Parser::Resource::Reference.new(:title => "file%s" % i, :type => "file") }
         res = Parser::Resource.new :type => "file", :title => "/tmp",
@@ -245,16 +247,15 @@ class TestResource < PuppetTest::TestCase
     # FIXME This isn't a great test, but I need to move on.
     def test_to_transbucket
         bucket = mock("transbucket")
-        Puppet::TransBucket.expects(:new).with([]).returns(bucket)
         source = mock("source")
-        scope = mock("scope")
+        scope = mkscope
         res = Parser::Resource.new :type => "mydefine", :title => "yay",
             :source => source, :scope => scope
 
-        bucket.expects(:name=).with("yay")
-        bucket.expects(:type=).with("mydefine")
 
-        assert_equal(bucket, res.to_trans, "Resource did not return the bucket")
+        result = res.to_trans
+        assert_equal("yay", result.name, "did not set bucket name correctly")
+        assert_equal("mydefine", result.type, "did not set bucket type correctly")
     end
 
     def test_evaluate
@@ -309,7 +310,7 @@ class TestResource < PuppetTest::TestCase
 
     def test_proxymethods
         res = Parser::Resource.new :type => "evaltest", :title => "yay",
-            :source => mock("source"), :scope => mock('scope')
+            :source => mock("source"), :scope => mkscope
 
         assert_equal("evaltest", res.type)
         assert_equal("yay", res.title)
@@ -337,7 +338,7 @@ class TestResource < PuppetTest::TestCase
         # Now create an obj that uses it
         res = mkresource :type => "file", :title => "/tmp/resource",
             :params => {:require => ref}
-        res.scope = stub(:tags => [])
+        res.scope = mkscope
 
         trans = nil
         assert_nothing_raised do
@@ -351,7 +352,7 @@ class TestResource < PuppetTest::TestCase
         two = Parser::Resource::Reference.new(:type => "file", :title => "/tmp/ref2")
         res = mkresource :type => "file", :title => "/tmp/resource2",
             :params => {:require => [ref, two]}
-        res.scope = stub(:tags => [])
+        res.scope = mkscope
 
         trans = nil
         assert_nothing_raised do
@@ -420,7 +421,7 @@ class TestResource < PuppetTest::TestCase
     # part of #629 -- the undef keyword.  Make sure 'undef' params get skipped.
     def test_undef_and_to_hash
         res = mkresource :type => "file", :title => "/tmp/testing",
-            :source => mock("source"), :scope => mock("scope"),
+            :source => mock("source"), :scope => mkscope,
             :params => {:owner => :undef, :mode => "755"}
 
         hash = nil
@@ -470,6 +471,37 @@ class TestResource < PuppetTest::TestCase
         assert(newres.exported?, "Exported defined resource generated non-exported resources")
         assert(newres.virtual?, "Exported defined resource generated non-virtual resources")
     end
-end
 
-# $Id$
+    # Make sure tags behave appropriately.
+    def test_tags
+        scope_resource = stub 'scope_resource', :tags => %w{srone srtwo}
+        scope = stub 'scope', :resource => scope_resource
+        resource = Puppet::Parser::Resource.new(:type => "file", :title => "yay", :scope => scope, :source => mock('source'))
+
+        # Make sure we get the scope resource's tags, plus the type and title
+        %w{srone srtwo yay file}.each do |tag|
+            assert(resource.tags.include?(tag), "Did not tag resource with %s" % tag)
+        end
+
+        # make sure we can only set legal tags
+        ["an invalid tag", "-anotherinvalid", "bad*tag"].each do |tag|
+            assert_raise(Puppet::ParseError, "Tag #{tag} was considered valid") do
+                resource.tag tag
+            end
+        end
+
+        # make sure good tags make it through.
+        tags = %w{good-tag yaytag GoodTag another_tag a ab A}
+        tags.each do |tag|
+            assert_nothing_raised("Tag #{tag} was considered invalid") do
+                resource.tag tag
+            end
+        end
+
+        # make sure we get each of them.
+        ptags = resource.tags
+        tags.each do |tag|
+            assert(ptags.include?(tag), "missing #{tag}")
+        end
+    end
+end

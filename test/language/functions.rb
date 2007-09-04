@@ -49,9 +49,10 @@ class TestLangFunctions < Test::Unit::TestCase
 
     def test_taggedfunction
         scope = mkscope
+        tags = []
+        scope.resource.stubs(:tags).returns(tags)
 
-        tag = "yayness"
-        scope.tag(tag)
+        tags << "yayness"
 
         {"yayness" => true, "booness" => false}.each do |tag, retval|
             func = taggedobj(tag, :rvalue)
@@ -318,7 +319,7 @@ class TestLangFunctions < Test::Unit::TestCase
         [%w{file /tmp/virtual}, %w{mytype yay}].each do |type, title|
             # Make a virtual resource
             virtual = mkresource(:type => type, :title => title,
-                :virtual => true, :params => {})
+                :virtual => true, :params => {}, :scope => scope)
         
             scope.compile.store_resource(scope, virtual)
 
@@ -434,7 +435,7 @@ class TestLangFunctions < Test::Unit::TestCase
             scope.function_include "myclass"
         end
 
-        assert(scope.compile.classlist.include?("myclass"),
+        assert(scope.compile.resources.find { |r| r.to_s == "Class[myclass]" }, 
             "class was not evaluated")
 
         # Now try multiple classes at once
@@ -445,7 +446,7 @@ class TestLangFunctions < Test::Unit::TestCase
         end
 
         classes.each do |c|
-            assert(scope.compile.classlist.include?(c),
+            assert(scope.compile.resources.find { |r| r.to_s == "Class[#{c}]" },
                 "class %s was not evaluated" % c)
         end
 

@@ -14,7 +14,7 @@ require 'puppet/util/errors'
 class Puppet::Parser::Compile
     include Puppet::Util
     include Puppet::Util::Errors
-    attr_reader :topscope, :parser, :node, :facts, :collections
+    attr_reader :topscope, :parser, :node, :facts, :collections, :configuration
 
     attr_writer :ast_nodes
 
@@ -121,13 +121,14 @@ class Puppet::Parser::Compile
         classes.each do |name|
             # If we can find the class, then make a resource that will evaluate it.
             if klass = scope.findclass(name)
+                unless scope.source
+                    raise Puppet::DevError, "No source for %s" % scope.to_s
+                end
                 # Create a resource to model this class, and then add it to the list
                 # of resources.
-                unless scope.source
-                    raise "No source for %s" % scope.to_s
-                end
                 resource = Puppet::Parser::Resource.new(:type => "class", :title => klass.classname, :scope => scope, :source => scope.source)
                 store_resource(scope, resource)
+                @configuration.tag(klass.classname)
                 found << name
             else
                 Puppet.info "Could not find class %s for %s" % [name, node.name]
@@ -311,11 +312,6 @@ class Puppet::Parser::Compile
         @configuration.add_vertex!(@main_resource)
 
         @resource_table["Class[main]"] = @main_resource
-        #if klass = @parser.findclass("", "")
-        #    # Set the source, so objects can tell where they were defined.
-        #    topscope.source = klass
-        #    klass.safeevaluate :scope => topscope, :nosubscope => true
-        #end
     end
 
     # Make sure the entire configuration is evaluated.

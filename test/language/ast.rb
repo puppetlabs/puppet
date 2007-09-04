@@ -119,7 +119,7 @@ class TestAST < Test::Unit::TestCase
 
         # Now try evaluating the node
         assert_nothing_raised do
-            mynode.evaluate :scope => scope
+            mynode.evaluate :scope => scope, :resource => scope.resource
         end
 
         # Make sure that we can find each of the files
@@ -136,7 +136,7 @@ class TestAST < Test::Unit::TestCase
 
         newscope = mkscope :parser => parser
         assert_nothing_raised do
-            child.evaluate :scope => newscope
+            child.evaluate :scope => newscope, :resource => scope.resource
         end
 
         assert(newscope.findresource("File[/tmp/base]"),

@@ -44,7 +44,7 @@ class TestASTResourceRef < Test::Unit::TestCase
         @parser.newdefine "one"
         @parser.newdefine "one::two"
         @parser.newdefine "three"
-        twoscope = @scope.newscope(:type => "one", :namespace => "one")
+        twoscope = @scope.newscope(:namespace => "one")
         assert(twoscope.finddefine("two"), "Could not find 'two' definition")
         title = "title"
 

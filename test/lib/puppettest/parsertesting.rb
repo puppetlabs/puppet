@@ -73,6 +73,8 @@ module PuppetTest::ParserTesting
         unless config.topscope.source
             raise "Could not find source for scope"
         end
+        # Make the 'main' stuff
+        config.send(:evaluate_main)
         config.topscope
     end
 
@@ -404,5 +406,3 @@ module PuppetTest::ParserTesting
         return trans
     end
 end
-
-# $Id$

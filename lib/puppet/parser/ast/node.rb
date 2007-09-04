@@ -19,7 +19,7 @@ class Puppet::Parser::AST
             # We don't have to worry about the declarativeness of node parentage,
             # because the entry point is always a single node definition.
             if parent = self.parentobj
-                scope = parent.safeevaluate :scope => scope
+                scope = parent.safeevaluate :scope => scope, :resource => options[:resource]
             end
 
             scope = scope.newscope(

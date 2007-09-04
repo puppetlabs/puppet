@@ -27,13 +27,14 @@ class TestASTHostClass < Test::Unit::TestCase
                         "owner" => "nobody", "mode" => "755")]
             )
 
+        resource = Puppet::Parser::Resource.new(:type => "class", :title => "first", :scope => scope)
         assert_nothing_raised do
-            klass.evaluate(:scope => scope)
+            klass.evaluate(:scope => scope, :resource => resource)
         end
 
         # Then try it again
         assert_nothing_raised do
-            klass.evaluate(:scope => scope)
+            klass.evaluate(:scope => scope, :resource => resource)
         end
 
         assert(scope.compile.class_scope(klass), "Class was not considered evaluated")
@@ -69,11 +70,11 @@ class TestASTHostClass < Test::Unit::TestCase
             )
 
         assert_nothing_raised do
-            newsub.evaluate(:scope => scope)
+            newsub.evaluate(:scope => scope, :resource => resource)
         end
 
         assert_nothing_raised do
-            moresub.evaluate(:scope => scope)
+            moresub.evaluate(:scope => scope, :resource => resource)
         end
 
         assert(scope.compile.class_scope(newbase), "Did not eval newbase")
@@ -115,7 +116,7 @@ class TestASTHostClass < Test::Unit::TestCase
         assert_equal("funtest", define.namespace,
             "component namespace was not set in the definition")
 
-        newscope = klass.subscope(scope)
+        newscope = klass.subscope(scope, mock("resource"))
 
         assert_equal(["funtest"], newscope.namespaces,
             "Scope did not inherit namespace")
@@ -143,6 +144,7 @@ class TestASTHostClass < Test::Unit::TestCase
         assert_nothing_raised do
             ret = scope.compile.evaluate_classes(["sub"], scope)
         end
+        scope.compile.send(:evaluate_generators)
 
         subscope = scope.compile.class_scope(scope.findclass("sub"))
         assert(subscope, "could not find sub scope")

@@ -90,11 +90,10 @@ class Puppet::Parser::Resource
             end
         end
 
-        [:scope, :source].each do |attribute|
-            unless self.send(attribute)
-                raise ArgumentError, "Resources require a %s" % attribute
-            end
+        unless self.scope
+            raise ArgumentError, "Resources require a scope"
         end
+        @source ||= scope.source
 
         options = symbolize_options(options)
 
@@ -121,6 +120,13 @@ class Puppet::Parser::Resource
         # Throw an exception if we've got any arguments left to set.
         unless options.empty?
             raise ArgumentError, "Resources do not accept %s" % options.keys.collect { |k| k.to_s }.join(", ")
+        end
+
+        @tags = []
+        @tags << @ref.type.to_s
+        @tags << @ref.title.to_s if @ref.title.to_s =~ /^[-\w]+$/
+        if scope.resource
+            @tags += scope.resource.tags
         end
     end
 
@@ -208,12 +214,22 @@ class Puppet::Parser::Resource
         @ref.to_s
     end
 
+    # Add a tag to our current list.  These tags will be added to all
+    # of the objects contained in this scope.
+    def tag(*ary)
+        ary.each { |tag|
+            tag = tag.to_s
+            unless tag =~ /^\w[-\w]*$/
+                fail Puppet::ParseError, "Invalid tag %s" % tag.inspect
+            end
+            unless @tags.include?(tag)
+                @tags << tag
+            end
+        }
+    end
+
     def tags
-        unless defined? @tags
-            @tags = scope.tags
-            @tags << self.type unless @tags.include?(self.type)
-        end
-        @tags
+        @tags.dup
     end
 
     def to_hash

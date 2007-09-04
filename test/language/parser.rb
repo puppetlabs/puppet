@@ -497,7 +497,7 @@ file { "/tmp/yayness":
             scope.source = klass
 
             assert_nothing_raised do
-                ret.classes[""].evaluate :scope => scope
+                ret.classes[""].evaluate :scope => scope, :resource => Puppet::Parser::Resource.new(:type => "mydefine", :title => 'whatever', :scope => scope, :source => scope.source)
             end
 
             # Make sure we can find both of them

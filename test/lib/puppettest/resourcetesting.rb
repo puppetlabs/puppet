@@ -28,7 +28,7 @@ module PuppetTest::ResourceTesting
 
     def mkresource(args = {})
         args[:source] ||= "source"
-        args[:scope] ||= stub :tags => []
+        args[:scope] ||= mkscope
 
         {:type => "resource", :title => "testing",
             :source => "source", :scope => "scope"}.each do |param, value|

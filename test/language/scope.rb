@@ -93,7 +93,7 @@ class TestScope < Test::Unit::TestCase
         scopes = {}
         classes = ["", "one", "one::two", "one::two::three"].each do |name|
             klass = parser.newclass(name)
-            klass.evaluate(:scope => scope)
+            Puppet::Parser::Resource.new(:type => "class", :title => name, :scope => scope, :source => mock('source')).evaluate
             scopes[name] = scope.compile.class_scope(klass)
         end
 
@@ -194,16 +194,8 @@ class TestScope < Test::Unit::TestCase
         parser = mkparser
         klass = parser.newclass("")
         scope = mkscope(:parser => parser)
-        klass.evaluate(:scope => scope)
+        Puppet::Parser::Resource.new(:type => "class", :title => :main, :scope => scope, :source => mock('source')).evaluate
 
-        klass = parser.newclass("one")
-        klass.evaluate(:scope => scope)
-
-        klass = parser.newclass("one::two")
-        klass.evaluate(:scope => scope)
-
-
-        scope = scope.compile.class_scope("")
         assert_nothing_raised {
             scope.setvar("test","value")
         }
@@ -212,7 +204,7 @@ class TestScope < Test::Unit::TestCase
 
         %w{one one::two one::two::three}.each do |name|
             klass = parser.newclass(name)
-            klass.evaluate(:scope => scope)
+            Puppet::Parser::Resource.new(:type => "class", :title => name, :scope => scope, :source => mock('source')).evaluate
             scopes[name] = scope.compile.class_scope(klass)
             scopes[name].setvar("test", "value-%s" % name.sub(/.+::/,''))
         end
@@ -267,41 +259,13 @@ class TestScope < Test::Unit::TestCase
         end
     end
 
-    def test_validtags
-        scope = mkscope()
-
-        ["a class", "a.class"].each do |bad|
-            assert_raise(Puppet::ParseError, "Incorrectly allowed %s" % bad.inspect) do
-                scope.tag(bad)
-            end
-        end
-
-        ["a-class", "a_class", "Class", "class", "yayNess"].each do |good|
-            assert_nothing_raised("Incorrectly banned %s" % good.inspect) do
-                scope.tag(good)
-            end
-        end
-
-    end
-
     def test_tagfunction
         scope = mkscope
-        
-        assert_nothing_raised {
-            scope.function_tag(["yayness", "booness"])
-        }
+        resource = mock 'resource'
+        scope.resource = resource
+        resource.expects(:tag).with("yayness", "booness")
 
-        assert(scope.tags.include?("yayness"), "tag 'yayness' did not get set")
-        assert(scope.tags.include?("booness"), "tag 'booness' did not get set")
-
-        # Now verify that the 'tagged' function works correctly
-        assert(scope.function_tagged("yayness"),
-            "tagged function incorrectly returned false")
-        assert(scope.function_tagged("booness"),
-            "tagged function incorrectly returned false")
-
-        assert(! scope.function_tagged("funtest"),
-            "tagged function incorrectly returned true")
+        scope.function_tag(%w{yayness booness})
     end
 
     def test_includefunction
@@ -322,6 +286,8 @@ class TestScope < Test::Unit::TestCase
         assert_nothing_raised do
             function.evaluate :scope => scope
         end
+
+        scope.compile.send(:evaluate_generators)
 
         [myclass, otherclass].each do |klass|
             assert(scope.compile.class_scope(klass),
@@ -371,6 +337,10 @@ class TestScope < Test::Unit::TestCase
 
         # Create a default source
         config.topscope.source = parser.newclass "", ""
+
+        # And a scope resource
+        scope_res = stub 'scope_resource', :virtual? => true, :exported? => false, :tags => []
+        config.topscope.resource = scope_res
 
         args = AST::ASTArray.new(
             :file => tempfile(),
@@ -468,42 +438,6 @@ Host <<||>>"
     end
     else
         $stderr.puts "No ActiveRecord -- skipping collection tests"
-    end
-
-    # Make sure tags behave appropriately.
-    def test_tags
-        parser, scope, source = mkclassframing
-
-        # First make sure we can only set legal tags
-        ["an invalid tag", "-anotherinvalid", "bad*tag"].each do |tag|
-            assert_raise(Puppet::ParseError, "Tag #{tag} was considered valid") do
-                scope.tag tag
-            end
-        end
-
-        # Now make sure good tags make it through.
-        tags = %w{good-tag yaytag GoodTag another_tag a ab A}
-        tags.each do |tag|
-            assert_nothing_raised("Tag #{tag} was considered invalid") do
-                scope.tag tag
-            end
-        end
-
-        # And make sure we get each of them.
-        ptags = scope.tags
-        tags.each do |tag|
-            assert(ptags.include?(tag), "missing #{tag}")
-        end
-
-
-        # Now create a subscope and set some tags there
-        newscope = scope.newscope(:type => 'subscope')
-
-        # set some tags
-        newscope.tag "onemore", "yaytag"
-
-        # And make sure we get them plus our parent tags
-        assert_equal((ptags + %w{onemore subscope}).sort, newscope.tags.sort)
     end
 
     def test_namespaces

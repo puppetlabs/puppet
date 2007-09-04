@@ -41,6 +41,7 @@ class TestASTDefinition < Test::Unit::TestCase
     def test_evaluate
         parser = mkparser
         config = mkconfig
+        config.send(:evaluate_main)
         scope = config.topscope
         klass = parser.newdefine "yayness",
             :arguments => [["owner", stringobj("nobody")], %w{mode}],
@@ -49,13 +50,16 @@ class TestASTDefinition < Test::Unit::TestCase
                         "owner" => varref("owner"), "mode" => varref("mode"))]
             )
 
-        resource = stub 'resource',
+        resource = Puppet::Parser::Resource.new(
             :title => "first",
-            :name => "first",
             :type => "yayness",
-            :to_hash => {"mode" => "755"},
             :exported => false,
-            :virtual => false 
+            :virtual => false,
+            :scope => scope,
+            :source => scope.source
+        )
+        resource.send(:set_parameter, "name", "first")
+        resource.send(:set_parameter, "mode", "755")
 
         resource.stubs(:title)
         assert_nothing_raised do
@@ -76,13 +80,17 @@ class TestASTDefinition < Test::Unit::TestCase
         end
 
         # Now create another with different args
-        resource2 = stub 'resource',
+        resource2 = Puppet::Parser::Resource.new(
             :title => "second",
-            :name => "second",
             :type => "yayness",
-            :to_hash => {"mode" => "755", "owner" => "daemon"},
             :exported => false,
-            :virtual => false 
+            :virtual => false,
+            :scope => scope,
+            :source => scope.source
+        )
+        resource2.send(:set_parameter, "name", "second")
+        resource2.send(:set_parameter, "mode", "755")
+        resource2.send(:set_parameter, "owner", "daemon")
 
         assert_nothing_raised do
             klass.evaluate(:scope => scope, :resource => resource2)
@@ -110,13 +118,14 @@ class TestASTDefinition < Test::Unit::TestCase
             # inside the loop so the subscope expectations work.
             klass = parser.newdefine "yayness%s" % i
 
-            resource = stub 'resource',
+            resource = Puppet::Parser::Resource.new(
                 :title => hash[:title],
-                :name => hash[:name] || hash[:title],
                 :type => "yayness%s" % i,
-                :to_hash => {},
                 :exported => false,
-                :virtual => false 
+                :virtual => false,
+                :scope => scope,
+                :source => scope.source
+            )
 
             subscope = klass.subscope(scope, resource)
 

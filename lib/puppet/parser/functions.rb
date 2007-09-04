@@ -135,7 +135,7 @@ module Functions
     newfunction(:tag, :doc => "Add the specified tags to the containing class
     or definition.  All contained objects will then acquire that tag, also.
     ") do |vals|
-        self.tag(*vals)
+        self.resource.tag(*vals)
     end
 
     # Test whether a given tag is set.  This functions as a big OR -- if any of the
@@ -148,7 +148,7 @@ module Functions
 
         retval = true
         vals.each do |val|
-            unless classlist.include?(val) or self.tags.include?(val)
+            unless classlist.include?(val) or self.resource.tags.include?(val)
                 retval = false
                 break
             end

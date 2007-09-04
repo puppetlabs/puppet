@@ -311,47 +311,11 @@ class Puppet::Parser::Scope
         return out
     end
 
-    # Add a tag to our current list.  These tags will be added to all
-    # of the objects contained in this scope.
-    def tag(*ary)
-        ary.each { |tag|
-            if tag.nil? or tag == ""
-                puts caller
-                Puppet.debug "got told to tag with %s" % tag.inspect
-                next
-            end
-            unless tag =~ /^\w[-\w]*$/
-                fail Puppet::ParseError, "Invalid tag %s" % tag.inspect
-            end
-            tag = tag.to_s
-            unless @tags.include?(tag)
-                #Puppet.info "Tagging scope %s with %s" % [self.object_id, tag]
-                @tags << tag
-            end
-        }
-    end
-
     # Return the tags associated with this scope.  It's basically
     # just our parents' tags, plus our type.  We don't cache this value
     # because our parent tags might change between calls.
     def tags
-        tmp = [] + @tags
-        unless ! defined? @type or @type.nil? or @type == ""
-            tmp << @type.to_s
-        end
-        if parent
-            #info "Looking for tags in %s" % parent.type
-            parent.tags.each { |tag|
-                if tag.nil? or tag == ""
-                    Puppet.debug "parent returned tag %s" % tag.inspect
-                    next
-                end
-                unless tmp.include?(tag)
-                    tmp << tag
-                end
-            }
-        end
-        return tmp.sort.uniq
+        resource.tags
     end
 
     # Used mainly for logging
