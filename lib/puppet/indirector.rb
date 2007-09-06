@@ -3,77 +3,37 @@
 # or more terminus types defined.  The indirection must have its preferred terminus
 # configured via a 'default' in the form of '<indirection>_terminus'; e.g.,
 # 'node_terminus = ldap'.
-class Puppet::Indirector
-    # A simple indirection category.  Indirections are the things that can have
-    # multiple indirect termini, like node, configuration, or facts.  Indirections
-    # should be very low-configuration, and at this point they don't do much beyond
-    # define the valid indirection categories.
-    class Indirection
-        attr_accessor :name, :default
-
-        def initialize(name)
-            @name = name
-            options.each { |param, val| send(param.to_s + "=", val) }
-        end
-
-        def to_s
-            @name.to_s
-        end
-    end
-
+module Puppet::Indirector
     # This manages reading in all of our files for us and then retrieving
     # loaded instances.  We still have to define the 'newX' method, but this
     # does all of the rest -- loading, storing, and retrieving by name.
     require 'puppet/util/instance_loader'
-    extend Puppet::Util::InstanceLoader
-
-    # Autoload our indirections.  Each indirection will set up its own autoloader.
-    # Indirections have to be stored by name at this path.
-    autoload :indirection, "puppet/indirector"
-
-    # Return (and load, if necessary) a specific autoloaded indirection.
-    def self.indirection(name)
-        loaded_instance(:indirection, name)
-    end
-
-    # Define a new indirection.  This method is used in the indirection files
-    # to define a new indirection category.
-    def self.newindirection(name, options = {}, &block)
-        unless Puppet.config.valid?("%s_terminus" % name)
-            raise ArgumentError, "Indirection category %s does not have a default defined" % name
-        end
-        # Create the indirection
-        @indirections[name] = Indirection.new(name, options)
-
-        # Set its default terminus.
-        @indirections[name].default = Puppet.config["%s_terminus" % name]
-
-        # Define a new autoload mechanism for this specific indirection.
-        autoload name, "puppet/indirector/%s" % name
-    end
+    include Puppet::Util::InstanceLoader
 
     # Define a new indirection terminus.  This method is used by the individual
     # termini in their separate files.  Again, the autoloader takes care of
     # actually loading these files.
-    def self.newterminus(indirection, name, options = {}, &block)
+    def register_terminus(name, options = {}, &block)
         genclass(name, :hash => instance_hash(indirection.name), :attributes => options, :block => block)
     end
 
     # Retrieve a terminus class by indirection and name.
-    def self.terminus(indirection, name)
-        loaded_instance(indirection.name, name)
+    def terminus(name)
+        loaded_instance(name)
     end
 
-    # Create/return our singleton.
-    def self.create
-        unless defined? @instance
-            @instance = new
-        end
-        @instance
-    end
+    # Declare that the including class indirects its methods to
+    # this terminus.  The terminus name must be the name of a Puppet
+    # default, not the value -- if it's the value, then it gets
+    # evaluated at parse time, which is before the user has had a chance
+    # to override it.
+    def indirects(indirection, options)
+        @indirection = indirection
+        @indirect_terminus = options[:to]
 
-    # Make sure they have to use the singleton-style method.
-    private :new
+        # Set up autoloading of the appropriate termini.
+        autoload "puppet/indirector/%s" % indirection
+    end
 
     # Define methods for each of the HTTP methods.  These just point to the
     # termini, with consistent error-handling.  Each method is called with
@@ -86,18 +46,13 @@ class Puppet::Indirector
     # declare supported methods, and then verify that termini implement all of
     # those methods.
     [:get, :post, :put, :delete].each do |method_name|
-        define_method(method_name) do |cat_name, *args|
+        define_method(method_name) do |*args|
             begin
-                terminus(self.class.indirection(cat_name)).send(method_name, *args)
+                terminus.send(method_name, *args)
             rescue NoMethodError
                 raise ArgumentError, "Indirection category %s does not respond to REST method %s" % [indirection, method_name]
             end
         end
-    end
-
-    def initialize
-        # To hold the singleton termini, by indirection name.
-        @termini = {}
     end
 
     private
@@ -112,7 +67,7 @@ class Puppet::Indirector
     end
 
     # Return the singleton terminus for this indirection.
-    def terminus(indirection)
+    def terminus
         unless terminus = @termini[indirection.name]
             terminus = @termini[indirection.name] = make_terminus(indirection)
         end
