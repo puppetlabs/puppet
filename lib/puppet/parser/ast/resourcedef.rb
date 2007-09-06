@@ -1,9 +1,9 @@
-require 'puppet/parser/ast/branch'
+require 'puppet/parser/ast/resourceref'
 
 # Any normal puppet resource declaration.  Can point to a definition or a
 # builtin type.
 class Puppet::Parser::AST
-class ResourceDef < AST::Branch
+class ResourceDef < AST::ResourceRef
     attr_accessor :title, :type, :exported, :virtual
     attr_reader :params
 
@@ -24,6 +24,8 @@ class ResourceDef < AST::Branch
             objtitles = [objtitles]
         end
 
+        objtype = qualified_type(scope)
+
         # This is where our implicit iteration takes place; if someone
         # passed an array as the name, then we act just like the called us
         # many times.
@@ -37,7 +39,7 @@ class ResourceDef < AST::Branch
                 # is true.  Argh, this was a very tough one to track down.
                 virt = self.virtual || scope.resource.virtual? || exp
                 obj = Puppet::Parser::Resource.new(
-                    :type => @type,
+                    :type => objtype,
                     :title => objtitle,
                     :params => paramobjects,
                     :file => self.file,
@@ -49,7 +51,7 @@ class ResourceDef < AST::Branch
                 )
 
                 # And then store the resource in the compile.
-                # XXX At some point, we need to switch all of this to return
+                # At some point, we need to switch all of this to return
                 # objects instead of storing them like this.
                 scope.compile.store_resource(scope, obj)
                 obj

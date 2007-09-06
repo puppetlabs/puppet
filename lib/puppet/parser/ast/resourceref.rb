@@ -25,28 +25,42 @@ class Puppet::Parser::AST
         def evaluate(hash)
             scope = hash[:scope]
 
-            # We want a lower-case type.
-            objtype = @type.downcase
             title = @title.safeevaluate(:scope => scope)
-
-            unless builtintype?(objtype)
-                if dtype = scope.finddefine(objtype)
-                    objtype = dtype.classname
-                elsif objtype == "class"
-                    # Look up the full path to the class
-                    if classobj = scope.findclass(title)
-                        title = classobj.classname
-                    else
-                        raise Puppet::ParseError, "Could not find class %s" % title
-                    end
-                else
-                    raise Puppet::ParseError, "Could not find resource type %s" % objtype
-                end
+            if @type == "class"
+                objtype = @type
+                title = qualified_class(scope, title)
+            else
+                objtype = qualified_type(scope)
             end
 
             return Puppet::Parser::Resource::Reference.new(
                 :type => objtype, :title => title
             )
+        end
+
+        # Look up a fully qualified class name.
+        def qualified_class(scope, title)
+            # Look up the full path to the class
+            if classobj = scope.findclass(title)
+                title = classobj.classname
+            else
+                raise Puppet::ParseError, "Could not find class %s" % title
+            end
+        end
+
+        # Look up a fully-qualified type.  This method is
+        # also used in AST::Resource.
+        def qualified_type(scope, title = nil)
+            # We want a lower-case type.  For some reason.
+            objtype = @type.downcase
+            unless builtintype?(objtype)
+                if dtype = scope.finddefine(objtype)
+                    objtype = dtype.classname
+                else
+                    raise Puppet::ParseError, "Could not find resource type %s" % objtype
+                end
+            end
+            return objtype
         end
     end
 end
