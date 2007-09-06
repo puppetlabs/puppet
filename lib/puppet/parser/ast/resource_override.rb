@@ -1,9 +1,9 @@
-require 'puppet/parser/ast/resourcedef'
+require 'puppet/parser/ast/resource'
 
 class Puppet::Parser::AST
     # Set a parameter on a resource specification created somewhere else in the
     # configuration.  The object is responsible for verifying that this is allowed.
-    class ResourceOverride < ResourceDef
+    class ResourceOverride < Resource
         attr_accessor :object
         attr_reader :params
 

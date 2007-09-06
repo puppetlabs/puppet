@@ -71,5 +71,5 @@ class Puppet::Parser::AST
     # Used for abstracting the grammar declarations.  Basically unnecessary
     # except that I kept finding bugs because I had too many arrays that
     # meant completely different things.
-    class ResourceInst < ASTArray; end
+    class ResourceInstance < ASTArray; end
 end

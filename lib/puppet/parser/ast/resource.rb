@@ -1,9 +1,9 @@
-require 'puppet/parser/ast/resourceref'
+require 'puppet/parser/ast/resource_reference'
 
 # Any normal puppet resource declaration.  Can point to a definition or a
 # builtin type.
 class Puppet::Parser::AST
-class ResourceDef < AST::ResourceRef
+class Resource < AST::ResourceReference
     attr_accessor :title, :type, :exported, :virtual
     attr_reader :params
 

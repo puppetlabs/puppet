@@ -105,7 +105,7 @@ module PuppetTest::ParserTesting
             title = stringobj(title)
         end
         assert_nothing_raised("Could not create %s %s" % [type, title]) {
-            return AST::ResourceDef.new(
+            return AST::Resource.new(
                 :file => __FILE__,
                 :line => __LINE__,
                 :title => title,
@@ -135,7 +135,7 @@ module PuppetTest::ParserTesting
 
     def resourceref(type, title)
         assert_nothing_raised("Could not create %s %s" % [type, title]) {
-            return AST::ResourceRef.new(
+            return AST::ResourceReference.new(
                 :file => __FILE__,
                 :line => __LINE__,
                 :type => type,
@@ -191,7 +191,7 @@ module PuppetTest::ParserTesting
             params = hash.collect { |param, value|
             resourceparam(param, value)
         }
-        return AST::ResourceInst.new(
+        return AST::ResourceInstance.new(
                                    :file => tempfile(),
                                    :line => rand(100),
                                    :children => params

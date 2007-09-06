@@ -8,13 +8,13 @@ $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 require 'puppettest'
 require 'puppettest/parsertesting'
 
-class TestASTResourceRef < Test::Unit::TestCase
+class TestASTResourceReference < Test::Unit::TestCase
 	include PuppetTest
 	include PuppetTest::ParserTesting
 	AST = Puppet::Parser::AST
     
     def newref(type, title)
-        AST::ResourceRef.new(:type => type, :title => AST::String.new(:value => title))
+        AST::ResourceReference.new(:type => type, :title => AST::String.new(:value => title))
     end
 
     def setup

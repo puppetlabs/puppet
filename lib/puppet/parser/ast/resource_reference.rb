@@ -2,7 +2,7 @@ require 'puppet/parser/ast/branch'
 
 class Puppet::Parser::AST
     # A reference to an object.  Only valid as an rvalue.
-    class ResourceRef < AST::Branch
+    class ResourceReference < AST::Branch
         attr_accessor :title, :type
         # Is the type a builtin type?
         def builtintype?(type)

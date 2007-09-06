@@ -8,7 +8,7 @@ $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 require 'puppettest'
 require 'puppettest/parsertesting'
 
-class TestASTResourceDef < Test::Unit::TestCase
+class TestASTResource< Test::Unit::TestCase
 	include PuppetTest
 	include PuppetTest::ParserTesting
 	AST = Puppet::Parser::AST
@@ -22,7 +22,7 @@ class TestASTResourceDef < Test::Unit::TestCase
 
     def newdef(type, title, params = nil)
         params ||= AST::ASTArray.new(:children => [])
-        AST::ResourceDef.new(:type => type, :title => AST::String.new(:value => title), :params => params)
+        AST::Resource.new(:type => type, :title => AST::String.new(:value => title), :params => params)
     end
 
     # Related to #806, make sure resources always look up the full path to the resource.

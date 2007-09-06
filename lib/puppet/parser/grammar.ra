@@ -116,19 +116,19 @@ resourcerefs:     resourceref
 
 resource:       classname LBRACE resourceinstances endsemi RBRACE {
     array = val[2]
-    if array.instance_of?(AST::ResourceInst)
+    if array.instance_of?(AST::ResourceInstance)
         array = [array]
     end
     result = ast AST::ASTArray
 
     # this iterates across each specified resourceinstance
     array.each { |instance|
-        unless instance.instance_of?(AST::ResourceInst)
+        unless instance.instance_of?(AST::ResourceInstance)
             raise Puppet::Dev, "Got something that isn't an instance"
         end
         # now, i need to somehow differentiate between those things with
         # arrays in their names, and normal things
-        result.push ast(AST::ResourceDef,
+        result.push ast(AST::Resource,
             :type => val[0],
             :title => instance[0],
             :params => instance[1])
@@ -248,12 +248,12 @@ colllval:                 variable
                         | name
 
 resourceinst:   resourcename COLON params endcomma {
-    result = ast AST::ResourceInst, :children => [val[0],val[2]]
+    result = ast AST::ResourceInstance, :children => [val[0],val[2]]
 }
 
 resourceinstances:   resourceinst
                  | resourceinstances SEMIC resourceinst {
-    if val[0].instance_of?(AST::ResourceInst)
+    if val[0].instance_of?(AST::ResourceInstance)
         result = ast AST::ASTArray, :children => [val[0],val[2]]
     else
         val[0].push val[2]
@@ -385,9 +385,9 @@ boolean:    BOOLEAN {
 
 resourceref: NAME LBRACK rvalue RBRACK {
     Puppet.warning addcontext("Deprecation notice:  Resource references should now be capitalized")
-    result = ast AST::ResourceRef, :type => val[0], :title => val[2]
+    result = ast AST::ResourceReference, :type => val[0], :title => val[2]
 }               | classref LBRACK rvalue RBRACK {
-    result = ast AST::ResourceRef, :type => val[0], :title => val[2]
+    result = ast AST::ResourceReference, :type => val[0], :title => val[2]
 }
 
 ifstatement:      IF iftest LBRACE statements RBRACE else {

@@ -475,7 +475,7 @@ file { "/tmp/yayness":
 
             assert_instance_of(AST::ASTArray, ret.classes[""].code)
             resdef = ret.classes[""].code[0]
-            assert_instance_of(AST::ResourceDef, resdef)
+            assert_instance_of(AST::Resource, resdef)
             assert_equal("/tmp/testing", resdef.title.value)
             # We always get an astarray back, so...
             check.call(resdef, "simple resource")
@@ -486,7 +486,7 @@ file { "/tmp/yayness":
             end
 
             ret.classes[""].each do |res|
-                assert_instance_of(AST::ResourceDef, res)
+                assert_instance_of(AST::Resource, res)
                 check.call(res, "multiresource")
             end
 
