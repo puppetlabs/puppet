@@ -43,7 +43,7 @@ class Puppet::Network::Handler
                 @local = false
             end
 
-            args[:Local] = local?
+            args[:Local] = true
 
             if hash.include?(:CA) and hash[:CA]
                 @ca = Puppet::SSLCertificates::CA.new()
@@ -77,15 +77,14 @@ class Puppet::Network::Handler
             fact_handler.set(client, facts)
 
             # And get the configuration from the config handler
-            config = config_handler.configuration(client)
+            begin
+                config = config_handler.configuration(client)
+            rescue => detail
+                puts detail.backtrace
+                raise
+            end
 
             return translate(config.extract)
-        end
-
-        def local=(val)
-            @local = val
-            config_handler.local = val
-            fact_handler.local = val
         end
 
         private

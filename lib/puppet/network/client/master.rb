@@ -694,5 +694,3 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         sleep(time)
     end
 end
-
-# $Id$

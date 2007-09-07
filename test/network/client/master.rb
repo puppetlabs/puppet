@@ -45,30 +45,23 @@ class TestMasterClient < Test::Unit::TestCase
         @master = Puppet::Network::Client.master
     end
 
-    def mkmaster(file = nil)
-        master = nil
-
-        file ||= mktestmanifest()
+    def mkmaster(options = {})
+        options[:UseNodes] = false
+        options[:Local] = true
+        unless options[:Code]
+            options[:Manifest] ||= mktestmanifest
+        end
         # create our master
-        assert_nothing_raised() {
-            # this is the default server setup
-            master = Puppet::Network::Handler.master.new(
-                :Manifest => file,
-                :UseNodes => false,
-                :Local => true
-            )
-        }
+        # this is the default server setup
+        master = Puppet::Network::Handler.master.new(options)
         return master
     end
 
     def mkclient(master = nil)
         master ||= mkmaster()
-        client = nil
-        assert_nothing_raised() {
-            client = Puppet::Network::Client.master.new(
-                :Master => master
-            )
-        }
+        client = Puppet::Network::Client.master.new(
+            :Master => master
+        )
 
         return client
     end
@@ -183,7 +176,7 @@ class TestMasterClient < Test::Unit::TestCase
         FileUtils.mkdir_p(Puppet[:statedir])
         manifest = mktestmanifest
 
-        master = mkmaster(manifest)
+        master = mkmaster(:Manifest => manifest)
 
         client = mkclient(master)
 
@@ -448,7 +441,7 @@ end
         manifest = tempfile()
         File.open(manifest, "w") { |f| f.puts "file { '#{file}': content => yay }" }
         
-        driver = mkmaster(manifest)
+        driver = mkmaster(:Manifest => manifest)
         driver.local = false
         master = mkclient(driver)
         
@@ -532,7 +525,6 @@ end
         master.local = false
         driver = master.send(:instance_variable_get, "@driver")
         driver.local = false
-        driver.send(:config_handler).local = false
         # Retrieve the configuration
         master.getconfig
 
@@ -720,6 +712,21 @@ end
             client.run
         end
     end
-end
 
-# $Id$
+    # #800 -- we cannot fix this using the current design.
+    def disabled_test_invalid_relationships_do_not_get_cached
+        # Make a master with an invalid relationship
+        master = mkmaster :Code => "notify { one: require => File[yaytest] }"
+        master.local = false # so it gets cached
+        client = mkclient(master)
+        client.local = false
+
+        client.getconfig
+        # Doesn't throw an exception, but definitely fails.
+        client.apply
+
+        # Make sure the config is not cached.
+        config = Puppet.config[:localconfig] + ".yaml"
+        assert(! File.exists?(config), "Cached an invalid configuration")
+    end
+end

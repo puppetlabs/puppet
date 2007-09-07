@@ -274,7 +274,7 @@ class Puppet::Type
                 # nil.
                 unless object
                     self.fail "Could not retrieve dependency '%s[%s]' of %s" %
-                        [tname.to_s.capitalize, self.ref, name]
+                        [tname.to_s.capitalize, @resource.ref, name]
                 end
 
                 # Are we requiring them, or vice versa?  See the method docs
