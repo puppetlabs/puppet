@@ -24,11 +24,11 @@ class ConfigurationRailsTests < PuppetTest::TestCase
     # We need to make sure finished objects are stored in the db.
     def test_finish_before_store
         railsinit
-        config = mkconfig
-        config.ast_nodes = true
-        parser = config.parser
+        compile = mkcompile
+        compile.ast_nodes = true
+        parser = compile.parser
 
-        node = parser.newnode [config.node.name], :code => AST::ASTArray.new(:children => [
+        node = parser.newnode [compile.node.name], :code => AST::ASTArray.new(:children => [
             resourcedef("file", "/tmp/yay", :group => "root"),
             defaultobj("file", :owner => "root")
         ])
@@ -44,7 +44,7 @@ class ConfigurationRailsTests < PuppetTest::TestCase
                 raise "Resource was not passed to store()"
             end
         end
-        config.compile
+        compile.compile
     end
 
     def test_hoststorage

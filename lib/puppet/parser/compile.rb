@@ -246,7 +246,11 @@ class Puppet::Parser::Compile
             raise Puppet::ParseError, "Could not find default node or by name with '%s'" % node.names.join(", ")
         end
 
-        astnode.safeevaluate :scope => topscope
+        # Create a resource to model this node, and then add it to the list
+        # of resources.
+        resource = Puppet::Parser::Resource.new(:type => "node", :title => astnode.classname, :scope => topscope, :source => topscope.source)
+        store_resource(topscope, resource)
+        @configuration.tag(astnode.classname)
     end
 
     # Evaluate our collections and return true if anything returned an object.

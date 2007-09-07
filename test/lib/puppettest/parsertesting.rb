@@ -41,7 +41,7 @@ module PuppetTest::ParserTesting
         )
     end
 
-    def mkconfig(parser = nil)
+    def mkcompile(parser = nil)
         require 'puppet/network/handler/node'
         parser ||= mkparser
         node = mknode
@@ -67,15 +67,15 @@ module PuppetTest::ParserTesting
 
     def mkscope(hash = {})
         hash[:parser] ||= mkparser
-        config ||= mkconfig(hash[:parser])
-        config.topscope.source = (hash[:parser].findclass("", "") || hash[:parser].newclass(""))
+        compile ||= mkcompile(hash[:parser])
+        compile.topscope.source = (hash[:parser].findclass("", "") || hash[:parser].newclass(""))
 
-        unless config.topscope.source
+        unless compile.topscope.source
             raise "Could not find source for scope"
         end
         # Make the 'main' stuff
-        config.send(:evaluate_main)
-        config.topscope
+        compile.send(:evaluate_main)
+        compile.topscope
     end
 
     def classobj(name, hash = {})

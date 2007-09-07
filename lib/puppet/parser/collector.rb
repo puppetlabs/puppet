@@ -121,6 +121,10 @@ class Puppet::Parser::Collector
 
     def initialize(scope, type, equery, vquery, form)
         @scope = scope
+
+        unless scope.resource
+            raise "wtf?"
+        end
         @type = type
         @equery = equery
         @vquery = vquery
@@ -162,7 +166,7 @@ class Puppet::Parser::Collector
             # XXX Because the scopes don't expect objects to return values,
             # we have to manually add our objects to the scope.  This is
             # über-lame.
-            scope.setresource(resource)
+            scope.compile.store_resource(scope, resource)
         rescue => detail
             if Puppet[:trace]
                 puts detail.backtrace
@@ -174,5 +178,3 @@ class Puppet::Parser::Collector
         return resource
     end
 end
-
-# $Id$

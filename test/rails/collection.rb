@@ -23,6 +23,7 @@ class TestRailsCollection < PuppetTest::TestCase
         super
         Puppet[:trace] = false
         @scope = mkscope
+        @scope.compile.send(:evaluate_main)
     end
 
     def test_collect_exported
@@ -31,7 +32,7 @@ class TestRailsCollection < PuppetTest::TestCase
         # make an exported resource
         exported = mkresource(:type => "file", :title => "/tmp/exported",
             :exported => true, :params => {:owner => "root"})
-        @scope.setresource exported
+        @scope.compile.store_resource @scope, exported
 
         assert(exported.exported?, "Object was not marked exported")
         assert(exported.virtual?, "Object was not marked virtual")
@@ -39,7 +40,7 @@ class TestRailsCollection < PuppetTest::TestCase
         # And a non-exported
         real = mkresource(:type => "file", :title => "/tmp/real",
             :params => {:owner => "root"})
-        @scope.setresource real
+        @scope.compile.store_resource @scope, real
 
         # Now make a collector
         coll = nil
@@ -122,16 +123,17 @@ class TestRailsCollection < PuppetTest::TestCase
 
         # Make a new set with a different node name
         node = mknode("other")
-        config = Puppet::Parser::Compile.new(node, mkparser)
-        config.topscope.source = mock("source")
+        compile = Puppet::Parser::Compile.new(node, mkparser)
+        compile.send(:evaluate_main)
+        compile.topscope.source = mock("source")
 
         # It's important that it's a different name, since same-name resources are ignored.
-        assert_equal("other", config.node.name, "Did not get correct node name")
+        assert_equal("other", compile.node.name, "Did not get correct node name")
 
         # Now make a collector
         coll = nil
         assert_nothing_raised do
-            coll = Puppet::Parser::Collector.new(config.topscope, "file", nil, nil, :exported)
+            coll = Puppet::Parser::Collector.new(compile.topscope, "file", nil, nil, :exported)
         end
 
         # And try to collect the virtual resources.
@@ -163,7 +165,7 @@ class TestRailsCollection < PuppetTest::TestCase
         # Now make a normal resource
         normal = mkresource(:type => "file", :title => "/tmp/conflicttest",
             :params => {:owner => "root"})
-        @scope.setresource normal
+        @scope.compile.store_resource @scope, normal
 
         # Now make a collector
         coll = nil

@@ -35,7 +35,7 @@ class TestRailsHost < PuppetTest::TestCase
     end
 
     def test_store
-        @interp, @scope, @source = mkclassframing
+        @scope = mkscope
         # First make some objects
         resources = []
         4.times { |i|

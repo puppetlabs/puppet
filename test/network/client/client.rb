@@ -164,7 +164,10 @@ class TestClient < Test::Unit::TestCase
         # Fake that it's local, so it creates the class file
         client.local = false
 
-        client.expects(:setclasses).with(%w{yaytest bootest})
+        # We can't guarantee class ordering
+        client.expects(:setclasses).with do |array|
+            array.length == 2 and array.include?("yaytest") and array.include?("bootest")
+        end
         assert_nothing_raised {
             client.getconfig
         }

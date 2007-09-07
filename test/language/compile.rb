@@ -189,6 +189,7 @@ class TestCompile < Test::Unit::TestCase
     def test_evaluate_ast_node
         # First try it with ast_nodes disabled
         compile = mkcompile :ast_nodes => false
+        name = compile.node.name
         compile.expects(:ast_nodes?).returns(false)
         compile.parser.expects(:nodes).never
 
@@ -196,11 +197,14 @@ class TestCompile < Test::Unit::TestCase
             compile.send(:evaluate_ast_node)
         end
 
+        assert_nil(compile.resources.find { |r| r.to_s == "Node[#{name}]" }, "Created node object when ast_nodes was false")
+
         # Now try it with them enabled, but no node found.
         nodes = mock 'node_hash'
         compile = mkcompile :ast_nodes => true
+        name = compile.node.name
         compile.expects(:ast_nodes?).returns(true)
-        compile.parser.expects(:nodes).returns(nodes).times(4)
+        compile.parser.stubs(:nodes).returns(nodes)
 
         # Set some names for our test
         @node.names = %w{a b c}
@@ -217,44 +221,41 @@ class TestCompile < Test::Unit::TestCase
         end
 
         # Finally, make sure it works dandily when we have a node
-        nodes = mock 'hash'
         compile = mkcompile :ast_nodes => true
         compile.expects(:ast_nodes?).returns(true)
-        compile.parser.expects(:nodes).returns(nodes).times(3)
 
-        node = mock 'node'
-        node.expects(:safeevaluate).with(:scope => compile.topscope)
+        node = stub 'node', :classname => "c"
+        nodes = {"c" => node}
+        compile.parser.stubs(:nodes).returns(nodes)
+
         # Set some names for our test
         @node.names = %w{a b c}
-        nodes.expects(:[]).with("a").returns(nil)
-        nodes.expects(:[]).with("b").returns(nil)
-        nodes.expects(:[]).with("c").returns(node)
-        nodes.expects(:[]).with("default").never
 
-        # And make sure the lack of a node throws an exception
+        # And make sure we throw no exceptions.
         assert_nothing_raised("Failed when a node was found") do
             compile.send(:evaluate_ast_node)
         end
+
+        assert_instance_of(Puppet::Parser::Resource, compile.resources.find { |r| r.to_s == "Node[c]" },
+            "Did not create node resource")
 
         # Lastly, check when we actually find the default.
-        nodes = mock 'hash'
         compile = mkcompile :ast_nodes => true
         compile.expects(:ast_nodes?).returns(true)
-        compile.parser.expects(:nodes).returns(nodes).times(4)
 
-        node = mock 'node'
-        node.expects(:safeevaluate).with(:scope => compile.topscope)
+        node = stub 'node', :classname => "default"
+        nodes = {"default" => node}
+        compile.parser.stubs(:nodes).returns(nodes)
+
         # Set some names for our test
         @node.names = %w{a b c}
-        nodes.expects(:[]).with("a").returns(nil)
-        nodes.expects(:[]).with("b").returns(nil)
-        nodes.expects(:[]).with("c").returns(nil)
-        nodes.expects(:[]).with("default").returns(node)
 
         # And make sure the lack of a node throws an exception
         assert_nothing_raised("Failed when a node was found") do
             compile.send(:evaluate_ast_node)
         end
+        assert_instance_of(Puppet::Parser::Resource, compile.resources.find { |r| r.to_s == "Node[default]" },
+            "Did not create default node resource")
     end
 
     def test_evaluate_node_classes
