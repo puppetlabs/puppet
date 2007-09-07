@@ -164,4 +164,21 @@ class TestASTHostClass < Test::Unit::TestCase
         assert(result, "could not find parent-defined definition from sub")
         assert(fun == result, "found incorrect parent-defined definition from sub")
     end
+
+    # #795 - make sure the subclass's tags get set before we
+    # evaluate the parent class, so we can be sure that the parent
+    # class can switch based on the sub classes.
+    def test_tags_set_before_parent_is_evaluated
+        scope = mkscope
+        parser = scope.compile.parser
+        base = parser.newclass "base"
+        sub = parser.newclass "sub", :parent => "base"
+
+        base.expects(:safeevaluate).with do |args|
+            assert(scope.compile.configuration.tags.include?("sub"), "Did not tag with sub class name before evaluating base class")
+            base.evaluate(args)
+            true
+        end
+        sub.evaluate :scope => scope, :resource => scope.resource
+    end
 end

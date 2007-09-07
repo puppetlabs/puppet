@@ -30,6 +30,8 @@ class Puppet::Parser::AST
                 return nil
             end
 
+            scope.compile.configuration.tag(self.classname)
+
             pnames = nil
             if pklass = self.parentobj
                 pklass.safeevaluate :scope => scope, :resource => options[:resource]
@@ -71,7 +73,7 @@ class Puppet::Parser::AST
             if s = scope.compile.class_scope(klass)
                 return s
             else
-                raise Puppet::DevError, "Could not find scope for %s" % klass.fqname
+                raise Puppet::DevError, "Could not find scope for %s" % klass.classname
             end
         end
     end

@@ -49,11 +49,9 @@ class TestLangFunctions < Test::Unit::TestCase
 
     def test_taggedfunction
         scope = mkscope
-        tags = []
-        scope.resource.stubs(:tags).returns(tags)
+        scope.resource.tag("yayness")
 
-        tags << "yayness"
-
+        # Make sure the ast stuff does what it's supposed to
         {"yayness" => true, "booness" => false}.each do |tag, retval|
             func = taggedobj(tag, :rvalue)
 
@@ -64,6 +62,12 @@ class TestLangFunctions < Test::Unit::TestCase
 
             assert_equal(retval, val, "'tagged' returned %s for %s" % [val, tag])
         end
+
+        # Now make sure we correctly get tags.
+        scope.resource.tag("resourcetag")
+        assert(scope.function_tagged("resourcetag"), "tagged function did not catch resource tags")
+        scope.compile.configuration.tag("configtag")
+        assert(scope.function_tagged("configtag"), "tagged function did not catch configuration tags")
     end
 
     def test_failfunction

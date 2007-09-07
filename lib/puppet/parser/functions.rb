@@ -144,11 +144,12 @@ module Functions
     tells you whether the current container is tagged with the specified tags.
     The tags are ANDed, so that all of the specified tags must be included for
     the function to return true.") do |vals|
-        classlist = compile.classlist
+        configtags = compile.configuration.tags
+        resourcetags = resource.tags
 
         retval = true
         vals.each do |val|
-            unless classlist.include?(val) or self.resource.tags.include?(val)
+            unless configtags.include?(val) or resourcetags.include?(val)
                 retval = false
                 break
             end
