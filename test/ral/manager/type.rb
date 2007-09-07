@@ -758,7 +758,7 @@ class TestType < Test::Unit::TestCase
         exec = mk.call(4, :parent => comp)
         assert_equal("/server/Exec[exec4]", exec.path)
         
-        comp = Puppet::Type.newcomponent :type => "whatever", :name => "main[top]"
+        comp = Puppet::Type.newcomponent :type => "whatever", :name => "class[main]"
         exec = mk.call(5, :parent => comp)
         assert_equal("//Exec[exec5]", exec.path)
         
