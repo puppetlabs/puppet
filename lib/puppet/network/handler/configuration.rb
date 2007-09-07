@@ -111,7 +111,9 @@ class Puppet::Network::Handler
                     if Puppet[:trace]
                         puts detail.backtrace
                     end
-                    Puppet.err detail
+                    unless local?
+                        Puppet.err detail.to_s
+                    end
                     raise XMLRPC::FaultException.new(
                         1, detail.to_s
                     )

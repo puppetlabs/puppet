@@ -77,20 +77,27 @@ class Puppet::Parser::Interpreter
             if Puppet[:trace]
                 puts detail.backtrace
             end
-            Puppet.err "Could not parse for environment %s: %s" % [environment, detail]
-            return nil
+            msg = "Could not parse"
+            if environment and environment != ""
+                msg += " for environment %s" % environment
+            end
+            msg += ": %s" % detail
+            raise Puppet::Error, detail
         end
     end
 
     # Return the parser for a specific environment.
     def parser(environment)
         if ! @parsers[environment] or @parsers[environment].reparse?
-            if tmp = create_parser(environment)
+            # This will throw an exception if it does not succeed.  We only
+            # want to get rid of the old parser if we successfully create a new
+            # one.
+            begin
+                tmp = create_parser(environment)
                 @parsers[environment].clear if @parsers[environment]
                 @parsers[environment] = tmp
-            end
-            unless @parsers[environment]
-                raise Puppet::Error, "Could not parse any configurations"
+            rescue
+                # Nothing, yo.
             end
         end
         @parsers[environment]

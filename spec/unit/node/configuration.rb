@@ -54,6 +54,16 @@ end
 
 describe Puppet::Node::Configuration, " when extracting transobjects" do
 
+    def mkscope
+        @parser = Puppet::Parser::Parser.new :Code => ""
+        @node = Puppet::Node.new("mynode")
+        @compile = Puppet::Parser::Compile.new(@node, @parser)
+
+        # XXX This is ridiculous.
+        @compile.send(:evaluate_main)
+        @scope = @compile.topscope
+    end
+
     def mkresource(type, name)
         Puppet::Parser::Resource.new(:type => type, :title => name, :source => @source, :scope => @scope)
     end
@@ -62,7 +72,7 @@ describe Puppet::Node::Configuration, " when extracting transobjects" do
     it "should transform the resource graph into a tree of TransBuckets and TransObjects" do
         config = Puppet::Node::Configuration.new("mynode")
 
-        @scope = mock 'scope'
+        @scope = mkscope
         @source = mock 'source'
 
         defined = mkresource("class", :main)
@@ -83,7 +93,7 @@ describe Puppet::Node::Configuration, " when extracting transobjects" do
     it "should transform arbitrarily deep graphs into isomorphic trees" do
         config = Puppet::Node::Configuration.new("mynode")
 
-        @scope = mock 'scope'
+        @scope = mkscope
         @scope.stubs(:tags).returns([])
         @source = mock 'source'
 

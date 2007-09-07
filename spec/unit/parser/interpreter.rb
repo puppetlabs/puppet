@@ -67,7 +67,7 @@ describe Puppet::Parser::Interpreter, " when creating parser instances" do
 
     it "should return nothing when new parsers fail" do
         Puppet::Parser::Parser.expects(:new).with(:environment => :myenv).raises(ArgumentError)
-        @interp.send(:create_parser, :myenv).should be_nil
+        proc { @interp.send(:create_parser, :myenv) }.should raise_error(Puppet::Error)
     end
 
     it "should create parsers with environment-appropriate manifests" do
@@ -83,11 +83,13 @@ describe Puppet::Parser::Interpreter, " when creating parser instances" do
         parser1 = mock 'parser1'
         Puppet::Parser::Parser.expects(:new).with(:environment => :env1).returns(parser1)
         parser1.expects(:file=).with("/t/env1.pp")
+        parser1.expects(:parse)
         @interp.send(:create_parser, :env1)
 
         parser2 = mock 'parser2'
         Puppet::Parser::Parser.expects(:new).with(:environment => :env2).returns(parser2)
         parser2.expects(:file=).with("/t/env2.pp")
+        parser2.expects(:parse)
         @interp.send(:create_parser, :env2)
     end
 end
@@ -100,7 +102,7 @@ describe Puppet::Parser::Interpreter, " when managing parser instances" do
 
     it "it should an exception when nothing is there and nil is returned" do
         @interp.expects(:create_parser).with(:myenv).returns(nil)
-        lambda { @interp.send(:parser, :myenv) }.should raise_error(Puppet::Error)
+        @interp.send(:parser, :myenv).should be_nil
     end
 
     it "should create and return a new parser and use the same parser when the parser does not need reparsing" do
