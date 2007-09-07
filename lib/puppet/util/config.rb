@@ -1137,7 +1137,11 @@ Generated on #{Time.now}.
             path.shift # remove the leading nil
 
             objects = []
-            obj = Puppet::TransObject.new(self.value, "file")
+            path = self.value
+            unless path =~ /^#{File::SEPARATOR}/
+                path = File.join(Dir.getwd, path)
+            end
+            obj = Puppet::TransObject.new(path, "file")
 
             # Only create directories, or files that are specifically marked to
             # create.

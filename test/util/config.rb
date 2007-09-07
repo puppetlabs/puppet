@@ -59,6 +59,21 @@ class TestConfig < Test::Unit::TestCase
         }
     end
 
+    # #795 - when --config=relative, we want to fully expand file paths.
+    def test_relative_paths_when_to_transportable
+        config = mkconfig
+        config.setdefaults :yay, :transtest => ["/what/ever", "yo"]
+        file = config.element(:transtest)
+
+        # Now override it with a relative path name
+        config[:transtest] = "here"
+
+        should = File.join(Dir.getwd, "here")
+
+        object = file.to_transportable[0]
+        assert_equal(should, object.name, "Did not translate relative pathnames to full path names")
+    end
+
     def test_to_manifest
         set_configs
         manifest = nil
@@ -79,7 +94,7 @@ class TestConfig < Test::Unit::TestCase
             trans = interp.compile(node)
         end
         assert_nothing_raised("Could not instantiate objects") {
-            trans.to_type
+            trans.extract.to_type
         }
     end
 
