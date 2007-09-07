@@ -121,10 +121,6 @@ class Puppet::Parser::Collector
 
     def initialize(scope, type, equery, vquery, form)
         @scope = scope
-
-        unless scope.resource
-            raise "wtf?"
-        end
         @type = type
         @equery = equery
         @vquery = vquery

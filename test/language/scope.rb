@@ -27,7 +27,7 @@ class TestScope < Test::Unit::TestCase
     end
 
     def test_variables
-        config = mkconfig
+        config = mkcompile
         topscope = config.topscope
         midscope = config.newscope(topscope)
         botscope = config.newscope(midscope)
@@ -125,7 +125,7 @@ class TestScope < Test::Unit::TestCase
     end
 
     def test_setdefaults
-        config = mkconfig
+        config = mkcompile
 
         scope = config.topscope
 
@@ -151,7 +151,7 @@ class TestScope < Test::Unit::TestCase
     end
 
     def test_lookupdefaults
-        config = mkconfig
+        config = mkcompile
         top = config.topscope
 
         # Make a subscope
@@ -179,7 +179,7 @@ class TestScope < Test::Unit::TestCase
     end
 
     def test_parent
-        config = mkconfig
+        config = mkcompile
         top = config.topscope
 
         # Make a subscope
@@ -332,7 +332,7 @@ class TestScope < Test::Unit::TestCase
     # Verify that we recursively mark as exported the results of collectable
     # components.
     def test_exportedcomponents
-        config = mkconfig
+        config = mkcompile
         parser = config.parser
 
         # Create a default source
