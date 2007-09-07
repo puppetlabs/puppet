@@ -815,6 +815,23 @@ class TestType < Test::Unit::TestCase
             end
         end
     end
-end
 
-# $Id$
+    # #801 -- resources only checked in noop should be rescheduled immediately.
+    def test_reschedule_when_noop
+        Puppet::Type.type(:schedule).mkdefaultschedules
+        file = Puppet::Type.type(:file).create(:path => "/tmp/whatever", :mode => "755", :noop => true, :schedule => :daily, :ensure => :file)
+
+        assert(file.noop?, "File not considered in noop")
+        assert(file.scheduled?, "File is not considered scheduled")
+
+        file.evaluate
+
+        assert_nil(file.cached(:checked), "Stored a checked time when running in noop mode when there were changes")
+        file.cache(:checked, nil)
+
+        file.stubs(:propertychanges).returns([])
+
+        file.evaluate
+        assert_instance_of(Time, file.cached(:checked), "Did not store a checked time when running in noop mode when there were no changes")
+    end
+end
