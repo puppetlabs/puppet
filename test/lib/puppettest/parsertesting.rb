@@ -5,6 +5,8 @@ module PuppetTest::ParserTesting
     include PuppetTest
     AST = Puppet::Parser::AST
 
+    Compile = Puppet::Parser::Compile
+
     # A fake class that we can use for testing evaluation.
     class FakeAST
         attr_writer :evaluate
@@ -39,6 +41,20 @@ module PuppetTest::ParserTesting
         )
     end
 
+    def mkcompile(parser = nil)
+        require 'puppet/network/handler/node'
+        parser ||= mkparser
+        node = mknode
+        return Compile.new(node, parser)
+    end
+
+    def mknode(name = nil)
+        require 'puppet/node'
+        name ||= "nodename"
+        Puppet::Network::Handler.handler(:node)
+        Puppet::Node.new(name)
+    end
+
     def mkinterp(args = {})
         args[:Code] ||= "" unless args.include?(:Manifest)
         args[:Local] ||= true
@@ -50,14 +66,16 @@ module PuppetTest::ParserTesting
     end
 
     def mkscope(hash = {})
-        hash[:interp] ||= mkinterp
-        hash[:source] ||= (hash[:interp].findclass("", "") ||
-            hash[:interp].newclass(""))
+        hash[:parser] ||= mkparser
+        compile ||= mkcompile(hash[:parser])
+        compile.topscope.source = (hash[:parser].findclass("", "") || hash[:parser].newclass(""))
 
-        unless hash[:source]
+        unless compile.topscope.source
             raise "Could not find source for scope"
         end
-        Puppet::Parser::Scope.new(hash)
+        # Make the 'main' stuff
+        compile.send(:evaluate_main)
+        compile.topscope
     end
 
     def classobj(name, hash = {})
@@ -87,7 +105,7 @@ module PuppetTest::ParserTesting
             title = stringobj(title)
         end
         assert_nothing_raised("Could not create %s %s" % [type, title]) {
-            return AST::ResourceDef.new(
+            return AST::Resource.new(
                 :file => __FILE__,
                 :line => __LINE__,
                 :title => title,
@@ -117,7 +135,7 @@ module PuppetTest::ParserTesting
 
     def resourceref(type, title)
         assert_nothing_raised("Could not create %s %s" % [type, title]) {
-            return AST::ResourceRef.new(
+            return AST::ResourceReference.new(
                 :file => __FILE__,
                 :line => __LINE__,
                 :type => type,
@@ -173,7 +191,7 @@ module PuppetTest::ParserTesting
             params = hash.collect { |param, value|
             resourceparam(param, value)
         }
-        return AST::ResourceInst.new(
+        return AST::ResourceInstance.new(
                                    :file => tempfile(),
                                    :line => rand(100),
                                    :children => params
@@ -293,12 +311,12 @@ module PuppetTest::ParserTesting
 
         config = nil
         assert_nothing_raised {
-            config = interp.run(Facter["hostname"].value, {})
+            config = interp.compile(mknode)
         }
 
         comp = nil
         assert_nothing_raised {
-            comp = config.to_type
+            comp = config.extract.to_type
         }
 
         assert_apply(comp)
@@ -388,5 +406,3 @@ module PuppetTest::ParserTesting
         return trans
     end
 end
-
-# $Id$

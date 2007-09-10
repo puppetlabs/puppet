@@ -15,16 +15,17 @@ class Puppet::Parser::Scope
 
     include Enumerable
     include Puppet::Util::Errors
-    attr_accessor :parent, :level, :interp, :source
-    attr_accessor :name, :type, :base, :keyword
-    attr_accessor :top, :translated, :exported, :virtual, :configuration
+    attr_accessor :parent, :level, :parser, :source, :resource
+    attr_accessor :base, :keyword, :nodescope
+    attr_accessor :top, :translated, :compile
 
     # Proxy accessors
     def host
-        @configuration.host
+        @compile.node.name
     end
+
     def interpreter
-        @configuration.interpreter
+        @compile.interpreter
     end
 
     # Is the value true?  This allows us to control the definition of truth
@@ -47,100 +48,14 @@ class Puppet::Parser::Scope
         end
     end
 
-    # Is the type a builtin type?
-    def builtintype?(type)
-        if typeklass = Puppet::Type.type(type)
-            return typeklass
-        else
-            return false
-        end
-    end
-
-    # Create a new child scope.
-    def child=(scope)
-        @children.push(scope)
-
-        # Copy all of the shared tables over to the child.
-        @@sharedtables.each do |name|
-            scope.send(name.to_s + "=", self.send(name))
-        end
-    end
-
-    # Verify that the given object isn't defined elsewhere.
-    def chkobjectclosure(obj)
-        if exobj = @definedtable[obj.ref]
-            typeklass = Puppet::Type.type(obj.type)
-            if typeklass and ! typeklass.isomorphic?
-                Puppet.info "Allowing duplicate %s" % type
-            else
-                # Either it's a defined type, which are never
-                # isomorphic, or it's a non-isomorphic type.
-                msg = "Duplicate definition: %s is already defined" % obj.ref
-
-                if exobj.file and exobj.line
-                    msg << " in file %s at line %s" %
-                        [exobj.file, exobj.line]
-                end
-
-                if obj.line or obj.file
-                    msg << "; cannot redefine"
-                end
-
-                raise Puppet::ParseError.new(msg)
-            end
-        end
-
-        return true
-    end
-
-    # Remove a specific child.
-    def delete(child)
-        @children.delete(child)
-    end
-
-    # Remove a resource from the various tables.  This is only used when
-    # a resource maps to a definition and gets evaluated.
-    def deleteresource(resource)
-        if @definedtable[resource.ref]
-            @definedtable.delete(resource.ref)
-        end
-
-        if @children.include?(resource)
-            @children.delete(resource)
-        end
-    end
-
     # Are we the top scope?
     def topscope?
         @level == 1
     end
 
-    # Yield each child scope in turn
-    def each
-        @children.each { |child|
-            yield child
-        }
-    end
-
-    # Evaluate a list of classes.
-    def evalclasses(*classes)
-        retval = []
-        classes.each do |klass|
-            if obj = findclass(klass)
-                obj.safeevaluate :scope => self
-                retval << klass
-            end
-        end
-        retval
-    end
-
-    def exported?
-        self.exported
-    end
-
     def findclass(name)
         @namespaces.each do |namespace|
-            if r = interp.findclass(namespace, name)
+            if r = parser.findclass(namespace, name)
                 return r
             end
         end
@@ -149,7 +64,7 @@ class Puppet::Parser::Scope
 
     def finddefine(name)
         @namespaces.each do |namespace|
-            if r = interp.finddefine(namespace, name)
+            if r = parser.finddefine(namespace, name)
                 return r
             end
         end
@@ -157,25 +72,11 @@ class Puppet::Parser::Scope
     end
 
     def findresource(string, name = nil)
-        if name
-            string = "%s[%s]" % [string.capitalize, name]
-        end
-
-        @definedtable[string]
+        compile.findresource(string, name)
     end
 
-    # Recursively complete the whole tree, in preparation for
-    # translation or storage.
-    def finish
-        self.each do |obj|
-            obj.finish
-        end
-    end
-
-    # Initialize our new scope.  Defaults to having no parent and to
-    # being declarative.
+    # Initialize our new scope.  Defaults to having no parent.
     def initialize(hash = {})
-        @finished = false
         if hash.include?(:namespace)
             if n = hash[:namespace]
                 @namespaces = [n]
@@ -195,16 +96,13 @@ class Puppet::Parser::Scope
 
         @tags = []
 
-        # Our child scopes and objects
-        @children = []
-
         # The symbol table for this scope.  This is where we store variables.
         @symtable = {}
 
         # All of the defaults set for types.  It's a hash of hashes,
         # with the first key being the type, then the second key being
         # the parameter.
-        @defaultstable = Hash.new { |dhash,type|
+        @defaults = Hash.new { |dhash,type|
             dhash[type] = {}
         }
     end
@@ -225,8 +123,8 @@ class Puppet::Parser::Scope
 
         # then override them with any current values
         # this should probably be done differently
-        if @defaultstable.include?(type)
-            @defaultstable[type].each { |var,value|
+        if @defaults.include?(type)
+            @defaults[type].each { |var,value|
                 values[var] = value
             }
         end
@@ -234,17 +132,6 @@ class Puppet::Parser::Scope
         #Puppet.debug "Got defaults for %s: %s" %
         #    [type,values.inspect]
         return values
-    end
-
-    # Look up all of the exported objects of a given type.
-    def lookupexported(type)
-        @definedtable.find_all do |name, r|
-            r.type == type and r.exported?
-        end
-    end
-
-    def lookupoverrides(obj)
-        @overridetable[obj.ref]
     end
 
     # Look up a defined type.
@@ -260,7 +147,7 @@ class Puppet::Parser::Scope
         unless klass
             raise Puppet::ParseError, "Could not find class %s" % klassname
         end
-        unless kscope = class_scope(klass)
+        unless kscope = compile.class_scope(klass)
             raise Puppet::ParseError, "Class %s has not been evaluated so its variables cannot be referenced" % klass.classname
         end
         return kscope.lookupvar(shortname, usestring)
@@ -295,11 +182,9 @@ class Puppet::Parser::Scope
         @namespaces.dup
     end
 
-    # Create a new scope.
-    def newscope(hash = {})
-        hash[:parent] = self
-        #debug "Creating new scope, level %s" % [self.level + 1]
-        return Puppet::Parser::Scope.new(hash)
+    # Create a new scope and set these options.
+    def newscope(options = {})
+        compile.newscope(self, options)
     end
 
     # Is this class for a node?  This is used to make sure that
@@ -307,20 +192,14 @@ class Puppet::Parser::Scope
     # is required because of how often the names are used throughout
     # the system, including on the client.
     def nodescope?
-        defined?(@nodescope) and @nodescope
-    end
-
-    # Return the list of remaining overrides.
-    def overrides
-        #@overridetable.collect { |name, overs| overs }.flatten
-        @overridetable.values.flatten
+        self.nodescope
     end
 
     # We probably shouldn't cache this value...  But it's a lot faster
     # than doing lots of queries.
     def parent
         unless defined?(@parent)
-            @parent = configuration.parent(self)
+            @parent = compile.parent(self)
         end
         @parent
     end
@@ -335,74 +214,11 @@ class Puppet::Parser::Scope
         end
     end
 
-    def resources
-        @definedtable.values
-    end
-
-    # Store the fact that we've evaluated a given class.  We use a hash
-    # that gets inherited from the top scope down, rather than a global
-    # hash.  We store the object ID, not class name, so that we
-    # can support multiple unrelated classes with the same name.
-    def setclass(klass)
-        if klass.is_a?(AST::HostClass)
-            unless klass.classname
-                raise Puppet::DevError, "Got a %s with no fully qualified name" %
-                    klass.class
-            end
-            @configuration.class_set(klass.classname, self)
-        else
-            raise Puppet::DevError, "Invalid class %s" % klass.inspect
-        end
-        if klass.is_a?(AST::Node)
-            @nodescope = true
-        end
-        nil
-    end
-
-    # Set all of our facts in the top-level scope.
-    def setfacts(facts)
-        facts.each { |var, value|
-            self.setvar(var, value)
-        }
-    end
-
-    # Add a new object to our object table and the global list, and do any necessary
-    # checks.
-    def setresource(obj)
-        self.chkobjectclosure(obj)
-
-        @children << obj
-
-        # Mark the resource as virtual or exported, as necessary.
-        if self.exported?
-            obj.exported = true
-        elsif self.virtual?
-            obj.virtual = true
-        end
-
-        # The global table
-        @definedtable[obj.ref] = obj
-
-        return obj
-    end
-
-    # Override a parameter in an existing object.  If the object does not yet
-    # exist, then cache the override in a global table, so it can be flushed
-    # at the end.
-    def setoverride(resource)
-        resource.override = true
-        if obj = @definedtable[resource.ref]
-            obj.merge(resource)
-        else
-            @overridetable[resource.ref] << resource
-        end
-    end
-
     # Set defaults for a type.  The typename should already be downcased,
     # so that the syntax is isolated.  We don't do any kind of type-checking
     # here; instead we let the resource do it when the defaults are used.
     def setdefaults(type, params)
-        table = @defaultstable[type]
+        table = @defaults[type]
 
         # if we got a single param, it'll be in its own array
         params = [params] unless params.is_a?(Array)
@@ -410,17 +226,8 @@ class Puppet::Parser::Scope
         params.each { |param|
             #Puppet.debug "Default for %s is %s => %s" %
             #    [type,ary[0].inspect,ary[1].inspect]
-            if @@declarative
-                if table.include?(param.name)
-                    self.fail "Default already defined for %s { %s }" %
-                            [type,param.name]
-                end
-            else
-                if table.include?(param.name)
-                    # we should maybe allow this warning to be turned off...
-                    Puppet.warning "Replacing default for %s { %s }" %
-                        [type,param.name]
-                end
+            if table.include?(param.name)
+                raise Puppet::ParseError.new("Default already defined for %s { %s }; cannot redefine" % [type, param.name], param.line, param.file)
             end
             table[param.name] = param
         }
@@ -428,23 +235,19 @@ class Puppet::Parser::Scope
 
     # Set a variable in the current scope.  This will override settings
     # in scopes above, but will not allow variables in the current scope
-    # to be reassigned if we're declarative (which is the default).
+    # to be reassigned.
     def setvar(name,value, file = nil, line = nil)
         #Puppet.debug "Setting %s to '%s' at level %s" %
         #    [name.inspect,value,self.level]
         if @symtable.include?(name)
-            if @@declarative
-                error = Puppet::ParseError.new("Cannot reassign variable %s" % name)
-                if file
-                    error.file = file
-                end
-                if line
-                    error.line = line
-                end
-                raise error
-            else
-                Puppet.warning "Reassigning %s to %s" % [name,value]
+            error = Puppet::ParseError.new("Cannot reassign variable %s" % name)
+            if file
+                error.file = file
             end
+            if line
+                error.line = line
+            end
+            raise error
         end
         @symtable[name] = value
     end
@@ -508,82 +311,16 @@ class Puppet::Parser::Scope
         return out
     end
 
-    # Add a tag to our current list.  These tags will be added to all
-    # of the objects contained in this scope.
-    def tag(*ary)
-        ary.each { |tag|
-            if tag.nil? or tag == ""
-                puts caller
-                Puppet.debug "got told to tag with %s" % tag.inspect
-                next
-            end
-            unless tag =~ /^\w[-\w]*$/
-                fail Puppet::ParseError, "Invalid tag %s" % tag.inspect
-            end
-            tag = tag.to_s
-            unless @tags.include?(tag)
-                #Puppet.info "Tagging scope %s with %s" % [self.object_id, tag]
-                @tags << tag
-            end
-        }
-    end
-
     # Return the tags associated with this scope.  It's basically
     # just our parents' tags, plus our type.  We don't cache this value
     # because our parent tags might change between calls.
     def tags
-        tmp = [] + @tags
-        unless ! defined? @type or @type.nil? or @type == ""
-            tmp << @type.to_s
-        end
-        if parent
-            #info "Looking for tags in %s" % parent.type
-            parent.tags.each { |tag|
-                if tag.nil? or tag == ""
-                    Puppet.debug "parent returned tag %s" % tag.inspect
-                    next
-                end
-                unless tmp.include?(tag)
-                    tmp << tag
-                end
-            }
-        end
-        return tmp.sort.uniq
+        resource.tags
     end
 
     # Used mainly for logging
     def to_s
-        if self.name
-            return "%s[%s]" % [@type, @name]
-        else
-            return self.type.to_s
-        end
-    end
-
-    # Convert all of our objects as necessary.
-    def translate
-        ret = @children.collect do |child|
-            case child
-            when Puppet::Parser::Resource
-                child.to_trans
-            when self.class
-                child.translate
-            else
-                devfail "Got %s for translation" % child.class
-            end
-        end.reject { |o| o.nil? }
-        bucket = Puppet::TransBucket.new ret
-
-        case self.type
-        when "": bucket.type = "main"
-        when nil: devfail "A Scope with no type"
-        else
-            bucket.type = @type
-        end
-        if self.name
-            bucket.name = self.name
-        end
-        return bucket
+        "Scope(%s)" % @resource.to_s
     end
 
     # Undefine a variable; only used for testing.
@@ -592,10 +329,4 @@ class Puppet::Parser::Scope
             @symtable.delete(var)
         end
     end
-
-    def virtual?
-        self.virtual || self.exported?
-    end
 end
-
-# $Id$

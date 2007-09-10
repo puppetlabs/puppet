@@ -7,12 +7,14 @@ require 'puppet/rails'
 require 'puppettest'
 require 'puppettest/railstesting'
 require 'puppettest/resourcetesting'
+require 'puppettest/parsertesting'
 
 # Don't do any tests w/out this class
 if Puppet.features.rails?
 class TestRailsResource < Test::Unit::TestCase
     include PuppetTest::RailsTesting
     include PuppetTest::ResourceTesting
+    include PuppetTest::ParserTesting
 
     def setup
         super
@@ -55,7 +57,7 @@ class TestRailsResource < Test::Unit::TestCase
         resource = mktest_resource
 
         # We need a scope
-        interp, scope, source = mkclassframing
+        scope = mkscope
 
         # Find the new resource and include all it's parameters.
         resource = Puppet::Rails::Resource.find_by_id(resource.id)
@@ -69,7 +71,7 @@ class TestRailsResource < Test::Unit::TestCase
         assert_equal("root", res[:owner])
         assert_equal("644", res[:mode])
         assert_equal("/tmp/to_resource", res.title)
-        assert_equal(source, res.source)
+        assert_equal(scope.source, res.source)
     end
 
     def test_parameters
@@ -111,7 +113,7 @@ class TestExportedResources < PuppetTest::TestCase
     def setup
         super
         Puppet[:trace] = false
-        @interp, @scope, @source = mkclassframing
+        @scope = mkscope
     end
 
     confine "Missing rails support" => Puppet.features.rails?

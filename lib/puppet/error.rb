@@ -50,5 +50,3 @@ module Puppet # :nodoc:
         end
     end
 end
-
-# $Id$

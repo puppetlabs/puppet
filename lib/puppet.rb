@@ -115,7 +115,7 @@ module Puppet
     end
 
     # Load all of the configuration parameters.
-    require 'puppet/configuration'
+    require 'puppet/defaults'
 
     def self.genconfig
         if Puppet[:configprint] != ""

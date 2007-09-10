@@ -22,19 +22,17 @@ class TestRailsCollection < PuppetTest::TestCase
     def setup
         super
         Puppet[:trace] = false
-        @interp, @scope, @source = mkclassframing
+        @scope = mkscope
+        @scope.compile.send(:evaluate_main)
     end
 
     def test_collect_exported
         railsinit
 
-        # Set a hostname
-        @scope.host = Facter.value(:hostname)
-
         # make an exported resource
         exported = mkresource(:type => "file", :title => "/tmp/exported",
             :exported => true, :params => {:owner => "root"})
-        @scope.setresource exported
+        @scope.compile.store_resource @scope, exported
 
         assert(exported.exported?, "Object was not marked exported")
         assert(exported.virtual?, "Object was not marked virtual")
@@ -42,7 +40,7 @@ class TestRailsCollection < PuppetTest::TestCase
         # And a non-exported
         real = mkresource(:type => "file", :title => "/tmp/real",
             :params => {:owner => "root"})
-        @scope.setresource real
+        @scope.compile.store_resource @scope, real
 
         # Now make a collector
         coll = nil
@@ -51,10 +49,10 @@ class TestRailsCollection < PuppetTest::TestCase
         end
 
         # Set it in our scope
-        @scope.newcollection(coll)
+        @scope.compile.add_collection(coll)
 
         # Make sure it's in the collections
-        assert_equal([coll], @scope.collections)
+        assert_equal([coll], @scope.compile.collections)
 
         # And try to collect the virtual resources.
         ret = nil
@@ -111,39 +109,40 @@ class TestRailsCollection < PuppetTest::TestCase
         # Now try storing our crap
         # Remark this as exported
         exported.exported = true
-        host = Puppet::Rails::Host.store(
-            :resources => [exported],
-            :facts => facts,
-            :name => facts["hostname"]
-        )
+        exported.scope.stubs(:tags).returns([])
+        node = mknode(facts["hostname"])
+        node.parameters = facts
+        host = Puppet::Rails::Host.store(node, [exported])
         assert(host, "did not get rails host")
         host.save
 
         # And make sure it's in there
         newres = host.resources.find_by_restype_and_title_and_exported("file", "/tmp/exported", true)
         assert(newres, "Did not find resource in db")
-        interp, scope, source = mkclassframing
-        scope.host = "two"
+        assert(newres.exported?, "Resource was not exported")
+
+        # Make a new set with a different node name
+        node = mknode("other")
+        compile = Puppet::Parser::Compile.new(node, mkparser)
+        compile.send(:evaluate_main)
+        compile.topscope.source = mock("source")
+
+        # It's important that it's a different name, since same-name resources are ignored.
+        assert_equal("other", compile.node.name, "Did not get correct node name")
 
         # Now make a collector
         coll = nil
         assert_nothing_raised do
-            coll = Puppet::Parser::Collector.new(scope, "file", nil, nil, :exported)
+            coll = Puppet::Parser::Collector.new(compile.topscope, "file", nil, nil, :exported)
         end
-
-        # Set it in our scope
-        scope.newcollection(coll)
-
-        # Make sure it's in the collections
-        assert_equal([coll], scope.collections)
 
         # And try to collect the virtual resources.
         ret = nil
-        assert_nothing_raised do
+        assert_nothing_raised("Could not collect exported resources") do
             ret = coll.collect_exported
         end
 
-        assert_equal(["/tmp/exported"], ret.collect { |f| f.title })
+        assert_equal(["/tmp/exported"], ret.collect { |f| f.title }, "Did not find resource in collction")
 
         # Make sure we can evaluate the same collection multiple times and
         # that later collections do nothing
@@ -166,8 +165,7 @@ class TestRailsCollection < PuppetTest::TestCase
         # Now make a normal resource
         normal = mkresource(:type => "file", :title => "/tmp/conflicttest",
             :params => {:owner => "root"})
-        @scope.setresource normal
-        @scope.host = "otherhost"
+        @scope.compile.store_resource @scope, normal
 
         # Now make a collector
         coll = nil
@@ -186,14 +184,12 @@ class TestRailsCollection < PuppetTest::TestCase
         railsinit
 
         # Make our configuration
-        host = Puppet::Rails::Host.new(:name => "myhost")
+        host = Puppet::Rails::Host.new(:name => @scope.host)
 
         host.resources.build(:title => "/tmp/hosttest", :restype => "file",
             :exported => true)
 
         host.save
-
-        @scope.host = "myhost"
 
         # Now make a collector
         coll = nil
@@ -223,8 +219,6 @@ class TestRailsCollection < PuppetTest::TestCase
             :exported => false)
 
         host.save
-
-        @scope.host = "otherhost"
 
         # Now make a collector
         coll = nil

@@ -77,5 +77,3 @@ class CollExpr < AST::Branch
     end
 end
 end
-
-# $Id$

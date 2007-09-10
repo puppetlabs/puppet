@@ -4,6 +4,7 @@ require 'etc'
 require 'uri'
 require 'fileutils'
 require 'puppet/network/handler'
+require 'puppet/util/diff'
 
 module Puppet
     newtype(:file) do
@@ -1047,7 +1048,7 @@ module Puppet
         # Write out the file.  We open the file correctly, with all of the
         # uid and mode and such, and then yield the file handle for actual
         # writing.
-        def write(usetmp = true)
+        def write(property, usetmp = true)
             mode = self.should(:mode)
 
             remove_existing(:file)

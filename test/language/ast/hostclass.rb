@@ -17,25 +17,27 @@ class TestASTHostClass < Test::Unit::TestCase
 	AST = Puppet::Parser::AST
 
     def test_hostclass
-        interp, scope, source = mkclassframing
+        scope = mkscope
+        parser = scope.compile.parser
 
         # Create the class we're testing, first with no parent
-        klass = interp.newclass "first",
+        klass = parser.newclass "first",
             :code => AST::ASTArray.new(
                 :children => [resourcedef("file", "/tmp",
                         "owner" => "nobody", "mode" => "755")]
             )
 
+        resource = Puppet::Parser::Resource.new(:type => "class", :title => "first", :scope => scope)
         assert_nothing_raised do
-            klass.evaluate(:scope => scope)
+            klass.evaluate(:scope => scope, :resource => resource)
         end
 
         # Then try it again
         assert_nothing_raised do
-            klass.evaluate(:scope => scope)
+            klass.evaluate(:scope => scope, :resource => resource)
         end
 
-        assert(scope.class_scope(klass), "Class was not considered evaluated")
+        assert(scope.compile.class_scope(klass), "Class was not considered evaluated")
 
         tmp = scope.findresource("File[/tmp]")
         assert(tmp, "Could not find file /tmp")
@@ -43,13 +45,13 @@ class TestASTHostClass < Test::Unit::TestCase
         assert_equal("755", tmp[:mode])
 
         # Now create a couple more classes.
-        newbase = interp.newclass "newbase",
+        newbase = parser.newclass "newbase",
             :code => AST::ASTArray.new(
                 :children => [resourcedef("file", "/tmp/other",
                         "owner" => "nobody", "mode" => "644")]
             )
 
-        newsub = interp.newclass "newsub",
+        newsub = parser.newclass "newsub",
             :parent => "newbase",
             :code => AST::ASTArray.new(
                 :children => [resourcedef("file", "/tmp/yay",
@@ -60,7 +62,7 @@ class TestASTHostClass < Test::Unit::TestCase
             )
 
         # Override a different variable in the top scope.
-        moresub = interp.newclass "moresub",
+        moresub = parser.newclass "moresub",
             :parent => "newbase",
             :code => AST::ASTArray.new(
                 :children => [resourceoverride("file", "/tmp/other",
@@ -68,15 +70,15 @@ class TestASTHostClass < Test::Unit::TestCase
             )
 
         assert_nothing_raised do
-            newsub.evaluate(:scope => scope)
+            newsub.evaluate(:scope => scope, :resource => resource)
         end
 
         assert_nothing_raised do
-            moresub.evaluate(:scope => scope)
+            moresub.evaluate(:scope => scope, :resource => resource)
         end
 
-        assert(scope.class_scope(newbase), "Did not eval newbase")
-        assert(scope.class_scope(newsub), "Did not eval newsub")
+        assert(scope.compile.class_scope(newbase), "Did not eval newbase")
+        assert(scope.compile.class_scope(newsub), "Did not eval newsub")
 
         yay = scope.findresource("File[/tmp/yay]")
         assert(yay, "Did not find file /tmp/yay")
@@ -92,19 +94,20 @@ class TestASTHostClass < Test::Unit::TestCase
     # Make sure that classes set their namespaces to themselves.  This
     # way they start looking for definitions in their own namespace.
     def test_hostclass_namespace
-        interp, scope, source = mkclassframing
+        scope = mkscope
+        parser = scope.compile.parser
 
         # Create a new class
         klass = nil
         assert_nothing_raised do
-            klass = interp.newclass "funtest"
+            klass = parser.newclass "funtest"
         end
 
         # Now define a definition in that namespace
 
         define = nil
         assert_nothing_raised do
-            define = interp.newdefine "funtest::mydefine"
+            define = parser.newdefine "funtest::mydefine"
         end
 
         assert_equal("funtest", klass.namespace,
@@ -113,7 +116,7 @@ class TestASTHostClass < Test::Unit::TestCase
         assert_equal("funtest", define.namespace,
             "component namespace was not set in the definition")
 
-        newscope = klass.subscope(scope)
+        newscope = klass.subscope(scope, mock("resource"))
 
         assert_equal(["funtest"], newscope.namespaces,
             "Scope did not inherit namespace")
@@ -127,24 +130,27 @@ class TestASTHostClass < Test::Unit::TestCase
     # At the same time, make sure definitions in the parent class can be
     # found within the subclass (#517).
     def test_parent_scope_from_parentclass
-        interp = mkinterp
+        scope = mkscope
+        parser = scope.compile.parser
 
-        interp.newclass("base")
-        fun = interp.newdefine("base::fun")
-        interp.newclass("middle", :parent => "base")
-        interp.newclass("sub", :parent => "middle")
-        scope = mkscope :interp => interp
+        source = parser.newclass ""
+        parser.newclass("base")
+        fun = parser.newdefine("base::fun")
+        parser.newclass("middle", :parent => "base")
+        parser.newclass("sub", :parent => "middle")
+        scope = mkscope :parser => parser
 
         ret = nil
         assert_nothing_raised do
-            ret = scope.evalclasses("sub")
+            ret = scope.compile.evaluate_classes(["sub"], scope)
         end
+        scope.compile.send(:evaluate_generators)
 
-        subscope = scope.class_scope(scope.findclass("sub"))
+        subscope = scope.compile.class_scope(scope.findclass("sub"))
         assert(subscope, "could not find sub scope")
-        mscope = scope.class_scope(scope.findclass("middle"))
+        mscope = scope.compile.class_scope(scope.findclass("middle"))
         assert(mscope, "could not find middle scope")
-        pscope = scope.class_scope(scope.findclass("base"))
+        pscope = scope.compile.class_scope(scope.findclass("base"))
         assert(pscope, "could not find parent scope")
 
         assert(pscope == mscope.parent, "parent scope of middle was not set correctly")
@@ -158,6 +164,21 @@ class TestASTHostClass < Test::Unit::TestCase
         assert(result, "could not find parent-defined definition from sub")
         assert(fun == result, "found incorrect parent-defined definition from sub")
     end
-end
 
-# $Id$
+    # #795 - make sure the subclass's tags get set before we
+    # evaluate the parent class, so we can be sure that the parent
+    # class can switch based on the sub classes.
+    def test_tags_set_before_parent_is_evaluated
+        scope = mkscope
+        parser = scope.compile.parser
+        base = parser.newclass "base"
+        sub = parser.newclass "sub", :parent => "base"
+
+        base.expects(:safeevaluate).with do |args|
+            assert(scope.compile.configuration.tags.include?("sub"), "Did not tag with sub class name before evaluating base class")
+            base.evaluate(args)
+            true
+        end
+        sub.evaluate :scope => scope, :resource => scope.resource
+    end
+end

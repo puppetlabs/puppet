@@ -1,3 +1,5 @@
+# I pulled this into a separate file, because I got
+# tired of rebuilding the parser.rb file all the time.
 class Puppet::Parser::Parser
     require 'puppet/parser/functions'
 
@@ -13,7 +15,7 @@ class Puppet::Parser::Parser
 
     AST = Puppet::Parser::AST
 
-    attr_reader :file, :interp
+    attr_reader :version, :environment
     attr_accessor :files
 
 
@@ -83,6 +85,10 @@ class Puppet::Parser::Parser
         raise except
     end
 
+    def file
+        @lexer.file
+    end
+
     def file=(file)
         unless FileTest.exists?(file)
             unless file =~ /\.pp$/
@@ -119,7 +125,7 @@ class Puppet::Parser::Parser
     # The recursive method used to actually look these objects up.
     def fqfind(namespace, name, table)
         namespace = namespace.downcase
-        name = name.downcase
+        name = name.to_s.downcase
         if name =~ /^::/ or namespace == ""
             classname = name.sub(/^::/, '')
             unless table[classname]
@@ -174,14 +180,14 @@ class Puppet::Parser::Parser
                "in file #{@lexer.file} at line #{@lexer.line}"
             )
         end
-        files = Puppet::Module::find_manifests(pat, dir)
+        files = Puppet::Module::find_manifests(pat, :cwd => dir)
         if files.size == 0
             raise Puppet::ImportError.new("No file(s) found for import " +
                                           "of '#{pat}'")
         end
 
         files.collect { |file|
-            parser = Puppet::Parser::Parser.new(@astset)
+            parser = Puppet::Parser::Parser.new(:astset => @astset, :environment => @environment)
             parser.files = self.files
             Puppet.debug("importing '%s'" % file)
 
@@ -200,11 +206,10 @@ class Puppet::Parser::Parser
         }
     end
 
-    def initialize(astset = nil)
+    def initialize(options = {})
+        @astset = options[:astset] || ASTSet.new({}, {}, {})
+        @environment = options[:environment]
         initvars()
-        if astset
-            @astset = astset
-        end
     end
 
     # Initialize or reset all of our variables.
@@ -212,15 +217,6 @@ class Puppet::Parser::Parser
         @lexer = Puppet::Parser::Lexer.new()
         @files = []
         @loaded = []
-
-        # This is where we store our classes and definitions and nodes.
-        # Clear each hash, just to help the GC a bit.
-        if defined?(@astset)
-            [:classes, :definitions, :nodes].each do |name|
-                @astset.send(name).clear
-            end
-        end
-        @astset = ASTSet.new({}, {}, {})
     end
 
     # Try to load a class, since we could not find it.
@@ -340,7 +336,7 @@ class Puppet::Parser::Parser
             args[param] = options[param] if options[param]
         end
 
-        @astset.definitions[name] = ast AST::Component, args
+        @astset.definitions[name] = ast AST::Definition, args
     end
 
     # Create a new node.  Nodes are special, because they're stored in a global
@@ -425,6 +421,7 @@ class Puppet::Parser::Parser
             # Store the results as the top-level class.
             newclass("", :code => main)
         end
+        @version = Time.now.to_i
         return @astset
     ensure
         @lexer.clear
@@ -442,6 +439,16 @@ class Puppet::Parser::Parser
     def string=(string)
         @lexer.string = string
     end
-end
 
-# $Id$
+    # Add a new file to be checked when we're checking to see if we should be
+    # reparsed.  This is basically only used by the TemplateWrapper to let the
+    # parser know about templates that should be parsed.
+    def watch_file(*files)
+        files.each do |file|
+            unless file.is_a? Puppet::Util::LoadedFile
+                file = Puppet::Util::LoadedFile.new(file)
+            end
+            @files << file
+        end
+    end
+end

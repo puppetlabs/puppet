@@ -35,15 +35,5 @@ class Puppet::Parser::AST
                 end
             }
         end
-
-        # Pretty-print the parse tree.
-        def tree(indent = 0)
-            return ((@@indline * indent) +
-                self.typewrap(self.pin)) + "\n" + self.collect { |child|
-                    child.tree(indent + 1)
-            }.join("\n")
-        end
     end
 end
-
-# $Id$

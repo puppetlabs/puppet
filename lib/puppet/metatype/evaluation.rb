@@ -29,7 +29,16 @@ class Puppet::Type
             self.debug "%s change(s)" %
                 [changes.length]
         end
-        self.cache(:checked, Time.now)
+
+        # If we're in noop mode, we don't want to store the checked time,
+        # because it will result in the resource not getting scheduled if
+        # someone were to run the configuration in non-noop mode.
+        # We're going to go ahead and record that we checked if there were
+        # no changes, since it's unlikely it will affect the scheduling.
+        noop = noop?
+        if ! noop or (noop && changes.length == 0)
+            self.cache(:checked, Time.now)
+        end
         return changes.flatten
     end
 

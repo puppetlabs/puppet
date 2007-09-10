@@ -10,7 +10,7 @@ module Puppet::Network
         # This is so that the handlers can subclass just 'Handler', rather
         # then having to specify the full class path.
         Handler = self
-        attr_accessor :server
+        attr_accessor :server, :local
 
         extend Puppet::Util::SubclassLoader
         extend Puppet::Util
@@ -43,6 +43,10 @@ module Puppet::Network
 
         # Create an empty init method with the same signature.
         def initialize(hash = {})
+        end
+
+        def local?
+            self.local
         end
     end
 end

@@ -1,3 +1,5 @@
+require 'sync'
+
 class Puppet::SSLCertificates::CA
     include Puppet::Util::Warnings
 
@@ -226,6 +228,33 @@ class Puppet::SSLCertificates::CA
         }
     end
 
+    # Create an exclusive lock for reading and writing, and do the
+    # writing in a tmp file.
+    def readwritelock(file, mode = 0600)
+        tmpfile = file + ".tmp"
+        sync = Sync.new
+        unless FileTest.directory?(File.dirname(tmpfile))
+            raise Puppet::DevError, "Cannot create %s; directory %s does not exist" %
+                [file, File.dirname(file)]
+        end
+        sync.synchronize(Sync::EX) do
+            File.open(file, "r+", mode) do |rf|
+                rf.lock_exclusive do
+                    File.open(tmpfile, "w", mode) do |tf|
+                        yield tf
+                    end
+                    begin
+                        File.rename(tmpfile, file)
+                    rescue => detail
+                        Puppet.err "Could not rename %s to %s: %s" %
+                            [file, tmpfile, detail]
+                    end
+                end
+            end
+        end
+    end
+
+
     # Sign a given certificate request.
     def sign(csr)
         unless csr.is_a?(OpenSSL::X509::Request)
@@ -238,7 +267,14 @@ class Puppet::SSLCertificates::CA
             raise Puppet::Error, "CSR sign verification failed"
         end
 
-        serial = File.read(@config[:serial]).chomp.hex
+        serial = nil
+        readwritelock(@config[:serial]) { |f|
+            serial = File.read(@config[:serial]).chomp.hex
+
+            # increment the serial
+            f << "%04X" % (serial + 1)
+        }
+
         newcert = Puppet::SSLCertificates.mkcert(
             :type => :server,
             :name => csr.subject,
@@ -248,10 +284,6 @@ class Puppet::SSLCertificates::CA
             :publickey => csr.public_key
         )
 
-        # increment the serial
-        Puppet.config.write(:serial) do |f|
-            f << "%04X" % (serial + 1)
-        end
 
         sign_with_key(newcert)
 

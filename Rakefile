@@ -137,5 +137,3 @@ task :dailyclean do
         File.unlink(file)
     end
 end
-
-# $Id$

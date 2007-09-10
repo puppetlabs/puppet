@@ -86,10 +86,11 @@ class TestWebrickServer < Test::Unit::TestCase
         kill_and_wait(serverpid, server.pidfile)
         serverpid, server = mk_status_server
 
-        client = mk_status_client
-        # This time the client should be denied
-        assert_raise(Puppet::Network::XMLRPCClientError) {
-            client.status
+        # This time the client should be denied.  With keep-alive,
+        # the client starts its connection immediately, thus throwing
+        # the error.
+        assert_raise(OpenSSL::SSL::SSLError) {
+            client = Puppet::Network::Client.status.new(:Server => "localhost", :Port => @@port)
         }
     end
     

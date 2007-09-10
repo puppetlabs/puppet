@@ -7,16 +7,16 @@ class Puppet::Parser::TemplateWrapper
 
     def initialize(scope, file)
         @scope = scope
-        @file = Puppet::Module::find_template(file)
+        @file = Puppet::Module::find_template(file, @scope.compile.environment)
 
         unless FileTest.exists?(@file)
             raise Puppet::ParseError,
                 "Could not find template %s" % file
         end
 
-        # We'll only ever not have an interpreter in testing, but, eh.
-        if @scope.interp
-            @scope.interp.newfile(@file)
+        # We'll only ever not have a parser in testing, but, eh.
+        if @scope.parser
+            @scope.parser.watch_file(@file)
         end
     end
 

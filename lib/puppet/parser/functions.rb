@@ -1,4 +1,3 @@
-# Grr
 require 'puppet/util/autoload'
 require 'puppet/parser/scope'
 
@@ -109,7 +108,8 @@ module Functions
 
     # Include the specified classes
     newfunction(:include, :doc => "Evaluate one or more classes.") do |vals|
-        klasses = evalclasses(*vals)
+        vals = [vals] unless vals.is_a?(Array)
+        klasses = compile.evaluate_classes(vals, self)
 
         missing = vals.find_all do |klass|
             ! klasses.include?(klass)
@@ -135,7 +135,7 @@ module Functions
     newfunction(:tag, :doc => "Add the specified tags to the containing class
     or definition.  All contained objects will then acquire that tag, also.
     ") do |vals|
-        self.tag(*vals)
+        self.resource.tag(*vals)
     end
 
     # Test whether a given tag is set.  This functions as a big OR -- if any of the
@@ -144,11 +144,12 @@ module Functions
     tells you whether the current container is tagged with the specified tags.
     The tags are ANDed, so that all of the specified tags must be included for
     the function to return true.") do |vals|
-        classlist = self.classlist
+        configtags = compile.configuration.tags
+        resourcetags = resource.tags
 
         retval = true
         vals.each do |val|
-            unless classlist.include?(val) or self.tags.include?(val)
+            unless configtags.include?(val) or resourcetags.include?(val)
                 retval = false
                 break
             end
@@ -234,7 +235,7 @@ module Functions
         vals = [vals] unless vals.is_a?(Array)
         coll.resources = vals
 
-        newcollection(coll)
+        compile.add_collection(coll)
     end
 
     newfunction(:search, :doc => "Add another namespace for this class to search.

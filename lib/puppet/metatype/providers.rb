@@ -230,6 +230,9 @@ class Puppet::Type
 
     # Return an array of all of the suitable providers.
     def self.suitableprovider
+        if @providers.empty?
+            providerloader.loadall
+        end
         @providers.find_all { |name, provider|
             provider.suitable?
         }.collect { |name, provider|
@@ -249,5 +252,3 @@ class Puppet::Type
         end
     end
 end
-
-# $Id$

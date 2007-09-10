@@ -29,7 +29,7 @@ module Puppet
 
     class Parser < Racc::Parser
 
-module_eval <<'..end grammar.ra modeval..idc5e5087e93', 'grammar.ra', 640
+module_eval <<'..end grammar.ra modeval..id8b4fcf8e20', 'grammar.ra', 640
 
 # It got too annoying having code in a file that needs to be compiled.
 require 'puppet/parser/parser_support'
@@ -41,7 +41,7 @@ require 'puppet/parser/parser_support'
 
 # $Id$
 
-..end grammar.ra modeval..idc5e5087e93
+..end grammar.ra modeval..id8b4fcf8e20
 
 ##### racc 1.4.5 generates ###
 
@@ -929,19 +929,19 @@ module_eval <<'.,.,', 'grammar.ra', 115
 module_eval <<'.,.,', 'grammar.ra', 136
   def _reduce_34( val, _values, result )
     array = val[2]
-    if array.instance_of?(AST::ResourceInst)
+    if array.instance_of?(AST::ResourceInstance)
         array = [array]
     end
     result = ast AST::ASTArray
 
     # this iterates across each specified resourceinstance
     array.each { |instance|
-        unless instance.instance_of?(AST::ResourceInst)
+        unless instance.instance_of?(AST::ResourceInstance)
             raise Puppet::Dev, "Got something that isn't an instance"
         end
         # now, i need to somehow differentiate between those things with
         # arrays in their names, and normal things
-        result.push ast(AST::ResourceDef,
+        result.push ast(AST::Resource,
             :type => val[0],
             :title => instance[0],
             :params => instance[1])
@@ -1115,7 +1115,7 @@ module_eval <<'.,.,', 'grammar.ra', 245
 
 module_eval <<'.,.,', 'grammar.ra', 252
   def _reduce_57( val, _values, result )
-    result = ast AST::ResourceInst, :children => [val[0],val[2]]
+    result = ast AST::ResourceInstance, :children => [val[0],val[2]]
    result
   end
 .,.,
@@ -1124,7 +1124,7 @@ module_eval <<'.,.,', 'grammar.ra', 252
 
 module_eval <<'.,.,', 'grammar.ra', 262
   def _reduce_59( val, _values, result )
-    if val[0].instance_of?(AST::ResourceInst)
+    if val[0].instance_of?(AST::ResourceInstance)
         result = ast AST::ASTArray, :children => [val[0],val[2]]
     else
         val[0].push val[2]
@@ -1344,14 +1344,14 @@ module_eval <<'.,.,', 'grammar.ra', 384
 module_eval <<'.,.,', 'grammar.ra', 389
   def _reduce_105( val, _values, result )
     Puppet.warning addcontext("Deprecation notice:  Resource references should now be capitalized")
-    result = ast AST::ResourceRef, :type => val[0], :title => val[2]
+    result = ast AST::ResourceReference, :type => val[0], :title => val[2]
    result
   end
 .,.,
 
 module_eval <<'.,.,', 'grammar.ra', 391
   def _reduce_106( val, _values, result )
-    result = ast AST::ResourceRef, :type => val[0], :title => val[2]
+    result = ast AST::ResourceReference, :type => val[0], :title => val[2]
    result
   end
 .,.,

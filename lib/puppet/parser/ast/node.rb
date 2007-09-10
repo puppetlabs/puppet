@@ -7,11 +7,10 @@ class Puppet::Parser::AST
         @name = :node
         attr_accessor :name
 
-        #def evaluate(scope, facts = {})
-        def evaluate(hash)
-            scope = hash[:scope]
+        def evaluate(options)
+            scope = options[:scope]
 
-            #pscope = if ! Puppet[:lexical] or hash[:asparent]
+            #pscope = if ! Puppet[:lexical] or options[:asparent]
             #    @scope
             #else
             #    origscope
@@ -20,11 +19,11 @@ class Puppet::Parser::AST
             # We don't have to worry about the declarativeness of node parentage,
             # because the entry point is always a single node definition.
             if parent = self.parentobj
-                scope = parent.safeevaluate :scope => scope
+                scope = parent.safeevaluate :scope => scope, :resource => options[:resource]
             end
 
             scope = scope.newscope(
-                :type => self.name,
+                :resource => options[:resource],
                 :keyword => @keyword,
                 :source => self,
                 :namespace => "" # nodes are always in ""
@@ -33,7 +32,7 @@ class Puppet::Parser::AST
             # Mark our node name as a class, too, but strip it of the domain
             # name.  Make the mark before we evaluate the code, so that it is
             # marked within the code itself.
-            scope.setclass(self)
+            scope.compile.class_set(self.classname, scope)
 
             # And then evaluate our code if we have any
             if self.code
@@ -43,7 +42,7 @@ class Puppet::Parser::AST
             return scope
         end
 
-        def initialize(hash)
+        def initialize(options)
             @parentclass = nil
             super
 
@@ -53,6 +52,12 @@ class Puppet::Parser::AST
             end
         end
 
+        # Make sure node scopes are marked as such.
+        def subscope(*args)
+            scope = super
+            scope.nodescope = true
+        end
+
         private
         # Search for the object matching our parent class.
         def find_parentclass
@@ -60,5 +65,3 @@ class Puppet::Parser::AST
         end
     end
 end
-
-# $Id$

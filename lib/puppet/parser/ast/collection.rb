@@ -20,11 +20,9 @@ class Collection < AST::Branch
 
         newcoll = Puppet::Parser::Collector.new(scope, @type, str, code, self.form)
 
-        scope.newcollection(newcoll)
+        scope.compile.add_collection(newcoll)
 
         newcoll
     end
 end
 end
-
-# $Id$

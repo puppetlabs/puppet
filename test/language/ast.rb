@@ -49,29 +49,26 @@ class TestAST < Test::Unit::TestCase
 
     # Make sure our override object behaves "correctly"
     def test_override
-        interp, scope, source = mkclassframing
+        scope = mkscope
 
         ref = nil
         assert_nothing_raised do
-            ref = resourceoverride("resource", "yaytest", "one" => "yay", "two" => "boo")
+            ref = resourceoverride("file", "/yayness", "owner" => "blah", "group" => "boo")
         end
 
+        Puppet::Parser::Resource.expects(:new).with { |o| o.is_a?(Hash) }.returns(:override)
+        scope.compile.expects(:store_override).with(:override)
         ret = nil
         assert_nothing_raised do
             ret = ref.evaluate :scope => scope
         end
 
-        assert_instance_of(Puppet::Parser::Resource, ret)
-
-        assert(ret.override?, "Resource was not an override resource")
-
-        assert(scope.overridetable[ret.ref].include?(ret),
-            "Was not stored in the override table")
+        assert_equal(:override, ret, "Did not return override")
     end
 
     # make sure our resourcedefaults ast object works correctly.
     def test_resourcedefaults
-        interp, scope, source = mkclassframing
+        scope = mkscope
 
         # Now make some defaults for files
         args = {:source => "/yay/ness", :group => "yayness"}
@@ -97,16 +94,16 @@ class TestAST < Test::Unit::TestCase
     end
 
     def test_node
-        interp = mkinterp
-        scope = mkscope(:interp => interp)
+        scope = mkscope
+        parser = scope.compile.parser
 
         # Define a base node
-        basenode = interp.newnode "basenode", :code => AST::ASTArray.new(:children => [
+        basenode = parser.newnode "basenode", :code => AST::ASTArray.new(:children => [
             resourcedef("file", "/tmp/base", "owner" => "root")
         ])
 
         # Now define a subnode
-        nodes = interp.newnode ["mynode", "othernode"],
+        nodes = parser.newnode ["mynode", "othernode"],
             :code => AST::ASTArray.new(:children => [
                 resourcedef("file", "/tmp/mynode", "owner" => "root"),
                 resourcedef("file", "/tmp/basenode", "owner" => "daemon")
@@ -116,13 +113,13 @@ class TestAST < Test::Unit::TestCase
 
         # Make sure we can find them all.
         %w{mynode othernode}.each do |node|
-            assert(interp.nodesearch_code(node), "Could not find %s" % node)
+            assert(parser.nodes[node], "Could not find %s" % node)
         end
-        mynode = interp.nodesearch_code("mynode")
+        mynode = parser.nodes["mynode"]
 
         # Now try evaluating the node
         assert_nothing_raised do
-            mynode.evaluate :scope => scope
+            mynode.evaluate :scope => scope, :resource => scope.resource
         end
 
         # Make sure that we can find each of the files
@@ -135,11 +132,11 @@ class TestAST < Test::Unit::TestCase
         assert_equal("daemon", basefile[:owner])
 
         # Now make sure we can evaluate nodes with parents
-        child = interp.newnode(%w{child}, :parent => "basenode").shift
+        child = parser.newnode(%w{child}, :parent => "basenode").shift
 
-        newscope = mkscope :interp => interp
+        newscope = mkscope :parser => parser
         assert_nothing_raised do
-            child.evaluate :scope => newscope
+            child.evaluate :scope => newscope, :resource => scope.resource
         end
 
         assert(newscope.findresource("File[/tmp/base]"),
@@ -147,8 +144,7 @@ class TestAST < Test::Unit::TestCase
     end
 
     def test_collection
-        interp = mkinterp
-        scope = mkscope(:interp => interp)
+        scope = mkscope
 
         coll = nil
         assert_nothing_raised do
@@ -165,20 +161,21 @@ class TestAST < Test::Unit::TestCase
         assert_instance_of(Puppet::Parser::Collector, ret)
 
         # Now make sure we get it back from the scope
-        assert_equal([ret], scope.collections)
+        colls = scope.compile.instance_variable_get("@collections")
+        assert_equal([ret], colls, "Did not store collector in config's collection list")
     end
 
     def test_virtual_collexp
-        @interp, @scope, @source = mkclassframing
+        scope = mkscope
 
         # make a resource
         resource = mkresource(:type => "file", :title => "/tmp/testing",
-            :params => {:owner => "root", :group => "bin", :mode => "644"})
+            :scope => scope, :params => {:owner => "root", :group => "bin", :mode => "644"})
 
         run_collection_queries(:virtual) do |string, result, query|
             code = nil
             assert_nothing_raised do
-                str, code = query.evaluate :scope => @scope
+                str, code = query.evaluate :scope => scope
             end
 
             assert_instance_of(Proc, code)
@@ -189,5 +186,3 @@ class TestAST < Test::Unit::TestCase
         end
     end
 end
-
-# $Id$

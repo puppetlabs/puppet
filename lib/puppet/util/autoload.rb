@@ -3,7 +3,7 @@ class Puppet::Util::Autoload
     include Puppet::Util
 
     @autoloaders = {}
-    @loaded = {}
+    @loaded = []
 
     class << self
         attr_reader :autoloaders
@@ -13,12 +13,6 @@ class Puppet::Util::Autoload
     # Send [], []=, and :clear to the @autloaders hash
     Puppet::Util.classproxy self, :autoloaders, "[]", "[]="
 
-    # Clear the list of autoloaders and loaded files.
-    def self.clear
-        @autoloaders.clear
-        @loaded.clear
-    end
-
     # List all loaded files.
     def self.list_loaded
         @loaded.sort { |a,b| a[0] <=> b[0] }.collect do |path, hash|
@@ -27,15 +21,20 @@ class Puppet::Util::Autoload
     end
 
     # Has a given path been loaded?  This is used for testing whether a
-    # changed file should be loaded or just ignored.
+    # changed file should be loaded or just ignored.  This is only
+    # used in network/client/master, when downloading plugins, to
+    # see if a given plugin is currently loaded and thus should be
+    # reloaded.
     def self.loaded?(path)
         path = path.to_s.sub(/\.rb$/, '')
-        @loaded[path]
+        @loaded.include?(path)
     end
 
-    # Save the fact that a given path has been loaded
-    def self.loaded(path, file, loader)
-        @loaded[path] = {:file => file, :autoloader => loader}
+    # Save the fact that a given path has been loaded.  This is so
+    # we can load downloaded plugins if they've already been loaded
+    # into memory.
+    def self.loaded(file)
+        @loaded << file unless @loaded.include?(file)
     end
 
     attr_accessor :object, :path, :objwarn, :wrap
@@ -94,7 +93,7 @@ class Puppet::Util::Autoload
     # Mark the named object as loaded.  Note that this supports unqualified
     # queries, while we store the result as a qualified query in the class.
     def loaded(name, file)
-        self.class.loaded(File.join(@path, name.to_s), file, object)
+        self.class.loaded(File.join(@path, name.to_s))
     end
 
     # Indicate whether the specfied plugin has been loaded.
@@ -150,5 +149,3 @@ class Puppet::Util::Autoload
         [module_lib_dirs, Puppet[:libdir], $:].flatten
     end
 end
-
-# $Id$

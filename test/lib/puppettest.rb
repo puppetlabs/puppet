@@ -4,6 +4,7 @@ $LOAD_PATH.unshift(File.expand_path(File.dirname(__FILE__)))
 $LOAD_PATH.unshift(File.expand_path(File.join(File.dirname(__FILE__), '../../lib')))
 
 require 'puppet'
+require 'mocha'
 require 'test/unit'
 
 # Yay; hackish but it works
@@ -282,6 +283,7 @@ module PuppetTest
         rescue Timeout::Error
             # just move on
         end
+        mocha_verify
         if File.stat("/dev/null").mode & 007777 != 0666
             File.open("/tmp/nullfailure", "w") { |f|
                 f.puts self.class

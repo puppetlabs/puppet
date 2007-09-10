@@ -20,7 +20,8 @@ class TestRailsAST < PuppetTest::TestCase
     def test_exported_collexp
         railsinit
         Puppet[:storeconfigs] = true
-        @interp, @scope, @source = mkclassframing
+
+        @scope = mkscope
 
         # make a rails resource
         railsresource "file", "/tmp/testing", :owner => "root", :group => "bin",

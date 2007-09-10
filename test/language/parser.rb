@@ -38,13 +38,13 @@ class TestParser < Test::Unit::TestCase
     def test_failers
         failers { |file|
             parser = mkparser
-            interp = mkinterp
             Puppet.debug("parsing failer %s" % file) if __FILE__ == $0
-            assert_raise(Puppet::ParseError) {
+            assert_raise(Puppet::ParseError, "Did not fail while parsing %s" % file) {
                 parser.file = file
                 ast = parser.parse
-                scope = mkscope :interp => interp
-                ast.classes[""].evaluate :scope => scope
+                config = mkcompile(parser)
+                config.compile
+                #ast.classes[""].evaluate :scope => config.topscope
             }
             Puppet::Type.allclear
         }
@@ -371,7 +371,7 @@ file { "/tmp/yayness":
             ret = parser.parse(str1).classes[""].code[0]
         }
         assert_instance_of(Puppet::Parser::AST::IfStatement, ret)
-        parser.clear
+        parser = mkparser
         str2 = %{if true { #{exec.call("true")} } else { #{exec.call("false")} }}
         assert_nothing_raised {
             ret = parser.parse(str2).classes[""].code[0]
@@ -475,7 +475,7 @@ file { "/tmp/yayness":
 
             assert_instance_of(AST::ASTArray, ret.classes[""].code)
             resdef = ret.classes[""].code[0]
-            assert_instance_of(AST::ResourceDef, resdef)
+            assert_instance_of(AST::Resource, resdef)
             assert_equal("/tmp/testing", resdef.title.value)
             # We always get an astarray back, so...
             check.call(resdef, "simple resource")
@@ -486,7 +486,7 @@ file { "/tmp/yayness":
             end
 
             ret.classes[""].each do |res|
-                assert_instance_of(AST::ResourceDef, res)
+                assert_instance_of(AST::Resource, res)
                 check.call(res, "multiresource")
             end
 
@@ -497,7 +497,7 @@ file { "/tmp/yayness":
             scope.source = klass
 
             assert_nothing_raised do
-                ret.classes[""].evaluate :scope => scope
+                ret.classes[""].evaluate :scope => scope, :resource => Puppet::Parser::Resource.new(:type => "mydefine", :title => 'whatever', :scope => scope, :source => scope.source)
             end
 
             # Make sure we can find both of them
@@ -622,7 +622,7 @@ file { "/tmp/yayness":
 
         code = nil
         assert_nothing_raised do
-            code = interp.run("hostname.domain.com", {}).flatten
+            code = interp.compile(mknode).extract.flatten
         end
         assert(code.length == 1, "Did not get the file")
         assert_instance_of(Puppet::TransObject, code[0])
@@ -672,7 +672,7 @@ file { "/tmp/yayness":
             targets << target
             txt = %[ file { '#{target}': content => "#{fname}" } ]
             if fname == "init.pp"
-                txt = %[import 'mani1' \nimport '#{modname}/mani2'\nimport '#{modname}/sub/*.pp' ] + txt
+                txt = %[import 'mani1' \nimport '#{modname}/mani2'\nimport '#{modname}/sub/*.pp'\n ] + txt
             end
             File::open(File::join(manipath, fname), "w") do |f|
                 f.puts txt
@@ -785,7 +785,7 @@ file { "/tmp/yayness":
 
         assert_instance_of(AST::HostClass, result.classes["yay"], "Did not create 'yay' class")
         assert_instance_of(AST::HostClass, result.classes[""], "Did not create main class")
-        assert_instance_of(AST::Component, result.definitions["bar"], "Did not create 'bar' definition")
+        assert_instance_of(AST::Definition, result.definitions["bar"], "Did not create 'bar' definition")
         assert_instance_of(AST::Node, result.nodes["foo"], "Did not create 'foo' node")
     end
 
@@ -871,7 +871,8 @@ file { "/tmp/yayness":
     end
 
     def test_newclass
-        parser = mkparser
+        scope = mkscope
+        parser = scope.compile.parser
 
         mkcode = proc do |ary|
             classes = ary.collect do |string|
@@ -880,7 +881,6 @@ file { "/tmp/yayness":
             AST::ASTArray.new(:children => classes)
         end
 
-        scope = Puppet::Parser::Scope.new(:interp => mkinterp)
 
         # First make sure that code is being appended
         code = mkcode.call(%w{original code})
@@ -1118,7 +1118,7 @@ file { "/tmp/yayness":
         mk_module(name, :define => true, :init => [name])
 
         klass = parser.finddefine("", name)
-        assert_instance_of(AST::Component, klass, "Did not autoload class from module init file")
+        assert_instance_of(AST::Definition, klass, "Did not autoload class from module init file")
         assert_equal(name, klass.classname, "Incorrect class was returned")
 
         # Now try it with namespace classes where both classes are in the init file
@@ -1174,6 +1174,23 @@ file { "/tmp/yayness":
         klass = parser.findclass("", "alone::sub")
         assert_instance_of(AST::HostClass, klass, "Did not autoload sub class from alone file with no namespace")
         assert_equal("alone::sub", klass.classname, "Incorrect class was returned")
+    end
+    
+    # Make sure class, node, and define methods are case-insensitive
+    def test_structure_case_insensitivity
+        parser = mkparser
+        
+        result = nil
+        assert_nothing_raised do
+            result = parser.newclass "Yayness"
+        end
+        assert_equal(result, parser.findclass("", "yayNess"))
+        
+        assert_nothing_raised do
+            result = parser.newdefine "FunTest"
+        end
+        assert_equal(result, parser.finddefine("", "fUntEst"),
+            "%s was not matched" % "fUntEst")
     end
 end
 

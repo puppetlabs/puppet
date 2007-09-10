@@ -219,6 +219,7 @@ begin
                 Puppet.config.handlearg("--ignorecache")
                 Puppet.config.handlearg("--no-usecacheonfailure")
                 Puppet.config.handlearg("--no-splay")
+                Puppet.config.handlearg("--show_diff")
                 options[:onetime] = true
                 options[:waitforcert] = 0
                 unless Puppet::Util::Log.level == :debug
@@ -277,6 +278,11 @@ Puppet.parse_config
 
 Puppet.genconfig
 Puppet.genmanifest
+
+# If noop is set, then also enable diffs
+if Puppet[:noop]
+    Puppet[:show_diff] = true
+end
 
 # Default to daemonizing, but if verbose or debug is specified,
 # default to staying in the foreground.

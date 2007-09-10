@@ -21,8 +21,8 @@ class TestRailsParameter < Test::Unit::TestCase
         railsinit
 
         # Now create a source
-        interp = mkinterp
-        source = interp.newclass "myclass"
+        parser = mkparser
+        source = parser.newclass "myclass"
 
         host = Puppet::Rails::Host.new(:name => "myhost")
         

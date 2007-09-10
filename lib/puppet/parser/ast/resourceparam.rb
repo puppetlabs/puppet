@@ -20,19 +20,5 @@ class Puppet::Parser::AST
                 :add => self.add
             )
         end
-
-        def tree(indent = 0)
-            return [
-                @param.tree(indent + 1),
-                ((@@indline * indent) + self.typewrap(self.pin)),
-                @value.tree(indent + 1)
-            ].join("\n")
-        end
-
-        def to_s
-            return "%s => %s" % [@param,@value]
-        end
     end
 end
-
-# $Id$

@@ -113,10 +113,6 @@ module Puppet
 
         @aspects = {}
 
-        # For now, just do some hackery so resources work
-        @@interp = Puppet::Parser::Interpreter.new :Code => ""
-        @@scope = Puppet::Parser::Scope.new(:interp => @@interp)
-
         @@objects = Hash.new do |hash, key|
             hash[key] = {}
         end
@@ -237,7 +233,7 @@ module Puppet
             end
             unless obj = @@objects[type][name]
                 obj = Resource.new :title => name, :type => type.name,
-                    :source => source, :scope => @@scope
+                    :source => source, :scope => scope
                 @@objects[type][name] = obj
 
                 @resources << obj
@@ -250,10 +246,24 @@ module Puppet
                     :source => source
                 )
 
-                obj.set(param)
+                obj.send(:set_parameter, param)
             end
 
             obj
+        end
+
+        def scope
+            unless defined?(@scope)
+                @interp = Puppet::Parser::Interpreter.new :Code => ""
+                # Load the class, so the node object class is available.
+                require 'puppet/network/handler/node'
+                @node = Puppet::Node.new(Facter.value(:hostname))
+                @node.parameters = Facter.to_hash
+                @interp = Puppet::Parser::Interpreter.new :Code => ""
+                @compile = Puppet::Parser::Compile.new(@node, @interp.send(:parser, Puppet[:environment]))
+                @scope = @compile.topscope
+            end
+            @scope
         end
 
         def type

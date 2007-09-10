@@ -38,32 +38,6 @@ class TestPuppetDefaults < Test::Unit::TestCase
         }
     end
 
-    if __FILE__ == $0
-        def disabled_testContained
-            confdir = Regexp.new(Puppet[:confdir])
-            vardir = Regexp.new(Puppet[:vardir])
-            [@@dirs,@@files].flatten.each { |param|
-                value = Puppet[param]
-
-                unless value =~ confdir or value =~ vardir
-                    assert_nothing_raised { raise "%s is in wrong dir: %s" %
-                        [param,value] }
-                end
-            }
-        end
-    end
-
-    def testArgumentTypes
-        assert_raise(ArgumentError) { Puppet[["string"]] }
-        assert_raise(ArgumentError) { Puppet[[:symbol]] }
-    end
-
-    def testFailOnBogusArgs
-        [0, "ashoweklj", ";"].each { |param|
-            assert_raise(ArgumentError, "No error on %s" % param) { Puppet[param] }
-        }
-    end
-
     # we don't want user defaults in /, or root defaults in ~
     def testDefaultsInCorrectRoots
         notval = nil

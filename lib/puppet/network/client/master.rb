@@ -38,6 +38,9 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         # in their manifests
         facts["clientversion"] = Puppet.version.to_s
 
+        # And add our environment as a fact.
+        facts["environment"] = Puppet[:environment]
+
         facts
     end
 
@@ -149,12 +152,12 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
             return false
         end
 
-        # We're willing to give a 2 second drift
         newcompile = @driver.freshness
+        # We're willing to give a 2 second drift
         if newcompile - @compile_time.to_i < 1
             return true
         else
-            Puppet.debug "Server compile time is %s vs %s" % [newcompile, @compile_time]
+            Puppet.debug "Server compile time is %s vs %s" % [newcompile, @compile_time.to_i]
             return false
         end
     end
@@ -691,5 +694,3 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         sleep(time)
     end
 end
-
-# $Id$

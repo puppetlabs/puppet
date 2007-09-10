@@ -10,11 +10,6 @@ class Puppet::Parser::AST
             return @value
         end
 
-        # Print the value in parse tree context.
-        def tree(indent = 0)
-            return ((@@indent * indent) + self.typewrap(self.value))
-        end
-
         def to_s
             return @value
         end
@@ -92,7 +87,4 @@ class Puppet::Parser::AST
             end
         end
     end
-
 end
-
-# $Id$

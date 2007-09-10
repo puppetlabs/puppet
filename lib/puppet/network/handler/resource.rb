@@ -26,7 +26,7 @@ class Puppet::Network::Handler
 
         # Apply a TransBucket as a transaction.
         def apply(bucket, format = "yaml", client = nil, clientip = nil)
-            unless @local
+            unless local?
                 begin
                     case format
                     when "yaml":
@@ -43,7 +43,7 @@ class Puppet::Network::Handler
 
             # Create a client, but specify the remote machine as the server
             # because the class requires it, even though it's unused
-            client = Puppet::Network::Client.client(:Master).new(:Server => client||"localhost")
+            client = Puppet::Network::Client.client(:Master).new(:Master => client||"localhost")
 
             # Set the objects
             client.objects = component

@@ -81,20 +81,20 @@ class Puppet::Parser::Collector
         # If there are no more resources to find, delete this from the list
         # of collections.
         if @resources.empty?
-            @scope.collections.delete(self)
+            @scope.compile.delete_collection(self)
         end
 
         return result
     end
 
-    # Collect just virtual objects, from our local configuration.
+    # Collect just virtual objects, from our local compile.
     def collect_virtual(exported = false)
         if exported
             method = :exported?
         else
             method = :virtual?
         end
-        scope.resources.find_all do |resource|
+        scope.compile.resources.find_all do |resource|
             resource.type == @type and resource.send(method) and match?(resource)
         end
     end
@@ -117,13 +117,6 @@ class Puppet::Parser::Collector
                 return objects
             end
         end
-
-#        if objects and ! objects.empty?
-#            objects.each { |r| r.virtual = false }
-#            return objects
-#        else
-#            return false
-#        end
     end
 
     def initialize(scope, type, equery, vquery, form)
@@ -169,7 +162,7 @@ class Puppet::Parser::Collector
             # XXX Because the scopes don't expect objects to return values,
             # we have to manually add our objects to the scope.  This is
             # über-lame.
-            scope.setresource(resource)
+            scope.compile.store_resource(scope, resource)
         rescue => detail
             if Puppet[:trace]
                 puts detail.backtrace
@@ -181,5 +174,3 @@ class Puppet::Parser::Collector
         return resource
     end
 end
-
-# $Id$

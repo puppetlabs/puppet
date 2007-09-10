@@ -1,10 +1,10 @@
-require 'puppet/parser/ast/component'
+require 'puppet/parser/ast/definition'
 
 class Puppet::Parser::AST
-    # The code associated with a class.  This is different from components
+    # The code associated with a class.  This is different from definitions
     # in that each class is a singleton -- only one will exist for a given
     # node.
-    class HostClass < AST::Component
+    class HostClass < AST::Definition
         @name = :class
 
         # Are we a child of the passed class?  Do a recursive search up our
@@ -20,29 +20,30 @@ class Puppet::Parser::AST
         end
 
         # Evaluate the code associated with this class.
-        def evaluate(hash)
-            scope = hash[:scope]
-            args = hash[:arguments]
-
-            # Verify that we haven't already been evaluated, and if we have been evaluated,
-            # make sure that we match the class.
-            if existing_scope = scope.class_scope(self)
-                raise "Fix this portion of the code -- check that the scopes match classes"
-                #if existing_scope.source.object_id == self.object_id
+        def evaluate(options)
+            scope = options[:scope]
+            raise(ArgumentError, "Classes require resources") unless options[:resource]
+            # Verify that we haven't already been evaluated.  This is
+            # what provides the singleton aspect.
+            if existing_scope = scope.compile.class_scope(self)
                 Puppet.debug "%s class already evaluated" % @type
                 return nil
             end
 
+            scope.compile.configuration.tag(self.classname)
+
             pnames = nil
             if pklass = self.parentobj
-                pklass.safeevaluate :scope => scope
+                pklass.safeevaluate :scope => scope, :resource => options[:resource]
 
                 scope = parent_scope(scope, pklass)
                 pnames = scope.namespaces
             end
 
-            unless hash[:nosubscope]
-                scope = subscope(scope)
+            # Don't create a subscope for the top-level class, since it already
+            # has its own scope.
+            unless options[:resource].title == :main
+                scope = subscope(scope, options[:resource])
             end
 
             if pnames
@@ -53,7 +54,7 @@ class Puppet::Parser::AST
 
             # Set the class before we do anything else, so that it's set
             # during the evaluation and can be inspected.
-            scope.setclass(self)
+            scope.compile.class_set(self.classname, scope)
 
             # Now evaluate our code, yo.
             if self.code
@@ -63,19 +64,17 @@ class Puppet::Parser::AST
             end
         end
 
-        def initialize(hash)
+        def initialize(options)
             @parentclass = nil
             super
         end
 
         def parent_scope(scope, klass)
-            if s = scope.class_scope(klass)
+            if s = scope.compile.class_scope(klass)
                 return s
             else
-                raise Puppet::DevError, "Could not find scope for %s" % klass.fqname
+                raise Puppet::DevError, "Could not find scope for %s" % klass.classname
             end
         end
     end
 end
-
-# $Id$

@@ -2,67 +2,21 @@
 #  Copyright (c) 2007. All rights reserved.
 
 require 'puppet/util'
+require 'puppet/node'
 require 'puppet/util/classgen'
 require 'puppet/util/instance_loader'
 
 # Look up a node, along with all the details about it.
 class Puppet::Network::Handler::Node < Puppet::Network::Handler
-    # A simplistic class for managing the node information itself.
-    class SimpleNode
-        attr_accessor :name, :classes, :parameters, :environment, :source, :ipaddress
-
-        def initialize(name, options = {})
-            @name = name
-
-            if classes = options[:classes]
-                if classes.is_a?(String)
-                    @classes = [classes]
-                else
-                    @classes = classes
-                end
-            else
-                @classes = []
-            end
-
-            @parameters = options[:parameters] || {}
-
-            unless @environment = options[:environment] 
-                if env = Puppet[:environment] and env != ""
-                    @environment = env
-                end
-            end
-        end
-
-        # Merge the node facts with parameters from the node source.
-        # This is only called if the node source has 'fact_merge' set to true.
-        def fact_merge(facts)
-            facts.each do |name, value|
-                @parameters[name] = value unless @parameters.include?(name)
-            end
-        end
-    end
-
     desc "Retrieve information about nodes."
 
-    extend Puppet::Util::ClassGen
-    extend Puppet::Util::InstanceLoader
-
-    # A simple base module we can use for modifying how our node sources work.
-    module SourceBase
-        include Puppet::Util::Docs
+    # Create a singleton node handler
+    def self.create
+        unless @handler
+            @handler = new
+        end
+        @handler
     end
-
-    @interface = XMLRPC::Service::Interface.new("nodes") { |iface|
-        iface.add_method("string details(key)")
-        iface.add_method("string parameters(key)")
-        iface.add_method("string environment(key)")
-        iface.add_method("string classes(key)")
-    }
-
-    # Set up autoloading and retrieving of reports.
-    autoload :node_source, 'puppet/node_source'
-
-    attr_reader :source
 
     # Add a new node source.
     def self.newnode_source(name, options = {}, &block)
@@ -103,6 +57,26 @@ class Puppet::Network::Handler::Node < Puppet::Network::Handler
         rmclass(name, :hash => instance_hash(:node_source))
     end
 
+    extend Puppet::Util::ClassGen
+    extend Puppet::Util::InstanceLoader
+
+    # A simple base module we can use for modifying how our node sources work.
+    module SourceBase
+        include Puppet::Util::Docs
+    end
+
+    @interface = XMLRPC::Service::Interface.new("nodes") { |iface|
+        iface.add_method("string details(key)")
+        iface.add_method("string parameters(key)")
+        iface.add_method("string environment(key)")
+        iface.add_method("string classes(key)")
+    }
+
+    # Set up autoloading and retrieving of reports.
+    autoload :node_source, 'puppet/node_source'
+
+    attr_reader :source
+
     # Return a given node's classes.
     def classes(key)
         if node = details(key)
@@ -115,6 +89,10 @@ class Puppet::Network::Handler::Node < Puppet::Network::Handler
     # Return an entire node configuration.  This uses the 'nodesearch' method
     # defined in the node_source to look for the node.
     def details(key, client = nil, clientip = nil)
+        return nil unless key
+        if node = cached?(key)
+            return node
+        end
         facts = node_facts(key)
         node = nil
         names = node_names(key, facts)
@@ -136,11 +114,15 @@ class Puppet::Network::Handler::Node < Puppet::Network::Handler
 
         if node
             node.source = @source
+            node.names = names
 
             # Merge the facts into the parameters.
             if fact_merge?
                 node.fact_merge(facts)
             end
+
+            cache(node)
+
             return node
         else
             return nil
@@ -167,6 +149,9 @@ class Puppet::Network::Handler::Node < Puppet::Network::Handler
         extend(mod)
 
         super
+
+        # We cache node info for speed
+        @node_cache = {}
     end
 
     # Try to retrieve a given node's parameters.
@@ -180,6 +165,23 @@ class Puppet::Network::Handler::Node < Puppet::Network::Handler
 
     private
 
+    # Store the node to make things a bit faster.
+    def cache(node)
+        @node_cache[node.name] = node
+    end
+
+    # If the node is cached, return it.
+    def cached?(name)
+        # Don't use cache when the filetimeout is set to 0
+        return false if [0, "0"].include?(Puppet[:filetimeout])
+
+        if node = @node_cache[name] and Time.now - node.time < Puppet[:filetimeout]
+            return node
+        else
+            return false
+        end
+    end
+
     # Create/cache a fact handler.
     def fact_handler
         unless defined?(@fact_handler)
@@ -191,7 +193,7 @@ class Puppet::Network::Handler::Node < Puppet::Network::Handler
     # Short-hand for creating a new node, so the node sources don't need to
     # specify the constant.
     def newnode(options)
-        SimpleNode.new(options)
+        Puppet::Node.new(options)
     end
 
     # Look up the node facts from our fact handler.

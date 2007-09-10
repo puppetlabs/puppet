@@ -5,6 +5,7 @@ module Puppet
     # this state, during retrieval, modifies the appropriate other states
     # so that things get taken care of appropriately.
     Puppet.type(:file).newproperty(:source) do
+        include Puppet::Util::Diff
 
         attr_accessor :source, :local
         desc "Copy a file over the current file.  Uses ``checksum`` to
@@ -158,7 +159,17 @@ module Puppet
             end
             # Now, we just check to see if the checksums are the same
             parentchecksum = @resource.property(:checksum).retrieve
-            return (!parentchecksum.nil? and (parentchecksum == @stats[:checksum]))
+            result = (!parentchecksum.nil? and (parentchecksum == @stats[:checksum]))
+
+            # Diff the contents if they ask it.  This is quite annoying -- we need to do this in
+            # 'insync?' because they might be in noop mode, but we don't want to do the file
+            # retrieval twice, so we cache the value annoyingly.
+            if ! result and Puppet[:show_diff] and File.exists?(@resource[:path]) and ! @stats[:_diffed]
+                @stats[:_remote_content] = get_remote_content
+                string_file_diff(@resource[:path], @stats[:_remote_content])
+                @stats[:_diffed] = true
+            end
+            return result
         end
 
         def pinparams
@@ -236,6 +247,21 @@ module Puppet
         end
 
         def sync
+            contents = @stats[:_remote_content] || get_remote_content()
+
+            exists = File.exists?(@resource[:path])
+
+            @resource.write(:source) { |f| f.print contents }
+
+            if exists
+                return :file_changed
+            else
+                return :file_created
+            end
+        end
+
+        private
+        def get_remote_content
             unless @stats[:type] == "file"
                 #if @stats[:type] == "directory"
                         #[@resource.name, @should.inspect]
@@ -264,17 +290,8 @@ module Puppet
                 self.notice "Could not retrieve contents for %s" %
                     @source
             end
-            exists = File.exists?(@resource[:path])
 
-            @resource.write { |f| f.print contents }
-
-            if exists
-                return :file_changed
-            else
-                return :file_created
-            end
+            return contents
         end
     end
 end
-
-# $Id$
