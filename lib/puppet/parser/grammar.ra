@@ -5,7 +5,7 @@
 class Puppet::Parser::Parser
 
 token LBRACK DQTEXT SQTEXT RBRACK LBRACE RBRACE SYMBOL FARROW COMMA TRUE
-token FALSE EQUALS LESSEQUAL NOTEQUAL DOT COLON TYPE LLCOLLECT RRCOLLECT
+token FALSE EQUALS LESSEQUAL NOTEQUAL DOT COLON LLCOLLECT RRCOLLECT
 token QMARK LPAREN RPAREN ISEQUAL GREATEREQUAL GREATERTHAN LESSTHAN
 token IF ELSE IMPORT DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN
 token NAME SEMIC CASE DEFAULT AT LCOLLECT RCOLLECT CLASSNAME CLASSREF
@@ -271,7 +271,7 @@ name:         NAME {
     result = ast AST::Name, :value => val[0]
 }
 
-type:         TYPE {
+type:         CLASSREF {
     result = ast AST::Type, :value => val[0]
 }
 
@@ -529,8 +529,7 @@ nodedef: NODE hostnames nodeparent LBRACE statements RBRACE {
     result = nil
 }
 
-classref:       TYPE
-            | CLASSREF
+classref:       CLASSREF
 
 classname:       NAME
             | CLASSNAME

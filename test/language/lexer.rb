@@ -111,7 +111,7 @@ class TestLexer < Test::Unit::TestCase
         types.each { |t|
             @lexer.string = t
             assert_equal(
-                [[:TYPE,t],[false,false]],
+                [[:CLASSREF,t],[false,false]],
                 @lexer.fullscan
             )
         }
@@ -253,6 +253,24 @@ class TestLexer < Test::Unit::TestCase
         @lexer.string = "}"
         @lexer.scan {}
         assert_equal("]", @lexer.expected, "expected value is wrong after pop")
+    end
+
+    # #774
+    def test_classref_token
+        string = ["Foo", "::Foo","Foo::Bar","::Foo::Bar"]
+
+        string.each do |foo|
+            assert_nothing_raised {
+                @lexer.string = foo
+            }
+
+            ret = nil
+            assert_nothing_raised {
+                ret = @lexer.fullscan
+            }
+
+            assert_equal([:CLASSREF, foo],ret[0], "Did not correctly tokenize '%s'" % foo)
+        end
     end
 end
 
