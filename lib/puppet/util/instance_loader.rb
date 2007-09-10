@@ -6,7 +6,7 @@ require 'puppet/util'
 module Puppet::Util::InstanceLoader
     include Puppet::Util
     # Define a new type of autoloading.
-    def autoload(type, path, options = {})
+    def instance_load(type, path, options = {})
         @autoloaders ||= {}
         @instances ||= {}
         type = symbolize(type)

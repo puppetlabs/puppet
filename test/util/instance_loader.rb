@@ -19,15 +19,15 @@ class TestInstanceloader < Test::Unit::TestCase
             end
         end
 
-        assert_nothing_raised("Could not create autoloader") do
-            @loader.autoload(:stuff, "puppet/stuff")
+        assert_nothing_raised("Could not create instance loader") do
+            @loader.instance_load(:stuff, "puppet/stuff")
         end
     end
 
     # Make sure we correctly create our autoload instance.  This covers the basics.
     def test_autoload
         # Make sure we can retrieve the loader
-        assert_instance_of(Puppet::Util::Autoload, @loader.instance_loader(:stuff), "Could not get autoloader")
+        assert_instance_of(Puppet::Util::Autoload, @loader.instance_loader(:stuff), "Could not get instance loader")
 
         # Make sure we can get the instance hash
         assert(@loader.instance_hash(:stuff), "Could not get instance hash")
@@ -46,7 +46,7 @@ class TestInstanceloader < Test::Unit::TestCase
         assert_equal("a value", @loader.loaded_instance(:stuff, :testing), "Got incorrect loaded instance")
     end
 
-    def test_autoloading
+    def test_instance_loading
     end
 end
 

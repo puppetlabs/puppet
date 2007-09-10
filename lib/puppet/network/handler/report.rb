@@ -26,7 +26,7 @@ class Puppet::Network::Handler
         }
 
         # Set up autoloading and retrieving of reports.
-        autoload :report, 'puppet/reports'
+        instance_load :report, 'puppet/reports'
 
         class << self
             attr_reader :hooks

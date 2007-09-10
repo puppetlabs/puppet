@@ -73,7 +73,7 @@ class Puppet::Network::Handler::Node < Puppet::Network::Handler
     }
 
     # Set up autoloading and retrieving of reports.
-    autoload :node_source, 'puppet/node_source'
+    instance_load :node_source, 'puppet/node_source'
 
     attr_reader :source
 
