@@ -98,7 +98,7 @@ class Puppet::Network::Handler::Node < Puppet::Network::Handler
         names = node_names(key, facts)
         names.each do |name|
             name = name.to_s if name.is_a?(Symbol)
-            if node = nodesearch(name)
+            if node = nodesearch(name) and @source != "none"
                 Puppet.info "Found %s in %s" % [name, @source]
                 break
             end
