@@ -20,19 +20,6 @@ class TestHandlerConfiguration < Test::Unit::TestCase
         assert(config.local?, "Config is not considered local after being started that way")
     end
 
-    # Make sure we create the node handler when necessary.
-    def test_node_handler
-        config = Config.new
-        handler = nil
-        assert_nothing_raised("Could not create node handler") do
-            handler = config.send(:node_handler)
-        end
-        assert_instance_of(Puppet::Network::Handler.handler(:node), handler, "Did not create node handler")
-
-        # Now make sure we get the same object back again
-        assert_equal(handler.object_id, config.send(:node_handler).object_id, "Did not cache node handler")
-    end
-
     # Test creation/returning of the interpreter
     def test_interpreter
         config = Config.new
@@ -170,19 +157,14 @@ class TestHandlerConfiguration < Test::Unit::TestCase
     def test_version
         # First try the case where we can't look up the node
         config = Config.new
-        handler = Object.new
-        handler.expects(:details).with(:client).returns(false)
-        config.expects(:node_handler).returns(handler)
+        node = Object.new
+        Puppet::Node.stubs(:search).with(:client).returns(false, node)
         interp = Object.new
         assert_instance_of(Bignum, config.version(:client), "Did not return configuration version")
 
         # And then when we find the node.
         config = Config.new
-        node = Object.new
-        handler = Object.new
-        handler.expects(:details).with(:client).returns(node)
         config.expects(:update_node_check).with(node)
-        config.expects(:node_handler).returns(handler)
         interp = Object.new
         interp.expects(:configuration_version).returns(:version)
         config.expects(:interpreter).returns(interp)

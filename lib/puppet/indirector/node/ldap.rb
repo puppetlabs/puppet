@@ -1,9 +1,9 @@
-Puppet::Indirector.register_terminus :node, :ldap, :fact_merge => true do
+Puppet::Indirector.register_terminus :node, :ldap do
     desc "Search in LDAP for node configuration information."
 
     # Look for our node in ldap.
-    def get(node)
-        unless ary = ldapsearch(node)
+    def get(name)
+        unless ary = ldapsearch(name)
             return nil
         end
         parent, classes, parameters = ary
@@ -18,7 +18,11 @@ Puppet::Indirector.register_terminus :node, :ldap, :fact_merge => true do
             end
         end
 
-        return newnode(node, :classes => classes, :source => "ldap", :parameters => parameters)
+        node = Puppe::Node.new(name, :classes => classes, :source => "ldap", :parameters => parameters)
+        if facts = Puppet::Node.facts(name)
+            node.fact_merge(facts)
+        end
+        return node
     end
 
     # Find the ldap node, return the class list and parent node specially,

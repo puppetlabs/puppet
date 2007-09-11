@@ -1,4 +1,4 @@
-Puppet::Indirector.register_terminus :node, :external, :fact_merge => true do
+Puppet::Indirector.register_terminus :node, :external do
     desc "Call an external program to get node information."
 
     include Puppet::Util
@@ -33,13 +33,17 @@ Puppet::Indirector.register_terminus :node, :external, :fact_merge => true do
             raise Puppet::Error, "Could not load external node results for %s: %s" % [name, detail]
         end
 
-        node = newnode(name)
+        node = Puppe::Node.new(name)
         set = false
         [:parameters, :classes].each do |param|
             if value = result[param]
                 node.send(param.to_s + "=", value)
                 set = true
             end
+        end
+
+        if facts = Puppet::Node.facts(name)
+            node.fact_merge(facts)
         end
 
         if set
