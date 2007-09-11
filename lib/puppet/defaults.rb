@@ -495,7 +495,7 @@ module Puppet
     )
 
     self.setdefaults(:facts,
-        :factstore => ["yaml",
+        :fact_store => ["yaml",
             "The backend store to use for client facts."]
     )
 

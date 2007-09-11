@@ -70,5 +70,3 @@ module Puppet::Util::InstanceLoader
         instances[name]
     end
 end
-
-# $Id$

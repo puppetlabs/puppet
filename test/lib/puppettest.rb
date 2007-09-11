@@ -5,7 +5,12 @@ $LOAD_PATH.unshift(File.expand_path(File.join(File.dirname(__FILE__), '../../lib
 
 require 'puppet'
 require 'mocha'
-require 'test/unit'
+
+# Only load the test/unit class if we're not in the spec directory.
+# Else we get the bogus 'no tests, no failures' message.
+unless Dir.getwd =~ /spec/
+    require 'test/unit'
+end
 
 # Yay; hackish but it works
 if ARGV.include?("-d")
@@ -141,7 +146,7 @@ module PuppetTest
         end
 
         @configpath = File.join(tmpdir,
-            self.class.to_s + "configdir" + @@testcount.to_s + "/"
+            "configdir" + @@testcount.to_s + "/"
         )
 
         unless defined? $user and $group
@@ -197,8 +202,7 @@ module PuppetTest
             @@tmpfilenum = 1
         end
 
-        f = File.join(self.tmpdir(), self.class.to_s + "_" + @method_name.to_s +
-                      @@tmpfilenum.to_s)
+        f = File.join(self.tmpdir(), "tempfile_" + @@tmpfilenum.to_s)
         @@tmpfiles << f
         return f
     end
@@ -223,11 +227,11 @@ module PuppetTest
                       when "Darwin": "/private/tmp"
                       when "SunOS": "/var/tmp"
                       else
-            "/tmp"
+                            "/tmp"
                       end
 
 
-            @tmpdir = File.join(@tmpdir, "puppettesting")
+            @tmpdir = File.join(@tmpdir, "puppettesting" + Process.pid.to_s)
 
             unless File.exists?(@tmpdir)
                 FileUtils.mkdir_p(@tmpdir)

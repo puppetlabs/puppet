@@ -1,25 +1,55 @@
 # Manage indirections to termini.  They are organized in terms of indirections -
 # - e.g., configuration, node, file, certificate -- and each indirection has one
-# or more terminus types defined.  The indirection must have its preferred terminus
-# configured via a 'default' in the form of '<indirection>_terminus'; e.g.,
-# 'node_terminus = ldap'.
+# or more terminus types defined.  The indirection is configured via the
+# +indirects+ method, which will be called by the class extending itself
+# with this module.
 module Puppet::Indirector
+    # LAK:FIXME We need to figure out how to handle documentation for the
+    # different indirection types.
+
+    # A simple class that can function as the base class for indirected types.
+    class Terminus
+        require 'puppet/util/docs'
+        extend Puppet::Util::Docs
+    end
+
+    # This handles creating the terminus classes.
+    require 'puppet/util/classgen'
+    extend Puppet::Util::ClassGen
+
     # This manages reading in all of our files for us and then retrieving
     # loaded instances.  We still have to define the 'newX' method, but this
     # does all of the rest -- loading, storing, and retrieving by name.
     require 'puppet/util/instance_loader'
-    include Puppet::Util::InstanceLoader
+    extend Puppet::Util::InstanceLoader
+
+    # Register a given indirection type.  The classes including this module
+    # handle creating terminus instances, but the module itself handles
+    # loading them and managing the classes.
+    def self.register_indirection(name)
+        # Set up autoloading of the appropriate termini.
+        instance_load name, "puppet/indirector/%s" % name
+    end
 
     # Define a new indirection terminus.  This method is used by the individual
     # termini in their separate files.  Again, the autoloader takes care of
     # actually loading these files.
-    def register_terminus(name, options = {}, &block)
-        genclass(name, :hash => instance_hash(indirection.name), :attributes => options, :block => block)
+    #   Note that the termini are being registered on the Indirector module, not
+    # on the classes including the module.  This allows a given indirection to
+    # be used in multiple classes.
+    def self.register_terminus(indirection, terminus, options = {}, &block)
+        genclass(terminus,
+            :prefix => indirection.to_s.capitalize,
+            :hash => instance_hash(indirection),
+            :attributes => options,
+            :block => block,
+            :parent => options[:parent] || Terminus
+        )
     end
 
     # Retrieve a terminus class by indirection and name.
-    def terminus(name)
-        loaded_instance(name)
+    def self.terminus(indirection, terminus)
+        loaded_instance(indirection, terminus)
     end
 
     # Declare that the including class indirects its methods to
@@ -27,12 +57,27 @@ module Puppet::Indirector
     # default, not the value -- if it's the value, then it gets
     # evaluated at parse time, which is before the user has had a chance
     # to override it.
-    def indirects(indirection, options)
-        @indirection = indirection
-        @indirect_terminus = options[:to]
+    #   Options are:
+    # +:to+: What parameter to use as the name of the indirection terminus.
+    def indirects(indirection, options = {})
+        if defined?(@indirection)
+            raise ArgumentError, "Already performing an indirection of %s; cannot redirect %s" % [@indirection[:name], indirection]
+        end
+        options[:name] = indirection
+        @indirection = options
 
+        # Validate the parameter.  This requires that indirecting
+        # classes require 'puppet/defaults', because of ordering issues,
+        # but it makes problems much easier to debug.
+        if param_name = options[:to]
+            begin
+                name = Puppet[param_name]
+            rescue
+                raise ArgumentError, "Configuration parameter '%s' for indirection '%s' does not exist'" % [param_name, indirection]
+            end
+        end
         # Set up autoloading of the appropriate termini.
-        autoload "puppet/indirector/%s" % indirection
+        Puppet::Indirector.register_indirection indirection
     end
 
     # Define methods for each of the HTTP methods.  These just point to the
@@ -47,30 +92,46 @@ module Puppet::Indirector
     # those methods.
     [:get, :post, :put, :delete].each do |method_name|
         define_method(method_name) do |*args|
-            begin
-                terminus.send(method_name, *args)
-            rescue NoMethodError
-                raise ArgumentError, "Indirection category %s does not respond to REST method %s" % [indirection, method_name]
-            end
+            redirect(method_name, *args)
         end
     end
 
     private
 
+
     # Create a new terminus instance.
-    def make_terminus(indirection)
+    def make_terminus(name)
         # Load our terminus class.
-        unless klass = self.class.terminus(indirection, indirection.default)
-            raise ArgumentError, "Could not find terminus %s for indirection %s" % [indirection.default, indirection]
+        unless klass = Puppet::Indirector.terminus(@indirection[:name], name)
+            raise ArgumentError, "Could not find terminus %s for indirection %s" % [name, indirection]
         end
         return klass.new
     end
 
-    # Return the singleton terminus for this indirection.
-    def terminus
-        unless terminus = @termini[indirection.name]
-            terminus = @termini[indirection.name] = make_terminus(indirection)
+    # Redirect a given HTTP method.
+    def redirect(method_name, *args)
+        begin
+            terminus.send(method_name, *args)
+        rescue NoMethodError
+            raise ArgumentError, "Indirection category %s does not respond to REST method %s" % [indirection, method_name]
         end
-        terminus
+    end
+
+    # Return the singleton terminus for this indirection.
+    def terminus(name = nil)
+        @termini ||= {}
+        # Get the name of the terminus.
+        unless name
+            unless param_name = @indirection[:to]
+                raise ArgumentError, "You must specify an indirection terminus for indirection %s" % @indirection[:name]
+            end
+            name = Puppet[param_name]
+            name = name.intern if name.is_a?(String)
+        end
+        
+        unless @termini[name]
+            @termini[name] = make_terminus(name)
+        end
+        @termini[name]
     end
 end
