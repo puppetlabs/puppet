@@ -5,7 +5,7 @@
 class Puppet::Parser::Parser
 
 token LBRACK DQTEXT SQTEXT RBRACK LBRACE RBRACE SYMBOL FARROW COMMA TRUE
-token FALSE EQUALS LESSEQUAL NOTEQUAL DOT COLON TYPE LLCOLLECT RRCOLLECT
+token FALSE EQUALS LESSEQUAL NOTEQUAL DOT COLON LLCOLLECT RRCOLLECT
 token QMARK LPAREN RPAREN ISEQUAL GREATEREQUAL GREATERTHAN LESSTHAN
 token IF ELSE IMPORT DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN
 token NAME SEMIC CASE DEFAULT AT LCOLLECT RCOLLECT CLASSNAME CLASSREF
@@ -178,7 +178,7 @@ at:   AT { result = :virtual }
 
 # A collection statement.  Currently supports no arguments at all, but eventually
 # will, I assume.
-collection:     collectname collectrhand {
+collection:     classref collectrhand {
     if val[0] =~ /^[a-z]/
         Puppet.warning addcontext("Collection names must now be capitalized")
     end
@@ -198,7 +198,6 @@ collection:     collectname collectrhand {
     result = ast AST::Collection, args
 }
 
-collectname: TYPE | NAME
 
 collectrhand:     LCOLLECT collstatements RCOLLECT {
     if val[1]
@@ -272,7 +271,7 @@ name:         NAME {
     result = ast AST::Name, :value => val[0]
 }
 
-type:         TYPE {
+type:         CLASSREF {
     result = ast AST::Type, :value => val[0]
 }
 
@@ -530,8 +529,7 @@ nodedef: NODE hostnames nodeparent LBRACE statements RBRACE {
     result = nil
 }
 
-classref:       TYPE
-            | CLASSREF
+classref:       CLASSREF
 
 classname:       NAME
             | CLASSNAME

@@ -49,8 +49,7 @@ module Puppet
                 %r{\+>} => :PARROW,
                 %r{[a-z][-\w]*} => :NAME,
                 %r{([a-z][-\w]*::)+[a-z][-\w]*} => :CLASSNAME,
-                %r{([A-Z][-\w]*::)+[A-Z][-\w]*} => :CLASSREF,
-                %r{[A-Z][-\w]*} => :TYPE,
+                %r{((::){0,1}[A-Z][-\w]*)+} => :CLASSREF,
                 %r{[0-9]+} => :NUMBER,
                 %r{\$(\w*::)*\w+} => :VARIABLE
             }

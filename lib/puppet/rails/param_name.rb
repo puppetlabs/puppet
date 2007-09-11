@@ -9,7 +9,7 @@ class Puppet::Rails::ParamName < ActiveRecord::Base
         hash = {}
         hash[:name] = self.name.to_sym
         hash[:source] = source
-        hash[:value] = resource.param_values.find(:all, :conditions => [ "param_name_id = ?", self]).collect { |v| v.value }
+        hash[:value] = resource.param_values.find(:all, :conditions => [ "param_name_id = ?", self.id]).collect { |v| v.value }
         if hash[:value].length == 1
             hash[:value] = hash[:value].shift
         elsif hash[:value].empty?
