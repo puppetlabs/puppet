@@ -472,13 +472,14 @@ class TestSnippets < Test::Unit::TestCase
                     :Manifest => snippet(file),
                     :Local => true
                 )
-                server.send(:fact_handler).stubs(:set)
-                server.send(:fact_handler).stubs(:get).returns(facts)
+                facts = Puppet::Node::Facts.new("testhost", facts)
+                Puppet::Node::Facts.stubs(:post)
+                Puppet::Node::Facts.stubs(:get).returns(facts)
                 client = Puppet::Network::Client.master.new(
                     :Master => server,
                     :Cache => false
                 )
-                client.class.stubs(:facts).returns(facts)
+                client.class.stubs(:facts).returns(facts.values)
 
                 assert(client.local)
                 assert_nothing_raised {

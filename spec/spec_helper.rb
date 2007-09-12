@@ -5,8 +5,8 @@ $:.unshift("#{dir}/lib").unshift("#{dir}/../lib")
 $:.unshift("#{dir}/../test/lib")
 
 require 'mocha'
-require 'spec'
 require 'puppettest'
+require 'spec'
 
 Spec::Runner.configure do |config|
   config.mock_with :mocha

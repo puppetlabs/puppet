@@ -79,7 +79,7 @@ class Puppet::Network::Handler
         # Add any extra data necessary to the node.
         def add_node_data(node)
             # Merge in our server-side facts, so they can be used during compilation.
-            node.fact_merge(@server_facts)
+            node.merge(@server_facts)
 
             # Add any specified classes to the node's class list.
             if classes = @options[:Classes]

@@ -18,10 +18,8 @@ Puppet::Indirector.register_terminus :node, :ldap do
             end
         end
 
-        node = Puppe::Node.new(name, :classes => classes, :source => "ldap", :parameters => parameters)
-        if facts = Puppet::Node.facts(name)
-            node.fact_merge(facts)
-        end
+        node = Puppet::Node.new(name, :classes => classes, :source => "ldap", :parameters => parameters)
+        node.fact_merge
         return node
     end
 

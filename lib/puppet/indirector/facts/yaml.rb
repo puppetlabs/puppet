@@ -21,7 +21,7 @@ Puppet::Indirector.register_terminus :facts, :yaml do
     end
 
     # Store the facts to disk.
-    def put(facts)
+    def post(facts)
         File.open(path(facts.name), "w", 0600) do |f|
             begin
                 f.print YAML::dump(facts.values)

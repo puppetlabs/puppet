@@ -42,7 +42,6 @@ module PuppetTest::ParserTesting
     end
 
     def mkcompile(parser = nil)
-        require 'puppet/network/handler/node'
         parser ||= mkparser
         node = mknode
         return Compile.new(node, parser)

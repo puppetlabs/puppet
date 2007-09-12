@@ -85,32 +85,40 @@ end
 describe Puppet::Node, " when merging facts" do
     before do
         @node = Puppet::Node.new("testnode")
+        Puppet::Node::Facts.stubs(:get).with(@node.name).returns(Puppet::Node::Facts.new(@node.name, "one" => "c", "two" => "b"))
     end
 
     it "should prefer parameters already set on the node over facts from the node" do
         @node.parameters = {"one" => "a"}
-        @node.fact_merge("one" => "c")
+        @node.fact_merge
         @node.parameters["one"].should == "a"
     end
 
     it "should add passed parameters to the parameter list" do
         @node.parameters = {"one" => "a"}
-        @node.fact_merge("two" => "b")
+        @node.fact_merge
         @node.parameters["two"].should == "b"
+    end
+
+    it "should accept arbitrary parameters to merge into its parameters" do
+        @node.parameters = {"one" => "a"}
+        @node.merge "two" => "three"
+        @node.parameters["two"].should == "three"
     end
 end
 
 describe Puppet::Node, " when indirecting" do
     before do
-        Puppet[:node_source] = :test_source
-        @terminus_class = mock 'terminus_class'
         @terminus = mock 'terminus'
-        @terminus_class.expects(:new).returns(@terminus)
-        Puppet::Indirector.expects(:terminus).with(:node, :test_source).returns(@terminus_class)
+        Puppet::Indirector.terminus(:node, Puppet[:node_source]).stubs(:new).returns(@terminus)
     end
 
     it "should redirect to the specified node source" do
         @terminus.expects(:get).with(:my_node)
         Puppet::Node.get(:my_node)
+    end
+
+    after do
+        Puppet::Indirector::Indirection.clear_cache
     end
 end

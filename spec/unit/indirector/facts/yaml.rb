@@ -23,7 +23,7 @@ describe Puppet::Indirector.terminus(:facts, :yaml), " when managing facts" do
     it "should store facts in YAML in the yamlfactdir" do
         values = {"one" => "two", "three" => "four"}
         facts = Puppet::Node::Facts.new("node", values)
-        @store.put(facts)
+        @store.post(facts)
 
         # Make sure the file exists
         path = File.join(Puppet[:yamlfactdir], facts.name) + ".yaml"

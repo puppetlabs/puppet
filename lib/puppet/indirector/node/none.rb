@@ -1,3 +1,5 @@
+require 'puppet/node/facts'
+
 Puppet::Indirector.register_terminus :node, :none do
     desc "Always return an empty node object.  This is the node source you should
         use when you don't have some other, functional source you want to use,
@@ -6,9 +8,7 @@ Puppet::Indirector.register_terminus :node, :none do
     # Just return an empty node.
     def get(name)
         node = Puppet::Node.new(name)
-        if facts = Puppet::Node.facts(name)
-            node.fact_merge(facts)
-        end
+        node.fact_merge
         node
     end
 end

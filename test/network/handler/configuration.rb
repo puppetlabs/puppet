@@ -63,14 +63,14 @@ class TestHandlerConfiguration < Test::Unit::TestCase
         fakenode = Object.new
         # Set the server facts to something
         config.instance_variable_set("@server_facts", :facts)
-        fakenode.expects(:fact_merge).with(:facts)
+        fakenode.expects(:merge).with(:facts)
         config.send(:add_node_data, fakenode)
 
         # Now try it with classes.
         config.instance_variable_set("@options", {:Classes => %w{a b}})
         list = []
         fakenode = Object.new
-        fakenode.expects(:fact_merge).with(:facts)
+        fakenode.expects(:merge).with(:facts)
         fakenode.expects(:classes).returns(list).times(2)
         config.send(:add_node_data, fakenode)
         assert_equal(%w{a b}, list, "Did not add classes to node")

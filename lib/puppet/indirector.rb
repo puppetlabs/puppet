@@ -11,7 +11,19 @@ module Puppet::Indirector
     class Terminus
         require 'puppet/util/docs'
         extend Puppet::Util::Docs
+
+        class << self
+            attr_accessor :name, :indirection
+        end
+        def name
+            self.class.name
+        end
+        def indirection
+            self.class.indirection
+        end
     end
+
+    require 'puppet/indirector/indirection'
 
     # This handles creating the terminus classes.
     require 'puppet/util/classgen'
@@ -38,13 +50,15 @@ module Puppet::Indirector
     # on the classes including the module.  This allows a given indirection to
     # be used in multiple classes.
     def self.register_terminus(indirection, terminus, options = {}, &block)
-        genclass(terminus,
+        klass = genclass(terminus,
             :prefix => indirection.to_s.capitalize,
             :hash => instance_hash(indirection),
             :attributes => options,
             :block => block,
             :parent => options[:parent] || Terminus
         )
+        klass.indirection = indirection
+        klass.name = terminus
     end
 
     # Retrieve a terminus class by indirection and name.
@@ -61,23 +75,14 @@ module Puppet::Indirector
     # +:to+: What parameter to use as the name of the indirection terminus.
     def indirects(indirection, options = {})
         if defined?(@indirection)
-            raise ArgumentError, "Already performing an indirection of %s; cannot redirect %s" % [@indirection[:name], indirection]
+            raise ArgumentError, "Already performing an indirection of %s; cannot redirect %s" % [@indirection.name, indirection]
         end
-        options[:name] = indirection
-        @indirection = options
+        @indirection = Indirection.new(indirection, options)
 
-        # Validate the parameter.  This requires that indirecting
-        # classes require 'puppet/defaults', because of ordering issues,
-        # but it makes problems much easier to debug.
-        if param_name = options[:to]
-            begin
-                name = Puppet[param_name]
-            rescue
-                raise ArgumentError, "Configuration parameter '%s' for indirection '%s' does not exist'" % [param_name, indirection]
-            end
-        end
         # Set up autoloading of the appropriate termini.
         Puppet::Indirector.register_indirection indirection
+
+        return @indirection
     end
 
     # Define methods for each of the HTTP methods.  These just point to the
@@ -98,40 +103,16 @@ module Puppet::Indirector
 
     private
 
-
-    # Create a new terminus instance.
-    def make_terminus(name)
-        # Load our terminus class.
-        unless klass = Puppet::Indirector.terminus(@indirection[:name], name)
-            raise ArgumentError, "Could not find terminus %s for indirection %s" % [name, indirection]
-        end
-        return klass.new
-    end
-
     # Redirect a given HTTP method.
     def redirect(method_name, *args)
         begin
-            terminus.send(method_name, *args)
-        rescue NoMethodError
-            raise ArgumentError, "Indirection category %s does not respond to REST method %s" % [indirection, method_name]
-        end
-    end
-
-    # Return the singleton terminus for this indirection.
-    def terminus(name = nil)
-        @termini ||= {}
-        # Get the name of the terminus.
-        unless name
-            unless param_name = @indirection[:to]
-                raise ArgumentError, "You must specify an indirection terminus for indirection %s" % @indirection[:name]
+            @indirection.terminus.send(method_name, *args)
+        rescue NoMethodError => detail
+            if Puppet[:trace]
+                puts detail.backtrace
             end
-            name = Puppet[param_name]
-            name = name.intern if name.is_a?(String)
+            raise ArgumentError, "The %s terminus of the %s indirection failed to respond to %s: %s" %
+                [@indirection.terminus.name, @indirection.name, method_name, detail]
         end
-        
-        unless @termini[name]
-            @termini[name] = make_terminus(name)
-        end
-        @termini[name]
     end
 end

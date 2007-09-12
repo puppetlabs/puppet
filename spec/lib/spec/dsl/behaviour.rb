@@ -1,6 +1,10 @@
+require 'puppettest/runnable_test'
+
 module Spec
   module DSL
-    class EvalModule < Module; end
+    class EvalModule < Module;
+      include PuppetTest::RunnableTest
+    end
     class Behaviour
       extend BehaviourCallbacks
 

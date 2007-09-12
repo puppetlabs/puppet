@@ -74,7 +74,7 @@ class Puppet::Network::Handler
             client, clientip = clientname(client, clientip, facts)
 
             # Pass the facts to the fact handler
-            fact_handler.set(client, facts)
+            Puppet::Node::Facts.post(Puppet::Node::Facts.new(client, facts))
 
             # And get the configuration from the config handler
             begin
@@ -132,13 +132,6 @@ class Puppet::Network::Handler
             end
 
             return facts
-        end
-
-        def fact_handler
-            unless defined? @fact_handler
-                @fact_handler = Puppet::Network::Handler.handler(:facts).new :local => local?
-            end
-            @fact_handler
         end
 
         # Translate our configuration appropriately for sending back to a client.

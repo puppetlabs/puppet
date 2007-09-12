@@ -387,22 +387,40 @@ describe Puppet::Util::Config, " when reparsing its configuration" do
     end
 end
 
-#describe Puppet::Util::Config, " when being used to manage the host machine" do
-#    it "should provide a method that writes files with the correct modes"
-#
-#    it "should provide a method that creates directories with the correct modes"
-#
-#    it "should provide a method to declare what directories should exist"
-#
-#    it "should provide a method to trigger enforcing of file modes on existing files and directories"
-#
-#    it "should provide a method to convert the file mode enforcement into a Puppet manifest"
-#
-#    it "should provide an option to create needed users and groups"
-#
-#    it "should provide a method to print out the current configuration"
-#
-#    it "should be able to provide all of its parameters in a format compatible with GetOpt::Long"
-#
-#    it "should not attempt to manage files within /dev"
-#end
+describe Puppet::Util::Config, " when being used to manage the host machine" do
+    it "should provide a method that writes files with the correct modes" do
+        pending "Not converted from test/unit yet"
+    end
+
+    it "should provide a method that creates directories with the correct modes" do
+        pending "Not converted from test/unit yet"
+    end
+
+    it "should provide a method to declare what directories should exist" do
+        pending "Not converted from test/unit yet"
+    end
+
+    it "should provide a method to trigger enforcing of file modes on existing files and directories" do
+        pending "Not converted from test/unit yet"
+    end
+
+    it "should provide a method to convert the file mode enforcement into a Puppet manifest" do
+        pending "Not converted from test/unit yet"
+    end
+
+    it "should provide an option to create needed users and groups" do
+        pending "Not converted from test/unit yet"
+    end
+
+    it "should provide a method to print out the current configuration" do
+        pending "Not converted from test/unit yet"
+    end
+
+    it "should be able to provide all of its parameters in a format compatible with GetOpt::Long" do
+        pending "Not converted from test/unit yet"
+    end
+
+    it "should not attempt to manage files within /dev" do
+        pending "Not converted from test/unit yet"
+    end
+end

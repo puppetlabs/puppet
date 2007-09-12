@@ -8,6 +8,11 @@ require 'puppet/network/handler/master'
 class TestMaster < Test::Unit::TestCase
     include PuppetTest::ServerTest
 
+    def teardown
+        super
+        Puppet::Indirector::Indirection.clear_cache
+    end
+
     def test_defaultmanifest
         textfiles { |file|
             Puppet[:manifest] = file

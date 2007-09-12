@@ -11,15 +11,10 @@ describe Puppet::Indirector, " when managing indirections" do
         @indirector.send(:extend, Puppet::Indirector)
     end
 
-    # LAK:FIXME This seems like multiple tests, but I don't really know how to test one at a time.
-    it "should accept specification of an indirection terminus via a configuration parameter" do
-        @indirector.indirects :test, :to => :node_source
-        Puppet[:node_source] = "test_source"
-        klass = mock 'terminus_class'
-        terminus = mock 'terminus'
-        klass.expects(:new).returns terminus
-        Puppet::Indirector.expects(:terminus).with(:test, :test_source).returns(klass)
-        @indirector.send(:terminus).should equal(terminus)
+    it "should create an indirection" do
+        indirection = @indirector.indirects :test, :to => :node_source
+        indirection.name.should == :test
+        indirection.to.should == :node_source
     end
 
     it "should not allow more than one indirection in the same object" do
@@ -33,17 +28,14 @@ describe Puppet::Indirector, " when managing indirections" do
         other.send(:extend, Puppet::Indirector)
         proc { other.indirects :test }.should_not raise_error
     end
-end
-
-describe Puppet::Indirector, " when managing termini" do
-    before do
-        @indirector = Object.new
-        @indirector.send(:extend, Puppet::Indirector)
-    end
 
     it "should should autoload termini from disk" do
         Puppet::Indirector.expects(:instance_load).with(:test, "puppet/indirector/test")
         @indirector.indirects :test
+    end
+
+    after do
+        Puppet.config.clear
     end
 end
 
@@ -65,15 +57,5 @@ describe Puppet::Indirector, " when performing indirections" do
         terminus.expects(:put).with("myargument")
         @terminus_class.expects(:new).returns(terminus)
         @indirector.put("myargument")
-    end
-
-    # Make sure it caches the terminus.
-    it "should use the same terminus for all indirections" do
-        terminus = mock 'terminus'
-        terminus.expects(:put).with("myargument")
-        terminus.expects(:get).with("other_argument")
-        @terminus_class.expects(:new).returns(terminus)
-        @indirector.put("myargument")
-        @indirector.get("other_argument")
     end
 end
