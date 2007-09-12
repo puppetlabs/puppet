@@ -19,6 +19,20 @@ class Puppet::PGraph < GRATR::Digraph
         super
     end
 
+    # Add a resource to our graph and to our resource table.
+    def add_resource(resource)
+        unless resource.respond_to?(:ref)
+            raise ArgumentError, "Can only add objects that respond to :ref"
+        end
+
+        ref = resource.ref
+        if @resource_table.include?(ref)
+            raise ArgumentError, "Resource %s is already defined" % ref
+        else
+            @resource_table[ref] = resource
+        end
+    end
+
     def add_vertex!(*args)
         @reversal = nil
         super
@@ -26,6 +40,7 @@ class Puppet::PGraph < GRATR::Digraph
     
     def clear
         @vertex_dict.clear
+        #@resource_table.clear
         if defined? @edge_number
             @edge_number.clear
         end
@@ -71,6 +86,12 @@ class Puppet::PGraph < GRATR::Digraph
     def edge_class()
         Puppet::Relationship
     end
+
+    def initialize(*args)
+        super
+        # Create a table to keep references to all of our resources.
+        @resource_table = {}
+    end
     
     # Determine all of the leaf nodes below a given vertex.
     def leaves(vertex, type = :dfs)
@@ -96,6 +117,11 @@ class Puppet::PGraph < GRATR::Digraph
                 edge.match?(event.event)
             end
         end.flatten
+    end
+
+    # Look a resource up by its reference (e.g., File["/etc/passwd"]).
+    def resource(ref)
+        @resource_table[ref]
     end
     
     # Take container information from another graph and use it
@@ -209,5 +235,3 @@ class Puppet::PGraph < GRATR::Digraph
         end
     end
 end
-
-# $Id$

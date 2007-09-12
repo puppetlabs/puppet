@@ -265,6 +265,7 @@ module PuppetTest
         Puppet::Util::Storage.clear
         Puppet.clear
         Puppet.config.clear
+        Puppet::Indirector::Indirection.clear_cache
 
         @memoryatend = Puppet::Util.memory
         diff = @memoryatend - @memoryatstart

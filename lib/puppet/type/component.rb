@@ -169,6 +169,10 @@ Puppet::Type.newtype(:component) do
         end
     end
 
+    def ref
+        title
+    end
+
     # Remove an object.  The argument determines whether the object's
     # subscriptions get eliminated, too.
     def remove(rmdeps = true)

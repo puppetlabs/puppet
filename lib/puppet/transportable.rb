@@ -60,6 +60,17 @@ module Puppet
             instance_variables
         end
 
+        def to_ref
+            unless defined? @ref
+                if self.type and self.name
+                    @ref = "%s[%s]" % [self.type, self.name]
+                else
+                    @ref = nil
+                end
+            end
+            @ref
+        end
+
         def to_type(parent = nil)
             retobj = nil
             if typeklass = Puppet::Type.type(self.type)
@@ -188,6 +199,43 @@ module Puppet
             instance_variables
         end
 
+        # Create a resource graph from our structure.
+        def to_graph
+            graph = Puppet::PGraph.new
+            
+            delver = proc do |obj|
+                obj.each do |child|
+                    unless container = graph.resource(obj.to_ref)
+                        container = obj.to_type
+                        graph.add_resource container
+                    end
+                    unless resource = graph.resource(child.to_ref)
+                        resource = child.to_type
+                        graph.add_resource resource
+                    end
+                    graph.add_edge!(container, resource)
+                    if child.is_a?(self.class)
+                        delver.call(child)
+                    end
+                end
+            end
+            
+            delver.call(self)
+            
+            return graph
+        end
+
+        def to_ref
+            unless defined? @ref
+                if self.type and self.name
+                    @ref = "%s[%s]" % [self.type, self.name]
+                else
+                    @ref = nil
+                end
+            end
+            @ref
+        end
+
         def to_type(parent = nil)
             # this container will contain the equivalent of all objects at
             # this level
@@ -287,7 +335,5 @@ module Puppet
         end
 
     end
-    #------------------------------------------------------------
 end
 
-# $Id$
