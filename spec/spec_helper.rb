@@ -10,4 +10,11 @@ require 'puppettest'
 
 Spec::Runner.configure do |config|
   config.mock_with :mocha
+  config.prepend_before :each do
+      setup() if respond_to? :setup
+  end
+
+  config.prepend_after :each do
+      teardown() if respond_to? :teardown
+  end
 end
