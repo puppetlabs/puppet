@@ -4,7 +4,7 @@ require 'puppet/external/gratr/digraph'
 # meant to be passed from server to client, and it contains all
 # of the information in the configuration, including the resources
 # and the relationships between them.
-class Puppet::Node::Configuration < GRATR::Digraph
+class Puppet::Node::Configuration < Puppet::PGraph
     attr_accessor :name, :version
     attr_reader :extraction_format
 
@@ -16,6 +16,25 @@ class Puppet::Node::Configuration < GRATR::Digraph
 
         # Add the class names as tags, too.
         tag(*classes)
+    end
+
+    # Add a resource to our graph and to our resource table.
+    def add_resource(resource)
+        unless resource.respond_to?(:ref)
+            raise ArgumentError, "Can only add objects that respond to :ref"
+        end
+
+        ref = resource.ref
+        if @resource_table.include?(ref)
+            raise ArgumentError, "Resource %s is already defined" % ref
+        else
+            @resource_table[ref] = resource
+        end
+    end
+    
+    def clear
+        super
+        @resource_table.clear
     end
 
     def classes
@@ -100,6 +119,12 @@ class Puppet::Node::Configuration < GRATR::Digraph
         @extraction_format ||= :transportable
         @tags = []
         @classes = []
+        @resource_table = {}
+    end
+
+    # Look a resource up by its reference (e.g., File[/etc/passwd]).
+    def resource(ref)
+        @resource_table[ref]
     end
 
     # Add a tag.

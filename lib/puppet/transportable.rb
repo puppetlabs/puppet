@@ -201,7 +201,7 @@ module Puppet
 
         # Create a resource graph from our structure.
         def to_graph
-            graph = Puppet::PGraph.new
+            graph = Puppet::Node::Configuration.new(Facter.value(:hostname))
             
             delver = proc do |obj|
                 obj.each do |child|

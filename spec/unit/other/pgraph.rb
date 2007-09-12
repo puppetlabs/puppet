@@ -283,28 +283,3 @@ describe Puppet::PGraph, " when sorting the graph" do
         proc { @graph.topsort }.should_not raise_error
     end
 end
-
-describe Puppet::PGraph, " functioning as a resource container" do
-    before do
-        @graph = Puppet::PGraph.new
-        @one = stub 'resource1', :ref => "Me[you]"
-        @two = stub 'resource2', :ref => "Me[him]"
-        @dupe = stub 'resource3', :ref => "Me[you]"
-    end
-
-    it "should make all vertices available by resource reference" do
-        @graph.add_vertex!(@one)
-        @graph.resource(@one.ref).should equal(@one)
-    end
-
-    it "should not allow two resources with the same resource reference" do
-        @graph.add_vertex!(@one)
-        proc { @graph.add_vertex!(@dupe) }.should raise_error(ArgumentError)
-    end
-
-    it "should not store objects that do not respond to :ref" do
-        str = "thing"
-        @graph.add_vertex!(str)
-        @graph.resource(str).should be_nil
-    end
-end

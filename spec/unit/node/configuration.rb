@@ -133,3 +133,26 @@ describe Puppet::Node::Configuration, " when extracting transobjects" do
         botarray.include?(:botres).should be_true
     end
 end
+
+describe Puppet::Node::Configuration, " functioning as a resource container" do
+    before do
+        @graph = Puppet::Node::Configuration.new("host")
+        @one = stub 'resource1', :ref => "Me[you]"
+        @two = stub 'resource2', :ref => "Me[him]"
+        @dupe = stub 'resource3', :ref => "Me[you]"
+    end
+
+    it "should make all vertices available by resource reference" do
+        @graph.add_resource(@one)
+        @graph.resource(@one.ref).should equal(@one)
+    end
+
+    it "should not allow two resources with the same resource reference" do
+        @graph.add_resource(@one)
+        proc { @graph.add_resource(@dupe) }.should raise_error(ArgumentError)
+    end
+
+    it "should not store objects that do not respond to :ref" do
+        proc { @graph.add_resource("thing") }.should raise_error(ArgumentError)
+    end
+end
