@@ -16,10 +16,6 @@ Puppet::Indirector.register_terminus :facts, :yaml do
         Puppet::Node::Facts.new(node, values)
     end
 
-    def initialize
-        Puppet.config.use(:yamlfacts)
-    end
-
     # Store the facts to disk.
     def post(facts)
         File.open(path(facts.name), "w", 0600) do |f|

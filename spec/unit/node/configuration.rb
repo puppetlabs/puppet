@@ -134,25 +134,158 @@ describe Puppet::Node::Configuration, " when extracting transobjects" do
     end
 end
 
-describe Puppet::Node::Configuration, " functioning as a resource container" do
+describe Puppet::Node::Configuration, " when functioning as a resource container" do
     before do
-        @graph = Puppet::Node::Configuration.new("host")
+        @config = Puppet::Node::Configuration.new("host")
         @one = stub 'resource1', :ref => "Me[you]"
         @two = stub 'resource2', :ref => "Me[him]"
         @dupe = stub 'resource3', :ref => "Me[you]"
     end
 
     it "should make all vertices available by resource reference" do
-        @graph.add_resource(@one)
-        @graph.resource(@one.ref).should equal(@one)
+        @config.add_resource(@one)
+        @config.resource(@one.ref).should equal(@one)
+        @config.vertices.find { |r| r.ref == @one.ref }.should equal(@one)
     end
 
     it "should not allow two resources with the same resource reference" do
-        @graph.add_resource(@one)
-        proc { @graph.add_resource(@dupe) }.should raise_error(ArgumentError)
+        @config.add_resource(@one)
+        proc { @config.add_resource(@dupe) }.should raise_error(ArgumentError)
     end
 
     it "should not store objects that do not respond to :ref" do
-        proc { @graph.add_resource("thing") }.should raise_error(ArgumentError)
+        proc { @config.add_resource("thing") }.should raise_error(ArgumentError)
     end
+
+    it "should remove all resources when asked" do
+        @config.add_resource @one
+        @config.add_resource @two
+        @one.expects :remove
+        @two.expects :remove
+        @config.clear(true)
+    end
+
+    it "should support a mechanism for finishing resources" do
+        @one.expects :finish
+        @two.expects :finish
+        @config.add_resource @one
+        @config.add_resource @two
+
+        @config.finalize
+    end
+    
+    it "should optionally support an initialization block and should finalize after such blocks" do
+        @one.expects :finish
+        @two.expects :finish
+        config = Puppet::Node::Configuration.new("host") do |conf|
+            conf.add_resource @one
+            conf.add_resource @two
+        end
+    end
+end
+
+module ApplyingConfigurations
+    def setup
+        @config = Puppet::Node::Configuration.new("host")
+
+        @config.retrieval_duration = Time.now
+        @transaction = mock 'transaction'
+        Puppet::Transaction.stubs(:new).returns(@transaction)
+        @transaction.stubs(:evaluate)
+        @transaction.stubs(:cleanup)
+        @transaction.stubs(:addtimes)
+    end
+end
+
+describe Puppet::Node::Configuration, " when applying" do
+    include ApplyingConfigurations
+
+    it "should create and evaluate a transaction" do
+        @transaction.expects(:evaluate)
+        @config.apply
+    end
+
+    it "should provide the configuration time to the transaction" do
+        @transaction.expects(:addtimes).with do |arg|
+            arg[:config_retrieval].should be_instance_of(Time)
+            true
+        end
+        @config.apply
+    end
+
+    it "should clean up the transaction" do
+        @transaction.expects :cleanup
+        @config.apply
+    end
+    
+    it "should return the transaction" do
+        @config.apply.should equal(@transaction)
+    end
+
+    it "should yield the transaction if a block is provided" do
+        pending "the code works but is not tested"
+    end
+    
+    it "should default to not being a host configuration" do
+        @config.host_config.should be_nil
+    end
+end
+
+describe Puppet::Node::Configuration, " when applying host configurations" do
+    include ApplyingConfigurations
+
+    # super() doesn't work in the setup method for some reason
+    before do
+        @config.host_config = true
+    end
+
+    it "should send a report if reporting is enabled" do
+        Puppet[:report] = true
+        @transaction.expects :send_report
+        @config.apply
+    end
+
+    it "should send a report if report summaries are enabled" do
+        Puppet[:summarize] = true
+        @transaction.expects :send_report
+        @config.apply
+    end
+
+    it "should initialize the state database before applying a configuration" do
+        Puppet::Util::Storage.expects(:load)
+
+        # Short-circuit the apply, so we know we're loading before the transaction
+        Puppet::Transaction.expects(:new).raises ArgumentError
+        proc { @config.apply }.should raise_error(ArgumentError)
+    end
+
+    it "should sync the state database after applying" do
+        Puppet::Util::Storage.expects(:store)
+        @config.apply
+    end
+
+    after { Puppet.config.clear }
+end
+
+describe Puppet::Node::Configuration, " when applying non-host configurations" do
+    include ApplyingConfigurations
+
+    before do
+        @config.host_config = false
+    end
+    
+    it "should never send reports" do
+        Puppet[:report] = true
+        Puppet[:summarize] = true
+        @transaction.expects(:send_report).never
+        @config.apply
+    end
+
+    it "should never modify the state database" do
+        Puppet::Util::Storage.expects(:load).never
+        Puppet::Util::Storage.expects(:store).never
+        @config.apply
+    end
+
+    after { Puppet.config.clear }
 end

@@ -494,12 +494,11 @@ module Puppet
             "The server through which to send email reports."]
     )
 
-    self.setdefaults(:facts,
+    # This needs to be in main because it's used too early in the system, such that
+    # we get an infinite loop otherwise.
+    self.setdefaults(:main,
         :fact_store => ["yaml",
-            "The backend store to use for client facts."]
-    )
-
-    self.setdefaults(:yamlfacts,
+            "The backend store to use for client facts."],
         :yamlfactdir => ["$vardir/facts",
             "The directory in which client facts are stored when the yaml fact store is used."]
     )

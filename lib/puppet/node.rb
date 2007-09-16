@@ -38,6 +38,9 @@ class Puppet::Node
     end
 
     def initialize(name, options = {})
+        unless name
+            raise ArgumentError, "Node names cannot be nil"
+        end
         @name = name
 
         # Provide a default value.

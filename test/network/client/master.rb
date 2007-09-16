@@ -88,51 +88,6 @@ class TestMasterClient < Test::Unit::TestCase
         return master, objects
     end
     
-    def test_apply
-        master, objects = mk_fake_client
-        
-        check = Proc.new do |hash|
-            assert(objects.trans, "transaction was not created")
-            trans = objects.trans
-            hash[:yes].each do |m|
-                assert_equal(1, trans.send(m.to_s + "?"), "did not call #{m} enough times")
-            end
-            hash[:no].each do |m|
-                assert_equal(0, trans.send(m.to_s + "?"), "called #{m} too many times")
-            end
-        end
-        
-        # First try it with no arguments
-        assert_nothing_raised do
-            master.apply
-        end
-        check.call :yes => %w{evaluate cleanup addtimes}, :no => %w{report tags ignoreschedules}
-        assert_equal(0, master.reported, "master sent report with reports disabled")
-        
-        
-        # Now enable reporting and make sure the report method gets called
-        Puppet[:report] = true
-        assert_nothing_raised do
-            master.apply
-        end
-        check.call :yes => %w{evaluate cleanup addtimes}, :no => %w{tags ignoreschedules}
-        assert_equal(1, master.reported, "master did not send report")
-        
-        # Now try it with tags enabled
-        assert_nothing_raised do
-            master.apply("tags")
-        end
-        check.call :yes => %w{evaluate cleanup tags addtimes}, :no => %w{ignoreschedules}
-        assert_equal(2, master.reported, "master did not send report")
-        
-        # and ignoreschedules
-        assert_nothing_raised do
-            master.apply("tags", true)
-        end
-        check.call :yes => %w{evaluate cleanup tags ignoreschedules addtimes}, :no => %w{}
-        assert_equal(3, master.reported, "master did not send report")
-    end
-    
     def test_getconfig
         client = mkclient
         
@@ -167,9 +122,8 @@ class TestMasterClient < Test::Unit::TestCase
         [:getplugins, :get_actual_config].each do |method|
             assert($methodsrun.include?(method), "method %s was not run" % method)
         end
-        
-        objects = client.objects
-        assert(objects.finalized?, "objects were not finalized")
+
+        assert_instance_of(Puppet::Node::Configuration, client.configuration, "Configuration was not created")
     end
 
     def test_disable
@@ -233,7 +187,7 @@ class TestMasterClient < Test::Unit::TestCase
         }
     end
     
-    # This method is supposed
+    # This method downloads files, and yields each file object if a block is given.
     def test_download
         source = tempfile()
         dest = tempfile()

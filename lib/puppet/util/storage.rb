@@ -99,5 +99,3 @@ class Puppet::Util::Storage
         end
     end
 end
-
-# $Id$

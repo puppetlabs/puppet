@@ -69,14 +69,14 @@ class Puppet::Util::Config
         return options
     end
 
-    # Turn the config into a transaction and apply it
+    # Turn the config into a Puppet configuration and apply it
     def apply
         trans = self.to_transportable
         begin
-            comp = trans.to_type
-            trans = comp.evaluate
-            trans.evaluate
-            comp.remove
+            config = trans.to_configuration
+            config.store_state = false
+            config.apply
+            config.clear
         rescue => detail
             if Puppet[:trace]
                 puts detail.backtrace
@@ -476,57 +476,15 @@ class Puppet::Util::Config
     end
 
     # Convert a single section into transportable objects.
-    def section_to_transportable(section, done = nil, includefiles = true)
+    def section_to_transportable(section, done = nil)
         done ||= Hash.new { |hash, key| hash[key] = {} }
         objects = []
         persection(section) do |obj|
             if @config[:mkusers] and value(:mkusers)
-                [:owner, :group].each do |attr|
-                    type = nil
-                    if attr == :owner
-                        type = :user
-                    else
-                        type = attr
-                    end
-                    # If a user and/or group is set, then make sure we're
-                    # managing that object
-                    if obj.respond_to? attr and name = obj.send(attr)
-                        # Skip root or wheel
-                        next if %w{root wheel}.include?(name.to_s)
-
-                        # Skip owners and groups we've already done, but tag
-                        # them with our section if necessary
-                        if done[type].include?(name)
-                            tags = done[type][name].tags
-                            unless tags.include?(section)
-                                done[type][name].tags = tags << section
-                            end
-                        elsif newobj = Puppet::Type.type(type)[name]
-                            unless newobj.property(:ensure)
-                                newobj[:ensure] = "present"
-                            end
-                            newobj.tag(section)
-                            if type == :user
-                                newobj[:comment] ||= "%s user" % name
-                            end
-                        else
-                            newobj = Puppet::TransObject.new(name, type.to_s)
-                            newobj.tags = ["puppet", "configuration", section]
-                            newobj[:ensure] = "present"
-                            if type == :user
-                                newobj[:comment] ||= "%s user" % name
-                            end
-                            # Set the group appropriately for the user
-                            if type == :user
-                                newobj[:gid] = Puppet[:group]
-                            end
-                            done[type][name] = newobj
-                            objects << newobj
-                        end
-                    end
-                end
+                objects += add_user_resources(section, obj, done)
             end
 
+            # Only files are convertable to transportable resources.
             if obj.respond_to? :to_transportable
                 next if value(obj.name) =~ /^\/dev/
                 transobjects = obj.to_transportable
@@ -544,7 +502,8 @@ class Puppet::Util::Config
         end
 
         bucket = Puppet::TransBucket.new
-        bucket.type = section
+        bucket.type = "Configuration"
+        bucket.name = section
         bucket.push(*objects)
         bucket.keyword = "class"
 
@@ -634,7 +593,7 @@ Generated on #{Time.now}.
     end
 
     # Convert our configuration into a list of transportable objects.
-    def to_transportable
+    def to_transportable(*sections)
         done = Hash.new { |hash, key|
             hash[key] = {}
         }
@@ -643,14 +602,23 @@ Generated on #{Time.now}.
         if defined? @file.file and @file.file
             topbucket.name = @file.file
         else
-            topbucket.name = "configtop"
+            topbucket.name = "top"
         end
-        topbucket.type = "puppetconfig"
+        topbucket.type = "Configuration"
         topbucket.top = true
 
         # Now iterate over each section
-        eachsection do |section|
-            topbucket.push section_to_transportable(section, done)
+        if sections.empty?
+            eachsection do |section|
+                sections << section
+            end
+        end
+        sections.each do |section|
+            obj = section_to_transportable(section, done)
+            #puts obj.to_manifest
+            #puts "%s: %s" % [section, obj.inspect]
+            topbucket.push obj
+            #topbucket.push section_to_transportable(section, done)
         end
 
         topbucket
@@ -683,37 +651,31 @@ Generated on #{Time.now}.
             }
             return if runners.empty?
 
-            bucket = Puppet::TransBucket.new
-            bucket.type = "puppetconfig"
-            bucket.top = true
+            bucket = to_transportable(*sections)
 
-            # Create a hash to keep track of what we've done so far.
-            @done = Hash.new { |hash, key| hash[key] = {} }
-            runners.each do |section|
-                bucket.push section_to_transportable(section, @done, false)
-            end
+            config = bucket.to_configuration
+            config.host_config = false
+            config.apply
+            config.clear
 
-            objects = bucket.to_type
-
-            objects.finalize
-            tags = nil
-            if Puppet[:tags]
-                tags = Puppet[:tags]
-                Puppet[:tags] = ""
-            end
-            trans = objects.evaluate
-            trans.ignoretags = true
-            trans.configurator = true
-            trans.evaluate
-            if tags
-                Puppet[:tags] = tags
-            end
-
-            # Remove is a recursive process, so it's sufficient to just call
-            # it on the component.
-            objects.remove(true)
-
-            objects = nil
+#            tags = nil
+#            if Puppet[:tags]
+#                tags = Puppet[:tags]
+#                Puppet[:tags] = ""
+#            end
+#            trans = objects.evaluate
+#            trans.ignoretags = true
+#            trans.configurator = true
+#            trans.evaluate
+#            if tags
+#                Puppet[:tags] = tags
+#            end
+#
+#            # Remove is a recursive process, so it's sufficient to just call
+#            # it on the component.
+#            objects.remove(true)
+#
+#            objects = nil
 
             runners.each { |s| @used << s }
         end
@@ -844,6 +806,48 @@ Generated on #{Time.now}.
     end
 
     private
+
+    # Create the transportable objects for users and groups.
+    def add_user_resources(section, obj, done)
+        resources = []
+        [:owner, :group].each do |attr|
+            type = nil
+            if attr == :owner
+                type = :user
+            else
+                type = attr
+            end
+            # If a user and/or group is set, then make sure we're
+            # managing that object
+            if obj.respond_to? attr and name = obj.send(attr)
+                # Skip root or wheel
+                next if %w{root wheel}.include?(name.to_s)
+
+                # Skip owners and groups we've already done, but tag
+                # them with our section if necessary
+                if done[type].include?(name)
+                    tags = done[type][name].tags
+                    unless tags.include?(section)
+                        done[type][name].tags = tags << section
+                    end
+                else
+                    newobj = Puppet::TransObject.new(name, type.to_s)
+                    newobj.tags = ["puppet", "configuration", section]
+                    newobj[:ensure] = :present
+                    if type == :user
+                        newobj[:comment] ||= "%s user" % name
+                    end
+                    # Set the group appropriately for the user
+                    if type == :user
+                        newobj[:gid] = Puppet[:group]
+                    end
+                    done[type][name] = newobj
+                    resources << newobj
+                end
+            end
+        end
+        resources
+    end
 
     # Extract extra setting information for files.
     def extract_fileinfo(string)
@@ -1141,6 +1145,9 @@ Generated on #{Time.now}.
             unless path =~ /^#{File::SEPARATOR}/
                 path = File.join(Dir.getwd, path)
             end
+
+            # Skip plain files that don't exist, since we won't be managing them anyway.
+            return nil unless self.name.to_s =~ /dir$/ or File.exist?(path)
             obj = Puppet::TransObject.new(path, "file")
 
             # Only create directories, or files that are specifically marked to
@@ -1157,7 +1164,7 @@ Generated on #{Time.now}.
             }
 
             # Only chown or chgrp when root
-            if Puppet::Util::SUIDManager.uid == 0
+            if Puppet.features.root?
                 [:group, :owner].each { |var|
                     if value = self.send(var)
                         obj[var] = value
@@ -1218,5 +1225,3 @@ Generated on #{Time.now}.
         end
     end
 end
-
-# $Id$

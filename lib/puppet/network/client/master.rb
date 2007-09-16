@@ -7,7 +7,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         @@sync = Sync.new
     end
 
-    attr_accessor :objects
+    attr_accessor :configuration
     attr_reader :compile_time
 
     class << self
@@ -49,50 +49,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         Puppet.config[:dynamicfacts].split(/\s*,\s*/).collect { |fact| fact.downcase }
     end
 
-    # This method actually applies the configuration.
-    def apply(tags = nil, ignoreschedules = false)
-        unless defined? @objects
-            raise Puppet::Error, "Cannot apply; objects not defined"
-        end
-
-        transaction = @objects.evaluate
-
-        if tags
-            transaction.tags = tags
-        end
-
-        if ignoreschedules
-            transaction.ignoreschedules = true
-        end
-
-        transaction.addtimes :config_retrieval => @configtime
-
-        begin
-            transaction.evaluate
-        rescue Puppet::Error => detail
-            Puppet.err "Could not apply complete configuration: %s" %
-                detail
-        rescue => detail
-            Puppet.err "Got an uncaught exception of type %s: %s" %
-                [detail.class, detail]
-            if Puppet[:trace]
-                puts detail.backtrace
-            end
-        ensure
-            Puppet::Util::Storage.store
-        end
-        
-        if Puppet[:report] or Puppet[:summarize]
-            report(transaction)
-        end
-
-        return transaction
-    ensure
-        if defined? transaction and transaction
-            transaction.cleanup
-        end
-    end
-
     # Cache the config
     def cache(text)
         Puppet.info "Caching configuration at %s" % self.cachefile
@@ -111,10 +67,10 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     end
 
     def clear
-        @objects.remove(true) if @objects
+        @configuration.clear(true) if @configuration
         Puppet::Type.allclear
         mkdefault_objects
-        @objects = nil
+        @configuration = nil
     end
 
     # Initialize and load storage
@@ -183,15 +139,15 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
             facts = self.class.facts
         end
 
-        if self.objects or FileTest.exists?(self.cachefile)
+        if self.configuration or FileTest.exists?(self.cachefile)
             if self.fresh?(facts)
                 Puppet.info "Config is up to date"
-                if self.objects
+                if self.configuration
                     return
                 end
                 if oldtext = self.retrievecache
                     begin
-                        @objects = YAML.load(oldtext).to_type
+                        @configuration = YAML.load(oldtext).to_configuration
                     rescue => detail
                         Puppet.warning "Could not load cached configuration: %s" % detail
                     end
@@ -213,7 +169,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         end
 
         unless objects = get_actual_config(facts)
-            @objects = nil
+            @configuration = nil
             return
         end
 
@@ -225,21 +181,21 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         self.setclasses(objects.classes)
 
         # Clear all existing objects, so we can recreate our stack.
-        if self.objects
+        if self.configuration
             clear()
         end
 
-        # Now convert the objects to real Puppet objects
-        @objects = objects.to_type
+        # Now convert the objects to a puppet configuration graph.
+        @configuration = objects.to_configuration
 
-        if @objects.nil?
+        if @configuration.nil?
             raise Puppet::Error, "Configuration could not be processed"
         end
 
-        # and perform any necessary final actions before we evaluate.
-        @objects.finalize
+        # Keep the state database up to date.
+        @configuration.host_config = true
 
-        return @objects
+        return @configuration
     end
     
     # A simple proxy method, so it's easy to test.
@@ -251,9 +207,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     def initialize(*args)
         Puppet.config.use(:main, :ssl, :puppetd)
         super
-
-        # This might be nil
-        @configtime = 0
 
         self.class.instance = self
         @running = false
@@ -297,7 +250,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     end
 
     # The code that actually runs the configuration.  
-    def run(tags = nil, ignoreschedules = false)
+    def run
         got_lock = false
         splay
         Puppet::Util.sync(:puppetrun).synchronize(Sync::EX) do
@@ -307,19 +260,20 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
             else
                 got_lock = true
                 begin
-                    @configtime = thinmark do
+                    duration = thinmark do
                         self.getconfig
                     end
                 rescue => detail
                     Puppet.err "Could not retrieve configuration: %s" % detail
                 end
 
-                if defined? @objects and @objects
+                if defined? @configuration and @configuration
+                    @configuration.retrieval_duration = duration
                     unless @local
                         Puppet.notice "Starting configuration run"
                     end
                     benchmark(:notice, "Finished configuration run") do
-                        self.apply(tags, ignoreschedules)
+                        @configuration.apply
                     end
                 end
             end
@@ -366,9 +320,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     # Download files from the remote server, returning a list of all
     # changed files.
     def self.download(args)
-        objects = Puppet::Type.type(:component).create(
-            :name => "#{args[:name]}_collector"
-        )
         hash = {
             :path => args[:dest],
             :recurse => true,
@@ -383,18 +334,23 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         if args[:ignore]
             hash[:ignore] = args[:ignore].split(/\s+/)
         end
-        objects.push Puppet::Type.type(:file).create(hash)
+        downconfig = Puppet::Node::Configuration.new("downloading")
+        downconfig.add_resource Puppet::Type.type(:file).create(hash)
         
         Puppet.info "Retrieving #{args[:name]}s"
 
         noop = Puppet[:noop]
         Puppet[:noop] = false
 
+        files = []
         begin
-            trans = objects.evaluate
-            trans.ignoretags = true
             Timeout::timeout(self.timeout) do
-                trans.evaluate
+                downconfig.apply do |trans|
+                    trans.changed?.find_all do |resource|
+                        yield resource if block_given?
+                        files << resource[:path]
+                    end
+                end
             end
         rescue Puppet::Error, Timeout::Error => detail
             if Puppet[:debug]
@@ -403,18 +359,10 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
             Puppet.err "Could not retrieve #{args[:name]}s: %s" % detail
         end
 
-        # Now source all of the changed objects, but only source those
-        # that are top-level.
-        files = []
-        trans.changed?.find_all do |object|
-            yield object if block_given?
-            files << object[:path]
-        end
-        trans.cleanup
-
         # Now clean up after ourselves
-        objects.remove
-        files
+        downconfig.clear
+
+        return files
     ensure
         # I can't imagine why this is necessary, but apparently at last one person has had problems with noop
         # being nil here.
@@ -427,21 +375,21 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
 
     # Retrieve facts from the central server.
     def self.getfacts
-        # Clear all existing definitions.
-        Facter.clear
 
         # Download the new facts
         path = Puppet[:factpath].split(":")
         files = []
         download(:dest => Puppet[:factdest], :source => Puppet[:factsource],
-            :ignore => Puppet[:factsignore], :name => "fact") do |object|
+            :ignore => Puppet[:factsignore], :name => "fact") do |resource|
 
-            next unless path.include?(::File.dirname(object[:path]))
+            next unless path.include?(::File.dirname(resource[:path]))
 
-            files << object[:path]
-
+            files << resource[:path]
         end
     ensure
+        # Clear all existing definitions.
+        Facter.clear
+
         # Reload everything.
         if Facter.respond_to? :loadfacts
             Facter.loadfacts
@@ -461,20 +409,20 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     # changed plugins, because Puppet::Type loads plugins on demand.
     def self.getplugins
         download(:dest => Puppet[:plugindest], :source => Puppet[:pluginsource],
-            :ignore => Puppet[:pluginsignore], :name => "plugin") do |object|
+            :ignore => Puppet[:pluginsignore], :name => "plugin") do |resource|
 
-            next if FileTest.directory?(object[:path])
-            path = object[:path].sub(Puppet[:plugindest], '').sub(/^\/+/, '')
+            next if FileTest.directory?(resource[:path])
+            path = resource[:path].sub(Puppet[:plugindest], '').sub(/^\/+/, '')
             unless Puppet::Util::Autoload.loaded?(path)
                 next
             end
 
             begin
                 Puppet.info "Reloading downloaded file %s" % path
-                load object[:path]
+                load resource[:path]
             rescue => detail
                 Puppet.warning "Could not reload downloaded file %s: %s" %
-                    [object[:path], detail]
+                    [resource[:path], detail]
             end
         end
     end
@@ -516,42 +464,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         end
 
         return timeout
-    end
-    
-    # Send off the transaction report.
-    def report(transaction)
-        begin
-            report = transaction.generate_report()
-        rescue => detail
-            Puppet.err "Could not generate report: %s" % detail
-            return
-        end
-
-        if Puppet[:rrdgraph] == true
-            report.graph()
-        end
-
-        if Puppet[:summarize]
-            puts report.summary
-        end
-        
-        if Puppet[:report]
-            begin
-                reportclient().report(report)
-            rescue => detail
-                Puppet.err "Reporting failed: %s" % detail
-            end
-        end
-    end
-
-    def reportclient
-        unless defined? @reportclient
-            @reportclient = Puppet::Network::Client.report.new(
-                :Server => Puppet[:reportserver]
-            )
-        end
-
-        @reportclient
     end
 
     loadfacts()
@@ -633,7 +545,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
                 Puppet.err "Could not retrieve configuration: %s" % detail
 
                 unless Puppet[:usecacheonfailure]
-                    @objects = nil
+                    @configuration = nil
                     Puppet.warning "Not using cache on failed configuration"
                     return
                 end

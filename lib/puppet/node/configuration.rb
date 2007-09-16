@@ -5,8 +5,25 @@ require 'puppet/external/gratr/digraph'
 # of the information in the configuration, including the resources
 # and the relationships between them.
 class Puppet::Node::Configuration < Puppet::PGraph
-    attr_accessor :name, :version
+    # The host name this is a configuration for.
+    attr_accessor :name
+
+    # The configuration version.  Used for testing whether a configuration
+    # is up to date.
+    attr_accessor :version
+
+    # How long this configuration took to retrieve.  Used for reporting stats.
+    attr_accessor :retrieval_duration
+
+    # How we should extract the configuration for sending to the client.
     attr_reader :extraction_format
+
+    # Whether this is a host configuration, which behaves very differently.
+    # In particular, reports are sent, graphs are made, and state is
+    # stored in the state database.  If this is set incorrectly, then you often
+    # end up in infinite loops, because configurations are used to make things
+    # that the host configuration needs.
+    attr_accessor :host_config
 
     # Add classes to our class list.
     def add_class(*classes)
@@ -30,10 +47,50 @@ class Puppet::Node::Configuration < Puppet::PGraph
         else
             @resource_table[ref] = resource
         end
+        add_vertex!(resource)
+    end
+
+    # Apply our configuration to the local host.
+    def apply
+        Puppet::Util::Storage.load if host_config?
+        transaction = Puppet::Transaction.new(self)
+
+        transaction.addtimes :config_retrieval => @retrieval_duration
+
+        begin
+            transaction.evaluate
+        rescue Puppet::Error => detail
+            Puppet.err "Could not apply complete configuration: %s" % detail
+        rescue => detail
+            if Puppet[:trace]
+                puts detail.backtrace
+            end
+            Puppet.err "Got an uncaught exception of type %s: %s" % [detail.class, detail]
+        ensure
+            # Don't try to store state unless we're a host config
+            # too recursive.
+            Puppet::Util::Storage.store if host_config?
+        end
+
+        if block_given?
+            yield transaction
+        end
+        
+        if host_config and (Puppet[:report] or Puppet[:summarize])
+            transaction.send_report
+        end
+
+        return transaction
+    ensure
+        if defined? transaction and transaction
+            transaction.cleanup
+        end
     end
     
-    def clear
-        super
+    def clear(remove_resources = true)
+        super()
+        # We have to do this so that the resources clean themselves up.
+        @resource_table.values.each { |resource| resource.remove } if remove_resources
         @resource_table.clear
     end
 
@@ -113,18 +170,32 @@ class Puppet::Node::Configuration < Puppet::PGraph
         return result
     end
 
-    def initialize(name)
+    # Make sure all of our resources are "finished".
+    def finalize
+        @resource_table.values.each { |resource| resource.finish }
+    end
+
+    def initialize(name = nil)
         super()
-        @name = name
+        @name = name if name
         @extraction_format ||= :transportable
         @tags = []
         @classes = []
         @resource_table = {}
+
+        if block_given?
+            yield(self)
+            finalize()
+        end
     end
 
     # Look a resource up by its reference (e.g., File[/etc/passwd]).
     def resource(ref)
         @resource_table[ref]
+    end
+
+    def host_config?
+        host_config || false
     end
 
     # Add a tag.

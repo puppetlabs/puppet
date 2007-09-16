@@ -52,6 +52,7 @@ Puppet::Type.newtype(:component) do
     # this is only called on one component over the whole system
     # this also won't work with scheduling, but eh
     def evaluate
+        raise "Component#evaluate is deprecated"
         self.finalize unless self.finalized?
         transaction = Puppet::Transaction.new(self)
         transaction.component = self

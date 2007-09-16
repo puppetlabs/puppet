@@ -6,10 +6,14 @@ require 'puppet/propertychange'
 
 module Puppet
 class Transaction
-    attr_accessor :component, :resources, :ignoreschedules, :ignoretags
+    attr_accessor :component, :configuration, :ignoreschedules
     attr_accessor :relgraph, :sorted_resources, :configurator
 
+    # The report, once generated.
     attr_reader :report
+
+    # The list of events generated in this transaction.
+    attr_reader :events
     
     attr_writer :tags
 
@@ -129,6 +133,9 @@ class Transaction
     # Find all of the changed resources.
     def changed?
         @changes.find_all { |change| change.changed }.collect { |change|
+            unless change.property.resource
+                raise "No resource for %s" % change.inspect
+            end
             change.property.resource
         }.uniq
     end
@@ -144,7 +151,6 @@ class Transaction
         if defined? @relgraph
             @relgraph.clear
         end
-        @resources.clear
     end
 
     # Copy an important relationships from the parent to the newly-generated
@@ -283,7 +289,7 @@ class Transaction
     def evaluate
         @count = 0
         
-        graph(@resources, :resources)
+        graph(@configuration, :resources)
         
         # Start logging.
         Puppet::Util::Log.newdestination(@report)
@@ -347,7 +353,7 @@ class Transaction
     
     # Collect any dynamically generated resources.
     def generate
-        list = @resources.vertices
+        list = @configuration.vertices
         
         # Store a list of all generated resources, so that we can clean them up
         # after the transaction closes.
@@ -369,7 +375,7 @@ class Transaction
                     end
                     made.uniq!
                     made.each do |res|
-                        @resources.add_vertex!(res)
+                        @configuration.add_vertex!(res)
                         newlist << res
                         @generated << res
                         res.finish
@@ -412,8 +418,8 @@ class Transaction
 
     # Produce the graph files if requested.
     def graph(gr, name)
-        # We don't want to graph the configuration process.
-        return if self.configurator
+        # We only want to graph the main host configuration.
+        return unless @configuration.host_config?
         
         return unless Puppet[:graph]
 
@@ -425,17 +431,24 @@ class Transaction
         }
     end
 
+    # Should we ignore tags?
+    def ignore_tags?
+        ! @configuration.host_config?
+    end
+
     # this should only be called by a Puppet::Type::Component resource now
     # and it should only receive an array
     def initialize(resources)
-        if resources.is_a?(Puppet::PGraph)
-            @resources = resources
+        if resources.is_a?(Puppet::Node::Configuration)
+            @configuration = resources
+        elsif resources.is_a?(Puppet::PGraph)
+            raise "Transactions should get configurations now, not PGraph"
         else
-            @resources = resources.to_graph
+            raise "Transactions require configurations"
         end
 
         @resourcemetrics = {
-            :total => @resources.vertices.length,
+            :total => @configuration.vertices.length,
             :out_of_sync => 0,    # The number of resources that had changes
             :applied => 0,        # The number of resources fixed
             :skipped => 0,      # The number of resources skipped
@@ -474,7 +487,7 @@ class Transaction
     # types, just providers.
     def prefetch
         prefetchers = {}
-        @resources.each do |resource|
+        @configuration.each do |resource|
             if provider = resource.provider and provider.class.respond_to?(:prefetch)
                 prefetchers[provider.class] ||= {}
                 prefetchers[provider.class][resource.title] = resource
@@ -514,7 +527,7 @@ class Transaction
         graph = Puppet::PGraph.new
         
         # First create the dependency graph
-        @resources.vertices.each do |vertex|
+        @configuration.vertices.each do |vertex|
             graph.add_vertex!(vertex)
             vertex.builddepends.each do |edge|
                 graph.add_edge!(edge)
@@ -538,11 +551,47 @@ class Transaction
         graph(graph, :relationships)
         
         # Then splice in the container information
-        graph.splice!(@resources, Puppet::Type::Component)
+        graph.splice!(@configuration, Puppet::Type::Component)
 
         graph(graph, :expanded_relationships)
         
         return graph
+    end
+    
+    # Send off the transaction report.
+    def send_report
+        begin
+            report = generate_report()
+        rescue => detail
+            Puppet.err "Could not generate report: %s" % detail
+            return
+        end
+
+        if Puppet[:rrdgraph] == true
+            report.graph()
+        end
+
+        if Puppet[:summarize]
+            puts report.summary
+        end
+        
+        if Puppet[:report]
+            begin
+                reportclient().report(report)
+            rescue => detail
+                Puppet.err "Reporting failed: %s" % detail
+            end
+        end
+    end
+
+    def reportclient
+        unless defined? @reportclient
+            @reportclient = Puppet::Network::Client.report.new(
+                :Server => Puppet[:reportserver]
+            )
+        end
+
+        @reportclient
     end
 
     # Roll all completed changes back.
@@ -606,7 +655,7 @@ class Transaction
     # Should this resource be skipped?
     def skip?(resource)
         skip = false
-        if ! tagged?(resource)
+        if missing_tags?(resource)
             resource.debug "Not tagged with %s" % tags.join(", ")
         elsif ! scheduled?(resource)
             resource.debug "Not scheduled"
@@ -620,29 +669,22 @@ class Transaction
     
     # The tags we should be checking.
     def tags
-        # Allow the tags to be overridden
         unless defined? @tags
-            @tags = Puppet[:tags]
-        end
-        
-        unless defined? @processed_tags
-            if @tags.nil? or @tags == ""
+            tags = Puppet[:tags]
+            if tags.nil? or tags == ""
                 @tags = []
             else
-                @tags = [@tags] unless @tags.is_a? Array
-                @tags = @tags.collect do |tag|
-                    tag.split(/\s*,\s*/)
-                end.flatten
+                @tags = tags.split(/\s*,\s*/)
             end
-            @processed_tags = true
         end
         
         @tags
     end
     
     # Is this resource tagged appropriately?
-    def tagged?(resource)
-        self.ignoretags or tags.empty? or resource.tagged?(tags)
+    def missing_tags?(resource)
+        return false if self.ignore_tags? or tags.empty?
+        return true unless resource.tagged?(tags)
     end
     
     # Are there any edges that target this resource?

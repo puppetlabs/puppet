@@ -299,7 +299,7 @@ describe Puppet::Util::Config, " when parsing its configuration" do
     end
 
     it "should support specifying file all metadata (owner, group, mode) in the configuration file" do
-        @config.setdefaults :section, :myfile => ["/my/file", "a"]
+        @config.setdefaults :section, :myfile => ["/myfile", "a"]
 
         text = "[main]
         myfile = /other/file {owner = luke, group = luke, mode = 644}
@@ -312,7 +312,7 @@ describe Puppet::Util::Config, " when parsing its configuration" do
     end
 
     it "should support specifying file a single piece of metadata (owner, group, or mode) in the configuration file" do
-        @config.setdefaults :section, :myfile => ["/my/file", "a"]
+        @config.setdefaults :section, :myfile => ["/myfile", "a"]
 
         text = "[main]
         myfile = /other/file {owner = luke}
@@ -388,16 +388,34 @@ describe Puppet::Util::Config, " when reparsing its configuration" do
 end
 
 describe Puppet::Util::Config, " when being used to manage the host machine" do
+    before do
+        @config = Puppet::Util::Config.new
+        @config.setdefaults :main, :maindir => ["/maindir", "a"], :seconddir => ["/seconddir", "a"]
+        @config.setdefaults :other, :otherdir => {:default => "/otherdir", :desc => "a", :owner => "luke", :group => "johnny", :mode => 0755}
+        @config.setdefaults :files, :myfile => {:default => "/myfile", :desc => "a", :mode => 0755}
+    end
+
     it "should provide a method that writes files with the correct modes" do
         pending "Not converted from test/unit yet"
     end
 
     it "should provide a method that creates directories with the correct modes" do
-        pending "Not converted from test/unit yet"
+        Puppet::Util::SUIDManager.expects(:asuser).with("luke", "johnny").yields
+        Dir.expects(:mkdir).with("/otherdir", 0755)
+        @config.mkdir(:otherdir)
     end
 
-    it "should provide a method to declare what directories should exist" do
-        pending "Not converted from test/unit yet"
+    it "should be able to create needed directories in a single section" do
+        Dir.expects(:mkdir).with("/maindir")
+        Dir.expects(:mkdir).with("/seconddir")
+        @config.use(:main)
+    end
+
+    it "should be able to create needed directories in multiple sections" do
+        Dir.expects(:mkdir).with("/maindir")
+        Dir.expects(:mkdir).with("/otherdir", 0755)
+        Dir.expects(:mkdir).with("/seconddir")
+        @config.use(:main, :other)
     end
 
     it "should provide a method to trigger enforcing of file modes on existing files and directories" do
@@ -408,13 +426,85 @@ describe Puppet::Util::Config, " when being used to manage the host machine" do
         pending "Not converted from test/unit yet"
     end
 
-    it "should provide an option to create needed users and groups" do
+    it "should provide a method to convert the file mode enforcement into transportable resources" do
+        # Make it think we're root so it tries to manage user and group.
+        Puppet.features.stubs(:root?).returns(true)
+        File.stubs(:exist?).with("/myfile").returns(true)
+        trans = nil
+        trans = @config.to_transportable
+        resources = []
+        trans.delve { |obj| resources << obj if obj.is_a? Puppet::TransObject }
+        %w{/maindir /seconddir /otherdir /myfile}.each do |path|
+            obj = resources.find { |r| r.type == "file" and r.name == path }
+            if path.include?("dir")
+                obj[:ensure].should == :directory
+            else
+                # Do not create the file, just manage mode
+                obj[:ensure].should be_nil
+            end
+            obj.should be_instance_of(Puppet::TransObject)
+            case path
+            when "/otherdir":
+                obj[:owner].should == "luke"
+                obj[:group].should == "johnny"
+                obj[:mode].should == 0755
+            when "/myfile":
+                obj[:mode].should == 0755
+            end
+        end
+    end
+
+    it "should not try to manage user or group when not running as root" do
+        Puppet.features.stubs(:root?).returns(false)
+        trans = nil
+        trans = @config.to_transportable(:other)
+        trans.delve do |obj|
+            next unless obj.is_a?(Puppet::TransObject)
+            obj[:owner].should be_nil
+            obj[:group].should be_nil
+        end
+    end
+
+    it "should add needed users and groups to the manifest when asked" do
+        # This is how we enable user/group management
+        @config.setdefaults :main, :mkusers => [true, "w"]
+        Puppet.features.stubs(:root?).returns(false)
+        trans = nil
+        trans = @config.to_transportable(:other)
+        resources = []
+        trans.delve { |obj| resources << obj if obj.is_a? Puppet::TransObject and obj.type != "file" }
+
+        user = resources.find { |r| r.type == "user" }
+        user.should be_instance_of(Puppet::TransObject)
+        user.name.should == "luke"
+        user[:ensure].should == :present
+
+        # This should maybe be a separate test, but...
+        group = resources.find { |r| r.type == "group" }
+        group.should be_instance_of(Puppet::TransObject)
+        group.name.should == "johnny"
+        group[:ensure].should == :present
+    end
+
+    it "should ignore tags and schedules when creating files and directories"
+
+    it "should apply all resources in debug mode to reduce logging"
+
+    it "should not try to manage absent files" do
+        # Make it think we're root so it tries to manage user and group.
+        Puppet.features.stubs(:root?).returns(true)
+        trans = nil
+        trans = @config.to_transportable
+        file = nil
+        trans.delve { |obj| file = obj if obj.name == "/myfile" }
+        file.should be_nil
+    end
+
+    it "should be able to turn the current configuration into a parseable manifest" do
         pending "Not converted from test/unit yet"
     end
 
-    it "should provide a method to print out the current configuration" do
-        pending "Not converted from test/unit yet"
-    end
+    it "should convert octal numbers correctly when producing a manifest"
 
     it "should be able to provide all of its parameters in a format compatible with GetOpt::Long" do
         pending "Not converted from test/unit yet"
@@ -422,5 +512,12 @@ describe Puppet::Util::Config, " when being used to manage the host machine" do
 
     it "should not attempt to manage files within /dev" do
         pending "Not converted from test/unit yet"
+    end
+
+    it "should not modify the stored state database when managing resources" do
+        Puppet::Util::Storage.expects(:store).never
+        Puppet::Util::Storage.expects(:load).never
+        Dir.expects(:mkdir).with("/maindir")
+        @config.use(:main)
     end
 end

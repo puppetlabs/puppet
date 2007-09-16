@@ -4,34 +4,34 @@
 #  Copyright (c) 2006. All rights reserved.
 
 module PuppetTest::Support::Resources
-    def treefile(name)
-        Puppet::Type.type(:file).create :path => "/tmp/#{name}", :mode => 0755
+    def tree_resource(name)
+        Puppet::Type.type(:file).create :title => name, :path => "/tmp/#{name}", :mode => 0755
     end
     
-    def treecomp(name)
+    def tree_container(name)
         Puppet::Type::Component.create :name => name, :type => "yay"
     end
     
-    def treenode(name, *children)
-        comp = treecomp name
-        children.each do |c| 
-            if c.is_a?(String)
-                comp.push treefile(c)
-            else
-                comp.push c
+    def treenode(config, name, *resources)
+        comp = tree_container name
+        resources.each do |resource| 
+            if resource.is_a?(String)
+                resource = tree_resource(resource)
             end
+            config.add_edge!(comp, resource)
+            config.add_resource resource unless config.resource(resource.ref)
         end
         return comp
     end
     
     def mktree
-        one = treenode("one", "a", "b")
-        two = treenode("two", "c", "d")
-        middle = treenode("middle", "e", "f", two)
-        top = treenode("top", "g", "h", middle, one)
+        configuration = Puppet::Node::Configuration.new do |config|
+            one = treenode(config, "one", "a", "b")
+            two = treenode(config, "two", "c", "d")
+            middle = treenode(config, "middle", "e", "f", two)
+            top = treenode(config, "top", "g", "h", middle, one)
+        end
         
-        return one, two, middle, top
+        return configuration
     end
 end
-
-# $Id$

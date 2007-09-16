@@ -11,6 +11,10 @@ describe Puppet::Node, " when initializing" do
         @node.name.should == "testnode"
     end
 
+    it "should not allow nil node names" do
+        proc { Puppet::Node.new(nil) }.should raise_error(ArgumentError)
+    end
+
     it "should default to an empty parameter hash" do
         @node.parameters.should == {}
     end
