@@ -47,6 +47,7 @@ class Puppet::Node::Configuration < Puppet::PGraph
         else
             @resource_table[ref] = resource
         end
+        resource.configuration = self
         add_vertex!(resource)
     end
 

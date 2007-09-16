@@ -137,9 +137,9 @@ end
 describe Puppet::Node::Configuration, " when functioning as a resource container" do
     before do
         @config = Puppet::Node::Configuration.new("host")
-        @one = stub 'resource1', :ref => "Me[you]"
-        @two = stub 'resource2', :ref => "Me[him]"
-        @dupe = stub 'resource3', :ref => "Me[you]"
+        @one = stub 'resource1', :ref => "Me[you]", :configuration= => nil
+        @two = stub 'resource2', :ref => "Me[him]", :configuration= => nil
+        @dupe = stub 'resource3', :ref => "Me[you]", :configuration= => nil
     end
 
     it "should make all vertices available by resource reference" do
@@ -182,6 +182,11 @@ describe Puppet::Node::Configuration, " when functioning as a resource container
             conf.add_resource @two
         end
     end
+
+    it "should inform the resource that it is the resource's configuration" do
+        @one.expects(:configuration=).with(@config)
+        @config.add_resource @one
+    end
 end
 
 module ApplyingConfigurations
@@ -223,7 +228,9 @@ describe Puppet::Node::Configuration, " when applying" do
     end
 
     it "should yield the transaction if a block is provided" do
-        pending "the code works but is not tested"
+        @config.apply do |trans|
+            trans.should equal(@transaction)
+        end
     end
     
     it "should default to not being a host configuration" do

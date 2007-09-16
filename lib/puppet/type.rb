@@ -44,7 +44,9 @@ class Type
     # that it is clear whether it operates on all attributes (thus has 'attr' in
     # the method name, or whether it operates on a specific type of attributes.
     attr_accessor :file, :line
-    attr_reader :parent
+
+    # The configuration that this resource is stored in.
+    attr_accessor :configuration
 
     attr_writer :title
     attr_writer :noop
