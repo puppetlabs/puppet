@@ -6,7 +6,7 @@ class Puppet::Indirector::Indirection
     def self.clear_cache
         @@indirections.each { |ind| ind.clear_cache }
     end
-
+    
     attr_accessor :name, :termini
     attr_reader :to
 
