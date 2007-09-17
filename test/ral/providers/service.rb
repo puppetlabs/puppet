@@ -54,7 +54,7 @@ class TestLocalService < Test::Unit::TestCase
             service.retrieve
         }
 
-        comp = newcomp("servicetst", service)
+        comp = mk_configuration("servicetst", service)
         service[:ensure] = :running
 
         Puppet.info "Starting %s" % service.name
@@ -105,7 +105,7 @@ class TestLocalService < Test::Unit::TestCase
             service.retrieve
         }
 
-        comp = newcomp("servicetst", service)
+        comp = mk_configuration("servicetst", service)
         service[:enable] = true
 
         Puppet.info "Enabling %s" % service.name

@@ -59,57 +59,6 @@ class TestConfig < Test::Unit::TestCase
         }
     end
 
-    # #795 - when --config=relative, we want to fully expand file paths.
-    def test_relative_paths_when_to_transportable
-        config = mkconfig
-        config.setdefaults :yay, :transtest => ["/what/ever", "yo"]
-        file = config.element(:transtest)
-
-        # Now override it with a relative path name
-        config[:transtest] = "here"
-
-        should = File.join(Dir.getwd, "here")
-
-        object = file.to_transportable[0]
-        assert_equal(should, object.name, "Did not translate relative pathnames to full path names")
-    end
-
-    def test_to_manifest
-        set_configs
-        manifest = nil
-        assert_nothing_raised("Could not convert to a manifest") {
-            manifest = @config.to_manifest
-        }
-
-        Puppet[:parseonly] = true
-
-        interp = nil
-        assert_nothing_raised do
-            interp = mkinterp :Code => manifest, :UseNodes => false
-        end
-
-        trans = nil
-        node = Puppet::Node.new("node")
-        assert_nothing_raised do
-            trans = interp.compile(node)
-        end
-        assert_nothing_raised("Could not instantiate objects") {
-            trans.extract.to_type
-        }
-    end
-
-    def test_to_comp
-        set_configs
-        comp = nil
-        assert_nothing_raised("Could not convert to a component") {
-            comp = @config.to_component
-        }
-
-        assert_nothing_raised("Could not retrieve component") {
-            comp.retrieve
-        }
-    end
-
     def test_to_config
         set_configs
 
@@ -668,91 +617,6 @@ yay = /a/path
         assert_equal("/my/file", @config[:b], "Values are not equal")
     end
 
-    def test_reuse
-        c = mkconfig
-
-        file = tempfile()
-        section = "testing"
-        assert_nothing_raised {
-            @config.setdefaults(section,
-                :myfile => {:default => file, :create => true, :desc => "yay"}
-            )
-        }
-
-        assert_nothing_raised("Could not use a section") {
-            @config.use(section)
-        }
-
-        assert(FileTest.exists?(file), "Did not create file")
-
-        assert(! Puppet::Type.type(:file)[file], "File obj still exists")
-
-        File.unlink(file)
-
-        @config.reuse
-        assert(FileTest.exists?(file), "Did not create file")
-    end
-
-    def test_mkusers
-        c = mkconfig
-
-        file = tempfile()
-        section = "testing"
-        assert_nothing_raised {
-            @config.setdefaults(section,
-                :mkusers => [false, "yay"],
-                :myfile => {
-                    :default => file,
-                    :owner => "pptest",
-                    :group => "pptest",
-                    :desc => "yay",
-                    :create => true
-                }
-            )
-        }
-
-        comp = nil
-        assert_nothing_raised {
-            comp = @config.to_component
-        }
-
-        [:user, :group].each do |type|
-            # The objects might get created internally by Puppet::Util; just
-            # make sure they're not being managed
-            if obj = Puppet.type(type)["pptest"]
-                assert(! obj.managed?, "%s objectis managed" % type)
-            end
-        end
-        comp.each { |o| o.remove }
-
-        @config[:mkusers] = true
-
-        assert_nothing_raised {
-            @config.to_component
-        }
-
-        user = Puppet.type(:user)["pptest"]
-        assert(user, "User object did not get created")
-        assert(user.managed?, "User object is not managed.")
-        assert(user.should(:comment), "user does not have a comment set")
-        
-        group = Puppet.type(:group)["pptest"]
-        assert(group, "Group object did not get created")
-        assert(group.managed?,
-            "Group object is not managed."
-        )
-        
-        if Process.uid == 0
-            cleanup do
-                user[:ensure] = :absent
-                group[:ensure] = :absent
-                assert_apply(user, group)
-            end
-            
-            assert_apply(user, group)
-        end
-    end
-
     def test_notmanagingdev
         c = mkconfig
         path = "/dev/testing"
@@ -764,11 +628,9 @@ yay = /a/path
             }
         )
 
-        assert_nothing_raised {
-            @config.to_component
-        }
+        config = @config.to_configuration
 
-        assert(! Puppet.type(:file)["/dev/testing"], "Created dev file")
+        assert(! config.resource(:file, "/dev/testing"), "Created dev file")
     end
 
     def test_groupsetting
@@ -1119,12 +981,12 @@ yay = /a/path
         # Now enable it so they'll be added
         config[:mkusers] = true
 
-        comp = config.to_component
+        comp = config.to_configuration
 
-        Puppet::Type.type(:user).each do |u|
+        comp.vertices.find_all { |r| r.class.name == :user }.each do |u|
             assert(u.name != "root", "Tried to manage root user")
         end
-        Puppet::Type.type(:group).each do |u|
+        comp.vertices.find_all { |r| r.class.name == :group }.each do |u|
             assert(u.name != "root", "Tried to manage root group")
             assert(u.name != "wheel", "Tried to manage wheel group")
         end

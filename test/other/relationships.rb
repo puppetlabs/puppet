@@ -174,7 +174,7 @@ class TestRelationships < Test::Unit::TestCase
         
         # Now make sure that these relationships are added to the transaction's
         # relgraph
-        trans = Puppet::Transaction.new(newcomp(file, exec))
+        trans = Puppet::Transaction.new(mk_configuration(file, exec))
         assert_nothing_raised do
             trans.evaluate
         end

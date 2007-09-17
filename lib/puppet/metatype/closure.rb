@@ -1,19 +1,6 @@
 class Puppet::Type
     attr_writer :implicit
 
-    def self.implicitcreate(hash)
-        unless hash.include?(:implicit)
-            hash[:implicit] = true
-        end
-        if obj = self.create(hash)
-            obj.implicit = true
-
-            return obj
-        else
-            return nil
-        end
-    end
-
     # Is this type's name isomorphic with the object?  That is, if the
     # name conflicts, does it necessarily mean that the objects conflict?
     # Defaults to true.

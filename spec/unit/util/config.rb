@@ -500,9 +500,7 @@ describe Puppet::Util::Config, " when being used to manage the host machine" do
         file.should be_nil
     end
 
-    it "should be able to turn the current configuration into a parseable manifest" do
-        pending "Not converted from test/unit yet"
-    end
+    it "should be able to turn the current configuration into a parseable manifest"
 
     it "should convert octal numbers correctly when producing a manifest"
 
@@ -519,5 +517,17 @@ describe Puppet::Util::Config, " when being used to manage the host machine" do
         Puppet::Util::Storage.expects(:load).never
         Dir.expects(:mkdir).with("/maindir")
         @config.use(:main)
+    end
+
+    it "should convert all relative paths to fully-qualified paths (#795)" do
+        @config[:myfile] = "unqualified"
+        dir = Dir.getwd
+        @config[:myfile].should == File.join(dir, "unqualified")
+    end
+
+    it "should support a method for re-using all currently used sections" do
+        Dir.expects(:mkdir).with(@config[:otherdir], 0755).times(2)
+        @config.use(:other)
+        @config.reuse
     end
 end

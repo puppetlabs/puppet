@@ -312,6 +312,19 @@ class Type
         return self[:name]
     end
 
+    # Look up our parent in the configuration, if we have one.
+    def parent
+        return nil unless configuration
+
+        # We should never have more than one parent, so let's just ignore
+        # it if we happen to.
+        if parents = configuration.adjacent(self, :direction => :in)
+            return parents.shift
+        else
+            return nil
+        end
+    end
+
     # Return the "type[name]" style reference.
     def ref
         "%s[%s]" % [self.class.name.to_s.capitalize, self.title]

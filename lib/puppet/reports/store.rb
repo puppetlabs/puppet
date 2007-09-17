@@ -13,7 +13,7 @@ Puppet::Network::Handler.report.newreport(:store, :useyaml => true) do
     def mkclientdir(client, dir)
         config = Puppet::Util::Config.new
         config.setdefaults("reportclient-#{client}",
-            "clientdir-#{client}" => { :default => dir,
+            "client-#{client}-dir" => { :default => dir,
                 :mode => 0750,
                 :desc => "Client dir for %s" % client,
                 :owner => Puppet[:user],

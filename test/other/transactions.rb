@@ -293,11 +293,13 @@ class TestTransactions < Test::Unit::TestCase
         file[:check] = check
         file[:group] = @groups[0]
 
-        assert_apply(file)
+        config = mk_configuration(file)
+        config.apply
+        config.clear(false)
 
         @@tmpfiles << execfile
 
-        component = mk_configuration("both",file,exec)
+        config.add_resource exec
 
         # 'subscribe' expects an array of arrays
         exec[:subscribe] = [[file.class.name,file.name]]
@@ -315,7 +317,8 @@ class TestTransactions < Test::Unit::TestCase
             file[:mode] = "755"
         }
 
-        trans = assert_events([:file_changed, :triggered], component)
+        trans = assert_events([:file_changed, :triggered], config)
+        config.clear(false)
 
         assert(FileTest.exists?(execfile), "Execfile does not exist")
         File.unlink(execfile)
@@ -323,7 +326,7 @@ class TestTransactions < Test::Unit::TestCase
             file[:group] = @groups[1]
         }
 
-        trans = assert_events([:file_changed, :triggered], component)
+        trans = assert_events([:file_changed, :triggered], config)
         assert(FileTest.exists?(execfile), "Execfile does not exist")
     end
 
@@ -526,8 +529,8 @@ class TestTransactions < Test::Unit::TestCase
         assert_nothing_raised do
             graph = trans.relationship_graph
         end
-        
-        assert_instance_of(Puppet::PGraph, graph,
+
+        assert_instance_of(Puppet::Node::Configuration, graph,
             "Did not get relationship graph")
         
         # Make sure all of the components are gone
@@ -642,13 +645,13 @@ class TestTransactions < Test::Unit::TestCase
         end
         ya = type["ya"]
         assert(ya, "Did not generate ya")
-        assert(trans.relgraph.vertex?(ya),
+        assert(trans.relationship_graph.vertex?(ya),
             "Did not add ya to rel_graph")
         
         # Now make sure the appropriate relationships were added
-        assert(trans.relgraph.edge?(yay, ya),
+        assert(trans.relationship_graph.edge?(yay, ya),
             "parent was not required by child")
-        assert(! trans.relgraph.edge?(ya, rah),
+        assert(! trans.relationship_graph.edge?(ya, rah),
             "generated child ya inherited depencency on rah")
         
         # Now make sure it in turn eval_generates appropriately
@@ -659,7 +662,7 @@ class TestTransactions < Test::Unit::TestCase
         %w{y}.each do |name|
             res = type[name]
             assert(res, "Did not generate %s" % name)
-            assert(trans.relgraph.vertex?(res),
+            assert(trans.relationship_graph.vertex?(res),
                 "Did not add %s to rel_graph" % name)
             assert($finished.include?("y"), "y was not finished")
         end
@@ -667,7 +670,7 @@ class TestTransactions < Test::Unit::TestCase
         assert_nothing_raised("failed to eval_generate with nil response") do
             trans.eval_resource(type["y"])
         end
-        assert(trans.relgraph.edge?(yay, ya), "no edge was created for ya => yay")
+        assert(trans.relationship_graph.edge?(yay, ya), "no edge was created for ya => yay")
         
         assert_nothing_raised("failed to apply rah") do
             trans.eval_resource(rah)
@@ -675,15 +678,15 @@ class TestTransactions < Test::Unit::TestCase
 
         ra = type["ra"]
         assert(ra, "Did not generate ra")
-        assert(trans.relgraph.vertex?(ra),
+        assert(trans.relationship_graph.vertex?(ra),
             "Did not add ra to rel_graph" % name)
         assert($finished.include?("ra"), "y was not finished")
         
         # Now make sure this generated resource has the same relationships as
         # the generating resource
-        assert(! trans.relgraph.edge?(yay, ra),
+        assert(! trans.relationship_graph.edge?(yay, ra),
            "rah passed its dependencies on to its children")
-        assert(! trans.relgraph.edge?(ya, ra),
+        assert(! trans.relationship_graph.edge?(ya, ra),
             "children have a direct relationship")
         
         # Now make sure that cleanup gets rid of those generated types.
@@ -692,7 +695,7 @@ class TestTransactions < Test::Unit::TestCase
         end
         
         %w{ya ra y r}.each do |name|
-            assert(!trans.relgraph.vertex?(type[name]),
+            assert(!trans.relationship_graph.vertex?(type[name]),
                 "Generated vertex %s was not removed from graph" % name)
             assert_nil(type[name],
                 "Generated vertex %s was not removed from class" % name)
@@ -878,32 +881,6 @@ class TestTransactions < Test::Unit::TestCase
         assert(trans.triggered?(c, :refresh),
             "Transaction did not store the trigger")
     end
-
-    def test_graph
-        Puppet.config.use(:main)
-        # Make a graph
-        graph = Puppet::Node::Configuration.new
-        graph.host_config = true
-        graph.add_edge!("a", "b")
-
-        # Create our transaction
-        trans = Puppet::Transaction.new(graph)
-
-        assert_nothing_raised do
-            trans.graph(graph, :testing)
-        end
-
-        dotfile = File.join(Puppet[:graphdir], "testing.dot")
-        assert(! FileTest.exists?(dotfile), "Enabled graphing even tho disabled")
-
-        # Now enable graphing
-        Puppet[:graph] = true
-
-        assert_nothing_raised do
-            trans.graph(graph, :testing)
-        end
-        assert(FileTest.exists?(dotfile), "Did not create graph.")
-    end
     
     def test_set_target
         file = Puppet::Type.newfile(:path => tempfile(), :content => "yay")
@@ -1032,7 +1009,7 @@ class TestTransactions < Test::Unit::TestCase
                 trans.prepare
             end
         
-            graph = trans.relgraph
+            graph = trans.relationship_graph
             assert(graph.edge?(before, after), "did not create manual relationship %s" % str)
             assert(! graph.edge?(after, before), "created automatic relationship %s" % str)
         end

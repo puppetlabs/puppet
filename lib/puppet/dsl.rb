@@ -67,11 +67,8 @@ module Puppet
 
         def apply
             bucket = export()
-            objects = bucket.to_type
-            master = Puppet::Network::Client.master.new :Master => "whatever"
-            master.objects = objects
-
-            master.apply
+            configuration = bucket.to_configuration
+            configuration.apply
         end
 
         def export

@@ -39,21 +39,14 @@ class Puppet::Network::Handler
                 end
             end
 
-            component = bucket.to_type
-
-            # Create a client, but specify the remote machine as the server
-            # because the class requires it, even though it's unused
-            client = Puppet::Network::Client.client(:Master).new(:Master => client||"localhost")
-
-            # Set the objects
-            client.objects = component
+            config = bucket.to_configuration
 
             # And then apply the configuration.  This way we're reusing all
             # the code in there.  It should probably just be separated out, though.
-            transaction = client.apply
+            transaction = config.apply
             
             # And then clean up
-            component.remove
+            config.clear(true)
 
             # It'd be nice to return some kind of report, but... at this point
             # we have no such facility.

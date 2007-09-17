@@ -174,12 +174,7 @@ module Puppet
                 end
             end
 
-            str = nil
-            if self.top
-                str = "%s"
-            else
-                str = "#{@keyword} #{@type} {\n%s\n}"
-            end
+            str = "#{@keyword} #{@name} {\n%s\n}"
             str % @children.collect { |child|
                 child.to_manifest
             }.collect { |str|

@@ -62,6 +62,7 @@ class TestFileSources < Test::Unit::TestCase
                 :name => path
             )
         }
+        config = mk_configuration(file)
         child = nil
         assert_nothing_raised {
             child = file.newchild("childtest", true)
@@ -275,6 +276,7 @@ class TestFileSources < Test::Unit::TestCase
         # The sourcerecurse method will only ever get called when we're
         # recursing, so we go ahead and set it.
         obj = Puppet::Type.newfile :source => source, :path => dest, :recurse => true
+        config = mk_configuration(obj)
 
         result = nil
         sourced = nil
@@ -577,51 +579,6 @@ class TestFileSources < Test::Unit::TestCase
         }
     end
 
-    def test_networkSourcesWithoutService
-        server = nil
-
-        Puppet[:autosign] = true
-        Puppet[:masterport] = 8765
-
-        serverpid = nil
-        assert_nothing_raised() {
-            server = Puppet::Network::Server::WEBrick.new(
-                :Handlers => {
-                    :CA => {}, # so that certs autogenerate
-                }
-            )
-
-        }
-        serverpid = fork {
-            assert_nothing_raised() {
-                #trap(:INT) { server.shutdown; Kernel.exit! }
-                trap(:INT) { server.shutdown }
-                server.start
-            }
-        }
-        @@tmppids << serverpid
-
-        sleep(1)
-
-        name = File.join(tmpdir(), "nosourcefile")
-        file = Puppet.type(:file).create(
-            :source => "puppet://localhost/dist/file",
-            :name => name
-        )
-
-        assert_nothing_raised {
-            file.retrieve
-        }
-
-        comp = newcomp("nosource", file)
-
-        assert_nothing_raised {
-            comp.evaluate
-        }
-
-        assert(!FileTest.exists?(name), "File with no source exists anyway")
-    end
-
     def test_unmountedNetworkSources
         server = nil
         mounts = {
@@ -669,11 +626,8 @@ class TestFileSources < Test::Unit::TestCase
             file.retrieve
         }
 
-        comp = newcomp("nosource", file)
-
-        assert_nothing_raised {
-            comp.evaluate
-        }
+        comp = mk_configuration(file)
+        comp.apply
 
         assert(!FileTest.exists?(name), "File with no source exists anyway")
     end
@@ -722,7 +676,7 @@ class TestFileSources < Test::Unit::TestCase
             )
         }
 
-        comp = newcomp(file)
+        comp = mk_configuration(file)
         assert_events([:file_created], comp)
 
         assert(File.exists?(to), "File does not exist")
@@ -808,9 +762,8 @@ class TestFileSources < Test::Unit::TestCase
         trans = nil
         assert_nothing_raised {
             file[:links] = :manage
-            comp = newcomp(file)
-            trans = comp.evaluate
-            trans.evaluate
+            comp = mk_configuration(file)
+            trans = comp.apply
         }
 
         assert(trans.failed?(file), "Object did not fail to copy links")

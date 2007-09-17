@@ -574,6 +574,9 @@ module Puppet
         # Create a new file or directory object as a child to the current
         # object.
         def newchild(path, local, hash = {})
+            unless configuration
+                raise Puppet::DevError, "File recursion cannot happen without a configuration"
+            end
             # make local copy of arguments
             args = symbolize_options(@arghash)
 
@@ -608,13 +611,12 @@ module Puppet
             }
 
             child = nil
-            klass = self.class
             
             # The child might already exist because 'localrecurse' runs
             # before 'sourcerecurse'.  I could push the override stuff into
             # a separate method or something, but the work is the same other
             # than this last bit, so it doesn't really make sense.
-            if child = klass[path]
+            if child = configuration.resource(:file, path)
                 unless child.parent.object_id == self.object_id
                     self.debug "Not managing more explicit file %s" %
                         path
@@ -640,12 +642,7 @@ module Puppet
                 #notice "Creating new file with args %s" % args.inspect
                 args[:parent] = self
                 begin
-                    child = klass.implicitcreate(args)
-                    
-                    # implicit creation can return nil
-                    if child.nil?
-                        return nil
-                    end
+                    return nil unless child = configuration.create_implicit_resource(:file, args)
                 rescue Puppet::Error => detail
                     self.notice(
                         "Cannot manage: %s" %
@@ -661,6 +658,7 @@ module Puppet
                     self.debug args.inspect
                     child = nil
                 end
+                configuration.relationship_graph.add_edge! self, child
             end
             return child
         end
@@ -695,9 +693,7 @@ module Puppet
         # files.
         def recurse
             # are we at the end of the recursion?
-            unless self.recurse?
-                return
-            end
+            return unless self.recurse?
 
             recurse = self[:recurse]
             # we might have a string, rather than a number

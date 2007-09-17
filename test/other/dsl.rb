@@ -214,5 +214,3 @@ class TestDSL < Test::Unit::TestCase
         assert_instance_of(Puppet::Parser::Resource, file)
     end
 end
-
-# $Id$

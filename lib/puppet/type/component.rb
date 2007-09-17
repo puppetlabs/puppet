@@ -163,8 +163,8 @@ Puppet::Type.newtype(:component) do
         else
             myname = self.title
         end
-        if self.parent
-            return [@parent.pathbuilder, myname]
+        if p = self.parent
+            return [p.pathbuilder, myname]
         else
             return [myname]
         end
@@ -215,24 +215,6 @@ Puppet::Type.newtype(:component) do
             end
         }
     end
-    
-    # Convert to a graph object with all of the container info.
-    def to_graph
-        graph = Puppet::PGraph.new
-        
-        delver = proc do |obj|
-            obj.each do |child|
-                graph.add_edge!(obj, child)
-                if child.is_a?(self.class)
-                    delver.call(child)
-                end
-            end
-        end
-        
-        delver.call(self)
-        
-        return graph
-    end
 
     def to_s
         if self.title =~ /\[/
@@ -242,5 +224,3 @@ Puppet::Type.newtype(:component) do
         end
     end
 end
-
-# $Id$

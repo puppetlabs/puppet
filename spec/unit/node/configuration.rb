@@ -142,6 +142,12 @@ describe Puppet::Node::Configuration, " when functioning as a resource container
         @dupe = stub 'resource3', :ref => "Me[you]", :configuration= => nil
     end
 
+    it "should provide a method to add one or more resources" do
+        @config.add_resource @one, @two
+        @config.resource(@one.ref).should equal(@one)
+        @config.resource(@two.ref).should equal(@two)
+    end
+
     it "should make all vertices available by resource reference" do
         @config.add_resource(@one)
         @config.resource(@one.ref).should equal(@one)
@@ -186,6 +192,24 @@ describe Puppet::Node::Configuration, " when functioning as a resource container
     it "should inform the resource that it is the resource's configuration" do
         @one.expects(:configuration=).with(@config)
         @config.add_resource @one
+    end
+
+    it "should be able to find resources by reference" do
+        @config.add_resource @one
+        @config.resource(@one.ref).should equal(@one)
+    end
+
+    it "should be able to find resources by reference or by type/title tuple" do
+        @config.add_resource @one
+        @config.resource("me", "you").should equal(@one)
+    end
+
+    it "should have a mechanism for removing resources" do
+        @config.add_resource @one
+        @one.expects :remove
+        @config.remove_resource(@one)
+        @config.resource(@one.ref).should be_nil
+        @config.vertex?(@one).should be_false
     end
 end
 
@@ -295,4 +319,133 @@ describe Puppet::Node::Configuration, " when applying non-host configurations" d
     end
 
     after { Puppet.config.clear }
+end
+
+describe Puppet::Node::Configuration, " when creating a relationship graph" do
+    before do
+        @config = Puppet::Node::Configuration.new("host")
+        @compone = Puppet::Type::Component.create :name => "one"
+        @comptwo = Puppet::Type::Component.create :name => "two", :require => ["class", "one"]
+        @file = Puppet::Type.type(:file)
+        @one = @file.create :path => "/one"
+        @two = @file.create :path => "/two"
+        @config.add_edge! @compone, @one
+        @config.add_edge! @comptwo, @two
+
+        @three = @file.create :path => "/three"
+        @four = @file.create :path => "/four", :require => ["file", "/three"]
+        @config.add_resource @compone, @comptwo, @one, @two, @three, @four
+        @relationships = @config.relationship_graph
+    end
+
+    it "should be able to create a resource graph" do
+        @relationships.should be_instance_of(Puppet::Node::Configuration)
+    end
+
+    it "should not have any components" do
+        @relationships.vertices.find { |r| r.instance_of?(Puppet::Type::Component) }.should be_nil
+    end
+
+    it "should have all non-component resources from the configuration" do
+        # The failures print out too much info, so i just do a class comparison
+        @relationships.resource(@one.ref).should be_instance_of(@one.class)
+        @relationships.resource(@three.ref).should be_instance_of(@three.class)
+    end
+
+    it "should have all resource relationships set as edges" do
+        @relationships.edge?(@three, @four).should be_true
+    end
+
+    it "should copy component relationships to all contained resources" do
+        @relationships.edge?(@one, @two).should be_true
+    end
+
+    it "should get removed when the configuration is cleaned up" do
+        @relationships.expects(:clear).with(false)
+        @config.clear
+        @config.instance_variable_get("@relationship_graph").should be_nil
+    end
+
+    it "should create a new relationship graph after clearing the old one" do
+        @relationships.expects(:clear).with(false)
+        @config.clear
+        @config.relationship_graph.should be_instance_of(Puppet::Node::Configuration)
+    end
+
+    it "should look up resources in the relationship graph if not found in the main configuration" do
+        five = stub 'five', :ref => "File[five]", :configuration= => nil
+        @relationships.add_resource five
+        @config.resource(five.ref).should equal(five)
+    end
+
+    it "should provide a method to create additional resources that also registers the resource" do
+        args = {:name => "/yay", :ensure => :file}
+        resource = stub 'file', :ref => "File[/yay]", :configuration= => @config
+        Puppet::Type.type(:file).expects(:create).with(args).returns(resource)
+        @config.create_resource :file, args
+        @config.resource("File[/yay]").should equal(resource)
+    end
+
+    it "should provide a mechanism for creating implicit resources" do
+        args = {:name => "/yay", :ensure => :file}
+        resource = stub 'file', :ref => "File[/yay]", :configuration= => @config
+        Puppet::Type.type(:file).expects(:create).with(args).returns(resource)
+        resource.expects(:implicit=).with(true)
+        @config.create_implicit_resource :file, args
+        @config.resource("File[/yay]").should equal(resource)
+    end
+
+    it "should remove resources created mid-transaction" do
+        args = {:name => "/yay", :ensure => :file}
+        resource = stub 'file', :ref => "File[/yay]", :configuration= => @config
+        @transaction = mock 'transaction'
+        Puppet::Transaction.stubs(:new).returns(@transaction)
+        @transaction.stubs(:evaluate)
+        @transaction.stubs(:cleanup)
+        @transaction.stubs(:addtimes)
+        Puppet::Type.type(:file).expects(:create).with(args).returns(resource)
+        resource.expects :remove
+        @config.apply do |trans|
+            @config.create_resource :file, args
+            @config.resource("File[/yay]").should equal(resource)
+        end
+        @config.resource("File[/yay]").should be_nil
+    end
+
+    after do
+        Puppet::Type.allclear
+    end
+end
+
+describe Puppet::Node::Configuration, " when writing dot files" do
+    before do
+        @config = Puppet::Node::Configuration.new("host")
+        @name = :test
+        @file = File.join(Puppet[:graphdir], @name.to_s + ".dot")
+    end
+    it "should only write when it is a host configuration" do
+        File.expects(:open).with(@file).never
+        @config.host_config = false
+        Puppet[:graph] = true
+        @config.write_graph(@name)
+    end
+
+    it "should only write when graphing is enabled" do
+        File.expects(:open).with(@file).never
+        @config.host_config = true
+        Puppet[:graph] = false
+        @config.write_graph(@name)
+    end
+
+    it "should write a dot file based on the passed name" do
+        File.expects(:open).with(@file, "w").yields(stub("file", :puts => nil))
+        @config.expects(:to_dot).with("name" => @name.to_s.capitalize)
+        @config.host_config = true
+        Puppet[:graph] = true
+        @config.write_graph(@name)
+    end
+
+    after do
+        Puppet.config.clear
+    end
 end

@@ -555,9 +555,9 @@ class Puppet::Util::Config
     end
 
     # Convert our list of objects into a component that can be applied.
-    def to_component
+    def to_configuration
         transport = self.to_transportable
-        return transport.to_type
+        return transport.to_configuration
     end
 
     # Convert our list of objects into a configuration file.
@@ -615,10 +615,7 @@ Generated on #{Time.now}.
         end
         sections.each do |section|
             obj = section_to_transportable(section, done)
-            #puts obj.to_manifest
-            #puts "%s: %s" % [section, obj.inspect]
             topbucket.push obj
-            #topbucket.push section_to_transportable(section, done)
         end
 
         topbucket
@@ -1109,6 +1106,11 @@ Generated on #{Time.now}.
         # Set the type appropriately.  Yep, a hack.  This supports either naming
         # the variable 'dir', or adding a slash at the end.
         def munge(value)
+            # If it's not a fully qualified path...
+            if value.is_a?(String) and value !~ /^\$/ and value !~ /^\//
+                # Make it one
+                value = File.join(Dir.getwd, value)
+            end
             if value.to_s =~ /\/$/
                 @type = :directory
                 return value.sub(/\/$/, '')
@@ -1131,9 +1133,6 @@ Generated on #{Time.now}.
         end
 
         # Convert the object to a TransObject instance.
-        # FIXME There's no dependency system in place right now; if you use
-        # a section that requires another section, there's nothing done to
-        # correct that for you, at the moment.
         def to_transportable
             type = self.type
             return nil unless type
@@ -1142,9 +1141,6 @@ Generated on #{Time.now}.
 
             objects = []
             path = self.value
-            unless path =~ /^#{File::SEPARATOR}/
-                path = File.join(Dir.getwd, path)
-            end
 
             # Skip plain files that don't exist, since we won't be managing them anyway.
             return nil unless self.name.to_s =~ /dir$/ or File.exist?(path)

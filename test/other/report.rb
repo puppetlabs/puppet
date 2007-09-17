@@ -26,16 +26,10 @@ class TestReports < Test::Unit::TestCase
             )
         end
 
-        comp = newcomp(*objects)
-
-        trans = nil
-        assert_nothing_raised("Failed to create transaction") {
-            trans = comp.evaluate
-        }
-
-        assert_nothing_raised("Failed to evaluate transaction") {
-            trans.evaluate
-        }
+        config = mk_configuration(*objects)
+        # So the report works out.
+        config.retrieval_duration = 0.001
+        trans = config.apply
 
         return trans.generate_report
     end

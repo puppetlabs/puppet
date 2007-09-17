@@ -7,7 +7,7 @@ require 'puppet/propertychange'
 module Puppet
 class Transaction
     attr_accessor :component, :configuration, :ignoreschedules
-    attr_accessor :relgraph, :sorted_resources, :configurator
+    attr_accessor :sorted_resources, :configurator
 
     # The report, once generated.
     attr_reader :report
@@ -32,7 +32,7 @@ class Transaction
         # dependencies, then don't delete it unless it's implicit or the
         # dependency is itself being deleted.
         if resource.purging? and resource.deleting?
-            if deps = @relgraph.dependents(resource) and ! deps.empty? and deps.detect { |d| ! d.deleting? }
+            if deps = relationship_graph.dependents(resource) and ! deps.empty? and deps.detect { |d| ! d.deleting? }
                 resource.warning "%s still depend%s on me -- not purging" %
                     [deps.collect { |r| r.ref }.join(","), deps.length > 1 ? "":"s"] 
                 return false
@@ -144,12 +144,7 @@ class Transaction
     # contained resources might never get cleaned up.
     def cleanup
         if defined? @generated
-            @generated.each do |resource|
-                resource.remove
-            end
-        end
-        if defined? @relgraph
-            @relgraph.clear
+            relationship_graph.remove_resource(*@generated)
         end
     end
 
@@ -164,10 +159,11 @@ class Transaction
             else
                 edge = [resource, gen_child]
             end
-            unless @relgraph.edge?(edge[1], edge[0])
-                @relgraph.add_edge!(*edge)
+            relationship_graph.add_resource(gen_child) unless relationship_graph.resource(gen_child.ref)
+
+            unless relationship_graph.edge?(edge[1], edge[0])
+                relationship_graph.add_edge!(*edge)
             else
-                @relgraph.add_vertex!(gen_child)
                 resource.debug "Skipping automatic relationship to %s" % gen_child
             end
         end
@@ -198,7 +194,8 @@ class Transaction
                 children.each do |child|
                     child.finish
                     # Make sure that the vertex is in the relationship graph.
-                    @relgraph.add_vertex!(child)
+                    relationship_graph.add_resource(child) unless relationship_graph.resource(child.ref)
+                    child.configuration = relationship_graph
                 end
                 @generated += children
                 return children
@@ -271,7 +268,7 @@ class Transaction
         # Collect the targets of any subscriptions to those events.  We pass
         # the parent resource in so it will override the source in the events,
         # since eval_generated children can't have direct relationships.
-        @relgraph.matching_edges(events, resource).each do |edge|
+        relationship_graph.matching_edges(events, resource).each do |edge|
             edge = edge.dup
             label = edge.label
             label[:event] = events.collect { |e| e.event }
@@ -288,8 +285,6 @@ class Transaction
     # necessary events.
     def evaluate
         @count = 0
-        
-        graph(@configuration, :resources)
         
         # Start logging.
         Puppet::Util::Log.newdestination(@report)
@@ -320,6 +315,7 @@ class Transaction
         Puppet.debug "Finishing transaction %s with %s changes" %
             [self.object_id, @count]
 
+        @events = allevents
         allevents
     end
 
@@ -339,7 +335,7 @@ class Transaction
         # enough to check the immediate dependencies, which is why we use
         # a tree from the reversed graph.
         skip = false
-        deps = @relgraph.dependencies(resource)
+        deps = relationship_graph.dependencies(resource)
         deps.each do |dep|
             if fails = failed?(dep)
                 resource.notice "Dependency %s[%s] has %s failures" %
@@ -375,7 +371,8 @@ class Transaction
                     end
                     made.uniq!
                     made.each do |res|
-                        @configuration.add_vertex!(res)
+                        @configuration.add_resource(res)
+                        res.configuration = configuration
                         newlist << res
                         @generated << res
                         res.finish
@@ -414,21 +411,6 @@ class Transaction
         @report.time = Time.now
 
         return @report
-    end
-
-    # Produce the graph files if requested.
-    def graph(gr, name)
-        # We only want to graph the main host configuration.
-        return unless @configuration.host_config?
-        
-        return unless Puppet[:graph]
-
-        Puppet.config.use(:graphing)
-
-        file = File.join(Puppet[:graphdir], "%s.dot" % name.to_s)
-        File.open(file, "w") { |f|
-            f.puts gr.to_dot("name" => name.to_s.capitalize)
-        }
     end
 
     # Should we ignore tags?
@@ -514,48 +496,13 @@ class Transaction
     
         # Now add any dynamically generated resources
         generate()
-    
-        # Create a relationship graph from our resource graph
-        @relgraph = relationship_graph
         
         # This will throw an error if there are cycles in the graph.
-        @sorted_resources = @relgraph.topsort
+        @sorted_resources = relationship_graph.topsort
     end
-    
-    # Create a graph of all of the relationships in our resource graph.
-    def relationship_graph
-        graph = Puppet::PGraph.new
-        
-        # First create the dependency graph
-        @configuration.vertices.each do |vertex|
-            graph.add_vertex!(vertex)
-            vertex.builddepends.each do |edge|
-                graph.add_edge!(edge)
-            end
-        end
-        
-        # Lastly, add in any autorequires
-        graph.vertices.each do |vertex|
-            vertex.autorequire.each do |edge|
-                unless graph.edge?(edge)
-                    unless graph.edge?(edge.target, edge.source)
-                        vertex.debug "Autorequiring %s" % [edge.source]
-                        graph.add_edge!(edge)
-                    else
-                        vertex.debug "Skipping automatic relationship with %s" % (edge.source == vertex ? edge.target : edge.source)
-                    end
-                end
-            end
-        end
-        
-        graph(graph, :relationships)
-        
-        # Then splice in the container information
-        graph.splice!(@configuration, Puppet::Type::Component)
 
-        graph(graph, :expanded_relationships)
-        
-        return graph
+    def relationship_graph
+        configuration.relationship_graph
     end
     
     # Send off the transaction report.
@@ -621,7 +568,7 @@ class Transaction
             end
             
             # FIXME This won't work right now.
-            @relgraph.matching_edges(events).each do |edge|
+            relationship_graph.matching_edges(events).each do |edge|
                 @targets[edge.target] << edge
             end
 

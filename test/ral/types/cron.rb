@@ -94,7 +94,7 @@ class TestCron < Test::Unit::TestCase
 
         text = obj.read
         name = cron.name
-        comp = newcomp(name, cron)
+        comp = mk_configuration(name, cron)
 
         assert_events([:cron_created], comp)
         cron.provider.class.prefetch
@@ -157,7 +157,7 @@ class TestCron < Test::Unit::TestCase
     def test_makeandretrievecron
         %w{storeandretrieve a-name another-name more_naming SomeName}.each do |name|
             cron = mkcron(name)
-            comp = newcomp(name, cron)
+            comp = mk_configuration(name, cron)
             trans = assert_events([:cron_created], comp, name)
             
             cron.provider.class.prefetch

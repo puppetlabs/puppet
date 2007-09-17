@@ -122,7 +122,7 @@ class TestFile < Test::Unit::TestCase
                 )
             }
 
-            comp = newcomp("createusertest", file)
+            comp = mk_configuration("createusertest", file)
 
             assert_events([:file_created], comp)
         end
@@ -397,6 +397,8 @@ class TestFile < Test::Unit::TestCase
 
                 events = assert_apply(file)
 
+                assert(events)
+
                 assert(! events.include?(:file_changed),
                     "File incorrectly changed")
                 assert_events([], file)
@@ -493,6 +495,7 @@ class TestFile < Test::Unit::TestCase
         # Create a test directory
         path = tempfile()
         dir = @file.create :path => path, :mode => 0755, :recurse => true
+        config = mk_configuration(dir)
         
         Dir.mkdir(path)
         
@@ -673,6 +676,7 @@ class TestFile < Test::Unit::TestCase
                     :check => %w{owner mode group}
                 )
             }
+            mk_configuration dir
             
             children = nil
 
@@ -754,6 +758,7 @@ class TestFile < Test::Unit::TestCase
                 :check => %w{owner mode group}
             )
         }
+        mk_configuration dir
 
         assert_nothing_raised {
             dir.eval_generate
@@ -796,6 +801,7 @@ class TestFile < Test::Unit::TestCase
                 :check => %w{mode owner group}
             )
         }
+        mk_configuration dirobj
 
         assert_nothing_raised {
             dirobj.eval_generate
@@ -884,7 +890,7 @@ class TestFile < Test::Unit::TestCase
             )
         }
 
-        comp = newcomp("yay", file)
+        comp = mk_configuration("yay", file)
         comp.finalize
         assert_apply(comp)
         #assert_events([:directory_created], comp)
@@ -1274,26 +1280,29 @@ class TestFile < Test::Unit::TestCase
         lfobj = Puppet::Type.newfile(
             :title => "localfile",
             :path => localfile,
-            :content => "rahtest"
+            :content => "rahtest",
+            :backup => false
         )
         
+        Puppet[:evaltrace] = true
 
         destobj = Puppet::Type.newfile(:title => "destdir", :path => destdir,
                                     :source => sourcedir,
+                                    :backup => false,
                                     :recurse => true)
 
-        comp = newcomp(lfobj, destobj)
-        assert_apply(comp)
+        config = mk_configuration(lfobj, destobj)
+        config.apply
 
         assert(FileTest.exists?(dsourcefile), "File did not get copied")
         assert(FileTest.exists?(localfile), "File did not get created")
         assert(FileTest.exists?(purgee), "File got prematurely purged")
 
         assert_nothing_raised { destobj[:purge] = true }
-        assert_apply(comp)
+        config.apply
 
-        assert(FileTest.exists?(dsourcefile), "Source file got purged")
         assert(FileTest.exists?(localfile), "Local file got purged")
+        assert(FileTest.exists?(dsourcefile), "Source file got purged")
         assert(! FileTest.exists?(purgee), "File did not get purged")
     end
 
@@ -1333,7 +1342,7 @@ class TestFile < Test::Unit::TestCase
             group = Puppet.type(:group).create(
                 :name => "pptestg"
             )
-            comp = newcomp(user, group, home)
+            comp = mk_configuration(user, group, home)
         }
         
         # Now make sure we get a relationship for each of these
@@ -1629,6 +1638,7 @@ class TestFile < Test::Unit::TestCase
         file = File.join(dir, "file")
         File.open(file, "w") { |f| f.puts "" }
         obj = Puppet::Type.newfile :path => dir, :recurse => true, :mode => 0755
+        mk_configuration obj
         
         assert_equal("/%s" % obj.ref, obj.path)
         
@@ -1739,14 +1749,17 @@ class TestFile < Test::Unit::TestCase
         File.open(file, "w") { |f| f.puts "yay" }
         File.chmod(0644, file)
         obj = Puppet::Type.newfile(:path => dir, :mode => 0750, :recurse => "2")
+        config = mk_configuration(obj)
 
         children = nil
         assert_nothing_raised("Failure when recursing") do
             children = obj.eval_generate
         end
+        config.add_resource(*children)
         assert(obj.class[subdir], "did not create subdir object")
         children.each do |c|
             assert_nothing_raised("Failure when recursing on %s" % c) do
+                c.configuration = config
                 others = c.eval_generate
             end
         end
@@ -1780,6 +1793,7 @@ class TestFile < Test::Unit::TestCase
         obj = Puppet::Type.newfile(:path => dir, :ensure => :directory,
             :recurse => true)
 
+        config = mk_configuration(obj)
         children = nil
         assert_nothing_raised do
             children = obj.eval_generate
