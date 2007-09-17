@@ -1,4 +1,4 @@
-require 'puppettest/runnable_test'
+require(File.expand_path(File.dirname(__FILE__) + '../../../../../test/lib/puppettest/runnable_test.rb'))
 
 module Spec
   module DSL

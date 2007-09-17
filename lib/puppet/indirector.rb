@@ -42,7 +42,7 @@ module Puppet::Indirector
         # Set up autoloading of the appropriate termini.
         instance_load name, "puppet/indirector/%s" % name
     end
-
+    
     # Define a new indirection terminus.  This method is used by the individual
     # termini in their separate files.  Again, the autoloader takes care of
     # actually loading these files.
@@ -77,13 +77,35 @@ module Puppet::Indirector
         if defined?(@indirection)
             raise ArgumentError, "Already performing an indirection of %s; cannot redirect %s" % [@indirection.name, indirection]
         end
+
+        # JRB:  this associates an indirection class with this class (e.g., Node.@indirection = Indirection.new(:node))
         @indirection = Indirection.new(indirection, options)
 
         # Set up autoloading of the appropriate termini.
         Puppet::Indirector.register_indirection indirection
 
-        return @indirection
+        extend ClassMethods
+        include InstanceMethods
     end
+
+    module InstanceMethods
+      # these become instance methods 
+      def save
+      end
+    end
+    
+    module ClassMethods
+      def find
+      end
+
+      def destroy
+      end
+
+      def search
+      end
+    end
+
+    # JRB:FIXME: these methods to be deprecated:
 
     # Define methods for each of the HTTP methods.  These just point to the
     # termini, with consistent error-handling.  Each method is called with
@@ -103,14 +125,13 @@ module Puppet::Indirector
 
     private
 
-    # Redirect a given HTTP method.
+
+    # Redirect one of our methods to the corresponding method on the Terminus
     def redirect(method_name, *args)
         begin
             @indirection.terminus.send(method_name, *args)
         rescue NoMethodError => detail
-            if Puppet[:trace]
-                puts detail.backtrace
-            end
+            puts detail.backtrace if Puppet[:trace]
             raise ArgumentError, "The %s terminus of the %s indirection failed to respond to %s: %s" %
                 [@indirection.terminus.name, @indirection.name, method_name, detail]
         end
