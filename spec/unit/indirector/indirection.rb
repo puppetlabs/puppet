@@ -26,7 +26,7 @@ describe Puppet::Indirector::Indirection, " when initializing" do
     end
 end
 
-describe Puppet::Indirector, " when managing termini" do
+describe Puppet::Indirector::Indirection, " when managing termini" do
     before do
         @indirection = Puppet::Indirector::Indirection.new(:node, :to => :node_source)
     end

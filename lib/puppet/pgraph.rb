@@ -95,7 +95,7 @@ class Puppet::PGraph < GRATR::Digraph
             adjacent(source, :direction => :out, :type => :edges).find_all do |edge|
                 edge.match?(event.event)
             end
-        end.flatten
+        end.compact.flatten
     end
     
     # Take container information from another graph and use it

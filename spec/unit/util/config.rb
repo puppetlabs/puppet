@@ -426,6 +426,8 @@ describe Puppet::Util::Config, " when being used to manage the host machine" do
         pending "Not converted from test/unit yet"
     end
 
+    it "should create files when configured to do so with the :create parameter"
+
     it "should provide a method to convert the file mode enforcement into transportable resources" do
         # Make it think we're root so it tries to manage user and group.
         Puppet.features.stubs(:root?).returns(true)

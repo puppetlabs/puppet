@@ -334,12 +334,19 @@ describe Puppet::Node::Configuration, " when creating a relationship graph" do
 
         @three = @file.create :path => "/three"
         @four = @file.create :path => "/four", :require => ["file", "/three"]
-        @config.add_resource @compone, @comptwo, @one, @two, @three, @four
+        @five = @file.create :path => "/five"
+        @config.add_resource @compone, @comptwo, @one, @two, @three, @four, @five
         @relationships = @config.relationship_graph
     end
 
-    it "should be able to create a resource graph" do
+    it "should be able to create a relationship graph" do
         @relationships.should be_instance_of(Puppet::Node::Configuration)
+    end
+
+    it "should copy its host_config setting to the relationship graph" do
+        config = Puppet::Node::Configuration.new
+        config.host_config = true
+        config.relationship_graph.host_config.should be_true
     end
 
     it "should not have any components" do
@@ -348,8 +355,7 @@ describe Puppet::Node::Configuration, " when creating a relationship graph" do
 
     it "should have all non-component resources from the configuration" do
         # The failures print out too much info, so i just do a class comparison
-        @relationships.resource(@one.ref).should be_instance_of(@one.class)
-        @relationships.resource(@three.ref).should be_instance_of(@three.class)
+        @relationships.vertex?(@five).should be_true
     end
 
     it "should have all resource relationships set as edges" do
@@ -410,6 +416,11 @@ describe Puppet::Node::Configuration, " when creating a relationship graph" do
             @config.resource("File[/yay]").should equal(resource)
         end
         @config.resource("File[/yay]").should be_nil
+    end
+
+    it "should remove resources from the relationship graph if it exists" do
+        @config.remove_resource(@one)
+        @config.relationship_graph.vertex?(@one).should be_false
     end
 
     after do

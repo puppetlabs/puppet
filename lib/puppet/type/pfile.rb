@@ -611,13 +611,14 @@ module Puppet
             }
 
             child = nil
-            
+
             # The child might already exist because 'localrecurse' runs
             # before 'sourcerecurse'.  I could push the override stuff into
             # a separate method or something, but the work is the same other
             # than this last bit, so it doesn't really make sense.
             if child = configuration.resource(:file, path)
                 unless child.parent.object_id == self.object_id
+                    puts("Parent is %s, I am %s" % [child.parent.ref, self.ref]) if child.parent
                     self.debug "Not managing more explicit file %s" %
                         path
                     return nil
@@ -643,22 +644,15 @@ module Puppet
                 args[:parent] = self
                 begin
                     return nil unless child = configuration.create_implicit_resource(:file, args)
-                rescue Puppet::Error => detail
-                    self.notice(
-                        "Cannot manage: %s" %
-                            [detail.message]
-                    )
-                    self.debug args.inspect
-                    child = nil
                 rescue => detail
-                    self.notice(
-                        "Cannot manage: %s" %
-                            [detail]
-                    )
-                    self.debug args.inspect
-                    child = nil
+                    puts detail.backtrace
+                    self.notice "Cannot manage: %s" % [detail]
+                    return nil
                 end
-                configuration.relationship_graph.add_edge! self, child
+            end
+            configuration.relationship_graph.add_edge! self, child
+            unless child.parent
+                raise "Did not set parent of %s" % child.ref
             end
             return child
         end

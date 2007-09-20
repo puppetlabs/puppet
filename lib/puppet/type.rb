@@ -318,7 +318,7 @@ class Type
 
         # We should never have more than one parent, so let's just ignore
         # it if we happen to.
-        if parents = configuration.adjacent(self, :direction => :in)
+        if parents = configuration.relationship_graph.adjacent(self, :direction => :in)
             return parents.shift
         else
             return nil

@@ -55,12 +55,12 @@ class Puppet::Node::Configuration < Puppet::PGraph
 
     # Apply our configuration to the local host.
     def apply
+        @applying = true
+
         Puppet::Util::Storage.load if host_config?
         transaction = Puppet::Transaction.new(self)
 
         transaction.addtimes :config_retrieval => @retrieval_duration
-
-        @applying = true
 
         begin
             transaction.evaluate
@@ -122,6 +122,7 @@ class Puppet::Node::Configuration < Puppet::PGraph
         unless options.include?(:implicit)
             options[:implicit] = true
         end
+        # LAK:FIXME catch exceptions here and return nil when problems
         if resource = create_resource(type, options)
             resource.implicit = true
 
@@ -235,6 +236,7 @@ class Puppet::Node::Configuration < Puppet::PGraph
         @resource_table = {}
         @transient_resources = []
         @applying = false
+        @relationship_graph = nil
 
         if block_given?
             yield(self)
@@ -245,11 +247,12 @@ class Puppet::Node::Configuration < Puppet::PGraph
     # Create a graph of all of the relationships in our configuration.
     def relationship_graph
         unless defined? @relationship_graph and @relationship_graph
-            relationships = self.class.new
+            relationships = Puppet::Node::Configuration.new
+            relationships.host_config = host_config?
             
             # First create the dependency graph
             self.vertices.each do |vertex|
-                relationships.add_resource vertex
+                relationships.add_vertex! vertex
                 vertex.builddepends.each do |edge|
                     relationships.add_edge!(edge)
                 end
@@ -287,6 +290,7 @@ class Puppet::Node::Configuration < Puppet::PGraph
         resources.each do |resource|
             @resource_table.delete(resource.ref) if @resource_table.include?(resource.ref)
             remove_vertex!(resource) if vertex?(resource)
+            @relationship_graph.remove_vertex!(resource) if @relationship_graph and @relationship_graph.vertex?(resource)
             resource.remove
         end
     end
@@ -345,6 +349,7 @@ class Puppet::Node::Configuration < Puppet::PGraph
         unless @transient_resources.empty?
             remove_resource(*@transient_resources)
             @transient_resources.clear
+            @relationship_graph = nil
         end
     end
 end

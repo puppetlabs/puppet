@@ -1143,7 +1143,7 @@ Generated on #{Time.now}.
             path = self.value
 
             # Skip plain files that don't exist, since we won't be managing them anyway.
-            return nil unless self.name.to_s =~ /dir$/ or File.exist?(path)
+            return nil unless self.name.to_s =~ /dir$/ or File.exist?(path) or self.create
             obj = Puppet::TransObject.new(path, "file")
 
             # Only create directories, or files that are specifically marked to

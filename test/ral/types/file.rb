@@ -1283,8 +1283,6 @@ class TestFile < Test::Unit::TestCase
             :content => "rahtest",
             :backup => false
         )
-        
-        Puppet[:evaltrace] = true
 
         destobj = Puppet::Type.newfile(:title => "destdir", :path => destdir,
                                     :source => sourcedir,
@@ -1299,6 +1297,7 @@ class TestFile < Test::Unit::TestCase
         assert(FileTest.exists?(purgee), "File got prematurely purged")
 
         assert_nothing_raised { destobj[:purge] = true }
+        Puppet.err :yay
         config.apply
 
         assert(FileTest.exists?(localfile), "Local file got purged")
@@ -1755,7 +1754,6 @@ class TestFile < Test::Unit::TestCase
         assert_nothing_raised("Failure when recursing") do
             children = obj.eval_generate
         end
-        config.add_resource(*children)
         assert(obj.class[subdir], "did not create subdir object")
         children.each do |c|
             assert_nothing_raised("Failure when recursing on %s" % c) do

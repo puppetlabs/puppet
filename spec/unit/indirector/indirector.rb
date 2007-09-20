@@ -11,6 +11,8 @@ describe Puppet::Indirector, " when managing indirections" do
         @indirector.send(:extend, Puppet::Indirector)
     end
 
+    it "should require a name"
+
     it "should create an indirection" do
         indirection = @indirector.indirects :test, :to => :node_source
         indirection.name.should == :test
