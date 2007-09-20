@@ -10,12 +10,12 @@ describe Puppet::Node::Searching, " when searching for nodes" do
         @searcher.extend(Puppet::Node::Searching)
         @facts = Puppet::Node::Facts.new("foo", "hostname" => "yay", "domain" => "domain.com")
         @node = Puppet::Node.new("foo")
-        Puppet::Node::Facts.stubs(:get).with("foo").returns(@facts)
+        Puppet::Node::Facts.stubs(:find).with("foo").returns(@facts)
     end
 
     it "should search for the node by its key first" do
         names = []
-        @searcher.expects(:get).with do |name|
+        @searcher.expects(:find).with do |name|
             names << name
             names == %w{foo}
         end.returns(@node)
@@ -24,15 +24,15 @@ describe Puppet::Node::Searching, " when searching for nodes" do
 
     it "should return the first node found using the generated list of names" do
         names = []
-        @searcher.expects(:get).with("foo").returns(nil)
-        @searcher.expects(:get).with("yay.domain.com").returns(@node)
+        @searcher.expects(:find).with("foo").returns(nil)
+        @searcher.expects(:find).with("yay.domain.com").returns(@node)
         @searcher.search("foo").should equal(@node)
     end
 
     it "should search for the rest of the names inversely by length" do
         names = []
         @facts.values["fqdn"] = "longer.than.the.normal.fqdn.com"
-        @searcher.stubs(:get).with do |name|
+        @searcher.stubs(:find).with do |name|
             names << name
         end
         @searcher.search("foo")
@@ -51,7 +51,7 @@ describe Puppet::Node::Searching, " when searching for nodes" do
 
     it "should attempt to find a default node if no names are found" do
         names = []
-        @searcher.stubs(:get).with do |name|
+        @searcher.stubs(:find).with do |name|
             names << name
         end.returns(nil)
         @searcher.search("foo")
@@ -59,7 +59,7 @@ describe Puppet::Node::Searching, " when searching for nodes" do
     end
 
     it "should cache the nodes" do
-        @searcher.expects(:get).with("foo").returns(@node)
+        @searcher.expects(:find).with("foo").returns(@node)
         @searcher.search("foo").should equal(@node)
         @searcher.search("foo").should equal(@node)
     end
@@ -68,7 +68,7 @@ describe Puppet::Node::Searching, " when searching for nodes" do
         node2 = Puppet::Node.new("foo2")
         Puppet[:filetimeout] = -1
         # I couldn't get this to work with :expects
-        @searcher.stubs(:get).returns(@node, node2).then.raises(ArgumentError)
+        @searcher.stubs(:find).returns(@node, node2).then.raises(ArgumentError)
         @searcher.search("foo").should equal(@node)
         @searcher.search("foo").should equal(node2)
     end

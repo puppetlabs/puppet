@@ -32,32 +32,32 @@ describe Puppet::Indirector.terminus(:node, :external), " when searching for nod
 
     it "should throw an exception if the node_source is external but no external node command is set" do
         Puppet[:external_nodes] = "none"
-        proc { @searcher.get("foo") }.should raise_error(ArgumentError)
+        proc { @searcher.find("foo") }.should raise_error(ArgumentError)
     end
 
     it "should throw an exception if the external node source is not fully qualified" do
         Puppet[:external_nodes] = "mycommand"
-        proc { @searcher.get("foo") }.should raise_error(ArgumentError)
+        proc { @searcher.find("foo") }.should raise_error(ArgumentError)
     end
 
     it "should execute the command with the node name as the only argument" do
         command = [Puppet[:external_nodes], "yay"]
         @searcher.expects(:execute).with(command).returns("")
-        @searcher.get("yay")
+        @searcher.find("yay")
     end
 
     it "should return a node object" do
-        @searcher.get("apple").should be_instance_of(Puppet::Node)
+        @searcher.find("apple").should be_instance_of(Puppet::Node)
     end
 
     it "should set the node's name" do
-        @searcher.get("apple").name.should == "apple"
+        @searcher.find("apple").name.should == "apple"
     end
     
     # If we use a name that has a 'p' but no 'a', then our test generator
     # will return classes but no parameters.
     it "should be able to configure a node's classes" do
-        node = @searcher.get("plum")
+        node = @searcher.find("plum")
         node.classes.should == %w{plum1 plum2 plum3}
         node.parameters.should == {}
     end
@@ -65,26 +65,26 @@ describe Puppet::Indirector.terminus(:node, :external), " when searching for nod
     # If we use a name that has an 'a' but no 'p', then our test generator
     # will return parameters but no classes.
     it "should be able to configure a node's parameters" do
-        node = @searcher.get("guava")
+        node = @searcher.find("guava")
         node.classes.should == []
         node.parameters.should == {"one" => "guava1", "two" => "guava2"}
     end
     
     it "should be able to configure a node's classes and parameters" do
-        node = @searcher.get("apple")
+        node = @searcher.find("apple")
         node.classes.should == %w{apple1 apple2 apple3}
         node.parameters.should == {"one" => "apple1", "two" => "apple2"}
     end
 
     it "should merge node facts with returned parameters" do
         facts = Puppet::Node::Facts.new("apple", "three" => "four")
-        Puppet::Node::Facts.expects(:get).with("apple").returns(facts)
-        node = @searcher.get("apple")
+        Puppet::Node::Facts.expects(:find).with("apple").returns(facts)
+        node = @searcher.find("apple")
         node.parameters["three"].should == "four"
     end
 
     it "should return nil when it cannot find the node" do
-        @searcher.get("honeydew").should be_nil
+        @searcher.find("honeydew").should be_nil
     end
     
     # Make sure a nodesearch with arguments works

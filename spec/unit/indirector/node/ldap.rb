@@ -20,33 +20,33 @@ describe Puppet::Indirector.terminus(:node, :ldap), " when searching for nodes" 
     end
 
     it "should return nil for hosts that cannot be found" do
-        @searcher.get("foo").should be_nil
+        @searcher.find("foo").should be_nil
     end
 
     it "should return Puppet::Node instances" do
         @nodetable["foo"] = [nil, %w{}, {}]
-        @searcher.get("foo").should be_instance_of(Puppet::Node)
+        @searcher.find("foo").should be_instance_of(Puppet::Node)
     end
 
     it "should set the node name" do
         @nodetable["foo"] = [nil, %w{}, {}]
-        @searcher.get("foo").name.should == "foo"
+        @searcher.find("foo").name.should == "foo"
     end
 
     it "should set the classes" do
         @nodetable["foo"] = [nil, %w{one two}, {}]
-        @searcher.get("foo").classes.should == %w{one two}
+        @searcher.find("foo").classes.should == %w{one two}
     end
 
     it "should set the parameters" do
         @nodetable["foo"] = [nil, %w{}, {"one" => "two"}]
-        @searcher.get("foo").parameters.should == {"one" => "two"}
+        @searcher.find("foo").parameters.should == {"one" => "two"}
     end
 
     it "should set classes and parameters from the parent node" do
         @nodetable["foo"] = ["middle", %w{one two}, {"one" => "two"}]
         @nodetable["middle"] = [nil, %w{three four}, {"three" => "four"}]
-        node = @searcher.get("foo")
+        node = @searcher.find("foo")
         node.classes.sort.should == %w{one two three four}.sort
         node.parameters.should == {"one" => "two", "three" => "four"}
     end
@@ -54,14 +54,14 @@ describe Puppet::Indirector.terminus(:node, :ldap), " when searching for nodes" 
     it "should prefer child parameters to parent parameters" do
         @nodetable["foo"] = ["middle", %w{}, {"one" => "two"}]
         @nodetable["middle"] = [nil, %w{}, {"one" => "four"}]
-        @searcher.get("foo").parameters["one"].should == "two"
+        @searcher.find("foo").parameters["one"].should == "two"
     end
 
     it "should recurse indefinitely through parent relationships" do
         @nodetable["foo"] = ["middle", %w{one two}, {"one" => "two"}]
         @nodetable["middle"] = ["top", %w{three four}, {"three" => "four"}]
         @nodetable["top"] = [nil, %w{five six}, {"five" => "six"}]
-        node = @searcher.get("foo")
+        node = @searcher.find("foo")
         node.parameters.should == {"one" => "two", "three" => "four", "five" => "six"}
         node.classes.sort.should == %w{one two three four five six}.sort
     end

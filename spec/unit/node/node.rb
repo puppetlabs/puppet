@@ -85,7 +85,7 @@ end
 describe Puppet::Node, " when merging facts" do
     before do
         @node = Puppet::Node.new("testnode")
-        Puppet::Node::Facts.stubs(:get).with(@node.name).returns(Puppet::Node::Facts.new(@node.name, "one" => "c", "two" => "b"))
+        Puppet::Node::Facts.stubs(:find).with(@node.name).returns(Puppet::Node::Facts.new(@node.name, "one" => "c", "two" => "b"))
     end
 
     it "should prefer parameters already set on the node over facts from the node" do
@@ -110,12 +110,12 @@ end
 describe Puppet::Node, " when indirecting" do
     before do
         @terminus = mock 'terminus'
-        Puppet::Indirector.terminus(:node, Puppet[:node_source]).stubs(:new).returns(@terminus)
+        Puppet::Node.stubs(:indirection).returns(@terminus)
     end
 
     it "should redirect to the specified node source" do
-        @terminus.expects(:get).with(:my_node)
-        Puppet::Node.get(:my_node)
+        @terminus.expects(:find).with(:my_node.to_s)
+        Puppet::Node.find(:my_node.to_s)
     end
 
     after do

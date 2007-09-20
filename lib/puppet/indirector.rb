@@ -106,7 +106,12 @@ module Puppet::Indirector
     def self.terminus_for_indirection(name)
 # JRB:TODO make this do something useful, aka look something up in a .yml file
       # JRB:TODO look up name + '_source' in standard configuration
-      :ldap
+        case name
+        when :node: :none
+        when :facts: :yaml
+        else
+            raise ArgumentError, "Unknown indirection"
+        end
     end
 
     # Declare that the including class indirects its methods to
@@ -131,30 +136,30 @@ module Puppet::Indirector
         # instantiate the actual Terminus for that type and this name (:ldap, w/ args :node)
         # & hook the instantiated Terminus into this registered class (Node: @indirection = terminus)
         Puppet::Indirector.enable_autoloading_indirection indirection
-        @indirection = Puppet::Indirector.terminus(indirection, terminus)
+        raise("No Terminus %s for %s" % [terminus, indirection]) unless @indirection = Puppet::Indirector.terminus(indirection, terminus).new
     end
 
     module ClassMethods   
       attr_reader :indirection
          
       def find(*args)
-        self.indirection.find(args)
+        self.indirection.find(*args)
         # JRB:TODO look up the indirection, and call its .find method
       end
 
       def destroy(*args)
-        self.indirection.destroy(args)
+        self.indirection.destroy(*args)
       end
 
       def search(*args)
-        self.indirection.search(args)
+        self.indirection.search(*args)
       end
     end
 
     module InstanceMethods
       # these become instance methods 
       def save(*args)
-        self.class.indirection.save(args)
+        self.class.indirection.save(self, *args)
       end
     end
     

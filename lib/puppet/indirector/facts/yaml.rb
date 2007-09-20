@@ -2,7 +2,7 @@ Puppet::Indirector.register_terminus :facts, :yaml do
     desc "Store client facts as flat files, serialized using YAML."
 
     # Get a client's facts.
-    def get(node)
+    def find(node)
         file = path(node)
 
         return nil unless FileTest.exists?(file)
@@ -21,7 +21,7 @@ Puppet::Indirector.register_terminus :facts, :yaml do
     end
 
     # Store the facts to disk.
-    def post(facts)
+    def save(facts)
         File.open(path(facts.name), "w", 0600) do |f|
             begin
                 f.print YAML::dump(facts.values)

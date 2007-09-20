@@ -11,7 +11,7 @@ Puppet::Indirector.register_terminus :node, :external do
     end
 
     # Look for external node definitions.
-    def get(name)
+    def find(name)
         unless Puppet[:external_nodes] != "none"
             raise ArgumentError, "You must set the 'external_nodes' parameter to use the external node source"
         end

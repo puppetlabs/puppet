@@ -6,7 +6,7 @@ Puppet::Indirector.register_terminus :node, :none do
         as the compiler will not work without this node information."
 
     # Just return an empty node.
-    def get(name)
+    def find(name)
         node = Puppet::Node.new(name)
         node.fact_merge
         node

@@ -2,7 +2,7 @@ Puppet::Indirector.register_terminus :node, :ldap do
     desc "Search in LDAP for node configuration information."
 
     # Look for our node in ldap.
-    def get(name)
+    def find(name)
         unless ary = ldapsearch(name)
             return nil
         end

@@ -41,6 +41,9 @@ describe Puppet::Indirector, "when registering an indirection" do
       extend Puppet::Indirector
     end
     Puppet::Indirector.stubs(:terminus_for_indirection).returns(:ldap)
+    @terminus = mock 'terminus'
+    @terminus_class = stub 'terminus class', :new => @terminus
+    Puppet::Indirector.stubs(:terminus).returns(@terminus_class)
   end
 
   it "should require a name when registering a model" do
@@ -81,11 +84,12 @@ describe Puppet::Indirector, "when registering an indirection" do
   end
     
   it "should provide a way to get a handle to the terminus for a model" do
-    mock_terminus = mock('Terminus')
     Puppet::Indirector.expects(:terminus_for_indirection).with(:node).returns(:ldap)
-    Puppet::Indirector.expects(:terminus).returns(mock_terminus)
+    terminus = mock 'terminus'
+    terminus_class = stub 'terminus class', :new => terminus
+    Puppet::Indirector.expects(:terminus).returns(terminus_class)
     @thingie.send(:indirects, :node)
-    @thingie.indirection.should == mock_terminus
+    @thingie.indirection.should == terminus
   end
   
   it "should list the model in a list of known indirections" do
@@ -100,9 +104,10 @@ describe Puppet::Indirector, "when registering an indirection" do
   end
 
   it "should use the collection type described in the per-model configuration" do
-    mock_terminus = mock('Terminus')
+    terminus = mock 'terminus'
+    terminus_class = stub 'terminus class', :new => terminus
     Puppet::Indirector.expects(:terminus_for_indirection).with(:foo).returns(:bar)
-    Puppet::Indirector.expects(:terminus).with(:foo, :bar).returns(mock_terminus)
+    Puppet::Indirector.expects(:terminus).with(:foo, :bar).returns(terminus_class)
     @thingie.send(:indirects, :foo)
   end
   

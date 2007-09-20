@@ -14,7 +14,7 @@ module Puppet::Node::Searching
         names = node_names(key, facts)
         names.each do |name|
             name = name.to_s if name.is_a?(Symbol)
-            if node = get(name)
+            if node = find(name)
                 #Puppet.info "Found %s in %s" % [name, @source]
                 break
             end
@@ -23,7 +23,7 @@ module Puppet::Node::Searching
         # If they made it this far, we haven't found anything, so look for a
         # default node.
         unless node or names.include?("default")
-            if node = get("default")
+            if node = find("default")
                 Puppet.notice "Using default node for %s" % key
             end
         end
@@ -62,7 +62,7 @@ module Puppet::Node::Searching
 
     # Look up the node facts from our fact handler.
     def node_facts(key)
-        if facts = Puppet::Node::Facts.get(key)
+        if facts = Puppet::Node::Facts.find(key)
             facts.values
         else
             {}

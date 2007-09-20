@@ -11,17 +11,17 @@ describe Puppet::Indirector.terminus(:node, :none), " when searching for nodes" 
     end
 
     it "should create a node instance" do
-        @searcher.get("yay").should be_instance_of(Puppet::Node)
+        @searcher.find("yay").should be_instance_of(Puppet::Node)
     end
 
     it "should create a new node with the correct name" do
-        @searcher.get("yay").name.should == "yay"
+        @searcher.find("yay").name.should == "yay"
     end
 
     it "should merge the node's facts" do
         facts = Puppet::Node::Facts.new("yay", "one" => "two", "three" => "four")
-        Puppet::Node::Facts.expects(:get).with("yay").returns(facts)
-        node = @searcher.get("yay")
+        Puppet::Node::Facts.expects(:find).with("yay").returns(facts)
+        node = @searcher.find("yay")
         node.parameters["one"].should == "two"
         node.parameters["three"].should == "four"
     end

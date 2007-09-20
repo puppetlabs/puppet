@@ -7,21 +7,22 @@ require 'puppet/node/facts'
 describe Puppet::Node::Facts, " when indirecting" do
     before do
         @terminus = mock 'terminus'
-        Puppet::Indirector.terminus(:facts, Puppet[:fact_store].intern).stubs(:new).returns(@terminus)
+        Puppet::Node::Facts.stubs(:indirection).returns(@terminus)
 
         # We have to clear the cache so that the facts ask for our terminus stub,
         # instead of anything that might be cached.
         Puppet::Indirector::Indirection.clear_cache
+        @facts = Puppet::Node::Facts.new("me", "one" => "two")
     end
 
     it "should redirect to the specified fact store for retrieval" do
-        @terminus.expects(:get).with(:my_facts)
-        Puppet::Node::Facts.get(:my_facts)
+        @terminus.expects(:find).with(:my_facts)
+        Puppet::Node::Facts.find(:my_facts)
     end
 
     it "should redirect to the specified fact store for storage" do
-        @terminus.expects(:post).with(:my_facts)
-        Puppet::Node::Facts.post(:my_facts)
+        @terminus.expects(:save).with(@facts)
+        @facts.save
     end
 
     after do
