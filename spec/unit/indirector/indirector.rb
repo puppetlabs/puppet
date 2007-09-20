@@ -145,7 +145,9 @@ describe Puppet::Indirector, "when registering an indirection" do
 # TODO:  node lookup retries/searching
 end
 
-# 
+
+
+
 # describe Puppet::Indirector::Terminus do
 #   it "should register itself"  # ???
 #   
