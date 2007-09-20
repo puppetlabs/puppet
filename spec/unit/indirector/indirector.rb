@@ -73,9 +73,11 @@ describe Puppet::Indirector, "when registering an indirection" do
   end
   
   it "should make available the indirection used for a registered class" do
+    mock_terminus = mock('Terminus')
+    Puppet::Indirector.expects(:terminus_for_indirection).with(:node).returns(:ldap)
+    Puppet::Indirector.expects(:terminus).returns(mock_terminus)
     @thingie.send(:indirects, :node)
-    @thingie.indirection.indirection.should == :node
-    @thingie.indirection.name.should == :ldap
+    @thingie.indirection.should == mock_terminus
   end
   
   it "should make a save method available on instances of the registered class" do
@@ -98,16 +100,43 @@ describe Puppet::Indirector, "when registering an indirection" do
   end
 
   it "should use the Terminus described in the class configuration" do
-    Puppet::Indirector.expects(:terminus_for_indirection).with(:node).returns(:ldap)
-    @thingie.send(:indirects, :node)
-    @thingie.indirection.indirection.should == :node
-    @thingie.indirection.name.should == :ldap
+    mock_terminus = mock('Terminus')
+    Puppet::Indirector.expects(:terminus_for_indirection).with(:foo).returns(:bar)
+    Puppet::Indirector.expects(:terminus).with(:foo, :bar).returns(mock_terminus)
+    @thingie.send(:indirects, :foo)
   end
   
-  it "should use the Terminus find method when calling find on the registered class"
-  it "should use the Terminus save method when calling save on the registered class"
-  it "should use the Terminus destroy method when calling destroy on the registered class"
-  it "should use the Terminus search method when calling search on the registered class"
+  it "should delegate to the Terminus find method when calling find on the registered class" do
+    @thingie.send(:indirects, :node)
+    mock_terminus = mock('Terminus')
+    mock_terminus.expects(:find)
+    @thingie.expects(:indirection).returns(mock_terminus)
+    @thingie.find
+  end
+
+  it "should delegate to the Terminus destroy method when calling destroy on the registered class" do
+    @thingie.send(:indirects, :node)
+    mock_terminus = mock('Terminus')
+    mock_terminus.expects(:destroy)
+    @thingie.expects(:indirection).returns(mock_terminus)
+    @thingie.destroy  
+  end
+  
+  it "should delegate to the Terminus search method when calling search on the registered class" do
+    @thingie.send(:indirects, :node)
+    mock_terminus = mock('Terminus')
+    mock_terminus.expects(:search)
+    @thingie.expects(:indirection).returns(mock_terminus)
+    @thingie.search    
+  end
+  
+  it "should delegate to the Terminus save method when calling save on the registered class" do
+    @thingie.send(:indirects, :node)
+    mock_terminus = mock('Terminus')
+    mock_terminus.expects(:save)
+    @thingie.expects(:indirection).returns(mock_terminus)
+    @thingie.new.save        
+  end
 
   it "should allow a registered class to specify variations in behavior for a given Terminus"
 end
