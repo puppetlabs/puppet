@@ -8,7 +8,6 @@ class Puppet::Indirector::Indirection
     end
     
     attr_accessor :name, :termini
-    attr_reader :to
 
     # Clear our cached list of termini.
     # This is only used for testing.
@@ -31,34 +30,44 @@ class Puppet::Indirector::Indirection
             end
         end
         @termini = {}
+        raise(ArgumentError, "Indirection %s is already defined" % @name) if @@indirections.find { |i| i.name == @name }
         @@indirections << self
     end
 
     # Return the singleton terminus for this indirection.
-    def terminus(name = nil)
+    def terminus(terminus_name = nil)
         # Get the name of the terminus.
-        unless name
-            unless param_name = self.to
-                raise ArgumentError, "You must specify an indirection terminus for indirection %s" % self.name
+        unless terminus_name
+            param_name = "%s_terminus" % self.name
+            if Puppet.config.valid?(param_name)
+                terminus_name = Puppet.config[param_name]
+            else
+                terminus_name = Puppet[:default_terminus]
             end
-            name = Puppet[param_name]
-            name = name.intern if name.is_a?(String)
+            unless terminus_name and terminus_name.to_s != ""
+                raise ArgumentError, "Invalid terminus name %s" % terminus_name.inspect
+            end
+            terminus_name = terminus_name.intern if terminus_name.is_a?(String)
         end
         
-        unless @termini[name]
-            @termini[name] = make_terminus(name)
-        end
-        @termini[name]
+        return @termini[terminus_name] ||= make_terminus(terminus_name)
     end
 
-    # Validate the parameter.  This requires that indirecting
-    # classes require 'puppet/defaults', because of ordering issues,
-    # but it makes problems much easier to debug.
-    def to=(param_name)
-        unless Puppet.config.valid?(param_name)
-            raise ArgumentError, "Configuration parameter '%s' for indirection '%s' does not exist'" % [param_name, self.name]
-        end
-        @to = param_name
+    def find(*args)
+        terminus.find(*args)
+    end
+
+    def destroy(*args)
+        terminus.destroy(*args)
+    end
+
+    def search(*args)
+        terminus.search(*args)
+    end
+
+    # these become instance methods 
+    def save(*args)
+        terminus.save(*args)
     end
 
     private

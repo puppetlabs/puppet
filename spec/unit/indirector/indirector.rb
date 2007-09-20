@@ -2,26 +2,6 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/defaults'
 require 'puppet/indirector'
 
-describe Puppet::Indirector do
-  it "should provide a way to clear all registrations" do
-    Puppet::Indirector.should respond_to(:reset)
-  end
-  
-  it "should provide a way to access a list of all registered models" do
-    Puppet::Indirector.should respond_to(:indirections)
-  end
-end
-
-describe Puppet::Indirector, "when no models are registered" do
-  before do
-    Puppet::Indirector.reset
-  end
-  
-  it "should provide an empty list of registered models" do
-    Puppet::Indirector.indirections.should == {}
-  end  
-end
-
 describe Puppet::Indirector, " when available to a model" do
   before do
     @thingie = Class.new do
@@ -31,6 +11,38 @@ describe Puppet::Indirector, " when available to a model" do
 
   it "should provide a way for the model to register an indirection under a name" do
     @thingie.should respond_to(:indirects)
+  end
+  
+  it "should give model the ability to lookup a model instance by letting the indirection perform the lookup" do
+    @thingie.send(:indirects, :node)
+    mock_terminus = mock('Terminus')
+    mock_terminus.expects(:find)
+    @thingie.expects(:indirection).returns(mock_terminus)
+    @thingie.find
+  end
+
+  it "should give model the ability to remove model instances from a terminus by letting the indirection remove the instance" do
+    @thingie.send(:indirects, :node)
+    mock_terminus = mock('Terminus')
+    mock_terminus.expects(:destroy)
+    @thingie.expects(:indirection).returns(mock_terminus)
+    @thingie.destroy  
+  end
+  
+  it "should give model the ability to search for model instances by letting the indirection find the matching instances" do
+    @thingie.send(:indirects, :node)
+    mock_terminus = mock('Terminus')
+    mock_terminus.expects(:search)
+    @thingie.expects(:indirection).returns(mock_terminus)
+    @thingie.search    
+  end
+  
+  it "should give model the ability to store a model instance by letting the indirection store the instance" do
+    @thingie.send(:indirects, :node)
+    mock_terminus = mock('Terminus')
+    mock_terminus.expects(:save)
+    @thingie.expects(:indirection).returns(mock_terminus)
+    @thingie.new.save        
   end
 end
 
@@ -49,107 +61,16 @@ describe Puppet::Indirector, "when registering an indirection" do
   it "should require a name when registering a model" do
     Proc.new {@thingie.send(:indirects) }.should raise_error(ArgumentError)
   end
-  
-  it "should require each model to be registered under a unique name" do
-    @thingie.send(:indirects, :name)
-    Proc.new {@thingie.send(:indirects, :name)}.should raise_error(ArgumentError)
-  end
-  
-  it "should not allow a model to register under multiple names" do
-    @thingie.send(:indirects, :first)
-    Proc.new {@thingie.send(:indirects, :second)}.should raise_error(ArgumentError)
-  end
-  
-  it "should allow finding an instance of a model in a collection" do
-    @thingie.send(:indirects, :first)
-    @thingie.should respond_to(:find)
-  end
     
-  it "should allow removing an instance of a model from a collection" do
-    @thingie.send(:indirects, :first)
-    @thingie.should respond_to(:destroy)
-  end
-  
-  it "should allow finding all matching model instances in a collection" do
-    @thingie.send(:indirects, :first)
-    @thingie.should respond_to(:search)
-  end
-  
-  it "should allow for storing a model instance in a collection" do
-    @thing = Class.new do
-      extend Puppet::Indirector
-      indirects :thing
-    end.new
-    @thing.should respond_to(:save)
-  end
-    
-  it "should provide a way to get a handle to the terminus for a model" do
-    Puppet::Indirector.expects(:terminus_for_indirection).with(:node).returns(:ldap)
-    terminus = mock 'terminus'
-    terminus_class = stub 'terminus class', :new => terminus
-    Puppet::Indirector.expects(:terminus).returns(terminus_class)
-    @thingie.send(:indirects, :node)
-    @thingie.indirection.should == terminus
-  end
-  
-  it "should list the model in a list of known indirections" do
-    @thingie.send(:indirects, :name)
-    Puppet::Indirector.indirections[:name].should == @thingie
-  end  
-  
-  # when dealing with Terminus methods
-  it "should consult a per-model configuration to determine what kind of collection a model is being stored in" do
-    Puppet::Indirector.expects(:terminus_for_indirection).with(:node).returns(:ldap)
-    @thingie.send(:indirects, :node)
-  end
+    it "should not allow a model to register under multiple names" do
+        @thingie.send(:indirects, :first)
+        Proc.new {@thingie.send(:indirects, :second)}.should raise_error(ArgumentError)
+    end
 
-  it "should use the collection type described in the per-model configuration" do
-    terminus = mock 'terminus'
-    terminus_class = stub 'terminus class', :new => terminus
-    Puppet::Indirector.expects(:terminus_for_indirection).with(:foo).returns(:bar)
-    Puppet::Indirector.expects(:terminus).with(:foo, :bar).returns(terminus_class)
-    @thingie.send(:indirects, :foo)
-  end
-  
-  it "should handle lookups of a model instance by letting the terminus perform the lookup" do
-    @thingie.send(:indirects, :node)
-    mock_terminus = mock('Terminus')
-    mock_terminus.expects(:find)
-    @thingie.expects(:indirection).returns(mock_terminus)
-    @thingie.find
-  end
-
-  it "should handle removing model instances from a collection letting the terminus remove the instance" do
-    @thingie.send(:indirects, :node)
-    mock_terminus = mock('Terminus')
-    mock_terminus.expects(:destroy)
-    @thingie.expects(:indirection).returns(mock_terminus)
-    @thingie.destroy  
-  end
-  
-  it "should handle searching for model instances by letting the terminus find the matching instances" do
-    @thingie.send(:indirects, :node)
-    mock_terminus = mock('Terminus')
-    mock_terminus.expects(:search)
-    @thingie.expects(:indirection).returns(mock_terminus)
-    @thingie.search    
-  end
-  
-  it "should handle storing a model instance by letting the terminus store the instance" do
-    @thingie.send(:indirects, :node)
-    mock_terminus = mock('Terminus')
-    mock_terminus.expects(:save)
-    @thingie.expects(:indirection).returns(mock_terminus)
-    @thingie.new.save        
-  end
-  
-  it "should provide the same terminus for a given registered model"
-
-  it "should not access the collection for a registered model until that collection is actually needed"
+    it "should create an indirection instance to manage each indirecting model"
 
 # TODO:  node lookup retries/searching
 end
-
 
 
 
