@@ -79,6 +79,7 @@ module Puppet::Indirector
     end
     
     # clear out the list of known indirections
+#JRB:TODO -- I would prefer to get rid of this altogether, but it's implicated in testing, given the class loader
     def self.reset
       @indirections = {}
       @class_indirections = {}
@@ -104,6 +105,7 @@ module Puppet::Indirector
     
     def self.terminus_for_indirection(name)
 # JRB:TODO make this do something useful, aka look something up in a .yml file
+      # JRB:TODO look up name + '_source' in standard configuration
       :ldap
     end
 
