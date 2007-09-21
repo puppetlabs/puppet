@@ -22,6 +22,7 @@ module Puppet::Indirector
         def name
             self.class.name
         end
+
         def indirection
             self.class.indirection
         end
@@ -77,82 +78,37 @@ module Puppet::Indirector
     def self.terminus(indirection, terminus)
         loaded_instance(indirection, terminus)
     end
-    
-    # clear out the list of known indirections
-#JRB:TODO -- I would prefer to get rid of this altogether, but it's implicated in testing, given the class loader
-    def self.reset
-      @indirections = {}
-      @class_indirections = {}
-    end
-    
-    # return a hash of registered indirections, keys are indirection names, values are classes which handle the indirections
-    def self.indirections
-      @indirections ||= {}
-      @indirections
-    end
-    
-    # associate an indirection name with the class which handles the indirection
-    def self.register_indirection(name, klass)
-      @indirections ||= {}
-      @class_indirections ||= {}
-      
-      raise ArgumentError, "Already performing an indirection of %s; cannot redirect %s" % [name, klass.name] if @indirections[name]
-      raise ArgumentError, "Class %s is already redirecting to %s; cannot redirect to %s" % 
-        [klass.name, @class_indirections[klass.name], name] if @class_indirections[klass.name]
-      @class_indirections[klass.name] = name
-      @indirections[name] = klass
-    end
-    
-    def self.terminus_for_indirection(name)
-# JRB:TODO make this do something useful, aka look something up in a .yml file
-      # JRB:TODO look up name + '_source' in standard configuration
-        case name
-        when :node: :none
-        when :facts: :yaml
-        else
-            raise ArgumentError, "Unknown indirection"
-        end
-    end
 
     # Declare that the including class indirects its methods to
     # this terminus.  The terminus name must be the name of a Puppet
     # default, not the value -- if it's the value, then it gets
     # evaluated at parse time, which is before the user has had a chance
     # to override it.
-    def indirects(indirection, options = {})
-#JRB:TODO remove options hash  ^^^
-
-        # associate the name :node, with this class, Node
-        # also, do error checking (already registered, etc.)
-        Puppet::Indirector.register_indirection(indirection, self)
-
-        # populate this registered class with the various new methods
+    def indirects(indirection)
+        raise(ArgumentError, "Already handling indirection for %s; cannot also handle %s" % [@indirection.name, indirection]) if defined?(@indirection) and indirection
+        # populate this class with the various new methods
         extend ClassMethods
         include InstanceMethods
 
-        # look up the type of Terminus for this name (:node => :ldap)
-        terminus = Puppet::Indirector.terminus_for_indirection(indirection)
-
         # instantiate the actual Terminus for that type and this name (:ldap, w/ args :node)
-        # & hook the instantiated Terminus into this registered class (Node: @indirection = terminus)
+        # & hook the instantiated Terminus into this class (Node: @indirection = terminus)
         Puppet::Indirector.enable_autoloading_indirection indirection
-        raise("No Terminus %s for %s" % [terminus, indirection]) unless @indirection = Puppet::Indirector.terminus(indirection, terminus).new
+        @indirection = Puppet::Indirector::Indirection.new(indirection)
     end
 
     module ClassMethods   
       attr_reader :indirection
          
       def find(*args)
-        self.indirection.find(*args)
-        # JRB:TODO look up the indirection, and call its .find method
+        indirection.find(*args)
       end
 
       def destroy(*args)
-        self.indirection.destroy(*args)
+        indirection.destroy(*args)
       end
 
       def search(*args)
-        self.indirection.search(*args)
+        indirection.search(*args)
       end
     end
 
@@ -162,37 +118,4 @@ module Puppet::Indirector
         self.class.indirection.save(self, *args)
       end
     end
-    
-    # JRB:FIXME: these methods to be deprecated:
-
-    # Define methods for each of the HTTP methods.  These just point to the
-    # termini, with consistent error-handling.  Each method is called with
-    # the first argument being the indirection type and the rest of the
-    # arguments passed directly on to the indirection terminus.  There is
-    # currently no attempt to standardize around what the rest of the arguments
-    # should allow or include or whatever.
-    #   There is also no attempt to pre-validate that a given indirection supports
-    # the method in question.  We should probably require that indirections
-    # declare supported methods, and then verify that termini implement all of
-    # those methods.
-    # [:get, :post, :put, :delete].each do |method_name|
-    #     define_method(method_name) do |*args|
-    #         redirect(method_name, *args)
-    #     end
-    # end
-    # 
-    # private
-    # 
-    # 
-    # # JRB:TODO this needs to be renamed, as it actually ends up on the model class, where it might conflict with something
-    # # Redirect one of our methods to the corresponding method on the Terminus
-    # def redirect(method_name, *args)
-    #     begin
-    #         @indirection.terminus.send(method_name, *args)
-    #     rescue NoMethodError => detail
-    #         puts detail.backtrace if Puppet[:trace]
-    #         raise ArgumentError, "The %s terminus of the %s indirection failed to respond to %s: %s" %
-    #             [@indirection.terminus.name, @indirection.name, method_name, detail]
-    #     end
-    # end
 end
