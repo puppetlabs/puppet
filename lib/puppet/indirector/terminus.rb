@@ -20,6 +20,29 @@ class Puppet::Indirector::Terminus
                 raise ArgumentError, "Could not find indirection instance %s" % name
             end
         end
+
+        # Register our subclass with the appropriate indirection.
+        # This follows the convention that our terminus is named after the
+        # indirection.
+        def inherited(subclass)
+            longname = subclass.to_s
+            if longname =~ /#<Class/
+                raise ArgumentError, "Terminus subclasses must have associated constants"
+            end
+            names = longname.split("::")
+
+            # First figure out the indirection
+            shortname = names.pop.downcase.intern
+            subclass.indirection = shortname
+
+            if names.empty?
+                raise ArgumentError, "Terminus subclasses need to have their constants include the parent class for setting the terminus name"
+            end
+
+            # And then the name (e.g., ldap or yaml)
+            termtype = names.pop.downcase.intern
+            subclass.name = termtype
+        end
     end
 
     def initialize
