@@ -39,8 +39,6 @@ module Puppet::Indirector
     # does all of the rest -- loading, storing, and retrieving by name.
     require 'puppet/util/instance_loader'
     extend Puppet::Util::InstanceLoader
-
-# JRB:TODO - where did this come from, re: the specs?  also, shouldn't this be protected/private?
     
     # Register a given indirection type.  The classes including this module
     # handle creating terminus instances, but the module itself handles

@@ -36,6 +36,11 @@ describe Puppet::Indirector, "when registering an indirection" do
         Proc.new { @thingie.indirects :second }.should raise_error(ArgumentError)
     end
 
+    it "should set up instance loading for the indirection" do
+        Puppet::Indirector.expects(:instance_load).with(:test, "puppet/indirector/test")
+        @indirection = @thingie.indirects(:test)
+    end
+
     after do
         @indirection.delete if @indirection
     end
@@ -79,6 +84,14 @@ describe Puppet::Indirector, " when redirecting model" do
   end
 end
 
+describe Puppet::Indirector, " when retrieving terminus classes" do
+    it "should allow terminus classes to register themselves"
+
+    it "should provide a method to retrieve a terminus class by name and indirection" do
+        Puppet::Indirector.expects(:loaded_instance).with(:indirection, :terminus)
+        Puppet::Indirector.terminus(:indirection, :terminus)
+    end
+end
 
 
 # describe Puppet::Indirector::Terminus do
