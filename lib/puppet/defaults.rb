@@ -499,9 +499,9 @@ module Puppet
             "The backend store to use for client facts."]
     )
 
-    self.setdefaults(:yamlfacts,
-        :yamlfactdir => ["$vardir/facts",
-            "The directory in which client facts are stored when the yaml fact store is used."]
+    self.setdefaults(:yaml,
+        :yamldir => ["$vardir/yaml",
+            "The directory in which YAML data is stored, usually in a subdirectory."]
     )
 
     self.setdefaults(:rails,

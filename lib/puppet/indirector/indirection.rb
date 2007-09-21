@@ -6,6 +6,12 @@ class Puppet::Indirector::Indirection
     def self.clear_cache
         @@indirections.each { |ind| ind.clear_cache }
     end
+
+    # Find an indirection by name.  This is provided so that Terminus classes
+    # can specifically hook up with the indirections they are associated with.
+    def self.instance(name)
+        @@indirections.find { |i| i.name == name }
+    end
     
     attr_accessor :name, :termini
 

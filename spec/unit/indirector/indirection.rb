@@ -20,6 +20,21 @@ describe Puppet::Indirector::Indirection, " when initializing" do
     end
 end
 
+describe Puppet::Indirector::Indirection, " when managing indirection instances" do
+    it "should allow an indirection to be retrieved by name" do
+        @indirection = Puppet::Indirector::Indirection.new(:test)
+        Puppet::Indirector::Indirection.instance(:test).should equal(@indirection)
+    end
+
+    it "should return nil when the named indirection has not been created" do
+        Puppet::Indirector::Indirection.instance(:test).should be_nil
+    end
+
+    after do
+        @indirection.delete if defined? @indirection
+    end
+end
+
 describe Puppet::Indirector::Indirection, " when choosing terminus types" do
     before do
         @indirection = Puppet::Indirector::Indirection.new(:test)
