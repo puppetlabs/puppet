@@ -7,28 +7,8 @@ module Puppet::Indirector
     # LAK:FIXME We need to figure out how to handle documentation for the
     # different indirection types.
 
-# JRB:TODO factor this out into its own class, with specs, and require it here
-# require 'puppet/indirector/terminus'
-
-    # A simple class that can function as the base class for indirected types.
-    class Terminus
-        require 'puppet/util/docs'
-        extend Puppet::Util::Docs
-        
-        class << self
-            attr_accessor :name, :indirection
-        end
-        
-        def name
-            self.class.name
-        end
-
-        def indirection
-            self.class.indirection
-        end
-    end
-
     require 'puppet/indirector/indirection'
+    require 'puppet/indirector/terminus'
 
     # This handles creating the terminus classes.
     require 'puppet/util/classgen'
