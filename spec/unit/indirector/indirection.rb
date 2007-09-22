@@ -51,7 +51,7 @@ describe Puppet::Indirector::Indirection, " when choosing terminus types" do
     it "should follow a convention on using per-model configuration parameters to determine the terminus class" do
         Puppet.config.expects(:valid?).with('test_terminus').returns(true)
         Puppet.config.expects(:value).with('test_terminus').returns(:foo)
-        Puppet::Indirector::Terminus.expects(:terminus_class).with(:test, :foo).returns(@terminus_class)
+        Puppet::Indirector::Terminus.expects(:terminus_class).with(:foo, :test).returns(@terminus_class)
         @indirection.terminus.should equal(@terminus)
     end
 
@@ -59,12 +59,12 @@ describe Puppet::Indirector::Indirection, " when choosing terminus types" do
     per-model configuration parameter is available" do
         Puppet.config.expects(:valid?).with('test_terminus').returns(false)
         Puppet.config.expects(:value).with(:default_terminus).returns(:foo)
-        Puppet::Indirector::Terminus.expects(:terminus_class).with(:test, :foo).returns(@terminus_class)
+        Puppet::Indirector::Terminus.expects(:terminus_class).with(:foo, :test).returns(@terminus_class)
         @indirection.terminus.should equal(@terminus)
     end
 
     it "should select the specified terminus class if a name is provided" do
-        Puppet::Indirector::Terminus.expects(:terminus_class).with(:test, :foo).returns(@terminus_class)
+        Puppet::Indirector::Terminus.expects(:terminus_class).with(:foo, :test).returns(@terminus_class)
         @indirection.terminus(:foo).should equal(@terminus)
     end
 
@@ -77,7 +77,7 @@ describe Puppet::Indirector::Indirection, " when choosing terminus types" do
     end
 
     it "should fail when the specified terminus class cannot be found" do
-        Puppet::Indirector::Terminus.expects(:terminus_class).with(:test, :foo).returns(nil)
+        Puppet::Indirector::Terminus.expects(:terminus_class).with(:foo, :test).returns(nil)
         proc { @indirection.terminus(:foo) }.should raise_error(ArgumentError)
     end
 
@@ -91,7 +91,7 @@ describe Puppet::Indirector::Indirection, " when managing terminus instances" do
         @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
         @terminus = mock 'terminus'
         @terminus_class = mock 'terminus class'
-        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:test, :foo).returns(@terminus_class)
+        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:foo, :test).returns(@terminus_class)
     end
 
     it "should create an instance of the chosen terminus class" do

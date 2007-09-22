@@ -5,10 +5,10 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 describe Puppet::Module, " when building its search path" do
     include PuppetTest
 
-    it "should ignore unqualified paths in the search path" do
+    it "should fully qualify unqualified paths in the search path" do
         Puppet[:modulepath] = "something:/my/something"
         File.stubs(:directory?).returns(true)
-        Puppet::Module.modulepath.should == %w{/my/something}
+        Puppet::Module.modulepath.should == [File.join(Dir.getwd, 'something'), "/my/something"]
     end
 
     it "should ignore paths that do not exist" do

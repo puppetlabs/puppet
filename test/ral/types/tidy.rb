@@ -55,7 +55,7 @@ class TestTidy < Test::Unit::TestCase
         assert_nothing_raised {
             link = newlink(:target => source, :recurse => true)
         }
-        comp = newcomp("linktest",link)
+        comp = mk_configuration("linktest",link)
         cycle(comp)
 
         path = link.name

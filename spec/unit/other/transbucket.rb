@@ -48,7 +48,7 @@ describe Puppet::TransBucket do
     end
 end
 
-describe Puppet::TransBucket, " when generating a resource graph" do
+describe Puppet::TransBucket, " when generating a configuration" do
     before do
         @bottom = Puppet::TransBucket.new
         @bottom.type = "fake"
@@ -70,7 +70,7 @@ describe Puppet::TransBucket, " when generating a resource graph" do
         @top.push(@topobj)
         @top.push(@middle)
 
-        @graph = @top.to_graph
+        @config = @top.to_configuration
 
         @users = %w{top middle bottom}
         @fakes = %w{fake[bottom] fake[middle] fake[top]}
@@ -78,18 +78,28 @@ describe Puppet::TransBucket, " when generating a resource graph" do
 
     it "should convert all transportable objects to RAL resources" do
         @users.each do |name|
-            @graph.vertices.find { |r| r.class.name == :user and r.title == name }.should be_instance_of(Puppet::Type.type(:user))
+            @config.vertices.find { |r| r.class.name == :user and r.title == name }.should be_instance_of(Puppet::Type.type(:user))
         end
     end
 
     it "should convert all transportable buckets to RAL components" do
         @fakes.each do |name|
-            @graph.vertices.find { |r| r.class.name == :component and r.title == name }.should be_instance_of(Puppet::Type.type(:component))
+            @config.vertices.find { |r| r.class.name == :component and r.title == name }.should be_instance_of(Puppet::Type.type(:component))
         end
     end
 
     it "should add all resources to the graph's resource table" do
-        @graph.resource("fake[top]").should equal(@top)
+        @config.resource("fake[top]").should equal(@top)
+    end
+
+    it "should finalize all resources" do
+        @config.vertices.each do |vertex| vertex.should be_finalized end
+    end
+
+    it "should only call to_type on each resource once" do
+        @topobj.expects(:to_type)
+        @bottomobj.expects(:to_type)
+        @top.to_configuration
     end
 
     after do

@@ -194,8 +194,8 @@ begin
     if Puppet[:parseonly]
         exit(0)
     end
-    client.getconfig
-    client.apply
+    config = client.getconfig
+    config.apply
 rescue => detail
     if detail.is_a?(XMLRPC::FaultException)
         $stderr.puts detail.message

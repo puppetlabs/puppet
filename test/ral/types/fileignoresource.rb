@@ -73,19 +73,8 @@ class TestFileIgnoreSources < Test::Unit::TestCase
             )
         }
 
-        #make a component and adds the file
-        comp = Puppet.type(:component).create(
-            :name => "component"
-        )
-        comp.push tofile
-
-        #make, evaluate transaction and sync the component
-        assert_nothing_raised {
-            trans = comp.evaluate
-        }
-        assert_nothing_raised {
-            trans.evaluate
-        }
+        config = mk_configuration(tofile)
+        config.apply
   
       
         #topath should exist as a directory with sourcedir as a directory
@@ -150,19 +139,8 @@ class TestFileIgnoreSources < Test::Unit::TestCase
             )
         }
 
-        #make a component and adds the file
-        comp = Puppet.type(:component).create(
-            :name => "component"
-        )
-        comp.push tofile
-
-        #make, evaluate transaction and sync the component
-        assert_nothing_raised {
-            trans = comp.evaluate
-        }
-        assert_nothing_raised {
-            trans.evaluate
-        }
+        config = mk_configuration(tofile)
+        config.apply
               
         #topath should exist as a directory with sourcedir as a directory
        
@@ -170,6 +148,7 @@ class TestFileIgnoreSources < Test::Unit::TestCase
         assert(FileTest.exists?(File.join(topath,sourcefile1)))
         assert(FileTest.exists?(File.join(topath,subdir)))
         assert(FileTest.exists?(File.join(File.join(topath,subdir),sourcefile1)))
+
         #This file should not
         assert(!(FileTest.exists?(File.join(topath,sourcefile2))))
         assert(!(FileTest.exists?(File.join(topath,subdir2))))
@@ -235,19 +214,8 @@ class TestFileIgnoreSources < Test::Unit::TestCase
             )
         }
 
-        #make a component and adds the file
-        comp = Puppet.type(:component).create(
-            :name => "component"
-        )
-        comp.push tofile
-
-        #make, evaluate transaction and sync the component
-        assert_nothing_raised {
-            trans = comp.evaluate
-        }
-        assert_nothing_raised {
-            trans.evaluate
-        }
+        config = mk_configuration(tofile)
+        config.apply
 
         #topath should exist as a directory with sourcedir as a directory
 
@@ -273,5 +241,3 @@ class TestFileIgnoreSources < Test::Unit::TestCase
     end
 
 end
-
-# $Id$

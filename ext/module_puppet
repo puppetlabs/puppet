@@ -191,8 +191,8 @@ if parseonly
 end
 
 begin
-    client.getconfig
-    client.apply
+    config = client.getconfig
+    config.apply
 rescue => detail
     Puppet.err detail
     exit(1)

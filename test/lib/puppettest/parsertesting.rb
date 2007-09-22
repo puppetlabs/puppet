@@ -308,17 +308,17 @@ module PuppetTest::ParserTesting
                                                     )
         }
 
+        trans = nil
+        assert_nothing_raised {
+            trans = interp.compile(mknode)
+        }
+
         config = nil
         assert_nothing_raised {
-            config = interp.compile(mknode)
+            config = trans.extract.to_configuration
         }
 
-        comp = nil
-        assert_nothing_raised {
-            comp = config.extract.to_type
-        }
-
-        assert_apply(comp)
+        config.apply
 
         files.each do |file|
             assert(FileTest.exists?(file), "Did not create %s" % file)

@@ -19,6 +19,25 @@ module PuppetTest
         }
     end
 
+    # Turn a list of resources, or possibly a configuration and some resources,
+    # into a configuration object.
+    def resources2config(*resources)
+        if resources[0].is_a?(Puppet::Node::Configuration)
+            config = resources.shift
+            unless resources.empty?
+                resources.each { |r| config.add_resource r }
+            end
+        elsif resources[0].is_a?(Puppet.type(:component))
+            raise ArgumentError, "resource2config() no longer accpts components"
+            comp = resources.shift
+            comp.delve
+        else
+            config = Puppet::Node::Configuration.new
+            resources.each { |res| config.add_resource res }
+        end
+        return config
+    end
+
     # stop any services that might be hanging around
     def stopservices
         if stype = Puppet::Type.type(:service)
@@ -127,20 +146,17 @@ module PuppetTest
         }
     end
 
-    def newcomp(*ary)
-        name = nil
-        if ary[0].is_a?(String)
-            name = ary.shift
+    def mk_configuration(*resources)
+        if resources[0].is_a?(String)
+            name = resources.shift
         else
-            name = ary[0].title
+            name = :testing
+        end
+        config = Puppet::Node::Configuration.new :testing do |conf|
+            resources.each { |resource| conf.add_resource resource }
         end
 
-        comp = Puppet.type(:component).create(:name => name)
-        ary.each { |item|
-            comp.push item
-        }
-
-        return comp
+        return config
     end
     
     def setme

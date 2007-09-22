@@ -74,7 +74,7 @@ class Puppet::Network::Handler
             client, clientip = clientname(client, clientip, facts)
 
             # Pass the facts to the fact handler
-            Puppet::Node::Facts.post(Puppet::Node::Facts.new(client, facts))
+            Puppet::Node::Facts.new(client, facts).save
 
             # And get the configuration from the config handler
             begin

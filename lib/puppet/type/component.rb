@@ -52,6 +52,7 @@ Puppet::Type.newtype(:component) do
     # this is only called on one component over the whole system
     # this also won't work with scheduling, but eh
     def evaluate
+        raise "Component#evaluate is deprecated"
         self.finalize unless self.finalized?
         transaction = Puppet::Transaction.new(self)
         transaction.component = self
@@ -127,27 +128,6 @@ Puppet::Type.newtype(:component) do
             return false
         end
     end
-
-    def push(*childs)
-        unless defined? @children
-            @children = []
-        end
-        childs.each { |child|
-            # Make sure we don't have any loops here.
-            if parentof?(child)
-                devfail "Already the parent of %s[%s]" % [child.class.name, child.title]
-            end
-            unless child.is_a?(Puppet::Type)
-                self.debug "Got object of type %s" % child.class
-                self.devfail(
-                    "Containers can only contain Puppet resources, not %s" %
-                    child.class
-                )
-            end
-            @children.push(child)
-            child.parent = self
-        }
-    end
     
     # Component paths are special because they function as containers.
     def pathbuilder
@@ -162,8 +142,8 @@ Puppet::Type.newtype(:component) do
         else
             myname = self.title
         end
-        if self.parent
-            return [@parent.pathbuilder, myname]
+        if p = self.parent
+            return [p.pathbuilder, myname]
         else
             return [myname]
         end
@@ -171,25 +151,6 @@ Puppet::Type.newtype(:component) do
 
     def ref
         title
-    end
-
-    # Remove an object.  The argument determines whether the object's
-    # subscriptions get eliminated, too.
-    def remove(rmdeps = true)
-        # Our children remove themselves from our @children array (else the object
-        # we called this on at the top would not be removed), so we duplicate the
-        # array and iterate over that.  If we don't do this, only half of the
-        # objects get removed.
-        @children.dup.each { |child|
-            child.remove(rmdeps)
-        }
-
-        @children.clear
-
-        # Get rid of params and provider, too.
-        super
-
-        @parent = nil
     end
 
     # We have a different way of setting the title
@@ -207,30 +168,12 @@ Puppet::Type.newtype(:component) do
     end
 
     def refresh
-        @children.collect { |child|
+        configuration.adjacent(self).each do |child|
             if child.respond_to?(:refresh)
                 child.refresh
                 child.log "triggering %s" % :refresh
             end
-        }
-    end
-    
-    # Convert to a graph object with all of the container info.
-    def to_graph
-        graph = Puppet::PGraph.new
-        
-        delver = proc do |obj|
-            obj.each do |child|
-                graph.add_edge!(obj, child)
-                if child.is_a?(self.class)
-                    delver.call(child)
-                end
-            end
         end
-        
-        delver.call(self)
-        
-        return graph
     end
 
     def to_s
@@ -241,5 +184,3 @@ Puppet::Type.newtype(:component) do
         end
     end
 end
-
-# $Id$
