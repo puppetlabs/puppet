@@ -290,7 +290,7 @@ class TestFileSources < Test::Unit::TestCase
         assert_equal([dfileobj], result)
         
         # Clean this up so it can be recreated
-        dfileobj.remove
+        config.remove_resource(dfileobj)
         
         # Make sure we correctly iterate over the sources
         nosource = tempfile()

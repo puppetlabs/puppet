@@ -316,9 +316,15 @@ class Type
     def parent
         return nil unless configuration
 
-        # We should never have more than one parent, so let's just ignore
-        # it if we happen to.
-        if parents = configuration.relationship_graph.adjacent(self, :direction => :in)
+        # This is kinda weird.
+        if implicit?
+            parents = configuration.relationship_graph.adjacent(self, :direction => :in)
+        else
+            parents = configuration.adjacent(self, :direction => :in)
+        end
+        if parents
+            # We should never have more than one parent, so let's just ignore
+            # it if we happen to.
             return parents.shift
         else
             return nil

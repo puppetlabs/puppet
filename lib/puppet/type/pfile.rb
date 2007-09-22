@@ -650,6 +650,9 @@ module Puppet
                     return nil
                 end
             end
+
+            # LAK:FIXME This shouldn't be necessary, but as long as we're
+            # modeling the relationship graph specifically, it is.
             configuration.relationship_graph.add_edge! self, child
             unless child.parent
                 raise "Did not set parent of %s" % child.ref

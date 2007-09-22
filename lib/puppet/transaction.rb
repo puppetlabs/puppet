@@ -26,7 +26,8 @@ class Transaction
         end
     end
 
-    # Check to see if we should actually allow deleition.
+    # Check to see if we should actually allow processing, but this really only
+    # matters when a resource is getting deleted.
     def allow_processing?(resource, changes)
         # If a resource is going to be deleted but it still has
         # dependencies, then don't delete it unless it's implicit or the

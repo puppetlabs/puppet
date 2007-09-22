@@ -118,11 +118,21 @@ class Puppet::Node::Configuration < Puppet::PGraph
     # Create an implicit resource, meaning that it will lose out
     # to any explicitly defined resources.  This method often returns
     # nil.
+    #  The quirk of this method is that it's not possible to create
+    # an implicit resource before an explicit resource of the same name,
+    # because all explicit resources are created before any generate()
+    # methods are called on the individual resources.  Thus, this
+    # method can safely just check if an explicit resource already exists
+    # and toss this implicit resource if so.
     def create_implicit_resource(type, options)
         unless options.include?(:implicit)
             options[:implicit] = true
         end
-        # LAK:FIXME catch exceptions here and return nil when problems
+
+        # This will return nil if an equivalent explicit resource already exists.
+        # When resource classes no longer retain references to resource instances,
+        # this will need to be modified to catch that conflict and discard
+        # implicit resources.
         if resource = create_resource(type, options)
             resource.implicit = true
 

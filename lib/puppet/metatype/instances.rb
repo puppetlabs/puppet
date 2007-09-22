@@ -137,9 +137,8 @@ class Puppet::Type
 
                 # now pass through and create the new object
             elsif implicit
-                Puppet.notice "Ignoring implicit %s" % title
-
-                return retobj
+                Puppet.debug "Ignoring implicit %s[%s]" % [self.name, title]
+                return nil
             else
                 # If only one of the objects is being managed, then merge them
                 if retobj.managed?

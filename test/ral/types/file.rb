@@ -676,7 +676,7 @@ class TestFile < Test::Unit::TestCase
                     :check => %w{owner mode group}
                 )
             }
-            mk_configuration dir
+            config = mk_configuration dir
             
             children = nil
 
@@ -687,19 +687,22 @@ class TestFile < Test::Unit::TestCase
             assert_equal([subdir], children.collect {|c| c.title },
                 "Incorrect generated children")
             
-            dir.class[subdir].remove
+            # Remove our subdir resource, 
+            subdir_resource = config.resource(:file, subdir)
+            config.remove_resource(subdir_resource)
 
+            # Create the test file
             File.open(tmpfile, "w") { |f| f.puts "yayness" }
             
             assert_nothing_raised {
                 children = dir.eval_generate
             }
 
+            # And make sure we get both resources back.
             assert_equal([subdir, tmpfile].sort, children.collect {|c| c.title }.sort,
-                "Incorrect generated children")
+                "Incorrect generated children when recurse == %s" % value.inspect)
             
             File.unlink(tmpfile)
-            #system("rm -rf %s" % basedir)
             Puppet.type(:file).clear
         end
     end
@@ -1297,7 +1300,6 @@ class TestFile < Test::Unit::TestCase
         assert(FileTest.exists?(purgee), "File got prematurely purged")
 
         assert_nothing_raised { destobj[:purge] = true }
-        Puppet.err :yay
         config.apply
 
         assert(FileTest.exists?(localfile), "Local file got purged")
