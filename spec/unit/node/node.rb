@@ -66,7 +66,7 @@ describe Puppet::Node, " when returning the environment" do
     end
 
     it "should return the central environment if there is no environment fact nor explicit environment" do
-        Puppet.config.expects(:[]).with(:environment).returns(:centralenv)
+        Puppet.settings.expects(:[]).with(:environment).returns(:centralenv)
         @node.environment.should == :centralenv
     end
 
@@ -81,7 +81,7 @@ describe Puppet::Node, " when returning the environment" do
     end
 
     it "should not use an explicit environment that is an empty string" do
-        Puppet.config.expects(:[]).with(:environment).returns(nil)
+        Puppet.settings.expects(:[]).with(:environment).returns(nil)
         @node.environment.should be_nil
     end
 end

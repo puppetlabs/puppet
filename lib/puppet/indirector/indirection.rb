@@ -47,8 +47,8 @@ class Puppet::Indirector::Indirection
         # Get the name of the terminus.
         unless terminus_name
             param_name = "%s_terminus" % self.name
-            if Puppet.config.valid?(param_name)
-                terminus_name = Puppet.config[param_name]
+            if Puppet.settings.valid?(param_name)
+                terminus_name = Puppet.settings[param_name]
             else
                 terminus_name = Puppet[:default_terminus]
             end

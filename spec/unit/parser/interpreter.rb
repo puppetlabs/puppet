@@ -77,8 +77,8 @@ describe Puppet::Parser::Interpreter, " when creating parser instances" do
         file = mock 'file'
         file.stubs(:changed?).returns(true)
         file.stubs(:file).returns("/whatever")
-        Puppet.config.stubs(:read_file).with(file).returns(text)
-        Puppet.config.parse(file)
+        Puppet.settings.stubs(:read_file).with(file).returns(text)
+        Puppet.settings.parse(file)
 
         parser1 = mock 'parser1'
         Puppet::Parser::Parser.expects(:new).with(:environment => :env1).returns(parser1)

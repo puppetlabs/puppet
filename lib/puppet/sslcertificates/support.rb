@@ -44,7 +44,7 @@ module Puppet::SSLCertificates::Support
             unless instance_variable_get(var)
                 unless cert = send(reader)
                     cert = send(maker)
-                    Puppet.config.write(param) { |f| f.puts cert.to_pem }
+                    Puppet.settings.write(param) { |f| f.puts cert.to_pem }
                 end
                 instance_variable_set(var, cert)
             end
@@ -59,7 +59,7 @@ module Puppet::SSLCertificates::Support
 
         # Our key meta programming can only handle one file, so we have
         # to separately write out the public key.
-        Puppet.config.write(:hostpubkey) do |f|
+        Puppet.settings.write(:hostpubkey) do |f|
             f.print key.public_key.to_pem
         end
         return key
@@ -104,8 +104,8 @@ module Puppet::SSLCertificates::Support
         if cert.nil? or cert == ""
             return nil
         end
-        Puppet.config.write(:hostcert) do |f| f.print cert end
-        Puppet.config.write(:localcacert) do |f| f.print cacert end
+        Puppet.settings.write(:hostcert) do |f| f.print cert end
+        Puppet.settings.write(:localcacert) do |f| f.print cacert end
         #File.open(@certfile, "w", 0644) { |f| f.print cert }
         #File.open(@cacertfile, "w", 0644) { |f| f.print cacert }
         begin

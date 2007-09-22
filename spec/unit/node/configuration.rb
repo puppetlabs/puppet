@@ -305,7 +305,7 @@ describe Puppet::Node::Configuration, " when applying host configurations" do
         @config.apply
     end
 
-    after { Puppet.config.clear }
+    after { Puppet.settings.clear }
 end
 
 describe Puppet::Node::Configuration, " when applying non-host configurations" do
@@ -328,7 +328,7 @@ describe Puppet::Node::Configuration, " when applying non-host configurations" d
         @config.apply
     end
 
-    after { Puppet.config.clear }
+    after { Puppet.settings.clear }
 end
 
 describe Puppet::Node::Configuration, " when creating a relationship graph" do
@@ -467,6 +467,6 @@ describe Puppet::Node::Configuration, " when writing dot files" do
     end
 
     after do
-        Puppet.config.clear
+        Puppet.settings.clear
     end
 end

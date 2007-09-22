@@ -267,7 +267,7 @@ module Puppet
     )
 
     # Define the config default.
-    self.setdefaults(self.config[:name],
+    self.setdefaults(self.settings[:name],
         :config => ["$confdir/puppet.conf",
             "The configuration file for #{Puppet[:name]}."],
         :pidfile => ["", "The pid file"],

@@ -3,7 +3,6 @@
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppettest'
-require 'puppet/util/config'
 
 class TestConfFiles < Test::Unit::TestCase
     include PuppetTest
@@ -72,7 +71,7 @@ class TestConfFiles < Test::Unit::TestCase
         path = tempfile()
 
         sampledata { |data|
-            config = Puppet::Util::Config.new
+            config = Puppet::Util::Settings.new
             data.each { |section, hash|
                 hash.each { |param, value|
                     config.setdefaults(section, param => [value, value])
@@ -100,7 +99,7 @@ class TestConfFiles < Test::Unit::TestCase
     # that the default config is free of simple typos etc.
     def test_genconfig
         assert_nothing_raised {
-            Puppet::config::to_config
+            Puppet::settings::to_config
         }
     end
 

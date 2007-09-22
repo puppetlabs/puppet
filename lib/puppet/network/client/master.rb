@@ -46,7 +46,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
 
     # Return the list of dynamic facts as an array of symbols
     def self.dynamic_facts
-        Puppet.config[:dynamicfacts].split(/\s*,\s*/).collect { |fact| fact.downcase }
+        Puppet.settings[:dynamicfacts].split(/\s*,\s*/).collect { |fact| fact.downcase }
     end
 
     # Cache the config
@@ -205,7 +205,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     
     # Just so we can specify that we are "the" instance.
     def initialize(*args)
-        Puppet.config.use(:main, :ssl, :puppetd)
+        Puppet.settings.use(:main, :ssl, :puppetd)
         super
 
         self.class.instance = self

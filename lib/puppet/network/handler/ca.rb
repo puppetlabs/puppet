@@ -60,7 +60,7 @@ class Puppet::Network::Handler
         end
 
         def initialize(hash = {})
-            Puppet.config.use(:main, :ssl, :ca)
+            Puppet.settings.use(:main, :ssl, :ca)
             if hash.include? :autosign
                 @autosign = hash[:autosign]
             end

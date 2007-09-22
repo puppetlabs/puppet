@@ -680,7 +680,7 @@ end
         client.apply
 
         # Make sure the config is not cached.
-        config = Puppet.config[:localconfig] + ".yaml"
+        config = Puppet.settings[:localconfig] + ".yaml"
         assert(! File.exists?(config), "Cached an invalid configuration")
     end
 end

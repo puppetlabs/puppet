@@ -7,7 +7,7 @@ require 'puppet/indirector/exec/node'
 describe Puppet::Indirector::Exec::Node, " when constructing the command to run" do
     before do
         @indirection = mock 'indirection'
-        Puppet.config.stubs(:value).with(:external_nodes).returns("/echo")
+        Puppet.settings.stubs(:value).with(:external_nodes).returns("/echo")
         @searcher = Puppet::Indirector::Exec::Node.new
     end
 
@@ -25,7 +25,7 @@ end
 describe Puppet::Indirector::Exec::Node, " when handling the results of the command" do
     before do
         @indirection = mock 'indirection'
-        Puppet.config.stubs(:value).with(:external_nodes).returns("/echo")
+        Puppet.settings.stubs(:value).with(:external_nodes).returns("/echo")
         @searcher = Puppet::Indirector::Exec::Node.new
         @node = stub 'node', :fact_merge => nil
         @name = "yay"

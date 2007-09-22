@@ -5,7 +5,7 @@ require 'getoptlong'
 
 
 # The class for handling configuration files.
-class Puppet::Util::Config
+class Puppet::Util::Settings
     include Enumerable
     include Puppet::Util
 
@@ -502,7 +502,7 @@ class Puppet::Util::Config
         end
 
         bucket = Puppet::TransBucket.new
-        bucket.type = "Configuration"
+        bucket.type = "Settings"
         bucket.name = section
         bucket.push(*objects)
         bucket.keyword = "class"
@@ -604,7 +604,7 @@ Generated on #{Time.now}.
         else
             topbucket.name = "top"
         end
-        topbucket.type = "Configuration"
+        topbucket.type = "Settings"
         topbucket.top = true
 
         # Now iterate over each section
@@ -1190,7 +1190,7 @@ Generated on #{Time.now}.
                 name = $1
                 unless @parent.include?(name)
                     raise ArgumentError,
-                        "Configuration parameter '%s' is undefined" %
+                        "Settings parameter '%s' is undefined" %
                         name
                 end
             }

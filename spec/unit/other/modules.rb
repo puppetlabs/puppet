@@ -26,7 +26,7 @@ describe Puppet::Module, " when building its search path" do
     end
 
     it "should use the environment-specific search path when a node environment is provided" do
-        Puppet.config.expects(:value).with(:modulepath, "myenv").returns("/mone:/mtwo")
+        Puppet.settings.expects(:value).with(:modulepath, "myenv").returns("/mone:/mtwo")
         File.stubs(:directory?).returns(true)
         Puppet::Module.modulepath("myenv").should == %w{/mone /mtwo}
     end
@@ -82,30 +82,30 @@ describe Puppet::Module, " when searching for templates" do
     end
 
     it "should use the main templatedir if no module is found" do
-        Puppet.config.expects(:value).with(:templatedir, nil).returns("/my/templates")
+        Puppet.settings.expects(:value).with(:templatedir, nil).returns("/my/templates")
         Puppet::Module.expects(:find).with("mymod", nil).returns(nil)
         Puppet::Module.find_template("mymod/mytemplate").should == "/my/templates/mymod/mytemplate"
     end
 
     it "should return unqualified templates directly in the template dir" do
-        Puppet.config.expects(:value).with(:templatedir, nil).returns("/my/templates")
+        Puppet.settings.expects(:value).with(:templatedir, nil).returns("/my/templates")
         Puppet::Module.expects(:find).never
         Puppet::Module.find_template("mytemplate").should == "/my/templates/mytemplate"
     end
 
     it "should use the environment templatedir if no module is found and an environment is specified" do
-        Puppet.config.expects(:value).with(:templatedir, "myenv").returns("/myenv/templates")
+        Puppet.settings.expects(:value).with(:templatedir, "myenv").returns("/myenv/templates")
         Puppet::Module.expects(:find).with("mymod", "myenv").returns(nil)
         Puppet::Module.find_template("mymod/mytemplate", "myenv").should == "/myenv/templates/mymod/mytemplate"
     end
 
     it "should use the node environment if specified" do
-        Puppet.config.expects(:value).with(:modulepath, "myenv").returns("/my/templates")
+        Puppet.settings.expects(:value).with(:modulepath, "myenv").returns("/my/templates")
         File.stubs(:directory?).returns(true)
         Puppet::Module.find_template("mymod/envtemplate", "myenv").should == "/my/templates/mymod/templates/envtemplate"
     end
 
-    after { Puppet.config.clear }
+    after { Puppet.settings.clear }
 end
 
 describe Puppet::Module, " when searching for manifests" do
@@ -125,27 +125,27 @@ describe Puppet::Module, " when searching for manifests" do
     end
 
     it "should use the node environment if specified" do
-        Puppet.config.expects(:value).with(:modulepath, "myenv").returns("/env/modules")
+        Puppet.settings.expects(:value).with(:modulepath, "myenv").returns("/env/modules")
         File.stubs(:directory?).returns(true)
         Dir.expects(:glob).with("/env/modules/mymod/manifests/envmanifest.pp").returns(%w{/env/modules/mymod/manifests/envmanifest.pp})
         Puppet::Module.find_manifests("mymod/envmanifest.pp", :environment => "myenv").should == ["/env/modules/mymod/manifests/envmanifest.pp"]
     end
 
     it "should return all manifests matching the glob pattern" do
-        Puppet.config.expects(:value).with(:modulepath, nil).returns("/my/modules")
+        Puppet.settings.expects(:value).with(:modulepath, nil).returns("/my/modules")
         File.stubs(:directory?).returns(true)
         Dir.expects(:glob).with("/my/modules/mymod/manifests/yay/*.pp").returns(%w{/one /two})
         Puppet::Module.find_manifests("mymod/yay/*.pp").should == %w{/one /two}
     end
 
     it "should default to the 'init.pp' file in the manifests directory" do
-        Puppet.config.expects(:value).with(:modulepath, nil).returns("/my/modules")
+        Puppet.settings.expects(:value).with(:modulepath, nil).returns("/my/modules")
         File.stubs(:directory?).returns(true)
         Dir.expects(:glob).with("/my/modules/mymod/manifests/init.pp").returns(%w{my manifest})
         Puppet::Module.find_manifests("mymod").should == %w{my manifest}
     end
 
-    after { Puppet.config.clear }
+    after { Puppet.settings.clear }
 end
 
 describe Puppet::Module, " when returning files" do

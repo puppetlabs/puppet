@@ -1,4 +1,4 @@
-Puppet::Util::ConfigStore.newstore(:rest) do
+Puppet::Util::SettingsStore.newstore(:rest) do
     desc "Store client configurations via a REST web service."
 
     require 'net/http'

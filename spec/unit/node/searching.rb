@@ -74,6 +74,6 @@ describe Puppet::Node::Searching, " when searching for nodes" do
     end
 
     after do
-        Puppet.config.clear
+        Puppet.settings.clear
     end
 end

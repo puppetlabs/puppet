@@ -9,7 +9,7 @@ module Puppet::Rails
         # This global init does not work for testing, because we remove
         # the state dir on every test.
         unless ActiveRecord::Base.connected?
-            Puppet.config.use(:main, :rails, :puppetmasterd)
+            Puppet.settings.use(:main, :rails, :puppetmasterd)
 
             ActiveRecord::Base.logger = Logger.new(Puppet[:railslog])
             begin
@@ -103,7 +103,7 @@ module Puppet::Rails
             raise Puppet::DevError, "No activerecord, cannot init Puppet::Rails"
         end
 
-        Puppet.config.use(:puppetmasterd, :rails)
+        Puppet.settings.use(:puppetmasterd, :rails)
 
         begin
             ActiveRecord::Base.establish_connection(database_arguments())

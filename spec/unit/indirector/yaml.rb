@@ -20,8 +20,8 @@ module YamlTesting
         @subject.name = :me
 
         @dir = "/what/ever"
-        Puppet.config.stubs(:use)
-        Puppet.config.stubs(:value).with(:yamldir).returns(@dir)
+        Puppet.settings.stubs(:use)
+        Puppet.settings.stubs(:value).with(:yamldir).returns(@dir)
     end
 end
 

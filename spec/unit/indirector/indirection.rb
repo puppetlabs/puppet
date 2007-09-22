@@ -49,16 +49,16 @@ describe Puppet::Indirector::Indirection, " when choosing terminus types" do
     end
 
     it "should follow a convention on using per-model configuration parameters to determine the terminus class" do
-        Puppet.config.expects(:valid?).with('test_terminus').returns(true)
-        Puppet.config.expects(:value).with('test_terminus').returns(:foo)
+        Puppet.settings.expects(:valid?).with('test_terminus').returns(true)
+        Puppet.settings.expects(:value).with('test_terminus').returns(:foo)
         Puppet::Indirector::Terminus.expects(:terminus_class).with(:foo, :test).returns(@terminus_class)
         @indirection.terminus.should equal(@terminus)
     end
 
     it "should use a default system-wide configuration parameter parameter to determine the terminus class when no
     per-model configuration parameter is available" do
-        Puppet.config.expects(:valid?).with('test_terminus').returns(false)
-        Puppet.config.expects(:value).with(:default_terminus).returns(:foo)
+        Puppet.settings.expects(:valid?).with('test_terminus').returns(false)
+        Puppet.settings.expects(:value).with(:default_terminus).returns(:foo)
         Puppet::Indirector::Terminus.expects(:terminus_class).with(:foo, :test).returns(@terminus_class)
         @indirection.terminus.should equal(@terminus)
     end

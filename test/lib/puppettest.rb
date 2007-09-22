@@ -154,7 +154,7 @@ module PuppetTest
             $group = nonrootgroup().gid.to_s
         end
 
-        Puppet.config.clear
+        Puppet.settings.clear
         Puppet[:user] = $user
         Puppet[:group] = $group
 
@@ -264,7 +264,7 @@ module PuppetTest
         Puppet::Type.allclear
         Puppet::Util::Storage.clear
         Puppet.clear
-        Puppet.config.clear
+        Puppet.settings.clear
         Puppet::Indirector::Indirection.clear_cache
 
         @memoryatend = Puppet::Util.memory

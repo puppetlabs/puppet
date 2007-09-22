@@ -357,7 +357,7 @@ class Puppet::Node::Configuration < Puppet::PGraph
         
         return unless Puppet[:graph]
 
-        Puppet.config.use(:graphing)
+        Puppet.settings.use(:graphing)
 
         file = File.join(Puppet[:graphdir], "%s.dot" % name.to_s)
         File.open(file, "w") { |f|

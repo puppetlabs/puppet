@@ -4,7 +4,7 @@ require 'puppet/indirector/terminus'
 class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
     def initialize
         # Make sure our base directory exists.
-        Puppet.config.use(:yaml)
+        Puppet.settings.use(:yaml)
     end
 
     # Read a given name's file in and convert it from YAML.

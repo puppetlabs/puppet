@@ -4,14 +4,14 @@ $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'mocha'
 require 'puppettest'
-require 'puppet/util/config'
+require 'puppet/util/settings'
 require 'puppettest/parsertesting'
 
-class TestConfig < Test::Unit::TestCase
+class TestSettings < Test::Unit::TestCase
 	include PuppetTest
 	include PuppetTest::ParserTesting
-    CElement = Puppet::Util::Config::CElement
-    CBoolean = Puppet::Util::Config::CBoolean
+    CElement = Puppet::Util::Settings::CElement
+    CBoolean = Puppet::Util::Settings::CBoolean
 
     def setup
         super
@@ -95,7 +95,7 @@ class TestConfig < Test::Unit::TestCase
     def mkconfig
         c = nil
         assert_nothing_raised {
-            c = Puppet::Util::Config.new
+            c = Puppet::Util::Settings.new
         }
         return c
     end
@@ -768,15 +768,15 @@ yay = /a/path
         }
 
         assert_equal("http://yayness/rahness", val,
-            "Config got messed up")
+            "Settings got messed up")
     end
 
     def test_correct_type_assumptions
         config = mkconfig
 
-        file = Puppet::Util::Config::CFile
-        element = Puppet::Util::Config::CElement
-        bool = Puppet::Util::Config::CBoolean
+        file = Puppet::Util::Settings::CFile
+        element = Puppet::Util::Settings::CElement
+        bool = Puppet::Util::Settings::CBoolean
 
         # We have to keep these ordered, unfortunately.
         [
