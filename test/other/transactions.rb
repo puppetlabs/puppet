@@ -295,11 +295,8 @@ class TestTransactions < Test::Unit::TestCase
 
         config = mk_configuration(file)
         config.apply
-        config.clear(false)
 
         @@tmpfiles << execfile
-
-        config.add_resource exec
 
         # 'subscribe' expects an array of arrays
         exec[:subscribe] = [[file.class.name,file.name]]
@@ -317,8 +314,11 @@ class TestTransactions < Test::Unit::TestCase
             file[:mode] = "755"
         }
 
+        # Make a new configuration so the resource relationships get
+        # set up.
+        config = mk_configuration(file, exec)
+
         trans = assert_events([:file_changed, :triggered], config)
-        config.clear(false)
 
         assert(FileTest.exists?(execfile), "Execfile does not exist")
         File.unlink(execfile)
@@ -433,7 +433,8 @@ class TestTransactions < Test::Unit::TestCase
         Puppet[:ignoreschedules] = false
         file = Puppet.type(:file).create(
             :name => tempfile(),
-            :ensure => "file"
+            :ensure => "file",
+            :backup => false
         )
 
         fname = tempfile()
@@ -444,7 +445,7 @@ class TestTransactions < Test::Unit::TestCase
             :subscribe => ["file", file.name]
         )
 
-        config = mk_configuration(file,exec)
+        config = mk_configuration(file, exec)
 
         # Run it once
         assert_apply(config)
@@ -458,6 +459,7 @@ class TestTransactions < Test::Unit::TestCase
         file[:content] = "some content"
 
         assert_events([:file_changed, :triggered], config)
+
         assert(FileTest.exists?(fname), "File did not get recreated")
 
         # Now remove it, so it can get created again
@@ -710,17 +712,6 @@ class TestTransactions < Test::Unit::TestCase
         
         assert_equal(%w{yay ya y rah ra r}, $evaluated,
             "Not all resources were evaluated or not in the right order")
-    end
-    
-    # Make sure tags on the transaction get copied to the configuration.
-    def test_tags
-        config = Puppet::Node::Configuration.new
-        transaction = Puppet::Transaction.new(config)
-        assert_equal([], transaction.tags, "Tags defaulted to non-empty")
-
-        Puppet[:tags] = "one,two"
-        transaction = Puppet::Transaction.new(config)
-        assert_equal(%w{one two}, transaction.tags, "Tags were not copied from the central configuration")
     end
 
     def test_ignore_tags?

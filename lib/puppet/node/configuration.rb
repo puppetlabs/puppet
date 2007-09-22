@@ -53,12 +53,20 @@ class Puppet::Node::Configuration < Puppet::PGraph
         end
     end
 
-    # Apply our configuration to the local host.
-    def apply
+    # Apply our configuration to the local host.  Valid options
+    # are:
+    #   :tags - set the tags that restrict what resources run
+    #       during the transaction
+    #   :ignoreschedules - tell the transaction to ignore schedules
+    #       when determining the resources to run
+    def apply(options = {})
         @applying = true
 
         Puppet::Util::Storage.load if host_config?
         transaction = Puppet::Transaction.new(self)
+
+        transaction.tags = options[:tags] if options[:tags]
+        transaction.ignoreschedules = true if options[:ignoreschedules]
 
         transaction.addtimes :config_retrieval => @retrieval_duration
 
@@ -257,24 +265,29 @@ class Puppet::Node::Configuration < Puppet::PGraph
     # Create a graph of all of the relationships in our configuration.
     def relationship_graph
         unless defined? @relationship_graph and @relationship_graph
-            relationships = Puppet::Node::Configuration.new
-            relationships.host_config = host_config?
+            # It's important that we assign the graph immediately, because
+            # the debug messages below use the relationships in the
+            # relationship graph to determine the path to the resources
+            # spitting out the messages.  If this is not set,
+            # then we get into an infinite loop.
+            @relationship_graph = Puppet::Node::Configuration.new
+            @relationship_graph.host_config = host_config?
             
             # First create the dependency graph
             self.vertices.each do |vertex|
-                relationships.add_vertex! vertex
+                @relationship_graph.add_vertex! vertex
                 vertex.builddepends.each do |edge|
-                    relationships.add_edge!(edge)
+                    @relationship_graph.add_edge!(edge)
                 end
             end
             
             # Lastly, add in any autorequires
-            relationships.vertices.each do |vertex|
+            @relationship_graph.vertices.each do |vertex|
                 vertex.autorequire.each do |edge|
-                    unless relationships.edge?(edge)
-                        unless relationships.edge?(edge.target, edge.source)
+                    unless @relationship_graph.edge?(edge)
+                        unless @relationship_graph.edge?(edge.target, edge.source)
                             vertex.debug "Autorequiring %s" % [edge.source]
-                            relationships.add_edge!(edge)
+                            @relationship_graph.add_edge!(edge)
                         else
                             vertex.debug "Skipping automatic relationship with %s" % (edge.source == vertex ? edge.target : edge.source)
                         end
@@ -282,13 +295,12 @@ class Puppet::Node::Configuration < Puppet::PGraph
                 end
             end
             
-            relationships.write_graph(:relationships)
+            @relationship_graph.write_graph(:relationships)
             
             # Then splice in the container information
-            relationships.splice!(self, Puppet::Type::Component)
+            @relationship_graph.splice!(self, Puppet::Type::Component)
 
-            relationships.write_graph(:expanded_relationships)
-            @relationship_graph = relationships
+            @relationship_graph.write_graph(:expanded_relationships)
         end
         @relationship_graph
     end

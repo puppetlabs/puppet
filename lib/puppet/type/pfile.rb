@@ -643,7 +643,9 @@ module Puppet
                 #notice "Creating new file with args %s" % args.inspect
                 args[:parent] = self
                 begin
-                    return nil unless child = configuration.create_implicit_resource(:file, args)
+                    # This method is used by subclasses of :file, so use the class name rather than hard-coding
+                    # :file.
+                    return nil unless child = configuration.create_implicit_resource(self.class.name, args)
                 rescue => detail
                     puts detail.backtrace
                     self.notice "Cannot manage: %s" % [detail]
@@ -664,12 +666,14 @@ module Puppet
         # path names, rather than including the full parent's title each
         # time.
         def pathbuilder
-            if defined? @parent
+            # We specifically need to call the method here, so it looks
+            # up our parent in the configuration graph.
+            if parent = parent()
                 # We only need to behave specially when our parent is also
                 # a file
-                if @parent.is_a?(self.class)
+                if parent.is_a?(self.class)
                     # Remove the parent file name
-                    list = @parent.pathbuilder
+                    list = parent.pathbuilder
                     list.pop # remove the parent's path info
                     return list << self.ref
                 else

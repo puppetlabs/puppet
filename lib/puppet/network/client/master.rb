@@ -250,7 +250,9 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     end
 
     # The code that actually runs the configuration.  
-    def run
+    # This just passes any options on to the configuration,
+    # which accepts :tags and :ignoreschedules.
+    def run(options = {})
         got_lock = false
         splay
         Puppet::Util.sync(:puppetrun).synchronize(Sync::EX) do
@@ -273,7 +275,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
                         Puppet.notice "Starting configuration run"
                     end
                     benchmark(:notice, "Finished configuration run") do
-                        @configuration.apply
+                        @configuration.apply(options)
                     end
                 end
             end

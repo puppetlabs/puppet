@@ -260,6 +260,16 @@ describe Puppet::Node::Configuration, " when applying" do
     it "should default to not being a host configuration" do
         @config.host_config.should be_nil
     end
+
+    it "should pass supplied tags on to the transaction" do
+        @transaction.expects(:tags=).with(%w{one two})
+        @config.apply(:tags => %w{one two})
+    end
+
+    it "should set ignoreschedules on the transaction if specified in apply()" do
+        @transaction.expects(:ignoreschedules=).with(true)
+        @config.apply(:ignoreschedules => true)
+    end
 end
 
 describe Puppet::Node::Configuration, " when applying host configurations" do

@@ -128,27 +128,6 @@ Puppet::Type.newtype(:component) do
             return false
         end
     end
-
-    def push(*childs)
-        unless defined? @children
-            @children = []
-        end
-        childs.each { |child|
-            # Make sure we don't have any loops here.
-            if parentof?(child)
-                devfail "Already the parent of %s[%s]" % [child.class.name, child.title]
-            end
-            unless child.is_a?(Puppet::Type)
-                self.debug "Got object of type %s" % child.class
-                self.devfail(
-                    "Containers can only contain Puppet resources, not %s" %
-                    child.class
-                )
-            end
-            @children.push(child)
-            child.parent = self
-        }
-    end
     
     # Component paths are special because they function as containers.
     def pathbuilder
@@ -174,25 +153,6 @@ Puppet::Type.newtype(:component) do
         title
     end
 
-    # Remove an object.  The argument determines whether the object's
-    # subscriptions get eliminated, too.
-    def remove(rmdeps = true)
-        # Our children remove themselves from our @children array (else the object
-        # we called this on at the top would not be removed), so we duplicate the
-        # array and iterate over that.  If we don't do this, only half of the
-        # objects get removed.
-        @children.dup.each { |child|
-            child.remove(rmdeps)
-        }
-
-        @children.clear
-
-        # Get rid of params and provider, too.
-        super
-
-        @parent = nil
-    end
-
     # We have a different way of setting the title
     def title
         unless defined? @title
@@ -208,12 +168,12 @@ Puppet::Type.newtype(:component) do
     end
 
     def refresh
-        @children.collect { |child|
+        configuration.adjacent(self).each do |child|
             if child.respond_to?(:refresh)
                 child.refresh
                 child.log "triggering %s" % :refresh
             end
-        }
+        end
     end
 
     def to_s

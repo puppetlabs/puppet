@@ -172,15 +172,12 @@ class TestRelationships < Test::Unit::TestCase
         end
         assert_equal([Puppet::Relationship[file, exec]], reqs)
         
-        # Now make sure that these relationships are added to the transaction's
-        # relgraph
-        trans = Puppet::Transaction.new(mk_configuration(file, exec))
-        assert_nothing_raised do
-            trans.evaluate
+        # Now make sure that these relationships are added to the 
+        # relationship graph
+        config = mk_configuration(file, exec)
+        config.apply do |trans|
+            assert(config.relationship_graph.edge?(file, exec), "autorequire edge was not created")
         end
-        
-        graph = trans.relgraph
-        assert(graph.edge?(file, exec), "autorequire edge was not created")
     end
     
     def test_requires?
