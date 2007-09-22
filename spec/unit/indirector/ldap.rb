@@ -78,7 +78,7 @@ describe Puppet::Indirector::Ldap, " when searching ldap" do
 
     it "should call process() on the first found entry" do
         @connection.expects(:search).yields("myresult")
-        @searcher.expects(:process).with("myresult")
+        @searcher.expects(:process).with("yay", "myresult")
         @searcher.find "yay"
     end
 
@@ -92,7 +92,7 @@ describe Puppet::Indirector::Ldap, " when searching ldap" do
                 raise "failed"
             end
         end.yields("myresult")
-        @searcher.expects(:process).with("myresult")
+        @searcher.expects(:process).with("yay", "myresult")
 
         @searcher.find "yay"
     end

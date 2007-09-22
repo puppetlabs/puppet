@@ -5,7 +5,7 @@ class Puppet::Indirector::Ldap < Puppet::Indirector::Terminus
     def find(name)
         # We have to use 'yield' here because the LDAP::Entry objects
         # get destroyed outside the scope of the search, strangely.
-        ldapsearch(name) { |entry| return process(entry) }
+        ldapsearch(name) { |entry| return process(name, entry) }
 
         # Return nil if we haven't found something.
         return nil
@@ -13,7 +13,7 @@ class Puppet::Indirector::Ldap < Puppet::Indirector::Terminus
 
     # Process the found entry.  We assume that we don't just want the
     # ldap object.
-    def process(entry)
+    def process(name, entry)
         raise Puppet::DevError, "The 'process' method has not been overridden for the LDAP terminus for %s" % self.name
     end
 

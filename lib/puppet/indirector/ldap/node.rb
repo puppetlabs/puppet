@@ -10,23 +10,34 @@ class Puppet::Indirector::Ldap::Node < Puppet::Indirector::Ldap
 
     # Look for our node in ldap.
     def find(name)
-        unless ary = ldapsearch(name)
-            return nil
-        end
-        parent, classes, parameters = ary
+        return nil unless information = super
+        node = Puppet::Node.new(name)
 
+        parent_info = nil
+        parent = information[:parent]
+        parents = [name]
         while parent
-            parent, tmpclasses, tmpparams = ldapsearch(parent)
-            classes += tmpclasses if tmpclasses
-            tmpparams.each do |param, value|
+            if parents.include?(parent)
+                raise ArgumentError, "Found loop in LDAP node parents; %s appears twice" % parent
+            end
+            parents << parent
+            ldapsearch(parent) do |entry|
+                parent_info = process(parent, entry)
+            end
+            information[:classes] += parent_info[:classes]
+            parent_info[:parameters].each do |param, value|
                 # Specifically test for whether it's set, so false values are handled
                 # correctly.
-                parameters[param] = value unless parameters.include?(param)
+                information[:parameters][param] = value unless information[:parameters].include?(param)
             end
+
+            parent = parent_info[:parent]
         end
 
-        node = Puppet::Node.new(name, :classes => classes, :source => "ldap", :parameters => parameters)
+        node.classes = information[:classes].uniq unless information[:classes].empty?
+        node.parameters = information[:parameters] unless information[:parameters].empty?
         node.fact_merge
+
         return node
     end
 
@@ -41,8 +52,37 @@ class Puppet::Indirector::Ldap::Node < Puppet::Indirector::Ldap
 
     # Process the found entry.  We assume that we don't just want the
     # ldap object.
-    def process(entry)
-        raise Puppet::DevError, "The 'process' method has not been overridden for the LDAP terminus for %s" % self.name
+    def process(name, entry)
+        result = {}
+        if pattr = parent_attribute
+            if values = entry.vals(pattr)
+                if values.length > 1
+                    raise Puppet::Error,
+                        "Node %s has more than one parent: %s" % [name, values.inspect]
+                end
+                unless values.empty?
+                    result[:parent] = values.shift
+                end
+            end
+        end
+
+        result[:classes] = []
+        class_attributes.each { |attr|
+            if values = entry.vals(attr)
+                values.each do |v| result[:classes] << v end
+            end
+        }
+
+        result[:parameters] = entry.to_hash.inject({}) do |hash, ary|
+            if ary[1].length == 1
+                hash[ary[0]] = ary[1].shift
+            else
+                hash[ary[0]] = ary[1]
+            end
+            hash
+        end
+
+        return result
     end
 
     # Default to all attributes.
