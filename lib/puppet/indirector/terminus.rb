@@ -68,6 +68,10 @@ class Puppet::Indirector::Terminus
             @abstract_terminus = true
         end
 
+        def model
+            indirection.model
+        end
+
         # Register a class, probably autoloaded.
         def register_terminus_class(klass)
             setup_instance_loading klass.terminus_type
@@ -101,6 +105,10 @@ class Puppet::Indirector::Terminus
     
     def name
         self.class.name
+    end
+    
+    def model
+        self.class.model
     end
 
     def indirection

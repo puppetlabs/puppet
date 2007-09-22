@@ -13,7 +13,7 @@ class Puppet::Indirector::Indirection
         @@indirections.find { |i| i.name == name }
     end
     
-    attr_accessor :name, :termini
+    attr_accessor :name, :model
 
     # Clear our cached list of termini.
     # This is only used for testing.
@@ -26,7 +26,8 @@ class Puppet::Indirector::Indirection
         @@indirections.delete(self) if @@indirections.include?(self)
     end
 
-    def initialize(name, options = {})
+    def initialize(model, name, options = {})
+        @model = model
         @name = name
         options.each do |name, value|
             begin

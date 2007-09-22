@@ -5,13 +5,19 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/indirector'
 
 describe Puppet::Indirector::Indirection, " when initializing" do
+    it "should keep a reference to the indirecting model" do
+        model = mock 'model'
+        @indirection = Puppet::Indirector::Indirection.new(model, :myind)
+        @indirection.model.should equal(model)
+    end
+
     it "should set the name" do
-        @indirection = Puppet::Indirector::Indirection.new(:myind)
+        @indirection = Puppet::Indirector::Indirection.new(mock('model'), :myind)
         @indirection.name.should == :myind
     end
 
     it "should require indirections to have unique names" do
-        @indirection = Puppet::Indirector::Indirection.new(:test)
+        @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
         proc { Puppet::Indirector::Indirection.new(:test) }.should raise_error(ArgumentError)
     end
 
@@ -22,7 +28,7 @@ end
 
 describe Puppet::Indirector::Indirection, " when managing indirection instances" do
     it "should allow an indirection to be retrieved by name" do
-        @indirection = Puppet::Indirector::Indirection.new(:test)
+        @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
         Puppet::Indirector::Indirection.instance(:test).should equal(@indirection)
     end
 
@@ -37,7 +43,7 @@ end
 
 describe Puppet::Indirector::Indirection, " when choosing terminus types" do
     before do
-        @indirection = Puppet::Indirector::Indirection.new(:test)
+        @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
         @terminus = mock 'terminus'
         @terminus_class = stub 'terminus class', :new => @terminus
     end
@@ -82,7 +88,7 @@ end
 
 describe Puppet::Indirector::Indirection, " when managing terminus instances" do
     before do
-        @indirection = Puppet::Indirector::Indirection.new(:test)
+        @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
         @terminus = mock 'terminus'
         @terminus_class = mock 'terminus class'
         Puppet::Indirector::Terminus.stubs(:terminus_class).with(:test, :foo).returns(@terminus_class)
@@ -111,7 +117,7 @@ describe Puppet::Indirector::Indirection, " when managing terminus instances" do
 
     it "should not create a terminus instance until one is actually needed" do
         Puppet::Indirector.expects(:terminus).never
-        indirection = Puppet::Indirector::Indirection.new(:lazytest)
+        indirection = Puppet::Indirector::Indirection.new(mock('model'), :lazytest)
     end
 
     after do
@@ -122,7 +128,7 @@ end
 
 describe Puppet::Indirector::Indirection do
   before do
-        @indirection = Puppet::Indirector::Indirection.new(:test)
+        @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
         @terminus = mock 'terminus'
         @indirection.stubs(:terminus).returns(@terminus)
   end

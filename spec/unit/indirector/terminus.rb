@@ -36,6 +36,10 @@ describe Puppet::Indirector::Terminus do
         @terminus.should respond_to(:terminus_type)
     end
 
+    it "should support a class-level model attribute" do
+        @terminus.should respond_to(:model)
+    end
+
     it "should accept indirection instances as its indirection" do
         indirection = stub 'indirection', :is_a? => true, :register_terminus_type => nil
         proc { @terminus.indirection = indirection }.should_not raise_error
@@ -177,6 +181,11 @@ describe Puppet::Indirector::Terminus, " when creating terminus classes" do
     it "should set the subclass's name to the indirection name" do
         @terminus.name.should == :myindirection
     end
+
+    it "should set the subclass's model to the indirection model" do
+        @indirection.expects(:model).returns :yay
+        @terminus.model.should == :yay
+    end
 end
 
 describe Puppet::Indirector::Terminus, " when a terminus instance" do
@@ -208,5 +217,10 @@ describe Puppet::Indirector::Terminus, " when a terminus instance" do
 
     it "should set the instances's type to the abstract terminus type's name" do
         @terminus.terminus_type.should == :abstract
+    end
+
+    it "should set the instances's model to the indirection's model" do
+        @indirection.expects(:model).returns :yay
+        @terminus.model.should == :yay
     end
 end
