@@ -36,6 +36,7 @@ class Puppet::Indirector::Indirection
             end
         end
         @termini = {}
+        @terminus_types = {}
         raise(ArgumentError, "Indirection %s is already defined" % @name) if @@indirections.find { |i| i.name == @name }
         @@indirections << self
     end
@@ -81,7 +82,7 @@ class Puppet::Indirector::Indirection
     # Create a new terminus instance.
     def make_terminus(name)
         # Load our terminus class.
-        unless klass = Puppet::Indirector.terminus(self.name, name)
+        unless klass = Puppet::Indirector::Terminus.terminus_class(self.name, name)
             raise ArgumentError, "Could not find terminus %s for indirection %s" % [name, self.name]
         end
         return klass.new

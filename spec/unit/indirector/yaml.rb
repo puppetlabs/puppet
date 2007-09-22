@@ -6,9 +6,13 @@ require 'puppet/indirector/yaml'
 
 module YamlTesting
     def setup
-        @store_class = Class.new(Puppet::Indirector::Yaml)
-        @indirection = stub 'indirection', :name => :myyaml
-        @store_class.stubs(:indirection).returns(@indirection)
+        @indirection = stub 'indirection', :name => :myyaml, :register_terminus_type => nil
+        Puppet::Indirector::Indirection.stubs(:instance).with(:myyaml).returns(@indirection)
+        @store_class = Class.new(Puppet::Indirector::Yaml) do
+            def self.to_s
+                "MyYaml"
+            end
+        end
         @store = @store_class.new
 
         @subject = Object.new
@@ -21,19 +25,6 @@ module YamlTesting
     end
 end
 
-describe Puppet::Indirector::Yaml, " when initializing" do
-    before do
-        @store_class = Class.new(Puppet::Indirector::Yaml)
-    end
-
-    # The superclass tests for the same thing, but it doesn't hurt to
-    # leave this in the spec.
-    it "should require an associated indirection" do
-        @store_class.expects(:indirection).returns(nil)
-        proc { @store_class.new }.should raise_error(Puppet::DevError)
-    end
-end
-
 describe Puppet::Indirector::Yaml, " when choosing file location" do
     include YamlTesting
 
@@ -41,7 +32,7 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
         @store.send(:path, :me).should =~ %r{^#{@dir}}
     end
 
-    it "should use the indirection name for choosing the subdirectory" do
+    it "should use the terminus name for choosing the subdirectory" do
         @store.send(:path, :me).should =~ %r{^#{@dir}/myyaml}
     end
 

@@ -3,8 +3,6 @@ require 'puppet/indirector/terminus'
 # The base class for YAML indirection termini.
 class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
     def initialize
-        super
-
         # Make sure our base directory exists.
         Puppet.config.use(:yaml)
     end
@@ -42,6 +40,6 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
 
     # Return the path to a given node's file.
     def path(name)
-        File.join(Puppet[:yamldir], indirection.name.to_s, name.to_s + ".yaml")
+        File.join(Puppet[:yamldir], self.name.to_s, name.to_s + ".yaml")
     end
 end

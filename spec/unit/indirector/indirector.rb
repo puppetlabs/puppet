@@ -36,16 +36,9 @@ describe Puppet::Indirector, "when registering an indirection" do
         Proc.new { @thingie.indirects :second }.should raise_error(ArgumentError)
     end
 
-    it "should set up instance loading for the indirection" do
-        Puppet::Indirector.expects(:instance_load).with(:test, "puppet/indirector/test")
-        @indirection = @thingie.indirects(:test)
-    end
-
     after do
         @indirection.delete if @indirection
     end
-
-# TODO:  node lookup retries/searching
 end
 
 describe Puppet::Indirector, " when redirecting model" do
@@ -83,27 +76,3 @@ describe Puppet::Indirector, " when redirecting model" do
       @indirection.delete
   end
 end
-
-describe Puppet::Indirector, " when retrieving terminus classes" do
-    it "should allow terminus classes to register themselves"
-
-    it "should provide a method to retrieve a terminus class by name and indirection" do
-        Puppet::Indirector.expects(:loaded_instance).with(:indirection, :terminus)
-        Puppet::Indirector.terminus(:indirection, :terminus)
-    end
-end
-
-
-# describe Puppet::Indirector::Terminus do
-#   it "should register itself"  # ???
-#   
-#   it "should allow for finding an object from a collection"
-#   it "should allow for finding matching objects from a collection"
-#   it "should allow for destroying an object in a collection"
-#   it "should allow an object to be saved to a collection"
-#   it "should allow an object class to pre-process its arguments"
-#   it "should allow an object class to be in a read-only collection"
-#   
-#   it "should look up the appropriate decorator for the class"
-#   it "should call "
-# end
