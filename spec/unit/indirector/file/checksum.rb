@@ -80,11 +80,10 @@ describe Puppet::Indirector::File::Checksum, " when retrieving files" do
         @store.find(@value)
     end
 
-    it "should return an instance of Puppet::Checksum with the checksum and content set correctly if the file exists" do
+    it "should return an instance of Puppet::Checksum created with the content if the file exists" do
         content = "my content"
         sum = stub 'file'
-        sum.expects(:content=).with(content)
-        Puppet::Checksum.expects(:new).with(@value).returns(sum)
+        Puppet::Checksum.expects(:new).with(content).returns(sum)
 
         File.expects(:exist?).with(@path).returns(true)
         File.expects(:read).with(@path).returns(content)
