@@ -59,10 +59,35 @@ describe Puppet::Indirector::File, " when finding files" do
     end
 
     it "should fail intelligently if a found file cannot be read" do
-        content = "my content"
         File.expects(:exist?).with(@path).returns(true)
         File.expects(:read).with(@path).raises(RuntimeError)
         proc { @searcher.find(@path) }.should raise_error(Puppet::Error)
+    end
+
+    it "should use the path() method to calculate the path if it exists" do
+        @searcher.meta_def(:path) do |name|
+            name.upcase
+        end
+
+        File.expects(:exist?).with(@path.upcase).returns(false)
+        @searcher.find(@path)
+    end
+
+    it "should use the passed-in name for the model instance even if a path() method exists" do
+        @searcher.meta_def(:path) do |name|
+            name.upcase
+        end
+
+        content = "something"
+        file = mock 'file'
+        file.expects(:content=).with(content)
+
+        # The passed-in path, rather than the upcased version
+        @model.expects(:new).with(@path).returns(file)
+
+        File.expects(:exist?).with(@path.upcase).returns(true)
+        File.expects(:read).with(@path.upcase).returns(content)
+        @searcher.find(@path).should equal(file)
     end
 end
 
@@ -100,6 +125,17 @@ describe Puppet::Indirector::File, " when saving files" do
 
         proc { @searcher.save(file) }.should raise_error(Puppet::Error)
     end
+
+    it "should use the path() method to calculate the path if it exists" do
+        @searcher.meta_def(:path) do |name|
+            name.upcase
+        end
+
+        file = stub 'file', :name => "/yay"
+
+        File.expects(:open).with("/YAY", "w")
+        @searcher.save(file)
+    end
 end
 
 describe Puppet::Indirector::File, " when removing files" do
@@ -126,5 +162,17 @@ describe Puppet::Indirector::File, " when removing files" do
         File.expects(:unlink).with(@path).raises(ArgumentError)
 
         proc { @searcher.destroy(file) }.should raise_error(Puppet::Error)
+    end
+
+    it "should use the path() method to calculate the path if it exists" do
+        @searcher.meta_def(:path) do |name|
+            name.upcase
+        end
+
+        file = stub 'file', :name => "/yay"
+        File.expects(:exist?).with("/YAY").returns(true)
+        File.expects(:unlink).with("/YAY")
+
+        @searcher.destroy(file)
     end
 end
