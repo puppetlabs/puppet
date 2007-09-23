@@ -7,6 +7,22 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 
 require 'puppet/indirector/file/checksum'
 
+module FileChecksumTesting
+    def setup
+        Puppet.settings.stubs(:use)
+        @store = Puppet::Indirector::File::Checksum.new
+
+        @value = "70924d6fa4b2d745185fa4660703a5c0"
+        @sum = stub 'sum', :name => @value
+
+        @dir = "/what/ever"
+
+        Puppet.stubs(:[]).with(:bucketdir).returns(@dir)
+
+        @path = @store.path(@value)
+    end
+end
+
 describe Puppet::Indirector::File::Checksum do
     it "should be a subclass of the File terminus class" do
         Puppet::Indirector::File::Checksum.superclass.should equal(Puppet::Indirector::File)
@@ -25,18 +41,7 @@ describe Puppet::Indirector::File::Checksum, " when initializing" do
 end
 
 describe Puppet::Indirector::File::Checksum, " when determining file paths" do
-    before do
-        Puppet.settings.stubs(:use)
-        @store = Puppet::Indirector::File::Checksum.new
-
-        @value = "70924d6fa4b2d745185fa4660703a5c0"
-
-        @dir = "/what/ever"
-
-        Puppet.stubs(:[]).with(:bucketdir).returns(@dir)
-
-        @path = @store.path(@value)
-    end
+    include FileChecksumTesting
 
     # I was previously passing the object in.
     it "should use the value passed in to path() as the checksum" do
@@ -66,22 +71,6 @@ describe Puppet::Indirector::File::Checksum, " when determining file paths" do
     end
 end
 
-module FileChecksumTesting
-    def setup
-        Puppet.settings.stubs(:use)
-        @store = Puppet::Indirector::File::Checksum.new
-
-        @value = "70924d6fa4b2d745185fa4660703a5c0"
-        @sum = stub 'sum', :name => @value
-
-        @dir = "/what/ever"
-
-        Puppet.stubs(:[]).with(:bucketdir).returns(@dir)
-
-        @path = @store.path(@value)
-    end
-end
-
 describe Puppet::Indirector::File::Checksum, " when retrieving files" do
     include FileChecksumTesting
 
@@ -91,7 +80,7 @@ describe Puppet::Indirector::File::Checksum, " when retrieving files" do
         @store.find(@value)
     end
 
-    it "should return an instance of Puppet::Checksum with the name and content set correctly if the file exists" do
+    it "should return an instance of Puppet::Checksum with the checksum and content set correctly if the file exists" do
         content = "my content"
         sum = stub 'file'
         sum.expects(:content=).with(content)

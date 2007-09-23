@@ -27,26 +27,25 @@ describe Puppet::Indirector::File, " when finding files" do
     include FileTerminusTesting
 
     it "should provide a method to return file contents at a specified path" do
+        @searcher.should respond_to(:find)
     end
 
     it "should return file contents as an instance of the model" do
         content = "my content"
 
         file = mock 'file'
-        @model.expects(:new).with(@path).returns(file)
-        file.expects(:content=).with(content)
+        @model.expects(:new).with(content).returns(file)
 
         File.expects(:exist?).with(@path).returns(true)
         File.expects(:read).with(@path).returns(content)
         @searcher.find(@path)
     end
 
-    it "should set the file contents as the 'content' attribute of the returned instance" do
+    it "should create the model instance with the content as the only argument to initialization" do
         content = "my content"
 
         file = mock 'file'
-        @model.expects(:new).with(@path).returns(file)
-        file.expects(:content=).with(content)
+        @model.expects(:new).with(content).returns(file)
 
         File.expects(:exist?).with(@path).returns(true)
         File.expects(:read).with(@path).returns(content)
@@ -71,23 +70,6 @@ describe Puppet::Indirector::File, " when finding files" do
 
         File.expects(:exist?).with(@path.upcase).returns(false)
         @searcher.find(@path)
-    end
-
-    it "should use the passed-in name for the model instance even if a path() method exists" do
-        @searcher.meta_def(:path) do |name|
-            name.upcase
-        end
-
-        content = "something"
-        file = mock 'file'
-        file.expects(:content=).with(content)
-
-        # The passed-in path, rather than the upcased version
-        @model.expects(:new).with(@path).returns(file)
-
-        File.expects(:exist?).with(@path.upcase).returns(true)
-        File.expects(:read).with(@path.upcase).returns(content)
-        @searcher.find(@path).should equal(file)
     end
 end
 

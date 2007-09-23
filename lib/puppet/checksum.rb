@@ -12,26 +12,53 @@ class Puppet::Checksum
 
     indirects :checksum
 
-    attr_accessor :name, :content
-    attr_reader :algorithm
+    attr_reader :algorithm, :content
 
     def algorithm=(value)
-        value = value.intern if value.respond_to?(:intern)
+        unless respond_to?(value)
+            raise ArgumentError, "Checksum algorithm %s is not supported" % value
+        end
+        value = value.intern if value.is_a?(String)
         @algorithm = value
+        # Reset the checksum so it's forced to be recalculated.
+        @checksum = nil
     end
 
-    def initialize(name)
-        raise ArgumentError.new("You must specify the checksum") unless name
-
-        if name =~ /^\{(\w+)\}(.+$)$/
-            @algorithm, @name = $1.intern, $2
-        else
-            @name = name
-            @algorithm = :md5
+    # Calculate (if necessary) and return the checksum
+    def checksum
+        unless @checksum
+            @checksum = send(algorithm)
         end
+        @checksum
+    end
+
+    def initialize(content, algorithm = nil)
+        raise ArgumentError.new("You must specify the content") unless content
+
+        @content = content
+        self.algorithm = algorithm || "md5"
+
+        # Init to avoid warnings.
+        @checksum = nil
+    end
+
+    # This can't be private, else respond_to? returns false.
+    def md5
+        require 'digest/md5'
+        Digest::MD5.hexdigest(content)
+    end
+
+    # This is here so the Indirector::File terminus works correctly.
+    def name
+        checksum
+    end
+
+    def sha1
+        require 'digest/sha1'
+        Digest::SHA1.hexdigest(content)
     end
 
     def to_s
-        "Checksum<{%s}%s>" % [algorithm, name]
+        "Checksum<{%s}%s>" % [algorithm, checksum]
     end
 end

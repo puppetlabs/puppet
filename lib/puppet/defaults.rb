@@ -498,7 +498,9 @@ module Puppet
     # we get an infinite loop otherwise.
     self.setdefaults(:main,
         :facts_terminus => ["yaml",
-            "The backend store to use for client facts."]
+            "The backend store to use for client facts."],
+        :checksum_terminus => ["file",
+            "The backend store to use for storing files by checksum (i.e., filebuckets)."]
     )
 
     self.setdefaults(:yaml,

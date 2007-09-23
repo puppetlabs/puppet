@@ -32,9 +32,7 @@ class Puppet::Indirector::File < Puppet::Indirector::Terminus
             raise Puppet::Error, "Could not retrieve path %s: %s" % [path, detail]
         end
 
-        file = model.new(name)
-        file.content = content
-        return file
+        return model.new(content)
     end
 
     def save(file)

@@ -1,4 +1,7 @@
+#!/usr/bin/env ruby
+
 require File.dirname(__FILE__) + '/../../spec_helper'
+
 require 'puppet/defaults'
 require 'puppet/indirector'
 
@@ -36,12 +39,17 @@ describe Puppet::Indirector, "when registering an indirection" do
         Proc.new { @thingie.indirects :second }.should raise_error(ArgumentError)
     end
 
+    it "should make the indirection available via an accessor" do
+        @indirection = @thingie.indirects :first
+        @thingie.indirection.should equal(@indirection)
+    end
+
     after do
         @indirection.delete if @indirection
     end
 end
 
-describe Puppet::Indirector, " when redirecting model" do
+describe Puppet::Indirector, " when redirecting a model" do
   before do
     @thingie = Class.new do
       extend Puppet::Indirector
@@ -51,22 +59,22 @@ describe Puppet::Indirector, " when redirecting model" do
     @thingie.expects(:indirection).returns(@mock_terminus)
   end
   
-  it "should give model the ability to lookup a model instance by letting the indirection perform the lookup" do
+  it "should give the model the ability to lookup a model instance by letting the indirection perform the lookup" do
     @mock_terminus.expects(:find)
     @thingie.find
   end
 
-  it "should give model the ability to remove model instances from a terminus by letting the indirection remove the instance" do
+  it "should give the model the ability to remove model instances from a terminus by letting the indirection remove the instance" do
     @mock_terminus.expects(:destroy)
     @thingie.destroy  
   end
   
-  it "should give model the ability to search for model instances by letting the indirection find the matching instances" do
+  it "should give the model the ability to search for model instances by letting the indirection find the matching instances" do
     @mock_terminus.expects(:search)
     @thingie.search    
   end
   
-  it "should give model the ability to store a model instance by letting the indirection store the instance" do
+  it "should give the model the ability to store a model instance by letting the indirection store the instance" do
     thing = @thingie.new
     @mock_terminus.expects(:save).with(thing)
     thing.save        
