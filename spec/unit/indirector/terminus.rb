@@ -6,8 +6,8 @@ describe Puppet::Indirector::Terminus do
     before do
         Puppet::Indirector::Terminus.stubs(:register_terminus_class)
 
-        @indirection = stub 'indirection', :name => :mystuff, :register_terminus_type => nil
-        Puppet::Indirector::Indirection.stubs(:instance).with(:mystuff).returns(@indirection)
+        @indirection = stub 'indirection', :name => :my_stuff, :register_terminus_type => nil
+        Puppet::Indirector::Indirection.stubs(:instance).with(:my_stuff).returns(@indirection)
         @abstract_terminus = Class.new(Puppet::Indirector::Terminus) do
             def self.to_s
                 "Abstract"
@@ -91,7 +91,7 @@ describe Puppet::Indirector::Terminus, " when managing terminus classes" do
     end
 
     it "should fail when no indirection can be found" do
-        Puppet::Indirector::Indirection.expects(:instance).with(:myindirection).returns(nil)
+        Puppet::Indirector::Indirection.expects(:instance).with(:my_indirection).returns(nil)
 
         @abstract_terminus = Class.new(Puppet::Indirector::Terminus) do
             def self.to_s
@@ -109,10 +109,10 @@ describe Puppet::Indirector::Terminus, " when managing terminus classes" do
 
     it "should register the terminus class with the terminus base class" do
         Puppet::Indirector::Terminus.expects(:register_terminus_class).with do |type|
-            type.terminus_type == :abstract and type.name == :myindirection
+            type.terminus_type == :abstract and type.name == :my_indirection
         end
         @indirection = stub 'indirection', :name => :myind, :register_terminus_type => nil
-        Puppet::Indirector::Indirection.expects(:instance).with(:myindirection).returns(@indirection)
+        Puppet::Indirector::Indirection.expects(:instance).with(:my_indirection).returns(@indirection)
 
         @abstract_terminus = Class.new(Puppet::Indirector::Terminus) do
             def self.to_s
@@ -128,6 +128,18 @@ describe Puppet::Indirector::Terminus, " when managing terminus classes" do
     end
 end
 
+describe Puppet::Indirector::Terminus, " when converting class constants to indirection names" do
+    it "should convert camel case to lower case with underscores as word separators" do
+        subclass = mock 'subclass'
+        subclass.stubs(:to_s).returns("OneTwo")
+        subclass.stubs(:mark_as_abstract_terminus)
+
+        subclass.expects(:name=).with(:one_two)
+
+        Puppet::Indirector::Terminus.inherited(subclass)
+    end
+end
+
 describe Puppet::Indirector::Terminus, " when creating terminus class types" do
     before do
         Puppet::Indirector::Terminus.stubs(:register_terminus_class)
@@ -139,7 +151,7 @@ describe Puppet::Indirector::Terminus, " when creating terminus class types" do
     end
 
     it "should set the name of the abstract subclass to be its class constant" do
-        @subclass.name.should equal(:mytermtype)
+        @subclass.name.should equal(:my_term_type)
     end
 
     it "should mark abstract terminus types as such" do
@@ -156,7 +168,7 @@ describe Puppet::Indirector::Terminus, " when creating terminus classes" do
         Puppet::Indirector::Terminus.stubs(:register_terminus_class)
 
         @indirection = stub 'indirection', :name => :myind, :register_terminus_type => nil
-        Puppet::Indirector::Indirection.expects(:instance).with(:myindirection).returns(@indirection)
+        Puppet::Indirector::Indirection.expects(:instance).with(:my_indirection).returns(@indirection)
 
         @abstract_terminus = Class.new(Puppet::Indirector::Terminus) do
             def self.to_s
@@ -179,7 +191,7 @@ describe Puppet::Indirector::Terminus, " when creating terminus classes" do
     end
 
     it "should set the subclass's name to the indirection name" do
-        @terminus.name.should == :myindirection
+        @terminus.name.should == :my_indirection
     end
 
     it "should set the subclass's model to the indirection model" do
@@ -192,7 +204,7 @@ describe Puppet::Indirector::Terminus, " when a terminus instance" do
     before do
         Puppet::Indirector::Terminus.stubs(:register_terminus_class)
         @indirection = stub 'indirection', :name => :myyaml, :register_terminus_type => nil
-        Puppet::Indirector::Indirection.stubs(:instance).with(:mystuff).returns(@indirection)
+        Puppet::Indirector::Indirection.stubs(:instance).with(:my_stuff).returns(@indirection)
         @abstract_terminus = Class.new(Puppet::Indirector::Terminus) do
             def self.to_s
                 "Abstract"
