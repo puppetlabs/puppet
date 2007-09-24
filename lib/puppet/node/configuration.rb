@@ -1,3 +1,4 @@
+require 'puppet/indirector'
 require 'puppet/external/gratr/digraph'
 
 # This class models a node configuration.  It is the thing
@@ -5,6 +6,9 @@ require 'puppet/external/gratr/digraph'
 # of the information in the configuration, including the resources
 # and the relationships between them.
 class Puppet::Node::Configuration < Puppet::PGraph
+    extend Puppet::Indirector
+    indirects :configuration
+
     # The host name this is a configuration for.
     attr_accessor :name
 

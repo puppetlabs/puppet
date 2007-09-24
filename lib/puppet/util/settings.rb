@@ -45,15 +45,17 @@ class Puppet::Util::Settings
     end
 
     # A simplified equality operator.
-    def ==(other)
-        self.each { |myname, myobj|
-            unless other[myname] == value(myname)
-                return false
-            end
-        }
-
-        return true
-    end
+    # LAK: For some reason, this causes mocha to not be able to mock
+    # the 'value' method, and it's not used anywhere.
+#    def ==(other)
+#        self.each { |myname, myobj|
+#            unless other[myname] == value(myname)
+#                return false
+#            end
+#        }
+#
+#        return true
+#    end
 
     # Generate the list of valid arguments, in a format that GetoptLong can
     # understand, and add them to the passed option list.

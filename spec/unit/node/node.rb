@@ -126,3 +126,10 @@ describe Puppet::Node, " when indirecting" do
         Puppet::Indirector::Indirection.clear_cache
     end
 end
+
+describe Puppet::Node do
+    # LAK:NOTE This is used to keep track of when a given node has connected,
+    # so we can report on nodes that do not appear to connecting to the
+    # central server.
+    it "should provide a method for noting that the node has connected"
+end
