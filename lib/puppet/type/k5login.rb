@@ -5,12 +5,12 @@
 Puppet::Type.newtype(:k5login) do
     @doc = "Manage the .k5login file for a user.  Specify the full path to 
         the .k5login file as the name and an array of principals as the
-        property princs."
+        property principals."
 
     ensurable
 
     # Principals that should exist in the file
-    newproperty(:princs, :array_matching => :all) do
+    newproperty(:principals, :array_matching => :all) do
         desc "The principals present in the .k5login file."
     end
 
@@ -43,7 +43,7 @@ Puppet::Type.newtype(:k5login) do
 
         # create the file
         def create
-            write(@resource.should(:princs))
+            write(@resource.should(:principals))
             should_mode = @resource.should(:mode)
             unless self.mode == should_mode
                 self.mode  should_mode
@@ -55,8 +55,8 @@ Puppet::Type.newtype(:k5login) do
             File.unlink(@resource[:name])
         end
 
-        # Return the princs
-        def princs
+        # Return the principals
+        def principals
             if File.exists?(@resource[:name])
                 File.readlines(@resource[:name]).collect { |line| line.chomp }
             else
@@ -64,8 +64,8 @@ Puppet::Type.newtype(:k5login) do
             end
         end
 
-        # Write the princs out to the k5login file
-        def princs=(value)
+        # Write the principals out to the k5login file
+        def principals=(value)
             write(value)
         end
 
