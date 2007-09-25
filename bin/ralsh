@@ -228,11 +228,10 @@ else
             params.each do |param, value|
                 obj[param] = value
             end
-            comp = Puppet::Type.type(:component).create(:name => "ralsh")
-            comp.push(obj)
-            transaction = comp.evaluate
+            config = Puppet::Node::Configuration.new
+            config.add_resource obj
             begin
-                transaction.evaluate
+                config.apply
             rescue => detail
                 if Puppet[:trace]
                     puts detail.backtrace
