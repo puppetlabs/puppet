@@ -4,6 +4,39 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/indirector'
 
+describe Puppet::Indirector::Indirection do
+    before do
+        @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
+        @terminus = mock 'terminus'
+        @indirection.stubs(:terminus).returns(@terminus)
+    end
+  
+    it "should handle lookups of a model instance by letting the appropriate terminus perform the lookup" do
+        @terminus.expects(:find).with(:mything).returns(:whev)
+        @indirection.find(:mything).should == :whev
+    end
+
+    it "should handle removing model instances from a terminus letting the appropriate terminus remove the instance" do
+        @terminus.expects(:destroy).with(:mything).returns(:whev)
+        @indirection.destroy(:mything).should == :whev
+    end
+  
+    it "should handle searching for model instances by letting the appropriate terminus find the matching instances" do
+        @terminus.expects(:search).with(:mything).returns(:whev)
+        @indirection.search(:mything).should == :whev
+    end
+  
+    it "should handle storing a model instance by letting the appropriate terminus store the instance" do
+        @terminus.expects(:save).with(:mything).returns(:whev)
+        @indirection.save(:mything).should == :whev
+    end
+
+    after do
+        @indirection.delete
+        Puppet::Indirector::Indirection.clear_cache
+    end
+end
+
 describe Puppet::Indirector::Indirection, " when initializing" do
     it "should keep a reference to the indirecting model" do
         model = mock 'model'
@@ -126,32 +159,98 @@ describe Puppet::Indirector::Indirection, " when managing terminus instances" do
     end
 end
 
-describe Puppet::Indirector::Indirection do
-  before do
+describe Puppet::Indirector::Indirection, " when deciding whether to cache" do
+    before do
         @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
         @terminus = mock 'terminus'
         @indirection.stubs(:terminus).returns(@terminus)
-  end
-  
-  it "should handle lookups of a model instance by letting the appropriate terminus perform the lookup" do
-      @terminus.expects(:find).with(:mything).returns(:whev)
-      @indirection.find(:mything).should == :whev
-  end
+    end
 
-  it "should handle removing model instances from a terminus letting the appropriate terminus remove the instance" do
-      @terminus.expects(:destroy).with(:mything).returns(:whev)
-      @indirection.destroy(:mything).should == :whev
-  end
-  
-  it "should handle searching for model instances by letting the appropriate terminus find the matching instances" do
-      @terminus.expects(:search).with(:mything).returns(:whev)
-      @indirection.search(:mything).should == :whev
-  end
-  
-  it "should handle storing a model instance by letting the appropriate terminus store the instance" do
-      @terminus.expects(:save).with(:mything).returns(:whev)
-      @indirection.save(:mything).should == :whev
-  end
+    it "should not use a cache if there no cache setting" do
+        Puppet.settings.expects(:valid?).with("test_cache").returns(false)
+        @indirection.expects(:cache).never
+        @terminus.stubs(:save)
+        @indirection.save(:whev)
+    end
+
+    it "should not use a cache if the cache setting is set to 'none'" do
+        Puppet.settings.expects(:valid?).with("test_cache").returns(true)
+        Puppet.settings.expects(:value).with("test_cache").returns("none")
+        @indirection.expects(:cache).never
+        @terminus.stubs(:save)
+        @indirection.save(:whev)
+    end
+
+    it "should use a cache if there is a related cache setting and it is not set to 'none'" do
+        Puppet.settings.expects(:valid?).with("test_cache").returns(true)
+        Puppet.settings.expects(:value).with("test_cache").returns("something")
+        cache = mock 'cache'
+        cache.expects(:save).with(:whev)
+        @indirection.expects(:cache).returns(cache)
+        @terminus.stubs(:save)
+        @indirection.save(:whev)
+    end
+
+    after do
+        @indirection.delete
+        Puppet::Indirector::Indirection.clear_cache
+    end
+end
+
+describe Puppet::Indirector::Indirection, " when using a cache" do
+    before do
+        Puppet.settings.stubs(:valid?).returns(true)
+        Puppet.settings.stubs(:value).with("test_terminus").returns("test_terminus")
+        @terminus_class = mock 'terminus_class'
+        @terminus = mock 'terminus'
+        @terminus_class.stubs(:new).returns(@terminus)
+        @cache = mock 'cache'
+        @cache_class = mock 'cache_class'
+        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:cache_terminus, :test).returns(@cache_class)
+        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:test_terminus, :test).returns(@terminus_class)
+        @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
+    end
+
+    it "should copy all writing indirection calls to the cache terminus" do
+        @cache_class.expects(:new).returns(@cache)
+        Puppet.settings.stubs(:value).with("test_cache").returns("cache_terminus")
+        @cache.expects(:save).with(:whev)
+        @terminus.stubs(:save)
+        @indirection.save(:whev)
+    end
+
+    it "should not create a cache terminus at initialization" do
+        # This is weird, because all of the code is in the setup.  If we got
+        # new() called on the cache class, we'd get an exception here.
+    end
+
+    it "should reuse the cache terminus" do
+        @cache_class.expects(:new).returns(@cache)
+        Puppet.settings.stubs(:value).with("test_cache").returns("cache_terminus")
+        @indirection.cache.should equal(@cache)
+        @indirection.cache.should equal(@cache)
+    end
+
+    it "should remove the cache terminus when all other terminus instances are cleared" do
+        cache2 = mock 'cache2'
+        @cache_class.stubs(:new).returns(@cache, cache2)
+        Puppet.settings.stubs(:value).with("test_cache").returns("cache_terminus")
+        @indirection.cache.should equal(@cache)
+        @indirection.clear_cache
+        @indirection.cache.should equal(cache2)
+    end
+
+    it "should look up the cache name when recreating the cache terminus after terminus instances have been cleared" do
+        cache_class2 = mock 'cache_class2'
+        cache2 = mock 'cache2'
+        cache_class2.expects(:new).returns(cache2)
+        @cache_class.expects(:new).returns(@cache)
+        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:other_cache, :test).returns(cache_class2)
+        Puppet.settings.stubs(:value).with("test_cache").returns("cache_terminus", "other_cache")
+        @indirection.cache.should equal(@cache)
+        @indirection.clear_cache
+        @indirection.cache.should equal(cache2)
+    end
 
     after do
         @indirection.delete
