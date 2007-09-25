@@ -12,7 +12,7 @@ require 'puppet/external/event-loop'
 require 'puppet/util'
 require 'puppet/util/log'
 require 'puppet/util/autoload'
-require 'puppet/util/config'
+require 'puppet/util/settings'
 require 'puppet/util/feature'
 require 'puppet/util/suidmanager'
 
@@ -45,7 +45,7 @@ module Puppet
     end
 
     # the hash that determines how our system behaves
-    @@config = Puppet::Util::Config.new
+    @@settings = Puppet::Util::Settings.new
 
     # The services running in this process.
     @services ||= []
@@ -76,7 +76,7 @@ module Puppet
 
     # Store a new default value.
     def self.setdefaults(section, hash)
-        @@config.setdefaults(section, hash)
+        @@settings.setdefaults(section, hash)
     end
 
 	# configuration parameter access and stuff
@@ -89,17 +89,17 @@ module Puppet
                 return false
             end
         else
-            return @@config[param]
+            return @@settings[param]
         end
 	end
 
 	# configuration parameter access and stuff
 	def self.[]=(param,value)
-        @@config[param] = value
+        @@settings[param] = value
 	end
 
     def self.clear
-        @@config.clear
+        @@settings.clear
     end
 
     def self.debug=(value)
@@ -110,8 +110,8 @@ module Puppet
         end
     end
 
-    def self.config
-        @@config
+    def self.settings
+        @@settings
     end
 
     # Load all of the configuration parameters.
@@ -122,7 +122,7 @@ module Puppet
             val = Puppet[:configprint]
             if val == "all"
                 hash = {}
-                Puppet.config.each do |name, obj|
+                Puppet.settings.each do |name, obj|
                     val = obj.value
                     case val
                     when true, false, "": val = val.inspect
@@ -134,7 +134,7 @@ module Puppet
                 end
             elsif val =~ /,/
                 val.split(/\s*,\s*/).sort.each do |v|
-                    if Puppet.config.include?(v)
+                    if Puppet.settings.include?(v)
                         puts "%s = %s" % [v, Puppet[v]]
                     else
                         puts "invalid parameter: %s" % v
@@ -143,7 +143,7 @@ module Puppet
                 end
             else
                 val.split(/\s*,\s*/).sort.each do |v|
-                    if Puppet.config.include?(v)
+                    if Puppet.settings.include?(v)
                         puts Puppet[val]
                     else
                         puts "invalid parameter: %s" % v
@@ -154,14 +154,14 @@ module Puppet
             exit(0)
         end
         if Puppet[:genconfig]
-            puts Puppet.config.to_config
+            puts Puppet.settings.to_config
             exit(0)
         end
     end
 
     def self.genmanifest
         if Puppet[:genmanifest]
-            puts Puppet.config.to_manifest
+            puts Puppet.settings.to_manifest
             exit(0)
         end
     end
@@ -208,14 +208,14 @@ module Puppet
         oldconfig ||= File.join(Puppet[:confdir], Puppet[:name].to_s + ".conf")
         if FileTest.exists?(oldconfig) and Puppet[:name] != "puppet"
             Puppet.warning "Individual config files are deprecated; remove %s and use puppet.conf" % oldconfig
-            Puppet.config.old_parse(oldconfig)
+            Puppet.settings.old_parse(oldconfig)
             return
         end
 
         # Now check for the normal config.
         if Puppet[:config] and File.exists? Puppet[:config]
             Puppet.debug "Parsing %s" % Puppet[:config]
-            Puppet.config.parse(Puppet[:config])
+            Puppet.settings.parse(Puppet[:config])
         end
     end
 

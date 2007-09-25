@@ -178,7 +178,7 @@ options = [
 ]
 
 # Add all of the config parameters as valid options.
-Puppet.config.addargs(options)
+Puppet.settings.addargs(options)
 
 result = GetoptLong.new(*options)
 
@@ -216,10 +216,10 @@ begin
                 options[:enable] = true
             when "--test"
                 # Enable all of the most common test options.
-                Puppet.config.handlearg("--ignorecache")
-                Puppet.config.handlearg("--no-usecacheonfailure")
-                Puppet.config.handlearg("--no-splay")
-                Puppet.config.handlearg("--show_diff")
+                Puppet.settings.handlearg("--ignorecache")
+                Puppet.settings.handlearg("--no-usecacheonfailure")
+                Puppet.settings.handlearg("--no-splay")
+                Puppet.settings.handlearg("--show_diff")
                 options[:onetime] = true
                 options[:waitforcert] = 0
                 unless Puppet::Util::Log.level == :debug
@@ -264,7 +264,7 @@ begin
                 options[:waitforcert] = arg.to_i
                 explicit_waitforcert = true
             else
-                Puppet.config.handlearg(opt, arg)
+                Puppet.settings.handlearg(opt, arg)
         end
     }
 rescue GetoptLong::InvalidOption => detail

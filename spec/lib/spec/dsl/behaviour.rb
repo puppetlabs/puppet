@@ -1,6 +1,10 @@
+require(File.expand_path(File.dirname(__FILE__) + '../../../../../test/lib/puppettest/runnable_test.rb'))
+
 module Spec
   module DSL
-    class EvalModule < Module; end
+    class EvalModule < Module;
+      include PuppetTest::RunnableTest
+    end
     class Behaviour
       extend BehaviourCallbacks
 

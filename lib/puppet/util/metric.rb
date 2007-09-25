@@ -21,7 +21,7 @@ class Puppet::Util::Metric
     end
 
     def create(start = nil)
-        Puppet.config.use(:metrics)
+        Puppet.settings.use(:metrics)
 
         start ||= Time.now.to_i - 5
 

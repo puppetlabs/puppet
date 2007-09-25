@@ -14,14 +14,6 @@ class Puppet::Type
         self.class.depthfirst?
     end
 
-    def parent=(parent)
-        if self.parentof?(parent)
-            devfail "%s[%s] is already the parent of %s[%s]" %
-                [self.class.name, self.title, parent.class.name, parent.title]
-        end
-        @parent = parent
-    end
-
     # Add a hook for testing for recursion.
     def parentof?(child)
         if (self == child)

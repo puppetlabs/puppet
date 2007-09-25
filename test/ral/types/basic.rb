@@ -35,12 +35,9 @@ class TestBasic < Test::Unit::TestCase
                 :path => ENV["PATH"]
             )
         }
-        assert_nothing_raised() {
-            @component.push(
-                @configfile,
-                @command
-            )
-        }
+        @config = mk_configuration(@component, @configfile, @command)
+        @config.add_edge! @component, @configfile
+        @config.add_edge! @component, @command
     end
 
     def teardown
@@ -86,5 +83,3 @@ class TestBasic < Test::Unit::TestCase
         }
     end
 end
-
-# $Id$

@@ -67,11 +67,8 @@ module Puppet
 
         def apply
             bucket = export()
-            objects = bucket.to_type
-            master = Puppet::Network::Client.master.new :Master => "whatever"
-            master.objects = objects
-
-            master.apply
+            configuration = bucket.to_configuration
+            configuration.apply
         end
 
         def export
@@ -255,8 +252,7 @@ module Puppet
         def scope
             unless defined?(@scope)
                 @interp = Puppet::Parser::Interpreter.new :Code => ""
-                # Load the class, so the node object class is available.
-                require 'puppet/network/handler/node'
+                require 'puppet/node'
                 @node = Puppet::Node.new(Facter.value(:hostname))
                 @node.parameters = Facter.to_hash
                 @interp = Puppet::Parser::Interpreter.new :Code => ""

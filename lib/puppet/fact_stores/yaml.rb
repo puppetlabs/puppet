@@ -16,7 +16,7 @@ Puppet::Util::FactStore.newstore(:yaml) do
     end
 
     def initialize
-        Puppet.config.use(:yamlfacts)
+        Puppet.settings.use(:yamlfacts)
     end
 
     # Store the facts to disk.

@@ -31,7 +31,7 @@ Puppet::Network::Handler.report.newreport(:tagmail) do
         "
 
 
-    Puppet.config.use(:tagmail)
+    Puppet.settings.use(:tagmail)
 
     # Find all matching messages.
     def match(taglists)

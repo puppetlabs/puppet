@@ -56,8 +56,8 @@ class TestCertInventory < Test::Unit::TestCase
             file.expects(:puts).with do |written|
                 written.include? cert.subject.to_s
             end
-            Puppet::Util::Config.any_instance.stubs(:write)
-            Puppet::Util::Config.any_instance.expects(:write).
+            Puppet::Util::Settings.any_instance.stubs(:write)
+            Puppet::Util::Settings.any_instance.expects(:write).
               with(:cert_inventory, 'a').yields(file)
 
             Puppet::SSLCertificates::Inventory.add(cert)

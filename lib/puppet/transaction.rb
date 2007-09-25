@@ -6,10 +6,14 @@ require 'puppet/propertychange'
 
 module Puppet
 class Transaction
-    attr_accessor :component, :resources, :ignoreschedules, :ignoretags
-    attr_accessor :relgraph, :sorted_resources, :configurator
+    attr_accessor :component, :configuration, :ignoreschedules
+    attr_accessor :sorted_resources, :configurator
 
+    # The report, once generated.
     attr_reader :report
+
+    # The list of events generated in this transaction.
+    attr_reader :events
     
     attr_writer :tags
 
@@ -22,13 +26,14 @@ class Transaction
         end
     end
 
-    # Check to see if we should actually allow deleition.
+    # Check to see if we should actually allow processing, but this really only
+    # matters when a resource is getting deleted.
     def allow_processing?(resource, changes)
         # If a resource is going to be deleted but it still has
         # dependencies, then don't delete it unless it's implicit or the
         # dependency is itself being deleted.
         if resource.purging? and resource.deleting?
-            if deps = @relgraph.dependents(resource) and ! deps.empty? and deps.detect { |d| ! d.deleting? }
+            if deps = relationship_graph.dependents(resource) and ! deps.empty? and deps.detect { |d| ! d.deleting? }
                 resource.warning "%s still depend%s on me -- not purging" %
                     [deps.collect { |r| r.ref }.join(","), deps.length > 1 ? "":"s"] 
                 return false
@@ -129,6 +134,9 @@ class Transaction
     # Find all of the changed resources.
     def changed?
         @changes.find_all { |change| change.changed }.collect { |change|
+            unless change.property.resource
+                raise "No resource for %s" % change.inspect
+            end
             change.property.resource
         }.uniq
     end
@@ -137,14 +145,8 @@ class Transaction
     # contained resources might never get cleaned up.
     def cleanup
         if defined? @generated
-            @generated.each do |resource|
-                resource.remove
-            end
+            relationship_graph.remove_resource(*@generated)
         end
-        if defined? @relgraph
-            @relgraph.clear
-        end
-        @resources.clear
     end
 
     # Copy an important relationships from the parent to the newly-generated
@@ -158,10 +160,11 @@ class Transaction
             else
                 edge = [resource, gen_child]
             end
-            unless @relgraph.edge?(edge[1], edge[0])
-                @relgraph.add_edge!(*edge)
+            relationship_graph.add_resource(gen_child) unless relationship_graph.resource(gen_child.ref)
+
+            unless relationship_graph.edge?(edge[1], edge[0])
+                relationship_graph.add_edge!(*edge)
             else
-                @relgraph.add_vertex!(gen_child)
                 resource.debug "Skipping automatic relationship to %s" % gen_child
             end
         end
@@ -192,7 +195,8 @@ class Transaction
                 children.each do |child|
                     child.finish
                     # Make sure that the vertex is in the relationship graph.
-                    @relgraph.add_vertex!(child)
+                    relationship_graph.add_resource(child) unless relationship_graph.resource(child.ref)
+                    child.configuration = relationship_graph
                 end
                 @generated += children
                 return children
@@ -265,9 +269,12 @@ class Transaction
         # Collect the targets of any subscriptions to those events.  We pass
         # the parent resource in so it will override the source in the events,
         # since eval_generated children can't have direct relationships.
-        @relgraph.matching_edges(events, resource).each do |edge|
-            edge = edge.dup
-            label = edge.label
+        relationship_graph.matching_edges(events, resource).each do |orig_edge|
+            # We have to dup the label here, else we modify the original edge label,
+            # which affects whether a given event will match on the next run, which is,
+            # of course, bad.
+            edge = orig_edge.class.new(orig_edge.source, orig_edge.target)
+            label = orig_edge.label.dup
             label[:event] = events.collect { |e| e.event }
             edge.label = label
             set_trigger(edge)
@@ -282,8 +289,6 @@ class Transaction
     # necessary events.
     def evaluate
         @count = 0
-        
-        graph(@resources, :resources)
         
         # Start logging.
         Puppet::Util::Log.newdestination(@report)
@@ -314,6 +319,7 @@ class Transaction
         Puppet.debug "Finishing transaction %s with %s changes" %
             [self.object_id, @count]
 
+        @events = allevents
         allevents
     end
 
@@ -333,7 +339,7 @@ class Transaction
         # enough to check the immediate dependencies, which is why we use
         # a tree from the reversed graph.
         skip = false
-        deps = @relgraph.dependencies(resource)
+        deps = relationship_graph.dependencies(resource)
         deps.each do |dep|
             if fails = failed?(dep)
                 resource.notice "Dependency %s[%s] has %s failures" %
@@ -347,7 +353,7 @@ class Transaction
     
     # Collect any dynamically generated resources.
     def generate
-        list = @resources.vertices
+        list = @configuration.vertices
         
         # Store a list of all generated resources, so that we can clean them up
         # after the transaction closes.
@@ -369,7 +375,8 @@ class Transaction
                     end
                     made.uniq!
                     made.each do |res|
-                        @resources.add_vertex!(res)
+                        @configuration.add_resource(res)
+                        res.configuration = configuration
                         newlist << res
                         @generated << res
                         res.finish
@@ -410,32 +417,24 @@ class Transaction
         return @report
     end
 
-    # Produce the graph files if requested.
-    def graph(gr, name)
-        # We don't want to graph the configuration process.
-        return if self.configurator
-        
-        return unless Puppet[:graph]
-
-        Puppet.config.use(:graphing)
-
-        file = File.join(Puppet[:graphdir], "%s.dot" % name.to_s)
-        File.open(file, "w") { |f|
-            f.puts gr.to_dot("name" => name.to_s.capitalize)
-        }
+    # Should we ignore tags?
+    def ignore_tags?
+        ! @configuration.host_config?
     end
 
     # this should only be called by a Puppet::Type::Component resource now
     # and it should only receive an array
     def initialize(resources)
-        if resources.is_a?(Puppet::PGraph)
-            @resources = resources
+        if resources.is_a?(Puppet::Node::Configuration)
+            @configuration = resources
+        elsif resources.is_a?(Puppet::PGraph)
+            raise "Transactions should get configurations now, not PGraph"
         else
-            @resources = resources.to_graph
+            raise "Transactions require configurations"
         end
 
         @resourcemetrics = {
-            :total => @resources.vertices.length,
+            :total => @configuration.vertices.length,
             :out_of_sync => 0,    # The number of resources that had changes
             :applied => 0,        # The number of resources fixed
             :skipped => 0,      # The number of resources skipped
@@ -474,7 +473,7 @@ class Transaction
     # types, just providers.
     def prefetch
         prefetchers = {}
-        @resources.each do |resource|
+        @configuration.each do |resource|
             if provider = resource.provider and provider.class.respond_to?(:prefetch)
                 prefetchers[provider.class] ||= {}
                 prefetchers[provider.class][resource.title] = resource
@@ -501,48 +500,49 @@ class Transaction
     
         # Now add any dynamically generated resources
         generate()
-    
-        # Create a relationship graph from our resource graph
-        @relgraph = relationship_graph
         
         # This will throw an error if there are cycles in the graph.
-        @sorted_resources = @relgraph.topsort
+        @sorted_resources = relationship_graph.topsort
+    end
+
+    def relationship_graph
+        configuration.relationship_graph
     end
     
-    # Create a graph of all of the relationships in our resource graph.
-    def relationship_graph
-        graph = Puppet::PGraph.new
-        
-        # First create the dependency graph
-        @resources.vertices.each do |vertex|
-            graph.add_vertex!(vertex)
-            vertex.builddepends.each do |edge|
-                graph.add_edge!(edge)
-            end
+    # Send off the transaction report.
+    def send_report
+        begin
+            report = generate_report()
+        rescue => detail
+            Puppet.err "Could not generate report: %s" % detail
+            return
         end
-        
-        # Lastly, add in any autorequires
-        graph.vertices.each do |vertex|
-            vertex.autorequire.each do |edge|
-                unless graph.edge?(edge)
-                    unless graph.edge?(edge.target, edge.source)
-                        vertex.debug "Autorequiring %s" % [edge.source]
-                        graph.add_edge!(edge)
-                    else
-                        vertex.debug "Skipping automatic relationship with %s" % (edge.source == vertex ? edge.target : edge.source)
-                    end
-                end
-            end
-        end
-        
-        graph(graph, :relationships)
-        
-        # Then splice in the container information
-        graph.splice!(@resources, Puppet::Type::Component)
 
-        graph(graph, :expanded_relationships)
+        if Puppet[:rrdgraph] == true
+            report.graph()
+        end
+
+        if Puppet[:summarize]
+            puts report.summary
+        end
         
-        return graph
+        if Puppet[:report]
+            begin
+                reportclient().report(report)
+            rescue => detail
+                Puppet.err "Reporting failed: %s" % detail
+            end
+        end
+    end
+
+    def reportclient
+        unless defined? @reportclient
+            @reportclient = Puppet::Network::Client.report.new(
+                :Server => Puppet[:reportserver]
+            )
+        end
+
+        @reportclient
     end
 
     # Roll all completed changes back.
@@ -572,7 +572,7 @@ class Transaction
             end
             
             # FIXME This won't work right now.
-            @relgraph.matching_edges(events).each do |edge|
+            relationship_graph.matching_edges(events).each do |edge|
                 @targets[edge.target] << edge
             end
 
@@ -606,7 +606,7 @@ class Transaction
     # Should this resource be skipped?
     def skip?(resource)
         skip = false
-        if ! tagged?(resource)
+        if missing_tags?(resource)
             resource.debug "Not tagged with %s" % tags.join(", ")
         elsif ! scheduled?(resource)
             resource.debug "Not scheduled"
@@ -620,29 +620,22 @@ class Transaction
     
     # The tags we should be checking.
     def tags
-        # Allow the tags to be overridden
         unless defined? @tags
-            @tags = Puppet[:tags]
-        end
-        
-        unless defined? @processed_tags
-            if @tags.nil? or @tags == ""
+            tags = Puppet[:tags]
+            if tags.nil? or tags == ""
                 @tags = []
             else
-                @tags = [@tags] unless @tags.is_a? Array
-                @tags = @tags.collect do |tag|
-                    tag.split(/\s*,\s*/)
-                end.flatten
+                @tags = tags.split(/\s*,\s*/)
             end
-            @processed_tags = true
         end
         
         @tags
     end
     
     # Is this resource tagged appropriately?
-    def tagged?(resource)
-        self.ignoretags or tags.empty? or resource.tagged?(tags)
+    def missing_tags?(resource)
+        return false if self.ignore_tags? or tags.empty?
+        return true unless resource.tagged?(tags)
     end
     
     # Are there any edges that target this resource?

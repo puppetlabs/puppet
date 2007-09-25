@@ -93,5 +93,3 @@ class TestFeatures < Test::Unit::TestCase
         end
     end
 end
-
-# $Id$

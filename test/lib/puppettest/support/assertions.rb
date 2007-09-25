@@ -38,7 +38,7 @@ module PuppetTest
         run_events(:rollback, trans, events, msg)
     end
 
-    def assert_events(events, *items)
+    def assert_events(events, *resources)
         trans = nil
         comp = nil
         msg = nil
@@ -46,56 +46,26 @@ module PuppetTest
         unless events.is_a? Array
             raise Puppet::DevError, "Incorrect call of assert_events"
         end
-        if items[-1].is_a? String
-            msg = items.pop
+        if resources[-1].is_a? String
+            msg = resources.pop
         end
 
-        remove_comp = false
-        # They either passed a comp or a list of items.
-        if items[0].is_a? Puppet.type(:component)
-            comp = items.shift
-        else
-            comp = newcomp(items[0].title, *items)
-            remove_comp = true
-        end
-        msg ||= comp.title
-        assert_nothing_raised("Component %s failed" % [msg]) {
-            trans = comp.evaluate
-        }
+        config = resources2config(*resources)
+        transaction = Puppet::Transaction.new(config)
 
-        run_events(:evaluate, trans, events, msg)
+        run_events(:evaluate, transaction, events, msg)
 
-        if remove_comp
-            Puppet.type(:component).delete(comp)
-        end
-
-        return trans
+        return transaction
     end
 
     # A simpler method that just applies what we have.
-    def assert_apply(*objects)
-        if objects[0].is_a?(Puppet.type(:component))
-            comp = objects.shift
-            unless objects.empty?
-                objects.each { |o| comp.push o }
-            end
-        else
-            comp = newcomp(*objects)
-        end
-        trans = nil
-
-        assert_nothing_raised("Failed to create transaction") {
-            trans = comp.evaluate
-        }
+    def assert_apply(*resources)
+        config = resources2config(*resources)
 
         events = nil
-        assert_nothing_raised("Failed to evaluate transaction") {
-            events = trans.evaluate.collect { |e| e.event }
+        assert_nothing_raised("Failed to evaluate") {
+            events = config.apply.events
         }
-        trans.cleanup
-        Puppet.type(:component).delete(comp)
         events
     end
 end
-
-# $Id$

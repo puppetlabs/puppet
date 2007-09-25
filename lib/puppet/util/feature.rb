@@ -16,8 +16,7 @@ class Puppet::Util::Feature
         if self.class.respond_to?(method)
             raise ArgumentError, "Feature %s is already defined" % name
         end
-        
-        result = true
+
         if block_given?
             begin
                 result = yield
@@ -25,33 +24,21 @@ class Puppet::Util::Feature
                 warn "Failed to load feature test for %s: %s" % [name, detail]
                 result = false
             end
-        end
-        
-        if ary = options[:libs]
-            ary = [ary] unless ary.is_a?(Array)
-            
-            ary.each do |lib|
-                unless lib.is_a?(String)
-                    raise ArgumentError, "Libraries must be passed as strings not %s" % lib.class
-                end
-            
-                begin
-                    require lib
-                rescue Exception
-                    Puppet.debug "Failed to load library '%s' for feature '%s'" % [lib, name]
-                    result = false
-                end
-            end
+            @results[name] = result
         end
         
         meta_def(method) do
-            result
+            unless @results.include?(name)
+                @results[name] = test(name, options)
+            end
+            @results[name]
         end
     end
     
     # Create a new feature collection.
     def initialize(path)
         @path = path
+        @results = {}
         @loader = Puppet::Util::Autoload.new(self, @path)
     end
     
@@ -71,6 +58,28 @@ class Puppet::Util::Feature
             return false
         end
     end
-end
 
-# $Id$
+    # Actually test whether the feature is present.  We only want to test when
+    # someone asks for the feature, so we don't unnecessarily load
+    # files.
+    def test(name, options)
+        result = true
+        if ary = options[:libs]
+            ary = [ary] unless ary.is_a?(Array)
+            
+            ary.each do |lib|
+                unless lib.is_a?(String)
+                    raise ArgumentError, "Libraries must be passed as strings not %s" % lib.class
+                end
+            
+                begin
+                    require lib
+                rescue Exception
+                    Puppet.debug "Failed to load library '%s' for feature '%s'" % [lib, name]
+                    result = false
+                end
+            end
+        end
+        result
+    end
+end

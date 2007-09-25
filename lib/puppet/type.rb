@@ -44,7 +44,9 @@ class Type
     # that it is clear whether it operates on all attributes (thus has 'attr' in
     # the method name, or whether it operates on a specific type of attributes.
     attr_accessor :file, :line
-    attr_reader :parent
+
+    # The configuration that this resource is stored in.
+    attr_accessor :configuration
 
     attr_writer :title
     attr_writer :noop
@@ -308,6 +310,25 @@ class Type
     # works everywhere, I'll switch it.
     def name
         return self[:name]
+    end
+
+    # Look up our parent in the configuration, if we have one.
+    def parent
+        return nil unless configuration
+
+        # This is kinda weird.
+        if implicit?
+            parents = configuration.relationship_graph.adjacent(self, :direction => :in)
+        else
+            parents = configuration.adjacent(self, :direction => :in)
+        end
+        if parents
+            # We should never have more than one parent, so let's just ignore
+            # it if we happen to.
+            return parents.shift
+        else
+            return nil
+        end
     end
 
     # Return the "type[name]" style reference.

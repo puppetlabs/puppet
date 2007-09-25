@@ -199,7 +199,7 @@ flags = [
 ]
 
 # Add all of the config parameters as valid options.
-Puppet.config.addargs(flags)
+Puppet.settings.addargs(flags)
 
 result = GetoptLong.new(*flags)
 
@@ -259,7 +259,7 @@ begin
             when "--debug"
                 options[:debug] = true
             else
-                Puppet.config.handlearg(opt, arg)
+                Puppet.settings.handlearg(opt, arg)
         end
     }
 rescue GetoptLong::InvalidOption => detail
@@ -278,7 +278,7 @@ config = File.join(Puppet[:confdir], "puppetmasterd.conf")
 Puppet.parse_config(config)
 
 if File.exists? config
-    Puppet.config.parse(config)
+    Puppet.settings.parse(config)
 end
 
 if Puppet[:ldapnodes]

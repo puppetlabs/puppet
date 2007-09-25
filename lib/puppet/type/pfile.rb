@@ -574,6 +574,9 @@ module Puppet
         # Create a new file or directory object as a child to the current
         # object.
         def newchild(path, local, hash = {})
+            unless configuration
+                raise Puppet::DevError, "File recursion cannot happen without a configuration"
+            end
             # make local copy of arguments
             args = symbolize_options(@arghash)
 
@@ -608,14 +611,14 @@ module Puppet
             }
 
             child = nil
-            klass = self.class
-            
+
             # The child might already exist because 'localrecurse' runs
             # before 'sourcerecurse'.  I could push the override stuff into
             # a separate method or something, but the work is the same other
             # than this last bit, so it doesn't really make sense.
-            if child = klass[path]
+            if child = configuration.resource(:file, path)
                 unless child.parent.object_id == self.object_id
+                    puts("Parent is %s, I am %s" % [child.parent.ref, self.ref]) if child.parent
                     self.debug "Not managing more explicit file %s" %
                         path
                     return nil
@@ -640,27 +643,21 @@ module Puppet
                 #notice "Creating new file with args %s" % args.inspect
                 args[:parent] = self
                 begin
-                    child = klass.implicitcreate(args)
-                    
-                    # implicit creation can return nil
-                    if child.nil?
-                        return nil
-                    end
-                rescue Puppet::Error => detail
-                    self.notice(
-                        "Cannot manage: %s" %
-                            [detail.message]
-                    )
-                    self.debug args.inspect
-                    child = nil
+                    # This method is used by subclasses of :file, so use the class name rather than hard-coding
+                    # :file.
+                    return nil unless child = configuration.create_implicit_resource(self.class.name, args)
                 rescue => detail
-                    self.notice(
-                        "Cannot manage: %s" %
-                            [detail]
-                    )
-                    self.debug args.inspect
-                    child = nil
+                    puts detail.backtrace
+                    self.notice "Cannot manage: %s" % [detail]
+                    return nil
                 end
+            end
+
+            # LAK:FIXME This shouldn't be necessary, but as long as we're
+            # modeling the relationship graph specifically, it is.
+            configuration.relationship_graph.add_edge! self, child
+            unless child.parent
+                raise "Did not set parent of %s" % child.ref
             end
             return child
         end
@@ -669,12 +666,14 @@ module Puppet
         # path names, rather than including the full parent's title each
         # time.
         def pathbuilder
-            if defined? @parent
+            # We specifically need to call the method here, so it looks
+            # up our parent in the configuration graph.
+            if parent = parent()
                 # We only need to behave specially when our parent is also
                 # a file
-                if @parent.is_a?(self.class)
+                if parent.is_a?(self.class)
                     # Remove the parent file name
-                    list = @parent.pathbuilder
+                    list = parent.pathbuilder
                     list.pop # remove the parent's path info
                     return list << self.ref
                 else
@@ -695,9 +694,7 @@ module Puppet
         # files.
         def recurse
             # are we at the end of the recursion?
-            unless self.recurse?
-                return
-            end
+            return unless self.recurse?
 
             recurse = self[:recurse]
             # we might have a string, rather than a number

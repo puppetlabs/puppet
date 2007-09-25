@@ -99,7 +99,7 @@ options = [
 ]
 
 # Add all of the config parameters as valid options.
-Puppet.config.addargs(options)
+Puppet.settings.addargs(options)
 
 result = GetoptLong.new(*options)
 
@@ -139,7 +139,7 @@ result.each { |opt,arg|
         debug = true
     else
         # Anything else is handled by the config stuff
-        Puppet.config.handlearg(opt, arg)
+        Puppet.settings.handlearg(opt, arg)
     end
 }
 

@@ -102,7 +102,7 @@ Puppet::Network::Handler.report.newreport(:rrdgraph) do
 
         unless File.directory?(hostdir) and FileTest.writable?(hostdir)
             # Some hackishness to create the dir with all of the right modes and ownership
-            config = Puppet::Util::Config.new
+            config = Puppet::Util::Settings.new
             config.setdefaults(:reports, :hostdir => {:default => hostdir, :owner => Puppet[:user], :mode => 0755, :group => Puppet[:group], :desc => "eh"})
 
             # This creates the dir.

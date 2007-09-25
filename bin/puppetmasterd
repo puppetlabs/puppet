@@ -95,7 +95,7 @@ options = [
 ]
 
 # Add all of the config parameters as valid options.
-Puppet.config.addargs(options)
+Puppet.settings.addargs(options)
 
 result = GetoptLong.new(*options)
 
@@ -152,7 +152,7 @@ begin
             when "--verbose"
                 options[:verbose] = true
             else
-                Puppet.config.handlearg(opt, arg)
+                Puppet.settings.handlearg(opt, arg)
         end
     }
 rescue GetoptLong::InvalidOption => detail

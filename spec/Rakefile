@@ -2,9 +2,15 @@ require File.join(File.dirname(__FILE__), "spec_helper.rb")
 require 'rake'
 require 'spec/rake/spectask'
 
+basedir = File.dirname(__FILE__)
+puppetlibdir = File.join(basedir, "../lib")
+puppettestlibdir = File.join(basedir, "../test/lib")
+speclibdir = File.join(basedir, "lib")
+
 desc "Run all spec unit tests"
 Spec::Rake::SpecTask.new('unit') do |t|
     t.spec_files = FileList['unit/**/*.rb']
+    t.libs = [puppetlibdir, puppettestlibdir, speclibdir]
 end
 
 task :default => [:unit]
