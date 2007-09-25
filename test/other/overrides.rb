@@ -90,12 +90,10 @@ class TestOverrides < Test::Unit::TestCase
             }
         }
 
-        comp = newcomp("overrides", baseobj)
-        children.each { |child| comp.push child }
+        config = mk_configuration(baseobj, *children)
 
         assert_nothing_raised("Could not eval component") {
-            trans = comp.evaluate
-            trans.evaluate
+            config.apply
         }
 
         files.each { |path, mode|

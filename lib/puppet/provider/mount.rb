@@ -50,5 +50,3 @@ module Puppet::Provider::Mount
         end
     end
 end
-
-# $Id$

@@ -60,7 +60,18 @@ module Puppet
             instance_variables
         end
 
-        def to_type(parent = nil)
+        def to_ref
+            unless defined? @ref
+                if self.type and self.name
+                    @ref = "%s[%s]" % [self.type, self.name]
+                else
+                    @ref = nil
+                end
+            end
+            @ref
+        end
+
+        def to_type
             retobj = nil
             if typeklass = Puppet::Type.type(self.type)
                 # FIXME This should really be done differently, but...
@@ -75,10 +86,6 @@ module Puppet
                 end
             else
                 raise Puppet::Error.new("Could not find object type %s" % self.type)
-            end
-
-            if parent
-                parent.push retobj
             end
 
             return retobj
@@ -167,12 +174,7 @@ module Puppet
                 end
             end
 
-            str = nil
-            if self.top
-                str = "%s"
-            else
-                str = "#{@keyword} #{@type} {\n%s\n}"
-            end
+            str = "#{@keyword} #{@name} {\n%s\n}"
             str % @children.collect { |child|
                 child.to_manifest
             }.collect { |str|
@@ -188,7 +190,44 @@ module Puppet
             instance_variables
         end
 
-        def to_type(parent = nil)
+        # Create a resource graph from our structure.
+        def to_configuration
+            configuration = Puppet::Node::Configuration.new(Facter.value("hostname")) do |config|
+                delver = proc do |obj|
+                    unless container = config.resource(obj.to_ref)
+                        container = obj.to_type
+                        config.add_resource container
+                    end
+                    obj.each do |child|
+                        unless resource = config.resource(child.to_ref)
+                            next unless resource = child.to_type
+                            config.add_resource resource
+                        end
+                        config.add_edge!(container, resource)
+                        if child.is_a?(self.class)
+                            delver.call(child)
+                        end
+                    end
+                end
+                
+                delver.call(self)
+            end
+            
+            return configuration
+        end
+
+        def to_ref
+            unless defined? @ref
+                if self.type and self.name
+                    @ref = "%s[%s]" % [self.type, self.name]
+                else
+                    @ref = nil
+                end
+            end
+            @ref
+        end
+
+        def to_type
             # this container will contain the equivalent of all objects at
             # this level
             #container = Puppet::Component.new(:name => @name, :type => @type)
@@ -235,44 +274,15 @@ module Puppet
                     #Puppet.debug "%s[%s] has no parameters" % [@type, @name]
                 end
 
-                #if parent
-                #    hash[:parent] = parent
-                #end
                 container = Puppet::Type::Component.create(hash)
             end
             #Puppet.info container.inspect
-
-            if parent
-                parent.push container
-            end
 
             # unless we successfully created the container, return an error
             unless container
                 Puppet.warning "Got no container back"
                 return nil
             end
-
-            self.each { |child|
-                # the fact that we descend here means that we are
-                # always going to execute depth-first
-                # which is _probably_ a good thing, but one never knows...
-                unless  child.is_a?(Puppet::TransBucket) or
-                        child.is_a?(Puppet::TransObject)
-                    raise Puppet::DevError,
-                        "TransBucket#to_type cannot handle objects of type %s" %
-                            child.class
-                end
-
-                # Now just call to_type on them with the container as a parent
-                begin
-                    child.to_type(container)
-                rescue => detail
-                    if Puppet[:trace] and ! detail.is_a?(Puppet::Error)
-                        puts detail.backtrace
-                    end
-                    Puppet.err detail.to_s
-                end
-            }
 
             # at this point, no objects at are level are still Transportable
             # objects
@@ -287,7 +297,5 @@ module Puppet
         end
 
     end
-    #------------------------------------------------------------
 end
 
-# $Id$

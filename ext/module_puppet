@@ -61,7 +61,7 @@ options = [
 ]
 
 # Add all of the config parameters as valid options.
-Puppet.config.addargs(options)
+Puppet.settings.addargs(options)
 
 result = GetoptLong.new(*options)
 
@@ -108,7 +108,7 @@ begin
                     $stderr.puts detail.to_s
                 end
             else
-                Puppet.config.handlearg(opt, arg)
+                Puppet.settings.handlearg(opt, arg)
         end
     }
 rescue GetoptLong::InvalidOption => detail
@@ -121,7 +121,7 @@ end
 
 # Now parse the config
 if Puppet[:config] and File.exists? Puppet[:config]
-    Puppet.config.parse(Puppet[:config])
+    Puppet.settings.parse(Puppet[:config])
 end
 
 client = nil
@@ -191,8 +191,8 @@ if parseonly
 end
 
 begin
-    client.getconfig
-    client.apply
+    config = client.getconfig
+    config.apply
 rescue => detail
     Puppet.err detail
     exit(1)

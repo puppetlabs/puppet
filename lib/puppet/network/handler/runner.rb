@@ -50,10 +50,10 @@ class Puppet::Network::Handler
 
             # And then we need to tell it to run, with this extra info.
             if fg
-                master.run(tags, ignoreschedules)
+                master.run(:tags => tags, :ignoreschedules => ignoreschedules)
             else
                 Puppet.newthread do
-                    master.run(tags, ignoreschedules)
+                    master.run(:tags => tags, :ignoreschedules => ignoreschedules)
                 end
             end
 

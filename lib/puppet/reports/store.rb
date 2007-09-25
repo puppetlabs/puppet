@@ -1,7 +1,7 @@
 require 'puppet'
 
 Puppet::Network::Handler.report.newreport(:store, :useyaml => true) do
-    Puppet.config.use(:reporting)
+    Puppet.settings.use(:reporting)
 
     desc "Store the yaml report on disk.  Each host sends its report as a YAML dump
         and this just stores the file on disk, in the ``reportdir`` directory.
@@ -11,9 +11,9 @@ Puppet::Network::Handler.report.newreport(:store, :useyaml => true) do
         default report)."
 
     def mkclientdir(client, dir)
-        config = Puppet::Util::Config.new
+        config = Puppet::Util::Settings.new
         config.setdefaults("reportclient-#{client}",
-            "clientdir-#{client}" => { :default => dir,
+            "client-#{client}-dir" => { :default => dir,
                 :mode => 0750,
                 :desc => "Client dir for %s" % client,
                 :owner => Puppet[:user],

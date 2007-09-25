@@ -7,8 +7,6 @@ require 'puppettest'
 require 'mocha'
 require 'puppettest/support/resources'
 
-# $Id$
-
 class TestTransactions < Test::Unit::TestCase
     include PuppetTest::FileTesting
     include PuppetTest::Support::Resources
@@ -133,7 +131,7 @@ class TestTransactions < Test::Unit::TestCase
         inst = type.create :name => "yay"
         
         # Create a transaction
-        trans = Puppet::Transaction.new(newcomp(inst))
+        trans = Puppet::Transaction.new(mk_configuration(inst))
 
         # Make sure prefetch works
         assert_nothing_raised do
@@ -255,7 +253,7 @@ class TestTransactions < Test::Unit::TestCase
         }
 
 
-        component = newcomp("file",file)
+        component = mk_configuration("file",file)
         require 'etc'
         groupname = Etc.getgrgid(File.stat(file.name).gid).name
         assert_nothing_raised() {
@@ -295,11 +293,10 @@ class TestTransactions < Test::Unit::TestCase
         file[:check] = check
         file[:group] = @groups[0]
 
-        assert_apply(file)
+        config = mk_configuration(file)
+        config.apply
 
         @@tmpfiles << execfile
-
-        component = newcomp("both",file,exec)
 
         # 'subscribe' expects an array of arrays
         exec[:subscribe] = [[file.class.name,file.name]]
@@ -317,7 +314,11 @@ class TestTransactions < Test::Unit::TestCase
             file[:mode] = "755"
         }
 
-        trans = assert_events([:file_changed, :triggered], component)
+        # Make a new configuration so the resource relationships get
+        # set up.
+        config = mk_configuration(file, exec)
+
+        trans = assert_events([:file_changed, :triggered], config)
 
         assert(FileTest.exists?(execfile), "Execfile does not exist")
         File.unlink(execfile)
@@ -325,7 +326,7 @@ class TestTransactions < Test::Unit::TestCase
             file[:group] = @groups[1]
         }
 
-        trans = assert_events([:file_changed, :triggered], component)
+        trans = assert_events([:file_changed, :triggered], config)
         assert(FileTest.exists?(execfile), "Execfile does not exist")
     end
 
@@ -343,24 +344,30 @@ class TestTransactions < Test::Unit::TestCase
         file[:group] = @groups[0]
         assert_apply(file)
 
-        fcomp = newcomp("file",file)
-        ecomp = newcomp("exec",exec)
+        config = Puppet::Node::Configuration.new
+        fcomp = Puppet::Type.type(:component).create(:name => "file")
+        config.add_resource fcomp
+        config.add_resource file
+        config.add_edge!(fcomp, file)
 
-        component = newcomp("both",fcomp,ecomp)
+        ecomp = Puppet::Type.type(:component).create(:name => "exec")
+        config.add_resource ecomp
+        config.add_resource exec
+        config.add_edge!(ecomp, exec)
 
         # 'subscribe' expects an array of arrays
         #component[:require] = [[file.class.name,file.name]]
         ecomp[:subscribe] = fcomp
         exec[:refreshonly] = true
 
-        trans = assert_events([], component)
+        trans = assert_events([], config)
 
         assert_nothing_raised() {
             file[:group] = @groups[1]
             file[:mode] = "755"
         }
 
-        trans = assert_events([:file_changed, :file_changed, :triggered], component)
+        trans = assert_events([:file_changed, :file_changed, :triggered], config)
     end
 
     # Make sure that multiple subscriptions get triggered.
@@ -426,7 +433,8 @@ class TestTransactions < Test::Unit::TestCase
         Puppet[:ignoreschedules] = false
         file = Puppet.type(:file).create(
             :name => tempfile(),
-            :ensure => "file"
+            :ensure => "file",
+            :backup => false
         )
 
         fname = tempfile()
@@ -437,11 +445,10 @@ class TestTransactions < Test::Unit::TestCase
             :subscribe => ["file", file.name]
         )
 
-        comp = newcomp(file,exec)
-        comp.finalize
+        config = mk_configuration(file, exec)
 
         # Run it once
-        assert_apply(comp)
+        assert_apply(config)
         assert(FileTest.exists?(fname), "File did not get created")
 
         assert(!exec.scheduled?, "Exec is somehow scheduled")
@@ -451,7 +458,8 @@ class TestTransactions < Test::Unit::TestCase
 
         file[:content] = "some content"
 
-        assert_events([:file_changed, :triggered], comp)
+        assert_events([:file_changed, :triggered], config)
+
         assert(FileTest.exists?(fname), "File did not get recreated")
 
         # Now remove it, so it can get created again
@@ -469,7 +477,7 @@ class TestTransactions < Test::Unit::TestCase
 
         assert(! file.insync?(file.retrieve), "Uh, file is in sync?")
 
-        assert_events([:file_changed, :triggered], comp)
+        assert_events([:file_changed, :triggered], config)
         assert(FileTest.exists?(fname), "File did not get recreated")
     end
 
@@ -493,11 +501,9 @@ class TestTransactions < Test::Unit::TestCase
             :ensure => :file
         )
 
-        comp = newcomp(exec, file1, file2)
+        config = mk_configuration(exec, file1, file2)
 
-        comp.finalize
-
-        assert_apply(comp)
+        assert_apply(config)
 
         assert(! FileTest.exists?(file1[:path]),
             "File got created even tho its dependency failed")
@@ -506,31 +512,27 @@ class TestTransactions < Test::Unit::TestCase
     end
     end
     
-    def f(n)
-        Puppet::Type.type(:file)["/tmp/#{n.to_s}"]
-    end
-    
     def test_relationship_graph
-        one, two, middle, top = mktree
+        config = mktree
+
+        config.meta_def(:f) do |name|
+            self.resource("File[%s]" % name)
+        end
         
-        {one => two, "f" => "c", "h" => middle}.each do |source, target|
-            if source.is_a?(String)
-                source = f(source)
-            end
-            if target.is_a?(String)
-                target = f(target)
-            end
+        {"one" => "two", "File[f]" => "File[c]", "File[h]" => "middle"}.each do |source_ref, target_ref|
+            source = config.resource(source_ref) or raise "Missing %s" % source_ref
+            target = config.resource(target_ref) or raise "Missing %s" % target_ref
             target[:require] = source
         end
         
-        trans = Puppet::Transaction.new(top)
+        trans = Puppet::Transaction.new(config)
         
         graph = nil
         assert_nothing_raised do
             graph = trans.relationship_graph
         end
-        
-        assert_instance_of(Puppet::PGraph, graph,
+
+        assert_instance_of(Puppet::Node::Configuration, graph,
             "Did not get relationship graph")
         
         # Make sure all of the components are gone
@@ -544,13 +546,13 @@ class TestTransactions < Test::Unit::TestCase
         sorted = graph.topsort.reverse
         
         # Now make sure the appropriate edges are there and are in the right order
-        assert(graph.dependents(f(:f)).include?(f(:c)),
+        assert(graph.dependents(config.f(:f)).include?(config.f(:c)),
             "c not marked a dep of f")
-        assert(sorted.index(f(:c)) < sorted.index(f(:f)),
+        assert(sorted.index(config.f(:c)) < sorted.index(config.f(:f)),
             "c is not before f")
             
-        one.each do |o|
-            two.each do |t|
+        config.resource("one").each do |o|
+            config.resource("two").each do |t|
                 assert(graph.dependents(o).include?(t),
                     "%s not marked a dep of %s" % [t.ref, o.ref])
                 assert(sorted.index(t) < sorted.index(o),
@@ -558,22 +560,22 @@ class TestTransactions < Test::Unit::TestCase
             end
         end
         
-        trans.resources.leaves(middle).each do |child|
-            assert(graph.dependents(f(:h)).include?(child),
+        trans.configuration.leaves(config.resource("middle")).each do |child|
+            assert(graph.dependents(config.f(:h)).include?(child),
                 "%s not marked a dep of h" % [child.ref])
-            assert(sorted.index(child) < sorted.index(f(:h)),
+            assert(sorted.index(child) < sorted.index(config.f(:h)),
                 "%s is not before h" % child.ref)
         end
         
         # Lastly, make sure our 'g' vertex made it into the relationship
         # graph, since it's not involved in any relationships.
-        assert(graph.vertex?(f(:g)),
+        assert(graph.vertex?(config.f(:g)),
             "Lost vertexes with no relations")
 
         # Now make the reversal graph and make sure all of the vertices made it into that
         reverse = graph.reversal
         %w{a b c d e f g h}.each do |letter|
-            file = f(letter)
+            file = config.f(letter)
             assert(reverse.vertex?(file), "%s did not make it into reversal" % letter)
         end
     end
@@ -594,15 +596,15 @@ class TestTransactions < Test::Unit::TestCase
         
         yay = Puppet::Type.newgenerator :title => "yay"
         rah = Puppet::Type.newgenerator :title => "rah"
-        comp = newcomp(yay, rah)
-        trans = comp.evaluate
+        config = mk_configuration(yay, rah)
+        trans = Puppet::Transaction.new(config)
         
         assert_nothing_raised do
             trans.generate
         end
         
         %w{ya ra y r}.each do |name|
-            assert(trans.resources.vertex?(Puppet::Type.type(:generator)[name]),
+            assert(trans.configuration.vertex?(Puppet::Type.type(:generator)[name]),
                 "Generated %s was not a vertex" % name)
             assert($finished.include?(name), "%s was not finished" % name)
         end
@@ -613,7 +615,7 @@ class TestTransactions < Test::Unit::TestCase
         end
         
         %w{ya ra y r}.each do |name|
-            assert(!trans.resources.vertex?(Puppet::Type.type(:generator)[name]),
+            assert(!trans.configuration.vertex?(Puppet::Type.type(:generator)[name]),
                 "Generated vertex %s was not removed from graph" % name)
             assert_nil(Puppet::Type.type(:generator)[name],
                 "Generated vertex %s was not removed from class" % name)
@@ -633,8 +635,8 @@ class TestTransactions < Test::Unit::TestCase
 
         yay = Puppet::Type.newgenerator :title => "yay"
         rah = Puppet::Type.newgenerator :title => "rah", :subscribe => yay
-        comp = newcomp(yay, rah)
-        trans = comp.evaluate
+        config = mk_configuration(yay, rah)
+        trans = Puppet::Transaction.new(config)
         
         trans.prepare
         
@@ -645,13 +647,13 @@ class TestTransactions < Test::Unit::TestCase
         end
         ya = type["ya"]
         assert(ya, "Did not generate ya")
-        assert(trans.relgraph.vertex?(ya),
+        assert(trans.relationship_graph.vertex?(ya),
             "Did not add ya to rel_graph")
         
         # Now make sure the appropriate relationships were added
-        assert(trans.relgraph.edge?(yay, ya),
+        assert(trans.relationship_graph.edge?(yay, ya),
             "parent was not required by child")
-        assert(! trans.relgraph.edge?(ya, rah),
+        assert(! trans.relationship_graph.edge?(ya, rah),
             "generated child ya inherited depencency on rah")
         
         # Now make sure it in turn eval_generates appropriately
@@ -662,7 +664,7 @@ class TestTransactions < Test::Unit::TestCase
         %w{y}.each do |name|
             res = type[name]
             assert(res, "Did not generate %s" % name)
-            assert(trans.relgraph.vertex?(res),
+            assert(trans.relationship_graph.vertex?(res),
                 "Did not add %s to rel_graph" % name)
             assert($finished.include?("y"), "y was not finished")
         end
@@ -670,7 +672,7 @@ class TestTransactions < Test::Unit::TestCase
         assert_nothing_raised("failed to eval_generate with nil response") do
             trans.eval_resource(type["y"])
         end
-        assert(trans.relgraph.edge?(yay, ya), "no edge was created for ya => yay")
+        assert(trans.relationship_graph.edge?(yay, ya), "no edge was created for ya => yay")
         
         assert_nothing_raised("failed to apply rah") do
             trans.eval_resource(rah)
@@ -678,15 +680,15 @@ class TestTransactions < Test::Unit::TestCase
 
         ra = type["ra"]
         assert(ra, "Did not generate ra")
-        assert(trans.relgraph.vertex?(ra),
+        assert(trans.relationship_graph.vertex?(ra),
             "Did not add ra to rel_graph" % name)
         assert($finished.include?("ra"), "y was not finished")
         
         # Now make sure this generated resource has the same relationships as
         # the generating resource
-        assert(! trans.relgraph.edge?(yay, ra),
+        assert(! trans.relationship_graph.edge?(yay, ra),
            "rah passed its dependencies on to its children")
-        assert(! trans.relgraph.edge?(ya, ra),
+        assert(! trans.relationship_graph.edge?(ya, ra),
             "children have a direct relationship")
         
         # Now make sure that cleanup gets rid of those generated types.
@@ -695,14 +697,14 @@ class TestTransactions < Test::Unit::TestCase
         end
         
         %w{ya ra y r}.each do |name|
-            assert(!trans.relgraph.vertex?(type[name]),
+            assert(!trans.relationship_graph.vertex?(type[name]),
                 "Generated vertex %s was not removed from graph" % name)
             assert_nil(type[name],
                 "Generated vertex %s was not removed from class" % name)
         end
         
         # Now, start over and make sure that everything gets evaluated.
-        trans = comp.evaluate
+        trans = Puppet::Transaction.new(config)
         $evaluated.clear
         assert_nothing_raised do
             trans.evaluate
@@ -711,54 +713,41 @@ class TestTransactions < Test::Unit::TestCase
         assert_equal(%w{yay ya y rah ra r}, $evaluated,
             "Not all resources were evaluated or not in the right order")
     end
-    
-    def test_tags
-        res = Puppet::Type.newfile :path => tempfile()
-        comp = newcomp(res)
-        
-        # Make sure they default to none
-        assert_equal([], comp.evaluate.tags)
-        
-        # Make sure we get the main tags
-        Puppet[:tags] = %w{this is some tags}
-        assert_equal(%w{this is some tags}, comp.evaluate.tags)
-        
-        # And make sure they get processed correctly
-        Puppet[:tags] = ["one", "two,three", "four"]
-        assert_equal(%w{one two three four}, comp.evaluate.tags)
-        
-        # lastly, make sure we can override them
-        trans = comp.evaluate
-        trans.tags = ["one", "two,three", "four"]
-        assert_equal(%w{one two three four}, comp.evaluate.tags)
+
+    def test_ignore_tags?
+        config = Puppet::Node::Configuration.new
+        config.host_config = true
+        transaction = Puppet::Transaction.new(config)
+        assert(! transaction.ignore_tags?, "Ignoring tags when applying a host configuration")
+
+        config.host_config = false
+        transaction = Puppet::Transaction.new(config)
+        assert(transaction.ignore_tags?, "Not ignoring tags when applying a non-host configuration")
     end
     
-    def test_tagged?
-        res = Puppet::Type.newfile :path => tempfile()
-        comp = newcomp(res)
-        trans = comp.evaluate
-        
-        assert(trans.tagged?(res), "tagged? defaulted to false")
-        
-        # Now set some tags
-        trans.tags = %w{some tags}
-        
-        # And make sure it's false
-        assert(! trans.tagged?(res), "matched invalid tags")
-        
-        # Set ignoretags and make sure it sticks
-        trans.ignoretags = true
-        assert(trans.tagged?(res), "tags were not ignored")
-        
-        # Now make sure we actually correctly match tags
-        res[:tag] = "mytag"
-        trans.ignoretags = false
-        trans.tags = %w{notag}
-        
-        assert(! trans.tagged?(res), "tags incorrectly matched")
-        
-        trans.tags = %w{mytag yaytag}
-        assert(trans.tagged?(res), "tags should have matched")
+    def test_missing_tags?
+        resource = stub 'resource', :tagged? => true
+        config = Puppet::Node::Configuration.new
+
+        # Mark it as a host config so we don't care which test is first
+        config.host_config = true
+        transaction = Puppet::Transaction.new(config)
+        assert(! transaction.missing_tags?(resource), "Considered a resource to be missing tags when none are set")
+
+        # host configurations pay attention to tags, no one else does.
+        Puppet[:tags] = "three,four"
+        config.host_config = false
+        transaction = Puppet::Transaction.new(config)
+        assert(! transaction.missing_tags?(resource), "Considered a resource to be missing tags when not running a host configuration")
+
+        # 
+        config.host_config = true
+        transaction = Puppet::Transaction.new(config)
+        assert(! transaction.missing_tags?(resource), "Considered a resource to be missing tags when running a host configuration and all tags are present")
+
+        transaction = Puppet::Transaction.new(config)
+        resource.stubs :tagged? => false
+        assert(transaction.missing_tags?(resource), "Considered a resource not to be missing tags when running a host configuration and tags are missing")
     end
     
     # Make sure changes generated by eval_generated resources have proxies
@@ -772,8 +761,8 @@ class TestTransactions < Test::Unit::TestCase
         end
         
         resource = type.create :name => "test"
-        comp = newcomp(resource)
-        trans = comp.evaluate
+        config = mk_configuration(resource)
+        trans = Puppet::Transaction.new(config)
         trans.prepare
 
         assert_nothing_raised do
@@ -831,7 +820,7 @@ class TestTransactions < Test::Unit::TestCase
         end
 
         # Make a graph with some stuff in it.
-        graph = Puppet::PGraph.new
+        graph = Puppet::Node::Configuration.new
 
         # Add a non-triggering edge.
         a = trigger.new(:a)
@@ -883,52 +872,12 @@ class TestTransactions < Test::Unit::TestCase
         assert(trans.triggered?(c, :refresh),
             "Transaction did not store the trigger")
     end
-
-    def test_graph
-        Puppet.config.use(:main)
-        # Make a graph
-        graph = Puppet::PGraph.new
-        graph.add_edge!("a", "b")
-
-        # Create our transaction
-        trans = Puppet::Transaction.new(graph)
-
-        assert_nothing_raised do
-            trans.graph(graph, :testing)
-        end
-
-        dotfile = File.join(Puppet[:graphdir], "testing.dot")
-        assert(! FileTest.exists?(dotfile), "Enabled graphing even tho disabled")
-
-        # Now enable graphing
-        Puppet[:graph] = true
-
-        assert_nothing_raised do
-            trans.graph(graph, :testing)
-        end
-        assert(FileTest.exists?(dotfile), "Did not create graph.")
-    end
-
-    def test_created_graphs
-        FileUtils.mkdir_p(Puppet[:graphdir])
-        file = Puppet::Type.newfile(:path => tempfile, :content => "yay")
-        exec = Puppet::Type.type(:exec).create(:command => "echo yay", :path => ENV['PATH'],
-            :require => file)
-
-        Puppet[:graph] = true
-        assert_apply(file, exec)
-
-        %w{resources relationships expanded_relationships}.each do |name|
-            file = File.join(Puppet[:graphdir], "%s.dot" % name)
-            assert(FileTest.exists?(file), "graph for %s was not created" % name)
-        end
-    end
     
     def test_set_target
         file = Puppet::Type.newfile(:path => tempfile(), :content => "yay")
         exec1 = Puppet::Type.type(:exec).create :command => "/bin/echo exec1"
         exec2 = Puppet::Type.type(:exec).create :command => "/bin/echo exec2"
-        trans = Puppet::Transaction.new(newcomp(file, exec1, exec2))
+        trans = Puppet::Transaction.new(mk_configuration(file, exec1, exec2))
         
         # First try it with an edge that has no callback
         edge = Puppet::Relationship.new(file, exec1)
@@ -975,7 +924,8 @@ class TestTransactions < Test::Unit::TestCase
         one[:require] = two
         two[:require] = one
 
-        trans = newcomp(one, two).evaluate
+        config = mk_configuration(one, two)
+        trans = Puppet::Transaction.new(config)
         assert_raise(Puppet::Error) do
             trans.prepare
         end
@@ -1042,15 +992,15 @@ class TestTransactions < Test::Unit::TestCase
         
         rels[dir] = file
         rels.each do |after, before|
-            comp = newcomp(before, after)
-            trans = comp.evaluate
+            config = mk_configuration(before, after)
+            trans = Puppet::Transaction.new(config)
             str = "from %s to %s" % [before, after]
         
             assert_nothing_raised("Failed to create graph %s" % str) do
                 trans.prepare
             end
         
-            graph = trans.relgraph
+            graph = trans.relationship_graph
             assert(graph.edge?(before, after), "did not create manual relationship %s" % str)
             assert(! graph.edge?(after, before), "created automatic relationship %s" % str)
         end
@@ -1063,7 +1013,7 @@ class TestTransactions < Test::Unit::TestCase
         one[:require] = two
         one[:subscribe] = two
 
-        comp = newcomp(one, two)
+        comp = mk_configuration(one, two)
         trans = Puppet::Transaction.new(comp)
         graph = trans.relationship_graph
 
@@ -1188,5 +1138,3 @@ class TestTransactions < Test::Unit::TestCase
         assert_equal(1, $flushed, "object was flushed in noop")
     end
 end
-
-# $Id$

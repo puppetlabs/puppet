@@ -53,7 +53,7 @@ class Puppet::SSLCertificates::CA
     end
 
     def initialize(hash = {})
-        Puppet.config.use(:main, :ca, :ssl)
+        Puppet.settings.use(:main, :ca, :ssl)
         self.setconfig(hash)
 
         if Puppet[:capass]
@@ -73,7 +73,7 @@ class Puppet::SSLCertificates::CA
         self.getcert
         init_crl
         unless FileTest.exists?(@config[:serial])
-            Puppet.config.write(:serial) do |f|
+            Puppet.settings.write(:serial) do |f|
                 f << "%04X" % 1
             end
         end
@@ -85,7 +85,7 @@ class Puppet::SSLCertificates::CA
         20.times { pass += (rand(74) + 48).chr }
 
         begin
-            Puppet.config.write(:capass) { |f| f.print pass }
+            Puppet.settings.write(:capass) { |f| f.print pass }
         rescue Errno::EACCES => detail
             raise Puppet::Error, detail.to_s
         end
@@ -163,10 +163,10 @@ class Puppet::SSLCertificates::CA
         Puppet::Util::SUIDManager.asuser(Puppet[:user], Puppet[:group]) do
             @cert = cert.mkselfsigned
         end
-        Puppet.config.write(:cacert) do |f|
+        Puppet.settings.write(:cacert) do |f|
             f.puts @cert.to_pem
         end
-        Puppet.config.write(:capub) do |f|
+        Puppet.settings.write(:capub) do |f|
             f.puts @cert.public_key
         end
         return cert
@@ -201,7 +201,7 @@ class Puppet::SSLCertificates::CA
     # Take the Puppet config and store it locally.
     def setconfig(hash)
         @config = {}
-        Puppet.config.params("ca").each { |param|
+        Puppet.settings.params("ca").each { |param|
             param = param.intern if param.is_a? String
             if hash.include?(param)
                 @config[param] = hash[param]
@@ -303,7 +303,7 @@ class Puppet::SSLCertificates::CA
             raise Puppet::Error, "Certificate request for %s already exists" % host
         end
 
-        Puppet.config.writesub(:csrdir, csrfile) do |f|
+        Puppet.settings.writesub(:csrdir, csrfile) do |f|
             f.print csr.to_pem
         end
     end
@@ -319,7 +319,7 @@ class Puppet::SSLCertificates::CA
         end
 
         Puppet::SSLCertificates::Inventory::add(cert)
-        Puppet.config.writesub(:signeddir, certfile) do |f|
+        Puppet.settings.writesub(:signeddir, certfile) do |f|
             f.print cert.to_pem
         end
     end
@@ -389,7 +389,7 @@ class Puppet::SSLCertificates::CA
         @crl.next_update = now + 5 * 365*24*60*60
 
         sign_with_key(@crl)
-        Puppet.config.write(:cacrl) do |f|
+        Puppet.settings.write(:cacrl) do |f|
             f.puts @crl.to_pem
         end
     end

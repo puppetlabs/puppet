@@ -23,7 +23,7 @@ class TestEvents < Test::Unit::TestCase
             :subscribe => [[file.class.name, file.name]] 
         )
 
-        comp = newcomp("eventtesting", file, exec)
+        comp = mk_configuration("eventtesting", file, exec)
 
         trans = assert_events([:file_created, :triggered], comp)
 
@@ -44,54 +44,14 @@ class TestEvents < Test::Unit::TestCase
         )
 
 
-        comp = Puppet.type(:component).create(
-            :name => "eventtesting"
-        )
-        comp.push exec
-        trans = comp.evaluate
-        events = nil
-        assert_nothing_raised {
-            events = trans.evaluate
-        }
+        config = mk_configuration
+        config.add_resource file
+        config.add_resource exec
+        trans = config.apply
 
-        assert_equal(1, events.length)
+        assert_equal(1, trans.events.length)
 
         assert_equal(0, trans.triggered?(exec, :refresh))
-    end
-
-    # Verify that one component can subscribe to another component and the "right"
-    # thing happens
-    def test_ladderrequire
-        comps = {}
-        objects = {}
-        fname = tempfile()
-        file = Puppet.type(:file).create(
-            :name => tempfile(),
-            :ensure => "file"
-        )
-
-        exec = Puppet.type(:exec).create(
-            :name => "touch %s" % fname,
-            :path => "/usr/bin:/bin",
-            :refreshonly => true
-        )
-
-        fcomp = newcomp(file)
-        ecomp = newcomp(exec)
-        comp = newcomp("laddercomp", fcomp, ecomp)
-
-        ecomp[:subscribe] = [[fcomp.class.name, fcomp.name]]
-
-        comp.finalize
-
-        trans = comp.evaluate
-        events = nil
-        assert_nothing_raised {
-            events = trans.evaluate
-        }
-
-        assert(FileTest.exists?(fname), "#{fname} does not exist")
-        #assert_equal(events.length, trans.triggered?(objects[:b], :refresh))
     end
 
     def test_multiplerefreshes
@@ -115,7 +75,7 @@ class TestEvents < Test::Unit::TestCase
             ["file", f.name]
         }
 
-        comp = newcomp(exec, *files)
+        comp = mk_configuration(exec, *files)
 
         assert_apply(comp)
         assert(FileTest.exists?(fname), "Exec file did not get created")
@@ -147,17 +107,16 @@ class TestEvents < Test::Unit::TestCase
         )
         execs = [exec1, exec2, exec3]
 
-        comp = newcomp(exec1,exec2,exec3)
+        config = mk_configuration(exec1,exec2,exec3)
         
-        trans = comp.evaluate
-        execs.each do |e| assert(trans.resources.vertex?(e), "%s is not in graph" % e.title) end
+        trans = Puppet::Transaction.new(config)
+        execs.each do |e| assert(config.vertex?(e), "%s is not in graph" % e.title) end
         trans.prepare
-        execs.each do |e| assert(trans.relgraph.vertex?(e), "%s is not in relgraph" % e.title) end
-        reverse = trans.relgraph.reversal
+        execs.each do |e| assert(config.vertex?(e), "%s is not in relgraph" % e.title) end
+        reverse = trans.relationship_graph.reversal
         execs.each do |e| assert(reverse.vertex?(e), "%s is not in reversed graph" % e.title) end
         
-
-        assert_apply(comp)
+        config.apply
 
         assert(FileTest.exists?(file), "File does not exist")
 

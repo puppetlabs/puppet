@@ -4,28 +4,11 @@
 #  Copyright (c) 2007. All rights reserved.
 
 require 'puppettest'
+require 'puppettest/runnable_test'
 
 class PuppetTest::TestCase < Test::Unit::TestCase
 	include PuppetTest
-    def self.confine(hash)
-        @confines ||= {}
-        hash.each do |message, result|
-            @confines[message] = result
-        end
-    end
-
-    def self.runnable?
-        @messages ||= []
-        return false unless @messages.empty?
-        return true unless defined? @confines
-        @confines.find_all do |message, result|
-            ! result
-        end.each do |message, result|
-            @messages << message
-        end
-
-        return @messages.empty?
-    end
+    extend PuppetTest::RunnableTest
 
     def self.suite
         # Always skip this parent class.  It'd be nice if there were a
@@ -44,5 +27,3 @@ class PuppetTest::TestCase < Test::Unit::TestCase
         end
     end
 end
-
-# $Id$

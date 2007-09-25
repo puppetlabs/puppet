@@ -1,12 +1,33 @@
+require 'puppet/indirector'
 require 'puppet/external/gratr/digraph'
 
 # This class models a node configuration.  It is the thing
 # meant to be passed from server to client, and it contains all
 # of the information in the configuration, including the resources
 # and the relationships between them.
-class Puppet::Node::Configuration < GRATR::Digraph
-    attr_accessor :name, :version
+class Puppet::Node::Configuration < Puppet::PGraph
+    extend Puppet::Indirector
+    indirects :configuration
+
+    # The host name this is a configuration for.
+    attr_accessor :name
+
+    # The configuration version.  Used for testing whether a configuration
+    # is up to date.
+    attr_accessor :version
+
+    # How long this configuration took to retrieve.  Used for reporting stats.
+    attr_accessor :retrieval_duration
+
+    # How we should extract the configuration for sending to the client.
     attr_reader :extraction_format
+
+    # Whether this is a host configuration, which behaves very differently.
+    # In particular, reports are sent, graphs are made, and state is
+    # stored in the state database.  If this is set incorrectly, then you often
+    # end up in infinite loops, because configurations are used to make things
+    # that the host configuration needs.
+    attr_accessor :host_config
 
     # Add classes to our class list.
     def add_class(*classes)
@@ -18,8 +39,131 @@ class Puppet::Node::Configuration < GRATR::Digraph
         tag(*classes)
     end
 
+    # Add one or more resources to our graph and to our resource table.
+    def add_resource(*resources)
+        resources.each do |resource|
+            unless resource.respond_to?(:ref)
+                raise ArgumentError, "Can only add objects that respond to :ref"
+            end
+
+            ref = resource.ref
+            if @resource_table.include?(ref)
+                raise ArgumentError, "Resource %s is already defined" % ref
+            else
+                @resource_table[ref] = resource
+            end
+            resource.configuration = self
+            add_vertex!(resource)
+        end
+    end
+
+    # Apply our configuration to the local host.  Valid options
+    # are:
+    #   :tags - set the tags that restrict what resources run
+    #       during the transaction
+    #   :ignoreschedules - tell the transaction to ignore schedules
+    #       when determining the resources to run
+    def apply(options = {})
+        @applying = true
+
+        Puppet::Util::Storage.load if host_config?
+        transaction = Puppet::Transaction.new(self)
+
+        transaction.tags = options[:tags] if options[:tags]
+        transaction.ignoreschedules = true if options[:ignoreschedules]
+
+        transaction.addtimes :config_retrieval => @retrieval_duration
+
+        begin
+            transaction.evaluate
+        rescue Puppet::Error => detail
+            Puppet.err "Could not apply complete configuration: %s" % detail
+        rescue => detail
+            if Puppet[:trace]
+                puts detail.backtrace
+            end
+            Puppet.err "Got an uncaught exception of type %s: %s" % [detail.class, detail]
+        ensure
+            # Don't try to store state unless we're a host config
+            # too recursive.
+            Puppet::Util::Storage.store if host_config?
+        end
+
+        if block_given?
+            yield transaction
+        end
+        
+        if host_config and (Puppet[:report] or Puppet[:summarize])
+            transaction.send_report
+        end
+
+        return transaction
+    ensure
+        @applying = false
+        cleanup()
+        if defined? transaction and transaction
+            transaction.cleanup
+        end
+    end
+
+    # Are we in the middle of applying the configuration?
+    def applying?
+        @applying
+    end
+    
+    def clear(remove_resources = true)
+        super()
+        # We have to do this so that the resources clean themselves up.
+        @resource_table.values.each { |resource| resource.remove } if remove_resources
+        @resource_table.clear
+
+        if defined?(@relationship_graph) and @relationship_graph
+            @relationship_graph.clear(false)
+            @relationship_graph = nil
+        end
+    end
+
     def classes
         @classes.dup
+    end
+
+    # Create an implicit resource, meaning that it will lose out
+    # to any explicitly defined resources.  This method often returns
+    # nil.
+    #  The quirk of this method is that it's not possible to create
+    # an implicit resource before an explicit resource of the same name,
+    # because all explicit resources are created before any generate()
+    # methods are called on the individual resources.  Thus, this
+    # method can safely just check if an explicit resource already exists
+    # and toss this implicit resource if so.
+    def create_implicit_resource(type, options)
+        unless options.include?(:implicit)
+            options[:implicit] = true
+        end
+
+        # This will return nil if an equivalent explicit resource already exists.
+        # When resource classes no longer retain references to resource instances,
+        # this will need to be modified to catch that conflict and discard
+        # implicit resources.
+        if resource = create_resource(type, options)
+            resource.implicit = true
+
+            return resource
+        else
+            return nil
+        end
+    end
+
+    # Create a new resource and register it in the configuration.
+    def create_resource(type, options)
+        unless klass = Puppet::Type.type(type)
+            raise ArgumentError, "Unknown resource type %s" % type
+        end
+        return unless resource = klass.create(options)
+
+        @transient_resources << resource if applying?
+        add_resource(resource)
+        resource
     end
 
     # Make sure we support the requested extraction format.
@@ -94,12 +238,101 @@ class Puppet::Node::Configuration < GRATR::Digraph
         return result
     end
 
-    def initialize(name)
+    # Make sure all of our resources are "finished".
+    def finalize
+        @resource_table.values.each { |resource| resource.finish }
+        
+        write_graph(:resources)
+    end
+
+    def host_config?
+        host_config || false
+    end
+
+    def initialize(name = nil)
         super()
-        @name = name
+        @name = name if name
         @extraction_format ||= :transportable
         @tags = []
         @classes = []
+        @resource_table = {}
+        @transient_resources = []
+        @applying = false
+        @relationship_graph = nil
+
+        if block_given?
+            yield(self)
+            finalize()
+        end
+    end
+    
+    # Create a graph of all of the relationships in our configuration.
+    def relationship_graph
+        unless defined? @relationship_graph and @relationship_graph
+            # It's important that we assign the graph immediately, because
+            # the debug messages below use the relationships in the
+            # relationship graph to determine the path to the resources
+            # spitting out the messages.  If this is not set,
+            # then we get into an infinite loop.
+            @relationship_graph = Puppet::Node::Configuration.new
+            @relationship_graph.host_config = host_config?
+            
+            # First create the dependency graph
+            self.vertices.each do |vertex|
+                @relationship_graph.add_vertex! vertex
+                vertex.builddepends.each do |edge|
+                    @relationship_graph.add_edge!(edge)
+                end
+            end
+            
+            # Lastly, add in any autorequires
+            @relationship_graph.vertices.each do |vertex|
+                vertex.autorequire.each do |edge|
+                    unless @relationship_graph.edge?(edge)
+                        unless @relationship_graph.edge?(edge.target, edge.source)
+                            vertex.debug "Autorequiring %s" % [edge.source]
+                            @relationship_graph.add_edge!(edge)
+                        else
+                            vertex.debug "Skipping automatic relationship with %s" % (edge.source == vertex ? edge.target : edge.source)
+                        end
+                    end
+                end
+            end
+            
+            @relationship_graph.write_graph(:relationships)
+            
+            # Then splice in the container information
+            @relationship_graph.splice!(self, Puppet::Type::Component)
+
+            @relationship_graph.write_graph(:expanded_relationships)
+        end
+        @relationship_graph
+    end
+
+    # Remove the resource from our configuration.  Notice that we also call
+    # 'remove' on the resource, at least until resource classes no longer maintain
+    # references to the resource instances.
+    def remove_resource(*resources)
+        resources.each do |resource|
+            @resource_table.delete(resource.ref) if @resource_table.include?(resource.ref)
+            remove_vertex!(resource) if vertex?(resource)
+            @relationship_graph.remove_vertex!(resource) if @relationship_graph and @relationship_graph.vertex?(resource)
+            resource.remove
+        end
+    end
+
+    # Look a resource up by its reference (e.g., File[/etc/passwd]).
+    def resource(type, title = nil)
+        if title
+            ref = "%s[%s]" % [type.to_s.capitalize, title]
+        else
+            ref = type
+        end
+        if resource = @resource_table[ref]
+            return resource
+        elsif defined?(@relationship_graph) and @relationship_graph
+            @relationship_graph.resource(ref)
+        end
     end
 
     # Add a tag.
@@ -119,5 +352,30 @@ class Puppet::Node::Configuration < GRATR::Digraph
     # Return the list of tags.
     def tags
         @tags.dup
+    end
+
+    # Produce the graph files if requested.
+    def write_graph(name)
+        # We only want to graph the main host configuration.
+        return unless host_config?
+        
+        return unless Puppet[:graph]
+
+        Puppet.settings.use(:graphing)
+
+        file = File.join(Puppet[:graphdir], "%s.dot" % name.to_s)
+        File.open(file, "w") { |f|
+            f.puts to_dot("name" => name.to_s.capitalize)
+        }
+    end
+
+    private
+
+    def cleanup
+        unless @transient_resources.empty?
+            remove_resource(*@transient_resources)
+            @transient_resources.clear
+            @relationship_graph = nil
+        end
     end
 end

@@ -243,7 +243,10 @@ class Puppet::Network::Handler
         # the modules.
         def modules_mount(module_name, client)
             # Find our environment, if we have one.
-            if node = node_handler.details(client || Facter.value("hostname"))
+            unless hostname = (client || Facter.value("hostname"))
+                raise ArgumentError, "Could not find hostname"
+            end
+            if node = Puppet::Node.find(hostname)
                 env = node.environment
             else
                 env = nil
@@ -256,14 +259,6 @@ class Puppet::Network::Handler
             else
                 return nil
             end
-        end
-
-        # Create a node handler instance for looking up our nodes.
-        def node_handler
-            unless defined?(@node_handler)
-                @node_handler = Puppet::Network::Handler.handler(:node).create
-            end
-            @node_handler
         end
 
         # Read the configuration file.

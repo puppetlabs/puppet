@@ -8,6 +8,11 @@ require 'puppet/network/handler/master'
 class TestMaster < Test::Unit::TestCase
     include PuppetTest::ServerTest
 
+    def teardown
+        super
+        Puppet::Indirector::Indirection.clear_cache
+    end
+
     def test_defaultmanifest
         textfiles { |file|
             Puppet[:manifest] = file
@@ -70,10 +75,11 @@ class TestMaster < Test::Unit::TestCase
         assert(! client.fresh?(facts),
             "Client is incorrectly up to date")
 
-        Puppet.config.use(:main)
+        Puppet.settings.use(:main)
+        config = nil
         assert_nothing_raised {
-            client.getconfig
-            client.apply
+            config = client.getconfig
+            config.apply
         }
 
         # Now it should be up to date
@@ -108,8 +114,8 @@ class TestMaster < Test::Unit::TestCase
 
         # Retrieve and apply the new config
         assert_nothing_raised {
-            client.getconfig
-            client.apply
+            config = client.getconfig
+            config.apply
         }
         assert(client.fresh?(facts), "Client is not up to date")
 

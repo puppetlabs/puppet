@@ -267,7 +267,7 @@ module Puppet
     )
 
     # Define the config default.
-    self.setdefaults(self.config[:name],
+    self.setdefaults(self.settings[:name],
         :config => ["$confdir/puppet.conf",
             "The configuration file for #{Puppet[:name]}."],
         :pidfile => ["", "The pid file"],
@@ -494,14 +494,18 @@ module Puppet
             "The server through which to send email reports."]
     )
 
-    self.setdefaults(:facts,
-        :factstore => ["yaml",
-            "The backend store to use for client facts."]
+    # This needs to be in main because it's used too early in the system, such that
+    # we get an infinite loop otherwise.
+    self.setdefaults(:main,
+        :facts_terminus => ["yaml",
+            "The backend store to use for client facts."],
+        :checksum_terminus => ["file",
+            "The backend store to use for storing files by checksum (i.e., filebuckets)."]
     )
 
-    self.setdefaults(:yamlfacts,
-        :yamlfactdir => ["$vardir/facts",
-            "The directory in which client facts are stored when the yaml fact store is used."]
+    self.setdefaults(:yaml,
+        :yamldir => ["$vardir/yaml",
+            "The directory in which YAML data is stored, usually in a subdirectory."]
     )
 
     self.setdefaults(:rails,
@@ -554,7 +558,7 @@ module Puppet
     setdefaults(:parser,
         :typecheck => [true, "Whether to validate types during parsing."],
         :paramcheck => [true, "Whether to validate parameters during parsing."],
-        :node_source => ["none", "Where to look for node configuration information.
+        :node_terminus => ["null", "Where to look for node configuration information.
             The default node source, ``none``, just returns a node with its facts
             filled in, which is required for normal functionality.
             See the `NodeSourceReference`:trac: for more information."]

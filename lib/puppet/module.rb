@@ -9,7 +9,7 @@ class Puppet::Module
     # parameter. Only consider paths that are absolute and existing
     # directories
     def self.modulepath(environment = nil)
-        dirs = Puppet.config.value(:modulepath, environment).split(":")
+        dirs = Puppet.settings.value(:modulepath, environment).split(":")
         if ENV["PUPPETLIB"]
             dirs = ENV["PUPPETLIB"].split(":") + dirs
         else
@@ -61,7 +61,7 @@ class Puppet::Module
         if mod
             return mod.template(file)
         else
-            return File.join(Puppet.config.value(:templatedir, environment), template)
+            return File.join(Puppet.settings.value(:templatedir, environment), template)
         end
     end
 

@@ -64,7 +64,7 @@ class Puppet::Network::Handler # :nodoc:
                 end
             end
 
-            Puppet.config.use(:filebucket)
+            Puppet.settings.use(:filebucket)
 
             @name = "Filebucket[#{@path}]"
         end

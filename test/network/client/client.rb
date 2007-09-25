@@ -113,9 +113,9 @@ class TestClient < Test::Unit::TestCase
         # Create a new ssl root.
         confdir = tempfile()
         Puppet[:ssldir] = confdir
-        Puppet.config.mkdir(:ssldir)
-        Puppet.config.clearused
-        Puppet.config.use(:ssl, :ca)
+        Puppet.settings.mkdir(:ssldir)
+        Puppet.settings.clearused
+        Puppet.settings.use(:ssl, :ca)
 
         mkserver
 

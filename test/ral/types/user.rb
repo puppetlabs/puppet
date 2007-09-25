@@ -82,7 +82,7 @@ class TestUser < Test::Unit::TestCase
         old = user.provider.ensure
         user[:ensure] = :absent
 
-        comp = newcomp("ensuretest", user)
+        comp = mk_configuration("ensuretest", user)
         assert_apply(user)
         assert(!user.provider.exists?, "User is still present")
         user[:ensure] = :present
@@ -102,7 +102,7 @@ class TestUser < Test::Unit::TestCase
         old = user.provider.comment
         user[:comment] = "A different comment"
 
-        comp = newcomp("commenttest", user)
+        comp = mk_configuration("commenttest", user)
 
         trans = assert_events([:user_changed], comp, "user")
 
@@ -117,7 +117,7 @@ class TestUser < Test::Unit::TestCase
 
     def attrtest_home(user)
         obj = nil
-        comp = newcomp("hometest", user)
+        comp = mk_configuration("hometest", user)
 
         old = user.provider.home
         user[:home] = old
@@ -137,7 +137,7 @@ class TestUser < Test::Unit::TestCase
 
     def attrtest_shell(user)
         old = user.provider.shell
-        comp = newcomp("shelltest", user)
+        comp = mk_configuration("shelltest", user)
 
         user[:shell] = old
 
@@ -167,7 +167,7 @@ class TestUser < Test::Unit::TestCase
     def attrtest_gid(user)
         obj = nil
         old = user.provider.gid
-        comp = newcomp("gidtest", user)
+        comp = mk_configuration("gidtest", user)
 
         user.retrieve
 
@@ -216,7 +216,7 @@ class TestUser < Test::Unit::TestCase
 
     def attrtest_uid(user)
         obj = nil
-        comp = newcomp("uidtest", user)
+        comp = mk_configuration("uidtest", user)
 
         user.provider.uid = 1
 
@@ -387,7 +387,7 @@ class TestUser < Test::Unit::TestCase
             ogroup = Puppet.type(:group).create(
                 :name => "yayness"
             )
-            comp = newcomp(user, group, home, ogroup)
+            comp = mk_configuration(user, group, home, ogroup)
         }
         
         rels = nil
@@ -404,7 +404,7 @@ class TestUser < Test::Unit::TestCase
 
         user = mkuser(name)
 
-        comp = newcomp("usercomp", user)
+        comp = mk_configuration("usercomp", user)
 
         trans = assert_events([:user_created], comp, "user")
 
@@ -424,7 +424,7 @@ class TestUser < Test::Unit::TestCase
 
         assert(! user.provider.exists?, "User %s is present" % name)
 
-        comp = newcomp("usercomp", user)
+        comp = mk_configuration("usercomp", user)
 
         trans = assert_events([:user_created], comp, "user")
 

@@ -84,7 +84,7 @@ class Puppet::PGraph < GRATR::Digraph
     def matching_edges(events, base = nil)
         events.collect do |event|
             source = base || event.source
-            
+
             unless vertex?(source)
                 Puppet.warning "Got an event from invalid vertex %s" % source.ref
                 next
@@ -95,7 +95,7 @@ class Puppet::PGraph < GRATR::Digraph
             adjacent(source, :direction => :out, :type => :edges).find_all do |edge|
                 edge.match?(event.event)
             end
-        end.flatten
+        end.compact.flatten
     end
     
     # Take container information from another graph and use it
@@ -209,5 +209,3 @@ class Puppet::PGraph < GRATR::Digraph
         end
     end
 end
-
-# $Id$

@@ -5,6 +5,12 @@ require 'puppet/util'
 # of Puppet::Util::Autoload
 module Puppet::Util::InstanceLoader
     include Puppet::Util
+
+    # Are we instance-loading this type?
+    def instance_loading?(type)
+        defined?(@autoloaders) and @autoloaders.include?(symbolize(type))
+    end
+
     # Define a new type of autoloading.
     def instance_load(type, path, options = {})
         @autoloaders ||= {}
@@ -54,7 +60,7 @@ module Puppet::Util::InstanceLoader
     # Retrieve an alread-loaded instance, or attempt to load our instance.
     def loaded_instance(type, name)
         name = symbolize(name)
-        instances = instance_hash(type)
+        return nil unless instances = instance_hash(type)
         unless instances.include? name
             if instance_loader(type).load(name)
                 unless instances.include? name
@@ -70,5 +76,3 @@ module Puppet::Util::InstanceLoader
         instances[name]
     end
 end
-
-# $Id$

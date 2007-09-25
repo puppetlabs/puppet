@@ -197,7 +197,7 @@ class TestSnippets < Test::Unit::TestCase
     def snippet_classpathtest
         path = "/tmp/classtest"
 
-        file = @file[path]
+        file = @configuration.resource(:file, path)
         assert(file, "did not create file %s" % path)
 
         assert_nothing_raised {
@@ -269,14 +269,6 @@ class TestSnippets < Test::Unit::TestCase
         file = "/tmp/scopetest"
         assert_file(file)
         assert_mode_equal(0755, file)
-    end
-
-    def snippet_failmissingexecpath
-        file = "/tmp/exectesting1"
-        execfile = "/tmp/execdisttesting"
-        assert_file(file)
-
-        assert_nil(Puppet::Type.type(:exec)["exectest"], "invalid exec was created")
     end
 
     def snippet_selectorvalues
@@ -472,13 +464,14 @@ class TestSnippets < Test::Unit::TestCase
                     :Manifest => snippet(file),
                     :Local => true
                 )
-                server.send(:fact_handler).stubs(:set)
-                server.send(:fact_handler).stubs(:get).returns(facts)
+                facts = Puppet::Node::Facts.new("testhost", facts)
+                Puppet::Node::Facts.stubs(:save)
+                Puppet::Node::Facts.stubs(:find).returns(facts)
                 client = Puppet::Network::Client.master.new(
                     :Master => server,
                     :Cache => false
                 )
-                client.class.stubs(:facts).returns(facts)
+                client.class.stubs(:facts).returns(facts.values)
 
                 assert(client.local)
                 assert_nothing_raised {
@@ -507,6 +500,7 @@ class TestSnippets < Test::Unit::TestCase
                         assert(obj.name)
                     }
                 }
+                @configuration = client.configuration
                 assert_nothing_raised {
                     self.send(mname)
                 }

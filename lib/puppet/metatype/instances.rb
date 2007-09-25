@@ -79,8 +79,7 @@ class Puppet::Type
     end
 
     # Force users to call this, so that we can merge objects if
-    # necessary.  FIXME This method should be responsible for most of the
-    # error handling.
+    # necessary.
     def self.create(args)
         # Don't modify the original hash; instead, create a duplicate and modify it.
         # We have to dup and use the ! so that it stays a TransObject if it is
@@ -138,9 +137,8 @@ class Puppet::Type
 
                 # now pass through and create the new object
             elsif implicit
-                Puppet.notice "Ignoring implicit %s" % title
-
-                return retobj
+                Puppet.debug "Ignoring implicit %s[%s]" % [self.name, title]
+                return nil
             else
                 # If only one of the objects is being managed, then merge them
                 if retobj.managed?
@@ -308,8 +306,8 @@ class Puppet::Type
 
     # Create the path for logging and such.
     def pathbuilder
-        if defined? @parent and @parent
-            [@parent.pathbuilder, self.ref].flatten
+        if p = parent
+            [p.pathbuilder, self.ref].flatten
         else
             [self.ref]
         end

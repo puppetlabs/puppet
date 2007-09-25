@@ -14,9 +14,9 @@ class Puppet::Network::Client::CA < Puppet::Network::Client
     end
 
     # This client is really only able to request certificates for the
-    # current host.  It uses the Puppet.config settings to figure everything out.
+    # current host.  It uses the Puppet.settings settings to figure everything out.
     def request_cert
-        Puppet.config.use(:main, :ssl)
+        Puppet.settings.use(:main, :ssl)
 
         if cert = read_cert
             return cert
@@ -49,8 +49,8 @@ class Puppet::Network::Client::CA < Puppet::Network::Client
         end
 
         # Only write the cert out if it passes validating.
-        Puppet.config.write(:hostcert) do |f| f.print cert end
-        Puppet.config.write(:localcacert) do |f| f.print cacert end
+        Puppet.settings.write(:hostcert) do |f| f.print cert end
+        Puppet.settings.write(:localcacert) do |f| f.print cacert end
 
         return @cert
     end

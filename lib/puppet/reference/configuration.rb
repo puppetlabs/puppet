@@ -1,6 +1,6 @@
 config = Puppet::Util::Reference.newreference(:configuration, :depth => 1, :doc => "A reference for all configuration parameters") do
     docs = {}
-    Puppet.config.each do |name, object|
+    Puppet.settings.each do |name, object|
         docs[name] = object
     end
 

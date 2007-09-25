@@ -239,13 +239,13 @@ class TestCertMgr < Test::Unit::TestCase
 
         ca.revoke(h1.serial)
 
-        oldcert = File.read(Puppet.config[:cacert])
-        oldserial = File.read(Puppet.config[:serial])
+        oldcert = File.read(Puppet.settings[:cacert])
+        oldserial = File.read(Puppet.settings[:serial])
 
         # Recreate the CA from disk
         ca = mkCA()
-        newcert = File.read(Puppet.config[:cacert])
-        newserial = File.read(Puppet.config[:serial])
+        newcert = File.read(Puppet.settings[:cacert])
+        newserial = File.read(Puppet.settings[:serial])
         assert_equal(oldcert, newcert, "The certs are not equal after making a new CA.")
         assert_equal(oldserial, newserial, "The serials are not equal after making a new CA.")
         store = mkStore(ca)
