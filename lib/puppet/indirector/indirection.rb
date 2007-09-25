@@ -15,9 +15,36 @@ class Puppet::Indirector::Indirection
     
     attr_accessor :name, :model
 
-    # Clear our cached list of termini.
+    # Create and return our cache terminus.
+    def cache
+        terminus(cache_name)
+    end
+
+    # Should we use a cache?
+    def cache?
+        cache_name ? true : false
+    end
+
+    # Figure out the cache name, if there is one.  If there's no name, then
+    # caching is disabled.
+    def cache_name
+        unless @cache_name
+            setting_name = "%s_cache" % self.name
+            if ! Puppet.settings.valid?(setting_name) or (value = Puppet.settings[setting_name] and value == "none")
+                @cache_name = nil
+            else
+                @cache_name = value
+                @cache_name = @cache_name.intern if @cache_name.is_a?(String)
+            end
+        end
+        @cache_name
+    end
+
+    # Clear our cached list of termini, and reset the cache name
+    # so it's looked up again.
     # This is only used for testing.
     def clear_cache
+        @cache_name = nil
         @termini.clear
     end
 
@@ -38,6 +65,7 @@ class Puppet::Indirector::Indirection
         end
         @termini = {}
         @terminus_types = {}
+        @cache_name = nil
         raise(ArgumentError, "Indirection %s is already defined" % @name) if @@indirections.find { |i| i.name == @name }
         @@indirections << self
     end
@@ -66,6 +94,7 @@ class Puppet::Indirector::Indirection
     end
 
     def destroy(*args)
+        cache.destroy(*args) if cache?
         terminus.destroy(*args)
     end
 
@@ -75,6 +104,7 @@ class Puppet::Indirector::Indirection
 
     # these become instance methods 
     def save(*args)
+        cache.save(*args) if cache?
         terminus.save(*args)
     end
 

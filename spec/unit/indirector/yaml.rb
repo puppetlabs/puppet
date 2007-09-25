@@ -6,8 +6,8 @@ require 'puppet/indirector/yaml'
 
 module YamlTesting
     def setup
-        @indirection = stub 'indirection', :name => :myyaml, :register_terminus_type => nil
-        Puppet::Indirector::Indirection.stubs(:instance).with(:myyaml).returns(@indirection)
+        @indirection = stub 'indirection', :name => :my_yaml, :register_terminus_type => nil
+        Puppet::Indirector::Indirection.stubs(:instance).with(:my_yaml).returns(@indirection)
         @store_class = Class.new(Puppet::Indirector::Yaml) do
             def self.to_s
                 "MyYaml"
@@ -33,7 +33,7 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
     end
 
     it "should use the terminus name for choosing the subdirectory" do
-        @store.send(:path, :me).should =~ %r{^#{@dir}/myyaml}
+        @store.send(:path, :me).should =~ %r{^#{@dir}/my_yaml}
     end
 
     it "should use the object's name to determine the file name" do

@@ -26,7 +26,7 @@ class Puppet::Indirector::Terminus
             elsif ind = Puppet::Indirector::Indirection.instance(name)
                 @indirection = ind
             else
-                raise ArgumentError, "Could not find indirection instance %s" % name
+                raise ArgumentError, "Could not find indirection instance %s for %s" % [name, self.name]
             end
         end
 
@@ -39,7 +39,9 @@ class Puppet::Indirector::Terminus
                 raise ArgumentError, "Terminus subclasses must have associated constants"
             end
             names = longname.split("::")
-            name = names.pop.downcase.intern
+
+            # Convert everything to a lower-case symbol, converting camelcase to underscore word separation.
+            name = names.pop.sub(/^[A-Z]/) { |i| i.downcase }.gsub(/[A-Z]/) { |i| "_" + i.downcase }.intern
 
             subclass.name = name
 
