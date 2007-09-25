@@ -653,6 +653,14 @@ file { "/tmp/yayness":
         }
     end
 
+    # #774
+    def test_fully_qualified_collection_statement
+        parser = mkparser
+        assert_nothing_raised("Could not parse fully qualified collection statement") {
+            parser.parse %{Foo::Bar <||>}
+        }
+    end
+
     def test_module_import
         basedir = File.join(tmpdir(), "module-import")
         @@tmpfiles << basedir

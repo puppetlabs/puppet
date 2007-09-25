@@ -450,7 +450,7 @@ class Puppet::Network::Handler
 
             def getfileobject(dir, links)
                 unless FileTest.exists?(dir)
-                    self.notice "File source %s does not exist" % dir
+                    self.debug "File source %s does not exist" % dir
                     return nil
                 end
 

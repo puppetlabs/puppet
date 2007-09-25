@@ -242,7 +242,7 @@ module Puppet
 
         # Handle restarting.
         trap(:HUP) do
-            if client = @services.find { |s| s.is_a? Puppet::Network::Client::Master } and client.running?
+            if client = @services.find { |s| s.is_a? Puppet::Network::Client.master } and client.running?
                 client.restart
             else
                 Puppet.restart
