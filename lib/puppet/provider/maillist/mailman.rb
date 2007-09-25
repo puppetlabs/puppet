@@ -101,9 +101,9 @@ Puppet::Type.type(:maillist).provide(:mailman) do
     # Pull the current state of the list from the full list.  We're
     # getting some double entendre here....
     def query
-        provider.class.instances.each do |list|
+        self.class.instances.each do |list|
             if list.name == self.name or list.name.downcase == self.name
-                return list.property_hash
+                return list.properties
             end
         end
         nil
