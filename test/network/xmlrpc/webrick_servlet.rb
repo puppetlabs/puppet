@@ -3,11 +3,18 @@
 $:.unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppettest'
+require 'puppettest/support/utils'
 require 'puppet/network/xmlrpc/webrick_servlet'
 require 'mocha'
 
 class TestXMLRPCWEBrickServlet < Test::Unit::TestCase
+    include PuppetTest
     def test_basics
+	# Make sure we're doing things as our user info, rather than puppet/puppet
+	setme
+	set_mygroup
+	Puppet[:user] = @me
+	Puppet[:group] = @mygroup
         servlet = nil
         ca = Puppet::Network::Handler.ca.new
 
