@@ -50,6 +50,7 @@ module PuppetTest
 
     # TODO: rewrite this to use the 'etc' module.
 
+    # Define a variable that contains the name of my user.
     def setme
         # retrieve the user name
         id = %x{id}.chomp
@@ -61,6 +62,16 @@ module PuppetTest
         unless defined? @me
             raise "Could not retrieve user name; 'id' did not work"
         end
+    end
+
+    # Define a variable that contains a group I'm in.
+    def set_mygroup
+        # retrieve the user name
+        group = %x{groups}.chomp.split(/ /)[0]
+	unless group
+	    raise "Could not find group to set in @mygroup"
+	end
+	@mygroup = group
     end
 
     def run_events(type, trans, events, msg)
@@ -157,19 +168,6 @@ module PuppetTest
         end
 
         return config
-    end
-    
-    def setme
-        # retrieve the user name
-        id = %x{id}.chomp 
-        if id =~ /uid=\d+\(([^\)]+)\)/
-            @me = $1
-        else
-            puts id
-        end 
-        unless defined? @me
-            raise "Could not retrieve user name; 'id' did not work"
-        end
     end
 end
 
