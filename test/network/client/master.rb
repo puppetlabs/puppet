@@ -379,7 +379,7 @@ end
             facts = Puppet::Network::Client.master.facts
         end
         Facter.to_hash.each do |fact, value|
-            assert_equal(facts[fact.downcase], value, "%s is not equal" % fact.inspect)
+            assert_equal(facts[fact.downcase], value.to_s, "%s is not equal" % fact.inspect)
         end
         
         # Make sure the puppet version got added
