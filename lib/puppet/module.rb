@@ -27,8 +27,8 @@ class Puppet::Module
             return nil
         end
 
-        modpath = modulepath(environment).collect { |p|
-            File::join(p, modname)
+        modpath = modulepath(environment).collect { |path|
+            File::join(path, modname)
         }.find { |f| File::directory?(f) }
         return nil unless modpath
 
@@ -72,10 +72,9 @@ class Puppet::Module
     # Otherwise, try to find manifests matching +pat+ relative to +cwd+
     def self.find_manifests(start, options = {})
         cwd = options[:cwd] || Dir.getwd
-        path, pat = split_path(start)
-        mod = find(path, options[:environment])
-        if mod
-            return mod.manifests(pat)
+        module_name, pattern = split_path(start)
+        if module_name and mod = find(module_name, options[:environment])
+            return mod.manifests(pattern)
         else
             abspat = File::expand_path(start, cwd)
             files = Dir.glob(abspat).reject { |f| FileTest.directory?(f) }
@@ -87,6 +86,8 @@ class Puppet::Module
     end
 
     # Split the path into the module and the rest of the path.
+    # This method can and often does return nil, so anyone calling
+    # it needs to handle that.
     def self.split_path(path)
         if path =~ %r/^#{File::SEPARATOR}/
             return nil

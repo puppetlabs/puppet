@@ -108,20 +108,53 @@ describe Puppet::Module, " when searching for templates" do
     after { Puppet.settings.clear }
 end
 
-describe Puppet::Module, " when searching for manifests" do
+describe Puppet::Module, " when searching for manifests when no module is found" do
+    before do
+        File.stubs(:find).returns(nil)
+    end
+
+    it "should not look for modules when paths are fully qualified" do
+        Puppet.expects(:value).with(:modulepath).never
+        file = "/fully/qualified/file.pp"
+        Dir.stubs(:glob).with(file).returns([file])
+        Puppet::Module.find_manifests(file)
+    end
+
+    it "should directly return fully qualified files" do
+        file = "/fully/qualified/file.pp"
+        Dir.stubs(:glob).with(file).returns([file])
+        Puppet::Module.find_manifests(file).should == [file]
+    end
+
+    it "should match against provided fully qualified patterns" do
+        pattern = "/fully/qualified/pattern/*"
+        Dir.expects(:glob).with(pattern).returns(%w{my file list})
+        Puppet::Module.find_manifests(pattern).should == %w{my file list}
+    end
+
+    it "should look for files relative to the current directory" do
+        cwd = Dir.getwd
+        Dir.expects(:glob).with("#{cwd}/mymod/init.pp").returns(["#{cwd}/mymod/init.pp"])
+        Puppet::Module.find_manifests("mymod/init.pp").should == ["#{cwd}/mymod/init.pp"]
+    end
+
+    it "should only return files, not directories" do
+        pattern = "/fully/qualified/pattern/*"
+        file = "/my/file"
+        dir = "/my/directory"
+        Dir.expects(:glob).with(pattern).returns([file, dir])
+        FileTest.expects(:directory?).with(file).returns(false)
+        FileTest.expects(:directory?).with(dir).returns(true)
+        Puppet::Module.find_manifests(pattern).should == [file]
+    end
+end
+
+describe Puppet::Module, " when searching for manifests in a found module" do
     it "should return the manifests from the first found module" do
         Puppet[:modulepath] = "/one:/two"
         File.stubs(:directory?).returns(true)
         Dir.expects(:glob).with("/one/mymod/manifests/init.pp").returns(%w{/one/mymod/manifests/init.pp})
         Puppet::Module.find_manifests("mymod/init.pp").should == ["/one/mymod/manifests/init.pp"]
-    end
-
-    it "should search the cwd if no module is found" do
-        Puppet[:modulepath] = "/one:/two"
-        File.stubs(:find).returns(nil)
-        cwd = Dir.getwd
-        Dir.expects(:glob).with("#{cwd}/mymod/init.pp").returns(["#{cwd}/mymod/init.pp"])
-        Puppet::Module.find_manifests("mymod/init.pp").should == ["#{cwd}/mymod/init.pp"]
     end
 
     it "should use the node environment if specified" do
