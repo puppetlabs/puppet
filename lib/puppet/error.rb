@@ -41,12 +41,5 @@ module Puppet # :nodoc:
     # An error class for when I don't know what happened.  Automatically
     # prints a stack trace when in debug mode.
     class DevError < Puppet::Error
-        # XXX This is probably the wrong way to do this, but...
-        def set_backtrace(trace)
-            if Puppet[:trace]
-                puts trace
-            end
-            super
-        end
     end
 end
