@@ -562,7 +562,7 @@ class Puppet::Util::Settings
         return transport.to_configuration
     end
 
-    # Convert our list of objects into a configuration file.
+    # Convert our list of config elements into a configuration file.
     def to_config
         str = %{The configuration file for #{Puppet[:name]}.  Note that this file
 is likely to have unused configuration parameters in it; any parameter that's

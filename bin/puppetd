@@ -8,7 +8,7 @@
 #
 # = Usage
 #
-#   puppetd  [-D|--daemonize] [-d|--debug] [--disable] [--enable]
+#   puppetd  [-D|--daemonize|--no-daemonize] [-d|--debug] [--disable] [--enable]
 #       [-h|--help] [--fqdn <host name>] [-l|--logdest syslog|<file>|console]
 #       [-o|--onetime] [--serve <handler>] [-t|--test]
 #       [-V|--version] [-v|--verbose] [-w|--waitforcert <seconds>]
@@ -63,8 +63,10 @@
 # '--genconfig'.
 #
 # daemonize::
-#   Send the process into the background.  This is the default unless
-#   +verbose+ or +debug+ is enabled.
+#   Send the process into the background.  This is the default.
+#
+# no-daemonize::
+#   Do not send the process into the background.
 #
 # debug::
 #   Enable full debugging.
@@ -161,7 +163,6 @@ require 'getoptlong'
 
 options = [
 	[ "--centrallogging",			GetoptLong::NO_ARGUMENT ],
-	[ "--daemonize", "-D",			GetoptLong::NO_ARGUMENT ],
 	[ "--disable",	    			GetoptLong::NO_ARGUMENT ],
 	[ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
 	[ "--enable",	    			GetoptLong::NO_ARGUMENT ],
@@ -201,9 +202,7 @@ begin
     result.each { |opt,arg|
         case opt
             # First check to see if the argument is a valid configuration parameter;
-            # if so, set it.
-            when "--daemonize"
-                options[:daemonize] = true
+            # if so, set it. NOTE: there is a catch-all at the bottom for defaults.rb
             when "--disable"
                 options[:disable] = true
             when "--serve"
@@ -215,17 +214,7 @@ begin
             when "--enable"
                 options[:enable] = true
             when "--test"
-                # Enable all of the most common test options.
-                Puppet.settings.handlearg("--ignorecache")
-                Puppet.settings.handlearg("--no-usecacheonfailure")
-                Puppet.settings.handlearg("--no-splay")
-                Puppet.settings.handlearg("--show_diff")
-                options[:onetime] = true
-                options[:waitforcert] = 0
-                unless Puppet::Util::Log.level == :debug
-                    Puppet::Util::Log.level = :info
-                end
-                Puppet::Util::Log.newdestination(:console)
+                options[:test] = true
             when "--centrallogging"
                 options[:centrallogs] = true
             when "--help"
@@ -276,22 +265,27 @@ end
 # Now parse the config
 Puppet.parse_config
 
+if options[:test]
+    # Enable all of the most common test options.
+    Puppet.settings.handlearg("--ignorecache")
+    Puppet.settings.handlearg("--no-usecacheonfailure")
+    Puppet.settings.handlearg("--no-splay")
+    Puppet.settings.handlearg("--show_diff")
+    Puppet.settings.handlearg("--no-daemonize")
+    options[:onetime] = true
+    options[:waitforcert] = 0
+    unless Puppet::Util::Log.level == :debug
+        Puppet::Util::Log.level = :info
+    end
+    Puppet::Util::Log.newdestination(:console)
+end
+
 Puppet.genconfig
 Puppet.genmanifest
 
 # If noop is set, then also enable diffs
 if Puppet[:noop]
     Puppet[:show_diff] = true
-end
-
-# Default to daemonizing, but if verbose or debug is specified,
-# default to staying in the foreground.
-unless options.include?(:daemonize)
-    if Puppet::Util::Log.level == :debug or Puppet::Util::Log.level == :info
-        options[:daemonize] = false
-    else
-        options[:daemonize] = true
-    end
 end
 
 unless options[:setdest]
@@ -330,7 +324,7 @@ server = nil
 
 # It'd be nice to daemonize later, but we have to daemonize before the
 # waitforcert happens.
-if options[:daemonize]
+if Puppet[:daemonize]
     client.daemonize
 end
 
