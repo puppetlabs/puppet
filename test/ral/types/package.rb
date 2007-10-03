@@ -120,6 +120,9 @@ class TestPackages < Test::Unit::TestCase
     # Make sure we can prefetch package information, rather than getting it one package at a time.
     def test_prefetch
         @type.providers_by_source.each do |provider|
+            # The yum provider can't be used if you're not root
+            next if provider.name == :yum && Process.euid != 0
+
             # First get a list of packages
             list = provider.instances
 

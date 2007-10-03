@@ -5,15 +5,14 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
         binary."
 
     # The query format by which we identify installed packages
-    NVRFORMAT = "%{NAME}-%{VERSION}-%{RELEASE}"
-
-    VERSIONSTRING = "%{VERSION}-%{RELEASE}"
+    NEVRAFORMAT = "%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}"
+    NEVRA_FIELDS = [:name, :epoch, :version, :release, :arch]
 
     commands :rpm => "rpm"
 
     if command('rpm')
         confine :true => begin
-                rpm('-ql', 'rpm')
+                rpm('--version')
            rescue Puppet::ExecutionFailure
                false
            else
@@ -26,23 +25,11 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
 
         # list out all of the packages
         begin
-            execpipe("#{command(:rpm)} -qa --nosignature --nodigest --qf '%{NAME} #{VERSIONSTRING}\n'") { |process|
-                # our regex for matching dpkg output
-                regex = %r{^(\S+)\s+(\S+)}
-                fields = [:name, :ensure]
-
+            execpipe("#{command(:rpm)} -qa --nosignature --nodigest --qf '#{NEVRAFORMAT}\n'") { |process|
                 # now turn each returned line into a package object
                 process.each { |line|
-                    if match = regex.match(line)
-                        hash = {}
-                        fields.zip(match.captures) { |field,value|
-                            hash[field] = value
-                        }
-                        hash[:provider] = self.name
-                        packages << new(hash)
-                    else
-                        raise "failed to match rpm line %s" % line
-                    end
+                    hash = nevra_to_hash(line)
+                    packages << new(hash)
                 }
             }
         rescue Puppet::ExecutionFailure
@@ -56,30 +43,21 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     # a hash with entries :instance => fully versioned package name, and 
     # :ensure => version-release
     def query
-        cmd = ["-q", @resource[:name], "--nosignature", "--nodigest", "--qf", "#{NVRFORMAT} #{VERSIONSTRING}\n"]
+        unless @property_hash[:epoch]
+            cmd = ["-q", @resource[:name], "--nosignature", "--nodigest", "--qf", "#{NEVRAFORMAT}\n"]
 
-        begin
-            output = rpm(*cmd)
-        rescue Puppet::ExecutionFailure
-            return nil
+            begin
+                output = rpm(*cmd)
+            rescue Puppet::ExecutionFailure
+                return nil
+            end
+            
+            # FIXME: We could actually be getting back multiple packages
+            # for multilib
+            @property_hash.update(self.class.nevra_to_hash(output))
         end
 
-        regex = %r{^(\S+)\s+(\S+)}
-        fields = [:instance, :ensure]
-        attrs = {}
-        if match = regex.match(output)
-            fields.zip(match.captures) { |field,value|
-                attrs[field] = value
-            }
-        else
-            raise Puppet::DevError,
-                "Failed to match rpm output '%s'" %
-                output
-        end
-
-        @nvr = attrs[:instance]
-
-        return attrs
+        return @property_hash.dup
     end
 
     # Here we just retrieve the version from the file specified in the source.
@@ -88,9 +66,9 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
             @resource.fail "RPMs must specify a package source"
         end
         
-        cmd = [command(:rpm), "-q", "--qf", "#{VERSIONSTRING}", "-p", "#{@resource[:source]}"]
-        version = execfail(cmd, Puppet::Error)
-        return version
+        cmd = [command(:rpm), "-q", "--qf", "#{NEVRAFORMAT}\n", "-p", "#{@resource[:source]}"]
+        h = nevra_to_hash(execfail(cmd, Puppet::Error))
+        return h[:ensure]
     end
 
     def install
@@ -124,6 +102,15 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     def nvr
         query unless @nvr
         @nvr
+    end
+
+    def self.nevra_to_hash(line)
+        line.chomp!
+        hash = {}
+        NEVRA_FIELDS.zip(line.split) { |f, v| hash[f] = v }
+        hash[:provider] = self.name
+        hash[:ensure] = "#{hash[:version]}-#{hash[:release]}"
+        return hash
     end
 end
 
