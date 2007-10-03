@@ -3,11 +3,17 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
     has_feature :versionable
 
-    commands :yum => "yum", :rpm => "rpm"
+    commands :yum => "yum", :rpm => "rpm", :python => "python"
+    
+    YUMHELPER = File::join(File::dirname(__FILE__), "yumhelper.py")
+
+    class << self
+        attr_reader :updates
+    end
 
     if command('rpm')
         confine :true => begin
-                rpm('-ql', 'rpm')
+                rpm('--version')
            rescue Puppet::ExecutionFailure
                false
            else
@@ -17,8 +23,26 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
     defaultfor :operatingsystem => [:fedora, :centos, :redhat]
 
-    def install
+    def self.prefetch(packages)
+        @updates = {}
+        if Process.euid != 0
+            raise Puppet::Error, "The yum provider can only be used as root"
+        end
+        super
+        python(YUMHELPER).each_line do |l|
+            l.chomp!
+            next if l.empty?
+            if l[0,4] == "_pkg"
+                hash = nevra_to_hash(l[5..-1])
+                [hash[:name], "#{hash[:name]}.#{hash[:arch]}"].each do |n|
+                    @updates[n] ||= []
+                    @updates[n] << hash
+                end
+            end
+        end
+    end
 
+    def install
         should = @resource.should(:ensure)
         self.debug "Ensuring => #{should}"
         wanted = @resource[:name]
@@ -27,6 +51,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
         case should
         when true, false, Symbol
             # pass
+            should = nil
         else
             # Add the package version
             wanted += "-%s" % should
@@ -34,26 +59,33 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
         output = yum "-d", "0", "-e", "0", "-y", :install, wanted
 
-        unless self.query
-            raise Puppet::Error.new(
-                "Could not find package %s" % self.name
-            )
+        is = self.query
+        unless is
+            raise Puppet::Error, "Could not find package %s" % self.name
+        end
+
+        # FIXME: Should we raise an exception even if should == :latest
+        # and yum updated us to a version other than @param_hash[:ensure] ?
+        if should && should != is[:ensure]
+            raise Puppet::Error, "Failed to update to version #{should}, got version #{is[:ensure]} instead"
         end
     end
 
     # What's the latest package version available?
     def latest
-        output = yum "-d", "0", "-e", "0", :list, :available, @resource[:name]
-
-        if output =~ /^#{Regexp.escape(@resource[:name])}\S+\s+(\S+)\s/
-            return $1
+        upd = self.class.updates[@resource[:name]]
+        unless upd.nil?
+            # FIXME: there could be more than one update for a package
+            # because of multiarch
+            upd = upd[0]
+            return "#{upd[:version]}-#{upd[:release]}"
         else
             # Yum didn't find updates, pretend the current
             # version is the latest
-            unless properties[:ensure] != :absent
+            if properties[:ensure] == :absent
                 raise Puppet::DevError, "Tried to get latest on a missing package"
             end
-            return @property_hash[:ensure]
+            return properties[:ensure]
         end
     end
 
