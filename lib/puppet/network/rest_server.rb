@@ -1,35 +1,37 @@
 class Puppet::Network::RESTServer # :nodoc:
-  @@routes = {}
-  @@listening = false
+  attr_reader :server
   
-  def self.register(*indirections)
+  def initialize(args = {})
+    raise(ArgumentError, "requires :server to be specified") unless args[:server]
+    @routes = {}
+    @listening = false
+    @server = args[:server]
+  end
+
+  def register(*indirections)
     raise ArgumentError, "indirection names are required" if indirections.empty?
-    indirections.flatten.each { |i| @@routes[i.to_sym] = true }
+    indirections.flatten.each { |i| @routes[i.to_sym] = true }
   end
   
-  def self.unregister(*indirections)
-    raise ArgumentError, "indirection names are required" if indirections.empty?
+  def unregister(*indirections)
+    indirections = @routes.keys if indirections.empty?
     indirections.flatten.each do |i|
-      raise(ArgumentError, "indirection [%s] is not known" % i) unless @@routes[i.to_sym]
-      @@routes.delete(i.to_sym)
+      raise(ArgumentError, "indirection [%s] is not known" % i) unless @routes[i.to_sym]
+      @routes.delete(i.to_sym)
     end
   end
-  
-  def self.reset
-    self.unregister(@@routes.keys) unless @@routes.keys.empty?
+
+  def listening?
+    @listening
   end
   
-  def self.listening?
-    @@listening
+  def listen
+    raise "Cannot listen -- already listening" if listening?
+    @listening = true
   end
   
-  def self.listen
-    raise "Cannot listen -- already listening" if @@listening
-    @@listening = true
-  end
-  
-  def self.unlisten
-    raise "Cannot unlisten -- not currently listening" unless @@listening
-    @@listening = false
+  def unlisten
+    raise "Cannot unlisten -- not currently listening" unless listening?
+    @listening = false
   end
 end
