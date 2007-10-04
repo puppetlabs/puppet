@@ -28,6 +28,14 @@ module Puppet::Indirector
 
     module ClassMethods   
       attr_reader :indirection
+
+      def cache_class=(klass)
+          indirection.cache_class = klass
+      end
+
+      def terminus_class=(klass)
+          indirection.terminus_class = klass
+      end
          
       def find(*args)
         indirection.find(*args)

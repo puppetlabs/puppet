@@ -50,37 +50,45 @@ describe Puppet::Indirector, "when registering an indirection" do
 end
 
 describe Puppet::Indirector, " when redirecting a model" do
-  before do
-    @thingie = Class.new do
-      extend Puppet::Indirector
+    before do
+        @thingie = Class.new do
+            extend Puppet::Indirector
+        end
+        @indirection = @thingie.send(:indirects, :test)
     end
-    @mock_terminus = mock('Terminus')
-    @indirection = @thingie.send(:indirects, :test)
-    @thingie.expects(:indirection).returns(@mock_terminus)
-  end
-  
-  it "should give the model the ability to lookup a model instance by letting the indirection perform the lookup" do
-    @mock_terminus.expects(:find)
-    @thingie.find
-  end
 
-  it "should give the model the ability to remove model instances from a terminus by letting the indirection remove the instance" do
-    @mock_terminus.expects(:destroy)
-    @thingie.destroy  
-  end
-  
-  it "should give the model the ability to search for model instances by letting the indirection find the matching instances" do
-    @mock_terminus.expects(:search)
-    @thingie.search    
-  end
-  
-  it "should give the model the ability to store a model instance by letting the indirection store the instance" do
-    thing = @thingie.new
-    @mock_terminus.expects(:save).with(thing)
-    thing.save        
-  end
+    it "should give the model the ability to lookup a model instance by letting the indirection perform the lookup" do
+        @indirection.expects(:find)
+        @thingie.find
+    end
 
-  after do
-      @indirection.delete
-  end
+    it "should give the model the ability to remove model instances from a terminus by letting the indirection remove the instance" do
+        @indirection.expects(:destroy)
+        @thingie.destroy  
+    end
+
+    it "should give the model the ability to search for model instances by letting the indirection find the matching instances" do
+        @indirection.expects(:search)
+        @thingie.search    
+    end
+
+    it "should give the model the ability to store a model instance by letting the indirection store the instance" do
+        thing = @thingie.new
+        @indirection.expects(:save).with(thing)
+        thing.save        
+    end
+
+    it "should give the model the ability to set the indirection terminus class" do
+        @indirection.expects(:terminus_class=).with(:myterm)
+        @thingie.terminus_class = :myterm
+    end
+
+    it "should give the model the ability to set the indirection cache class" do
+        @indirection.expects(:cache_class=).with(:mycache)
+        @thingie.cache_class = :mycache
+    end
+
+    after do
+        @indirection.delete
+    end
 end
