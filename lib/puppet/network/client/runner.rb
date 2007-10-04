@@ -10,4 +10,3 @@ class Puppet::Network::Client::Runner < Puppet::Network::Client::ProxyClient
     end
 end
 
-# $Id$

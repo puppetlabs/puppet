@@ -113,4 +113,3 @@ class TestPuppetCA < Test::Unit::TestCase
     end
 end
 
-# $Id$

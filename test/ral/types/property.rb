@@ -385,4 +385,3 @@ class TestProperty < Test::Unit::TestCase
     end
 end
 
-# $Id$

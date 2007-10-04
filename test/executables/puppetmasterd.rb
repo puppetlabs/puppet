@@ -140,4 +140,3 @@ class TestPuppetMasterD < Test::Unit::TestCase
     end
 end
 
-# $Id$

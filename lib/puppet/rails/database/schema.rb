@@ -107,4 +107,3 @@ class Puppet::Rails::Schema
     end
 end
 
-# $Id$

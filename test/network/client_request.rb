@@ -35,5 +35,4 @@ class TestClientRequest < Test::Unit::TestCase
     end
 end
 
-# $Id$
 

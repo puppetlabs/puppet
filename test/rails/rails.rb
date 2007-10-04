@@ -24,4 +24,3 @@ class TestRails < Test::Unit::TestCase
     end
 end
 
-# $Id$

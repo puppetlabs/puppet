@@ -144,4 +144,3 @@ class TestWebrickServer < Test::Unit::TestCase
     end
 end
 
-# $Id$

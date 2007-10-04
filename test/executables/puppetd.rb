@@ -56,4 +56,3 @@ class TestPuppetDExe < Test::Unit::TestCase
     end
 end
 
-# $Id$

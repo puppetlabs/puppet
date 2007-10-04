@@ -89,4 +89,3 @@ class TestMongrelServer < PuppetTest::TestCase
     end
 end
 
-# $Id$

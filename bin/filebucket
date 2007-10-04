@@ -209,4 +209,3 @@ else
     raise "Invalid mode %s" % mode
 end
 
-# $Id$

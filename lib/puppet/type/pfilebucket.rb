@@ -115,4 +115,3 @@ module Puppet
     end
 end
 
-# $Id$

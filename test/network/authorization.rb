@@ -134,5 +134,4 @@ class TestAuthConfig < Test::Unit::TestCase
     end
 end
 
-# $Id$
 

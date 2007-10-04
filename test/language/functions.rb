@@ -536,4 +536,3 @@ class TestLangFunctions < Test::Unit::TestCase
     end
 end
 
-# $Id$

@@ -1176,4 +1176,3 @@ module Puppet
     require 'puppet/type/pfile/mode'
     require 'puppet/type/pfile/type'
 end
-# $Id$

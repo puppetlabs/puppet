@@ -69,4 +69,3 @@ module PuppetTest::ServerTest
 
 end
 
-# $Id$

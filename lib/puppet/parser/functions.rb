@@ -302,4 +302,3 @@ module Functions
 end
 end
 
-# $Id$

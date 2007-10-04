@@ -57,4 +57,3 @@ module Puppet::Util
     end
 end
 
-# $Id$

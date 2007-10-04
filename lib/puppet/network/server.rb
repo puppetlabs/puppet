@@ -2,4 +2,3 @@
 module Puppet::Network::Server # :nodoc:
 end
 
-# $Id$

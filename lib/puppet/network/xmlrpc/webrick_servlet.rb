@@ -118,4 +118,3 @@ module Puppet::Network::XMLRPC
     end
 end
 
-# $Id$

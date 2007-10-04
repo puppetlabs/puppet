@@ -232,4 +232,3 @@ class TestLocalService < Test::Unit::TestCase
 end
 end
 
-# $Id$

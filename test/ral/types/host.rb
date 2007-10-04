@@ -159,4 +159,3 @@ class TestHost < Test::Unit::TestCase
     end
 end
 
-# $Id$

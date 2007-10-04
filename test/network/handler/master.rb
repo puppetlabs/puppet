@@ -158,5 +158,4 @@ class TestMaster < Test::Unit::TestCase
     end
 end
 
-# $Id$
 

@@ -52,4 +52,3 @@ class TestTypeManager < Test::Unit::TestCase
     end
 end
 
-# $Id$

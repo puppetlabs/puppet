@@ -291,4 +291,3 @@ when "mongrel":
     webserver.run.join
 end
 
-# $Id$

@@ -76,4 +76,3 @@ class Puppet::Transaction::Report
     end
 end
 
-# $Id$

@@ -659,4 +659,3 @@ module Puppet
     )
 end
 
-# $Id$

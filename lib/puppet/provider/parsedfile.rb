@@ -362,4 +362,3 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     end
 end
 
-# $Id$

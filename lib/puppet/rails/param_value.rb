@@ -22,4 +22,3 @@ class Puppet::Rails::ParamValue < ActiveRecord::Base
     end
 end
 
-# $Id$

@@ -447,4 +447,3 @@ else
     Puppet.start
 end
 
-# $Id$

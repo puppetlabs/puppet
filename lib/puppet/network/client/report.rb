@@ -28,4 +28,3 @@ class Puppet::Network::Client::Report < Puppet::Network::Client
     end
 end
 
-# $Id$

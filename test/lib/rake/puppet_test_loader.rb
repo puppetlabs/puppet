@@ -14,4 +14,3 @@ unless runner.run
     exit 14
 end
 
-# $Id$

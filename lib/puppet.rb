@@ -430,4 +430,3 @@ if Puppet[:storeconfigs]
     require 'puppet/rails'
 end
 
-# $Id$

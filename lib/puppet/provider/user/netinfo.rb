@@ -103,4 +103,3 @@ Puppet::Type.type(:user).provide :netinfo, :parent => Puppet::Provider::NameServ
     end
 end
 
-# $Id$

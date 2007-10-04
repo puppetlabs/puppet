@@ -181,5 +181,4 @@ class TestReportServer < Test::Unit::TestCase
     end
 end
 
-# $Id$
 

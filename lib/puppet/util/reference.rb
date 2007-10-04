@@ -186,4 +186,3 @@ class Puppet::Util::Reference
     end
 end
 
-# $Id$

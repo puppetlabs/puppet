@@ -190,4 +190,3 @@ package { Thunderbird-2.0.0.4-1.pkg.dmg:
     end
 end
 
-# $Id$

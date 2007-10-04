@@ -238,4 +238,3 @@ class TestRailsCollection < PuppetTest::TestCase
     end
 end
 
-# $Id$

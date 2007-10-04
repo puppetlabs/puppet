@@ -43,4 +43,3 @@ module PuppetTest::ResourceTesting
     end
 end
 
-# $Id$

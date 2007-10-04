@@ -19,4 +19,3 @@ class Object
     end
 end
 
-# $Id$

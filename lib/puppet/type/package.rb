@@ -403,4 +403,3 @@ module Puppet
     end # Puppet.type(:package)
 end
 
-# $Id$

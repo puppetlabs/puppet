@@ -12,4 +12,3 @@ module Puppet::Util::Warnings
     end
 end
 
-# $Id$

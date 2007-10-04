@@ -167,4 +167,3 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
     end
 end
 
-# $Id$

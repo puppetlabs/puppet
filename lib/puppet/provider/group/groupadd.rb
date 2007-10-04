@@ -26,4 +26,3 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
     end
 end
 
-# $Id$

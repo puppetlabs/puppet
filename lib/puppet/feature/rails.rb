@@ -49,4 +49,3 @@ Puppet.features.add(:rails) do
     end
 end
 
-# $Id$

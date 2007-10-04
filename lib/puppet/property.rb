@@ -557,4 +557,3 @@ class Property < Puppet::Parameter
 end
 end
 
-# $Id$

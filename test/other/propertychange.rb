@@ -138,4 +138,3 @@ class TestPropertyChange < Test::Unit::TestCase
     end
 end
 
-# $Id$

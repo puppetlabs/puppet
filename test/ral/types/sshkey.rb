@@ -189,4 +189,3 @@ class TestSSHKey < Test::Unit::TestCase
     end
 end
 
-# $Id$

@@ -61,4 +61,3 @@ Puppet::Network::Handler.report.newreport(:store, :useyaml => true) do
     end
 end
 
-# $Id$

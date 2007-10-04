@@ -117,4 +117,3 @@ end
 
 require 'puppet/parser/ast/leaf'
 
-# $Id$

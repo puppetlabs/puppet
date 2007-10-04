@@ -256,4 +256,3 @@ class TestClient < Test::Unit::TestCase
     end
 end
 
-# $Id$

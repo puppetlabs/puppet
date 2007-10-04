@@ -342,4 +342,3 @@ class TestBucket < Test::Unit::TestCase
     end
 end
 
-# $Id$

@@ -374,4 +374,3 @@ class Puppet::DisabledDSL
     end
 end
 
-# $Id$

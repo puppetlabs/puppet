@@ -175,4 +175,3 @@ module Puppet::Util::ProviderFeatures
     end
 end
 
-# $Id$

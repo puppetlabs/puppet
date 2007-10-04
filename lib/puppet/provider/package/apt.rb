@@ -116,4 +116,3 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     end
 end
 
-# $Id$

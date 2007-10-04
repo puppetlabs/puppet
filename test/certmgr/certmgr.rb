@@ -297,4 +297,3 @@ class TestCertMgr < Test::Unit::TestCase
     end
 end
 
-# $Id$

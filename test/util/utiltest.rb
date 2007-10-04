@@ -285,4 +285,3 @@ class TestPuppetUtil < Test::Unit::TestCase
     end
 end
 
-# $Id$
