@@ -56,8 +56,7 @@ class Property < Puppet::Parameter
 
     # Look up a value's name, so we can find options and such.
     def self.value_name(value)
-        name = symbolize(value)
-        if @parametervalues[name]
+        if value != '' and name = symbolize(value) and @parametervalues.include?(name)
             return name
         elsif ary = self.match?(value)
             return ary[0]
