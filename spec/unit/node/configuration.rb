@@ -300,12 +300,14 @@ describe Puppet::Node::Configuration, " when applying host configurations" do
     it "should send a report if reporting is enabled" do
         Puppet[:report] = true
         @transaction.expects :send_report
+        @transaction.stubs :any_failed? => false
         @config.apply
     end
 
     it "should send a report if report summaries are enabled" do
         Puppet[:summarize] = true
         @transaction.expects :send_report
+        @transaction.stubs :any_failed? => false
         @config.apply
     end
 
@@ -319,6 +321,7 @@ describe Puppet::Node::Configuration, " when applying host configurations" do
 
     it "should sync the state database after applying" do
         Puppet::Util::Storage.expects(:store)
+        @transaction.stubs :any_failed? => false
         @config.apply
     end
 
