@@ -102,13 +102,13 @@ describe Puppet::Indirector::Ldap::Node, " when a parent node exists" do
     it "should add any parent classes to the node's classes" do
         @entry.stubs(:to_hash).returns({})
         @entry.stubs(:vals).with(:parent).returns(%w{parent})
-        @entry.stubs(:vals).with("one").returns(%w{a b})
+        @entry.stubs(:vals).with("classes").returns(%w{a b})
 
         @parent.stubs(:to_hash).returns({})
-        @parent.stubs(:vals).with("one").returns(%w{c d})
+        @parent.stubs(:vals).with("classes").returns(%w{c d})
         @parent.stubs(:vals).with(:parent).returns(nil)
 
-        @searcher.stubs(:class_attributes).returns(%w{one})
+        @searcher.stubs(:class_attributes).returns(%w{classes})
         @node.expects(:classes=).with(%w{a b c d})
         @searcher.find("mynode")
     end
