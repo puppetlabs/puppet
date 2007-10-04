@@ -654,27 +654,12 @@ Generated on #{Time.now}.
 
             config = bucket.to_configuration
             config.host_config = false
-            config.apply
+            config.apply do |transaction|
+                if failures = transaction.any_failed?
+                    raise "Could not configure for running; got %s failure(s)" % failures
+                end
+            end
             config.clear
-
-#            tags = nil
-#            if Puppet[:tags]
-#                tags = Puppet[:tags]
-#                Puppet[:tags] = ""
-#            end
-#            trans = objects.evaluate
-#            trans.ignoretags = true
-#            trans.configurator = true
-#            trans.evaluate
-#            if tags
-#                Puppet[:tags] = tags
-#            end
-#
-#            # Remove is a recursive process, so it's sufficient to just call
-#            # it on the component.
-#            objects.remove(true)
-#
-#            objects = nil
 
             runners.each { |s| @used << s }
         end
