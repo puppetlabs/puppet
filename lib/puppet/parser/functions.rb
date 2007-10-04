@@ -200,11 +200,9 @@ module Functions
     end
 
     newfunction(:template, :type => :rvalue, :doc => "Evaluate a template and
-    return its value.  See `the templating docs`_
+    return its value.  See `the templating docs </trac/puppet/wiki/PuppetTemplating>`_
     for more information.  Note that if multiple templates are specified, their
     output is all concatenated and returned as the output of the function.
-    
-    .. _the templating docs: /trac/puppet/wiki/PuppetTemplating
     ") do |vals|
         require 'erb'
 
@@ -304,4 +302,3 @@ module Functions
 end
 end
 
-# $Id$

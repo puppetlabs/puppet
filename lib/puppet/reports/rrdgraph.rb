@@ -135,4 +135,3 @@ Puppet::Network::Handler.report.newreport(:rrdgraph) do
     end
 end
 
-# $Id$

@@ -54,4 +54,3 @@ Puppet::Type.newtype(:interface) do
     end
 end
 
-# $Id$

@@ -54,4 +54,3 @@ module Puppet::Util::CollectionMerger
     end
 end
 
-# $Id$

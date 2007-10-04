@@ -28,4 +28,3 @@ Puppet::Type.type(:mailalias).provide(:aliases,
     end
 end
 
-# $Id$

@@ -73,10 +73,14 @@ the client configuration.
 
 Configuration Files
 +++++++++++++++++++
-As mentioned above, the configuration parameters can also be stored in a 
-configuration file, located in the configuration directory (`/etc/puppet` 
-by default).  As of 0.23.0, all executables look for ``puppet.conf`` in their
-configuration directory (although they previously looked for separate files).
+As mentioned above, the configuration parameters can also be stored in a
+configuration file, located in the configuration directory.  As root, the
+default configuration directory is ``/etc/puppet``, and as a regular user, the
+default configuration directory is ``~user/.puppet``.  As of 0.23.0, all
+executables look for ``puppet.conf`` in their configuration directory
+(although they previously looked for separate files).  For example,
+``puppet.conf`` is located at ``/etc/puppet/puppet.conf`` as root and
+``~user/.puppet/puppet.conf`` as a regular user by default.
 
 All executables will set any parameters set within the ``main`` section,
 while each executable will also look for a section named for the executable

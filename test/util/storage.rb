@@ -120,4 +120,3 @@ class TestStorage < Test::Unit::TestCase
     end
 end
 
-# $Id$

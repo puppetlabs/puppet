@@ -329,4 +329,3 @@ class Puppet::Provider::NameService < Puppet::Provider
     end
 end
 
-# $Id$

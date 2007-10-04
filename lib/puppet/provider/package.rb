@@ -28,4 +28,3 @@ class Puppet::Provider::Package < Puppet::Provider
     end
 end
 
-# $Id$

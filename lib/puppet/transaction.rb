@@ -730,4 +730,3 @@ end
 
 require 'puppet/transaction/report'
 
-# $Id$

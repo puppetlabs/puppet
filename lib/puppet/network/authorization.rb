@@ -81,4 +81,3 @@ module Puppet::Network
     end
 end
 
-# $Id$

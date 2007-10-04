@@ -291,4 +291,3 @@ class TestResourceServer < Test::Unit::TestCase
     end
 end
 
-# $Id$

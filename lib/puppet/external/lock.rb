@@ -61,4 +61,3 @@ class File
     end
 end
 
-# $Id$

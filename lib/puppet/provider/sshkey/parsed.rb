@@ -33,4 +33,3 @@ Puppet::Type.type(:sshkey).provide(:parsed,
         }
 end
 
-# $Id$

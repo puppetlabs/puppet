@@ -84,4 +84,3 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm, :source => :rpm do
     end
 end
 
-# $Id$

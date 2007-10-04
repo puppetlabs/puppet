@@ -228,4 +228,3 @@ class TestTidy < Test::Unit::TestCase
     end
 end
 
-# $Id$

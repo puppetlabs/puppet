@@ -243,4 +243,3 @@ class TestReports < Test::Unit::TestCase
     end
 end
 
-# $Id$

@@ -115,4 +115,3 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
     end
 end
 
-# $Id$

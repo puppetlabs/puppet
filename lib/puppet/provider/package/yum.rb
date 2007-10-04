@@ -95,4 +95,3 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     end
 end
 
-# $Id$

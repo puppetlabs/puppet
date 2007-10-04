@@ -167,4 +167,3 @@ class AptPackageProviderTest < PuppetTest::TestCase
     end
 end
 
-# $Id$

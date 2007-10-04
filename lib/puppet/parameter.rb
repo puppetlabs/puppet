@@ -484,4 +484,3 @@ class Puppet::Parameter
     end
 end
 
-# $Id$

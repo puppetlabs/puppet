@@ -113,4 +113,3 @@ Puppet::Type.type(:interface).provide(:sunos,
     end
 end
 
-# $Id$

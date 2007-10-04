@@ -127,4 +127,3 @@ module PuppetTest::ExeTest
     end
 end
 
-# $Id$

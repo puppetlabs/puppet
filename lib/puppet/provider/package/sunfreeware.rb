@@ -6,4 +6,3 @@ Puppet::Type.type(:package).provide :sunfreeware, :parent => :blastwave, :source
     commands :pkgget => "pkg-get"
 end
 
-# $Id$

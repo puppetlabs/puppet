@@ -100,12 +100,7 @@ describe Puppet::Parser::Interpreter, " when managing parser instances" do
         @parser = mock('parser')
     end
 
-    it "it should an exception when nothing is there and nil is returned" do
-        @interp.expects(:create_parser).with(:myenv).returns(nil)
-        @interp.send(:parser, :myenv).should be_nil
-    end
-
-    it "should create and return a new parser and use the same parser when the parser does not need reparsing" do
+    it "should use the same parser when the parser does not need reparsing" do
         @interp.expects(:create_parser).with(:myenv).returns(@parser)
         @interp.send(:parser, :myenv).should equal(@parser)
 
@@ -125,7 +120,12 @@ describe Puppet::Parser::Interpreter, " when managing parser instances" do
         @interp.send(:parser, :myenv).should equal(newparser)
     end
 
-    it "should keep the old parser if create_parser doesn't return anything." do
+    it "should fail intelligently if a parser cannot be created and one does not already exist" do
+        @interp.expects(:create_parser).with(:myenv).raises(ArgumentError)
+        proc { @interp.send(:parser, :myenv) }.should raise_error(ArgumentError)
+    end
+
+    it "should keep the old parser if a new parser cannot be created" do
         # Get the first parser in the hash.
         @interp.expects(:create_parser).with(:myenv).returns(@parser)
         @interp.send(:parser, :myenv).should equal(@parser)
@@ -134,7 +134,7 @@ describe Puppet::Parser::Interpreter, " when managing parser instances" do
         @parser.expects(:reparse?).returns(true)
 
         # But fail to create a new parser
-        @interp.expects(:create_parser).with(:myenv).returns(nil)
+        @interp.expects(:create_parser).with(:myenv).raises(ArgumentError)
 
         # And make sure we still get the old valid parser
         @interp.send(:parser, :myenv).should equal(@parser)
@@ -154,27 +154,30 @@ end
 describe Puppet::Parser::Interpreter, " when compiling configurations" do
     before do
         @interp = Puppet::Parser::Interpreter.new
+        @node = stub 'node', :environment => :myenv
+        @compile = mock 'compile'
+        @parser = mock 'parser'
     end
 
-    it "should create a configuration with the node, parser, and whether to use ast nodes" do
-        node = mock('node')
-        node.expects(:environment).returns(:myenv)
-        compile = mock 'compile'
-        compile.expects(:compile).returns(:config)
-        parser = mock 'parser'
-        @interp.expects(:parser).with(:myenv).returns(parser)
+    it "should create a compile with the node, parser, and whether to use ast nodes when ast nodes is true" do
+        @compile.expects(:compile).returns(:config)
+        @interp.expects(:parser).with(:myenv).returns(@parser)
         @interp.expects(:usenodes?).returns(true)
-        Puppet::Parser::Compile.expects(:new).with(node, parser, :ast_nodes => true).returns(compile)
-        @interp.compile(node)
+        Puppet::Parser::Compile.expects(:new).with(@node, @parser, :ast_nodes => true).returns(@compile)
+        @interp.compile(@node)
+    end
 
-        # Now try it when usenodes is true
-        @interp = Puppet::Parser::Interpreter.new :UseNodes => false
-        node.expects(:environment).returns(:myenv)
-        compile.expects(:compile).returns(:config)
-        @interp.expects(:parser).with(:myenv).returns(parser)
+    it "should create a compile with the node, parser, and whether to use ast nodes when ast nodes is false" do
+        @compile.expects(:compile).returns(:config)
+        @interp.expects(:parser).with(:myenv).returns(@parser)
         @interp.expects(:usenodes?).returns(false)
-        Puppet::Parser::Compile.expects(:new).with(node, parser, :ast_nodes => false).returns(compile)
-        @interp.compile(node).should equal(:config)
+        Puppet::Parser::Compile.expects(:new).with(@node, @parser, :ast_nodes => false).returns(@compile)
+        @interp.compile(@node).should equal(:config)
+    end
+
+    it "should fail intelligently when no parser can be found" do
+        @interp.expects(:parser).with(:myenv).returns(nil)
+        proc { @interp.compile(@node) }.should raise_error(Puppet::ParseError)
     end
 end
 

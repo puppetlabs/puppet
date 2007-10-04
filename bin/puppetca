@@ -286,4 +286,3 @@ else
     exit(42)
 end
 
-# $Id$

@@ -149,4 +149,3 @@ Puppet::Type.newtype(:resources) do
     end
 end
 
-# $Id$

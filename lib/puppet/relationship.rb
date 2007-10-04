@@ -60,4 +60,3 @@ class Puppet::Relationship < GRATR::Edge
     end
 end
 
-# $Id$

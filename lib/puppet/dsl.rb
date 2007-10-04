@@ -269,5 +269,3 @@ module Puppet
 end
 
 @aspects = {}
-
-# $Id$

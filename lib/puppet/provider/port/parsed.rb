@@ -171,4 +171,3 @@ require 'puppet/provider/parsedfile'
 #    end
 #end
 
-# $Id$

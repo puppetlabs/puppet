@@ -223,4 +223,3 @@ class Hash #:nodoc:
   include Plist::Emit
 end
 
-# $Id$

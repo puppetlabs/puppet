@@ -169,4 +169,3 @@ class TestParameter < Test::Unit::TestCase
     end
 end
 
-# $Id$

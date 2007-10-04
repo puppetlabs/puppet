@@ -106,4 +106,3 @@ class TestTypeInstances < Test::Unit::TestCase
     end
 end
 
-# $Id$

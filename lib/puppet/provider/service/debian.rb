@@ -29,4 +29,3 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
     end
 end
 
-# $Id$

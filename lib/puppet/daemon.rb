@@ -81,4 +81,3 @@ module Puppet::Daemon
     end
 end
 
-# $Id$

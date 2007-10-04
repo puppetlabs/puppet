@@ -153,4 +153,3 @@ class TestFileBucket < Test::Unit::TestCase
     end
 end
 
-# $Id$

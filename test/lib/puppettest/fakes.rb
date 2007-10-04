@@ -202,4 +202,3 @@ module PuppetTest
     module_function :fakeprovider
 end
 
-# $Id$

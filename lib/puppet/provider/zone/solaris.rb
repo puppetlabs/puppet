@@ -240,4 +240,3 @@ set zonepath=%s
     end
 end
 
-# $Id$

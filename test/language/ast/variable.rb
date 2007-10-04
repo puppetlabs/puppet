@@ -28,4 +28,3 @@ class TestVariable < Test::Unit::TestCase
     end
 end
 
-# $Id$

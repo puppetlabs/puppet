@@ -104,5 +104,4 @@ class TestHandlerRunner < Test::Unit::TestCase
     end
 end
 
-# $Id$
 

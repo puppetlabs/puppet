@@ -34,5 +34,4 @@ class TestRights < Test::Unit::TestCase
     end
 end
 
-# $Id$
 

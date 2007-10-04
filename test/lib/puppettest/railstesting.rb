@@ -51,4 +51,3 @@ module PuppetTest::RailsTesting
     end
 end
 
-# $Id$

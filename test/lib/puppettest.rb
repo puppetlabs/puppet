@@ -312,4 +312,3 @@ require 'puppettest/parsertesting'
 require 'puppettest/servertest'
 require 'puppettest/testcase'
 
-# $Id$

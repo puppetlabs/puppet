@@ -280,4 +280,3 @@ class Puppet::SSLCertificates::Certificate
     end
 end
 
-# $Id$

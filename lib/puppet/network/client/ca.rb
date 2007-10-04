@@ -56,4 +56,3 @@ class Puppet::Network::Client::CA < Puppet::Network::Client
     end
 end
 
-# $Id$

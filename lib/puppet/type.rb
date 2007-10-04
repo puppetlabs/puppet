@@ -415,4 +415,3 @@ require 'puppet/type/tidy'
 
 
 
-# $Id$

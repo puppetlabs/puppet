@@ -80,4 +80,3 @@ class TestResourceClient < Test::Unit::TestCase
     end
 end
 
-# $Id$

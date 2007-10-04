@@ -497,4 +497,3 @@ class TestCron < Test::Unit::TestCase
 end
 
 
-# $Id$

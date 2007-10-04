@@ -1104,4 +1104,3 @@ yay = /a/path
     end
 end
 
-# $Id$

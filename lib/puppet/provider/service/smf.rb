@@ -82,4 +82,3 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
     end
 end
 
-# $Id$

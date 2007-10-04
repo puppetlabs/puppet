@@ -48,4 +48,3 @@ class Puppet::Type
     end
 end
 
-# $Id$

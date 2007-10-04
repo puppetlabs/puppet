@@ -70,4 +70,3 @@ Puppet::Type.type(:host).provide(:parsed,
     end
 end
 
-# $Id$

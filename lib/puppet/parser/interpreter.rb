@@ -25,7 +25,8 @@ class Puppet::Parser::Interpreter
 
     # evaluate our whole tree
     def compile(node)
-        return Puppet::Parser::Compile.new(node, parser(node.environment), :ast_nodes => usenodes?).compile
+        raise Puppet::ParseError, "Could not parse configuration; cannot compile" unless env_parser = parser(node.environment)
+        return Puppet::Parser::Compile.new(node, env_parser, :ast_nodes => usenodes?).compile
     end
 
     # create our interpreter
@@ -74,15 +75,14 @@ class Puppet::Parser::Interpreter
             parser.parse
             return parser
         rescue => detail
-            if Puppet[:trace]
-                puts detail.backtrace
-            end
             msg = "Could not parse"
             if environment and environment != ""
                 msg += " for environment %s" % environment
             end
-            msg += ": %s" % detail
-            raise Puppet::Error, detail
+            msg += ": %s" % detail.to_s
+            error = Puppet::Error.new(msg)
+            error.set_backtrace(detail.backtrace)
+            raise error
         end
     end
 
@@ -96,8 +96,11 @@ class Puppet::Parser::Interpreter
                 tmp = create_parser(environment)
                 @parsers[environment].clear if @parsers[environment]
                 @parsers[environment] = tmp
-            rescue
-                # Nothing, yo.
+            rescue => detail
+                # If a parser already exists, than assume that we logged the
+                # exception elsewhere and reuse the parser.  If one doesn't
+                # exist, then reraise.
+                raise detail unless @parsers[environment]
             end
         end
         @parsers[environment]

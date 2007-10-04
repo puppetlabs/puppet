@@ -61,4 +61,3 @@ class TestHandler < Test::Unit::TestCase
     end
 end
 
-# $Id$

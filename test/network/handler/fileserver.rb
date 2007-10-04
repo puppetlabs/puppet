@@ -1150,5 +1150,4 @@ allow *
     end
 end
 
-# $Id$
 

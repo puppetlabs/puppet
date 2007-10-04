@@ -59,4 +59,3 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     end
 end
 
-# $Id$

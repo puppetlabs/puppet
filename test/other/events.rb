@@ -5,7 +5,6 @@ $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 require 'puppet'
 require 'puppettest'
 
-# $Id$
 
 class TestEvents < Test::Unit::TestCase
 	include PuppetTest

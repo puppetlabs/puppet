@@ -27,4 +27,3 @@ module PuppetTest::Support::Collection
     end
 end
 
-# $Id$

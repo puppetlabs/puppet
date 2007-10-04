@@ -87,4 +87,3 @@ module Puppet::Util::SubclassLoader
     end
 end
 
-# $Id$

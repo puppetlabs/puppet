@@ -563,4 +563,3 @@ class TestUserProvider < Test::Unit::TestCase
     end
 end
 
-# $Id$

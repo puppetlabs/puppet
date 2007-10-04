@@ -1,4 +1,11 @@
 0.23.2 (misspiggy)
+    Fixed #832. Added the '--no-daemonize' option to puppetd and
+    puppetmasterd.  NOTE: The default behavior of 'verbose' and
+    'debug' no longer cause puppetd and puppetmasterd to not
+    daemonize.
+
+    Added k5login type. (#759)
+
     Fixed CA race condition. (#693)
 
     Added shortname support to config.rb and refactored addargs

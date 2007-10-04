@@ -135,4 +135,3 @@ class TestFileType < Test::Unit::TestCase
     end
 end
 
-# $Id$
