@@ -50,6 +50,22 @@ describe Puppet::Network::RESTServer, "in general" do
     Puppet::Network::RESTServer.unregister(:foo)    
     Proc.new { Puppet::Network::RESTServer.unregister(:foo) }.should raise_error(ArgumentError)
   end
+  
+  it "should allow clearing out the list of all indirection accessible to clients" do
+    Puppet::Network::RESTServer.register(:foo, :bar)
+    Puppet::Network::RESTServer.reset
+    [ :foo, :bar, :baz].each do |indirection|
+      Proc.new { Puppet::Network::RESTServer.unregister(indirection) }.should raise_error(ArgumentError)
+    end
+  end
+  
+  it "should use the normal means of turning off indirections accessible to clients when clearing all indirections" do
+    Puppet::Network::RESTServer.register(:foo, :bar, :baz)
+    Puppet::Network::RESTServer.expects(:unregister).with do |args|
+      args.include?(:foo) && args.include?(:bar) && args.include?(:baz)
+    end
+    Puppet::Network::RESTServer.reset
+  end
 end
 
 describe Puppet::Network::RESTServer, "when listening is not turned on" do
