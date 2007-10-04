@@ -8,8 +8,48 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/network/rest_server'
 
 describe Puppet::Network::RESTServer, "in general" do
-  it "should provide a way to specify that an indirection is to be made accessible to clients"
-  it "should provide a way to specify that an indirection is to no longer be made accessible to clients"
+  before do
+    Puppet::Network::RESTServer.reset
+  end
+  
+  it "should allow registering an indirection for client access by specifying its indirection name" do
+    Proc.new { Puppet::Network::RESTServer.register(:foo) }.should_not raise_error
+  end
+  
+  it "should require at least one indirection name when registering indirections for client access" do
+    Proc.new { Puppet::Network::RESTServer.register }.should raise_error(ArgumentError)
+  end
+  
+  it "should allow for numerous indirections to be registered at once for client access" do
+    Proc.new { Puppet::Network::RESTServer.register(:foo, :bar, :baz) }.should_not raise_error
+  end
+
+  it "should allow the use of indirection names to specify which indirections are to be no longer accessible to clients" do
+    Puppet::Network::RESTServer.register(:foo)
+    Proc.new { Puppet::Network::RESTServer.unregister(:foo) }.should_not raise_error    
+  end
+
+  it "should leave other indirections accessible to clients when turning off other indirections" do
+    Puppet::Network::RESTServer.register(:foo, :bar)
+    Puppet::Network::RESTServer.unregister(:foo)
+    Proc.new { Puppet::Network::RESTServer.unregister(:bar)}.should_not raise_error
+  end
+  
+  it "should allow specifying numerous indirections which are to be no longer accessible to clients" do
+    Puppet::Network::RESTServer.register(:foo, :bar)
+    Proc.new { Puppet::Network::RESTServer.unregister(:foo, :bar) }.should_not raise_error
+  end
+  
+  it "should not allow for unregistering unknown indirection names" do
+    Puppet::Network::RESTServer.register(:foo, :bar)
+    Proc.new { Puppet::Network::RESTServer.unregister(:baz) }.should raise_error(ArgumentError)
+  end
+  
+  it "should disable client access immediately" do
+    Puppet::Network::RESTServer.register(:foo, :bar)
+    Puppet::Network::RESTServer.unregister(:foo)    
+    Proc.new { Puppet::Network::RESTServer.unregister(:foo) }.should raise_error(ArgumentError)
+  end
 end
 
 describe Puppet::Network::RESTServer, "when listening is not turned on" do
