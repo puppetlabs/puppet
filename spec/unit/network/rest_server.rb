@@ -66,12 +66,30 @@ describe Puppet::Network::RESTServer, "in general" do
     end
     Puppet::Network::RESTServer.reset
   end
+  
+  it "should provide a means of determining whether it is providing access to clients" do
+    Puppet::Network::RESTServer.should respond_to(:listening?)
+  end
 end
 
 describe Puppet::Network::RESTServer, "when listening is not turned on" do
+  before do
+    Puppet::Network::RESTServer.unlisten if Puppet::Network::RESTServer.listening?
+  end
+  
+  it "should allow listening to be turned on" do
+    Proc.new { Puppet::Network::RESTServer.listen }.should_not raise_error
+  end
+  
+  it "should not allow listening to be turned off" do
+    Proc.new { Puppet::Network::RESTServer.unlisten }.should raise_error(RuntimeError)
+  end
+  
+  it "should indicate that it is not listening" do
+    Puppet::Network::RESTServer.should_not be_listening
+  end
+  
   it "should allow picking which technology to use to make indirections accessible to clients"
-  it "should allow listening to be turned on"
-  it "should not allow listening to be turned off"
   it "should not route HTTP GET requests on indirector's name to indirector find for the specified technology"
   it "should not route HTTP GET requests on indirector's plural name to indirector search for the specified technology"
   it "should not route HTTP DELETE requests on indirector's name to indirector destroy for the specified technology"
@@ -81,9 +99,23 @@ describe Puppet::Network::RESTServer, "when listening is not turned on" do
 end
 
 describe Puppet::Network::RESTServer, "when listening is turned on" do
+  before do
+    Puppet::Network::RESTServer.listen unless Puppet::Network::RESTServer.listening?
+  end
+  
+  it "should allow listening to be turned off" do
+    Proc.new { Puppet::Network::RESTServer.unlisten }.should_not raise_error
+  end
+  
+  it "should not allow listening to be turned on" do
+    Proc.new { Puppet::Network::RESTServer.listen }.should raise_error(RuntimeError)
+  end
+  
+  it "should indicate that it is  listening" do
+    Puppet::Network::RESTServer.should be_listening
+  end
+  
   it "should not allow picking which technology to use to make indirections accessible to clients"
-  it "should allow listening to be turned off"
-  it "should not allow listening to be turned on"
   it "should route HTTP GET requests on indirector's name to indirector find for the specified technology"
   it "should route HTTP GET requests on indirector's plural name to indirector search for the specified technology"
   it "should route HTTP DELETE requests on indirector's name to indirector destroy for the specified technology"
@@ -91,3 +123,6 @@ describe Puppet::Network::RESTServer, "when listening is turned on" do
 
   # TODO: FIXME [ write integrations which fire up actual webrick / mongrel servers and are thus webrick / mongrel specific?]
 end
+
+
+# TODO: FIXME == should be able to have multiple servers running on different technologies, or with different configurations -- this will force an instance model

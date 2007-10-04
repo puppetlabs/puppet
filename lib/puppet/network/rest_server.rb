@@ -1,5 +1,6 @@
 class Puppet::Network::RESTServer # :nodoc:
   @@routes = {}
+  @@listening = false
   
   def self.register(*indirections)
     raise ArgumentError, "indirection names are required" if indirections.empty?
@@ -16,5 +17,19 @@ class Puppet::Network::RESTServer # :nodoc:
   
   def self.reset
     self.unregister(@@routes.keys) unless @@routes.keys.empty?
+  end
+  
+  def self.listening?
+    @@listening
+  end
+  
+  def self.listen
+    raise "Cannot listen -- already listening" if @@listening
+    @@listening = true
+  end
+  
+  def self.unlisten
+    raise "Cannot unlisten -- not currently listening" unless @@listening
+    @@listening = false
   end
 end
