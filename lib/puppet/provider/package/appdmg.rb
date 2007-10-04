@@ -114,4 +114,3 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
     end
 end
 
-# $Id$

@@ -198,4 +198,3 @@ Puppet::Type.type(:cron).provide(:crontab,
     end
 end
 
-# $Id$

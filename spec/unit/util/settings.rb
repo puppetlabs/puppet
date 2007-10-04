@@ -395,6 +395,17 @@ describe Puppet::Util::Settings, " when being used to manage the host machine" d
         @settings.setdefaults :files, :myfile => {:default => "/myfile", :desc => "a", :mode => 0755}
     end
 
+    def stub_transaction
+        @bucket = mock 'bucket'
+        @config = mock 'config'
+        @trans = mock 'transaction'
+
+        @settings.expects(:to_transportable).with(:whatever).returns(@bucket)
+        @bucket.expects(:to_configuration).returns(@config)
+        @config.expects(:apply).yields(@trans)
+        @config.stubs(:host_config=)
+    end
+
     it "should provide a method that writes files with the correct modes" do
         pending "Not converted from test/unit yet"
     end
@@ -518,6 +529,7 @@ describe Puppet::Util::Settings, " when being used to manage the host machine" d
         Puppet::Util::Storage.expects(:store).never
         Puppet::Util::Storage.expects(:load).never
         Dir.expects(:mkdir).with("/maindir")
+        Dir.expects(:mkdir).with("/seconddir")
         @settings.use(:main)
     end
 
@@ -531,5 +543,12 @@ describe Puppet::Util::Settings, " when being used to manage the host machine" d
         Dir.expects(:mkdir).with(@settings[:otherdir], 0755).times(2)
         @settings.use(:other)
         @settings.reuse
+    end
+
+    it "should fail if any resources fail" do
+        stub_transaction
+        @trans.expects(:any_failed?).returns(true)
+
+        proc { @settings.use(:whatever) }.should raise_error(RuntimeError)
     end
 end

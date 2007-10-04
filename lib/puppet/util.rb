@@ -461,4 +461,3 @@ require 'puppet/util/logging'
 require 'puppet/util/package'
 require 'puppet/util/warnings'
 
-# $Id$

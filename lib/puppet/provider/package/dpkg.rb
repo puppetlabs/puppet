@@ -122,4 +122,3 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     end
 end
 
-# $Id$

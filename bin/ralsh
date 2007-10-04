@@ -267,4 +267,3 @@ else
     puts text
 end
 
-# $Id$

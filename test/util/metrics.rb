@@ -75,4 +75,3 @@ class TestMetric < PuppetTest::TestCase
     end
 end
 
-# $Id$

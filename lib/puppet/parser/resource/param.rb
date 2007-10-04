@@ -88,4 +88,3 @@ class Puppet::Parser::Resource::Param
     end
 end
 
-# $Id$

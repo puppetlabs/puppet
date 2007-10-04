@@ -243,4 +243,3 @@ class UserRootAddProviderTest < PuppetTest::TestCase
 end
 
 
-# $Id$

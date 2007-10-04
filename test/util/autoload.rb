@@ -102,4 +102,25 @@ TestAutoload.newthing(:#{name.to_s})
 
         assert(loader.send(:searchpath).include?(dir), "searchpath does not include the libdir")
     end
+
+    # This causes very strange behaviour in the tests.  We need to make sure we
+    # require the same path that a user would use, otherwise we'll result in
+    # a reload of the 
+    def test_require_does_not_cause_reload
+        loadname = "testing"
+        loader = Puppet::Util::Autoload.new(self.class, loadname)
+
+        basedir = "/some/dir"
+        dir = File.join(basedir, loadname)
+        loader.expects(:eachdir).yields(dir)
+
+        subname = "instance"
+
+        file = File.join(dir, subname) + ".rb"
+
+        Dir.expects(:glob).with("#{dir}/*.rb").returns(file)
+
+        Kernel.expects(:require).with(File.join(loadname, subname))
+        loader.loadall
+    end
 end

@@ -93,4 +93,3 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd, :source => :fre
     end
 end
 
-# $Id$

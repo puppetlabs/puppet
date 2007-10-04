@@ -354,4 +354,3 @@ class TestSchedule < Test::Unit::TestCase
     end
 end
 
-# $Id$

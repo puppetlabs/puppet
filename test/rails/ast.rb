@@ -71,4 +71,3 @@ class TestRailsAST < PuppetTest::TestCase
     end
 end
 
-# $Id$

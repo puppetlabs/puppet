@@ -372,4 +372,3 @@ class Puppet::Provider
     end
 end
 
-# $Id$

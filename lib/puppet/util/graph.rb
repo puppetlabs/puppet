@@ -36,4 +36,3 @@ module Puppet::Util::Graph
     end
 end
 
-# $Id$

@@ -107,16 +107,13 @@ class Puppet::Network::Handler
             benchmark(level, "Compiled configuration for %s" % node.name) do
                 begin
                     config = interpreter.compile(node)
-                rescue Puppet::Error => detail
-                    if Puppet[:trace]
-                        puts detail.backtrace
-                    end
-                    unless local?
-                        Puppet.err detail.to_s
-                    end
-                    raise XMLRPC::FaultException.new(
-                        1, detail.to_s
-                    )
+                rescue => detail
+                    # If we're local, then we leave it to the local system
+                    # to handle error reporting, but otherwise we do it here
+                    # so the interpreter doesn't need to know if the parser
+                    # is local or not.
+                    Puppet.err(detail.to_s) unless local?
+                    raise
                 end
             end
 

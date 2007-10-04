@@ -673,5 +673,4 @@ class TestUtilFileRecord < Test::Unit::TestCase
     end
 end
 
-# $Id$
 

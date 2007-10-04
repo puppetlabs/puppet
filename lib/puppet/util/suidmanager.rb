@@ -69,4 +69,3 @@ module Puppet::Util::SUIDManager
     module_function :system
 end
 
-# $Id$

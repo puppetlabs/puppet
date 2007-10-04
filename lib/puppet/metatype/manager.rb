@@ -139,4 +139,3 @@ module Manager
 end
 end
 
-# $Id$

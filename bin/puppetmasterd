@@ -7,7 +7,7 @@
 #
 # = Usage
 #
-#   puppetmasterd [-D|--daemonize] [-d|--debug] [-h|--help]
+#   puppetmasterd [-D|--daemonize|--no-daemonize] [-d|--debug] [-h|--help]
 #       [-l|--logdest <file>|console|syslog] [--nobucket] [--nonodes]
 #       [-v|--verbose] [-V|--version]
 #
@@ -28,11 +28,13 @@
 # '--genconfig'.
 #
 # daemonize::
-#   Send the process into the background.  This is the default unless
-#   +verbose+ or +debug+ is enabled.
+#   Send the process into the background.  This is the default.
+#
+# no-daemonize::
+#   Do not send the process into the background.
 #
 # debug::
-#   Enable full debugging.  Causes the daemon not to go into the background.
+#   Enable full debugging.
 #
 # help::
 #   Print this help message.
@@ -53,7 +55,7 @@
 #   Do not start the reports server.
 #
 # verbose::
-#   Enable verbosity.  Causes the daemon not to go into the background.
+#   Enable verbosity.
 #
 # version::
 #   Print the puppet version number and exit.
@@ -82,7 +84,6 @@ require 'puppet'
 require 'puppet/sslcertificates'
 
 options = [
-	[ "--daemonize", "-D",			GetoptLong::NO_ARGUMENT ],
 	[ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
 	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
 	[ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
@@ -117,8 +118,8 @@ options = {
 begin
     result.each { |opt,arg|
         case opt
-            when "--daemonize"
-                options[:daemonize] = true
+            # First check to see if the argument is a valid configuration parameter;
+            # if so, set it. NOTE: there is a catch-all at the bottom for defaults.rb
             when "--debug"
                 options[:debug] = true
             when "--help"
@@ -161,6 +162,9 @@ rescue GetoptLong::InvalidOption => detail
     exit(1)
 end
 
+# Now parse the config
+Puppet.parse_config
+
 # Handle the logging settings.
 if options[:debug] or options[:verbose]
     if options[:debug]
@@ -169,7 +173,7 @@ if options[:debug] or options[:verbose]
         Puppet::Util::Log.level = :info
     end
 
-    unless options[:daemonize]
+    unless Puppet[:daemonize]
         Puppet::Util::Log.newdestination(:console)
         options[:setdest] = true
     end
@@ -179,23 +183,10 @@ unless options[:setdest]
     Puppet::Util::Log.newdestination(:syslog)
 end
 
-# Now parse the config
-Puppet.parse_config
-
 Puppet.genconfig
 Puppet.genmanifest
 
 require 'etc'
-
-# Default to daemonizing, but if verbose or debug is specified,
-# default to staying in the foreground.
-unless options.include?(:daemonize)
-    if Puppet::Util::Log.level == :debug or Puppet::Util::Log.level == :info
-        options[:daemonize] = false
-    else
-        options[:daemonize] = true
-    end
-end
 
 handlers = {
     :Status => {},
@@ -288,7 +279,7 @@ if Puppet[:servertype] == "webrick"
 end
 Puppet.settraps
 
-if options[:daemonize]
+if Puppet[:daemonize]
     server.daemonize
 end
 
@@ -300,4 +291,3 @@ when "mongrel":
     webserver.run.join
 end
 
-# $Id$

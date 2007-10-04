@@ -228,4 +228,3 @@ module PuppetTest::FileTesting
     end
 end
 
-# $Id$

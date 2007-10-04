@@ -14,4 +14,3 @@ Puppet::Type.type(:host).provide :netinfo, :parent => Puppet::Provider::NameServ
     defaultfor :operatingsystem => :darwin
 end
 
-# $Id$

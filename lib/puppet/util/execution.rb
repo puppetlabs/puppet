@@ -19,4 +19,3 @@ module Puppet::Util::Execution
     end
 end
 
-# $Id$

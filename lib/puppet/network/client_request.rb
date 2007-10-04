@@ -29,4 +29,3 @@ module Puppet::Network # :nodoc:
     end
 end
 
-# $Id$

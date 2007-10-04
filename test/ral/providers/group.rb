@@ -249,4 +249,3 @@ class TestGroupProvider < Test::Unit::TestCase
     end
 end
 
-# $Id$

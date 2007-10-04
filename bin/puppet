@@ -197,13 +197,13 @@ begin
     config = client.getconfig
     config.apply
 rescue => detail
+    if Puppet[:trace]
+        puts detail.backtrace
+    end
     if detail.is_a?(XMLRPC::FaultException)
         $stderr.puts detail.message
     else
         $stderr.puts detail
-    end
-    if Puppet[:trace]
-        puts detail.backtrace
     end
     exit(1)
 end

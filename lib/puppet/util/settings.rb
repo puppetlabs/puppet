@@ -562,7 +562,7 @@ class Puppet::Util::Settings
         return transport.to_configuration
     end
 
-    # Convert our list of objects into a configuration file.
+    # Convert our list of config elements into a configuration file.
     def to_config
         str = %{The configuration file for #{Puppet[:name]}.  Note that this file
 is likely to have unused configuration parameters in it; any parameter that's
@@ -654,27 +654,12 @@ Generated on #{Time.now}.
 
             config = bucket.to_configuration
             config.host_config = false
-            config.apply
+            config.apply do |transaction|
+                if failures = transaction.any_failed?
+                    raise "Could not configure for running; got %s failure(s)" % failures
+                end
+            end
             config.clear
-
-#            tags = nil
-#            if Puppet[:tags]
-#                tags = Puppet[:tags]
-#                Puppet[:tags] = ""
-#            end
-#            trans = objects.evaluate
-#            trans.ignoretags = true
-#            trans.configurator = true
-#            trans.evaluate
-#            if tags
-#                Puppet[:tags] = tags
-#            end
-#
-#            # Remove is a recursive process, so it's sufficient to just call
-#            # it on the component.
-#            objects.remove(true)
-#
-#            objects = nil
 
             runners.each { |s| @used << s }
         end

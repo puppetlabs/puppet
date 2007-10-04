@@ -97,4 +97,3 @@ class TestPuppetUtilSubclassLoader < Test::Unit::TestCase
     end
 end
 
-# $Id$

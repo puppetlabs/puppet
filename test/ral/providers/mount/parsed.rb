@@ -248,4 +248,3 @@ class TestParsedMountsNonDarwinAsRoot < PuppetTest::TestCase
     end
 end
 
-# $Id$

@@ -50,4 +50,3 @@ class TestInstanceloader < Test::Unit::TestCase
     end
 end
 
-# $Id$

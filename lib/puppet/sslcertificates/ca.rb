@@ -414,4 +414,3 @@ class Puppet::SSLCertificates::CA
     end
 end
 
-# $Id$

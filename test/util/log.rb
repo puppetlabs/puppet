@@ -272,4 +272,3 @@ class TestLog < Test::Unit::TestCase
     end
 end
 
-# $Id$

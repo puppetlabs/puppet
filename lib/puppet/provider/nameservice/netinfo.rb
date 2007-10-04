@@ -207,4 +207,3 @@ class NetInfo < Puppet::Provider::NameService
 end
 end
 
-# $Id$

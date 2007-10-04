@@ -24,4 +24,3 @@ class TestPuppetUtilPackage < Test::Unit::TestCase
     end
 end
 
-# $Id$

@@ -309,4 +309,3 @@ class Puppet::Util::FileType
     end
 end
 
-# $Id$

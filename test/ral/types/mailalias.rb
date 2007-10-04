@@ -47,4 +47,3 @@ class TestMailAlias < Test::Unit::TestCase
     end
 end
 
-# $Id$

@@ -51,4 +51,3 @@ class Puppet::Parser::TemplateWrapper
     end
 end
 
-# $Id$

@@ -129,4 +129,3 @@ class TestPuppetModule < Test::Unit::TestCase
     end
 end
 
-# $Id$

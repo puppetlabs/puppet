@@ -85,4 +85,3 @@ class TestPuppetBin < Test::Unit::TestCase
     end
 end
 
-# $Id$

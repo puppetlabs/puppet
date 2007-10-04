@@ -30,4 +30,3 @@ module PuppetTest::FileParsing
     end
 end
 
-# $Id$

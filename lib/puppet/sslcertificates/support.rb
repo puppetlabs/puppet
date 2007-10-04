@@ -125,4 +125,3 @@ module Puppet::SSLCertificates::Support
     end
 end
 
-# $Id$

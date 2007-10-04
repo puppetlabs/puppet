@@ -14,4 +14,3 @@ module Rake
     end
 end
 
-# $Id$

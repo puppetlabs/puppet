@@ -59,4 +59,3 @@ class TestSelector < Test::Unit::TestCase
     end
 end
 
-# $Id$

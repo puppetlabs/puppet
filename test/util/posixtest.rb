@@ -167,4 +167,3 @@ class TestPosixUtil < Test::Unit::TestCase
     end
 end
 
-# $Id$

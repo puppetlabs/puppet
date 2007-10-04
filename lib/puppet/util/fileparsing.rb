@@ -394,4 +394,3 @@ module Puppet::Util::FileParsing
     end
 end
 
-# $Id$

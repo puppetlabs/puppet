@@ -52,7 +52,6 @@ class TestCronParsedProvider < Test::Unit::TestCase
 
     def teardown
         Puppet::Util::FileType.filetype(:ram).clear
-        @provider.filetype = @oldfiletype
         @provider.clear
         super
     end
@@ -211,7 +210,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
     # Take our sample files, and make sure we can entirely parse them,
     # then that we can generate them again and we get the same data.
     def test_parse_and_generate_sample_files
-        @provider.filetype = :ram
+        @provider.stubs(:filetype).returns(Puppet::Util::FileType.filetype(:ram))
         crondir = datadir(File.join(%w{providers cron}))
         files = Dir.glob("%s/crontab.*" % crondir)
 
@@ -306,7 +305,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
         str = "# this is a comment\n#and another comment\n"
         user = "fakeuser"
         records = nil
-        target = @provider.filetype = :ram
+        @provider.stubs(:filetype).returns(Puppet::Util::FileType.filetype(:ram))
         target = @provider.target_object(user)
         target.write(str)
         assert_nothing_raised {
@@ -320,7 +319,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
     end
 
     def test_simpleparsing
-        @provider.filetype = :ram
+        @provider.stubs(:filetype).returns(Puppet::Util::FileType.filetype(:ram))
         text = "5 1,2 * 1 0 /bin/echo funtest"
 
         records = nil
@@ -376,7 +375,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
 
     # Make sure we correctly bidirectionally parse things.
     def test_records_and_strings
-        @provider.filetype = :ram
+        @provider.stubs(:filetype).returns(Puppet::Util::FileType.filetype(:ram))
         setme
 
         target = @provider.target_object(@me)
@@ -426,7 +425,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
         0,30 * * 1 * fooness
         "
         setme
-        @provider.filetype = :ram
+        @provider.stubs(:filetype).returns(Puppet::Util::FileType.filetype(:ram))
         you = "you"
 
         # Write the same tab to multiple targets
@@ -486,7 +485,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
 
     def test_data
         setme
-        @provider.filetype = :ram
+        @provider.stubs(:filetype).returns(Puppet::Util::FileType.filetype(:ram))
         target = @provider.target_object(@me)
         fakedata("data/providers/cron/examples").each do |file|
             text = File.read(file)
@@ -518,7 +517,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
 
     # Match freebsd's annoying @daily stuff.
     def test_match_freebsd_special
-        @provider.filetype = :ram
+        @provider.stubs(:filetype).returns(Puppet::Util::FileType.filetype(:ram))
         setme
 
         target = @provider.target_object(@me)
@@ -561,7 +560,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
 
     # Testing #669.
     def test_environment_settings
-        @provider.filetype = :ram
+        @provider.stubs(:filetype).returns(Puppet::Util::FileType.filetype(:ram))
         setme
 
         target = @provider.target_object(@me)
@@ -601,4 +600,3 @@ class TestCronParsedProvider < Test::Unit::TestCase
     end
 end
 
-# $Id$

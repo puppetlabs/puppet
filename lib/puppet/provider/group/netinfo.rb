@@ -9,4 +9,3 @@ Puppet::Type.type(:group).provide :netinfo, :parent => Puppet::Provider::NameSer
     defaultfor :operatingsystem => :darwin
 end
 
-# $Id$

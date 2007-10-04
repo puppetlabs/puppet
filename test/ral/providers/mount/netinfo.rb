@@ -77,4 +77,3 @@ require 'puppettest'
 # end
 # end
 
-# $Id$

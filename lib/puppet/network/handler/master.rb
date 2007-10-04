@@ -77,12 +77,7 @@ class Puppet::Network::Handler
             Puppet::Node::Facts.new(client, facts).save
 
             # And get the configuration from the config handler
-            begin
-                config = config_handler.configuration(client)
-            rescue => detail
-                puts detail.backtrace
-                raise
-            end
+            config = config_handler.configuration(client)
 
             return translate(config.extract)
         end

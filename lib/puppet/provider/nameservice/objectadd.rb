@@ -42,4 +42,3 @@ class ObjectAdd < Puppet::Provider::NameService
 end
 end
 
-# $Id$

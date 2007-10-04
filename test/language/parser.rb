@@ -1202,4 +1202,3 @@ file { "/tmp/yayness":
     end
 end
 
-# $Id$

@@ -13,4 +13,3 @@ module Puppet::Util::LogPaths
     end
 end
 
-# $Id$

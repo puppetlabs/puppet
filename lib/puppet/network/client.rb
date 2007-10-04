@@ -190,4 +190,3 @@ class Puppet::Network::Client
     require 'puppet/network/client/proxy'
 end
 
-# $Id$

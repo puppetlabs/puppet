@@ -36,4 +36,3 @@ class TestServiceType < Test::Unit::TestCase
     end
 end
 
-# $Id$

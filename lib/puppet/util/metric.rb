@@ -149,4 +149,3 @@ end
 
 Puppet::Metric = Puppet::Util::Metric
 
-# $Id$

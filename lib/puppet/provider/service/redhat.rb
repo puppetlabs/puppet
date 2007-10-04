@@ -56,4 +56,3 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init do
     end
 end
 
-# $Id$

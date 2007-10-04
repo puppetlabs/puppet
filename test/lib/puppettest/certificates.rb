@@ -58,4 +58,3 @@ module PuppetTest::Certificates
     end
 end
 
-# $Id$

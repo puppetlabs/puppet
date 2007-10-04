@@ -107,16 +107,11 @@ class Puppet::Util::Autoload
         # Load every instance of everything we can find.
         eachdir do |dir|
             Dir.glob("#{dir}/*.rb").each do |file|
-                # Load here, rather than require, so that facts
-                # can be reloaded.  This has some short-comings, I
-                # believe, but it works as long as real classes
-                # aren't used.
                 name = File.basename(file).sub(".rb", '').intern
                 next if loaded?(name)
-                next if $".include?(File.join(@path, name.to_s + ".rb"))
-                filepath = File.join(@path, name.to_s + ".rb")
+                rubypath = File.join(@path, name.to_s)
                 begin
-                    Kernel.require file
+                    Kernel.require rubypath
                     loaded(name, file)
                 rescue => detail
                     if Puppet[:trace]

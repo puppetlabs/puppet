@@ -116,4 +116,3 @@ module Puppet::Util::POSIX
     end
 end
 
-# $Id$

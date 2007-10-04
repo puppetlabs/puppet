@@ -77,5 +77,4 @@ class TestXMLRPCProcessor < Test::Unit::TestCase
     end
 end
 
-# $Id$
 

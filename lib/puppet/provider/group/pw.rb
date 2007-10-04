@@ -28,4 +28,3 @@ Puppet::Type.type(:group).provide :pw, :parent => Puppet::Provider::NameService:
     end
 end
 
-# $Id$

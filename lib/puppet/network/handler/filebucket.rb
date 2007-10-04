@@ -180,4 +180,3 @@ class Puppet::Network::Handler # :nodoc:
     end
 end
 
-# $Id$

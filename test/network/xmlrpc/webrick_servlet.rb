@@ -29,5 +29,4 @@ class TestXMLRPCWEBrickServlet < Test::Unit::TestCase
     end
 end
 
-# $Id$
 

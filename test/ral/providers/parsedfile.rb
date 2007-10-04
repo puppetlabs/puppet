@@ -695,5 +695,4 @@ class TestParsedFile < Test::Unit::TestCase
     end
 end
 
-# $Id$
 

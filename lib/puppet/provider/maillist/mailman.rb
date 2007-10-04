@@ -110,4 +110,3 @@ Puppet::Type.type(:maillist).provide(:mailman) do
     end
 end
 
-# $Id$

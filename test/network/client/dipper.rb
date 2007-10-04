@@ -32,4 +32,3 @@ class TestDipperClient < Test::Unit::TestCase
     end
 end
 
-# $Id$

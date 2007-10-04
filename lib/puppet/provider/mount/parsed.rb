@@ -34,4 +34,3 @@ Puppet::Type.type(:mount).provide(:parsed,
     record_line self.name, :fields => @fields, :separator => /\s+/, :joiner => "\t", :optional => [:pass, :dump]
 end
 
-# $Id$

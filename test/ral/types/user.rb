@@ -490,4 +490,3 @@ class TestUser < Test::Unit::TestCase
     end
 end
 
-# $Id$

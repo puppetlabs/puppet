@@ -17,8 +17,7 @@ class TestCron < Test::Unit::TestCase
         @crontype = Puppet::Type.type(:cron)
         @provider = @crontype.defaultprovider
         if @provider.respond_to?(:filetype=)
-            @oldfiletype = @provider.filetype
-            @provider.filetype = :ram
+            @provider.stubs(:filetype).returns(Puppet::Util::FileType.filetype(:ram))
         end
         @crontype = Puppet::Type.type(:cron)
     end
@@ -26,9 +25,6 @@ class TestCron < Test::Unit::TestCase
     def teardown
         super
         @crontype.defaultprovider = nil
-        if defined? @oldfiletype
-            @provider.filetype = @oldfiletype
-        end
         Puppet::Util::FileType.filetype(:ram).clear
     end
 
@@ -501,4 +497,3 @@ class TestCron < Test::Unit::TestCase
 end
 
 
-# $Id$

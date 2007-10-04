@@ -146,4 +146,3 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     end
 end
 
-# $Id$

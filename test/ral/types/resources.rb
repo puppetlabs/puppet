@@ -206,4 +206,3 @@ class TestResources < Test::Unit::TestCase
     end
 end
 
-# $Id$

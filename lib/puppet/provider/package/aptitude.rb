@@ -29,4 +29,3 @@ Puppet::Type.type(:package).provide :aptitude, :parent => :apt, :source => :dpkg
 	end
 end
 
-# $Id$

@@ -43,6 +43,16 @@ class Transaction
         return true
     end
 
+    # Are there any failed resources in this transaction?
+    def any_failed?
+        failures = @failures.inject(0) { |failures, array| failures += array[1]; failures }
+        if failures > 0
+            failures
+        else
+            false
+        end
+    end
+
     # Apply all changes for a resource, returning a list of the events
     # generated.
     def apply(resource)
@@ -730,4 +740,3 @@ end
 
 require 'puppet/transaction/report'
 
-# $Id$

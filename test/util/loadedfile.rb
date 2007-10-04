@@ -119,4 +119,3 @@ class TestLoadedFile < Test::Unit::TestCase
     end
 end
 
-# $Id$

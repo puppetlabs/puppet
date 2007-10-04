@@ -84,4 +84,3 @@ Puppet::Type.type(:package).provide :fink, :parent => :dpkg, :source => :dpkg do
      end
 end
 
-# $Id$

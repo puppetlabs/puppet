@@ -546,4 +546,3 @@ class Puppet::Util::Log
 end
 Puppet::Log = Puppet::Util::Log
 
-# $Id$

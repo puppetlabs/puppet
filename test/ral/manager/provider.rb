@@ -89,4 +89,3 @@ class TestTypeProviders < Test::Unit::TestCase
     end
 end
 
-# $Id$

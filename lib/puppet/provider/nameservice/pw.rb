@@ -19,4 +19,3 @@ class PW < ObjectAdd
 end
 end
 
-# $Id$

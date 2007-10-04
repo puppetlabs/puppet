@@ -192,4 +192,3 @@ class Puppet::Network::Handler
     end
 end
 
-# $Id$
