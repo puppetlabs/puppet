@@ -35,7 +35,7 @@ describe Puppet::Network::RESTServer, "in general" do
     Proc.new { @server.unregister(:foo) }.should_not raise_error    
   end
 
-  it "should leave other indirections accessible to clients when turning off other indirections" do
+  it "should leave other indirections accessible to clients when turning off indirections" do
     @server.register(:foo, :bar)
     @server.unregister(:foo)
     Proc.new { @server.unregister(:bar)}.should_not raise_error
@@ -46,18 +46,18 @@ describe Puppet::Network::RESTServer, "in general" do
     Proc.new { @server.unregister(:foo, :bar) }.should_not raise_error
   end
   
-  it "should not allow for unregistering unknown indirection names" do
+  it "should not allow turning off unknown indirection names" do
     @server.register(:foo, :bar)
     Proc.new { @server.unregister(:baz) }.should raise_error(ArgumentError)
   end
   
-  it "should disable client access immediately" do
+  it "should disable client access immediately when turning off indirections" do
     @server.register(:foo, :bar)
     @server.unregister(:foo)    
     Proc.new { @server.unregister(:foo) }.should raise_error(ArgumentError)
   end
   
-  it "should allow clearing out the list of all indirection accessible to clients" do
+  it "should allow turning off all indirections at once" do
     @server.register(:foo, :bar)
     @server.unregister
     [ :foo, :bar, :baz].each do |indirection|
@@ -73,7 +73,7 @@ describe Puppet::Network::RESTServer, "in general" do
     @server.server.should == :mongrel
   end
 
-  it "should allow for multiple configurations, each allowing different indirections for client access" do
+  it "should allow for multiple configurations, each allowing a different HTTP server handling different indirections" do
     @server2 = Puppet::Network::RESTServer.new(:server => :webrick)
     @server.register(:foo, :bar)
     @server2.register(:foo, :xyzzy)
@@ -123,7 +123,7 @@ describe Puppet::Network::RESTServer, "when listening is turned on" do
     Proc.new { @server.listen }.should raise_error(RuntimeError)
   end
   
-  it "should indicate that it is  listening" do
+  it "should indicate that it is listening" do
     @server.should be_listening
   end
   

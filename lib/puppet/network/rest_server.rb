@@ -1,4 +1,4 @@
-class Puppet::Network::RESTServer # :nodoc:
+class Puppet::Network::RESTServer
   attr_reader :server
   
   def initialize(args = {})
