@@ -4,7 +4,6 @@ $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppet'
 require 'puppet/dsl'
-require 'puppet/util/autoload'
 require 'puppettest'
 
 class TestDSL < Test::Unit::TestCase
