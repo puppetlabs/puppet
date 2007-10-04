@@ -131,7 +131,9 @@ module Puppet
         :diff => ["diff", "Which diff command to use when printing differences between files."],
         :show_diff => [false, "Whether to print a contextual diff when files are being replaced.  The diff
             is printed on stdout, so this option is meaningless unless you are running Puppet interactively.
-            This feature currently requires the ``diff/lcs`` Ruby library."]
+            This feature currently requires the ``diff/lcs`` Ruby library."],
+        :yamldir => {:default => "$vardir/yaml", :owner => "$user", :group => "$user", :mode => "750",
+            :desc => "The directory in which YAML data is stored, usually in a subdirectory."}
     )
 
     hostname = Facter["hostname"].value
@@ -501,11 +503,6 @@ module Puppet
             "The backend store to use for client facts."],
         :checksum_terminus => ["file",
             "The backend store to use for storing files by checksum (i.e., filebuckets)."]
-    )
-
-    self.setdefaults(:yaml,
-        :yamldir => ["$vardir/yaml",
-            "The directory in which YAML data is stored, usually in a subdirectory."]
     )
 
     self.setdefaults(:rails,
