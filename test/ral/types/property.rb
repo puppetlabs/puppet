@@ -76,7 +76,8 @@ class TestProperty < Test::Unit::TestCase
             end
             assert_equal(/\d+/, name)
         end
-        ["two", :three].each do |value|
+        # these values should not have a name
+        ["two", :three, ''].each do |value|
             assert_nothing_raised do
                 name = property.value_name(value)
             end

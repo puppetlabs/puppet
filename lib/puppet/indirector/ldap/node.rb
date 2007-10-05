@@ -21,8 +21,11 @@ class Puppet::Indirector::Ldap::Node < Puppet::Indirector::Ldap
                 raise ArgumentError, "Found loop in LDAP node parents; %s appears twice" % parent
             end
             parents << parent
-            ldapsearch(parent) do |entry|
-                parent_info = process(parent, entry)
+
+            ldapsearch(parent) { |entry| parent_info = process(parent, entry) }
+
+            unless parent_info
+                raise Puppet::Error.new("Could not find parent node '%s'" % parent)
             end
             information[:classes] += parent_info[:classes]
             parent_info[:parameters].each do |param, value|

@@ -56,9 +56,18 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
         dpkg "-i", file
     end
 
+    def update
+        self.install
+    end
+
     # Return the version from the package.
     def latest
         output = dpkg_deb "--show", @resource[:source]
+        matches = /^(\S+)\t(\S+)$/.match(output).captures
+        unless matches[0].match(@resource[:name])
+            Puppet.warning "source doesn't contain named package, but %s" % matches[0]
+        end
+        matches[1]
     end
 
     def query

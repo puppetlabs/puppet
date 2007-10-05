@@ -82,7 +82,7 @@ describe Puppet::Indirector::Ldap::Node, " when searching for nodes" do
     end
 end
 
-describe Puppet::Indirector::Ldap::Node, " when a parent node exists" do
+describe Puppet::Indirector::Ldap::Node, " when a parent node is specified" do
     include LdapNodeSearching
 
     before do
@@ -99,16 +99,25 @@ describe Puppet::Indirector::Ldap::Node, " when a parent node exists" do
         @searcher.stubs(:parent_attribute).returns(:parent)
     end
 
+    it "should fail if the parent cannot be found" do
+        @connection.stubs(:search).with { |*args| args[2] == 'parent' }.returns("whatever")
+
+        @entry.stubs(:to_hash).returns({})
+        @entry.stubs(:vals).with(:parent).returns(%w{parent})
+
+        proc { @searcher.find("mynode") }.should raise_error(Puppet::Error)
+    end
+
     it "should add any parent classes to the node's classes" do
         @entry.stubs(:to_hash).returns({})
         @entry.stubs(:vals).with(:parent).returns(%w{parent})
-        @entry.stubs(:vals).with("one").returns(%w{a b})
+        @entry.stubs(:vals).with("classes").returns(%w{a b})
 
         @parent.stubs(:to_hash).returns({})
-        @parent.stubs(:vals).with("one").returns(%w{c d})
+        @parent.stubs(:vals).with("classes").returns(%w{c d})
         @parent.stubs(:vals).with(:parent).returns(nil)
 
-        @searcher.stubs(:class_attributes).returns(%w{one})
+        @searcher.stubs(:class_attributes).returns(%w{classes})
         @node.expects(:classes=).with(%w{a b c d})
         @searcher.find("mynode")
     end
