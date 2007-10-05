@@ -80,14 +80,16 @@ Puppet.settings.addargs(options)
 
 result = GetoptLong.new(*options)
 
-debug = false
-verbose = false
-noop = false
-logfile = false
-loadclasses = false
-logset = false
+options = {
+    :debug => false,
+    :verbose => false,
+    :noop => false,
+    :logfile => false,
+    :loadclasses => false,
+    :logset => false,
+    :code => nil
+}
 
-code = nil
 
 master = {
     :Local => true
@@ -107,19 +109,19 @@ begin
                     exit
                 end
             when "--use-nodes"
-                master[:UseNodes] = true
+                options[:UseNodes] = true
             when "--verbose"
-                verbose = true
+                options[:verbose] = true
             when "--debug"
-                debug = true
+                options[:debug] = true
             when "--execute"
-                code = arg
+                options[:code] = arg
             when "--loadclasses"
-                loadclasses = true
+                options[:loadclasses] = true
             when "--logdest"
                 begin
                     Puppet::Util::Log.newdestination(arg)
-                    logset = true
+                    options[:logset] = true
                 rescue => detail
                     $stderr.puts detail.to_s
                 end
@@ -139,7 +141,7 @@ if Puppet[:noop]
     Puppet[:show_diff] = true
 end
 
-unless logset
+unless options[:logset]
     Puppet::Util::Log.newdestination(:console)
 end
 
@@ -148,9 +150,9 @@ server = nil
 
 Puppet.settraps
 
-if debug
+if options[:debug]
     Puppet::Util::Log.level = :debug
-elsif verbose
+elsif options[:verbose]
     Puppet::Util::Log.level = :info
 end
 
@@ -162,18 +164,26 @@ end
 Puppet.genconfig
 Puppet.genmanifest
 
-if code
-    master[:Code] = code
+# Set our code or file to use.
+if options[:code] or ARGV.length == 0
+    Puppet::Node::Configuration.code = options[:code] || STDIN.read
 else
-    if ARGV.length > 0
-        master[:Manifest] = ARGV.shift
-    else
-        master[:Code] = STDIN.read
-    end
+    Puppet[:manifest] = ARGV.shift
 end
 
+# Collect our facts.
+Puppet::Node::Facts.terminus_class = :code
+facts = Puppet::Node::Facts.find("me")
+facts.name = facts.values["hostname"]
+
+# Create our Node
+node = Puppet::Node.new(facts.name)
+
+# Merge in the facts.
+node.merge(facts.values)
+
 # Allow users to load the classes that puppetd creates.
-if loadclasses
+if options[:loadclasses]
     file = Puppet[:classfile]
     if FileTest.exists?(file)
         unless FileTest.readable?(file)
@@ -181,20 +191,21 @@ if loadclasses
             exit(63)
         end
 
-        master[:Classes] = File.read(file).split(/[\s\n]+/)
+        node.classes = File.read(file).split(/[\s\n]+/)
     end
 end
 
+# Compile and apply the configuration
+Puppet::Node::Configuration.terminus_class = :code
+
 begin
-    server = Puppet::Network::Handler.master.new(master)
-    client = Puppet::Network::Client.master.new(
-        :Master => server,
-        :Cache => false
-    )
-    if Puppet[:parseonly]
-        exit(0)
-    end
-    config = client.getconfig
+    # Compile our configuration
+    config = Puppet::Node::Configuration.find(node)
+
+    # Translate it to a RAL configuration
+    config = config.extract_to_transportable.to_configuration
+
+    # And apply it
     config.apply
 rescue => detail
     if Puppet[:trace]

@@ -26,7 +26,7 @@ class Puppet::Parser::Interpreter
     # evaluate our whole tree
     def compile(node)
         raise Puppet::ParseError, "Could not parse configuration; cannot compile" unless env_parser = parser(node.environment)
-        return Puppet::Parser::Compile.new(node, env_parser, :ast_nodes => usenodes?).compile
+        return Puppet::Parser::Compile.new(node, env_parser).compile
     end
 
     # create our interpreter
@@ -51,11 +51,6 @@ class Puppet::Parser::Interpreter
         end
 
         @parsers = {}
-    end
-
-    # Should we parse ast nodes?
-    def usenodes?
-        defined?(@usenodes) and @usenodes
     end
 
     private

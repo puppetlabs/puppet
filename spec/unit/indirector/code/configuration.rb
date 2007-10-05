@@ -39,6 +39,11 @@ describe Puppet::Indirector::Code::Configuration do
         compiler.find('node1')
         compiler.find('node2')
     end
+
+    it "should provide a method for determining if the configuration is networked" do
+        compiler = Puppet::Indirector::Code::Configuration.new
+        compiler.should respond_to(:networked?)
+    end
 end
 
 describe Puppet::Indirector::Code::Configuration, " when creating the interpreter" do
@@ -70,7 +75,6 @@ describe Puppet::Indirector::Code::Configuration, " when creating the interprete
         Puppet::Parser::Interpreter.expects(:new).with(:Code => code).returns(interp)
         @compiler.send(:interpreter).should equal(interp)
     end
-
 end
 
 describe Puppet::Indirector::Code::Configuration, " when finding nodes" do
@@ -132,8 +136,15 @@ describe Puppet::Indirector::Code::Configuration, " when creating configurations
     before do
         @compiler = Puppet::Indirector::Code::Configuration.new
         @name = "me"
-        @node = stub 'node', :merge => nil, :name => @name, :environment => "yay"
+        @node = Puppet::Node.new @name, :environment => "yay"
+        @node.stubs(:merge)
         Puppet::Node.stubs(:search).with(@name).returns(@node)
+    end
+
+    it "should directly use provided nodes" do
+        Puppet::Node.expects(:search).never
+        @compiler.interpreter.expects(:compile).with(@node)
+        @compiler.find(@node)
     end
 
     it "should pass the found node to the interpreter for compiling" do
@@ -149,6 +160,7 @@ describe Puppet::Indirector::Code::Configuration, " when creating configurations
     end
 
     it "should benchmark the compile process" do
+        @compiler.stubs(:networked?).returns(true)
         @compiler.expects(:benchmark).with do |level, message|
             level == :notice and message =~ /^Compiled configuration/
         end

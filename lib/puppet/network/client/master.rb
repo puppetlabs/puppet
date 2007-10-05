@@ -544,6 +544,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
                 end
 
             rescue => detail
+                puts detail.backtrace
                 Puppet.err "Could not retrieve configuration: %s" % detail
 
                 unless Puppet[:usecacheonfailure]

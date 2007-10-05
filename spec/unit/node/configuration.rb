@@ -490,3 +490,27 @@ describe Puppet::Node::Configuration, " when writing dot files" do
         Puppet.settings.clear
     end
 end
+
+describe Puppet::Node::Configuration, " when indirecting" do
+    before do
+        @indirection = mock 'indirection'
+
+        Puppet::Indirector::Indirection.clear_cache
+        @configuration = Puppet::Node::Facts.new("me")
+    end
+
+    it "should redirect to the indirection for retrieval" do
+        Puppet::Node::Configuration.stubs(:indirection).returns(@indirection)
+        @indirection.expects(:find).with(:myconfig)
+        Puppet::Node::Configuration.find(:myconfig)
+    end
+
+    it "should default to the code terminus" do
+        Puppet::Node::Configuration.indirection.terminus_class.should == :code
+    end
+
+    after do
+        mocha_verify
+        Puppet::Indirector::Indirection.clear_cache
+    end
+end

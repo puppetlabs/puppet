@@ -49,4 +49,14 @@ describe Puppet::Parser::Compile, " when compiling" do
         @compile.resources.find { |r| r.to_s == "Class[two]" }.should be_nil
         @compile.resources.find { |r| r.to_s == "Class[four]" }.should be_nil
     end
+
+    it "should enable ast_nodes if the parser has any nodes" do
+        @parser.expects(:nodes).returns(:one => :yay)
+        @compile.ast_nodes?.should be_true
+    end
+
+    it "should disable ast_nodes if the parser has no nodes" do
+        @parser.expects(:nodes).returns({})
+        @compile.ast_nodes?.should be_false
+    end
 end

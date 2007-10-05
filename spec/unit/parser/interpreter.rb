@@ -24,16 +24,6 @@ describe Puppet::Parser::Interpreter, " when initializing" do
         interp.code.should equal(:code)
         interp.file.should be_nil
     end
-
-    it "should default to usenodes" do
-        interp = Puppet::Parser::Interpreter.new
-        interp.usenodes?.should be_true
-    end
-
-    it "should allow disabling of usenodes" do
-        interp = Puppet::Parser::Interpreter.new :UseNodes => false
-        interp.usenodes?.should be_false
-    end
 end
 
 describe Puppet::Parser::Interpreter, " when creating parser instances" do
@@ -159,20 +149,11 @@ describe Puppet::Parser::Interpreter, " when compiling configurations" do
         @parser = mock 'parser'
     end
 
-    it "should create a compile with the node, parser, and whether to use ast nodes when ast nodes is true" do
+    it "should create a compile with the node and parser" do
         @compile.expects(:compile).returns(:config)
         @interp.expects(:parser).with(:myenv).returns(@parser)
-        @interp.expects(:usenodes?).returns(true)
-        Puppet::Parser::Compile.expects(:new).with(@node, @parser, :ast_nodes => true).returns(@compile)
+        Puppet::Parser::Compile.expects(:new).with(@node, @parser).returns(@compile)
         @interp.compile(@node)
-    end
-
-    it "should create a compile with the node, parser, and whether to use ast nodes when ast nodes is false" do
-        @compile.expects(:compile).returns(:config)
-        @interp.expects(:parser).with(:myenv).returns(@parser)
-        @interp.expects(:usenodes?).returns(false)
-        Puppet::Parser::Compile.expects(:new).with(@node, @parser, :ast_nodes => false).returns(@compile)
-        @interp.compile(@node).should equal(:config)
     end
 
     it "should fail intelligently when no parser can be found" do

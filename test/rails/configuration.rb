@@ -25,7 +25,6 @@ class ConfigurationRailsTests < PuppetTest::TestCase
     def test_finish_before_store
         railsinit
         compile = mkcompile
-        compile.ast_nodes = true
         parser = compile.parser
 
         node = parser.newnode [compile.node.name], :code => AST::ASTArray.new(:children => [
