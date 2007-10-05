@@ -74,9 +74,6 @@ class Puppet::Indirector::Code::Configuration < Puppet::Indirector::Code
 
         loglevel = networked? ? :notice : :none
 
-        # LAK:FIXME This should log at :none when our client is
-        # local, since we don't want 'puppet' (vs. puppetmasterd) to
-        # log compile times.
         benchmark(loglevel, "Compiled configuration for %s" % node.name) do
             begin
                 config = interpreter.compile(node)
