@@ -166,7 +166,7 @@ Puppet.genmanifest
 
 # Set our code or file to use.
 if options[:code] or ARGV.length == 0
-    Puppet::Node::Configuration.code = options[:code] || STDIN.read
+    Puppet[:code] = options[:code] || STDIN.read
 else
     Puppet[:manifest] = ARGV.shift
 end

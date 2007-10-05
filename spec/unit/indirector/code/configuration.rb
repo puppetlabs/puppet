@@ -53,27 +53,15 @@ describe Puppet::Indirector::Code::Configuration, " when creating the interprete
 
     it "should not create the interpreter until it is asked for the first time" do
         interp = mock 'interp'
-        Puppet::Parser::Interpreter.expects(:new).with({}).returns(interp)
+        Puppet::Parser::Interpreter.expects(:new).with().returns(interp)
         @compiler.interpreter.should equal(interp)
     end
 
     it "should use the same interpreter for all compiles" do
         interp = mock 'interp'
-        Puppet::Parser::Interpreter.expects(:new).with({}).returns(interp)
+        Puppet::Parser::Interpreter.expects(:new).with().returns(interp)
         @compiler.interpreter.should equal(interp)
         @compiler.interpreter.should equal(interp)
-    end
-
-    it "should provide a mechanism for setting the code to pass to the interpreter" do
-        @compiler.should respond_to(:code=)
-    end
-
-    it "should pass any specified code on to the interpreter when it is being initialized" do
-        code = "some code"
-        @compiler.code = code
-        interp = mock 'interp'
-        Puppet::Parser::Interpreter.expects(:new).with(:Code => code).returns(interp)
-        @compiler.send(:interpreter).should equal(interp)
     end
 end
 

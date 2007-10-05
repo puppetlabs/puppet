@@ -14,7 +14,6 @@ class Puppet::Parser::Interpreter
     include Puppet::Util
 
     attr_accessor :usenodes
-    attr_accessor :code, :file
 
     include Puppet::Util::Errors
 
@@ -30,17 +29,7 @@ class Puppet::Parser::Interpreter
     end
 
     # create our interpreter
-    def initialize(options = {})
-        if @code = options[:Code]
-        elsif @file = options[:Manifest]
-        end
-
-        if options.include?(:UseNodes)
-            @usenodes = options[:UseNodes]
-        else
-            @usenodes = true
-        end
-
+    def initialize
         # The class won't always be defined during testing.
         if Puppet[:storeconfigs] 
             if Puppet.features.rails?
@@ -59,10 +48,8 @@ class Puppet::Parser::Interpreter
     def create_parser(environment)
         begin
             parser = Puppet::Parser::Parser.new(:environment => environment)
-            if self.code
-                parser.string = self.code
-            elsif self.file
-                parser.file = self.file
+            if code = Puppet.settings.value(:code, environment) and code != ""
+                parser.string = code
             else
                 file = Puppet.settings.value(:manifest, environment)
                 parser.file = file

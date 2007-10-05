@@ -91,21 +91,7 @@ class Puppet::Indirector::Code::Configuration < Puppet::Indirector::Code
 
     # Create our interpreter object.
     def create_interpreter
-        args = {}
-
-        # Allow specification of a code snippet or of a file
-        if self.code
-            args[:Code] = self.code
-        end
-
-        # LAK:FIXME This needs to be handled somehow.
-        #if options.include?(:UseNodes)
-        #    args[:UseNodes] = options[:UseNodes]
-        #elsif @local
-        #    args[:UseNodes] = false
-        #end
-
-        return Puppet::Parser::Interpreter.new(args)
+        return Puppet::Parser::Interpreter.new
     end
 
     # Turn our host name into a node object.

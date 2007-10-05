@@ -52,6 +52,10 @@ describe Puppet::Node::Configuration, " when extracting" do
     end
 end
 
+describe Puppet::Node::Configuration, " when extracting RAL resources" do
+    it "should support an extraction method for converting a parser configuration into a RAL configuration"
+end
+
 describe Puppet::Node::Configuration, " when extracting transobjects" do
 
     def mkscope

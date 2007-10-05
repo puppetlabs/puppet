@@ -54,10 +54,8 @@ module PuppetTest::ParserTesting
         Puppet::Node.new(name)
     end
 
-    def mkinterp(args = {})
-        args[:Code] ||= "" unless args.include?(:Manifest)
-        args[:Local] ||= true
-        Puppet::Parser::Interpreter.new(args)
+    def mkinterp
+        Puppet::Parser::Interpreter.new
     end
 
     def mkparser
@@ -301,11 +299,10 @@ module PuppetTest::ParserTesting
     # This assumes no nodes
     def assert_creates(manifest, *files)
         interp = nil
+        oldmanifest = Puppet[:manifest]
+        Puppet[:manifest] = manifest
         assert_nothing_raised {
-            interp = Puppet::Parser::Interpreter.new(
-                                                     :Manifest => manifest,
-                                                     :UseNodes => false
-                                                    )
+            interp = Puppet::Parser::Interpreter.new
         }
 
         trans = nil
@@ -323,6 +320,8 @@ module PuppetTest::ParserTesting
         files.each do |file|
             assert(FileTest.exists?(file), "Did not create %s" % file)
         end
+    ensure
+        Puppet[:manifest] = oldmanifest
     end
 
     def mk_transobject(file = "/etc/passwd")
