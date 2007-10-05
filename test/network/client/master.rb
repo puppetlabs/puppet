@@ -48,8 +48,10 @@ class TestMasterClient < Test::Unit::TestCase
     def mkmaster(options = {})
         options[:UseNodes] = false
         options[:Local] = true
-        unless options[:Code]
-            options[:Manifest] ||= mktestmanifest
+        if code = options[:Code]
+            Puppet[:code] = code
+        else
+            Puppet[:manifest] = options[:Manifest] || mktestmanifest
         end
         # create our master
         # this is the default server setup

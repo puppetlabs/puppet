@@ -51,19 +51,9 @@ class ConfigurationRailsTests < PuppetTest::TestCase
             Puppet[:storeconfigs] = true
         }
 
-        file = tempfile()
-        File.open(file, "w") { |f|
-            f.puts "file { \"/etc\": owner => root }"
-        }
+        Puppet[:code] = "file { \"/etc\": owner => root }"
 
-        interp = nil
-        assert_nothing_raised {
-            interp = Puppet::Parser::Interpreter.new(
-                :Manifest => file,
-                :UseNodes => false,
-                :ForkSave => false
-            )
-        }
+        interp = Puppet::Parser::Interpreter.new
 
         facts = {}
         Facter.each { |fact, val| facts[fact] = val }
