@@ -408,5 +408,4 @@ Puppet::Type.newtype(:cron) do
 end
 
 
-# $Id$
 

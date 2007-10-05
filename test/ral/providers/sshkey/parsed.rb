@@ -108,4 +108,3 @@ class TestParsedSSHKey < Test::Unit::TestCase
     end
 end
 
-# $Id$

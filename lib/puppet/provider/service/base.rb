@@ -131,4 +131,3 @@ Puppet::Type.type(:service).provide :base do
     end
 end
 
-# $Id$

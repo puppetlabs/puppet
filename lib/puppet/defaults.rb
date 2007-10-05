@@ -131,7 +131,13 @@ module Puppet
         :diff => ["diff", "Which diff command to use when printing differences between files."],
         :show_diff => [false, "Whether to print a contextual diff when files are being replaced.  The diff
             is printed on stdout, so this option is meaningless unless you are running Puppet interactively.
-            This feature currently requires the ``diff/lcs`` Ruby library."]
+            This feature currently requires the ``diff/lcs`` Ruby library."],
+        :yamldir => {:default => "$vardir/yaml", :owner => "$user", :group => "$user", :mode => "750",
+            :desc => "The directory in which YAML data is stored, usually in a subdirectory."},
+        :daemonize => { :default => true,
+            :desc => "Send the process into the background.  This is the default.",
+            :short => "D"
+        }
     )
 
     hostname = Facter["hostname"].value
@@ -339,7 +345,7 @@ module Puppet
             :owner => "root",
             :mode => 0644,
             :desc => "The file in which puppetd stores a list of the classes
-                associated with the retrieved configuratiion.  Can be loaded in
+                associated with the retrieved configuration.  Can be loaded in
                 the separate ``puppet`` executable using the ``--loadclasses``
                 option."},
         :puppetdlog => { :default => "$logdir/puppetd.log",
@@ -503,11 +509,6 @@ module Puppet
             "The backend store to use for storing files by checksum (i.e., filebuckets)."]
     )
 
-    self.setdefaults(:yaml,
-        :yamldir => ["$vardir/yaml",
-            "The directory in which YAML data is stored, usually in a subdirectory."]
-    )
-
     self.setdefaults(:rails,
         :dblocation => { :default => "$statedir/clientconfigs.sqlite3",
             :mode => 0660,
@@ -655,4 +656,3 @@ module Puppet
     )
 end
 
-# $Id$

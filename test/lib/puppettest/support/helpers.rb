@@ -20,4 +20,3 @@ module PuppetTest
     end
 end
 
-# $Id$

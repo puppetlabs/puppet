@@ -124,4 +124,3 @@ if Puppet.features.rails?
     require 'puppet/rails/host'
 end
 
-# $Id$

@@ -117,6 +117,8 @@ module Puppet
     # Load all of the configuration parameters.
     require 'puppet/defaults'
 
+    # Prints the contents of a config file with the available config elements, or it
+    # prints a single value of a config element.
     def self.genconfig
         if Puppet[:configprint] != ""
             val = Puppet[:configprint]
@@ -428,4 +430,3 @@ if Puppet[:storeconfigs]
     require 'puppet/rails'
 end
 
-# $Id$

@@ -49,4 +49,3 @@ class Puppet::Network::Client::Resource < Puppet::Network::Client
     end
 end
 
-# $Id$

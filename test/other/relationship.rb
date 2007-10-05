@@ -71,4 +71,3 @@ class TestRelationship < Test::Unit::TestCase
     end
 end
 
-# $Id$

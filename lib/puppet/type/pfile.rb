@@ -891,8 +891,8 @@ module Puppet
                     # For directories, keep all of the sources, so that
                     # sourceselect still works as planned.
                     if type == "directory"
-                        newsource = @parameters[:source].should.collect do |source|
-                            source + file
+                        newsource = @parameters[:source].should.collect do |tmpsource|
+                            tmpsource + file
                         end
                     else
                         newsource = source + file
@@ -1176,4 +1176,3 @@ module Puppet
     require 'puppet/type/pfile/mode'
     require 'puppet/type/pfile/type'
 end
-# $Id$

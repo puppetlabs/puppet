@@ -80,4 +80,3 @@ class TestCertSupport < Test::Unit::TestCase
     end
 end
 
-# $Id$

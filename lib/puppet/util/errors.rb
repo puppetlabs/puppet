@@ -52,4 +52,3 @@ module Puppet::Util::Errors
     end
 end
 
-# $Id$

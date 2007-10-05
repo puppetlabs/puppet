@@ -16,4 +16,3 @@ module PuppetTest::Reporttesting
     end
 end
 
-# $Id$

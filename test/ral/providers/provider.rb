@@ -500,4 +500,3 @@ class TestProviderFeatures < Test::Unit::TestCase
     end
 end
 
-# $Id$

@@ -247,5 +247,4 @@ class TestExportedResources < PuppetTest::TestCase
     end
 end
 
-# $Id$
 

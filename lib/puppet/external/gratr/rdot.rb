@@ -1,6 +1,5 @@
 # rdot.rb
 # 
-# $Id$
 #
 # This is a modified version of dot.rb from Dave Thomas's rdoc project.  I [Horst Duchene]
 # renamed it to rdot.rb to avoid collision with an installed rdoc/dot.

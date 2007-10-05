@@ -206,4 +206,3 @@ module Puppet::Util::IniConfig
     end
 end
 
-# $Id$

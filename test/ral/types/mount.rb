@@ -359,4 +359,3 @@ class TestMounts < PuppetTest::TestCase
 end
 end
 
-# $Id$

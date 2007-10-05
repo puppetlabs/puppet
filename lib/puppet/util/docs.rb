@@ -101,4 +101,3 @@ module Puppet::Util::Docs
     module_function :scrub
 end
 
-# $Id$

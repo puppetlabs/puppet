@@ -19,4 +19,3 @@ class Puppet::Rails::ParamName < ActiveRecord::Base
     end
 end
 
-# $Id$

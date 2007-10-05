@@ -224,4 +224,3 @@ class TestPuppetUtilClassGen < Test::Unit::TestCase
     end
 end
 
-# $Id$

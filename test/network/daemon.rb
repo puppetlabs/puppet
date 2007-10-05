@@ -67,5 +67,4 @@ class TestDaemon < Test::Unit::TestCase
     end
 end
 
-# $Id$
 

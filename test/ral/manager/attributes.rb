@@ -349,4 +349,3 @@ class TestTypeAttributes < Test::Unit::TestCase
     end
 end
 
-# $Id$

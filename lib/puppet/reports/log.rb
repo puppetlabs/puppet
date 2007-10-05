@@ -11,4 +11,3 @@ Puppet::Network::Handler.report.newreport(:log) do
     end
 end
 
-# $Id$

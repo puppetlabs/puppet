@@ -142,4 +142,3 @@ module Puppet::SSLCertificates
     require 'puppet/sslcertificates/ca'
 end
 
-# $Id$

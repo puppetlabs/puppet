@@ -4,4 +4,3 @@ class Puppet::Rails::PuppetClass < ActiveRecord::Base
     has_many :hosts
 end
 
-# $Id$

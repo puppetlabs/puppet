@@ -167,4 +167,3 @@ Puppet::Network::Handler.report.newreport(:tagmail) do
     end
 end
 
-# $Id$

@@ -154,4 +154,3 @@ class TestPackages < Test::Unit::TestCase
     end
 end
 
-# $Id$

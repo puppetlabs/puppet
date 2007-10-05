@@ -446,5 +446,4 @@ class TestAuthStoreDeclaration < PuppetTest::TestCase
     end
 end
 
-# $Id$
 

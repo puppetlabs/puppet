@@ -30,7 +30,6 @@
 # 5) Install all library files ending in .rb from lib/ into Ruby's
 #    site_lib/version directory.
 #
-# $Id$
 #++
 
 require 'rbconfig'

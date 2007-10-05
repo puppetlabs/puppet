@@ -224,4 +224,3 @@ module Plist
   end
 end
 
-# $Id$

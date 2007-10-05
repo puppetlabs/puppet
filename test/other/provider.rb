@@ -159,4 +159,3 @@ class TestImpl < Test::Unit::TestCase
     end
 end
 
-# $Id$

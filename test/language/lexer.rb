@@ -274,4 +274,3 @@ class TestLexer < Test::Unit::TestCase
     end
 end
 
-# $Id$

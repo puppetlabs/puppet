@@ -71,5 +71,4 @@ class TestXMLRPCClient < Test::Unit::TestCase
     end
 end
 
-# $Id$
 

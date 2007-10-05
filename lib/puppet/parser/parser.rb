@@ -39,7 +39,6 @@ require 'puppet/parser/parser_support'
 # mode: ruby
 # End:
 
-# $Id$
 
 ..end grammar.ra modeval..id9134b179f4
 

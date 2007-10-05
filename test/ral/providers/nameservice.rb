@@ -30,4 +30,3 @@ class TestNameServiceProvider < Test::Unit::TestCase
     end
 end
 
-# $Id$

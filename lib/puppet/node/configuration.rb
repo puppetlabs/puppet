@@ -226,9 +226,10 @@ class Puppet::Node::Configuration < Puppet::PGraph
             raise Puppet::DevError, "Could not find 'main' class; cannot generate configuration"
         end
 
-        # Retrive the bucket for the top-level scope and set the appropriate metadata.
+        # Retrieve the bucket for the top-level scope and set the appropriate metadata.
         unless result = buckets[main.to_s]
-            raise Puppet::DevError, "Did not evaluate top scope"
+            # This only happens when the configuration is entirely empty.
+            result = buckets[main.to_s] = main.to_trans
         end
 
         result.classes = classes

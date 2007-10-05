@@ -955,8 +955,13 @@ class TestFileSources < Test::Unit::TestCase
         files = []
         [source1, source2, File.join(source1, "subdir"), File.join(source2, "subdir")].each_with_index do |dir, i|
             Dir.mkdir(dir)
+            # Make a single file in each directory
             file = File.join(dir, "file%s" % i)
             File.open(file, "w") { |f| f.puts "yay%s" % i}
+
+            # Now make a second one in each directory
+            file = File.join(dir, "second-file%s" % i)
+            File.open(file, "w") { |f| f.puts "yaysecond-%s" % i}
             files << file
         end
         
@@ -964,7 +969,7 @@ class TestFileSources < Test::Unit::TestCase
         
         assert_apply(obj)
         
-        ["file0", "file1", "subdir/file2", "subdir/file3"].each do |file|
+        ["file0", "file1", "second-file0", "second-file1", "subdir/file2", "subdir/second-file2", "subdir/file3", "subdir/second-file3"].each do |file|
             path = File.join(dest, file)
             assert(FileTest.exists?(path), "did not create %s" % file)
             
@@ -1000,4 +1005,3 @@ class TestFileSources < Test::Unit::TestCase
     end
 end
 
-# $Id$

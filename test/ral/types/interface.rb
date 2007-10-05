@@ -37,4 +37,3 @@ class TestInterfaceType < PuppetTest::TestCase
     end
 end
 
-# $Id$

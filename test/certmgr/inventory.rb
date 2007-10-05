@@ -65,4 +65,3 @@ class TestCertInventory < Test::Unit::TestCase
     end
 end
 
-# $Id$

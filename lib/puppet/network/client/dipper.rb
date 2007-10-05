@@ -78,4 +78,3 @@ class Puppet::Network::Client::Dipper < Puppet::Network::Client
     end
 end
 
-# $Id$

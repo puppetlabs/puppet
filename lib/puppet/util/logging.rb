@@ -17,4 +17,3 @@ module Puppet::Util::Logging
     end
 end
 
-# $Id$

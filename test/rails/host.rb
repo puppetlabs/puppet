@@ -189,4 +189,3 @@ class TestRailsHost < PuppetTest::TestCase
     end
 end
 
-# $Id$

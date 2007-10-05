@@ -245,7 +245,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
     # Initialize the object if necessary.
     def self.target_object(target)
-        @target_objects[target] ||= @filetype.new(target)
+        @target_objects[target] ||= filetype.new(target)
 
         @target_objects[target]
     end
@@ -362,4 +362,3 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     end
 end
 
-# $Id$

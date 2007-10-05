@@ -68,6 +68,23 @@ describe Puppet::Node::Configuration, " when extracting transobjects" do
         Puppet::Parser::Resource.new(:type => type, :title => name, :source => @source, :scope => @scope)
     end
 
+    it "should always create a TransBucket for the 'main' class" do
+        config = Puppet::Node::Configuration.new("mynode")
+
+        @scope = mkscope
+        @source = mock 'source'
+
+        main = mkresource("class", :main)
+        config.add_vertex!(main)
+
+        bucket = mock 'bucket'
+        bucket.expects(:classes=).with(config.classes)
+        main.stubs(:builtin?).returns(false)
+        main.expects(:to_transbucket).returns(bucket)
+
+        config.extract_to_transportable.should equal(bucket)
+    end
+
     # This isn't really a spec-style test, but I don't know how better to do it.
     it "should transform the resource graph into a tree of TransBuckets and TransObjects" do
         config = Puppet::Node::Configuration.new("mynode")
@@ -283,12 +300,14 @@ describe Puppet::Node::Configuration, " when applying host configurations" do
     it "should send a report if reporting is enabled" do
         Puppet[:report] = true
         @transaction.expects :send_report
+        @transaction.stubs :any_failed? => false
         @config.apply
     end
 
     it "should send a report if report summaries are enabled" do
         Puppet[:summarize] = true
         @transaction.expects :send_report
+        @transaction.stubs :any_failed? => false
         @config.apply
     end
 
@@ -302,6 +321,7 @@ describe Puppet::Node::Configuration, " when applying host configurations" do
 
     it "should sync the state database after applying" do
         Puppet::Util::Storage.expects(:store)
+        @transaction.stubs :any_failed? => false
         @config.apply
     end
 

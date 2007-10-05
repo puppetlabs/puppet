@@ -154,4 +154,3 @@ class Puppet::Rails::Host < ActiveRecord::Base
     end
 end
 
-# $Id$

@@ -36,4 +36,3 @@ module Puppet::Util::Variables
     end
 end
 
-# $Id$

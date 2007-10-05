@@ -414,4 +414,3 @@ class Puppet::Type
     end
 end # Puppet::Type
 
-# $Id$

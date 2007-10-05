@@ -86,4 +86,3 @@ Puppet::Type.type(:package).provide :darwinport, :parent => Puppet::Provider::Pa
     end
 end
 
-# $Id$

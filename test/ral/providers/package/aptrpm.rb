@@ -86,4 +86,3 @@ class AptrpmPackageProviderTest < PuppetTest::TestCase
     end
 end
 
-# $Id$

@@ -35,4 +35,3 @@ require 'puppet/provider/mount'
 #     end
 # end
 
-# $Id$

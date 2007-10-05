@@ -4,4 +4,3 @@ class Puppet::Network::Client::File < Puppet::Network::Client::ProxyClient
     self.mkmethods
 end
 
-# $Id$

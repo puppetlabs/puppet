@@ -39,4 +39,3 @@ Puppet::Type.type(:package).provide :freebsd, :parent => :openbsd do
     end
 end
 
-# $Id$

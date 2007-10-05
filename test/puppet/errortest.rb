@@ -17,4 +17,3 @@ class TestError < Test::Unit::TestCase
     end
 end
 
-# $Id$

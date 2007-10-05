@@ -38,4 +38,3 @@ Puppet.type(:package).provide :up2date, :parent => :rpm, :source => :rpm do
     end
 end
 
-# $Id$

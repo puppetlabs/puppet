@@ -72,4 +72,3 @@ class TestBaseServiceProvider < Test::Unit::TestCase
     end
 end
 
-# $Id$

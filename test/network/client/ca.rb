@@ -62,4 +62,3 @@ class TestClientCA < Test::Unit::TestCase
     end
 end
 
-# $Id$

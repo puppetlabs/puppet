@@ -101,4 +101,3 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     end
 end
 
-# $Id$

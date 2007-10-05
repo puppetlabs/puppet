@@ -105,4 +105,3 @@ class TestConfFiles < Test::Unit::TestCase
 
 end
 
-# $Id$

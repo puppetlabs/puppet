@@ -37,4 +37,3 @@ module Puppet::SSLCertificates
     end
 end
 
-# $Id$

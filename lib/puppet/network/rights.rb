@@ -71,4 +71,3 @@ class Puppet::Network::Rights < Hash
     end
 end
 
-# $Id$

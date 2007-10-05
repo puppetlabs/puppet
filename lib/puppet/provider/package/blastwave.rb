@@ -113,4 +113,3 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
     end
 end
 
-# $Id$

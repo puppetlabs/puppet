@@ -70,4 +70,3 @@ else
     $stderr.puts "Install Rails for Rails and Caching tests"
 end
 
-# $Id$
