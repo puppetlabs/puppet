@@ -95,25 +95,50 @@ class Puppet::Indirector::Terminus
         end
     end
 
+    # Is this instance fresh?  Meaning, is the version we have equivalent or better
+    # than the version being asked about
+    def fresh?(key, vers)
+        raise Puppet::DevError.new("Cannot check update status when no 'version' method is defined") unless respond_to?(:version)
+
+        if existing_version = version(key)
+            existing_version >= vers
+        else
+            false
+        end
+    end
+
+    def indirection
+        self.class.indirection
+    end
+
     def initialize
         if self.class.abstract_terminus?
             raise Puppet::DevError, "Cannot create instances of abstract terminus types"
         end
     end
     
-    def terminus_type
-        self.class.terminus_type
+    def model
+        self.class.model
     end
     
     def name
         self.class.name
     end
     
-    def model
-        self.class.model
+    def terminus_type
+        self.class.terminus_type
     end
 
-    def indirection
-        self.class.indirection
+    # Provide a default method for retrieving an instance's version.
+    # By default, just find the resource and get its version.  Individual
+    # terminus types can override this method to provide custom definitions of
+    # 'versions'.
+    def version(name)
+        raise Puppet::DevError.new("Cannot retrieve an instance's version without a :find method") unless respond_to?(:find)
+        if instance = find(name)
+            instance.version
+        else
+            nil
+        end
     end
 end

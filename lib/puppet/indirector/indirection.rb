@@ -90,12 +90,18 @@ class Puppet::Indirector::Indirection
         end
     end
 
-    def find(*args)
-        terminus.find(*args)
+    def find(key, *args)
+        if cache? and terminus.fresh?(key, cache.version(key))
+            return cache.find(key, *args)
+        end
+        if result = terminus.find(key, *args)
+            result.version ||= Time.now.utc
+            cache.save(result, *args) if cache?
+            return result
+        end
     end
 
     def destroy(*args)
-        cache.destroy(*args) if cache?
         terminus.destroy(*args)
     end
 
@@ -104,9 +110,12 @@ class Puppet::Indirector::Indirection
     end
 
     # these become instance methods 
-    def save(*args)
-        cache.save(*args) if cache?
-        terminus.save(*args)
+    def save(instance, *args)
+        instance.version ||= Time.now.utc
+        dest = cache? ? cache : terminus
+        return if dest.fresh?(instance.name, instance.version)
+        cache.save(instance, *args) if cache?
+        terminus.save(instance, *args)
     end
 
     private

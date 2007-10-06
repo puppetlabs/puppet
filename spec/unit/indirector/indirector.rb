@@ -64,6 +64,16 @@ describe Puppet::Indirector, " when redirecting a model" do
         @indirection = @thingie.send(:indirects, :test)
     end
 
+    it "should give the model the ability set a version" do
+        thing = @thingie.new
+        thing.should respond_to(:version=)
+    end
+
+    it "should give the model the ability retrieve a version" do
+        thing = @thingie.new
+        thing.should respond_to(:version)
+    end
+
     it "should give the model the ability to lookup a model instance by letting the indirection perform the lookup" do
         @indirection.expects(:find)
         @thingie.find
