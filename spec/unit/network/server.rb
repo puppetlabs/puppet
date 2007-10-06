@@ -5,17 +5,48 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-require 'puppet/network/rest_server'
+require 'puppet/network/server'
 
-describe Puppet::Network::RESTServer, "when initializing" do
-  it "should require specifying which HTTP server will be used to provide access to clients" do
-    Proc.new { Puppet::Network::RESTServer.new }.should raise_error(ArgumentError)
+# a fake server class, so we don't have to implement full autoloading etc. (or at least just yet) just to do testing
+class TestServer < Puppet::Network::Server
+  def start_web_server
+  end
+  
+  def stop_web_server
   end
 end
 
-describe Puppet::Network::RESTServer, "in general" do
+describe Puppet::Network::Server, "when initializing" do
   before do
-    @server = Puppet::Network::RESTServer.new(:server => :mongrel)
+    Puppet::Network::Server.stubs(:server_class_by_name).returns(TestServer)
+  end
+  
+  it "should use the Puppet configurator to determine which HTTP server will be used to provide access to clients" do
+    Puppet.expects(:[]).with(:servertype).returns(:suparserver)
+    @server = Puppet::Network::Server.new
+    @server.server_type.should == :suparserver
+  end
+  
+  it "should fail to initialize if there is no HTTP server known to the Puppet configurator" do
+    Puppet.expects(:[]).with(:servertype).returns(nil)
+    Proc.new { Puppet::Network::Server.new }.should raise_error
+  end
+  
+  it "should allow registering indirections" do
+    @server = Puppet::Network::Server.new(:handlers => [ :foo, :bar, :baz])
+    Proc.new { @server.unregister(:foo, :bar, :baz) }.should_not raise_error
+  end
+  
+  it "should not be listening after initialization" do
+    Puppet::Network::Server.new.should_not be_listening
+  end
+end
+
+describe Puppet::Network::Server, "in general" do
+  before do
+    Puppet::Network::Server.stubs(:server_class_by_name).returns(TestServer)
+    Puppet.stubs(:[]).with(:servertype).returns(:suparserver)
+    @server = Puppet::Network::Server.new
   end
   
   it "should allow registering an indirection for client access by specifying its indirection name" do
@@ -70,23 +101,25 @@ describe Puppet::Network::RESTServer, "in general" do
   end
   
   it "should provide a means of determining which HTTP server will be used to provide access to clients" do
-    @server.server.should == :mongrel
+    @server.server_type.should == :suparserver
   end
 
-  it "should allow for multiple configurations, each allowing a different HTTP server handling different indirections" do
-    @server2 = Puppet::Network::RESTServer.new(:server => :webrick)
+  it "should allow for multiple configurations, each handling different indirections" do
+    @server2 = Puppet::Network::Server.new
     @server.register(:foo, :bar)
     @server2.register(:foo, :xyzzy)
     @server.unregister(:foo, :bar)
     @server2.unregister(:foo, :xyzzy)
     Proc.new { @server.unregister(:xyzzy) }.should raise_error(ArgumentError)
-    Proc.new { @server2.unregister(:bar)}.should raise_error(ArgumentError)
+    Proc.new { @server2.unregister(:bar) }.should raise_error(ArgumentError)
   end  
 end
 
-describe Puppet::Network::RESTServer, "when listening is not turned on" do
+describe Puppet::Network::Server, "when listening is turned off" do
   before do
-    @server = Puppet::Network::RESTServer.new(:server => :mongrel)
+    Puppet::Network::Server.stubs(:server_class_by_name).returns(TestServer)
+    Puppet.stubs(:[]).with(:servertype).returns(:suparserver)
+    @server = Puppet::Network::Server.new
   end
   
   it "should allow listening to be turned on" do
@@ -101,6 +134,11 @@ describe Puppet::Network::RESTServer, "when listening is not turned on" do
     @server.should_not be_listening
   end
   
+  it "should cause the HTTP server to listen when listening is turned on" do
+    @server.expects(:start_web_server)
+    @server.listen
+  end
+  
   it "should not route HTTP GET requests on indirector's name to indirector find for the specified HTTP server"
   it "should not route HTTP GET requests on indirector's plural name to indirector search for the specified HTTP server"
   it "should not route HTTP DELETE requests on indirector's name to indirector destroy for the specified HTTP server"
@@ -109,9 +147,11 @@ describe Puppet::Network::RESTServer, "when listening is not turned on" do
   # TODO: FIXME write integrations which fire up actual webrick / mongrel servers and are thus webrick / mongrel specific?]
 end
 
-describe Puppet::Network::RESTServer, "when listening is turned on" do
+describe Puppet::Network::Server, "when listening is turned on" do
   before do
-    @server = Puppet::Network::RESTServer.new(:server => :mongrel)
+    Puppet::Network::Server.stubs(:server_class_by_name).returns(TestServer)
+    Puppet.stubs(:[]).with(:servertype).returns(:suparserver)
+    @server = Puppet::Network::Server.new
     @server.listen
   end
   
@@ -123,8 +163,13 @@ describe Puppet::Network::RESTServer, "when listening is turned on" do
     Proc.new { @server.listen }.should raise_error(RuntimeError)
   end
   
-  it "should indicate that it is listening" do
+  it "should indicate that listening is turned off" do
     @server.should be_listening
+  end
+
+  it "should cause the HTTP server to stop listening when listening is turned off" do
+    @server.expects(:stop_web_server)
+    @server.unlisten
   end
   
   it "should route HTTP GET requests on indirector's name to indirector find for the specified HTTP server"

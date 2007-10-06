@@ -238,11 +238,11 @@ begin
     case Puppet[:servertype]
     when "webrick"
         # use the default, um, everything
-        require 'puppet/network/server/webrick'
-        webserver = server = Puppet::Network::Server::WEBrick.new(:Handlers => handlers)
+        require 'puppet/network/http_server/webrick'
+        webserver = server = Puppet::Network::HTTPServer::WEBrick.new(:Handlers => handlers)
     when "mongrel":
-        require 'puppet/network/server/mongrel'
-        server = Puppet::Network::Server::Mongrel.new(handlers)
+        require 'puppet/network/http_server/mongrel'
+        server = Puppet::Network::HTTPServer::Mongrel.new(handlers)
         addr = Puppet[:bindaddress]
         if addr == ""
             addr =  "127.0.0.1"

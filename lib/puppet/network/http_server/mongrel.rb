@@ -31,7 +31,7 @@ require 'rubygems'
 require 'mongrel'
 require 'xmlrpc/server'
 require 'puppet/network/xmlrpc/server'
-require 'puppet/network/server'
+require 'puppet/network/http_server'
 require 'puppet/network/client_request'
 require 'puppet/daemon'
 
@@ -49,7 +49,7 @@ require 'resolv'
 # handler.xmlrpc_server.add_handler("my.add") { |a, b| a.to_i + b.to_i }
 # </pre>
 module Puppet::Network
-    class Server::Mongrel < ::Mongrel::HttpHandler
+    class HTTPServer::Mongrel < ::Mongrel::HttpHandler
         include Puppet::Daemon
         attr_reader :xmlrpc_server
 

@@ -548,7 +548,7 @@ class TestFileSources < Test::Unit::TestCase
 
         serverpid = nil
         assert_nothing_raised() {
-            server = Puppet::Network::Server::WEBrick.new(
+            server = Puppet::Network::HTTPServer::WEBrick.new(
                 :Handlers => {
                     :CA => {}, # so that certs autogenerate
                     :FileServer => {
@@ -593,7 +593,7 @@ class TestFileSources < Test::Unit::TestCase
 
         serverpid = nil
         assert_nothing_raised("Could not start on port %s" % @port) {
-            server = Puppet::Network::Server::WEBrick.new(
+            server = Puppet::Network::HTTPServer::WEBrick.new(
                 :Port => @port,
                 :Handlers => {
                     :CA => {}, # so that certs autogenerate

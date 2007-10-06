@@ -12,7 +12,7 @@ class TestMongrelServer < PuppetTest::TestCase
 
     def mkserver(handlers = nil)
         handlers ||= { :Status => nil }
-        mongrel = Puppet::Network::Server::Mongrel.new(handlers)
+        mongrel = Puppet::Network::HTTPServer::Mongrel.new(handlers)
     end
 
     # Make sure client info is correctly extracted.
