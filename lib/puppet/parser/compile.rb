@@ -16,8 +16,6 @@ class Puppet::Parser::Compile
     include Puppet::Util::Errors
     attr_reader :topscope, :parser, :node, :facts, :collections, :configuration
 
-    attr_writer :ast_nodes
-
     # Add a collection to the global list.
     def add_collection(coll)
         @collections << coll
@@ -25,7 +23,7 @@ class Puppet::Parser::Compile
 
     # Do we use nodes found in the code, vs. the external node sources?
     def ast_nodes?
-        defined?(@ast_nodes) and @ast_nodes
+        parser.nodes.length > 0
     end
 
     # Store the fact that we've evaluated a class, and store a reference to

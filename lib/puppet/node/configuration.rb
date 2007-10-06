@@ -7,7 +7,7 @@ require 'puppet/external/gratr/digraph'
 # and the relationships between them.
 class Puppet::Node::Configuration < Puppet::PGraph
     extend Puppet::Indirector
-    indirects :configuration
+    indirects :configuration, :terminus_class => :code
 
     # The host name this is a configuration for.
     attr_accessor :name

@@ -14,7 +14,6 @@ class Puppet::Parser::Interpreter
     include Puppet::Util
 
     attr_accessor :usenodes
-    attr_accessor :code, :file
 
     include Puppet::Util::Errors
 
@@ -26,21 +25,11 @@ class Puppet::Parser::Interpreter
     # evaluate our whole tree
     def compile(node)
         raise Puppet::ParseError, "Could not parse configuration; cannot compile" unless env_parser = parser(node.environment)
-        return Puppet::Parser::Compile.new(node, env_parser, :ast_nodes => usenodes?).compile
+        return Puppet::Parser::Compile.new(node, env_parser).compile
     end
 
     # create our interpreter
-    def initialize(options = {})
-        if @code = options[:Code]
-        elsif @file = options[:Manifest]
-        end
-
-        if options.include?(:UseNodes)
-            @usenodes = options[:UseNodes]
-        else
-            @usenodes = true
-        end
-
+    def initialize
         # The class won't always be defined during testing.
         if Puppet[:storeconfigs] 
             if Puppet.features.rails?
@@ -53,21 +42,14 @@ class Puppet::Parser::Interpreter
         @parsers = {}
     end
 
-    # Should we parse ast nodes?
-    def usenodes?
-        defined?(@usenodes) and @usenodes
-    end
-
     private
 
     # Create a new parser object and pre-parse the configuration.
     def create_parser(environment)
         begin
             parser = Puppet::Parser::Parser.new(:environment => environment)
-            if self.code
-                parser.string = self.code
-            elsif self.file
-                parser.file = self.file
+            if code = Puppet.settings.value(:code, environment) and code != ""
+                parser.string = code
             else
                 file = Puppet.settings.value(:manifest, environment)
                 parser.file = file

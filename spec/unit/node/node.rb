@@ -112,14 +112,15 @@ describe Puppet::Node, " when merging facts" do
 end
 
 describe Puppet::Node, " when indirecting" do
-    before do
-        @terminus = mock 'terminus'
-        Puppet::Node.stubs(:indirection).returns(@terminus)
+    it "should redirect to the indirection" do
+        @indirection = mock 'indirection'
+        Puppet::Node.stubs(:indirection).returns(@indirection)
+        @indirection.expects(:find).with(:my_node.to_s)
+        Puppet::Node.find(:my_node.to_s)
     end
 
-    it "should redirect to the specified node source" do
-        @terminus.expects(:find).with(:my_node.to_s)
-        Puppet::Node.find(:my_node.to_s)
+    it "should default to the 'null' node terminus" do
+        Puppet::Node.indirection.terminus_class.should == :null
     end
 
     after do

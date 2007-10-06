@@ -399,24 +399,17 @@ class TestScope < Test::Unit::TestCase
         Puppet::Rails.init
         sleep 1
         children = []
-        file = tempfile()
-        File.open(file, "w") { |f|
-            f.puts "
+        Puppet[:code] = "
 class yay {
     @@host { myhost: ip => \"192.168.0.2\" }
 }
 include yay
 @@host { puppet: ip => \"192.168.0.3\" }
 Host <<||>>"
-        }
 
         interp = nil
         assert_nothing_raised {
-            interp = Puppet::Parser::Interpreter.new(
-                :Manifest => file,
-                :UseNodes => false,
-                :ForkSave => false
-            )
+            interp = Puppet::Parser::Interpreter.new
         }
 
         config = nil

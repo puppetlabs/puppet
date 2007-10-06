@@ -202,16 +202,10 @@ class TestLangFunctions < Test::Unit::TestCase
             f.puts "original text"
         end
 
-        manifest = tempfile()
         file = tempfile()
-        File.open(manifest, "w") do |f|
-            f.puts %{file { "#{file}": content => template("#{template}") }}
-        end
 
-        interp = Puppet::Parser::Interpreter.new(
-            :Manifest => manifest,
-            :UseNodes => false
-        )
+        Puppet[:code] = %{file { "#{file}": content => template("#{template}") }}
+        interp = Puppet::Parser::Interpreter.new
         node = mknode
         node.stubs(:environment).returns("yay")
 

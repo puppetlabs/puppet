@@ -2,65 +2,25 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-describe Puppet::Parser::Interpreter, " when initializing" do
-    it "should default to neither code nor file" do
-        interp = Puppet::Parser::Interpreter.new
-        interp.code.should be_nil
-        interp.file.should be_nil
-    end
-
-    it "should set the code to parse" do
-        interp = Puppet::Parser::Interpreter.new :Code => :code
-        interp.code.should equal(:code)
-    end
-
-    it "should set the file to parse" do
-        interp = Puppet::Parser::Interpreter.new :Manifest => :file
-        interp.file.should equal(:file)
-    end
-
-    it "should set code and ignore manifest when both are present" do
-        interp = Puppet::Parser::Interpreter.new :Code => :code, :Manifest => :file
-        interp.code.should equal(:code)
-        interp.file.should be_nil
-    end
-
-    it "should default to usenodes" do
-        interp = Puppet::Parser::Interpreter.new
-        interp.usenodes?.should be_true
-    end
-
-    it "should allow disabling of usenodes" do
-        interp = Puppet::Parser::Interpreter.new :UseNodes => false
-        interp.usenodes?.should be_false
-    end
-end
-
 describe Puppet::Parser::Interpreter, " when creating parser instances" do
     before do
         @interp = Puppet::Parser::Interpreter.new
         @parser = mock('parser')
     end
 
-    it "should create a parser with code passed in at initialization time" do
-        @interp.code = :some_code
-        @parser.expects(:string=).with(:some_code)
+    it "should create a parser with code if there is code defined in the :code setting" do
+        Puppet.settings.stubs(:value).with(:code, :myenv).returns("mycode")
+        @parser.expects(:string=).with("mycode")
         @parser.expects(:parse)
         Puppet::Parser::Parser.expects(:new).with(:environment => :myenv).returns(@parser)
         @interp.send(:create_parser, :myenv).object_id.should equal(@parser.object_id)
     end
 
-    it "should create a parser with a file passed in at initialization time" do
-        @interp.file = :a_file
-        @parser.expects(:file=).with(:a_file)
+    it "should create a parser with the main manifest when the code setting is an empty string" do
+        Puppet.settings.stubs(:value).with(:code, :myenv).returns("")
+        Puppet.settings.stubs(:value).with(:manifest, :myenv).returns("/my/file")
         @parser.expects(:parse)
-        Puppet::Parser::Parser.expects(:new).with(:environment => :myenv).returns(@parser)
-        @interp.send(:create_parser, :myenv).should equal(@parser)
-    end
-
-    it "should create a parser with the main manifest when passed neither code nor file" do
-        @parser.expects(:parse)
-        @parser.expects(:file=).with(Puppet[:manifest])
+        @parser.expects(:file=).with("/my/file")
         Puppet::Parser::Parser.expects(:new).with(:environment => :myenv).returns(@parser)
         @interp.send(:create_parser, :myenv).should equal(@parser)
     end
@@ -159,20 +119,11 @@ describe Puppet::Parser::Interpreter, " when compiling configurations" do
         @parser = mock 'parser'
     end
 
-    it "should create a compile with the node, parser, and whether to use ast nodes when ast nodes is true" do
+    it "should create a compile with the node and parser" do
         @compile.expects(:compile).returns(:config)
         @interp.expects(:parser).with(:myenv).returns(@parser)
-        @interp.expects(:usenodes?).returns(true)
-        Puppet::Parser::Compile.expects(:new).with(@node, @parser, :ast_nodes => true).returns(@compile)
+        Puppet::Parser::Compile.expects(:new).with(@node, @parser).returns(@compile)
         @interp.compile(@node)
-    end
-
-    it "should create a compile with the node, parser, and whether to use ast nodes when ast nodes is false" do
-        @compile.expects(:compile).returns(:config)
-        @interp.expects(:parser).with(:myenv).returns(@parser)
-        @interp.expects(:usenodes?).returns(false)
-        Puppet::Parser::Compile.expects(:new).with(@node, @parser, :ast_nodes => false).returns(@compile)
-        @interp.compile(@node).should equal(:config)
     end
 
     it "should fail intelligently when no parser can be found" do

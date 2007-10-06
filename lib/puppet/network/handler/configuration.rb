@@ -49,10 +49,14 @@ class Puppet::Network::Handler
                 @local = false
             end
 
-            # Just store the options, rather than creating the interpreter
-            # immediately.  Mostly, this is so we can create the interpreter
-            # on-demand, which is easier for testing.
-            @options = options
+            options.each do |param, value|
+                case param
+                when :Classes: @classes = value
+                when :Local: self.local = true
+                else
+                    raise ArgumentError, "Configuration handler does not accept %s" % param
+                end
+            end
 
             set_server_facts
         end
@@ -82,8 +86,8 @@ class Puppet::Network::Handler
             node.merge(@server_facts)
 
             # Add any specified classes to the node's class list.
-            if classes = @options[:Classes]
-                classes.each do |klass|
+            if @classes
+                @classes.each do |klass|
                     node.classes << klass
                 end
             end
@@ -121,37 +125,14 @@ class Puppet::Network::Handler
         end
 
         # Create our interpreter object.
-        def create_interpreter(options)
-            args = {}
-
-            # Allow specification of a code snippet or of a file
-            if code = options[:Code]
-                args[:Code] = code
-            elsif options[:Manifest]
-                args[:Manifest] = options[:Manifest]
-            end
-
-            args[:Local] = local?
-
-            if options.include?(:UseNodes)
-                args[:UseNodes] = options[:UseNodes]
-            elsif @local
-                args[:UseNodes] = false
-            end
-
-            # This is only used by the cfengine module, or if --loadclasses was
-            # specified in +puppet+.
-            if options.include?(:Classes)
-                args[:Classes] = options[:Classes]
-            end
-
-            return Puppet::Parser::Interpreter.new(args)
+        def create_interpreter
+            return Puppet::Parser::Interpreter.new
         end
 
         # Create/return our interpreter.
         def interpreter
             unless defined?(@interpreter) and @interpreter
-                @interpreter = create_interpreter(@options)
+                @interpreter = create_interpreter
             end
             @interpreter
         end

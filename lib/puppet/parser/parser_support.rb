@@ -366,10 +366,12 @@ class Puppet::Parser::Parser
     end
 
     def on_error(token,value,stack)
-        #on '%s' at '%s' in\n'%s'" % [token,value,stack]
-        #error = "line %s: parse error after '%s'" %
-        #    [@lexer.line,@lexer.last]
-        error = "Syntax error at '%s'" % [value]
+        if token == 0 # denotes end of file
+            value = 'end of file'
+        else
+            value = "'%s'" % value
+        end
+        error = "Syntax error at %s" % [value]
 
         if brace = @lexer.expected
             error += "; expected '%s'" % brace

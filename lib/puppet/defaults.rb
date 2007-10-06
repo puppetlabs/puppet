@@ -292,6 +292,9 @@ module Puppet
             "Where puppetmasterd looks for its manifests."],
         :manifest => ["$manifestdir/site.pp",
             "The entry-point manifest for puppetmasterd."],
+        :code => ["", "Code to parse directly.  This is essentially only used
+            by ``puppet`, and should only be set if you're writing your own Puppet
+            executable"],
         :masterlog => { :default => "$logdir/puppetmaster.log",
             :owner => "$user",
             :group => "$group",
