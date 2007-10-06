@@ -32,6 +32,9 @@ describe Puppet::Network::Server, "when initializing" do
     Proc.new { Puppet::Network::Server.new }.should raise_error
   end
   
+  it "should use the Puppet Configurator to determine what style of service we will offer to clients (e.g., REST, XMLRPC, ...)"
+  it "should fail to initialize if there is no style of service known to the Puppet configurator"
+  
   it "should allow registering indirections" do
     @server = Puppet::Network::Server.new(:handlers => [ :foo, :bar, :baz])
     Proc.new { @server.unregister(:foo, :bar, :baz) }.should_not raise_error
@@ -103,6 +106,8 @@ describe Puppet::Network::Server, "in general" do
   it "should provide a means of determining which HTTP server will be used to provide access to clients" do
     @server.server_type.should == :suparserver
   end
+  
+  it "should provide a means of determining which style of service is being offered to clients"
 
   it "should allow for multiple configurations, each handling different indirections" do
     @server2 = Puppet::Network::Server.new
@@ -139,10 +144,9 @@ describe Puppet::Network::Server, "when listening is turned off" do
     @server.listen
   end
   
-  it "should not route HTTP GET requests on indirector's name to indirector find for the specified HTTP server"
-  it "should not route HTTP GET requests on indirector's plural name to indirector search for the specified HTTP server"
-  it "should not route HTTP DELETE requests on indirector's name to indirector destroy for the specified HTTP server"
-  it "should not route HTTP POST requests on indirector's name to indirector save for the specified HTTP server"
+  it "should not route HTTP GET requests to a controller for the registered indirection"
+  it "should not route HTTP DELETE requests to a controller for the registered indirection"
+  it "should not route HTTP POST requests to a controller for the registered indirection"
 
   # TODO: FIXME write integrations which fire up actual webrick / mongrel servers and are thus webrick / mongrel specific?]
 end
@@ -172,10 +176,9 @@ describe Puppet::Network::Server, "when listening is turned on" do
     @server.unlisten
   end
   
-  it "should route HTTP GET requests on indirector's name to indirector find for the specified HTTP server"
-  it "should route HTTP GET requests on indirector's plural name to indirector search for the specified HTTP server"
-  it "should route HTTP DELETE requests on indirector's name to indirector destroy for the specified HTTP server"
-  it "should route HTTP POST requests on indirector's name to indirector save for the specified HTTP server"
+  it "should route HTTP GET requests to a controller for the registered indirection"
+  it "should route HTTP DELETE requests to a controller for the registered indirection"
+  it "should route HTTP POST requests to a controller for the registered indirection"
 
   # TODO: FIXME [ write integrations which fire up actual webrick / mongrel servers and are thus webrick / mongrel specific?]
 end
