@@ -17,7 +17,7 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
 
         # If it's enabled, then it will print output showing removal of
         # links.
-        if output =~ /etc\/rc[\dS].d|Nothing to do\./
+        if output =~ /etc\/rc[\dS].d|not installed/
             return :true
         else
             return :false
