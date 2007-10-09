@@ -456,10 +456,19 @@ billy three four\n"
                 :separator => " " # A single space
         end
 
-        ["a b c d", "a b * d", "a b * *", "a b c *"].each do |line|
+        { "a b c d" => [],
+          "a b * d" => [:three],
+          "a b * *" => [:three, :four],
+          "a b c *" => [:four]
+        }.each do |line, absentees|
             record = nil
             assert_nothing_raised do
                 record = @parser.parse_line(line)
+            end
+
+            # Absent field is :absent, not "*" inside the record
+            absentees.each do |absentee|
+                assert_equal(:absent, record[absentee])
             end
 
             # Now regenerate the line

@@ -268,7 +268,9 @@ module Puppet::Util::FileParsing
 
     # Define a new type of record.  These lines get split into hashes.  Valid
     # options are:
-    # * <tt>:absent</tt>: What to use when a field is absent.  Defaults to "".
+    # * <tt>:absent</tt>: What to use as value within a line, when a field is
+    #   absent.  Note that in the record object, the literal :absent symbol is
+    #   used, and not this value.  Defaults to "".
     # * <tt>:fields</tt>: The list of fields, as an array.  By default, all
     #   fields are considered required.
     # * <tt>:joiner</tt>: How to join fields together.  Defaults to '\t'.
