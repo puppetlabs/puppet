@@ -56,11 +56,10 @@ class TestMaster < Test::Unit::TestCase
         @@tmpfiles << file2
 
         client = master = nil
+        Puppet[:manifest] = manifest
         assert_nothing_raised() {
             # this is the default server setup
             master = Puppet::Network::Handler.master.new(
-                :Manifest => manifest,
-                :UseNodes => false,
                 :Local => true
             )
         }

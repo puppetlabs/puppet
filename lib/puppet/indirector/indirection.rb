@@ -91,12 +91,15 @@ class Puppet::Indirector::Indirection
     end
 
     def find(key, *args)
-        if cache? and terminus.fresh?(key, cache.version(key))
+        if cache? and cache.has_most_recent?(key, terminus.version(key))
             return cache.find(key, *args)
         end
         if result = terminus.find(key, *args)
             result.version ||= Time.now.utc
-            cache.save(result, *args) if cache?
+            if cache?
+                Puppet.info "Caching %s %s" % [self.name, key]
+                cache.save(result, *args)
+            end
             return result
         end
     end
@@ -113,7 +116,7 @@ class Puppet::Indirector::Indirection
     def save(instance, *args)
         instance.version ||= Time.now.utc
         dest = cache? ? cache : terminus
-        return if dest.fresh?(instance.name, instance.version)
+        return if dest.has_most_recent?(instance.name, instance.version)
         cache.save(instance, *args) if cache?
         terminus.save(instance, *args)
     end

@@ -143,6 +143,8 @@ class TestClient < Test::Unit::TestCase
     def test_classfile
         Puppet[:code] = "class yaytest {}\n class bootest {}\n include yaytest, bootest"
 
+        Puppet::Node::Facts.indirection.stubs(:save)
+
         master = client = nil
         assert_nothing_raised() {
             master = Puppet::Network::Handler.master.new(

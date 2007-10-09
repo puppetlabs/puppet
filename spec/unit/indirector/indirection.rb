@@ -7,7 +7,7 @@ require 'puppet/indirector'
 describe Puppet::Indirector::Indirection do
     before do
         @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
-        @terminus = stub 'terminus', :fresh? => false
+        @terminus = stub 'terminus', :has_most_recent? => false
         @indirection.stubs(:terminus).returns(@terminus)
         @instance = stub 'instance', :version => nil, :version= => nil, :name => "whatever"
         @name = :mything
@@ -286,12 +286,12 @@ describe Puppet::Indirector::Indirection, " when saving and using a cache" do
     end
 
     it "should not update the cache or terminus if the new object is not different" do
-        @cache.expects(:fresh?).with(@name, 5).returns(true)
+        @cache.expects(:has_most_recent?).with(@name, 5).returns(true)
         @indirection.save(@instance)
     end
 
     it "should update the original and the cache if the cached object is different" do
-        @cache.expects(:fresh?).with(@name, 5).returns(false)
+        @cache.expects(:has_most_recent?).with(@name, 5).returns(false)
         @terminus.expects(:save).with(@instance)
         @cache.expects(:save).with(@instance)
         @indirection.save(@instance)
@@ -311,8 +311,8 @@ describe Puppet::Indirector::Indirection, " when finding and using a cache" do
 
         name = "myobject"
 
-        @cache.expects(:version).with(name).returns(1)
-        @terminus.expects(:fresh?).with(name, 1).returns(true)
+        @terminus.expects(:version).with(name).returns(1)
+        @cache.expects(:has_most_recent?).with(name, 1).returns(true)
 
         @cache.expects(:find).with(name).returns(cached)
 
@@ -324,9 +324,9 @@ describe Puppet::Indirector::Indirection, " when finding and using a cache" do
 
         name = "myobject"
 
-        @cache.expects(:version).with(name).returns(1)
         @cache.stubs(:save)
-        @terminus.expects(:fresh?).with(name, 1).returns(false)
+        @cache.expects(:has_most_recent?).with(name, 1).returns(false)
+        @terminus.expects(:version).with(name).returns(1)
 
         @terminus.expects(:find).with(name).returns(real)
 
@@ -338,8 +338,8 @@ describe Puppet::Indirector::Indirection, " when finding and using a cache" do
 
         name = "myobject"
 
-        @cache.expects(:version).with(name).returns(1)
-        @terminus.expects(:fresh?).with(name, 1).returns(false)
+        @terminus.expects(:version).with(name).returns(1)
+        @cache.expects(:has_most_recent?).with(name, 1).returns(false)
 
         @terminus.expects(:find).with(name).returns(real)
         @cache.expects(:save).with(real)

@@ -109,14 +109,6 @@ Puppet::Type.newtype(:component) do
         @children = []
     end
 
-    def parent=(parent)
-        if self.parentof?(parent)
-            devfail "%s[%s] is already the parent of %s[%s]" %
-                [self.class.name, self.title, parent.class.name, parent.title]
-        end
-        @parent = parent
-    end
-
     # Add a hook for testing for recursion.
     def parentof?(child)
         if super(child)
@@ -133,7 +125,7 @@ Puppet::Type.newtype(:component) do
     def pathbuilder
         tmp = []
         myname = ""
-        if self.title =~ /^class\[(.+)\]$/
+        if self.title =~ /^class\[(.+)\]$/i
             # 'main' is the top class, so we want to see '//' instead of
             # its name.
             unless $1 == "main"

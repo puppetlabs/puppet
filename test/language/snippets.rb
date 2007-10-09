@@ -202,7 +202,7 @@ class TestSnippets < Test::Unit::TestCase
 
         assert_nothing_raised {
             assert_equal(
-                "//testing/component[componentname]/File[/tmp/classtest]",
+                "//testing/Mytype[componentname]/File[/tmp/classtest]",
                 file.path)
         }
     end
@@ -466,7 +466,7 @@ class TestSnippets < Test::Unit::TestCase
                 }
 
                 assert_nothing_raised("Could not convert configuration") {
-                    config = config.extract_to_transportable.to_configuration
+                    config = config.to_ral
                 }
 
                 Puppet::Type.eachtype { |type|

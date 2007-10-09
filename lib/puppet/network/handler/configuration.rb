@@ -13,7 +13,7 @@ class Puppet::Network::Handler
 
         include Puppet::Util
 
-        attr_accessor :local
+        attr_accessor :local, :classes
 
         @interface = XMLRPC::Service::Interface.new("configuration") { |iface|
                 iface.add_method("string configuration(string)")
@@ -43,16 +43,10 @@ class Puppet::Network::Handler
         end
 
         def initialize(options = {})
-            if options[:Local]
-                @local = options[:Local]
-            else
-                @local = false
-            end
-
             options.each do |param, value|
                 case param
                 when :Classes: @classes = value
-                when :Local: self.local = true
+                when :Local: self.local = value
                 else
                     raise ArgumentError, "Configuration handler does not accept %s" % param
                 end

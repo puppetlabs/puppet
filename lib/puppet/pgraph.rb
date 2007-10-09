@@ -190,6 +190,10 @@ class Puppet::PGraph < GRATR::Digraph
         return result
     end
 
+    def to_yaml_properties
+        instance_variables
+    end
+
     # A different way of walking a tree, and a much faster way than the
     # one that comes with GRATR.
     def tree_from_vertex2(start, direction = :out)

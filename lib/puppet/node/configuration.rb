@@ -22,6 +22,10 @@ class Puppet::Node::Configuration < Puppet::PGraph
     # How we should extract the configuration for sending to the client.
     attr_reader :extraction_format
 
+    # We need the ability to set this externally, so we can yaml-dump the
+    # configuration.
+    attr_accessor :edgelist_class
+
     # Whether this is a host configuration, which behaves very differently.
     # In particular, reports are sent, graphs are made, and state is
     # stored in the state database.  If this is set incorrectly, then you often
@@ -355,6 +359,16 @@ class Puppet::Node::Configuration < Puppet::PGraph
         @tags.dup
     end
 
+    # Convert our configuration into a RAL configuration.
+    def to_ral
+        to_configuration :to_type
+    end
+
+    # Turn our parser configuration into a transportable configuration.
+    def to_transportable
+        to_configuration :to_transobject
+    end
+
     # Produce the graph files if requested.
     def write_graph(name)
         # We only want to graph the main host configuration.
@@ -370,6 +384,14 @@ class Puppet::Node::Configuration < Puppet::PGraph
         }
     end
 
+    # LAK:NOTE We cannot yaml-dump the class in the edgelist_class, because classes cannot be
+    # dumped by default, nor does yaml-dumping # the edge-labels work at this point (I don't
+    # know why).
+    #  Neither of these matters right now, but I suppose it could at some point.
+    def to_yaml_properties
+        instance_variables.reject { |v| %w{@edgelist_class @edge_labels}.include?(v) }
+    end
+
     private
 
     def cleanup
@@ -378,5 +400,40 @@ class Puppet::Node::Configuration < Puppet::PGraph
             @transient_resources.clear
             @relationship_graph = nil
         end
+    end
+
+    # An abstracted method for converting one configuration into another type of configuration.
+    # This pretty much just converts all of the resources from one class to another, using
+    # a conversion method.
+    def to_configuration(convert)
+        result = self.class.new(self.name)
+
+        vertices.each do |resource|
+            next if resource.respond_to?(:virtual?) and resource.virtual?
+
+            result.add_resource resource.send(convert)
+        end
+
+        message = convert.to_s.gsub "_", " "
+        edges.each do |edge|
+            # Skip edges between virtual resources.
+            next if edge.source.respond_to?(:virtual?) and edge.source.virtual?
+            next if edge.target.respond_to?(:virtual?) and edge.target.virtual?
+
+            unless source = result.resource(edge.source.ref)
+                raise Puppet::DevError, "Could not find vertex for %s when converting %s" % [edge.source.ref, message]
+            end
+
+            unless target = result.resource(edge.target.ref)
+                raise Puppet::DevError, "Could not find vertex for %s when converting %s" % [edge.target.ref, message]
+            end
+
+            result.add_edge!(source, target, edge.label)
+        end
+
+        result.add_class *self.classes
+        result.tag(*self.tags)
+
+        return result
     end
 end

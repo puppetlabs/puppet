@@ -203,7 +203,7 @@ begin
     config = Puppet::Node::Configuration.find(node)
 
     # Translate it to a RAL configuration
-    config = config.extract_to_transportable.to_configuration
+    config = config.to_ral
 
     # And apply it
     config.apply

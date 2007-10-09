@@ -95,13 +95,15 @@ class Puppet::Indirector::Terminus
         end
     end
 
-    # Is this instance fresh?  Meaning, is the version we have equivalent or better
-    # than the version being asked about
-    def fresh?(key, vers)
+    # Do we have an update for this object?  This compares the provided version
+    # to our version, and returns true if our version is at least as high
+    # as the asked-about version.
+    def has_most_recent?(key, vers)
         raise Puppet::DevError.new("Cannot check update status when no 'version' method is defined") unless respond_to?(:version)
 
         if existing_version = version(key)
-            existing_version >= vers
+            #puts "%s fresh: %s (%s vs %s)" % [self.name, (existing_version.to_f >= vers.to_f).inspect, existing_version.to_f, vers.to_f]
+            existing_version.to_f >= vers.to_f
         else
             false
         end
