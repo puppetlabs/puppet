@@ -6,7 +6,7 @@ require 'fcntl'
 
 require 'puppet/sslcertificates/support'
 require 'puppet/network/xmlrpc/webrick_servlet'
-require 'puppet/network/server'
+require 'puppet/network/http_server'
 require 'puppet/network/client'
 
 module Puppet
@@ -14,7 +14,7 @@ module Puppet
     module Network
         # The old-school, pure ruby webrick server, which is the default serving
         # mechanism.
-        class Server::WEBrick < WEBrick::HTTPServer
+        class HTTPServer::WEBrick < WEBrick::HTTPServer
             include Puppet::Daemon
             include Puppet::SSLCertificates::Support
 

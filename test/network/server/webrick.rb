@@ -3,7 +3,7 @@
 $:.unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppettest'
-require 'puppet/network/server/webrick'
+require 'puppet/network/http_server/webrick'
 require 'mocha'
 
 class TestWebrickServer < Test::Unit::TestCase
@@ -19,7 +19,7 @@ class TestWebrickServer < Test::Unit::TestCase
     def test_basics
         server = nil
         assert_raise(Puppet::Error, "server succeeded with no cert") do
-            server = Puppet::Network::Server::WEBrick.new(
+            server = Puppet::Network::HTTPServer::WEBrick.new(
                 :Port => @@port,
                 :Handlers => {
                     :Status => nil
@@ -28,7 +28,7 @@ class TestWebrickServer < Test::Unit::TestCase
         end
 
         assert_nothing_raised("Could not create simple server") do
-            server = Puppet::Network::Server::WEBrick.new(
+            server = Puppet::Network::HTTPServer::WEBrick.new(
                 :Port => @@port,
                 :Handlers => {
                     :CA => {}, # so that certs autogenerate
@@ -112,7 +112,7 @@ class TestWebrickServer < Test::Unit::TestCase
     def mk_status_server
         server = nil
         assert_nothing_raised() {
-            server = Puppet::Network::Server::WEBrick.new(
+            server = Puppet::Network::HTTPServer::WEBrick.new(
                 :Port => @@port,
                 :Handlers => {
                     :CA => {}, # so that certs autogenerate

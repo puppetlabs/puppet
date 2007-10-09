@@ -500,15 +500,6 @@ module Puppet
             "The server through which to send email reports."]
     )
 
-    # This needs to be in main because it's used too early in the system, such that
-    # we get an infinite loop otherwise.
-    self.setdefaults(:main,
-        :facts_terminus => ["yaml",
-            "The backend store to use for client facts."],
-        :checksum_terminus => ["file",
-            "The backend store to use for storing files by checksum (i.e., filebuckets)."]
-    )
-
     self.setdefaults(:rails,
         :dblocation => { :default => "$statedir/clientconfigs.sqlite3",
             :mode => 0660,

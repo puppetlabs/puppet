@@ -51,8 +51,6 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
                         unless names[name].nil?
                             hash[names[name]] = value
                         end
-                    else
-                        raise "Could not find %s" % name
                     end
                 when /\s+\d+.+/:
                     # nothing; we're ignoring the FILES info

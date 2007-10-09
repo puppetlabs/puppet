@@ -74,44 +74,43 @@ describe Puppet::Indirector::Indirection, " when managing indirection instances"
     end
 end
 
-describe Puppet::Indirector::Indirection, " when choosing terminus types" do
+describe Puppet::Indirector::Indirection, " when specifying terminus types" do
     before do
         @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
         @terminus = mock 'terminus'
         @terminus_class = stub 'terminus class', :new => @terminus
     end
 
-    it "should follow a convention on using per-model configuration parameters to determine the terminus class" do
-        Puppet.settings.expects(:valid?).with('test_terminus').returns(true)
-        Puppet.settings.expects(:value).with('test_terminus').returns(:foo)
-        Puppet::Indirector::Terminus.expects(:terminus_class).with(:foo, :test).returns(@terminus_class)
-        @indirection.terminus.should equal(@terminus)
+    it "should allow specification of a terminus type" do
+        @indirection.should respond_to(:terminus_class=)
     end
 
-    it "should use a default system-wide configuration parameter parameter to determine the terminus class when no
-    per-model configuration parameter is available" do
-        Puppet.settings.expects(:valid?).with('test_terminus').returns(false)
-        Puppet.settings.expects(:value).with(:default_terminus).returns(:foo)
-        Puppet::Indirector::Terminus.expects(:terminus_class).with(:foo, :test).returns(@terminus_class)
-        @indirection.terminus.should equal(@terminus)
-    end
-
-    it "should select the specified terminus class if a name is provided" do
-        Puppet::Indirector::Terminus.expects(:terminus_class).with(:foo, :test).returns(@terminus_class)
-        @indirection.terminus(:foo).should equal(@terminus)
+    it "should fail to redirect if no terminus type has been specified" do
+        proc { @indirection.find("blah") }.should raise_error(Puppet::DevError)
     end
 
     it "should fail when the terminus class name is an empty string" do
-        proc { @indirection.terminus("") }.should raise_error(ArgumentError)
+        proc { @indirection.terminus_class = "" }.should raise_error(ArgumentError)
     end
 
     it "should fail when the terminus class name is nil" do
-        proc { @indirection.terminus(nil) }.should raise_error(ArgumentError)
+        proc { @indirection.terminus_class = nil }.should raise_error(ArgumentError)
     end
 
     it "should fail when the specified terminus class cannot be found" do
         Puppet::Indirector::Terminus.expects(:terminus_class).with(:foo, :test).returns(nil)
-        proc { @indirection.terminus(:foo) }.should raise_error(ArgumentError)
+        proc { @indirection.terminus_class = :foo }.should raise_error(ArgumentError)
+    end
+
+    it "should select the specified terminus class if a terminus class name is provided" do
+        Puppet::Indirector::Terminus.expects(:terminus_class).with(:foo, :test).returns(@terminus_class)
+        @indirection.terminus(:foo).should equal(@terminus)
+    end
+
+    it "should use the configured terminus class if no terminus name is specified" do
+        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:foo, :test).returns(@terminus_class)
+        @indirection.terminus_class = :foo
+        @indirection.terminus().should equal(@terminus)
     end
 
     after do
@@ -163,30 +162,48 @@ describe Puppet::Indirector::Indirection, " when deciding whether to cache" do
     before do
         @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
         @terminus = mock 'terminus'
-        @indirection.stubs(:terminus).returns(@terminus)
+        @terminus_class = mock 'terminus class'
+        @terminus_class.stubs(:new).returns(@terminus)
+        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:foo, :test).returns(@terminus_class)
+        @indirection.terminus_class = :foo
+    end
+
+    it "should provide a method for setting the cache terminus class" do
+        @indirection.should respond_to(:cache_class=)
+    end
+
+    it "should fail to cache if no cache type has been specified" do
+        proc { @indirection.cache }.should raise_error(Puppet::DevError)
+    end
+
+    it "should fail to set the cache class when the cache class name is an empty string" do
+        proc { @indirection.cache_class = "" }.should raise_error(ArgumentError)
+    end
+
+    it "should fail to set the cache class when the cache class name is nil" do
+        proc { @indirection.cache_class = nil }.should raise_error(ArgumentError)
+    end
+
+    it "should fail to set the cache class when the specified cache class cannot be found" do
+        Puppet::Indirector::Terminus.expects(:terminus_class).with(:foo, :test).returns(nil)
+        proc { @indirection.cache_class = :foo }.should raise_error(ArgumentError)
     end
 
     it "should not use a cache if there no cache setting" do
-        Puppet.settings.expects(:valid?).with("test_cache").returns(false)
         @indirection.expects(:cache).never
         @terminus.stubs(:save)
         @indirection.save(:whev)
     end
 
-    it "should not use a cache if the cache setting is set to 'none'" do
-        Puppet.settings.expects(:valid?).with("test_cache").returns(true)
-        Puppet.settings.expects(:value).with("test_cache").returns("none")
-        @indirection.expects(:cache).never
-        @terminus.stubs(:save)
-        @indirection.save(:whev)
-    end
-
-    it "should use a cache if there is a related cache setting and it is not set to 'none'" do
-        Puppet.settings.expects(:valid?).with("test_cache").returns(true)
-        Puppet.settings.expects(:value).with("test_cache").returns("something")
+    it "should use a cache if a cache was configured" do
         cache = mock 'cache'
         cache.expects(:save).with(:whev)
-        @indirection.expects(:cache).returns(cache)
+
+        cache_class = mock 'cache class'
+        cache_class.expects(:new).returns(cache)
+        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:mycache, :test).returns(cache_class)
+
+        @indirection.cache_class = :mycache
         @terminus.stubs(:save)
         @indirection.save(:whev)
     end
@@ -199,7 +216,6 @@ end
 
 describe Puppet::Indirector::Indirection, " when using a cache" do
     before do
-        Puppet.settings.stubs(:valid?).returns(true)
         Puppet.settings.stubs(:value).with("test_terminus").returns("test_terminus")
         @terminus_class = mock 'terminus_class'
         @terminus = mock 'terminus'
@@ -209,11 +225,12 @@ describe Puppet::Indirector::Indirection, " when using a cache" do
         Puppet::Indirector::Terminus.stubs(:terminus_class).with(:cache_terminus, :test).returns(@cache_class)
         Puppet::Indirector::Terminus.stubs(:terminus_class).with(:test_terminus, :test).returns(@terminus_class)
         @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
+        @indirection.terminus_class = :test_terminus
     end
 
     it "should copy all writing indirection calls to the cache terminus" do
         @cache_class.expects(:new).returns(@cache)
-        Puppet.settings.stubs(:value).with("test_cache").returns("cache_terminus")
+        @indirection.cache_class = :cache_terminus
         @cache.expects(:save).with(:whev)
         @terminus.stubs(:save)
         @indirection.save(:whev)
@@ -227,6 +244,7 @@ describe Puppet::Indirector::Indirection, " when using a cache" do
     it "should reuse the cache terminus" do
         @cache_class.expects(:new).returns(@cache)
         Puppet.settings.stubs(:value).with("test_cache").returns("cache_terminus")
+        @indirection.cache_class = :cache_terminus
         @indirection.cache.should equal(@cache)
         @indirection.cache.should equal(@cache)
     end
@@ -234,19 +252,7 @@ describe Puppet::Indirector::Indirection, " when using a cache" do
     it "should remove the cache terminus when all other terminus instances are cleared" do
         cache2 = mock 'cache2'
         @cache_class.stubs(:new).returns(@cache, cache2)
-        Puppet.settings.stubs(:value).with("test_cache").returns("cache_terminus")
-        @indirection.cache.should equal(@cache)
-        @indirection.clear_cache
-        @indirection.cache.should equal(cache2)
-    end
-
-    it "should look up the cache name when recreating the cache terminus after terminus instances have been cleared" do
-        cache_class2 = mock 'cache_class2'
-        cache2 = mock 'cache2'
-        cache_class2.expects(:new).returns(cache2)
-        @cache_class.expects(:new).returns(@cache)
-        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:other_cache, :test).returns(cache_class2)
-        Puppet.settings.stubs(:value).with("test_cache").returns("cache_terminus", "other_cache")
+        @indirection.cache_class = :cache_terminus
         @indirection.cache.should equal(@cache)
         @indirection.clear_cache
         @indirection.cache.should equal(cache2)

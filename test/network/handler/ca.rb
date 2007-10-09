@@ -191,7 +191,7 @@ class TestCA < Test::Unit::TestCase
         server = nil
         Puppet[:name] = "puppetmasterd"
         assert_nothing_raised {
-            server = Puppet::Network::Server::WEBrick.new(
+            server = Puppet::Network::HTTPServer::WEBrick.new(
                 :Port => @@port,
                 :Handlers => {
                     :CA => {}, # so that certs autogenerate

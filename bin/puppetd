@@ -390,10 +390,10 @@ if Puppet[:listen] and ! options[:onetime]
     args[:Handlers] = handlers
     args[:Port] = Puppet[:puppetport]
 
-    require 'puppet/network/server/webrick'
+    require 'puppet/network/http_server/webrick'
 
     begin
-        server = Puppet::Network::Server::WEBrick.new(args)
+        server = Puppet::Network::HTTPServer::WEBrick.new(args)
     rescue => detail
         $stderr.puts detail
         puts detail.backtrace
