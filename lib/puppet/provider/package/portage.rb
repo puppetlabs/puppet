@@ -55,7 +55,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
     # The common package name format.
     def package_name
-        "%s/%s" % [@resource[:category], @resource[:name]]
+        @resource[:category] ? "%s/%s" % [@resource[:category], @resource[:name]] : @resource[:name]
     end
 
     def uninstall
@@ -71,7 +71,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
         result_fields = [:category, :name, :ensure, :version_available, :slot, :vendor, :description]
 
         search_field = @resource[:category] ? "--category-name" : "--name"
-        search_value = @resource[:category] ? package_name : @resource[:name]
+        search_value = package_name
         search_format = "<category> <name> [<installedversionsshort>] [<best>] <homepage> <description>"
 
         begin
