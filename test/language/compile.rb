@@ -23,7 +23,7 @@ class TestCompile < Test::Unit::TestCase
 
     def mkparser
         # This should mock an interpreter
-        @parser = stub 'parser', :version => "1.0"
+        @parser = stub 'parser', :version => "1.0", :nodes => {}
     end
 
     def mkcompile(options = {})
@@ -38,7 +38,7 @@ class TestCompile < Test::Unit::TestCase
     def test_initialize
         compile = nil
         node = stub 'node', :name => "foo"
-        parser = stub 'parser', :version => "1.0"
+        parser = stub 'parser', :version => "1.0", :nodes => {}
         assert_nothing_raised("Could not init compile with all required options") do
             compile = Compile.new(node, parser)
         end
@@ -51,7 +51,7 @@ class TestCompile < Test::Unit::TestCase
 
         # Now try it with some options
         assert_nothing_raised("Could not init compile with extra options") do
-            compile = Compile.new(node, parser, :ast_nodes => false)
+            compile = Compile.new(node, parser)
         end
 
         assert_equal(false, compile.ast_nodes?, "Did not set ast_nodes? correctly")
@@ -188,7 +188,7 @@ class TestCompile < Test::Unit::TestCase
     # Make sure we either don't look for nodes, or that we find and evaluate the right object.
     def test_evaluate_ast_node
         # First try it with ast_nodes disabled
-        compile = mkcompile :ast_nodes => false
+        compile = mkcompile
         name = compile.node.name
         compile.expects(:ast_nodes?).returns(false)
         compile.parser.expects(:nodes).never
@@ -201,7 +201,7 @@ class TestCompile < Test::Unit::TestCase
 
         # Now try it with them enabled, but no node found.
         nodes = mock 'node_hash'
-        compile = mkcompile :ast_nodes => true
+        compile = mkcompile
         name = compile.node.name
         compile.expects(:ast_nodes?).returns(true)
         compile.parser.stubs(:nodes).returns(nodes)
@@ -221,7 +221,7 @@ class TestCompile < Test::Unit::TestCase
         end
 
         # Finally, make sure it works dandily when we have a node
-        compile = mkcompile :ast_nodes => true
+        compile = mkcompile
         compile.expects(:ast_nodes?).returns(true)
 
         node = stub 'node', :classname => "c"
@@ -240,7 +240,7 @@ class TestCompile < Test::Unit::TestCase
             "Did not create node resource")
 
         # Lastly, check when we actually find the default.
-        compile = mkcompile :ast_nodes => true
+        compile = mkcompile
         compile.expects(:ast_nodes?).returns(true)
 
         node = stub 'node', :classname => "default"

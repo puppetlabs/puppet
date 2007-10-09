@@ -9,7 +9,7 @@ class Puppet::Node
     extend Puppet::Indirector
 
     # Use the node source as the indirection terminus.
-    indirects :node
+    indirects :node, :terminus_class => :null
 
     # Add the node-searching methods.  This is what people will actually
     # interact with that will find the node with the list of names or

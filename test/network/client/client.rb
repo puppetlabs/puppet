@@ -141,17 +141,13 @@ class TestClient < Test::Unit::TestCase
     end
 
     def test_classfile
-        manifest = tempfile()
+        Puppet[:code] = "class yaytest {}\n class bootest {}\n include yaytest, bootest"
 
-        File.open(manifest, "w") do |file|
-            file.puts "class yaytest {}\n class bootest {}\n include yaytest, bootest"
-        end
+        Puppet::Node::Facts.indirection.stubs(:save)
 
         master = client = nil
         assert_nothing_raised() {
             master = Puppet::Network::Handler.master.new(
-                :Manifest => manifest,
-                :UseNodes => false,
                 :Local => false
             )
         }

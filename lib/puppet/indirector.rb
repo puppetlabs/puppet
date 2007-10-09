@@ -15,7 +15,7 @@ module Puppet::Indirector
     # default, not the value -- if it's the value, then it gets
     # evaluated at parse time, which is before the user has had a chance
     # to override it.
-    def indirects(indirection)
+    def indirects(indirection, options = {})
         raise(ArgumentError, "Already handling indirection for %s; cannot also handle %s" % [@indirection.name, indirection]) if defined?(@indirection) and @indirection
         # populate this class with the various new methods
         extend ClassMethods
@@ -24,10 +24,29 @@ module Puppet::Indirector
         # instantiate the actual Terminus for that type and this name (:ldap, w/ args :node)
         # & hook the instantiated Terminus into this class (Node: @indirection = terminus)
         @indirection = Puppet::Indirector::Indirection.new(self, indirection)
+
+        unless options.empty?
+            options.each do |param, value|
+                case param
+                when :terminus_class: @indirection.terminus_class = value
+                else
+                    raise ArgumenError, "Invalid option '%s' to 'indirects'" % param
+                end
+            end
+        end
+        @indirection
     end
 
     module ClassMethods   
       attr_reader :indirection
+
+      def cache_class=(klass)
+          indirection.cache_class = klass
+      end
+
+      def terminus_class=(klass)
+          indirection.terminus_class = klass
+      end
          
       def find(*args)
         indirection.find(*args)
@@ -43,6 +62,10 @@ module Puppet::Indirector
     end
 
     module InstanceMethods
+      # Make it easy for the model to set versions,
+      # which are used for caching and such.
+      attr_accessor :version
+
       # these become instance methods 
       def save(*args)
         self.class.indirection.save(self, *args)

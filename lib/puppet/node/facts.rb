@@ -9,7 +9,7 @@ class Puppet::Node::Facts
     extend Puppet::Indirector
 
     # Use the node source as the indirection terminus.
-    indirects :facts
+    indirects :facts, :terminus_class => :code
 
     attr_accessor :name, :values
 

@@ -9,7 +9,7 @@ speclibdir = File.join(basedir, "lib")
 
 desc "Run all spec unit tests"
 Spec::Rake::SpecTask.new('unit') do |t|
-    t.spec_files = FileList['unit/**/*.rb']
+    t.spec_files = FileList['unit/**/*.rb', 'integration/**/*.rb']
     t.libs = [puppetlibdir, puppettestlibdir, speclibdir]
 end
 

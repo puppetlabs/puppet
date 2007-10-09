@@ -202,7 +202,7 @@ class TestSnippets < Test::Unit::TestCase
 
         assert_nothing_raised {
             assert_equal(
-                "//testing/component[componentname]/File[/tmp/classtest]",
+                "//testing/Mytype[componentname]/File[/tmp/classtest]",
                 file.path)
         }
     end
@@ -449,45 +449,24 @@ class TestSnippets < Test::Unit::TestCase
             #eval("alias %s %s" % [testname, mname])
             testname = ("test_" + mname).intern
             self.send(:define_method, testname) {
+                Puppet[:manifest] = snippet(file)
                 facts = {
                     "hostname" => "testhost",
                     "domain" => "domain.com",
                     "ipaddress" => "127.0.0.1",
                     "fqdn" => "testhost.domain.com"
                 }
-                Facter.stubs(:each)
-                facts.each do |name, value|
-                    Facter.stubs(:value).with(name).returns(value)
-                end
-                # first parse the file
-                server = Puppet::Network::Handler.master.new(
-                    :Manifest => snippet(file),
-                    :Local => true
-                )
-                facts = Puppet::Node::Facts.new("testhost", facts)
-                Puppet::Node::Facts.stubs(:save)
-                Puppet::Node::Facts.stubs(:find).returns(facts)
-                client = Puppet::Network::Client.master.new(
-                    :Master => server,
-                    :Cache => false
-                )
-                client.class.stubs(:facts).returns(facts.values)
 
-                assert(client.local)
-                assert_nothing_raised {
-                    client.getconfig()
+                node = Puppet::Node.new("testhost")
+                node.merge(facts)
+
+                config = nil
+                assert_nothing_raised("Could not compile configuration") {
+                    config = Puppet::Node::Configuration.find(node)
                 }
 
-                client = Puppet::Network::Client.master.new(
-                    :Master => server,
-                    :Cache => false
-                )
-
-                assert(client.local)
-                # Now do it again
-                Puppet::Type.allclear
-                assert_nothing_raised {
-                    client.getconfig()
+                assert_nothing_raised("Could not convert configuration") {
+                    config = config.to_ral
                 }
 
                 Puppet::Type.eachtype { |type|
@@ -500,12 +479,10 @@ class TestSnippets < Test::Unit::TestCase
                         assert(obj.name)
                     }
                 }
-                @configuration = client.configuration
+                @configuration = config
                 assert_nothing_raised {
                     self.send(mname)
                 }
-
-                client.clear
             }
             mname = mname.intern
         end

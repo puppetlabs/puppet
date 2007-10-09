@@ -30,13 +30,6 @@ class Puppet::Network::Handler
         def initialize(hash = {})
             args = {}
 
-            # Allow specification of a code snippet or of a file
-            if code = hash[:Code]
-                args[:Code] = code
-            elsif man = hash[:Manifest]
-                args[:Manifest] = man
-            end
-
             if hash[:Local]
                 @local = hash[:Local]
             else
@@ -53,12 +46,6 @@ class Puppet::Network::Handler
 
             Puppet.debug("Creating interpreter")
 
-            if hash.include?(:UseNodes)
-                args[:UseNodes] = hash[:UseNodes]
-            elsif @local
-                args[:UseNodes] = false
-            end
-
             # This is only used by the cfengine module, or if --loadclasses was
             # specified in +puppet+.
             if hash.include?(:Classes)
@@ -74,7 +61,7 @@ class Puppet::Network::Handler
             client, clientip = clientname(client, clientip, facts)
 
             # Pass the facts to the fact handler
-            Puppet::Node::Facts.new(client, facts).save
+            Puppet::Node::Facts.new(client, facts).save unless local?
 
             # And get the configuration from the config handler
             config = config_handler.configuration(client)

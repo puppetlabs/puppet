@@ -151,6 +151,153 @@ describe Puppet::Node::Configuration, " when extracting transobjects" do
     end
 end
 
+describe Puppet::Node::Configuration, " when converting to a transobject configuration" do
+    class TestResource
+        attr_accessor :name, :virtual, :builtin
+        def initialize(name, options = {})
+            @name = name
+            options.each { |p,v| send(p.to_s + "=", v) }
+        end
+
+        def ref
+            if builtin?
+                "File[%s]" % name
+            else
+                "Class[%s]" % name
+            end
+        end
+
+        def virtual?
+            virtual
+        end
+
+        def builtin?
+            builtin
+        end
+
+        def to_transobject
+            Puppet::TransObject.new(name, builtin? ? "file" : "class")
+        end
+    end
+
+    before do
+        @original = Puppet::Node::Configuration.new("mynode")
+        @original.tag(*%w{one two three})
+        @original.add_class *%w{four five six}
+
+        @top            = TestResource.new 'top'
+        @topobject      = TestResource.new 'topobject', :builtin => true
+        @virtual        = TestResource.new 'virtual', :virtual => true
+        @virtualobject  = TestResource.new 'virtualobject', :builtin => true, :virtual => true
+        @middle         = TestResource.new 'middle'
+        @middleobject   = TestResource.new 'middleobject', :builtin => true
+        @bottom         = TestResource.new 'bottom'
+        @bottomobject   = TestResource.new 'bottomobject', :builtin => true
+
+        @resources = [@top, @topobject, @middle, @middleobject, @bottom, @bottomobject]
+
+        @original.add_edge!(@top, @topobject)
+        @original.add_edge!(@top, @virtual)
+        @original.add_edge!(@virtual, @virtualobject)
+        @original.add_edge!(@top, @middle)
+        @original.add_edge!(@middle, @middleobject)
+        @original.add_edge!(@middle, @bottom)
+        @original.add_edge!(@bottom, @bottomobject)
+
+        @config = @original.to_transportable
+    end
+
+    it "should add all resources as TransObjects" do
+        @resources.each { |resource| @config.resource(resource.ref).should be_instance_of(Puppet::TransObject) }
+    end
+
+    it "should not extract defined virtual resources" do
+        @config.vertices.find { |v| v.name == "virtual" }.should be_nil
+    end
+
+    it "should not extract builtin virtual resources" do
+        @config.vertices.find { |v| v.name == "virtualobject" }.should be_nil
+    end
+
+    it "should copy the tag list to the new configuration" do
+        @config.tags.sort.should == @original.tags.sort
+    end
+
+    it "should copy the class list to the new configuration" do
+        @config.classes.should == @original.classes
+    end
+
+    it "should duplicate the original edges" do
+        @original.edges.each do |edge|
+            next if edge.source.virtual? or edge.target.virtual?
+            source = @config.resource(edge.source.ref)
+            target = @config.resource(edge.target.ref)
+
+            source.should_not be_nil
+            target.should_not be_nil
+            @config.edge?(source, target).should be_true
+        end
+    end
+
+    it "should set itself as the configuration for each converted resource" do
+        @config.vertices.each { |v| v.configuration.object_id.should equal(@config.object_id) }
+    end
+end
+
+describe Puppet::Node::Configuration, " when converting to a RAL configuration" do
+    before do
+        @original = Puppet::Node::Configuration.new("mynode")
+        @original.tag(*%w{one two three})
+        @original.add_class *%w{four five six}
+
+        @top            = Puppet::TransObject.new 'Class[top]', "component"
+        @topobject      = Puppet::TransObject.new '/topobject', "file"
+        @middle         = Puppet::TransObject.new 'Class[middle]', "component"
+        @middleobject   = Puppet::TransObject.new '/middleobject', "file"
+        @bottom         = Puppet::TransObject.new 'Class[bottom]', "component"
+        @bottomobject   = Puppet::TransObject.new '/bottomobject', "file"
+
+        @resources = [@top, @topobject, @middle, @middleobject, @bottom, @bottomobject]
+
+        @original.add_resource(*@resources)
+
+        @original.add_edge!(@top, @topobject)
+        @original.add_edge!(@top, @middle)
+        @original.add_edge!(@middle, @middleobject)
+        @original.add_edge!(@middle, @bottom)
+        @original.add_edge!(@bottom, @bottomobject)
+
+        @config = @original.to_ral
+    end
+
+    it "should add all resources as RAL instances" do
+        @resources.each { |resource| @config.resource(resource.ref).should be_instance_of(Puppet::Type) }
+    end
+
+    it "should copy the tag list to the new configuration" do
+        @config.tags.sort.should == @original.tags.sort
+    end
+
+    it "should copy the class list to the new configuration" do
+        @config.classes.should == @original.classes
+    end
+
+    it "should duplicate the original edges" do
+        @original.edges.each do |edge|
+            @config.edge?(@config.resource(edge.source.ref), @config.resource(edge.target.ref)).should be_true
+        end
+    end
+
+    it "should set itself as the configuration for each converted resource" do
+        @config.vertices.each { |v| v.configuration.object_id.should equal(@config.object_id) }
+    end
+
+    after do
+        # Remove all resource instances.
+        @config.clear(true)
+    end
+end
+
 describe Puppet::Node::Configuration, " when functioning as a resource container" do
     before do
         @config = Puppet::Node::Configuration.new("host")
@@ -488,5 +635,62 @@ describe Puppet::Node::Configuration, " when writing dot files" do
 
     after do
         Puppet.settings.clear
+    end
+end
+
+describe Puppet::Node::Configuration, " when indirecting" do
+    before do
+        @indirection = mock 'indirection'
+
+        Puppet::Indirector::Indirection.clear_cache
+    end
+
+    it "should redirect to the indirection for retrieval" do
+        Puppet::Node::Configuration.stubs(:indirection).returns(@indirection)
+        @indirection.expects(:find).with(:myconfig)
+        Puppet::Node::Configuration.find(:myconfig)
+    end
+
+    it "should default to the code terminus" do
+        Puppet::Node::Configuration.indirection.terminus_class.should == :code
+    end
+
+    after do
+        mocha_verify
+        Puppet::Indirector::Indirection.clear_cache
+    end
+end
+
+describe Puppet::Node::Configuration, " when converting to yaml" do
+    before do
+        @configuration = Puppet::Node::Configuration.new("me")
+        @configuration.add_edge!("one", "two")
+    end
+
+    it "should be able to be dumped to yaml" do
+        YAML.dump(@configuration).should be_instance_of(String)
+    end
+end
+
+describe Puppet::Node::Configuration, " when converting from yaml" do
+    before do
+        @configuration = Puppet::Node::Configuration.new("me")
+        @configuration.add_edge!("one", "two")
+
+        text = YAML.dump(@configuration)
+        @newconfig = YAML.load(text)
+    end
+
+    it "should get converted back to a configuration" do
+        @newconfig.should be_instance_of(Puppet::Node::Configuration)
+    end
+
+    it "should have all vertices" do
+        @newconfig.vertex?("one").should be_true
+        @newconfig.vertex?("two").should be_true
+    end
+
+    it "should have all edges" do
+        @newconfig.edge?("one", "two").should be_true
     end
 end

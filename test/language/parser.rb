@@ -618,7 +618,8 @@ file { "/tmp/yayness":
             f.puts "file { '#{file}': ensure => present }"
         end
 
-        interp = mkinterp :Manifest => top, :UseNodes => false
+        Puppet[:manifest] = top
+        interp = Puppet::Parser::Interpreter.new
 
         code = nil
         assert_nothing_raised do

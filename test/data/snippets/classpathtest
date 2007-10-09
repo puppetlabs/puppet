@@ -1,11 +1,11 @@
 # $Id$
 
-define component {
+define mytype {
     file { "/tmp/classtest": ensure => file, mode => 755 }
 }
 
 class testing {
-    component { "componentname": }
+    mytype { "componentname": }
 }
 
 include testing

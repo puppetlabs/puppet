@@ -7,15 +7,14 @@ require 'puppettest'
 class TestHandlerRunner < Test::Unit::TestCase
 	include PuppetTest
 
-    def mkclient(file)
+    def mkclient(code)
         master = nil
         client = nil
+        Puppet[:code] = code
         # create our master
         assert_nothing_raised() {
             # this is the default server setup
             master = Puppet::Network::Handler.master.new(
-                :Manifest => file,
-                :UseNodes => false,
                 :Local => true
             )
         }
@@ -38,8 +37,7 @@ class TestHandlerRunner < Test::Unit::TestCase
         created = tempfile()
         # We specify the schedule here, because I was having problems with
         # using default schedules.
-        File.open(file, "w") do |f|
-            f.puts %{
+        code = %{
                 class yayness {
                     schedule { "yayness": period => weekly }
                     file { "#{created}": ensure => file, schedule => yayness }
@@ -47,9 +45,8 @@ class TestHandlerRunner < Test::Unit::TestCase
 
                 include yayness
             }
-        end
 
-        client = mkclient(file)
+        client = mkclient(code)
 
         runner = nil
         assert_nothing_raised {

@@ -251,12 +251,17 @@ module Puppet
 
         def scope
             unless defined?(@scope)
-                @interp = Puppet::Parser::Interpreter.new :Code => ""
+                # Set the code to something innocuous; we just need the
+                # scopes, not the interpreter.  Hackish, but true.
+                Puppet[:code] = " "
+                @interp = Puppet::Parser::Interpreter.new
                 require 'puppet/node'
                 @node = Puppet::Node.new(Facter.value(:hostname))
+                if env = Puppet[:environment] and env == ""
+                    env = nil
+                end
                 @node.parameters = Facter.to_hash
-                @interp = Puppet::Parser::Interpreter.new :Code => ""
-                @compile = Puppet::Parser::Compile.new(@node, @interp.send(:parser, Puppet[:environment]))
+                @compile = Puppet::Parser::Compile.new(@node, @interp.send(:parser, env))
                 @scope = @compile.topscope
             end
             @scope

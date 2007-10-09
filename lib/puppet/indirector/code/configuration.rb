@@ -15,24 +15,19 @@ class Puppet::Indirector::Code::Configuration < Puppet::Indirector::Code
 
     # Compile a node's configuration.
     def find(key, client = nil, clientip = nil)
-        # If we want to use the cert name as our key
-        if Puppet[:node_name] == 'cert' and client
-            key = client
+        if key.is_a?(Puppet::Node)
+            node = key
+        else
+            node = find_node(key)
         end
 
-        # Note that this is reasonable, because either their node source should actually
-        # know about the node, or they should be using the ``none`` node source, which
-        # will always return data.
-        unless node = Puppet::Node.search(key)
-            raise Puppet::Error, "Could not find node '%s'" % key
+        if configuration = compile(node)
+            return configuration.to_transportable
+        else
+            # This shouldn't actually happen; we should either return
+            # a config or raise an exception.
+            return nil
         end
-
-        # Add any external data to the node.
-        add_node_data(node)
-
-        configuration = compile(node)
-
-        return configuration
     end
 
     def initialize
@@ -45,6 +40,11 @@ class Puppet::Indirector::Code::Configuration < Puppet::Indirector::Code
             @interpreter = create_interpreter
         end
         @interpreter
+    end
+
+    # Is our compiler part of a network, or are we just local?
+    def networked?
+        $0 =~ /puppetmasterd/
     end
 
     # Return the configuration version.
@@ -76,22 +76,14 @@ class Puppet::Indirector::Code::Configuration < Puppet::Indirector::Code
         end
         config = nil
 
-        # LAK:FIXME This should log at :none when our client is
-        # local, since we don't want 'puppet' (vs. puppetmasterd) to
-        # log compile times.
-        benchmark(:notice, "Compiled configuration for %s" % node.name) do
+        loglevel = networked? ? :notice : :none
+
+        benchmark(loglevel, "Compiled configuration for %s" % node.name) do
             begin
                 config = interpreter.compile(node)
             rescue Puppet::Error => detail
-                if Puppet[:trace]
-                    puts detail.backtrace
-                end
-                unless local?
-                    Puppet.err detail.to_s
-                end
-                raise XMLRPC::FaultException.new(
-                    1, detail.to_s
-                )
+                Puppet.err(detail.to_s) if networked?
+                raise
             end
         end
 
@@ -100,21 +92,28 @@ class Puppet::Indirector::Code::Configuration < Puppet::Indirector::Code
 
     # Create our interpreter object.
     def create_interpreter
-        args = {}
+        return Puppet::Parser::Interpreter.new
+    end
 
-        # Allow specification of a code snippet or of a file
-        if self.code
-            args[:Code] = self.code
-        end
-
-        # LAK:FIXME This needs to be handled somehow.
-        #if options.include?(:UseNodes)
-        #    args[:UseNodes] = options[:UseNodes]
-        #elsif @local
-        #    args[:UseNodes] = false
+    # Turn our host name into a node object.
+    def find_node(key)
+        # If we want to use the cert name as our key
+        # LAK:FIXME This needs to be figured out somehow, but it requires the routing.
+        #if Puppet[:node_name] == 'cert' and client
+        #    key = client
         #end
 
-        return Puppet::Parser::Interpreter.new(args)
+        # Note that this is reasonable, because either their node source should actually
+        # know about the node, or they should be using the ``none`` node source, which
+        # will always return data.
+        unless node = Puppet::Node.search(key)
+            raise Puppet::Error, "Could not find node '%s'" % key
+        end
+
+        # Add any external data to the node.
+        add_node_data(node)
+
+        node
     end
 
     # Initialize our server fact hash; we add these to each client, and they
@@ -150,7 +149,7 @@ class Puppet::Indirector::Code::Configuration < Puppet::Indirector::Code
     # LAK:FIXME This method should probably be part of the protocol, but it
     # shouldn't be here.
     def translate(config)
-        if local?
+        unless networked?
             config
         else
             CGI.escape(config.to_yaml(:UseBlock => true))

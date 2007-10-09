@@ -1,4 +1,9 @@
-0.23.2 (misspiggy)
+    The --use-nodes and --no-nodes options are now obsolete.
+    Puppet automatically detects when nodes are defined, and if
+    they are defined it will require that a node be found,
+    else it will not look for a node nor will it fail if it
+    fails to find one.
+
     Fixed #832. Added the '--no-daemonize' option to puppetd and
     puppetmasterd.  NOTE: The default behavior of 'verbose' and
     'debug' no longer cause puppetd and puppetmasterd to not
@@ -10,6 +15,7 @@
 
     Added shortname support to config.rb and refactored addargs
 
+0.23.2
     Fixed the problem in cron jobs where environment settings
     tended to multiple. (#749)
 

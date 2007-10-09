@@ -8,7 +8,7 @@ module Puppet
     # YAML.
     class TransObject
         include Enumerable
-        attr_accessor :type, :name, :file, :line, :collectable, :collected
+        attr_accessor :type, :name, :file, :line, :configuration
 
         attr_writer :tags
 
@@ -25,7 +25,6 @@ module Puppet
         def initialize(name,type)
             @type = type
             @name = name
-            @collectable = false
             @params = {}
             @tags = []
         end
@@ -34,8 +33,42 @@ module Puppet
             return [@type,@name].join('--')
         end
 
+        def ref
+            unless defined? @ref
+                if @type == :component
+                    @ref = @name
+                else
+                    @ref = "%s[%s]" % [type_capitalized, name]
+                end
+            end
+            @ref
+        end
+
         def tags
             return @tags
+        end
+
+        # Convert a defined type into a component.
+        def to_component
+            tmpname = nil
+
+            # Nodes have the same name and type
+            if self.name
+                tmpname = "%s[%s]" % [type_capitalized, self.name]
+            else
+                tmpname = @type
+            end
+            trans = TransObject.new(tmpname, :component)
+            if defined? @parameters
+                @parameters.each { |param,value|
+                    Puppet.debug "Defining %s on %s of type %s" %
+                        [param,@name,@type]
+                    trans[param] = value
+                }
+            else
+                #Puppet.debug "%s[%s] has no parameters" % [@type, @name]
+            end
+            Puppet::Type::Component.create(trans)
         end
 
         def to_hash
@@ -57,18 +90,18 @@ module Puppet
         end
 
         def to_yaml_properties
-            instance_variables
+            instance_variables.reject { |v| %w{@ref}.include?(v) }
         end
 
         def to_ref
-            unless defined? @ref
+            unless defined? @res_ref
                 if self.type and self.name
-                    @ref = "%s[%s]" % [self.type, self.name]
+                    @res_ref = "%s[%s]" % [type_capitalized, self.name]
                 else
-                    @ref = nil
+                    @res_ref = nil
                 end
             end
-            @ref
+            @res_ref
         end
 
         def to_type
@@ -85,10 +118,15 @@ module Puppet
                     end
                 end
             else
-                raise Puppet::Error.new("Could not find object type %s" % self.type)
+                return to_component
             end
 
             return retobj
+        end
+
+        # Return the type fully capitalized correctly.
+        def type_capitalized
+            type.split("::").collect { |s| s.capitalize }.join("::")
         end
     end
 
@@ -106,20 +144,6 @@ module Puppet
                 #Puppet.warning @params.inspect
             end
         }
-
-        # Remove all collectable objects from our tree, since the client
-        # should not see them.
-        def collectstrip!
-            @children.dup.each do |child|
-                if child.is_a? self.class
-                    child.collectstrip!
-                else
-                    if child.collectable and ! child.collected
-                        @children.delete(child)
-                    end
-                end
-            end
-        end
 
         # Recursively yield everything.
         def delve(&block)
