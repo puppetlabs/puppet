@@ -397,6 +397,8 @@ end
         manifest = tempfile()
         File.open(manifest, "w") { |f| f.puts "file { '#{file}': content => yay }" }
         
+        Puppet::Node::Facts.indirection.stubs(:save)
+        
         driver = mkmaster(:Manifest => manifest)
         driver.local = false
         master = mkclient(driver)
@@ -406,7 +408,7 @@ end
         
         assert(! master.fresh?(master.class.facts),
             "Considered fresh with no compile at all")
-        
+
         assert_nothing_raised { master.run }
         assert(master.fresh?(master.class.facts),
             "not considered fresh after compile")
@@ -481,7 +483,9 @@ end
         master.local = false
         driver = master.send(:instance_variable_get, "@driver")
         driver.local = false
+        Puppet::Node::Facts.indirection.stubs(:save)
         # Retrieve the configuration
+
         master.getconfig
 
         # Now the config is up to date, so get rid of the @objects var and
@@ -508,6 +512,8 @@ end
         master.local = false
         driver = master.send(:instance_variable_get, "@driver")
         driver.local = false
+
+        Puppet::Node::Facts.indirection.stubs(:save)
 
         assert_nothing_raised("Could not compile config") do
             master.getconfig

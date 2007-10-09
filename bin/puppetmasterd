@@ -186,6 +186,9 @@ end
 Puppet.genconfig
 Puppet.genmanifest
 
+# A temporary solution, to at least make the master work for now.
+Puppet::Node::Facts.terminus_class = :yaml
+
 require 'etc'
 
 handlers = {

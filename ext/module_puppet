@@ -150,14 +150,23 @@ unless setdest
     Puppet::Util::Log.newdestination(:syslog)
 end
 
-master[:Manifest] = ARGV.shift
+Puppet[:manifest] = ARGV.shift
 
 unless ENV.include?("CFALLCLASSES")
     $stderr.puts "Cfengine classes must be passed to the module"
     exit(15)
 end
 
-master[:UseNodes] = false
+# Collect our facts.
+Puppet::Node::Facts.terminus_class = :code
+facts = Puppet::Node::Facts.find("me")
+facts.name = facts.values["hostname"]
+
+# Create our Node
+node = Puppet::Node.new(facts.name)
+
+# Merge in the facts.
+node.merge(facts.values)
 
 classes = ENV["CFALLCLASSES"].split(":")
 
@@ -166,32 +175,32 @@ if classes.empty?
     exit(16)
 end
 
-master[:Classes] = classes
+node.classes = classes
 
 begin
-    server = Puppet::Network::Handler.master.new(master)
+    # Compile our configuration
+    config = Puppet::Node::Configuration.find(node)
 rescue => detail
-    $stderr.puts detail
+    if Puppet[:trace]
+        puts detail.backtrace
+    end
+    if detail.is_a?(XMLRPC::FaultException)
+        $stderr.puts detail.message
+    else
+        $stderr.puts detail
+    end
     exit(1)
 end
-
-begin
-    client = Puppet::Network::Client.master.new(
-        :Master => server,
-        :Cache => false
-    )
-rescue => detail
-    $stderr.puts detail
-    exit(1)
-end
-
 
 if parseonly
     exit(0)
 end
 
 begin
-    config = client.getconfig
+    # Translate it to a RAL configuration
+    config = config.to_ral
+
+    # And apply it
     config.apply
 rescue => detail
     Puppet.err detail

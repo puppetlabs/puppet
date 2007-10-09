@@ -14,9 +14,9 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
         return nil unless FileTest.exist?(file)
 
         begin
-            return YAML.load(File.read(file))
+            return from_yaml(File.read(file))
         rescue => detail
-            raise Puppet::Error, "Could not read YAML data for %s(%s): %s" % [indirection.name, name, detail]
+            raise Puppet::Error, "Could not read YAML data for %s %s: %s" % [indirection.name, name, detail]
         end
     end
 
@@ -33,10 +33,22 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
             Dir.mkdir(basedir)
         end
 
-        File.open(file, "w", 0660) { |f| f.print YAML.dump(object) }
+        begin
+            File.open(file, "w", 0660) { |f| f.print to_yaml(object) }
+        rescue TypeError => detail
+            Puppet.err "Could not save %s %s: %s" % [self.name, object.name, detail]
+        end
     end
 
     private
+
+    def from_yaml(text)
+        YAML.load(text)
+    end
+
+    def to_yaml(object)
+        YAML.dump(object)
+    end
 
     # Return the path to a given node's file.
     def path(name)

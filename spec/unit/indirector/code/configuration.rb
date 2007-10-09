@@ -143,7 +143,9 @@ describe Puppet::Indirector::Code::Configuration, " when creating configurations
 
     it "should return the results of compiling as the configuration" do
         config = mock 'config'
-        @compiler.interpreter.expects(:compile).with(@node).returns(:configuration)
+        result = mock 'result', :to_transportable => :configuration
+
+        @compiler.interpreter.expects(:compile).with(@node).returns(result)
         @compiler.find(@name).should == :configuration
     end
 

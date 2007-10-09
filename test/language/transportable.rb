@@ -47,37 +47,17 @@ class TestTransportable < Test::Unit::TestCase
         assert(newobj.type, "Bucket has no type")
     end
 
-    # Verify that we correctly strip out collectable objects, since they should
-    # not be sent to the client.
-    def test_collectstrip
-        top = mk_transtree do |object, depth, width|
-            if width % 2 == 1
-                object.collectable = true
-            end
-        end
-
-        assert(top.flatten.find_all { |o| o.collectable }.length > 0,
-            "Could not find any collectable objects")
-
-        # Now strip out the collectable objects
-        top.collectstrip!
-
-        # And make sure they're actually gone
-        assert_equal(0, top.flatten.find_all { |o| o.collectable }.length,
-            "Still found collectable objects")
-    end
-
     # Make sure our 'delve' command is working
     def test_delve
         top = mk_transtree do |object, depth, width|
             if width % 2 == 1
-                object.collectable = true
+                object.file = :funtest
             end
         end
 
         objects = []
         buckets = []
-        collectable = []
+        found = []
 
         count = 0
         assert_nothing_raised {
@@ -87,8 +67,8 @@ class TestTransportable < Test::Unit::TestCase
                     buckets << object
                 else
                     objects << object
-                    if object.collectable
-                        collectable << object
+                    if object.file == :funtest
+                        found << object
                     end
                 end
             end
@@ -98,9 +78,9 @@ class TestTransportable < Test::Unit::TestCase
             assert(objects.include?(obj), "Missing obj %s[%s]" % [obj.type, obj.name])
         end
 
-        assert_equal(collectable.length,
-            top.flatten.find_all { |o| o.collectable }.length,
-            "Found incorrect number of collectable objects")
+        assert_equal(found.length,
+            top.flatten.find_all { |o| o.file == :funtest }.length,
+            "Found incorrect number of objects")
     end
 end
 

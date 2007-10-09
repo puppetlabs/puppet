@@ -21,9 +21,13 @@ class Puppet::Indirector::Code::Configuration < Puppet::Indirector::Code
             node = find_node(key)
         end
 
-        configuration = compile(node)
-
-        return configuration
+        if configuration = compile(node)
+            return configuration.to_transportable
+        else
+            # This shouldn't actually happen; we should either return
+            # a config or raise an exception.
+            return nil
+        end
     end
 
     def initialize

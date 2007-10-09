@@ -25,9 +25,7 @@ class TestHandlerConfiguration < Test::Unit::TestCase
         config = Config.new
 
         # First test the defaults
-        args = {}
-        config.instance_variable_set("@options", args)
-        config.expects(:create_interpreter).with(args).returns(:interp)
+        config.expects(:create_interpreter).returns(:interp)
         assert_equal(:interp, config.send(:interpreter), "Did not return the interpreter")
 
         # Now run it again and make sure we get the same thing
@@ -39,20 +37,8 @@ class TestHandlerConfiguration < Test::Unit::TestCase
         args = {}
 
         # Try it first with defaults.
-        Puppet::Parser::Interpreter.expects(:new).with(:Local => config.local?).returns(:interp)
-        assert_equal(:interp, config.send(:create_interpreter, args), "Did not return the interpreter")
-
-        # Now reset it and make sure a specified manifest passes through
-        file = tempfile
-        args[:Manifest] = file
-        Puppet::Parser::Interpreter.expects(:new).with(:Local => config.local?, :Manifest => file).returns(:interp)
-        assert_equal(:interp, config.send(:create_interpreter, args), "Did not return the interpreter")
-
-        # And make sure the code does, too
-        args.delete(:Manifest)
-        args[:Code] = "yay"
-        Puppet::Parser::Interpreter.expects(:new).with(:Local => config.local?, :Code => "yay").returns(:interp)
-        assert_equal(:interp, config.send(:create_interpreter, args), "Did not return the interpreter")
+        Puppet::Parser::Interpreter.expects(:new).returns(:interp)
+        assert_equal(:interp, config.send(:create_interpreter), "Did not return the interpreter")
     end
 
     # Make sure node objects get appropriate data added to them.
@@ -67,7 +53,7 @@ class TestHandlerConfiguration < Test::Unit::TestCase
         config.send(:add_node_data, fakenode)
 
         # Now try it with classes.
-        config.instance_variable_set("@options", {:Classes => %w{a b}})
+        config.classes = %w{a b}
         list = []
         fakenode = Object.new
         fakenode.expects(:merge).with(:facts)
@@ -126,8 +112,9 @@ class TestHandlerConfiguration < Test::Unit::TestCase
 
         # Now a non-local
         config = Config.new(:Local => false)
-        obj = Object.new
-        yamld = Object.new
+        assert(! config.local?, "Config wrongly thinks it's local")
+        obj = mock 'dumpee'
+        yamld = mock 'yaml'
         obj.expects(:to_yaml).with(:UseBlock => true).returns(yamld)
         CGI.expects(:escape).with(yamld).returns(:translated)
         assert_equal(:translated, config.send(:translate, obj), "Did not return translated config")

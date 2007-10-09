@@ -62,6 +62,10 @@ module Puppet::Indirector
     end
 
     module InstanceMethods
+      # Make it easy for the model to set versions,
+      # which are used for caching and such.
+      attr_accessor :version
+
       # these become instance methods 
       def save(*args)
         self.class.indirection.save(self, *args)
