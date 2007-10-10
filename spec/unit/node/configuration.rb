@@ -250,11 +250,11 @@ describe Puppet::Node::Configuration, " when converting to a RAL configuration" 
         @original.tag(*%w{one two three})
         @original.add_class *%w{four five six}
 
-        @top            = Puppet::TransObject.new 'Class[top]', "component"
+        @top            = Puppet::TransObject.new 'top', "class"
         @topobject      = Puppet::TransObject.new '/topobject', "file"
-        @middle         = Puppet::TransObject.new 'Class[middle]', "component"
+        @middle         = Puppet::TransObject.new 'middle', "class"
         @middleobject   = Puppet::TransObject.new '/middleobject', "file"
-        @bottom         = Puppet::TransObject.new 'Class[bottom]', "component"
+        @bottom         = Puppet::TransObject.new 'bottom', "class"
         @bottomobject   = Puppet::TransObject.new '/bottomobject', "file"
 
         @resources = [@top, @topobject, @middle, @middleobject, @bottom, @bottomobject]
