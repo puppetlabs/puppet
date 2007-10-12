@@ -388,8 +388,12 @@ class Puppet::Node::Configuration < Puppet::PGraph
     # dumped by default, nor does yaml-dumping # the edge-labels work at this point (I don't
     # know why).
     #  Neither of these matters right now, but I suppose it could at some point.
+    # We also have to have the vertex_dict dumped after the resource table, because yaml can't
+    # seem to handle the output of yaml-dumping the vertex_dict.
     def to_yaml_properties
-        instance_variables.reject { |v| %w{@edgelist_class @edge_labels}.include?(v) }
+        props = instance_variables.reject { |v| %w{@edgelist_class @edge_labels @vertex_dict}.include?(v) }
+        props << "@vertex_dict"
+        props
     end
 
     private
