@@ -1,78 +1,24 @@
 require 'puppet/util/instance_loader'
+require 'puppet/reports'
 
 # A simple server for triggering a new run on a Puppet client.
 class Puppet::Network::Handler
     class Report < Handler
         desc "Accepts a Puppet transaction report and processes it."
 
-        extend Puppet::Util::ClassGen
-        extend Puppet::Util::InstanceLoader
-
-        module ReportBase
-            include Puppet::Util::Docs
-            attr_writer :useyaml
-
-            def useyaml?
-                if defined? @useyaml
-                    @useyaml
-                else
-                    false
-                end
-            end
-        end
-
         @interface = XMLRPC::Service::Interface.new("puppetreports") { |iface|
             iface.add_method("string report(array)")
         }
 
-        # Set up autoloading and retrieving of reports.
-        instance_load :report, 'puppet/reports'
-
-        class << self
-            attr_reader :hooks
-        end
-
         # Add a new report type.
         def self.newreport(name, options = {}, &block)
-            name = symbolize(name)
-
-            mod = genmodule(name, :extend => ReportBase, :hash => instance_hash(:report), :block => block)
-
-            if options[:useyaml]
-                mod.useyaml = true
-            end
-
-            mod.send(:define_method, :report_name) do
-                name
-            end
-        end
-
-        # Collect the docs for all of our reports.
-        def self.reportdocs
-            docs = ""
-
-            # Use this method so they all get loaded
-            instance_loader(:report).loadall
-            loaded_instances(:report).sort { |a,b| a.to_s <=> b.to_s }.each do |name|
-                mod = self.report(name)
-                docs += "%s\n%s\n" % [name, "-" * name.to_s.length]
-
-                docs += Puppet::Util::Docs.scrub(mod.doc) + "\n\n"
-            end
-
-            docs
-        end
-
-        # List each of the reports.
-        def self.reports
-            instance_loader(:report).loadall
-            loaded_instances(:report)
+            Puppet.warning "The interface for registering report types has changed; use Puppet::Reports.register_report for report type %s" % name
+            Puppet::Reports.register_report(name, options, &block)
         end
 
         def initialize(*args)
             super
-            Puppet.settings.use(:reporting)
-            Puppet.settings.use(:metrics)
+            Puppet.settings.use(:reporting, :metrics)
         end
 
         # Accept a report from a client.
@@ -111,17 +57,13 @@ class Puppet::Network::Handler
             client = report.host
 
             reports().each do |name|
-                if mod = self.class.report(name)
+                if mod = Puppet::Reports.report(name)
                     # We have to use a dup because we're including a module in the
                     # report.
                     newrep = report.dup
                     begin
                         newrep.extend(mod)
-                        if mod.useyaml?
-                            newrep.process(yaml)
-                        else
-                            newrep.process
-                        end
+                        newrep.process
                     rescue => detail
                         if Puppet[:trace]
                             puts detail.backtrace

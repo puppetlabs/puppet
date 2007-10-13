@@ -3,6 +3,7 @@
 $:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
 
 require 'puppet'
+require 'puppet/reports'
 require 'puppet/transaction/report'
 require 'puppettest'
 require 'puppettest/reporttesting'
@@ -97,14 +98,14 @@ class TestReports < Test::Unit::TestCase
         }
 
         assert_nothing_raised do
-            report.extend(Puppet::Network::Handler.report.report(:store))
+            report.extend(Puppet::Reports.report(:store))
         end
 
         yaml = YAML.dump(report)
 
         file = nil
         assert_nothing_raised {
-            file = report.process(yaml)
+            file = report.process
         }
 
         assert(FileTest.exists?(file), "report file did not get created")
@@ -119,7 +120,7 @@ class TestReports < Test::Unit::TestCase
         assert(! report.metrics.empty?, "Did not receive any metrics")
 
         assert_nothing_raised do
-            report.extend(Puppet::Network::Handler.report.report(:rrdgraph))
+            report.extend(Puppet::Reports.report(:rrdgraph))
         end
 
         assert_nothing_raised {
@@ -154,7 +155,7 @@ class TestReports < Test::Unit::TestCase
     
     def test_tagmail_parsing
         report = Object.new
-        report.extend(Puppet::Network::Handler.report.report(:tagmail))
+        report.extend(Puppet::Reports.report(:tagmail))
         
         passers = File.join(datadir, "reports", "tagmail_passers.conf")
         assert(FileTest.exists?(passers), "no passers file %s" % passers)
@@ -178,7 +179,7 @@ class TestReports < Test::Unit::TestCase
     
     def test_tagmail_parsing_results
         report = Object.new
-        report.extend(Puppet::Network::Handler.report.report(:tagmail))
+        report.extend(Puppet::Reports.report(:tagmail))
         # Now test a few specific lines to make sure we get the results we want
         {
             "tag: abuse@domain.com" => [%w{abuse@domain.com}, %w{tag}, []],
@@ -206,7 +207,7 @@ class TestReports < Test::Unit::TestCase
         
         list = report.logs.collect { |l| l.to_report }
         
-        report.extend(Puppet::Network::Handler.report.report(:tagmail))
+        report.extend(Puppet::Reports.report(:tagmail))
         
         {
             [%w{abuse@domain.com}, %w{all}, []] => list,

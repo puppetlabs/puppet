@@ -1,6 +1,6 @@
 require 'puppet'
 
-Puppet::Network::Handler.report.newreport(:store, :useyaml => true) do
+Puppet::Reports.register_report(:store) do
     Puppet.settings.use(:reporting)
 
     desc "Store the yaml report on disk.  Each host sends its report as a YAML dump
@@ -24,7 +24,7 @@ Puppet::Network::Handler.report.newreport(:store, :useyaml => true) do
         config.use("reportclient-#{client}")
     end
 
-    def process(yaml)
+    def process
         # We don't want any tracking back in the fs.  Unlikely, but there
         # you go.
         client = self.host.gsub("..",".")
@@ -46,7 +46,7 @@ Puppet::Network::Handler.report.newreport(:store, :useyaml => true) do
 
         begin
             File.open(file, "w", 0640) do |f|
-                f.print yaml
+                f.print to_yaml
             end
         rescue => detail
             if Puppet[:trace]

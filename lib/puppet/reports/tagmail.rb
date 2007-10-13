@@ -3,7 +3,7 @@ require 'pp'
 
 require 'net/smtp'
 
-Puppet::Network::Handler.report.newreport(:tagmail) do
+Puppet::Reports.register_report(:tagmail) do
     desc "This report sends specific log messages to specific email addresses
         based on the tags in the log messages.  See the
         `UsingTags tag documentation`:trac: for more information

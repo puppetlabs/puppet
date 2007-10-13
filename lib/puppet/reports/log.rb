@@ -1,6 +1,6 @@
-require 'puppet'
+require 'puppet/reports'
 
-Puppet::Network::Handler.report.newreport(:log) do
+Puppet::Reports.register_report(:log) do
     desc "Send all received logs to the local log destinations.  Usually
         the log destination is syslog."
 
