@@ -47,15 +47,19 @@ class Puppet::Indirector::Code::Configuration < Puppet::Indirector::Code
         $0 =~ /puppetmasterd/
     end
 
-    # Return the configuration version.
-    def version(client = nil, clientip = nil)
-        if client and node = Puppet::Node.search(client)
-            update_node_check(node)
-            return interpreter.configuration_version(node)
+    # Return the configuration version.  Here we're returning the
+    # latest of the node, fact, or parse date.  These are the
+    # three things that go into compiling a client configuration,
+    # so changes in any of them result in changes.
+    # LAK:FIXME Note that this only works when all three sources
+    # use timestamps; once one of them moves to using real versions,
+    # the comparison stops working.
+    def version(key)
+        if node = Puppet::Node.search(key)
+            return [Puppet::Node.version(key).to_f, Puppet::Node::Facts.version(key).to_f, interpreter.configuration_version(node).to_f].sort[-1]
         else
-            # Just return something that will always result in a recompile, because
-            # this is local.
-            return (Time.now + 1000).to_i
+            # This is the standard for "got nothing for ya".
+            0
         end
     end
 

@@ -1,10 +1,15 @@
 require 'puppet'
+require 'puppet/indirector'
 
 # A class for reporting what happens on each client.  Reports consist of
 # two types of data:  Logs and Metrics.  Logs are the output that each
 # change produces, and Metrics are all of the numerical data involved
 # in the transaction.
 class Puppet::Transaction::Report
+    extend Puppet::Indirector
+
+    indirects :report, :terminus_class => :code
+
     attr_accessor :logs, :metrics, :time, :host
     
     def <<(msg)

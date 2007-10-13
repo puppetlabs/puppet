@@ -126,7 +126,7 @@ module Puppet
 
         # Return the type fully capitalized correctly.
         def type_capitalized
-            type.split("::").collect { |s| s.capitalize }.join("::")
+            type.to_s.split("::").collect { |s| s.capitalize }.join("::")
         end
     end
 

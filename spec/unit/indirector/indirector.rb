@@ -95,6 +95,11 @@ describe Puppet::Indirector, " when redirecting a model" do
         thing.save        
     end
 
+    it "should give the model the ability to look up an instance's version by letting the indirection perform the lookup" do
+        @indirection.expects(:version).with(:thing)
+        @thingie.version(:thing)        
+    end
+
     it "should give the model the ability to set the indirection terminus class" do
         @indirection.expects(:terminus_class=).with(:myterm)
         @thingie.terminus_class = :myterm

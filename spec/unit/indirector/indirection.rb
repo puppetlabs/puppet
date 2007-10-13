@@ -37,6 +37,11 @@ describe Puppet::Indirector::Indirection do
         @terminus.expects(:save).with(@instance).returns(@instance)
         @indirection.save(@instance).should == @instance
     end
+  
+    it "should handle version lookups by letting the appropriate terminus perform the lookup" do
+        @terminus.expects(:version).with(@name).returns(5)
+        @indirection.version(@name).should == 5
+    end
 
     it "should add versions to found instances that do not already have them" do
         @terminus.expects(:find).with(@name).returns(@instance)

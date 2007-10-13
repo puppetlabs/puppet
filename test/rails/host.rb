@@ -155,10 +155,9 @@ class TestRailsHost < PuppetTest::TestCase
         Puppet::Rails.init
         Puppet[:storeconfigs] = true
 
+        Puppet[:code] = " "
         # this is the default server setup
         master = Puppet::Network::Handler.configuration.new(
-            :Code => "",
-            :UseNodes => true,
             :Local => true
         )
 

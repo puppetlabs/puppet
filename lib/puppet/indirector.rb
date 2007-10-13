@@ -59,6 +59,10 @@ module Puppet::Indirector
       def search(*args)
         indirection.search(*args)
       end
+
+      def version(*args)
+        indirection.version(*args)
+      end
     end
 
     module InstanceMethods

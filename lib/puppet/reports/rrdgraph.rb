@@ -1,6 +1,4 @@
-require 'puppet'
-
-Puppet::Network::Handler.report.newreport(:rrdgraph) do
+Puppet::Reports.register_report(:rrdgraph) do
     desc "Graph all available data about hosts using the RRD library.  You
         must have the Ruby RRDtool library installed to use this report, which
         you can get from `the RubyRRDTool RubyForge page`_.  This package requires

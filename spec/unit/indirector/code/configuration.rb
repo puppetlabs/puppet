@@ -8,16 +8,6 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 require 'puppet/indirector/code/configuration'
 
 describe Puppet::Indirector::Code::Configuration do
-    # LAK:TODO I have no idea how to do this, or even if it should be in this class or test or what.
-    # This is used for determining if the client should recompile its configuration, so it's not sufficient
-    # to recompile and compare versions.
-    #   It might be that the right solution is to require configuration caching, and then compare the cached
-    # configuration version to the current version, via some querying mechanism (i.e., the client asks for just
-    # the configuration's 'up-to-date' attribute, rather than the whole configuration).
-    it "should provide a mechanism for determining if the client's configuration is up to date"
-end
-
-describe Puppet::Indirector::Code::Configuration do
     before do
         Puppet.expects(:version).returns(1)
         Facter.expects(:value).with('fqdn').returns("my.server.com")
@@ -48,6 +38,8 @@ end
 
 describe Puppet::Indirector::Code::Configuration, " when creating the interpreter" do
     before do
+        # This gets pretty annoying on a plane where we have no IP address
+        Facter.stubs(:value).returns("whatever")
         @compiler = Puppet::Indirector::Code::Configuration.new
     end
 
@@ -67,6 +59,7 @@ end
 
 describe Puppet::Indirector::Code::Configuration, " when finding nodes" do
     before do
+        Facter.stubs(:value).returns("whatever")
         @compiler = Puppet::Indirector::Code::Configuration.new
         @name = "me"
         @node = mock 'node'
@@ -117,11 +110,14 @@ describe Puppet::Indirector::Code::Configuration, " after finding nodes" do
     # LAK:TODO This is going to be difficult, because this whole process is so
     # far removed from the actual connection that the certificate information
     # will be quite hard to come by, dum by, gum by.
-    it "should search for the name using the client certificate's DN if the :node_name setting is set to 'cert'"
+    it "should search for the name using the client certificate's DN if the :node_name setting is set to 'cert'" do
+        pending "Probably will end up in the REST work"
+    end
 end
 
 describe Puppet::Indirector::Code::Configuration, " when creating configurations" do
     before do
+        Facter.stubs(:value).returns("whatever")
         @compiler = Puppet::Indirector::Code::Configuration.new
         @name = "me"
         @node = Puppet::Node.new @name, :environment => "yay"
@@ -156,5 +152,55 @@ describe Puppet::Indirector::Code::Configuration, " when creating configurations
         end
         @compiler.interpreter.stubs(:compile).with(@node)
         @compiler.find(@name)
+    end
+end
+
+describe Puppet::Indirector::Code::Configuration, " when determining a client's available configuration version" do
+    before do
+        Puppet::Node::Facts.stubs(:find).returns(nil)
+        Facter.stubs(:value).returns("whatever")
+        @configuration = Puppet::Indirector::Code::Configuration.new
+        @name = "johnny"
+    end
+
+    it "should provide a mechanism for providing the version of a given client's configuration" do
+        @configuration.should respond_to(:version)
+    end
+
+    it "should use the client's Facts version as the available configuration version if it is the most recent" do
+        Puppet::Node::Facts.expects(:version).with(@name).returns(5)
+        Puppet::Node.expects(:version).with(@name).returns(3)
+        @configuration.interpreter.stubs(:configuration_version).returns(4)
+
+        @configuration.version(@name).should == 5
+    end
+
+    it "should use the client's Node version as the available configuration version if it is the most recent" do
+        Puppet::Node::Facts.expects(:version).with(@name).returns(3)
+        Puppet::Node.expects(:version).with(@name).returns(5)
+        @configuration.interpreter.stubs(:configuration_version).returns(4)
+
+        @configuration.version(@name).should == 5
+    end
+
+    it "should use the last parse date as the available configuration version if it is the most recent" do
+        Puppet::Node::Facts.expects(:version).with(@name).returns(3)
+        Puppet::Node.expects(:version).with(@name).returns(4)
+        @configuration.interpreter.stubs(:configuration_version).returns(5)
+
+        @configuration.version(@name).should == 5
+    end
+
+    it "should return a version of 0 if no information on the node can be found" do
+        Puppet::Node.stubs(:search).returns(nil)
+        @configuration.version(@name).should == 0
+    end
+
+    it "should indicate when an update is available even if an input has clock skew" do
+        pending "Unclear how to implement this"
+    end
+
+    it "should not indicate an available update when apparent updates are a result of clock skew" do
+        pending "Unclear how to implement this"
     end
 end
