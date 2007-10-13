@@ -12,22 +12,11 @@ class TestDebianServiceProvider < Test::Unit::TestCase
     include Puppet::Util
 
     def prepare_provider(servicename, output)
-        service = Puppet::Type.type(:service).create(
-                                                     :name => servicename, :provider => :debian
-                                                     )
+        @resource = mock 'resource'
+        @resource.stubs(:[]).with(:name).returns("myresource")
+        provider = Puppet::Type.type(:service).provider(:debian).new(@resource)
 
-        provider = service.provider
-        assert(provider, "did not get debian provider")
-
-        metaclass = class << provider
-                        self
-                    end
-
-        metaclass.instance_eval do
-            define_method :update do |*args|
-                return output
-            end
-        end
+        provider.stubs(:update).returns(output)
 
         provider
     end
@@ -67,5 +56,3 @@ class TestDebianServiceProvider < Test::Unit::TestCase
         assert_disabled("test4", " Removing any system startup links for /etc/init.d/test4 ...\n")
     end
 end
-
-# $Id$
