@@ -9,7 +9,7 @@ require 'puppet/network/http'
 
 describe Puppet::Network::HTTP do
     it "should return the webrick HTTP server class when asked for a webrick server" do
-        Puppet::Network::HTTP.server_class_by_type(:webrick).should be(Puppet::Network::HTTP::WEBRick)
+        Puppet::Network::HTTP.server_class_by_type(:webrick).should be(Puppet::Network::HTTP::WEBrick)
     end
     
     it "should return the mongrel HTTP server class when asked for a mongrel server" do

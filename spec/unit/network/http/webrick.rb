@@ -6,15 +6,15 @@
 require File.dirname(__FILE__) + '/../../../spec_helper'
 require 'puppet/network/http'
 
-describe Puppet::Network::HTTP::WEBRick, "after initializing" do
+describe Puppet::Network::HTTP::WEBrick, "after initializing" do
     it "should not be listening" do
-        Puppet::Network::HTTP::WEBRick.new.should_not be_listening
+        Puppet::Network::HTTP::WEBrick.new.should_not be_listening
     end
 end
 
-describe Puppet::Network::HTTP::WEBRick, "when turning on listening" do
+describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
     before do
-        @server = Puppet::Network::HTTP::WEBRick.new
+        @server = Puppet::Network::HTTP::WEBrick.new
         Puppet.stubs(:start)
     end
     
@@ -44,9 +44,9 @@ describe Puppet::Network::HTTP::WEBRick, "when turning on listening" do
     it "should be able to specify the port on which webrick will listen"
 end
 
-describe Puppet::Network::HTTP::WEBRick, "when turning off listening" do
+describe Puppet::Network::HTTP::WEBrick, "when turning off listening" do
     before do
-        @server = Puppet::Network::HTTP::WEBRick.new        
+        @server = Puppet::Network::HTTP::WEBrick.new        
         @server.stubs(:shutdown)
         Puppet.stubs(:start).returns(true)
     end

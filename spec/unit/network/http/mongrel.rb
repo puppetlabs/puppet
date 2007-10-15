@@ -47,7 +47,7 @@ describe Puppet::Network::HTTP::Mongrel, "when turning on listening" do
     it "should be able to specify the port on which mongrel will listen"
 end
 
-describe Puppet::Network::HTTP::WEBRick, "when turning off listening" do
+describe Puppet::Network::HTTP::WEBrick, "when turning off listening" do
     before do
         @mock_mongrel = mock('mongrel httpserver')
         @mock_mongrel.stubs(:run)
