@@ -4,9 +4,7 @@
 #  Copyright (c) 2007. All rights reserved.
 
 require File.dirname(__FILE__) + '/../../spec_helper'
-
 require 'puppet/network/server'
-
 
 describe Puppet::Network::Server, "when initializing" do
     before do
@@ -212,7 +210,7 @@ describe Puppet::Network::Server, "when listening is being turned off" do
         @server.stubs(:http_server).returns(@mock_http_server)
         @server.listen
     end
-  
+
     it "should cause the HTTP server to stop listening when listening is turned off" do
         @mock_http_server.expects(:unlisten)
         @server.unlisten
@@ -222,26 +220,6 @@ describe Puppet::Network::Server, "when listening is being turned off" do
         @server.register(:foo)
         Proc.new { @server.unregister(:foo) }.should raise_error(RuntimeError) 
     end
-end
-
-describe Class.new, "Puppet::Network::HTTP::Webrick (webrick http server class)" do
-    it "should allow listening"
-    it "should get a set of handlers when listening"
-    it "should allow unlistening"
-    it "should instantiate a specific handler (webrick+rest, e.g.) for each handler when listening, for each protocol being served (xmlrpc, rest, etc.)"
-    it "should mount each handler with the appropriate webrick path when listening"
-    it "should start webrick when listening"
-    it "should stop webrick when unlistening"
-end
-
-describe Class.new, "Puppet::Network::HTTP::Mongrel (mongrel http server class)" do
-    it "should allow listening"
-    it "should get a set of handlers when listening"
-    it "should allow unlistening"
-    it "should instantiate a specific handler (mongrel+rest, e.g.) for each handler when listening, for each protocol being served (xmlrpc, rest, etc.)"
-    it "should mount each handler with the appropriate mongrel path when listening"
-    it "should start mongrel when listening"
-    it "should stop mongrel when unlistening"
 end
 
 describe Class.new, "Puppet::Network::Handler::*::* (handler class (e.g., webrick+rest or mongrel+xmlrpc))" do
