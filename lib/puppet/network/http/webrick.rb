@@ -7,10 +7,16 @@ class Puppet::Network::HTTP::WEBrick
     end
     
     def listen(args = {})
-        raise ArgumentError, ":handlers must be specified." if !args[:handlers] or args[:handlers].keys.empty?
+        raise ArgumentError, ":handlers must be specified." if !args[:handlers] or args[:handlers].empty?
+        raise ArgumentError, ":protocols must be specified." if !args[:protocols] or args[:protocols].empty?
         raise ArgumentError, ":address must be specified." unless args[:address]
         raise ArgumentError, ":port must be specified." unless args[:port]
         raise "WEBrick server is already listening" if listening?
+        
+        @protocols = args[:protocols]
+        @handlers = args[:handlers]
+        
+        setup_handlers
         
         @server = WEBrick::HTTPServer.new(:BindAddress => args[:address], :Port => args[:port])
         
@@ -29,5 +35,19 @@ class Puppet::Network::HTTP::WEBrick
     
     def listening?
         @listening
+    end
+    
+  private
+    
+    def setup_handlers
+        @handlers.each do |handler|
+            @protocols.each do |protocol|
+                class_for_protocol_handler(protocol, handler).new
+            end
+        end
+    end
+    
+    def class_for_protocol_handler(protocol, handler)
+        Class.new
     end
 end

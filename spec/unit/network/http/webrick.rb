@@ -19,7 +19,7 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
         @mock_webrick = mock('webrick')
         WEBrick::HTTPServer.stubs(:new).returns(@mock_webrick)
         @server = Puppet::Network::HTTP::WEBrick.new
-        @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => { :foo => :bar }}
+        @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => [ :node, :configuration ], :protocols => [ :rest, :xmlrpc ] }
     end
     
     it "should fail if already listening" do
@@ -31,6 +31,10 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
         Proc.new { @server.listen(@listen_params.delete_if {|k,v| :handlers == k}) }.should raise_error(ArgumentError)
     end
     
+    it "should require at least one protocol" do
+        Proc.new { @server.listen(@listen_params.delete_if {|k,v| :protocols == k}) }.should raise_error(ArgumentError)
+    end
+
     it "should require a listening address to be specified" do
         Proc.new { @server.listen(@listen_params.delete_if {|k,v| :address == k})}.should raise_error(ArgumentError)
     end
@@ -55,8 +59,19 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
         @server.listen(@listen_params)
         @server.should be_listening
     end
-
-    it "should instantiate a specific handler (webrick+rest, e.g.) for each handler, for each protocol being served (xmlrpc, rest, etc.)"
+    
+    it "should instantiate a specific handler (mongrel+rest, e.g.) for each named handler, for each named protocol)" do
+        @listen_params[:handlers].each do |handler|
+            @listen_params[:protocols].each do |protocol|
+                mock_handler = mock("handler instance for [#{protocol}]+[#{handler}]")
+                mock_handler_class = mock("handler class for [#{protocol}]+[#{handler}]")
+                mock_handler_class.expects(:new).returns(mock_handler)
+                @server.expects(:class_for_protocol_handler).with(protocol, handler).returns(mock_handler_class)
+            end
+        end
+        @server.listen(@listen_params)
+    end
+    
     it "should mount handlers on a webrick path"
 end
 
@@ -68,7 +83,7 @@ describe Puppet::Network::HTTP::WEBrick, "when turning off listening" do
         WEBrick::HTTPServer.stubs(:new).returns(@mock_webrick)
         @server = Puppet::Network::HTTP::WEBrick.new        
         @server.stubs(:shutdown)
-        @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => { :foo => :bar }}
+        @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => [ :node, :configuration ], :protocols => [ :rest, :xmlrpc ] }
     end
     
     it "should fail unless listening" do
