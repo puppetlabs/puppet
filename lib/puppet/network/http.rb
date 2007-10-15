@@ -1,18 +1,10 @@
 class Puppet::Network::HTTP
-    def self.new(args = {})
-        raise ArgumentError, ":server_type is required" unless args[:server_type]
-        obj = class_for_server_type(args[:server_type]).allocate
-        obj.send :initialize, args.delete_if {|k,v| k == :server_type }
-        obj
-    end
-    
-    class << self
-        def class_for_server_type(server_type)
-            Class.new
-            # TODO:  this will end up probably:     { :webrick => ... }
-            
-        end
-        private :class_for_server_type
+    def self.server_class_by_type(kind)
+        return Puppet::Network::HTTP::WEBRick if kind == :webrick
+        return Puppet::Network::HTTP::Mongrel if kind == :mongrel
+        raise ArgumentError, "Unknown HTTP server name [#{kind}]"
     end
 end
 
+require 'puppet/network/http/webrick'
+require 'puppet/network/http/mongrel'

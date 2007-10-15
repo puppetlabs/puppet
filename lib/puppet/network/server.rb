@@ -1,9 +1,10 @@
 class Puppet::Network::Server
-	attr_reader :server_type, :http_server
+	attr_reader :server_type, :http_server_class, :protocols
 
     def initialize(args = {})
         @server_type = Puppet[:servertype] or raise "No servertype configuration found."  # e.g.,  WEBrick, Mongrel, etc.
 	    @http_server_class = http_server_class_by_type(@server_type)
+	    @protocols = []
 	    @listening = false
 	    @routes = {}
 	    self.register(args[:handlers]) if args[:handlers]
@@ -33,26 +34,24 @@ class Puppet::Network::Server
   
     def listen
 	    raise "Cannot listen -- already listening." if listening?
-	    initialize_http_server
-	    self.http_server.listen(@routes.dup)
+	    http_server.listen(@routes.dup)
 	    @listening = true
     end
   
     def unlisten
 	    raise "Cannot unlisten -- not currently listening." unless listening?
-	    self.http_server.unlisten   
+	    http_server.unlisten   
 	    @listening = false
     end
 
   private
   
-    def initialize_http_server
-	    @server = @http_server_class.new
+    def http_server
+        @http_server ||= http_server_class.new
     end
     
     def http_server_class_by_type(kind)
-        # TODO:  this will become Puppet::Network::HTTP::WEBrick or Puppet::Network::HTTP::Mongrel
-        Class.new
+        Puppet::Network::HTTP.server_class_by_type(kind)
     end
 end
 

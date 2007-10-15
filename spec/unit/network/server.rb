@@ -7,15 +7,13 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/network/server'
 
-# a fake server class, so we don't have to implement full autoloading etc. (or at least just yet) just to do testing
-class TestServer < Puppet::Network::Server
-end
 
 describe Puppet::Network::Server, "when initializing" do
     before do
-        Puppet::Network::Server.stubs(:server_class_by_name).returns(TestServer)
+        @mock_http_server_class = mock('http server class')
+        Puppet::Network::HTTP.stubs(:server_class_by_type).returns(@mock_http_server_class)
     end
-  
+    
     it "should use the Puppet configurator to determine which HTTP server will be used to provide access to clients" do
         Puppet.expects(:[]).with(:servertype).returns(:suparserver)
         @server = Puppet::Network::Server.new
@@ -25,6 +23,13 @@ describe Puppet::Network::Server, "when initializing" do
     it "should fail to initialize if there is no HTTP server known to the Puppet configurator" do
         Puppet.expects(:[]).with(:servertype).returns(nil)
         Proc.new { Puppet::Network::Server.new }.should raise_error
+    end
+ 
+    it "should ask the Puppet::Network::HTTP class to fetch the proper HTTP server class" do
+        Puppet.stubs(:[]).with(:servertype).returns(:suparserver)
+        mock_http_server_class = mock('http server class')
+        Puppet::Network::HTTP.expects(:server_class_by_type).with(:suparserver).returns(mock_http_server_class)
+        @server = Puppet::Network::Server.new
     end
   
     it "should allow registering indirections" do
@@ -39,7 +44,8 @@ end
 
 describe Puppet::Network::Server, "in general" do
     before do
-        Puppet::Network::Server.stubs(:server_class_by_name).returns(TestServer)
+        @mock_http_server_class = mock('http server class')
+        Puppet::Network::HTTP.stubs(:server_class_by_type).returns(@mock_http_server_class)
         Puppet.stubs(:[]).with(:servertype).returns(:suparserver)
         @server = Puppet::Network::Server.new
     end
@@ -105,8 +111,6 @@ describe Puppet::Network::Server, "in general" do
         @server.server_type.should == :suparserver
     end
     
-    it "should allocate an instance of the appropriate HTTP server"
-  
     it "should allow for multiple configurations, each handling different indirections" do
         @server2 = Puppet::Network::Server.new
         @server.register(:foo, :bar)
@@ -117,42 +121,40 @@ describe Puppet::Network::Server, "in general" do
         Proc.new { @server2.unregister(:bar) }.should raise_error(ArgumentError)
     end  
 
-    it "should provide a means of determining which style of service is being offered to clients"
+    it "should provide a means of determining which style of service is being offered to clients" do
+        @server.protocols.should == []
+    end
 end
 
 describe Puppet::Network::Server, "when listening is off" do
     before do
-        Puppet::Network::Server.stubs(:server_class_by_name).returns(TestServer)
+        @mock_http_server_class = mock('http server class')
+        Puppet::Network::HTTP.stubs(:server_class_by_type).returns(@mock_http_server_class)
         Puppet.stubs(:[]).with(:servertype).returns(:suparserver)
         @server = Puppet::Network::Server.new
         @mock_http_server = mock('http server')
         @mock_http_server.stubs(:listen)
         @server.stubs(:http_server).returns(@mock_http_server)
     end
-  
-    it "should allow listening to be turned on" do
-        Proc.new { @server.listen }.should_not raise_error
-    end
-    
-    it "should cause the HTTP server to listen when listening is turned on" do
-        mock_http_server = mock('http server')
-        mock_http_server.expects(:listen)
-        @server.expects(:http_server).returns(mock_http_server)
-        @server.listen
-    end
+
+    it "should indicate that it is not listening" do
+        @server.should_not be_listening
+    end  
   
     it "should not allow listening to be turned off" do
         Proc.new { @server.unlisten }.should raise_error(RuntimeError)
     end
   
-    it "should indicate that it is not listening" do
-        @server.should_not be_listening
-    end  
+    it "should allow listening to be turned on" do
+        Proc.new { @server.listen }.should_not raise_error
+    end
+    
 end
 
 describe Puppet::Network::Server, "when listening is on" do
     before do
-        Puppet::Network::Server.stubs(:server_class_by_name).returns(TestServer)
+        @mock_http_server_class = mock('http server class')
+        Puppet::Network::HTTP.stubs(:server_class_by_type).returns(@mock_http_server_class)
         Puppet.stubs(:[]).with(:servertype).returns(:suparserver)
         @server = Puppet::Network::Server.new
         @mock_http_server = mock('http server')
@@ -160,29 +162,64 @@ describe Puppet::Network::Server, "when listening is on" do
         @mock_http_server.stubs(:unlisten)
         @server.stubs(:http_server).returns(@mock_http_server)
         @server.listen
-        @server.register(:foo)
-    end
-  
-    it "should allow listening to be turned off" do
-        Proc.new { @server.unlisten }.should_not raise_error
-    end
-  
-    it "should cause the HTTP server to stop listening when listening is turned off" do
-        mock_http_server = mock('http server')
-        mock_http_server.expects(:unlisten)
-        @server.expects(:http_server).returns(mock_http_server)
-        @server.unlisten
-    end
-
-    it "should not allow listening to be turned on" do
-        Proc.new { @server.listen }.should raise_error(RuntimeError)
     end
   
     it "should indicate that listening is turned off" do
         @server.should be_listening
     end
     
+    it "should not allow listening to be turned on" do
+        Proc.new { @server.listen }.should raise_error(RuntimeError)
+    end
+  
+    it "should allow listening to be turned off" do
+        Proc.new { @server.unlisten }.should_not raise_error
+    end
+end
+ 
+describe Puppet::Network::Server, "when listening is being turned on" do
+    before do
+        @mock_http_server_class = mock('http server class')
+        Puppet::Network::HTTP.stubs(:server_class_by_type).returns(@mock_http_server_class)
+        Puppet.stubs(:[]).with(:servertype).returns(:suparserver)
+        @server = Puppet::Network::Server.new
+        @mock_http_server = mock('http server')
+        @mock_http_server.stubs(:listen)
+    end
+
+    it "should fetch an instance of an HTTP server when listening is turned on" do
+        mock_http_server_class = mock('http server class')
+        mock_http_server_class.expects(:new).returns(@mock_http_server)
+        @server.expects(:http_server_class).returns(mock_http_server_class)
+        @server.listen        
+    end
+
+    it "should cause the HTTP server to listen when listening is turned on" do
+        @mock_http_server.expects(:listen)
+        @server.expects(:http_server).returns(@mock_http_server)
+        @server.listen
+    end
+end
+
+describe Puppet::Network::Server, "when listening is being turned off" do
+    before do
+        @mock_http_server_class = mock('http server class')
+        Puppet::Network::HTTP.stubs(:server_class_by_type).returns(@mock_http_server_class)
+        Puppet.stubs(:[]).with(:servertype).returns(:suparserver)
+        @server = Puppet::Network::Server.new
+        @mock_http_server = mock('http server')
+        @mock_http_server.stubs(:listen)
+        @server.stubs(:http_server).returns(@mock_http_server)
+        @server.listen
+    end
+  
+    it "should cause the HTTP server to stop listening when listening is turned off" do
+        @mock_http_server.expects(:unlisten)
+        @server.unlisten
+    end
+
     it "should not allow for indirections to be turned off" do
+        @server.register(:foo)
         Proc.new { @server.unregister(:foo) }.should raise_error(RuntimeError) 
     end
 end
