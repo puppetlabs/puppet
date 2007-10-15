@@ -10,33 +10,71 @@ describe Puppet::Network::Server, "when initializing" do
     before do
         @mock_http_server_class = mock('http server class')
         Puppet::Network::HTTP.stubs(:server_class_by_type).returns(@mock_http_server_class)
+        Puppet.stubs(:[]).with(:servertype).returns(:suparserver)
     end
     
+    it "should allow specifying a listening address" do
+        Puppet.stubs(:[]).with(:masterport).returns('')
+        @server = Puppet::Network::Server.new(:address => "127.0.0.1")
+        @server.address.should == "127.0.0.1"
+    end
+
+    it "should allow specifying a listening port" do
+        Puppet.stubs(:[]).with(:bindaddress).returns('')
+        @server = Puppet::Network::Server.new(:port => 31337)
+        @server.port.should == 31337
+    end
+    
+    it "should use the Puppet configurator to find a default listening address" do
+        Puppet.stubs(:[]).with(:masterport).returns('')
+        Puppet.expects(:[]).with(:bindaddress).returns("10.0.0.1")
+        @server = Puppet::Network::Server.new
+        @server.address.should == "10.0.0.1"
+    end
+
+    it "should use the Puppet configurator to find a default listening port" do
+        Puppet.stubs(:[]).with(:bindaddress).returns('')
+        Puppet.expects(:[]).with(:masterport).returns(6667)
+        @server = Puppet::Network::Server.new
+        @server.port.should == 6667
+    end
+
+    it "should fail to initialize if no listening address can be found" do
+        Puppet.stubs(:[]).with(:masterport).returns(6667)
+        Puppet.stubs(:[]).with(:bindaddress).returns(nil)
+        Proc.new { Puppet::Network::Server.new }.should raise_error(ArgumentError)
+    end
+    
+    it "should fail to initialize if no listening port can be found" do
+        Puppet.stubs(:[]).with(:bindaddress).returns("127.0.0.1")
+        Puppet.stubs(:[]).with(:masterport).returns(nil)
+        Proc.new { Puppet::Network::Server.new }.should raise_error(ArgumentError)        
+    end
+
     it "should use the Puppet configurator to determine which HTTP server will be used to provide access to clients" do
         Puppet.expects(:[]).with(:servertype).returns(:suparserver)
-        @server = Puppet::Network::Server.new
+        @server = Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337)
         @server.server_type.should == :suparserver
     end
   
     it "should fail to initialize if there is no HTTP server known to the Puppet configurator" do
         Puppet.expects(:[]).with(:servertype).returns(nil)
-        Proc.new { Puppet::Network::Server.new }.should raise_error
+        Proc.new { Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337) }.should raise_error
     end
  
     it "should ask the Puppet::Network::HTTP class to fetch the proper HTTP server class" do
-        Puppet.stubs(:[]).with(:servertype).returns(:suparserver)
         mock_http_server_class = mock('http server class')
         Puppet::Network::HTTP.expects(:server_class_by_type).with(:suparserver).returns(mock_http_server_class)
-        @server = Puppet::Network::Server.new
+        @server = Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337)
     end
   
     it "should allow registering indirections" do
-        @server = Puppet::Network::Server.new(:handlers => [ :foo, :bar, :baz])
+        @server = Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337, :handlers => [ :foo, :bar, :baz])
         Proc.new { @server.unregister(:foo, :bar, :baz) }.should_not raise_error
     end
   
     it "should not be listening after initialization" do
-        Puppet::Network::Server.new.should_not be_listening
+        Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337).should_not be_listening
     end
 end
 
@@ -45,7 +83,7 @@ describe Puppet::Network::Server, "in general" do
         @mock_http_server_class = mock('http server class')
         Puppet::Network::HTTP.stubs(:server_class_by_type).returns(@mock_http_server_class)
         Puppet.stubs(:[]).with(:servertype).returns(:suparserver)
-        @server = Puppet::Network::Server.new
+        @server = Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337)
     end
   
     it "should allow registering an indirection for client access by specifying its indirection name" do
@@ -110,7 +148,7 @@ describe Puppet::Network::Server, "in general" do
     end
     
     it "should allow for multiple configurations, each handling different indirections" do
-        @server2 = Puppet::Network::Server.new
+        @server2 = Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337)
         @server.register(:foo, :bar)
         @server2.register(:foo, :xyzzy)
         @server.unregister(:foo, :bar)
@@ -122,6 +160,14 @@ describe Puppet::Network::Server, "in general" do
     it "should provide a means of determining which style of service is being offered to clients" do
         @server.protocols.should == []
     end
+    
+    it "should provide a means of determining the listening address" do
+        @server.address.should == "127.0.0.1"
+    end
+    
+    it "should provide a means of determining the listening port" do
+        @server.port.should == 31337
+    end
 end
 
 describe Puppet::Network::Server, "when listening is off" do
@@ -129,7 +175,7 @@ describe Puppet::Network::Server, "when listening is off" do
         @mock_http_server_class = mock('http server class')
         Puppet::Network::HTTP.stubs(:server_class_by_type).returns(@mock_http_server_class)
         Puppet.stubs(:[]).with(:servertype).returns(:suparserver)
-        @server = Puppet::Network::Server.new
+        @server = Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337)
         @mock_http_server = mock('http server')
         @mock_http_server.stubs(:listen)
         @server.stubs(:http_server).returns(@mock_http_server)
@@ -154,7 +200,7 @@ describe Puppet::Network::Server, "when listening is on" do
         @mock_http_server_class = mock('http server class')
         Puppet::Network::HTTP.stubs(:server_class_by_type).returns(@mock_http_server_class)
         Puppet.stubs(:[]).with(:servertype).returns(:suparserver)
-        @server = Puppet::Network::Server.new
+        @server = Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337)
         @mock_http_server = mock('http server')
         @mock_http_server.stubs(:listen)
         @mock_http_server.stubs(:unlisten)
@@ -180,7 +226,7 @@ describe Puppet::Network::Server, "when listening is being turned on" do
         @mock_http_server_class = mock('http server class')
         Puppet::Network::HTTP.stubs(:server_class_by_type).returns(@mock_http_server_class)
         Puppet.stubs(:[]).with(:servertype).returns(:suparserver)
-        @server = Puppet::Network::Server.new
+        @server = Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337)
         @mock_http_server = mock('http server')
         @mock_http_server.stubs(:listen)
     end
@@ -204,7 +250,7 @@ describe Puppet::Network::Server, "when listening is being turned off" do
         @mock_http_server_class = mock('http server class')
         Puppet::Network::HTTP.stubs(:server_class_by_type).returns(@mock_http_server_class)
         Puppet.stubs(:[]).with(:servertype).returns(:suparserver)
-        @server = Puppet::Network::Server.new
+        @server = Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337)
         @mock_http_server = mock('http server')
         @mock_http_server.stubs(:listen)
         @server.stubs(:http_server).returns(@mock_http_server)

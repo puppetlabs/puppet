@@ -1,9 +1,13 @@
 class Puppet::Network::Server
-	attr_reader :server_type, :http_server_class, :protocols
+	attr_reader :server_type, :http_server_class, :protocols, :address, :port
 
     def initialize(args = {})
         @server_type = Puppet[:servertype] or raise "No servertype configuration found."  # e.g.,  WEBrick, Mongrel, etc.
 	    @http_server_class = http_server_class_by_type(@server_type)
+        @address = args[:address] || Puppet[:bindaddress] || 
+            raise(ArgumentError, "Must specify :address or configure Puppet :bindaddress.")
+        @port = args[:port] || Puppet[:masterport] ||
+            raise(ArgumentError, "Must specify :port or configure Puppet :masterport")
 	    @protocols = []
 	    @listening = false
 	    @routes = {}

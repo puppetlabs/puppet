@@ -6,9 +6,11 @@ class Puppet::Network::HTTP::Mongrel
     end
     
     def listen(args = {})
-        raise ArgumentError if args.keys.empty?
+        raise ArgumentError, ":handlers must be specified." if !args[:handlers] or args[:handlers].keys.empty?
+        raise ArgumentError, ":address must be specified." unless args[:address]
+        raise ArgumentError, ":port must be specified." unless args[:port]
         raise "Mongrel server is already listening" if listening?
-        @server = Mongrel::HttpServer.new("0.0.0.0", "3000")
+        @server = Mongrel::HttpServer.new(args[:address], args[:port])
         @server.run
         @listening = true
     end

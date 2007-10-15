@@ -15,45 +15,59 @@ end
 describe Puppet::Network::HTTP::Mongrel, "when turning on listening" do
     before do
         @server = Puppet::Network::HTTP::Mongrel.new
+        @mock_mongrel = mock('mongrel')
+        @mock_mongrel.stubs(:run)
+        Mongrel::HttpServer.stubs(:new).returns(@mock_mongrel)
+        @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => { :foo => :bar }}
     end
     
     it "should fail if already listening" do
-        @server.listen(:foo => :bar)
-        Proc.new { @server.listen(:foo => :bar) }.should raise_error(RuntimeError)
+        @server.listen(@listen_params)
+        Proc.new { @server.listen(@listen_params) }.should raise_error(RuntimeError)
     end
     
     it "should require at least one handler" do
-        Proc.new { @server.listen }.should raise_error(ArgumentError)
+        Proc.new { @server.listen(@listen_params.delete_if {|k,v| :handlers == k}) }.should raise_error(ArgumentError)
+    end
+    
+    it "should require a listening address to be specified" do
+        Proc.new { @server.listen(@listen_params.delete_if {|k,v| :address == k})}.should raise_error(ArgumentError)
+    end
+    
+    it "should require a listening port to be specified" do
+        Proc.new { @server.listen(@listen_params.delete_if {|k,v| :port == k})}.should raise_error(ArgumentError)
     end
     
     it "should order a mongrel server to start" do
-        mock_mongrel = mock('mongrel httpserver')
-        mock_mongrel.expects(:run)
-        Mongrel::HttpServer.expects(:new).returns(mock_mongrel)
-        @server.listen(:foo => :bar)
+        @mock_mongrel.expects(:run)
+        @server.listen(@listen_params)
+    end
+    
+    it "should tell mongrel to listen on the specified address and port" do
+        Mongrel::HttpServer.expects(:new).with("127.0.0.1", 31337).returns(@mock_mongrel)
+        @server.listen(@listen_params)
     end
     
     it "should be listening" do
         mock_mongrel = mock('mongrel httpserver')
         mock_mongrel.expects(:run)
         Mongrel::HttpServer.expects(:new).returns(mock_mongrel)
-        @server.listen(:foo => :bar)
+        @server.listen(@listen_params)
         @server.should be_listening
     end
 
     it "should instantiate a specific handler (mongrel+rest, e.g.) for each handler, for each protocol being served (xmlrpc, rest, etc.)"
     it "should mount handlers on a mongrel path"    
-    it "should be able to specify the address on which mongrel will listen"
-    it "should be able to specify the port on which mongrel will listen"
 end
 
-describe Puppet::Network::HTTP::WEBrick, "when turning off listening" do
+describe Puppet::Network::HTTP::Mongrel, "when turning off listening" do
     before do
         @mock_mongrel = mock('mongrel httpserver')
         @mock_mongrel.stubs(:run)
-        @mock_mongrel.stubs(:graceful_shutdown)
         Mongrel::HttpServer.stubs(:new).returns(@mock_mongrel)
+
         @server = Puppet::Network::HTTP::Mongrel.new        
+        @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => { :foo => :bar }}
     end
     
     it "should fail unless listening" do
@@ -61,13 +75,14 @@ describe Puppet::Network::HTTP::WEBrick, "when turning off listening" do
     end
     
     it "should order mongrel server to stop" do
-        @server.listen(:foo => :bar)
+        @server.listen(@listen_params)
         @mock_mongrel.expects(:graceful_shutdown)
         @server.unlisten
     end
     
     it "should not be listening" do
-        @server.listen(:foo => :bar)
+        @server.listen(@listen_params)
+        @mock_mongrel.stubs(:graceful_shutdown)
         @server.unlisten
         @server.should_not be_listening
     end
