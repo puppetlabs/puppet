@@ -1,7 +1,7 @@
 require 'webrick'
 require 'webrick/https'
 
-class Puppet::Network::HTTP::WEBrick < WEBrick::HTTPServer
+class Puppet::Network::HTTP::WEBrick
     def initialize(args = {})
         @listening = false
     end
@@ -12,8 +12,12 @@ class Puppet::Network::HTTP::WEBrick < WEBrick::HTTPServer
         raise ArgumentError, ":port must be specified." unless args[:port]
         raise "WEBrick server is already listening" if listening?
         
-        # TODO / FIXME: this should be moved out of the wacky Puppet global namespace!
+        @server = WEBrick::HTTPServer.new(:BindAddress => args[:address], :Port => args[:port])
+        
+        # TODO / FIXME is this really necessary? -- or can we do it in both mongrel and webrick?
+        Puppet.newservice(@server)
         Puppet.start
+        
         @listening = true
     end
     

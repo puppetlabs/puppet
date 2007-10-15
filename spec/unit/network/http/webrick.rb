@@ -14,9 +14,12 @@ end
 
 describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
     before do
+        Puppet.stubs(:start)
+        Puppet.stubs(:newservice)
+        @mock_webrick = mock('webrick')
+        WEBrick::HTTPServer.stubs(:new).returns(@mock_webrick)
         @server = Puppet::Network::HTTP::WEBrick.new
         @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => { :foo => :bar }}
-        Puppet.stubs(:start)
     end
     
     it "should fail if already listening" do
@@ -41,7 +44,12 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
         @server.listen(@listen_params)
     end
     
-    it "should tell webrick to listen on the specified address and port"
+    it "should tell webrick to listen on the specified address and port" do
+        WEBrick::HTTPServer.expects(:new).with {|args|
+            args[:Port] == 31337 and args[:BindAddress] == "127.0.0.1"
+        }.returns(@mock_webrick)
+        @server.listen(@listen_params)
+    end
     
     it "should be listening" do
         @server.listen(@listen_params)
@@ -54,10 +62,13 @@ end
 
 describe Puppet::Network::HTTP::WEBrick, "when turning off listening" do
     before do
+        Puppet.stubs(:start)
+        Puppet.stubs(:newservice)
+        @mock_webrick = mock('webrick')
+        WEBrick::HTTPServer.stubs(:new).returns(@mock_webrick)
         @server = Puppet::Network::HTTP::WEBrick.new        
         @server.stubs(:shutdown)
         @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => { :foo => :bar }}
-        Puppet.stubs(:start).returns(true)
     end
     
     it "should fail unless listening" do
