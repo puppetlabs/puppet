@@ -6,6 +6,12 @@
 require File.dirname(__FILE__) + '/../../../spec_helper'
 require 'puppet/network/http'
 
+describe Puppet::Network::HTTP::Mongrel, "after initializing" do
+    it "should not be listening" do
+        Puppet::Network::HTTP::Mongrel.new.should_not be_listening
+    end
+end
+
 describe Puppet::Network::HTTP::Mongrel, "when turning on listening" do
     before do
         @server = Puppet::Network::HTTP::Mongrel.new
@@ -26,6 +32,14 @@ describe Puppet::Network::HTTP::Mongrel, "when turning on listening" do
         Mongrel::HttpServer.expects(:new).returns(mock_mongrel)
         @server.listen(:foo => :bar)
     end
+    
+    it "should be listening" do
+        mock_mongrel = mock('mongrel httpserver')
+        mock_mongrel.expects(:run)
+        Mongrel::HttpServer.expects(:new).returns(mock_mongrel)
+        @server.listen(:foo => :bar)
+        @server.should be_listening
+    end
 
     it "should instantiate a specific handler (mongrel+rest, e.g.) for each handler, for each protocol being served (xmlrpc, rest, etc.)"
     it "should mount handlers on a mongrel path"    
@@ -37,6 +51,7 @@ describe Puppet::Network::HTTP::WEBRick, "when turning off listening" do
     before do
         @mock_mongrel = mock('mongrel httpserver')
         @mock_mongrel.stubs(:run)
+        @mock_mongrel.stubs(:graceful_shutdown)
         Mongrel::HttpServer.stubs(:new).returns(@mock_mongrel)
         @server = Puppet::Network::HTTP::Mongrel.new        
     end
@@ -49,5 +64,11 @@ describe Puppet::Network::HTTP::WEBRick, "when turning off listening" do
         @server.listen(:foo => :bar)
         @mock_mongrel.expects(:graceful_shutdown)
         @server.unlisten
+    end
+    
+    it "should not be listening" do
+        @server.listen(:foo => :bar)
+        @server.unlisten
+        @server.should_not be_listening
     end
 end

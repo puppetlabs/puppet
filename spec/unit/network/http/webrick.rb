@@ -6,13 +6,19 @@
 require File.dirname(__FILE__) + '/../../../spec_helper'
 require 'puppet/network/http'
 
+describe Puppet::Network::HTTP::WEBRick, "after initializing" do
+    it "should not be listening" do
+        Puppet::Network::HTTP::WEBRick.new.should_not be_listening
+    end
+end
+
 describe Puppet::Network::HTTP::WEBRick, "when turning on listening" do
     before do
         @server = Puppet::Network::HTTP::WEBRick.new
+        Puppet.stubs(:start)
     end
     
     it "should fail if already listening" do
-        Puppet.stubs(:start)
         @server.listen(:foo => :bar)
         Proc.new { @server.listen(:foo => :bar) }.should raise_error(RuntimeError)
     end
@@ -25,6 +31,11 @@ describe Puppet::Network::HTTP::WEBRick, "when turning on listening" do
         Puppet.expects(:start)
         @server.listen(:foo => :bar)
     end
+    
+    it "should be listening" do
+        @server.listen(:foo => :bar)
+        @server.should be_listening
+    end
 
     it "should instantiate a specific handler (webrick+rest, e.g.) for each handler, for each protocol being served (xmlrpc, rest, etc.)"
     it "should mount handlers on a webrick path"
@@ -36,6 +47,8 @@ end
 describe Puppet::Network::HTTP::WEBRick, "when turning off listening" do
     before do
         @server = Puppet::Network::HTTP::WEBRick.new        
+        @server.stubs(:shutdown)
+        Puppet.stubs(:start).returns(true)
     end
     
     it "should fail unless listening" do
@@ -43,10 +56,15 @@ describe Puppet::Network::HTTP::WEBRick, "when turning off listening" do
     end
     
     it "should order webrick server to stop" do
-        Puppet.stubs(:start).returns(true)
         @server.should respond_to(:shutdown)
         @server.expects(:shutdown)
         @server.listen(:foo => :bar)
         @server.unlisten
+    end
+    
+    it "should no longer be listening" do
+        @server.listen(:foo => :bar)
+        @server.unlisten
+        @server.should_not be_listening
     end
 end
