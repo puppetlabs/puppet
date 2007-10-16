@@ -9,8 +9,8 @@ require 'puppet/network/server'
 describe Puppet::Network::Server, "when initializing" do
     before do
         @mock_http_server_class = mock('http server class')
-        Puppet::Network::HTTP.stubs(:server_class_by_type).returns(@mock_http_server_class)
         Puppet.stubs(:[]).with(:servertype).returns(:suparserver)
+        Puppet::Network::HTTP.stubs(:server_class_by_type).returns(@mock_http_server_class)
     end
     
     it "should allow specifying a listening address" do
@@ -63,9 +63,13 @@ describe Puppet::Network::Server, "when initializing" do
     end
  
     it "should ask the Puppet::Network::HTTP class to fetch the proper HTTP server class" do
-        mock_http_server_class = mock('http server class')
-        Puppet::Network::HTTP.expects(:server_class_by_type).with(:suparserver).returns(mock_http_server_class)
+        Puppet::Network::HTTP.expects(:server_class_by_type).with(:suparserver).returns(@mock_http_server_class)
         @server = Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337)
+    end
+    
+    it "should fail if the HTTP server class is unknown" do
+        Puppet::Network::HTTP.stubs(:server_class_by_type).returns(nil)
+        Proc.new { Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337) }.should raise_error(ArgumentError)
     end
   
     it "should allow registering indirections" do

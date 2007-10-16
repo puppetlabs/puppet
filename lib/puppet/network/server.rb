@@ -1,9 +1,9 @@
 class Puppet::Network::Server
-	attr_reader :server_type, :http_server_class, :protocols, :address, :port
+	attr_reader :server_type, :protocols, :address, :port
 
     def initialize(args = {})
         @server_type = Puppet[:servertype] or raise "No servertype configuration found."  # e.g.,  WEBrick, Mongrel, etc.
-	    @http_server_class = http_server_class_by_type(@server_type)
+        http_server_class || raise(ArgumentError, "Could not determine HTTP Server class for server type [#{@server_type}]")
         @address = args[:address] || Puppet[:bindaddress] || 
             raise(ArgumentError, "Must specify :address or configure Puppet :bindaddress.")
         @port = args[:port] || Puppet[:masterport] ||
@@ -46,6 +46,10 @@ class Puppet::Network::Server
 	    raise "Cannot unlisten -- not currently listening." unless listening?
 	    http_server.unlisten   
 	    @listening = false
+    end
+    
+    def http_server_class
+        http_server_class_by_type(@server_type)
     end
 
   private
