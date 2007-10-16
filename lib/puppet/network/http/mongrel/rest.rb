@@ -5,7 +5,6 @@ class Puppet::Network::HTTP::MongrelREST < Puppet::Network::HTTP::Handler
   private
     
     def register_handler
-        @model = find_model_for_handler(@handler)
         @server.register('/' + @handler.to_s, self)
         @server.register('/' + @handler.to_s + 's', self)
     end

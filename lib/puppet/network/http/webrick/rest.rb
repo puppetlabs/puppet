@@ -10,7 +10,6 @@ class Puppet::Network::HTTP::WEBrickREST < Puppet::Network::HTTP::Handler
   private
     
     def register_handler
-        @model = find_model_for_handler(@handler)
         @server.mount('/' + @handler.to_s, self)
         @server.mount('/' + @handler.to_s + 's', self)
     end

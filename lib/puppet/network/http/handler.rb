@@ -2,6 +2,7 @@ class Puppet::Network::HTTP::Handler
     def initialize(args = {})
         raise ArgumentError unless @server = args[:server]
         raise ArgumentError unless @handler = args[:handler]
+        @model = find_model_for_handler(@handler)
         register_handler
     end
     

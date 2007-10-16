@@ -94,6 +94,21 @@ describe Puppet::Network::HTTP::WEBrickREST, "when receiving a request" do
         @mock_request.stubs(:path).returns('/foo')
         Proc.new { @handler.service(@mock_request, @mock_response) }.should raise_error(ArgumentError)
     end
+    
+    it "should fail if the request's pluralization is wrong" do
+        @mock_request.stubs(:request_method).returns('DELETE')
+        @mock_request.stubs(:path).returns('/foos')
+        Proc.new { @handler.process(@mock_request, @mock_response) }.should raise_error(ArgumentError)
+        @mock_request.stubs(:request_method).returns('PUT')
+        @mock_request.stubs(:path).returns('/foos')
+        Proc.new { @handler.process(@mock_request, @mock_response) }.should raise_error(ArgumentError)
+    end
+
+    it "should fail if the request is for an unknown path" do
+        @mock_request.stubs(:request_method).returns('GET')
+        @mock_request.stubs(:path).returns('/bar')
+        Proc.new { @handler.process(@mock_request, @mock_response) }.should raise_error(ArgumentError)
+    end
 
     it "should unpack request information from WEBrick"
     

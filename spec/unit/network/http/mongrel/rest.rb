@@ -89,6 +89,18 @@ describe Puppet::Network::HTTP::MongrelREST, "when receiving a request" do
         @mock_request.stubs(:params).returns({ Mongrel::Const::REQUEST_METHOD => 'POST', Mongrel::Const::REQUEST_PATH => '/foo'})
         Proc.new { @handler.process(@mock_request, @mock_response) }.should raise_error(ArgumentError)
     end
+    
+    it "should fail if the request's pluralization is wrong" do
+        @mock_request.stubs(:params).returns({ Mongrel::Const::REQUEST_METHOD => 'DELETE', Mongrel::Const::REQUEST_PATH => '/foos'})
+        Proc.new { @handler.process(@mock_request, @mock_response) }.should raise_error(ArgumentError)
+        @mock_request.stubs(:params).returns({ Mongrel::Const::REQUEST_METHOD => 'PUT', Mongrel::Const::REQUEST_PATH => '/foos'})
+        Proc.new { @handler.process(@mock_request, @mock_response) }.should raise_error(ArgumentError)
+    end
+
+    it "should fail if the request is for an unknown path" do
+        @mock_request.stubs(:params).returns({ Mongrel::Const::REQUEST_METHOD => 'GET', Mongrel::Const::REQUEST_PATH => '/bar'})
+        Proc.new { @handler.process(@mock_request, @mock_response) }.should raise_error(ArgumentError)
+    end
 
     it "should unpack request information from Mongrel"
     
