@@ -46,7 +46,7 @@ describe Puppet::Indirector, "when registering an indirection" do
 
     it "should allow specification of a default terminus" do
         klass = mock 'terminus class'
-        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:foo, :first).returns(klass)
+        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:first, :foo).returns(klass)
         @indirection = @thingie.indirects :first, :terminus_class => :foo
         @indirection.terminus_class.should == :foo
     end

@@ -12,7 +12,7 @@ describe Puppet::Indirector::Code do
 
         @code_class = Class.new(Puppet::Indirector::Code) do
             def self.to_s
-                "Testing"
+                "Mystuff::Testing"
             end
         end
 

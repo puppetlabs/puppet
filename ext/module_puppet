@@ -158,7 +158,7 @@ unless ENV.include?("CFALLCLASSES")
 end
 
 # Collect our facts.
-Puppet::Node::Facts.terminus_class = :code
+Puppet::Node::Facts.terminus_class = :facter
 facts = Puppet::Node::Facts.find("me")
 facts.name = facts.values["hostname"]
 

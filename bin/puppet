@@ -172,7 +172,7 @@ else
 end
 
 # Collect our facts.
-Puppet::Node::Facts.terminus_class = :code
+Puppet::Node::Facts.terminus_class = :facter
 facts = Puppet::Node::Facts.find("me")
 facts.name = facts.values["hostname"]
 
@@ -196,7 +196,7 @@ if options[:loadclasses]
 end
 
 # Compile and apply the configuration
-Puppet::Node::Configuration.terminus_class = :code
+Puppet::Node::Configuration.terminus_class = :compiler
 
 begin
     # Compile our configuration

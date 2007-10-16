@@ -26,8 +26,8 @@ describe Puppet::Node::Facts, " when indirecting" do
         @facts.save
     end
 
-    it "should default to the code terminus" do
-        Puppet::Node::Facts.indirection.terminus_class.should == :code
+    it "should default to the 'facter' terminus" do
+        Puppet::Node::Facts.indirection.terminus_class.should == :facter
     end
 
     after do
