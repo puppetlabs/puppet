@@ -50,11 +50,18 @@ end
 
 describe Puppet::Network::HTTP::WEBrickREST, "when receiving a request" do
     it "should unpack request information from WEBrick"
+    
     it "should unpack parameters from the request for passing to controller methods"    
+    
     it "should call the controller find method if the request represents a singular HTTP GET"
+    
     it "should call the controller search method if the request represents a plural HTTP GET"
+    
     it "should call the controller destroy method if the request represents an HTTP DELETE"
+    
     it "should call the controller save method if the request represents an HTTP PUT"
-    it "should serialize the result from the controller method for return back to Mongrel"
-    it "should serialize a controller expection result for return back to Mongrel"
+    
+    it "should serialize the result from the controller method for return back to WEBrick"
+    
+    it "should serialize a controller exception result for return back to WEBrick"
 end

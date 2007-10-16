@@ -49,12 +49,52 @@ describe Puppet::Network::HTTP::MongrelREST, "when initializing" do
 end
 
 describe Puppet::Network::HTTP::MongrelREST, "when receiving a request" do
+    before do
+        @mock_request = mock('mongrel http request')
+        @mock_response = mock('mongrel http response')
+        @mock_model_class = mock('indirected model class')
+        Puppet::Indirector::Indirection.stubs(:model).with(:foo).returns(@mock_model_class)
+        @mock_mongrel = mock('mongrel http server')
+        @mock_mongrel.stubs(:register)
+        @handler = Puppet::Network::HTTP::MongrelREST.new(:server => @mock_mongrel, :handler => :foo)
+    end
+    
+    it "should call the model find method if the request represents a singular HTTP GET" do
+        @mock_request.stubs(:params).returns({ Mongrel::Const::REQUEST_METHOD => 'GET', Mongrel::Const::REQUEST_PATH => '/foo'})
+        @mock_model_class.expects(:find)
+        @handler.process(@mock_request, @mock_response)
+    end
+
+    it "should call the model search method if the request represents a plural HTTP GET" do
+        @mock_request.stubs(:params).returns({ Mongrel::Const::REQUEST_METHOD => 'GET', Mongrel::Const::REQUEST_PATH => '/foos'})
+        @mock_model_class.expects(:search)
+        @handler.process(@mock_request, @mock_response)
+    end
+    
+    it "should call the model destroy method if the request represents an HTTP DELETE" do
+        @mock_request.stubs(:params).returns({ Mongrel::Const::REQUEST_METHOD => 'DELETE', Mongrel::Const::REQUEST_PATH => '/foo'})
+        @mock_model_class.expects(:destroy)
+        @handler.process(@mock_request, @mock_response)
+    end
+
+    it "should call the model save method if the request represents an HTTP PUT" do
+        @mock_request.stubs(:params).returns({ Mongrel::Const::REQUEST_METHOD => 'PUT', Mongrel::Const::REQUEST_PATH => '/foo'})
+        mock_model_instance = mock('indirected model instance')
+        mock_model_instance.expects(:save)
+        @mock_model_class.expects(:new).returns(mock_model_instance)
+        @handler.process(@mock_request, @mock_response)
+    end
+    
+    it "should fail if the HTTP method isn't supported" do
+        @mock_request.stubs(:params).returns({ Mongrel::Const::REQUEST_METHOD => 'POST', Mongrel::Const::REQUEST_PATH => '/foo'})
+        Proc.new { @handler.process(@mock_request, @mock_response) }.should raise_error(ArgumentError)
+    end
+
     it "should unpack request information from Mongrel"
+    
     it "should unpack parameters from the request for passing to controller methods"    
-    it "should call the controller find method if the request represents a singular HTTP GET"
-    it "should call the controller search method if the request represents a plural HTTP GET"
-    it "should call the controller destroy method if the request represents an HTTP DELETE"
-    it "should call the controller save method if the request represents an HTTP PUT"
+    
     it "should serialize the result from the controller method for return back to Mongrel"
-    it "should serialize a controller expection result for return back to Mongrel"
+    
+    it "should serialize a controller exception result for return back to Mongrel"
 end
