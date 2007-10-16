@@ -19,6 +19,14 @@ class Puppet::Network::HTTP::WEBrickREST < Puppet::Network::HTTP::Handler
     end
     
     def path(request)
-        request.path
+        '/' + request.path.split('/')[1]
+    end
+    
+    def request_key(request)
+        request.path.split('/')[2]
+    end
+    
+    def body(request)
+        request.body
     end
 end

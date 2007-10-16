@@ -8,15 +8,35 @@ class Puppet::Network::HTTP::Handler
     
     # handle an HTTP request coming from Mongrel
     def process(request, response)
-        return @model.find     if get?(request)    and singular?(request)
-        return @model.search   if get?(request)    and plural?(request)
-        return @model.destroy  if delete?(request) and singular?(request)
-        return @model.new.save if put?(request) and singular?(request)
+        return do_find(request, response)       if get?(request)    and singular?(request)
+        return do_search(request, response)     if get?(request)    and plural?(request)
+        return do_destroy(request, response)    if delete?(request) and singular?(request)
+        return do_save(request, response)       if put?(request) and singular?(request)
         raise ArgumentError, "Did not understand HTTP #{http_method(request)} request for '#{path(request)}'"
     end
     
   private
     
+    def do_find(request, response)
+        key = request_key(request) || raise(ArgumentError, "Could not locate lookup key in request path [#{path}]")
+        @model.find(key)
+    end
+
+    def do_search(request, response)
+        @model.search
+    end
+
+    def do_destroy(request, response)
+        key = request_key(request) || raise(ArgumentError, "Could not locate lookup key in request path [#{path}]")
+        @model.destroy(key)
+    end
+
+    def do_save(request, response)
+        data = body(request)
+        raise ArgumentError, "No data to save" if !data or data.empty?
+        @model.new.save(:data => data)
+    end
+  
     def find_model_for_handler(handler)
         Puppet::Indirector::Indirection.model(handler) || 
             raise(ArgumentError, "Cannot locate indirection [#{handler}].")
@@ -45,14 +65,22 @@ class Puppet::Network::HTTP::Handler
   # methods specific to a given web server
     
     def register_handler
-        raise UnimplementedError
+        raise NotImplementedError
     end
     
     def http_method(request)
-        raise UnimplementedError
+        raise NotImplementedError
     end
     
     def path(request)
-        raise UnimplementedError
+        raise NotImplementedError
     end    
+    
+    def request_key(request)
+        raise NotImplementedError
+    end
+    
+    def body(request)
+        raise NotImplementedError
+    end
 end

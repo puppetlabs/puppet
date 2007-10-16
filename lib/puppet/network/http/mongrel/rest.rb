@@ -14,6 +14,14 @@ class Puppet::Network::HTTP::MongrelREST < Puppet::Network::HTTP::Handler
     end
     
     def path(request)
-        request.params[Mongrel::Const::REQUEST_PATH]
+        '/' + request.params[Mongrel::Const::REQUEST_PATH].split('/')[1]
+    end
+    
+    def request_key(request)
+        request.params[Mongrel::Const::REQUEST_PATH].split('/')[2]        
+    end
+    
+    def body(request)
+        request.body
     end
 end
