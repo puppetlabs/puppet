@@ -17,6 +17,7 @@ describe Puppet::Network::HTTP::Mongrel, "when turning on listening" do
         @server = Puppet::Network::HTTP::Mongrel.new
         @mock_mongrel = mock('mongrel')
         @mock_mongrel.stubs(:run)
+        @mock_mongrel.stubs(:register)
         Mongrel::HttpServer.stubs(:new).returns(@mock_mongrel)
         @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => [ :node, :configuration ], :protocols => [ :rest, :xmlrpc ] }
     end
@@ -53,9 +54,7 @@ describe Puppet::Network::HTTP::Mongrel, "when turning on listening" do
     end
     
     it "should be listening" do
-        mock_mongrel = mock('mongrel httpserver')
-        mock_mongrel.expects(:run)
-        Mongrel::HttpServer.expects(:new).returns(mock_mongrel)
+        Mongrel::HttpServer.expects(:new).returns(@mock_mongrel)
         @server.listen(@listen_params)
         @server.should be_listening
     end
@@ -94,6 +93,7 @@ describe Puppet::Network::HTTP::Mongrel, "when turning off listening" do
     before do
         @mock_mongrel = mock('mongrel httpserver')
         @mock_mongrel.stubs(:run)
+        @mock_mongrel.stubs(:register)
         Mongrel::HttpServer.stubs(:new).returns(@mock_mongrel)
         @server = Puppet::Network::HTTP::Mongrel.new        
         @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => [ :node, :configuration ], :protocols => [ :rest, :xmlrpc ] }

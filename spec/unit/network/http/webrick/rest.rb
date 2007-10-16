@@ -9,6 +9,9 @@ require 'puppet/network/http'
 describe Puppet::Network::HTTP::WEBrickREST, "when initializing" do
     before do
         @mock_webrick = mock('WEBrick server')
+        @mock_webrick.stubs(:mount)
+        @mock_model = mock('indirected model')
+        Puppet::Indirector::Indirection.stubs(:model).returns(@mock_model)
         @params = { :server => @mock_webrick, :handler => :foo }
     end
     
@@ -21,17 +24,28 @@ describe Puppet::Network::HTTP::WEBrickREST, "when initializing" do
     end
     
     it "should look up the indirection model from the indirection name" do
-        mock_model = mock('indirected model')
-        Puppet::Indirector::Indirection.expects(:model).with(:foo).returns(mock_model)
+        Puppet::Indirector::Indirection.expects(:model).returns(@mock_model)
         Puppet::Network::HTTP::WEBrickREST.new(@params)
     end
     
-    it "should fail if a handler is not indirected" do
-        Puppet::Indirector::Indirection.expects(:model).with(:foo).returns(nil)
+    it "should fail if the indirection is not known" do
+        Puppet::Indirector::Indirection.expects(:model).returns(nil)
         Proc.new { Puppet::Network::HTTP::WEBrickREST.new(@params) }.should raise_error(ArgumentError)
     end
     
-    it "should register a listener for each indirection with the provided WEBrick server"
+    it "should register itself with the WEBrick server for the singular HTTP methods" do
+        @mock_webrick.expects(:mount).with do |*args|
+            args.first == '/foo' and args.last.is_a?(Puppet::Network::HTTP::WEBrickREST)
+        end
+        Puppet::Network::HTTP::WEBrickREST.new(@params)
+    end
+
+    it "should register itself with the WEBrick server for the plural GET method" do
+        @mock_webrick.expects(:mount).with do |*args|
+            args.first == '/foos' and args.last.is_a?(Puppet::Network::HTTP::WEBrickREST)
+        end
+        Puppet::Network::HTTP::WEBrickREST.new(@params)
+    end
 end
 
 describe Puppet::Network::HTTP::WEBrickREST, "when receiving a request" do

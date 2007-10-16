@@ -9,6 +9,9 @@ require 'puppet/network/http'
 describe Puppet::Network::HTTP::MongrelREST, "when initializing" do
     before do
         @mock_mongrel = mock('Mongrel server')
+        @mock_mongrel.stubs(:register)
+        @mock_model = mock('indirected model')
+        Puppet::Indirector::Indirection.stubs(:model).with(:foo).returns(@mock_model)
         @params = { :server => @mock_mongrel, :handler => :foo }
     end
     
@@ -21,17 +24,28 @@ describe Puppet::Network::HTTP::MongrelREST, "when initializing" do
     end
     
     it "should look up the indirection model from the indirection name" do
-        mock_model = mock('indirected model')
-        Puppet::Indirector::Indirection.expects(:model).with(:foo).returns(mock_model)
+        Puppet::Indirector::Indirection.expects(:model).with(:foo).returns(@mock_model)
         Puppet::Network::HTTP::MongrelREST.new(@params)
     end
     
-    it "should fail if a handler is not indirected" do
+    it "should fail if the indirection is not known" do
         Puppet::Indirector::Indirection.expects(:model).with(:foo).returns(nil)
         Proc.new { Puppet::Network::HTTP::MongrelREST.new(@params) }.should raise_error(ArgumentError)
     end
-    
-    it "should register a listener for each indirection with the provided Mongrel server"
+
+    it "should register itself with the mongrel server for the singular HTTP methods" do
+        @mock_mongrel.expects(:register).with do |*args|
+            args.first == '/foo' and args.last.is_a? Puppet::Network::HTTP::MongrelREST
+        end
+        Puppet::Network::HTTP::MongrelREST.new(@params)
+    end
+
+    it "should register itself with the mongrel server for the plural GET method" do
+        @mock_mongrel.expects(:register).with do |*args|
+            args.first == '/foos' and args.last.is_a? Puppet::Network::HTTP::MongrelREST
+        end
+        Puppet::Network::HTTP::MongrelREST.new(@params)
+    end
 end
 
 describe Puppet::Network::HTTP::MongrelREST, "when receiving a request" do

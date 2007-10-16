@@ -17,6 +17,7 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
         Puppet.stubs(:start)
         Puppet.stubs(:newservice)
         @mock_webrick = mock('webrick')
+        @mock_webrick.stubs(:mount)
         WEBrick::HTTPServer.stubs(:new).returns(@mock_webrick)
         @server = Puppet::Network::HTTP::WEBrick.new
         @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => [ :node, :configuration ], :protocols => [ :rest, :xmlrpc ] }
@@ -94,6 +95,7 @@ describe Puppet::Network::HTTP::WEBrick, "when turning off listening" do
         Puppet.stubs(:start)
         Puppet.stubs(:newservice)
         @mock_webrick = mock('webrick')
+        @mock_webrick.stubs(:mount)
         WEBrick::HTTPServer.stubs(:new).returns(@mock_webrick)
         @server = Puppet::Network::HTTP::WEBrick.new        
         @server.stubs(:shutdown)
