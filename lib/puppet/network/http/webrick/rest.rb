@@ -29,4 +29,8 @@ class Puppet::Network::HTTP::WEBrickREST < Puppet::Network::HTTP::Handler
     def body(request)
         request.body
     end
+    
+    def params(request)
+        request.query
+    end
 end

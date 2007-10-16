@@ -19,22 +19,26 @@ class Puppet::Network::HTTP::Handler
     
     def do_find(request, response)
         key = request_key(request) || raise(ArgumentError, "Could not locate lookup key in request path [#{path}]")
-        @model.find(key)
+        args = params(request)
+        @model.find(key, args)
     end
 
     def do_search(request, response)
-        @model.search
+        args = params(request)
+        @model.search(args)
     end
 
     def do_destroy(request, response)
         key = request_key(request) || raise(ArgumentError, "Could not locate lookup key in request path [#{path}]")
-        @model.destroy(key)
+        args = params(request)
+        @model.destroy(key, args)
     end
 
     def do_save(request, response)
         data = body(request)
         raise ArgumentError, "No data to save" if !data or data.empty?
-        @model.new.save(:data => data)
+        args = params(request)
+        @model.new.save(args.merge(:data => data))
     end
   
     def find_model_for_handler(handler)
@@ -81,6 +85,10 @@ class Puppet::Network::HTTP::Handler
     end
     
     def body(request)
+        raise NotImplementedError
+    end
+    
+    def params(request)
         raise NotImplementedError
     end
 end

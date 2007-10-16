@@ -51,6 +51,7 @@ end
 describe Puppet::Network::HTTP::WEBrickREST, "when receiving a request" do
     before do
         @mock_request = mock('webrick http request')
+        @mock_request.stubs(:query).returns({})
         @mock_response = mock('webrick http response')
         @mock_model_class = mock('indirected model class')
         Puppet::Indirector::Indirection.stubs(:model).with(:foo).returns(@mock_model_class)
@@ -62,7 +63,7 @@ describe Puppet::Network::HTTP::WEBrickREST, "when receiving a request" do
     it "should call the model find method if the request represents a singular HTTP GET" do
         @mock_request.stubs(:request_method).returns('GET')
         @mock_request.stubs(:path).returns('/foo/key')
-        @mock_model_class.expects(:find).with('key')
+        @mock_model_class.expects(:find).with('key', {})
         @handler.service(@mock_request, @mock_response)
     end
 
@@ -76,7 +77,7 @@ describe Puppet::Network::HTTP::WEBrickREST, "when receiving a request" do
     it "should call the model destroy method if the request represents an HTTP DELETE" do
         @mock_request.stubs(:request_method).returns('DELETE')
         @mock_request.stubs(:path).returns('/foo/key')
-        @mock_model_class.expects(:destroy).with('key')
+        @mock_model_class.expects(:destroy).with('key', {})
         @handler.service(@mock_request, @mock_response)
     end
 
@@ -130,10 +131,49 @@ describe Puppet::Network::HTTP::WEBrickREST, "when receiving a request" do
         Proc.new { @handler.process(@mock_request, @mock_response) }.should raise_error(ArgumentError)        
     end
 
-    it "should unpack request information from WEBrick"
+    it "should pass HTTP request parameters to model find" do
+        @mock_request.stubs(:query).returns(:foo => :baz, :bar => :xyzzy)
+        @mock_request.stubs(:request_method).returns('GET')
+        @mock_request.stubs(:path).returns('/foo/key')
+        @mock_model_class.expects(:find).with do |key, args|
+            key == 'key' and args[:foo] == :baz and args[:bar] == :xyzzy
+        end
+        @handler.service(@mock_request, @mock_response)
+    end
     
-    it "should unpack parameters from the request for passing to controller methods"    
+    it "should pass HTTP request parameters to model search" do
+        @mock_request.stubs(:query).returns(:foo => :baz, :bar => :xyzzy)
+        @mock_request.stubs(:request_method).returns('GET')
+        @mock_request.stubs(:path).returns('/foos/key')
+        @mock_model_class.expects(:search).with do |args|
+            args[:foo] == :baz and args[:bar] == :xyzzy
+        end
+        @handler.service(@mock_request, @mock_response)
+    end
     
+    it "should pass HTTP request parameters to model destroy" do
+        @mock_request.stubs(:query).returns(:foo => :baz, :bar => :xyzzy)
+        @mock_request.stubs(:request_method).returns('DELETE')
+        @mock_request.stubs(:path).returns('/foo/key')
+        @mock_model_class.expects(:destroy).with do |key, args|
+            key == 'key' and args[:foo] == :baz and args[:bar] == :xyzzy
+        end
+        @handler.service(@mock_request, @mock_response)
+    end
+    
+    it "should pass HTTP request parameters to model save" do
+        @mock_request.stubs(:request_method).returns('PUT')
+        @mock_request.stubs(:path).returns('/foo')
+        @mock_request.stubs(:query).returns(:foo => :baz, :bar => :xyzzy)
+        @mock_request.stubs(:body).returns('This is a fake request body')
+        mock_model_instance = mock('indirected model instance')
+        mock_model_instance.expects(:save).with do |args|
+            args[:data] == 'This is a fake request body' and args[:foo] == :baz and args[:bar] == :xyzzy
+        end
+        @mock_model_class.expects(:new).returns(mock_model_instance)
+        @handler.service(@mock_request, @mock_response)
+    end
+
     it "should serialize the result from the controller method for return back to Mongrel"
     
     it "should serialize a controller exception result for return back to Mongrel"
