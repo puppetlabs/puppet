@@ -73,6 +73,20 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
         end
         @server.listen(@listen_params)        
     end
+
+    it "should use a WEBrick + REST class to configure WEBrick when REST services are requested" do
+        Puppet::Network::HTTP::WEBrickREST.expects(:new).at_least_once
+        @server.listen(@listen_params.merge(:protocols => [:rest]))
+    end
+    
+    it "should use a WEBrick + XMLRPC class to configure WEBrick when XMLRPC services are requested" do
+        Puppet::Network::HTTP::WEBrickXMLRPC.expects(:new).at_least_once
+        @server.listen(@listen_params.merge(:protocols => [:xmlrpc]))        
+    end
+    
+    it "should fail if services from an unknown protocol are requested" do
+        Proc.new { @server.listen(@listen_params.merge(:protocols => [ :foo ]))}.should raise_error(ArgumentError)
+    end
 end
 
 describe Puppet::Network::HTTP::WEBrick, "when turning off listening" do

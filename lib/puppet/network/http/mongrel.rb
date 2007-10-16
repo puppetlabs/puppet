@@ -1,4 +1,6 @@
 require 'mongrel'
+require 'puppet/network/http/mongrel/rest'
+require 'puppet/network/http/mongrel/xmlrpc'
 
 class Puppet::Network::HTTP::Mongrel
     def initialize(args = {})
@@ -44,9 +46,8 @@ class Puppet::Network::HTTP::Mongrel
   
     # TODO/FIXME: need a spec which forces delegation to the real class
     def class_for_protocol(protocol)
-        Class.new do
-            def initialize(args = {})
-            end
-        end
+        return Puppet::Network::HTTP::MongrelREST if protocol.to_sym == :rest
+        return Puppet::Network::HTTP::MongrelXMLRPC if protocol.to_sym == :xmlrpc
+        raise ArgumentError, "Unknown protocol [#{protocol}]."
     end
 end

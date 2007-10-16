@@ -1,5 +1,7 @@
 require 'webrick'
 require 'webrick/https'
+require 'puppet/network/http/webrick/rest'
+require 'puppet/network/http/webrick/xmlrpc'
 
 class Puppet::Network::HTTP::WEBrick
     def initialize(args = {})
@@ -46,11 +48,9 @@ class Puppet::Network::HTTP::WEBrick
         end
     end
     
-    # TODO/FIXME: need a spec which forces delegation to the real class
     def class_for_protocol(protocol)
-        Class.new do
-            def initialize(args = {})
-            end
-        end
+        return Puppet::Network::HTTP::WEBrickREST if protocol.to_sym == :rest
+        return Puppet::Network::HTTP::WEBrickXMLRPC if protocol.to_sym == :xmlrpc
+        raise ArgumentError, "Unknown protocol [#{protocol}]."
     end
 end

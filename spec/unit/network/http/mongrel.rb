@@ -73,6 +73,21 @@ describe Puppet::Network::HTTP::Mongrel, "when turning on listening" do
         end
         @server.listen(@listen_params)        
     end
+    
+    it "should use a Mongrel + REST class to configure Mongrel when REST services are requested" do
+        Puppet::Network::HTTP::MongrelREST.expects(:new).at_least_once
+        @server.listen(@listen_params.merge(:protocols => [:rest]))
+    end
+    
+    it "should use a Mongrel + XMLRPC class to configure Mongrel when XMLRPC services are requested" do
+        Puppet::Network::HTTP::MongrelXMLRPC.expects(:new).at_least_once
+        @server.listen(@listen_params.merge(:protocols => [:xmlrpc]))        
+    end
+    
+    it "should fail if services from an unknown protocol are requested" do
+        Proc.new { @server.listen(@listen_params.merge(:protocols => [ :foo ]))}.should raise_error(ArgumentError)
+    end
+    
 end
 
 describe Puppet::Network::HTTP::Mongrel, "when turning off listening" do
