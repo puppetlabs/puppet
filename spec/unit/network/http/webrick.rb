@@ -60,19 +60,19 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
         @server.should be_listening
     end
     
-    it "should instantiate a specific handler (mongrel+rest, e.g.) for each named handler, for each named protocol)" do
-        @listen_params[:handlers].each do |handler|
-            @listen_params[:protocols].each do |protocol|
-                mock_handler = mock("handler instance for [#{protocol}]+[#{handler}]")
-                mock_handler_class = mock("handler class for [#{protocol}]+[#{handler}]")
-                mock_handler_class.expects(:new).returns(mock_handler)
-                @server.expects(:class_for_protocol_handler).with(protocol, handler).returns(mock_handler_class)
+    it "should instantiate a handler for each protocol+handler pair to configure web server routing" do
+        @listen_params[:protocols].each do |protocol|
+            mock_handler = mock("handler instance for [#{protocol}]")
+            mock_handler_class = mock("handler class for [#{protocol}]")
+            @listen_params[:handlers].each do |handler|
+                mock_handler_class.expects(:new).with {|args| 
+                    args[:server] == @mock_webrick and args[:handler] == handler
+                }.returns(mock_handler)
             end
+            @server.expects(:class_for_protocol).with(protocol).at_least_once.returns(mock_handler_class)
         end
-        @server.listen(@listen_params)
+        @server.listen(@listen_params)        
     end
-    
-    it "should mount handlers on a webrick path"
 end
 
 describe Puppet::Network::HTTP::WEBrick, "when turning off listening" do

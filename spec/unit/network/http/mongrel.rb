@@ -60,28 +60,16 @@ describe Puppet::Network::HTTP::Mongrel, "when turning on listening" do
         @server.should be_listening
     end
 
-    it "should instantiate a specific handler (mongrel+rest, e.g.) for each named handler, for each named protocol)" do
-        @listen_params[:handlers].each do |handler|
-            @listen_params[:protocols].each do |protocol|
-                mock_handler = mock("handler instance for [#{protocol}]+[#{handler}]")
-                mock_handler_class = mock("handler class for [#{protocol}]+[#{handler}]")
-                mock_handler_class.expects(:new).returns(mock_handler)
-                @server.expects(:class_for_protocol_handler).with(protocol, handler).returns(mock_handler_class)
+    it "should instantiate a handler for each protocol+handler pair to configure web server routing" do
+        @listen_params[:protocols].each do |protocol|
+            mock_handler = mock("handler instance for [#{protocol}]")
+            mock_handler_class = mock("handler class for [#{protocol}]")
+            @listen_params[:handlers].each do |handler|
+                mock_handler_class.expects(:new).with {|args| 
+                    args[:server] == @mock_mongrel and args[:handler] == handler
+                }.returns(mock_handler)
             end
-        end
-        @server.listen(@listen_params)
-    end
-    
-    it "should mount each handler on a mongrel path" do
-        pending "a moment of clarity"
-        @listen_params[:handlers].each do |handler|
-            @listen_params[:protocols].each do |protocol|
-                mock_handler = mock("handler instance for [#{protocol}]+[#{handler}]")
-                mock_handler_class = mock("handler class for [#{protocol}]+[#{handler}]")
-                mock_handler_class.stubs(:new).returns(mock_handler)
-                @server.stubs(:class_for_protocol_handler).with(protocol, handler).returns(mock_handler_class)
-                # TODO / FIXME : HERE -- need to begin resolving the model behind the indirection
-            end
+            @server.expects(:class_for_protocol).with(protocol).at_least_once.returns(mock_handler_class)
         end
         @server.listen(@listen_params)        
     end

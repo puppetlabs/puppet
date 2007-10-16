@@ -14,11 +14,10 @@ class Puppet::Network::HTTP::WEBrick
         raise "WEBrick server is already listening" if listening?
         
         @protocols = args[:protocols]
-        @handlers = args[:handlers]
+        @handlers = args[:handlers]        
+        @server = WEBrick::HTTPServer.new(:BindAddress => args[:address], :Port => args[:port])
         
         setup_handlers
-        
-        @server = WEBrick::HTTPServer.new(:BindAddress => args[:address], :Port => args[:port])
         
         # TODO / FIXME is this really necessary? -- or can we do it in both mongrel and webrick?
         Puppet.newservice(@server)
@@ -42,12 +41,16 @@ class Puppet::Network::HTTP::WEBrick
     def setup_handlers
         @handlers.each do |handler|
             @protocols.each do |protocol|
-                class_for_protocol_handler(protocol, handler).new
+                class_for_protocol(protocol).new(:server => @server, :handler => handler)
             end
         end
     end
     
-    def class_for_protocol_handler(protocol, handler)
-        Class.new
+    # TODO/FIXME: need a spec which forces delegation to the real class
+    def class_for_protocol(protocol)
+        Class.new do
+            def initialize(args = {})
+            end
+        end
     end
 end

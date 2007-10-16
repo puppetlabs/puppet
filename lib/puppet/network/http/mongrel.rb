@@ -14,10 +14,10 @@ class Puppet::Network::HTTP::Mongrel
         
         @protocols = args[:protocols]
         @handlers = args[:handlers]
-        
-        setup_handlers
-        
         @server = Mongrel::HttpServer.new(args[:address], args[:port])
+
+        setup_handlers
+
         @server.run
         @listening = true
     end
@@ -37,12 +37,16 @@ class Puppet::Network::HTTP::Mongrel
     def setup_handlers
         @protocols.each do |protocol|
             @handlers.each do |handler|
-                class_for_protocol_handler(protocol, handler).new
+                class_for_protocol(protocol).new(:server => @server, :handler => handler)
             end
         end
     end
   
-    def class_for_protocol_handler(protocol, handler)
-        Class.new
+    # TODO/FIXME: need a spec which forces delegation to the real class
+    def class_for_protocol(protocol)
+        Class.new do
+            def initialize(args = {})
+            end
+        end
     end
 end
