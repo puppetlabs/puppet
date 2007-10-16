@@ -1,4 +1,5 @@
-require 'mongrel'
+require 'mongrel' if Puppet.features.mongrel?
+
 require 'puppet/network/http/mongrel/rest'
 require 'puppet/network/http/mongrel/xmlrpc'
 

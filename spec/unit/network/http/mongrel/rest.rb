@@ -7,6 +7,8 @@ require File.dirname(__FILE__) + '/../../../../spec_helper'
 require 'puppet/network/http'
 
 describe Puppet::Network::HTTP::MongrelREST, "when initializing" do
+    confine "Mongrel is not available" => Puppet.features.mongrel?
+    
     before do
         @mock_mongrel = mock('Mongrel server')
         @mock_mongrel.stubs(:register)
@@ -49,6 +51,8 @@ describe Puppet::Network::HTTP::MongrelREST, "when initializing" do
 end
 
 describe Puppet::Network::HTTP::MongrelREST, "when receiving a request" do
+    confine "Mongrel is not available" => Puppet.features.mongrel?
+    
     before do
         @mock_request = mock('mongrel http request')
         @mock_response = mock('mongrel http response')
