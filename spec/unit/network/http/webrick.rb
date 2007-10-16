@@ -14,10 +14,8 @@ end
 
 describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
     before do
-        Puppet.stubs(:start)
-        Puppet.stubs(:newservice)
         @mock_webrick = mock('webrick')
-        @mock_webrick.stubs(:mount)
+        [:mount, :start, :shutdown].each {|meth| @mock_webrick.stubs(meth)}        
         WEBrick::HTTPServer.stubs(:new).returns(@mock_webrick)
         @server = Puppet::Network::HTTP::WEBrick.new
         @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => [ :node, :configuration ], :protocols => [ :rest, :xmlrpc ] }
@@ -45,7 +43,7 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
     end
 
     it "should order a webrick server to start" do
-        Puppet.expects(:start)
+        @mock_webrick.expects(:start)
         @server.listen(@listen_params)
     end
     
@@ -92,13 +90,10 @@ end
 
 describe Puppet::Network::HTTP::WEBrick, "when turning off listening" do
     before do
-        Puppet.stubs(:start)
-        Puppet.stubs(:newservice)
         @mock_webrick = mock('webrick')
-        @mock_webrick.stubs(:mount)
+        [:mount, :start, :shutdown].each {|meth| @mock_webrick.stubs(meth)}
         WEBrick::HTTPServer.stubs(:new).returns(@mock_webrick)
         @server = Puppet::Network::HTTP::WEBrick.new        
-        @server.stubs(:shutdown)
         @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => [ :node, :configuration ], :protocols => [ :rest, :xmlrpc ] }
     end
     
@@ -107,8 +102,7 @@ describe Puppet::Network::HTTP::WEBrick, "when turning off listening" do
     end
     
     it "should order webrick server to stop" do
-        @server.should respond_to(:shutdown)
-        @server.expects(:shutdown)
+        @mock_webrick.expects(:shutdown)
         @server.listen(@listen_params)
         @server.unlisten
     end

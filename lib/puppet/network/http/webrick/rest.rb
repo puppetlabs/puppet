@@ -1,8 +1,10 @@
-class Puppet::Network::HTTP::WEBrickREST
-    def initialize(args = {})
-        raise ArgumentError unless @server = args[:server]
-        raise ArgumentError unless @handler = args[:handler]
-        register_handler
+require 'puppet/network/http/handler'
+
+class Puppet::Network::HTTP::WEBrickREST < Puppet::Network::HTTP::Handler
+
+    # WEBrick uses a service() method to respond to requests.  Simply delegate to the handler response() method.
+    def service(request, response)
+        process(request, response)
     end
 
   private
@@ -13,8 +15,11 @@ class Puppet::Network::HTTP::WEBrickREST
         @server.mount('/' + @handler.to_s + 's', self)
     end
 
-    def find_model_for_handler(handler)
-        Puppet::Indirector::Indirection.model(handler) || 
-            raise(ArgumentError, "Cannot locate indirection [#{handler}].")
+    def http_method(request)
+        request.request_method
+    end
+    
+    def path(request)
+        request.path
     end
 end

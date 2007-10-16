@@ -18,19 +18,14 @@ class Puppet::Network::HTTP::WEBrick
         @protocols = args[:protocols]
         @handlers = args[:handlers]        
         @server = WEBrick::HTTPServer.new(:BindAddress => args[:address], :Port => args[:port])
-        
         setup_handlers
-        
-        # TODO / FIXME is this really necessary? -- or can we do it in both mongrel and webrick?
-        Puppet.newservice(@server)
-        Puppet.start
-        
+        @server.start
         @listening = true
     end
     
     def unlisten
         raise "WEBrick server is not listening" unless listening?
-        shutdown
+        @server.shutdown
         @listening = false
     end
     
