@@ -12,7 +12,7 @@ module FileTerminusTesting
 
         @file_class = Class.new(Puppet::Indirector::File) do
             def self.to_s
-                "Testing"
+                "Testing::Mytype"
             end
         end
 

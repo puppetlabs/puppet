@@ -85,7 +85,7 @@ class Puppet::Indirector::Indirection
         unless terminus_class and terminus_class.to_s != ""
             raise ArgumentError, "Invalid terminus name %s" % terminus_class.inspect
         end
-        unless Puppet::Indirector::Terminus.terminus_class(terminus_class, self.name)
+        unless Puppet::Indirector::Terminus.terminus_class(self.name, terminus_class)
             raise ArgumentError, "Could not find terminus %s for indirection %s" % [terminus_class, self.name]
         end
     end
@@ -132,7 +132,7 @@ class Puppet::Indirector::Indirection
     # Create a new terminus instance.
     def make_terminus(terminus_class)
         # Load our terminus class.
-        unless klass = Puppet::Indirector::Terminus.terminus_class(terminus_class, self.name)
+        unless klass = Puppet::Indirector::Terminus.terminus_class(self.name, terminus_class)
             raise ArgumentError, "Could not find terminus %s for indirection %s" % [terminus_class, self.name]
         end
         return klass.new

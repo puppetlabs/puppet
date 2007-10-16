@@ -651,8 +651,8 @@ describe Puppet::Node::Configuration, " when indirecting" do
         Puppet::Node::Configuration.find(:myconfig)
     end
 
-    it "should default to the code terminus" do
-        Puppet::Node::Configuration.indirection.terminus_class.should == :code
+    it "should default to the 'compiler' terminus" do
+        Puppet::Node::Configuration.indirection.terminus_class.should == :compiler
     end
 
     after do

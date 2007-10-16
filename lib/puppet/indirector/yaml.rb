@@ -52,6 +52,6 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
 
     # Return the path to a given node's file.
     def path(name)
-        File.join(Puppet[:yamldir], self.name.to_s, name.to_s + ".yaml")
+        File.join(Puppet[:yamldir], self.class.indirection_name.to_s, name.to_s + ".yaml")
     end
 end

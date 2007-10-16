@@ -8,7 +8,7 @@ require 'puppet/indirector'
 class Puppet::Transaction::Report
     extend Puppet::Indirector
 
-    indirects :report, :terminus_class => :code
+    indirects :report, :terminus_class => :processor
 
     attr_accessor :logs, :metrics, :time, :host
     

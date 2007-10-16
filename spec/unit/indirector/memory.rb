@@ -42,7 +42,7 @@ describe Puppet::Indirector::Memory do
 
         @memory_class = Class.new(Puppet::Indirector::Memory) do
             def self.to_s
-                "Testing"
+                "Mystuff::Testing"
             end
         end
 

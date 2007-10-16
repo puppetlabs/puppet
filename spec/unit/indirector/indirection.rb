@@ -137,17 +137,17 @@ describe Puppet::Indirector::Indirection, " when specifying terminus types" do
     end
 
     it "should fail when the specified terminus class cannot be found" do
-        Puppet::Indirector::Terminus.expects(:terminus_class).with(:foo, :test).returns(nil)
+        Puppet::Indirector::Terminus.expects(:terminus_class).with(:test, :foo).returns(nil)
         proc { @indirection.terminus_class = :foo }.should raise_error(ArgumentError)
     end
 
     it "should select the specified terminus class if a terminus class name is provided" do
-        Puppet::Indirector::Terminus.expects(:terminus_class).with(:foo, :test).returns(@terminus_class)
+        Puppet::Indirector::Terminus.expects(:terminus_class).with(:test, :foo).returns(@terminus_class)
         @indirection.terminus(:foo).should equal(@terminus)
     end
 
     it "should use the configured terminus class if no terminus name is specified" do
-        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:foo, :test).returns(@terminus_class)
+        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:test, :foo).returns(@terminus_class)
         @indirection.terminus_class = :foo
         @indirection.terminus().should equal(@terminus)
     end
@@ -162,7 +162,7 @@ describe Puppet::Indirector::Indirection, " when managing terminus instances" do
         @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
         @terminus = mock 'terminus'
         @terminus_class = mock 'terminus class'
-        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:foo, :test).returns(@terminus_class)
+        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:test, :foo).returns(@terminus_class)
     end
 
     it "should create an instance of the chosen terminus class" do
@@ -203,7 +203,7 @@ describe Puppet::Indirector::Indirection, " when deciding whether to cache" do
         @terminus = mock 'terminus'
         @terminus_class = mock 'terminus class'
         @terminus_class.stubs(:new).returns(@terminus)
-        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:foo, :test).returns(@terminus_class)
+        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:test, :foo).returns(@terminus_class)
         @indirection.terminus_class = :foo
     end
 
@@ -224,7 +224,7 @@ describe Puppet::Indirector::Indirection, " when deciding whether to cache" do
     end
 
     it "should fail to set the cache class when the specified cache class cannot be found" do
-        Puppet::Indirector::Terminus.expects(:terminus_class).with(:foo, :test).returns(nil)
+        Puppet::Indirector::Terminus.expects(:terminus_class).with(:test, :foo).returns(nil)
         proc { @indirection.cache_class = :foo }.should raise_error(ArgumentError)
     end
 
@@ -242,8 +242,8 @@ module IndirectionCaching
         @terminus_class.stubs(:new).returns(@terminus)
         @cache = mock 'cache'
         @cache_class = mock 'cache_class'
-        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:cache_terminus, :test).returns(@cache_class)
-        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:test_terminus, :test).returns(@terminus_class)
+        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:test, :cache_terminus).returns(@cache_class)
+        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:test, :test_terminus).returns(@terminus_class)
         @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
         @indirection.terminus_class = :test_terminus
     end

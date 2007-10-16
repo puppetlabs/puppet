@@ -6,11 +6,11 @@ require 'puppet/indirector/exec'
 
 describe Puppet::Indirector::Exec do
     before do
-        @indirection = mock 'indirection'
+        @indirection = stub 'indirection', :name => :testing
         Puppet::Indirector::Indirection.expects(:instance).with(:testing).returns(@indirection)
         @exec_class = Class.new(Puppet::Indirector::Exec) do
             def self.to_s
-                "Testing"
+                "Testing::Mytype"
             end
 
             attr_accessor :command

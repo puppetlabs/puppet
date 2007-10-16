@@ -12,7 +12,7 @@ describe Puppet::Indirector::Null do
 
         @null_class = Class.new(Puppet::Indirector::Null) do
             def self.to_s
-                "Testing"
+                "Mystuff::Testing"
             end
         end
 

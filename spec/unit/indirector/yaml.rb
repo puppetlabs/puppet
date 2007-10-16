@@ -10,7 +10,7 @@ module YamlTesting
         Puppet::Indirector::Indirection.stubs(:instance).with(:my_yaml).returns(@indirection)
         @store_class = Class.new(Puppet::Indirector::Yaml) do
             def self.to_s
-                "MyYaml"
+                "MyYaml::MyType"
             end
         end
         @store = @store_class.new

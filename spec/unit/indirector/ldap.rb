@@ -6,11 +6,11 @@ require 'puppet/indirector/ldap'
 
 describe Puppet::Indirector::Ldap, " when searching ldap" do
     before do
-        @indirection = mock 'indirection'
+        @indirection = stub 'indirection', :name => :testing
         Puppet::Indirector::Indirection.stubs(:instance).returns(@indirection)
         @ldap_class = Class.new(Puppet::Indirector::Ldap) do
             def self.to_s
-                "Testing"
+                "Testing::Mytype"
             end
         end
 

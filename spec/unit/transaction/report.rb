@@ -24,8 +24,8 @@ describe Puppet::Transaction::Report, " when being indirect" do
         report.save
     end
 
-    it "should default to the 'code' terminus" do
-        Puppet::Transaction::Report.indirection.terminus_class.should == :code
+    it "should default to the 'processor' terminus" do
+        Puppet::Transaction::Report.indirection.terminus_class.should == :processor
     end
 
     after do
