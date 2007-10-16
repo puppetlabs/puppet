@@ -273,25 +273,10 @@ describe Puppet::Network::Server, "when listening is being turned off" do
 end
 
                 
-                # TODO / FIXME : HERE -- need to begin resolving the model behind the indirection
-                # looks like:  get the handler class, providing @server to it
-                # have the handler class register the handler @ the right URL
-                # handler class knows the correct path to use, correct registration method to call
-                # handler also know how to get the model class from the indirection name
-                # do we change indirection name to indirection (instead of saying "handlers")?
-
-
-describe Class.new, "Puppet::Network::Handler::*::* (handler class (e.g., webrick+rest or mongrel+xmlrpc))" do
-    it "should be able to unserialize a request from the given httpserver answering for the given protocol handler, to be used by a controller"
-    it "should be able to serialize a result from a controller for return by the given httpserver responding with the given protocol"
-    it "should properly encode an exception from a controller for use by the httpserver for the given protocol handler"
-    it "should call the appropriate controller method"
-    it "should properly encode parameters on the request for use by the controller methods"
-end
-
 describe Class.new, "put these somewhere" do
     it "should allow indirections to deny access to services based upon which client is connecting, or whether the client is authorized"
     it "should deny access to clients based upon rules"    
 end
+
 
 

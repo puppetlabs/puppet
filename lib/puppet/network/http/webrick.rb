@@ -41,10 +41,8 @@ class Puppet::Network::HTTP::WEBrick
   private
     
     def setup_handlers
-        @handlers.each do |handler|
-            @protocols.each do |protocol|
-                class_for_protocol(protocol).new(:server => @server, :handler => handler)
-            end
+        @protocols.each do |protocol|
+            class_for_protocol(protocol).new(:server => @server, :handlers => @handlers)
         end
     end
     
