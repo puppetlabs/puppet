@@ -38,7 +38,9 @@ class Puppet::Network::HTTP::Mongrel
   
     def setup_handlers
         @protocols.each do |protocol|
-            class_for_protocol(protocol).new(:server => @server, :handlers => @handlers)
+            @handlers.each do |handler|
+                class_for_protocol(protocol).new(:server => @server, :handler => handler)
+            end
         end
     end
   

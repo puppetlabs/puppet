@@ -9,15 +9,15 @@ require 'puppet/network/http'
 describe Puppet::Network::HTTP::MongrelREST, "when initializing" do
     before do
         @mock_mongrel = mock('Mongrel server')
-        @params = { :server => @mock_mongrel, :handlers => [ :foo ] }
+        @params = { :server => @mock_mongrel, :handler => :foo }
     end
     
     it "should require access to a Mongrel server" do
         Proc.new { Puppet::Network::HTTP::MongrelREST.new(@params.delete_if {|k,v| :server == k })}.should raise_error(ArgumentError)
     end
     
-    it "should require at least one indirection name" do
-        Proc.new { Puppet::Network::HTTP::MongrelREST.new(@params.delete_if {|k,v| :handlers == k })}.should raise_error(ArgumentError)        
+    it "should require an indirection name" do
+        Proc.new { Puppet::Network::HTTP::MongrelREST.new(@params.delete_if {|k,v| :handler == k })}.should raise_error(ArgumentError)        
     end
     
     it "should look up the indirection model from the indirection name" do

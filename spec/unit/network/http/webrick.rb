@@ -64,9 +64,11 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
         @listen_params[:protocols].each do |protocol|
             mock_handler = mock("handler instance for [#{protocol}]")
             mock_handler_class = mock("handler class for [#{protocol}]")
-            mock_handler_class.expects(:new).with {|args| 
-                args[:server] == @mock_webrick and args[:handlers] == @listen_params[:handlers]
-            }.returns(mock_handler)
+            @listen_params[:handlers].each do |handler|
+                mock_handler_class.expects(:new).with {|args| 
+                    args[:server] == @mock_webrick and args[:handler] == handler
+                }.returns(mock_handler)
+            end
             @server.expects(:class_for_protocol).with(protocol).at_least_once.returns(mock_handler_class)
         end
         @server.listen(@listen_params)        

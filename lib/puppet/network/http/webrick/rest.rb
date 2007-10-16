@@ -1,12 +1,8 @@
 class Puppet::Network::HTTP::WEBrickREST
     def initialize(args = {})
         raise ArgumentError unless args[:server]
-        raise ArgumentError if !args[:handlers] or args[:handlers].empty?
-        
-        @models = {}
-        args[:handlers].each do |handler|
-            @models[handler] = find_model_for_handler(handler)
-        end
+        raise ArgumentError unless @handler = args[:handler]
+        @model = find_model_for_handler(@handler)
     end
 
   private
