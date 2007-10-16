@@ -174,7 +174,13 @@ describe Puppet::Network::HTTP::WEBrickREST, "when receiving a request" do
         @handler.service(@mock_request, @mock_response)
     end
 
-    it "should serialize the result from the controller method for return back to Mongrel"
-    
-    it "should serialize a controller exception result for return back to Mongrel"
+    it "should generate a 200 response when a model find call succeeds"
+    it "should generate a 200 response when a model search call succeeds"
+    it "should generate a 200 response when a model destroy call succeeds"
+    it "should generate a 200 response when a model save call succeeds"
+    it "should return a serialized object when a model find call succeeds"
+    it "should return a list of serialized object matches when a model search call succeeds"
+    it "should return a serialized success result when a model destroy call succeeds"
+    it "should return a serialized success result when a model save call succeeds"
+    it "should serialize a controller exception when an exception is thrown by the handler"
 end
