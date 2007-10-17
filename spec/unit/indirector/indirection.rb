@@ -4,8 +4,8 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/indirector'
 
-describe Puppet::Indirector::Indirection do
-    before do
+module IndirectionTesting
+    def setup
         @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
         @terminus = stub 'terminus', :has_most_recent? => false
         @indirection.stubs(:terminus).returns(@terminus)
@@ -13,35 +13,74 @@ describe Puppet::Indirector::Indirection do
         @name = :mything
     end
   
+    def teardown
+        @indirection.delete
+        Puppet::Indirector::Indirection.clear_cache
+    end
+end
+
+describe Puppet::Indirector::Indirection do
+    include IndirectionTesting
+
     it "should not attempt to set a timestamp if the terminus cannot find the instance" do
         @terminus.expects(:find).with(@name).returns(nil)
         proc { @indirection.find(@name) }.should_not raise_error
     end
+end
   
-    it "should handle lookups of a model instance by letting the appropriate terminus perform the lookup" do
+describe Puppet::Indirector::Indirection, " when looking for a model instance" do
+    include IndirectionTesting
+
+    it "should let the appropriate terminus perform the lookup" do
         @terminus.expects(:find).with(@name).returns(@instance)
         @indirection.find(@name).should == @instance
     end
 
-    it "should handle removing model instances from a terminus letting the appropriate terminus remove the instance" do
+    it "should call the terminus's authorization hook if there is one"
+end
+
+describe Puppet::Indirector::Indirection, " when removing a model instance" do
+    include IndirectionTesting
+
+    it "should let the appropriate terminus remove the instance" do
         @terminus.expects(:destroy).with(@name).returns(@instance)
         @indirection.destroy(@name).should == @instance
     end
+
+    it "should call the terminus's authorization hook if there is one"
+end
+
+describe Puppet::Indirector::Indirection, " when searching for multiple model instances" do
+    include IndirectionTesting
   
-    it "should handle searching for model instances by letting the appropriate terminus find the matching instances" do
+    it "should let the appropriate terminus find the matching instances" do
         @terminus.expects(:search).with(@name).returns(@instance)
         @indirection.search(@name).should == @instance
     end
+
+    it "should call the terminus's authorization hook if there is one"
+end
+
+describe Puppet::Indirector::Indirection, " when storing a model instance" do
+    include IndirectionTesting
   
-    it "should handle storing a model instance by letting the appropriate terminus store the instance" do
+    it "should let the appropriate terminus store the instance" do
         @terminus.expects(:save).with(@instance).returns(@instance)
         @indirection.save(@instance).should == @instance
     end
+
+    it "should call the terminus's authorization hook if there is one"
+end
+
+describe Puppet::Indirector::Indirection, " when handling instance versions" do
+    include IndirectionTesting
   
-    it "should handle version lookups by letting the appropriate terminus perform the lookup" do
+    it "should let the appropriate terminus perform the lookup" do
         @terminus.expects(:version).with(@name).returns(5)
         @indirection.version(@name).should == 5
     end
+
+    it "should call the terminus's authorization hook if there is one"
 
     it "should add versions to found instances that do not already have them" do
         @terminus.expects(:find).with(@name).returns(@instance)
@@ -68,11 +107,6 @@ describe Puppet::Indirector::Indirection do
         end
         @terminus.stubs(:save)
         @indirection.save(@instance)
-    end
-
-    after do
-        @indirection.delete
-        Puppet::Indirector::Indirection.clear_cache
     end
 end
 
@@ -234,7 +268,7 @@ describe Puppet::Indirector::Indirection, " when deciding whether to cache" do
     end
 end
 
-module IndirectionCaching
+module IndirectionCacheTesting
     def setup
         Puppet.settings.stubs(:value).with("test_terminus").returns("test_terminus")
         @terminus_class = mock 'terminus_class'
@@ -255,7 +289,7 @@ module IndirectionCaching
 end
 
 describe Puppet::Indirector::Indirection, " when managing the cache terminus" do
-    include IndirectionCaching
+    include IndirectionCacheTesting
 
     it "should not create a cache terminus at initialization" do
         # This is weird, because all of the code is in the setup.  If we got
@@ -281,7 +315,7 @@ describe Puppet::Indirector::Indirection, " when managing the cache terminus" do
 end
 
 describe Puppet::Indirector::Indirection, " when saving and using a cache" do
-    include IndirectionCaching
+    include IndirectionCacheTesting
 
     before do
         @indirection.cache_class = :cache_terminus
@@ -304,7 +338,7 @@ describe Puppet::Indirector::Indirection, " when saving and using a cache" do
 end
 
 describe Puppet::Indirector::Indirection, " when finding and using a cache" do
-    include IndirectionCaching
+    include IndirectionCacheTesting
 
     before do
         @indirection.cache_class = :cache_terminus
