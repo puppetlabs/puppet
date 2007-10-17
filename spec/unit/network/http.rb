@@ -12,8 +12,10 @@ describe Puppet::Network::HTTP do
         Puppet::Network::HTTP.server_class_by_type(:webrick).should be(Puppet::Network::HTTP::WEBrick)
     end
     
-    it "should return the mongrel HTTP server class when asked for a mongrel server" do
-        Puppet::Network::HTTP.server_class_by_type(:mongrel).should be(Puppet::Network::HTTP::Mongrel)
+    if Puppet.features.mongrel?
+        it "should return the mongrel HTTP server class when asked for a mongrel server" do
+            Puppet::Network::HTTP.server_class_by_type(:mongrel).should be(Puppet::Network::HTTP::Mongrel)
+        end
     end
     
     it "should fail to return the mongrel HTTP server class if mongrel is not available " do
