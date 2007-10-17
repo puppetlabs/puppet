@@ -20,12 +20,12 @@ class Puppet::Network::HTTP::Handler
     def do_find(request, response)
         key = request_key(request) || raise(ArgumentError, "Could not locate lookup key in request path [#{path}]")
         args = params(request)
-        @model.find(key, args)
+        encode_result(request, response, @model.find(key, args))
     end
 
     def do_search(request, response)
         args = params(request)
-        @model.search(args)
+        encode_result(request, response, @model.search(args))
     end
 
     def do_destroy(request, response)
@@ -89,6 +89,10 @@ class Puppet::Network::HTTP::Handler
     end
     
     def params(request)
+        raise NotImplementedError
+    end
+    
+    def encode_result(request, response, result)
         raise NotImplementedError
     end
 end

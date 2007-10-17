@@ -278,5 +278,7 @@ describe Class.new, "put these somewhere" do
     it "should deny access to clients based upon rules"    
 end
 
-
-
+describe Puppet::Indirector, "stuff required by HTTP servers" do
+    it "should provide the model with the ability to serialize to XML"
+    it "should provide the model with the ability to deserialize from XML"
+end

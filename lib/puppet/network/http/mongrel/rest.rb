@@ -28,4 +28,9 @@ class Puppet::Network::HTTP::MongrelREST < Puppet::Network::HTTP::Handler
     def params(request)
         Mongrel::HttpRequest.query_parse(request.params["QUERY_STRING"])
     end
+    
+    def encode_result(request, response, result)
+        response.start(200) do |head, body|
+        end
+    end
 end

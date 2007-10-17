@@ -56,6 +56,7 @@ describe Puppet::Network::HTTP::MongrelREST, "when receiving a request" do
     before do
         @mock_request = mock('mongrel http request')
         @mock_response = mock('mongrel http response')
+        @mock_response.stubs(:start)
         @mock_model_class = mock('indirected model class')
         Puppet::Indirector::Indirection.stubs(:model).with(:foo).returns(@mock_model_class)
         @mock_mongrel = mock('mongrel http server')
@@ -176,13 +177,35 @@ describe Puppet::Network::HTTP::MongrelREST, "when receiving a request" do
         @handler.process(@mock_request, @mock_response)
     end
 
-    it "should generate a 200 response when a model find call succeeds"
-    it "should generate a 200 response when a model search call succeeds"
+    it "should generate a 200 response when a model find call succeeds" do
+        @mock_request.stubs(:params).returns({  Mongrel::Const::REQUEST_METHOD => 'GET', 
+                                                Mongrel::Const::REQUEST_PATH => '/foo/key',
+                                                'QUERY_STRING' => ''})
+        @mock_model_class.stubs(:find)        
+        @mock_response.expects(:start).with(200)
+        @handler.process(@mock_request, @mock_response)
+    end
+    
+    it "should generate a 200 response when a model search call succeeds" do
+        @mock_request.stubs(:params).returns({  Mongrel::Const::REQUEST_METHOD => 'GET', 
+                                                Mongrel::Const::REQUEST_PATH => '/foos',
+                                                'QUERY_STRING' => ''})
+        @mock_model_class.stubs(:search)        
+        @mock_response.expects(:start).with(200)
+        @handler.process(@mock_request, @mock_response)
+    end
+    
     it "should generate a 200 response when a model destroy call succeeds"
+
     it "should generate a 200 response when a model save call succeeds"
+    
     it "should return a serialized object when a model find call succeeds"
+    
     it "should return a list of serialized object matches when a model search call succeeds"
+    
     it "should return a serialized success result when a model destroy call succeeds"
+    
     it "should return a serialized success result when a model save call succeeds"
+    
     it "should serialize a controller exception when an exception is thrown by the handler"
 end

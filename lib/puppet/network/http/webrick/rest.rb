@@ -33,4 +33,8 @@ class Puppet::Network::HTTP::WEBrickREST < Puppet::Network::HTTP::Handler
     def params(request)
         request.query
     end
+    
+    def encode_result(request, response, result)
+        result
+    end
 end
