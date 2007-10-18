@@ -8,6 +8,10 @@ describe Puppet::FileServing::Content do
     it "should indirect file_content" do
         Puppet::FileServing::Content.indirection.name.should == :file_content
     end
+
+    it "should should include the TerminusSelector module in its indirection" do
+        Puppet::FileServing::Content.indirection.metaclass.included_modules.should include(Puppet::FileServing::TerminusSelector)
+    end
 end
 
 describe Puppet::FileServing::Content, " when initializing" do

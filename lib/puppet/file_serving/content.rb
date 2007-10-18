@@ -4,13 +4,14 @@
 
 require 'puppet/indirector'
 require 'puppet/file_serving'
+require 'puppet/file_serving/terminus_selector'
 
 # A class that handles retrieving file contents.
 # It only reads the file when its content is specifically
 # asked for.
 class Puppet::FileServing::Content
     extend Puppet::Indirector
-    indirects :file_content, :terminus_class => :file
+    indirects :file_content, :terminus_class => :file, :extend => Puppet::FileServing::TerminusSelector
 
     attr_reader :path
 

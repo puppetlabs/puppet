@@ -8,4 +8,7 @@ require 'puppet/indirector/file'
 
 class Puppet::Indirector::FileContent::File < Puppet::Indirector::File
     desc "Retrieve file contents from disk."
+
+    def find(path)
+    end
 end

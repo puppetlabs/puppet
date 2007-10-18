@@ -19,21 +19,52 @@ module IndirectionTesting
     end
 end
 
-describe Puppet::Indirector::Indirection do
-    include IndirectionTesting
+describe Puppet::Indirector::Indirection, " when initializing" do
+    # LAK:FIXME I've no idea how to test this, really.
+    it "should store a reference to itself before it consumes its options" do
+        proc { @indirection = Puppet::Indirector::Indirection.new(Object.new, :testingness, :not_valid_option) }.should raise_error
+        Puppet::Indirector::Indirection.instance(:testingness).should be_instance_of(Puppet::Indirector::Indirection)
+        Puppet::Indirector::Indirection.instance(:testingness).delete
+    end
 
-    it "should not attempt to set a timestamp if the terminus cannot find the instance" do
-        @terminus.expects(:find).with(@name).returns(nil)
-        proc { @indirection.find(@name) }.should_not raise_error
+    it "should keep a reference to the indirecting model" do
+        model = mock 'model'
+        @indirection = Puppet::Indirector::Indirection.new(model, :myind)
+        @indirection.model.should equal(model)
+    end
+
+    it "should set the name" do
+        @indirection = Puppet::Indirector::Indirection.new(mock('model'), :myind)
+        @indirection.name.should == :myind
+    end
+
+    it "should require indirections to have unique names" do
+        @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
+        proc { Puppet::Indirector::Indirection.new(:test) }.should raise_error(ArgumentError)
+    end
+
+    it "should extend itself with any specified module" do
+        mod = Module.new
+        @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test, :extend => mod)
+        @indirection.metaclass.included_modules.should include(mod)
+    end
+
+    after do
+        @indirection.delete if defined? @indirection
     end
 end
-  
+
 describe Puppet::Indirector::Indirection, " when looking for a model instance" do
     include IndirectionTesting
 
     it "should let the appropriate terminus perform the lookup" do
         @terminus.expects(:find).with(@name).returns(@instance)
         @indirection.find(@name).should == @instance
+    end
+
+    it "should not attempt to set a timestamp if the terminus cannot find the instance" do
+        @terminus.expects(:find).with(@name).returns(nil)
+        proc { @indirection.find(@name) }.should_not raise_error
     end
 
     it "should call the terminus's authorization hook if there is one"
@@ -110,28 +141,6 @@ describe Puppet::Indirector::Indirection, " when handling instance versions" do
     end
 end
 
-describe Puppet::Indirector::Indirection, " when initializing" do
-    it "should keep a reference to the indirecting model" do
-        model = mock 'model'
-        @indirection = Puppet::Indirector::Indirection.new(model, :myind)
-        @indirection.model.should equal(model)
-    end
-
-    it "should set the name" do
-        @indirection = Puppet::Indirector::Indirection.new(mock('model'), :myind)
-        @indirection.name.should == :myind
-    end
-
-    it "should require indirections to have unique names" do
-        @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
-        proc { Puppet::Indirector::Indirection.new(:test) }.should raise_error(ArgumentError)
-    end
-
-    after do
-        @indirection.delete if defined? @indirection
-    end
-end
-
 describe Puppet::Indirector::Indirection, " when managing indirection instances" do
     it "should allow an indirection to be retrieved by name" do
         @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
@@ -147,7 +156,7 @@ describe Puppet::Indirector::Indirection, " when managing indirection instances"
     end
 end
 
-describe Puppet::Indirector::Indirection, " when specifying terminus types" do
+describe Puppet::Indirector::Indirection, " when specifying the terminus class to use" do
     before do
         @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
         @terminus = mock 'terminus'
@@ -184,6 +193,64 @@ describe Puppet::Indirector::Indirection, " when specifying terminus types" do
         Puppet::Indirector::Terminus.stubs(:terminus_class).with(:test, :foo).returns(@terminus_class)
         @indirection.terminus_class = :foo
         @indirection.terminus().should equal(@terminus)
+    end
+
+    after do
+        @indirection.delete if defined? @indirection
+    end
+end
+
+describe Puppet::Indirector::Indirection, " when a select_terminus hook is available" do
+    before do
+        @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
+
+        # And provide a select_terminus hook
+        @indirection.meta_def(:select_terminus) do |uri|
+            :other
+        end
+
+        @terminus = mock 'terminus'
+        @terminus_class = stub 'terminus class', :new => @terminus
+
+        @other_terminus = mock 'other_terminus'
+        @other_terminus_class = stub 'other_terminus_class', :new => @other_terminus
+
+        @cache_terminus = mock 'cache_terminus'
+        @cache_terminus_class = stub 'cache_terminus_class', :new => @cache_terminus
+
+        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:test, :foo).returns(@terminus_class)
+        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:test, :other).returns(@other_terminus_class)
+        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:test, :cache).returns(@cache_terminus_class)
+
+        # Set it to a default type.
+        @indirection.terminus_class = :foo
+
+        @uri = "full://url/path"
+        @result = stub 'result', :version => 1.0
+    end
+
+    it "should use the terminus name provided by passing the key to the :select_terminus hook when finding instances" do
+        # Set up the expectation
+        @other_terminus.expects(:find).with(@uri).returns(@result)
+
+        @indirection.find(@uri)
+    end
+
+    it "should use the terminus name provided by passing the key to the :select_terminus hook when testing if a cached instance is up to date" do
+        @indirection.cache_class = :cache
+
+        @other_terminus.expects(:version).with(@uri).returns(2.0)
+
+        @cache_terminus.expects(:has_most_recent?).with(@uri, 2.0).returns(true)
+        @cache_terminus.expects(:find).returns(:whatever)
+
+        @indirection.find(@uri).should == :whatever
+    end
+
+    it "should pass the original key to the terminus rather than a modified key" do
+        # This is the same test as before
+        @other_terminus.expects(:find).with(@uri).returns(@result)
+        @indirection.find(@uri)
     end
 
     after do

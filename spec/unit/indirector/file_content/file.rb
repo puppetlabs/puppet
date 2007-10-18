@@ -11,5 +11,19 @@ describe Puppet::Indirector::FileContent::File do
     it "should be registered with the file_content indirection" do
         Puppet::Indirector::Terminus.terminus_class(:file_content, :file).should equal(Puppet::Indirector::FileContent::File)
     end
+
+    it "should be a subclass of the File terminus" do
+        Puppet::Indirector::FileContent::File.superclass.should equal(Puppet::Indirector::File)
+    end
 end
 
+describe Puppet::Indirector::FileContent::File, "when finding a single file" do
+    before do
+        @content = Puppet::Indirector::FileContent::File.new
+        @path = "/my/file"
+    end
+
+    it "should return nil if the file does not exist"
+
+    it "should return a Content instance with the path set to the file if the file exists"
+end
