@@ -8,6 +8,10 @@ describe Puppet::FileServing::Metadata do
     it "should indirect file_metadata" do
         Puppet::FileServing::Metadata.indirection.name.should == :file_metadata
     end
+
+    it "should should include the TerminusSelector module in its indirection" do
+        Puppet::FileServing::Metadata.indirection.metaclass.included_modules.should include(Puppet::FileServing::TerminusSelector)
+    end
 end
 
 describe Puppet::FileServing::Metadata, " when initializing" do

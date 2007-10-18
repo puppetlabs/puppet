@@ -6,13 +6,14 @@ require 'puppet'
 require 'puppet/indirector'
 require 'puppet/file_serving'
 require 'puppet/util/checksums'
+require 'puppet/file_serving/terminus_selector'
 
 # A class that handles retrieving file metadata.
 class Puppet::FileServing::Metadata
     include Puppet::Util::Checksums
 
     extend Puppet::Indirector
-    indirects :file_metadata, :terminus_class => :ral
+    indirects :file_metadata, :extend => Puppet::FileServing::TerminusSelector
 
     attr_reader :path, :owner, :group, :mode, :checksum_type, :checksum
 

@@ -5,25 +5,25 @@
 
 require File.dirname(__FILE__) + '/../../../spec_helper'
 
-require 'puppet/indirector/file_content/file'
+require 'puppet/indirector/file_content/local'
 
-describe Puppet::Indirector::FileContent::File do
+describe Puppet::Indirector::FileContent::Local do
     it "should be registered with the file_content indirection" do
-        Puppet::Indirector::Terminus.terminus_class(:file_content, :file).should equal(Puppet::Indirector::FileContent::File)
+        Puppet::Indirector::Terminus.terminus_class(:file_content, :local).should equal(Puppet::Indirector::FileContent::Local)
     end
 
     it "should be a subclass of the File terminus" do
-        Puppet::Indirector::FileContent::File.superclass.should equal(Puppet::Indirector::File)
+        Puppet::Indirector::FileContent::Local.superclass.should equal(Puppet::Indirector::File)
     end
 end
 
-describe Puppet::Indirector::FileContent::File, "when finding a single file" do
+describe Puppet::Indirector::FileContent::Local, "when finding a single local" do
     before do
-        @content = Puppet::Indirector::FileContent::File.new
-        @path = "/my/file"
+        @content = Puppet::Indirector::FileContent::Local.new
+        @path = "/my/local"
     end
 
-    it "should return nil if the file does not exist"
+    it "should return nil if the local does not exist"
 
-    it "should return a Content instance with the path set to the file if the file exists"
+    it "should return a Content instance with the path set to the local if the local exists"
 end

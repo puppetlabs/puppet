@@ -5,10 +5,10 @@
 
 require File.dirname(__FILE__) + '/../../../spec_helper'
 
-require 'puppet/indirector/file_metadata/ral'
+require 'puppet/indirector/file_metadata/local'
 
-describe Puppet::Indirector::FileMetadata::Ral do
+describe Puppet::Indirector::FileMetadata::Local do
     it "should be registered with the file_metadata indirection" do
-        Puppet::Indirector::Terminus.terminus_class(:file_metadata, :ral).should equal(Puppet::Indirector::FileMetadata::Ral)
+        Puppet::Indirector::Terminus.terminus_class(:file_metadata, :local).should equal(Puppet::Indirector::FileMetadata::Local)
     end
 end

@@ -11,7 +11,7 @@ require 'puppet/file_serving/terminus_selector'
 # asked for.
 class Puppet::FileServing::Content
     extend Puppet::Indirector
-    indirects :file_content, :terminus_class => :file, :extend => Puppet::FileServing::TerminusSelector
+    indirects :file_content, :extend => Puppet::FileServing::TerminusSelector
 
     attr_reader :path
 

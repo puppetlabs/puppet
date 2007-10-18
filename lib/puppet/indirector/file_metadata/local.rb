@@ -6,7 +6,7 @@ require 'puppet/file_serving/metadata'
 require 'puppet/indirector/file_metadata'
 require 'puppet/indirector/code'
 
-class Puppet::Indirector::FileMetadata::Ral < Puppet::Indirector::Code
+class Puppet::Indirector::FileMetadata::Local < Puppet::Indirector::Code
     desc "Retrieve file metadata using Puppet's Resource Abstraction Layer.
         Returns everything about the file except its content."
 
