@@ -2,8 +2,8 @@
 
 require File.dirname(__FILE__) + '/../../../spec_helper'
 
-require 'puppet/file_serving/content'
+require 'puppet/indirector/file_metadata'
 
-describe "Puppet::Indirector::Content::Rest" do
+describe "Puppet::Indirector::Metadata::Rest" do
     it "should add the node's cert name to the arguments"
 end

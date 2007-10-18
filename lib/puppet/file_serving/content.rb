@@ -10,7 +10,7 @@ require 'puppet/file_serving'
 # asked for.
 class Puppet::FileServing::Content
     extend Puppet::Indirector
-    indirects :content, :terminus_class => :file
+    indirects :file_content, :terminus_class => :file
 
     attr_reader :path
 

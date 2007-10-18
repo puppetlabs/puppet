@@ -4,6 +4,12 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/file_serving/metadata'
 
+describe Puppet::FileServing::Metadata do
+    it "should indirect file_metadata" do
+        Puppet::FileServing::Metadata.indirection.name.should == :file_metadata
+    end
+end
+
 describe Puppet::FileServing::Metadata, " when initializing" do
     it "should require a fully qualified file path" do
         proc { Puppet::FileServing::Metadata.new("unqualified") }.should raise_error(ArgumentError)

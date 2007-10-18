@@ -4,6 +4,12 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/file_serving/content'
 
+describe Puppet::FileServing::Content do
+    it "should indirect file_content" do
+        Puppet::FileServing::Content.indirection.name.should == :file_content
+    end
+end
+
 describe Puppet::FileServing::Content, " when initializing" do
     before do
         @path = "/my/file"

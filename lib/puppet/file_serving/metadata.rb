@@ -12,7 +12,7 @@ class Puppet::FileServing::Metadata
     include Puppet::Util::Checksums
 
     extend Puppet::Indirector
-    indirects :metadata, :terminus_class => :ral
+    indirects :file_metadata, :terminus_class => :ral
 
     attr_reader :path, :owner, :group, :mode, :checksum_type, :checksum
 
