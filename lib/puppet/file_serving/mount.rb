@@ -13,11 +13,12 @@ require 'puppet/file_serving/content'
 class Puppet::FileServing::Mount < Puppet::Network::AuthStore
     include Puppet::Util::Logging
 
+    # A constant that defines how we refer to our modules mount.
+    MODULES = "modules"
+
+    InstanceTypes = {:metadata => Puppet::FileServing::Metadata, :content => Puppet::FileServing::Content}
+
     attr_reader :name
-
-    @@syncs = {}
-
-    @@files = {}
 
     # Return a new mount with the same properties as +self+, except
     # with a different name and path.
@@ -28,17 +29,27 @@ class Puppet::FileServing::Mount < Puppet::Network::AuthStore
         return result
     end
 
-    # Return a content instance for a given file.
-    def content(short_file, client = nil)
-        file_instance(Puppet::FileServing::Content, short_file, client)
+    # Return an instance of the appropriate class.
+    def file_instance(return_type, short_file, options = {})
+        raise(ArgumentError, "Invalid file type %s" % return_type) unless InstanceTypes.include?(return_type)
+
+        file = file_path(short_file, options[:node])
+
+        return nil unless FileTest.exists?(file)
+
+        return InstanceTypes[return_type].new(file)
     end
 
     # Return a fully qualified path, given a short path and
     # possibly a client name.
-    def file_path(short, client = nil)
-        p = path(client)
-        raise ArgumentError.new("Mounts without paths are not usable") unless p
-        File.join(p, short)
+    def file_path(relative_path, node = nil)
+        full_path = path(node)
+        raise ArgumentError.new("Mounts without paths are not usable") unless full_path
+
+        # If there's no relative path name, then we're serving the mount itself.
+        return full_path unless relative_path
+
+        return File.join(full_path, relative_path)
     end
 
     # Create out object.  It must have a name.
@@ -57,15 +68,10 @@ class Puppet::FileServing::Mount < Puppet::Network::AuthStore
         super()
     end
 
-    # Return a metadata instance with the appropriate information provided.
-    def metadata(short_file, client = nil)
-        file_instance(Puppet::FileServing::Metadata, short_file, client)
-    end
-
     # Return the path as appropriate, expanding as necessary.
-    def path(client = nil)
+    def path(node = nil)
         if expandable?
-            return expand(@path, client)
+            return expand(@path, node)
         else
             return @path
         end
@@ -114,22 +120,37 @@ class Puppet::FileServing::Mount < Puppet::Network::AuthStore
 
     private
 
-    # Create a map for a specific client.
-    def clientmap(client)
+    # LAK:FIXME Move this method to the REST terminus hook.
+    def authcheck(file, client, clientip)
+        raise "This method should be replaced by a REST/terminus hook"
+        # If we're local, don't bother passing in information.
+        if local?
+            client = nil
+            clientip = nil
+        end
+        unless mount.allowed?(client, clientip)
+            mount.warning "%s cannot access %s" %
+                [client, file]
+            raise Puppet::AuthorizationError, "Cannot access %s" % mount
+        end
+    end
+
+    # Create a map for a specific node.
+    def clientmap(node)
         {
-            "h" => client.sub(/\..*$/, ""), 
-            "H" => client,
-            "d" => client.sub(/[^.]+\./, "") # domain name
+            "h" => node.sub(/\..*$/, ""), 
+            "H" => node,
+            "d" => node.sub(/[^.]+\./, "") # domain name
         }
     end
 
     # Replace % patterns as appropriate.
-    def expand(path, client = nil)
+    def expand(path, node = nil)
         # This map should probably be moved into a method.
         map = nil
 
-        if client
-            map = clientmap(client)
+        if node
+            map = clientmap(node)
         else
             Puppet.notice "No client; expanding '%s' with local host" %
                 path
@@ -153,15 +174,6 @@ class Puppet::FileServing::Mount < Puppet::Network::AuthStore
         else
             false
         end
-    end
-
-    # Return an instance of the appropriate class.
-    def file_instance(klass, short_file, client = nil)
-        file = file_path(short_file, client)
-
-        return nil unless FileTest.exists?(file)
-
-        return klass.new(file)
     end
 
     # Cache this manufactured map, since if it's used it's likely

@@ -1,0 +1,123 @@
+require 'puppet/file_serving/configuration'
+require 'puppet/util/loadedfile'
+
+class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
+    Mount = Puppet::FileServing::Mount
+
+    # Parse our configuration file.
+    def parse
+        raise("File server configuration %s does not exist" % self.file) unless FileTest.exists?(self.file)
+        raise("Cannot read file server configuration %s" % self.file) unless FileTest.readable?(self.file)
+
+        @mounts = {}
+        @count = 0
+
+        File.open(self.file) { |f|
+            mount = nil
+            f.each { |line|
+                # Have the count increment at the top, in case we throw exceptions.
+                @count += 1
+
+                case line
+                when /^\s*#/: next # skip comments
+                when /^\s*$/: next # skip blank lines
+                when /\[([-\w]+)\]/:
+                    mount = newmount($1)
+                when /^\s*(\w+)\s+(.+)$/:
+                    var = $1
+                    value = $2
+                    raise(ArgumentError, "Fileserver configuration file does not use '=' as a separator") if value =~ /^=/
+                    case var
+                    when "path":
+                        path(mount, value)
+                    when "allow":
+                        allow(mount, value)
+                    when "deny":
+                        deny(mount, value)
+                    else
+                        raise ArgumentError.new("Invalid argument '%s'" % var,
+                            @count, file)
+                    end
+                else
+                    raise ArgumentError.new("Invalid line '%s'" % line.chomp,
+                        @count, file)
+                end
+            }
+        }
+
+        return @mounts
+    end
+
+    private
+
+    # Add the mount for getting files from modules.
+    def add_module_mount
+        unless @mounts[Mount::MODULES]
+            mount = Mount.new(Mount::MODULES)
+            mount.allow("*")
+            @mounts[Mount::MODULES] = mount
+        end
+    end
+
+    # Allow a given pattern access to a mount.
+    def allow(mount, value)
+        value.split(/\s*,\s*/).each { |val|
+            begin
+                mount.info "allowing %s access" % val
+                mount.allow(val)
+            rescue AuthStoreError => detail
+                raise ArgumentError.new(detail.to_s,
+                    @count, file)
+            end
+        }
+    end
+
+    # Deny a given pattern access to a mount.
+    def deny(mount, value)
+        value.split(/\s*,\s*/).each { |val|
+            begin
+                mount.info "denying %s access" % val
+                mount.deny(val)
+            rescue AuthStoreError => detail
+                raise ArgumentError.new(detail.to_s,
+                    @count, file)
+            end
+        }
+    end
+
+    # Create a new mount.
+    def newmount(name)
+        if @mounts.include?(name)
+            raise ArgumentError, "%s is already mounted at %s" %
+                [@mounts[name], name], @count, file
+        end
+        mount = Mount.new(name)
+        @mounts[name] = mount
+        return mount
+    end
+
+    # Set the path for a mount.
+    def path(mount, value)
+        if mount.name == Mount::MODULES
+            Puppet.warning "The '#{Mount::MODULES}' module can not have a path. Ignoring attempt to set it"
+        else
+            begin
+                mount.path = value
+            rescue ArgumentError => detail
+                Puppet.err "Removing mount %s: %s" %
+                    [mount.name, detail]
+                @mounts.delete(mount.name)
+            end
+        end
+    end
+
+    # Make sure all of our mounts are valid.  We have to do this after the fact
+    # because details are added over time as the file is parsed.
+    def validate
+        @mounts.each { |name, mount|
+            unless mount.valid?
+                raise ArgumentError, "No path specified for mount %s" % name
+            end
+        }
+    end
+end
