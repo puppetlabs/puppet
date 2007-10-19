@@ -33,7 +33,7 @@ describe Puppet::FileServing::Content, " when initializing" do
         proc { Puppet::FileServing::Content.new(@path) }.should raise_error(ArgumentError)
     end
 
-    it "should not read the file" do
+    it "should not stat the file" do
         FileTest.expects(:exists?).with(@path).returns(true)
         File.expects(:read).with(@path).never
         Puppet::FileServing::Content.new(@path)
@@ -50,5 +50,15 @@ describe Puppet::FileServing::Content, " when converting to yaml" do
     it "should return the file contents" do
         File.expects(:read).with(@path).returns("mycontent")
         @content.to_yaml.should == "mycontent"
+    end
+end
+
+describe Puppet::FileServing::Content, " when converting from yaml" do
+    # LAK:FIXME This isn't in the right place, but we need some kind of
+    # control somewhere that requires that all REST connections only pull
+    # from the file-server, thus guaranteeing they go through our authorization
+    # hook.
+    it "should set the URI scheme to 'puppetmounts'" do
+        pending "We need to figure out where this should be"
     end
 end

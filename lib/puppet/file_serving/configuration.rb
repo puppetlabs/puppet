@@ -30,11 +30,20 @@ class Puppet::FileServing::Configuration
 
     # Return a content instance.
     def content(path, options = {})
-        mount, file_path = splitpath(path, options[:node])
+        mount, file_path = split_path(path, options[:node])
 
         return nil unless mount
 
         mount.file_instance :content, file_path, options
+    end
+
+    # Search for a file.
+    def file_path(key, options = {})
+        mount, file_path = split_path(key, options[:node])
+
+        return nil unless mount
+
+        return mount.file(file_path, options)
     end
 
     def initialize
@@ -48,30 +57,11 @@ class Puppet::FileServing::Configuration
 
     # Return a metadata instance.
     def metadata(path, options = {})
-        mount, file_path = splitpath(path, options[:node])
+        mount, file_path = split_path(path, options[:node])
 
         return nil unless mount
 
         mount.file_instance :metadata, file_path, options
-    end
-
-    # Mount a new directory with a name.
-    def mount(path, name)
-        if @mounts.include?(name)
-            if @mounts[name] != path
-                raise FileServerError, "%s is already mounted at %s" %
-                    [@mounts[name].path, name]
-            else
-                # it's already mounted; no problem
-                return
-            end
-        end
-
-        # Let the mounts do their own error-checking.
-        @mounts[name] = Mount.new(name, path)
-        @mounts[name].info "Mounted %s" % path
-
-        return @mounts[name]
     end
 
     # Is a given mount available?
@@ -137,7 +127,7 @@ class Puppet::FileServing::Configuration
     end
 
     # Split the path into the separate mount point and path.
-    def splitpath(uri, node)
+    def split_path(uri, node)
         # Reparse the configuration if necessary.
         readconfig
 

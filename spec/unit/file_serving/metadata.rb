@@ -15,11 +15,19 @@ describe Puppet::FileServing::Metadata do
 end
 
 describe Puppet::FileServing::Metadata, " when initializing" do
-    it "should require a fully qualified file path" do
+    it "should allow initialization without a path" do
+        proc { Puppet::FileServing::Metadata.new() }.should_not raise_error
+    end
+
+    it "should allow initialization with a path" do
         proc { Puppet::FileServing::Metadata.new("unqualified") }.should raise_error(ArgumentError)
     end
 
-    it "should require the path to exist" do
+    it "should the path to be fully qualified if it is provied" do
+        proc { Puppet::FileServing::Metadata.new("unqualified") }.should raise_error(ArgumentError)
+    end
+
+    it "should require the path to exist if it is provided" do
         FileTest.expects(:exists?).with("/no/such/path").returns(false)
         proc { Puppet::FileServing::Metadata.new("/no/such/path") }.should raise_error(ArgumentError)
     end
@@ -36,6 +44,7 @@ describe Puppet::FileServing::Metadata do
         @checksum = Digest::MD5.hexdigest("some content\n")
         FileTest.expects(:exists?).with(@path).returns(true)
         @metadata = Puppet::FileServing::Metadata.new(@path)
+        @metadata.get_attributes
     end
 
     it "should accept a file path" do
@@ -74,5 +83,15 @@ describe Puppet::FileServing::Metadata do
 
     it "should default to a checksum of type MD5" do
         @metadata.checksum.should == "{md5}" + @checksum
+    end
+end
+
+describe Puppet::FileServing::Metadata, " when converting from yaml" do
+    # LAK:FIXME This isn't in the right place, but we need some kind of
+    # control somewhere that requires that all REST connections only pull
+    # from the file-server, thus guaranteeing they go through our authorization
+    # hook.
+    it "should set the URI scheme to 'puppetmounts'" do
+        pending "We need to figure out where this should be"
     end
 end

@@ -17,13 +17,21 @@ describe Puppet::Indirector::FileContent::Local do
     end
 end
 
-describe Puppet::Indirector::FileContent::Local, "when finding a single local" do
-    before do
+describe Puppet::Indirector::FileContent::Local, "when finding a single file" do
+    it "should return a Content instance created with the full path to the file if the file exists" do
         @content = Puppet::Indirector::FileContent::Local.new
-        @path = "/my/local"
+        @uri = "file:///my/local"
+
+        FileTest.expects(:exists?).with("/my/local").returns true
+        Puppet::FileServing::Content.expects(:new).with("/my/local").returns(:mycontent)
+        @content.find(@uri).should == :mycontent
     end
 
-    it "should return nil if the local does not exist"
+    it "should return nil if the file does not exist" do
+        @content = Puppet::Indirector::FileContent::Local.new
+        @uri = "file:///my/local"
 
-    it "should return a Content instance with the path set to the local if the local exists"
+        FileTest.expects(:exists?).with("/my/local").returns false
+        @content.find(@uri).should be_nil
+    end
 end

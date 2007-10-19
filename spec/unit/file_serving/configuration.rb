@@ -117,9 +117,7 @@ describe Puppet::FileServing::Configuration, " when using a module mount" do
     it "should prefer module mounts to static mounts"
 end
 
-# We're kind of testing the implementation here, because we know that both
-# content and metadata use the same internal method.  Oh well.
-describe Puppet::FileServing::Configuration, " when using File URIs to pick the correct mount and file" do
+describe Puppet::FileServing::Configuration, " when finding files" do
     include FSConfigurationTesting
 
     before do
@@ -139,48 +137,50 @@ describe Puppet::FileServing::Configuration, " when using File URIs to pick the 
 
     it "should fail if the uri does not match a leading slash followed by a valid mount name" do
         @parser.expects(:parse).returns(@mounts)
-        proc { @config.metadata("something") }.should raise_error(ArgumentError)
+        proc { @config.file_path("something") }.should raise_error(ArgumentError)
     end
 
     it "should use the first term after the first slash for the mount name" do
         @parser.expects(:parse).returns(@mounts)
-        @mount1.expects(:file_instance)
-        @config.metadata("/one")
+        @mount1.expects(:file)
+        @config.file_path("/one")
     end
 
     it "should use the remainder of the URI after the mount name as the file name" do
         @parser.expects(:parse).returns(@mounts)
-        @mount1.expects(:file_instance).with(:metadata, "something/else", {})
-        @config.metadata("/one/something/else")
+        @mount1.expects(:file).with("something/else", {})
+        @config.file_path("/one/something/else")
     end
 
     it "should treat a bare name as a mount and no relative file" do
         @parser.expects(:parse).returns(@mounts)
-        @mount1.expects(:file_instance).with(:metadata, nil, {})
-        @config.metadata("/one")
+        @mount1.expects(:file).with(nil, {})
+        @config.file_path("/one")
     end
 
     it "should treat a name with a trailing slash equivalently to a name with no trailing slash" do
         @parser.expects(:parse).returns(@mounts)
-        @mount1.expects(:file_instance).with(:metadata, nil, {})
-        @config.metadata("/one/")
+        @mount1.expects(:file).with(nil, {})
+        @config.file_path("/one/")
     end
 
     it "should return nil if the mount cannot be found" do
         @parser.expects(:changed?).returns(true)
         @parser.expects(:parse).returns({})
-        @config.metadata("/one/something").should be_nil
+        @config.file_path("/one/something").should be_nil
     end
 
+    it "should return nil if the mount does not contain the file"
+
     it "should reparse the configuration file when it has changed" do
-        @mount1.stubs(:file_instance).returns("whatever")
+        @mount1.stubs(:file).returns("whatever")
         @parser.expects(:changed?).returns(true)
         @parser.expects(:parse).returns(@mounts)
-        @config.metadata("/one/something")
+        @config.file_path("/one/something")
 
         @parser.expects(:changed?).returns(true)
         @parser.expects(:parse).returns({})
-        @config.metadata("/one/something").should be_nil
+        @config.file_path("/one/something").should be_nil
     end
 end
 

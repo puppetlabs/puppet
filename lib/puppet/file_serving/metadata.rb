@@ -23,12 +23,7 @@ class Puppet::FileServing::Metadata
         @checksum_type = type
     end
 
-    def initialize(path, checksum_type = "md5")
-        raise ArgumentError.new("Files must be fully qualified") unless path =~ /^#{::File::SEPARATOR}/
-        raise ArgumentError.new("Files must exist") unless FileTest.exists?(path)
-
-        @path = path
-
+    def get_attributes
         stat = File.stat(path)
         @owner = stat.uid
         @group = stat.gid
@@ -36,8 +31,18 @@ class Puppet::FileServing::Metadata
         # Set the octal mode, but as a string.
         @mode = "%o" % (stat.mode & 007777)
 
-        @checksum_type = checksum_type
         @checksum = get_checksum
+    end
+
+    def initialize(path = nil)
+        if path
+            raise ArgumentError.new("Files must be fully qualified") unless path =~ /^#{::File::SEPARATOR}/
+            raise ArgumentError.new("Files must exist") unless FileTest.exists?(path)
+
+            @path = path
+        end
+
+        @checksum_type = "md5"
     end
 
     private

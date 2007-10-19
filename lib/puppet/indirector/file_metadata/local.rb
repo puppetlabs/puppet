@@ -4,13 +4,21 @@
 
 require 'puppet/file_serving/metadata'
 require 'puppet/indirector/file_metadata'
+require 'puppet/file_serving/terminus_helper'
 require 'puppet/indirector/code'
 
 class Puppet::Indirector::FileMetadata::Local < Puppet::Indirector::Code
-    desc "Retrieve file metadata using Puppet's Resource Abstraction Layer.
-        Returns everything about the file except its content."
+    desc "Retrieve file metadata directly from the local filesystem."
 
-    def find(file)
-        Puppet::Node::Facts.new(key, Facter.to_hash)
+    include Puppet::FileServing::TerminusHelper
+
+    def find(key)
+        uri = key2uri(key)
+
+        return nil unless FileTest.exists?(uri.path)
+        data = Puppet::FileServing::Metadata.new uri.path
+        data.get_attributes
+
+        return data
     end
 end
