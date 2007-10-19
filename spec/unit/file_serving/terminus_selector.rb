@@ -30,13 +30,22 @@ describe Puppet::FileServing::TerminusSelector, " when being used to select term
         @object.select_terminus("puppet://host/module/file").should == :rest
     end
 
-    it "should choose :mounts when the protocol is 'puppetmounts'" do
-        @object.select_terminus("puppetmounts://host/module/file").should == :mounts
+    it "should choose :modules when the protocol is 'puppetmounts' and the mount name is 'modules'" do
+        @object.select_terminus("puppetmounts://host/modules/mymod/file").should == :modules
     end
 
-    it "should choose :mounts when no server name is provided and the process name is 'puppet'" do
+    it "should choose :modules when no server name is provided, the process name is 'puppet', and the mount name is 'modules'" do
         Puppet.settings.expects(:value).with(:name).returns("puppet")
-        @object.select_terminus("puppet:///module/file").should == :mounts
+        @object.select_terminus("puppet:///modules/mymod/file").should == :modules
+    end
+
+    it "should choose :mounts when the protocol is 'puppetmounts' and the mount name is not 'modules'" do
+        @object.select_terminus("puppetmounts://host/notmodules/file").should == :mounts
+    end
+
+    it "should choose :mounts when no server name is provided, the process name is 'puppet', and the mount name is not 'modules'" do
+        Puppet.settings.expects(:value).with(:name).returns("puppet")
+        @object.select_terminus("puppet:///notmodules/file").should == :mounts
     end
 
     it "should choose :rest when no server name is provided and the process name is not 'puppet'" do
@@ -50,6 +59,11 @@ describe Puppet::FileServing::TerminusSelector, " when being used to select term
 
     it "should choose :local when the URI is a normal path name" do
         @object.select_terminus("/module/file").should == :local
+    end
+
+    # This is so that we only choose modules over mounts, not local
+    it "should choose :local when the protocol is 'file' and the fully qualified path starts with '/modules'" do
+        @object.select_terminus("file://host/modules/file").should == :local
     end
 
     it "should fail when a protocol other than :puppet, :file, or :puppetmounts is used" do

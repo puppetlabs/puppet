@@ -5,19 +5,18 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-require 'puppet/file_serving/terminus_helper'
+require 'puppet/util/uri_helper'
 
-module TerminusHelperTesting
-    def setup
+describe Puppet::Util::URIHelper, " when converting a key to a URI" do
+    before do
         @helper = Object.new
-        @config = mock 'fs configuration'
-        Puppet::FileServing::Configuration.stubs(:create).returns(@config)
-        @helper.extend(Puppet::FileServing::TerminusHelper)
+        @helper.extend(Puppet::Util::URIHelper)
     end
-end
 
-describe Puppet::FileServing::TerminusHelper, " when converting a key to a URI" do
-    include TerminusHelperTesting
+    it "should return the URI instance" do
+        URI.expects(:parse).with("file:///myhost/blah").returns(:myuri)
+        @helper.key2uri("/myhost/blah").should == :myuri
+    end
 
     it "should escape the key before parsing" do
         URI.expects(:escape).with("mykey").returns("http://myhost/blah")
@@ -39,12 +38,4 @@ describe Puppet::FileServing::TerminusHelper, " when converting a key to a URI" 
         URI.expects(:parse).with("file:///myhost/blah").returns(:myuri)
         @helper.key2uri("/myhost/blah").should == :myuri
     end
-end
-
-describe Puppet::FileServing::TerminusHelper, " when returning file paths" do
-    include TerminusHelperTesting
-
-    it "should follow links if the links option is set to :follow"
-
-    it "should ignore links if the links option is not set to follow"
 end

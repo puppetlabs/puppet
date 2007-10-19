@@ -3,6 +3,7 @@ require 'puppet/util/loadedfile'
 
 class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
     Mount = Puppet::FileServing::Mount
+    MODULES = 'modules'
 
     # Parse our configuration file.
     def parse
@@ -52,10 +53,10 @@ class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
 
     # Add the mount for getting files from modules.
     def add_module_mount
-        unless @mounts[Mount::MODULES]
-            mount = Mount.new(Mount::MODULES)
+        unless @mounts[MODULES]
+            mount = Mount.new(MODULES)
             mount.allow("*")
-            @mounts[Mount::MODULES] = mount
+            @mounts[MODULES] = mount
         end
     end
 
@@ -98,8 +99,8 @@ class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
 
     # Set the path for a mount.
     def path(mount, value)
-        if mount.name == Mount::MODULES
-            Puppet.warning "The '#{Mount::MODULES}' module can not have a path. Ignoring attempt to set it"
+        if mount.name == MODULES
+            Puppet.warning "The '#{MODULES}' module can not have a path. Ignoring attempt to set it"
         else
             begin
                 mount.path = value

@@ -28,21 +28,14 @@ class Puppet::FileServing::Configuration
 
     private_class_method  :new
 
-    # Return a content instance.
-    def content(path, options = {})
-        mount, file_path = split_path(path, options[:node])
-
-        return nil unless mount
-
-        mount.file_instance :content, file_path, options
-    end
-
     # Search for a file.
     def file_path(key, options = {})
         mount, file_path = split_path(key, options[:node])
 
         return nil unless mount
 
+        # The mount checks to see if the file exists, and returns nil
+        # if not.
         return mount.file(file_path, options)
     end
 
@@ -53,15 +46,6 @@ class Puppet::FileServing::Configuration
         # We don't check to see if the file is modified the first time,
         # because we always want to parse at first.
         readconfig(false)
-    end
-
-    # Return a metadata instance.
-    def metadata(path, options = {})
-        mount, file_path = split_path(path, options[:node])
-
-        return nil unless mount
-
-        mount.file_instance :metadata, file_path, options
     end
 
     # Is a given mount available?
@@ -84,27 +68,6 @@ class Puppet::FileServing::Configuration
         }
         return children
     end  
-
-    # Return the mount for the Puppet modules; allows file copying from
-    # the modules.
-    def modules_mount(module_name, client)
-        unless hostname = (client || Facter.value("hostname"))
-            raise ArgumentError, "Could not find hostname"
-        end
-        if node = Puppet::Node.find(hostname)
-            env = node.environment
-        else
-            env = nil
-        end
-
-        # And use the environment to look up the module.
-        mod = Puppet::Module::find(module_name, env)
-        if mod
-            return @mounts[Mount::MODULES].copy(mod.name, mod.files)
-        else
-            return nil
-        end
-    end
 
     # Read the configuration file.
     def readconfig(check = true)
@@ -139,7 +102,7 @@ class Puppet::FileServing::Configuration
         # Strip off the mount name.
         mount_name, path = uri.sub(%r{^/}, '').split(File::Separator, 2)
 
-        return nil unless mount = modules_mount(mount_name, node) || @mounts[mount_name]
+        return nil unless mount = @mounts[mount_name]
 
         if path == ""
             path = nil

@@ -29,6 +29,10 @@ module Puppet::FileServing::TerminusSelector
             terminus = :mounts
         end
 
+        if uri.path =~ /^\/modules\b/ and terminus == :mounts
+            terminus = :modules
+        end
+
         return terminus
     end
 end

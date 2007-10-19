@@ -4,19 +4,19 @@
 
 require 'puppet/file_serving/metadata'
 require 'puppet/indirector/file_metadata'
-require 'puppet/file_serving/terminus_helper'
+require 'puppet/util/uri_helper'
 require 'puppet/indirector/code'
 
 class Puppet::Indirector::FileMetadata::Local < Puppet::Indirector::Code
     desc "Retrieve file metadata directly from the local filesystem."
 
-    include Puppet::FileServing::TerminusHelper
+    include Puppet::Util::URIHelper
 
     def find(key)
         uri = key2uri(key)
 
         return nil unless FileTest.exists?(uri.path)
-        data = Puppet::FileServing::Metadata.new uri.path
+        data = model.new(uri.path)
         data.get_attributes
 
         return data

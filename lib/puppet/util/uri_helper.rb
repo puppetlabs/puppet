@@ -3,10 +3,10 @@
 #  Copyright (c) 2007. All rights reserved.
 
 require 'uri'
-require 'puppet/file_serving'
-require 'puppet/file_serving/configuration'
+require 'puppet/util'
 
-module Puppet::FileServing::TerminusHelper
+# Helper methods for dealing with URIs.
+module Puppet::Util::URIHelper
     def key2uri(key)
         # Return it directly if it's fully qualified.
         if key =~ /^#{::File::SEPARATOR}/

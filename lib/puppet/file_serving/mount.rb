@@ -13,10 +13,12 @@ require 'puppet/file_serving/content'
 class Puppet::FileServing::Mount < Puppet::Network::AuthStore
     include Puppet::Util::Logging
 
-    # A constant that defines how we refer to our modules mount.
-    MODULES = "modules"
+    @@localmap = nil
 
-    InstanceTypes = {:metadata => Puppet::FileServing::Metadata, :content => Puppet::FileServing::Content}
+    # Clear the cache.  This is only ever used for testing.
+    def self.clear_cache
+        @@localmap = nil
+    end
 
     attr_reader :name
 
@@ -30,14 +32,12 @@ class Puppet::FileServing::Mount < Puppet::Network::AuthStore
     end
 
     # Return an instance of the appropriate class.
-    def file_instance(return_type, short_file, options = {})
-        raise(ArgumentError, "Invalid file type %s" % return_type) unless InstanceTypes.include?(return_type)
-
+    def file(short_file, options = {})
         file = file_path(short_file, options[:node])
 
         return nil unless FileTest.exists?(file)
 
-        return InstanceTypes[return_type].new(file)
+        return file
     end
 
     # Return a fully qualified path, given a short path and
@@ -85,11 +85,8 @@ class Puppet::FileServing::Mount < Puppet::Network::AuthStore
             # Mark that we're expandable.
             @expandable = true
         else
-            unless FileTest.exists?(path)
-                raise ArgumentError, "%s does not exist" % path
-            end
             unless FileTest.directory?(path)
-                raise ArgumentError, "%s is not a directory" % path
+                raise ArgumentError, "%s does not exist or is not a directory" % path
             end
             unless FileTest.readable?(path)
                 raise ArgumentError, "%s is not readable" % path
@@ -111,11 +108,7 @@ class Puppet::FileServing::Mount < Puppet::Network::AuthStore
     # Verify our configuration is valid.  This should really check to
     # make sure at least someone will be allowed, but, eh.
     def valid?
-        if name == MODULES
-            return @path.nil?
-        else
-            return ! @path.nil?
-        end
+        return ! @path.nil?
     end
 
     private
@@ -157,6 +150,7 @@ class Puppet::FileServing::Mount < Puppet::Network::AuthStore
             # Else, use the local information
             map = localmap()
         end
+
         path.gsub(/%(.)/) do |v|
             key = $1
             if key == "%" 
@@ -179,7 +173,7 @@ class Puppet::FileServing::Mount < Puppet::Network::AuthStore
     # Cache this manufactured map, since if it's used it's likely
     # to get used a lot.
     def localmap
-        unless defined? @@localmap
+        unless @@localmap
             @@localmap = {
                 "h" =>  Facter.value("hostname"),
                 "H" => [Facter.value("hostname"),

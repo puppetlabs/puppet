@@ -3,6 +3,21 @@
 require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/file_serving/mount'
 
+module FileServingMountTesting
+    def stub_facter(hostname)
+        Facter.stubs(:value).with("hostname").returns(hostname.sub(/\..+/, ''))
+        Facter.stubs(:value).with("domain").returns(hostname.sub(/^[^.]+\./, ''))
+    end
+end
+
+describe Puppet::FileServing::Mount do
+    it "should provide a method for clearing its cached host information" do
+        Puppet::FileServing::Mount.new("whatever").send(:localmap)
+        Puppet::FileServing::Mount.clear_cache
+        Puppet::FileServing::Mount.send(:class_variable_get, "@@localmap").should be_nil
+    end
+end
+
 describe Puppet::FileServing::Mount, " when initializing" do
     it "should fail on non-alphanumeric name" do
         proc { Puppet::FileServing::Mount.new("non alpha") }.should raise_error(ArgumentError)
@@ -23,19 +38,12 @@ describe Puppet::FileServing::Mount, " when setting the path" do
         @dir = "/this/path/does/not/exist"
     end
 
-    it "should fail if the path does not exist" do
-        FileTest.expects(:exists?).returns(false)
-        proc { @mount.path = @dir }.should raise_error(ArgumentError)
-    end
-
     it "should fail if the path is not a directory" do
-        FileTest.expects(:exists?).returns(true)
         FileTest.expects(:directory?).returns(false)
         proc { @mount.path = @dir }.should raise_error(ArgumentError)
     end
 
     it "should fail if the path is not readable" do
-        FileTest.expects(:exists?).returns(true)
         FileTest.expects(:directory?).returns(true)
         FileTest.expects(:readable?).returns(false)
         proc { @mount.path = @dir }.should raise_error(ArgumentError)
@@ -43,8 +51,9 @@ describe Puppet::FileServing::Mount, " when setting the path" do
 end
 
 describe Puppet::FileServing::Mount, " when finding files" do
+    include FileServingMountTesting
+
     before do
-        FileTest.stubs(:exists?).returns(true)
         FileTest.stubs(:directory?).returns(true)
         FileTest.stubs(:readable?).returns(true)
         @mount = Puppet::FileServing::Mount.new("test")
@@ -91,8 +100,7 @@ describe Puppet::FileServing::Mount, " when finding files" do
     end
 
     it "should use local host information if no client data is provided" do
-        Facter.stubs(:value).with("hostname").returns("myhost")
-        Facter.stubs(:value).with("domain").returns("mydomain.com")
+        stub_facter("myhost.mydomain.com")
         @mount.path = "/%h/%d/%H"
         @mount.path().should == "/myhost/mydomain.com/myhost.mydomain.com"
     end
@@ -100,45 +108,40 @@ describe Puppet::FileServing::Mount, " when finding files" do
     it "should ignore links by default"
 
     it "should follow links when asked"
+
+    after do
+        Puppet::FileServing::Mount.clear_cache
+    end
 end
 
-describe Puppet::FileServing::Mount, " when providing file instances" do
+describe Puppet::FileServing::Mount, " when providing file paths" do
+    include FileServingMountTesting
+
     before do
         FileTest.stubs(:exists?).returns(true)
         FileTest.stubs(:directory?).returns(true)
         FileTest.stubs(:readable?).returns(true)
         @mount = Puppet::FileServing::Mount.new("test", "/mount/%h")
+        stub_facter("myhost.mydomain.com")
         @host = "host.domain.com"
     end
 
     it "should return nil if the file is absent" do
-        Puppet::FileServing::Metadata.expects(:new).never
         FileTest.stubs(:exists?).returns(false)
-        @mount.file_instance(:metadata, "/my/path").should be_nil
+        @mount.file("/my/path").should be_nil
     end
 
-    it "should fail if any type other than metadata or content is requested" do
-        proc { @mount.file_instance(:else, "/my/path") }.should raise_error(ArgumentError)
+    it "should return the file path if the file is absent" do
+        FileTest.stubs(:exists?).with("/my/path").returns(true)
+        @mount.file("/my/path").should == "/mount/myhost/my/path"
     end
 
     it "should treat a nil file name as the path to the mount itself" do
-        Puppet::FileServing::Metadata.expects(:new).with("/mount/myhost").returns(:myobj)
         FileTest.stubs(:exists?).returns(true)
-        @mount.file_instance(:metadata, nil).should == :myobj
-    end
-
-    it "should return a Metadata instance if the file is present and metadata was asked for" do
-        Puppet::FileServing::Metadata.expects(:new).returns(:myobj)
-        @mount.file_instance(:metadata, "/my/path").should == :myobj
-    end
-
-    it "should return a Content instance if the file is present and content was asked for" do
-        Puppet::FileServing::Content.expects(:new).returns(:myobj)
-        @mount.file_instance(:content, "/my/path").should == :myobj
+        @mount.file(nil).should == "/mount/myhost"
     end
 
     it "should use the client host name if provided in the options" do
-        Puppet::FileServing::Content.expects(:new).with("/mount/host/my/path").returns(:myobj)
-        @mount.file_instance(:content, "/my/path", :node => @host).should == :myobj
+        @mount.file("/my/path", :node => @host).should == "/mount/host/my/path"
     end
 end

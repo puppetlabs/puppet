@@ -3,7 +3,7 @@
 #  Copyright (c) 2007. All rights reserved.
 
 require 'puppet/file_serving/content'
-require 'puppet/file_serving/terminus_helper'
+require 'puppet/util/uri_helper'
 require 'puppet/indirector/file_content'
 require 'puppet/indirector/rest'
 

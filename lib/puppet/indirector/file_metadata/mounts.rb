@@ -3,26 +3,9 @@
 #  Copyright (c) 2007. All rights reserved.
 
 require 'puppet/file_serving/metadata'
-require 'puppet/file_serving/terminus_helper'
 require 'puppet/indirector/file_metadata'
-require 'puppet/indirector/code'
+require 'puppet/indirector/file_server'
 
-class Puppet::Indirector::FileMetadata::Mounts < Puppet::Indirector::Code
+class Puppet::Indirector::FileMetadata::Mounts < Puppet::Indirector::FileServer
     desc "Retrieve file metadata using Puppet's fileserver."
-
-    include Puppet::FileServing::TerminusHelper
-
-    # This way it can be cleared or whatever and we aren't retaining
-    # a reference to the old one.
-    def configuration
-        Puppet::FileServing::Configuration.create
-    end
-
-    def find(key)
-        uri = key2uri(key)
-
-        return nil unless path = configuration.file_path(uri.path) and FileTest.exists?(path)
-
-        Puppet::FileServing::Metadata.new path
-    end
 end
