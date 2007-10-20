@@ -18,19 +18,19 @@ describe "Puppet::FileServing::Files", :shared => true do
         @test_class.find(uri)
     end
 
-    it "should use the mounts terminus when the 'puppet' URI scheme is used, no host name is present, and the process name is 'puppet'" do
+    it "should use the file_server terminus when the 'puppet' URI scheme is used, no host name is present, and the process name is 'puppet'" do
         uri = "puppet:///mymod/my/file"
         Puppet.settings.stubs(:value).with(:name).returns("puppet")
         Puppet.settings.stubs(:value).with(:modulepath).returns("")
         Puppet.settings.stubs(:value).with(:libdir).returns("")
         Puppet.settings.stubs(:value).with(:fileserverconfig).returns("/whatever")
-        @indirection.terminus(:mounts).expects(:find).with(uri)
+        @indirection.terminus(:file_server).expects(:find).with(uri)
         @test_class.find(uri)
     end
 
-    it "should use the mounts terminus when the 'puppetmounts' URI scheme is used" do
+    it "should use the file_server terminus when the 'puppetmounts' URI scheme is used" do
         uri = "puppetmounts:///mymod/my/file"
-        @indirection.terminus(:mounts).expects(:find).with(uri)
+        @indirection.terminus(:file_server).expects(:find).with(uri)
         @test_class.find(uri)
     end
 

@@ -3,7 +3,7 @@
 #  Created by Luke Kanies on 2007-10-18.
 #  Copyright (c) 2007. All rights reserved.
 
-describe "Puppet::Indirector::FileServerMounts", :shared => true do
+describe "Puppet::Indirector::FileServerTerminus", :shared => true do
     # This only works if the shared behaviour is included before
     # the 'before' block in the including context.
     before do
@@ -21,8 +21,6 @@ describe "Puppet::Indirector::FileServerMounts", :shared => true do
         @parser.stubs(:parse).returns("one" => @mount1)
 
         Puppet::FileServing::Configuration::Parser.stubs(:new).returns(@parser)
-
-        Puppet::FileServing::Configuration.create.stubs(:modules_mount)
 
         # Stub out the modules terminus
         @modules = mock 'modules terminus'

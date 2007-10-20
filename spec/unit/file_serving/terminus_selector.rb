@@ -39,13 +39,13 @@ describe Puppet::FileServing::TerminusSelector, " when being used to select term
         @object.select_terminus("puppet:///modules/mymod/file").should == :modules
     end
 
-    it "should choose :mounts when the protocol is 'puppetmounts' and the mount name is not 'modules'" do
-        @object.select_terminus("puppetmounts://host/notmodules/file").should == :mounts
+    it "should choose :file_server when the protocol is 'puppetmounts' and the mount name is not 'modules'" do
+        @object.select_terminus("puppetmounts://host/notmodules/file").should == :file_server
     end
 
-    it "should choose :mounts when no server name is provided, the process name is 'puppet', and the mount name is not 'modules'" do
+    it "should choose :file_server when no server name is provided, the process name is 'puppet', and the mount name is not 'modules'" do
         Puppet.settings.expects(:value).with(:name).returns("puppet")
-        @object.select_terminus("puppet:///notmodules/file").should == :mounts
+        @object.select_terminus("puppet:///notmodules/file").should == :file_server
     end
 
     it "should choose :rest when no server name is provided and the process name is not 'puppet'" do

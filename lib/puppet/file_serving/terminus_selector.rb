@@ -9,7 +9,7 @@ require 'puppet/file_serving'
 # in file-serving indirections.  This is necessary because
 # the terminus varies based on the URI asked for.
 module Puppet::FileServing::TerminusSelector
-    PROTOCOL_MAP = {"puppet" => :rest, "file" => :local, "puppetmounts" => :mounts}
+    PROTOCOL_MAP = {"puppet" => :rest, "file" => :local, "puppetmounts" => :file_server}
 
     # Pick an appropriate terminus based on the protocol.
     def select_terminus(full_uri)
@@ -26,10 +26,10 @@ module Puppet::FileServing::TerminusSelector
         # This provides a convenient mechanism for people to write configurations work
         # well in both a networked and local setting.
         if uri.host.nil? and uri.scheme == "puppet" and Puppet.settings[:name] == "puppet"
-            terminus = :mounts
+            terminus = :file_server
         end
 
-        if uri.path =~ /^\/modules\b/ and terminus == :mounts
+        if uri.path =~ /^\/modules\b/ and terminus == :file_server
             terminus = :modules
         end
 
