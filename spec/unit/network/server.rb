@@ -275,7 +275,12 @@ end
                 
 describe Class.new, "put these somewhere" do
     it "should allow indirections to deny access to services based upon which client is connecting, or whether the client is authorized"
-    it "should deny access to clients based upon rules"    
+    it "should deny access to clients based upon rules"   
+    it "should have the ability to use a class-level from_ hook (from_yaml, from_text, etc.) that can be called, based on content-type header, to allow for different deserializations of an object" 
+    it "should allow from_* on the inbound :data packet (look at its content_type) when doing a PUT/.new.save"
+    it "should prepend a rest version number on the path (w00t)"
+    it "should ... on server side, .save should from_yaml, then foo.save(args) instead of just Foo.new.save(args)"
+    it "should have a from_yaml class_method in the indirector (... default:  yaml.load(data) => instance, but can be overridden)"
 end
 
 describe Puppet::Indirector, "stuff required by HTTP servers" do

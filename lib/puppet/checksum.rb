@@ -3,11 +3,14 @@
 #  Copyright (c) 2007. All rights reserved.
 
 require 'puppet'
+require 'puppet/util/checksums'
 require 'puppet/indirector'
 
 # A checksum class to model translating checksums to file paths.  This
 # is the new filebucket.
 class Puppet::Checksum
+    include Puppet::Util::Checksums
+
     extend Puppet::Indirector
 
     indirects :checksum
@@ -27,35 +30,25 @@ class Puppet::Checksum
     # Calculate (if necessary) and return the checksum
     def checksum
         unless @checksum
-            @checksum = send(algorithm)
+            @checksum = send(algorithm, content)
         end
         @checksum
     end
 
-    def initialize(content, algorithm = nil)
+    def initialize(content, algorithm = "md5")
         raise ArgumentError.new("You must specify the content") unless content
 
         @content = content
-        self.algorithm = algorithm || "md5"
 
         # Init to avoid warnings.
         @checksum = nil
-    end
 
-    # This can't be private, else respond_to? returns false.
-    def md5
-        require 'digest/md5'
-        Digest::MD5.hexdigest(content)
+        self.algorithm = algorithm
     end
 
     # This is here so the Indirector::File terminus works correctly.
     def name
         checksum
-    end
-
-    def sha1
-        require 'digest/sha1'
-        Digest::SHA1.hexdigest(content)
     end
 
     def to_s

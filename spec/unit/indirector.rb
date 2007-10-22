@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.dirname(__FILE__) + '/../spec_helper'
 
 require 'puppet/defaults'
 require 'puppet/indirector'
@@ -44,11 +44,10 @@ describe Puppet::Indirector, "when registering an indirection" do
         @thingie.indirection.should equal(@indirection)
     end
 
-    it "should allow specification of a default terminus" do
+    it "should pass any provided options to the indirection during initialization" do
         klass = mock 'terminus class'
-        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:first, :foo).returns(klass)
-        @indirection = @thingie.indirects :first, :terminus_class => :foo
-        @indirection.terminus_class.should == :foo
+        Puppet::Indirector::Indirection.expects(:new).with(@thingie, :first, {:some => :options})
+        @indirection = @thingie.indirects :first, :some => :options
     end
 
     after do

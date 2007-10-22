@@ -56,6 +56,19 @@ class Puppet::Indirector::Indirection
     def initialize(model, name, options = {})
         @model = model
         @name = name
+
+        @termini = {}
+        @cache_class = nil
+
+        raise(ArgumentError, "Indirection %s is already defined" % @name) if @@indirections.find { |i| i.name == @name }
+        @@indirections << self
+
+        if mod = options[:extend]
+            extend(mod)
+            options.delete(:extend)
+        end
+
+        # This is currently only used for cache_class and terminus_class.
         options.each do |name, value|
             begin
                 send(name.to_s + "=", value)
@@ -63,11 +76,6 @@ class Puppet::Indirector::Indirection
                 raise ArgumentError, "%s is not a valid Indirection parameter" % name
             end
         end
-        @termini = {}
-        @terminus_types = {}
-        @cache_class = nil
-        raise(ArgumentError, "Indirection %s is already defined" % @name) if @@indirections.find { |i| i.name == @name }
-        @@indirections << self
     end
 
     # Return the singleton terminus for this indirection.
@@ -99,11 +107,24 @@ class Puppet::Indirector::Indirection
     end
 
     def find(key, *args)
-        if cache? and cache.has_most_recent?(key, terminus.version(key))
+        # Select the appropriate terminus if there's a hook
+        # for doing so.  This allows the caller to pass in some kind
+        # of URI that the indirection can use for routing to the appropriate
+        # terminus.
+        if respond_to?(:select_terminus)
+            terminus_name = select_terminus(key)
+        else
+            terminus_name = terminus_class
+        end
+
+        # See if our instance is in the cache and up to date.
+        if cache? and cache.has_most_recent?(key, terminus(terminus_name).version(key))
             Puppet.info "Using cached %s %s" % [self.name, key]
             return cache.find(key, *args)
         end
-        if result = terminus.find(key, *args)
+
+        # Otherwise, return the result from the terminus, caching if appropriate.
+        if result = terminus(terminus_name).find(key, *args)
             result.version ||= Time.now.utc
             if cache?
                 Puppet.info "Caching %s %s" % [self.name, key]

@@ -6,7 +6,7 @@ class Puppet::Network::HTTP::Handler
         register_handler
     end
     
-    # handle an HTTP request coming from Mongrel
+    # handle an HTTP request
     def process(request, response)
         return do_find(request, response)       if get?(request)    and singular?(request)
         return do_search(request, response)     if get?(request)    and plural?(request)

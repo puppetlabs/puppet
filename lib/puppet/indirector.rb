@@ -23,17 +23,7 @@ module Puppet::Indirector
 
         # instantiate the actual Terminus for that type and this name (:ldap, w/ args :node)
         # & hook the instantiated Terminus into this class (Node: @indirection = terminus)
-        @indirection = Puppet::Indirector::Indirection.new(self, indirection)
-
-        unless options.empty?
-            options.each do |param, value|
-                case param
-                when :terminus_class: @indirection.terminus_class = value
-                else
-                    raise ArgumenError, "Invalid option '%s' to 'indirects'" % param
-                end
-            end
-        end
+        @indirection = Puppet::Indirector::Indirection.new(self, indirection,  options)
         @indirection
     end
 
