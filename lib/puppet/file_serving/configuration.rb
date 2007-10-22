@@ -28,6 +28,14 @@ class Puppet::FileServing::Configuration
 
     private_class_method  :new
 
+    # Verify that the client is allowed access to this file.
+    def authorized?(file, options = {})
+        mount, file_path = split_path(file, options[:node])
+        # If we're not serving this mount, then access is denied.
+        return false unless mount
+        return mount.allowed?(options[:node], options[:ipaddress])
+    end
+
     # Search for a file.
     def file_path(key, options = {})
         mount, file_path = split_path(key, options[:node])
@@ -81,6 +89,7 @@ class Puppet::FileServing::Configuration
             return
         end
 
+        # Don't assign the mounts hash until we're sure the parsing succeeded.
         begin
             newmounts = @parser.parse
             @mounts = newmounts

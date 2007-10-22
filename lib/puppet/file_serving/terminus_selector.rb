@@ -12,7 +12,7 @@ module Puppet::FileServing::TerminusSelector
     PROTOCOL_MAP = {"puppet" => :rest, "file" => :local, "puppetmounts" => :file_server}
 
     # Pick an appropriate terminus based on the protocol.
-    def select_terminus(full_uri)
+    def select_terminus(full_uri, options = {})
         # Short-circuit to :local if it's a fully-qualified path.
         return PROTOCOL_MAP["file"] if full_uri =~ /^#{::File::SEPARATOR}/
         begin
@@ -29,8 +29,14 @@ module Puppet::FileServing::TerminusSelector
             terminus = :file_server
         end
 
-        if uri.path =~ /^\/modules\b/ and terminus == :file_server
-            terminus = :modules
+        if terminus == :file_server and uri.path =~ %r{^/([^/]+)\b}
+            modname = $1
+            if modname == "modules"
+                terminus = :modules
+            elsif terminus(:modules).find_module(modname, options[:node])
+                Puppet.warning "DEPRECATION NOTICE: Found file '%s' in module without using the 'modules' mount; please prefix path with '/modules'" % uri.path
+                terminus = :modules
+            end
         end
 
         return terminus

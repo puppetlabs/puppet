@@ -10,15 +10,18 @@ require 'puppet/indirector/terminus'
 class Puppet::Indirector::FileServer < Puppet::Indirector::Terminus
     include Puppet::Util::URIHelper
 
+    # Is the client authorized to perform this action?
+    def authorized?(method, key, options = {})
+        return false unless [:find, :search].include?(method)
+
+        uri = key2uri(key)
+
+        configuration.authorized?(uri.path, :node => options[:node], :ipaddress => options[:ipaddress])
+    end
+
     # Find our key using the fileserver.
     def find(key, options = {})
         uri = key2uri(key)
-
-        # First try the modules mount, at least for now.
-        if instance = indirection.terminus(:modules).find(key, options)
-            Puppet.warning "DEPRECATION NOTICE: Found file in module without using the 'modules' mount; please fix"
-            return instance
-        end
 
         return nil unless path = configuration.file_path(uri.path, :node => options[:node]) and FileTest.exists?(path)
 

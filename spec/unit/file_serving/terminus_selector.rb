@@ -30,22 +30,34 @@ describe Puppet::FileServing::TerminusSelector, " when being used to select term
         @object.select_terminus("puppet://host/module/file").should == :rest
     end
 
-    it "should choose :modules when the protocol is 'puppetmounts' and the mount name is 'modules'" do
-        @object.select_terminus("puppetmounts://host/modules/mymod/file").should == :modules
-    end
-
-    it "should choose :modules when no server name is provided, the process name is 'puppet', and the mount name is 'modules'" do
-        Puppet.settings.expects(:value).with(:name).returns("puppet")
-        @object.select_terminus("puppet:///modules/mymod/file").should == :modules
-    end
-
     it "should choose :file_server when the protocol is 'puppetmounts' and the mount name is not 'modules'" do
+        modules = mock 'modules'
+        @object.stubs(:terminus).with(:modules).returns(modules)
+        modules.stubs(:find_module).returns(nil)
+
         @object.select_terminus("puppetmounts://host/notmodules/file").should == :file_server
     end
 
     it "should choose :file_server when no server name is provided, the process name is 'puppet', and the mount name is not 'modules'" do
+        modules = mock 'modules'
+        @object.stubs(:terminus).with(:modules).returns(modules)
+        modules.stubs(:find_module).returns(nil)
+
         Puppet.settings.expects(:value).with(:name).returns("puppet")
         @object.select_terminus("puppet:///notmodules/file").should == :file_server
+    end
+
+    it "should choose :modules if it would normally choose :file_server but the mount name is 'modules'" do
+        @object.select_terminus("puppetmounts://host/modules/mymod/file").should == :modules
+    end
+
+    it "should choose :modules it would normally choose :file_server but a module exists with the mount name" do
+        modules = mock 'modules'
+
+        @object.expects(:terminus).with(:modules).returns(modules)
+        modules.expects(:find_module).with("mymod", nil).returns(:thing)
+
+        @object.select_terminus("puppetmounts://host/mymod/file").should == :modules
     end
 
     it "should choose :rest when no server name is provided and the process name is not 'puppet'" do
@@ -68,5 +80,31 @@ describe Puppet::FileServing::TerminusSelector, " when being used to select term
 
     it "should fail when a protocol other than :puppet, :file, or :puppetmounts is used" do
         proc { @object.select_terminus("http:///module/file") }.should raise_error(ArgumentError)
+    end
+end
+
+describe Puppet::FileServing::TerminusSelector, " when looking for a module whose name matches the mount name" do
+    before do
+        @object = Object.new
+        @object.extend(Puppet::FileServing::TerminusSelector)
+
+        @modules = mock 'modules'
+        @object.stubs(:terminus).with(:modules).returns(@modules)
+    end
+
+    it "should use the modules terminus to look up the module" do
+        @modules.expects(:find_module).with("mymod", nil)
+        @object.select_terminus("puppetmounts://host/mymod/my/file")
+    end
+
+    it "should pass the node name to the modules terminus" do
+        @modules.expects(:find_module).with("mymod", nil)
+        @object.select_terminus("puppetmounts://host/mymod/my/file")
+    end
+
+    it "should log a deprecation warning if a module is found" do
+        @modules.expects(:find_module).with("mymod", nil).returns(:something)
+        Puppet.expects(:warning)
+        @object.select_terminus("puppetmounts://host/mymod/my/file")
     end
 end

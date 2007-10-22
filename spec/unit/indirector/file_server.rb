@@ -35,29 +35,6 @@ end
 describe Puppet::Indirector::FileServer, " when finding files" do
     include FileServerTerminusTesting
 
-    it "should see if the modules terminus has the file" do
-        @module_server.expects(:find).with(@uri, {})
-        @configuration.stubs(:file_path)
-        @file_server.find(@uri)
-    end
-
-    it "should pass the client name to the modules terminus if one is provided" do
-        @module_server.expects(:find).with(@uri, :node => "mynode")
-        @configuration.stubs(:file_path)
-        @file_server.find(@uri, :node => "mynode")
-    end
-
-    it "should return any results from the modules terminus" do
-        @module_server.expects(:find).with(@uri, {}).returns(:myinstance)
-        @file_server.find(@uri).should == :myinstance
-    end
-
-    it "should produce a deprecation notice if it finds a file in the module terminus" do
-        @module_server.expects(:find).with(@uri, {}).returns(:myinstance)
-        Puppet.expects(:warning)
-        @file_server.find(@uri)
-    end
-
     it "should use the path portion of the URI as the file name" do
         @configuration.expects(:file_path).with("/my/local/file", :node => nil)
         @module_server.stubs(:find).returns(nil)
@@ -103,4 +80,50 @@ describe Puppet::Indirector::FileServer, " when returning file paths" do
     it "should follow links if the links option is set to :follow"
 
     it "should ignore links if the links option is not set to follow"
+end
+
+describe Puppet::Indirector::FileServer, " when checking authorization" do
+    include FileServerTerminusTesting
+
+    it "should have an authorization hook" do
+        @file_server.should respond_to(:authorized?)
+    end
+
+    it "should deny the :destroy method" do
+        @file_server.authorized?(:destroy, "whatever").should be_false
+    end
+
+    it "should deny the :save method" do
+        @file_server.authorized?(:save, "whatever").should be_false
+    end
+
+    it "should use the file server configuration to determine authorization" do
+        @configuration.expects(:authorized?)
+        @file_server.authorized?(:find, "puppetmounts://host/my/file")
+    end
+
+    it "should pass the file path from the URI to the file server configuration" do
+        @configuration.expects(:authorized?).with { |uri, *args| uri == "/my/file" }
+        @file_server.authorized?(:find, "puppetmounts://host/my/file")
+    end
+
+    it "should pass the node name to the file server configuration" do
+        @configuration.expects(:authorized?).with { |key, options| options[:node] == "mynode" }
+        @file_server.authorized?(:find, "puppetmounts://host/my/file", :node => "mynode")
+    end
+
+    it "should pass the IP address to the file server configuration" do
+        @configuration.expects(:authorized?).with { |key, options| options[:ipaddress] == "myip" }
+        @file_server.authorized?(:find, "puppetmounts://host/my/file", :ipaddress => "myip")
+    end
+
+    it "should return false if the file server configuration denies authorization" do
+        @configuration.expects(:authorized?).returns(false)
+        @file_server.authorized?(:find, "puppetmounts://host/my/file").should be_false
+    end
+
+    it "should return true if the file server configuration approves authorization" do
+        @configuration.expects(:authorized?).returns(true)
+        @file_server.authorized?(:find, "puppetmounts://host/my/file").should be_true
+    end
 end

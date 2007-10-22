@@ -38,12 +38,4 @@ describe "Puppet::Indirector::FileServerTerminus", :shared => true do
 
         @terminus.find("puppetmounts://myhost/one/my/file").should == :myinstance
     end
-
-    it "should try to use the modules terminus to find files" do
-        path = "puppetmounts://myhost/one/my/file"
-        @modules.stubs(:find).with(path, {}).returns(:myinstance)
-        @terminus.indirection.stubs(:terminus).with(:modules).returns(@modules)
-
-        @terminus.find("puppetmounts://myhost/one/my/file").should == :myinstance
-    end
 end

@@ -4,10 +4,23 @@
 
 require 'puppet/util/uri_helper'
 require 'puppet/indirector/terminus'
+require 'puppet/file_serving/configuration'
 
 # Look files up in Puppet modules.
 class Puppet::Indirector::ModuleFiles < Puppet::Indirector::Terminus
     include Puppet::Util::URIHelper
+
+    # Is the client allowed access to this key with this method?
+    def authorized?(method, key, options = {})
+        return false unless [:find, :search].include?(method)
+
+        uri = key2uri(key)
+
+        # Make sure our file path starts with /modules
+        path = uri.path =~ /^\/modules/ ? uri.path : "/modules" + uri.path
+
+        configuration.authorized?(path, :node => options[:node], :ipaddress => options[:ipaddress])
+    end
 
     # Find our key in a module.
     def find(key, options = {})
@@ -27,7 +40,17 @@ class Puppet::Indirector::ModuleFiles < Puppet::Indirector::Terminus
         return model.new(path)
     end
 
+    # Try to find our module.
+    def find_module(module_name, node_name)
+        Puppet::Module::find(module_name, environment(node_name))
+    end
+
     private
+
+    # Our fileserver configuration, if needed.
+    def configuration
+        Puppet::FileServing::Configuration.create
+    end
     
     # Determine the environment to use, if any.
     def environment(node_name)
@@ -38,10 +61,5 @@ class Puppet::Indirector::ModuleFiles < Puppet::Indirector::Terminus
         else
             nil
         end
-    end
-
-    # Try to find our module.
-    def find_module(module_name, node_name)
-        Puppet::Module::find(module_name, environment(node_name))
     end
 end
