@@ -83,7 +83,7 @@ describe Puppet::FileServing::Fileset, " when determining whether to recurse" do
         @fileset.recurse?(1).should be_true
     end
 
-    it "should not recurse if :recurse is set to an integer and the current depth is great than that integer" do
+    it "should not recurse if :recurse is set to an integer and the current depth is greater than that integer" do
         @fileset.recurse = 1
         @fileset.recurse?(2).should be_false
     end
@@ -126,13 +126,13 @@ describe Puppet::FileServing::Fileset, " when recursing" do
     it "should recurse through the whole file tree if :recurse is set to 'true'" do
         mock_dir_structure(@path)
         @fileset.stubs(:recurse?).returns(true)
-        @fileset.find.sort.should == @files.sort
+        @fileset.files.sort.should == @files.sort
     end
 
     it "should not recurse if :recurse is set to 'false'" do
         mock_dir_structure(@path)
         @fileset.stubs(:recurse?).returns(false)
-        @fileset.find.should == %w{.}
+        @fileset.files.should == %w{.}
     end
 
     # It seems like I should stub :recurse? here, or that I shouldn't stub the
@@ -140,41 +140,41 @@ describe Puppet::FileServing::Fileset, " when recursing" do
     it "should recurse to the level set if :recurse is set to an integer" do
         mock_dir_structure(@path)
         @fileset.recurse = 1
-        @fileset.find.should == %w{. one two .svn CVS}
+        @fileset.files.should == %w{. one two .svn CVS}
     end
 
     it "should ignore the '.' and '..' directories in subdirectories" do
         mock_dir_structure(@path)
         @fileset.recurse = true
-        @fileset.find.sort.should == @files.sort
+        @fileset.files.sort.should == @files.sort
     end
 
     it "should ignore files that match a single pattern in the ignore list" do
         mock_dir_structure(@path)
         @fileset.recurse = true
         @fileset.ignore = ".svn"
-        @fileset.find.find { |file| file.include?(".svn") }.should be_nil
+        @fileset.files.find { |file| file.include?(".svn") }.should be_nil
     end
 
     it "should ignore files that match any of multiple patterns in the ignore list" do
         mock_dir_structure(@path)
         @fileset.recurse = true
         @fileset.ignore = %w{.svn CVS}
-        @fileset.find.find { |file| file.include?(".svn") or file.include?("CVS") }.should be_nil
+        @fileset.files.find { |file| file.include?(".svn") or file.include?("CVS") }.should be_nil
     end
 
     it "should use File.stat if :links is set to :follow" do
         mock_dir_structure(@path, :stat)
         @fileset.recurse = true
         @fileset.links = :follow
-        @fileset.find.sort.should == @files.sort
+        @fileset.files.sort.should == @files.sort
     end
 
     it "should use File.lstat if :links is set to :manage" do
         mock_dir_structure(@path, :lstat)
         @fileset.recurse = true
         @fileset.links = :manage
-        @fileset.find.sort.should == @files.sort
+        @fileset.files.sort.should == @files.sort
     end
 end
 
@@ -194,11 +194,11 @@ describe Puppet::FileServing::Fileset, " when following links that point to miss
     end
 
     it "should not fail" do
-        proc { @fileset.find }.should_not raise_error
+        proc { @fileset.files }.should_not raise_error
     end
 
     it "should still manage the link" do
-        @fileset.find.sort.should == %w{. mylink}.sort
+        @fileset.files.sort.should == %w{. mylink}.sort
     end
 end
 

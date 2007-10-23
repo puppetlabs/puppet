@@ -15,7 +15,7 @@ end
 
 describe Puppet::Indirector::FileMetadata::Local, "when finding a single file" do
     before do
-        @content = Puppet::Indirector::FileMetadata::Local.new
+        @metadata = Puppet::Indirector::FileMetadata::Local.new
         @uri = "file:///my/local"
 
         @data = mock 'metadata'
@@ -25,7 +25,7 @@ describe Puppet::Indirector::FileMetadata::Local, "when finding a single file" d
 
         FileTest.expects(:exists?).with("/my/local").returns true
         Puppet::FileServing::Metadata.expects(:new).with("/my/local").returns(@data)
-        @content.find(@uri).should == @data
+        @metadata.find(@uri).should == @data
     end
 
     it "should collect its attributes when a file is found" do
@@ -33,11 +33,41 @@ describe Puppet::Indirector::FileMetadata::Local, "when finding a single file" d
 
         FileTest.expects(:exists?).with("/my/local").returns true
         Puppet::FileServing::Metadata.expects(:new).with("/my/local").returns(@data)
-        @content.find(@uri).should == @data
+        @metadata.find(@uri).should == @data
     end
 
     it "should return nil if the file does not exist" do
         FileTest.expects(:exists?).with("/my/local").returns false
-        @content.find(@uri).should be_nil
+        @metadata.find(@uri).should be_nil
+    end
+end
+
+describe Puppet::Indirector::FileMetadata::Local, "when searching for multiple files" do
+    before do
+        @metadata = Puppet::Indirector::FileMetadata::Local.new
+        @uri = "file:///my/local"
+    end
+
+    it "should return nil if the file does not exist" do
+        FileTest.expects(:exists?).with("/my/local").returns false
+        @metadata.find(@uri).should be_nil
+    end
+
+    it "should use :path2instances from the terminus_helper to return instances if the file exists" do
+        FileTest.expects(:exists?).with("/my/local").returns true
+        @metadata.expects(:path2instances).with("/my/local", {}).returns([])
+        @metadata.search(@uri)
+    end
+
+    it "should pass any options on to :path2instances" do
+        FileTest.expects(:exists?).with("/my/local").returns true
+        @metadata.expects(:path2instances).with("/my/local", :testing => :one, :other => :two).returns([])
+        @metadata.search(@uri, :testing => :one, :other => :two)
+    end
+
+    it "should collect the attributes of the instances returned" do
+        FileTest.expects(:exists?).with("/my/local").returns true
+        @metadata.expects(:path2instances).with("/my/local", {}).returns( [mock("one", :get_attributes => nil), mock("two", :get_attributes => nil)] )
+        @metadata.search(@uri)
     end
 end

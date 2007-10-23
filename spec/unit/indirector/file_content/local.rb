@@ -35,3 +35,27 @@ describe Puppet::Indirector::FileContent::Local, "when finding a single file" do
         @content.find(@uri).should be_nil
     end
 end
+
+describe Puppet::Indirector::FileContent::Local, "when searching for multiple files" do
+    before do
+        @content = Puppet::Indirector::FileContent::Local.new
+        @uri = "file:///my/local"
+    end
+
+    it "should return nil if the file does not exist" do
+        FileTest.expects(:exists?).with("/my/local").returns false
+        @content.find(@uri).should be_nil
+    end
+
+    it "should use :path2instances from the terminus_helper to return instances if the file exists" do
+        FileTest.expects(:exists?).with("/my/local").returns true
+        @content.expects(:path2instances).with("/my/local", {})
+        @content.search(@uri)
+    end
+
+    it "should pass any options on to :path2instances" do
+        FileTest.expects(:exists?).with("/my/local").returns true
+        @content.expects(:path2instances).with("/my/local", :testing => :one, :other => :two)
+        @content.search(@uri, :testing => :one, :other => :two)
+    end
+end

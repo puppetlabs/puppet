@@ -11,11 +11,11 @@ class Puppet::FileServing::Fileset
     attr_reader :path, :ignore, :links
     attr_accessor :recurse
 
-    # Find our collection of files.  This is different from the
+    # Return a list of all files in our fileset.  This is different from the
     # normal definition of find in that we support specific levels
     # of recursion, which means we need to know when we're going another
     # level deep, which Find doesn't do.
-    def find
+    def files
         files = perform_recursion
 
         # Now strip off the leading path, so each file becomes relative, and remove

@@ -82,7 +82,7 @@ describe Puppet::Indirector::ModuleFiles, " when finding files" do
         @module_files.find(@uri)
     end
 
-    it "should not us an environment when looking up the module if the node name is not provided and the environment is set to ''" do
+    it "should not use an environment when looking up the module if the node name is not provided and the environment is set to ''" do
         Puppet.settings.stubs(:value).with(:environment).returns("")
         Puppet::Module.expects(:find).with('my', nil)
         @module_files.find(@uri)
@@ -148,5 +148,74 @@ describe Puppet::Indirector::ModuleFiles, " when authorizing" do
     it "should return true if the file server configuration approves authorization" do
         @configuration.expects(:authorized?).returns(true)
         @module_files.authorized?(:find, "puppetmounts://host/my/file").should be_true
+    end
+end
+
+describe Puppet::Indirector::ModuleFiles, " when searching for files" do
+    include ModuleFilesTerminusTesting
+
+    it "should strip off the leading '/modules' mount name" do
+        Puppet::Module.expects(:find).with('my', nil).returns @module
+        @module_files.search(@uri)
+    end
+
+    it "should not strip off leading terms that start with '/modules' but are longer words" do
+        Puppet::Module.expects(:find).with('modulestart', nil).returns nil
+        @module_files.search("puppetmounts://host/modulestart/my/local/file")
+    end
+
+    it "should search for a module whose name is the first term in the remaining file path" do
+        Puppet::Module.expects(:find).with('my', nil).returns @module
+        @module_files.search(@uri)
+    end
+
+    it "should search for a file relative to the module's files directory" do
+        Puppet::Module.expects(:find).with('my', nil).returns @module
+        FileTest.expects(:exists?).with("/module/path/files/local/file")
+        @module_files.search(@uri)
+    end
+
+    it "should return nil if the module does not exist" do
+        Puppet::Module.expects(:find).with('my', nil).returns nil
+        @module_files.search(@uri).should be_nil
+    end
+
+    it "should return nil if the module exists but the file does not" do
+        Puppet::Module.expects(:find).with('my', nil).returns @module
+        FileTest.expects(:exists?).with("/module/path/files/local/file").returns(false)
+        @module_files.search(@uri).should be_nil
+    end
+
+    it "should use the node's environment to look up the module if the node name is provided" do
+        node = stub "node", :environment => "testing"
+        Puppet::Node.expects(:find).with("mynode").returns(node)
+        Puppet::Module.expects(:find).with('my', "testing")
+        @module_files.search(@uri, :node => "mynode")
+    end
+
+    it "should use the local environment setting to look up the module if the node name is not provided and the environment is not set to ''" do
+        Puppet.settings.stubs(:value).with(:environment).returns("testing")
+        Puppet::Module.expects(:find).with('my', "testing")
+        @module_files.search(@uri)
+    end
+
+    it "should not use an environment when looking up the module if the node name is not provided and the environment is set to ''" do
+        Puppet.settings.stubs(:value).with(:environment).returns("")
+        Puppet::Module.expects(:find).with('my', nil)
+        @module_files.search(@uri)
+    end
+
+    it "should use :path2instances from the terminus_helper to return instances if a module is found and the file exists" do
+        Puppet::Module.expects(:find).with('my', nil).returns @module
+        FileTest.expects(:exists?).with("/module/path/files/local/file").returns(true)
+        @module_files.expects(:path2instances).with("/module/path/files/local/file", {})
+        @module_files.search(@uri)
+    end
+
+    it "should pass any options on to :path2instances" do
+        Puppet::Module.expects(:find).with('my', nil).returns @module
+        FileTest.expects(:exists?).with("/module/path/files/local/file").returns(true)
+        @module_files.expects(:path2instances).with("/module/path/files/local/file", :testing => :one, :other => :two)
+        @module_files.search(@uri, :testing => :one, :other => :two)
     end
 end
