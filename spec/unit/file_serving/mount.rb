@@ -105,10 +105,6 @@ describe Puppet::FileServing::Mount, " when finding files" do
         @mount.path().should == "/myhost/mydomain.com/myhost.mydomain.com"
     end
 
-    it "should ignore links by default"
-
-    it "should follow links when asked"
-
     after do
         Puppet::FileServing::Mount.clear_cache
     end

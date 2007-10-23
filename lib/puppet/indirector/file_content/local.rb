@@ -17,7 +17,7 @@ class Puppet::Indirector::FileContent::Local < Puppet::Indirector::File
     def find(key, options = {})
         uri = key2uri(key)
         return nil unless FileTest.exists?(uri.path)
-        model.new(uri.path)
+        model.new(uri.path, :links => options[:links])
     end
 
     def search(key, options = {})

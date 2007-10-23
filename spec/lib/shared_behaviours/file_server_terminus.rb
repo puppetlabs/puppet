@@ -32,7 +32,7 @@ describe "Puppet::Indirector::FileServerTerminus", :shared => true do
 
         path = "/my/mount/path/my/file"
         FileTest.stubs(:exists?).with(path).returns(true)
-        @test_class.expects(:new).with(path).returns(:myinstance)
+        @test_class.expects(:new).with(path, :links => nil).returns(:myinstance)
         FileTest.stubs(:exists?).with("/my/mount/path").returns(true)
         @mount1.expects(:file).with("my/file", :node => nil).returns(path)
 

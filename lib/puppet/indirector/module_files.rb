@@ -30,7 +30,7 @@ class Puppet::Indirector::ModuleFiles < Puppet::Indirector::Terminus
     def find(key, options = {})
         return nil unless path = find_path(key, options)
 
-        return model.new(path)
+        return model.new(path, :links => options[:links])
     end
 
     # Try to find our module.

@@ -65,7 +65,7 @@ describe Puppet::Indirector::ModuleFiles, " when finding files" do
     it "should return an instance of the model created with the full path if a module is found and the file exists" do
         Puppet::Module.expects(:find).with('my', nil).returns @module
         FileTest.expects(:exists?).with("/module/path/files/local/file").returns(true)
-        @model.expects(:new).with("/module/path/files/local/file").returns(:myinstance)
+        @model.expects(:new).with("/module/path/files/local/file", :links => nil).returns(:myinstance)
         @module_files.find(@uri).should == :myinstance
     end
 
@@ -89,10 +89,15 @@ describe Puppet::Indirector::ModuleFiles, " when finding files" do
     end
 end
 
-describe Puppet::Indirector::ModuleFiles, " when returning file paths" do
-    it "should follow links if the links option is set to :follow"
+describe Puppet::Indirector::ModuleFiles, " when returning instances" do
+    include ModuleFilesTerminusTesting
 
-    it "should ignore links if the links option is not set to follow"
+    it "should pass the provided :links setting on to the instance if one is provided" do
+        Puppet::Module.expects(:find).with('my', nil).returns @module
+        FileTest.expects(:exists?).with("/module/path/files/local/file").returns(true)
+        @model.expects(:new).with("/module/path/files/local/file", :links => :mytest)
+        @module_files.find(@uri, :links => :mytest)
+    end
 end
 
 describe Puppet::Indirector::ModuleFiles, " when authorizing" do

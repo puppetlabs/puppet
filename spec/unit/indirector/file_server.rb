@@ -54,16 +54,20 @@ describe Puppet::Indirector::FileServer, " when finding files" do
 
     it "should return an instance of the model created with the full path if a file is found" do
         @configuration.expects(:file_path).with("/my/local/file", :node => nil).returns("/some/file")
-        @model.expects(:new).with("/some/file").returns(:myinstance)
+        @model.expects(:new).with("/some/file", :links => nil).returns(:myinstance)
         @file_server.find(@uri).should == :myinstance
     end
 end
 
 
-describe Puppet::Indirector::FileServer, " when returning file paths" do
-    it "should follow links if the links option is set to :follow"
+describe Puppet::Indirector::FileServer, " when returning instances" do
+    include FileServerTerminusTesting
 
-    it "should ignore links if the links option is not set to follow"
+    it "should pass the provided :links setting on to the instance if one is provided" do
+        @configuration.expects(:file_path).with("/my/local/file", :node => nil).returns("/some/file")
+        @model.expects(:new).with("/some/file", :links => :mytest)
+        @file_server.find(@uri, :links => :mytest)
+    end
 end
 
 describe Puppet::Indirector::FileServer, " when checking authorization" do

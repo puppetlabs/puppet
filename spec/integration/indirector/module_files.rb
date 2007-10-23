@@ -19,7 +19,7 @@ describe Puppet::Indirector::ModuleFiles, " when interacting with Puppet::Module
 
         FileTest.expects(:exists?).with(filepath).returns(true)
 
-        @terminus.model.expects(:new).with(filepath)
+        @terminus.model.expects(:new).with(filepath, :links => nil)
 
         @terminus.find("puppetmounts://host/modules/mymod/myfile")
     end

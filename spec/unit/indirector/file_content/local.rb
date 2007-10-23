@@ -23,8 +23,17 @@ describe Puppet::Indirector::FileContent::Local, "when finding a single file" do
         @uri = "file:///my/local"
 
         FileTest.expects(:exists?).with("/my/local").returns true
-        Puppet::FileServing::Content.expects(:new).with("/my/local").returns(:mycontent)
+        Puppet::FileServing::Content.expects(:new).with("/my/local", :links => nil).returns(:mycontent)
         @content.find(@uri).should == :mycontent
+    end
+
+    it "should pass the :links setting on to the created Content instance if the file exists" do
+        @content = Puppet::Indirector::FileContent::Local.new
+        @uri = "file:///my/local"
+
+        FileTest.expects(:exists?).with("/my/local").returns true
+        Puppet::FileServing::Content.expects(:new).with("/my/local", :links => :manage).returns(:mycontent)
+        @content.find(@uri, :links => :manage)
     end
 
     it "should return nil if the file does not exist" do

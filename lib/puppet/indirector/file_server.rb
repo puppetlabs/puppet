@@ -25,7 +25,7 @@ class Puppet::Indirector::FileServer < Puppet::Indirector::Terminus
     # Find our key using the fileserver.
     def find(key, options = {})
         return nil unless path = find_path(key, options)
-        return model.new(path)
+        return model.new(path, :links => options[:links])
     end
 
     # Search for files.  This returns an array rather than a single

@@ -14,12 +14,12 @@ class Puppet::Indirector::FileMetadata::Local < Puppet::Indirector::Code
     include Puppet::Util::URIHelper
     include Puppet::FileServing::TerminusHelper
 
-    def find(key)
+    def find(key, options = {})
         uri = key2uri(key)
 
         return nil unless FileTest.exists?(uri.path)
-        data = model.new(uri.path)
-        data.get_attributes
+        data = model.new(uri.path, :links => options[:links])
+        data.collect_attributes
 
         return data
     end
@@ -27,6 +27,6 @@ class Puppet::Indirector::FileMetadata::Local < Puppet::Indirector::Code
     def search(key, options = {})
         uri = key2uri(key)
         return nil unless FileTest.exists?(uri.path)
-        path2instances(uri.path, options).each { |instance| instance.get_attributes }
+        path2instances(uri.path, options).each { |instance| instance.collect_attributes }
     end
 end

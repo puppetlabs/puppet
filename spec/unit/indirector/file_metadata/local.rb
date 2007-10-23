@@ -20,19 +20,28 @@ describe Puppet::Indirector::FileMetadata::Local, "when finding a single file" d
 
         @data = mock 'metadata'
     end
+
     it "should return a Metadata instance created with the full path to the file if the file exists" do
-        @data.stubs(:get_attributes)
+        @data.stubs(:collect_attributes)
 
         FileTest.expects(:exists?).with("/my/local").returns true
-        Puppet::FileServing::Metadata.expects(:new).with("/my/local").returns(@data)
+        Puppet::FileServing::Metadata.expects(:new).with("/my/local", :links => nil).returns(@data)
         @metadata.find(@uri).should == @data
     end
 
-    it "should collect its attributes when a file is found" do
-        @data.expects(:get_attributes)
+    it "should pass the :links setting on to the created Content instance if the file exists" do
+        @data.stubs(:collect_attributes)
 
         FileTest.expects(:exists?).with("/my/local").returns true
-        Puppet::FileServing::Metadata.expects(:new).with("/my/local").returns(@data)
+        Puppet::FileServing::Metadata.expects(:new).with("/my/local", :links => :manage).returns(@data)
+        @metadata.find(@uri, :links => :manage)
+    end
+
+    it "should collect its attributes when a file is found" do
+        @data.expects(:collect_attributes)
+
+        FileTest.expects(:exists?).with("/my/local").returns true
+        Puppet::FileServing::Metadata.expects(:new).with("/my/local", :links => nil).returns(@data)
         @metadata.find(@uri).should == @data
     end
 
@@ -67,7 +76,7 @@ describe Puppet::Indirector::FileMetadata::Local, "when searching for multiple f
 
     it "should collect the attributes of the instances returned" do
         FileTest.expects(:exists?).with("/my/local").returns true
-        @metadata.expects(:path2instances).with("/my/local", {}).returns( [mock("one", :get_attributes => nil), mock("two", :get_attributes => nil)] )
+        @metadata.expects(:path2instances).with("/my/local", {}).returns( [mock("one", :collect_attributes => nil), mock("two", :collect_attributes => nil)] )
         @metadata.search(@uri)
     end
 end
