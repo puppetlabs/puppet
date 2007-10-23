@@ -15,40 +15,80 @@ describe Puppet::FileServing::Metadata do
 end
 
 describe Puppet::FileServing::Metadata, " when initializing" do
-    it "should allow initialization without a path" do
-        proc { Puppet::FileServing::Metadata.new() }.should_not raise_error
+    it "should not allow initialization without a path" do
+        proc { Puppet::FileServing::Metadata.new() }.should raise_error(ArgumentError)
     end
 
-    it "should allow initialization with a path" do
-        proc { Puppet::FileServing::Metadata.new("unqualified") }.should raise_error(ArgumentError)
+    it "should not allow the path to be fully qualified if it is provided" do
+        proc { Puppet::FileServing::Metadata.new("/fully/qualified") }.should raise_error(ArgumentError)
     end
 
-    it "should the path to be fully qualified if it is provied" do
-        proc { Puppet::FileServing::Metadata.new("unqualified") }.should raise_error(ArgumentError)
+    it "should allow initialization with a relative path" do
+        Puppet::FileServing::Metadata.new("not/fully/qualified")
     end
 
-    it "should require the path to exist if it is provided" do
-        FileTest.expects(:exists?).with("/no/such/path").returns(false)
-        proc { Puppet::FileServing::Metadata.new("/no/such/path") }.should raise_error(ArgumentError)
+    it "should allow specification of whether links should be managed" do
+        Puppet::FileServing::Metadata.new("not/qualified", :links => :manage)
+    end
+
+    it "should fail if :links is set to anything other than :manage or :follow" do
+        Puppet::FileServing::Metadata.new("not/qualified", :links => :manage)
+    end
+
+    it "should default to :manage for :links" do
+        Puppet::FileServing::Metadata.new("not/qualified", :links => :manage)
     end
 end
 
-describe Puppet::FileServing::Metadata do
+describe Puppet::FileServing::Metadata, " when finding the file to use for setting attributes" do
+    before do
+        @metadata = Puppet::FileServing::Metadata.new("my/path")
+
+        @base = "/base/path"
+        @full = "/base/path/my/path"
+
+        # Use a symlink because it's easier to test -- no checksumming
+        @stat = stub "stat", :uid => 10, :gid => 20, :mode => 0755, :ftype => "symlink"
+    end
+
+    it "should accept a base path path to which the file should be relative" do
+        File.expects(:lstat).with(@full).returns @stat
+        File.expects(:readlink).with(@full).returns "/what/ever"
+        @metadata.collect_attributes(@base)
+    end
+
+    it "should use the set base path if one is not provided" do
+        @metadata.base_path = @base
+        File.expects(:lstat).with(@full).returns @stat
+        File.expects(:readlink).with(@full).returns "/what/ever"
+        @metadata.collect_attributes()
+    end
+
+    it "should fail if a base path is neither set nor provided" do
+        proc { @metadata.collect_attributes() }.should raise_error(ArgumentError)
+    end
+
+    it "should raise an exception if the file does not exist" do
+        File.expects(:lstat).with("/base/dir/my/path").raises(Errno::ENOENT)
+        proc { @metadata.collect_attributes("/base/dir")}.should raise_error(Errno::ENOENT)
+    end
+end
+
+describe Puppet::FileServing::Metadata, " when collecting attributes" do
     before do
         @path = "/my/file"
-        @stat = mock 'stat', :uid => 10, :gid => 20, :mode => 0755
-        File.stubs(:stat).returns(@stat)
+        @stat = stub 'stat', :uid => 10, :gid => 20, :mode => 0755, :ftype => "file"
+        File.stubs(:lstat).returns(@stat)
         @filehandle = mock 'filehandle'
         @filehandle.expects(:each_line).yields("some content\n")
         File.stubs(:open).with(@path, 'r').yields(@filehandle)
         @checksum = Digest::MD5.hexdigest("some content\n")
-        FileTest.expects(:exists?).with(@path).returns(true)
-        @metadata = Puppet::FileServing::Metadata.new(@path)
-        @metadata.get_attributes
+        @metadata = Puppet::FileServing::Metadata.new("file")
+        @metadata.collect_attributes("/my")
     end
 
     it "should accept a file path" do
-        @metadata.path.should == @path
+        @metadata.path.should == "file"
     end
 
     # LAK:FIXME This should actually change at some point
@@ -83,6 +123,28 @@ describe Puppet::FileServing::Metadata do
 
     it "should default to a checksum of type MD5" do
         @metadata.checksum.should == "{md5}" + @checksum
+    end
+end
+
+describe Puppet::FileServing::Metadata, " when pointing to a symlink" do
+    it "should store the destination of the symlink in :destination if links are :manage" do
+        file = Puppet::FileServing::Metadata.new("my/file", :links => :manage)
+
+        File.expects(:lstat).with("/base/path/my/file").returns stub("stat", :uid => 1, :gid => 2, :ftype => "symlink", :mode => 0755)
+        File.expects(:readlink).with("/base/path/my/file").returns "/some/other/path"
+
+        file.collect_attributes("/base/path")
+        file.destination.should == "/some/other/path"
+    end
+
+    it "should not collect the checksum" do
+        file = Puppet::FileServing::Metadata.new("my/file", :links => :manage)
+
+        File.expects(:lstat).with("/base/path/my/file").returns stub("stat", :uid => 1, :gid => 2, :ftype => "symlink", :mode => 0755)
+        File.expects(:readlink).with("/base/path/my/file").returns "/some/other/path"
+
+        file.collect_attributes("/base/path")
+        file.checksum.should be_nil
     end
 end
 

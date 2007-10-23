@@ -177,3 +177,51 @@ describe Puppet::FileServing::Configuration, " when finding files" do
         @config.file_path("/one/something").should be_nil
     end
 end
+
+describe Puppet::FileServing::Configuration, " when checking authorization" do
+    include FSConfigurationTesting
+
+    before do
+        @parser = mock 'parser'
+        @parser.stubs(:changed?).returns true
+        FileTest.stubs(:exists?).with(@path).returns(true)
+        Puppet::FileServing::Configuration::Parser.stubs(:new).returns(@parser)
+
+        @mount1 = stub 'mount', :name => "one"
+        @mounts = {"one" => @mount1}
+        @parser.stubs(:parse).returns(@mounts)
+
+        Facter.stubs(:value).with("hostname").returns("whatever")
+
+        @config = Puppet::FileServing::Configuration.create
+    end
+
+    it "should return false if the mount cannot be found" do
+        @config.authorized?("/nope/my/file").should be_false
+    end
+
+    it "should use the mount to determine authorization" do
+        @mount1.expects(:allowed?)
+        @config.authorized?("/one/my/file")
+    end
+
+    it "should pass the client's name to the mount if provided" do
+        @mount1.expects(:allowed?).with("myhost", nil)
+        @config.authorized?("/one/my/file", :node => "myhost")
+    end
+
+    it "should pass the client's IP to the mount if provided" do
+        @mount1.expects(:allowed?).with("myhost", "myip")
+        @config.authorized?("/one/my/file", :node => "myhost", :ipaddress => "myip")
+    end
+
+    it "should return true if the mount allows the client" do
+        @mount1.expects(:allowed?).returns(true)
+        @config.authorized?("/one/my/file").should be_true
+    end
+
+    it "should return false if the mount denies the client"  do
+        @mount1.expects(:allowed?).returns(false)
+        @config.authorized?("/one/my/file").should be_false
+    end
+end

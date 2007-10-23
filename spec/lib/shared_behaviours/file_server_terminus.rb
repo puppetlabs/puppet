@@ -3,7 +3,7 @@
 #  Created by Luke Kanies on 2007-10-18.
 #  Copyright (c) 2007. All rights reserved.
 
-describe "Puppet::Indirector::FileServerMounts", :shared => true do
+describe "Puppet::Indirector::FileServerTerminus", :shared => true do
     # This only works if the shared behaviour is included before
     # the 'before' block in the including context.
     before do
@@ -22,8 +22,6 @@ describe "Puppet::Indirector::FileServerMounts", :shared => true do
 
         Puppet::FileServing::Configuration::Parser.stubs(:new).returns(@parser)
 
-        Puppet::FileServing::Configuration.create.stubs(:modules_mount)
-
         # Stub out the modules terminus
         @modules = mock 'modules terminus'
     end
@@ -34,17 +32,9 @@ describe "Puppet::Indirector::FileServerMounts", :shared => true do
 
         path = "/my/mount/path/my/file"
         FileTest.stubs(:exists?).with(path).returns(true)
-        @test_class.expects(:new).with(path).returns(:myinstance)
+        @test_class.expects(:new).with(path, :links => nil).returns(:myinstance)
         FileTest.stubs(:exists?).with("/my/mount/path").returns(true)
         @mount1.expects(:file).with("my/file", :node => nil).returns(path)
-
-        @terminus.find("puppetmounts://myhost/one/my/file").should == :myinstance
-    end
-
-    it "should try to use the modules terminus to find files" do
-        path = "puppetmounts://myhost/one/my/file"
-        @modules.stubs(:find).with(path, {}).returns(:myinstance)
-        @terminus.indirection.stubs(:terminus).with(:modules).returns(@modules)
 
         @terminus.find("puppetmounts://myhost/one/my/file").should == :myinstance
     end

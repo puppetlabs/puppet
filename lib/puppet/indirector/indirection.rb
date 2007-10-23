@@ -112,7 +112,7 @@ class Puppet::Indirector::Indirection
         # of URI that the indirection can use for routing to the appropriate
         # terminus.
         if respond_to?(:select_terminus)
-            terminus_name = select_terminus(key)
+            terminus_name = select_terminus(key, *args)
         else
             terminus_name = terminus_class
         end

@@ -20,7 +20,7 @@ module IndirectionTesting
 end
 
 describe Puppet::Indirector::Indirection, " when initializing" do
-    # LAK:FIXME I've no idea how to test this, really.
+    # (LAK) I've no idea how to test this, really.
     it "should store a reference to itself before it consumes its options" do
         proc { @indirection = Puppet::Indirector::Indirection.new(Object.new, :testingness, :not_valid_option) }.should raise_error
         Puppet::Indirector::Indirection.instance(:testingness).should be_instance_of(Puppet::Indirector::Indirection)
@@ -255,6 +255,13 @@ describe Puppet::Indirector::Indirection, " when a select_terminus hook is avail
         @cache_terminus.expects(:find).returns(:whatever)
 
         @indirection.find(@uri).should == :whatever
+    end
+
+    it "should pass all arguments to the :select_terminus hook" do
+        @indirection.expects(:select_terminus).with(@uri, :node => "johnny").returns(:other)
+        @other_terminus.stubs(:find)
+
+        @indirection.find(@uri, :node => "johnny")
     end
 
     it "should pass the original key to the terminus rather than a modified key" do

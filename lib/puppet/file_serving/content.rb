@@ -4,30 +4,28 @@
 
 require 'puppet/indirector'
 require 'puppet/file_serving'
+require 'puppet/file_serving/file_base'
 require 'puppet/file_serving/terminus_selector'
 
 # A class that handles retrieving file contents.
 # It only reads the file when its content is specifically
 # asked for.
-class Puppet::FileServing::Content
+class Puppet::FileServing::Content < Puppet::FileServing::FileBase
     extend Puppet::Indirector
     indirects :file_content, :extend => Puppet::FileServing::TerminusSelector
 
     attr_reader :path
 
-    def content
-        ::File.read(@path)
-    end
+    # Read the content of our file in.
+    def content(base = nil)
+        # This stat can raise an exception, too.
+        raise(ArgumentError, "Cannot read the contents of links unless following links") if stat(base).ftype == "symlink" 
 
-    def initialize(path)
-        raise ArgumentError.new("Files must be fully qualified") unless path =~ /^#{::File::SEPARATOR}/
-        raise ArgumentError.new("Files must exist") unless FileTest.exists?(path)
-
-        @path = path
+        ::File.read(full_path(base))
     end
 
     # Just return the file contents as the yaml.  This allows us to
-    # avoid escaping or any such thing.  LAK:FIXME Not really sure how
+    # avoid escaping or any such thing.  LAK:NOTE Not really sure how
     # this will behave if the file contains yaml...  I think the far
     # side needs to understand that it's a plain string.
     def to_yaml

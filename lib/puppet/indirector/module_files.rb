@@ -4,13 +4,66 @@
 
 require 'puppet/util/uri_helper'
 require 'puppet/indirector/terminus'
+require 'puppet/file_serving/configuration'
+require 'puppet/file_serving/fileset'
+require 'puppet/file_serving/terminus_helper'
 
 # Look files up in Puppet modules.
 class Puppet::Indirector::ModuleFiles < Puppet::Indirector::Terminus
     include Puppet::Util::URIHelper
+    include Puppet::FileServing::TerminusHelper
+
+    # Is the client allowed access to this key with this method?
+    def authorized?(method, key, options = {})
+        return false unless [:find, :search].include?(method)
+
+        uri = key2uri(key)
+
+        # Make sure our file path starts with /modules, so that we authorize
+        # against the 'modules' mount.
+        path = uri.path =~ /^\/modules/ ? uri.path : "/modules" + uri.path
+
+        configuration.authorized?(path, :node => options[:node], :ipaddress => options[:ipaddress])
+    end
 
     # Find our key in a module.
     def find(key, options = {})
+        return nil unless path = find_path(key, options)
+
+        return model.new(path, :links => options[:links])
+    end
+
+    # Try to find our module.
+    def find_module(module_name, node_name)
+        Puppet::Module::find(module_name, environment(node_name))
+    end
+
+    # Search for a list of files.
+    def search(key, options = {})
+        return nil unless path = find_path(key, options)
+        path2instances(path, options)
+    end
+
+    private
+
+    # Our fileserver configuration, if needed.
+    def configuration
+        Puppet::FileServing::Configuration.create
+    end
+    
+    # Determine the environment to use, if any.
+    def environment(node_name)
+        if node_name and node = Puppet::Node.find(node_name)
+            node.environment
+        elsif env = Puppet.settings[:environment] and env != ""
+            env
+        else
+            nil
+        end
+    end
+
+    # The abstracted method for turning a key into a path; used by both :find and :search.
+    def find_path(key, options)
         uri = key2uri(key)
 
         # Strip off /modules if it's there -- that's how requests get routed to this terminus.
@@ -24,24 +77,6 @@ class Puppet::Indirector::ModuleFiles < Puppet::Indirector::Terminus
 
         return nil unless FileTest.exists?(path)
 
-        return model.new(path)
-    end
-
-    private
-    
-    # Determine the environment to use, if any.
-    def environment(node_name)
-        if node_name and node = Puppet::Node.find(node_name)
-            node.environment
-        elsif env = Puppet.settings[:environment] and env != ""
-            env
-        else
-            nil
-        end
-    end
-
-    # Try to find our module.
-    def find_module(module_name, node_name)
-        Puppet::Module::find(module_name, environment(node_name))
+        return path
     end
 end
