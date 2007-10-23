@@ -7,14 +7,14 @@ require 'puppet/indirector'
 require 'puppet/file_serving'
 require 'puppet/file_serving/file_base'
 require 'puppet/util/checksums'
-require 'puppet/file_serving/terminus_selector'
+require 'puppet/file_serving/indirection_hooks'
 
 # A class that handles retrieving file metadata.
 class Puppet::FileServing::Metadata < Puppet::FileServing::FileBase
     include Puppet::Util::Checksums
 
     extend Puppet::Indirector
-    indirects :file_metadata, :extend => Puppet::FileServing::TerminusSelector
+    indirects :file_metadata, :extend => Puppet::FileServing::IndirectionHooks
 
     attr_reader :path, :owner, :group, :mode, :checksum_type, :checksum, :ftype, :destination
 

@@ -13,8 +13,8 @@ describe Puppet::FileServing::Content do
         Puppet::FileServing::Content.indirection.name.should == :file_content
     end
 
-    it "should should include the TerminusSelector module in its indirection" do
-        Puppet::FileServing::Content.indirection.metaclass.included_modules.should include(Puppet::FileServing::TerminusSelector)
+    it "should should include the IndirectionHooks module in its indirection" do
+        Puppet::FileServing::Content.indirection.metaclass.included_modules.should include(Puppet::FileServing::IndirectionHooks)
     end
 end
 
