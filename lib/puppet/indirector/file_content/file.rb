@@ -8,7 +8,7 @@ require 'puppet/util/uri_helper'
 require 'puppet/indirector/file_content'
 require 'puppet/indirector/file'
 
-class Puppet::Indirector::FileContent::Local < Puppet::Indirector::File
+class Puppet::Indirector::FileContent::File < Puppet::Indirector::File
     desc "Retrieve file contents from disk."
 
     include Puppet::Util::URIHelper

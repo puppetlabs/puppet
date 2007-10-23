@@ -8,7 +8,7 @@ require 'puppet/indirector/file_metadata'
 require 'puppet/util/uri_helper'
 require 'puppet/indirector/code'
 
-class Puppet::Indirector::FileMetadata::Local < Puppet::Indirector::Code
+class Puppet::Indirector::FileMetadata::File < Puppet::Indirector::Code
     desc "Retrieve file metadata directly from the local filesystem."
 
     include Puppet::Util::URIHelper

@@ -5,17 +5,17 @@
 
 require File.dirname(__FILE__) + '/../../../spec_helper'
 
-require 'puppet/indirector/file_metadata/local'
+require 'puppet/indirector/file_metadata/file'
 
-describe Puppet::Indirector::FileMetadata::Local do
+describe Puppet::Indirector::FileMetadata::File do
     it "should be registered with the file_metadata indirection" do
-        Puppet::Indirector::Terminus.terminus_class(:file_metadata, :local).should equal(Puppet::Indirector::FileMetadata::Local)
+        Puppet::Indirector::Terminus.terminus_class(:file_metadata, :file).should equal(Puppet::Indirector::FileMetadata::File)
     end
 end
 
-describe Puppet::Indirector::FileMetadata::Local, "when finding a single file" do
+describe Puppet::Indirector::FileMetadata::File, "when finding a single file" do
     before do
-        @metadata = Puppet::Indirector::FileMetadata::Local.new
+        @metadata = Puppet::Indirector::FileMetadata::File.new
         @uri = "file:///my/local"
 
         @data = mock 'metadata'
@@ -51,9 +51,9 @@ describe Puppet::Indirector::FileMetadata::Local, "when finding a single file" d
     end
 end
 
-describe Puppet::Indirector::FileMetadata::Local, "when searching for multiple files" do
+describe Puppet::Indirector::FileMetadata::File, "when searching for multiple files" do
     before do
-        @metadata = Puppet::Indirector::FileMetadata::Local.new
+        @metadata = Puppet::Indirector::FileMetadata::File.new
         @uri = "file:///my/local"
     end
 

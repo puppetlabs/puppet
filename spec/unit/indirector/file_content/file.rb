@@ -5,21 +5,21 @@
 
 require File.dirname(__FILE__) + '/../../../spec_helper'
 
-require 'puppet/indirector/file_content/local'
+require 'puppet/indirector/file_content/file'
 
-describe Puppet::Indirector::FileContent::Local do
+describe Puppet::Indirector::FileContent::File do
     it "should be registered with the file_content indirection" do
-        Puppet::Indirector::Terminus.terminus_class(:file_content, :local).should equal(Puppet::Indirector::FileContent::Local)
+        Puppet::Indirector::Terminus.terminus_class(:file_content, :file).should equal(Puppet::Indirector::FileContent::File)
     end
 
     it "should be a subclass of the File terminus" do
-        Puppet::Indirector::FileContent::Local.superclass.should equal(Puppet::Indirector::File)
+        Puppet::Indirector::FileContent::File.superclass.should equal(Puppet::Indirector::File)
     end
 end
 
-describe Puppet::Indirector::FileContent::Local, "when finding a single file" do
+describe Puppet::Indirector::FileContent::File, "when finding a single file" do
     it "should return a Content instance created with the full path to the file if the file exists" do
-        @content = Puppet::Indirector::FileContent::Local.new
+        @content = Puppet::Indirector::FileContent::File.new
         @uri = "file:///my/local"
 
         FileTest.expects(:exists?).with("/my/local").returns true
@@ -28,7 +28,7 @@ describe Puppet::Indirector::FileContent::Local, "when finding a single file" do
     end
 
     it "should pass the :links setting on to the created Content instance if the file exists" do
-        @content = Puppet::Indirector::FileContent::Local.new
+        @content = Puppet::Indirector::FileContent::File.new
         @uri = "file:///my/local"
 
         FileTest.expects(:exists?).with("/my/local").returns true
@@ -37,7 +37,7 @@ describe Puppet::Indirector::FileContent::Local, "when finding a single file" do
     end
 
     it "should return nil if the file does not exist" do
-        @content = Puppet::Indirector::FileContent::Local.new
+        @content = Puppet::Indirector::FileContent::File.new
         @uri = "file:///my/local"
 
         FileTest.expects(:exists?).with("/my/local").returns false
@@ -45,9 +45,9 @@ describe Puppet::Indirector::FileContent::Local, "when finding a single file" do
     end
 end
 
-describe Puppet::Indirector::FileContent::Local, "when searching for multiple files" do
+describe Puppet::Indirector::FileContent::File, "when searching for multiple files" do
     before do
-        @content = Puppet::Indirector::FileContent::Local.new
+        @content = Puppet::Indirector::FileContent::File.new
         @uri = "file:///my/local"
     end
 

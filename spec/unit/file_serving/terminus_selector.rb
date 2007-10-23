@@ -65,17 +65,17 @@ describe Puppet::FileServing::TerminusSelector, " when being used to select term
         @object.select_terminus("puppet:///module/file").should == :rest
     end
 
-    it "should choose :local when the protocol is 'file'" do
-        @object.select_terminus("file://host/module/file").should == :local
+    it "should choose :file when the protocol is 'file'" do
+        @object.select_terminus("file://host/module/file").should == :file
     end
 
-    it "should choose :local when the URI is a normal path name" do
-        @object.select_terminus("/module/file").should == :local
+    it "should choose :file when the URI is a normal path name" do
+        @object.select_terminus("/module/file").should == :file
     end
 
-    # This is so that we only choose modules over mounts, not local
-    it "should choose :local when the protocol is 'file' and the fully qualified path starts with '/modules'" do
-        @object.select_terminus("file://host/modules/file").should == :local
+    # This is so that we only choose modules over mounts, not file
+    it "should choose :file when the protocol is 'file' and the fully qualified path starts with '/modules'" do
+        @object.select_terminus("file://host/modules/file").should == :file
     end
 
     it "should fail when a protocol other than :puppet, :file, or :puppetmounts is used" do

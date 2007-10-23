@@ -36,15 +36,15 @@ describe "Puppet::FileServing::Files", :shared => true do
         @test_class.find(uri)
     end
 
-    it "should use the local terminus when the 'file' URI scheme is used" do
+    it "should use the file terminus when the 'file' URI scheme is used" do
         uri = "file:///mymod/my/file"
-        @indirection.terminus(:local).expects(:find).with(uri)
+        @indirection.terminus(:file).expects(:find).with(uri)
         @test_class.find(uri)
     end
 
-    it "should use the local terminus when a fully qualified path is provided" do
+    it "should use the file terminus when a fully qualified path is provided" do
         uri = "/mymod/my/file"
-        @indirection.terminus(:local).expects(:find).with(uri)
+        @indirection.terminus(:file).expects(:find).with(uri)
         @test_class.find(uri)
     end
 end
