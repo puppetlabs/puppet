@@ -31,6 +31,7 @@ class Puppet::Network::HTTP::MongrelREST < Puppet::Network::HTTP::Handler
     
     def encode_result(request, response, result)
         response.start(200) do |head, body|
+            body.write(result)
         end
     end
 end

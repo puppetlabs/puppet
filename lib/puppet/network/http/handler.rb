@@ -20,25 +20,31 @@ class Puppet::Network::HTTP::Handler
     def do_find(request, response)
         key = request_key(request) || raise(ArgumentError, "Could not locate lookup key in request path [#{path}]")
         args = params(request)
-        encode_result(request, response, @model.find(key, args))
+        result = @model.find(key, args).to_yaml
+        encode_result(request, response, result)
     end
 
     def do_search(request, response)
         args = params(request)
-        encode_result(request, response, @model.search(args))
+        result = @model.search(args).collect {|obj| obj.to_yaml }
+        encode_result(request, response, result)
+        
     end
 
     def do_destroy(request, response)
         key = request_key(request) || raise(ArgumentError, "Could not locate lookup key in request path [#{path}]")
         args = params(request)
-        encode_result(request, response, @model.destroy(key, args))
+        result = @model.destroy(key, args)
+        encode_result(request, response, YAML.dump(result))
     end
 
     def do_save(request, response)
         data = body(request)
         raise ArgumentError, "No data to save" if !data or data.empty?
         args = params(request)
-        encode_result(request, response, @model.new.save(args.merge(:data => data)))
+        obj = @model.new
+        result = obj.save(args.merge(:data => data)).to_yaml
+        encode_result(request, response, result)
     end
   
     def find_model_for_handler(handler)
