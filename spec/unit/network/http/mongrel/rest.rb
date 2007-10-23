@@ -195,9 +195,26 @@ describe Puppet::Network::HTTP::MongrelREST, "when receiving a request" do
         @handler.process(@mock_request, @mock_response)
     end
     
-    it "should generate a 200 response when a model destroy call succeeds"
+    it "should generate a 200 response when a model destroy call succeeds" do
+      @mock_request.stubs(:params).returns({  Mongrel::Const::REQUEST_METHOD => 'DELETE', 
+                                              Mongrel::Const::REQUEST_PATH => '/foo/key',
+                                              'QUERY_STRING' => ''})
+      @mock_model_class.stubs(:destroy)        
+      @mock_response.expects(:start).with(200)
+      @handler.process(@mock_request, @mock_response)
+    end
 
-    it "should generate a 200 response when a model save call succeeds"
+    it "should generate a 200 response when a model save call succeeds" do
+      @mock_request.stubs(:params).returns({  Mongrel::Const::REQUEST_METHOD => 'PUT', 
+                                              Mongrel::Const::REQUEST_PATH => '/foo',
+                                              'QUERY_STRING' => ''})
+      @mock_request.stubs(:body).returns('this is a fake request body')
+      @mock_model_instance = mock('model instance')
+      @mock_model_instance.stubs(:save)
+      @mock_model_class.stubs(:new).returns(@mock_model_instance)        
+      @mock_response.expects(:start).with(200)
+      @handler.process(@mock_request, @mock_response)
+    end
     
     it "should return a serialized object when a model find call succeeds"
     

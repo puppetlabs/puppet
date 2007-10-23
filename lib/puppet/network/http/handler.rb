@@ -31,14 +31,14 @@ class Puppet::Network::HTTP::Handler
     def do_destroy(request, response)
         key = request_key(request) || raise(ArgumentError, "Could not locate lookup key in request path [#{path}]")
         args = params(request)
-        @model.destroy(key, args)
+        encode_result(request, response, @model.destroy(key, args))
     end
 
     def do_save(request, response)
         data = body(request)
         raise ArgumentError, "No data to save" if !data or data.empty?
         args = params(request)
-        @model.new.save(args.merge(:data => data))
+        encode_result(request, response, @model.new.save(args.merge(:data => data)))
     end
   
     def find_model_for_handler(handler)

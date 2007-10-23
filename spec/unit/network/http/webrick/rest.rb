@@ -53,6 +53,7 @@ describe Puppet::Network::HTTP::WEBrickREST, "when receiving a request" do
         @mock_request = mock('webrick http request')
         @mock_request.stubs(:query).returns({})
         @mock_response = mock('webrick http response')
+        @mock_response.stubs(:status=)
         @mock_model_class = mock('indirected model class')
         Puppet::Indirector::Indirection.stubs(:model).with(:foo).returns(@mock_model_class)
         @mock_webrick = mock('mongrel http server')
@@ -85,9 +86,9 @@ describe Puppet::Network::HTTP::WEBrickREST, "when receiving a request" do
         @mock_request.stubs(:request_method).returns('PUT')
         @mock_request.stubs(:path).returns('/foo')
         @mock_request.stubs(:body).returns('This is a fake request body')
-        mock_model_instance = mock('indirected model instance')
-        mock_model_instance.expects(:save).with(:data => 'This is a fake request body')
-        @mock_model_class.expects(:new).returns(mock_model_instance)
+        @mock_model_instance = mock('indirected model instance')
+        @mock_model_instance.expects(:save).with(:data => 'This is a fake request body')
+        @mock_model_class.expects(:new).returns(@mock_model_instance)
         @handler.service(@mock_request, @mock_response)
     end
     
@@ -166,18 +167,54 @@ describe Puppet::Network::HTTP::WEBrickREST, "when receiving a request" do
         @mock_request.stubs(:path).returns('/foo')
         @mock_request.stubs(:query).returns(:foo => :baz, :bar => :xyzzy)
         @mock_request.stubs(:body).returns('This is a fake request body')
-        mock_model_instance = mock('indirected model instance')
-        mock_model_instance.expects(:save).with do |args|
+        @mock_model_instance = mock('indirected model instance')
+        @mock_model_instance.expects(:save).with do |args|
             args[:data] == 'This is a fake request body' and args[:foo] == :baz and args[:bar] == :xyzzy
         end
-        @mock_model_class.expects(:new).returns(mock_model_instance)
+        @mock_model_class.expects(:new).returns(@mock_model_instance)
         @handler.service(@mock_request, @mock_response)
     end
 
-    it "should generate a 200 response when a model find call succeeds"
-    it "should generate a 200 response when a model search call succeeds"
-    it "should generate a 200 response when a model destroy call succeeds"
-    it "should generate a 200 response when a model save call succeeds"
+    it "should generate a 200 response when a model find call succeeds" do
+      @mock_request.stubs(:query).returns(:foo => :baz, :bar => :xyzzy)
+      @mock_request.stubs(:request_method).returns('GET')
+      @mock_request.stubs(:path).returns('/foo/key')
+      @mock_model_class.stubs(:find)        
+      @mock_response.expects(:status=).with(200)
+      @handler.process(@mock_request, @mock_response)      
+    end
+
+    it "should generate a 200 response when a model search call succeeds" do
+      @mock_request.stubs(:query).returns(:foo => :baz, :bar => :xyzzy)
+      @mock_request.stubs(:request_method).returns('GET')
+      @mock_request.stubs(:path).returns('/foos/key')
+      @mock_model_class.stubs(:search)        
+      @mock_response.expects(:status=).with(200)
+      @handler.process(@mock_request, @mock_response)      
+    end
+
+    it "should generate a 200 response when a model destroy call succeeds" do
+      @mock_request.stubs(:query).returns(:foo => :baz, :bar => :xyzzy)
+      @mock_request.stubs(:request_method).returns('DELETE')
+      @mock_request.stubs(:path).returns('/foo/key')
+      @mock_model_class.stubs(:destroy)        
+      @mock_response.expects(:status=).with(200)
+      @handler.process(@mock_request, @mock_response)      
+    end
+    
+    it "should generate a 200 response when a model save call succeeds" do
+      @mock_request.stubs(:request_method).returns('PUT')
+      @mock_request.stubs(:path).returns('/foo')
+      @mock_request.stubs(:query).returns(:foo => :baz, :bar => :xyzzy)
+      @mock_request.stubs(:body).returns('This is a fake request body')
+      @mock_model_instance = mock('indirected model instance')
+      @mock_model_class.stubs(:new).returns(@mock_model_instance)
+      @mock_model_instance.stubs(:save)        
+      @mock_response.expects(:status=).with(200)
+      @handler.process(@mock_request, @mock_response)            
+    end
+    
+    
     it "should return a serialized object when a model find call succeeds"
     it "should return a list of serialized object matches when a model search call succeeds"
     it "should return a serialized success result when a model destroy call succeeds"
