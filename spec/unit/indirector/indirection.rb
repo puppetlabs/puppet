@@ -66,6 +66,16 @@ describe Puppet::Indirector::Indirection, " when looking for a model instance" d
         @terminus.expects(:find).with(@name).returns(nil)
         proc { @indirection.find(@name) }.should_not raise_error
     end
+
+    it "should pass the instance to the :post_find hook if there is one" do
+        class << @terminus
+            def post_find
+            end
+        end
+        @terminus.expects(:post_find).with(@instance)
+        @terminus.expects(:find).with(@name).returns(@instance)
+        @indirection.find(@name)
+    end
 end
 
 describe Puppet::Indirector::Indirection, " when removing a model instance" do
@@ -83,6 +93,16 @@ describe Puppet::Indirector::Indirection, " when searching for multiple model in
     it "should let the appropriate terminus find the matching instances" do
         @terminus.expects(:search).with(@name).returns(@instance)
         @indirection.search(@name).should == @instance
+    end
+
+    it "should pass the instances to the :post_search hook if there is one" do
+        class << @terminus
+            def post_search
+            end
+        end
+        @terminus.expects(:post_search).with(@instance)
+        @terminus.expects(:search).with(@name).returns(@instance)
+        @indirection.search(@name)
     end
 end
 

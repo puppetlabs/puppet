@@ -124,6 +124,9 @@ class Puppet::Indirector::Indirection
                 Puppet.info "Caching %s %s" % [self.name, key]
                 cache.save(result, *args)
             end
+
+            terminus(terminus_name).post_find(result) if terminus(terminus_name).respond_to?(:post_find)
+
             return result
         end
     end
@@ -137,7 +140,11 @@ class Puppet::Indirector::Indirection
     def search(*args)
         check_authorization(:search, terminus_class, args)
 
-        terminus.search(*args)
+        result = terminus.search(*args)
+
+        terminus().post_search(result) if terminus().respond_to?(:post_search)
+
+        result
     end
 
     # these become instance methods 
