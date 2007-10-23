@@ -34,7 +34,7 @@ describe Puppet::Network::HTTP::MongrelREST, "when initializing" do
         Puppet::Indirector::Indirection.expects(:model).with(:foo).returns(nil)
         Proc.new { Puppet::Network::HTTP::MongrelREST.new(@params) }.should raise_error(ArgumentError)
     end
-
+    
     it "should register itself with the mongrel server for the singular HTTP methods" do
         @mock_mongrel.expects(:register).with do |*args|
             args.first == '/foo' and args.last.is_a? Puppet::Network::HTTP::MongrelREST
@@ -95,6 +95,10 @@ describe Puppet::Network::HTTP::MongrelREST, "when receiving a request" do
         @mock_model_class.stubs(:new).returns(@mock_model_instance)
     end
     
+    def setup_bad_request
+        @mock_request.stubs(:params).returns({ Mongrel::Const::REQUEST_METHOD => 'POST', Mongrel::Const::REQUEST_PATH => '/foos'})        
+    end
+
     it "should call the model find method if the request represents a singular HTTP GET" do
         setup_find_request
         @mock_model_class.expects(:find).with('key', {})
@@ -121,37 +125,45 @@ describe Puppet::Network::HTTP::MongrelREST, "when receiving a request" do
     
     it "should fail if the HTTP method isn't supported" do
         @mock_request.stubs(:params).returns({ Mongrel::Const::REQUEST_METHOD => 'POST', Mongrel::Const::REQUEST_PATH => '/foo'})
-        Proc.new { @handler.process(@mock_request, @mock_response) }.should raise_error(ArgumentError)
+        @mock_response.expects(:start).with(404)
+        @handler.process(@mock_request, @mock_response)
     end
     
     it "should fail if the request's pluralization is wrong" do
         @mock_request.stubs(:params).returns({ Mongrel::Const::REQUEST_METHOD => 'DELETE', Mongrel::Const::REQUEST_PATH => '/foos/key'})
-        Proc.new { @handler.process(@mock_request, @mock_response) }.should raise_error(ArgumentError)
+        @mock_response.expects(:start).with(404)
+        @handler.process(@mock_request, @mock_response)
+
         @mock_request.stubs(:params).returns({ Mongrel::Const::REQUEST_METHOD => 'PUT', Mongrel::Const::REQUEST_PATH => '/foos/key'})
-        Proc.new { @handler.process(@mock_request, @mock_response) }.should raise_error(ArgumentError)
+        @mock_response.expects(:start).with(404)
+        @handler.process(@mock_request, @mock_response)
     end
 
     it "should fail if the request is for an unknown path" do
         @mock_request.stubs(:params).returns({  Mongrel::Const::REQUEST_METHOD => 'GET', 
                                                 Mongrel::Const::REQUEST_PATH => '/bar/key',
                                                 'QUERY_STRING' => '' })
-        Proc.new { @handler.process(@mock_request, @mock_response) }.should raise_error(ArgumentError)
+        @mock_response.expects(:start).with(404)
+        @handler.process(@mock_request, @mock_response)
     end
     
     it "should fail to find model if key is not specified" do
         @mock_request.stubs(:params).returns({ Mongrel::Const::REQUEST_METHOD => 'GET', Mongrel::Const::REQUEST_PATH => '/foo'})
-        Proc.new { @handler.process(@mock_request, @mock_response) }.should raise_error(ArgumentError)
+        @mock_response.expects(:start).with(404)
+        @handler.process(@mock_request, @mock_response)
     end
 
     it "should fail to destroy model if key is not specified" do
         @mock_request.stubs(:params).returns({ Mongrel::Const::REQUEST_METHOD => 'DELETE', Mongrel::Const::REQUEST_PATH => '/foo'})
-        Proc.new { @handler.process(@mock_request, @mock_response) }.should raise_error(ArgumentError)
+        @mock_response.expects(:start).with(404)
+        @handler.process(@mock_request, @mock_response)
     end
     
     it "should fail to save model if data is not specified" do
         @mock_request.stubs(:params).returns({ Mongrel::Const::REQUEST_METHOD => 'PUT', Mongrel::Const::REQUEST_PATH => '/foo'})
         @mock_request.stubs(:body).returns('')
-        Proc.new { @handler.process(@mock_request, @mock_response) }.should raise_error(ArgumentError)        
+        @mock_response.expects(:start).with(404)
+        @handler.process(@mock_request, @mock_response)
     end
 
     it "should pass HTTP request parameters to model find" do
@@ -239,5 +251,37 @@ describe Puppet::Network::HTTP::MongrelREST, "when receiving a request" do
         @handler.process(@mock_request, @mock_response)        
     end
     
-    it "should serialize a controller exception when an exception is thrown by the handler"
+    it "should serialize a controller exception when an exception is thrown by find" do
+       setup_find_request
+       @mock_model_class.expects(:find).raises(ArgumentError) 
+       @mock_response.expects(:start).with(404)
+       @handler.process(@mock_request, @mock_response)        
+    end
+
+    it "should serialize a controller exception when an exception is thrown by search" do
+        setup_search_request
+        @mock_model_class.expects(:search).raises(ArgumentError) 
+        @mock_response.expects(:start).with(404)
+        @handler.process(@mock_request, @mock_response)                
+    end
+    
+    it "should serialize a controller exception when an exception is thrown by destroy" do
+        setup_destroy_request
+        @mock_model_class.expects(:destroy).raises(ArgumentError) 
+        @mock_response.expects(:start).with(404)
+        @handler.process(@mock_request, @mock_response)                 
+    end
+    
+    it "should serialize a controller exception when an exception is thrown by save" do
+        setup_save_request
+        @mock_model_instance.expects(:save).raises(ArgumentError) 
+        @mock_response.expects(:start).with(404)
+        @handler.process(@mock_request, @mock_response)                         
+    end
+    
+    it "should serialize a controller exception if the request fails" do
+        setup_bad_request     
+        @mock_response.expects(:start).with(404)
+        @handler.process(@mock_request, @mock_response)        
+    end
 end

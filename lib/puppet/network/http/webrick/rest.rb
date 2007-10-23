@@ -34,8 +34,8 @@ class Puppet::Network::HTTP::WEBrickREST < Puppet::Network::HTTP::Handler
         request.query
     end
     
-    def encode_result(request, response, result)
-        response.status = 200
+    def encode_result(request, response, result, status = 200)
+        response.status = status
         response.body = result
     end
 end

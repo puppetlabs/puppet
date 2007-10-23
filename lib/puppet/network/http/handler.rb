@@ -13,6 +13,8 @@ class Puppet::Network::HTTP::Handler
         return do_destroy(request, response)    if delete?(request) and singular?(request)
         return do_save(request, response)       if put?(request) and singular?(request)
         raise ArgumentError, "Did not understand HTTP #{http_method(request)} request for '#{path(request)}'"
+    rescue Exception => e
+        return do_exception(request, response, e)
     end
     
   private
@@ -45,6 +47,10 @@ class Puppet::Network::HTTP::Handler
         obj = @model.new
         result = obj.save(args.merge(:data => data)).to_yaml
         encode_result(request, response, result)
+    end
+  
+    def do_exception(request, response, exception, status=404)
+        encode_result(request, response, exception.to_s, status)
     end
   
     def find_model_for_handler(handler)
@@ -98,7 +104,7 @@ class Puppet::Network::HTTP::Handler
         raise NotImplementedError
     end
     
-    def encode_result(request, response, result)
+    def encode_result(request, response, result, status = 200)
         raise NotImplementedError
     end
 end
