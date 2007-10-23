@@ -66,8 +66,6 @@ describe Puppet::Indirector::Indirection, " when looking for a model instance" d
         @terminus.expects(:find).with(@name).returns(nil)
         proc { @indirection.find(@name) }.should_not raise_error
     end
-
-    it "should call the terminus's authorization hook if there is one"
 end
 
 describe Puppet::Indirector::Indirection, " when removing a model instance" do
@@ -77,8 +75,6 @@ describe Puppet::Indirector::Indirection, " when removing a model instance" do
         @terminus.expects(:destroy).with(@name).returns(@instance)
         @indirection.destroy(@name).should == @instance
     end
-
-    it "should call the terminus's authorization hook if there is one"
 end
 
 describe Puppet::Indirector::Indirection, " when searching for multiple model instances" do
@@ -88,8 +84,6 @@ describe Puppet::Indirector::Indirection, " when searching for multiple model in
         @terminus.expects(:search).with(@name).returns(@instance)
         @indirection.search(@name).should == @instance
     end
-
-    it "should call the terminus's authorization hook if there is one"
 end
 
 describe Puppet::Indirector::Indirection, " when storing a model instance" do
@@ -99,8 +93,6 @@ describe Puppet::Indirector::Indirection, " when storing a model instance" do
         @terminus.expects(:save).with(@instance).returns(@instance)
         @indirection.save(@instance).should == @instance
     end
-
-    it "should call the terminus's authorization hook if there is one"
 end
 
 describe Puppet::Indirector::Indirection, " when handling instance versions" do
@@ -110,8 +102,6 @@ describe Puppet::Indirector::Indirection, " when handling instance versions" do
         @terminus.expects(:version).with(@name).returns(5)
         @indirection.version(@name).should == 5
     end
-
-    it "should call the terminus's authorization hook if there is one"
 
     it "should add versions to found instances that do not already have them" do
         @terminus.expects(:find).with(@name).returns(@instance)
@@ -458,5 +448,67 @@ describe Puppet::Indirector::Indirection, " when finding and using a cache" do
         @cache.expects(:save).with(real)
 
         @indirection.find(name).should equal(real)
+    end
+end
+
+describe Puppet::Indirector::Indirection, " when an authorization hook is present" do
+    include IndirectionTesting
+
+    before do
+        # So the :respond_to? turns out right.
+        class << @terminus
+            def authorized?
+            end
+        end
+    end
+
+    it "should fail while finding instances if authorization returns false" do
+        @terminus.expects(:authorized?).with(:find, "/my/key", :node => "mynode").returns(false)
+        @terminus.stubs(:find)
+        proc { @indirection.find("/my/key", :node => "mynode") }.should raise_error(ArgumentError)
+    end
+
+    it "should continue finding instances if authorization returns true" do
+        @terminus.expects(:authorized?).with(:find, "/my/key", :node => "mynode").returns(true)
+        @terminus.stubs(:find)
+        @indirection.find("/my/key", :node => "mynode")
+    end
+
+    it "should fail while saving instances if authorization returns false" do
+        @terminus.expects(:authorized?).with(:save, :myinstance, :node => "mynode").returns(false)
+        @terminus.stubs(:save)
+        proc { @indirection.save(:myinstance, :node => "mynode") }.should raise_error(ArgumentError)
+    end
+
+    it "should continue saving instances if authorization returns true" do
+        instance = stub 'instance', :version => 1.0, :name => "eh"
+        @terminus.expects(:authorized?).with(:save, instance, :node => "mynode").returns(true)
+        @terminus.stubs(:save)
+        @indirection.save(instance, :node => "mynode")
+    end
+
+    it "should fail while destroying instances if authorization returns false" do
+        @terminus.expects(:authorized?).with(:destroy, "/my/key", :node => "mynode").returns(false)
+        @terminus.stubs(:destroy)
+        proc { @indirection.destroy("/my/key", :node => "mynode") }.should raise_error(ArgumentError)
+    end
+
+    it "should continue destroying instances if authorization returns true" do
+        instance = stub 'instance', :version => 1.0, :name => "eh"
+        @terminus.expects(:authorized?).with(:destroy, instance, :node => "mynode").returns(true)
+        @terminus.stubs(:destroy)
+        @indirection.destroy(instance, :node => "mynode")
+    end
+
+    it "should fail while searching for instances if authorization returns false" do
+        @terminus.expects(:authorized?).with(:search, "/my/key", :node => "mynode").returns(false)
+        @terminus.stubs(:search)
+        proc { @indirection.search("/my/key", :node => "mynode") }.should raise_error(ArgumentError)
+    end
+
+    it "should continue searching for instances if authorization returns true" do
+        @terminus.expects(:authorized?).with(:search, "/my/key", :node => "mynode").returns(true)
+        @terminus.stubs(:search)
+        @indirection.search("/my/key", :node => "mynode")
     end
 end

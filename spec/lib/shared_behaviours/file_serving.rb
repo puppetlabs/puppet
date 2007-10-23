@@ -27,12 +27,14 @@ describe "Puppet::FileServing::Files", :shared => true do
         Puppet.settings.stubs(:value).with(:fileserverconfig).returns("/whatever")
         Puppet.settings.stubs(:value).with(:environment).returns("")
         @indirection.terminus(:file_server).expects(:find).with(uri)
+        @indirection.terminus(:file_server).stubs(:authorized?).returns(true)
         @test_class.find(uri)
     end
 
     it "should use the file_server terminus when the 'puppetmounts' URI scheme is used" do
         uri = "puppetmounts:///mymod/my/file"
         @indirection.terminus(:file_server).expects(:find).with(uri)
+        @indirection.terminus(:file_server).stubs(:authorized?).returns(true)
         @test_class.find(uri)
     end
 

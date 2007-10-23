@@ -109,6 +109,8 @@ class Puppet::Indirector::Indirection
             terminus_name = terminus_class
         end
 
+        check_authorization(:find, terminus_name, ([key] + args))
+
         # See if our instance is in the cache and up to date.
         if cache? and cache.has_most_recent?(key, terminus(terminus_name).version(key))
             Puppet.info "Using cached %s %s" % [self.name, key]
@@ -127,15 +129,21 @@ class Puppet::Indirector::Indirection
     end
 
     def destroy(*args)
+        check_authorization(:destroy, terminus_class, args)
+
         terminus.destroy(*args)
     end
 
     def search(*args)
+        check_authorization(:search, terminus_class, args)
+
         terminus.search(*args)
     end
 
     # these become instance methods 
     def save(instance, *args)
+        check_authorization(:save, terminus_class, ([instance] + args))
+
         instance.version ||= Time.now.utc
         dest = cache? ? cache : terminus
         return if dest.has_most_recent?(instance.name, instance.version)
@@ -149,6 +157,14 @@ class Puppet::Indirector::Indirection
     end
 
     private
+
+    # Check authorization if there's a hook available; fail if there is one
+    # and it returns false.
+    def check_authorization(method, terminus_name, arguments)
+        if terminus(terminus_name).respond_to?(:authorized?) and ! terminus(terminus_name).authorized?(method, *arguments)
+            raise ArgumentError, "Not authorized to call %s with %s" % [method, arguments[0]]
+        end
+    end
 
     # Create a new terminus instance.
     def make_terminus(terminus_class)
