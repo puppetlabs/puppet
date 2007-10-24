@@ -482,6 +482,12 @@ describe Puppet::Indirector::Indirection, " when an authorization hook is presen
         end
     end
 
+    it "should not check authorization if a node name is not provided" do
+        @terminus.expects(:authorized?).never
+        @terminus.stubs(:find)
+        @indirection.find("/my/key")
+    end
+
     it "should fail while finding instances if authorization returns false" do
         @terminus.expects(:authorized?).with(:find, "/my/key", :node => "mynode").returns(false)
         @terminus.stubs(:find)

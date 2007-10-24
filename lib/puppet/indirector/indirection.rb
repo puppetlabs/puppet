@@ -168,6 +168,10 @@ class Puppet::Indirector::Indirection
     # Check authorization if there's a hook available; fail if there is one
     # and it returns false.
     def check_authorization(method, terminus_name, arguments)
+        # Don't check authorization if there's no node.
+        # LAK:FIXME This is a hack and is quite possibly not the design we want.
+        return unless arguments[-1].is_a?(Hash) and arguments[-1][:node]
+
         if terminus(terminus_name).respond_to?(:authorized?) and ! terminus(terminus_name).authorized?(method, *arguments)
             raise ArgumentError, "Not authorized to call %s with %s" % [method, arguments[0]]
         end

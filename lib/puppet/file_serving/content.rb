@@ -17,11 +17,11 @@ class Puppet::FileServing::Content < Puppet::FileServing::FileBase
     attr_reader :path
 
     # Read the content of our file in.
-    def content(base = nil)
+    def content
         # This stat can raise an exception, too.
-        raise(ArgumentError, "Cannot read the contents of links unless following links") if stat(base).ftype == "symlink" 
+        raise(ArgumentError, "Cannot read the contents of links unless following links") if stat().ftype == "symlink" 
 
-        ::File.read(full_path(base))
+        ::File.read(full_path())
     end
 
     # Just return the file contents as the yaml.  This allows us to

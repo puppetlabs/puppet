@@ -618,7 +618,6 @@ module Puppet
             # than this last bit, so it doesn't really make sense.
             if child = configuration.resource(:file, path)
                 unless child.parent.object_id == self.object_id
-                    puts("Parent is %s, I am %s" % [child.parent.ref, self.ref]) if child.parent
                     self.debug "Not managing more explicit file %s" %
                         path
                     return nil

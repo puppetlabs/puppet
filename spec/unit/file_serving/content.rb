@@ -18,79 +18,43 @@ describe Puppet::FileServing::Content do
     end
 end
 
-describe Puppet::FileServing::Content, " when initializing" do
-    it "should accept a file path" do
-        Puppet::FileServing::Content.new("not/qualified").path.should == "not/qualified"
-    end
-
-    it "should not allow a fully qualified file path" do
-        proc { Puppet::FileServing::Content.new("/fully/qualified") }.should raise_error(ArgumentError)
-    end
-
-    it "should allow specification of whether links should be managed" do
-        Puppet::FileServing::Content.new("not/qualified", :links => :manage)
-    end
-
-    it "should fail if :links is set to anything other than :manage or :follow" do
-        Puppet::FileServing::Content.new("not/qualified", :links => :manage)
-    end
-
-    it "should default to :manage for :links" do
-        Puppet::FileServing::Content.new("not/qualified", :links => :manage)
-    end
-end
-
 describe Puppet::FileServing::Content, " when returning the contents" do
     before do
-        @content = Puppet::FileServing::Content.new("sub/path", :links => :follow)
-        @base = "/my/base"
-        @full = "/my/base/sub/path"
+        @path = "/my/base"
+        @content = Puppet::FileServing::Content.new("sub/path", :links => :follow, :path => @path)
     end
 
     it "should fail if the file is a symlink and links are set to :manage" do
         @content.links = :manage
-        File.expects(:lstat).with(@full).returns stub("stat", :ftype => "symlink")
-        proc { @content.content(@base) }.should raise_error(ArgumentError)
+        File.expects(:lstat).with(@path).returns stub("stat", :ftype => "symlink")
+        proc { @content.content }.should raise_error(ArgumentError)
     end
 
-    it "should accept a base path path to which the file should be relative" do
-        File.expects(:stat).with(@full).returns stub("stat", :ftype => "file")
-        File.expects(:read).with(@full).returns(:mycontent)
-        @content.content(@base).should == :mycontent
-    end
-
-    it "should use the set base path if one is not provided" do
-        @content.base_path = @base
-        File.expects(:stat).with(@full).returns stub("stat", :ftype => "file")
-        File.expects(:read).with(@full).returns(:mycontent)
-        @content.content()
-    end
-
-    it "should fail if a base path is neither set nor provided" do
-        proc { @content.content() }.should raise_error(ArgumentError)
+    it "should fail if a path is not set" do
+        proc { @content.content() }.should raise_error(Errno::ENOENT)
     end
 
     it "should raise Errno::ENOENT if the file is absent" do
-        @content.base_path = "/there/is/absolutely/no/chance/that/this/path/exists"
+        @content.path = "/there/is/absolutely/no/chance/that/this/path/exists"
         proc { @content.content() }.should raise_error(Errno::ENOENT)
     end
 
     it "should return the contents of the path if the file exists" do
-        File.expects(:stat).with(@full).returns stub("stat", :ftype => "file")
-        File.expects(:read).with(@full).returns(:mycontent)
-        @content.content(@base).should == :mycontent
+        File.expects(:stat).with(@path).returns stub("stat", :ftype => "file")
+        File.expects(:read).with(@path).returns(:mycontent)
+        @content.content.should == :mycontent
     end
 end
 
 describe Puppet::FileServing::Content, " when converting to yaml" do
-    it "should fail if no base path has been set" do
-        @content = Puppet::FileServing::Content.new("some/path")
+    it "should fail if no path has been set" do
+        @content = Puppet::FileServing::Content.new("some/key")
         proc { @content.to_yaml }.should raise_error(ArgumentError)
     end
 
     it "should return the file contents" do
         @content = Puppet::FileServing::Content.new("some/path")
-        @content.base_path = "/base/path"
+        @content.path = "/base/path"
         @content.expects(:content).returns(:content)
         @content.to_yaml.should == :content
     end

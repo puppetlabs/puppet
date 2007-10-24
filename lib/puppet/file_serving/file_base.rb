@@ -7,18 +7,19 @@ require 'puppet/file_serving'
 # The base class for Content and Metadata; provides common
 # functionality like the behaviour around links.
 class Puppet::FileServing::FileBase
-    attr_accessor :path, :base_path
+    attr_accessor :key
 
-    def full_path(base = nil)
-        base ||= base_path || raise(ArgumentError, "You must set or provide a base path")
+    # Return the full path to our file.  Fails if there's no path set.
+    def full_path
+        raise(ArgumentError, "You must set a path to get a file's path") unless self.path
 
-        full = File.join(base, self.path)
+        relative_path ? File.join(path, relative_path) : path
     end
 
-    def initialize(path, options = {})
+    def initialize(key, options = {})
         raise ArgumentError.new("Files must not be fully qualified") if path =~ /^#{::File::SEPARATOR}/
 
-        @path = path
+        @key = key
         @links = :manage
 
         options.each do |param, value|
@@ -30,17 +31,33 @@ class Puppet::FileServing::FileBase
         end
     end
 
+    # Determine how we deal with links.
     attr_reader :links
     def links=(value)
         raise(ArgumentError, ":links can only be set to :manage or :follow") unless [:manage, :follow].include?(value) 
         @links = value
     end
 
+    # Set our base path.
+    attr_reader :path
+    def path=(path)
+        raise ArgumentError.new("Paths must be fully qualified") unless path =~ /^#{::File::SEPARATOR}/
+        @path = path
+    end
+
+    # Set a relative path; this is used for recursion, and sets
+    # the file's path relative to the initial recursion point.
+    attr_reader :relative_path
+    def relative_path=(path)
+        raise ArgumentError.new("Relative paths must not be fully qualified") if path =~ /^#{::File::SEPARATOR}/
+        @relative_path = path
+    end
+
     # Stat our file, using the appropriate link-sensitive method.
-    def stat(base = nil)
+    def stat
         unless defined?(@stat_method)
             @stat_method = self.links == :manage ? :lstat : :stat
         end
-        File.send(@stat_method, full_path(base))
+        File.send(@stat_method, full_path())
     end
 end

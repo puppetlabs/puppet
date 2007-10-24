@@ -30,7 +30,9 @@ class Puppet::Indirector::ModuleFiles < Puppet::Indirector::Terminus
     def find(key, options = {})
         return nil unless path = find_path(key, options)
 
-        return model.new(path, :links => options[:links])
+        result = model.new(key, :path => path)
+        result.links = options[:links] if options[:links]
+        return result
     end
 
     # Try to find our module.
@@ -41,7 +43,7 @@ class Puppet::Indirector::ModuleFiles < Puppet::Indirector::Terminus
     # Search for a list of files.
     def search(key, options = {})
         return nil unless path = find_path(key, options)
-        path2instances(path, options)
+        path2instances(key, path, options)
     end
 
     private
