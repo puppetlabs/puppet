@@ -55,8 +55,6 @@ module Spec
 
       def run_behaviours
         @behaviours.each do |behaviour|
-          # LAK:NOTE: this 'runnable' test is Puppet-specific.
-          next unless behaviour.runnable?
           behaviour.run(@options.reporter, @options.dry_run, @options.reverse, @options.timeout)
         end
       end

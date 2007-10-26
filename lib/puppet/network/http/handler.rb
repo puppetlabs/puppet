@@ -29,8 +29,7 @@ class Puppet::Network::HTTP::Handler
     def do_search(request, response)
         args = params(request)
         result = @model.search(args).collect {|obj| obj.to_yaml }
-        encode_result(request, response, result)
-        
+        encode_result(request, response, result) 
     end
 
     def do_destroy(request, response)
