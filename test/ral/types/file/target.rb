@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-$:.unshift("../../../lib") if __FILE__ =~ /\.rb$/
+require File.dirname(__FILE__) + '/../../../lib/puppettest'
 
 require 'puppettest'
 require 'fileutils'

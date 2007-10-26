@@ -5,12 +5,12 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-require 'puppet/file_serving/terminus_selector'
+require 'puppet/file_serving/indirection_hooks'
 
-describe Puppet::FileServing::TerminusSelector, " when being used to select termini" do
+describe Puppet::FileServing::IndirectionHooks, " when being used to select termini" do
     before do
         @object = Object.new
-        @object.extend(Puppet::FileServing::TerminusSelector)
+        @object.extend(Puppet::FileServing::IndirectionHooks)
     end
 
     it "should escape the key before parsing" do
@@ -83,10 +83,10 @@ describe Puppet::FileServing::TerminusSelector, " when being used to select term
     end
 end
 
-describe Puppet::FileServing::TerminusSelector, " when looking for a module whose name matches the mount name" do
+describe Puppet::FileServing::IndirectionHooks, " when looking for a module whose name matches the mount name" do
     before do
         @object = Object.new
-        @object.extend(Puppet::FileServing::TerminusSelector)
+        @object.extend(Puppet::FileServing::IndirectionHooks)
 
         @modules = mock 'modules'
         @object.stubs(:terminus).with(:modules).returns(@modules)

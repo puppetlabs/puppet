@@ -62,10 +62,10 @@ describe Puppet::Indirector::ModuleFiles, " when finding files" do
         @module_files.find(@uri).should be_nil
     end
 
-    it "should return an instance of the model created with the full path if a module is found and the file exists" do
+    it "should return an instance of the model if a module is found and the file exists" do
         Puppet::Module.expects(:find).with('my', nil).returns @module
         FileTest.expects(:exists?).with("/module/path/files/local/file").returns(true)
-        @model.expects(:new).with("/module/path/files/local/file", :links => nil).returns(:myinstance)
+        @model.expects(:new).returns(:myinstance)
         @module_files.find(@uri).should == :myinstance
     end
 
@@ -92,11 +92,31 @@ end
 describe Puppet::Indirector::ModuleFiles, " when returning instances" do
     include ModuleFilesTerminusTesting
 
-    it "should pass the provided :links setting on to the instance if one is provided" do
+    before do
         Puppet::Module.expects(:find).with('my', nil).returns @module
         FileTest.expects(:exists?).with("/module/path/files/local/file").returns(true)
-        @model.expects(:new).with("/module/path/files/local/file", :links => :mytest)
+        @instance = mock 'instance'
+    end
+
+    it "should create the instance with the key used to find the instance" do
+        @model.expects(:new).with { |key, *options| key == @uri }
+        @module_files.find(@uri)
+    end
+
+    it "should create the instance with the path at which the instance was found" do
+        @model.expects(:new).with { |key, options| options[:path] == "/module/path/files/local/file" }
+        @module_files.find(@uri)
+    end
+
+    it "should set the provided :links setting on to the instance if one is provided" do
+        @model.expects(:new).returns(@instance)
+        @instance.expects(:links=).with(:mytest)
         @module_files.find(@uri, :links => :mytest)
+    end
+
+    it "should not set a :links value if no :links parameter is provided" do
+        @model.expects(:new).returns(@instance)
+        @module_files.find(@uri)
     end
 end
 
@@ -213,14 +233,14 @@ describe Puppet::Indirector::ModuleFiles, " when searching for files" do
     it "should use :path2instances from the terminus_helper to return instances if a module is found and the file exists" do
         Puppet::Module.expects(:find).with('my', nil).returns @module
         FileTest.expects(:exists?).with("/module/path/files/local/file").returns(true)
-        @module_files.expects(:path2instances).with("/module/path/files/local/file", {})
+        @module_files.expects(:path2instances).with(@uri, "/module/path/files/local/file", {})
         @module_files.search(@uri)
     end
 
     it "should pass any options on to :path2instances" do
         Puppet::Module.expects(:find).with('my', nil).returns @module
         FileTest.expects(:exists?).with("/module/path/files/local/file").returns(true)
-        @module_files.expects(:path2instances).with("/module/path/files/local/file", :testing => :one, :other => :two)
+        @module_files.expects(:path2instances).with(@uri, "/module/path/files/local/file", :testing => :one, :other => :two)
         @module_files.search(@uri, :testing => :one, :other => :two)
     end
 end

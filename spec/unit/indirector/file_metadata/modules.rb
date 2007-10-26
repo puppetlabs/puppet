@@ -34,7 +34,7 @@ describe Puppet::Indirector::FileMetadata::Modules, " when finding metadata" do
         FileTest.expects(:exists?).with("/path/to/files/my/file").returns true
         instance = mock 'metadta'
         Puppet::FileServing::Metadata.expects(:new).returns instance
-        instance.expects :get_attributes
+        instance.expects :collect_attributes
         @finder.find("puppetmounts://hostname/modules/mymod/my/file")
     end
 end

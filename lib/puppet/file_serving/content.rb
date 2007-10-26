@@ -5,23 +5,23 @@
 require 'puppet/indirector'
 require 'puppet/file_serving'
 require 'puppet/file_serving/file_base'
-require 'puppet/file_serving/terminus_selector'
+require 'puppet/file_serving/indirection_hooks'
 
 # A class that handles retrieving file contents.
 # It only reads the file when its content is specifically
 # asked for.
 class Puppet::FileServing::Content < Puppet::FileServing::FileBase
     extend Puppet::Indirector
-    indirects :file_content, :extend => Puppet::FileServing::TerminusSelector
+    indirects :file_content, :extend => Puppet::FileServing::IndirectionHooks
 
     attr_reader :path
 
     # Read the content of our file in.
-    def content(base = nil)
+    def content
         # This stat can raise an exception, too.
-        raise(ArgumentError, "Cannot read the contents of links unless following links") if stat(base).ftype == "symlink" 
+        raise(ArgumentError, "Cannot read the contents of links unless following links") if stat().ftype == "symlink" 
 
-        ::File.read(full_path(base))
+        ::File.read(full_path())
     end
 
     # Just return the file contents as the yaml.  This allows us to

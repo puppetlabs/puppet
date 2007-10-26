@@ -19,20 +19,60 @@ describe Puppet::FileServing::TerminusHelper do
     it "should use a fileset to find paths" do
         fileset = mock 'fileset', :files => []
         Puppet::FileServing::Fileset.expects(:new).with("/my/file", {}).returns(fileset)
-        @helper.path2instances("/my/file")
+        @helper.path2instances("url", "/my/file")
     end
 
     it "should pass :recurse, :ignore, and :links settings on to the fileset if present" do
         fileset = mock 'fileset', :files => []
         Puppet::FileServing::Fileset.expects(:new).with("/my/file", :links => :a, :ignore => :b, :recurse => :c).returns(fileset)
-        @helper.path2instances("/my/file", :links => :a, :ignore => :b, :recurse => :c)
+        @helper.path2instances("url", "/my/file", :links => :a, :ignore => :b, :recurse => :c)
+    end
+end
+
+
+describe Puppet::FileServing::TerminusHelper, " when creating instances" do
+    before do
+        @helper = Object.new
+        @helper.extend(Puppet::FileServing::TerminusHelper)
+
+        @model = mock 'model'
+        @helper.stubs(:model).returns(@model)
+
+        @key = "puppet://host/mount/dir"
+
+        @fileset = mock 'fileset', :files => %w{one two}
+        Puppet::FileServing::Fileset.expects(:new).returns(@fileset)
     end
 
-    it "should return an instance of the model for each path returned by the fileset" do
-        fileset = mock 'fileset', :files => %w{one two}
-        Puppet::FileServing::Fileset.expects(:new).with("/my/file", {}).returns(fileset)
-        @model.expects(:new).with("one").returns(:one)
-        @model.expects(:new).with("two").returns(:two)
-        @helper.path2instances("/my/file").should == [:one, :two]
+    it "should create an instance of the model for each path returned by the fileset" do
+        @model.expects(:new).returns(:one)
+        @model.expects(:new).returns(:two)
+        @helper.path2instances(@key, "/my/file").length.should == 2
+    end
+
+    it "should set each instance's key to be the original key plus the file-specific path" do
+        @model.expects(:new).with { |key, options| key == @key + "/one" }.returns(:one)
+        @model.expects(:new).with { |key, options| key == @key + "/two" }.returns(:two)
+        @helper.path2instances(@key, "/my/file")
+    end
+
+    it "should set each returned instance's path to the original path" do
+        @model.expects(:new).with { |key, options| options[:path] == "/my/file" }.returns(:one)
+        @model.expects(:new).with { |key, options| options[:path] == "/my/file" }.returns(:two)
+        @helper.path2instances(@key, "/my/file")
+    end
+
+    it "should set each returned instance's relative path to the file-specific path" do
+        @model.expects(:new).with { |key, options| options[:relative_path] == "one" }.returns(:one)
+        @model.expects(:new).with { |key, options| options[:relative_path] == "two" }.returns(:two)
+        @helper.path2instances(@key, "/my/file")
+    end
+
+    it "should set the links value on each instance if one is provided" do
+        one = mock 'one', :links= => :manage
+        two = mock 'two', :links= => :manage
+        @model.expects(:new).returns(one)
+        @model.expects(:new).returns(two)
+        @helper.path2instances(@key, "/my/file", :links => :manage)
     end
 end

@@ -3,30 +3,24 @@
 #  Copyright (c) 2007. All rights reserved.
 
 require 'puppet/file_serving/metadata'
-require 'puppet/file_serving/terminus_helper'
 require 'puppet/indirector/file_metadata'
-require 'puppet/util/uri_helper'
-require 'puppet/indirector/code'
+require 'puppet/indirector/direct_file_server'
 
-class Puppet::Indirector::FileMetadata::File < Puppet::Indirector::Code
+class Puppet::Indirector::FileMetadata::File < Puppet::Indirector::DirectFileServer
     desc "Retrieve file metadata directly from the local filesystem."
 
-    include Puppet::Util::URIHelper
-    include Puppet::FileServing::TerminusHelper
-
     def find(key, options = {})
-        uri = key2uri(key)
-
-        return nil unless FileTest.exists?(uri.path)
-        data = model.new(uri.path, :links => options[:links])
+        return unless data = super
         data.collect_attributes
 
         return data
     end
 
     def search(key, options = {})
-        uri = key2uri(key)
-        return nil unless FileTest.exists?(uri.path)
-        path2instances(uri.path, options).each { |instance| instance.collect_attributes }
+        return unless result = super
+
+        result.each { |instance| instance.collect_attributes }
+
+        return result
     end
 end

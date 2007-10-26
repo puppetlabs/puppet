@@ -11,7 +11,7 @@ class Puppet::Indirector::FileMetadata::Modules < Puppet::Indirector::ModuleFile
 
     def find(*args)
         return unless instance = super
-        instance.get_attributes
+        instance.collect_attributes
         instance
     end
 end
