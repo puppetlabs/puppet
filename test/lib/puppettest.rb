@@ -1,7 +1,9 @@
 # Add .../test/lib
-$LOAD_PATH.unshift(File.expand_path(File.dirname(__FILE__)))
+testlib = File.expand_path(File.dirname(__FILE__))
+$LOAD_PATH.unshift(testlib) unless $LOAD_PATH.include?(testlib)
 # Add .../lib
-$LOAD_PATH.unshift(File.expand_path(File.join(File.dirname(__FILE__), '../../lib')))
+mainlib = File.expand_path(File.join(File.dirname(__FILE__), '../../lib'))
+$LOAD_PATH.unshift(mainlib) unless $LOAD_PATH.include?(mainlib)
 
 require 'puppet'
 require 'mocha'

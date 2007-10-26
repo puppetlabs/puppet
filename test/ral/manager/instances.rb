@@ -3,7 +3,7 @@
 #  Created by Luke A. Kanies on 2007-06-10.
 #  Copyright (c) 2007. All rights reserved.
 
-$:.unshift("../../lib") if __FILE__ =~ /\.rb$/
+require File.dirname(__FILE__) + '/../../lib/puppettest'
 
 require 'puppettest'
 
