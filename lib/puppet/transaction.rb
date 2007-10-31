@@ -202,12 +202,7 @@ class Transaction
             end
             
             if children
-                children.each do |child|
-                    child.finish
-                    # Make sure that the vertex is in the relationship graph.
-                    relationship_graph.add_resource(child) unless relationship_graph.resource(child.ref)
-                    child.configuration = relationship_graph
-                end
+                children.each { |child| child.finish }
                 @generated += children
                 return children
             end

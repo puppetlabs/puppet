@@ -574,9 +574,8 @@ module Puppet
         # Create a new file or directory object as a child to the current
         # object.
         def newchild(path, local, hash = {})
-            unless configuration
-                raise Puppet::DevError, "File recursion cannot happen without a configuration"
-            end
+            raise(Puppet::DevError, "File recursion cannot happen without a configuration") unless configuration
+
             # make local copy of arguments
             args = symbolize_options(@arghash)
 
@@ -655,9 +654,7 @@ module Puppet
             # LAK:FIXME This shouldn't be necessary, but as long as we're
             # modeling the relationship graph specifically, it is.
             configuration.relationship_graph.add_edge! self, child
-            unless child.parent
-                raise "Did not set parent of %s" % child.ref
-            end
+
             return child
         end
 
