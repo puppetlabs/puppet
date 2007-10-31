@@ -316,19 +316,22 @@ class Type
     def parent
         return nil unless configuration
 
-        # This is kinda weird.
-        if implicit?
-            parents = configuration.relationship_graph.adjacent(self, :direction => :in)
-        else
-            parents = configuration.adjacent(self, :direction => :in)
+        unless defined?(@parent)
+            # This is kinda weird.
+            if implicit?
+                parents = configuration.relationship_graph.adjacent(self, :direction => :in)
+            else
+                parents = configuration.adjacent(self, :direction => :in)
+            end
+            if parents
+                # We should never have more than one parent, so let's just ignore
+                # it if we happen to.
+                @parent = parents.shift
+            else
+                @parent = nil
+            end
         end
-        if parents
-            # We should never have more than one parent, so let's just ignore
-            # it if we happen to.
-            return parents.shift
-        else
-            return nil
-        end
+        @parent
     end
 
     # Return the "type[name]" style reference.
