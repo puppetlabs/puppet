@@ -54,8 +54,11 @@ class Puppet::SimpleGraph
 
         # The other vertex in the edge.
         def other_vertex(direction, edge)
-            method = direction == :in ? :source : :target
-            edge.send(method)
+            case direction
+            when :in: edge.source
+            else
+                edge.target
+            end
         end
 
         # Remove an edge from our list.  Assumes that we've already checked
@@ -80,6 +83,17 @@ class Puppet::SimpleGraph
     # Whether our graph is directed.  Always true.  (Used by the GRATR search lib.)
     def directed?
         true
+    end
+
+    # Return a reversed version of this graph.
+    def reversal
+        result = self.class.new
+        vertices.each { |vertex| result.add_vertex!(vertex) }
+        edges.each do |edge|
+            newedge = edge.class.new(edge.target, edge.source, edge.label)
+            result.add_edge!(newedge)
+        end
+        result
     end
 
     # Return the size of the graph. Used by GRATR.
@@ -119,9 +133,9 @@ class Puppet::SimpleGraph
 
     # Add a new edge.  The graph user has to create the edge instance,
     # since they have to specify what kind of edge it is.
-    def add_edge!(source, target = nil)
+    def add_edge!(source, target = nil, label = nil)
         if target
-            edge = Puppet::Relationship.new(source, target)
+            edge = Puppet::Relationship.new(source, target, label)
         else
             edge = source
         end
@@ -136,6 +150,11 @@ class Puppet::SimpleGraph
     # not all of them or whatever.
     def edge(source, target)
         @edges.each_with_index { |test_edge, index| return test_edge if test_edge.source == source and test_edge.target == target }
+    end
+
+    def edge_label(source, target)
+        return nil unless edge = edge(source, target)
+        edge.label
     end
 
     # Is there an edge between the two vertices?
@@ -173,5 +192,60 @@ class Puppet::SimpleGraph
     # duplicate validation calls.
     def setup_vertex(vertex)
         @vertices[vertex] = VertexWrapper.new(vertex)
+    end
+ 
+    public
+
+    # LAK:FIXME This is just a paste of the GRATR code with slight modifications.
+
+    # Return a DOT::DOTDigraph for directed graphs or a DOT::DOTSubgraph for an
+    # undirected Graph.  _params_ can contain any graph property specified in
+    # rdot.rb. If an edge or vertex label is a kind of Hash then the keys
+    # which match +dot+ properties will be used as well.
+    def to_dot_graph (params = {})
+      params['name'] ||= self.class.name.gsub(/:/,'_')
+      fontsize   = params['fontsize'] ? params['fontsize'] : '8'
+      graph      = (directed? ? DOT::DOTDigraph : DOT::DOTSubgraph).new(params)
+      edge_klass = directed? ? DOT::DOTDirectedEdge : DOT::DOTEdge
+      vertices.each do |v|
+        name = v.to_s
+        params = {'name'     => '"'+name+'"',
+                  'fontsize' => fontsize,
+                  'label'    => name}
+        v_label = vertex_label(v)
+        params.merge!(v_label) if v_label and v_label.kind_of? Hash
+        graph << DOT::DOTNode.new(params)
+      end
+      edges.each do |e|
+        params = {'from'     => '"'+ e.source.to_s + '"',
+                  'to'       => '"'+ e.target.to_s + '"',
+                  'fontsize' => fontsize }
+        e_label = edge_label(e)
+        params.merge!(e_label) if e_label and e_label.kind_of? Hash
+        graph << edge_klass.new(params)
+      end
+      graph
+    end
+    
+    # Output the dot format as a string
+    def to_dot (params={}) to_dot_graph(params).to_s; end
+
+    # Call +dotty+ for the graph which is written to the file 'graph.dot'
+    # in the # current directory.
+    def dotty (params = {}, dotfile = 'graph.dot')
+      File.open(dotfile, 'w') {|f| f << to_dot(params) }
+      system('dotty', dotfile)
+    end
+
+    # Use +dot+ to create a graphical representation of the graph.  Returns the
+    # filename of the graphics file.
+    def write_to_graphic_file (fmt='png', dotfile='graph')
+      src = dotfile + '.dot'
+      dot = dotfile + '.' + fmt
+      
+      File.open(src, 'w') {|f| f << self.to_dot << "\n"}
+      
+      system( "dot -T#{fmt} #{src} -o #{dot}" )
+      dot
     end
 end

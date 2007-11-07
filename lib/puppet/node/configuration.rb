@@ -83,6 +83,7 @@ class Puppet::Node::Configuration < Puppet::PGraph
 
         transaction.addtimes :config_retrieval => @retrieval_duration
 
+
         begin
             transaction.evaluate
         rescue Puppet::Error => detail
@@ -304,7 +305,7 @@ class Puppet::Node::Configuration < Puppet::PGraph
             # Lastly, add in any autorequires
             @relationship_graph.vertices.each do |vertex|
                 vertex.autorequire.each do |edge|
-                    unless @relationship_graph.edge?(edge)
+                    unless @relationship_graph.edge?(edge.source, edge.target) # don't let automatic relationships conflict with manual ones.
                         unless @relationship_graph.edge?(edge.target, edge.source)
                             vertex.debug "Autorequiring %s" % [edge.source]
                             @relationship_graph.add_edge!(edge)

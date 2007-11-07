@@ -294,7 +294,7 @@ class Transaction
     # necessary events.
     def evaluate
         @count = 0
-        
+
         # Start logging.
         Puppet::Util::Log.newdestination(@report)
         
@@ -478,7 +478,7 @@ class Transaction
     # types, just providers.
     def prefetch
         prefetchers = {}
-        @configuration.each do |resource|
+        @configuration.vertices.each do |resource|
             if provider = resource.provider and provider.class.respond_to?(:prefetch)
                 prefetchers[provider.class] ||= {}
                 prefetchers[provider.class][resource.title] = resource

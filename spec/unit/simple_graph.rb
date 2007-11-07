@@ -17,6 +17,12 @@ describe Puppet::SimpleGraph do
     it "should consider itself a directed graph" do
         Puppet::SimpleGraph.new.directed?.should be_true
     end
+
+    it "should provide a method for reversing the graph" do
+        @graph = Puppet::SimpleGraph.new
+        @graph.add_edge!(:one, :two)
+        @graph.reversal.edge?(:two, :one).should be_true
+    end
 end
 
 describe Puppet::SimpleGraph, " when managing vertices" do
@@ -78,6 +84,17 @@ describe Puppet::SimpleGraph, " when managing edges" do
     it "should provide a method to add an edge by specifying the two vertices" do
         @graph.add_edge!(:one, :two)
         @graph.edge?(:one, :two).should be_true
+    end
+
+    it "should provide a method to add an edge by specifying the two vertices and a label" do
+        @graph.add_edge!(:one, :two, :stuff => :awesome)
+        @graph.edge?(:one, :two).should be_true
+    end
+
+    it "should provide a method for retrieving an edge label" do
+        edge = Puppet::Relationship.new(:one, :two, :stuff => :awesome)
+        @graph.add_edge!(edge)
+        @graph.edge_label(:one, :two).should == {:stuff => :awesome}
     end
 
     it "should provide a method for retrieving an edge" do
@@ -180,4 +197,29 @@ describe Puppet::SimpleGraph, " when clearing" do
     it "should remove all edges" do
         @graph.edges.should be_empty
     end
+end
+
+describe Puppet::SimpleGraph, " when reversing graphs" do
+    before do
+        @graph = Puppet::SimpleGraph.new
+    end
+
+    it "should provide a method for reversing the graph" do
+        @graph.add_edge!(:one, :two)
+        @graph.reversal.edge?(:two, :one).should be_true
+    end
+
+    it "should add all vertices to the reversed graph" do
+    end
+    
+    it "should retain labels on edges" do
+        @graph.add_edge!(:one, :two, :stuff => :awesome)
+        edge = @graph.reversal.edge(:two, :one)
+        edge.label.should == {:stuff => :awesome}
+    end
+end
+
+describe Puppet::SimpleGraph, " when making DOT files" do
+    # LAK:FIXME yay
+    it "should have tests"
 end

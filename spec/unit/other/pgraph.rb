@@ -122,7 +122,7 @@ describe Puppet::PGraph, " when splicing the relationship graph" do
     def dependency_graph
         @depgraph = Puppet::PGraph.new
         @contgraph.vertices.each do |v|
-            @depgraph.add_vertex(v)
+            @depgraph.add_vertex!(v)
         end
 
         # We have to specify a relationship to our empty container, else it
@@ -204,51 +204,9 @@ describe Puppet::PGraph, " when splicing the relationship graph" do
         splice
         @three.each do |child|
             edge = @depgraph.edge_class.new("c", child)
-            @depgraph.should be_edge(edge)
-            @depgraph[edge].should == {:callback => :refresh}
+            @depgraph.should be_edge(edge.source, edge.target)
+            @depgraph.edge_label(edge.source, edge.target).should == {:callback => :refresh}
         end
-    end
-end
-
-# Labels in this graph are used for managing relationships,
-# including callbacks, so they're quite important.
-describe Puppet::PGraph, " when managing labels" do
-    before do
-        @graph = Puppet::PGraph.new
-        @label = {:callback => :yay}
-    end
-
-    it "should return nil for edges with no label" do
-        @graph.add_edge!(:a, :b)
-        @graph.edge_label(:a, :b).should be_nil
-    end
-
-    it "should just return empty label hashes" do
-        @graph.add_edge!(:a, :b, {})
-        @graph.edge_label(:a, :b).should == {}
-    end
-
-    it "should consider empty label hashes to be nil when copying" do
-        @graph.add_edge!(:a, :b)
-        @graph.copy_label(:a, :b, {})
-        @graph.edge_label(:a, :b).should be_nil
-    end
-
-    it "should return label hashes" do
-        @graph.add_edge!(:a, :b, @label)
-        @graph.edge_label(:a, :b).should == @label
-    end
-
-    it "should replace nil labels with real labels" do
-        @graph.add_edge!(:a, :b)
-        @graph.copy_label(:a, :b, @label)
-        @graph.edge_label(:a, :b).should == @label
-    end
-
-    it "should not replace labels with nil labels" do
-        @graph.add_edge!(:a, :b, @label)
-        @graph.copy_label(:a, :b, {})
-        @graph.edge_label(:a, :b).should == @label
     end
 end
 
