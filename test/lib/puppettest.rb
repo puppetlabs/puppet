@@ -79,10 +79,6 @@ module PuppetTest
         end
     end
 
-    def cleanup(&block)
-        @@cleaners << block
-    end
-
     def datadir(*list)
         File.join(basedir, "test", "data", *list)
     end
@@ -100,6 +96,10 @@ module PuppetTest
     end
 
     module_function :basedir, :datadir, :exampledir
+
+    def cleanup(&block)
+        @@cleaners << block
+    end
 
     # Rails clobbers RUBYLIB, thanks
     def libsetup

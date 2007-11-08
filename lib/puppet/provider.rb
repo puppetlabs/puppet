@@ -284,16 +284,16 @@ class Puppet::Provider
         end
     end
 
-    def self.to_s
-        unless defined? @str
-            if self.resource_type
-                @str = "%s provider %s" % [resource_type.name, self.name]
-            else
-                @str = "unattached provider %s" % [self.name]
-            end
-        end
-        @str
-    end
+#    def self.to_s
+#        unless defined? @str
+#            if self.resource_type
+#                @str = "%s provider %s" % [resource_type.name, self.name]
+#            else
+#                @str = "unattached provider %s" % [self.name]
+#            end
+#        end
+#        @str
+#    end
 
     dochook(:defaults) do
         if @defaults.length > 0

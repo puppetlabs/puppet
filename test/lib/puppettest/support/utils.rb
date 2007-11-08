@@ -1,6 +1,8 @@
 require 'puppettest'
 
-module PuppetTest
+module PuppetTest::Support
+end
+module PuppetTest::Support::Utils
     def gcdebug(type)
         Puppet.warning "%s: %s" % [type, ObjectSpace.each_object(type) { |o| }]
     end
@@ -112,7 +114,7 @@ module PuppetTest
     end
 
     def fakefile(name)
-        ary = [basedir, "test"]
+        ary = [PuppetTest.basedir, "test"]
         ary += name.split("/")
         file = File.join(ary)
         unless FileTest.exists?(file)
@@ -171,3 +173,6 @@ module PuppetTest
     end
 end
 
+module PuppetTest
+    include PuppetTest::Support::Utils
+end
