@@ -83,12 +83,12 @@ class Puppet::Parser::Compile
         return @configuration
     end
 
-    # FIXME There are no tests for this.
+    # LAK:FIXME There are no tests for this.
     def delete_collection(coll)
         @collections.delete(coll) if @collections.include?(coll)
     end
 
-    # FIXME There are no tests for this.
+    # LAK:FIXME There are no tests for this.
     def delete_resource(resource)
         @resource_table.delete(resource.ref) if @resource_table.include?(resource.ref)
     end
@@ -114,7 +114,7 @@ class Puppet::Parser::Compile
     # find, just tag the configuration and move on.  This method really just
     # creates resource objects that point back to the classes, and then the
     # resources are themselves evaluated later in the process.
-    def evaluate_classes(classes, scope)
+    def evaluate_classes(classes, scope, lazy_evaluate = true)
         unless scope.source
             raise Puppet::DevError, "No source for scope passed to evaluate_classes"
         end
@@ -126,6 +126,10 @@ class Puppet::Parser::Compile
                 # of resources.
                 resource = Puppet::Parser::Resource.new(:type => "class", :title => klass.classname, :scope => scope, :source => scope.source)
                 store_resource(scope, resource)
+
+                # If they've disabled lazy evaluation (which the :include function does),
+                # then evaluate our resource immediately.
+                resource.evaluate unless lazy_evaluate
                 @configuration.tag(klass.classname)
                 found << name
             else

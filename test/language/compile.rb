@@ -267,36 +267,6 @@ class TestCompile < Test::Unit::TestCase
         end
     end
 
-    def test_evaluate_classes
-        compile = mkcompile
-        compile.parser.expects(:findclass).with("", "").returns(stub('main', :classname => ""))
-        compile.send :evaluate_main
-        classes = {
-            "one" => stub('class one', :classname => "one"),
-            "three" => stub('class three', :classname => "three")
-        }
-
-        classes.each do |name, obj|
-            compile.parser.expects(:findclass).with("", name).returns(obj)
-        end
-        %w{two four}.each do |name|
-            compile.parser.expects(:findclass).with("", name).returns(nil)
-        end
-
-        %w{one two three four}.each do |name|
-            compile.configuration.expects(:tag).with(name)
-        end
-
-        result = nil
-        assert_nothing_raised("could not call evaluate_node_classes") do
-            result = compile.send(:evaluate_classes, %w{one two three four}, compile.topscope)
-        end
-        %w{one three}.each do |found|
-            assert(compile.resources.find { |r| r.to_s == "Class[#{found}]" }, "Did not create a class resource for %s" % found)
-        end
-        assert_equal(%w{one three}, result, "Did not return the list of evaluated classes")
-    end
-
     def test_evaluate_collections
         compile = mkcompile
 
