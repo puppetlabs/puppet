@@ -4,7 +4,7 @@ class Puppet::Module
     TEMPLATES = "templates"
     FILES = "files"
     MANIFESTS = "manifests"
-
+    
     # Return an array of paths by splitting the +modulepath+ config
     # parameter. Only consider paths that are absolute and existing
     # directories
@@ -27,12 +27,25 @@ class Puppet::Module
             return nil
         end
 
-        modpath = modulepath(environment).collect { |path|
-            File::join(path, modname)
-        }.find { |f| File::directory?(f) }
+        modpath = all(environment).find { |f| File::directory?(f) }
         return nil unless modpath
 
         return self.new(modname, modpath)
+    end
+
+    # Return an array of the full path of every subdirectory in each
+    # directory in the modulepath.
+    def self.all(environment = nil)
+        modulepath(environment).map do |mp|
+            Dir.new(mp).map do |modfile|
+                modpath = File.join(mp, modfile)
+                unless modfile == '.' or modfile == '..' or !File.directory?(modpath)
+                    modpath
+                else
+                    nil
+                end
+            end
+        end.flatten.compact
     end
 
     # Instance methods
