@@ -170,7 +170,9 @@ class TestRelationships < Test::Unit::TestCase
         assert_nothing_raised do
             reqs = exec.autorequire
         end
-        assert_equal([Puppet::Relationship[file, exec]], reqs)
+        assert_instance_of(Puppet::Relationship, reqs[0], "Did not return a relationship edge")
+        assert_equal(file, reqs[0].source, "Did not set the autorequire source correctly")
+        assert_equal(exec, reqs[0].target, "Did not set the autorequire target correctly")
         
         # Now make sure that these relationships are added to the 
         # relationship graph

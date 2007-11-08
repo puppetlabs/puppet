@@ -3,12 +3,15 @@
 #  Created by Luke A. Kanies on 2006-11-24.
 #  Copyright (c) 2006. All rights reserved.
 
-require 'puppet/external/gratr'
-
 # subscriptions are permanent associations determining how different
 # objects react to an event
 
-class Puppet::Relationship < GRATR::Edge
+# This is Puppet's class for modeling edges in its configuration graph.
+# It used to be a subclass of GRATR::Edge, but that class has weird hash
+# overrides that dramatically slow down the graphing.
+class Puppet::Relationship
+    attr_accessor :source, :target, :label
+
     # Return the callback
     def callback
         if label
@@ -30,17 +33,17 @@ class Puppet::Relationship < GRATR::Edge
     def initialize(source, target, label = {})
         if label
             unless label.is_a?(Hash)
-                raise Puppet::DevError, "The label must be a hash"
+                raise ArgumentError, "Relationship labels must be a hash"
             end
         
             if label[:event] and label[:event] != :NONE and ! label[:callback]
-                raise Puppet::DevError, "You must pass a callback for non-NONE events"
+                raise ArgumentError, "You must pass a callback for non-NONE events"
             end
         else
             label = {}
         end
-        
-        super(source, target, label)
+
+        @source, @target, @label = source, target, label
     end
     
     # Does the passed event match our event?  This is where the meaning

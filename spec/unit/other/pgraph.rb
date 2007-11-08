@@ -50,8 +50,8 @@ describe Puppet::PGraph, " when matching edges" do
 	    @none = Puppet::Event.new(:source => "a", :event => :NONE)
 
 	    @edges = {}
-	    @edges["a/b"] = Puppet::Relationship["a", "b", {:event => :yay, :callback => :refresh}]
-	    @edges["a/c"] = Puppet::Relationship["a", "c", {:event => :yay, :callback => :refresh}]
+	    @edges["a/b"] = Puppet::Relationship.new("a", "b", {:event => :yay, :callback => :refresh})
+	    @edges["a/c"] = Puppet::Relationship.new("a", "c", {:event => :yay, :callback => :refresh})
 	    @graph.add_edge!(@edges["a/b"])
     end
 
@@ -65,7 +65,9 @@ describe Puppet::PGraph, " when matching edges" do
 
     it "should match multiple edges" do
 	    @graph.add_edge!(@edges["a/c"])
-        @graph.matching_edges([@event]).sort.should == [@edges["a/b"], @edges["a/c"]].sort
+        edges = @graph.matching_edges([@event])
+        edges.should be_include(@edges["a/b"])
+        edges.should be_include(@edges["a/c"])
     end
 end
 

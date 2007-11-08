@@ -40,7 +40,7 @@ class Puppet::Type
                     end
                 end
                 
-                reqs << Puppet::Relationship[dep, self]
+                reqs << Puppet::Relationship.new(dep, self)
             }
         }
         
