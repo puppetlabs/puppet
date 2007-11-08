@@ -14,7 +14,7 @@ module Puppet::Provider::Mount
         if self.options and self.options != :absent
             args << "-o" << self.options
         end
-        args << @resource[:name]
+        args << resource[:name]
 
         if respond_to?(:flush)
             flush
@@ -24,8 +24,8 @@ module Puppet::Provider::Mount
 
     def remount
         info "Remounting"
-        if @resource[:remounts] == :true
-            mountcmd "-o", "remount", @resource[:name]
+        if resource[:remounts] == :true
+            mountcmd "-o", "remount", resource[:name]
         else
             unmount()
             mount()
@@ -34,16 +34,19 @@ module Puppet::Provider::Mount
 
     # This only works when the mount point is synced to the fstab.
     def unmount
-        umount @resource[:name]
+        umount resource[:name]
     end
 
     # Is the mount currently mounted?
     def mounted?
-        platform = Facter["operatingsystem"].value
-        name = @resource[:name]
+        platform = Facter.value("operatingsystem")
+        name = resource[:name]
         mounts = mountcmd.split("\n").find do |line|
-            if platform == "Darwin"
+            case platform
+            when "Darwin"
                 line =~ / on #{name} / or line =~ %r{ on /private/var/automount#{name}}
+            when "Solaris"
+                line =~ /^#{name} on /
             else
                 line =~ / on #{name} /
             end
