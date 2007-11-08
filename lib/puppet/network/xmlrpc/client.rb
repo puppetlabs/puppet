@@ -128,12 +128,12 @@ module Puppet::Network
                 120 # a two minute timeout, instead of 30 seconds
             )
 
-	    # We overwrite the uninitialized @http here with a cached one.
+            # We overwrite the uninitialized @http here with a cached one.
             key = "%s%s" % [hash[:Server], hash[:Port]]
             if @@http_cache[key]
-                    @http = @@http_cache[key]
+                @http = @@http_cache[key]
             else
-                    @@http_cache[key] = @http
+                @@http_cache[key] = @http
             end
         end
 
@@ -150,4 +150,3 @@ module Puppet::Network
         end
     end
 end
-

@@ -312,6 +312,17 @@ describe Puppet::Node::Configuration, " when functioning as a resource container
         @config.resource(@two.ref).should equal(@two)
     end
 
+    it "should set itself as the resource's configuration if it is not a relationship graph" do
+        @one.expects(:configuration=).with(@config)
+        @config.add_resource @one
+    end
+
+    it "should not set itself as the resource's configuration if it is a relationship graph" do
+        @one.expects(:configuration=).never
+        @config.is_relationship_graph = true
+        @config.add_resource @one
+    end
+
     it "should make all vertices available by resource reference" do
         @config.add_resource(@one)
         @config.resource(@one.ref).should equal(@one)
@@ -516,6 +527,10 @@ describe Puppet::Node::Configuration, " when creating a relationship graph" do
         @relationships = @config.relationship_graph
     end
 
+    it "should fail when trying to create a relationship graph for a relationship graph" do
+        proc { @relationships.relationship_graph }.should raise_error(Puppet::DevError)
+    end
+
     it "should be able to create a relationship graph" do
         @relationships.should be_instance_of(Puppet::Node::Configuration)
     end
@@ -576,6 +591,18 @@ describe Puppet::Node::Configuration, " when creating a relationship graph" do
         resource.expects(:implicit=).with(true)
         @config.create_implicit_resource :file, args
         @config.resource("File[/yay]").should equal(resource)
+    end
+
+    it "should add implicit resources to the relationship graph if there is one" do
+        args = {:name => "/yay", :ensure => :file}
+        resource = stub 'file', :ref => "File[/yay]", :configuration= => @config
+        resource.expects(:implicit=).with(true)
+        Puppet::Type.type(:file).expects(:create).with(args).returns(resource)
+        # build the graph
+        relgraph = @config.relationship_graph
+
+        @config.create_implicit_resource :file, args
+        relgraph.resource("File[/yay]").should equal(resource)
     end
 
     it "should remove resources created mid-transaction" do

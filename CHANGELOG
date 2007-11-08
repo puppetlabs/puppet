@@ -1,3 +1,8 @@
+    Replaced GRATR::Digraph with Puppet::SimpleGraph as
+    the base class for Puppet's graphing.  Functionality
+    should be equivalent but with dramatically better
+    performance.
+
     The --use-nodes and --no-nodes options are now obsolete.
     Puppet automatically detects when nodes are defined, and if
     they are defined it will require that a node be found,

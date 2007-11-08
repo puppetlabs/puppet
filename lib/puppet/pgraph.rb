@@ -4,11 +4,13 @@
 require 'puppet/external/gratr/digraph'
 require 'puppet/external/gratr/import'
 require 'puppet/external/gratr/dot'
+
 require 'puppet/relationship'
+require 'puppet/simple_graph'
 
 # This class subclasses a graph class in order to handle relationships
 # among resources.
-class Puppet::PGraph < GRATR::Digraph
+class Puppet::PGraph < Puppet::SimpleGraph
     # This is the type used for splicing.
     attr_accessor :container_type
 
@@ -22,13 +24,6 @@ class Puppet::PGraph < GRATR::Digraph
     def add_vertex!(*args)
         @reversal = nil
         super
-    end
-    
-    def clear
-        @vertex_dict.clear
-        if defined? @edge_number
-            @edge_number.clear
-        end
     end
 
     # Make sure whichever edge has a label keeps the label
@@ -149,7 +144,7 @@ class Puppet::PGraph < GRATR::Digraph
                     # Now get rid of the edge, so remove_vertex! works correctly.
                     remove_edge!(edge)
                     Puppet.debug "%s: %s => %s: %s" % [container,
-                        edge.source, edge.target, edge?(edge)]
+                        edge.source, edge.target, edge?(edge.source, edge.target)]
                 end
             end
             remove_vertex!(container)

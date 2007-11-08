@@ -202,12 +202,7 @@ class Transaction
             end
             
             if children
-                children.each do |child|
-                    child.finish
-                    # Make sure that the vertex is in the relationship graph.
-                    relationship_graph.add_resource(child) unless relationship_graph.resource(child.ref)
-                    child.configuration = relationship_graph
-                end
+                children.each { |child| child.finish }
                 @generated += children
                 return children
             end
@@ -299,7 +294,7 @@ class Transaction
     # necessary events.
     def evaluate
         @count = 0
-        
+
         # Start logging.
         Puppet::Util::Log.newdestination(@report)
         
@@ -483,7 +478,7 @@ class Transaction
     # types, just providers.
     def prefetch
         prefetchers = {}
-        @configuration.each do |resource|
+        @configuration.vertices.each do |resource|
             if provider = resource.provider and provider.class.respond_to?(:prefetch)
                 prefetchers[provider.class] ||= {}
                 prefetchers[provider.class][resource.title] = resource

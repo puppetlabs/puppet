@@ -33,6 +33,11 @@ class Puppet::Node::Configuration < Puppet::PGraph
     # that the host configuration needs.
     attr_accessor :host_config
 
+    # Whether this graph is another configuration's relationship graph.
+    # We don't want to accidentally create a relationship graph for another
+    # relationship graph.
+    attr_accessor :is_relationship_graph
+
     # Add classes to our class list.
     def add_class(*classes)
         classes.each do |klass|
@@ -56,7 +61,7 @@ class Puppet::Node::Configuration < Puppet::PGraph
             else
                 @resource_table[ref] = resource
             end
-            resource.configuration = self
+            resource.configuration = self unless is_relationship_graph
             add_vertex!(resource)
         end
     end
@@ -77,6 +82,7 @@ class Puppet::Node::Configuration < Puppet::PGraph
         transaction.ignoreschedules = true if options[:ignoreschedules]
 
         transaction.addtimes :config_retrieval => @retrieval_duration
+
 
         begin
             transaction.evaluate
@@ -167,6 +173,9 @@ class Puppet::Node::Configuration < Puppet::PGraph
 
         @transient_resources << resource if applying?
         add_resource(resource)
+        if @relationship_graph
+            @relationship_graph.add_resource(resource) unless @relationship_graph.resource(resource.ref)
+        end
         resource
     end
 
@@ -273,6 +282,8 @@ class Puppet::Node::Configuration < Puppet::PGraph
     
     # Create a graph of all of the relationships in our configuration.
     def relationship_graph
+        raise(Puppet::DevError, "Tried get a relationship graph for a relationship graph") if self.is_relationship_graph
+
         unless defined? @relationship_graph and @relationship_graph
             # It's important that we assign the graph immediately, because
             # the debug messages below use the relationships in the
@@ -281,6 +292,7 @@ class Puppet::Node::Configuration < Puppet::PGraph
             # then we get into an infinite loop.
             @relationship_graph = Puppet::Node::Configuration.new
             @relationship_graph.host_config = host_config?
+            @relationship_graph.is_relationship_graph = true
             
             # First create the dependency graph
             self.vertices.each do |vertex|
@@ -293,7 +305,7 @@ class Puppet::Node::Configuration < Puppet::PGraph
             # Lastly, add in any autorequires
             @relationship_graph.vertices.each do |vertex|
                 vertex.autorequire.each do |edge|
-                    unless @relationship_graph.edge?(edge)
+                    unless @relationship_graph.edge?(edge.source, edge.target) # don't let automatic relationships conflict with manual ones.
                         unless @relationship_graph.edge?(edge.target, edge.source)
                             vertex.debug "Autorequiring %s" % [edge.source]
                             @relationship_graph.add_edge!(edge)
