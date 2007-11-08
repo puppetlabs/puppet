@@ -34,20 +34,10 @@ describe Puppet::Parser::Compile, " when compiling" do
         one = stub 'one', :classname => "one"
         three = stub 'three', :classname => "three"
         @node.stubs(:name).returns("whatever")
-        @compile.parser.expects(:findclass).with("", "").returns(main)
-        @compile.parser.expects(:findclass).with("", "one").returns(one)
-        @compile.parser.expects(:findclass).with("", "two").returns(nil)
-        @compile.parser.expects(:findclass).with("", "three").returns(three)
-        @compile.parser.expects(:findclass).with("", "four").returns(nil)
         @node.stubs(:classes).returns(classes)
-        @compile.send :evaluate_main
-        @compile.send :evaluate_node_classes
 
-        # Now make sure we've created the appropriate resources.
-        @compile.resources.find { |r| r.to_s == "Class[one]" }.should be_an_instance_of(Puppet::Parser::Resource)
-        @compile.resources.find { |r| r.to_s == "Class[three]" }.should be_an_instance_of(Puppet::Parser::Resource)
-        @compile.resources.find { |r| r.to_s == "Class[two]" }.should be_nil
-        @compile.resources.find { |r| r.to_s == "Class[four]" }.should be_nil
+        @compile.expects(:evaluate_classes).with(classes, @compile.topscope)
+        @compile.send :evaluate_node_classes
     end
 
     it "should enable ast_nodes if the parser has any nodes" do
@@ -58,5 +48,90 @@ describe Puppet::Parser::Compile, " when compiling" do
     it "should disable ast_nodes if the parser has no nodes" do
         @parser.expects(:nodes).returns({})
         @compile.ast_nodes?.should be_false
+    end
+end
+
+describe Puppet::Parser::Compile, " when evaluating classes" do
+    before do
+        @node = stub 'node', :name => 'mynode'
+        @parser = stub 'parser', :version => "1.0"
+        @scope = stub 'scope', :source => mock("source")
+        @compile = Puppet::Parser::Compile.new(@node, @parser)
+    end
+
+    it "should fail if there's no source listed for the scope" do
+        scope = stub 'scope', :source => nil
+        proc { @compile.evaluate_classes(%w{one two}, scope) }.should raise_error(Puppet::DevError)
+    end
+
+    it "should tag the configuration with the name of each not-found class" do
+        @compile.configuration.expects(:tag).with("notfound")
+        @scope.expects(:findclass).with("notfound").returns(nil)
+        @compile.evaluate_classes(%w{notfound}, @scope)
+    end
+end
+
+describe Puppet::Parser::Compile, " when evaluating found classes" do
+    before do
+        @node = stub 'node', :name => 'mynode'
+        @parser = stub 'parser', :version => "1.0"
+        @scope = stub 'scope', :source => mock("source")
+        @compile = Puppet::Parser::Compile.new(@node, @parser)
+
+        @class = stub 'class', :classname => "my::class"
+        @scope.stubs(:findclass).with("myclass").returns(@class)
+
+        @resource = mock 'resource'
+    end
+
+    it "should create a resource for each found class" do
+        @compile.configuration.stubs(:tag)
+
+        @compile.stubs :store_resource
+        @resource.stubs(:evaluate)
+
+        Puppet::Parser::Resource.expects(:new).with(:scope => @scope, :source => @scope.source, :title => "my::class", :type => "class").returns(@resource)
+        @compile.evaluate_classes(%w{myclass}, @scope)
+    end
+
+    it "should store each created resource in the compile" do
+        @compile.configuration.stubs(:tag)
+
+        @compile.expects(:store_resource).with(@scope, @resource)
+        @resource.stubs(:evaluate)
+
+        Puppet::Parser::Resource.stubs(:new).returns(@resource)
+        @compile.evaluate_classes(%w{myclass}, @scope)
+    end
+
+    it "should tag the configuration with the fully-qualified name of each found class" do
+        @compile.configuration.expects(:tag).with("my::class")
+
+        @compile.stubs(:store_resource)
+        @resource.stubs(:evaluate)
+
+        Puppet::Parser::Resource.stubs(:new).returns(@resource)
+        @compile.evaluate_classes(%w{myclass}, @scope)
+    end
+
+    it "should immediately evaluate the resources created for found classes" do
+        @compile.configuration.stubs(:tag)
+
+        @compile.stubs(:store_resource)
+        @resource.expects(:evaluate)
+
+        Puppet::Parser::Resource.stubs(:new).returns(@resource)
+        @compile.evaluate_classes(%w{myclass}, @scope)
+    end
+
+    it "should return the list of found classes" do
+        @compile.configuration.stubs(:tag)
+
+        @compile.stubs(:store_resource)
+        @resource.expects(:evaluate)
+        @scope.stubs(:findclass).with("notfound").returns(nil)
+
+        Puppet::Parser::Resource.stubs(:new).returns(@resource)
+        @compile.evaluate_classes(%w{myclass notfound}, @scope).should == %w{myclass}
     end
 end

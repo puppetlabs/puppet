@@ -126,6 +126,7 @@ class Puppet::Parser::Compile
                 # of resources.
                 resource = Puppet::Parser::Resource.new(:type => "class", :title => klass.classname, :scope => scope, :source => scope.source)
                 store_resource(scope, resource)
+                resource.evaluate
                 @configuration.tag(klass.classname)
                 found << name
             else

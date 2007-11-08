@@ -427,30 +427,10 @@ class TestLangFunctions < Test::Unit::TestCase
 
         parser.newclass("myclass")
 
-        assert_nothing_raised do
-            scope.function_include "myclass"
-        end
-
-        assert(scope.compile.resources.find { |r| r.to_s == "Class[myclass]" }, 
-            "class was not evaluated")
-
-        # Now try multiple classes at once
-        classes = %w{one two three}.each { |c| parser.newclass(c) }
+        scope.compile.expects(:evaluate_classes).with(%w{myclass otherclass}, scope).returns(%w{myclass otherclass})
 
         assert_nothing_raised do
-            scope.function_include classes
-        end
-
-        classes.each do |c|
-            assert(scope.compile.resources.find { |r| r.to_s == "Class[#{c}]" },
-                "class %s was not evaluated" % c)
-        end
-
-        # Now try a scoped class
-        parser.newclass("os::redhat")
-
-        assert_nothing_raised("Could not include qualified class name") do
-            scope.function_include("os::redhat")
+            scope.function_include(["myclass", "otherclass"])
         end
     end
 
