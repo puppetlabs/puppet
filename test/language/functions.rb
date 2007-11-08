@@ -427,7 +427,7 @@ class TestLangFunctions < Test::Unit::TestCase
 
         parser.newclass("myclass")
 
-        scope.compile.expects(:evaluate_classes).with(%w{myclass otherclass}, scope).returns(%w{myclass otherclass})
+        scope.compile.expects(:evaluate_classes).with(%w{myclass otherclass}, scope, false).returns(%w{myclass otherclass})
 
         assert_nothing_raised do
             scope.function_include(["myclass", "otherclass"])

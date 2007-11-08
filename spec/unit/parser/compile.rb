@@ -88,7 +88,6 @@ describe Puppet::Parser::Compile, " when evaluating found classes" do
         @compile.configuration.stubs(:tag)
 
         @compile.stubs :store_resource
-        @resource.stubs(:evaluate)
 
         Puppet::Parser::Resource.expects(:new).with(:scope => @scope, :source => @scope.source, :title => "my::class", :type => "class").returns(@resource)
         @compile.evaluate_classes(%w{myclass}, @scope)
@@ -98,7 +97,6 @@ describe Puppet::Parser::Compile, " when evaluating found classes" do
         @compile.configuration.stubs(:tag)
 
         @compile.expects(:store_resource).with(@scope, @resource)
-        @resource.stubs(:evaluate)
 
         Puppet::Parser::Resource.stubs(:new).returns(@resource)
         @compile.evaluate_classes(%w{myclass}, @scope)
@@ -108,27 +106,35 @@ describe Puppet::Parser::Compile, " when evaluating found classes" do
         @compile.configuration.expects(:tag).with("my::class")
 
         @compile.stubs(:store_resource)
-        @resource.stubs(:evaluate)
 
         Puppet::Parser::Resource.stubs(:new).returns(@resource)
         @compile.evaluate_classes(%w{myclass}, @scope)
     end
 
-    it "should immediately evaluate the resources created for found classes" do
+    it "should not evaluate the resources created for found classes unless asked" do
+        @compile.configuration.stubs(:tag)
+
+        @compile.stubs(:store_resource)
+        @resource.expects(:evaluate).never
+
+        Puppet::Parser::Resource.stubs(:new).returns(@resource)
+        @compile.evaluate_classes(%w{myclass}, @scope)
+    end
+
+    it "should immediately evaluate the resources created for found classes when asked" do
         @compile.configuration.stubs(:tag)
 
         @compile.stubs(:store_resource)
         @resource.expects(:evaluate)
 
         Puppet::Parser::Resource.stubs(:new).returns(@resource)
-        @compile.evaluate_classes(%w{myclass}, @scope)
+        @compile.evaluate_classes(%w{myclass}, @scope, false)
     end
 
     it "should return the list of found classes" do
         @compile.configuration.stubs(:tag)
 
         @compile.stubs(:store_resource)
-        @resource.expects(:evaluate)
         @scope.stubs(:findclass).with("notfound").returns(nil)
 
         Puppet::Parser::Resource.stubs(:new).returns(@resource)
