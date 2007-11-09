@@ -196,7 +196,7 @@ module PuppetTest
 
         Puppet[:ignoreschedules] = true
 
-        @start = Time.now
+        #@start = Time.now
     end
 
     def tempfile
@@ -246,8 +246,8 @@ module PuppetTest
     end
 
     def teardown
-        @stop = Time.now
-        File.open("/tmp/test_times.log", ::File::WRONLY|::File::CREAT|::File::APPEND) { |f| f.puts "%0.4f %s %s" % [@stop - @start, @method_name, self.class] }
+        #@stop = Time.now
+        #File.open("/tmp/test_times.log", ::File::WRONLY|::File::CREAT|::File::APPEND) { |f| f.puts "%0.4f %s %s" % [@stop - @start, @method_name, self.class] }
         @@cleaners.each { |cleaner| cleaner.call() }
 
         @@tmpfiles.each { |file|
