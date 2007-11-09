@@ -33,7 +33,13 @@ module Puppet
         end
 
         # Override this method to provide diffs if asked for.
+        # Also, fix #872: when content is used, and replace is true, the file
+        # should be insync when it exists
         def insync?(is)
+            if ! @resource.replace? and File.exists?(@resource[:path])
+                return true
+            end
+
             result = super
             if ! result and Puppet[:show_diff] and File.exists?(@resource[:path])
                 string_file_diff(@resource[:path], self.should)
