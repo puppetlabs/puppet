@@ -4,9 +4,8 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 
 require 'puppet/indirector/node/memory'
 
-# All of our behaviour is described here, so we always have to 
-# include it.
-require 'unit/indirector/memory'
+# All of our behaviour is described here, so we always have to include it.
+require File.dirname(__FILE__) + '/../memory'
 
 describe Puppet::Node::Memory do
     before do

@@ -2,9 +2,6 @@ require(File.expand_path(File.dirname(__FILE__) + '../../../../../test/lib/puppe
 
 module Spec
   module DSL
-    class EvalModule < Module;
-      include PuppetTest::RunnableTest
-    end
     class Behaviour
       extend BehaviourCallbacks
 

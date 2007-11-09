@@ -156,9 +156,19 @@ describe Puppet::Indirector::Indirection, " when managing indirection instances"
         @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
         Puppet::Indirector::Indirection.instance(:test).should equal(@indirection)
     end
-
+    
     it "should return nil when the named indirection has not been created" do
         Puppet::Indirector::Indirection.instance(:test).should be_nil
+    end
+
+    it "should allow an indirection's model to be retrieved by name" do
+        mock_model = mock('model')
+        @indirection = Puppet::Indirector::Indirection.new(mock_model, :test)
+        Puppet::Indirector::Indirection.model(:test).should equal(mock_model)
+    end
+    
+    it "should return nil when no model matches the requested name" do
+        Puppet::Indirector::Indirection.model(:test).should be_nil
     end
 
     after do
