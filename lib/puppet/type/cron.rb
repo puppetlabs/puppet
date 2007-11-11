@@ -348,7 +348,7 @@ Puppet::Type.newtype(:cron) do
             
             The user defaults to whomever Puppet is running as."
 
-        defaultto { ENV["USER"] || "root" }
+        defaultto { Etc.getpwuid(Process.uid).name || "root" }
     end
 
     newproperty(:target) do
