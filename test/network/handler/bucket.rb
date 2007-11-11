@@ -214,6 +214,7 @@ class TestBucket < Test::Unit::TestCase
         FileUtils.mkdir_p(tmpdir)
 
         Puppet[:autosign] = true
+        Puppet[:certname] = "localhost"
         client = nil
         port = Puppet[:masterport]
 
