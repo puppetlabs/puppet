@@ -1,3 +1,8 @@
+    The node scope is now above all other scopes besides
+    the 'main' scope, which should help make its variables
+    visible to other classes, assuming those classes were
+    not included in the node's parent.
+
     Replaced GRATR::Digraph with Puppet::SimpleGraph as
     the base class for Puppet's graphing.  Functionality
     should be equivalent but with dramatically better
