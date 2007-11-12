@@ -318,6 +318,8 @@ class Puppet::Parser::Compile
         @configuration.add_vertex!(@main_resource)
 
         @resource_table["Class[main]"] = @main_resource
+
+        @main_resource.evaluate
     end
 
     # Make sure the entire configuration is evaluated.

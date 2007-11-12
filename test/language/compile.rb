@@ -174,15 +174,18 @@ class TestCompile < Test::Unit::TestCase
     # "".
     def test_evaluate_main
         compile = mkcompile
-        main = mock 'main_class'
-        compile.topscope.expects(:source=).with(main)
-        @parser.expects(:findclass).with("", "").returns(main)
+        main_class = mock 'main_class'
+        compile.topscope.expects(:source=).with(main_class)
+        @parser.expects(:findclass).with("", "").returns(main_class)
+
+        main_resource = mock 'main resource'
+        Puppet::Parser::Resource.expects(:new).with { |args| args[:title] == :main }.returns(main_resource)
+
+        main_resource.expects(:evaluate)
 
         assert_nothing_raised("Could not call evaluate_main") do
             compile.send(:evaluate_main)
         end
-
-        assert(compile.resources.find { |r| r.to_s == "Class[main]" }, "Did not create a 'main' resource")
     end
 
     # Make sure we either don't look for nodes, or that we find and evaluate the right object.
