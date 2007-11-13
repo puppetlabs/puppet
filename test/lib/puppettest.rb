@@ -20,6 +20,17 @@ if ARGV.include?("-d")
     $console = true
 end
 
+# Some monkey-patching to allow us to test private methods.
+class Class
+    def publicize_methods(*methods)
+        saved_private_instance_methods = methods.empty? ? self.private_instance_methods : methods
+
+        self.class_eval { public *saved_private_instance_methods }
+        yield
+        self.class_eval { private *saved_private_instance_methods }
+    end
+end
+
 module PuppetTest
     # Munge cli arguments, so we can enable debugging if we want
     # and so we can run just specific methods.
@@ -196,7 +207,7 @@ module PuppetTest
 
         Puppet[:ignoreschedules] = true
 
-        @start = Time.now
+        #@start = Time.now
     end
 
     def tempfile
@@ -246,8 +257,8 @@ module PuppetTest
     end
 
     def teardown
-        @stop = Time.now
-        File.open("/tmp/test_times.log", ::File::WRONLY|::File::CREAT|::File::APPEND) { |f| f.puts "%0.4f %s %s" % [@stop - @start, @method_name, self.class] }
+        #@stop = Time.now
+        #File.open("/tmp/test_times.log", ::File::WRONLY|::File::CREAT|::File::APPEND) { |f| f.puts "%0.4f %s %s" % [@stop - @start, @method_name, self.class] }
         @@cleaners.each { |cleaner| cleaner.call() }
 
         @@tmpfiles.each { |file|

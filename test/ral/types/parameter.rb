@@ -113,6 +113,9 @@ class TestParameter < Test::Unit::TestCase
 
         inst = type.create(:name => "test")
 
+        config = mk_configuration
+        inst.configuration = config
+
         assert_nothing_raised("Could not create shadowed param") {
             inst[:alias] = "foo"
         }
@@ -133,7 +136,7 @@ class TestParameter < Test::Unit::TestCase
         # Now try it during initialization
         other = nil
         assert_nothing_raised("Could not create instance with shadow") do
-            other = type.create(:name => "rah", :alias => "one")
+            other = type.create(:name => "rah", :alias => "one", :configuration => config)
         end
         params = other.instance_variable_get("@parameters")
         obj = params[:alias]

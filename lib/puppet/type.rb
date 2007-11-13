@@ -182,7 +182,7 @@ class Type
         # directly from it.  This is the main object instantiation mechanism.
         if hash.is_a?(Puppet::TransObject)
             #self[:name] = hash[:name]
-            [:file, :line, :tags].each { |getter|
+            [:file, :line, :tags, :configuration].each { |getter|
                 if hash.respond_to?(getter)
                     setter = getter.to_s + "="
                     if val = hash.send(getter)
@@ -194,10 +194,11 @@ class Type
             # XXX This will need to change when transobjects change to titles.
             @title = hash.name
             hash = hash.to_hash
-        elsif hash[:title]
-            # XXX This should never happen
-            @title = hash[:title]
-            hash.delete(:title)
+        else
+            if hash[:title]
+                @title = hash[:title]
+                hash.delete(:title)
+            end
         end
 
         # Before anything else, set our parent if it was included
@@ -221,7 +222,7 @@ class Type
             if attrs.include?(namevar)
                 attrs.delete(namevar)
             else
-                self.devfail "My namevar isn\'t a valid attribute...?"
+                self.devfail "My namevar isn't a valid attribute...?"
             end
         else
             self.devfail "I was not passed a namevar"
@@ -284,6 +285,14 @@ class Type
         # Scheduling has to be done when the whole config is instantiated, so
         # that file order doesn't matter in finding them.
         self.schedule
+
+        # Make sure all of our relationships are valid.  Again, must be done
+        # when the entire configuration is instantiated.
+        self.class.relationship_params.collect do |klass|
+            if param = @parameters[klass.name]
+                param.validate_relationship
+            end
+        end.flatten.reject { |r| r.nil? }
     end
 
     # Return a cached value

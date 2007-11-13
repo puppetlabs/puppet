@@ -694,6 +694,7 @@ file { "/tmp/yayness":
 
         manifest = File.join(modpath, "manifest.pp")
         manifest_texts.each do |txt|
+            Puppet::Type.allclear
             File.open(manifest, "w") { |f| f.puts txt }
 
             assert_nothing_raised {

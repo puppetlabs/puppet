@@ -6,6 +6,10 @@ module Puppet
             name or group ID."
         @event = :file_changed
 
+        validate do |group|
+            raise(Puppet::Error, "Invalid group name '%s'" % group.inspect) unless group and group != ""
+        end
+
         def id2name(id)
             if id > 70000
                 return nil

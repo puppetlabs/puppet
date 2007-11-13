@@ -59,15 +59,11 @@ module Puppet
                 tmpname = @type
             end
             trans = TransObject.new(tmpname, :component)
-            if defined? @parameters
-                @parameters.each { |param,value|
-                    Puppet.debug "Defining %s on %s of type %s" %
-                        [param,@name,@type]
-                    trans[param] = value
-                }
-            else
-                #Puppet.debug "%s[%s] has no parameters" % [@type, @name]
-            end
+            @params.each { |param,value|
+                next unless Puppet::Type::Component.validattr?(param)
+                Puppet.debug "Defining %s on %s of type %s" % [param,@name,@type]
+                trans[param] = value
+            }
             Puppet::Type::Component.create(trans)
         end
 
@@ -107,16 +103,7 @@ module Puppet
         def to_type
             retobj = nil
             if typeklass = Puppet::Type.type(self.type)
-                # FIXME This should really be done differently, but...
-                if retobj = typeklass[self.name]
-                    self.each do |param, val|
-                        retobj[param] = val
-                    end
-                else
-                    unless retobj = typeklass.create(self)
-                        return nil
-                    end
-                end
+                return typeklass.create(self)
             else
                 return to_component
             end
@@ -135,7 +122,7 @@ module Puppet
     class TransBucket
         include Enumerable
 
-        attr_accessor :name, :type, :file, :line, :classes, :keyword, :top
+        attr_accessor :name, :type, :file, :line, :classes, :keyword, :top, :configuration
 
         %w{delete shift include? length empty? << []}.each { |method|
             define_method(method) do |*args|
@@ -218,11 +205,13 @@ module Puppet
         def to_configuration
             configuration = Puppet::Node::Configuration.new(Facter.value("hostname")) do |config|
                 delver = proc do |obj|
+                    obj.configuration = config
                     unless container = config.resource(obj.to_ref)
                         container = obj.to_type
                         config.add_resource container
                     end
                     obj.each do |child|
+                        child.configuration = config
                         unless resource = config.resource(child.to_ref)
                             next unless resource = child.to_type
                             config.add_resource resource
@@ -252,65 +241,25 @@ module Puppet
         end
 
         def to_type
-            # this container will contain the equivalent of all objects at
-            # this level
-            #container = Puppet::Component.new(:name => @name, :type => @type)
-            #unless defined? @name
-            #    raise Puppet::DevError, "TransBuckets must have names"
-            #end
             unless defined? @type
                 Puppet.debug "TransBucket '%s' has no type" % @name
             end
-            usetrans = true
 
-            if usetrans
-                tmpname = nil
-
-                # Nodes have the same name and type
-                if self.name
-                    tmpname = "%s[%s]" % [@type, self.name]
-                else
-                    tmpname = @type
-                end
-                trans = TransObject.new(tmpname, :component)
-                if defined? @parameters
-                    @parameters.each { |param,value|
-                        Puppet.debug "Defining %s on %s of type %s" %
-                            [param,@name,@type]
-                        trans[param] = value
-                    }
-                else
-                    #Puppet.debug "%s[%s] has no parameters" % [@type, @name]
-                end
-                container = Puppet::Type::Component.create(trans)
+            # Nodes have the same name and type
+            if self.name
+                tmpname = "%s[%s]" % [@type, self.name]
             else
-                hash = {
-                    :name => self.name,
-                    :type => @type
+                tmpname = @type
+            end
+            trans = TransObject.new(tmpname, :component)
+            if defined? @parameters
+                @parameters.each { |param,value|
+                    Puppet.debug "Defining %s on %s of type %s" %
+                        [param,@name,@type]
+                    trans[param] = value
                 }
-                if defined? @parameters
-                    @parameters.each { |param,value|
-                        Puppet.debug "Defining %s on %s of type %s" %
-                            [param,@name,@type]
-                        hash[param] = value
-                    }
-                else
-                    #Puppet.debug "%s[%s] has no parameters" % [@type, @name]
-                end
-
-                container = Puppet::Type::Component.create(hash)
             end
-            #Puppet.info container.inspect
-
-            # unless we successfully created the container, return an error
-            unless container
-                Puppet.warning "Got no container back"
-                return nil
-            end
-
-            # at this point, no objects at are level are still Transportable
-            # objects
-            return container
+            return Puppet::Type::Component.create(trans)
         end
 
         def param(param,value)

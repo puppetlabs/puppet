@@ -107,7 +107,7 @@ class Puppet::Parser::Compile
 
     # Evaluate all of the classes specified by the node.
     def evaluate_node_classes
-        evaluate_classes(@node.classes, @topscope)
+        evaluate_classes(@node.classes, topscope)
     end
 
     # Evaluate each specified class in turn.  If there are any classes we can't
@@ -142,9 +142,7 @@ class Puppet::Parser::Compile
 
     # Return a resource by either its ref or its type and title.
     def findresource(string, name = nil)
-        if name
-            string = "%s[%s]" % [string.capitalize, name]
-        end
+        string = "%s[%s]" % [string.capitalize, name] if name
 
         @resource_table[string]
     end
@@ -173,7 +171,7 @@ class Puppet::Parser::Compile
     # using the top scope.  Adds an edge between the scope and
     # its parent to the graph.
     def newscope(parent, options = {})
-        parent ||= @topscope
+        parent ||= topscope
         options[:compile] = self
         options[:parser] ||= self.parser
         scope = Puppet::Parser::Scope.new(options)
@@ -419,7 +417,6 @@ class Puppet::Parser::Compile
 
         # A graph for maintaining scope relationships.
         @scope_graph = GRATR::Digraph.new
-        @scope_graph.add_vertex!(@topscope)
 
         # For maintaining the relationship between scopes and their resources.
         @configuration = Puppet::Node::Configuration.new(@node.name)

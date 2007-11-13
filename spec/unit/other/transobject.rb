@@ -2,114 +2,73 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-describe Puppet::TransObject, " when building its search path" do
-end
-
-describe Puppet::TransObject, " when building its search path" do
-end
-#!/usr/bin/env ruby
-
-$:.unshift("../lib").unshift("../../lib") if __FILE__ =~ /\.rb$/
-
-require 'puppet'
 require 'puppet/transportable'
-require 'puppettest'
-require 'puppettest/parsertesting'
-require 'yaml'
 
-class TestTransportable < Test::Unit::TestCase
-    include PuppetTest::ParserTesting
-
-    def test_yamldumpobject
-        obj = mk_transobject
-        obj.to_yaml_properties
-        str = nil
-        assert_nothing_raised {
-            str = YAML.dump(obj)
-        }
-
-        newobj = nil
-        assert_nothing_raised {
-            newobj = YAML.load(str)
-        }
-
-        assert(newobj.name, "Object has no name")
-        assert(newobj.type, "Object has no type")
+describe Puppet::TransObject, " when serializing" do
+    before do
+        @resource = Puppet::TransObject.new("/my/file", "file")
+        @resource["one"] = "test"
+        @resource["two"] = "other"
     end
 
-    def test_yamldumpbucket
-        objects = %w{/etc/passwd /etc /tmp /var /dev}.collect { |d|
-            mk_transobject(d)
-        }
-        bucket = mk_transbucket(*objects)
-        str = nil
-        assert_nothing_raised {
-            str = YAML.dump(bucket)
-        }
-
-        newobj = nil
-        assert_nothing_raised {
-            newobj = YAML.load(str)
-        }
-
-        assert(newobj.name, "Bucket has no name")
-        assert(newobj.type, "Bucket has no type")
+    it "should be able to be dumped to yaml" do
+        proc { YAML.dump(@resource) }.should_not raise_error
     end
 
-    # Verify that we correctly strip out collectable objects, since they should
-    # not be sent to the client.
-    def test_collectstrip
-        top = mk_transtree do |object, depth, width|
-            if width % 2 == 1
-                object.collectable = true
-            end
+    it "should produce an equivalent yaml object" do
+        text = YAML.dump(@resource)
+
+        newresource = YAML.load(text)
+        newresource.name.should == "/my/file"
+        newresource.type.should == "file"
+        %w{one two}.each do |param|
+            newresource[param].should == @resource[param]
         end
-
-        assert(top.flatten.find_all { |o| o.collectable }.length > 0,
-            "Could not find any collectable objects")
-
-        # Now strip out the collectable objects
-        top.collectstrip!
-
-        # And make sure they're actually gone
-        assert_equal(0, top.flatten.find_all { |o| o.collectable }.length,
-            "Still found collectable objects")
-    end
-
-    # Make sure our 'delve' command is working
-    def test_delve
-        top = mk_transtree do |object, depth, width|
-            if width % 2 == 1
-                object.collectable = true
-            end
-        end
-
-        objects = []
-        buckets = []
-        collectable = []
-
-        count = 0
-        assert_nothing_raised {
-            top.delve do |object|
-                count += 1
-                if object.is_a? Puppet::TransBucket
-                    buckets << object
-                else
-                    objects << object
-                    if object.collectable
-                        collectable << object
-                    end
-                end
-            end
-        }
-
-        top.flatten.each do |obj|
-            assert(objects.include?(obj), "Missing obj %s[%s]" % [obj.type, obj.name])
-        end
-
-        assert_equal(collectable.length,
-            top.flatten.find_all { |o| o.collectable }.length,
-            "Found incorrect number of collectable objects")
     end
 end
 
+describe Puppet::TransObject, " when converting to a RAL resource" do
+    before do
+        @resource = Puppet::TransObject.new("/my/file", "file")
+        @resource["one"] = "test"
+        @resource["two"] = "other"
+    end
+
+    it "should use the resource type's :create method to create the resource" do
+        type = mock 'resource type'
+        type.expects(:create).with(@resource).returns(:myresource)
+        Puppet::Type.expects(:type).with("file").returns(type)
+        @resource.to_type.should == :myresource
+    end
+
+    it "should convert to a component instance if the resource type cannot be found" do
+        Puppet::Type.expects(:type).with("file").returns(nil)
+        @resource.expects(:to_component).returns(:mycomponent)
+        @resource.to_type.should == :mycomponent
+    end
+end
+
+describe Puppet::TransObject, " when converting to a RAL component instance" do
+    before do
+        @resource = Puppet::TransObject.new("/my/file", "one::two")
+        @resource["one"] = "test"
+        @resource["noop"] = "other"
+    end
+
+    it "should use a new TransObject whose name is a resource reference of the type and title of the original TransObject" do
+        Puppet::Type::Component.expects(:create).with { |resource| resource.type == :component and resource.name == "One::Two[/my/file]" }.returns(:yay)
+        @resource.to_component.should == :yay
+    end
+
+    it "should pass the resource parameters on to the newly created TransObject" do
+        Puppet::Type::Component.expects(:create).with { |resource| resource["noop"] == "other" }.returns(:yay)
+        @resource.to_component.should == :yay
+    end
+
+    # LAK:FIXME This really isn't the design we want going forward, but it's
+    # good enough for now.
+    it "should not pass resource paramaters that are not metaparams" do
+        Puppet::Type::Component.expects(:create).with { |resource| resource["one"].nil? }.returns(:yay)
+        @resource.to_component.should == :yay
+    end
+end

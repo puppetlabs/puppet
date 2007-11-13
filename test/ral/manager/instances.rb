@@ -93,7 +93,8 @@ class TestTypeInstances < Test::Unit::TestCase
     # Make sure resources are entirely deleted.
     def test_delete
         aliases = %w{one}
-        obj = @type.create(:name => "testing", :alias => "two")
+        config = mk_configuration
+        obj = @type.create(:name => "testing", :alias => "two", :configuration => config)
         aliases << "two"
 
         @type.alias("two", obj)

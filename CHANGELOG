@@ -1,3 +1,14 @@
+    Fixed #800 -- invalid configurations are no longer
+    cached.  This was done partially by adding a relationship
+    validation step once the entire configuration is created,
+    but it also required the previously-mentioned changes
+    to how the configuration retrieval process works.
+
+    Removed some functionality from the Master client,
+    since the local functionality has been replaced
+    with the Indirector already, and rearranging how configuration
+    retrieval is done to fix ordering and caching bugs.
+
     The node scope is now above all other scopes besides
     the 'main' scope, which should help make its variables
     visible to other classes, assuming those classes were

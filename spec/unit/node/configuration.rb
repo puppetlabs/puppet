@@ -301,9 +301,9 @@ end
 describe Puppet::Node::Configuration, " when functioning as a resource container" do
     before do
         @config = Puppet::Node::Configuration.new("host")
-        @one = stub 'resource1', :ref => "Me[you]", :configuration= => nil
-        @two = stub 'resource2', :ref => "Me[him]", :configuration= => nil
-        @dupe = stub 'resource3', :ref => "Me[you]", :configuration= => nil
+        @one = stub 'resource1', :ref => "Me[one]", :configuration= => nil
+        @two = stub 'resource2', :ref => "Me[two]", :configuration= => nil
+        @dupe = stub 'resource3', :ref => "Me[one]", :configuration= => nil
     end
 
     it "should provide a method to add one or more resources" do
@@ -376,7 +376,7 @@ describe Puppet::Node::Configuration, " when functioning as a resource container
 
     it "should be able to find resources by reference or by type/title tuple" do
         @config.add_resource @one
-        @config.resource("me", "you").should equal(@one)
+        @config.resource("me", "one").should equal(@one)
     end
 
     it "should have a mechanism for removing resources" do
@@ -385,6 +385,32 @@ describe Puppet::Node::Configuration, " when functioning as a resource container
         @config.remove_resource(@one)
         @config.resource(@one.ref).should be_nil
         @config.vertex?(@one).should be_false
+    end
+
+    it "should have a method for creating aliases for resources" do
+        @config.add_resource @one
+        @config.alias(@one, "other")
+        @config.resource("me", "other").should equal(@one)
+    end
+
+    # This test is the same as the previous, but the behaviour should be explicit.
+    it "should alias using the class name from the resource reference, not the resource class name" do
+        @config.add_resource @one
+        @config.alias(@one, "other")
+        @config.resource("me", "other").should equal(@one)
+    end
+
+    it "should fail to add an alias if the aliased name already exists" do
+        @config.add_resource @one
+        proc { @config.alias @two, "one" }.should raise_error(ArgumentError)
+    end
+
+    it "should remove resource aliases when the target resource is removed" do
+        @config.add_resource @one
+        @config.alias(@one, "other")
+        @one.expects :remove
+        @config.remove_resource(@one)
+        @config.resource("me", "other").should be_nil
     end
 end
 

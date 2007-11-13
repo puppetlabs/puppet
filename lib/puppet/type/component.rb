@@ -93,9 +93,9 @@ Puppet::Type.newtype(:component) do
     end
 
     # Initialize a new component
-    def initialize(args)
+    def initialize(*args)
         @children = []
-        super(args)
+        super
 
         # If the title isn't a full resource reference, assume
         # we're a class and make an alias for that.

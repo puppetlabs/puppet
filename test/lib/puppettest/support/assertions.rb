@@ -1,7 +1,9 @@
 require 'puppettest'
+require 'puppettest/support/utils'
 require 'fileutils'
 
 module PuppetTest
+    include PuppetTest::Support::Utils
     def assert_logged(level, regex, msg = nil)
         # Skip verifying logs that we're not supposed to send.
         return unless Puppet::Util::Log.sendlevel?(level)
