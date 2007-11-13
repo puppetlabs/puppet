@@ -49,6 +49,15 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         Puppet.settings[:dynamicfacts].split(/\s*,\s*/).collect { |fact| fact.downcase }
     end
 
+    # Add our default resources to the configuration.
+    def add_default_resources(configuration)
+        # First create the default scheduling objects
+        Puppet::Type.type(:schedule).add_default_schedules(configuration)
+        
+        # And filebuckets
+        Puppet::Type.type(:filebucket).add_default_filebucket(configuration)
+    end
+
     # Cache the config
     def cache(text)
         Puppet.info "Caching configuration at %s" % self.cachefile
@@ -69,7 +78,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     def clear
         @configuration.clear(true) if @configuration
         Puppet::Type.allclear
-        mkdefault_objects
         @configuration = nil
     end
 
@@ -190,6 +198,8 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
 
         # Keep the state database up to date.
         @configuration.host_config = true
+
+        add_default_resources(@configuration)
     end
     
     # A simple proxy method, so it's easy to test.
@@ -204,17 +214,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
 
         self.class.instance = self
         @running = false
-
-        mkdefault_objects
-    end
-
-    # Make the default objects necessary for function.
-    def mkdefault_objects
-        # First create the default scheduling objects
-        Puppet::Type.type(:schedule).mkdefaultschedules
-        
-        # And filebuckets
-        Puppet::Type.type(:filebucket).mkdefaultbucket
     end
 
     # Mark that we should restart.  The Puppet module checks whether we're running,
@@ -582,6 +581,8 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
             clear
             return false
         end
+
+        add_default_resources(@configuration)
         return true
     end
 end

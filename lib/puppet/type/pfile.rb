@@ -73,10 +73,13 @@ module Puppet
                 "
 
             defaultto  do
-                # Make sure the default file bucket exists.
-                obj = Puppet::Type.type(:filebucket)["puppet"] ||
-                    Puppet::Type.type(:filebucket).create(:name => "puppet")
-                obj.bucket
+                if resource.configuration
+                    # Make sure the default file bucket exists.
+                    obj = resource.configuration.resource(:filebucket, "puppet") || resource.configuration.create_resource(:filebucket, :name => "puppet")
+                    obj.bucket
+                else
+                    nil
+                end
             end
             
             munge do |value|

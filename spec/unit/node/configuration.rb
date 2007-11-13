@@ -540,6 +540,7 @@ describe Puppet::Node::Configuration, " when creating a relationship graph" do
         @config = Puppet::Node::Configuration.new("host")
         @compone = Puppet::Type::Component.create :name => "one"
         @comptwo = Puppet::Type::Component.create :name => "two", :require => ["class", "one"]
+
         @file = Puppet::Type.type(:file)
         @one = @file.create :path => "/one"
         @two = @file.create :path => "/two"

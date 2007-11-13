@@ -370,6 +370,11 @@ class Puppet::Node::Configuration < Puppet::PGraph
         end
     end
 
+    # Return an array of the currently-defined resources.
+    def resources
+        @resource_table.keys
+    end
+
     # Add a tag.
     def tag(*names)
         names.each do |name|

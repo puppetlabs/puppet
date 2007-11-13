@@ -52,13 +52,10 @@ module Puppet
         def to_component
             tmpname = nil
 
-            # Nodes have the same name and type
-            if self.name
-                tmpname = "%s[%s]" % [type_capitalized, self.name]
-            else
-                tmpname = @type
-            end
+            tmpname = "%s[%s]" % [type_capitalized, self.name]
+
             trans = TransObject.new(tmpname, :component)
+
             @params.each { |param,value|
                 next unless Puppet::Type::Component.validattr?(param)
                 Puppet.debug "Defining %s on %s of type %s" % [param,@name,@type]
@@ -91,11 +88,7 @@ module Puppet
 
         def to_ref
             unless defined? @res_ref
-                if self.type and self.name
-                    @res_ref = "%s[%s]" % [type_capitalized, self.name]
-                else
-                    @res_ref = nil
-                end
+                @res_ref = "%s[%s]" % [type_capitalized, self.name]
             end
             @res_ref
         end

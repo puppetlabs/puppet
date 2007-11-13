@@ -18,11 +18,9 @@ class Puppet::Type
     # Figure out of there are any objects we can automatically add as
     # dependencies.
     def autorequire
+        raise(ArgumentError, "Cannot autorequire resources without a configuration") unless configuration
         reqs = []
         self.class.eachautorequire { |type, block|
-            # Ignore any types we can't find, although that would be a bit odd.
-            next unless typeobj = Puppet.type(type)
-
             # Retrieve the list of names from the block.
             next unless list = self.instance_eval(&block)
             unless list.is_a?(Array)
@@ -35,7 +33,7 @@ class Puppet::Type
                 # Support them passing objects directly, to save some effort.
                 unless dep.is_a? Puppet::Type
                     # Skip autorequires that we aren't managing
-                    unless dep = typeobj[dep]
+                    unless dep = configuration.resource(type, dep)
                         next
                     end
                 end

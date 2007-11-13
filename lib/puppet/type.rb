@@ -229,14 +229,14 @@ class Type
         end
 
         # If the name and title differ, set up an alias
-        if self.name != self.title
-            if obj = self.class[self.name] 
+        if self.configuration and (self.name != self.title)
+            if obj = self.configuration.resource(self.class.name, self.name)
                 if self.class.isomorphic?
                     raise Puppet::Error, "%s already exists with name %s" %
                         [obj.title, self.name]
                 end
             else
-                self.class.alias(self.name, self)
+                self.configuration.alias(self, self.name)
             end
         end
 

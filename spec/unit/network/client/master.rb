@@ -72,6 +72,7 @@ describe Puppet::Network::Client::Master, " when retrieving the configuration" d
         @client.stubs(:fresh?).with(@facts).returns true
         @client.stubs(:use_cached_config).returns(true)
         @client.class.stubs(:facts).returns(@facts)
+        @client.stubs(:add_default_resources)
         @client.getconfig
     end
 
@@ -97,6 +98,7 @@ describe Puppet::Network::Client::Master, " when retrieving the configuration" d
         config.stubs(:to_configuration).returns(config)
         config.stubs(:host_config=)
         config.stubs(:from_cache).returns(true)
+        @client.stubs(:add_default_resources)
 
         @client.getconfig
     end
@@ -127,6 +129,7 @@ describe Puppet::Network::Client::Master, " when retrieving the configuration" d
         config.stubs(:to_configuration).returns(config)
         config.stubs(:host_config=)
         config.stubs(:from_cache).returns(true)
+        @client.stubs(:add_default_resources)
 
         @client.getconfig
     end
@@ -145,9 +148,9 @@ describe Puppet::Network::Client::Master, " when retrieving the configuration" d
 
         yamlconfig.stubs(:classes)
         yamlconfig.expects(:to_configuration).returns(config)
-
         config.stubs(:host_config=)
         config.stubs(:from_cache).returns(true)
+        @client.stubs(:add_default_resources)
 
         @client.getconfig
     end
@@ -210,6 +213,7 @@ describe Puppet::Network::Client::Master, " when retrieving the configuration" d
         yamlconfig.expects(:to_configuration).returns(config)
 
         config.stubs(:host_config=)
+        @client.stubs(:add_default_resources)
 
         config.expects(:from_cache).returns(false)
 
@@ -236,6 +240,31 @@ describe Puppet::Network::Client::Master, " when retrieving the configuration" d
         config.stubs(:from_cache).returns(true)
 
         config.expects(:host_config=).with(true)
+        @client.stubs(:add_default_resources)
+
+        @client.getconfig
+    end
+
+    it "should add the default resources to the configuration" do
+        @client.stubs(:dostorage)
+        @client.class.stubs(:facts).returns(@facts)
+        @master.stubs(:getconfig).returns("myconfig")
+
+        yamlconfig = mock 'yaml config'
+        YAML.stubs(:load).returns(yamlconfig)
+
+        @client.stubs(:setclasses)
+
+        config = mock 'config'
+
+        yamlconfig.stubs(:classes)
+        yamlconfig.stubs(:to_configuration).returns(config)
+
+        config.stubs(:from_cache).returns(true)
+
+        config.stubs(:host_config=).with(true)
+
+        @client.expects(:add_default_resources).with(config)
 
         @client.getconfig
     end
@@ -307,6 +336,7 @@ describe Puppet::Network::Client::Master, " when using the cached configuration"
         config.expects(:to_configuration).returns(ral_config)
 
         @client.stubs(:retrievecache).returns("whatever")
+        @client.stubs(:add_default_resources)
         Puppet::Network::Client::Master.publicize_methods :use_cached_config do
             @client.use_cached_config().should be_true
         end
@@ -322,6 +352,7 @@ describe Puppet::Network::Client::Master, " when using the cached configuration"
         config.expects(:to_configuration).returns(ral_config)
 
         @client.stubs(:retrievecache).returns("whatever")
+        @client.stubs(:add_default_resources)
         Puppet::Network::Client::Master.publicize_methods :use_cached_config do
             @client.use_cached_config()
         end
@@ -339,6 +370,7 @@ describe Puppet::Network::Client::Master, " when using the cached configuration"
         config.expects(:to_configuration).returns(ral_config)
 
         @client.stubs(:retrievecache).returns("whatever")
+        @client.stubs(:add_default_resources)
         Puppet::Network::Client::Master.publicize_methods :use_cached_config do
             @client.use_cached_config()
         end
@@ -356,10 +388,55 @@ describe Puppet::Network::Client::Master, " when using the cached configuration"
         config.expects(:to_configuration).returns(ral_config)
 
         @client.stubs(:retrievecache).returns("whatever")
+        @client.stubs(:add_default_resources)
         Puppet::Network::Client::Master.publicize_methods :use_cached_config do
             @client.use_cached_config()
         end
 
         @client.configuration.should equal(ral_config)
+    end
+
+    it "should add the default resources to the configuration" do
+        config = mock 'config'
+        YAML.stubs(:load).returns(config)
+
+        ral_config = mock 'ral config'
+        ral_config.expects(:from_cache=).with(true)
+        ral_config.stubs(:host_config=)
+        config.stubs(:to_configuration).returns(ral_config)
+
+        @client.stubs(:retrievecache).returns("whatever")
+        @client.expects(:add_default_resources).with(ral_config)
+        Puppet::Network::Client::Master.publicize_methods :use_cached_config do
+            @client.use_cached_config()
+        end
+    end
+end
+
+describe Puppet::Network::Client::Master, " when adding default resources" do
+    before do
+        @master = mock 'master'
+        @client = Puppet::Network::Client.master.new(
+            :Master => @master
+        )
+        @facts = {"one" => "two", "three" => "four"}
+    end
+
+    it "should add the default schedules" do
+        config = mock 'config'
+        Puppet::Type.type(:schedule).expects(:add_default_schedules).with(config)
+        Puppet::Type.type(:filebucket).stubs(:add_default_filebucket)
+        Puppet::Network::Client::Master.publicize_methods :add_default_resources do
+            @client.add_default_resources(config)
+        end
+    end
+
+    it "should add the default filebucket" do
+        config = mock 'config'
+        Puppet::Type.type(:schedule).stubs(:add_default_schedules)
+        Puppet::Type.type(:filebucket).expects(:add_default_filebucket).with(config)
+        Puppet::Network::Client::Master.publicize_methods :add_default_resources do
+            @client.add_default_resources(config)
+        end
     end
 end

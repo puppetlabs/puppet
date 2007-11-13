@@ -8,11 +8,13 @@ class Puppet::Type
 
     # retrieve a named instance of the current type
     def self.[](name)
+        raise "DEPRECATED [], yo"
         @objects[name] || @aliases[name]
     end
 
     # add an instance by name to the class list of instances
     def self.[]=(name,object)
+        raise "DEPRECATED []=, yo"
         newobj = nil
         if object.is_a?(Puppet::Type)
             newobj = object
@@ -128,36 +130,6 @@ class Puppet::Type
 
         #Puppet.debug "Creating %s[%s]" % [self.name, title]
 
-        # if the object already exists
-        if self.isomorphic? and retobj = self[title]
-            # if only one of our objects is implicit, then it's easy to see
-            # who wins -- the non-implicit one.
-            if retobj.implicit? and ! implicit
-                Puppet.notice "Removing implicit %s" % retobj.title
-                # Remove all of the objects, but do not remove their subscriptions.
-                retobj.remove(false)
-
-                # now pass through and create the new object
-            elsif implicit
-                Puppet.debug "Ignoring implicit %s[%s]" % [self.name, title]
-                return nil
-            else
-                # If only one of the objects is being managed, then merge them
-                if retobj.managed?
-                    raise Puppet::Error, "%s '%s' is already being managed" %
-                        [self.name, title]
-                else
-                    retobj.merge(hash)
-                    return retobj
-                end
-                # We will probably want to support merging of some kind in
-                # the future, but for now, just throw an error.
-                #retobj.merge(hash)
-
-                #return retobj
-            end
-        end
-
         # create it anew
         # if there's a failure, destroy the object if it got that far, but raise
         # the error.
@@ -167,8 +139,6 @@ class Puppet::Type
             Puppet.err "Could not create %s: %s" % [title, detail.to_s]
             if obj
                 obj.remove(true)
-            elsif obj = self[title]
-                obj.remove(true)
             end
             raise
         end
@@ -176,9 +146,6 @@ class Puppet::Type
         if implicit
             obj.implicit = true
         end
-
-        # Store the object by title
-        self[obj.title] = obj
 
         return obj
     end
