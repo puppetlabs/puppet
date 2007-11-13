@@ -311,7 +311,7 @@ class Transaction
                     ret = eval_resource(resource)
                 end
 
-                if Puppet[:evaltrace]
+                if Puppet[:evaltrace] and @configuration.host_config?
                     resource.info "Evaluated in %0.2f seconds" % seconds
                 end
                 ret

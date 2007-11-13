@@ -94,7 +94,7 @@ class Puppet::Type
     
     # We've got four relationship metaparameters, so this method is used
     # to reduce code duplication between them.
-    def store_relationship(param, values)
+    def munge_relationship(param, values)
         # We need to support values passed in as an array or as a
         # resource reference.
         result = []
@@ -194,20 +194,24 @@ class Puppet::Type
             unless aliases.is_a?(Array)
                 aliases = [aliases]
             end
-            @resource.info "Adding aliases %s" % aliases.collect { |a|
-                    a.inspect
-            }.join(", ")
+
+            raise(ArgumentError, "Cannot add aliases without a configuration") unless @resource.configuration
+
+            @resource.info "Adding aliases %s" % aliases.collect { |a| a.inspect }.join(", ")
+
             aliases.each do |other|
-                if obj = @resource.class[other]
-                    unless obj == @resource
-                        self.fail(
-                            "%s can not create alias %s: object already exists" %
-                            [@resource.title, other]
-                        )
+                if obj = @resource.configuration.resource(@resource.class.name, other)
+                    unless obj.object_id == @resource.object_id
+                        self.fail("%s can not create alias %s: object already exists" % [@resource.title, other])
                     end
                     next
                 end
+
+                # LAK:FIXME Old-school, add the alias to the class.
                 @resource.class.alias(other, @resource)
+
+                # Newschool, add it to the configuration.
+                @resource.configuration.alias(@resource, other)
             end
         end
     end
@@ -247,7 +251,16 @@ class Puppet::Type
         end
         
         def munge(rels)
-            @resource.store_relationship(self.class.name, rels)
+            @resource.munge_relationship(self.class.name, rels)
+        end
+
+        def validate_relationship
+            @value.each do |value|
+                unless @resource.configuration.resource(*value)
+                    description = self.class.direction == :in ? "dependency" : "dependent"
+                    raise Puppet::Error, "Could not find #{description} %s[%s]" % [value[0].to_s.capitalize, value[1]]
+                end
+            end
         end
         
         # Create edges from each of our relationships.    :in

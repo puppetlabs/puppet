@@ -3,10 +3,13 @@
 require File.dirname(__FILE__) + '/../../lib/puppettest'
 
 require 'puppettest'
+require 'puppettest/support/utils'
+require 'puppettest/support/assertions'
 require 'puppet/network/client/resource'
 
 class TestResourceClient < Test::Unit::TestCase
     include PuppetTest::ServerTest
+    include PuppetTest::Support::Utils
 
     def mkresourceserver
         Puppet::Network::Handler.resource.new
@@ -35,6 +38,7 @@ class TestResourceClient < Test::Unit::TestCase
 
         assert_instance_of(Puppet::TransObject, tobj)
 
+        Puppet::Type.allclear
         obj = nil
         assert_nothing_raised {
             obj = tobj.to_type
@@ -45,6 +49,7 @@ class TestResourceClient < Test::Unit::TestCase
         File.unlink(file)
 
         # Now test applying
+        Puppet::Type.allclear
         result = nil
         assert_nothing_raised {
             result = client.apply(tobj)
@@ -52,6 +57,7 @@ class TestResourceClient < Test::Unit::TestCase
         assert(FileTest.exists?(file), "File was not created on apply")
 
         # Lastly, test "list"
+        Puppet::Type.allclear
         list = nil
         assert_nothing_raised {
             list = client.list("user")
@@ -64,12 +70,14 @@ class TestResourceClient < Test::Unit::TestCase
             break if count > 3
             assert_instance_of(Puppet::TransObject, tobj)
 
+            Puppet::Type.allclear
             tobj2 = nil
             assert_nothing_raised {
                 tobj2 = client.describe(tobj.type, tobj.name)
             }
 
             obj = nil
+            Puppet::Type.allclear
             assert_nothing_raised {
                 obj = tobj2.to_type
             }

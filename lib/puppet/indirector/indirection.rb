@@ -13,6 +13,14 @@ class Puppet::Indirector::Indirection
         @@indirections.find { |i| i.name == name }
     end
     
+    # Find an indirected model by name.  This is provided so that Terminus classes
+    # can specifically hook up with the indirections they are associated with.
+    def self.model(name)
+        match = @@indirections.find { |i| i.name == name }
+        return nil unless match
+        match.model
+    end
+    
     attr_accessor :name, :model
 
     # Create and return our cache terminus.

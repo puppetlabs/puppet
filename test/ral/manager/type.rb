@@ -131,27 +131,60 @@ class TestType < Test::Unit::TestCase
         }
     end
 
-    # Verify that aliasing works
-    def test_aliasing
-        file = tempfile()
+    def test_aliases_to_self_are_not_failures
+        resource = Puppet.type(:file).create(
+            :name => "/path/to/some/missing/file",
+            :ensure => "file"
+        )
+        resource.stubs(:path).returns("")
 
-        baseobj = nil
-        assert_nothing_raised {
-            baseobj = Puppet.type(:file).create(
-                :name => file,
-                :ensure => "file",
-                :alias => ["funtest"]
-            )
-        }
+        configuration = stub 'configuration'
+        configuration.expects(:resource).with(:file, "/path/to/some/missing/file").returns(resource)
+        resource.configuration = configuration
 
         # Verify our adding ourselves as an alias isn't an error.
-        assert_nothing_raised {
-            baseobj[:alias] = file
+        assert_nothing_raised("Could not add alias") {
+            resource[:alias] = "/path/to/some/missing/file"
         }
 
-        assert_instance_of(Puppet.type(:file), Puppet.type(:file)["funtest"],
-            "Could not retrieve alias")
+        assert_equal(resource.object_id, Puppet.type(:file)["/path/to/some/missing/file"].object_id, "Could not retrieve alias to self")
+    end
 
+    def test_aliases_are_added_to_class_and_configuration
+        resource = Puppet.type(:file).create(
+            :name => "/path/to/some/missing/file",
+            :ensure => "file"
+        )
+        resource.stubs(:path).returns("")
+
+        configuration = stub 'configuration'
+        configuration.stubs(:resource).returns(nil)
+        configuration.expects(:alias).with(resource, "funtest")
+        resource.configuration = configuration
+
+        assert_nothing_raised("Could not add alias") {
+            resource[:alias] = "funtest"
+        }
+
+        assert_equal(resource.object_id, Puppet.type(:file)["funtest"].object_id, "Could not retrieve alias")
+    end
+
+    def test_aliasing_fails_without_a_configuration
+        resource = Puppet.type(:file).create(
+            :name => "/no/such/file",
+            :ensure => "file"
+        )
+
+        assert_raise(Puppet::Error, "Did not fail to alias when no configuration was available") {
+            resource[:alias] = "funtest"
+        }
+    end
+
+    def test_configurations_are_set_during_initialization_if_present_on_the_transobject
+        trans = Puppet::TransObject.new("/path/to/some/file", :file)
+        trans.configuration = :my_config
+        resource = trans.to_type
+        assert_equal(resource.configuration, trans.configuration, "Did not set configuration on initialization")
     end
 
     # Verify that requirements don't depend on file order

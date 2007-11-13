@@ -104,6 +104,12 @@ class TestFile < Test::Unit::TestCase
         }
     end
 
+    def test_groups_fails_when_invalid
+        assert_raise(Puppet::Error, "did not fail when the group was empty") do
+            Puppet::Type.type(:file).create :path => "/some/file", :group => ""
+        end
+    end
+
     if Puppet::Util::SUIDManager.uid == 0
         def test_createasuser
             dir = tmpdir()

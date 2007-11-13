@@ -43,7 +43,7 @@ class Puppet::Network::Handler
             end
 
             if ignoreschedules
-                msg += " without schedules"
+                msg += " ignoring schedules"
             end
 
             Puppet.notice msg

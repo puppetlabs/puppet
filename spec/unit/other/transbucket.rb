@@ -102,6 +102,18 @@ describe Puppet::TransBucket, " when generating a configuration" do
         @top.to_configuration
     end
 
+    it "should set each TransObject's configuration before converting to a RAL resource" do
+        @middleobj.expects(:configuration=).with { |c| c.is_a?(Puppet::Node::Configuration) }
+        @top.to_configuration
+    end
+
+    it "should set each TransBucket's configuration before converting to a RAL resource" do
+        # each bucket is seen twice in the loop, so we have to handle the case where the config
+        # is set twice
+        @bottom.expects(:configuration=).with { |c| c.is_a?(Puppet::Node::Configuration) }.at_least_once
+        @top.to_configuration
+    end
+
     after do
         Puppet::Type.allclear
     end

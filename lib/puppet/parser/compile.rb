@@ -14,7 +14,7 @@ require 'puppet/util/errors'
 class Puppet::Parser::Compile
     include Puppet::Util
     include Puppet::Util::Errors
-    attr_reader :topscope, :parser, :node, :facts, :collections, :configuration
+    attr_reader :parser, :node, :facts, :collections, :configuration, :node_scope
 
     # Add a collection to the global list.
     def add_collection(coll)
@@ -107,7 +107,7 @@ class Puppet::Parser::Compile
 
     # Evaluate all of the classes specified by the node.
     def evaluate_node_classes
-        evaluate_classes(@node.classes, @topscope)
+        evaluate_classes(@node.classes, topscope)
     end
 
     # Evaluate each specified class in turn.  If there are any classes we can't
@@ -142,9 +142,7 @@ class Puppet::Parser::Compile
 
     # Return a resource by either its ref or its type and title.
     def findresource(string, name = nil)
-        if name
-            string = "%s[%s]" % [string.capitalize, name]
-        end
+        string = "%s[%s]" % [string.capitalize, name] if name
 
         @resource_table[string]
     end
@@ -173,7 +171,7 @@ class Puppet::Parser::Compile
     # using the top scope.  Adds an edge between the scope and
     # its parent to the graph.
     def newscope(parent, options = {})
-        parent ||= @topscope
+        parent ||= topscope
         options[:compile] = self
         options[:parser] ||= self.parser
         scope = Puppet::Parser::Scope.new(options)
@@ -229,6 +227,12 @@ class Puppet::Parser::Compile
         @configuration.add_edge!(scope.resource, resource)
     end
 
+    # The top scope is usually the top-level scope, but if we're using AST nodes,
+    # then it is instead the node's scope.
+    def topscope
+        node_scope || @topscope
+    end
+
     private
 
     # If ast nodes are enabled, then see if we can find and evaluate one.
@@ -241,10 +245,7 @@ class Puppet::Parser::Compile
             break if astnode = @parser.nodes[name.to_s.downcase]
         end
 
-        unless astnode
-            astnode = @parser.nodes["default"]
-        end
-        unless astnode
+        unless (astnode ||= @parser.nodes["default"])
             raise Puppet::ParseError, "Could not find default node or by name with '%s'" % node.names.join(", ")
         end
 
@@ -253,6 +254,12 @@ class Puppet::Parser::Compile
         resource = Puppet::Parser::Resource.new(:type => "node", :title => astnode.classname, :scope => topscope, :source => topscope.source)
         store_resource(topscope, resource)
         @configuration.tag(astnode.classname)
+
+        resource.evaluate
+
+        # Now set the node scope appropriately, so that :topscope can
+        # behave differently.
+        @node_scope = class_scope(astnode)
     end
 
     # Evaluate our collections and return true if anything returned an object.
@@ -318,6 +325,8 @@ class Puppet::Parser::Compile
         @configuration.add_vertex!(@main_resource)
 
         @resource_table["Class[main]"] = @main_resource
+
+        @main_resource.evaluate
     end
 
     # Make sure the entire configuration is evaluated.
@@ -408,7 +417,6 @@ class Puppet::Parser::Compile
 
         # A graph for maintaining scope relationships.
         @scope_graph = GRATR::Digraph.new
-        @scope_graph.add_vertex!(@topscope)
 
         # For maintaining the relationship between scopes and their resources.
         @configuration = Puppet::Node::Configuration.new(@node.name)

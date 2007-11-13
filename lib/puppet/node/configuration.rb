@@ -38,6 +38,10 @@ class Puppet::Node::Configuration < Puppet::PGraph
     # relationship graph.
     attr_accessor :is_relationship_graph
 
+    # Whether this configuration was retrieved from the cache, which affects
+    # whether it is written back out again.
+    attr_accessor :from_cache
+
     # Add classes to our class list.
     def add_class(*classes)
         classes.each do |klass|
@@ -64,6 +68,16 @@ class Puppet::Node::Configuration < Puppet::PGraph
             resource.configuration = self unless is_relationship_graph
             add_vertex!(resource)
         end
+    end
+
+    # Create an alias for a resource.
+    def alias(resource, name)
+        resource.ref =~ /^(.+)\[/
+
+        newref = "%s[%s]" % [$1 || resource.class.name, name]
+        raise(ArgumentError, "Cannot alias %s to %s; resource %s already exists" % [resource.ref, name, newref]) if @resource_table[newref]
+        @resource_table[newref] = resource
+        @aliases[resource.ref] << newref
     end
 
     # Apply our configuration to the local host.  Valid options
@@ -274,6 +288,8 @@ class Puppet::Node::Configuration < Puppet::PGraph
         @applying = false
         @relationship_graph = nil
 
+        @aliases = Hash.new { |hash, key| hash[key] = [] }
+
         if block_given?
             yield(self)
             finalize()
@@ -331,7 +347,9 @@ class Puppet::Node::Configuration < Puppet::PGraph
     # references to the resource instances.
     def remove_resource(*resources)
         resources.each do |resource|
-            @resource_table.delete(resource.ref) if @resource_table.include?(resource.ref)
+            @resource_table.delete(resource.ref)
+            @aliases[resource.ref].each { |res_alias| @resource_table.delete(res_alias) }
+            @aliases[resource.ref].clear
             remove_vertex!(resource) if vertex?(resource)
             @relationship_graph.remove_vertex!(resource) if @relationship_graph and @relationship_graph.vertex?(resource)
             resource.remove

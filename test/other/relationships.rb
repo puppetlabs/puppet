@@ -111,7 +111,7 @@ class TestRelationships < Test::Unit::TestCase
         end
     end
     
-    def test_store_relationship
+    def test_munge_relationship
         file = Puppet::Type.newfile :path => tempfile(), :mode => 0755
         execs = []
         3.times do |i|
@@ -122,7 +122,7 @@ class TestRelationships < Test::Unit::TestCase
         result = nil
         [execs[0], [:exec, "yay0"], ["exec", "yay0"]].each do |target|
             assert_nothing_raised do
-                result = file.send(:store_relationship, :require, target)
+                result = file.send(:munge_relationship, :require, target)
             end
         
             assert_equal([[:exec, "yay0"]], result)
@@ -133,7 +133,7 @@ class TestRelationships < Test::Unit::TestCase
         strings = execs.collect { |e| [e.class.name.to_s, e.title] }
         [execs, symbols, strings].each do |target|
             assert_nothing_raised do
-                result = file.send(:store_relationship, :require, target)
+                result = file.send(:munge_relationship, :require, target)
             end
         
             assert_equal(symbols, result)
@@ -141,7 +141,7 @@ class TestRelationships < Test::Unit::TestCase
         
         # Make sure we can mix it up, even though this shouldn't happen
         assert_nothing_raised do
-            result = file.send(:store_relationship, :require, [execs[0], [execs[1].class.name, execs[1].title]])
+            result = file.send(:munge_relationship, :require, [execs[0], [execs[1].class.name, execs[1].title]])
         end
         
         assert_equal([[:exec, "yay0"], [:exec, "yay1"]], result)
@@ -151,7 +151,7 @@ class TestRelationships < Test::Unit::TestCase
         file[:require] = execs[0]
         
         assert_nothing_raised do
-            result = file.send(:store_relationship, :require, [execs[1], execs[2]])
+            result = file.send(:munge_relationship, :require, [execs[1], execs[2]])
         end
         
         assert_equal(symbols, result)

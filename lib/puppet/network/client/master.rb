@@ -139,63 +139,57 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
             facts = self.class.facts
         end
 
-        if self.configuration or FileTest.exists?(self.cachefile)
-            if self.fresh?(facts)
-                Puppet.info "Config is up to date"
-                if self.configuration
-                    return
-                end
-                if oldtext = self.retrievecache
-                    begin
-                        @configuration = YAML.load(oldtext).to_configuration
-                    rescue => detail
-                        Puppet.warning "Could not load cached configuration: %s" % detail
-                    end
-                    return
-                end
-            end
-        end
-        Puppet.debug("getting config")
+        raise Puppet::Network::ClientError.new("Could not retrieve any facts") unless facts.length > 0
 
         # Retrieve the plugins.
-        if Puppet[:pluginsync]
-            getplugins()
+        getplugins() if Puppet[:pluginsync]
+
+        if (self.configuration or FileTest.exist?(self.cachefile)) and self.fresh?(facts)
+            Puppet.info "Configuration is up to date"
+            return if use_cached_config
         end
 
-        unless facts.length > 0
-            raise Puppet::Network::ClientError.new(
-                "Could not retrieve any facts"
-            )
-        end
+        Puppet.debug("Retrieving configuration")
 
-        unless objects = get_actual_config(facts)
-            @configuration = nil
+        # If we can't retrieve the configuration, just return, which will either
+        # fail, or use the in-memory configuration.
+        unless yaml_objects = get_actual_config(facts)
+            use_cached_config(true)
             return
         end
 
-        unless objects.is_a?(Puppet::TransBucket)
-            raise NetworkClientError,
-                "Invalid returned objects of type %s" % objects.class
+        begin
+            objects = YAML.load(yaml_objects)
+        rescue => detail
+            msg = "Configuration could not be translated from yaml"
+            msg += "; using cached configuration" if use_cached_config(true)
+            Puppet.warning msg
+            return
         end
 
         self.setclasses(objects.classes)
 
         # Clear all existing objects, so we can recreate our stack.
-        if self.configuration
-            clear()
-        end
+        clear() if self.configuration
 
         # Now convert the objects to a puppet configuration graph.
-        @configuration = objects.to_configuration
+        begin
+            @configuration = objects.to_configuration
+        rescue => detail
+            clear()
+            puts detail.backtrace if Puppet[:trace]
+            msg = "Configuration could not be instantiated: %s" % detail
+            msg += "; using cached configuration" if use_cached_config(true)
+            Puppet.warning msg
+            return
+        end
 
-        if @configuration.nil?
-            raise Puppet::Error, "Configuration could not be processed"
+        if ! @configuration.from_cache
+            self.cache(yaml_objects)
         end
 
         # Keep the state database up to date.
         @configuration.host_config = true
-
-        return @configuration
     end
     
     # A simple proxy method, so it's easy to test.
@@ -270,11 +264,9 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
                     Puppet.err "Could not retrieve configuration: %s" % detail
                 end
 
-                if defined? @configuration and @configuration
+                if self.configuration
                     @configuration.retrieval_duration = duration
-                    unless @local
-                        Puppet.notice "Starting configuration run"
-                    end
+                    Puppet.notice "Starting configuration run" unless @local
                     benchmark(:notice, "Finished configuration run") do
                         @configuration.apply(options)
                     end
@@ -500,32 +492,14 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     # Actually retrieve the configuration, either from the server or from a
     # local master.
     def get_actual_config(facts)
-        if @local
-            return get_local_config(facts)
-        else
-            begin
-                Timeout::timeout(self.class.timeout) do
-                    return get_remote_config(facts)
-                end
-            rescue Timeout::Error
-                Puppet.err "Configuration retrieval timed out"
-                return nil
+        begin
+            Timeout::timeout(self.class.timeout) do
+                return get_remote_config(facts)
             end
+        rescue Timeout::Error
+            Puppet.err "Configuration retrieval timed out"
+            return nil
         end
-    end
-    
-    # Retrieve a configuration from a local master.
-    def get_local_config(facts)
-        # If we're local, we don't have to do any of the conversion
-        # stuff.
-        objects = @driver.getconfig(facts, "yaml")
-        @compile_time = Time.now
-
-        if objects == ""
-            raise Puppet::Error, "Could not retrieve configuration"
-        end
-        
-        return objects
     end
     
     # Retrieve a config from a remote master.
@@ -545,45 +519,18 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
                 end
 
             rescue => detail
-                puts detail.backtrace
                 Puppet.err "Could not retrieve configuration: %s" % detail
-
-                unless Puppet[:usecacheonfailure]
-                    @configuration = nil
-                    Puppet.warning "Not using cache on failed configuration"
-                    return
-                end
+                return nil
             end
         end
 
-        fromcache = false
-        if textobjects == ""
-            unless textobjects = self.retrievecache
-                raise Puppet::Error.new(
-                    "Cannot connect to server and there is no cached configuration"
-                )
-            end
-            Puppet.warning "Could not get config; using cached copy"
-            fromcache = true
-        else
-            @compile_time = Time.now
-            Puppet::Util::Storage.cache(:configuration)[:facts] = facts
-            Puppet::Util::Storage.cache(:configuration)[:compile_time] = @compile_time
-        end
+        return nil if textobjects == ""
 
-        begin
-            objects = YAML.load(textobjects)
-        rescue => detail
-            raise Puppet::Error,
-                "Could not understand configuration: %s" %
-                detail.to_s
-        end
+        @compile_time = Time.now
+        Puppet::Util::Storage.cache(:configuration)[:facts] = facts
+        Puppet::Util::Storage.cache(:configuration)[:compile_time] = @compile_time
 
-        if @cache and ! fromcache
-            self.cache(textobjects)
-        end
-        
-        return objects
+        return textobjects
     end
 
     def lockfile
@@ -608,5 +555,33 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
 
         Puppet.info "Sleeping for %s seconds (splay is enabled)" % time
         sleep(time)
+    end
+
+    private
+
+    # Use our cached config, optionally specifying whether this is
+    # necessary because of a failure.
+    def use_cached_config(because_of_failure = false)
+        return true if self.configuration
+
+        if because_of_failure and ! Puppet[:usecacheonfailure]
+            @configuration = nil
+            Puppet.warning "Not using cache on failed configuration"
+            return false
+        end
+
+        return false unless oldtext = self.retrievecache
+
+        begin
+            @configuration = YAML.load(oldtext).to_configuration
+            @configuration.from_cache = true
+            @configuration.host_config = true
+        rescue => detail
+            puts detail.backtrace if Puppet[:trace]
+            Puppet.warning "Could not load cached configuration: %s" % detail
+            clear
+            return false
+        end
+        return true
     end
 end

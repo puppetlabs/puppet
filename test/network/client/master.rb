@@ -7,38 +7,6 @@ require 'mocha'
 
 class TestMasterClient < Test::Unit::TestCase
     include PuppetTest::ServerTest
-    
-    class FakeTrans
-        def initialize
-            @counters = Hash.new { |h,k| h[k] = 0 }
-        end
-        [:evaluate, :report, :cleanup, :addtimes, :tags, :ignoreschedules].each do |m|
-            define_method(m.to_s + "=") do |*args|
-                @counters[m] += 1
-            end
-            define_method(m) do |*args|
-                @counters[m] += 1
-            end
-            define_method(m.to_s + "?") do
-                @counters[m]
-            end
-        end
-    end
-    class FakeComponent
-        attr_accessor :trans
-        def evaluate
-            @trans = FakeTrans.new
-            @trans
-        end
-        
-        def finalize
-            @finalized = true
-        end
-        
-        def finalized?
-            @finalized
-        end
-    end
 
     def setup
         super
@@ -67,66 +35,6 @@ class TestMasterClient < Test::Unit::TestCase
 
         return client
     end
-    
-    def mk_fake_client
-        server = Puppet::Network::Handler.master.new :Code => ""
-        master = Puppet::Network::Client.master.new :Master => server, :Local => true
-
-        # Now create some objects
-        objects = FakeComponent.new
-
-        master.send(:instance_variable_set, "@objects", objects)
-
-        class << master
-            def report(r)
-                @reported ||= 0
-                @reported += 1
-            end
-            def reported
-                @reported ||= 0
-                @reported
-            end
-        end
-        return master, objects
-    end
-    
-    def test_getconfig
-        client = mkclient
-        
-        $methodsrun = []
-        cleanup { $methodsrun = nil }
-        client.meta_def(:getplugins) do
-            $methodsrun << :getplugins
-        end
-        client.meta_def(:get_actual_config) do
-            $methodsrun << :get_actual_config
-            result = Puppet::TransBucket.new()
-            result.type = "testing"
-            result.name = "yayness"
-            result
-        end
-        
-        assert_nothing_raised do
-            client.getconfig
-        end
-        [:get_actual_config].each do |method|
-            assert($methodsrun.include?(method), "method %s was not run" % method)
-        end
-        assert(! $methodsrun.include?(:getplugins), "plugins were synced even tho disabled")
-
-        # Now set pluginsync
-        Puppet[:pluginsync] = true
-        $methodsrun.clear
-        
-        assert_nothing_raised do
-            client.getconfig
-        end
-        [:getplugins, :get_actual_config].each do |method|
-            assert($methodsrun.include?(method), "method %s was not run" % method)
-        end
-
-        assert_instance_of(Puppet::Node::Configuration, client.configuration, "Configuration was not created")
-    end
 
     def test_disable
         FileUtils.mkdir_p(Puppet[:statedir])
@@ -136,27 +44,22 @@ class TestMasterClient < Test::Unit::TestCase
 
         client = mkclient(master)
 
-        assert(! FileTest.exists?(@createdfile))
-
-        assert_nothing_raised {
+        assert_nothing_raised("Could not disable client") {
             client.disable
         }
 
-        assert_nothing_raised {
-            client.run
-        }
+        client.expects(:getconfig).never
 
-        assert(! FileTest.exists?(@createdfile), "Disabled client ran")
+        client.run
 
-        assert_nothing_raised {
+        client = mkclient(master)
+
+        client.expects(:getconfig)
+
+        assert_nothing_raised("Could not enable client") {
             client.enable
         }
-
-        assert_nothing_raised {
-            client.run
-        }
-
-        assert(FileTest.exists?(@createdfile), "Enabled client did not run")
+        client.run
     end
 
     # Make sure we're getting the client version in our list of facts
@@ -652,15 +555,16 @@ end
         client = mkclient
 
         ftype = Puppet::Type.type(:file)
+        file = ftype.create :title => "/what/ever", :ensure => :present
+        config = Puppet::Node::Configuration.new
+        config.add_resource(file)
 
-        assert_nil(ftype[@createdfile], "file object already exists")
-        assert(! FileTest.exists?(@createdfile), "File already exists on disk")
+        config.expects :apply
 
-        assert_nothing_raised("Could not apply config") do
-            client.run
-        end
+        client.configuration = config
+        client.expects(:getconfig)
+        client.run
 
-        assert(FileTest.exists?(@createdfile), "File does not exist on disk")
         assert_nil(ftype[@createdfile], "file object was not removed from memory")
     end
 
@@ -675,20 +579,20 @@ end
         end
     end
 
-    # #800 -- we cannot fix this using the current design.
-    def disabled_test_invalid_relationships_do_not_get_cached
-        # Make a master with an invalid relationship
+    def test_invalid_configurations_do_not_get_cached
         master = mkmaster :Code => "notify { one: require => File[yaytest] }"
         master.local = false # so it gets cached
         client = mkclient(master)
+        client.stubs(:facts).returns({})
         client.local = false
+
+        Puppet::Node::Facts.indirection.stubs(:terminus_class).returns(:memory)
+
+        # Make sure the config is not cached.
+        client.expects(:cache).never
 
         client.getconfig
         # Doesn't throw an exception, but definitely fails.
-        client.apply
-
-        # Make sure the config is not cached.
-        config = Puppet.settings[:localconfig] + ".yaml"
-        assert(! File.exists?(config), "Cached an invalid configuration")
+        client.run
     end
 end

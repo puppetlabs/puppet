@@ -29,7 +29,8 @@ class TestHandlerRunner < Test::Unit::TestCase
         client
     end
 
-    def test_runner
+    def setup
+        super
         FileUtils.mkdir_p(Puppet[:statedir])
         Puppet[:ignoreschedules] = false
         # Okay, make our manifest
@@ -37,7 +38,7 @@ class TestHandlerRunner < Test::Unit::TestCase
         created = tempfile()
         # We specify the schedule here, because I was having problems with
         # using default schedules.
-        code = %{
+        @code = %{
                 class yayness {
                     schedule { "yayness": period => weekly }
                     file { "#{created}": ensure => file, schedule => yayness }
@@ -46,59 +47,24 @@ class TestHandlerRunner < Test::Unit::TestCase
                 include yayness
             }
 
-        client = mkclient(code)
+        @client = mkclient(@code)
 
-        runner = nil
-        assert_nothing_raised {
-            runner = Puppet::Network::Handler.runner.new
-        }
-        # First: tags
-        # Second: ignore schedules true/false
-        # Third: background true/false
-        # Fourth: whether file should exist true/false
-        [
-            ["with no backgrounding",
-                nil, true, true, true],
-            ["in the background",
-                nil, true, false, true],
-            ["with a bad tag",
-                ["coolness"], true, false, false],
-            ["with another bad tag",
-                "coolness", true, false, false],
-            ["with a good tag",
-                ["coolness", "yayness"], true, false, true],
-            ["with another good tag",
-                ["yayness"], true, false, true],
-            ["with a third good tag",
-                "yayness", true, false, true],
-            ["with no tags",
-                "", true, false, true],
-            ["not ignoring schedules",
-                nil, false, false, false],
-            ["ignoring schedules",
-                nil, true, false, true],
-        ].each do |msg, tags, ignore, fg, shouldexist|
-            if FileTest.exists?(created)
-                File.unlink(created)
-            end
-            assert_nothing_raised {
-                # Try it without backgrounding
-                runner.run(tags, ignore, fg)
-            }
+        @runner = Puppet::Network::Handler.runner.new
+    end
 
-            unless fg
-                Puppet.join
-            end
+    def test_runner_when_in_foreground
+        @client.expects(:run).with(:tags => "mytags", :ignoreschedules => true)
 
-            if shouldexist
-                assert(FileTest.exists?(created), "File did not get created " +
-                    msg)
-            else
-                assert(!FileTest.exists?(created), "File got created incorrectly " +
-                    msg)
-            end
-        end
+        Process.expects(:newthread).never
+
+        @runner.run("mytags", true, true)
+    end
+
+    def test_runner_when_in_background
+        @client.expects(:run).with(:tags => "mytags", :ignoreschedules => true)
+
+        Puppet.expects(:newthread).yields
+
+        @runner.run("mytags", true, false)
     end
 end
-
-

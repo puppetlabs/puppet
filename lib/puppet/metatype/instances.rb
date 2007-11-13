@@ -99,6 +99,8 @@ class Puppet::Type
                 end
             end
 
+            # If they've specified a type and called on the base, then
+            # delegate to the subclass.
             if type
                 if typeklass = self.type(type)
                     return typeklass.create(hash)
@@ -233,19 +235,22 @@ class Puppet::Type
             hash.delete :name
         end
 
-        unless title
-            raise Puppet::Error,
-                "You must specify a title for objects of type %s" % self.to_s
+        if configuration = hash[:configuration]
+            hash.delete(:configuration)
         end
+
+        raise(Puppet::Error, "You must specify a title for objects of type %s" % self.to_s) unless title
 
         if hash.include? :type
             unless self.validattr? :type
                 hash.delete :type
             end
         end
+
         # okay, now make a transobject out of hash
         begin
             trans = Puppet::TransObject.new(title, self.name.to_s)
+            trans.configuration = configuration if configuration
             hash.each { |param, value|
                 trans[param] = value
             }
