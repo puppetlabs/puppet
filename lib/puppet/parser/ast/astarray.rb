@@ -49,6 +49,7 @@ class Puppet::Parser::AST
                     end
                 end
             }
+
             rets = [settors, others].flatten.collect { |child|
                 child.safeevaluate(:scope => scope)
             }

@@ -6,9 +6,12 @@ require 'mocha'
 require 'puppet'
 require 'puppet/parser/parser'
 require 'puppettest'
+require 'puppettest/support/utils'
 
 class TestParser < Test::Unit::TestCase
+    include PuppetTest
     include PuppetTest::ParserTesting
+    include PuppetTest::Support::Utils
     def setup
         super
         Puppet[:parseonly] = true
@@ -488,23 +491,6 @@ file { "/tmp/yayness":
             ret.classes[""].each do |res|
                 assert_instance_of(AST::Resource, res)
                 check.call(res, "multiresource")
-            end
-
-            # Now evaluate these
-            scope = mkscope
-
-            klass = parser.newclass ""
-            scope.source = klass
-
-            assert_nothing_raised do
-                ret.classes[""].evaluate :scope => scope, :resource => Puppet::Parser::Resource.new(:type => "mydefine", :title => 'whatever', :scope => scope, :source => scope.source)
-            end
-
-            # Make sure we can find both of them
-            %w{/tmp/1 /tmp/2}.each do |title|
-                res = scope.findresource("File[#{title}]")
-                assert(res, "Could not find %s" % title)
-                check.call(res, "found multiresource")
             end
         end
     end

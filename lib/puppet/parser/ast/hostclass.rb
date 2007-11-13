@@ -26,7 +26,7 @@ class Puppet::Parser::AST
             # Verify that we haven't already been evaluated.  This is
             # what provides the singleton aspect.
             if existing_scope = scope.compile.class_scope(self)
-                Puppet.debug "%s class already evaluated" % @type
+                Puppet.debug "Class '%s' already evaluated; not evaluating again" % (classname == "" ? "main" : classname)
                 return nil
             end
 
