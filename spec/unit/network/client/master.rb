@@ -424,8 +424,13 @@ describe Puppet::Network::Client::Master, " when adding default resources" do
 
     it "should add the default schedules" do
         config = mock 'config'
-        Puppet::Type.type(:schedule).expects(:add_default_schedules).with(config)
-        Puppet::Type.type(:filebucket).stubs(:add_default_filebucket)
+        one = stub 'one', :title => "one"
+        two = stub 'two', :title => "two"
+        Puppet::Type.type(:schedule).expects(:create_default_resources).with().returns([one, two])
+        config.expects(:add_resource).with(one)
+        config.expects(:add_resource).with(two)
+        config.stubs(:resource).returns(false)
+        Puppet::Type.type(:filebucket).stubs(:create_default_resources).returns([])
         Puppet::Network::Client::Master.publicize_methods :add_default_resources do
             @client.add_default_resources(config)
         end
@@ -433,10 +438,18 @@ describe Puppet::Network::Client::Master, " when adding default resources" do
 
     it "should add the default filebucket" do
         config = mock 'config'
-        Puppet::Type.type(:schedule).stubs(:add_default_schedules)
-        Puppet::Type.type(:filebucket).expects(:add_default_filebucket).with(config)
+        Puppet::Type.type(:schedule).stubs(:create_default_resources).returns([])
+        one = stub 'one', :title => "one"
+        two = stub 'two', :title => "two"
+        Puppet::Type.type(:filebucket).expects(:create_default_resources).with().returns([one, two])
+        config.expects(:add_resource).with(one)
+        config.expects(:add_resource).with(two)
+        config.stubs(:resource).returns(false)
         Puppet::Network::Client::Master.publicize_methods :add_default_resources do
             @client.add_default_resources(config)
         end
+    end
+
+    it "should only add default resources if no similarly named resource does not exist" do
     end
 end

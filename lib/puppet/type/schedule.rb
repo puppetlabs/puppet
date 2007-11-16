@@ -311,27 +311,24 @@ module Puppet
             []
         end
 
-        def self.add_default_schedules(configuration)
+        def self.create_default_schedules
             Puppet.debug "Creating default schedules"
             resources = []
             # Create our default schedule
-            unless configuration.resource(:schedule, "puppet")
-                configuration.create(:schedule,
-                    :name => "puppet",
-                    :period => :hourly,
-                    :repeat => "2"
-                )
-            end
+            resources << self.create(
+                :name => "puppet",
+                :period => :hourly,
+                :repeat => "2"
+            )
 
             # And then one for every period
             @parameters.find { |p| p.name == :period }.values.each { |value|
-                unless configuration.resource(:schedule, value.to_s)
-                    configuraiton.create(:schedule,
-                        :name => value.to_s,
-                        :period => value
-                    )
-                end
+                resources << self.create(:schedule,
+                    :name => value.to_s,
+                    :period => value
+                )
             }
+            resources
         end
 
         def match?(previous = nil, now = nil)

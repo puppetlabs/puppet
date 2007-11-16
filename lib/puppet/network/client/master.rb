@@ -49,15 +49,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         Puppet.settings[:dynamicfacts].split(/\s*,\s*/).collect { |fact| fact.downcase }
     end
 
-    # Add our default resources to the configuration.
-    def add_default_resources(configuration)
-        # First create the default scheduling objects
-        Puppet::Type.type(:schedule).add_default_schedules(configuration)
-        
-        # And filebuckets
-        Puppet::Type.type(:filebucket).add_default_filebucket(configuration)
-    end
-
     # Cache the config
     def cache(text)
         Puppet.info "Caching configuration at %s" % self.cachefile
@@ -557,6 +548,18 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     end
 
     private
+
+    # Add our default resources to the configuration.
+    def add_default_resources(configuration)
+        # These are the only two resource types with default resources.
+        # We should probably iterate across all of them, but I think that's
+        # unnecessarily expensive at this point.
+        [:schedule, :filebucket].each do |resource_type|
+            Puppet::Type.type(resource_type).create_default_resources.each do |resource|
+                configuration.add_resource(resource) unless configuration.resource(resource_type, resource.title)
+            end
+        end
+    end
 
     # Use our cached config, optionally specifying whether this is
     # necessary because of a failure.

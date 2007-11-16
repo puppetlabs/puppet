@@ -64,11 +64,9 @@ module Puppet
         end
         
         # Create a default filebucket.
-        def self.add_default_bucket(configuration)
-            unless configuration.resource(:filebucket, "puppet")
-                Puppet.debug "Creating default local filebucket"
-                configuration.create :filebucket, :name => "puppet", :path => Puppet[:clientbucketdir]
-            end
+        def self.create_default_resources
+            Puppet.debug "Creating default local filebucket"
+            self.create :name => "puppet", :path => Puppet[:clientbucketdir]
         end
 
         def self.instances
