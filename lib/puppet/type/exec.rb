@@ -113,12 +113,6 @@ module Puppet
                     self.fail "Command exceeded timeout" % value.inspect
                 end
 
-                loglevel = @resource[:loglevel]
-                if status.exitstatus.to_s != self.should.to_s
-                    self.fail("%s returned %s instead of %s" %
-                        [self.resource[:command], status.exitstatus, self.should.to_s])
-                end
-
                 if log = @resource[:logoutput]
                     if log == :true
                         log = @resource[:loglevel]
@@ -128,6 +122,11 @@ module Puppet
                             self.send(log, line)
                         }
                     end
+                end
+
+                if status.exitstatus.to_s != self.should.to_s
+                    self.fail("%s returned %s instead of %s" %
+                        [self.resource[:command], status.exitstatus, self.should.to_s])
                 end
 
                 return event
