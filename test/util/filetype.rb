@@ -85,8 +85,7 @@ class TestFileType < Test::Unit::TestCase
         assert_nothing_raised("Could not call backup with no buckets") do
             obj.backup
         end
-        puppet = type["puppet"]
-        assert(puppet, "Did not create default filebucket")
+        puppet = Puppet::Type.type(:filebucket).create_default_resources
 
         assert_equal("one", puppet.bucket.getfile(Digest::MD5.hexdigest(File.read(path))), "Could not get file from backup")
 

@@ -3,10 +3,12 @@
 require File.dirname(__FILE__) + '/../../lib/puppettest'
 
 require 'puppettest'
+require 'puppettest/support/utils'
 require 'fileutils'
 
 class TestFileBucket < Test::Unit::TestCase
     include PuppetTest::FileTesting
+    include PuppetTest::Support::Utils
     # hmmm
     # this is complicated, because we store references to the created
     # objects in a central store
@@ -63,14 +65,9 @@ class TestFileBucket < Test::Unit::TestCase
     def test_simplebucket
         name = "yayness"
         bucketpath = tempfile()
-        mkbucket(name, bucketpath)
+        bucket_resource = mkbucket(name, bucketpath)
 
-        bucket = nil
-        assert_nothing_raised {
-            bucket = Puppet.type(:filebucket).bucket(name)
-        }
-
-        assert_instance_of(Puppet::Network::Client.dipper, bucket)
+        bucket = bucket_resource.bucket
 
         md5 = nil
         newpath = tempfile()
@@ -109,15 +106,16 @@ class TestFileBucket < Test::Unit::TestCase
     end
 
     def test_fileswithbuckets
+        Facter.stubs(:to_hash).returns({})
         name = "yayness"
-        mkbucket(name, tempfile())
+        resource = mkbucket(name, tempfile())
 
-        bucket = nil
-        assert_nothing_raised {
-            bucket = Puppet.type(:filebucket).bucket(name)
-        }
+        config = mk_configuration resource
+
+        bucket = resource.bucket
 
         file = mktestfile()
+        config.add_resource(file)
         assert_nothing_raised {
             file[:backup] = name
         }
@@ -133,7 +131,7 @@ class TestFileBucket < Test::Unit::TestCase
         #    file[:backup] = true
         #}
 
-        assert_apply(file)
+        config.apply
 
         # so, we've now replaced the file with the opath file
         assert_equal(

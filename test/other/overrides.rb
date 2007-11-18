@@ -25,28 +25,27 @@ class TestOverrides < Test::Unit::TestCase
 
         baseobj = nil
         basefile = File.join(basedir, "file")
-        assert_nothing_raised("Could not create base obj") {
-            baseobj = Puppet.type(:file).create(
-                :title => "base",
-                :path => basedir,
-                :recurse => true,
-                :mode => "755"
-            )
-        }
+        config = mk_configuration
+
+        baseobj = config.create_resource(:file,
+            :title => "base",
+            :path => basedir,
+            :recurse => true,
+            :mode => "755"
+        )
 
         subobj = nil
         subdir = File.join(basedir, "0")
         subfile = File.join(subdir, "file")
-        assert_nothing_raised("Could not create sub obj") {
-            subobj = Puppet.type(:file).create(
-                :title => "sub",
-                :path => subdir,
-                :recurse => true,
-                :mode => "644"
-            )
-        }
 
-        assert_apply(baseobj, subobj)
+        subobj = config.create_resource(:file,
+            :title => "sub",
+            :path => subdir,
+            :recurse => true,
+            :mode => "644"
+        )
+
+        config.apply
 
         assert(File.stat(basefile).mode & 007777 == 0755)
         assert(File.stat(subfile).mode & 007777 == 0644)

@@ -9,6 +9,7 @@ require 'mocha'
 $platform = Facter["operatingsystem"].value
 
 class TestPackages < Test::Unit::TestCase
+    include PuppetTest
     include PuppetTest::FileTesting
     def setup
         super

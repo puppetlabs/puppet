@@ -53,8 +53,8 @@ class Puppet::Network::Handler
             return "success"
         end
 
-        # Describe a given object.  This returns the 'is' values for every property
-        # available on the object type.
+        # Describe a given resource.  This returns the 'is' values for every property
+        # available on the resource type.
         def describe(type, name, retrieve = nil, ignore = [], format = "yaml", client = nil, clientip = nil)
             Puppet.info "Describing %s[%s]" % [type.to_s.capitalize, name]
             @local = true unless client
@@ -63,29 +63,23 @@ class Puppet::Network::Handler
                 raise Puppet::Error, "Puppet type %s is unsupported" % type
             end
 
-            obj = nil
-
             retrieve ||= :all
             ignore ||= []
 
-            if obj = typeklass[name]
-                obj[:check] = retrieve
-            else
-                begin
-                    obj = typeklass.create(:name => name, :check => retrieve)
-                rescue Puppet::Error => detail
-                    raise Puppet::Error, "%s[%s] could not be created: %s" %
-                        [type, name, detail]
-                end
+            begin
+                resource = typeklass.create(:name => name, :check => retrieve)
+            rescue Puppet::Error => detail
+                raise Puppet::Error, "%s[%s] could not be created: %s" %
+                    [type, name, detail]
             end
 
-            unless obj
+            unless resource
                 raise XMLRPC::FaultException.new(
                     1, "Could not create %s[%s]" % [type, name]
                 )
             end
 
-            trans = obj.to_trans
+            trans = resource.to_trans
 
             # Now get rid of any attributes they specifically don't want
             ignore.each do |st|
@@ -138,11 +132,10 @@ class Puppet::Network::Handler
             bucket = Puppet::TransBucket.new
             bucket.type = typeklass.name
 
-            typeklass.instances.each do |obj|
-                next if ignore.include? obj.name
+            typeklass.instances.each do |resource|
+                next if ignore.include? resource.name
 
-                #object = Puppet::TransObject.new(obj.name, typeklass.name)
-                bucket << obj.to_trans
+                bucket << resource.to_trans
             end
 
             unless @local

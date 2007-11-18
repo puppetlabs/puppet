@@ -29,16 +29,16 @@ class Puppet::Type
 
             # Collect the current prereqs
             list.each { |dep|
-                obj = nil
                 # Support them passing objects directly, to save some effort.
-                unless dep.is_a? Puppet::Type
+                if dep.is_a?(Puppet::Type)
+                    next unless configuration.resource(type, dep.title)
+                    resource = dep
+                else
                     # Skip autorequires that we aren't managing
-                    unless dep = configuration.resource(type, dep)
-                        next
-                    end
+                    next unless resource = configuration.resource(type, dep)
                 end
                 
-                reqs << Puppet::Relationship.new(dep, self)
+                reqs << Puppet::Relationship.new(resource, self)
             }
         }
         

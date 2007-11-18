@@ -3,8 +3,10 @@
 require File.dirname(__FILE__) + '/../../lib/puppettest'
 
 require 'puppettest'
+require 'puppettest/support/utils'
 
 class TestTidy < Test::Unit::TestCase
+    include PuppetTest
     include PuppetTest::FileTesting
     def mktmpfile
         # because luke's home directory is on nfs, it can't be used for testing
@@ -201,16 +203,10 @@ class TestTidy < Test::Unit::TestCase
         path = tempfile()
         File.open(path, "w") { |f| 10.times { f.puts "yayness " } }
         tidy = Puppet::Type.type(:tidy).create :path => path, :size => "1b"
-        
-        assert_apply(tidy)
-        assert(! FileTest.exists?(path), "file did not get tidied")
-        
-        # Now try one with just an age attribute.
-        File.open(path, "w") { |f| 10.times { f.puts "yayness " } }
-        tidy = Puppet::Type.type(:tidy).create :path => path, :age => "5s"
-        
+        config = mk_configuration(tidy)
 
-        assert_apply(tidy)
+        config.apply
+
         assert(! FileTest.exists?(path), "file did not get tidied")
     end
     

@@ -73,10 +73,8 @@ module Puppet
                 "
 
             defaultto  do
-                if resource.configuration
-                    # Make sure the default file bucket exists.
-                    obj = resource.configuration.resource(:filebucket, "puppet") || resource.configuration.create_resource(:filebucket, :name => "puppet")
-                    obj.bucket
+                if resource.configuration and bucket_resource = resource.configuration.resource(:filebucket, "puppet")
+                    bucket_resource.bucket
                 else
                     nil
                 end
@@ -98,7 +96,7 @@ module Puppet
                     # We can't depend on looking this up right now,
                     # we have to do it after all of the objects
                     # have been instantiated.
-                    if bucketobj = Puppet::Type.type(:filebucket)[value]
+                    if @resource.configuration and bucketobj = @resource.configuration.resource(:filebucket, value)
                         @resource.bucket = bucketobj.bucket
                         bucketobj.title
                     else
@@ -256,11 +254,6 @@ module Puppet
             end
         end
         
-        def self.[](path)
-            return nil unless path
-            super(path.gsub(/\/+/, '/').sub(/\/$/, ''))
-        end
-
         # List files, but only one level deep.
         def self.instances(base = "/")
             unless FileTest.directory?(base)
@@ -316,31 +309,32 @@ module Puppet
             # a couple of these buckets
             @@filebuckets ||= {}
 
-            # Look up our bucket, if there is one
-            if bucket = self.bucket
-                case bucket
-                when String:
-                    if obj = @@filebuckets[bucket]
-                        # This sets the @value on :backup, too
-                        self.bucket = obj
-                    elsif bucket == "puppet"
-                        obj = Puppet::Network::Client.client(:Dipper).new(
-                            :Path => Puppet[:clientbucketdir]
-                        )
-                        self.bucket = obj
-                        @@filebuckets[bucket] = obj
-                    elsif obj = Puppet::Type.type(:filebucket).bucket(bucket)
-                        @@filebuckets[bucket] = obj
-                        self.bucket = obj
-                    else
-                        self.fail "Could not find filebucket %s" % bucket
-                    end
-                when Puppet::Network::Client.client(:Dipper): # things are hunky-dorey
-                else
-                    self.fail "Invalid bucket type %s" % bucket.class
-                end
-            end
             super
+
+            # Look up our bucket, if there is one
+            return unless bucket_name = self.bucket
+
+            return if bucket_name.is_a?(Puppet::Network::Client.dipper)
+
+            self.fail("Invalid bucket type %s" % bucket_name.class) unless bucket_name.is_a?(String)
+
+            return self.bucket = bucket if bucket = @@filebuckets[bucket_name]
+
+            if configuration and bucket_resource = configuration.resource(:filebucket, bucket_name)
+                @@filebuckets[bucket_name] = bucket_resource.bucket
+                self.bucket = bucket
+                return
+            end
+
+            if bucket_name == "puppet"
+                puts "Creating default bucket"
+                bucket_resource = Puppet::Type.type(:filebucket).create_default_resources
+                self.bucket = bucket_resource.bucket
+                configuration.add_resource(bucket_resource) if configuration
+                @@filebuckets[bucket_name] = bucket
+            else
+                self.fail "Could not find filebucket '%s'" % bucket_name
+            end
         end
         
         # Create any children via recursion or whatever.

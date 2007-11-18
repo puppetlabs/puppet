@@ -311,7 +311,7 @@ module Puppet
             []
         end
 
-        def self.create_default_schedules
+        def self.create_default_resources
             Puppet.debug "Creating default schedules"
             resources = []
             # Create our default schedule
@@ -323,7 +323,7 @@ module Puppet
 
             # And then one for every period
             @parameters.find { |p| p.name == :period }.values.each { |value|
-                resources << self.create(:schedule,
+                resources << self.create(
                     :name => value.to_s,
                     :period => value
                 )

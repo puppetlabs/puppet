@@ -3,11 +3,13 @@
 require File.dirname(__FILE__) + '/../../lib/puppettest'
 
 require 'puppettest'
+require 'puppettest/support/assertions'
 require 'cgi'
 require 'fileutils'
 require 'mocha'
 
 class TestFileSources < Test::Unit::TestCase
+    include PuppetTest
     include PuppetTest::FileTesting
     def setup
         super
@@ -285,7 +287,7 @@ class TestFileSources < Test::Unit::TestCase
         end
 
         assert_equal([destfile], sourced, "Did not get correct list of sourced objects")
-        dfileobj = @file[destfile]
+        dfileobj = config.resource(:file, destfile)
         assert(dfileobj, "Did not create destfile object")
         assert_equal([dfileobj], result)
         
@@ -301,7 +303,7 @@ class TestFileSources < Test::Unit::TestCase
             result, sourced = obj.sourcerecurse(true)
         end
         assert_equal([destfile], sourced, "Did not get correct list of sourced objects")
-        dfileobj = @file[destfile]
+        dfileobj = config.resource(:file, destfile)
         assert(dfileobj, "Did not create destfile object with a missing source")
         assert_equal([dfileobj], result)
         dfileobj.remove
@@ -415,9 +417,6 @@ class TestFileSources < Test::Unit::TestCase
     def test_sources_with_deleted_destfiles
         fromdir, todir, one, two = run_complex_sources
         assert(FileTest.exists?(todir))
-        
-        # We shouldn't have a 'two' file object in memory
-        assert_nil(@file[two], "object for 'two' is still in memory")
 
         # then delete a file
         File.unlink(two)
@@ -939,7 +938,6 @@ class TestFileSources < Test::Unit::TestCase
         end
         File.unlink(file1)
         File.unlink(file3)
-        Puppet.err :yay
         assert_apply(obj)
 
         assert(FileTest.exists?(file1), "File from source 1 was not copied")

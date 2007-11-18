@@ -150,20 +150,6 @@ class TestCron < Test::Unit::TestCase
         end
     end
 
-    def test_makeandretrievecron
-        %w{storeandretrieve a-name another-name more_naming SomeName}.each do |name|
-            cron = mkcron(name)
-            comp = mk_configuration(name, cron)
-            trans = assert_events([:cron_created], comp, name)
-            
-            cron.provider.class.prefetch
-            cron = nil
-
-            assert(cron = Puppet.type(:cron)[name], "Could not retrieve named cron")
-            assert_instance_of(Puppet.type(:cron), cron)
-        end
-    end
-
     # Do input validation testing on all of the parameters.
     def test_arguments
         values = {

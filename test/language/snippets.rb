@@ -22,14 +22,14 @@ class TestSnippets < Test::Unit::TestCase
     end
 
     def assert_file(path, msg = nil)
-        unless file = @file[path]
+        unless file = @configuration.resource(:file, path)
             msg ||= "Could not find file %s" % path
             raise msg
         end
     end
 
     def assert_mode_equal(mode, path)
-        unless file = @file[path]
+        unless file = @configuration.resource(:file, path)
             raise "Could not find file %s" % path
         end
 
@@ -211,8 +211,8 @@ class TestSnippets < Test::Unit::TestCase
         path1 = "/tmp/argumenttest1"
         path2 = "/tmp/argumenttest2"
 
-        file1 = @file[path1]
-        file2 = @file[path2]
+        file1 = @configuration.resource(:file, path1)
+        file2 = @configuration.resource(:file, path2)
 
         assert_file(path1)
         assert_mode_equal(0755, path1)
@@ -231,7 +231,7 @@ class TestSnippets < Test::Unit::TestCase
         }
 
         paths.each { |path|
-            file = @file[path]
+            file = @configuration.resource(:file, path)
             assert(file, "File %s is missing" % path)
             assert_mode_equal(0755, path)
         }
@@ -241,7 +241,7 @@ class TestSnippets < Test::Unit::TestCase
         paths = %w{a b c d e f g h}.collect { |l| "/tmp/iteration%stest" % l }
 
         paths.each { |path|
-            file = @file[path]
+            file = @configuration.resource(:file, path)
             assert_file(path)
             assert_mode_equal(0755, path)
         }
@@ -262,7 +262,7 @@ class TestSnippets < Test::Unit::TestCase
         dir = "/tmp/testdirtest"
         assert_file(file)
         assert_file(dir)
-        assert_equal(:directory, @file[dir].should(:ensure), "Directory is not set to be a directory")
+        assert_equal(:directory, @configuration.resource(:file, dir).should(:ensure), "Directory is not set to be a directory")
     end
 
     def snippet_scopetest
@@ -349,7 +349,7 @@ class TestSnippets < Test::Unit::TestCase
         }.each { |count, str|
             path = "/tmp/singlequote%s" % count
             assert_file(path)
-            assert_equal(str, @file[path].should(:content))
+            assert_equal(str, @configuration.resource(:file, path).should(:content))
         }
     end
 
@@ -387,21 +387,20 @@ class TestSnippets < Test::Unit::TestCase
     end
 
     def snippet_emptyexec
-        assert(Puppet::Type.type(:exec)["touch /tmp/emptyexectest"],
-            "Did not create exec")
+        assert(@configuration.resource(:exec, "touch /tmp/emptyexectest"), "Did not create exec")
     end
 
     def snippet_multisubs
         path = "/tmp/multisubtest"
         assert_file(path)
-        file = @file[path]
+        file = @configuration.resource(:file, path)
         assert_equal("sub2", file.should(:content), "sub2 did not override content")
         assert_mode_equal(0755, path)
     end
 
     def snippet_collection
         assert_file("/tmp/colltest1")
-        assert_nil(@file["/tmp/colltest2"], "Incorrectly collected file")
+        assert_nil(@configuration.resource(:file, "/tmp/colltest2"), "Incorrectly collected file")
     end
 
     def snippet_virtualresources

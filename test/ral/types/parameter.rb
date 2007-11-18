@@ -113,8 +113,7 @@ class TestParameter < Test::Unit::TestCase
 
         inst = type.create(:name => "test")
 
-        config = mk_configuration
-        inst.configuration = config
+        config = mk_configuration(inst)
 
         assert_nothing_raised("Could not create shadowed param") {
             inst[:alias] = "foo"
@@ -131,7 +130,7 @@ class TestParameter < Test::Unit::TestCase
         assert_instance_of(param, obj, "alias is an instance of the wrong class")
 
         # Make sure the alias got created
-        assert(type["foo"], "Did not retrieve object by its alias")
+        assert(config.resource(inst.class.name, "foo"), "Did not retrieve object by its alias")
         
         # Now try it during initialization
         other = nil

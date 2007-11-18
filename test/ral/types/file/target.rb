@@ -3,9 +3,11 @@
 require File.dirname(__FILE__) + '/../../../lib/puppettest'
 
 require 'puppettest'
+require 'puppettest/support/assertions'
 require 'fileutils'
 
 class TestFileTarget < Test::Unit::TestCase
+    include PuppetTest
     include PuppetTest::FileTesting
 
     def setup
@@ -44,7 +46,7 @@ class TestFileTarget < Test::Unit::TestCase
     def test_linkrecurse
         dest = tempfile()
         link = @file.create :path => tempfile(), :recurse => true, :ensure => dest
-        mk_configuration link
+        config = mk_configuration link
         
         ret = nil
         
@@ -62,7 +64,8 @@ class TestFileTarget < Test::Unit::TestCase
         assert_equal(:directory, link.should(:ensure), "ensure was not set to directory")
         assert_equal([File.join(link.title, "one")], ret.collect { |f| f.title },
             "Did not get linked file")
-        oneobj = @file[File.join(link.title, "one")]
+        oneobj = config.resource(:file, File.join(link.title, "one"))
+
         assert_equal(one, oneobj.should(:target), "target was not set correctly")
         
         oneobj.remove
@@ -81,7 +84,7 @@ class TestFileTarget < Test::Unit::TestCase
             "Did not get links back")
         
         returns.each do |path|
-            obj = @file[path]
+            obj = config.resource(:file, path)
             assert(path, "did not get obj for %s" % path)
             sdest = File.join(dest, File.basename(path))
             assert_equal(sdest, obj.should(:target),
@@ -99,15 +102,14 @@ class TestFileTarget < Test::Unit::TestCase
         system("touch %s" % file)
 
         link = nil
-        assert_nothing_raised {
-            link = Puppet.type(:file).create(
-                :ensure => source,
-                :path => path,
-                :recurse => true
-            )
-        }
+        config = mk_configuration
+        link = config.create_resource(:file,
+            :ensure => source,
+            :path => path,
+            :recurse => true
+        )
 
-        assert_apply(link)
+        config.apply
 
         sublink = File.join(path, "subdir")
         linkpath = File.join(sublink, "file")
@@ -116,7 +118,7 @@ class TestFileTarget < Test::Unit::TestCase
         assert(File.symlink?(linkpath), "path is not a link")
         assert_equal(file, File.readlink(linkpath))
 
-        assert_nil(@file[sublink], "objects were not removed")
+        assert_nil(config.resource(:file, sublink), "objects were not removed")
         assert_equal([], link.evaluate, "Link is not in sync")
     end
 

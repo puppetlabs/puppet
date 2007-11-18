@@ -27,7 +27,7 @@ module PuppetTest::Support::Utils
         if resources[0].is_a?(Puppet::Node::Configuration)
             config = resources.shift
             unless resources.empty?
-                resources.each { |r| config.add_resource r }
+                resources.each { |r| config.add_resource(r) unless config.resource(r.class.name, r.title) }
             end
         elsif resources[0].is_a?(Puppet.type(:component))
             raise ArgumentError, "resource2config() no longer accpts components"
