@@ -392,6 +392,7 @@ describe Puppet::Util::Settings, " when being used to manage the host machine" d
         @settings = Puppet::Util::Settings.new
         @settings.setdefaults :main, :maindir => ["/maindir", "a"], :seconddir => ["/seconddir", "a"]
         @settings.setdefaults :other, :otherdir => {:default => "/otherdir", :desc => "a", :owner => "luke", :group => "johnny", :mode => 0755}
+        @settings.setdefaults :third, :thirddir => ["/thirddir", "b"]
         @settings.setdefaults :files, :myfile => {:default => "/myfile", :desc => "a", :mode => 0755}
     end
 
@@ -424,9 +425,9 @@ describe Puppet::Util::Settings, " when being used to manage the host machine" d
 
     it "should be able to create needed directories in multiple sections" do
         Dir.expects(:mkdir).with("/maindir")
-        Dir.expects(:mkdir).with("/otherdir", 0755)
         Dir.expects(:mkdir).with("/seconddir")
-        @settings.use(:main, :other)
+        Dir.expects(:mkdir).with("/thirddir")
+        @settings.use(:main, :third)
     end
 
     it "should provide a method to trigger enforcing of file modes on existing files and directories" do
@@ -540,8 +541,8 @@ describe Puppet::Util::Settings, " when being used to manage the host machine" d
     end
 
     it "should support a method for re-using all currently used sections" do
-        Dir.expects(:mkdir).with(@settings[:otherdir], 0755).times(2)
-        @settings.use(:other)
+        Dir.expects(:mkdir).with("/thirddir").times(2)
+        @settings.use(:third)
         @settings.reuse
     end
 
