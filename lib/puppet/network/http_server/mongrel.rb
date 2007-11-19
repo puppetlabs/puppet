@@ -54,6 +54,10 @@ module Puppet::Network
         attr_reader :xmlrpc_server
 
         def initialize(handlers)
+            if Puppet[:debug]
+                $mongrel_debug_client = true
+                Puppet.debug 'Mongrel client debugging enabled. [$mongrel_debug_client = true].'
+            end
             # Create a new instance of BasicServer. We are supposed to subclass it
             # but that does not make sense since we would not introduce any new
             # behaviour and we have to subclass Mongrel::HttpHandler so our handler
