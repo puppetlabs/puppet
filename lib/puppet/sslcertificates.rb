@@ -9,7 +9,7 @@ rescue LoadError
 end
 
 module Puppet::SSLCertificates
-    #def self.mkcert(type, name, ttl, issuercert, issuername, serial, publickey)
+    #def self.mkcert(type, name, dnsnames, ttl, issuercert, issuername, serial, publickey)
     def self.mkcert(hash)
         [:type, :name, :ttl, :issuer, :serial, :publickey].each { |param|
             unless hash.include?(param)
@@ -39,6 +39,7 @@ module Puppet::SSLCertificates
         basic_constraint = nil
         key_usage = nil
         ext_key_usage = nil
+        subject_alt_name = []
 
         ef = OpenSSL::X509::ExtensionFactory.new
 
@@ -60,16 +61,17 @@ module Puppet::SSLCertificates
             key_usage = %w{cRLSign keyCertSign}
         when :server:
             basic_constraint = "CA:FALSE"
+            hash[:dnsnames].each(':') { |d| subject_alt_name << 'DNS:' + d } if hash[:dnsnames]
             key_usage = %w{digitalSignature keyEncipherment}
-        ext_key_usage = %w{serverAuth clientAuth}
+            ext_key_usage = %w{serverAuth clientAuth}
         when :ocsp:
             basic_constraint = "CA:FALSE"
             key_usage = %w{nonRepudiation digitalSignature}
-        ext_key_usage = %w{serverAuth OCSPSigning}
+            ext_key_usage = %w{serverAuth OCSPSigning}
         when :client:
             basic_constraint = "CA:FALSE"
             key_usage = %w{nonRepudiation digitalSignature keyEncipherment}
-        ext_key_usage = %w{clientAuth emailProtection}
+            ext_key_usage = %w{clientAuth emailProtection}
             ex << ef.create_extension("nsCertType", "client,email")
         else
             raise Puppet::Error, "unknown cert type '%s'" % hash[:type]
@@ -80,12 +82,9 @@ module Puppet::SSLCertificates
         ex << ef.create_extension("basicConstraints", basic_constraint, true)
         ex << ef.create_extension("subjectKeyIdentifier", "hash")
 
-        if key_usage
-          ex << ef.create_extension("keyUsage", key_usage.join(","))
-        end
-        if ext_key_usage
-          ex << ef.create_extension("extendedKeyUsage", ext_key_usage.join(","))
-        end
+        ex << ef.create_extension("keyUsage", key_usage.join(",")) if key_usage
+        ex << ef.create_extension("extendedKeyUsage", ext_key_usage.join(",")) if ext_key_usage
+	    ex << ef.create_extension("subjectAltName", subject_alt_name.join(",")) if ! subject_alt_name.empty?
 
         #if @ca_config[:cdp_location] then
         #  ex << ef.create_extension("crlDistributionPoints",
@@ -99,10 +98,7 @@ module Puppet::SSLCertificates
         cert.extensions = ex
 
         # for some reason this _must_ be the last extension added
-        if hash[:type] == :ca
-            ex << ef.create_extension("authorityKeyIdentifier",
-                                      "keyid:always,issuer:always")
-        end
+        ex << ef.create_extension("authorityKeyIdentifier", "keyid:always,issuer:always") if hash[:type] == :ca
 
         return cert
     end

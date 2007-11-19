@@ -1,3 +1,8 @@
+    Certificates now always specify a subjectAltName, but it defaults
+    to '*', meaning that it doesn't require DNS names to match.  You
+    can override that behaviour by specifying a value for
+    'certdnsnames', which will then require that hostname as a match (#896).
+
     Relationship metaparams (:notify, :require, :subscribe, and
     :before) now stack when they are collecting metaparam values
     from their containers (#446).  For instance, if a resource

@@ -155,6 +155,8 @@ module Puppet
     Puppet.setdefaults(:ssl,
         :certname => [fqdn, "The name to use when handling certificates.  Defaults
             to the fully qualified domain name."],
+        :certdnsnames => ['*', "The DNS names on the Server certificate as a colon-
+            separated list.  Defaults to * (wildcard match for all names)."],
         :certdir => ["$ssldir/certs", "The certificate directory."],
         :publickeydir => ["$ssldir/public_keys", "The public key directory."],
         :privatekeydir => { :default => "$ssldir/private_keys",
