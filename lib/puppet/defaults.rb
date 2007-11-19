@@ -6,6 +6,10 @@ module Puppet
     var = nil
     name = $0.gsub(/.+#{File::SEPARATOR}/,'').sub(/\.rb$/, '')
 
+    # Make File.expand_path happy
+    require 'etc'
+    ENV["HOME"] ||= Etc.getpwuid(Process.uid).dir
+
     if name != "puppetmasterd" and Puppet::Util::SUIDManager.uid != 0
         conf = File.expand_path("~/.puppet")
         var = File.expand_path("~/.puppet/var")
