@@ -33,7 +33,6 @@ module PuppetTest::ServerTest
     # create a server, forked into the background
     def mkserver(handlers = nil)
         Puppet[:name] = "puppetmasterd"
-        Puppet[:ssldir] = "/tmp/ssl"
         # our default handlers
         unless handlers
             handlers = {
