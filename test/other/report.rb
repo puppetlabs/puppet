@@ -87,7 +87,7 @@ class TestReports < Test::Unit::TestCase
         
         # We have to reuse reporting here because of something going on in the
         # server/report.rb file
-        Puppet.settings.use(:reporting)
+        Puppet.settings.use(:main, :reporting)
 
         3.times { |i|
             log = Puppet.warning("Report test message %s" % i)
@@ -114,7 +114,7 @@ class TestReports < Test::Unit::TestCase
 
     if Puppet.features.rrd?
     def test_rrdgraph_report
-        Puppet.settings.use(:metrics)
+        Puppet.settings.use(:main, :metrics)
         report = mkreport
 
         assert(! report.metrics.empty?, "Did not receive any metrics")

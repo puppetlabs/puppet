@@ -18,7 +18,7 @@ class Puppet::Network::Handler
 
         def initialize(*args)
             super
-            Puppet.settings.use(:reporting, :metrics)
+            Puppet.settings.use(:main, :reporting, :metrics)
         end
 
         # Accept a report from a client.

@@ -643,13 +643,6 @@ Generated on #{Time.now}.
                 @used = []
             end
 
-            runners = sections.collect { |s|
-                symbolize(s)
-            }.find_all { |s|
-                ! @used.include? s
-            }
-            return if runners.empty?
-
             bucket = to_transportable(*sections)
 
             config = bucket.to_configuration
@@ -661,7 +654,8 @@ Generated on #{Time.now}.
             end
             config.clear
 
-            runners.each { |s| @used << s }
+            sections.each { |s| @used << s }
+            @used.uniq
         end
     end
 
