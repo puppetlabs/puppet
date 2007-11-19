@@ -52,7 +52,9 @@ describe Puppet::SimpleGraph, " when managing vertices" do
     it "should return all set vertices when asked" do
         @graph.add_vertex!(:one)
         @graph.add_vertex!(:two)
-        @graph.vertices.should == [:one, :two]
+        @graph.vertices.length.should == 2
+        @graph.vertices.should include(:one)
+        @graph.vertices.should include(:two)
     end
 
     it "should remove a given vertex when asked" do
