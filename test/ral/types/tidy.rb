@@ -3,8 +3,10 @@
 require File.dirname(__FILE__) + '/../../lib/puppettest'
 
 require 'puppettest'
+require 'puppettest/support/utils'
 
 class TestTidy < Test::Unit::TestCase
+    include PuppetTest::Support::Utils
     include PuppetTest::FileTesting
     def mktmpfile
         # because luke's home directory is on nfs, it can't be used for testing

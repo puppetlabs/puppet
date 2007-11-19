@@ -3,9 +3,11 @@
 require File.dirname(__FILE__) + '/../../lib/puppettest'
 
 require 'puppettest'
+require 'puppettest/support/utils'
 require 'fileutils'
 
 class TestFile < Test::Unit::TestCase
+    include PuppetTest::Support::Utils
     include PuppetTest::FileTesting
     # hmmm
     # this is complicated, because we store references to the created

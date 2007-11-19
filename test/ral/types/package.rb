@@ -3,12 +3,14 @@
 require File.dirname(__FILE__) + '/../../lib/puppettest'
 
 require 'puppettest'
+require 'puppettest/support/utils'
 require 'facter'
 require 'mocha'
 
 $platform = Facter["operatingsystem"].value
 
 class TestPackages < Test::Unit::TestCase
+    include PuppetTest::Support::Utils
     include PuppetTest::FileTesting
     def setup
         super

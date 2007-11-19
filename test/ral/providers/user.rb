@@ -3,8 +3,10 @@
 require File.dirname(__FILE__) + '/../../lib/puppettest'
 
 require 'puppettest'
+require 'puppettest/support/utils'
 
 class TestUserProvider < Test::Unit::TestCase
+    include PuppetTest::Support::Utils
     include PuppetTest::FileTesting
 
     def setup
