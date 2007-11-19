@@ -1,3 +1,10 @@
+    Relationship metaparams (:notify, :require, :subscribe, and
+    :before) now stack when they are collecting metaparam values
+    from their containers (#446).  For instance, if a resource
+    inside a definition has a value set for 'require', and you call
+    the definition with 'require', the resource gets both requires,
+    where before it would only retain its initial value.
+
     Changed the behavior of --debug to include Mongrel client
     debugging information.  Mongrel output will be written to
     the terminal only, not to the puppet debug log.  This should

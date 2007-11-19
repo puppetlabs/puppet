@@ -15,6 +15,14 @@ class Puppet::Parser::Resource
 
     attr_writer :tags
 
+    # Determine whether the provided parameter name is a relationship parameter.
+    def self.relationship_parameter?(name)
+        unless defined?(@relationship_names)
+            @relationship_names = Puppet::Type.relationship_params.collect { |p| p.name }
+        end
+        @relationship_names.include?(name)
+    end
+
     # Proxy a few methods to our @ref object.
     [:builtin?, :type, :title].each do |method|
         define_method(method) do
@@ -337,13 +345,19 @@ class Puppet::Parser::Resource
     # from any parent scope, and there's currently no way to turn that off.
     def add_metaparams
         Puppet::Type.eachmetaparam do |name|
-            # Skip metaparams that we already have defined.
-            next if @params[name]
-            if val = scope.lookupvar(name.to_s, false)
-                unless val == :undefined
-                    set_parameter(name, val)
-                end
-            end
+            # Skip metaparams that we already have defined, unless they're relationship metaparams.
+            # LAK:NOTE Relationship metaparams get treated specially -- we stack them, instead of
+            # overriding.
+            next if @params[name] and not self.class.relationship_parameter?(name)
+
+            # Skip metaparams for which we get no value.
+            next unless val = scope.lookupvar(name.to_s, false) and val != :undefined
+
+            # The default case: just set the value
+            return set_parameter(name, val) unless @params[name]
+
+            # For relationship params, though, join the values (a la #446).
+            @params[name].value = [@params[name].value, val].flatten
         end
     end
 
@@ -364,21 +378,10 @@ class Puppet::Parser::Resource
     def override_parameter(param)
         # This can happen if the override is defining a new parameter, rather
         # than replacing an existing one.
-        unless current = @params[param.name]
-            @params[param.name] = param
-            return
-        end
+        (@params[param.name] = param and return) unless current = @params[param.name]
 
-        # The parameter is already set.  See if they're allowed to override it.
-        if param.source.child_of?(current.source)
-            if param.add
-                # Merge with previous value.
-                param.value = [ current.value, param.value ].flatten
-            end
-
-            # Replace it, keeping all of its info.
-            @params[param.name] = param
-        else
+        # The parameter is already set.  Fail if they're not allowed to override it.
+        unless param.source.child_of?(current.source)
             if Puppet[:trace]
                 puts caller
             end
@@ -395,6 +398,16 @@ class Puppet::Parser::Resource
             end
             msg += "; cannot redefine"
             raise Puppet::ParseError.new(msg, param.line, param.file)
+        end
+
+        # If we've gotten this far, we're allowed to override.
+
+        # Merge with previous value, if the parameter was generated with the +> syntax.
+        if param.add
+            current.value = [current.value, param.value].flatten
+        else
+            # Just replace the existing parameter with this new one.
+            @params[param.name] = param
         end
     end
 
