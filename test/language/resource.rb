@@ -317,20 +317,6 @@ class TestResource < PuppetTest::TestCase
         assert_equal(false, res.builtin?)
     end
 
-    def test_add_metaparams
-        res = mkresource
-        params = res.instance_variable_get("@params")
-        params[:a] = :b
-        Puppet::Type.expects(:eachmetaparam).multiple_yields(:a, :b, :c)
-        res.scope.expects(:lookupvar).with("b", false).returns(:something)
-        res.scope.expects(:lookupvar).with("c", false).returns(:undefined)
-        res.expects(:set_parameter).with(:b, :something)
-
-        res.send(:add_metaparams)
-
-        assert_nil(params[:c], "A value was created somehow for an unset metaparam")
-    end
-
     def test_reference_conversion
         # First try it as a normal string
         ref = Parser::Resource::Reference.new(:type => "file", :title => "/tmp/ref1")

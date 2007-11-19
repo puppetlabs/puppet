@@ -403,12 +403,11 @@ class Puppet::Parser::Resource
         # If we've gotten this far, we're allowed to override.
 
         # Merge with previous value, if the parameter was generated with the +> syntax.
-        if param.add
-            current.value = [current.value, param.value].flatten
-        else
-            # Just replace the existing parameter with this new one.
-            @params[param.name] = param
-        end
+        # It's important that we use the new param instance here, not the old one,
+        # so that the source is registered correctly for later overrides.
+        param.value = [current.value, param.value].flatten if param.add
+
+        @params[param.name] = param
     end
 
     # Verify that all passed parameters are valid.  This throws an error if
