@@ -464,9 +464,9 @@ class TestCron < Test::Unit::TestCase
             inst = @crontype.create(
                 :name => "something", :command => "/some/thing",
                 :provider => :crontab)
-            assert_equal(ENV["USER"], inst.should(:user),
+            assert_equal(Etc.getpwuid(Process.uid).name, inst.should(:user),
                 "user did not default to current user with crontab")
-            assert_equal(ENV["USER"], inst.should(:target),
+            assert_equal(Etc.getpwuid(Process.uid).name, inst.should(:target),
                 "target did not default to current user with crontab")
 
             # Now make a new cron with a user, and make sure it gets copied
