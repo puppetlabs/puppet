@@ -3,13 +3,11 @@
 require File.dirname(__FILE__) + '/../../lib/puppettest'
 
 require 'puppettest'
-require 'puppettest/support/utils'
 require 'cgi'
 require 'fileutils'
 
 class TestFileIgnoreSources < Test::Unit::TestCase
     include PuppetTest::FileTesting
-    include PuppetTest::Support::Utils
    
     def setup
         super
@@ -20,7 +18,7 @@ class TestFileIgnoreSources < Test::Unit::TestCase
         end
     end
 
-    #This is not needed unless using md5 (correct me if I'm wrong)
+#This is not needed unless using md5 (correct me if I'm wrong)
     def initstorage
         Puppet::Util::Storage.init
         Puppet::Util::Storage.load
@@ -32,7 +30,6 @@ class TestFileIgnoreSources < Test::Unit::TestCase
     end
 
     def test_ignore_simple_source
-        Facter.stubs(:to_hash).returns({})
 
         #Temp directory to run tests in
         path = tempfile()
@@ -92,7 +89,6 @@ class TestFileIgnoreSources < Test::Unit::TestCase
     end
 
     def test_ignore_with_wildcard
-        Facter.stubs(:to_hash).returns({})
         #Temp directory to run tests in
         path = tempfile()
         @@tmpfiles.push path
@@ -162,7 +158,6 @@ class TestFileIgnoreSources < Test::Unit::TestCase
     end
 
     def test_ignore_array
-        Facter.stubs(:to_hash).returns({})
         #Temp directory to run tests in
         path = tempfile()
         @@tmpfiles.push path

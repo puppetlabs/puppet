@@ -228,6 +228,18 @@ class Type
             self.devfail "I was not passed a namevar"
         end
 
+        # If the name and title differ, set up an alias
+        if self.name != self.title
+            if obj = self.class[self.name] 
+                if self.class.isomorphic?
+                    raise Puppet::Error, "%s already exists with name %s" %
+                        [obj.title, self.name]
+                end
+            else
+                self.class.alias(self.name, self)
+            end
+        end
+
         if hash.include?(:provider)
             self[:provider] = hash[:provider]
             hash.delete(:provider)

@@ -8,11 +8,6 @@ require 'puppet/network/handler/fileserver'
 class TestFileServer < Test::Unit::TestCase
 	include PuppetTest
 
-    def setup
-        super
-        Facter.stubs(:to_hash).returns({})
-    end
-
     def mkmount(path = nil)
         mount = nil
         name = "yaytest"
@@ -149,6 +144,10 @@ class TestFileServer < Test::Unit::TestCase
         sfile = "/test/tmpfile"
         assert_nothing_raised {
             list = server.list(sfile, :ignore, true, false)
+        }
+
+        assert_nothing_raised {
+            file = Puppet.type(:file)[tmpfile]
         }
 
         output = "/\tfile"
@@ -944,11 +943,10 @@ allow *
          end
 
         # Now, check that they use Facter info 
-        Facter.stubs(:value).with("hostname").returns("myhost")
-        Facter.stubs(:value).with("domain").returns("mydomain")
-        local = "myhost"
-        domain = "mydomain"
+        Puppet.notice "The following messages are normal"
         client = nil
+        local = Facter["hostname"].value
+        domain = Facter["domain"].value
         fqdn = [local, domain].join(".")
         {"%h" => local, # Short name
          "%H" => fqdn, # Full name
@@ -956,7 +954,6 @@ allow *
          "%%" => "%", # escape
          "%o" => "%o" # other
          }.each do |pat, repl|
-             Puppet.expects(:notice)
              check.call(client, pat, repl)
          end
 
@@ -1135,8 +1132,6 @@ allow *
     def test_failures
         # create a server with the file
         server = nil
-        Facter.stubs(:[]).with("hostname").returns("myhost")
-        Facter.stubs(:[]).with("domain").returns("mydomain")
 
         config = tempfile
         [

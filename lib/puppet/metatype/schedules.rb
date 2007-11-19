@@ -4,8 +4,8 @@ class Puppet::Type
     # file.
     def schedule
         unless defined? @schedule
-            if name = self[:schedule] and self.configuration
-                if sched = configuration.resource(:schedule, name)
+            if name = self[:schedule]
+                if sched = Puppet.type(:schedule)[name]
                     @schedule = sched
                 else
                     self.fail "Could not find schedule %s" % name

@@ -154,13 +154,11 @@ class TestHost < Test::Unit::TestCase
     def test_puppetalias
         host = mkhost()
 
-        config = mk_configuration(host)
-
         assert_nothing_raised {
             host[:alias] = "testing"
         }
 
-        same = config.resource(:host, "testing")
+        same = host.class["testing"]
         assert(same, "Could not retrieve by alias")
     end
 end

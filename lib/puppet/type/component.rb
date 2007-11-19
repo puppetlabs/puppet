@@ -20,7 +20,7 @@ Puppet::Type.newtype(:component) do
         desc "The type that this component maps to.  Generally some kind of
             class from the language."
 
-        defaultto "class"
+        defaultto "component"
     end
 
     # Remove a child from the component.
@@ -97,8 +97,10 @@ Puppet::Type.newtype(:component) do
         @children = []
         super
 
-        unless @title.include?("[")
-            @title = "%s[%s]" % [self[:type].capitalize, @title]
+        # If the title isn't a full resource reference, assume
+        # we're a class and make an alias for that.
+        unless @title.to_s.include?("[")
+            self.class.alias("class[%s]" % @title, self)
         end
     end
 

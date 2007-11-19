@@ -69,6 +69,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     def clear
         @configuration.clear(true) if @configuration
         Puppet::Type.allclear
+        mkdefault_objects
         @configuration = nil
     end
 
@@ -189,8 +190,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
 
         # Keep the state database up to date.
         @configuration.host_config = true
-
-        add_default_resources(@configuration)
     end
     
     # A simple proxy method, so it's easy to test.
@@ -205,6 +204,17 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
 
         self.class.instance = self
         @running = false
+
+        mkdefault_objects
+    end
+
+    # Make the default objects necessary for function.
+    def mkdefault_objects
+        # First create the default scheduling objects
+        Puppet::Type.type(:schedule).mkdefaultschedules
+        
+        # And filebuckets
+        Puppet::Type.type(:filebucket).mkdefaultbucket
     end
 
     # Mark that we should restart.  The Puppet module checks whether we're running,
@@ -549,18 +559,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
 
     private
 
-    # Add our default resources to the configuration.
-    def add_default_resources(configuration)
-        # These are the only two resource types with default resources.
-        # We should probably iterate across all of them, but I think that's
-        # unnecessarily expensive at this point.
-        [:schedule, :filebucket].each do |resource_type|
-            Puppet::Type.type(resource_type).create_default_resources.each do |resource|
-                configuration.add_resource(resource) unless configuration.resource(resource_type, resource.title)
-            end
-        end
-    end
-
     # Use our cached config, optionally specifying whether this is
     # necessary because of a failure.
     def use_cached_config(because_of_failure = false)
@@ -584,8 +582,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
             clear
             return false
         end
-
-        add_default_resources(@configuration)
         return true
     end
 end

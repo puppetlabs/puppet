@@ -102,8 +102,6 @@ class TestSSHKey < Test::Unit::TestCase
     def test_moddingkey
         key = mkkey()
 
-        config = mk_configuration(key)
-
         assert_events([:sshkey_created], key)
 
         key.retrieve
@@ -115,7 +113,7 @@ class TestSSHKey < Test::Unit::TestCase
         assert_events([:sshkey_changed], key)
 
         aliases.each do |name|
-            assert_equal(key, config.resource(:sshkey, name),
+            assert_equal(key, key.class[name],
                 "alias was not set")
         end
     end
@@ -133,13 +131,12 @@ class TestSSHKey < Test::Unit::TestCase
 
     def test_puppetalias
         key = mkkey()
-        config = mk_configuration(key)
 
         assert_nothing_raised {
             key[:alias] = "testing"
         }
 
-        same = config.resource(:sshkey, "testing")
+        same = key.class["testing"]
         assert(same, "Could not retrieve by alias")
     end
 
@@ -171,14 +168,13 @@ class TestSSHKey < Test::Unit::TestCase
             keys << k
             names << k.name
         }
-        config = mk_configuration(*keys)
-        config.apply
-
+        assert_apply(*keys)
+        keys.clear
+        Puppet.type(:sshkey).clear
         newkey = mkkey()
-        config = mk_configuration(newkey)
+        #newkey[:ensure] = :present
         names << newkey.name
-
-        config.apply
+        assert_apply(newkey)
 
         # Verify we can retrieve that info
         assert_nothing_raised("Could not retrieve after second write") {

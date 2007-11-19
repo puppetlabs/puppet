@@ -61,20 +61,19 @@ class TestRelationships < Test::Unit::TestCase
             :notify => true, :before => true}
         refreshers = [:subscribe, :notify]
         [:require, :subscribe, :notify, :before].each do |param|
-            config = mk_configuration
             # Create three files to generate our events and three
             # execs to receive them
             files = []
             execs = []
             3.times do |i|
-                files << config.create_resource(:file,
+                files << Puppet::Type.newfile(
                     :title => "file#{i}",
                     :path => tempfile(),
                     :ensure => :file
                 )
 
                 path = tempfile()
-                execs << config.create_resource(:exec,
+                execs << Puppet::Type.newexec(
                     :title => "notifytest#{i}",
                     :path => "/usr/bin:/bin",
                     :command => "touch #{path}",
@@ -166,9 +165,7 @@ class TestRelationships < Test::Unit::TestCase
             :ensure => :directory)
         exec = Puppet::Type.newexec(:title => "myexec", :cwd => path,
             :command => "/bin/echo")
-
-        config = mk_configuration(file, exec)
-
+        
         reqs = nil
         assert_nothing_raised do
             reqs = exec.autorequire
@@ -176,10 +173,13 @@ class TestRelationships < Test::Unit::TestCase
         assert_instance_of(Puppet::Relationship, reqs[0], "Did not return a relationship edge")
         assert_equal(file, reqs[0].source, "Did not set the autorequire source correctly")
         assert_equal(exec, reqs[0].target, "Did not set the autorequire target correctly")
-
+        
         # Now make sure that these relationships are added to the 
         # relationship graph
-        assert(config.relationship_graph.edge?(file, exec), "autorequire edge was not created")
+        config = mk_configuration(file, exec)
+        config.apply do |trans|
+            assert(config.relationship_graph.edge?(file, exec), "autorequire edge was not created")
+        end
     end
     
     def test_requires?
@@ -210,7 +210,7 @@ class TestRelationships < Test::Unit::TestCase
         file = Puppet::Type.newfile :path => tempfile, :require => ["file", "/no/such/file"]
         
         assert_raise(Puppet::Error) do
-            config = mk_configuration(file)
+            file.builddepends
         end
     end
 end

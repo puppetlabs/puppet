@@ -301,9 +301,9 @@ end
 describe Puppet::Node::Configuration, " when functioning as a resource container" do
     before do
         @config = Puppet::Node::Configuration.new("host")
-        @one = stub 'resource1', :ref => "Me[one]", :configuration= => nil, :title => "one", :name => "one"
-        @two = stub 'resource2', :ref => "Me[two]", :configuration= => nil, :title => "two", :name => "two"
-        @dupe = stub 'resource3', :ref => "Me[one]", :configuration= => nil, :title => "one", :name => "one"
+        @one = stub 'resource1', :ref => "Me[one]", :configuration= => nil
+        @two = stub 'resource2', :ref => "Me[two]", :configuration= => nil
+        @dupe = stub 'resource3', :ref => "Me[one]", :configuration= => nil
     end
 
     it "should provide a method to add one or more resources" do
@@ -411,25 +411,6 @@ describe Puppet::Node::Configuration, " when functioning as a resource container
         @one.expects :remove
         @config.remove_resource(@one)
         @config.resource("me", "other").should be_nil
-    end
-
-    it "should alias resources whose names are not equal to their titles" do
-        resource = stub("resource", :name => "one", :title => "two", :ref => "Me[two]", :configuration= => nil)
-        @config.expects(:alias).with(resource, "one")
-        @config.add_resource resource
-    end
-
-    it "should fail to add resources whose names conflict with an existing resource even when the title does not conflict" do
-        conflict = stub("resource", :name => "one", :ref => "Me[one]", :configuration= => nil)
-        resource = stub("resource", :name => "one", :title => "other", :ref => "Me[other]", :configuration= => nil)
-        @config.expects(:alias).with(resource, "one")
-        @config.add_resource resource
-    end
-
-    it "should not alias components whose names do not match their titles" do
-        comp = Puppet::Type::Component.create :name => "one", :title => "two"
-        @config.expects(:alias).never
-        @config.add_resource comp
     end
 end
 
@@ -557,18 +538,18 @@ end
 describe Puppet::Node::Configuration, " when creating a relationship graph" do
     before do
         @config = Puppet::Node::Configuration.new("host")
-        @compone = @config.create_resource :component, :name => "one"
-        @comptwo = @config.create_resource :component, :name => "two", :require => ["class", "one"]
-
+        @compone = Puppet::Type::Component.create :name => "one"
+        @comptwo = Puppet::Type::Component.create :name => "two", :require => ["class", "one"]
         @file = Puppet::Type.type(:file)
-        @one = @config.create_resource :file, :path => "/one"
-        @two = @config.create_resource :file, :path => "/two"
+        @one = @file.create :path => "/one"
+        @two = @file.create :path => "/two"
         @config.add_edge! @compone, @one
         @config.add_edge! @comptwo, @two
 
-        @three = @config.create_resource :file, :path => "/three"
-        @four = @config.create_resource :file, :path => "/four", :require => ["file", "/three"]
-        @five = @config.create_resource :file, :path => "/five"
+        @three = @file.create :path => "/three"
+        @four = @file.create :path => "/four", :require => ["file", "/three"]
+        @five = @file.create :path => "/five"
+        @config.add_resource @compone, @comptwo, @one, @two, @three, @four, @five
         @relationships = @config.relationship_graph
     end
 

@@ -332,6 +332,39 @@ end
         assert(FileTest.exists?(file), "file was not created on second run")
     end
 
+    def test_default_objects
+        # Make sure they start out missing
+        assert_nil(Puppet::Type.type(:filebucket)["puppet"],
+            "default filebucket already exists")
+        assert_nil(Puppet::Type.type(:schedule)["daily"],
+            "default schedules already exists")
+
+        master = mkclient()
+
+        # Now make sure they got created
+        assert(Puppet::Type.type(:filebucket)["puppet"],
+            "default filebucket not found")
+        assert(Puppet::Type.type(:schedule)["daily"],
+            "default schedules not found")
+
+        # clear everything, and make sure we can recreate them
+        Puppet::Type.allclear
+        assert_nil(Puppet::Type.type(:filebucket)["puppet"],
+            "default filebucket not removed")
+        assert_nil(Puppet::Type.type(:schedule)["daily"],
+            "default schedules not removed")
+        assert_nothing_raised  { master.mkdefault_objects }
+        assert(Puppet::Type.type(:filebucket)["puppet"],
+            "default filebucket not found")
+        assert(Puppet::Type.type(:schedule)["daily"],
+            "default schedules not found")
+
+
+        # Make sure we've got schedules
+        assert(Puppet::Type.type(:schedule)["hourly"], "Could not retrieve hourly schedule")
+        assert(Puppet::Type.type(:filebucket)["puppet"], "Could not retrieve default bucket")
+    end
+
     # #540 - make sure downloads aren't affected by noop
     def test_download_in_noop
         source = tempfile
@@ -515,6 +548,24 @@ end
         Puppet[:environment] = "something"
         facts = Puppet::Network::Client::Master.facts
         assert_equal(facts["environment"], Puppet[:environment], "Did not add environment to client facts")
+    end
+
+    # This is partially to fix #532, but also to save on memory.
+    def test_remove_objects_after_every_run
+        client = mkclient
+
+        ftype = Puppet::Type.type(:file)
+        file = ftype.create :title => "/what/ever", :ensure => :present
+        config = Puppet::Node::Configuration.new
+        config.add_resource(file)
+
+        config.expects :apply
+
+        client.configuration = config
+        client.expects(:getconfig)
+        client.run
+
+        assert_nil(ftype[@createdfile], "file object was not removed from memory")
     end
 
     # #685

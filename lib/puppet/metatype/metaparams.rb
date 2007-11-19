@@ -272,11 +272,16 @@ class Puppet::Type
         # which resource is applied first and which resource is considered
         # to be the event generator.
         def to_edges
-            raise(Puppet::DevError, "Cannot create dependencies without a configuration") unless resource.configuration
-            @value.collect do |tname, name|
+            @value.collect do |value|
                 # we just have a name and a type, and we need to convert it
                 # to an object...
-                object = resource.configuration.resource(tname, name)
+                tname, name = value
+                object = nil
+                if type = Puppet::Type.type(tname)
+                    object = type[name]
+                else # try to treat it as a component
+                    object = Puppet::Type::Component["#{tname}[#{name}]"]
+                end
                 
                 # Either of the two retrieval attempts could have returned
                 # nil.

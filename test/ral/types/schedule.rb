@@ -242,23 +242,24 @@ class TestSchedule < Test::Unit::TestCase
         s = mksched
         s[:period] = :hourly
 
+        f = nil
         path = tempfile()
-        f = Puppet.type(:file).create(
-            :name => path,
-            :schedule => s.name,
-            :ensure => "file"
-        )
-
-        config = mk_configuration(s, f)
+        assert_nothing_raised {
+            f = Puppet.type(:file).create(
+                :name => path,
+                :schedule => s.name,
+                :ensure => "file"
+            )
+        }
 
         assert(f.scheduled?, "File is not scheduled to run")
 
-        config.apply
+        assert_apply(f)
 
         assert(! f.scheduled?, "File is scheduled to run already")
         File.unlink(path)
 
-        config.apply
+        assert_apply(f)
 
         assert(! FileTest.exists?(path), "File was created when not scheduled")
     end
@@ -286,17 +287,25 @@ class TestSchedule < Test::Unit::TestCase
 
     # Verify that each of our default schedules exist
     def test_defaultschedules
-        defaults = nil
-        assert_nothing_raised("Could not create default schedules") do
-            defaults = Puppet.type(:schedule).create_default_resources
+        assert_nothing_raised do
+            Puppet.type(:schedule).mkdefaultschedules
         end
         s = {}
         %w{puppet hourly daily weekly monthly}.each { |period|
-            schedule = defaults.find { |r| r.title == period }
-            assert(schedule, "Could not find %s schedule" %
+            obj = Puppet.type(:schedule)[period]
+            assert(obj, "Could not find %s schedule" %
                 period)
-            s[period] = schedule
+            s[period] = obj
         }
+        assert_nothing_raised("Could not rerun mkdefaultschedules") do
+            Puppet.type(:schedule).mkdefaultschedules
+        end
+        s.each do |period, obj|
+            newobj = Puppet.type(:schedule)[period]
+            assert(newobj, "somehow lost schedule for %s" % period)
+            assert_equal(obj.object_id, newobj.object_id,
+                "created a new schedule instead of reusing existing one")
+        end
     end
 
     def test_period_with_repeat

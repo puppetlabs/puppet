@@ -60,22 +60,11 @@ class Puppet::Node::Configuration < Puppet::PGraph
             end
 
             ref = resource.ref
-
             if @resource_table.include?(ref)
                 raise ArgumentError, "Resource %s is already defined" % ref
             else
                 @resource_table[ref] = resource
             end
-
-            # If the name and title differ, set up an alias
-            if ! resource.is_a?(Puppet::Type::Component) and resource.respond_to?(:title) and resource.name != resource.title
-                if obj = resource(resource.class.name, resource.name)
-                    raise Puppet::Error, "%s already exists with name %s" % [obj.title, self.name] if resource.class.isomorphic?
-                else
-                    self.alias(resource, resource.name)
-                end
-            end
-
             resource.configuration = self unless is_relationship_graph
             add_vertex!(resource)
         end
@@ -193,11 +182,6 @@ class Puppet::Node::Configuration < Puppet::PGraph
     def create_resource(type, options)
         unless klass = Puppet::Type.type(type)
             raise ArgumentError, "Unknown resource type %s" % type
-        end
-        if options.is_a?(Puppet::TransObject)
-            options.configuration = self
-        else
-            options[:configuration] = self
         end
         return unless resource = klass.create(options)
 
@@ -384,11 +368,6 @@ class Puppet::Node::Configuration < Puppet::PGraph
         elsif defined?(@relationship_graph) and @relationship_graph
             @relationship_graph.resource(ref)
         end
-    end
-
-    # Return an array of the currently-defined resources.
-    def resources
-        @resource_table.keys
     end
 
     # Add a tag.

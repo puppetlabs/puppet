@@ -3,12 +3,10 @@
 require File.dirname(__FILE__) + '/../../lib/puppettest'
 
 require 'puppettest'
-require 'puppettest/support/utils'
 require 'base64'
 require 'cgi'
 
 class TestResourceServer < Test::Unit::TestCase
-    include PuppetTest
     include PuppetTest::ServerTest
 
     def verify_described(type, described)
@@ -180,6 +178,9 @@ class TestResourceServer < Test::Unit::TestCase
         end
 
         require 'etc'
+
+        # Make the example schedules, for testing
+        Puppet::Type.type(:schedule).mkdefaultschedules
 
         Puppet::Type.eachtype do |type|
             unless type.respond_to? :instances

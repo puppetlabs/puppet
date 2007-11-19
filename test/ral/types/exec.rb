@@ -203,45 +203,42 @@ class TestExec < Test::Unit::TestCase
         )
 
         comp = mk_configuration("Testing", file, exec)
-        Puppet::Node::Facts.indirection.stubs(:terminus_class).returns(:memory)
 
         assert_events([:file_created, :executed_command], comp)
     end
 
     # Verify that we auto-require any managed scripts.
     def test_autorequire_files
-        config = mk_configuration
-
         exe = tempfile()
         oexe = tempfile()
         sh = %x{which sh}
         File.open(exe, "w") { |f| f.puts "#!#{sh}\necho yup" }
 
-        file = config.create_resource(:file,
+        file = Puppet.type(:file).create(
             :path => oexe,
             :source => exe,
             :mode => 755
         )
 
         basedir = File.dirname(oexe)
-        baseobj = config.create_resource(:file,
+        baseobj = Puppet.type(:file).create(
             :path => basedir,
             :source => exe,
             :mode => 755
         )
 
-        ofile = config.create_resource(:file,
+        ofile = Puppet.type(:file).create(
             :path => exe,
             :mode => 755
         )
 
-        exec = config.create_resource(:exec,
+        exec = Puppet.type(:exec).create(
             :command => oexe,
             :path => ENV["PATH"],
             :cwd => basedir
         )
 
-        cat = config.create_resource(:exec,
+        cat = Puppet.type(:exec).create(
             :command => "cat %s %s" % [exe, oexe],
             :path => ENV["PATH"]
         )

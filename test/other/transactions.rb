@@ -6,10 +6,8 @@ require 'puppet'
 require 'puppettest'
 require 'mocha'
 require 'puppettest/support/resources'
-require 'puppettest/support/utils'
 
 class TestTransactions < Test::Unit::TestCase
-    include PuppetTest
     include PuppetTest::FileTesting
     include PuppetTest::Support::Resources
     class Fakeprop <Puppet::Property
@@ -431,25 +429,26 @@ class TestTransactions < Test::Unit::TestCase
 
     # Make sure that unscheduled and untagged objects still respond to events
     def test_unscheduled_and_untagged_response
-        config = mk_configuration
-        config.add_resource(*(Puppet::Type.type(:schedule).create_default_resources))
+        Puppet::Type.type(:schedule).mkdefaultschedules
         Puppet[:ignoreschedules] = false
-        file = config.create_resource(:file,
+        file = Puppet.type(:file).create(
             :name => tempfile(),
             :ensure => "file",
             :backup => false
         )
 
         fname = tempfile()
-        exec = config.create_resource(:exec,
+        exec = Puppet.type(:exec).create(
             :name => "touch %s" % fname,
             :path => "/usr/bin:/bin",
             :schedule => "monthly",
             :subscribe => ["file", file.name]
         )
 
+        config = mk_configuration(file, exec)
+
         # Run it once
-        config.apply
+        assert_apply(config)
         assert(FileTest.exists?(fname), "File did not get created")
 
         assert(!exec.scheduled?, "Exec is somehow scheduled")
@@ -605,7 +604,8 @@ class TestTransactions < Test::Unit::TestCase
         end
         
         %w{ya ra y r}.each do |name|
-            assert(trans.configuration.vertex?(config.resource(:generator, name)), "Generated %s was not a vertex" % name)
+            assert(trans.configuration.vertex?(Puppet::Type.type(:generator)[name]),
+                "Generated %s was not a vertex" % name)
             assert($finished.include?(name), "%s was not finished" % name)
         end
         
@@ -615,8 +615,10 @@ class TestTransactions < Test::Unit::TestCase
         end
         
         %w{ya ra y r}.each do |name|
-            assert(!trans.configuration.vertex?(config.resource(:generator, name)), "Generated vertex %s was not removed from graph" % name)
-            assert_nil(config.resource(:generator, name), "Generated vertex %s was not removed from class" % name)
+            assert(!trans.configuration.vertex?(Puppet::Type.type(:generator)[name]),
+                "Generated vertex %s was not removed from graph" % name)
+            assert_nil(Puppet::Type.type(:generator)[name],
+                "Generated vertex %s was not removed from class" % name)
         end
     end
     
@@ -643,7 +645,7 @@ class TestTransactions < Test::Unit::TestCase
         assert_nothing_raised("failed to apply yay") do
             trans.eval_resource(yay)
         end
-        ya = config.resource(:generator, "ya")
+        ya = type["ya"]
         assert(ya, "Did not generate ya")
         assert(trans.relationship_graph.vertex?(ya),
             "Did not add ya to rel_graph")
@@ -656,11 +658,11 @@ class TestTransactions < Test::Unit::TestCase
         
         # Now make sure it in turn eval_generates appropriately
         assert_nothing_raised("failed to apply yay") do
-            trans.eval_resource(config.resource(:generator, "ya"))
+            trans.eval_resource(type["ya"])
         end
 
         %w{y}.each do |name|
-            res = config.resource(:generator, name)
+            res = type[name]
             assert(res, "Did not generate %s" % name)
             assert(trans.relationship_graph.vertex?(res),
                 "Did not add %s to rel_graph" % name)
@@ -668,7 +670,7 @@ class TestTransactions < Test::Unit::TestCase
         end
         
         assert_nothing_raised("failed to eval_generate with nil response") do
-            trans.eval_resource(config.resource(:generator, "y"))
+            trans.eval_resource(type["y"])
         end
         assert(trans.relationship_graph.edge?(yay, ya), "no edge was created for ya => yay")
         
@@ -676,7 +678,7 @@ class TestTransactions < Test::Unit::TestCase
             trans.eval_resource(rah)
         end
 
-        ra = config.resource(:generator, "ra")
+        ra = type["ra"]
         assert(ra, "Did not generate ra")
         assert(trans.relationship_graph.vertex?(ra),
             "Did not add ra to rel_graph" % name)
@@ -695,9 +697,9 @@ class TestTransactions < Test::Unit::TestCase
         end
         
         %w{ya ra y r}.each do |name|
-            assert(!trans.relationship_graph.vertex?(config.resource(:generator, name)),
+            assert(!trans.relationship_graph.vertex?(type[name]),
                 "Generated vertex %s was not removed from graph" % name)
-            assert_nil(config.resource(:generator, name),
+            assert_nil(type[name],
                 "Generated vertex %s was not removed from class" % name)
         end
         

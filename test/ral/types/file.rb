@@ -3,12 +3,10 @@
 require File.dirname(__FILE__) + '/../../lib/puppettest'
 
 require 'puppettest'
-require 'puppettest/support/utils'
 require 'fileutils'
 
 class TestFile < Test::Unit::TestCase
     include PuppetTest::FileTesting
-    include PuppetTest::Support::Utils
     # hmmm
     # this is complicated, because we store references to the created
     # objects in a central store
@@ -34,8 +32,6 @@ class TestFile < Test::Unit::TestCase
         @file = Puppet::Type.type(:file)
         $method = @method_name
         Puppet[:filetimeout] = -1
-        Facter.stubs(:each)
-        Facter.stubs(:to_hash).returns({})
     end
 
     def teardown
@@ -518,7 +514,7 @@ class TestFile < Test::Unit::TestCase
         test = File.join(path, "file")
         File.open(test, "w") { |f| f.puts "yay" }
         assert_nothing_raised() { ret = dir.localrecurse(true) }
-        fileobj = config.resource(:file, test)
+        fileobj = @file[test]
         assert(fileobj, "child object was not created")
         assert_equal([fileobj], ret, "child object was not returned")
         
@@ -562,7 +558,7 @@ class TestFile < Test::Unit::TestCase
         assert_nothing_raised() { ret = dir.localrecurse(true) }
         assert_equal([bad], ret.collect { |f| f.title }, "purge failed")
         
-        badobj = config.resource(:file, bad)
+        badobj = @file[bad]
         assert(badobj, "did not create bad object")
     end
     
@@ -758,6 +754,43 @@ class TestFile < Test::Unit::TestCase
         assert(file.insync?(currentvalues))
     end
 
+    def test_remove
+        basedir = tempfile()
+        subdir = File.join(basedir, "this")
+        FileUtils.mkdir_p(subdir)
+
+        dir = nil
+        assert_nothing_raised {
+            dir = Puppet.type(:file).create(
+                :path => basedir,
+                :recurse => true,
+                :check => %w{owner mode group}
+            )
+        }
+        mk_configuration dir
+
+        assert_nothing_raised {
+            dir.eval_generate
+        }
+
+        obj = nil
+        assert_nothing_raised {
+            obj = Puppet.type(:file)[subdir]
+        }
+
+        assert(obj, "Could not retrieve subdir object")
+
+        assert_nothing_raised {
+            obj.remove(true)
+        }
+
+        assert_nothing_raised {
+            obj = Puppet.type(:file)[subdir]
+        }
+
+        assert_nil(obj, "Retrieved removed object")
+    end
+
     def test_path
         dir = tempfile()
 
@@ -777,14 +810,14 @@ class TestFile < Test::Unit::TestCase
                 :check => %w{mode owner group}
             )
         }
-        config = mk_configuration dirobj
+        mk_configuration dirobj
 
         assert_nothing_raised {
             dirobj.eval_generate
         }
 
         assert_nothing_raised {
-            file = config.resource(:file, path)
+            file = dirobj.class[path]
         }
 
         assert(file, "Could not retrieve file object")
@@ -796,14 +829,12 @@ class TestFile < Test::Unit::TestCase
         basedir = tempfile()
         subfile = File.join(basedir, "subfile")
 
-        config = Puppet::Node::Configuration.new
-
-        baseobj = config.create_resource(:file,
+        baseobj = Puppet.type(:file).create(
             :name => basedir,
             :ensure => "directory"
         )
 
-        subobj = config.create_resource(:file,
+        subobj = Puppet.type(:file).create(
             :name => subfile,
             :ensure => "file"
         )
@@ -1098,17 +1129,18 @@ class TestFile < Test::Unit::TestCase
         file = tempfile()
         newfile = tempfile()
 
-        config = mk_configuration
-
         File.open(file, "w", 0411) { |f| f.puts "yayness" }
 
-        resource = config.create_resource(:file,
-            :path => file, :content => "rahness\n", :backup => ".puppet-bak"
-        )
+        obj = nil
+        assert_nothing_raised {
+            obj = Puppet::Type.type(:file).create(
+                :path => file, :content => "rahness\n", :backup => ".puppet-bak"
+            )
+        }
 
-        assert_apply(config)
+        assert_apply(obj)
 
-        backupfile = file + resource[:backup]
+        backupfile = file + obj[:backup]
         @@tmpfiles << backupfile
         assert(FileTest.exists?(backupfile),
             "Backup file %s does not exist" % backupfile)
@@ -1119,15 +1151,13 @@ class TestFile < Test::Unit::TestCase
         bucket = "bucket"
         bpath = tempfile()
         Dir.mkdir(bpath)
-        config.create_resource(:filebucket,
+        Puppet::Type.type(:filebucket).create(
             :title => bucket, :path => bpath
         )
 
-        resource[:backup] = bucket
-        resource[:content] = "New content"
-
-        resource.finish
-        assert_apply(config)
+        obj[:backup] = bucket
+        obj[:content] = "New content"
+        assert_apply(obj)
 
         md5 = "18cc17fa3047fcc691fdf49c0a7f539a"
         dir, file, pathfile = Puppet::Network::Handler.filebucket.paths(bpath, md5)
@@ -1256,20 +1286,19 @@ class TestFile < Test::Unit::TestCase
         # this file should get removed
         File.open(purgee, "w") { |f| f.puts "footest" }
 
-        config = mk_configuration
-
-        lfobj = config.create_resource(:file,
+        lfobj = Puppet::Type.newfile(
             :title => "localfile",
             :path => localfile,
             :content => "rahtest",
             :backup => false
         )
 
-        destobj = config.create_resource(:file, :title => "destdir", :path => destdir,
+        destobj = Puppet::Type.newfile(:title => "destdir", :path => destdir,
                                     :source => sourcedir,
                                     :backup => false,
                                     :recurse => true)
 
+        config = mk_configuration(lfobj, destobj)
         config.apply
 
         assert(FileTest.exists?(dsourcefile), "File did not get copied")
@@ -1402,11 +1431,10 @@ class TestFile < Test::Unit::TestCase
             :link => proc { File.symlink(linkdest, path) }
         }
 
-        config = mk_configuration
+        bucket = Puppet::Type.newfilebucket :name => "main", :path => tempfile()
 
-        bucket = config.create_resource :filebucket, :name => "main", :path => tempfile()
-
-        obj = config.create_resource :file, :path => path, :force => true, :links => :manage
+        obj = Puppet::Type.newfile :path => path, :force => true,
+            :links => :manage
 
         Puppet[:trace] = true
         ["main", false].each do |backup|
@@ -1529,17 +1557,15 @@ class TestFile < Test::Unit::TestCase
         dfiles = [File.join(dest, "1"), File.join(dest, "dir", "2")]
         
         bpath = tempfile
-
-        config = mk_configuration
-        bucket = config.create_resource :filebucket, :name => "rtest", :path => bpath
+        bucket = Puppet::Type.type(:filebucket).create :name => "rtest", :path => bpath
         dipper = bucket.bucket
         dipper = Puppet::Network::Handler.filebucket.new(
             :Path => bpath
         )
         assert(dipper, "did not receive bucket client")
-        file = config.create_resource :file, :path => dest, :source => source, :recurse => true, :backup => "rtest"
+        file = Puppet::Type.newfile :path => dest, :source => source, :recurse => true, :backup => "rtest"
         
-        config.apply
+        assert_apply(file)
         dfiles.each do |f|
             assert(FileTest.exists?(f), "destfile %s was not created" % f)
         end
@@ -1549,7 +1575,7 @@ class TestFile < Test::Unit::TestCase
             f.puts "boo: %s" % File.basename(sf)
         } }
         
-        config.apply
+        assert_apply(file)
         dfiles.each do |f|
             assert_equal("boo: %s\n" % File.basename(f), File.read(f),
                 "file was not copied correctly")
@@ -1574,8 +1600,7 @@ class TestFile < Test::Unit::TestCase
     
     def test_backup
         path = tempfile()
-        config = Puppet::Node::Configuration.new
-        file = config.create_resource :file, :path => path, :content => "yay"
+        file = Puppet::Type.newfile :path => path, :content => "yay"
         
         [false, :false, "false"].each do |val|
             assert_nothing_raised do
@@ -1604,7 +1629,7 @@ class TestFile < Test::Unit::TestCase
         assert_equal("main", file.bucket, "file's bucket was not set")
         
         # And then an existing bucket
-        obj = config.create_resource :filebucket, :name => "testing"
+        obj = Puppet::Type.type(:filebucket).create :name => "testing"
         bucket = obj.bucket
         
         assert_nothing_raised do
@@ -1620,12 +1645,12 @@ class TestFile < Test::Unit::TestCase
         file = File.join(dir, "file")
         File.open(file, "w") { |f| f.puts "" }
         obj = Puppet::Type.newfile :path => dir, :recurse => true, :mode => 0755
-        config = mk_configuration obj
+        mk_configuration obj
         
         assert_equal("/%s" % obj.ref, obj.path)
         
         list = obj.eval_generate
-        fileobj = config.resource(:file, file)
+        fileobj = obj.class[file]
         assert(fileobj, "did not generate file object")
         assert_equal("/%s" % fileobj.ref, fileobj.path, "did not generate correct subfile path")
     end
@@ -1642,8 +1667,7 @@ class TestFile < Test::Unit::TestCase
     
     # Testing #434
     def test_stripping_extra_slashes_during_lookup
-        config = mk_configuration
-        file = config.create_resource(:file, :path => "/one/two")
+        file = Puppet::Type.newfile(:path => "/one/two")
         %w{/one/two/ /one/two /one//two //one//two//}.each do |path|
             assert(Puppet::Type.type(:file)[path], "could not look up file via path %s" % path)
         end
@@ -1738,14 +1762,14 @@ class TestFile < Test::Unit::TestCase
         assert_nothing_raised("Failure when recursing") do
             children = obj.eval_generate
         end
-        assert(config.resource(:file, subdir), "did not create subdir object")
+        assert(obj.class[subdir], "did not create subdir object")
         children.each do |c|
             assert_nothing_raised("Failure when recursing on %s" % c) do
                 c.configuration = config
                 others = c.eval_generate
             end
         end
-        oobj = config.resource(:file, other)
+        oobj = obj.class[other]
         assert(oobj, "did not create other object")
 
         assert_nothing_raised do
@@ -1756,14 +1780,12 @@ class TestFile < Test::Unit::TestCase
     # Make sure we default to the "puppet" filebucket, rather than a string
     def test_backup_defaults_to_bucket
         path = tempfile
-        config = Puppet::Node::Configuration.new
-        config.add_resource(Puppet::Type.type(:filebucket).create_default_resources)
-        file = config.create_resource :file, :path => path, :content => 'some content'
+        file = Puppet::Type.newfile(:path => path, :content => 'some content')
         file.finish
 
-        assert_instance_of(Puppet::Network::Client.dipper, file.bucket,
+        assert_instance_of(Puppet::Network::Client::Dipper, file.bucket,
             "did not default to a filebucket for backups")
-        assert_equal(config.resource(:filebucket, "puppet").bucket, file.bucket,
+        assert_equal(Puppet::Type.type(:filebucket)["puppet"].bucket, file.bucket,
             "did not default to the 'puppet' filebucket")
     end
 
@@ -1782,7 +1804,7 @@ class TestFile < Test::Unit::TestCase
         assert_nothing_raised do
             children = obj.eval_generate
         end
-        fobj = config.resource(:file,file)
+        fobj = obj.class[file]
         assert(fobj, "did not create file object")
         assert(fobj.should(:ensure) != :directory, "ensure was passed to child")
     end
