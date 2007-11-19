@@ -114,8 +114,15 @@ module Puppet
                 end
 
                 if log = @resource[:logoutput]
-                    if log == :true
+                    case log 
+                    when :true 
                         log = @resource[:loglevel]
+                    when :on_failure
+                        if status.exitstatus.to_s != self.should.to_s
+                            log = @resource[:loglevel]
+                        else
+                            log = :false
+                        end
                     end
                     unless log == :false
                         @output.split(/\n/).each { |line|
@@ -200,10 +207,11 @@ module Puppet
 
         newparam(:logoutput) do
             desc "Whether to log output.  Defaults to logging output at the
-                loglevel for the ``exec`` resource.  Values are **true**, *false*,
-                and any legal log level."
+                loglevel for the ``exec`` resource. Use *on_failure* to only
+                log the output when the command reports an error.  Values are
+                **true**, *false*, *on_failure*, and any legal log level."
 
-            values = [:true, :false]
+            values = [:true, :false, :on_failure]
             # And all of the log levels
             Puppet::Util::Log.eachlevel { |level| values << level }
             newvalues(*values)
