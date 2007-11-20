@@ -43,6 +43,10 @@ Puppet::Type.newtype(:interface) do
               and alias. This is use to force a given number to be used"
 	end
 
+	newproperty(:netmask) do
+		desc "The netmask for the interface."
+	end
+
 	newproperty(:ifopts) do
 		desc "Interface options."
 	end

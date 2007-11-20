@@ -1,3 +1,7 @@
+    Fixing some of the problems with interface management on Red Hat.
+    Puppet now uses the :netmask property and does not try to set
+    the bootproto (#762).
+
     You now must specify an environment and you are required to specify
     the valid environments for your site. (#911) 
 

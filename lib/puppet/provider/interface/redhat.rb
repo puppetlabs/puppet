@@ -2,6 +2,9 @@ require 'puppet/provider/parsedfile'
 require 'erb'
 
 Puppet::Type.type(:interface).provide(:redhat) do
+    desc "Manage network interfaces on Red Hat operating systems.  This provider
+        parses and generates configuration files in ``/etc/sysconfig/network-scripts``."
+
 	@interface_dir = "/etc/sysconfig/network-scripts"
     confine :exists => @interface_dir
     defaultfor :operatingsystem => [:fedora, :centos, :redhat]
@@ -9,22 +12,34 @@ Puppet::Type.type(:interface).provide(:redhat) do
     # Create the setter/gettor methods to match the model.
     mk_resource_methods
 
-    @alias_template = ERB.new <<-ALIAS
+    @templates = {}
+
+    # Register a template.
+    def self.register_template(name, string)
+        @templates[name] = ERB.new(string)
+    end
+
+    # Retrieve a template by name.
+    def self.template(name)
+        @templates[name]
+    end
+
+    register_template :alias, <<-ALIAS
 DEVICE=<%= self.device %>
 ONBOOT=<%= self.on_boot %>
-BOOTPROTO=<%= self.bootproto %>
+BOOTPROTO=none
 IPADDR=<%= self.name %>
 NETMASK=<%= self.netmask %>
 BROADCAST=
 ALIAS
 
 
-    @loopback_template = ERB.new <<-LOOPBACKDUMMY
+    register_template :loopback, <<-LOOPBACKDUMMY
 DEVICE=<%= self.device %>
 ONBOOT=<%= self.on_boot %>
 BOOTPROTO=static
 IPADDR=<%= self.name %>
-NETMASK=255.255.255.255
+NETMASK=<%= self.netmask %>
 BROADCAST=
 LOOPBACKDUMMY
 
@@ -34,7 +49,6 @@ LOOPBACKDUMMY
 	# maximum number of aliases per interface
 	@max_aliases_per_iface = 10
 
-
 	@@dummies = []
 	@@aliases = Hash.new { |hash, key| hash[key] = [] }
 
@@ -43,17 +57,13 @@ LOOPBACKDUMMY
 	def self.instances
 		# parse all of the config files at once
 		Dir.glob("%s/ifcfg-*" % @interface_dir).collect do |file|
-
 			record = parse(file)
 
 			# store the existing dummy interfaces
-			if record[:interface_type] == :dummy
-				@@dummies << record[:ifnum] unless @@dummies.include?(record[:ifnum])
-			end
+            @@dummies << record[:ifnum] if (record[:interface_type] == :dummy and ! @@dummies.include?(record[:ifnum]))
 
-			if record[:interface_type] == :alias
-				@@aliases[record[:interface]] << record[:ifnum]
-			end
+            @@aliases[record[:interface]] << record[:ifnum] if record[:interface_type] == :alias
+
             new(record)
 		end
 	end
@@ -85,68 +95,16 @@ LOOPBACKDUMMY
 
     # Parse the existing file.
     def self.parse(file)
+        instance = new()
+        return instance unless FileTest.exist?(file)
 
-        opts = {}
-        return opts unless FileTest.exists?(file)
-
-        File.open(file) do |f|
-            f.readlines.each do |line|
-                if line =~ /^(\w+)=(.+)$/
-                    opts[$1.downcase.intern] = $2
-                end
+        File.readlines(file).each do |line|
+            if line =~ /^(\w+)=(.+)$/
+                instance.send($1.downcase + "=", $2)
             end
         end
 
-        # figure out the "real" device information
-        case opts[:device]
-        when /:/:
-            if opts[:device].include?(":")
-                opts[:interface], opts[:ifnum] = opts[:device].split(":")
-            end
-
-            opts[:interface_type] = :alias
-        when /^dummy/:
-            opts[:interface_type] = :loopback
-			opts[:interface] = "dummy"
-
-			# take the number of the dummy interface, as this is used
-			# when working out whether to call next_dummy when dynamically
-			# creating these
-			opts[:ifnum] = opts[:device].sub("dummy",'')
-
-			@@dummies << opts[:ifnum].to_s unless @@dummies.include?(opts[:ifnum].to_s)
-        else
-			opts[:interface_type] = :normal
-			opts[:interface] = opts[:device]
-        end
-
-		# translate whether we come up on boot to true/false
-		case opts[:onboot].downcase
-		when "yes":
-			opts[:onboot] = :true
-		when "no":
-			opts[:onboot] = :false
-		else
-			# this case should never happen, but just in case
-			opts[:onboot] = false
-		end
-
-
-        # Remove any attributes we don't want.  These would be
-        # pretty easy to support.
-        [:bootproto, :broadcast, :netmask, :device].each do |opt|
-            if opts.include?(opt)
-                opts.delete(opt)
-            end
-        end
-
-        if opts.include?(:ipaddr)
-            opts[:name] = opts[:ipaddr]
-            opts.delete(:ipaddr)
-        end
-
-        return opts
-
+        return instance
     end
 
     # Prefetch our interface list, yo.
@@ -182,14 +140,7 @@ LOOPBACKDUMMY
     # address (also dummy) on linux. For linux it's quite involved, and we
     # will use an ERB template
 	def generate
-		# choose which template to use for the interface file, based on
-		# the interface type
-        case @resource.should(:interface_type)
-        when :loopback
-			return @loopback_template.result(binding)
-        when :alias
-			return @alias_template.result(binding)
-		end
+        self.class.template(@property_hash[:interface_type]).result(binding)
 	end
 
     # Where should the file be written out?
@@ -198,7 +149,28 @@ LOOPBACKDUMMY
     def file_path
 		@resource[:interface_desc] ||= @resource[:name]
        	return File.join(@interface_dir, "ifcfg-" + @resource[:interface_desc])
+    end
 
+    # Use the device value to figure out all kinds of nifty things.
+    def device=(value)
+        case value
+        when /:/:
+            @property_hash[:interface], @property_hash[:ifnum] = value.split(":")
+            @property_hash[:interface_type] = :alias
+        when /^dummy/:
+            @property_hash[:interface_type] = :loopback
+            @property_hash[:interface] = "dummy"
+
+            # take the number of the dummy interface, as this is used
+            # when working out whether to call next_dummy when dynamically
+            # creating these
+            @property_hash[:ifnum] = value.sub("dummy",'')
+
+            @@dummies << @property_hash[:ifnum].to_s unless @@dummies.include?(@property_hash[:ifnum].to_s)
+        else
+            @property_hash[:interface_type] = :normal
+            @property_hash[:interface] = value
+        end
     end
 
 	# create the device name, so this based on the IP, and interface + type
@@ -211,6 +183,11 @@ LOOPBACKDUMMY
 			@property_hash[:ifnum] ||= self.class.next_alias(@resource[:interface])
         	return @resource[:interface] + ":" + @property_hash[:ifnum]
 		end
+    end
+
+    # Set the name to our ip address.
+    def ipaddr=(value)
+        @property_hash[:name] = value
     end
 
 	# whether the device is to be brought up on boot or not. converts
@@ -226,6 +203,17 @@ LOOPBACKDUMMY
 			return "neither"
 		end
 	end
+
+    # Mark whether the interface should be started on boot.
+    def on_boot=(value)
+        # translate whether we come up on boot to true/false
+        case value.downcase
+        when "yes":
+            @property_hash[:onboot] = :true
+        else
+            @property_hash[:onboot] = :false
+        end
+    end
 
     # Write the new file out.
     def flush
