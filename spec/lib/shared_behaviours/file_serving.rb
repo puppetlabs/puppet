@@ -20,8 +20,9 @@ describe "Puppet::FileServing::Files", :shared => true do
 
     it "should use the file_server terminus when the 'puppet' URI scheme is used, no host name is present, and the process name is 'puppet'" do
         uri = "puppet:///mymod/my/file"
+        Puppet::Node::Environment.stubs(:new).returns(stub("env", :name => "testing"))
         Puppet.settings.stubs(:value).with(:name).returns("puppet")
-        Puppet.settings.stubs(:value).with(:modulepath, nil).returns("")
+        Puppet.settings.stubs(:value).with(:modulepath, "testing").returns("")
         Puppet.settings.stubs(:value).with(:modulepath).returns("")
         Puppet.settings.stubs(:value).with(:libdir).returns("")
         Puppet.settings.stubs(:value).with(:fileserverconfig).returns("/whatever")
