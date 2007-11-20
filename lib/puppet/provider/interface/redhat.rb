@@ -148,7 +148,12 @@ LOOPBACKDUMMY
 	# more symbolic name by setting interface_desc in the type. 
     def file_path
 		@resource[:interface_desc] ||= @resource[:name]
-       	return File.join(@interface_dir, "ifcfg-" + @resource[:interface_desc])
+        case @resource.should(:interface_type)
+        when :loopback
+            return File.join(@interface_dir, "ifcfg-" + @resource[:interface_desc])
+        when :alias
+            return File.join(@interface_dir, "ifcfg-" + @resource[:interface] + ":" + @resource[:interface_desc])
+        end
     end
 
     # Use the device value to figure out all kinds of nifty things.
