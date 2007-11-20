@@ -1,3 +1,6 @@
+    You now must specify an environment and you are required to specify
+    the valid environments for your site. (#911) 
+
     Certificates now always specify a subjectAltName, but it defaults
     to '*', meaning that it doesn't require DNS names to match.  You
     can override that behaviour by specifying a value for
