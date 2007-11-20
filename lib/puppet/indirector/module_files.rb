@@ -57,10 +57,8 @@ class Puppet::Indirector::ModuleFiles < Puppet::Indirector::Terminus
     def environment(node_name)
         if node_name and node = Puppet::Node.find(node_name)
             node.environment
-        elsif env = Puppet.settings[:environment] and env != ""
-            env
         else
-            nil
+            Puppet::Node::Environment.new.name
         end
     end
 

@@ -3,6 +3,7 @@ require 'puppet/indirector'
 # A simplistic class for managing the node information itself.
 class Puppet::Node
     require 'puppet/node/facts'
+    require 'puppet/node/environment'
 
     # Set up indirection, so that nodes can be looked for in
     # the node sources.
@@ -19,19 +20,23 @@ class Puppet::Node
 
     attr_accessor :name, :classes, :parameters, :source, :ipaddress, :names
     attr_reader :time
-    attr_writer :environment
+
+    # Set the environment, making sure that it's valid.
+    def environment=(value)
+        raise(ArgumentError, "Invalid environment %s" % value) unless Puppet::Node::Environment.valid?(value)
+        @environment = value
+    end
 
     # Do not return environments that are the empty string, and use
     # explicitly set environments, then facts, then a central env
     # value.
     def environment
-        unless @environment and @environment != ""
-            if env = parameters["environment"] and env != ""
-                @environment = env
-            elsif env = Puppet[:environment] and env != ""
+        unless @environment
+            if env = parameters["environment"]
+                raise(ArgumentError, "Invalid environment %s from parameters" % env) unless Puppet::Node::Environment.valid?(env)
                 @environment = env
             else
-                @environment = nil
+                @environment = Puppet::Node::Environment.new.name.to_s
             end
         end
         @environment
@@ -66,7 +71,7 @@ class Puppet::Node
 
         @parameters = options[:parameters] || {}
 
-        @environment = options[:environment] 
+        self.environment = options[:environment] if options[:environment]
 
         @time = Time.now
     end

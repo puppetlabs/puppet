@@ -10,10 +10,11 @@ require 'puppet/indirector/module_files'
 
 describe Puppet::Indirector::ModuleFiles, " when interacting with Puppet::Module and FileServing::Content" do
     it "should look for files in the module's 'files' directory" do
+        Puppet::Node::Environment.stubs(:new).returns(stub('env', :name => "myenv"))
         # We just test a subclass, since it's close enough.
         @terminus = Puppet::Indirector::FileContent::Modules.new
         @module = Puppet::Module.new("mymod", "/some/path/mymod")
-        Puppet::Module.expects(:find).with("mymod", nil).returns(@module)
+        Puppet::Module.expects(:find).with("mymod", "myenv").returns(@module)
 
         filepath = "/some/path/mymod/files/myfile"
 
@@ -25,9 +26,10 @@ end
 
 describe Puppet::Indirector::ModuleFiles, " when interacting with FileServing::Fileset and FileServing::Content" do
     it "should return an instance for every file in the fileset" do
+        Puppet::Node::Environment.stubs(:new).returns(stub('env', :name => "myenv"))
         @terminus = Puppet::Indirector::FileContent::Modules.new
         @module = Puppet::Module.new("mymod", "/some/path/mymod")
-        Puppet::Module.expects(:find).with("mymod", nil).returns(@module)
+        Puppet::Module.expects(:find).with("mymod", "myenv").returns(@module)
 
         filepath = "/some/path/mymod/files/myfile"
         FileTest.stubs(:exists?).with(filepath).returns(true)

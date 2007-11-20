@@ -118,9 +118,12 @@ end
 describe Puppet::Node::Configuration::Compiler, " when creating configurations" do
     before do
         Facter.stubs(:value).returns("whatever")
+        env = stub 'environment', :name => "yay"
+        Puppet::Node::Environment.stubs(:new).returns(env)
+
         @compiler = Puppet::Node::Configuration::Compiler.new
         @name = "me"
-        @node = Puppet::Node.new @name, :environment => "yay"
+        @node = Puppet::Node.new @name
         @node.stubs(:merge)
         Puppet::Node.stubs(:search).with(@name).returns(@node)
     end

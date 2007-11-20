@@ -9,6 +9,7 @@ require 'puppet/indirector/module_files'
 
 module ModuleFilesTerminusTesting
     def setup
+        Puppet::Node::Environment.stubs(:new).returns(stub('env', :name => "myenv"))
         Puppet::Indirector::Terminus.stubs(:register_terminus_class)
         @model = mock 'model'
         @indirection = stub 'indirection', :name => :mystuff, :register_terminus_type => nil, :model => @model
@@ -31,39 +32,39 @@ describe Puppet::Indirector::ModuleFiles, " when finding files" do
     include ModuleFilesTerminusTesting
 
     it "should strip off the leading '/modules' mount name" do
-        Puppet::Module.expects(:find).with('my', nil).returns @module
+        Puppet::Module.expects(:find).with('my', "myenv").returns @module
         @module_files.find(@uri)
     end
 
     it "should not strip off leading terms that start with '/modules' but are longer words" do
-        Puppet::Module.expects(:find).with('modulestart', nil).returns nil
+        Puppet::Module.expects(:find).with('modulestart', "myenv").returns nil
         @module_files.find("puppetmounts://host/modulestart/my/local/file")
     end
 
     it "should search for a module whose name is the first term in the remaining file path" do
-        Puppet::Module.expects(:find).with('my', nil).returns @module
+        Puppet::Module.expects(:find).with('my', "myenv").returns @module
         @module_files.find(@uri)
     end
 
     it "should search for a file relative to the module's files directory" do
-        Puppet::Module.expects(:find).with('my', nil).returns @module
+        Puppet::Module.expects(:find).with('my', "myenv").returns @module
         FileTest.expects(:exists?).with("/module/path/files/local/file")
         @module_files.find(@uri)
     end
 
     it "should return nil if the module does not exist" do
-        Puppet::Module.expects(:find).with('my', nil).returns nil
+        Puppet::Module.expects(:find).with('my', "myenv").returns nil
         @module_files.find(@uri).should be_nil
     end
 
     it "should return nil if the module exists but the file does not" do
-        Puppet::Module.expects(:find).with('my', nil).returns @module
+        Puppet::Module.expects(:find).with('my', "myenv").returns @module
         FileTest.expects(:exists?).with("/module/path/files/local/file").returns(false)
         @module_files.find(@uri).should be_nil
     end
 
     it "should return an instance of the model if a module is found and the file exists" do
-        Puppet::Module.expects(:find).with('my', nil).returns @module
+        Puppet::Module.expects(:find).with('my', "myenv").returns @module
         FileTest.expects(:exists?).with("/module/path/files/local/file").returns(true)
         @model.expects(:new).returns(:myinstance)
         @module_files.find(@uri).should == :myinstance
@@ -76,15 +77,10 @@ describe Puppet::Indirector::ModuleFiles, " when finding files" do
         @module_files.find(@uri, :node => "mynode")
     end
 
-    it "should use the local environment setting to look up the module if the node name is not provided and the environment is not set to ''" do
-        Puppet.settings.stubs(:value).with(:environment).returns("testing")
+    it "should use the default environment setting to look up the module if the node name is not provided" do
+        env = stub "environment", :name => "testing"
+        Puppet::Node::Environment.stubs(:new).returns(env)
         Puppet::Module.expects(:find).with('my', "testing")
-        @module_files.find(@uri)
-    end
-
-    it "should not use an environment when looking up the module if the node name is not provided and the environment is set to ''" do
-        Puppet.settings.stubs(:value).with(:environment).returns("")
-        Puppet::Module.expects(:find).with('my', nil)
         @module_files.find(@uri)
     end
 end
@@ -93,7 +89,7 @@ describe Puppet::Indirector::ModuleFiles, " when returning instances" do
     include ModuleFilesTerminusTesting
 
     before do
-        Puppet::Module.expects(:find).with('my', nil).returns @module
+        Puppet::Module.expects(:find).with('my', "myenv").returns @module
         FileTest.expects(:exists?).with("/module/path/files/local/file").returns(true)
         @instance = mock 'instance'
     end
@@ -180,33 +176,39 @@ describe Puppet::Indirector::ModuleFiles, " when searching for files" do
     include ModuleFilesTerminusTesting
 
     it "should strip off the leading '/modules' mount name" do
-        Puppet::Module.expects(:find).with('my', nil).returns @module
+        Puppet::Node::Environment.stubs(:new).returns(stub('env', :name => "myenv"))
+        Puppet::Module.expects(:find).with('my', "myenv").returns @module
         @module_files.search(@uri)
     end
 
     it "should not strip off leading terms that start with '/modules' but are longer words" do
-        Puppet::Module.expects(:find).with('modulestart', nil).returns nil
+        Puppet::Node::Environment.stubs(:new).returns(stub('env', :name => "myenv"))
+        Puppet::Module.expects(:find).with('modulestart', "myenv").returns nil
         @module_files.search("puppetmounts://host/modulestart/my/local/file")
     end
 
     it "should search for a module whose name is the first term in the remaining file path" do
-        Puppet::Module.expects(:find).with('my', nil).returns @module
+        Puppet::Node::Environment.stubs(:new).returns(stub('env', :name => "myenv"))
+        Puppet::Module.expects(:find).with('my', "myenv").returns @module
         @module_files.search(@uri)
     end
 
     it "should search for a file relative to the module's files directory" do
-        Puppet::Module.expects(:find).with('my', nil).returns @module
+        Puppet::Node::Environment.stubs(:new).returns(stub('env', :name => "myenv"))
+        Puppet::Module.expects(:find).with('my', "myenv").returns @module
         FileTest.expects(:exists?).with("/module/path/files/local/file")
         @module_files.search(@uri)
     end
 
     it "should return nil if the module does not exist" do
-        Puppet::Module.expects(:find).with('my', nil).returns nil
+        Puppet::Node::Environment.stubs(:new).returns(stub('env', :name => "myenv"))
+        Puppet::Module.expects(:find).with('my', "myenv").returns nil
         @module_files.search(@uri).should be_nil
     end
 
     it "should return nil if the module exists but the file does not" do
-        Puppet::Module.expects(:find).with('my', nil).returns @module
+        Puppet::Node::Environment.stubs(:new).returns(stub('env', :name => "myenv"))
+        Puppet::Module.expects(:find).with('my', "myenv").returns @module
         FileTest.expects(:exists?).with("/module/path/files/local/file").returns(false)
         @module_files.search(@uri).should be_nil
     end
@@ -218,27 +220,24 @@ describe Puppet::Indirector::ModuleFiles, " when searching for files" do
         @module_files.search(@uri, :node => "mynode")
     end
 
-    it "should use the local environment setting to look up the module if the node name is not provided and the environment is not set to ''" do
-        Puppet.settings.stubs(:value).with(:environment).returns("testing")
+    it "should use the default environment setting to look up the module if the node name is not provided and the environment is not set to ''" do
+        env = stub 'env', :name => "testing"
+        Puppet::Node::Environment.stubs(:new).returns(env)
         Puppet::Module.expects(:find).with('my', "testing")
         @module_files.search(@uri)
     end
 
-    it "should not use an environment when looking up the module if the node name is not provided and the environment is set to ''" do
-        Puppet.settings.stubs(:value).with(:environment).returns("")
-        Puppet::Module.expects(:find).with('my', nil)
-        @module_files.search(@uri)
-    end
-
     it "should use :path2instances from the terminus_helper to return instances if a module is found and the file exists" do
-        Puppet::Module.expects(:find).with('my', nil).returns @module
+        Puppet::Node::Environment.stubs(:new).returns(stub('env', :name => "myenv"))
+        Puppet::Module.expects(:find).with('my', "myenv").returns @module
         FileTest.expects(:exists?).with("/module/path/files/local/file").returns(true)
         @module_files.expects(:path2instances).with(@uri, "/module/path/files/local/file", {})
         @module_files.search(@uri)
     end
 
     it "should pass any options on to :path2instances" do
-        Puppet::Module.expects(:find).with('my', nil).returns @module
+        Puppet::Node::Environment.stubs(:new).returns(stub('env', :name => "myenv"))
+        Puppet::Module.expects(:find).with('my', "myenv").returns @module
         FileTest.expects(:exists?).with("/module/path/files/local/file").returns(true)
         @module_files.expects(:path2instances).with(@uri, "/module/path/files/local/file", :testing => :one, :other => :two)
         @module_files.search(@uri, :testing => :one, :other => :two)

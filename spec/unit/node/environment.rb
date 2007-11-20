@@ -55,6 +55,10 @@ describe Puppet::Node::Environment do
         proc { Puppet::Node::Environment.new("three") }.should raise_error(ArgumentError)
     end
 
+    it "should consider environments that are empty strings invalid" do
+        Puppet::Node::Environment.valid?("").should be_false
+    end
+
     it "should fail if a no-longer-valid environment instance is asked for" do
         Puppet.settings.expects(:value).with(:environments).returns("one")
         Puppet::Node::Environment.new("one")

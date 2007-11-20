@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.dirname(__FILE__) + '/../spec_helper'
 
 describe Puppet::Node, " when initializing" do
     before do
@@ -44,9 +44,15 @@ describe Puppet::Node, " when initializing" do
         @node.classes.should == ["myclass"]
     end
 
-    it "should accept the environment during initialization" do
+    it "should accept an environment value" do
+        Puppet.settings.stubs(:value).with(:environments).returns("myenv")
         @node = Puppet::Node.new("testing", :environment => "myenv")
         @node.environment.should == "myenv"
+    end
+
+    it "should validate the environment" do
+        Puppet.settings.stubs(:value).with(:environments).returns("myenv")
+        proc { Puppet::Node.new("testing", :environment => "other") }.should raise_error(ArgumentError)
     end
 
     it "should accept names passed in" do
@@ -57,32 +63,30 @@ end
 
 describe Puppet::Node, " when returning the environment" do
     before do
+        Puppet.settings.stubs(:value).with(:environments).returns("one,two")
+        Puppet.settings.stubs(:value).with(:environment).returns("one")
         @node = Puppet::Node.new("testnode")
     end
 
     it "should return the 'environment' fact if present and there is no explicit environment" do
-        @node.parameters = {"environment" => "myenv"}
+        @node.parameters = {"environment" => "two"}
+        @node.environment.should == "two"
+    end
+
+    it "should use the default environment if there is no environment fact nor explicit environment" do
+        env = mock 'environment', :name => :myenv
+        Puppet::Node::Environment.expects(:new).returns(env)
         @node.environment.should == "myenv"
     end
 
-    it "should return the central environment if there is no environment fact nor explicit environment" do
-        Puppet.settings.expects(:[]).with(:environment).returns(:centralenv)
-        @node.environment.should == :centralenv
+    it "should fail if the parameter environment is invalid" do
+        @node.parameters = {"environment" => "three"}
+        proc { @node.environment }.should raise_error(ArgumentError)
     end
 
-    it "should not use an explicit environment that is an empty string" do
-        @node.environment == ""
-        @node.environment.should be_nil
-    end
-
-    it "should not use an environment fact that is an empty string" do
-        @node.parameters = {"environment" => ""}
-        @node.environment.should be_nil
-    end
-
-    it "should not use an explicit environment that is an empty string" do
-        Puppet.settings.expects(:[]).with(:environment).returns(nil)
-        @node.environment.should be_nil
+    it "should fail if the parameter environment is invalid" do
+        @node.parameters = {"environment" => "three"}
+        proc { @node.environment }.should raise_error(ArgumentError)
     end
 end
 

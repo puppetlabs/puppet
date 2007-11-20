@@ -5,7 +5,6 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/type/exec'
 
 module ExecModuleTesting
-
     def create_resource(command, output, exitstatus)
         @user_name = 'some_user_name'
         @group_name = 'some_group_name'

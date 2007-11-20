@@ -9,6 +9,7 @@ class Puppet::Node::Environment
 
     # Is the provided environment valid?
     def self.valid?(name)
+        return false if name.to_s == ""
         valid.include?(name.to_sym)
     end
 
