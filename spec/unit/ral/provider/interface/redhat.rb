@@ -54,24 +54,6 @@ describe provider_class, " when parsing" do
     end
 end
 
-describe provider_class do
-    before { @provider = Puppet::Type::Interface::ProviderRedhat.new }
-    it "should have a bootproto attribute" do
-        @provider.bootproto = "whatever"
-        @provider.bootproto.should == "whatever"
-    end
-
-    it "should have a netmask attribute" do
-        @provider.netmask = "whatever"
-        @provider.netmask.should == "whatever"
-    end
-
-    it "should have a broadcast attribute" do
-        @provider.broadcast = "whatever"
-        @provider.broadcast.should == "whatever"
-    end
-end
-
 describe provider_class, " when setting the device to a value containing ':'" do
     before do
         @provider = Puppet::Type::Interface::ProviderRedhat.new
