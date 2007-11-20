@@ -71,6 +71,31 @@ describe Puppet::Parser::Compile, " when evaluating classes" do
     end
 end
 
+describe Puppet::Parser::Compile, " when evaluating collections" do
+    before do
+        @node = stub 'node', :name => 'mynode'
+        @parser = stub 'parser', :version => "1.0"
+        @scope = stub 'scope', :source => mock("source")
+        @compile = Puppet::Parser::Compile.new(@node, @parser)
+    end
+
+    it "should evaluate each collection" do
+        2.times { |i|
+            coll = mock 'coll%s' % i
+            @compile.add_collection(coll)
+            
+            # This is the hard part -- we have to emulate the fact that
+            # collections delete themselves if they are done evaluating.
+            coll.expects(:evaluate).with do
+                @compile.delete_collection(coll)
+            end
+        }
+
+        @compile.class.publicize_methods(:evaluate_collections) { @compile.evaluate_collections }
+    end
+end
+
+
 describe Puppet::Parser::Compile, " when evaluating found classes" do
     before do
         @node = stub 'node', :name => 'mynode'

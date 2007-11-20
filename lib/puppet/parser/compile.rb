@@ -269,10 +269,11 @@ class Puppet::Parser::Compile
 
         found_something = false
         exceptwrap do
-            @collections.each do |collection|
-                if collection.evaluate
-                    found_something = true
-                end
+            # We have to iterate over a dup of the array because
+            # collections can delete themselves from the list, which
+            # changes its length and causes some collections to get missed.
+            @collections.dup.each do |collection|
+                found_something = true if collection.evaluate
             end
         end
 
