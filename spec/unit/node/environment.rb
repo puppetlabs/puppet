@@ -29,6 +29,11 @@ describe Puppet::Node::Environment do
         Puppet::Node::Environment.valid?(:one).should be_true
     end
 
+    it "should be used to determine when an environment setting is valid" do
+        Puppet.settings.expects(:value).with(:environments).returns("one,two")
+        proc { Puppet.settings[:environment] = :three }.should raise_error(ArgumentError)
+    end
+
     it "should use the default environment if no name is provided while initializing an environment" do
         Puppet.settings.expects(:value).with(:environments).returns("one,two")
         Puppet.settings.expects(:value).with(:environment).returns("one")
