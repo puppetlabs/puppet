@@ -67,6 +67,11 @@ module Puppet::Util::Docs
         str + "\n"
     end
 
+    attr_reader :nodoc
+    def nodoc?
+        nodoc
+    end
+
     # Pad a field with spaces
     def pad(value, length)
         value.to_s + (" " * (length - value.to_s.length))
