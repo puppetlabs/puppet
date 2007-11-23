@@ -57,4 +57,3 @@ Puppet::Type.newtype(:interface) do
         defaultto { @resource.provider.file_path }
     end
 end
-
