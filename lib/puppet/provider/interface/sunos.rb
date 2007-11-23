@@ -1,88 +1,22 @@
 require 'puppet/provider/parsedfile'
 require 'erb'
 
-Puppet::Type.type(:interface).provide(:sunos,
-	:default_target => "/etc/hostname.lo0",
-	:parent => Puppet::Provider::ParsedFile,
-	:filetype => :flat
-) do
-	
+Puppet::Type.type(:interface).provide(:sunos) do
     confine :kernel => "SunOS"
 
-    # Two types of lines:
-    #   the first line does not start with 'addif'
-    #   the rest do
-	record_line :sunos, :fields => %w{interface_type name ifopts onboot}, :rts => true, :absent => "", :block_eval => :instance do
-        # Parse our interface line
-        def process(line)
-            details = {:ensure => :present}
-
-            values = line.split(/\s+/)
-
-            # Are we the primary interface?
-            if values[0] == "addif"
-                details[:interface_type] = :alias
-                values.shift
-            else
-                details[:interface_type] = :normal
-            end
-
-            # Should the interface be up by default?
-            if values[-1] == "up"
-                details[:onboot] = :true
-                values.pop
-            else
-                details[:onboot] = :false
-            end
-
-            # Set the interface name.
-            details[:name] = values.shift
-
-            # Handle any interface options
-            unless values.empty?
-                details[:ifopts] = values.join(" ")
-            end
-
-            return details
-        end
-
-        # Turn our record into a line.
-        def to_line(details)
-            ret = []
-            if details[:interface_type] != :normal
-                ret << "addif"
-            end
-            ret << details[:name]
-
-            if details[:ifopts] and details[:ifopts] != :absent
-                if details[:ifopts].is_a?(Array)
-                    ret << details[:ifopts].join(" ")
-                else
-                    ret << details[:ifopts]
-                end
-            end
-
-            if details[:onboot] and details[:onboot] != :false
-                ret << "up"
-            end
-
-            return ret.join(" ")
-        end
-    end
-
-	def self.header
-		# over-write the default puppet behaviour of adding a header
-		# because on further investigation this breaks the solaris
-		# init scripts
-		%{}
-	end
+    # Add accessor/getter methods for each property/parameter; these methods
+    # modify @property_hash.
+    mk_resource_methods
 
     # Get a list of interface instances.
     def self.instances
 		Dir.glob("/etc/hostname.*").collect do |file|
-            # We really only expect one record from each file
-            parse(file).shift
-        end.collect { |record| new(record) }
+            device = File.basename(file).split(".").pop
+
+            instance = new(:interface => device)
+            instance.parse
+            instance
+        end
     end
 
 	def self.match(hash)
@@ -103,13 +37,97 @@ Puppet::Type.type(:interface).provide(:sunos,
         end
     end
 
+    def initialize(*args)
+        @property_hash = {}
+        super
+    end
+
+    def create
+        self.class.resource_type.validproperties.each do |property|
+            if value = resource.should(property)
+                @property_hash[property] = value
+            end
+        end
+        @property_hash[:name] = resource.name
+
+        return (@resource.class.name.to_s + "_created").intern
+    end
+
+    def destroy
+        File.unlink(file_path)
+        @property_hash[:ensure] = :absent
+    end
+
+    def exists?
+        FileTest.exist?(file_path)
+    end
+
     # Where should the file be written out?  Can be overridden by setting
     # :target in the model.
     def file_path
-        unless resource[:interface]
-            raise ArgumentError, "You must provide the interface name on Solaris"
+        self.fail("Could not determine interface") unless interface = @property_hash[:interface] || (resource and resource[:interface])
+       	return File.join("/etc", "hostname." + interface)
+    end
+
+    def flush
+        return if self.ensure == :absent
+        File.open(file_path, "w") { |f| f.print generate() + "\n" }
+    end
+
+    # Turn our record into a line.
+    def generate
+        ret = []
+        if self.interface_type == :alias
+            ret << "addif"
         end
-       	return File.join("/etc", "hostname." + resource[:interface])
+        ret << self.name
+
+        if self.ifopts != :absent
+            if @property_hash[:ifopts].is_a?(Array)
+                ret << @property_hash[:ifopts].join(" ")
+            else
+                ret << @property_hash[:ifopts]
+            end
+        end
+
+        if self.onboot and ! [:absent, :false].include?(self.onboot)
+            ret << "up"
+        end
+
+        return ret.join(" ")
+    end
+
+    # Parse our interface file.
+    def parse
+        (@property_hash = {:ensure => :absent} and return) unless FileTest.exist?(file_path)
+
+        values = File.read(file_path).chomp.split(/\s+/)
+
+        @property_hash[:ensure] = :present
+        #@property_hash = {:ensure => :present}
+
+        # Are we the primary interface?
+        if values[0] == "addif"
+            @property_hash[:interface_type] = :alias
+            values.shift
+        else
+            @property_hash[:interface_type] = :normal
+        end
+
+        # Should the interface be up by default?
+        if values[-1] == "up"
+            @property_hash[:onboot] = :true
+            values.pop
+        else
+            @property_hash[:onboot] = :false
+        end
+
+        # Set the interface name.
+        @property_hash[:name] = values.shift
+
+        # Handle any interface options
+        unless values.empty?
+            @property_hash[:ifopts] = values.join(" ")
+        end
     end
 end
-
