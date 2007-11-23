@@ -64,7 +64,10 @@ class Puppet::Network::Handler
             Puppet::Node::Facts.new(client, facts).save unless local?
 
             # And get the configuration from the config handler
-            config = config_handler.configuration(client)
+            config = nil
+            benchmark(:notice, "Compiled configuration for %s" % client) do
+                config = config_handler.configuration(client)
+            end
 
             return translate(config.extract)
         end
