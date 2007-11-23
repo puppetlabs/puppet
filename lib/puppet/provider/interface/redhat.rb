@@ -5,8 +5,8 @@ Puppet::Type.type(:interface).provide(:redhat) do
     desc "Manage network interfaces on Red Hat operating systems.  This provider
         parses and generates configuration files in ``/etc/sysconfig/network-scripts``."
 
-	@interface_dir = "/etc/sysconfig/network-scripts"
-    confine :exists => @interface_dir
+	INTERFACE_DIR = "/etc/sysconfig/network-scripts"
+    confine :exists => INTERFACE_DIR
     defaultfor :operatingsystem => [:fedora, :centos, :redhat]
 
     # Create the setter/gettor methods to match the model.
@@ -34,7 +34,7 @@ BROADCAST=
 ALIAS
 
 
-    register_template :loopback, <<-LOOPBACKDUMMY
+    register_template :normal, <<-LOOPBACKDUMMY
 DEVICE=<%= self.device %>
 ONBOOT=<%= self.on_boot %>
 BOOTPROTO=static
@@ -56,7 +56,7 @@ LOOPBACKDUMMY
 	# use prior to needing to call self.next_dummy later on.
 	def self.instances
 		# parse all of the config files at once
-		Dir.glob("%s/ifcfg-*" % @interface_dir).collect do |file|
+		Dir.glob("%s/ifcfg-*" % INTERFACE_DIR).collect do |file|
 			record = parse(file)
 
 			# store the existing dummy interfaces
@@ -117,7 +117,7 @@ LOOPBACKDUMMY
     end
 
     def create
-        @resource.class.validproperties.each do |property|
+        self.class.resource_type.validproperties.each do |property|
             if value = @resource.should(property)
                 @property_hash[property] = value
             end
@@ -128,11 +128,11 @@ LOOPBACKDUMMY
     end
 
     def destroy
-        File.unlink(@resource[:target])
+        File.unlink(file_path)
     end
 
     def exists?
-        FileTest.exists?(@resource[:target])
+        FileTest.exist?(file_path)
     end
 
     # generate the content for the interface file, so this is dependent
@@ -140,19 +140,26 @@ LOOPBACKDUMMY
     # address (also dummy) on linux. For linux it's quite involved, and we
     # will use an ERB template
 	def generate
-        self.class.template(@property_hash[:interface_type]).result(binding)
+        itype = self.interface_type == :alias ? :alias : :normal
+        self.class.template(itype).result(binding)
 	end
 
     # Where should the file be written out?
-	# This defaults to @interface_dir/ifcfg-<namevar>, but can have a
+	# This defaults to INTERFACE_DIR/ifcfg-<namevar>, but can have a
 	# more symbolic name by setting interface_desc in the type. 
     def file_path
-		@resource[:interface_desc] ||= @resource[:name]
-        case @resource.should(:interface_type)
-        when :loopback
-            return File.join(@interface_dir, "ifcfg-" + @resource[:interface_desc])
-        when :alias
-            return File.join(@interface_dir, "ifcfg-" + @resource[:interface] + ":" + @resource[:interface_desc])
+        if resource and val = resource[:interface_desc]
+            desc = val
+        else
+            desc = self.name
+        end
+
+        self.fail("Could not get name for interface") unless desc
+
+        if self.interface_type == :alias
+            return File.join(INTERFACE_DIR, "ifcfg-" + self.interface + ":" + desc)
+        else
+            return File.join(INTERFACE_DIR, "ifcfg-" + desc)
         end
     end
 
@@ -223,7 +230,7 @@ LOOPBACKDUMMY
     # Write the new file out.
     def flush
         # Don't flush to disk if we're removing the config.
-        return if @resource.should(:ensure) == :absent
+        return if self.ensure == :absent
 
         @property_hash.each do |name, val|
             if val == :absent
@@ -231,13 +238,13 @@ LOOPBACKDUMMY
             end
         end
 
-        File.open(@resource[:target], "w") do |f|
+        File.open(file_path, "w") do |f|
             f.puts generate()
         end
     end
 
     def prefetch
-        @property_hash = self.class.parse(@resource[:target])
+        @property_hash = self.class.parse(file_path)
     end
 end
 

@@ -22,6 +22,51 @@ describe provider_class do
     end
 end
 
+describe provider_class, " when determining the file path" do
+    it "should always contain '/etc/sysconfig/network-scripts/ifcfg-'" do
+        provider = provider_class.new(:name => "192.168.0.1")
+        provider.file_path.should =~ %r{^/etc/sysconfig/network-scripts/ifcfg-}
+    end
+
+    it "should include the interface name and the description when the interface is an alias" do
+        provider = provider_class.new(:name => "192.168.0.1", :interface => "eth0")
+        provider.interface_type = :alias
+        resource = stub 'resource'
+        resource.stubs(:[]).with(:interface_desc).returns("blah")
+        provider.resource = resource
+        provider.file_path.should == "/etc/sysconfig/network-scripts/ifcfg-eth0:blah"
+    end
+
+    it "should just include the description when the interface is not an alias" do
+        provider = provider_class.new(:name => "192.168.0.1")
+        provider.interface_type = :normal
+        resource = stub 'resource'
+        resource.stubs(:[]).with(:interface_desc).returns("eth0")
+        provider.resource = resource
+        provider.file_path.should == "/etc/sysconfig/network-scripts/ifcfg-eth0"
+    end
+
+    it "should use the interface description if one is available" do
+        provider = provider_class.new(:name => "192.168.0.1")
+        provider.interface_type = :normal
+        resource = stub 'resource'
+        resource.stubs(:[]).with(:interface_desc).returns("eth0")
+        provider.resource = resource
+        provider.file_path.should == "/etc/sysconfig/network-scripts/ifcfg-eth0"
+    end
+
+    it "should use the name if no interface description is available" do
+        provider = provider_class.new(:name => "192.168.0.1")
+        provider.interface_type = :normal
+        provider.file_path.should == "/etc/sysconfig/network-scripts/ifcfg-192.168.0.1"
+    end
+
+    it "should fail if no name or interface description can be found" do
+        provider = provider_class.new()
+        proc { provider.file_path }.should raise_error
+    end
+end
+
 describe provider_class, " when returning instances" do
     it "should consider each file in the network-scripts directory an interface instance" do
         Dir.expects(:glob).with("/etc/sysconfig/network-scripts/ifcfg-*").returns(%w{one two})
@@ -131,8 +176,8 @@ describe provider_class, " when generating" do
         @provider.stubs(:device).returns("mydevice")
         @provider.stubs(:on_boot).returns("myboot")
         @provider.stubs(:name).returns("myname")
-        @provider.stubs(:interface_type).returns("myname")
         @provider.stubs(:netmask).returns("mynetmask")
+        @provider.interface_type = :alias
 
         @text = @provider.generate
     end
@@ -165,5 +210,62 @@ describe provider_class, " when generating" do
 
     it "should set the ipaddr to the provider's name" do
         @text.should =~ /^IPADDR=myname$/
+    end
+end
+
+describe provider_class, " when creating and destroying" do
+    before do
+        @provider = provider_class.new(:interface => "eth0", :name => "testing")
+        @path = "/etc/sysconfig/network-scripts/ifcfg-testing"
+    end
+
+    it "should consider the interface present if the file exists" do
+        FileTest.expects(:exist?).with(@path).returns(true)
+        @provider.should be_exists
+    end
+
+    it "should consider the interface absent if the file does not exist" do
+        FileTest.expects(:exist?).with(@path).returns(false)
+        @provider.should_not be_exists
+    end
+
+    it "should remove the file if the interface is being destroyed" do
+        File.expects(:unlink).with(@path)
+        @provider.destroy
+    end
+
+    it "should mark :ensure as :absent if the interface is destroyed" do
+        File.stubs(:unlink)
+        @provider.destroy
+        @provider.ensure.should == :absent
+    end
+
+    it "should mark :ensure as :present if the interface is being created" do
+        resource = stub 'resource', :name => 'testing'
+        resource.stubs(:should).with { |name| name == :ensure }.returns(:present)
+        resource.stubs(:should).with { |name| name != :ensure }.returns(nil)
+        @provider.resource = resource
+        @provider.create
+        @provider.ensure.should == :present
+    end
+
+    it "should write the generated text to disk when the interface is flushed" do
+        fh = mock("filehandle")
+        File.expects(:open).yields(fh)
+        fh.expects(:puts).with("generated")
+        resource = stub 'resource', :name => 'testing'
+        resource.stubs(:[]).with(:interface_desc).returns(nil)
+        resource.stubs(:should).with { |name| name == :ensure }.returns(:present)
+        resource.stubs(:should).with { |name| name != :ensure }.returns(nil)
+        @provider.resource = resource
+        @provider.create
+
+        @provider.stubs(:generate).returns("generated")
+        @provider.flush
+    end
+
+    it "should not write the generated text to disk when the interface is flushed if :ensure == :absent" do
+        @provider.ensure = :absent
+        @provider.flush
     end
 end
