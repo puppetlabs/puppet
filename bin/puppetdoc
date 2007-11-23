@@ -68,33 +68,33 @@ Reference = Puppet::Util::Reference
 begin
     result.each { |opt,arg|
         case opt
-            when "--all"
-                options[:all] = true
-            when "--format"
-                method = "to_%s" % arg
-                if Reference.method_defined?(method)
-                    options[:format] = method
-                else
-                    raise "Invalid output format %s" % arg
-                end
-            when "--mode"
-                if Reference.modes.include?(arg)
-                    options[:mode] = arg.intern
-                else
-                    raise "Invalid output mode %s" % arg
-                end
-            when "--list"
-                puts Reference.references.collect { |r| Reference.reference(r).doc }.join("\n")
-                exit(0)
-            when "--reference"
-                options[:references] << arg.intern
-            when "--help"
-                if Puppet.features.usage?
-                    RDoc::usage && exit
-                else
-                    puts "No help available unless you have RDoc::usage installed"
-                    exit
-                end
+        when "--all"
+            options[:all] = true
+        when "--format"
+            method = "to_%s" % arg
+            if Reference.method_defined?(method)
+                options[:format] = method
+            else
+                raise "Invalid output format %s" % arg
+            end
+        when "--mode"
+            if Reference.modes.include?(arg)
+                options[:mode] = arg.intern
+            else
+                raise "Invalid output mode %s" % arg
+            end
+        when "--list"
+            puts Reference.references.collect { |r| Reference.reference(r).doc }.join("\n")
+            exit(0)
+        when "--reference"
+            options[:references] << arg.intern
+        when "--help"
+            if Puppet.features.usage?
+                RDoc::usage && exit
+            else
+                puts "No help available unless you have RDoc::usage installed"
+                exit
+            end
         end
     }
 rescue GetoptLong::InvalidOption => detail

@@ -1,6 +1,7 @@
 require 'puppet/util/methodhelper'
 require 'puppet/util/log_paths'
 require 'puppet/util/logging'
+require 'puppet/util/docs'
 
 class Puppet::Parameter
     include Puppet::Util
@@ -10,6 +11,7 @@ class Puppet::Parameter
     include Puppet::Util::MethodHelper
     class << self
         include Puppet::Util
+        include Puppet::Util::Docs
         attr_reader :validater, :munger, :name, :default, :required_features
         attr_accessor :metaparam
 

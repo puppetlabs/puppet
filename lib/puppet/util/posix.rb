@@ -53,6 +53,13 @@ module Puppet::Util::POSIX
                 return object.send(field)
             end
         end
+
+        # Apparently the group/passwd methods need to get reset; if we skip
+        # this call, then new users aren't found.
+        case type
+        when :passwd: Etc.send(:endpwent)
+        when :group: Etc.send(:endgrent)
+        end
         return nil
     end
     

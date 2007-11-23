@@ -1,3 +1,6 @@
+    Added calls to endpwent/endgrent when searching for user and group IDs,
+    which fixes #791.
+
     Obviated 'target' in interfaces, as all file paths were automatically
     calculated anyway.  The parameter is still there, but it's
     not used and just generates a warning.
