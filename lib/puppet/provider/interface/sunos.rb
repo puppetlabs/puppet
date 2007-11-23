@@ -106,10 +106,10 @@ Puppet::Type.type(:interface).provide(:sunos,
     # Where should the file be written out?  Can be overridden by setting
     # :target in the model.
     def file_path
-        unless @resource[:interface]
+        unless resource[:interface]
             raise ArgumentError, "You must provide the interface name on Solaris"
         end
-       	return File.join("/etc", "hostname." + @resource[:interface])
+       	return File.join("/etc", "hostname." + resource[:interface])
     end
 end
 
