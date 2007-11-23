@@ -535,6 +535,8 @@ module Puppet
             used when networked databases are used."],
         :dbpassword => [ "puppet", "The database password for Client caching. Only
             used when networked databases are used."],
+        :dbsocket => [ "", "The database socket location. Only used when networked
+            databases are used.  Will be ignored if the value is an empty string."],
         :railslog => {:default => "$logdir/rails.log",
             :mode => 0600,
             :owner => "$user",
