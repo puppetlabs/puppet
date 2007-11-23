@@ -52,8 +52,9 @@ Puppet::Type.newtype(:interface) do
 	end
 
     newparam(:target) do
+        include Puppet::Util::Warnings
         desc "The path to the file this resource creates."
 
-        defaultto { @resource.provider.file_path }
+        munge { |value| warnonce "Interface targets are deprecated and no longer have any function" }
     end
 end

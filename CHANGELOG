@@ -1,3 +1,7 @@
+    Obviated 'target' in interfaces, as all file paths were automatically
+    calculated anyway.  The parameter is still there, but it's
+    not used and just generates a warning.
+
     Fixing some of the problems with interface management on Red Hat.
     Puppet now uses the :netmask property and does not try to set
     the bootproto (#762).
