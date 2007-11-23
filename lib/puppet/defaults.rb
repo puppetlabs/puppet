@@ -148,7 +148,11 @@ module Puppet
         :daemonize => { :default => true,
             :desc => "Send the process into the background.  This is the default.",
             :short => "D"
-        }
+        },
+        :maximum_uid => [4294967290, "The maximum allowed UID.  Some platforms use negative UIDs
+            but then ship with tools that do not know how to handle signed ints, so the UIDs show up as
+            huge numbers that can then not be fed back into the system.  This is a hackish way to fail in a
+            slightly more useful way when that happens."]
     )
 
     hostname = Facter["hostname"].value

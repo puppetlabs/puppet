@@ -6,12 +6,9 @@ module Puppet
         @event = :file_changed
 
         def id2name(id)
-            if id.is_a?(Symbol)
-                return id.to_s
-            end
-            if id > 70000
-                return nil
-            end
+            return id.to_s if id.is_a?(Symbol)
+            return nil if id > Puppet[:maximum_uid].to_i
+
             begin
                 user = Etc.getpwuid(id)
             rescue TypeError
@@ -19,6 +16,7 @@ module Puppet
             rescue ArgumentError
                 return nil
             end
+
             if user.uid == ""
                 return nil
             else
@@ -113,8 +111,8 @@ module Puppet
             # On OS X, files that are owned by -2 get returned as really
             # large UIDs instead of negative ones.  This isn't a Ruby bug,
             # it's an OS X bug, since it shows up in perl, too.
-            if currentvalue > 120000
-                self.warning "current state is silly: %s" % currentvalue
+            if currentvalue > Puppet[:maximum_uid].to_i
+                self.warning "Apparently using negative UID (%s) on a platform that does not consistently handle them" % currentvalue
                 currentvalue = :silly
             end
 
