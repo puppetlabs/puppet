@@ -1,3 +1,9 @@
+puppet (0.23.2-5) unstable; urgency=low
+
+  * Add some NEWS for the ssldir transition.  Should have done that earlier.
+
+ -- Matthew Palmer <mpalmer@debian.org>  Thu, 13 Sep 2007 10:52:37 +1000
+
 puppet (0.23.2-4) unstable; urgency=low
 
   * Fix puppet#776 in a slightly better way by only flushing the cache when

@@ -1,3 +1,34 @@
+puppet (0.23.2-3) unstable; urgency=low
+
+  * This version of Puppet makes a fairly major change to the location of
+    the CA and certificates, from /etc/puppet/ssl to the more FHS-compliant
+    location /var/lib/puppet/ssl.  This is to be both policy-compliant and
+    to match the location of the ssldir in other distributions.
+    
+    If you have transitioned to using the consolidated puppet.conf config
+    file, there should be no problems.  If you are using a stock
+    puppet.conf, the change should be made for you automatically, while if
+    you've customised puppet.conf the ssldir will be left where it is and
+    you should transition to the new location manually.
+
+    The only source of problems is if you're still using per-program config
+    files (puppetd.conf, puppetmasterd.conf, etc).  I haven't been able to
+    work out a damage-free way of transitioning to the new location, so
+    things will likely break for you -- ssldir will have been moved to
+    /var/lib/puppet/ssl, but your puppet programs will use the
+    old config file (with the default ssldir of /etc/puppet/ssl.  In this
+    case, you'll likely get all sorts of certificate-related problems.
+    
+    The solution is to either switch to using puppet.conf (which is
+    necessary anyway because support for the deprecated per-program config
+    files will be going away sometime) with the new ssldir setting, or add
+    the ssldir setting to all your per-program config files (this includes
+    creating them for programs that don't already have a config file, like
+    puppetca.conf).  Then delete /etc/puppet/ssl (since it's not needed) and
+    use the existing SSL data that was moved to /var/lib/puppet/ssl.
+
+ -- Matthew Palmer <mpalmer@debian.org>  Fri, 24 Aug 2007 16:08:04 +1000
+
 puppet (0.23.0-1) unstable; urgency=low
 
   * As of upstream 0.23.0, the configuration file layout has been largely
