@@ -896,7 +896,7 @@ Generated on #{Time.now}.
                 result[section][:_meta] ||= {}
             when /^\s*#/: next # Skip comments
             when /^\s*$/: next # Skip blanks
-            when /^\s*(\w+)\s*=\s*(.+)$/: # settings
+            when /^\s*(\w+)\s*=\s*(.*)$/: # settings
                 var = $1.intern
 
                 # We don't want to munge modes, because they're specified in octal, so we'll

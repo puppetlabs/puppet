@@ -203,38 +203,6 @@ class TestBucket < Test::Unit::TestCase
         checkfiles(client)
     end
 
-    # test that things work over the wire
-    def test_webxmlmix
-        Puppet::Util::SUIDManager.stubs(:asuser).yields
-
-        files = filelist()
-
-        tmpdir = File.join(tmpdir(),"tmpfiledir")
-        @@tmpfiles << tmpdir
-        FileUtils.mkdir_p(tmpdir)
-
-        Puppet[:autosign] = true
-        Puppet[:certname] = "localhost"
-        client = nil
-        port = Puppet[:masterport]
-
-        pid = mkserver(:CA => {}, :FileBucket => { :Path => @bucket})
-
-        assert_nothing_raised {
-            client = Puppet::Network::Client.dipper.new(
-                :Server => "localhost",
-                :Port => @@port
-            )
-        }
-
-        checkfiles(client)
-
-        unless pid
-            raise "Uh, we don't have a child pid"
-        end
-        Process.kill("TERM", pid)
-    end
-
     def test_no_path_duplicates
         bucket = nil
         assert_nothing_raised {

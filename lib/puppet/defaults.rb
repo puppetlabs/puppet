@@ -55,7 +55,7 @@ module Puppet
             syslog.  Syslog has a fixed list of valid facilities, and you must
             choose one of those; you cannot just make one up."],
         :statedir => { :default => "$vardir/state",
-            :mode => 01777,
+            :mode => 01755,
             :desc => "The directory where Puppet state is stored.  Generally,
                 this directory can be removed without causing harm (although it
                 might result in spurious service restarts)."
@@ -74,7 +74,6 @@ module Puppet
             :desc => "Where SSL certificates are kept."
         },
         :rundir => { :default => rundir,
-            :mode => 01777,
             :desc => "Where Puppet PID files are kept."
         },
         :genconfig => [false,
@@ -385,6 +384,8 @@ module Puppet
             may need to use a FQDN for the server hostname when using a proxy."],
         :http_proxy_port => [3128,
             "The HTTP proxy port to use for outgoing connections"],
+        :http_keepalive => [true,
+            "Whether to reuse http connections, thus enabling http-keepalive."],
         :server => ["puppet",
             "The server to which server puppetd should connect"],
         :ignoreschedules => [false,

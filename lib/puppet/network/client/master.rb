@@ -323,6 +323,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
             :owner => Process.uid,
             :group => Process.gid,
             :purge => true,
+            :force => true,
             :backup => false
         }
 
