@@ -42,7 +42,7 @@ module Puppet::Rails
             args[:dbfile] = Puppet[:dblocation]
         when "mysql", "postgresql":
             args[:host]     = Puppet[:dbserver] unless Puppet[:dbserver].empty?
-            args[:username] = Puppet[:dbuser]
+            args[:username] = Puppet[:dbuser] unless Puppet[:dbuser].empty?
             args[:password] = Puppet[:dbpassword] unless Puppet[:dbpassword].empty?
             args[:database] = Puppet[:dbname]
             args[:args]     = Puppet[:dbsocket] unless Puppet[:dbsocket] == ""
