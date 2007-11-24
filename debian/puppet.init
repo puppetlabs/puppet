@@ -21,6 +21,13 @@ stop_puppet() {
 	start-stop-daemon --stop --quiet --pidfile /var/run/$NAME.pid
 }
 
+if [ ! -d /var/run/puppet ]; then
+	rm -rf /var/run/puppet
+	mkdir -p /var/run/puppet
+fi
+
+chown puppet:puppet /var/run/puppet
+
 case "$1" in
     start)
 	log_begin_msg "Starting $DESC"

@@ -12,6 +12,13 @@ test -x $DAEMON || exit 0
 
 . /lib/lsb/init-functions
 
+if [ ! -d /var/run/puppet ]; then
+	rm -rf /var/run/puppet
+	mkdir -p /var/run/puppet
+fi
+
+chown puppet:puppet /var/run/puppet
+
 start_puppetmaster() {
 	start-stop-daemon --start --quiet --pidfile /var/run/$NAME.pid \
 		--startas $DAEMON -- $DAEMON_OPTS
