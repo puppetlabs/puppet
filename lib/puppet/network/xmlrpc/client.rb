@@ -3,6 +3,7 @@ require 'openssl'
 require 'puppet/external/base64'
 
 require 'xmlrpc/client'
+require 'net/https'
 require 'yaml'
 
 module Puppet::Network
@@ -18,6 +19,42 @@ module Puppet::Network
             include Puppet::Util::ClassGen
         end
 
+        # Clear our http cache.
+        def self.clear_http_instances
+            @@http_cache.clear
+        end
+
+        # Retrieve a cached http instance of caching is enabled, else return
+        # a new one.
+        def self.http_instance(host, port, reset = false)
+            # We overwrite the uninitialized @http here with a cached one.
+            key = "%s:%s" % [host, port]
+
+            # Return our cached instance if keepalive is enabled and we've got
+            # a cache, as long as we're not resetting the instance.
+            return @@http_cache[key] if ! reset and Puppet[:http_keepalive] and @@http_cache[key]
+
+            args = [host, port]
+            if Puppet[:http_proxy_host] == "none"
+                args << nil << nil
+            else
+                args << Puppet[:http_proxy_host] << Puppet[:http_proxy_port]
+            end
+            @http = Net::HTTP.new(*args)
+
+            # Pop open @http a little; older versions of Net::HTTP(s) didn't
+            # give us a reader for ca_file... Grr...
+            class << @http; attr_accessor :ca_file; end
+
+            @http.use_ssl = true
+            @http.read_timeout = 120
+            @http.open_timeout = 120
+
+            @@http_cache[key] = @http if Puppet[:http_keepalive]
+
+            return @http
+        end
+
         # Create a netclient for each handler
         def self.mkclient(handler)
             interface = handler.interface
@@ -25,7 +62,7 @@ module Puppet::Network
 
             # Create a subclass for every client type.  This is
             # so that all of the methods are on their own class,
-            # so that they namespaces can define the same methods if
+            # so that their namespaces can define the same methods if
             # they want.
             constant = handler.name.to_s.capitalize
             name = namespace.downcase
@@ -94,26 +131,22 @@ module Puppet::Network
             # Cache it for next time
             @cert_client = client
             
-            unless FileTest.exists?(Puppet[:localcacert])
+            unless FileTest.exist?(Puppet[:localcacert])
                 raise Puppet::SSLCertificates::Support::MissingCertificate,
                     "Could not find ca certificate %s" % Puppet[:localcacert]
             end
 
-            # Pop open @http a little; older versions of Net::HTTP(s) didn't
-            # give us a reader for ca_file... Grr...
-            class << @http; attr_accessor :ca_file; end
-
-            # Don't want to overwrite certificates, @http will freeze itself
+            # We can't overwrite certificates, @http will freeze itself
             # once started.
             unless @http.ca_file
-                    @http.ca_file = Puppet[:localcacert]
-                    store = OpenSSL::X509::Store.new
-                    store.add_file Puppet[:localcacert]
-                    store.purpose = OpenSSL::X509::PURPOSE_SSL_CLIENT
-                    @http.cert_store = store
-                    @http.cert = client.cert
-                    @http.verify_mode = OpenSSL::SSL::VERIFY_PEER
-                    @http.key = client.key
+                @http.ca_file = Puppet[:localcacert]
+                store = OpenSSL::X509::Store.new
+                store.add_file Puppet[:localcacert]
+                store.purpose = OpenSSL::X509::PURPOSE_SSL_CLIENT
+                @http.cert_store = store
+                @http.cert = client.cert
+                @http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+                @http.key = client.key
             end
         end
 
@@ -129,9 +162,6 @@ module Puppet::Network
                 hash[:HTTPProxyPort] = nil
             end
 
-            @puppet_server = hash[:Server]
-            @puppet_port = hash[:Port]
-
             super(
                 hash[:Server],
                 hash[:Path],
@@ -143,34 +173,12 @@ module Puppet::Network
                 true, # use_ssl
                 120 # a two minute timeout, instead of 30 seconds
             )
-            initialize_connection
+            @http = self.class.http_instance(@host, @port)
         end
  
-        def initialize_connection
-            # Yes, this may well be redoing what the XMLRPC::Client constructor
-            # did, but sometimes it won't be, because of the occasional retry.
-            @http = Net::HTTP.new(@host, @port, @proxy_host, @proxy_port)
-            @http.use_ssl = @use_ssl if @use_ssl
-            @http.read_timeout = @timeout
-            @http.open_timeout = @timeout
-
-            # We overwrite the uninitialized @http here with a cached one.
-            key = "%s:%s" % [@host, @port]
-
-            # We overwrite the uninitialized @http here with a cached one.
-            key = "%s%s" % [hash[:Server], hash[:Port]]
-            if @@http_cache[key]
-                @http = @@http_cache[key]
-            else
-                @@http_cache[key] = @http
-            end
-        end
-
         def recycle_connection(client)
-            conn_key = "%s:%s" % [@host, @port]
-            @@http_cache.delete(conn_key)
-            
-            initialize_connection
+            @http = self.class.http_instance(@host, @port, true) # reset the instance
+
             cert_setup(client)
         end
         

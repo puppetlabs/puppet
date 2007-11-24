@@ -384,6 +384,8 @@ module Puppet
             may need to use a FQDN for the server hostname when using a proxy."],
         :http_proxy_port => [3128,
             "The HTTP proxy port to use for outgoing connections"],
+        :http_keepalive => [true,
+            "Whether to reuse http connections, thus enabling http-keepalive."],
         :server => ["puppet",
             "The server to which server puppetd should connect"],
         :ignoreschedules => [false,

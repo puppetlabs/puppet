@@ -51,24 +51,34 @@ class TestXMLRPCClient < Test::Unit::TestCase
             client = Puppet::Network::XMLRPCClient.new()
         end
 
-        ca = Puppet::Network::Handler.ca.new
-        caclient = Puppet::Network::Client.ca.new :CA => ca
-        caclient.request_cert
+        caclient = mock 'client', :cert => :ccert, :key => :ckey
+
+        FileTest.expects(:exist?).with(Puppet[:localcacert]).returns(true)
+
+        store = mock 'sslstore'
+        OpenSSL::X509::Store.expects(:new).returns(store)
+        store.expects(:add_file).with(Puppet[:localcacert])
+        store.expects(:purpose=).with(OpenSSL::X509::PURPOSE_SSL_CLIENT)
 
         class << client
             attr_accessor :http
         end
 
-        client.http.expects(:ca_file=).with(Puppet[:localcacert])
-        client.http.expects(:cert=).with(caclient.cert)
-        client.http.expects(:key=).with(caclient.key)
-        client.http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
-        client.http.expects(:cert_store=)
+        http = mock 'http'
+        client.http = http
+
+        http.expects(:ca_file).returns(false)
+        http.expects(:ca_file=).with(Puppet[:localcacert])
+        http.expects(:cert=).with(:ccert)
+        http.expects(:key=).with(:ckey)
+        http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
+        http.expects(:cert_store=)
 
         assert_nothing_raised do
             client.cert_setup(caclient)
         end
     end
+
+    def test_http_cache
+    end
 end
-
-

@@ -243,8 +243,8 @@ class TestClient < Test::Unit::TestCase
         client = FakeClient.new :Test => FakeDriver.new
 
         driver = client.driver
-        driver.meta_def(:cert_setup) { |c| }
-        driver.expects(:cert_setup).with(client)
+        driver.meta_def(:recycle_connection) { |c| }
+        driver.expects(:recycle_connection).with(client)
 
         assert_nothing_raised("Could not read cert") do
             client.read_cert
