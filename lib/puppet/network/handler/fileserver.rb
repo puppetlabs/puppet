@@ -17,6 +17,7 @@ class Puppet::Network::Handler
 
         # Special filserver module for puppet's module system
         MODULES = "modules"
+        PLUGINS = "plugins"
 
         @interface = XMLRPC::Service::Interface.new("fileserver") { |iface|
             iface.add_method("string describe(string, string)")
@@ -99,6 +100,7 @@ class Puppet::Network::Handler
                     end
                 }
                 self.mount(nil, MODULES)
+                self.mount(nil, PLUGINS)
             else
                 @passedconfig = false
                 readconfig(false) # don't check the file the first time.
@@ -114,13 +116,11 @@ class Puppet::Network::Handler
             end
 
             obj = nil
-            unless FileTest.exists?(path)
+            unless mount.path_exists?(path)
                 return ""
             end
 
-            # We pass two paths here, but reclist internally changes one
-            # of the arguments when called internally.
-            desc = reclist(mount, path, path, recurse, ignore)
+            desc = mount.list(path, recurse, ignore)
 
             if desc.length == 0
                 mount.notice "Got no information on //%s/%s" %
@@ -167,13 +167,15 @@ class Puppet::Network::Handler
                 mount.info "Sending %s to %s" % [url, client]
             end
 
-            unless FileTest.exists?(path)
+            unless mount.path_exists?(path)
+                mount.debug "#{mount} reported that #{path} does not exist"
                 return ""
             end
 
             links = links.intern if links.is_a? String
 
             if links == :ignore and FileTest.symlink?(path)
+                mount.debug "I think that #{path} is a symlink and we're ignoring them"
                 return ""
             end
 
@@ -181,7 +183,7 @@ class Puppet::Network::Handler
             if links == :manage
                 raise Puppet::Error, "Cannot copy links yet."
             else
-                str = File.read(path)
+                str = mount.read_file(path)
             end
 
             if @local
@@ -210,6 +212,9 @@ class Puppet::Network::Handler
             end
         end
 
+        # Take a URL and some client info and return a mount and relative
+        # path pair.
+        #
         def convert(url, client, clientip)
             readconfig
 
@@ -219,25 +224,8 @@ class Puppet::Network::Handler
 
             authcheck(url, mount, client, clientip)
 
-            path = nil
-            unless path = mount.subdir(stub, client)
-                mount.notice "Could not find subdirectory %s" %
-                    "//%s/%s" % [mount, stub]
-                return ""
-            end
-
-            return mount, path
+            return mount, stub
         end
-
-        # Deal with ignore parameters.
-        def handleignore(children, path, ignore)            
-            ignore.each { |ignore|                
-                Dir.glob(File.join(path,ignore), File::FNM_DOTMATCH) { |match|
-                    children.delete(File.basename(match))
-                }                
-            }
-            return children
-        end  
 
         # Return the mount for the Puppet modules; allows file copying from
         # the modules.
@@ -291,8 +279,8 @@ class Puppet::Network::Handler
                             value = $2
                             case var
                             when "path":
-                                if mount.name == MODULES
-                                    Puppet.warning "The '#{MODULES}' module can not have a path. Ignoring attempt to set it"
+                                if mount.name == MODULES or mount.name == PLUGINS
+                                    Puppet.warning "The '#{mount.name}' module can not have a path. Ignoring attempt to set it"
                                 else
                                     begin
                                         mount.path = value
@@ -349,6 +337,12 @@ class Puppet::Network::Handler
                 mount.allow("*")
                 newmounts[MODULES] = mount
             end
+            
+            unless newmounts[PLUGINS]
+                mount = PluginMount.new(PLUGINS)
+                mount.allow("*")
+                newmounts[PLUGINS] = mount
+            end
 
             # Verify each of the mounts are valid.
             # We let the check raise an error, so that it can raise an error
@@ -362,54 +356,13 @@ class Puppet::Network::Handler
             @mounts = newmounts
         end
 
-        # Recursively list the directory. FIXME This should be using
-        # puppet objects, not directly listing.
-        def reclist(mount, root, path, recurse, ignore)
-            # Take out the root of the path.
-            name = path.sub(root, '')
-            if name == ""
-                name = "/"
-            end
-
-            if name == path
-                raise FileServerError, "Could not match %s in %s" %
-                    [root, path]
-            end
-
-            desc = [name]
-            ftype = File.stat(path).ftype
-
-            desc << ftype
-            if recurse.is_a?(Integer)
-                recurse -= 1
-            end
-
-            ary = [desc]
-            if recurse == true or (recurse.is_a?(Integer) and recurse > -1)
-                if ftype == "directory"
-                    children = Dir.entries(path)
-                    if ignore
-                        children = handleignore(children, path, ignore)
-                    end  
-                    children.each { |child|
-                        next if child =~ /^\.\.?$/
-                        reclist(mount, root, File.join(path, child), recurse, ignore).each { |cobj|
-                            ary << cobj
-                        }
-                    }
-                end
-            end
-
-            return ary.reject { |c| c.nil? }
-        end
-
         # Split the path into the separate mount point and path.
         def splitpath(dir, client)
             # the dir is based on one of the mounts
             # so first retrieve the mount path
             mount = nil
             path = nil
-            if dir =~ %r{/([-\w]+)/?}
+            if dir =~ %r{/([-\w]+)}
                 # Strip off the mount name.
                 mount_name, path = dir.sub(%r{^/}, '').split(File::Separator, 2)
 
@@ -422,8 +375,8 @@ class Puppet::Network::Handler
                 raise FileServerError, "Fileserver error: Invalid path '%s'" % dir
             end
 
-            if path == ""
-                path = nil
+            if path.nil? or path == ''
+                path = '/'
             elsif path
                 # Remove any double slashes that might have occurred
                 path = URI.unescape(path.gsub(/\/\//, "/"))
@@ -449,7 +402,7 @@ class Puppet::Network::Handler
             Puppet::Util.logmethods(self, true)
 
             def getfileobject(dir, links)
-                unless FileTest.exists?(dir)
+                unless path_exists?(dir)
                     self.debug "File source %s does not exist" % dir
                     return nil
                 end
@@ -556,7 +509,7 @@ class Puppet::Network::Handler
 
             def fileobj(path, links)
                 obj = nil
-                if obj = Puppet.type(:file)[path]
+                if obj = Puppet.type(:file)[real_path(path)]
                     # This can only happen in local fileserving, but it's an
                     # important one.  It'd be nice if we didn't just set
                     # the check params every time, but I'm not sure it's worth
@@ -564,7 +517,7 @@ class Puppet::Network::Handler
                     obj[:check] = CHECKPARAMS
                 else
                     obj = Puppet.type(:file).create(
-                        :name => path,
+                        :name => real_path(path),
                         :check => CHECKPARAMS
                     )
                 end
@@ -579,6 +532,17 @@ class Puppet::Network::Handler
                 end
 
                 return obj
+            end
+
+            # Read the contents of the file at the relative path given.
+            def read_file(relpath)
+            	File.read(real_path(relpath))
+				end
+
+            # Determine the real path on disk for the given mount-relative
+            # path
+            def real_path(relpath)
+                File.join(self.path(nil), relpath)
             end
 
             # Cache this manufactured map, since if it's used it's likely
@@ -626,6 +590,12 @@ class Puppet::Network::Handler
                 @path = path
             end
 
+            # Verify that the path given exists within this mount's subtree.
+            #
+            def path_exists?(relpath)
+            	File.exists?(File.join(path(nil), relpath))
+				end
+
             # Return the current values for the object.
             def properties(obj)
                 obj.retrieve.inject({}) { |props, ary| props[ary[0].name] = ary[1]; props }
@@ -637,7 +607,7 @@ class Puppet::Network::Handler
                 basedir = self.path(client)
 
                 dirname = if dir
-                    File.join(basedir, dir.split("/").join(File::SEPARATOR))
+                    File.join(basedir, *dir.split("/"))
                 else
                     basedir
                 end
@@ -657,7 +627,7 @@ class Puppet::Network::Handler
             # Verify our configuration is valid.  This should really check to
             # make sure at least someone will be allowed, but, eh.
             def valid?
-                if name == MODULES
+                if name == MODULES or name == PLUGINS
                     return @path.nil?
                 else
                     return ! @path.nil?
@@ -671,6 +641,135 @@ class Puppet::Network::Handler
                 result.path = path
                 result.instance_variable_set(:@name, name)
                 return result
+            end
+
+            # List the contents of the relative path +relpath+ of this mount.
+            #
+            # +recurse+ is the number of levels to recurse into the tree,
+            # or false to provide no recursion or true if you just want to
+            # go for broke.
+            #
+            # +ignore+ is an array of filenames to ignore when traversing
+            # the list.
+            #
+            # The return value of this method is a complex nest of arrays,
+            # which describes a directory tree.  Each file or directory is
+            # represented by an array, where the first element is the path
+            # of the file (relative to the root of the mount), and the
+            # second element is the type.  A directory is represented by an
+            # array as well, where the first element is a "directory" array,
+            # while the remaining elements are other file or directory
+            # arrays.  Confusing?  Hell yes.
+            #
+            def list(relpath, recurse, ignore)
+            	reclist(File.join(path(nil), relpath), nil, recurse, ignore)
+            end
+
+            # Recursively list the files in this tree.
+            def reclist(basepath, abspath, recurse, ignore)
+                abspath = basepath if abspath.nil?
+                relpath = abspath.sub(%r{^#{basepath}}, '')
+                relpath = '/' if relpath == ''
+                
+                desc = [relpath]
+                
+                ftype = File.stat(abspath).ftype
+
+                desc << ftype
+                if recurse.is_a?(Integer)
+                    recurse -= 1
+                end
+
+                ary = [desc]
+                if recurse == true or (recurse.is_a?(Integer) and recurse > -1)
+                    if ftype == "directory"
+                        children = Dir.entries(abspath)
+                        if ignore
+                            children = handleignore(children, relpath, ignore)
+                        end  
+                        children.each { |child|
+                            next if child =~ /^\.\.?$/
+                            reclist(basepath, File.join(abspath, child), recurse, ignore).each { |cobj|
+                                ary << cobj
+                            }
+                        }
+                    end
+                end
+
+                return ary.compact
+            end
+
+            # Deal with ignore parameters.
+            def handleignore(children, path, ignore)            
+                ignore.each { |ignore|                
+                    Dir.glob(File.join(path,ignore), File::FNM_DOTMATCH) { |match|
+                        children.delete(File.basename(match))
+                    }                
+                }
+                return children
+            end
+        end  
+
+        # A special mount class specifically for the plugins mount -- just
+        # has some magic to effectively do a union mount of the 'plugins'
+        # directory of all modules.
+        # 
+        class PluginMount < Mount
+				def path(client)
+				    ''
+            end
+
+            def path_exists?(relpath)
+            	!valid_modules.find { |m| File.exists?(File.join(m, PLUGINS, relpath)) }.nil?
+				end
+
+				def real_path(relpath)
+                mod = valid_modules.map { |m| File.exists?(File.join(m, PLUGINS, relpath)) ? m : nil }.compact.first
+                File.join(mod, PLUGINS, relpath)
+            end
+
+            def reclist(basepath, abspath, recurse, ignore)
+                abspath = basepath if abspath.nil?
+                relpath = abspath.sub(%r{^#{basepath}}, '')
+                relpath = "/#{relpath}" unless relpath[0] == ?/  #/
+                
+                desc = [relpath]
+                
+                ftype = File.stat(real_path(abspath)).ftype
+
+                desc << ftype
+                if recurse.is_a?(Integer)
+                    recurse -= 1
+                end
+
+                ary = [desc]
+                if recurse == true or (recurse.is_a?(Integer) and recurse > -1)
+                    if ftype == "directory"
+                        valid_modules.each do |mod|
+                            children = Dir.entries(File.join(mod, PLUGINS, abspath))
+                            if ignore
+                                children = handleignore(children, relpath, ignore)
+                            end  
+                            children.each { |child|
+                                next if child =~ /^\.\.?$/
+                                reclist(basepath, File.join(abspath, child), recurse, ignore).each { |cobj|
+                                    ary << cobj
+                                }
+                            }
+                        end
+                    end
+                end
+
+                return ary.compact
+            end
+
+            private
+            def valid_modules
+            	Puppet::Module.all.find_all { |m| File.directory?(File.join(m, PLUGINS)) }
+            end
+            
+            def add_to_filetree(f, filetree)
+            	first, rest = f.split(File::SEPARATOR, 2)
             end
         end
     end
