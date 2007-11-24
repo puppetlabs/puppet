@@ -51,7 +51,7 @@ class Puppet::Parser::Resource::Param
         #dev_warn if db_values.nil? || db_values.empty? 
 
         values_to_remove(db_values).each { |remove_me|
-            Puppet::Rails::ParamValue.delete(remove_me)
+            Puppet::Rails::ParamValue.delete(remove_me.id)
         }
         line_number = line_to_i()
         values_to_add(db_values).each { |add_me| 
