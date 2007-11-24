@@ -1,8 +1,10 @@
 puppet (0.23.2-5) unstable; urgency=low
 
   * Add some NEWS for the ssldir transition.  Should have done that earlier.
+  * Remove the explicit mode change for vardir, and fix up the mode on
+    statedir, as well.  Closes: #425496.
 
- -- Matthew Palmer <mpalmer@debian.org>  Thu, 13 Sep 2007 10:52:37 +1000
+ -- Matthew Palmer <mpalmer@debian.org>  Thu, 13 Sep 2007 11:08:03 +1000
 
 puppet (0.23.2-4) unstable; urgency=low
 
