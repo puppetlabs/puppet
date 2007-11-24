@@ -43,6 +43,11 @@ module Puppet::Network
                     begin
                         call("%s.%s" % [namespace, method.to_s],*args)
                     rescue OpenSSL::SSL::SSLError => detail
+                        if detail.message =~ /bad write retry/
+                            Puppet.warning "Transient SSL write error; restarting connection and retrying"
+                            self.recycle_connection(@cert_client)
+                            retry
+                        end
                         raise XMLRPCClientError,
                             "Certificates were not trusted: %s" % detail
                     rescue ::XMLRPC::FaultException => detail
@@ -59,11 +64,15 @@ module Puppet::Network
                         )
                         error.set_backtrace detail.backtrace
                         raise error
-                    rescue Errno::EPIPE
+                    rescue Errno::EPIPE, EOFError
                         Puppet.warning "Other end went away; restarting connection and retrying"
                         self.recycle_connection(@cert_client)
                         retry
                     rescue => detail
+                        if detail.message =~ /^Wrong size\. Was \d+, should be \d+$/
+                            Puppet.warning "XMLRPC returned wrong size.  Retrying."
+                            retry
+                        end    
                         Puppet.err "Could not call %s.%s: %s" %
                             [namespace, method, detail.inspect]
                         error = XMLRPCClientError.new(detail.to_s)
