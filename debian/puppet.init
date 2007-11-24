@@ -13,12 +13,12 @@ test -x $DAEMON || exit 0
 . /lib/lsb/init-functions
 
 start_puppet() {
-	start-stop-daemon --start --quiet --pidfile /var/run/$NAME.pid \
+	start-stop-daemon --start --quiet --pidfile /var/run/puppet/$NAME.pid \
 		--startas $DAEMON -- $DAEMON_OPTS
 }
 
 stop_puppet() {
-	start-stop-daemon --stop --quiet --pidfile /var/run/$NAME.pid
+	start-stop-daemon --stop --quiet --pidfile /var/run/puppet/$NAME.pid
 }
 
 if [ ! -d /var/run/puppet ]; then
