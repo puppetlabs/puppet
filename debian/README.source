@@ -1,0 +1,9 @@
+The debian/ directory for this package is maintained in bzr.  There are two
+primary branches, kept by each maintainer:
+
+http://www.hezmatt.org/~mpalmer/bzr/puppet.debian (mpalmer)
+http://repo.spacepants.org/puppet/puppet.debian (jaq)
+
+Typically all the changes will be in one (or both) of these branches.  They
+merge from each other on a regular basis, and the canonical version for a
+release just depends on who actually made the upload.

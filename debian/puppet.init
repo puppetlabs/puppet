@@ -1,0 +1,48 @@
+#! /bin/sh
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/sbin/puppetd
+DAEMON_OPTS="-w 0"
+NAME=puppetd
+DESC="puppet configuration management tool"
+
+test -x $DAEMON || exit 0
+
+[ -r /etc/default/puppet ] && . /etc/default/puppet
+
+. /lib/lsb/init-functions
+
+start_puppet() {
+	start-stop-daemon --start --quiet --pidfile /var/run/$NAME.pid \
+		--startas $DAEMON -- $DAEMON_OPTS
+}
+
+stop_puppet() {
+	start-stop-daemon --stop --quiet --pidfile /var/run/$NAME.pid
+}
+
+case "$1" in
+    start)
+	log_begin_msg "Starting $DESC"
+	start_puppet
+	log_end_msg 0
+	;;
+    stop)
+	log_begin_msg "Stopping $DESC"
+	stop_puppet
+	log_end_msg 0
+	;;
+  restart|force-reload)
+	log_begin_msg "Restarting $DESC"
+	stop_puppet
+	sleep 1
+	start_puppet
+	log_end_msg 0
+	;;
+  *)
+	echo "Usage: $0 {start|stop|restart|force-reload}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

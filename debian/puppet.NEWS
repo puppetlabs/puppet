@@ -1,0 +1,21 @@
+puppet (0.23.0-1) unstable; urgency=low
+
+  * As of upstream 0.23.0, the configuration file layout has been largely
+    revamped.  Now, instead of having one file per program, there is now
+    a single file, /etc/puppet/puppet.conf, which contains sections for
+    each program, as well as a "main" section that sets global config
+    options relevant for all programs.
+    
+    See http://reductivelabs.com/trac/puppet/wiki/ConfigurationReference for
+    more info.
+    
+    For backwards compatibility, all programs still read the per-program
+    configuration files, and will ignore the generic puppet.conf file if the
+    per-program file still exists.  To prevent accidents, you will need to
+    do the configuration change manually, by rewriting puppet.conf to match
+    your local configuration parameters and then deleting the old files.  If
+    you haven't changed any config parameters, then it should be as simple
+    as deleting puppetd.conf and puppetmasterd.conf and restarting the
+    daemons, as the configuration itself hasn't changed between versions.
+
+ -- Matthew Palmer <mpalmer@debian.org>  Mon, 25 Jun 2007 10:43:53 +1000

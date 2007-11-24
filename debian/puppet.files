@@ -1,0 +1,7 @@
+usr/bin/puppet
+usr/bin/puppetdoc
+usr/sbin/puppetd
+usr/lib/ruby/1.8/
+var/run
+var/log/puppet
+etc/puppet/puppet.conf
