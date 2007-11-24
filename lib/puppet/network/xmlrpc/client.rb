@@ -61,7 +61,7 @@ module Puppet::Network
                         raise error
                     rescue Errno::EPIPE
                         Puppet.warning "Other end went away; restarting connection and retrying"
-                        self.recycle_connection
+                        self.recycle_connection(@cert_client)
                         retry
                     rescue => detail
                         Puppet.err "Could not call %s.%s: %s" %
@@ -157,12 +157,12 @@ module Puppet::Network
             end
         end
 
-        def recycle_connection
+        def recycle_connection(client)
             conn_key = "%s:%s" % [@host, @port]
             @@http_cache.delete(conn_key)
             
             initialize_connection
-            cert_setup(@cert_client)
+            cert_setup(client)
         end
         
         def start

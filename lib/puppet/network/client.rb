@@ -85,9 +85,7 @@ class Puppet::Network::Client
 
             @driver = self.class.xmlrpc_client.new(args)
 
-            if self.read_cert
-                @driver.cert_setup(self)
-            end
+            self.read_cert
 
             # We have to start the HTTP connection manually before we start
             # sending it requests or keep-alive won't work.
@@ -120,7 +118,7 @@ class Puppet::Network::Client
     # Make sure we set the driver up when we read the cert in.
     def read_cert
         if super
-            @driver.cert_setup(self) if @driver.respond_to?(:cert_setup)
+            @driver.recycle_connection(self) if @driver.respond_to?(:recycle_connection)
             return true
         else
             return false
