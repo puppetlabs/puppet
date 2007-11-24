@@ -1,3 +1,14 @@
+puppet (0.23.2-12) unstable; urgency=low
+
+  * Handling of the rundir setting has been changed; we now store PID files
+    in /var/run/puppet, and the initscripts have been modified to ensure
+    that this directory exists on startup.  It is no longer necessary to set
+    rundir explicitly in /etc/puppet/puppet.conf, and you should ensure that
+    you have no explicit rundir setting in your puppet.conf unless you want
+    to use a custom rundir setting for your own local purposes.
+
+ -- Matthew Palmer <mpalmer@debian.org>  Sat, 20 Oct 2007 11:58:58 +1000
+
 puppet (0.23.2-3) unstable; urgency=low
 
   * This version of Puppet makes a fairly major change to the location of
