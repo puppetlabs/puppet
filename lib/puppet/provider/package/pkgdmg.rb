@@ -41,9 +41,9 @@ the DMG file system. Sub directories are not checked for packages.
 This provider always assumes the label (formerly called 'name') attribute
 declared in the manifest will always exactly match the file name (without
 path) of the DMG file itself. Therefore, if you want to install packages in
-'Foobar.pkg.dmg' you must explicitly specify the label:
+'Foobar.pkg.dmg' you must explicitly specify the label::
 
- package { Foobar.pkg.dmg: ensure => installed, provider => pkgdmg }
+    package { Foobar.pkg.dmg: ensure => installed, provider => pkgdmg }
 
 Only the dmg file name itself is used when puppet determines if the packages
 contained within are currently installed. For example, if a package resource
@@ -57,9 +57,9 @@ will not update or re-install the packages contained within unless you change
 the file name of the DMG wrapper itself. Therefore, if you use this provider,
 I recommend you name the DMG wrapper files in a manner that lends itself to
 incremental version changes. I include some version or date string in the DMG
-name, like so:
+name, like so::
 
- Firefox-2.0.0.3-1.pkg.dmg
+    Firefox-2.0.0.3-1.pkg.dmg
 
 If I realize I've mis-packaged this DMG, then I have the option to increment
 the package version, yielding Firefox-2.0.0.3-2.pkg.dmg.
@@ -82,12 +82,12 @@ file system and not via a URL method.
 
 If this is a problem for you, please patch the code, or bug Jeff to fix this.
 
-Example usage:
+Example usage::
 
-package { Thunderbird-2.0.0.4-1.pkg.dmg:
-  provider => pkgdmg, ensure => present
-  source => 'http://0.0.0.0:8000/packages/Thunderbird-2.0.0.4-1.pkg.dmg',
-}
+    package { Thunderbird-2.0.0.4-1.pkg.dmg:
+      provider => pkgdmg, ensure => present
+      source => 'http://0.0.0.0:8000/packages/Thunderbird-2.0.0.4-1.pkg.dmg',
+    }
 "
   
 
