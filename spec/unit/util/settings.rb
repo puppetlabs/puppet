@@ -323,6 +323,17 @@ describe Puppet::Util::Settings, " when parsing its configuration" do
         @settings[:myfile].should == "/other/file"
         @settings.metadata(:myfile).should == {:owner => "luke"}
     end
+
+    it "should allow empty values" do
+        @settings.setdefaults :section, :myarg => ["myfile", "a"]
+
+        text = "[main]
+        myarg =
+        "
+        @settings.stubs(:read_file).returns(text)
+        @settings.parse("/some/file")
+        @settings[:myarg].should == ""
+    end
 end
 
 describe Puppet::Util::Settings, " when reparsing its configuration" do

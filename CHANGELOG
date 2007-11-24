@@ -1,3 +1,8 @@
+    Empty dbserver and dbpassword settings will now be ignored when
+    initializing Rails connections (patch by womble).
+
+    Configuration settings can now be blank (patch by womble).
+
     Added calls to endpwent/endgrent when searching for user and group IDs,
     which fixes #791.
 
