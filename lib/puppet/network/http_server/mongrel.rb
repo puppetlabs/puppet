@@ -120,8 +120,11 @@ module Puppet::Network
         def client_info(request)
             params = request.params
             ip = params["REMOTE_ADDR"]
-            if dn = params[Puppet[:ssl_client_header]] and dn.include?("/CN=")
-                client = dn.sub("/CN=", '')
+            # JJM #906 The following dn.match regular expression is forgiving
+            # enough to match the two Distinguished Name string contents
+            # coming from Apache, Pound or other reverse SSL proxies.
+            if dn = params[Puppet[:ssl_client_header]] and dn_matchdata = dn.match(/^.*?CN\s*=\s*(.*)/)
+                client = dn_matchdata[1].to_str
                 valid = (params[Puppet[:ssl_client_verify_header]] == 'SUCCESS')
             else
                 client = Resolv.getname(ip)
