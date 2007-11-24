@@ -1,3 +1,14 @@
+puppet (0.23.2-4) unstable; urgency=low
+
+  * Fix puppet#776 in a slightly better way by only flushing the cache when
+    a value is changed, rather than whenever a value is read.
+  * Apply patch from puppet#755 to cache connections to the Puppetmaster,
+    which improves performance by more than a little.
+  * Modify the fileserver so that it provides a 'plugins' mount which
+    exports the union of the plugins directory of all modules.
+
+ -- Matthew Palmer <mpalmer@debian.org>  Fri, 31 Aug 2007 15:32:04 +1000
+
 puppet (0.23.2-3) unstable; urgency=low
 
   * Clear the config value cache every time.  This is a titchy little
