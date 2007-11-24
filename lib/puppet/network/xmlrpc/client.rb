@@ -46,10 +46,6 @@ module Puppet::Network
                         raise XMLRPCClientError,
                             "Certificates were not trusted: %s" % detail
                     rescue ::XMLRPC::FaultException => detail
-                        #Puppet.err "Could not call %s.%s: %s" %
-                        #    [namespace, method, detail.faultString]
-                        #raise XMLRPCClientError,
-                        #    "XMLRPC Error: %s" % detail.faultString
                         raise XMLRPCClientError, detail.faultString
                     rescue Errno::ECONNREFUSED => detail
                         msg = "Could not connect to %s on port %s" %
@@ -57,12 +53,16 @@ module Puppet::Network
                         raise XMLRPCClientError, msg
                     rescue SocketError => detail
                         Puppet.err "Could not find server %s: %s" %
-                            [@puppet_server, detail.to_s]
+                            [@host, detail.to_s]
                         error = XMLRPCClientError.new(
-                            "Could not find server %s" % @puppet_server
+                            "Could not find server %s" % @host
                         )
                         error.set_backtrace detail.backtrace
                         raise error
+                    rescue Errno::EPIPE
+                        Puppet.warning "Other end went away; restarting connection and retrying"
+                        self.recycle_connection
+                        retry
                     rescue => detail
                         Puppet.err "Could not call %s.%s: %s" %
                             [namespace, method, detail.inspect]
@@ -82,6 +82,9 @@ module Puppet::Network
 
         # Use cert information from a Puppet client to set up the http object.
         def cert_setup(client)
+            # Cache it for next time
+            @cert_client = client
+            
             unless FileTest.exists?(Puppet[:localcacert])
                 raise Puppet::SSLCertificates::Support::MissingCertificate,
                     "Could not find ca certificate %s" % Puppet[:localcacert]
@@ -124,13 +127,26 @@ module Puppet::Network
                 hash[:Server],
                 hash[:Path],
                 hash[:Port],
-                hash[:HTTPProxyHost], # proxy_host
-                hash[:HTTPProxyPort], # proxy_port
+                hash[:HTTPProxyHost],
+                hash[:HTTPProxyPort],
                 nil, # user
                 nil, # password
                 true, # use_ssl
                 120 # a two minute timeout, instead of 30 seconds
             )
+            initialize_connection
+        end
+ 
+        def initialize_connection
+            # Yes, this may well be redoing what the XMLRPC::Client constructor
+            # did, but sometimes it won't be, because of the occasional retry.
+            @http = Net::HTTP.new(@host, @port, @proxy_host, @proxy_port)
+            @http.use_ssl = @use_ssl if @use_ssl
+            @http.read_timeout = @timeout
+            @http.open_timeout = @timeout
+
+            # We overwrite the uninitialized @http here with a cached one.
+            key = "%s:%s" % [@host, @port]
 
             # We overwrite the uninitialized @http here with a cached one.
             key = "%s%s" % [hash[:Server], hash[:Port]]
@@ -141,6 +157,14 @@ module Puppet::Network
             end
         end
 
+        def recycle_connection
+            conn_key = "%s:%s" % [@host, @port]
+            @@http_cache.delete(conn_key)
+            
+            initialize_connection
+            cert_setup(@cert_client)
+        end
+        
         def start
             @http.start unless @http.started?
         end
