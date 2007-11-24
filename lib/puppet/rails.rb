@@ -41,9 +41,9 @@ module Puppet::Rails
         when "sqlite3":
             args[:dbfile] = Puppet[:dblocation]
         when "mysql", "postgresql":
-            args[:host]     = Puppet[:dbserver]
+            args[:host]     = Puppet[:dbserver] unless Puppet[:dbserver].empty?
             args[:username] = Puppet[:dbuser]
-            args[:password] = Puppet[:dbpassword]
+            args[:password] = Puppet[:dbpassword] unless Puppet[:dbpassword].empty?
             args[:database] = Puppet[:dbname]
             args[:args]     = Puppet[:dbsocket] unless Puppet[:dbsocket] == ""
         else
