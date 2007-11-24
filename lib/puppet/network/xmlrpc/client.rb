@@ -87,6 +87,10 @@ module Puppet::Network
                     "Could not find ca certificate %s" % Puppet[:localcacert]
             end
 
+            # Pop open @http a little; older versions of Net::HTTP(s) didn't
+            # give us a reader for ca_file... Grr...
+            class << @http; attr_accessor :ca_file; end
+
             # Don't want to overwrite certificates, @http will freeze itself
             # once started.
             unless @http.ca_file
