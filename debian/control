@@ -28,7 +28,7 @@ Package: puppetmaster
 Architecture: all
 Depends: ruby (>= 1.8.1), puppet (= ${Source-Version}), facter, lsb-base
 Recommends: rails (>= 1.2.3-2), rdoc
-Description: centralised configuration manangement control daemon
+Description: centralised configuration management control daemon
  Puppet lets you centrally manage every important aspect of your system
  using a cross-platform specification language that manages all the
  separate elements normally aggregated in different files, like users,

@@ -5,7 +5,7 @@ case "$1" in
 	/usr/sbin/adduser --system \
 	    --group \
 	    --home /var/lib/puppet \
-	    --gecos "Puppet configuration manangement daemon" \
+	    --gecos "Puppet configuration management daemon" \
 	    puppet > /dev/null
     ;;
 
