@@ -13,7 +13,7 @@ describe Puppet::Rails, " when using sqlite3" do
     
     teardown do
         Puppet[:dbadapter] = @old_adapter
-        Puppet[:dbsocket]    = @old_dbsocket
+        Puppet[:dbsocket]  = @old_dbsocket
     end
     
     it "should ignore the database socket argument" do
@@ -24,7 +24,7 @@ end
 
 describe Puppet::Rails, " when not using sqlite3" do
     setup do
-        @old_adapter    = Puppet[:dbadapter]
+        @old_adapter  = Puppet[:dbadapter]
         @old_dbsocket = Puppet[:dbsocket]
         
         Puppet[:dbadapter] = "mysql"
@@ -32,7 +32,7 @@ describe Puppet::Rails, " when not using sqlite3" do
     
     teardown do
         Puppet[:dbadapter] = @old_adapter
-        Puppet[:dbsocket]    = @old_dbsocket
+        Puppet[:dbsocket]  = @old_dbsocket
     end
     
     it "should set the dbsocket argument if not empty " do
