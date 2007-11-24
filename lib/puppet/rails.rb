@@ -45,7 +45,7 @@ module Puppet::Rails
             args[:username] = Puppet[:dbuser]
             args[:password] = Puppet[:dbpassword]
             args[:database] = Puppet[:dbname]
-            args[:args]     = Puppet[:dbsocket] unless Puppet[:dbsocket] == ""
+            args[:socket]   = Puppet[:dbsocket] unless Puppet[:dbsocket] == ""
         else
             raise ArgumentError, "Invalid db adapter %s" % Puppet[:dbadapter]
         end
