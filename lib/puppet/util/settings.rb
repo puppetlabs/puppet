@@ -516,6 +516,7 @@ class Puppet::Util::Settings
     # pointless, but they help break things up a bit, anyway.
     def setdefaults(section, defs)
         section = symbolize(section)
+        call = []
         defs.each { |name, hash|
             if hash.is_a? Array
                 unless hash.length == 2
@@ -540,7 +541,14 @@ class Puppet::Util::Settings
                 @shortnames[short] = tryconfig
             end
             @config[name] = tryconfig
+
+            # Collect the settings that need to have their hooks called immediately.
+            # We have to collect them so that we can be sure we're fully initialized before
+            # the hook is called.
+            call << tryconfig if tryconfig.call_on_define
         }
+
+        call.each { |setting| setting.handle(self.value(setting.name)) }
     end
 
     # Create a timer to check whether the file should be reparsed.
@@ -959,7 +967,7 @@ Generated on #{Time.now}.
 
     # The base element type.
     class CElement
-        attr_accessor :name, :section, :default, :parent, :setbycli
+        attr_accessor :name, :section, :default, :parent, :setbycli, :call_on_define
         attr_reader :desc, :short
 
         # Unset any set value.

@@ -179,6 +179,7 @@ end
 
         assert_equal(hostname, Facter.value(:hostname),
             "Lost value to hostname")
+
         assert_equal("yayness", Facter.value(:myfact),
             "Did not get correct fact value")
 

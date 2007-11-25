@@ -371,7 +371,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
 
     # Retrieve facts from the central server.
     def self.getfacts
-
         # Download the new facts
         path = Puppet[:factpath].split(":")
         files = []

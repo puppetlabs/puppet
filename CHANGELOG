@@ -1,3 +1,7 @@
+    Added modified patch by Matt Palmer which adds a 'plugins' mount,
+    fixing #891.  See PluginsInModules on the wiki for information on
+    usage.
+
     Empty dbserver and dbpassword settings will now be ignored when
     initializing Rails connections (patch by womble).
 
