@@ -1,7 +1,63 @@
 # An object that collects stored objects from the central cache and returns
 # them to the current host, yo.
 class Puppet::Parser::Collector
-    attr_accessor :type, :scope, :vquery, :rquery, :form, :resources
+    attr_accessor :type, :scope, :vquery, :equery, :form, :resources
+
+    # Call the collection method, mark all of the returned objects as non-virtual,
+    # and then delete this object from the list of collections to evaluate.
+    def evaluate
+        if self.resources
+            if objects = collect_resources and ! objects.empty?
+                return objects
+            else
+                return false
+            end
+        else
+            method = "collect_#{@form.to_s}"
+            changer = @form.to_s + "="
+            objects = send(method).each { |obj| obj.send(changer, false) }
+            if objects.empty?
+                return false
+            else
+                return objects
+            end
+        end
+    end
+
+    def initialize(scope, type, equery, vquery, form)
+        @scope = scope
+        @type = type
+        @equery = equery
+        @vquery = vquery
+
+        raise(ArgumentError, "Invalid query form %s" % form) unless [:exported, :virtual].include?(form)
+        @form = form
+    end
+
+    private
+
+    # Create our active record query.
+    def build_active_record_query
+        Puppet::Rails.init unless ActiveRecord::Base.connected?
+
+        raise Puppet::DevError, "Cannot collect resources for a nil host" unless @scope.host
+        host = Puppet::Rails::Host.find_by_name(@scope.host)
+
+        query = {:include => {:param_values => :param_name}}
+
+        search = "(exported=? AND restype=?)"
+        values = [true, @type]
+
+        search += " AND (?)" and values << @equery if @equery
+
+        # We're going to collect objects from rails, but we don't want any
+        # objects from this host.
+        search = ("host_id != ? AND %s" % search) and values.unshift(host.id) if host
+
+        query[:conditions] = [search, *values]
+
+        return query
+    end
 
     # Collect exported objects.
     def collect_exported
@@ -9,39 +65,16 @@ class Puppet::Parser::Collector
         # collect_virtual method but tell it to use 'exported? for the test.
         resources = collect_virtual(true).reject { |r| ! r.virtual? }
 
-        count = 0
+        count = resources.length
 
-        unless @scope.host
-            raise Puppet::DevError, "Cannot collect resources for a nil host"
-        end
-
-        # We're going to collect objects from rails, but we don't want any
-        # objects from this host.
-        unless ActiveRecord::Base.connected?
-            Puppet::Rails.init
-        end
-        host = Puppet::Rails::Host.find_by_name(@scope.host)
-
-        args = {:include => {:param_values => :param_name}}
-        args[:conditions] = "(exported = %s AND restype = '%s')" %
-	    [ActiveRecord::Base.connection.quote(true), @type]
-        if @equery
-            args[:conditions] += " AND (%s)" % [@equery]
-        end
-        if host
-            args[:conditions] = "host_id != %s AND %s" % [host.id, args[:conditions]]
-        else
-            #Puppet.info "Host %s is uninitialized" % @scope.host
-        end
+        query = build_active_record_query
 
         # Now look them up in the rails db.  When we support attribute comparison
         # and such, we'll need to vary the conditions, but this works with no
         # attributes, anyway.
         time = Puppet::Util.thinmark do
-            Puppet::Rails::Resource.find(:all, @type, true,
-                args
-            ).each do |obj|
-                if resource = export_resource(obj)
+            Puppet::Rails::Resource.find(:all, @type, true, query).each do |obj|
+                if resource = exported_resource(obj)
                     count += 1
                     resources << resource
                 end
@@ -70,6 +103,7 @@ class Puppet::Parser::Collector
     # Collect resources directly; this is the result of using 'realize',
     # which specifies resources, rather than using a normal collection.
     def collect_virtual_resources
+        return [] unless defined?(@resources) and ! @resources.empty?
         result = @resources.dup.collect do |ref|
             if res = @scope.findresource(ref.to_s)
                 @resources.delete(ref)
@@ -100,33 +134,21 @@ class Puppet::Parser::Collector
         end
     end
 
-    # Call the collection method, mark all of the returned objects as non-virtual,
-    # and then delete this object from the list of collections to evaluate.
-    def evaluate
-        if self.resources
-            if objects = collect_resources and ! objects.empty?
-                return objects
-            else
-                return false
-            end
-        else
-            method = "collect_#{@form.to_s}"
-            objects = send(method).each { |obj| obj.virtual = false }
-            if objects.empty?
-                return false
-            else
-                return objects
-            end
-        end
-    end
+    # Seek a specific exported resource.
+    def exported_resource(obj)
+        if existing = @scope.findresource(obj.restype, obj.title)
+            # Next see if we've already collected this resource
+            return nil if existing.rails_id == obj.id
 
-    def initialize(scope, type, equery, vquery, form)
-        @scope = scope
-        @type = type
-        @equery = equery
-        @vquery = vquery
-        @form = form
-        @tests = []
+            # This is the one we've already collected
+            raise Puppet::ParseError, "Exported resource %s cannot override local resource" % [obj.ref]
+        end
+
+        resource = obj.to_resource(self.scope)
+        
+        scope.compile.store_resource(scope, resource)
+
+        return resource
     end
 
     # Does the resource match our tests?  We don't yet support tests,
@@ -137,41 +159,5 @@ class Puppet::Parser::Collector
         else
             return true
         end
-    end
-
-    def export_resource(obj)
-        if existing = @scope.findresource(obj.restype, obj.title)
-            # See if we exported it; if so, just move on
-            if @scope.host == obj.host.name
-                return nil
-            else
-                # Next see if we've already collected this resource
-                if existing.rails_id == obj.id
-                    # This is the one we've already collected
-                    return nil
-                else
-                    raise Puppet::ParseError,
-                        "Exported resource %s cannot override local resource" %
-                        [obj.ref]
-                end
-            end
-        end
-
-        begin
-            resource = obj.to_resource(self.scope)
-            
-            # XXX Because the scopes don't expect objects to return values,
-            # we have to manually add our objects to the scope.  This is
-            # über-lame.
-            scope.compile.store_resource(scope, resource)
-        rescue => detail
-            if Puppet[:trace]
-                puts detail.backtrace
-            end
-            raise
-        end
-        resource.exported = false
-
-        return resource
     end
 end
