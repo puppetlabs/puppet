@@ -8,29 +8,30 @@ module Puppet::Rails
     def self.connect
         # This global init does not work for testing, because we remove
         # the state dir on every test.
-        unless ActiveRecord::Base.connected?
-            Puppet.settings.use(:main, :rails, :puppetmasterd)
+        return if ActiveRecord::Base.connected?
 
-            ActiveRecord::Base.logger = Logger.new(Puppet[:railslog])
-            begin
-                loglevel = Logger.const_get(Puppet[:rails_loglevel].upcase)
-                ActiveRecord::Base.logger.level = loglevel
-            rescue => detail
-                Puppet.warning "'%s' is not a valid Rails log level; using debug" % Puppet[:rails_loglevel]
-                ActiveRecord::Base.logger.level = Logger::DEBUG
-            end
-            ActiveRecord::Base.allow_concurrency = true
-            ActiveRecord::Base.verify_active_connections!
+        Puppet.settings.use(:main, :rails, :puppetmasterd)
 
-            begin
-                ActiveRecord::Base.establish_connection(database_arguments())
-            rescue => detail
-                if Puppet[:trace]
-                    puts detail.backtrace
-                end
-                raise Puppet::Error, "Could not connect to database: %s" % detail
-            end 
+        ActiveRecord::Base.logger = Logger.new(Puppet[:railslog])
+        begin
+            loglevel = Logger.const_get(Puppet[:rails_loglevel].upcase)
+            ActiveRecord::Base.logger.level = loglevel
+        rescue => detail
+            Puppet.warning "'%s' is not a valid Rails log level; using debug" % Puppet[:rails_loglevel]
+            ActiveRecord::Base.logger.level = Logger::DEBUG
         end
+
+        ActiveRecord::Base.allow_concurrency = true
+        ActiveRecord::Base.verify_active_connections!
+
+        begin
+            ActiveRecord::Base.establish_connection(database_arguments())
+        rescue => detail
+            if Puppet[:trace]
+                puts detail.backtrace
+            end
+            raise Puppet::Error, "Could not connect to database: %s" % detail
+        end 
     end
 
     # The arguments for initializing the database connection.
