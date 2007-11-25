@@ -1,3 +1,7 @@
+    Added modified patch by Matt Palmer which adds a 'plugins' mount,
+    fixing #891.  See PluginsInModules on the wiki for information on
+    usage.
+
     Added calls to endpwent/endgrent when searching for user and group IDs,
     which fixes #791.
 

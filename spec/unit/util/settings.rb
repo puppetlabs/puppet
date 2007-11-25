@@ -102,6 +102,19 @@ describe Puppet::Util::Settings, " when setting values" do
         values.should == %w{something}
     end
 
+    it "should provide an option to call passed blocks during definition" do
+        values = []
+        @settings.setdefaults(:section, :hooker => {:default => "yay", :desc => "boo", :call_on_define => true, :hook => lambda { |v| values << v }})
+        values.should == %w{yay}
+    end
+
+    it "should pass the fully interpolated value to the hook when called on definition" do
+        values = []
+        @settings.setdefaults(:section, :one => ["test", "a"])
+        @settings.setdefaults(:section, :hooker => {:default => "$one/yay", :desc => "boo", :call_on_define => true, :hook => lambda { |v| values << v }})
+        values.should == %w{test/yay}
+    end
+
     it "should munge values using the element-specific methods" do
         @settings[:bool] = "false"
         @settings[:bool].should == false

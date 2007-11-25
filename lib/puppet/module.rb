@@ -27,7 +27,9 @@ class Puppet::Module
             return nil
         end
 
-        modpath = all(environment).find { |f| File::directory?(f) }
+        modpath = modulepath(environment).collect { |path|
+            File::join(path, modname)
+        }.find { |f| File::directory?(f) }
         return nil unless modpath
 
         return self.new(modname, modpath)

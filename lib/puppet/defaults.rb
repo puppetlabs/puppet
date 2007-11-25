@@ -111,6 +111,7 @@ module Puppet
                 guaranteed to work for those cases.  In fact, the autoload
                 mechanism is responsible for making sure this directory
                 is in Ruby's search path",
+            :call_on_define => true, # Call our hook with the default value, so we always get the libdir set.
             :hook => proc do |value|
                 if defined? @oldlibdir and $:.include?(@oldlibdir)
                     $:.delete(@oldlibdir)

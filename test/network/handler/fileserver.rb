@@ -1030,7 +1030,6 @@ allow *
         end
 
         conffile = tempfile
-        @@tmpfiles << conffile
 
         File.open(conffile, "w") { |f| f.puts "# a test config file" }
 

@@ -370,7 +370,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
 
     # Retrieve facts from the central server.
     def self.getfacts
-
         # Download the new facts
         path = Puppet[:factpath].split(":")
         files = []
@@ -435,21 +434,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
             rescue => detail
                 Puppet.warning "Could not load #{type} %s: %s" % [fqfile, detail]
             end
-        end
-    ensure
-        # For some reason, the libdir doesn't end up in the load path
-        # reliably, so we might need to add it here to make sure those shiny
-        # new facts get picked up by My Friend Facter.
-        $:.unshift(Puppet[:libdir]) unless $:.include?(Puppet[:libdir])
-        # Reload everything.
-        Facter.clear
-        if Facter.respond_to? :loadfacts
-            Facter.loadfacts
-        elsif Facter.respond_to? :load
-            Facter.load
-        else
-            raise Puppet::Error,
-                "You must upgrade your version of Facter to use centralized facts"
         end
     end
 

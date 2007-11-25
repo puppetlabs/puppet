@@ -45,7 +45,7 @@ class Puppet::Network::Handler
             end
 
             obj = nil
-            unless obj = mount.getfileobject(path, links)
+            unless obj = mount.getfileobject(path, links, client)
                 return ""
             end
 
@@ -116,11 +116,11 @@ class Puppet::Network::Handler
             end
 
             obj = nil
-            unless mount.path_exists?(path)
+            unless mount.path_exists?(path, client)
                 return ""
             end
 
-            desc = mount.list(path, recurse, ignore)
+            desc = mount.list(path, recurse, ignore, client)
 
             if desc.length == 0
                 mount.notice "Got no information on //%s/%s" %
@@ -167,7 +167,7 @@ class Puppet::Network::Handler
                 mount.info "Sending %s to %s" % [url, client]
             end
 
-            unless mount.path_exists?(path)
+            unless mount.path_exists?(path, client)
                 mount.debug "#{mount} reported that #{path} does not exist"
                 return ""
             end
@@ -183,7 +183,7 @@ class Puppet::Network::Handler
             if links == :manage
                 raise Puppet::Error, "Cannot copy links yet."
             else
-                str = mount.read_file(path)
+                str = mount.read_file(path, client)
             end
 
             if @local
@@ -420,13 +420,13 @@ class Puppet::Network::Handler
 
             Puppet::Util.logmethods(self, true)
 
-            def getfileobject(dir, links)
-                unless path_exists?(dir)
+            def getfileobject(dir, links, client = nil)
+                unless path_exists?(dir, client)
                     self.debug "File source %s does not exist" % dir
                     return nil
                 end
 
-                return fileobj(dir, links)
+                return fileobj(dir, links, client)
             end
              
             # Run 'retrieve' on a file.  This gets the actual parameters, so
@@ -510,6 +510,19 @@ class Puppet::Network::Handler
                 end
             end
 
+            # Return a fully qualified path, given a short path and
+            # possibly a client name.
+            def file_path(relative_path, node = nil)
+                full_path = path(node)
+
+                raise ArgumentError.new("Mounts without paths are not usable") unless full_path
+
+                # If there's no relative path name, then we're serving the mount itself.
+                return full_path unless relative_path and relative_path != "/"
+
+                return File.join(full_path, relative_path)
+            end
+
             # Create out object.  It must have a name.
             def initialize(name, path = nil)
                 unless name =~ %r{^[-\w]+$}
@@ -526,9 +539,9 @@ class Puppet::Network::Handler
                 super()
             end
 
-            def fileobj(path, links)
+            def fileobj(path, links, client)
                 obj = nil
-                if obj = Puppet.type(:file)[real_path(path)]
+                if obj = Puppet.type(:file)[file_path(path, client)]
                     # This can only happen in local fileserving, but it's an
                     # important one.  It'd be nice if we didn't just set
                     # the check params every time, but I'm not sure it's worth
@@ -536,7 +549,7 @@ class Puppet::Network::Handler
                     obj[:check] = CHECKPARAMS
                 else
                     obj = Puppet.type(:file).create(
-                        :name => real_path(path),
+                        :name => file_path(path, client),
                         :check => CHECKPARAMS
                     )
                 end
@@ -554,14 +567,8 @@ class Puppet::Network::Handler
             end
 
             # Read the contents of the file at the relative path given.
-            def read_file(relpath)
-            	File.read(real_path(relpath))
-				end
-
-            # Determine the real path on disk for the given mount-relative
-            # path
-            def real_path(relpath)
-                File.join(self.path(nil), relpath)
+            def read_file(relpath, client)
+               File.read(file_path(relpath, client))
             end
 
             # Cache this manufactured map, since if it's used it's likely
@@ -611,9 +618,9 @@ class Puppet::Network::Handler
 
             # Verify that the path given exists within this mount's subtree.
             #
-            def path_exists?(relpath)
-            	File.exists?(File.join(path(nil), relpath))
-				end
+            def path_exists?(relpath, client = nil)
+                File.exists?(file_path(relpath, client))
+            end
 
             # Return the current values for the object.
             def properties(obj)
@@ -683,8 +690,8 @@ class Puppet::Network::Handler
             # a complete explanation would involve the words "crack pipe"
             # and "bad batch".
             #
-            def list(relpath, recurse, ignore)
-                reclist(File.join(path(nil), relpath), nil, recurse, ignore)
+            def list(relpath, recurse, ignore, client = nil)
+                reclist(file_path(relpath, client), nil, recurse, ignore)
             end
 
             # Recursively list the files in this tree.
@@ -737,19 +744,19 @@ class Puppet::Network::Handler
         # directory of all modules.
         # 
         class PluginMount < Mount
-				def path(client)
-				    ''
+            def path(client)
+                ''
             end
 
-            def path_exists?(relpath)
-            	!valid_modules.find { |m| File.exists?(File.join(m, PLUGINS, relpath)) }.nil?
-				end
-				
-				def valid?
-				    true
-				end
+            def path_exists?(relpath, client = nil)
+               !valid_modules.find { |m| File.exists?(File.join(m, PLUGINS, relpath)) }.nil?
+            end
+            
+            def valid?
+                true
+            end
 
-				def real_path(relpath)
+            def file_path(relpath, client = nil)
                 mod = valid_modules.map { |m| File.exists?(File.join(m, PLUGINS, relpath)) ? m : nil }.compact.first
                 File.join(mod, PLUGINS, relpath)
             end
@@ -761,7 +768,7 @@ class Puppet::Network::Handler
                 
                 desc = [relpath]
                 
-                ftype = File.stat(real_path(abspath)).ftype
+                ftype = File.stat(file_path(abspath)).ftype
 
                 desc << ftype
                 if recurse.is_a?(Integer)
@@ -798,11 +805,11 @@ class Puppet::Network::Handler
 
             private
             def valid_modules
-            	Puppet::Module.all.find_all { |m| File.directory?(File.join(m, PLUGINS)) }
+               Puppet::Module.all.find_all { |m| File.directory?(File.join(m, PLUGINS)) }
             end
             
             def add_to_filetree(f, filetree)
-            	first, rest = f.split(File::SEPARATOR, 2)
+               first, rest = f.split(File::SEPARATOR, 2)
             end
         end
     end
