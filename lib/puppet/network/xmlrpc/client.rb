@@ -147,6 +147,7 @@ module Puppet::Network
                 @http.cert = client.cert
                 @http.verify_mode = OpenSSL::SSL::VERIFY_PEER
                 @http.key = client.key
+                @http.enable_post_connection_check = false
             end
         end
 
