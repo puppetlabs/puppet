@@ -279,7 +279,11 @@ class Puppet::Network::Handler
                             value = $2
                             case var
                             when "path":
-                                if mount.name == MODULES or mount.name == PLUGINS
+                                if mount.name == PLUGINS
+                                    Puppet.warning "An explicit 'plugins' mount is deprecated.  Please switch to using modules."
+                                end
+                                
+                                if mount.name == MODULES
                                     Puppet.warning "The '#{mount.name}' module can not have a path. Ignoring attempt to set it"
                                 else
                                     begin
@@ -327,29 +331,44 @@ class Puppet::Network::Handler
             rescue Errno::ENOENT => detail
                 Puppet.err "FileServer error: '%s' does not exist; cannot serve" %
                     @config
-                #raise Puppet::Error, "%s does not exit" % @config
-            #rescue FileServerError => detail
-            #    Puppet.err "FileServer error: %s" % detail
             end
 
             unless newmounts[MODULES]
+                Puppet.debug "No #{MODULES} mount given; autocreating with default permissions"
                 mount = Mount.new(MODULES)
                 mount.allow("*")
                 newmounts[MODULES] = mount
             end
             
             unless newmounts[PLUGINS]
+                Puppet.debug "No #{PLUGINS} mount given; autocreating with default permissions"
                 mount = PluginMount.new(PLUGINS)
                 mount.allow("*")
                 newmounts[PLUGINS] = mount
             end
-
+            
+            unless newmounts[PLUGINS].valid?
+                Puppet.debug "No path given for #{PLUGINS} mount; creating a special PluginMount"
+                # We end up here if the user has specified access rules for
+                # the plugins mount, without specifying a path (which means
+                # they want to have the default behaviour for the mount, but
+                # special access control).  So we need to move all the
+                # user-specified access controls into the new PluginMount
+                # object...
+                mount = PluginMount.new(PLUGINS)
+                # Yes, you're allowed to hate me for this.
+                mount.instance_variable_set(:@declarations,
+                                 newmounts[PLUGINS].instance_variable_get(:@declarations)
+                                 )
+                newmounts[PLUGINS] = mount
+            end
+                
             # Verify each of the mounts are valid.
             # We let the check raise an error, so that it can raise an error
             # pointing to the specific problem.
             newmounts.each { |name, mount|
                 unless mount.valid?
-                    raise FileServerError, "No path specified for mount %s" %
+                    raise FileServerError, "Invalid mount %s" %
                         name
                 end
             }
@@ -627,7 +646,7 @@ class Puppet::Network::Handler
             # Verify our configuration is valid.  This should really check to
             # make sure at least someone will be allowed, but, eh.
             def valid?
-                if name == MODULES or name == PLUGINS
+                if name == MODULES
                     return @path.nil?
                 else
                     return ! @path.nil?
@@ -659,17 +678,20 @@ class Puppet::Network::Handler
             # second element is the type.  A directory is represented by an
             # array as well, where the first element is a "directory" array,
             # while the remaining elements are other file or directory
-            # arrays.  Confusing?  Hell yes.
+            # arrays.  Confusing?  Hell yes.  As an added bonus, all names
+            # must start with a slash, because... well, I'm fairly certain
+            # a complete explanation would involve the words "crack pipe"
+            # and "bad batch".
             #
             def list(relpath, recurse, ignore)
-            	reclist(File.join(path(nil), relpath), nil, recurse, ignore)
+                reclist(File.join(path(nil), relpath), nil, recurse, ignore)
             end
 
             # Recursively list the files in this tree.
             def reclist(basepath, abspath, recurse, ignore)
                 abspath = basepath if abspath.nil?
                 relpath = abspath.sub(%r{^#{basepath}}, '')
-                relpath = '/' if relpath == ''
+                relpath = "/#{relpath}" if relpath[0] != ?/  #/
                 
                 desc = [relpath]
                 
@@ -685,7 +707,7 @@ class Puppet::Network::Handler
                     if ftype == "directory"
                         children = Dir.entries(abspath)
                         if ignore
-                            children = handleignore(children, relpath, ignore)
+                            children = handleignore(children, abspath, ignore)
                         end  
                         children.each { |child|
                             next if child =~ /^\.\.?$/
@@ -700,13 +722,13 @@ class Puppet::Network::Handler
             end
 
             # Deal with ignore parameters.
-            def handleignore(children, path, ignore)            
-                ignore.each { |ignore|                
-                    Dir.glob(File.join(path,ignore), File::FNM_DOTMATCH) { |match|
-                        children.delete(File.basename(match))
-                    }                
-                }
-                return children
+            def handleignore(files, path, ignore_patterns)
+                ignore_patterns.each do |ignore|
+                    files.delete_if do |entry|
+                        File.fnmatch(ignore, entry, File::FNM_DOTMATCH)
+                    end
+                end
+                return files
             end
         end  
 
@@ -721,6 +743,10 @@ class Puppet::Network::Handler
 
             def path_exists?(relpath)
             	!valid_modules.find { |m| File.exists?(File.join(m, PLUGINS, relpath)) }.nil?
+				end
+				
+				def valid?
+				    true
 				end
 
 				def real_path(relpath)
@@ -746,16 +772,23 @@ class Puppet::Network::Handler
                 if recurse == true or (recurse.is_a?(Integer) and recurse > -1)
                     if ftype == "directory"
                         valid_modules.each do |mod|
-                            children = Dir.entries(File.join(mod, PLUGINS, abspath))
-                            if ignore
-                                children = handleignore(children, relpath, ignore)
-                            end  
-                            children.each { |child|
-                                next if child =~ /^\.\.?$/
-                                reclist(basepath, File.join(abspath, child), recurse, ignore).each { |cobj|
-                                    ary << cobj
+                            begin
+                                children = Dir.entries(File.join(mod, PLUGINS, abspath))
+                                if ignore
+                                    children = handleignore(children, abspath, ignore)
+                                end  
+                                children.each { |child|
+                                    next if child =~ /^\.\.?$/
+                                    reclist(basepath, File.join(abspath, child), recurse, ignore).each { |cobj|
+                                        ary << cobj
+                                    }
                                 }
-                            }
+                            rescue Errno::ENOENT
+                                # A missing directory or whatever isn't a
+                                # massive problem in here; it'll happen
+                                # whenever we've got a module that doesn't
+                                # have a directory than another module does.
+                            end
                         end
                     end
                 end
