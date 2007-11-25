@@ -35,9 +35,11 @@ module Puppet::Rails
 
     # The arguments for initializing the database connection.
     def self.database_arguments
-        args = {:adapter => Puppet[:dbadapter], :log_level => Puppet[:rails_loglevel]}
+        adapter = Puppet[:dbadapter]
+        
+        args = {:adapter => adapter, :log_level => Puppet[:rails_loglevel]}
 
-        case Puppet[:dbadapter]
+        case adapter
         when "sqlite3":
             args[:dbfile] = Puppet[:dblocation]
         when "mysql", "postgresql":
@@ -45,9 +47,11 @@ module Puppet::Rails
             args[:username] = Puppet[:dbuser] unless Puppet[:dbuser].empty?
             args[:password] = Puppet[:dbpassword] unless Puppet[:dbpassword].empty?
             args[:database] = Puppet[:dbname]
-            args[:args]     = Puppet[:dbsocket] unless Puppet[:dbsocket] == ""
+            
+            socket          = Puppet[:dbsocket]
+            args[:socket]   = socket unless socket.empty?
         else
-            raise ArgumentError, "Invalid db adapter %s" % Puppet[:dbadapter]
+            raise ArgumentError, "Invalid db adapter %s" % adapter
         end
         args
     end
