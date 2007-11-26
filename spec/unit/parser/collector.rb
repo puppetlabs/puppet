@@ -228,8 +228,10 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
         one = stub 'one', :type => :mytype, :virtual? => true, :exported? => true
         two = stub 'two', :type => :mytype, :virtual? => true, :exported? => true
 
-        one.expects(:exported=).with(false)
-        two.expects(:exported=).with(false)
+        one.stubs(:exported=)
+        one.stubs(:virtual=)
+        two.stubs(:exported=)
+        two.stubs(:virtual=)
 
         @compile.expects(:resources).returns([one, two])
 
@@ -242,6 +244,20 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
         one = stub 'one', :type => :mytype, :virtual? => true, :exported? => true
 
         one.expects(:exported=).with(false)
+        one.stubs(:virtual=)
+
+        @compile.expects(:resources).returns([one])
+
+        @collector.evaluate.should == [one]
+    end
+
+    it "should mark all returned resources as not virtual" do
+        stub_rails(true)
+
+        one = stub 'one', :type => :mytype, :virtual? => true, :exported? => true
+
+        one.stubs(:exported=)
+        one.expects(:virtual=).with(false)
 
         @compile.expects(:resources).returns([one])
 
@@ -257,7 +273,8 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
 
         resource = mock 'resource'
         one.expects(:to_resource).with(@scope).returns(resource)
-        resource.expects(:exported=).with(false)
+        resource.stubs(:exported=)
+        resource.stubs(:virtual=)
 
         @compile.stubs(:resources).returns([])
         @scope.stubs(:findresource).returns(nil)
@@ -276,7 +293,8 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
 
         resource = mock 'resource'
         one.expects(:to_resource).with(@scope).returns(resource)
-        resource.expects(:exported=).with(false)
+        resource.stubs(:exported=)
+        resource.stubs(:virtual=)
 
         @compile.stubs(:resources).returns([])
         @scope.stubs(:findresource).returns(nil)
