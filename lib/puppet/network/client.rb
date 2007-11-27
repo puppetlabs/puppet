@@ -19,6 +19,12 @@ class Net::HTTP
             false
         end
     end
+
+    # JJM: This is a "backport" of sorts to older ruby versions which
+    # do not have this accessor.  See #896 for more information.
+    unless Net::HTTP.instance_methods.include? "enable_post_connection_check"
+        attr_accessor :enable_post_connection_check
+    end
 end
 
 # The base class for all of the clients.  Many clients just directly
