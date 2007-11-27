@@ -24,7 +24,7 @@ describe Puppet::Type::Package do
     end
 
     it "should have a :versionable feature" do
-        Puppet::Type::Package.provider_feature(:purgeable).should_not be_nil
+        Puppet::Type::Package.provider_feature(:versionable).should_not be_nil
     end
 
     it "should default to being installed" do
