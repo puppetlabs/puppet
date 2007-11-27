@@ -45,9 +45,6 @@ class Type
     # the method name, or whether it operates on a specific type of attributes.
     attr_accessor :file, :line
 
-    # The configuration that this resource is stored in.
-    attr_accessor :configuration
-
     attr_writer :title
     attr_writer :noop
 
@@ -119,6 +116,9 @@ class Type
         define_method(:validate, &block)
         #@validate = block
     end
+
+    # The configuration that this resource is stored in.
+    attr_accessor :configuration
     
     # create a log at specified level
     def log(msg)
@@ -181,6 +181,9 @@ class Type
         # If we got passed a transportable object, we just pull a bunch of info
         # directly from it.  This is the main object instantiation mechanism.
         if hash.is_a?(Puppet::TransObject)
+            # XXX This will need to change when transobjects change to titles.
+            self.title = hash.name
+
             #self[:name] = hash[:name]
             [:file, :line, :tags, :configuration].each { |getter|
                 if hash.respond_to?(getter)
@@ -191,8 +194,6 @@ class Type
                 end
             }
 
-            # XXX This will need to change when transobjects change to titles.
-            @title = hash.name
             hash = hash.to_hash
         else
             if hash[:title]

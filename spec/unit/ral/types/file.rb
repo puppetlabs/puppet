@@ -1,18 +1,15 @@
 #!/usr/bin/env ruby
 
 require File.dirname(__FILE__) + '/../../../spec_helper'
-require 'tempfile'
 
-describe Puppet::type(:file), " when used with replace=>false and content" do
+require 'puppet/type/pfile'
 
+describe Puppet::Type::File, " when used with replace=>false and content" do
     before do
         @path = Tempfile.new("puppetspec")
         @path.close!()
         @path = @path.path
-        @file = Puppet::type(:file).create( { :name => @path, :content => "foo", :replace => :false } )
-    end
-
-    after do
+        @file = Puppet::Type::File.create( { :name => @path, :content => "foo", :replace => :false } )
     end
 
     it "should be insync if the file exists and the content is different" do
@@ -29,4 +26,7 @@ describe Puppet::type(:file), " when used with replace=>false and content" do
         @file.property(:content).insync?(:nil).should be_false
     end
 
+    after do
+        Puppet::Type::File.clear
+    end
 end

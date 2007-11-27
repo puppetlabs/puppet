@@ -292,6 +292,28 @@ describe Puppet::Node::Configuration, " when converting to a RAL configuration" 
         @config.vertices.each { |v| v.configuration.object_id.should equal(@config.object_id) }
     end
 
+    # This tests #931.
+    it "should not lose track of resources whose names vary" do
+        changer = Puppet::TransObject.new 'changer', 'test'
+
+        config = Puppet::Node::Configuration.new('test')
+        config.add_resource(changer)
+        config.add_resource(@top)
+
+        config.add_edge!(@top, changer)
+
+        resource = stub 'resource', :name => "changer2", :title => "changer2", :ref => "Test[changer2]", :configuration= => nil, :remove => nil
+
+        changer.expects(:to_type).returns(resource)
+
+        newconfig = nil
+
+        Puppet::Type.allclear
+
+        proc { @config = config.to_ral }.should_not raise_error
+        @config.resource("Test[changer2]").should equal(resource)
+    end
+
     after do
         # Remove all resource instances.
         @config.clear(true)

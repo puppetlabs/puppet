@@ -22,4 +22,8 @@ describe Puppet::Type, " when in a configuration" do
     it "should set its parent to its in edge" do
         @one.parent.ref.should equal(@container.ref)
     end
+
+    after do
+        @configuration.clear(true)
+    end
 end

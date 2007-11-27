@@ -126,8 +126,6 @@ class Puppet::Type
         # XXX This will have to change when transobjects change to using titles
         title = hash.name
 
-        #Puppet.debug "Creating %s[%s]" % [self.name, title]
-
         # if the object already exists
         if self.isomorphic? and retobj = self[title]
             # if only one of our objects is implicit, then it's easy to see
@@ -142,19 +140,7 @@ class Puppet::Type
                 Puppet.debug "Ignoring implicit %s[%s]" % [self.name, title]
                 return nil
             else
-                # If only one of the objects is being managed, then merge them
-                if retobj.managed?
-                    raise Puppet::Error, "%s '%s' is already being managed" %
-                        [self.name, title]
-                else
-                    retobj.merge(hash)
-                    return retobj
-                end
-                # We will probably want to support merging of some kind in
-                # the future, but for now, just throw an error.
-                #retobj.merge(hash)
-
-                #return retobj
+                raise Puppet::Error, "%s is already being managed" % retobj.ref
             end
         end
 

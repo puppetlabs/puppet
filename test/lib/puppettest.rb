@@ -307,12 +307,6 @@ module PuppetTest
             # just move on
         end
         mocha_verify
-        if File.stat("/dev/null").mode & 007777 != 0666
-            File.open("/tmp/nullfailure", "w") { |f|
-                f.puts self.class
-            }
-            exit(74)
-        end
     end
 
     def logstore

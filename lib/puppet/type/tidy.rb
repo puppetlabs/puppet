@@ -139,7 +139,6 @@ module Puppet
                     type = @resource[:type] || :atime
                 end
                 
-                #return Integer(Time.now - stat.send(type))
                 return stat.send(type).to_i
             end
 

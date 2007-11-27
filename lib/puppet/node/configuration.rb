@@ -442,10 +442,18 @@ class Puppet::Node::Configuration < Puppet::PGraph
     def to_configuration(convert)
         result = self.class.new(self.name)
 
+        map = {}
         vertices.each do |resource|
             next if resource.respond_to?(:virtual?) and resource.virtual?
 
-            result.add_resource resource.send(convert)
+            newres = resource.send(convert)
+
+            # We can't guarantee that resources don't munge their names
+            # (like files do with trailing slashes), so we have to keep track
+            # of what a resource got converted to.
+            map[resource.ref] = newres
+
+            result.add_resource newres
         end
 
         message = convert.to_s.gsub "_", " "
@@ -454,16 +462,18 @@ class Puppet::Node::Configuration < Puppet::PGraph
             next if edge.source.respond_to?(:virtual?) and edge.source.virtual?
             next if edge.target.respond_to?(:virtual?) and edge.target.virtual?
 
-            unless source = result.resource(edge.source.ref)
-                raise Puppet::DevError, "Could not find vertex for %s when converting %s" % [edge.source.ref, message]
+            unless source = map[edge.source.ref]
+                raise Puppet::DevError, "Could not find resource %s when converting %s resources" % [edge.source.ref, message]
             end
 
-            unless target = result.resource(edge.target.ref)
-                raise Puppet::DevError, "Could not find vertex for %s when converting %s" % [edge.target.ref, message]
+            unless target = map[edge.target.ref]
+                raise Puppet::DevError, "Could not find resource %s when converting %s resources" % [edge.target.ref, message]
             end
 
             result.add_edge!(source, target, edge.label)
         end
+
+        map.clear
 
         result.add_class *self.classes
         result.tag(*self.tags)
