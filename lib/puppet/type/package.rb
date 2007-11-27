@@ -4,7 +4,6 @@
 # systems.
 
 module Puppet
-    class PackageError < Puppet::Error; end
     newtype(:package) do
         @doc = "Manage packages.  There is a basic dichotomy in package
             support right now:  Some package types (e.g., yum and apt) can
@@ -108,25 +107,15 @@ module Puppet
                 @lateststamp ||= (Time.now.to_i - 1000)
                 # Iterate across all of the should values, and see how they
                 # turn out.
+
                 @should.each { |should|
                     case should
                     when :present
-                        unless [:absent, :purged].include?(is)
-                            return true
-                        end
+                        return true unless [:absent, :purged].include?(is)
                     when :latest
                         # Short-circuit packages that are not present
-                        if is == :absent
-                            return false
-                        end
-
-                        unless provider.respond_to?(:latest)
-                            self.fail(
-                                "Package type %s does not support specifying 'latest'" %
-                                @resource[:provider]
-                            )
-                        end
-
+                        return false if is == :absent or is == :purged
+ 
                         # Don't run 'latest' more than about every 5 minutes
                         if @latest and ((Time.now.to_i - @lateststamp) / 60) < 5
                             #self.debug "Skipping latest check"
@@ -153,9 +142,9 @@ module Puppet
                                 [is.inspect, @resource.name, @latest.inspect]
                         end
                     when :absent
-                        if is == :absent or is == :purged
-                            return true
-                        end
+                        return true if is == :absent or is == :purged
+                    when :purged
+                        return true if is == :purged
                     when is
                         return true
                     end
@@ -312,46 +301,6 @@ module Puppet
             autos
         end
 
-        @listed = false
-
-        @allowedmethods = [:types]
-
-        class << self
-            attr_reader :listed
-        end
-
-        def self.clear
-            @listed = false
-            super
-        end
-
-        # Create a new package object from listed information
-        def self.installedpkg(hash)
-            unless hash.include? :provider
-                raise Puppet::DevError, "Got installed package with no provider"
-            end
-            # this is from code, so we don't have to do as much checking
-            name = hash[:name]
-            hash.delete(:name)
-
-            object = self[name] || self.create(:name => name)
-            object.setparams(hash)
-
-            return object
-        end
-
-        # Iterate across all packages of a given type and mark them absent
-        # if they are not in the list
-        def self.markabsent(pkgtype, packages)
-            # Mark any packages we didn't find as absent
-            self.each do |pkg|
-                next unless packages[:provider] == pkgtype
-                unless packages.include? pkg
-                    pkg.provider.send(:ensure, :absent)
-                end
-            end
-        end
-
         # This only exists for testing.
         def clear
             if obj = @parameters[:ensure]
@@ -365,10 +314,6 @@ module Puppet
             @provider.get(:ensure) != :absent
         end
 
-        # okay, there are two ways that a package could be created...
-        # either through the language, in which case the hash's values should
-        # be set in 'should', or through comparing against the system, in which
-        # case the hash's values should be set in 'is'
         def initialize(params)
             self.initvars
             provider = nil

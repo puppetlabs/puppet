@@ -289,9 +289,6 @@ class Puppet::Parameter
             raise Puppet::DevError, "No resource set for %s" % self.class.name
         end
 
-        # LAK 2007-05-09: Keep the @parent around for backward compatibility.
-        #@parent = @resource
-
         if ! self.metaparam? and klass = Puppet::Type.metaparamclass(self.class.name)
             setup_shadow(klass)
         end
@@ -378,36 +375,37 @@ class Puppet::Parameter
         vals = self.class.values
         regs = self.class.regexes
 
-        if regs.is_a? Hash # this is true on properties
-            regs = regs.keys
-        end
-        if vals.empty? and regs.empty?
-            # This parameter isn't using defined values to do its work.
-            return 
-        end
+        # this is true on properties
+        regs = regs.keys if regs.is_a?(Hash)
+
+        # This parameter isn't using defined values to do its work.
+        return if vals.empty? and regs.empty?
+
         newval = value
-        unless value.is_a?(Symbol)
-            newval = value.to_s.intern
+        newval = value.to_s.intern unless value.is_a?(Symbol)
+
+        name = newval
+
+        unless vals.include?(newval) or name = self.class.alias(newval) or name = self.class.match?(value) # We match the string, not the symbol
+            str = "Invalid '%s' value %s. " %
+                [self.class.name, value.inspect]
+
+            unless vals.empty?
+                str += "Valid values are %s. " % vals.join(", ")
+            end
+
+            unless regs.empty?
+                str += "Valid values match %s." % regs.collect { |r|
+                    r.to_s
+                }.join(", ")
+            end
+
+            raise ArgumentError, str
         end
 
-        unless vals.include?(newval) or
-            self.class.alias(newval) or
-            self.class.match?(value) # We match the string, not the symbol
-                str = "Invalid '%s' value %s. " %
-                    [self.class.name, value.inspect]
-
-                unless vals.empty?
-                    str += "Valid values are %s. " % vals.join(", ")
-                end
-
-                unless regs.empty?
-                    str += "Valid values match %s." % regs.collect { |r|
-                        r.to_s
-                    }.join(", ")
-                end
-
-                raise ArgumentError, str
-        end
+        # Now check for features.
+        name = name[0] if name.is_a?(Array) # This is true for regexes.
+        validate_features_per_value(name) if is_a?(Puppet::Property)
     end
 
     def remove
@@ -483,6 +481,13 @@ class Puppet::Parameter
 
     def to_s
         s = "Parameter(%s)" % self.name
+    end
+
+    # Make sure that we've got all of the required features for a given value.
+    def validate_features_per_value(value)
+        if features = self.class.value_option(value, :required_features)
+            raise ArgumentError, "Provider must have features '%s' to set '%s' to '%s'" % [features, self.class.name, value] unless provider.satisfies?(features)
+        end
     end
 end
 

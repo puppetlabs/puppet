@@ -27,4 +27,3 @@ class Puppet::Provider::Package < Puppet::Provider
         @property_hash.dup
     end
 end
-

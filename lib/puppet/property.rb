@@ -67,9 +67,7 @@ class Property < Puppet::Parameter
 
     # Retrieve an option set when a value was defined.
     def self.value_option(name, option)
-        if option.is_a?(String)
-            option = symbolize(option)
-        end
+        option = option.to_sym
         if hash = @parameteroptions[name]
             hash[option]
         else
@@ -209,26 +207,26 @@ class Property < Puppet::Parameter
     # Figure out which event to return.
     def event(name, event = nil)
         if value_event = self.class.value_option(name, :event)
-            return value_event
-        else
-            if event and event.is_a?(Symbol)
-                if event == :nochange
-                    return nil
-                else
-                    return event
-                end
+            return value_event 
+        end
+
+        if event and event.is_a?(Symbol)
+            if event == :nochange
+                return nil
             else
-                if self.class.name == :ensure
-                    event = case self.should
-                    when :present: (@resource.class.name.to_s + "_created").intern
-                    when :absent: (@resource.class.name.to_s + "_removed").intern
-                    else
-                        (@resource.class.name.to_s + "_changed").intern
-                    end
-                else
-                    event = (@resource.class.name.to_s + "_changed").intern
-                end
+                return event
             end
+        end
+
+        if self.class.name == :ensure
+            event = case self.should
+            when :present: (@resource.class.name.to_s + "_created").intern
+            when :absent: (@resource.class.name.to_s + "_removed").intern
+            else
+                (@resource.class.name.to_s + "_changed").intern
+            end
+        else
+            event = (@resource.class.name.to_s + "_changed").intern
         end
 
         return event
@@ -297,8 +295,7 @@ class Property < Puppet::Parameter
     # Send a log message.
     def log(msg)
         unless @resource[:loglevel]
-            self.devfail "Parent %s has no loglevel" %
-                @resource.name
+            self.devfail "Parent %s has no loglevel" % @resource.name
         end
         Puppet::Util::Log.create(
             :level => @resource[:loglevel],
@@ -338,10 +335,7 @@ class Property < Puppet::Parameter
     # provider.  In other words, if the property name is 'gid', we'll call
     # 'provider.gid' to retrieve the current value.
     def retrieve
-        is = provider.send(self.class.name)
-#        puts "IS is: " + is.to_s
-#       puts "and its an array!!!" if is.is_a? Array
-        return is
+        provider.send(self.class.name)
     end
 
     # Set our value, using the provider, an associated block, or both.
@@ -420,17 +414,9 @@ class Property < Puppet::Parameter
         end
     end
 
-    # The default 'sync' method only selects among a list of registered
-    # values.
+    # The default 'sync' method only selects among a list of registered # values.
     def sync
-#        if self.insync?
-#            self.info "already in sync"
-#            return nil
-#        end
-        unless self.class.values
-            self.devfail "No values defined for %s" %
-                self.class.name
-        end
+        self.devfail("No values defined for %s" % self.class.name) unless self.class.values
 
         if value = self.should
             set(value)

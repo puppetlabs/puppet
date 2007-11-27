@@ -55,9 +55,7 @@ module Puppet::Util::ProviderFeatures
     # required to determine if the feature is present.
     def feature(name, docs, hash = {})
         @features ||= {}
-        if @features.include?(name)
-            raise Puppet::DevError, "Feature %s is already defined" % name
-        end
+        raise(Puppet::DevError, "Feature %s is already defined" % name) if @features.include?(name)
         begin
             obj = ProviderFeature.new(name, docs, hash)
             @features[obj.name] = obj
@@ -133,7 +131,8 @@ module Puppet::Util::ProviderFeatures
                 }
             end
 
-            # Create a method that will list all functional features.
+            # Create a method that will determine if a provided list of
+            # features are satisfied by the curred provider.
             @feature_module.send(:define_method, :satisfies?) do |*needed|
                 ret = true
                 needed.flatten.each do |feature|
@@ -150,13 +149,7 @@ module Puppet::Util::ProviderFeatures
             @features.each do |name, feature|
                 method = name.to_s + "?"
                 @feature_module.send(:define_method, method) do
-                    if defined? @declared_features and @declared_features.include?(name)
-                        true
-                    elsif feature.available?(self)
-                        true
-                    else
-                        false
-                    end
+                    self.class.declared_feature?(name) or feature.available?(self)
                 end
             end
 
@@ -172,6 +165,13 @@ module Puppet::Util::ProviderFeatures
             @feature_module.send(:alias_method, :has_feature, :has_features)
         end
         @feature_module
+    end
+
+    # Return the actual provider feature instance.  Really only used for testing.
+    def provider_feature(name)
+        return nil unless defined?(@features)
+
+        @features[name]
     end
 end
 

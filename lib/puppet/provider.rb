@@ -64,6 +64,11 @@ class Puppet::Provider
         end
     end
 
+    # Is the provided feature a declared feature?
+    def self.declared_feature?(name)
+        defined?(@declared_features) and @declared_features.include?(name)
+    end
+
     # Does this implementation match all of the default requirements?  If
     # defaults are empty, we return false.
     def self.default?

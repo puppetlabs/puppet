@@ -149,7 +149,7 @@ class TestPackageProvider < Test::Unit::TestCase
         assert_absent(provider)
 
         if Process.uid != 0
-            $stderr.puts "Run as root for full package tests"
+            Puppet.info "Run as root for full package tests"
             return
         end
 
