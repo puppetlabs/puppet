@@ -456,11 +456,17 @@ class TestProviderFeatures < Test::Unit::TestCase
             :none => [:nomeths]}
 
         should.each do |name, features|
-            provider = @type.provider(name)
+            provider_class = @type.provider(name)
+            provider = provider_class.new({})
+
             assert(provider, "did not get provider named %s" % name)
             features.sort! { |a,b| a.to_s <=> b.to_s }
-            assert_equal(features, provider.features,
-                "Got incorrect feature list for %s" % name)
+            assert_equal(features, provider.features, "Got incorrect feature list for provider instance %s" % name)
+            assert_equal(features, provider_class.features, "Got incorrect feature list for provider class %s" % name)
+            features.each do |feat| 
+                assert(provider.feature?(feat), "Provider instance %s did not have feature %s" % [name, feat])
+                assert(provider_class.feature?(feat), "Provider class %s did not have feature %s" % [name, feat])
+            end
         end
     end
 
