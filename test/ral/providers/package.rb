@@ -146,6 +146,8 @@ class TestPackageProvider < Test::Unit::TestCase
 
         assert(provider, "Could not retrieve provider")
 
+        return if result = provider.query and ! [:absent, :purged].include?(result[:ensure])
+
         assert_absent(provider)
 
         if Process.uid != 0
