@@ -173,7 +173,6 @@ describe Puppet::Type::Mount, "when responding to events" do
     include MountEvaluationTesting
 
     it "should remount if it is currently mounted" do
-        Puppet::Util::Log.newdestination(:console)
         @provider.expects(:mounted?).returns(true)
         @provider.expects(:remount)
 

@@ -9,6 +9,9 @@ require 'puppet/file_serving/configuration'
 
 describe Puppet::FileServing::Configuration, " when finding files with Puppet::FileServing::Mount" do
     before do
+        # Just in case it already exists.
+        Puppet::FileServing::Configuration.clear_cache
+
         @config = Puppet::FileServing::Configuration.create
 
         @mount = Puppet::FileServing::Mount.new("mymount")
