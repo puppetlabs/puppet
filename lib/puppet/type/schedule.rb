@@ -241,7 +241,7 @@ module Puppet
                 :daily => :day,
                 :monthly => :month,
                 :weekly => proc do |prev, now|
-                    prev.strftime("%U") == now.strftime("%U")
+                    prev.strftime("%U") != now.strftime("%U")
                 end
             }
 
@@ -256,8 +256,7 @@ module Puppet
                         return method.call(previous, now)
                     else
                         # We negate it, because if they're equal we don't run
-                        val = now.send(method) != previous.send(method)
-                        return val
+                        return now.send(method) != previous.send(method)
                     end
                 when :distance
                     scale = @@scale[value]
@@ -266,6 +265,9 @@ module Puppet
                     # than the unit of time, we match.  We divide the scale
                     # by the repeat, so that we'll repeat that often within
                     # the scale.
+                    diff = (now.to_i - previous.to_i)
+                    comparison = (scale / @resource[:repeat])
+
                     return (now.to_i - previous.to_i) >= (scale / @resource[:repeat])
                 end
             end
@@ -312,25 +314,27 @@ module Puppet
         end
 
         def self.mkdefaultschedules
-            # Create our default schedule
-            unless self["puppet"]
-                Puppet.debug "Creating default schedules"
-                self.create(
-                    :name => "puppet",
-                    :period => :hourly,
-                    :repeat => "2"
-                )
-            end
+            return [] if self["puppet"]
+
+            result = []
+            Puppet.debug "Creating default schedules"
+            result << self.create(
+                :name => "puppet",
+                :period => :hourly,
+                :repeat => "2"
+            )
 
             # And then one for every period
             @parameters.find { |p| p.name == :period }.values.each { |value|
                 unless self[value.to_s]
-                    self.create(
+                    result << self.create(
                         :name => value.to_s,
                         :period => value
                     )
                 end
             }
+
+            result
         end
 
         def match?(previous = nil, now = nil)
@@ -346,7 +350,7 @@ module Puppet
             self.class.allattrs.each { |param|
                 if @parameters.include?(param) and
                     @parameters[param].respond_to?(:match?)
-                    #self.notice "Trying to match %s" % param
+                    self.notice "Trying to match %s" % param
                     return false unless @parameters[param].match?(previous, now)
                 end
             }
