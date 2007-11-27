@@ -1,7 +1,8 @@
 dir = File.expand_path(File.dirname(__FILE__))
-$LOAD_PATH.unshift("#{dir}/../../lib")
-$LOAD_PATH.unshift("#{dir}/../../../lib")
-$LOAD_PATH.unshift("#{dir}/../../../test/lib")  # Add the old test dir, so that we can still find our local mocha and spec
+[ "#{dir}/../../lib", "#{dir}/../../../lib", "#{dir}/../../../test/lib"].each do |dir|
+    fulldir = File.expand_path(dir)
+    $LOAD_PATH.unshift(fulldir) unless $LOAD_PATH.include?(fulldir)
+end
 
 require 'spec'
 require 'puppettest'
@@ -17,7 +18,7 @@ module Spec
           behaviour.run(@options.reporter, @options.dry_run, @options.reverse, @options.timeout)
         end
       end
-		end
+    end
   end
 end
 

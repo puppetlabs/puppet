@@ -158,7 +158,7 @@ class Property < Puppet::Parameter
     def call_valuemethod(name, value)
         event = nil
         if method = self.class.value_option(name, :method) and self.respond_to?(method)
-            self.debug "setting %s (currently %s)" % [value, self.retrieve]
+            #self.debug "setting %s (currently %s)" % [value, self.retrieve]
 
             begin
                 event = self.send(method)
