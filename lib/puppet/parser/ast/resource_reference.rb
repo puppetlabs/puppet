@@ -26,8 +26,8 @@ class Puppet::Parser::AST
             scope = hash[:scope]
 
             title = @title.safeevaluate(:scope => scope)
-            if @type == "class"
-                objtype = @type
+            if @type.to_s.downcase == "class"
+                objtype = "class"
                 title = qualified_class(scope, title)
             else
                 objtype = qualified_type(scope)

@@ -39,6 +39,18 @@ class TestASTResourceReference < Test::Unit::TestCase
         end
     end
 
+    def test_finding_classes_for_reference
+        @parser.newclass "one"
+        ref = newref("Class", "one")
+        evaled = nil
+        assert_nothing_raised("Could not evaluate resource ref") do
+            evaled = ref.evaluate(:scope => @scope)
+        end
+
+        assert_equal("class", evaled.type, "Did not set type to 'class'")
+        assert_equal("one", evaled.title, "Did not look up class corectly")
+    end
+
     # Related to #706, make sure resource references correctly translate to qualified types.
     def test_scoped_references
         @parser.newdefine "one"
