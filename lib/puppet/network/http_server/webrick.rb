@@ -91,7 +91,12 @@ module Puppet
 
                 setup_webrick(hash)
 
-                super(hash)
+                begin
+                    super(hash)
+                rescue => detail
+                    puts detail.backtrace if Puppet[:trace]
+                    raise Puppet::Error, "Could not start WEBrick: %s" % detail
+                end
 
                 # make sure children don't inherit the sockets
                 listeners.each { |sock|
