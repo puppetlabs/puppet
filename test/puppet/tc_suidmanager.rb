@@ -42,15 +42,31 @@ class TestSUIDManager < Test::Unit::TestCase
         assert_not_equal(nil, Puppet::Util.uid(@user.name))
     end
 
-    def test_asuser
+    def test_asuser_as_root
+        Process.stubs(:uid).returns(0)
         expects_id_set_and_revert @user.uid, @user.gid
         Puppet::Util::SUIDManager.asuser @user.uid, @user.gid do end
     end
 
+    def test_asuser_as_nonroot
+        Process.stubs(:uid).returns(1)
+        expects_no_id_set
+        Puppet::Util::SUIDManager.asuser @user.uid, @user.gid do end
+    end
 
-    def test_system
+
+    def test_system_as_root
+        Process.stubs(:uid).returns(0)
         set_exit_status!
         expects_id_set_and_revert @user.uid, @user.gid
+        Kernel.expects(:system).with('blah')
+        Puppet::Util::SUIDManager.system('blah', @user.uid, @user.gid)
+    end
+
+    def test_system_as_nonroot
+        Process.stubs(:uid).returns(1)
+        set_exit_status!
+        expects_no_id_set
         Kernel.expects(:system).with('blah')
         Puppet::Util::SUIDManager.system('blah', @user.uid, @user.gid)
     end
@@ -78,21 +94,23 @@ class TestSUIDManager < Test::Unit::TestCase
     end
 
     private
-    def expects_id_set_and_revert uid, gid
-        Process.expects(:uid).returns(99999)
-        Process.expects(:gid).returns(99998)
+
+    def expects_id_set_and_revert(uid, gid)
         Process.expects(:euid).returns(99997)
         Process.expects(:egid).returns(99996)
 
-        Process.expects(:uid=).with(uid)
-        Process.expects(:gid=).with(gid)
         Process.expects(:euid=).with(uid)
         Process.expects(:egid=).with(gid)
 
-        Process.expects(:uid=).with(99999)
-        Process.expects(:gid=).with(99998)
         Process.expects(:euid=).with(99997)
         Process.expects(:egid=).with(99996)
+    end
+
+    def expects_no_id_set
+        Process.expects(:egid).never
+        Process.expects(:euid).never
+        Process.expects(:egid=).never
+        Process.expects(:euid=).never
     end
 
     def set_exit_status!

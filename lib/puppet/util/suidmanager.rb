@@ -21,21 +21,19 @@ module Puppet::Util::SUIDManager
     end
 
     # Runs block setting uid and gid if provided then restoring original ids
-    def asuser new_uid=nil, new_gid=nil
-      # We set both because some programs like to drop privs, i.e. bash.
-      old_uid, old_gid = self.uid, self.gid
-      old_euid, old_egid = self.euid, self.egid
-      begin
-          self.uid = convert_xid :uid, new_uid if new_uid
-          self.gid = convert_xid :gid, new_gid if new_gid
-          self.euid = convert_xid :uid, new_uid if new_uid
-          self.egid = convert_xid :gid, new_gid if new_gid
-
-          yield
-      ensure
-          self.uid, self.gid = old_uid, old_gid
-          self.euid, self.egid = old_euid, old_egid
-      end
+    def asuser(new_uid=nil, new_gid=nil)
+        return yield unless Process.uid == 0
+        # We set both because some programs like to drop privs, i.e. bash.
+        old_uid, old_gid = self.uid, self.gid
+        old_euid, old_egid = self.euid, self.egid
+        begin
+            self.egid = convert_xid :gid, new_gid if new_gid
+            self.euid = convert_xid :uid, new_uid if new_uid
+  
+            yield
+        ensure
+            self.euid, self.egid = old_euid, old_egid
+        end
     end
     module_function :asuser
     
