@@ -207,11 +207,18 @@ module Puppet
         end
 
         def to_ref
-            return nil unless self.type and self.name
             unless defined? @ref
-                @ref = Puppet::ResourceReference.new(self.type, self.name)
+                if self.type and self.name
+                    @ref = Puppet::ResourceReference.new(self.type, self.name)
+                elsif self.type and ! self.name # This is old-school node types
+                    @ref = Puppet::ResourceReference.new("node", self.type)
+                elsif ! self.type and self.name
+                    @ref = Puppet::ResourceReference.new("component", self.name)
+                else
+                    @ref = nil
+                end
             end
-            @ref.to_s
+            @ref.to_s if @ref
         end
 
         def to_type
