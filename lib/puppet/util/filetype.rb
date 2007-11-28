@@ -198,26 +198,44 @@ class Puppet::Util::FileType
     newfiletype(:suntab) do
         # Read a specific @path's cron tab.
         def read
-            Puppet::Util::SUIDManager.asuser(@path) {
-                %x{crontab -l 2>/dev/null}
-            }
+            begin
+                output = Puppet::Util.execute(%w{crontab -l}, :uid => @path)
+                return "" if output.include?("can't open your crontab")
+                return output
+            rescue
+                # If there's a failure, treat it like an empty file.
+                return ""
+            end
         end
 
         # Remove a specific @path's cron tab.
         def remove
-            Puppet::Util::SUIDManager.asuser(@path) {
-                %x{crontab -r 2>/dev/null}
-            }
+            begin
+                Puppet::Util.execute(%w{crontab -r}, :uid => @path)
+            rescue => detail
+                raise Puppet::Error, "Could not remove crontab for %s: %s" % [@path, detail]
+            end
         end
 
         # Overwrite a specific @path's cron tab; must be passed the @path name
         # and the text with which to create the cron tab.
         def write(text)
-            Puppet::Util::SUIDManager.asuser(@path) {
-                IO.popen("crontab", "w") { |p|
-                    p.print text
-                }
-            }
+            puts text
+            require "tempfile"
+            output_file = Tempfile.new("puppet")
+            fh = output_file.open
+            fh.print text
+            fh.close
+
+            # We have to chown the stupid file to the user.
+            File.chown(Puppet::Util.uid(@path), nil, output_file.path)
+
+            begin
+                Puppet::Util.execute(["crontab", output_file.path], :uid => @path)
+            rescue => detail
+                raise Puppet::Error, "Could not write crontab for %s: %s" % [@path, detail]
+            end
+            output_file.delete
         end
     end
 
