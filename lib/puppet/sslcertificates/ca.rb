@@ -142,6 +142,16 @@ class Puppet::SSLCertificates::CA
         }
     end
 
+    # List signed certificates.  This returns a list of hostnames, not actual 
+    # files -- the names can be converted to full paths with host2csrfile. 
+    def list_signed 
+        return Dir.entries(Puppet[:signeddir]).find_all { |file| 
+            file =~ /\.pem$/ 
+        }.collect { |file| 
+            file.sub(/\.pem$/, '') 
+        } 
+    end 
+
     # Create the root certificate.
     def mkrootcert
         # Make the root cert's name the FQDN of the host running the CA.

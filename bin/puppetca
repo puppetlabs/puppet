@@ -32,7 +32,8 @@
 # '--genconfig'.
 #
 # all::
-#   Operate on all outstanding requests.  Only makes sense with '--sign'.
+#   Operate on all outstanding requests.  Only makes sense with '--sign',
+#   or '--list'.
 #
 # clean::
 #    Remove all files related to a host from puppetca's storage. This is 
@@ -51,7 +52,8 @@
 #   Print this help message
 #
 # list::
-#   List outstanding certificate requests.
+#   List outstanding certificate requests.  If '--all' is specified, 
+#   signed certificates are also listed, prefixed by '+'.
 #
 # revoke::
 #   Revoke the certificate of a client. The certificate can be specified
@@ -172,7 +174,7 @@ unless mode
     exit(12)
 end
 
-if [:generate, :clean, :revoke].include?(mode)
+if [:generate, :clean, :revoke, :list].include?(mode)
     hosts = ARGV.collect { |h| h.downcase }
 else
     waiting = ca.list
@@ -189,7 +191,13 @@ end
 
 case mode
 when :list
-    puts waiting.join("\n")
+    waiting = ca.list
+    if waiting.length > 0
+      puts waiting.join("\n")
+    end
+    if all
+      puts ca.list_signed.collect { |cert | cert.sub(/^/,"+ ") }.join("\n")
+    end
 when :clean
     if hosts.empty?
         $stderr.puts "You must specify one or more hosts to clean"
