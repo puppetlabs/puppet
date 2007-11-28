@@ -79,7 +79,7 @@ class TestAST < Test::Unit::TestCase
 
         hash = nil
         assert_nothing_raised do
-            hash = scope.lookupdefaults("file")
+            hash = scope.lookupdefaults("File")
         end
 
         hash.each do |name, value|

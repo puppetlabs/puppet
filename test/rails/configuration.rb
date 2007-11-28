@@ -36,7 +36,7 @@ class ConfigurationRailsTests < PuppetTest::TestCase
         Puppet[:storeconfigs] = true
 
         Puppet::Rails::Host.expects(:store).with do |node, resources|
-            if res = resources.find { |r| r.type == "file" and r.title == "/tmp/yay" }
+            if res = resources.find { |r| r.type == "File" and r.title == "/tmp/yay" }
                 assert_equal("root", res["owner"], "Did not set default on resource")
                 true
             else

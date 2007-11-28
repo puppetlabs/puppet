@@ -69,7 +69,7 @@ class TestASTDefinition < Test::Unit::TestCase
         firstobj = config.findresource("File[/tmp/first]")
         assert(firstobj, "Did not create /tmp/first obj")
 
-        assert_equal("file", firstobj.type)
+        assert_equal("File", firstobj.type)
         assert_equal("/tmp/first", firstobj.title)
         assert_equal("nobody", firstobj[:owner])
         assert_equal("755", firstobj[:mode])
@@ -99,7 +99,7 @@ class TestASTDefinition < Test::Unit::TestCase
         secondobj = config.findresource("File[/tmp/second]")
         assert(secondobj, "Did not create /tmp/second obj")
 
-        assert_equal("file", secondobj.type)
+        assert_equal("File", secondobj.type)
         assert_equal("/tmp/second", secondobj.title)
         assert_equal("daemon", secondobj[:owner])
         assert_equal("755", secondobj[:mode])

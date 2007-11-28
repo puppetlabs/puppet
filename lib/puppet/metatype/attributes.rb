@@ -428,8 +428,7 @@ class Puppet::Type
             if defined? @title and @title
                 hash[namevar] = @title
             else
-                raise Puppet::Error,
-                    "Was not passed a namevar or title"
+                raise Puppet::Error, "Was not passed a namevar or title"
             end
         end
 

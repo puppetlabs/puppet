@@ -103,9 +103,7 @@ class Puppet::Node::Configuration < Puppet::PGraph
         rescue Puppet::Error => detail
             Puppet.err "Could not apply complete configuration: %s" % detail
         rescue => detail
-            if Puppet[:trace]
-                puts detail.backtrace
-            end
+            puts detail.backtrace if Puppet[:trace]
             Puppet.err "Got an uncaught exception of type %s: %s" % [detail.class, detail]
         ensure
             # Don't try to store state unless we're a host config
@@ -113,21 +111,15 @@ class Puppet::Node::Configuration < Puppet::PGraph
             Puppet::Util::Storage.store if host_config?
         end
 
-        if block_given?
-            yield transaction
-        end
+        yield transaction if block_given?
         
-        if host_config and (Puppet[:report] or Puppet[:summarize])
-            transaction.send_report
-        end
+        transaction.send_report if host_config and (Puppet[:report] or Puppet[:summarize])
 
         return transaction
     ensure
         @applying = false
         cleanup()
-        if defined? transaction and transaction
-            transaction.cleanup
-        end
+        transaction.cleanup if defined? transaction and transaction
     end
 
     # Are we in the middle of applying the configuration?
@@ -213,7 +205,7 @@ class Puppet::Node::Configuration < Puppet::PGraph
         current = nil
         buckets = {}
 
-        unless main = vertices.find { |res| res.type == "class" and res.title == :main }
+        unless main = vertices.find { |res| res.type == "Class" and res.title == :main }
             raise Puppet::DevError, "Could not find 'main' class; cannot generate configuration"
         end
 
@@ -358,10 +350,15 @@ class Puppet::Node::Configuration < Puppet::PGraph
 
     # Look a resource up by its reference (e.g., File[/etc/passwd]).
     def resource(type, title = nil)
+        # Always create a resource reference, so that it always canonizes how we
+        # are referring to them.
         if title
-            ref = "%s[%s]" % [type.to_s.capitalize, title]
+            ref = Puppet::ResourceReference.new(type, title).to_s
         else
-            ref = type
+            # If they didn't provide a title, then we expect the first
+            # argument to be of the form 'Class[name]', which our
+            # Reference class canonizes for us.
+            ref = Puppet::ResourceReference.new(nil, type).to_s
         end
         if resource = @resource_table[ref]
             return resource

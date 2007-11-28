@@ -28,7 +28,9 @@ class Puppet::Parser::Collector
 
     def initialize(scope, type, equery, vquery, form)
         @scope = scope
-        @type = type
+
+        # Canonize the type
+        @type = Puppet::ResourceReference.new(type, "whatever").type
         @equery = equery
         @vquery = vquery
 
@@ -98,8 +100,7 @@ class Puppet::Parser::Collector
     end
 
     def collect_exported_resources
-        raise Puppet::ParseError,
-            "realize() is not yet implemented for exported resources"
+        raise Puppet::ParseError, "realize() is not yet implemented for exported resources"
     end
 
     # Collect resources directly; this is the result of using 'realize',

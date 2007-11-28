@@ -7,7 +7,7 @@ require 'puppet/parser/collector'
 describe Puppet::Parser::Collector, "when initializing" do
     before do
         @scope = mock 'scope'
-        @resource_type = mock 'resource_type'
+        @resource_type = 'resource_type'
         @form = :exported
         @vquery = mock 'vquery'
         @equery = mock 'equery'
@@ -20,7 +20,7 @@ describe Puppet::Parser::Collector, "when initializing" do
     end
 
     it "should require a resource type" do
-        @collector.type.should equal(@resource_type)
+        @collector.type.should == 'Resource_type'
     end
 
     it "should only accept :virtual or :exported as the collector form" do
@@ -33,6 +33,11 @@ describe Puppet::Parser::Collector, "when initializing" do
 
     it "should accept an optional exported query" do
         @collector.equery.should equal(@equery)
+    end
+
+    it "should canonize the type name" do
+        @collector = Puppet::Parser::Collector.new(@scope, "resource::type", @equery, @vquery, @form)
+        @collector.type.should == "Resource::Type"
     end
 end
 
@@ -95,15 +100,15 @@ describe Puppet::Parser::Collector, "when collecting virtual resources" do
         @scope = mock 'scope'
         @compile = mock 'compile'
         @scope.stubs(:compile).returns(@compile)
-        @resource_type = :mytype
+        @resource_type = "Mytype"
         @vquery = proc { |res| true }
 
         @collector = Puppet::Parser::Collector.new(@scope, @resource_type, nil, @vquery, :virtual)
     end
 
     it "should find all resources matching the vquery" do
-        one = stub 'one', :type => :mytype, :virtual? => true
-        two = stub 'two', :type => :mytype, :virtual? => true
+        one = stub 'one', :type => "Mytype", :virtual? => true
+        two = stub 'two', :type => "Mytype", :virtual? => true
 
         one.stubs(:virtual=)
         two.stubs(:virtual=)
@@ -114,7 +119,7 @@ describe Puppet::Parser::Collector, "when collecting virtual resources" do
     end
 
     it "should mark all matched resources as non-virtual" do
-        one = stub 'one', :type => :mytype, :virtual? => true
+        one = stub 'one', :type => "Mytype", :virtual? => true
 
         one.expects(:virtual=).with(false)
 
@@ -124,8 +129,8 @@ describe Puppet::Parser::Collector, "when collecting virtual resources" do
     end
 
     it "should return matched resources" do
-        one = stub 'one', :type => :mytype, :virtual? => true
-        two = stub 'two', :type => :mytype, :virtual? => true
+        one = stub 'one', :type => "Mytype", :virtual? => true
+        two = stub 'two', :type => "Mytype", :virtual? => true
 
         one.stubs(:virtual=)
         two.stubs(:virtual=)
@@ -136,8 +141,8 @@ describe Puppet::Parser::Collector, "when collecting virtual resources" do
     end
 
     it "should return all resources of the correct type if there is no virtual query" do
-        one = stub 'one', :type => :mytype, :virtual? => true
-        two = stub 'two', :type => :mytype, :virtual? => true
+        one = stub 'one', :type => "Mytype", :virtual? => true
+        two = stub 'two', :type => "Mytype", :virtual? => true
 
         one.expects(:virtual=).with(false)
         two.expects(:virtual=).with(false)
@@ -150,7 +155,7 @@ describe Puppet::Parser::Collector, "when collecting virtual resources" do
     end
 
     it "should not return or mark resources of a different type" do
-        one = stub 'one', :type => :mytype, :virtual? => true
+        one = stub 'one', :type => "Mytype", :virtual? => true
         two = stub 'two', :type => :other, :virtual? => true
 
         one.expects(:virtual=).with(false)
@@ -162,7 +167,7 @@ describe Puppet::Parser::Collector, "when collecting virtual resources" do
     end
 
     it "should not return or mark non-virtual resources" do
-        one = stub 'one', :type => :mytype, :virtual? => false
+        one = stub 'one', :type => "Mytype", :virtual? => false
         two = stub 'two', :type => :other, :virtual? => false
 
         one.expects(:virtual=).never
@@ -176,8 +181,8 @@ describe Puppet::Parser::Collector, "when collecting virtual resources" do
     it "should not return or mark non-matching resources" do
         @collector.vquery = proc { |res| res.name == :one }
 
-        one = stub 'one', :name => :one, :type => :mytype, :virtual? => true
-        two = stub 'two', :name => :two, :type => :mytype, :virtual? => true
+        one = stub 'one', :name => :one, :type => "Mytype", :virtual? => true
+        two = stub 'two', :name => :two, :type => "Mytype", :virtual? => true
 
         one.expects(:virtual=).with(false)
         two.expects(:virtual=).never
@@ -195,7 +200,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
         @scope = stub 'scope', :host => "myhost", :debug => nil
         @compile = mock 'compile'
         @scope.stubs(:compile).returns(@compile)
-        @resource_type = :mytype
+        @resource_type = "Mytype"
         @equery = "test = true"
         @vquery = proc { |r| true }
 
@@ -225,8 +230,8 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
     it "should return all matching resources from the current compile" do
         stub_rails(true)
 
-        one = stub 'one', :type => :mytype, :virtual? => true, :exported? => true
-        two = stub 'two', :type => :mytype, :virtual? => true, :exported? => true
+        one = stub 'one', :type => "Mytype", :virtual? => true, :exported? => true
+        two = stub 'two', :type => "Mytype", :virtual? => true, :exported? => true
 
         one.stubs(:exported=)
         one.stubs(:virtual=)
@@ -241,7 +246,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
     it "should mark all returned resources as not exported" do
         stub_rails(true)
 
-        one = stub 'one', :type => :mytype, :virtual? => true, :exported? => true
+        one = stub 'one', :type => "Mytype", :virtual? => true, :exported? => true
 
         one.expects(:exported=).with(false)
         one.stubs(:virtual=)
@@ -254,7 +259,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
     it "should mark all returned resources as not virtual" do
         stub_rails(true)
 
-        one = stub 'one', :type => :mytype, :virtual? => true, :exported? => true
+        one = stub 'one', :type => "Mytype", :virtual? => true, :exported? => true
 
         one.stubs(:exported=)
         one.expects(:virtual=).with(false)
@@ -268,7 +273,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
         stub_rails()
         Puppet::Rails::Host.stubs(:find_by_name).returns(nil)
 
-        one = stub 'one', :restype => :mytype, :title => "one", :virtual? => true, :exported? => true
+        one = stub 'one', :restype => "Mytype", :title => "one", :virtual? => true, :exported? => true
         Puppet::Rails::Resource.stubs(:find).returns([one])
 
         resource = mock 'resource'
@@ -288,7 +293,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
         stub_rails()
         Puppet::Rails::Host.stubs(:find_by_name).returns(nil)
 
-        one = stub 'one', :restype => :mytype, :title => "one", :virtual? => true, :exported? => true
+        one = stub 'one', :restype => "Mytype", :title => "one", :virtual? => true, :exported? => true
         Puppet::Rails::Resource.stubs(:find).returns([one])
 
         resource = mock 'resource'
@@ -308,8 +313,8 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
         stub_rails()
         Puppet::Rails::Host.stubs(:find_by_name).returns(nil)
 
-        rails = stub 'one', :restype => :mytype, :title => "one", :virtual? => true, :exported? => true, :id => 1, :ref => "yay"
-        inmemory = stub 'one', :type => :mytype, :virtual? => true, :exported? => true, :rails_id => 2
+        rails = stub 'one', :restype => "Mytype", :title => "one", :virtual? => true, :exported? => true, :id => 1, :ref => "yay"
+        inmemory = stub 'one', :type => "Mytype", :virtual? => true, :exported? => true, :rails_id => 2
 
         Puppet::Rails::Resource.stubs(:find).returns([rails])
 
@@ -327,8 +332,8 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
         stub_rails()
         Puppet::Rails::Host.stubs(:find_by_name).returns(nil)
 
-        rails = stub 'one', :restype => :mytype, :title => "one", :virtual? => true, :exported? => true, :id => 1, :ref => "yay"
-        inmemory = stub 'one', :type => :mytype, :virtual? => true, :exported? => true, :rails_id => 1
+        rails = stub 'one', :restype => "Mytype", :title => "one", :virtual? => true, :exported? => true, :id => 1, :ref => "yay"
+        inmemory = stub 'one', :type => "Mytype", :virtual? => true, :exported? => true, :rails_id => 1
 
         Puppet::Rails::Resource.stubs(:find).returns([rails])
 
@@ -350,7 +355,7 @@ describe Puppet::Parser::Collector, "when building its ActiveRecord query for co
         @scope = stub 'scope', :host => "myhost", :debug => nil
         @compile = mock 'compile'
         @scope.stubs(:compile).returns(@compile)
-        @resource_type = :mytype
+        @resource_type = "Mytype"
         @equery = nil
         @vquery = proc { |r| true }
 
@@ -390,7 +395,7 @@ describe Puppet::Parser::Collector, "when building its ActiveRecord query for co
     it "should only search for exported resources with the matching type" do
         Puppet::Rails::Resource.stubs(:find).with { |*arguments|
             options = arguments[3]
-            options[:conditions][0].include?("(exported=? AND restype=?)") and options[:conditions][1] == true and options[:conditions][2] == :mytype
+            options[:conditions][0].include?("(exported=? AND restype=?)") and options[:conditions][1] == true and options[:conditions][2] == "Mytype"
         }.returns([])
     end
 

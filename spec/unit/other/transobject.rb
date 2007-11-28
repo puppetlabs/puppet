@@ -4,6 +4,13 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/transportable'
 
+describe Puppet::TransObject do
+    it "should canonize resource references" do
+        resource = Puppet::TransObject.new("me", "foo::bar")
+        resource.ref.should == 'Foo::Bar[me]'
+    end
+end
+
 describe Puppet::TransObject, " when serializing" do
     before do
         @resource = Puppet::TransObject.new("/my/file", "file")

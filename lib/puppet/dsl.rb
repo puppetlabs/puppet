@@ -81,6 +81,7 @@ module Puppet
             end
             bucket = Puppet::TransBucket.new(objects)
             bucket.name = "top"
+            bucket.type = "class"
 
             return bucket
         end

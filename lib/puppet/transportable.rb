@@ -1,4 +1,5 @@
 require 'puppet'
+require 'puppet/resource_reference'
 require 'yaml'
 
 module Puppet
@@ -35,13 +36,9 @@ module Puppet
 
         def ref
             unless defined? @ref
-                if @type == :component
-                    @ref = @name
-                else
-                    @ref = "%s[%s]" % [type_capitalized, name]
-                end
+                @ref = Puppet::ResourceReference.new(@type, @name)
             end
-            @ref
+            @ref.to_s
         end
 
         def tags
@@ -50,18 +47,10 @@ module Puppet
 
         # Convert a defined type into a component.
         def to_component
-            tmpname = nil
-
-            # Nodes have the same name and type
-            if self.name
-                tmpname = "%s[%s]" % [type_capitalized, self.name]
-            else
-                tmpname = @type
-            end
-            trans = TransObject.new(tmpname, :component)
+            trans = TransObject.new(ref, :component)
             @params.each { |param,value|
                 next unless Puppet::Type::Component.validattr?(param)
-                Puppet.debug "Defining %s on %s of type %s" % [param,@name,@type]
+                Puppet.debug "Defining %s on %s" % [param, ref]
                 trans[param] = value
             }
             Puppet::Type::Component.create(trans)
@@ -90,14 +79,7 @@ module Puppet
         end
 
         def to_ref
-            unless defined? @res_ref
-                if self.type and self.name
-                    @res_ref = "%s[%s]" % [type_capitalized, self.name]
-                else
-                    @res_ref = nil
-                end
-            end
-            @res_ref
+            ref
         end
 
         def to_type
@@ -109,11 +91,6 @@ module Puppet
             end
 
             return retobj
-        end
-
-        # Return the type fully capitalized correctly.
-        def type_capitalized
-            type.to_s.split("::").collect { |s| s.capitalize }.join("::")
         end
     end
 
@@ -230,32 +207,21 @@ module Puppet
         end
 
         def to_ref
+            return nil unless self.type and self.name
             unless defined? @ref
-                if self.type and self.name
-                    @ref = "%s[%s]" % [self.type, self.name]
-                else
-                    @ref = nil
-                end
+                @ref = Puppet::ResourceReference.new(self.type, self.name)
             end
-            @ref
+            @ref.to_s
         end
 
         def to_type
-            unless defined? @type
-                Puppet.debug "TransBucket '%s' has no type" % @name
-            end
+            Puppet.debug("TransBucket '%s' has no type" % @name) unless defined? @type
 
             # Nodes have the same name and type
-            if self.name
-                tmpname = "%s[%s]" % [@type, self.name]
-            else
-                tmpname = @type
-            end
-            trans = TransObject.new(tmpname, :component)
+            trans = TransObject.new(to_ref, :component)
             if defined? @parameters
                 @parameters.each { |param,value|
-                    Puppet.debug "Defining %s on %s of type %s" %
-                        [param,@name,@type]
+                    Puppet.debug "Defining %s on %s" % [param, to_ref]
                     trans[param] = value
                 }
             end

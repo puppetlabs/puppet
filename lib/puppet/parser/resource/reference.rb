@@ -1,9 +1,11 @@
+require 'puppet/resource_reference'
+
 # A reference to a resource.  Mostly just the type and title.
-class Puppet::Parser::Resource::Reference
+class Puppet::Parser::Resource::Reference < Puppet::ResourceReference
     include Puppet::Util::MethodHelper
     include Puppet::Util::Errors
 
-    attr_accessor :type, :title, :builtin, :file, :line, :scope
+    attr_accessor :builtin, :file, :line, :scope
 
     # Are we a builtin type?
     def builtin?
@@ -19,7 +21,7 @@ class Puppet::Parser::Resource::Reference
     end
 
     def builtintype
-        if t = Puppet::Type.type(self.type) and t.name != :component
+        if t = Puppet::Type.type(self.type.downcase) and t.name != :component
             t
         else
             nil
@@ -30,28 +32,24 @@ class Puppet::Parser::Resource::Reference
     # definitions or nodes.
     def definedtype
         unless defined? @definedtype
-            type = self.type.to_s.downcase
-            name = self.title
-            case type
-            when "class": # look for host classes
+            case self.type
+            when "Class": # look for host classes
                 if self.title == :main
                     tmp = @scope.findclass("")
                 else
                     tmp = @scope.findclass(self.title)
                 end
-            when "node": # look for node definitions
+            when "Node": # look for node definitions
                 tmp = @scope.parser.nodes[self.title]
             else # normal definitions
                 # We have to swap these variables around so the errors are right.
-                name = type
-                type = "type"
                 tmp = @scope.finddefine(self.type)
             end
 
             if tmp
                 @definedtype = tmp
             else
-                fail Puppet::ParseError, "Could not find resource %s '%s'" % [type, name]
+                fail Puppet::ParseError, "Could not find resource '%s'" % self
             end
         end
 
@@ -65,13 +63,6 @@ class Puppet::Parser::Resource::Reference
 
     def to_ref
         return [type.to_s,title.to_s]
-    end
-
-    def to_s
-        unless defined? @namestring
-            @namestring = "%s[%s]" % [type.split("::").collect { |s| s.capitalize }.join("::"), title]
-        end
-        @namestring
     end
 
     def typeclass

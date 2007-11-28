@@ -20,7 +20,7 @@ describe Puppet::Type, " when in a configuration" do
     end
 
     it "should set its parent to its in edge" do
-        @one.parent.ref.should equal(@container.ref)
+        @one.parent.ref.should == @container.ref
     end
 
     after do

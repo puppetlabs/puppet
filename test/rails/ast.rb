@@ -62,7 +62,7 @@ class TestRailsAST < PuppetTest::TestCase
                 assert_equal(1, retval.length, "Did not find resource with '#{string}'")
                 res = retval.shift
 
-                assert_equal("file", res.restype)
+                assert_equal("File", res.restype)
                 assert_equal("/tmp/testing", res.title)
             else
                 assert_equal(0, retval.length, "found a resource with '#{string}'")

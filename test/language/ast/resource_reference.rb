@@ -26,7 +26,7 @@ class TestASTResourceReference < Test::Unit::TestCase
     def test_evaluate
         @parser.newdefine "one::two"
         @parser.newdefine "one-two"
-        [%w{file /tmp/yay}, %w{one::two three}, %w{one-two three}].each do |type, title|
+        [%w{File /tmp/yay}, %w{One::Two three}, %w{One-two three}].each do |type, title|
             ref = newref(type, title)
 
             evaled = nil
@@ -47,7 +47,7 @@ class TestASTResourceReference < Test::Unit::TestCase
             evaled = ref.evaluate(:scope => @scope)
         end
 
-        assert_equal("class", evaled.type, "Did not set type to 'class'")
+        assert_equal("Class", evaled.type, "Did not set type to 'class'")
         assert_equal("one", evaled.title, "Did not look up class corectly")
     end
 
@@ -61,19 +61,19 @@ class TestASTResourceReference < Test::Unit::TestCase
         title = "title"
 
         # First try a qualified type
-        assert_equal("one::two", newref("two", title).evaluate(:scope => twoscope).type,
+        assert_equal("One::Two", newref("two", title).evaluate(:scope => twoscope).type,
             "Defined type was not made fully qualified")
 
         # Then try a type that does not need to be qualified
-        assert_equal("one", newref("one", title).evaluate(:scope => twoscope).type,
+        assert_equal("One", newref("one", title).evaluate(:scope => twoscope).type,
             "Unqualified defined type was not handled correctly")
 
         # Then an unqualified type from within the one namespace
-        assert_equal("three", newref("three", title).evaluate(:scope => twoscope).type,
+        assert_equal("Three", newref("three", title).evaluate(:scope => twoscope).type,
             "Defined type was not made fully qualified")
 
         # Then a builtin type
-        assert_equal("file", newref("file", title).evaluate(:scope => twoscope).type,
+        assert_equal("File", newref("file", title).evaluate(:scope => twoscope).type,
             "Builtin type was not handled correctly")
 
         # Now try a type that does not exist, which should throw an error.

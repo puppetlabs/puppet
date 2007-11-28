@@ -351,6 +351,18 @@ describe Puppet::Node::Configuration, " when functioning as a resource container
         @config.vertices.find { |r| r.ref == @one.ref }.should equal(@one)
     end
 
+    it "should canonize how resources are referred to during retrieval when both type and title are provided" do
+        @config.add_resource(@one)
+
+        @config.resource("me", "one").should equal(@one)
+    end
+
+    it "should canonize how resources are referred to during retrieval when just the title is provided" do
+        @config.add_resource(@one)
+
+        @config.resource("me[one]", nil).should equal(@one)
+    end
+
     it "should not allow two resources with the same resource reference" do
         @config.add_resource(@one)
         proc { @config.add_resource(@dupe) }.should raise_error(ArgumentError)

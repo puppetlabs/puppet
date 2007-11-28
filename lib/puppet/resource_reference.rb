@@ -11,8 +11,11 @@ class Puppet::ResourceReference
     attr_accessor :title, :configuration
 
     def initialize(type, title)
-        @title = title
-        self.type = type
+        # This will set @type if it looks like a resource reference.
+        self.title = title
+
+        # Don't override whatever was done by setting the title.
+        self.type = type if self.type.nil?
         
         @builtin_type = nil
     end
@@ -30,9 +33,24 @@ class Puppet::ResourceReference
         end
     end
 
+    # If the title has square brackets, treat it like a reference and
+    # set things appropriately; else, just set it.
+    def title=(value)
+        if value =~ /^(.+)\[(.+)\]$/
+            self.type = $1
+            @title = $2
+        else
+            @title = value
+        end
+    end
+
     # Canonize the type so we know it's always consistent.
     def type=(value)
-        @type = value.to_s.split("::").collect { |s| s.capitalize }.join("::")
+        if value.nil? or value.to_s.downcase == "component"
+            @type = "Class"
+        else
+            @type = value.to_s.split("::").collect { |s| s.capitalize }.join("::")
+        end
     end
 
     # Convert to the standard way of referring to resources.

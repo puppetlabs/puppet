@@ -29,9 +29,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
 
     # Store our host in the database.
     def self.store(node, resources)
-        unless name = hash[:name]
-            raise ArgumentError, "You must specify the hostname for storage"
-        end
+        raise ArgumentError, "You must specify the hostname for storage" unless name = hash[:name]
 
         args = {}
 

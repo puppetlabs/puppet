@@ -48,17 +48,6 @@ Puppet::Type.newtype(:component) do
         @children.each { |child| yield child }
     end
 
-    # flatten all children, sort them, and evaluate them in order
-    # this is only called on one component over the whole system
-    # this also won't work with scheduling, but eh
-    def evaluate
-        raise "Component#evaluate is deprecated"
-        self.finalize unless self.finalized?
-        transaction = Puppet::Transaction.new(self)
-        transaction.component = self
-        return transaction
-    end
-
     # Do all of the polishing off, mostly doing autorequires and making
     # dependencies.  This will get run once on the top-level component,
     # and it will do everything necessary.
@@ -97,10 +86,10 @@ Puppet::Type.newtype(:component) do
         @children = []
         super
 
-        # If the title isn't a full resource reference, assume
-        # we're a class and make an alias for that.
-        unless @title.to_s.include?("[")
-            self.class.alias("class[%s]" % @title, self)
+        @reference = Puppet::ResourceReference.new(:component, @title)
+
+        unless self.class[@reference.to_s]
+            self.class.alias(@reference.to_s, self)
         end
     end
 
@@ -123,16 +112,16 @@ Puppet::Type.newtype(:component) do
     
     # Component paths are special because they function as containers.
     def pathbuilder
-        tmp = []
-        myname = ""
-        if self.title =~ /^class\[(.+)\]$/i
+        if @reference.type == "Class"
             # 'main' is the top class, so we want to see '//' instead of
             # its name.
-            unless $1 == "main"
-                myname = $1
+            if @reference.title == "main"
+                myname = ""
+            else
+                myname = @reference.title
             end
         else
-            myname = self.title
+            myname = @reference.to_s
         end
         if p = self.parent
             return [p.pathbuilder, myname]
@@ -142,21 +131,12 @@ Puppet::Type.newtype(:component) do
     end
 
     def ref
-        title
+        @reference.to_s
     end
 
-    # We have a different way of setting the title
+    # We want our title to just be the whole reference, rather than @title.
     def title
-        unless defined? @title
-            if self[:type] == self[:name] # this is the case for classes
-                @title = self[:type]
-            elsif self[:name] =~ /\[.+\]/ # most components already have ref info in the name
-                @title = self[:name]
-            else # else, set it up
-                @title = "%s[%s]" % [self[:type].capitalize, self[:name]]
-            end
-        end
-        return @title
+        @reference.to_s
     end
 
     def refresh
@@ -169,10 +149,6 @@ Puppet::Type.newtype(:component) do
     end
 
     def to_s
-        if self.title =~ /\[/
-            return self.title
-        else
-            return "component(%s)" % self.title
-        end
+        @reference.to_s
     end
 end

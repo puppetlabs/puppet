@@ -111,7 +111,7 @@ module Manager
     def type(name)
         @types ||= {}
 
-        name = symbolize(name)
+        name = name.to_s.downcase.to_sym
 
         if t = @types[name]
             return t

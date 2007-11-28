@@ -36,19 +36,19 @@ class TestASTResource< Test::Unit::TestCase
         title = "title"
 
         # First try a qualified type
-        assert_equal("one::two", newdef("two", title).evaluate(:scope => twoscope)[0].type,
+        assert_equal("One::Two", newdef("two", title).evaluate(:scope => twoscope)[0].type,
             "Defined type was not made fully qualified")
 
         # Then try a type that does not need to be qualified
-        assert_equal("one", newdef("one", title).evaluate(:scope => twoscope)[0].type,
+        assert_equal("One", newdef("one", title).evaluate(:scope => twoscope)[0].type,
             "Unqualified defined type was not handled correctly")
 
         # Then an unqualified type from within the one namespace
-        assert_equal("three", newdef("three", title).evaluate(:scope => twoscope)[0].type,
+        assert_equal("Three", newdef("three", title).evaluate(:scope => twoscope)[0].type,
             "Defined type was not made fully qualified")
 
         # Then a builtin type
-        assert_equal("file", newdef("file", title).evaluate(:scope => twoscope)[0].type,
+        assert_equal("File", newdef("file", title).evaluate(:scope => twoscope)[0].type,
             "Builtin type was not handled correctly")
 
         # Now try a type that does not exist, which should throw an error.

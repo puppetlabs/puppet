@@ -131,8 +131,9 @@ class Puppet::Parser::Resource
         end
 
         @tags = []
-        @tags << @ref.type.to_s
-        @tags << @ref.title.to_s if @ref.title.to_s =~ /^[-\w]+$/
+        tag(@ref.type)
+        tag(@ref.title) if @ref.title.to_s =~ /^[-\w]+$/
+
         if scope.resource
             @tags += scope.resource.tags
         end
@@ -225,15 +226,14 @@ class Puppet::Parser::Resource
     # Add a tag to our current list.  These tags will be added to all
     # of the objects contained in this scope.
     def tag(*ary)
-        ary.each { |tag|
-            tag = tag.to_s
+        ary.collect { |tag| tag.to_s.downcase }.collect { |tag| tag.split("::") }.flatten.each do |tag|
             unless tag =~ /^\w[-\w]*$/
                 fail Puppet::ParseError, "Invalid tag %s" % tag.inspect
             end
             unless @tags.include?(tag)
                 @tags << tag
             end
-        }
+        end
     end
 
     def tags

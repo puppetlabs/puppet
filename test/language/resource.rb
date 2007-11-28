@@ -41,7 +41,7 @@ class TestResource < PuppetTest::TestCase
         end
 
         ref = res.instance_variable_get("@ref")
-        assert_equal("resource", ref.type, "did not set resource type")
+        assert_equal("Resource", ref.type, "did not set resource type")
         assert_equal("testing", ref.title, "did not set resource title")
     end
 
@@ -239,9 +239,9 @@ class TestResource < PuppetTest::TestCase
         assert_equal("nobody", obj["owner"], "Single-value string was not passed correctly")
         assert_equal(%w{you me}, obj["group"], "Array of strings was not passed correctly")
         assert_equal("svn", obj["ignore"], "Array with single string was not turned into single value")
-        assert_equal(["file", refs[0].title], obj["require"], "Resource reference was not passed correctly")
-        assert_equal([["file", refs[1].title], ["file", refs[2].title]], obj["subscribe"], "Array of resource references was not passed correctly")
-        assert_equal(["file", refs[3].title], obj["notify"], "Array with single resource reference was not turned into single value")
+        assert_equal(["File", refs[0].title], obj["require"], "Resource reference was not passed correctly")
+        assert_equal([["File", refs[1].title], ["File", refs[2].title]], obj["subscribe"], "Array of resource references was not passed correctly")
+        assert_equal(["File", refs[3].title], obj["notify"], "Array with single resource reference was not turned into single value")
     end
 
     # FIXME This isn't a great test, but I need to move on.
@@ -255,7 +255,7 @@ class TestResource < PuppetTest::TestCase
 
         result = res.to_trans
         assert_equal("yay", result.name, "did not set bucket name correctly")
-        assert_equal("mydefine", result.type, "did not set bucket type correctly")
+        assert_equal("Mydefine", result.type, "did not set bucket type correctly")
     end
 
     def test_evaluate
@@ -312,7 +312,7 @@ class TestResource < PuppetTest::TestCase
         res = Parser::Resource.new :type => "evaltest", :title => "yay",
             :source => mock("source"), :scope => mkscope
 
-        assert_equal("evaltest", res.type)
+        assert_equal("Evaltest", res.type)
         assert_equal("yay", res.title)
         assert_equal(false, res.builtin?)
     end
@@ -332,7 +332,7 @@ class TestResource < PuppetTest::TestCase
         end
 
         assert_instance_of(Array, trans["require"])
-        assert_equal(["file", "/tmp/ref1"], trans["require"])
+        assert_equal(["File", "/tmp/ref1"], trans["require"])
 
         # Now try it when using an array of references.
         two = Parser::Resource::Reference.new(:type => "file", :title => "/tmp/ref2")
@@ -348,7 +348,7 @@ class TestResource < PuppetTest::TestCase
         assert_instance_of(Array, trans["require"][0])
         trans["require"].each do |val|
             assert_instance_of(Array, val)
-            assert_equal("file", val[0])
+            assert_equal("File", val[0])
             assert(val[1] =~ /\/tmp\/ref[0-9]/,
                 "Was %s instead of the file name" % val[1])
         end
@@ -487,7 +487,7 @@ class TestResource < PuppetTest::TestCase
         # make sure we get each of them.
         ptags = resource.tags
         tags.each do |tag|
-            assert(ptags.include?(tag), "missing #{tag}")
+            assert(ptags.include?(tag.downcase), "missing #{tag}")
         end
     end
 end

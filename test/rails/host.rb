@@ -89,10 +89,10 @@ class TestRailsHost < PuppetTest::TestCase
             end
             assert(resource[:restype] != "", "Did not get a type from the resource")
             case resource["restype"]
-            when "file":
+            when "File":
                 assert_equal("user#{i}", resource.parameter("owner"),
                     "got no owner for %s" % resource.ref)
-            when "exec":
+            when "Exec":
                 assert_equal("user#{i}", resource.parameter("user"),
                     "got no user for %s" % resource.ref)
             else

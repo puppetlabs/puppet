@@ -384,7 +384,7 @@ class TestScope < Test::Unit::TestCase
         # And run the loop.
         config.send(:evaluate_generators)
 
-        %w{file}.each do |type|
+        %w{File}.each do |type|
             objects = config.resources.find_all { |r| r.type == type and r.exported }
 
             assert(!objects.empty?, "Did not get an exported %s" % type)

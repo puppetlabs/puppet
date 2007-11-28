@@ -10,6 +10,7 @@ require 'puppet/metatype/manager'
 require 'puppet/util/errors'
 require 'puppet/util/log_paths'
 require 'puppet/util/logging'
+require 'puppet/resource_reference'
 
 # see the bottom of the file for the rest of the inclusions
 

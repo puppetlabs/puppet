@@ -10,7 +10,10 @@ class Puppet::Parser::AST
         # object type.
         def evaluate(hash)
             scope = hash[:scope]
-            type = @type.downcase
+
+            # Use a resource reference to canonize the type
+            ref = Puppet::ResourceReference.new(@type, "whatever")
+            type = ref.type
             params = @params.safeevaluate(:scope => scope)
 
             parsewrap do

@@ -276,18 +276,12 @@ class Puppet::Type
                 # we just have a name and a type, and we need to convert it
                 # to an object...
                 tname, name = value
-                object = nil
-                if type = Puppet::Type.type(tname)
-                    object = type[name]
-                else # try to treat it as a component
-                    object = Puppet::Type::Component["#{tname}[#{name}]"]
-                end
+                reference = Puppet::ResourceReference.new(tname, name)
                 
                 # Either of the two retrieval attempts could have returned
                 # nil.
-                unless object
-                    self.fail "Could not retrieve dependency '%s[%s]' of %s" %
-                        [tname.to_s.capitalize, @resource.ref, name]
+                unless object = reference.resolve
+                    self.fail "Could not retrieve dependency '%s' of %s" % [reference, @resource.ref]
                 end
 
                 # Are we requiring them, or vice versa?  See the method docs

@@ -11,6 +11,7 @@ class TestDSL < Test::Unit::TestCase
 	include Puppet::DSL
 
     def teardown
+        super
         Puppet::Aspect.clear
     end
 

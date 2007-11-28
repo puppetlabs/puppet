@@ -14,7 +14,7 @@ describe Puppet::TransBucket do
         resource = nil
         proc { resource = @bucket.to_type }.should_not raise_error
         resource.should be_instance_of(Puppet::Type::Component)
-        resource.title.should == "user[luke]"
+        resource.title.should == "User[luke]"
     end
 
     it "should accept TransObjects into its children list" do
@@ -44,7 +44,14 @@ describe Puppet::TransBucket do
     it "should return the title as its reference" do
         @bucket.name = "luke"
         @bucket.type = "user"
-        @bucket.to_ref.should == "user[luke]"
+        @bucket.to_ref.should == "User[luke]"
+    end
+
+    it "should canonize resource references when the type is 'component'" do
+        @bucket.name = 'something'
+        @bucket.type = 'foo::bar'
+
+        @bucket.to_ref.should == "Foo::Bar[something]"
     end
 end
 
@@ -73,7 +80,7 @@ describe Puppet::TransBucket, " when generating a configuration" do
         @config = @top.to_configuration
 
         @users = %w{top middle bottom}
-        @fakes = %w{fake[bottom] fake[middle] fake[top]}
+        @fakes = %w{Fake[bottom] Fake[middle] Fake[top]}
     end
 
     it "should convert all transportable objects to RAL resources" do

@@ -255,6 +255,7 @@ class TestResourceServer < Test::Unit::TestCase
 
         bucket = Puppet::TransBucket.new
         bucket.type = "file"
+        bucket.name = "test"
         bucket.push filetrans
 
         oldbucket = bucket.dup
