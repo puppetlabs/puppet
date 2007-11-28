@@ -80,9 +80,7 @@ class Puppet::Parser::AST
                 if defvalue
                     warnonce "%s is a metaparam; this value will inherit to all contained resources" % arg
                 else
-                    raise Puppet::ParseError,
-                        "%s is a metaparameter; please choose another name" %
-                        name
+                    raise Puppet::ParseError, "%s is a metaparameter; please choose another parameter name in the %s definition" % [arg, self.classname]
                 end
             end
         end
