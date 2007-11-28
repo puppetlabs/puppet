@@ -37,7 +37,17 @@ describe Puppet::TransBucket do
         proc { @bucket.push "a test" }.should raise_error
     end
 
-    it "should return nil as its reference when type or name is missing" do
+    it "should return use 'node' as the type and the provided name as the title if only a type is provided" do
+        @bucket.type = "mystuff"
+        @bucket.to_ref.should == "Node[mystuff]"
+    end
+
+    it "should return use 'component' as the type and the provided type as the title if only a name is provided" do
+        @bucket.name = "mystuff"
+        @bucket.to_ref.should == "Class[mystuff]"
+    end
+
+    it "should return nil as its reference when type and name are missing" do
         @bucket.to_ref.should be_nil
     end
 
