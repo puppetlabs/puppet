@@ -76,10 +76,6 @@ file into a temporary directory. If no URL is present, the provider skips
 straight to step 2. In step two, the source file is mounted, then packages
 installed, and finally the DMG file is removed.
 
-WARNING: Because I assume files will be downloaded to /tmp, the current
-implementation attempts to delete DMG files if you install directly from the
-file system and not via a URL method.
-
 If this is a problem for you, please patch the code, or bug Jeff to fix this.
 
 Example usage::
@@ -88,6 +84,10 @@ Example usage::
       provider => pkgdmg, ensure => present
       source => 'http://0.0.0.0:8000/packages/Thunderbird-2.0.0.4-1.pkg.dmg',
     }
+
+**WARNING**: Because I assume files will be downloaded to /tmp, the current
+implementation attempts to delete DMG files if you install directly from the
+file system and not via a URL method.
 "
   
 

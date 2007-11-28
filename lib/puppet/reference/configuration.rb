@@ -29,7 +29,9 @@ config = Puppet::Util::Reference.newreference(:configuration, :depth => 1, :doc 
         elsif name.to_s == "confdir"
             val = "/etc/puppet"
         end
-        str += "- **Section**: %s\n" % object.section
+
+        # Leave out the section information; it was apparently confusing people.
+        #str += "- **Section**: %s\n" % object.section
         unless val == ""
             str += "- **Default**: %s\n" % val
         end
