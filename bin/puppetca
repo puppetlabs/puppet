@@ -170,15 +170,17 @@ rescue => detail
 end
 
 unless mode
-    $stderr.puts "You must specify --list or --sign"
+    $stderr.puts "You must specify a mode; see the output from --help"
     exit(12)
 end
 
 if [:generate, :clean, :revoke, :list].include?(mode)
     hosts = ARGV.collect { |h| h.downcase }
-else
+end
+
+if [:sign, :list].include?(mode)
     waiting = ca.list
-    unless waiting.length > 0
+    unless waiting.length > 0 or (mode == :list and all)
         puts "No certificates to sign"
         if ARGV.length > 0
             exit(17)
@@ -186,17 +188,16 @@ else
             exit(0)
         end
     end
-    to_sign = ARGV.collect { |h| h.downcase }
 end
 
 case mode
 when :list
     waiting = ca.list
     if waiting.length > 0
-      puts waiting.join("\n")
+        puts waiting.join("\n")
     end
     if all
-      puts ca.list_signed.collect { |cert | cert.sub(/^/,"+ ") }.join("\n")
+        puts ca.list_signed.collect { |cert | cert.sub(/^/,"+ ") }.join("\n")
     end
 when :clean
     if hosts.empty?
@@ -217,6 +218,7 @@ when :clean
         exit(27)
     end
 when :sign
+    to_sign = ARGV.collect { |h| h.downcase }
     unless to_sign.length > 0 or all
         $stderr.puts(
             "You must specify to sign all certificates or you must specify hostnames"
