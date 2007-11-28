@@ -24,7 +24,7 @@ module Puppet
         end
 
         def initialize(name,type)
-            @type = type
+            @type = type.to_s.downcase
             @name = name
             @params = {}
             @tags = []

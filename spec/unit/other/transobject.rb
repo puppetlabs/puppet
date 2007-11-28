@@ -9,6 +9,11 @@ describe Puppet::TransObject do
         resource = Puppet::TransObject.new("me", "foo::bar")
         resource.ref.should == 'Foo::Bar[me]'
     end
+
+    it "should lower-case resource types for backward compatibility with 0.23.2" do
+        resource = Puppet::TransObject.new("me", "Foo")
+        resource.type.should == 'foo'
+    end
 end
 
 describe Puppet::TransObject, " when serializing" do
@@ -63,7 +68,7 @@ describe Puppet::TransObject, " when converting to a RAL component instance" do
     end
 
     it "should use a new TransObject whose name is a resource reference of the type and title of the original TransObject" do
-        Puppet::Type::Component.expects(:create).with { |resource| resource.type == :component and resource.name == "One::Two[/my/file]" }.returns(:yay)
+        Puppet::Type::Component.expects(:create).with { |resource| resource.type == "component" and resource.name == "One::Two[/my/file]" }.returns(:yay)
         @resource.to_component.should == :yay
     end
 
