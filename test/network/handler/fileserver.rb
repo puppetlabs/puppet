@@ -970,12 +970,16 @@ allow *
         }
 
         dir = tempfile()
+        Facter.stubs(:value).with(:ipaddress).returns("127.0.0.1")
+        Facter.stubs(:value).with { |v| v.to_s == "hostname" }.returns("myhost")
+        Facter.stubs(:value).with { |v| v.to_s == "domain" }.returns("mydomain.com")
+        Facter.stubs(:value).with(:domain).returns("mydomain.com")
         ip = Facter.value(:ipaddress)
 
         Dir.mkdir(dir)
-        host = "host.domain.com"
+        host = "myhost.mydomain.com"
         {
-            "%H" => "host.domain.com", "%h" => "host", "%d" => "domain.com"
+            "%H" => "myhost.mydomain.com", "%h" => "myhost", "%d" => "mydomain.com"
         }.each do |pattern, string|
             file = File.join(dir, string)
             mount = File.join(dir, pattern)
@@ -1146,6 +1150,23 @@ allow *
                 )
             }
         end
+    end
+
+    def test_can_start_without_configuration
+        Puppet[:fileserverconfig] = tempfile
+        assert_nothing_raised("Could not create fileserver when configuration is absent") do
+                server = Puppet::Network::Handler::FileServer.new(
+                    :Local => false
+                )
+        end
+    end
+
+    def test_creates_default_mounts_when_no_configuration_is_available
+        Puppet[:fileserverconfig] = tempfile
+        server = Puppet::Network::Handler::FileServer.new(:Local => false)
+
+        assert(server.mounted?("plugins"), "Did not create default plugins mount when missing configuration file")
+        assert(server.mounted?("modules"), "Did not create default modules mount when missing configuration file")
     end
 end
 

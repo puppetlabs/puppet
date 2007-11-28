@@ -29,6 +29,34 @@ class Puppet::Network::Handler
             CHECKPARAMS.dup
         end
 
+        # If the configuration file exists, then create (if necessary) a LoadedFile
+        # object to manage it; else, return nil.
+        def configuration
+            # Short-circuit the default case.
+            return @configuration if defined?(@configuration)
+
+            config_path = @passed_configuration_path || Puppet[:fileserverconfig]
+            return nil unless FileTest.exist?(config_path)
+
+            # The file exists but we don't have a LoadedFile instance for it.
+            @configuration = Puppet::Util::LoadedFile.new(config_path)
+        end
+
+        # Create our default mounts for modules and plugins.  This is duplicated code,
+        # but I'm not really worried about that.
+        def create_default_mounts
+            @mounts = {}
+            Puppet.debug "No file server configuration file; autocreating #{MODULES} mount with default permissions"
+            mount = Mount.new(MODULES)
+            mount.allow("*")
+            @mounts[MODULES] = mount
+            
+            Puppet.debug "No file server configuration file; autocreating #{PLUGINS} mount with default permissions"
+            mount = PluginMount.new(PLUGINS)
+            mount.allow("*")
+            @mounts[PLUGINS] = mount
+        end
+
         # Describe a given file.  This returns all of the manageable aspects
         # of that file.
         def describe(url, links = :ignore, client = nil, clientip = nil)
@@ -80,12 +108,9 @@ class Puppet::Network::Handler
 
             if hash[:Config] == false
                 @noreadconfig = true
-            else
-                @config = Puppet::Util::LoadedFile.new(
-                    hash[:Config] || Puppet[:fileserverconfig]
-                )
-                @noreadconfig = false
             end
+
+            @passed_configuration_path = hash[:Config]
 
             if hash.include?(:Mount)
                 @passedconfig = true
@@ -103,7 +128,11 @@ class Puppet::Network::Handler
                 self.mount(nil, PLUGINS)
             else
                 @passedconfig = false
-                readconfig(false) # don't check the file the first time.
+                if configuration
+                    readconfig(false) # don't check the file the first time.
+                else
+                    create_default_mounts()
+                end
             end
         end
 
@@ -135,6 +164,11 @@ class Puppet::Network::Handler
         
         def local?
             self.local
+        end
+
+        # Is a given mount available?
+        def mounted?(name)
+            @mounts.include?(name)
         end
 
         # Mount a new directory with a name.
@@ -253,13 +287,15 @@ class Puppet::Network::Handler
         def readconfig(check = true)
             return if @noreadconfig
 
-            if check and ! @config.changed?
+            return unless configuration
+
+            if check and ! @configuration.changed?
                 return
             end
 
             newmounts = {}
             begin
-                File.open(@config.file) { |f|
+                File.open(@configuration.file) { |f|
                     mount = nil
                     count = 1
                     f.each { |line|
@@ -270,7 +306,7 @@ class Puppet::Network::Handler
                             name = $1
                             if newmounts.include?(name)
                                 raise FileServerError, "%s is already mounted at %s" %
-                                    [newmounts[name], name], count, @config.file
+                                    [newmounts[name], name], count, @configuration.file
                             end
                             mount = Mount.new(name)
                             newmounts[name] = mount
@@ -301,7 +337,7 @@ class Puppet::Network::Handler
                                         mount.allow(val)
                                     rescue AuthStoreError => detail
                                         raise FileServerError.new(detail.to_s,
-                                            count, @config.file)
+                                            count, @configuration.file)
                                     end
                                 }
                             when "deny":
@@ -311,26 +347,26 @@ class Puppet::Network::Handler
                                         mount.deny(val)
                                     rescue AuthStoreError => detail
                                         raise FileServerError.new(detail.to_s,
-                                            count, @config.file)
+                                            count, @configuration.file)
                                     end
                                 }
                             else
                                 raise FileServerError.new("Invalid argument '%s'" % var,
-                                    count, @config.file)
+                                    count, @configuration.file)
                             end
                         else
                             raise FileServerError.new("Invalid line '%s'" % line.chomp,
-                                count, @config.file)
+                                count, @configuration.file)
                         end
                         count += 1
                     }
                 }
             rescue Errno::EACCES => detail
-                Puppet.err "FileServer error: Cannot read %s; cannot serve" % @config
-                #raise Puppet::Error, "Cannot read %s" % @config
+                Puppet.err "FileServer error: Cannot read %s; cannot serve" % @configuration
+                #raise Puppet::Error, "Cannot read %s" % @configuration
             rescue Errno::ENOENT => detail
                 Puppet.err "FileServer error: '%s' does not exist; cannot serve" %
-                    @config
+                    @configuration
             end
 
             unless newmounts[MODULES]
