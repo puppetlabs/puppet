@@ -12,10 +12,6 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init do
         superclass.defpath
     end
 
-    if self.suitable?
-        Puppet.type(:service).newpath(:redhat, defpath())
-    end
-
     # Remove the symlinks
     def disable
         begin

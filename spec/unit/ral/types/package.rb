@@ -4,8 +4,6 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 
 require 'puppet/type/package'
 
-$platform = Facter["operatingsystem"].value
-
 describe Puppet::Type::Package do
     it "should have an :installable feature that requires the :install method" do
         Puppet::Type::Package.provider_feature(:installable).methods.should == [:install]

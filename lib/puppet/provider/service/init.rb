@@ -20,14 +20,6 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     # We can't confine this here, because the init path can be overridden.
     #confine :exists => @defpath
 
-    if self.suitable?
-        # Add it to the search paths
-        Puppet.type(:service).newpath(:init, defpath())
-
-        # Set the default init directory.
-        Puppet.type(:service).attrclass(:path).defaultto defpath()
-    end
-
     # List all services of this type.
     def self.instances(name)
         # We need to find all paths specified for our type or any parent types

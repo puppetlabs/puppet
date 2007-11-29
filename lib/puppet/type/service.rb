@@ -28,78 +28,22 @@ module Puppet
         feature :enableable, "The provider can enable and disable the service",
             :methods => [:disable, :enable, :enabled?]
 
-        attr_reader :stat
-
-        newproperty(:enable) do
-            attr_reader :runlevel
+        newproperty(:enable, :required_features => :enableable) do
             desc "Whether a service should be enabled to start at boot.
                 This property behaves quite differently depending on the platform;
                 wherever possible, it relies on local tools to enable or disable
                 a given service."
 
             newvalue(:true, :event => :service_enabled) do
-                unless provider.respond_to?(:enable)
-                    raise Puppet::Error, "Service %s does not support enabling" %
-                        @resource.name
-                end
                 provider.enable
             end
 
             newvalue(:false, :event => :service_disabled) do
-                unless provider.respond_to?(:disable)
-                    raise Puppet::Error, "Service %s does not support enabling" %
-                        @resource.name
-                end
                 provider.disable
             end
 
             def retrieve
-                unless provider.respond_to?(:enabled?)
-                    raise Puppet::Error, "Service %s does not support enabling" %
-                        @resource.name
-                end
                 return provider.enabled?
-            end
-
-            validate do |value|
-                unless value =~ /^\d+/
-                    super(value)
-                end
-            end
-
-            munge do |should|
-                @runlevel = nil
-                if should =~ /^\d+$/
-                    arity = @resource.method(:enable)
-                    if @runlevel and arity != 1
-                        raise Puppet::Error,
-                            "Services on %s do not accept runlevel specs" %
-                                @resource.type
-                    elsif arity != 0
-                        raise Puppet::Error,
-                            "Services on %s must specify runlevels" %
-                                @resource.type
-                    end
-                    @runlevel = should
-                    return :true
-                else
-                    super(should)
-                end
-            end
-
-            def sync
-                case self.should
-                when :true
-                    if @runlevel
-                        provider.enable(@runlevel)
-                    else
-                        provider.enable()
-                    end
-                    return :service_enabled
-                when :false
-                    provider.disable
-                    return :service_disabled
-                end
             end
         end
 
@@ -124,39 +68,13 @@ module Puppet
 
             def sync
                 event = super()
-#                case self.should
-#                when :running
-#                    provider.start
-#                    event = :service_started
-#                when :stopped
-#                    provider.stop
-#                    event = :service_stopped
-#                else
-#                    self.debug "Not running '%s' and shouldn't be running" %
-#                        self
-#                end
 
                 if property = @resource.property(:enable)
                     val = property.retrieve
-                    unless property.insync?(val)
-                        property.sync
-                    end
+                    property.sync unless property.insync?(val)
                 end
 
                 return event
-            end
-        end
-
-        # Produce a warning, rather than just failing.
-        newparam(:running) do
-            desc "A place-holder parameter that wraps ``ensure``, because
-                ``running`` is deprecated.  You should use ``ensure`` instead
-                of this, but using this will still work, albeit with a
-                warning."
-
-            munge do |value|
-                @resource.warning "'running' is deprecated; please use 'ensure'"
-                @resource[:ensure] = value
             end
         end
 
@@ -178,53 +96,38 @@ module Puppet
                 
                 If you do not specify anything, then the service name will be
                 looked for in the process table."
+
+            newvalues(:true, :false)
         end
         newparam(:name) do
-            desc "The name of the service to run.  This name
-                is used to find the service in whatever service subsystem it
-                is in."
+            desc "The name of the service to run.  This name is used to find
+                the service in whatever service subsystem it is in."
             isnamevar
         end
 
-        newparam(:type) do
-            desc "Deprecated form of ``provider``."
-
-            munge do |value|
-                warning "'type' is deprecated; use 'provider' instead"
-                @resource[:provider] = value
-            end
-        end
-
         newparam(:path) do
-            desc "The search path for finding init scripts."
+            desc "The search path for finding init scripts.  Multiple values should
+                be separated by colons or provided as an array."
 
             munge do |value|
-                paths = []
-                if value.is_a?(Array)
-                    paths += value.flatten.collect { |p|
-                        p.split(":")
-                    }.flatten
-                else
-                    paths = value.split(":")
-                end
-
-                paths.each do |path|
+                value = [value] unless value.is_a?(Array)
+                paths = value.flatten.collect { |p| p.split(":") }.flatten.find_all do |path|
                     if FileTest.directory?(path)
-                        next
-                    end
-                    if FileTest.exists?(path)
-                        unless FileTest.directory?(path)
-                            @resource.debug "Search path %s is not a directory" %
-                                [path]
-                        end
+                        true
                     else
-                        @resource.debug("Search path %s does not exist" % [path])
+                        if FileTest.exist?(path) and ! FileTest.directory?(path)
+                            @resource.debug "Search path %s is not a directory" % [path]
+                        else
+                            @resource.debug("Search path %s does not exist" % [path])
+                        end
+                        false
                     end
-                    paths.delete(path)
                 end
 
                 paths
             end
+
+            defaultto { provider.class.defpath if provider.class.respond_to?(:defpath) }
         end
         newparam(:pattern) do
             desc "The pattern to search for in the process table.
@@ -238,9 +141,7 @@ module Puppet
                 
                 The pattern can be a simple string or any legal Ruby pattern."
 
-            defaultto {
-                @resource[:binary] || @resource[:name]
-            }
+            defaultto { @resource[:binary] || @resource[:name] }
         end
         newparam(:restart) do
             desc "Specify a *restart* command manually.  If left
@@ -268,45 +169,14 @@ module Puppet
             newvalues(:true, :false)
         end
 
-        # Add a new path to our list of paths that services could be in.
-        def self.newpath(type, path)
-            type = type.intern if type.is_a? String
-            @paths ||= {}
-            @paths[type] ||= []
-
-            unless @paths[type].include? path
-                @paths[type] << path
-            end
-        end
-
-        def self.paths(type)
-            type = type.intern if type.is_a? String
-            @paths ||= {}
-            @paths[type] ||= []
-
-            @paths[type].dup
-        end
-
-        # Initialize the service.  This is basically responsible for merging
-        # in the right module.
-        def initialize(hash)
-            super
-
-            # and then see if it needs to be checked
-            if self.respond_to?(:configchk)
-                self.configchk
-            end
-        end
-
         # Basically just a synonym for restarting.  Used to respond
         # to events.
         def refresh
-            # Only restart if we're supposed to be running
-            
-            if ens = @parameters[:ensure] and ens.should == :running and ens.retrieve == :running
+            # Only restart if we're actually running
+            if (@parameters[:ensure] || newattr(:ensure)).retrieve == :running
                 provider.restart
             else
-                debug "Skipping restart; 'ensure' is not set to 'running'"
+                debug "Skipping restart; service is not running"
             end
         end
     end
