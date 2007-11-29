@@ -195,7 +195,7 @@ module Puppet
 
         def refresh
             # Only remount if we're supposed to be mounted.
-            provider.remount if provider.mounted?
+            provider.remount if self.should(:fstype) != "swap" and provider.mounted?
         end
 
         def value(name)

@@ -1,3 +1,5 @@
+    Mounts no longer remount swap filesystems.
+
     Slightly modifying how services manage their list of paths
     (and adding documention for it).  Services now default
     to the paths specified by the provider classes.

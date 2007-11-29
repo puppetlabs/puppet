@@ -185,4 +185,11 @@ describe Puppet::Type::Mount, "when responding to events" do
 
         @mount.refresh
     end
+
+    it "should not remount swap filesystems" do
+        @mount[:fstype] = "swap"
+        @provider.expects(:remount).never
+
+        @mount.refresh
+    end
 end
