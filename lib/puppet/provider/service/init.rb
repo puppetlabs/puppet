@@ -100,7 +100,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
             # if we've gotten this far, we found a valid script
             return fqname
         }
-        @model[:path].each { |path|
+        @resource[:path].each { |path|
             fqname_sh = File.join(path,"#{name}.sh")
             begin
                 stat = File.stat(fqname_sh)
