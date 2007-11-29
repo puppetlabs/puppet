@@ -232,7 +232,7 @@ class TestResource < PuppetTest::TestCase
 
         assert_instance_of(Puppet::TransObject, obj)
 
-        assert_equal(obj.type, res.type)
+        assert_equal(obj.type, res.type.downcase)
         assert_equal(obj.name, res.title)
 
         # TransObjects use strings, resources use symbols
