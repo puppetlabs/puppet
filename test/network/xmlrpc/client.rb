@@ -72,7 +72,11 @@ class TestXMLRPCClient < Test::Unit::TestCase
         http.expects(:cert=).with(:ccert)
         http.expects(:key=).with(:ckey)
         http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
-        http.expects(:enable_post_connection_check=).with(Puppet[:http_enable_post_connection_check])
+        if Puppet[:http_enable_post_connection_check]
+            http.expects(:enable_post_connection_check=).with(true)
+        else
+            http.expects(:enable_post_connection_check=).with(false)
+        end
         http.expects(:cert_store=)
 
         assert_nothing_raised do
