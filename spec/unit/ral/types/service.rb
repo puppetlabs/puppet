@@ -206,7 +206,7 @@ describe Puppet::Type::Service, "when changing the host" do
         @service.property(:enable).expects(:insync?).returns(false)
         @service.property(:enable).expects(:sync)
 
-        @provider.stubs(:stop)
+        @service.provider.stubs(:stop)
 
         @service.property(:ensure).sync
     end

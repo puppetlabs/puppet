@@ -14,7 +14,7 @@ describe Puppet::Network::XMLRPCClient, " when managing http instances" do
     end
 
     it "should enable ssl on the http instance" do
-        Puppet::Network::XMLRPCClient.http_instance("me", 54321).use_ssl.should be_true
+        Puppet::Network::XMLRPCClient.http_instance("me", 54321).instance_variable_get("@use_ssl").should be_true
     end
 
     it "should set the read timeout" do
