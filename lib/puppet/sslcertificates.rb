@@ -61,7 +61,7 @@ module Puppet::SSLCertificates
             key_usage = %w{cRLSign keyCertSign}
         when :server:
             basic_constraint = "CA:FALSE"
-            hash[:dnsnames].each(':') { |d| subject_alt_name << 'DNS:' + d } if hash[:dnsnames]
+            hash[:dnsnames].split(':').each { |d| subject_alt_name << 'DNS:' + d } if hash[:dnsnames]
             key_usage = %w{digitalSignature keyEncipherment}
             ext_key_usage = %w{serverAuth clientAuth}
         when :ocsp:
