@@ -25,6 +25,16 @@ describe Puppet::Network::XMLRPCClient, " when managing http instances" do
         Puppet::Network::XMLRPCClient.http_instance("me", 54321).open_timeout.should == 120
     end
 
+    it "should default to http_enable_post_connection_check being enabled" do
+        Puppet.settings[:http_enable_post_connection_check].should be_true
+    end
+
+    # JJM: I'm not sure if this is correct, as this really follows the
+    # configuration option.
+    it "should set enable_post_connection_check true " do
+        Puppet::Network::XMLRPCClient.http_instance("me", 54321).instance_variable_get("@enable_post_connection_check").should be_true
+    end
+
     it "should create the http instance with the proxy host and port set if the http_proxy is not set to 'none'" do
         Puppet.settings.stubs(:value).with(:http_keepalive).returns(true)
         Puppet.settings.stubs(:value).with(:http_proxy_host).returns("myhost")
