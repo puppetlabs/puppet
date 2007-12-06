@@ -49,6 +49,12 @@ module Puppet::Network
             @http.use_ssl = true
             @http.read_timeout = 120
             @http.open_timeout = 120
+            # JJM Configurable fix for #896.
+            if Puppet[:http_enable_post_connection_check]
+                @http.enable_post_connection_check = true
+            else
+                @http.enable_post_connection_check = false
+            end
 
             @@http_cache[key] = @http if Puppet[:http_keepalive]
 
@@ -147,7 +153,6 @@ module Puppet::Network
                 @http.cert = client.cert
                 @http.verify_mode = OpenSSL::SSL::VERIFY_PEER
                 @http.key = client.key
-                @http.enable_post_connection_check = false
             end
         end
 

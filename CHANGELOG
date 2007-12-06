@@ -1,3 +1,8 @@
+    http_enable_post_connection_check added as a configuration
+    option for puppetd.  This defaults to true, which validates the server
+    SSL certificate against the requested host name in new versions of ruby.
+    See #896 for more information.
+
     Mounts no longer remount swap filesystems.
 
     Slightly modifying how services manage their list of paths
