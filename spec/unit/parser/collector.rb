@@ -243,19 +243,6 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
         @collector.evaluate.should == [one, two]
     end
 
-    it "should mark all returned resources as not exported" do
-        stub_rails(true)
-
-        one = stub 'one', :type => "Mytype", :virtual? => true, :exported? => true
-
-        one.expects(:exported=).with(false)
-        one.stubs(:virtual=)
-
-        @compile.expects(:resources).returns([one])
-
-        @collector.evaluate.should == [one]
-    end
-
     it "should mark all returned resources as not virtual" do
         stub_rails(true)
 

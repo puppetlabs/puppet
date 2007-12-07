@@ -16,7 +16,6 @@ class Puppet::Parser::Collector
             method = "collect_#{@form.to_s}"
             objects = send(method).each do |obj|
                 obj.virtual = false
-                obj.exported = false if form == :exported
             end
             if objects.empty?
                 return false
