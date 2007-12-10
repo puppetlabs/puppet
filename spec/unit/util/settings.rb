@@ -382,6 +382,20 @@ describe Puppet::Util::Settings, " when parsing its configuration" do
         values.should == ["other"]
     end
 
+    it "should pass the interpolated value to the hook when one is available" do
+        values = []
+        @settings.setdefaults :section, :base => {:default => "yay", :desc => "a", :hook => proc { |v| values << v }}
+        @settings.setdefaults :section, :mysetting => {:default => "defval", :desc => "a", :hook => proc { |v| values << v }}
+
+        text = "[main]
+        mysetting = $base/setval
+        "
+        file = "/some/file"
+        @settings.expects(:read_file).with(file).returns(text)
+        @settings.parse(file)
+        values.should == ["yay/setval"]
+    end
+
     it "should allow empty values" do
         @settings.setdefaults :section, :myarg => ["myfile", "a"]
 

@@ -308,7 +308,12 @@ class Puppet::Util::Settings
         settings_with_hooks.each do |setting|
             each_source(env) do |source|
                 if value = @values[source][setting.name]
-                    setting.handle(value)
+                    # We still have to use value() to retrieve the value, since
+                    # we want the fully interpolated value, not $vardir/lib or whatever.
+                    # This results in extra work, but so few of the settings
+                    # will have associated hooks that it ends up being less work this
+                    # way overall.
+                    setting.handle(self.value(setting.name, env))
                     break
                 end
             end
