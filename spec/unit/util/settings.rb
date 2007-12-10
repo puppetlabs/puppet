@@ -311,7 +311,7 @@ describe Puppet::Util::Settings, " when parsing its configuration" do
         @settings[:one].should == 65
     end
 
-    it "should support specifying file all metadata (owner, group, mode) in the configuration file" do
+    it "should support specifying all metadata (owner, group, mode) in the configuration file" do
         @settings.setdefaults :section, :myfile => ["/myfile", "a"]
 
         text = "[main]
@@ -324,7 +324,7 @@ describe Puppet::Util::Settings, " when parsing its configuration" do
         @settings.metadata(:myfile).should == {:owner => "luke", :group => "luke", :mode => "644"}
     end
 
-    it "should support specifying file a single piece of metadata (owner, group, or mode) in the configuration file" do
+    it "should support specifying a single piece of metadata (owner, group, or mode) in the configuration file" do
         @settings.setdefaults :section, :myfile => ["/myfile", "a"]
 
         text = "[main]
@@ -335,6 +335,51 @@ describe Puppet::Util::Settings, " when parsing its configuration" do
         @settings.parse(file)
         @settings[:myfile].should == "/other/file"
         @settings.metadata(:myfile).should == {:owner => "luke"}
+    end
+
+    it "should call hooks associated with values set in the configuration file" do
+        values = []
+        @settings.setdefaults :section, :mysetting => {:default => "defval", :desc => "a", :hook => proc { |v| values << v }}
+
+        text = "[main]
+        mysetting = setval
+        "
+        file = "/some/file"
+        @settings.expects(:read_file).with(file).returns(text)
+        @settings.parse(file)
+        values.should == ["setval"]
+    end
+
+    it "should not call the same hook for values set multiple times in the configuration file" do
+        values = []
+        @settings.setdefaults :section, :mysetting => {:default => "defval", :desc => "a", :hook => proc { |v| values << v }}
+
+        text = "[main]
+        mysetting = setval
+        [puppet]
+        mysetting = other
+        "
+        file = "/some/file"
+        @settings.expects(:read_file).with(file).returns(text)
+        @settings.parse(file)
+        values.should == ["setval"]
+    end
+
+    it "should pass the environment-specific value to the hook when one is available" do
+        values = []
+        @settings.setdefaults :section, :mysetting => {:default => "defval", :desc => "a", :hook => proc { |v| values << v }}
+        @settings.setdefaults :section, :environment => ["yay", "a"]
+        @settings.setdefaults :section, :environments => ["yay,foo", "a"]
+
+        text = "[main]
+        mysetting = setval
+        [yay]
+        mysetting = other
+        "
+        file = "/some/file"
+        @settings.expects(:read_file).with(file).returns(text)
+        @settings.parse(file)
+        values.should == ["other"]
     end
 
     it "should allow empty values" do

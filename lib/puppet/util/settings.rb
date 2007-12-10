@@ -297,8 +297,26 @@ class Puppet::Util::Settings
             @values[area] = values
         end
 
+        # Determine our environment, if we have one.
+        if @config[:environment]
+            env = self.value(:environment).to_sym
+        else
+            env = "none"
+        end
+
+        # Call any hooks we should be calling.
+        settings_with_hooks.each do |setting|
+            each_source(env) do |source|
+                if value = @values[source][setting.name]
+                    setting.handle(value)
+                    break
+                end
+            end
+        end
+
         # We have to do it in the reverse of the search path,
-        # because multiple sections could set the same value.
+        # because multiple sections could set the same value
+        # and I'm too lazy to only set the metadata once.
         searchpath.reverse.each do |source|
             if meta = @values[source][:_meta]
                 set_metadata(meta)
@@ -687,21 +705,13 @@ Generated on #{Time.now}.
         # Check the cache first.  It needs to be a per-environment
         # cache so that we don't spread values from one env
         # to another.
-        if @cache[environment||"none"].include?(param)
-            return @cache[environment||"none"][param]
+        if cached = @cache[environment||"none"][param]
+            return cached
         end
 
         # See if we can find it within our searchable list of values
         val = nil
-        searchpath(environment).each do |source|
-            # Modify the source as necessary.
-            source = case source
-            when :name:
-                self.name
-            else
-                source
-            end
-
+        each_source(environment) do |source|
             # Look for the value.  We have to test the hash for whether
             # it exists, because the value might be false.
             if @values[source].include?(param)
@@ -711,9 +721,7 @@ Generated on #{Time.now}.
         end
 
         # If we didn't get a value, use the default
-        if val.nil?
-            val = @config[param].default
-        end
+        val = @config[param].default if val.nil?
 
         # Convert it if necessary
         val = convert(val)
@@ -833,6 +841,21 @@ Generated on #{Time.now}.
             end
         end
         resources
+    end
+
+    # Yield each search source in turn.
+    def each_source(environment)
+        searchpath(environment).each do |source|
+            # Modify the source as necessary.
+            source = self.name if source == :name
+            yield source
+        end
+    end
+
+    # Return all elements that have associated hooks; this is so
+    # we can call them after parsing the configuration file.
+    def settings_with_hooks
+        @config.values.find_all { |setting| setting.respond_to?(:handle) }
     end
 
     # Extract extra setting information for files.
