@@ -51,8 +51,7 @@ class TestRailsHost < PuppetTest::TestCase
         }
 
         # Now collect our facts
-        facts = {"hostname" => Facter.value(:hostname), "test1" => "funtest",
-            "ipaddress" => Facter.value(:ipaddress)}
+        facts = {"hostname" => "myhost", "test1" => "funtest", "ipaddress" => "192.168.0.1"}
 
         # Now try storing our crap
         host = nil
@@ -120,12 +119,14 @@ class TestRailsHost < PuppetTest::TestCase
         facts["test3"] = "funtest"
         facts["test1"] = "changedfact"
         facts.delete("ipaddress")
-        host = nil
         node = mknode(facts["hostname"])
         node.parameters = facts
+        newhost = nil
         assert_nothing_raised {
-            host = Puppet::Rails::Host.store(node, resources)
+            newhost = Puppet::Rails::Host.store(node, resources)
         }
+
+        assert_equal(host.id, newhost.id, "Created new host instance)")
 
         # Make sure it sets the last_compile time
         assert_nothing_raised do

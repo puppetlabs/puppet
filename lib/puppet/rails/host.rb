@@ -29,15 +29,13 @@ class Puppet::Rails::Host < ActiveRecord::Base
 
     # Store our host in the database.
     def self.store(node, resources)
-        raise ArgumentError, "You must specify the hostname for storage" unless name = hash[:name]
-
         args = {}
 
         host = nil
         transaction do
             #unless host = find_by_name(name)
             seconds = Benchmark.realtime {
-                unless host = find_by_name(name)
+                unless host = find_by_name(node.name)
                     host = new(:name => node.name)
                 end
             }
