@@ -7,8 +7,14 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 require 'puppet/network/xmlrpc/client'
 
 describe Puppet::Network::XMLRPCClient, " when managing http instances" do
+    def stub_settings(settings)
+        settings.each do |param, value|
+            Puppet.settings.stubs(:value).with(param).returns(value)
+        end
+    end
+
     it "should return an http instance created with the passed host and port" do
-        http = stub 'http', :use_ssl= => nil, :read_timeout= => nil, :open_timeout= => nil
+        http = stub 'http', :use_ssl= => nil, :read_timeout= => nil, :open_timeout= => nil, :enable_post_connection_check= => nil
         Net::HTTP.expects(:new).with("me", 54321, nil, nil).returns(http)
         Puppet::Network::XMLRPCClient.http_instance("me", 54321).should equal(http)
     end
@@ -36,9 +42,7 @@ describe Puppet::Network::XMLRPCClient, " when managing http instances" do
     end
 
     it "should create the http instance with the proxy host and port set if the http_proxy is not set to 'none'" do
-        Puppet.settings.stubs(:value).with(:http_keepalive).returns(true)
-        Puppet.settings.stubs(:value).with(:http_proxy_host).returns("myhost")
-        Puppet.settings.stubs(:value).with(:http_proxy_port).returns(432)
+        stub_settings :http_keepalive => true, :http_proxy_host => "myhost", :http_proxy_port => 432, :http_enable_post_connection_check => true
         Puppet::Network::XMLRPCClient.http_instance("me", 54321).open_timeout.should == 120
     end
 
@@ -47,25 +51,19 @@ describe Puppet::Network::XMLRPCClient, " when managing http instances" do
     end
 
     it "should cache http instances if keepalive is enabled" do
-        Puppet.settings.stubs(:value).with(:http_keepalive).returns(true)
-        Puppet.settings.stubs(:value).with(:http_proxy_host).returns("myhost")
-        Puppet.settings.stubs(:value).with(:http_proxy_port).returns(432)
+        stub_settings :http_keepalive => true, :http_proxy_host => "myhost", :http_proxy_port => 432, :http_enable_post_connection_check => true
         old = Puppet::Network::XMLRPCClient.http_instance("me", 54321)
         Puppet::Network::XMLRPCClient.http_instance("me", 54321).should equal(old)
     end
 
     it "should not cache http instances if keepalive is not enabled" do
-        Puppet.settings.stubs(:value).with(:http_keepalive).returns(false)
-        Puppet.settings.stubs(:value).with(:http_proxy_host).returns("myhost")
-        Puppet.settings.stubs(:value).with(:http_proxy_port).returns(432)
+        stub_settings :http_keepalive => false, :http_proxy_host => "myhost", :http_proxy_port => 432, :http_enable_post_connection_check => true
         old = Puppet::Network::XMLRPCClient.http_instance("me", 54321)
         Puppet::Network::XMLRPCClient.http_instance("me", 54321).should_not equal(old)
     end
 
     it "should have a mechanism for clearing the http cache" do
-        Puppet.settings.stubs(:value).with(:http_keepalive).returns(true)
-        Puppet.settings.stubs(:value).with(:http_proxy_host).returns("myhost")
-        Puppet.settings.stubs(:value).with(:http_proxy_port).returns(432)
+        stub_settings :http_keepalive => true, :http_proxy_host => "myhost", :http_proxy_port => 432, :http_enable_post_connection_check => true
         old = Puppet::Network::XMLRPCClient.http_instance("me", 54321)
         Puppet::Network::XMLRPCClient.http_instance("me", 54321).should equal(old)
         old = Puppet::Network::XMLRPCClient.http_instance("me", 54321)
