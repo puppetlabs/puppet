@@ -296,6 +296,27 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
         @collector.evaluate.should == [resource]
     end
 
+    # This way one host doesn't store another host's resources as exported.
+    it "should mark resources collected from the database as not exported" do
+        stub_rails()
+        Puppet::Rails::Host.stubs(:find_by_name).returns(nil)
+
+        one = stub 'one', :restype => "Mytype", :title => "one", :virtual? => true, :exported? => true
+        Puppet::Rails::Resource.stubs(:find).returns([one])
+
+        resource = mock 'resource'
+        one.expects(:to_resource).with(@scope).returns(resource)
+        resource.expects(:exported=).with(false)
+        resource.stubs(:virtual=)
+
+        @compile.stubs(:resources).returns([])
+        @scope.stubs(:findresource).returns(nil)
+
+        @compile.stubs(:store_resource)
+
+        @collector.evaluate
+    end
+
     it "should fail if an equivalent resource already exists in the compile" do
         stub_rails()
         Puppet::Rails::Host.stubs(:find_by_name).returns(nil)

@@ -147,6 +147,8 @@ class Puppet::Parser::Collector
         end
 
         resource = obj.to_resource(self.scope)
+
+        resource.exported = false
         
         scope.compile.store_resource(scope, resource)
 
