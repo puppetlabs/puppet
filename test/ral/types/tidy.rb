@@ -235,5 +235,57 @@ class TestTidy < Test::Unit::TestCase
         assert_apply(tidy)
         assert(! FileTest.symlink?(link), "link was not tidied")
     end
+
+    def test_glob_matches_single
+        dir = mktmpdir
+        files = {
+          :remove => File.join(dir, "01-foo"),
+          :keep   => File.join(dir, "default")
+        }
+        files.each do |tag, file|
+          File.open(file, "w") { |f|
+              f.puts "some stuff"
+          }
+        end
+
+        tidy = Puppet.type(:tidy).create(
+            :name => dir,
+            :size => "1b",
+            :rmdirs => true,
+            :recurse => true,
+            :matches => "01-*"
+        )
+        assert_apply(tidy)
+
+        assert(FileTest.exists?(files[:keep]), "%s was tidied" % files[:keep])
+        assert(!FileTest.exists?(files[:remove]), "Tidied %s still exists" % files[:remove])
+    end
+
+    def test_glob_matches_multiple
+        dir = mktmpdir
+        files = {
+          :remove1 => File.join(dir, "01-foo"),
+          :remove2 => File.join(dir, "02-bar"),
+          :keep1   => File.join(dir, "default")
+        }
+        files.each do |tag, file|
+          File.open(file, "w") { |f|
+              f.puts "some stuff"
+          }
+        end
+
+        tidy = Puppet.type(:tidy).create(
+            :name => dir,
+            :size => "1b",
+            :rmdirs => true,
+            :recurse => true,
+            :matches => ["01-*", "02-*"]
+        )
+        assert_apply(tidy)
+
+        assert(FileTest.exists?(files[:keep1]), "%s was tidied" % files[:keep1])
+        assert(!FileTest.exists?(files[:remove1]), "Tidied %s still exists" % files[:remove1])
+        assert(!FileTest.exists?(files[:remove2]), "Tidied %s still exists" % files[:remove2])
+    end
 end
 

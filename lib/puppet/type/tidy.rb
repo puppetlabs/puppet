@@ -1,7 +1,3 @@
-
-require 'etc'
-require 'puppet/type/pfile'
-
 module Puppet
     newtype(:tidy, Puppet.type(:file)) do
         @doc = "Remove unwanted files based on specific criteria.  Multiple
@@ -14,11 +10,17 @@ module Puppet
             isnamevar
         end
 
+        newparam(:matches) do
+            desc "One or more file glob patterns, which restrict the list of
+                files to be tidied to those whose basenames match at least one
+                of the patterns specified.  Multiple patterns can be specified
+                using an array."
+        end
+
         copyparam(Puppet.type(:file), :backup)
         
         newproperty(:ensure) do
             desc "An internal attribute used to determine which files should be removed."
-            require 'etc'
 
             @nodoc = true
             
@@ -47,6 +49,14 @@ module Puppet
                     end
                 else
                     @out = []
+                    if @resource[:matches]
+                        basename = File.basename(@resource[:path])
+                        flags = File::FNM_DOTMATCH | File::FNM_PATHNAME
+                        unless @resource[:matches].any? {|pattern| File.fnmatch(pattern, basename, flags) }
+                            self.debug "No patterns specified match basename, skipping"
+                            return true
+                        end
+                    end
                     TATTRS.each do |param|
                         if property = @resource.property(param)
                             self.debug "No is value for %s", [param] if is[property].nil?
