@@ -145,7 +145,7 @@ class TestHandlerConfiguration < Test::Unit::TestCase
         # First try the case where we can't look up the node
         config = Config.new
         node = Object.new
-        Puppet::Node.stubs(:search).with(:client).returns(false, node)
+        Puppet::Node.stubs(:find_by_any_name).with(:client).returns(false, node)
         interp = Object.new
         assert_instance_of(Bignum, config.version(:client), "Did not return configuration version")
 

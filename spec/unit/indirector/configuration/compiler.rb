@@ -23,8 +23,8 @@ describe Puppet::Node::Configuration::Compiler do
         node1 = stub 'node1', :merge => nil
         node2 = stub 'node2', :merge => nil
         compiler.stubs(:compile)
-        Puppet::Node.stubs(:search).with('node1').returns(node1)
-        Puppet::Node.stubs(:search).with('node2').returns(node2)
+        Puppet::Node.stubs(:find_by_any_name).with('node1').returns(node1)
+        Puppet::Node.stubs(:find_by_any_name).with('node2').returns(node2)
 
         compiler.find('node1')
         compiler.find('node2')
@@ -68,13 +68,13 @@ describe Puppet::Node::Configuration::Compiler, " when finding nodes" do
 
     it "should look node information up via the Node class with the provided key" do
         @node.stubs :merge 
-        Puppet::Node.expects(:search).with(@name).returns(@node)
+        Puppet::Node.expects(:find_by_any_name).with(@name).returns(@node)
         @compiler.find(@name)
     end
 
     it "should fail if it cannot find the node" do
         @node.stubs :merge 
-        Puppet::Node.expects(:search).with(@name).returns(nil)
+        Puppet::Node.expects(:find_by_any_name).with(@name).returns(nil)
         proc { @compiler.find(@name) }.should raise_error(Puppet::Error)
     end
 end
@@ -89,7 +89,7 @@ describe Puppet::Node::Configuration::Compiler, " after finding nodes" do
         @name = "me"
         @node = mock 'node'
         @compiler.stubs(:compile)
-        Puppet::Node.stubs(:search).with(@name).returns(@node)
+        Puppet::Node.stubs(:find_by_any_name).with(@name).returns(@node)
     end
 
     it "should add the server's Puppet version to the node's parameters as 'serverversion'" do
@@ -125,11 +125,11 @@ describe Puppet::Node::Configuration::Compiler, " when creating configurations" 
         @name = "me"
         @node = Puppet::Node.new @name
         @node.stubs(:merge)
-        Puppet::Node.stubs(:search).with(@name).returns(@node)
+        Puppet::Node.stubs(:find_by_any_name).with(@name).returns(@node)
     end
 
     it "should directly use provided nodes" do
-        Puppet::Node.expects(:search).never
+        Puppet::Node.expects(:find_by_any_name).never
         @compiler.interpreter.expects(:compile).with(@node)
         @compiler.find(@node)
     end
@@ -195,7 +195,7 @@ describe Puppet::Node::Configuration::Compiler, " when determining a client's av
     end
 
     it "should return a version of 0 if no information on the node can be found" do
-        Puppet::Node.stubs(:search).returns(nil)
+        Puppet::Node.stubs(:find_by_any_name).returns(nil)
         @configuration.version(@name).should == 0
     end
 

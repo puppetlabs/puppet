@@ -172,12 +172,11 @@ else
 end
 
 # Collect our facts.
-Puppet::Node::Facts.terminus_class = :facter
 facts = Puppet::Node::Facts.find("me")
 facts.name = facts.values["hostname"]
 
-# Create our Node
-node = Puppet::Node.new(facts.name)
+# Find our Node
+node = Puppet::Node.find_by_any_name(facts.name)
 
 # Merge in the facts.
 node.merge(facts.values)
@@ -194,9 +193,6 @@ if options[:loadclasses]
         node.classes = File.read(file).split(/[\s\n]+/)
     end
 end
-
-# Compile and apply the configuration
-Puppet::Node::Configuration.terminus_class = :compiler
 
 begin
     # Compile our configuration

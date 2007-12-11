@@ -9,6 +9,7 @@ module IndirectionTesting
         @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
         @terminus = stub 'terminus', :has_most_recent? => false
         @indirection.stubs(:terminus).returns(@terminus)
+        @indirection.stubs(:terminus_class).returns(:whatever)
         @instance = stub 'instance', :version => nil, :version= => nil, :name => "whatever"
         @name = :mything
     end
@@ -169,6 +170,40 @@ describe Puppet::Indirector::Indirection, " when managing indirection instances"
     
     it "should return nil when no model matches the requested name" do
         Puppet::Indirector::Indirection.model(:test).should be_nil
+    end
+
+    after do
+        @indirection.delete if defined? @indirection
+    end
+end
+
+describe Puppet::Indirector::Indirection, " when choosing the terminus class" do
+    before do
+        @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
+        @terminus = mock 'terminus'
+        @terminus_class = stub 'terminus class', :new => @terminus
+        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:test, :default).returns(@terminus_class)
+    end
+
+    it "should choose the default terminus class if one is specified and no specific terminus class is provided" do
+        @indirection.terminus_class = :default
+        @indirection.terminus_class.should equal(:default)
+    end
+
+    it "should use the provided Puppet setting if told to do so" do
+        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:test, :my_terminus).returns(mock("terminus_class2"))
+        Puppet.settings.expects(:value).with(:my_setting).returns("my_terminus")
+        @indirection.terminus_setting = :my_setting
+        @indirection.terminus_class.should equal(:my_terminus)
+    end
+
+    it "should fail if the provided terminus class is not valid" do
+        Puppet::Indirector::Terminus.stubs(:terminus_class).with(:test, :nosuchclass).returns(nil)
+        proc { @indirection.terminus_class = :nosuchclass }.should raise_error(ArgumentError)
+    end
+    
+    it "should fail if no terminus class is picked" do
+        proc { @indirection.terminus_class }.should raise_error(Puppet::DevError)
     end
 
     after do

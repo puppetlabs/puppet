@@ -138,3 +138,69 @@ describe Puppet::Node do
     # central server.
     it "should provide a method for noting that the node has connected"
 end
+
+describe Puppet::Node, " when searching for nodes" do
+    before do
+        @searcher = Puppet::Node
+        @facts = Puppet::Node::Facts.new("foo", "hostname" => "yay", "domain" => "domain.com")
+        @node = Puppet::Node.new("foo")
+        Puppet::Node::Facts.stubs(:find).with("foo").returns(@facts)
+    end
+
+    it "should return the first node found using the generated list of names" do
+        @searcher.expects(:find).with("foo").returns(nil)
+        @searcher.expects(:find).with("yay.domain.com").returns(@node)
+        @searcher.find_by_any_name("foo").should equal(@node)
+    end
+
+    it "should search for the node by its key first" do
+        names = []
+        @searcher.expects(:find).with do |name|
+            names << name
+            names == %w{foo}
+        end.returns(@node)
+        @searcher.find_by_any_name("foo").should equal(@node)
+    end
+
+    it "should search for the rest of the names inversely by length" do
+        names = []
+        @facts.values["fqdn"] = "longer.than.the.normal.fqdn.com"
+        @searcher.stubs(:find).with do |name|
+            names << name
+        end
+        @searcher.find_by_any_name("foo")
+        # Strip off the key
+        names.shift
+
+        # And the 'default'
+        names.pop
+
+        length = 100
+        names.each do |name|
+            (name.length < length).should be_true
+            length = name.length
+        end
+    end
+
+    it "should attempt to find a default node if no names are found" do
+        names = []
+        @searcher.stubs(:find).with do |name|
+            names << name
+        end.returns(nil)
+        @searcher.find_by_any_name("foo")
+        names[-1].should == "default"
+    end
+
+    it "should flush the node cache using the :filetimeout parameter" do
+        node2 = Puppet::Node.new("foo2")
+        Puppet[:filetimeout] = -1
+        # I couldn't get this to work with :expects
+        @searcher.stubs(:find).returns(@node, node2).then.raises(ArgumentError)
+        @searcher.find_by_any_name("foo").should equal(@node)
+        @searcher.find_by_any_name("foo").should equal(node2)
+    end
+
+    after do
+        Puppet.settings.clear
+    end
+end

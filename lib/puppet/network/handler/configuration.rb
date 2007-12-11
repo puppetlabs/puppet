@@ -30,7 +30,7 @@ class Puppet::Network::Handler
             # Note that this is reasonable, because either their node source should actually
             # know about the node, or they should be using the ``none`` node source, which
             # will always return data.
-            unless node = Puppet::Node.search(key)
+            unless node = Puppet::Node.find_by_any_name(key)
                 raise Puppet::Error, "Could not find node '%s'" % key
             end
 
@@ -62,7 +62,7 @@ class Puppet::Network::Handler
 
         # Return the configuration version.
         def version(client = nil, clientip = nil)
-            if client and node = Puppet::Node.search(client)
+            if client and node = Puppet::Node.find_by_any_name(client)
                 update_node_check(node)
                 return interpreter.configuration_version(node)
             else

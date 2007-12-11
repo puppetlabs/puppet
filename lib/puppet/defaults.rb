@@ -152,7 +152,8 @@ module Puppet
         :maximum_uid => [4294967290, "The maximum allowed UID.  Some platforms use negative UIDs
             but then ship with tools that do not know how to handle signed ints, so the UIDs show up as
             huge numbers that can then not be fed back into the system.  This is a hackish way to fail in a
-            slightly more useful way when that happens."]
+            slightly more useful way when that happens."],
+        :node_terminus => ["null", "Where to find information about nodes."]
     )
 
     hostname = Facter["hostname"].value
@@ -578,11 +579,7 @@ module Puppet
 
     setdefaults(:parser,
         :typecheck => [true, "Whether to validate types during parsing."],
-        :paramcheck => [true, "Whether to validate parameters during parsing."],
-        :node_terminus => ["null", "Where to look for node configuration information.
-            The default node source, ``none``, just returns a node with its facts
-            filled in, which is required for normal functionality.
-            See the `NodeSourceReference`:trac: for more information."]
+        :paramcheck => [true, "Whether to validate parameters during parsing."]
     )
     
     setdefaults(:main,

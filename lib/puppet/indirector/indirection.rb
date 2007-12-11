@@ -59,6 +59,7 @@ class Puppet::Indirector::Indirection
 
         @termini = {}
         @cache_class = nil
+        @terminus_class = nil
 
         raise(ArgumentError, "Indirection %s is already defined" % @name) if @@indirections.find { |i| i.name == @name }
         @@indirections << self
@@ -88,12 +89,25 @@ class Puppet::Indirector::Indirection
         return @termini[terminus_name] ||= make_terminus(terminus_name)
     end
 
-    attr_reader :terminus_class
+    # This can be used to select the terminus class.
+    attr_accessor :terminus_setting
+
+    # Determine the terminus class.
+    def terminus_class
+        unless @terminus_class
+            if setting = self.terminus_setting
+                self.terminus_class = Puppet.settings[setting].to_sym
+            else
+                raise Puppet::DevError, "No terminus class nor terminus setting was provided for indirection %s" % self.name
+            end
+        end
+        @terminus_class
+    end
 
     # Specify the terminus class to use.
-    def terminus_class=(terminus_class)
-        validate_terminus_class(terminus_class)
-        @terminus_class = terminus_class
+    def terminus_class=(klass)
+        validate_terminus_class(klass)
+        @terminus_class = klass
     end
 
     # This is used by terminus_class= and cache=.

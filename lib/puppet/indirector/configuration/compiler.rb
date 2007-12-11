@@ -55,7 +55,7 @@ class Puppet::Node::Configuration::Compiler < Puppet::Indirector::Code
     # use timestamps; once one of them moves to using real versions,
     # the comparison stops working.
     def version(key)
-        if node = Puppet::Node.search(key)
+        if node = Puppet::Node.find_by_any_name(key)
             return [Puppet::Node.version(key).to_f, Puppet::Node::Facts.version(key).to_f, interpreter.configuration_version(node).to_f].sort[-1]
         else
             # This is the standard for "got nothing for ya".
@@ -108,9 +108,9 @@ class Puppet::Node::Configuration::Compiler < Puppet::Indirector::Code
         #end
 
         # Note that this is reasonable, because either their node source should actually
-        # know about the node, or they should be using the ``none`` node source, which
+        # know about the node, or they should be using the ``null`` node source, which
         # will always return data.
-        unless node = Puppet::Node.search(key)
+        unless node = Puppet::Node.find_by_any_name(key)
             raise Puppet::Error, "Could not find node '%s'" % key
         end
 

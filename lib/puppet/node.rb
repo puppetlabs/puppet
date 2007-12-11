@@ -10,13 +10,85 @@ class Puppet::Node
     extend Puppet::Indirector
 
     # Use the node source as the indirection terminus.
-    indirects :node, :terminus_class => :null
+    indirects :node, :terminus_setting => :node_terminus
 
-    # Add the node-searching methods.  This is what people will actually
-    # interact with that will find the node with the list of names or
-    # will search for a default node.
-    require 'puppet/node/searching'
-    extend Puppet::Node::Searching
+    # Retrieve a node from the node source, with some additional munging
+    # thrown in for kicks.
+    def self.find_by_any_name(key)
+        return nil unless key
+
+        facts = node_facts(key)
+        node = nil
+        names = node_names(key, facts)
+        names.each do |name|
+            name = name.to_s if name.is_a?(Symbol)
+            break if node = find(name)
+        end
+
+        # If they made it this far, we haven't found anything, so look for a
+        # default node.
+        unless node or names.include?("default")
+            if node = find("default")
+                Puppet.notice "Using default node for %s" % key
+            end
+        end
+
+        if node
+            node.names = names
+
+            return node
+        else
+            return nil
+        end
+    end
+
+    private
+
+    # Look up the node facts from our fact handler.
+    def self.node_facts(key)
+        if facts = Puppet::Node::Facts.find(key)
+            facts.values
+        else
+            {}
+        end
+    end
+
+    # Calculate the list of node names we should use for looking
+    # up our node.
+    def self.node_names(key, facts = nil)
+        facts ||= node_facts(key)
+        names = []
+
+        if hostname = facts["hostname"]
+            unless hostname == key
+                names << hostname
+            end
+        else
+            hostname = key
+        end
+
+        if fqdn = facts["fqdn"]
+            hostname = fqdn
+            names << fqdn
+        end
+
+        # Make sure both the fqdn and the short name of the
+        # host can be used in the manifest
+        if hostname =~ /\./
+            names << hostname.sub(/\..+/,'')
+        elsif domain = facts['domain']
+            names << hostname + "." + domain
+        end
+
+        # Sort the names inversely by name length.
+        names.sort! { |a,b| b.length <=> a.length }
+
+        # And make sure the key is first, since that's the most
+        # likely usage.
+        ([key] + names).uniq
+    end
+
+    public
 
     attr_accessor :name, :classes, :parameters, :source, :ipaddress, :names
     attr_reader :time
