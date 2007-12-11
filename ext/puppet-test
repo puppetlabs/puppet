@@ -200,7 +200,7 @@ class Suite
     end
 end
 
-Suite.new :configuration, "Configuration handling" do
+Suite.new :catalog, "Catalog handling" do
     def prepare
         $args[:cache] = false
         # Create a config client and pull the config down
@@ -227,7 +227,7 @@ Suite.new :configuration, "Configuration handling" do
         @facts = YAML.dump(@facts)
     end
 
-    newtest :compile, "Compiled configuration" do
+    newtest :compile, "Compiled catalog" do
         @client.driver.getconfig(@facts, "yaml")
     end
 

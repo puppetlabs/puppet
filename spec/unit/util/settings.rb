@@ -485,7 +485,7 @@ describe Puppet::Util::Settings, " when being used to manage the host machine" d
         @trans = mock 'transaction'
 
         @settings.expects(:to_transportable).with(:whatever).returns(@bucket)
-        @bucket.expects(:to_configuration).returns(@config)
+        @bucket.expects(:to_catalog).returns(@config)
         @config.expects(:apply).yields(@trans)
         @config.stubs(:host_config=)
     end

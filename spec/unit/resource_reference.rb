@@ -42,7 +42,7 @@ describe Puppet::ResourceReference do
     end
 end
 
-describe Puppet::ResourceReference, "when resolving resources without a configuration" do
+describe Puppet::ResourceReference, "when resolving resources without a catalog" do
     it "should be able to resolve builtin resources from their types" do
         Puppet::Type.type(:file).expects(:[]).with("myfile").returns(:myfile)
         Puppet::ResourceReference.new(:file, "myfile").resolve.should == :myfile
@@ -54,11 +54,11 @@ describe Puppet::ResourceReference, "when resolving resources without a configur
     end
 end
 
-describe Puppet::ResourceReference, "when resolving resources with a configuration" do
-    it "should resolve all resources using the configuration" do
-        config = mock 'configuration'
+describe Puppet::ResourceReference, "when resolving resources with a catalog" do
+    it "should resolve all resources using the catalog" do
+        config = mock 'catalog'
         ref = Puppet::ResourceReference.new("foo::bar", "yay")
-        ref.configuration = config
+        ref.catalog = config
 
         config.expects(:resource).with("Foo::Bar[yay]").returns(:myresource)
 

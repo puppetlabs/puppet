@@ -39,7 +39,7 @@ class TestHost < Test::Unit::TestCase
             @hcount = 1
         end
 
-        @configuration ||= mk_configuration
+        @catalog ||= mk_catalog
 
         host = nil
         assert_nothing_raised {
@@ -47,7 +47,7 @@ class TestHost < Test::Unit::TestCase
                 :name => "fakehost%s" % @hcount,
                 :ip => "192.168.27.%s" % @hcount,
                 :alias => "alias%s" % @hcount,
-                :configuration => @configuration
+                :catalog => @catalog
             )
         }
 

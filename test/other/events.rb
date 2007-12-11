@@ -22,7 +22,7 @@ class TestEvents < Test::Unit::TestCase
             :subscribe => [[file.class.name, file.name]] 
         )
 
-        comp = mk_configuration("eventtesting", file, exec)
+        comp = mk_catalog("eventtesting", file, exec)
 
         trans = assert_events([:file_created, :triggered], comp)
 
@@ -43,7 +43,7 @@ class TestEvents < Test::Unit::TestCase
         )
 
 
-        config = mk_configuration
+        config = mk_catalog
         config.add_resource file
         config.add_resource exec
         trans = config.apply
@@ -74,7 +74,7 @@ class TestEvents < Test::Unit::TestCase
             ["file", f.name]
         }
 
-        comp = mk_configuration(exec, *files)
+        comp = mk_catalog(exec, *files)
 
         assert_apply(comp)
         assert(FileTest.exists?(fname), "Exec file did not get created")
@@ -106,7 +106,7 @@ class TestEvents < Test::Unit::TestCase
         )
         execs = [exec1, exec2, exec3]
 
-        config = mk_configuration(exec1,exec2,exec3)
+        config = mk_catalog(exec1,exec2,exec3)
         
         trans = Puppet::Transaction.new(config)
         execs.each do |e| assert(config.vertex?(e), "%s is not in graph" % e.title) end

@@ -6,7 +6,7 @@
 require File.dirname(__FILE__) + '/../../../spec_helper'
 require 'puppet/network/client/master'
 
-describe Puppet::Network::Client::Master, " when retrieving the configuration" do
+describe Puppet::Network::Client::Master, " when retrieving the catalog" do
     before do
         @master = mock 'master'
         @client = Puppet::Network::Client.master.new(
@@ -22,7 +22,7 @@ describe Puppet::Network::Client::Master, " when retrieving the configuration" d
         @client.getconfig
     end
 
-    it "should collect facts to use for configuration retrieval" do
+    it "should collect facts to use for catalog retrieval" do
         @client.stubs(:dostorage)
         @client.class.expects(:facts).returns(@facts)
         @master.stubs(:getconfig).returns(nil)
@@ -36,7 +36,7 @@ describe Puppet::Network::Client::Master, " when retrieving the configuration" d
         proc { @client.getconfig }.should raise_error(Puppet::Network::ClientError)
     end
 
-    it "should use the cached configuration if it is up to date" do
+    it "should use the cached catalog if it is up to date" do
         file = "/path/to/cachefile"
         @client.stubs(:cachefile).returns(file)
         FileTest.expects(:exist?).with(file).returns(true)
@@ -48,7 +48,7 @@ describe Puppet::Network::Client::Master, " when retrieving the configuration" d
         @client.getconfig
     end
 
-    it "should log that the configuration does not need a recompile" do
+    it "should log that the catalog does not need a recompile" do
         file = "/path/to/cachefile"
         @client.stubs(:cachefile).returns(file)
         FileTest.stubs(:exist?).with(file).returns(true)
@@ -75,7 +75,7 @@ describe Puppet::Network::Client::Master, " when retrieving the configuration" d
         @client.getconfig
     end
 
-    it "should use the cached configuration if no configuration could be retrieved" do
+    it "should use the cached catalog if no catalog could be retrieved" do
         @client.stubs(:dostorage)
         @client.class.stubs(:facts).returns(@facts)
         @master.stubs(:getconfig).raises(ArgumentError.new("whev"))
@@ -83,7 +83,7 @@ describe Puppet::Network::Client::Master, " when retrieving the configuration" d
         @client.getconfig
     end
 
-    it "should load the retrieved configuration using YAML" do
+    it "should load the retrieved catalog using YAML" do
         @client.stubs(:dostorage)
         @client.class.stubs(:facts).returns(@facts)
         @master.stubs(:getconfig).returns("myconfig")
@@ -94,14 +94,14 @@ describe Puppet::Network::Client::Master, " when retrieving the configuration" d
         @client.stubs(:setclasses)
 
         config.stubs(:classes)
-        config.stubs(:to_configuration).returns(config)
+        config.stubs(:to_catalog).returns(config)
         config.stubs(:host_config=)
         config.stubs(:from_cache).returns(true)
 
         @client.getconfig
     end
 
-    it "should use the cached configuration if the retrieved configuration cannot be converted from YAML" do
+    it "should use the cached catalog if the retrieved catalog cannot be converted from YAML" do
         @client.stubs(:dostorage)
         @client.class.stubs(:facts).returns(@facts)
         @master.stubs(:getconfig).returns("myconfig")
@@ -113,7 +113,7 @@ describe Puppet::Network::Client::Master, " when retrieving the configuration" d
         @client.getconfig
     end
 
-    it "should set the classes.txt file with the classes listed in the retrieved configuration" do
+    it "should set the classes.txt file with the classes listed in the retrieved catalog" do
         @client.stubs(:dostorage)
         @client.class.stubs(:facts).returns(@facts)
         @master.stubs(:getconfig).returns("myconfig")
@@ -124,14 +124,14 @@ describe Puppet::Network::Client::Master, " when retrieving the configuration" d
         config.expects(:classes).returns(:myclasses)
         @client.expects(:setclasses).with(:myclasses)
 
-        config.stubs(:to_configuration).returns(config)
+        config.stubs(:to_catalog).returns(config)
         config.stubs(:host_config=)
         config.stubs(:from_cache).returns(true)
 
         @client.getconfig
     end
 
-    it "should convert the retrieved configuration to a RAL configuration" do
+    it "should convert the retrieved catalog to a RAL catalog" do
         @client.stubs(:dostorage)
         @client.class.stubs(:facts).returns(@facts)
         @master.stubs(:getconfig).returns("myconfig")
@@ -144,7 +144,7 @@ describe Puppet::Network::Client::Master, " when retrieving the configuration" d
         config = mock 'config'
 
         yamlconfig.stubs(:classes)
-        yamlconfig.expects(:to_configuration).returns(config)
+        yamlconfig.expects(:to_catalog).returns(config)
 
         config.stubs(:host_config=)
         config.stubs(:from_cache).returns(true)
@@ -152,7 +152,7 @@ describe Puppet::Network::Client::Master, " when retrieving the configuration" d
         @client.getconfig
     end
 
-    it "should use the cached configuration if the retrieved configuration cannot be converted to a RAL configuration" do
+    it "should use the cached catalog if the retrieved catalog cannot be converted to a RAL catalog" do
         @client.stubs(:dostorage)
         @client.class.stubs(:facts).returns(@facts)
         @master.stubs(:getconfig).returns("myconfig")
@@ -165,14 +165,14 @@ describe Puppet::Network::Client::Master, " when retrieving the configuration" d
         config = mock 'config'
 
         yamlconfig.stubs(:classes)
-        yamlconfig.expects(:to_configuration).raises(ArgumentError)
+        yamlconfig.expects(:to_catalog).raises(ArgumentError)
 
         @client.expects(:use_cached_config).with(true)
 
         @client.getconfig
     end
 
-    it "should clear the failed configuration if using the cached configuration after failing to instantiate the retrieved configuration" do
+    it "should clear the failed catalog if using the cached catalog after failing to instantiate the retrieved catalog" do
         @client.stubs(:dostorage)
         @client.class.stubs(:facts).returns(@facts)
         @master.stubs(:getconfig).returns("myconfig")
@@ -185,7 +185,7 @@ describe Puppet::Network::Client::Master, " when retrieving the configuration" d
         config = mock 'config'
 
         yamlconfig.stubs(:classes)
-        yamlconfig.stubs(:to_configuration).raises(ArgumentError)
+        yamlconfig.stubs(:to_catalog).raises(ArgumentError)
 
         @client.stubs(:use_cached_config).with(true)
 
@@ -194,7 +194,7 @@ describe Puppet::Network::Client::Master, " when retrieving the configuration" d
         @client.getconfig
     end
 
-    it "should cache the retrieved yaml configuration if it is not from the cache and is valid" do
+    it "should cache the retrieved yaml catalog if it is not from the cache and is valid" do
         @client.stubs(:dostorage)
         @client.class.stubs(:facts).returns(@facts)
         @master.stubs(:getconfig).returns("myconfig")
@@ -207,7 +207,7 @@ describe Puppet::Network::Client::Master, " when retrieving the configuration" d
         config = mock 'config'
 
         yamlconfig.stubs(:classes)
-        yamlconfig.expects(:to_configuration).returns(config)
+        yamlconfig.expects(:to_catalog).returns(config)
 
         config.stubs(:host_config=)
 
@@ -218,7 +218,7 @@ describe Puppet::Network::Client::Master, " when retrieving the configuration" d
         @client.getconfig
     end
 
-    it "should mark the configuration as a host configuration" do
+    it "should mark the catalog as a host catalog" do
         @client.stubs(:dostorage)
         @client.class.stubs(:facts).returns(@facts)
         @master.stubs(:getconfig).returns("myconfig")
@@ -231,7 +231,7 @@ describe Puppet::Network::Client::Master, " when retrieving the configuration" d
         config = mock 'config'
 
         yamlconfig.stubs(:classes)
-        yamlconfig.expects(:to_configuration).returns(config)
+        yamlconfig.expects(:to_catalog).returns(config)
 
         config.stubs(:from_cache).returns(true)
 
@@ -241,7 +241,7 @@ describe Puppet::Network::Client::Master, " when retrieving the configuration" d
     end
 end
 
-describe Puppet::Network::Client::Master, " when using the cached configuration" do
+describe Puppet::Network::Client::Master, " when using the cached catalog" do
     before do
         @master = mock 'master'
         @client = Puppet::Network::Client.master.new(
@@ -250,8 +250,8 @@ describe Puppet::Network::Client::Master, " when using the cached configuration"
         @facts = {"one" => "two", "three" => "four"}
     end
 
-    it "should return do nothing and true if there is already an in-memory configuration" do
-        @client.configuration = :whatever
+    it "should return do nothing and true if there is already an in-memory catalog" do
+        @client.catalog = :whatever
         Puppet::Network::Client::Master.publicize_methods :use_cached_config do
             @client.use_cached_config.should be_true
         end
@@ -264,14 +264,14 @@ describe Puppet::Network::Client::Master, " when using the cached configuration"
         end
     end
 
-    it "should return false if no cached configuration can be found" do
+    it "should return false if no cached catalog can be found" do
         @client.expects(:retrievecache).returns(nil)
         Puppet::Network::Client::Master.publicize_methods :use_cached_config do
             @client.use_cached_config().should be_false
         end
     end
 
-    it "should return false if the cached configuration cannot be instantiated" do
+    it "should return false if the cached catalog cannot be instantiated" do
         YAML.expects(:load).raises(ArgumentError)
         @client.expects(:retrievecache).returns("whatever")
         Puppet::Network::Client::Master.publicize_methods :use_cached_config do
@@ -279,7 +279,7 @@ describe Puppet::Network::Client::Master, " when using the cached configuration"
         end
     end
 
-    it "should warn if the cached configuration cannot be instantiated" do
+    it "should warn if the cached catalog cannot be instantiated" do
         YAML.stubs(:load).raises(ArgumentError)
         @client.stubs(:retrievecache).returns("whatever")
         Puppet.expects(:warning).with { |m| m.include?("Could not load cache") }
@@ -288,7 +288,7 @@ describe Puppet::Network::Client::Master, " when using the cached configuration"
         end
     end
 
-    it "should clear the client if the cached configuration cannot be instantiated" do
+    it "should clear the client if the cached catalog cannot be instantiated" do
         YAML.stubs(:load).raises(ArgumentError)
         @client.stubs(:retrievecache).returns("whatever")
         @client.expects(:clear)
@@ -297,14 +297,14 @@ describe Puppet::Network::Client::Master, " when using the cached configuration"
         end
     end
 
-    it "should return true if the cached configuration can be instantiated" do
+    it "should return true if the cached catalog can be instantiated" do
         config = mock 'config'
         YAML.stubs(:load).returns(config)
 
         ral_config = mock 'ral config'
         ral_config.stubs(:from_cache=)
         ral_config.stubs(:host_config=)
-        config.expects(:to_configuration).returns(ral_config)
+        config.expects(:to_catalog).returns(ral_config)
 
         @client.stubs(:retrievecache).returns("whatever")
         Puppet::Network::Client::Master.publicize_methods :use_cached_config do
@@ -312,54 +312,54 @@ describe Puppet::Network::Client::Master, " when using the cached configuration"
         end
     end
 
-    it "should set the configuration instance variable if the cached configuration can be instantiated" do
+    it "should set the catalog instance variable if the cached catalog can be instantiated" do
         config = mock 'config'
         YAML.stubs(:load).returns(config)
 
         ral_config = mock 'ral config'
         ral_config.stubs(:from_cache=)
         ral_config.stubs(:host_config=)
-        config.expects(:to_configuration).returns(ral_config)
+        config.expects(:to_catalog).returns(ral_config)
 
         @client.stubs(:retrievecache).returns("whatever")
         Puppet::Network::Client::Master.publicize_methods :use_cached_config do
             @client.use_cached_config()
         end
 
-        @client.configuration.should equal(ral_config)
+        @client.catalog.should equal(ral_config)
     end
 
-    it "should mark the configuration as a host_config if valid" do
+    it "should mark the catalog as a host_config if valid" do
         config = mock 'config'
         YAML.stubs(:load).returns(config)
 
         ral_config = mock 'ral config'
         ral_config.stubs(:from_cache=)
         ral_config.expects(:host_config=).with(true)
-        config.expects(:to_configuration).returns(ral_config)
+        config.expects(:to_catalog).returns(ral_config)
 
         @client.stubs(:retrievecache).returns("whatever")
         Puppet::Network::Client::Master.publicize_methods :use_cached_config do
             @client.use_cached_config()
         end
 
-        @client.configuration.should equal(ral_config)
+        @client.catalog.should equal(ral_config)
     end
 
-    it "should mark the configuration as from the cache if valid" do
+    it "should mark the catalog as from the cache if valid" do
         config = mock 'config'
         YAML.stubs(:load).returns(config)
 
         ral_config = mock 'ral config'
         ral_config.expects(:from_cache=).with(true)
         ral_config.stubs(:host_config=)
-        config.expects(:to_configuration).returns(ral_config)
+        config.expects(:to_catalog).returns(ral_config)
 
         @client.stubs(:retrievecache).returns("whatever")
         Puppet::Network::Client::Master.publicize_methods :use_cached_config do
             @client.use_cached_config()
         end
 
-        @client.configuration.should equal(ral_config)
+        @client.catalog.should equal(ral_config)
     end
 end

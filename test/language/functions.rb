@@ -66,8 +66,8 @@ class TestLangFunctions < Test::Unit::TestCase
         # Now make sure we correctly get tags.
         scope.resource.tag("resourcetag")
         assert(scope.function_tagged("resourcetag"), "tagged function did not catch resource tags")
-        scope.compile.configuration.tag("configtag")
-        assert(scope.function_tagged("configtag"), "tagged function did not catch configuration tags")
+        scope.compile.catalog.tag("configtag")
+        assert(scope.function_tagged("configtag"), "tagged function did not catch catalog tags")
     end
 
     def test_failfunction
@@ -212,15 +212,15 @@ class TestLangFunctions < Test::Unit::TestCase
 
         Puppet[:environment] = "yay"
 
-        configuration = nil
+        catalog = nil
         assert_nothing_raised {
-            configuration = interp.compile(node)
+            catalog = interp.compile(node)
         }
 
-        version = configuration.version
+        version = catalog.version
 
-        fileobj = configuration.vertices.find { |r| r.title == file }
-        assert(fileobj, "File was not in configuration")
+        fileobj = catalog.vertices.find { |r| r.title == file }
+        assert(fileobj, "File was not in catalog")
 
         assert_equal("original text\n", fileobj["content"],
             "Template did not work")

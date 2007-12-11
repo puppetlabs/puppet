@@ -64,8 +64,8 @@ describe Puppet::Parser::Compile, " when evaluating classes" do
         proc { @compile.evaluate_classes(%w{one two}, scope) }.should raise_error(Puppet::DevError)
     end
 
-    it "should tag the configuration with the name of each not-found class" do
-        @compile.configuration.expects(:tag).with("notfound")
+    it "should tag the catalog with the name of each not-found class" do
+        @compile.catalog.expects(:tag).with("notfound")
         @scope.expects(:findclass).with("notfound").returns(nil)
         @compile.evaluate_classes(%w{notfound}, @scope)
     end
@@ -110,7 +110,7 @@ describe Puppet::Parser::Compile, " when evaluating found classes" do
     end
 
     it "should create a resource for each found class" do
-        @compile.configuration.stubs(:tag)
+        @compile.catalog.stubs(:tag)
 
         @compile.stubs :store_resource
 
@@ -119,7 +119,7 @@ describe Puppet::Parser::Compile, " when evaluating found classes" do
     end
 
     it "should store each created resource in the compile" do
-        @compile.configuration.stubs(:tag)
+        @compile.catalog.stubs(:tag)
 
         @compile.expects(:store_resource).with(@scope, @resource)
 
@@ -127,8 +127,8 @@ describe Puppet::Parser::Compile, " when evaluating found classes" do
         @compile.evaluate_classes(%w{myclass}, @scope)
     end
 
-    it "should tag the configuration with the fully-qualified name of each found class" do
-        @compile.configuration.expects(:tag).with("my::class")
+    it "should tag the catalog with the fully-qualified name of each found class" do
+        @compile.catalog.expects(:tag).with("my::class")
 
         @compile.stubs(:store_resource)
 
@@ -137,7 +137,7 @@ describe Puppet::Parser::Compile, " when evaluating found classes" do
     end
 
     it "should not evaluate the resources created for found classes unless asked" do
-        @compile.configuration.stubs(:tag)
+        @compile.catalog.stubs(:tag)
 
         @compile.stubs(:store_resource)
         @resource.expects(:evaluate).never
@@ -147,7 +147,7 @@ describe Puppet::Parser::Compile, " when evaluating found classes" do
     end
 
     it "should immediately evaluate the resources created for found classes when asked" do
-        @compile.configuration.stubs(:tag)
+        @compile.catalog.stubs(:tag)
 
         @compile.stubs(:store_resource)
         @resource.expects(:evaluate)
@@ -157,7 +157,7 @@ describe Puppet::Parser::Compile, " when evaluating found classes" do
     end
 
     it "should return the list of found classes" do
-        @compile.configuration.stubs(:tag)
+        @compile.catalog.stubs(:tag)
 
         @compile.stubs(:store_resource)
         @scope.stubs(:findclass).with("notfound").returns(nil)
@@ -227,14 +227,14 @@ describe Puppet::Parser::Compile, " when evaluating AST nodes with AST nodes pre
         @compile.send(:evaluate_ast_node)
     end
 
-    it "should tag the configuration with the found node name" do
+    it "should tag the catalog with the found node name" do
         node_class = stub 'node', :classname => "c"
         @nodes.stubs(:[]).with("c").returns(node_class)
 
         node_resource = stub 'node resource', :ref => "Node[c]", :evaluate => nil
         Puppet::Parser::Resource.stubs(:new).returns(node_resource)
 
-        @compile.configuration.expects(:tag).with("c")
+        @compile.catalog.expects(:tag).with("c")
         @compile.send(:evaluate_ast_node)
     end
 

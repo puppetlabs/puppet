@@ -21,10 +21,10 @@ module PuppetTest::Support::Utils
         }
     end
 
-    # Turn a list of resources, or possibly a configuration and some resources,
-    # into a configuration object.
-    def resources2config(*resources)
-        if resources[0].is_a?(Puppet::Node::Configuration)
+    # Turn a list of resources, or possibly a catalog and some resources,
+    # into a catalog object.
+    def resources2catalog(*resources)
+        if resources[0].is_a?(Puppet::Node::Catalog)
             config = resources.shift
             unless resources.empty?
                 resources.each { |r| config.add_resource r }
@@ -34,7 +34,7 @@ module PuppetTest::Support::Utils
             comp = resources.shift
             comp.delve
         else
-            config = Puppet::Node::Configuration.new
+            config = Puppet::Node::Catalog.new
             resources.each { |res| config.add_resource res }
         end
         return config
@@ -159,13 +159,13 @@ module PuppetTest::Support::Utils
         }
     end
 
-    def mk_configuration(*resources)
+    def mk_catalog(*resources)
         if resources[0].is_a?(String)
             name = resources.shift
         else
             name = :testing
         end
-        config = Puppet::Node::Configuration.new :testing do |conf|
+        config = Puppet::Node::Catalog.new :testing do |conf|
             resources.each { |resource| conf.add_resource resource }
         end
 

@@ -558,12 +558,12 @@ end
 
         ftype = Puppet::Type.type(:file)
         file = ftype.create :title => "/what/ever", :ensure => :present
-        config = Puppet::Node::Configuration.new
+        config = Puppet::Node::Catalog.new
         config.add_resource(file)
 
         config.expects :apply
 
-        client.configuration = config
+        client.catalog = config
         client.expects(:getconfig)
         client.run
 
@@ -581,7 +581,7 @@ end
         end
     end
 
-    def test_invalid_configurations_do_not_get_cached
+    def test_invalid_catalogs_do_not_get_cached
         master = mkmaster :Code => "notify { one: require => File[yaytest] }"
         master.local = false # so it gets cached
         client = mkclient(master)

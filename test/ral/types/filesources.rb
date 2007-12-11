@@ -64,7 +64,7 @@ class TestFileSources < Test::Unit::TestCase
                 :name => path
             )
         }
-        config = mk_configuration(file)
+        config = mk_catalog(file)
         child = nil
         assert_nothing_raised {
             child = file.newchild("childtest", true)
@@ -278,7 +278,7 @@ class TestFileSources < Test::Unit::TestCase
         # The sourcerecurse method will only ever get called when we're
         # recursing, so we go ahead and set it.
         obj = Puppet::Type.newfile :source => source, :path => dest, :recurse => true
-        config = mk_configuration(obj)
+        config = mk_catalog(obj)
 
         result = nil
         sourced = nil
@@ -628,7 +628,7 @@ class TestFileSources < Test::Unit::TestCase
             file.retrieve
         }
 
-        comp = mk_configuration(file)
+        comp = mk_catalog(file)
         comp.apply
 
         assert(!FileTest.exists?(name), "File with no source exists anyway")
@@ -678,7 +678,7 @@ class TestFileSources < Test::Unit::TestCase
             )
         }
 
-        comp = mk_configuration(file)
+        comp = mk_catalog(file)
         assert_events([:file_created], comp)
 
         assert(File.exists?(to), "File does not exist")
@@ -764,7 +764,7 @@ class TestFileSources < Test::Unit::TestCase
         trans = nil
         assert_nothing_raised {
             file[:links] = :manage
-            comp = mk_configuration(file)
+            comp = mk_catalog(file)
             trans = comp.apply
         }
 

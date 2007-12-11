@@ -9,7 +9,7 @@ module Puppet
     # YAML.
     class TransObject
         include Enumerable
-        attr_accessor :type, :name, :file, :line, :configuration
+        attr_accessor :type, :name, :file, :line, :catalog
 
         attr_writer :tags
 
@@ -99,7 +99,7 @@ module Puppet
     class TransBucket
         include Enumerable
 
-        attr_accessor :name, :type, :file, :line, :classes, :keyword, :top, :configuration
+        attr_accessor :name, :type, :file, :line, :classes, :keyword, :top, :catalog
 
         %w{delete shift include? length empty? << []}.each { |method|
             define_method(method) do |*args|
@@ -179,16 +179,16 @@ module Puppet
         end
 
         # Create a resource graph from our structure.
-        def to_configuration
-            configuration = Puppet::Node::Configuration.new(Facter.value("hostname")) do |config|
+        def to_catalog
+            catalog = Puppet::Node::Catalog.new(Facter.value("hostname")) do |config|
                 delver = proc do |obj|
-                    obj.configuration = config
+                    obj.catalog = config
                     unless container = config.resource(obj.to_ref)
                         container = obj.to_type
                         config.add_resource container
                     end
                     obj.each do |child|
-                        child.configuration = config
+                        child.catalog = config
                         unless resource = config.resource(child.to_ref)
                             next unless resource = child.to_type
                             config.add_resource resource
@@ -203,7 +203,7 @@ module Puppet
                 delver.call(self)
             end
             
-            return configuration
+            return catalog
         end
 
         def to_ref

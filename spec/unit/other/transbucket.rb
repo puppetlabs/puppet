@@ -65,7 +65,7 @@ describe Puppet::TransBucket do
     end
 end
 
-describe Puppet::TransBucket, " when generating a configuration" do
+describe Puppet::TransBucket, " when generating a catalog" do
     before do
         @bottom = Puppet::TransBucket.new
         @bottom.type = "fake"
@@ -87,7 +87,7 @@ describe Puppet::TransBucket, " when generating a configuration" do
         @top.push(@topobj)
         @top.push(@middle)
 
-        @config = @top.to_configuration
+        @config = @top.to_catalog
 
         @users = %w{top middle bottom}
         @fakes = %w{Fake[bottom] Fake[middle] Fake[top]}
@@ -117,21 +117,21 @@ describe Puppet::TransBucket, " when generating a configuration" do
         @topobj.expects(:to_type)
         @bottomobj.expects(:to_type)
         Puppet::Type.allclear
-        @top.to_configuration
+        @top.to_catalog
     end
 
-    it "should set each TransObject's configuration before converting to a RAL resource" do
-        @middleobj.expects(:configuration=).with { |c| c.is_a?(Puppet::Node::Configuration) }
+    it "should set each TransObject's catalog before converting to a RAL resource" do
+        @middleobj.expects(:catalog=).with { |c| c.is_a?(Puppet::Node::Catalog) }
         Puppet::Type.allclear
-        @top.to_configuration
+        @top.to_catalog
     end
 
-    it "should set each TransBucket's configuration before converting to a RAL resource" do
+    it "should set each TransBucket's catalog before converting to a RAL resource" do
         # each bucket is seen twice in the loop, so we have to handle the case where the config
         # is set twice
-        @bottom.expects(:configuration=).with { |c| c.is_a?(Puppet::Node::Configuration) }.at_least_once
+        @bottom.expects(:catalog=).with { |c| c.is_a?(Puppet::Node::Catalog) }.at_least_once
         Puppet::Type.allclear
-        @top.to_configuration
+        @top.to_catalog
     end
 
     after do

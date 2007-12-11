@@ -138,9 +138,9 @@ class TestType < Test::Unit::TestCase
         )
         resource.stubs(:path).returns("")
 
-        configuration = stub 'configuration'
-        configuration.expects(:resource).with(:file, "/path/to/some/missing/file").returns(resource)
-        resource.configuration = configuration
+        catalog = stub 'catalog'
+        catalog.expects(:resource).with(:file, "/path/to/some/missing/file").returns(resource)
+        resource.catalog = catalog
 
         # Verify our adding ourselves as an alias isn't an error.
         assert_nothing_raised("Could not add alias") {
@@ -150,17 +150,17 @@ class TestType < Test::Unit::TestCase
         assert_equal(resource.object_id, Puppet.type(:file)["/path/to/some/missing/file"].object_id, "Could not retrieve alias to self")
     end
 
-    def test_aliases_are_added_to_class_and_configuration
+    def test_aliases_are_added_to_class_and_catalog
         resource = Puppet.type(:file).create(
             :name => "/path/to/some/missing/file",
             :ensure => "file"
         )
         resource.stubs(:path).returns("")
 
-        configuration = stub 'configuration'
-        configuration.stubs(:resource).returns(nil)
-        configuration.expects(:alias).with(resource, "funtest")
-        resource.configuration = configuration
+        catalog = stub 'catalog'
+        catalog.stubs(:resource).returns(nil)
+        catalog.expects(:alias).with(resource, "funtest")
+        resource.catalog = catalog
 
         assert_nothing_raised("Could not add alias") {
             resource[:alias] = "funtest"
@@ -169,22 +169,22 @@ class TestType < Test::Unit::TestCase
         assert_equal(resource.object_id, Puppet.type(:file)["funtest"].object_id, "Could not retrieve alias")
     end
 
-    def test_aliasing_fails_without_a_configuration
+    def test_aliasing_fails_without_a_catalog
         resource = Puppet.type(:file).create(
             :name => "/no/such/file",
             :ensure => "file"
         )
 
-        assert_raise(Puppet::Error, "Did not fail to alias when no configuration was available") {
+        assert_raise(Puppet::Error, "Did not fail to alias when no catalog was available") {
             resource[:alias] = "funtest"
         }
     end
 
-    def test_configurations_are_set_during_initialization_if_present_on_the_transobject
+    def test_catalogs_are_set_during_initialization_if_present_on_the_transobject
         trans = Puppet::TransObject.new("/path/to/some/file", :file)
-        trans.configuration = :my_config
+        trans.catalog = :my_config
         resource = trans.to_type
-        assert_equal(resource.configuration, trans.configuration, "Did not set configuration on initialization")
+        assert_equal(resource.catalog, trans.catalog, "Did not set catalog on initialization")
     end
 
     # Verify that requirements don't depend on file order
@@ -207,7 +207,7 @@ class TestType < Test::Unit::TestCase
             )
         }
 
-        comp = mk_configuration(twoobj, oneobj)
+        comp = mk_catalog(twoobj, oneobj)
 
         assert_nothing_raised {
             comp.finalize
@@ -695,7 +695,7 @@ class TestType < Test::Unit::TestCase
     end
     
     def test_path
-        config = mk_configuration
+        config = mk_catalog
 
         # Check that our paths are built correctly.  Just pick a random, "normal" type.
         type = Puppet::Type.type(:exec)

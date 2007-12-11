@@ -1,44 +1,44 @@
 require 'puppet/indirector'
 require 'puppet/external/gratr/digraph'
 
-# This class models a node configuration.  It is the thing
+# This class models a node catalog.  It is the thing
 # meant to be passed from server to client, and it contains all
-# of the information in the configuration, including the resources
+# of the information in the catalog, including the resources
 # and the relationships between them.
-class Puppet::Node::Configuration < Puppet::PGraph
+class Puppet::Node::Catalog < Puppet::PGraph
     extend Puppet::Indirector
-    indirects :configuration, :terminus_class => :compiler
+    indirects :catalog, :terminus_class => :compiler
 
-    # The host name this is a configuration for.
+    # The host name this is a catalog for.
     attr_accessor :name
 
-    # The configuration version.  Used for testing whether a configuration
+    # The catalog version.  Used for testing whether a catalog
     # is up to date.
     attr_accessor :version
 
-    # How long this configuration took to retrieve.  Used for reporting stats.
+    # How long this catalog took to retrieve.  Used for reporting stats.
     attr_accessor :retrieval_duration
 
-    # How we should extract the configuration for sending to the client.
+    # How we should extract the catalog for sending to the client.
     attr_reader :extraction_format
 
     # We need the ability to set this externally, so we can yaml-dump the
-    # configuration.
+    # catalog.
     attr_accessor :edgelist_class
 
-    # Whether this is a host configuration, which behaves very differently.
+    # Whether this is a host catalog, which behaves very differently.
     # In particular, reports are sent, graphs are made, and state is
     # stored in the state database.  If this is set incorrectly, then you often
-    # end up in infinite loops, because configurations are used to make things
-    # that the host configuration needs.
+    # end up in infinite loops, because catalogs are used to make things
+    # that the host catalog needs.
     attr_accessor :host_config
 
-    # Whether this graph is another configuration's relationship graph.
+    # Whether this graph is another catalog's relationship graph.
     # We don't want to accidentally create a relationship graph for another
     # relationship graph.
     attr_accessor :is_relationship_graph
 
-    # Whether this configuration was retrieved from the cache, which affects
+    # Whether this catalog was retrieved from the cache, which affects
     # whether it is written back out again.
     attr_accessor :from_cache
 
@@ -65,7 +65,7 @@ class Puppet::Node::Configuration < Puppet::PGraph
             else
                 @resource_table[ref] = resource
             end
-            resource.configuration = self unless is_relationship_graph
+            resource.catalog = self unless is_relationship_graph
             add_vertex!(resource)
         end
     end
@@ -80,7 +80,7 @@ class Puppet::Node::Configuration < Puppet::PGraph
         @aliases[resource.ref] << newref
     end
 
-    # Apply our configuration to the local host.  Valid options
+    # Apply our catalog to the local host.  Valid options
     # are:
     #   :tags - set the tags that restrict what resources run
     #       during the transaction
@@ -101,7 +101,7 @@ class Puppet::Node::Configuration < Puppet::PGraph
         begin
             transaction.evaluate
         rescue Puppet::Error => detail
-            Puppet.err "Could not apply complete configuration: %s" % detail
+            Puppet.err "Could not apply complete catalog: %s" % detail
         rescue => detail
             puts detail.backtrace if Puppet[:trace]
             Puppet.err "Got an uncaught exception of type %s: %s" % [detail.class, detail]
@@ -122,7 +122,7 @@ class Puppet::Node::Configuration < Puppet::PGraph
         transaction.cleanup if defined? transaction and transaction
     end
 
-    # Are we in the middle of applying the configuration?
+    # Are we in the middle of applying the catalog?
     def applying?
         @applying
     end
@@ -170,7 +170,7 @@ class Puppet::Node::Configuration < Puppet::PGraph
         end
     end
 
-    # Create a new resource and register it in the configuration.
+    # Create a new resource and register it in the catalog.
     def create_resource(type, options)
         unless klass = Puppet::Type.type(type)
             raise ArgumentError, "Unknown resource type %s" % type
@@ -193,12 +193,12 @@ class Puppet::Node::Configuration < Puppet::PGraph
         @extraction_format = value
     end
 
-    # Turn our configuration graph into whatever the client is expecting.
+    # Turn our catalog graph into whatever the client is expecting.
     def extract
         send("extract_to_%s" % extraction_format)
     end
 
-    # Create the traditional TransBuckets and TransObjects from our configuration
+    # Create the traditional TransBuckets and TransObjects from our catalog
     # graph.  This will hopefully be deprecated soon.
     def extract_to_transportable
         top = nil
@@ -206,7 +206,7 @@ class Puppet::Node::Configuration < Puppet::PGraph
         buckets = {}
 
         unless main = vertices.find { |res| res.type == "Class" and res.title == :main }
-            raise Puppet::DevError, "Could not find 'main' class; cannot generate configuration"
+            raise Puppet::DevError, "Could not find 'main' class; cannot generate catalog"
         end
 
         # Create a proc for examining edges, which we'll use to build our tree
@@ -242,12 +242,12 @@ class Puppet::Node::Configuration < Puppet::PGraph
         dfs(:start => main, :examine_edge => edges)
 
         unless main
-            raise Puppet::DevError, "Could not find 'main' class; cannot generate configuration"
+            raise Puppet::DevError, "Could not find 'main' class; cannot generate catalog"
         end
 
         # Retrieve the bucket for the top-level scope and set the appropriate metadata.
         unless result = buckets[main.to_s]
-            # This only happens when the configuration is entirely empty.
+            # This only happens when the catalog is entirely empty.
             result = buckets[main.to_s] = main.to_trans
         end
 
@@ -288,7 +288,7 @@ class Puppet::Node::Configuration < Puppet::PGraph
         end
     end
     
-    # Create a graph of all of the relationships in our configuration.
+    # Create a graph of all of the relationships in our catalog.
     def relationship_graph
         raise(Puppet::DevError, "Tried get a relationship graph for a relationship graph") if self.is_relationship_graph
 
@@ -298,7 +298,7 @@ class Puppet::Node::Configuration < Puppet::PGraph
             # relationship graph to determine the path to the resources
             # spitting out the messages.  If this is not set,
             # then we get into an infinite loop.
-            @relationship_graph = Puppet::Node::Configuration.new
+            @relationship_graph = Puppet::Node::Catalog.new
             @relationship_graph.host_config = host_config?
             @relationship_graph.is_relationship_graph = true
             
@@ -334,7 +334,7 @@ class Puppet::Node::Configuration < Puppet::PGraph
         @relationship_graph
     end
 
-    # Remove the resource from our configuration.  Notice that we also call
+    # Remove the resource from our catalog.  Notice that we also call
     # 'remove' on the resource, at least until resource classes no longer maintain
     # references to the resource instances.
     def remove_resource(*resources)
@@ -386,19 +386,19 @@ class Puppet::Node::Configuration < Puppet::PGraph
         @tags.dup
     end
 
-    # Convert our configuration into a RAL configuration.
+    # Convert our catalog into a RAL catalog.
     def to_ral
-        to_configuration :to_type
+        to_catalog :to_type
     end
 
-    # Turn our parser configuration into a transportable configuration.
+    # Turn our parser catalog into a transportable catalog.
     def to_transportable
-        to_configuration :to_transobject
+        to_catalog :to_transobject
     end
 
     # Produce the graph files if requested.
     def write_graph(name)
-        # We only want to graph the main host configuration.
+        # We only want to graph the main host catalog.
         return unless host_config?
         
         return unless Puppet[:graph]
@@ -433,10 +433,10 @@ class Puppet::Node::Configuration < Puppet::PGraph
         end
     end
 
-    # An abstracted method for converting one configuration into another type of configuration.
+    # An abstracted method for converting one catalog into another type of catalog.
     # This pretty much just converts all of the resources from one class to another, using
     # a conversion method.
-    def to_configuration(convert)
+    def to_catalog(convert)
         result = self.class.new(self.name)
 
         map = {}

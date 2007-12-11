@@ -195,14 +195,14 @@ if options[:loadclasses]
 end
 
 begin
-    # Compile our configuration
-    config = Puppet::Node::Configuration.find(node)
+    # Compile our catalog
+    catalog = Puppet::Node::Catalog.find(node)
 
-    # Translate it to a RAL configuration
-    config = config.to_ral
+    # Translate it to a RAL catalog
+    catalog = catalog.to_ral
 
     # And apply it
-    config.apply
+    catalog.apply
 rescue => detail
     if Puppet[:trace]
         puts detail.backtrace

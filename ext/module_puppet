@@ -179,7 +179,7 @@ node.classes = classes
 
 begin
     # Compile our configuration
-    config = Puppet::Node::Configuration.find(node)
+    catalog = Puppet::Node::Catalog.find(node)
 rescue => detail
     if Puppet[:trace]
         puts detail.backtrace
@@ -198,10 +198,10 @@ end
 
 begin
     # Translate it to a RAL configuration
-    config = config.to_ral
+    catalog = catalog.to_ral
 
     # And apply it
-    config.apply
+    catalog.apply
 rescue => detail
     Puppet.err detail
     exit(1)

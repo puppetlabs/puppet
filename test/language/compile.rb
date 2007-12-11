@@ -74,7 +74,7 @@ class TestCompile < Test::Unit::TestCase
         klass.expects(:classname).returns("myname")
 
         compile = mkcompile
-        compile.configuration.expects(:tag).with("myname")
+        compile.catalog.expects(:tag).with("myname")
         
         assert_nothing_raised("Could not set class") do
             compile.class_set "myname", "myscope"
@@ -153,7 +153,7 @@ class TestCompile < Test::Unit::TestCase
         [:set_node_parameters, :evaluate_main, :evaluate_ast_node, :evaluate_node_classes, :evaluate_generators, :fail_on_unevaluated, :finish].each do |method|
             compile.expects(method)
         end
-        assert_instance_of(Puppet::Node::Configuration, compile.compile, "Did not return the configuration")
+        assert_instance_of(Puppet::Node::Catalog, compile.compile, "Did not return the catalog")
     end
 
     # Test setting the node's parameters into the top scope.
@@ -416,7 +416,7 @@ class TestCompile < Test::Unit::TestCase
         compile.expects(:verify_uniqueness).with(resource)
         scope = stub("scope", :resource => mock('resource'))
 
-        compile.configuration.expects(:add_edge!).with(scope.resource, resource)
+        compile.catalog.expects(:add_edge!).with(scope.resource, resource)
 
         assert_nothing_raised("Could not store resource") do
             compile.store_resource(scope, resource)

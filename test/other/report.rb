@@ -27,7 +27,7 @@ class TestReports < Test::Unit::TestCase
             )
         end
 
-        config = mk_configuration(*objects)
+        config = mk_catalog(*objects)
         # So the report works out.
         config.retrieval_duration = 0.001
         trans = config.apply

@@ -18,7 +18,7 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
         [:mount, :start, :shutdown].each {|meth| @mock_webrick.stubs(meth)}        
         WEBrick::HTTPServer.stubs(:new).returns(@mock_webrick)
         @server = Puppet::Network::HTTP::WEBrick.new
-        @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => [ :node, :configuration ], :protocols => [ :rest, :xmlrpc ] }
+        @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => [ :node, :catalog ], :protocols => [ :rest, :xmlrpc ] }
     end
     
     it "should fail if already listening" do
@@ -94,7 +94,7 @@ describe Puppet::Network::HTTP::WEBrick, "when turning off listening" do
         [:mount, :start, :shutdown].each {|meth| @mock_webrick.stubs(meth)}
         WEBrick::HTTPServer.stubs(:new).returns(@mock_webrick)
         @server = Puppet::Network::HTTP::WEBrick.new        
-        @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => [ :node, :configuration ], :protocols => [ :rest, :xmlrpc ] }
+        @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => [ :node, :catalog ], :protocols => [ :rest, :xmlrpc ] }
     end
     
     it "should fail unless listening" do

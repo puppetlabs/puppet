@@ -175,7 +175,7 @@ class TestASTHostClass < Test::Unit::TestCase
         sub = parser.newclass "sub", :parent => "base"
 
         base.expects(:safeevaluate).with do |args|
-            assert(scope.compile.configuration.tags.include?("sub"), "Did not tag with sub class name before evaluating base class")
+            assert(scope.compile.catalog.tags.include?("sub"), "Did not tag with sub class name before evaluating base class")
             base.evaluate(args)
             true
         end

@@ -130,7 +130,7 @@ class TestFile < Test::Unit::TestCase
                 )
             }
 
-            comp = mk_configuration("createusertest", file)
+            comp = mk_catalog("createusertest", file)
 
             assert_events([:file_created], comp)
         end
@@ -503,7 +503,7 @@ class TestFile < Test::Unit::TestCase
         # Create a test directory
         path = tempfile()
         dir = @file.create :path => path, :mode => 0755, :recurse => true
-        config = mk_configuration(dir)
+        config = mk_catalog(dir)
         
         Dir.mkdir(path)
         
@@ -684,7 +684,7 @@ class TestFile < Test::Unit::TestCase
                     :check => %w{owner mode group}
                 )
             }
-            config = mk_configuration dir
+            config = mk_catalog dir
             
             children = nil
 
@@ -769,7 +769,7 @@ class TestFile < Test::Unit::TestCase
                 :check => %w{owner mode group}
             )
         }
-        mk_configuration dir
+        mk_catalog dir
 
         assert_nothing_raised {
             dir.eval_generate
@@ -812,7 +812,7 @@ class TestFile < Test::Unit::TestCase
                 :check => %w{mode owner group}
             )
         }
-        mk_configuration dirobj
+        mk_catalog dirobj
 
         assert_nothing_raised {
             dirobj.eval_generate
@@ -901,7 +901,7 @@ class TestFile < Test::Unit::TestCase
             )
         }
 
-        comp = mk_configuration("yay", file)
+        comp = mk_catalog("yay", file)
         comp.finalize
         assert_apply(comp)
         #assert_events([:directory_created], comp)
@@ -1300,7 +1300,7 @@ class TestFile < Test::Unit::TestCase
                                     :backup => false,
                                     :recurse => true)
 
-        config = mk_configuration(lfobj, destobj)
+        config = mk_catalog(lfobj, destobj)
         config.apply
 
         assert(FileTest.exists?(dsourcefile), "File did not get copied")
@@ -1351,7 +1351,7 @@ class TestFile < Test::Unit::TestCase
             group = Puppet.type(:group).create(
                 :name => "pptestg"
             )
-            comp = mk_configuration(user, group, home)
+            comp = mk_catalog(user, group, home)
         }
         
         # Now make sure we get a relationship for each of these
@@ -1647,7 +1647,7 @@ class TestFile < Test::Unit::TestCase
         file = File.join(dir, "file")
         File.open(file, "w") { |f| f.puts "" }
         obj = Puppet::Type.newfile :path => dir, :recurse => true, :mode => 0755
-        mk_configuration obj
+        mk_catalog obj
         
         assert_equal("/%s" % obj.ref, obj.path)
         
@@ -1758,7 +1758,7 @@ class TestFile < Test::Unit::TestCase
         File.open(file, "w") { |f| f.puts "yay" }
         File.chmod(0644, file)
         obj = Puppet::Type.newfile(:path => dir, :mode => 0750, :recurse => "2")
-        config = mk_configuration(obj)
+        config = mk_catalog(obj)
 
         children = nil
         assert_nothing_raised("Failure when recursing") do
@@ -1767,7 +1767,7 @@ class TestFile < Test::Unit::TestCase
         assert(obj.class[subdir], "did not create subdir object")
         children.each do |c|
             assert_nothing_raised("Failure when recursing on %s" % c) do
-                c.configuration = config
+                c.catalog = config
                 others = c.eval_generate
             end
         end
@@ -1801,7 +1801,7 @@ class TestFile < Test::Unit::TestCase
         obj = Puppet::Type.newfile(:path => dir, :ensure => :directory,
             :recurse => true)
 
-        config = mk_configuration(obj)
+        config = mk_catalog(obj)
         children = nil
         assert_nothing_raised do
             children = obj.eval_generate

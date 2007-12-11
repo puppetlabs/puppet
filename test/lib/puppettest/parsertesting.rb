@@ -312,7 +312,7 @@ module PuppetTest::ParserTesting
 
         config = nil
         assert_nothing_raised {
-            config = trans.extract.to_configuration
+            config = trans.extract.to_catalog
         }
 
         config.apply

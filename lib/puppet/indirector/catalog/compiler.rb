@@ -1,18 +1,18 @@
 require 'puppet/node'
-require 'puppet/node/configuration'
+require 'puppet/node/catalog'
 require 'puppet/indirector/code'
 require 'puppet/parser/interpreter'
 require 'yaml'
 
-class Puppet::Node::Configuration::Compiler < Puppet::Indirector::Code
-    desc "Puppet's configuration compilation interface, and its back-end is
+class Puppet::Node::Catalog::Compiler < Puppet::Indirector::Code
+    desc "Puppet's catalog compilation interface, and its back-end is
         Puppet's compiler"
 
     include Puppet::Util
 
     attr_accessor :code
 
-    # Compile a node's configuration.
+    # Compile a node's catalog.
     def find(key, client = nil, clientip = nil)
         if key.is_a?(Puppet::Node)
             node = key
@@ -20,8 +20,8 @@ class Puppet::Node::Configuration::Compiler < Puppet::Indirector::Code
             node = find_node(key)
         end
 
-        if configuration = compile(node)
-            return configuration.to_transportable
+        if catalog = compile(node)
+            return catalog.to_transportable
         else
             # This shouldn't actually happen; we should either return
             # a config or raise an exception.
@@ -46,16 +46,16 @@ class Puppet::Node::Configuration::Compiler < Puppet::Indirector::Code
         $0 =~ /puppetmasterd/
     end
 
-    # Return the configuration version.  Here we're returning the
+    # Return the catalog version.  Here we're returning the
     # latest of the node, fact, or parse date.  These are the
-    # three things that go into compiling a client configuration,
+    # three things that go into compiling a client catalog,
     # so changes in any of them result in changes.
     # LAK:FIXME Note that this only works when all three sources
     # use timestamps; once one of them moves to using real versions,
     # the comparison stops working.
     def version(key)
         if node = Puppet::Node.find_by_any_name(key)
-            return [Puppet::Node.version(key).to_f, Puppet::Node::Facts.version(key).to_f, interpreter.configuration_version(node).to_f].sort[-1]
+            return [Puppet::Node.version(key).to_f, Puppet::Node::Facts.version(key).to_f, interpreter.catalog_version(node).to_f].sort[-1]
         else
             # This is the standard for "got nothing for ya".
             0
@@ -70,10 +70,10 @@ class Puppet::Node::Configuration::Compiler < Puppet::Indirector::Code
         node.merge(@server_facts)
     end
 
-    # Compile the actual configuration.
+    # Compile the actual catalog.
     def compile(node)
-        # Ask the interpreter to compile the configuration.
-        str = "Compiled configuration for %s" % node.name
+        # Ask the interpreter to compile the catalog.
+        str = "Compiled catalog for %s" % node.name
         if node.environment
             str += " in environment %s" % node.environment
         end
@@ -81,7 +81,7 @@ class Puppet::Node::Configuration::Compiler < Puppet::Indirector::Code
 
         loglevel = networked? ? :notice : :none
 
-        benchmark(loglevel, "Compiled configuration for %s" % node.name) do
+        benchmark(loglevel, "Compiled catalog for %s" % node.name) do
             begin
                 config = interpreter.compile(node)
             rescue Puppet::Error => detail
@@ -148,7 +148,7 @@ class Puppet::Node::Configuration::Compiler < Puppet::Indirector::Code
         end
     end
 
-    # Translate our configuration appropriately for sending back to a client.
+    # Translate our catalog appropriately for sending back to a client.
     # LAK:FIXME This method should probably be part of the protocol, but it
     # shouldn't be here.
     def translate(config)

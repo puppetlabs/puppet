@@ -146,7 +146,7 @@ module Functions
     tells you whether the current container is tagged with the specified tags.
     The tags are ANDed, so that all of the specified tags must be included for
     the function to return true.") do |vals|
-        configtags = compile.configuration.tags
+        configtags = compile.catalog.tags
         resourcetags = resource.tags
 
         retval = true

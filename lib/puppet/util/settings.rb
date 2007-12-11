@@ -75,7 +75,7 @@ class Puppet::Util::Settings
     def apply
         trans = self.to_transportable
         begin
-            config = trans.to_configuration
+            config = trans.to_catalog
             config.store_state = false
             config.apply
             config.clear
@@ -590,7 +590,7 @@ class Puppet::Util::Settings
     # Convert our list of objects into a component that can be applied.
     def to_configuration
         transport = self.to_transportable
-        return transport.to_configuration
+        return transport.to_catalog
     end
 
     # Convert our list of config elements into a configuration file.
@@ -676,7 +676,7 @@ Generated on #{Time.now}.
 
             bucket = to_transportable(*sections)
 
-            config = bucket.to_configuration
+            config = bucket.to_catalog
             config.host_config = false
             config.apply do |transaction|
                 if failures = transaction.any_failed?

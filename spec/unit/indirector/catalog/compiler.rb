@@ -5,9 +5,9 @@
 
 require File.dirname(__FILE__) + '/../../../spec_helper'
 
-require 'puppet/indirector/configuration/compiler'
+require 'puppet/indirector/catalog/compiler'
 
-describe Puppet::Node::Configuration::Compiler do
+describe Puppet::Node::Catalog::Compiler do
     before do
         Puppet.expects(:version).returns(1)
         Facter.expects(:value).with('fqdn').returns("my.server.com")
@@ -15,11 +15,11 @@ describe Puppet::Node::Configuration::Compiler do
     end
 
     it "should gather data about itself" do
-        Puppet::Node::Configuration::Compiler.new
+        Puppet::Node::Catalog::Compiler.new
     end
 
     it "should cache the server metadata and reuse it" do
-        compiler = Puppet::Node::Configuration::Compiler.new
+        compiler = Puppet::Node::Catalog::Compiler.new
         node1 = stub 'node1', :merge => nil
         node2 = stub 'node2', :merge => nil
         compiler.stubs(:compile)
@@ -30,17 +30,17 @@ describe Puppet::Node::Configuration::Compiler do
         compiler.find('node2')
     end
 
-    it "should provide a method for determining if the configuration is networked" do
-        compiler = Puppet::Node::Configuration::Compiler.new
+    it "should provide a method for determining if the catalog is networked" do
+        compiler = Puppet::Node::Catalog::Compiler.new
         compiler.should respond_to(:networked?)
     end
 end
 
-describe Puppet::Node::Configuration::Compiler, " when creating the interpreter" do
+describe Puppet::Node::Catalog::Compiler, " when creating the interpreter" do
     before do
         # This gets pretty annoying on a plane where we have no IP address
         Facter.stubs(:value).returns("whatever")
-        @compiler = Puppet::Node::Configuration::Compiler.new
+        @compiler = Puppet::Node::Catalog::Compiler.new
     end
 
     it "should not create the interpreter until it is asked for the first time" do
@@ -57,10 +57,10 @@ describe Puppet::Node::Configuration::Compiler, " when creating the interpreter"
     end
 end
 
-describe Puppet::Node::Configuration::Compiler, " when finding nodes" do
+describe Puppet::Node::Catalog::Compiler, " when finding nodes" do
     before do
         Facter.stubs(:value).returns("whatever")
-        @compiler = Puppet::Node::Configuration::Compiler.new
+        @compiler = Puppet::Node::Catalog::Compiler.new
         @name = "me"
         @node = mock 'node'
         @compiler.stubs(:compile)
@@ -79,13 +79,13 @@ describe Puppet::Node::Configuration::Compiler, " when finding nodes" do
     end
 end
 
-describe Puppet::Node::Configuration::Compiler, " after finding nodes" do
+describe Puppet::Node::Catalog::Compiler, " after finding nodes" do
     before do
         Puppet.expects(:version).returns(1)
         Puppet.settings.stubs(:value).with(:node_name).returns("cert")
         Facter.expects(:value).with('fqdn').returns("my.server.com")
         Facter.expects(:value).with('ipaddress').returns("my.ip.address")
-        @compiler = Puppet::Node::Configuration::Compiler.new
+        @compiler = Puppet::Node::Catalog::Compiler.new
         @name = "me"
         @node = mock 'node'
         @compiler.stubs(:compile)
@@ -115,13 +115,13 @@ describe Puppet::Node::Configuration::Compiler, " after finding nodes" do
     end
 end
 
-describe Puppet::Node::Configuration::Compiler, " when creating configurations" do
+describe Puppet::Node::Catalog::Compiler, " when creating catalogs" do
     before do
         Facter.stubs(:value).returns("whatever")
         env = stub 'environment', :name => "yay"
         Puppet::Node::Environment.stubs(:new).returns(env)
 
-        @compiler = Puppet::Node::Configuration::Compiler.new
+        @compiler = Puppet::Node::Catalog::Compiler.new
         @name = "me"
         @node = Puppet::Node.new @name
         @node.stubs(:merge)
@@ -140,63 +140,63 @@ describe Puppet::Node::Configuration::Compiler, " when creating configurations" 
         @compiler.find(@name)
     end
 
-    it "should return the results of compiling as the configuration" do
+    it "should return the results of compiling as the catalog" do
         config = mock 'config'
-        result = mock 'result', :to_transportable => :configuration
+        result = mock 'result', :to_transportable => :catalog
 
         @compiler.interpreter.expects(:compile).with(@node).returns(result)
-        @compiler.find(@name).should == :configuration
+        @compiler.find(@name).should == :catalog
     end
 
     it "should benchmark the compile process" do
         @compiler.stubs(:networked?).returns(true)
         @compiler.expects(:benchmark).with do |level, message|
-            level == :notice and message =~ /^Compiled configuration/
+            level == :notice and message =~ /^Compiled catalog/
         end
         @compiler.interpreter.stubs(:compile).with(@node)
         @compiler.find(@name)
     end
 end
 
-describe Puppet::Node::Configuration::Compiler, " when determining a client's available configuration version" do
+describe Puppet::Node::Catalog::Compiler, " when determining a client's available catalog version" do
     before do
         Puppet::Node::Facts.stubs(:find).returns(nil)
         Facter.stubs(:value).returns("whatever")
-        @configuration = Puppet::Node::Configuration::Compiler.new
+        @catalog = Puppet::Node::Catalog::Compiler.new
         @name = "johnny"
     end
 
-    it "should provide a mechanism for providing the version of a given client's configuration" do
-        @configuration.should respond_to(:version)
+    it "should provide a mechanism for providing the version of a given client's catalog" do
+        @catalog.should respond_to(:version)
     end
 
-    it "should use the client's Facts version as the available configuration version if it is the most recent" do
+    it "should use the client's Facts version as the available catalog version if it is the most recent" do
         Puppet::Node::Facts.expects(:version).with(@name).returns(5)
         Puppet::Node.expects(:version).with(@name).returns(3)
-        @configuration.interpreter.stubs(:configuration_version).returns(4)
+        @catalog.interpreter.stubs(:catalog_version).returns(4)
 
-        @configuration.version(@name).should == 5
+        @catalog.version(@name).should == 5
     end
 
-    it "should use the client's Node version as the available configuration version if it is the most recent" do
+    it "should use the client's Node version as the available catalog version if it is the most recent" do
         Puppet::Node::Facts.expects(:version).with(@name).returns(3)
         Puppet::Node.expects(:version).with(@name).returns(5)
-        @configuration.interpreter.stubs(:configuration_version).returns(4)
+        @catalog.interpreter.stubs(:catalog_version).returns(4)
 
-        @configuration.version(@name).should == 5
+        @catalog.version(@name).should == 5
     end
 
-    it "should use the last parse date as the available configuration version if it is the most recent" do
+    it "should use the last parse date as the available catalog version if it is the most recent" do
         Puppet::Node::Facts.expects(:version).with(@name).returns(3)
         Puppet::Node.expects(:version).with(@name).returns(4)
-        @configuration.interpreter.stubs(:configuration_version).returns(5)
+        @catalog.interpreter.stubs(:catalog_version).returns(5)
 
-        @configuration.version(@name).should == 5
+        @catalog.version(@name).should == 5
     end
 
     it "should return a version of 0 if no information on the node can be found" do
         Puppet::Node.stubs(:find_by_any_name).returns(nil)
-        @configuration.version(@name).should == 0
+        @catalog.version(@name).should == 0
     end
 
     it "should indicate when an update is available even if an input has clock skew" do

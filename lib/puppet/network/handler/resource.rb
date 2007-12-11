@@ -39,14 +39,14 @@ class Puppet::Network::Handler
                 end
             end
 
-            config = bucket.to_configuration
+            catalog = bucket.to_catalog
 
-            # And then apply the configuration.  This way we're reusing all
+            # And then apply the catalog.  This way we're reusing all
             # the code in there.  It should probably just be separated out, though.
-            transaction = config.apply
+            transaction = catalog.apply
             
             # And then clean up
-            config.clear(true)
+            catalog.clear(true)
 
             # It'd be nice to return some kind of report, but... at this point
             # we have no such facility.

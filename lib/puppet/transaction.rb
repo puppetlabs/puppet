@@ -6,7 +6,7 @@ require 'puppet/propertychange'
 
 module Puppet
 class Transaction
-    attr_accessor :component, :configuration, :ignoreschedules
+    attr_accessor :component, :catalog, :ignoreschedules
     attr_accessor :sorted_resources, :configurator
 
     # The report, once generated.
@@ -311,7 +311,7 @@ class Transaction
                     ret = eval_resource(resource)
                 end
 
-                if Puppet[:evaltrace] and @configuration.host_config?
+                if Puppet[:evaltrace] and @catalog.host_config?
                     resource.info "Evaluated in %0.2f seconds" % seconds
                 end
                 ret
@@ -358,7 +358,7 @@ class Transaction
     
     # Collect any dynamically generated resources.
     def generate
-        list = @configuration.vertices
+        list = @catalog.vertices
         
         # Store a list of all generated resources, so that we can clean them up
         # after the transaction closes.
@@ -380,8 +380,8 @@ class Transaction
                     end
                     made.uniq!
                     made.each do |res|
-                        @configuration.add_resource(res)
-                        res.configuration = configuration
+                        @catalog.add_resource(res)
+                        res.catalog = catalog
                         newlist << res
                         @generated << res
                         res.finish
@@ -424,22 +424,22 @@ class Transaction
 
     # Should we ignore tags?
     def ignore_tags?
-        ! @configuration.host_config?
+        ! @catalog.host_config?
     end
 
     # this should only be called by a Puppet::Type::Component resource now
     # and it should only receive an array
     def initialize(resources)
-        if resources.is_a?(Puppet::Node::Configuration)
-            @configuration = resources
+        if resources.is_a?(Puppet::Node::Catalog)
+            @catalog = resources
         elsif resources.is_a?(Puppet::PGraph)
-            raise "Transactions should get configurations now, not PGraph"
+            raise "Transactions should get catalogs now, not PGraph"
         else
-            raise "Transactions require configurations"
+            raise "Transactions require catalogs"
         end
 
         @resourcemetrics = {
-            :total => @configuration.vertices.length,
+            :total => @catalog.vertices.length,
             :out_of_sync => 0,    # The number of resources that had changes
             :applied => 0,        # The number of resources fixed
             :skipped => 0,      # The number of resources skipped
@@ -478,7 +478,7 @@ class Transaction
     # types, just providers.
     def prefetch
         prefetchers = {}
-        @configuration.vertices.each do |resource|
+        @catalog.vertices.each do |resource|
             if provider = resource.provider and provider.class.respond_to?(:prefetch)
                 prefetchers[provider.class] ||= {}
                 prefetchers[provider.class][resource.title] = resource
@@ -511,7 +511,7 @@ class Transaction
     end
 
     def relationship_graph
-        configuration.relationship_graph
+        catalog.relationship_graph
     end
     
     # Send off the transaction report.

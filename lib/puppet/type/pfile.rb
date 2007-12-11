@@ -574,7 +574,7 @@ module Puppet
         # Create a new file or directory object as a child to the current
         # object.
         def newchild(path, local, hash = {})
-            raise(Puppet::DevError, "File recursion cannot happen without a configuration") unless configuration
+            raise(Puppet::DevError, "File recursion cannot happen without a catalog") unless catalog
 
             # make local copy of arguments
             args = symbolize_options(@arghash)
@@ -615,7 +615,7 @@ module Puppet
             # before 'sourcerecurse'.  I could push the override stuff into
             # a separate method or something, but the work is the same other
             # than this last bit, so it doesn't really make sense.
-            if child = configuration.resource(:file, path)
+            if child = catalog.resource(:file, path)
                 unless child.parent.object_id == self.object_id
                     self.debug "Not managing more explicit file %s" %
                         path
@@ -643,7 +643,7 @@ module Puppet
                 begin
                     # This method is used by subclasses of :file, so use the class name rather than hard-coding
                     # :file.
-                    return nil unless child = configuration.create_implicit_resource(self.class.name, args)
+                    return nil unless child = catalog.create_implicit_resource(self.class.name, args)
                 rescue => detail
                     puts detail.backtrace
                     self.notice "Cannot manage: %s" % [detail]
@@ -653,7 +653,7 @@ module Puppet
 
             # LAK:FIXME This shouldn't be necessary, but as long as we're
             # modeling the relationship graph specifically, it is.
-            configuration.relationship_graph.add_edge! self, child
+            catalog.relationship_graph.add_edge! self, child
 
             return child
         end
@@ -663,7 +663,7 @@ module Puppet
         # time.
         def pathbuilder
             # We specifically need to call the method here, so it looks
-            # up our parent in the configuration graph.
+            # up our parent in the catalog graph.
             if parent = parent()
                 # We only need to behave specially when our parent is also
                 # a file

@@ -30,7 +30,7 @@ class Puppet::Parser::AST
                 return nil
             end
 
-            scope.compile.configuration.tag(self.classname)
+            scope.compile.catalog.tag(self.classname)
 
             pnames = nil
             if pklass = self.parentobj

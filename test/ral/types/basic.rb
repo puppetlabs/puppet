@@ -35,7 +35,7 @@ class TestBasic < Test::Unit::TestCase
                 :path => ENV["PATH"]
             )
         }
-        @config = mk_configuration(@component, @configfile, @command)
+        @config = mk_catalog(@component, @configfile, @command)
         @config.add_edge! @component, @configfile
         @config.add_edge! @component, @command
     end

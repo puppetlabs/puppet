@@ -195,12 +195,12 @@ class Puppet::Type
                 aliases = [aliases]
             end
 
-            raise(ArgumentError, "Cannot add aliases without a configuration") unless @resource.configuration
+            raise(ArgumentError, "Cannot add aliases without a catalog") unless @resource.catalog
 
             @resource.info "Adding aliases %s" % aliases.collect { |a| a.inspect }.join(", ")
 
             aliases.each do |other|
-                if obj = @resource.configuration.resource(@resource.class.name, other)
+                if obj = @resource.catalog.resource(@resource.class.name, other)
                     unless obj.object_id == @resource.object_id
                         self.fail("%s can not create alias %s: object already exists" % [@resource.title, other])
                     end
@@ -210,8 +210,8 @@ class Puppet::Type
                 # LAK:FIXME Old-school, add the alias to the class.
                 @resource.class.alias(other, @resource)
 
-                # Newschool, add it to the configuration.
-                @resource.configuration.alias(@resource, other)
+                # Newschool, add it to the catalog.
+                @resource.catalog.alias(@resource, other)
             end
         end
     end
@@ -256,7 +256,7 @@ class Puppet::Type
 
         def validate_relationship
             @value.each do |value|
-                unless @resource.configuration.resource(*value)
+                unless @resource.catalog.resource(*value)
                     description = self.class.direction == :in ? "dependency" : "dependent"
                     raise Puppet::Error, "Could not find #{description} %s[%s]" % [value[0].to_s.capitalize, value[1]]
                 end

@@ -131,7 +131,7 @@ class TestTransactions < Test::Unit::TestCase
         inst = type.create :name => "yay"
         
         # Create a transaction
-        trans = Puppet::Transaction.new(mk_configuration(inst))
+        trans = Puppet::Transaction.new(mk_catalog(inst))
 
         # Make sure prefetch works
         assert_nothing_raised do
@@ -253,7 +253,7 @@ class TestTransactions < Test::Unit::TestCase
         }
 
 
-        component = mk_configuration("file",file)
+        component = mk_catalog("file",file)
         require 'etc'
         groupname = Etc.getgrgid(File.stat(file.name).gid).name
         assert_nothing_raised() {
@@ -293,7 +293,7 @@ class TestTransactions < Test::Unit::TestCase
         file[:check] = check
         file[:group] = @groups[0]
 
-        config = mk_configuration(file)
+        config = mk_catalog(file)
         config.apply
 
         @@tmpfiles << execfile
@@ -314,9 +314,9 @@ class TestTransactions < Test::Unit::TestCase
             file[:mode] = "755"
         }
 
-        # Make a new configuration so the resource relationships get
+        # Make a new catalog so the resource relationships get
         # set up.
-        config = mk_configuration(file, exec)
+        config = mk_catalog(file, exec)
 
         trans = assert_events([:file_changed, :triggered], config)
 
@@ -344,7 +344,7 @@ class TestTransactions < Test::Unit::TestCase
         file[:group] = @groups[0]
         assert_apply(file)
 
-        config = Puppet::Node::Configuration.new
+        config = Puppet::Node::Catalog.new
         fcomp = Puppet::Type.type(:component).create(:name => "file")
         config.add_resource fcomp
         config.add_resource file
@@ -445,7 +445,7 @@ class TestTransactions < Test::Unit::TestCase
             :subscribe => ["file", file.name]
         )
 
-        config = mk_configuration(file, exec)
+        config = mk_catalog(file, exec)
 
         # Run it once
         assert_apply(config)
@@ -501,7 +501,7 @@ class TestTransactions < Test::Unit::TestCase
             :ensure => :file
         )
 
-        config = mk_configuration(exec, file1, file2)
+        config = mk_catalog(exec, file1, file2)
 
         assert_apply(config)
 
@@ -532,7 +532,7 @@ class TestTransactions < Test::Unit::TestCase
             graph = trans.relationship_graph
         end
 
-        assert_instance_of(Puppet::Node::Configuration, graph,
+        assert_instance_of(Puppet::Node::Catalog, graph,
             "Did not get relationship graph")
         
         # Make sure all of the components are gone
@@ -560,7 +560,7 @@ class TestTransactions < Test::Unit::TestCase
             end
         end
         
-        trans.configuration.leaves(config.resource("middle")).each do |child|
+        trans.catalog.leaves(config.resource("middle")).each do |child|
             assert(graph.dependents(config.f(:h)).include?(child),
                 "%s not marked a dep of h" % [child.ref])
             assert(sorted.index(child) < sorted.index(config.f(:h)),
@@ -596,7 +596,7 @@ class TestTransactions < Test::Unit::TestCase
         
         yay = Puppet::Type.newgenerator :title => "yay"
         rah = Puppet::Type.newgenerator :title => "rah"
-        config = mk_configuration(yay, rah)
+        config = mk_catalog(yay, rah)
         trans = Puppet::Transaction.new(config)
         
         assert_nothing_raised do
@@ -604,7 +604,7 @@ class TestTransactions < Test::Unit::TestCase
         end
         
         %w{ya ra y r}.each do |name|
-            assert(trans.configuration.vertex?(Puppet::Type.type(:generator)[name]),
+            assert(trans.catalog.vertex?(Puppet::Type.type(:generator)[name]),
                 "Generated %s was not a vertex" % name)
             assert($finished.include?(name), "%s was not finished" % name)
         end
@@ -615,7 +615,7 @@ class TestTransactions < Test::Unit::TestCase
         end
         
         %w{ya ra y r}.each do |name|
-            assert(!trans.configuration.vertex?(Puppet::Type.type(:generator)[name]),
+            assert(!trans.catalog.vertex?(Puppet::Type.type(:generator)[name]),
                 "Generated vertex %s was not removed from graph" % name)
             assert_nil(Puppet::Type.type(:generator)[name],
                 "Generated vertex %s was not removed from class" % name)
@@ -635,7 +635,7 @@ class TestTransactions < Test::Unit::TestCase
 
         yay = Puppet::Type.newgenerator :title => "yay"
         rah = Puppet::Type.newgenerator :title => "rah", :subscribe => yay
-        config = mk_configuration(yay, rah)
+        config = mk_catalog(yay, rah)
         trans = Puppet::Transaction.new(config)
         
         trans.prepare
@@ -715,39 +715,39 @@ class TestTransactions < Test::Unit::TestCase
     end
 
     def test_ignore_tags?
-        config = Puppet::Node::Configuration.new
+        config = Puppet::Node::Catalog.new
         config.host_config = true
         transaction = Puppet::Transaction.new(config)
-        assert(! transaction.ignore_tags?, "Ignoring tags when applying a host configuration")
+        assert(! transaction.ignore_tags?, "Ignoring tags when applying a host catalog")
 
         config.host_config = false
         transaction = Puppet::Transaction.new(config)
-        assert(transaction.ignore_tags?, "Not ignoring tags when applying a non-host configuration")
+        assert(transaction.ignore_tags?, "Not ignoring tags when applying a non-host catalog")
     end
     
     def test_missing_tags?
         resource = stub 'resource', :tagged? => true
-        config = Puppet::Node::Configuration.new
+        config = Puppet::Node::Catalog.new
 
         # Mark it as a host config so we don't care which test is first
         config.host_config = true
         transaction = Puppet::Transaction.new(config)
         assert(! transaction.missing_tags?(resource), "Considered a resource to be missing tags when none are set")
 
-        # host configurations pay attention to tags, no one else does.
+        # host catalogs pay attention to tags, no one else does.
         Puppet[:tags] = "three,four"
         config.host_config = false
         transaction = Puppet::Transaction.new(config)
-        assert(! transaction.missing_tags?(resource), "Considered a resource to be missing tags when not running a host configuration")
+        assert(! transaction.missing_tags?(resource), "Considered a resource to be missing tags when not running a host catalog")
 
         # 
         config.host_config = true
         transaction = Puppet::Transaction.new(config)
-        assert(! transaction.missing_tags?(resource), "Considered a resource to be missing tags when running a host configuration and all tags are present")
+        assert(! transaction.missing_tags?(resource), "Considered a resource to be missing tags when running a host catalog and all tags are present")
 
         transaction = Puppet::Transaction.new(config)
         resource.stubs :tagged? => false
-        assert(transaction.missing_tags?(resource), "Considered a resource not to be missing tags when running a host configuration and tags are missing")
+        assert(transaction.missing_tags?(resource), "Considered a resource not to be missing tags when running a host catalog and tags are missing")
     end
     
     # Make sure changes generated by eval_generated resources have proxies
@@ -761,7 +761,7 @@ class TestTransactions < Test::Unit::TestCase
         end
         
         resource = type.create :name => "test"
-        config = mk_configuration(resource)
+        config = mk_catalog(resource)
         trans = Puppet::Transaction.new(config)
         trans.prepare
 
@@ -820,7 +820,7 @@ class TestTransactions < Test::Unit::TestCase
         end
 
         # Make a graph with some stuff in it.
-        graph = Puppet::Node::Configuration.new
+        graph = Puppet::Node::Catalog.new
 
         # Add a non-triggering edge.
         a = trigger.new(:a)
@@ -877,7 +877,7 @@ class TestTransactions < Test::Unit::TestCase
         file = Puppet::Type.newfile(:path => tempfile(), :content => "yay")
         exec1 = Puppet::Type.type(:exec).create :command => "/bin/echo exec1"
         exec2 = Puppet::Type.type(:exec).create :command => "/bin/echo exec2"
-        trans = Puppet::Transaction.new(mk_configuration(file, exec1, exec2))
+        trans = Puppet::Transaction.new(mk_catalog(file, exec1, exec2))
         
         # First try it with an edge that has no callback
         edge = Puppet::Relationship.new(file, exec1)
@@ -924,7 +924,7 @@ class TestTransactions < Test::Unit::TestCase
         one[:require] = two
         two[:require] = one
 
-        config = mk_configuration(one, two)
+        config = mk_catalog(one, two)
         trans = Puppet::Transaction.new(config)
         assert_raise(Puppet::Error) do
             trans.prepare
@@ -992,7 +992,7 @@ class TestTransactions < Test::Unit::TestCase
         
         rels[dir] = file
         rels.each do |after, before|
-            config = mk_configuration(before, after)
+            config = mk_catalog(before, after)
             trans = Puppet::Transaction.new(config)
             str = "from %s to %s" % [before, after]
         

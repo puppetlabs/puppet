@@ -46,7 +46,7 @@ class TestFileTarget < Test::Unit::TestCase
     def test_linkrecurse
         dest = tempfile()
         link = @file.create :path => tempfile(), :recurse => true, :ensure => dest
-        mk_configuration link
+        mk_catalog link
         
         ret = nil
         
@@ -320,7 +320,7 @@ class TestFileTarget < Test::Unit::TestCase
             :source => dirs["source"],
             :recurse => true
         )
-        config = mk_configuration obj
+        config = mk_catalog obj
         config.apply
 
         newfile = File.join(dirs["target"], "sourcefile")

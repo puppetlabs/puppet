@@ -90,7 +90,7 @@ class TestOverrides < Test::Unit::TestCase
             }
         }
 
-        config = mk_configuration(baseobj, *children)
+        config = mk_catalog(baseobj, *children)
 
         assert_nothing_raised("Could not eval component") {
             config.apply

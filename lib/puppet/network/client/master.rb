@@ -7,7 +7,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         @@sync = Sync.new
     end
 
-    attr_accessor :configuration
+    attr_accessor :catalog
     attr_reader :compile_time
 
     class << self
@@ -51,7 +51,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
 
     # Cache the config
     def cache(text)
-        Puppet.info "Caching configuration at %s" % self.cachefile
+        Puppet.info "Caching catalog at %s" % self.cachefile
         confdir = ::File.dirname(Puppet[:localconfig])
         ::File.open(self.cachefile + ".tmp", "w", 0660) { |f|
             f.print text
@@ -67,10 +67,10 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     end
 
     def clear
-        @configuration.clear(true) if @configuration
+        @catalog.clear(true) if @catalog
         Puppet::Type.allclear
         mkdefault_objects
-        @configuration = nil
+        @catalog = nil
     end
 
     # Initialize and load storage
@@ -93,7 +93,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         end
     end
 
-    # Check whether our configuration is up to date
+    # Check whether our catalog is up to date
     def fresh?(facts)
         if Puppet[:ignorecache]
             Puppet.notice "Ignoring cache"
@@ -124,7 +124,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         lockfile.unlock(:anonymous => true)
     end
 
-    # Stop the daemon from making any configuration runs.
+    # Stop the daemon from making any catalog runs.
     def disable
         lockfile.lock(:anonymous => true)
     end
@@ -144,15 +144,15 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         # Retrieve the plugins.
         getplugins() if Puppet[:pluginsync]
 
-        if (self.configuration or FileTest.exist?(self.cachefile)) and self.fresh?(facts)
+        if (self.catalog or FileTest.exist?(self.cachefile)) and self.fresh?(facts)
             Puppet.info "Configuration is up to date"
             return if use_cached_config
         end
 
-        Puppet.debug("Retrieving configuration")
+        Puppet.debug("Retrieving catalog")
 
-        # If we can't retrieve the configuration, just return, which will either
-        # fail, or use the in-memory configuration.
+        # If we can't retrieve the catalog, just return, which will either
+        # fail, or use the in-memory catalog.
         unless yaml_objects = get_actual_config(facts)
             use_cached_config(true)
             return
@@ -162,7 +162,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
             objects = YAML.load(yaml_objects)
         rescue => detail
             msg = "Configuration could not be translated from yaml"
-            msg += "; using cached configuration" if use_cached_config(true)
+            msg += "; using cached catalog" if use_cached_config(true)
             Puppet.warning msg
             return
         end
@@ -170,26 +170,26 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         self.setclasses(objects.classes)
 
         # Clear all existing objects, so we can recreate our stack.
-        clear() if self.configuration
+        clear() if self.catalog
 
-        # Now convert the objects to a puppet configuration graph.
+        # Now convert the objects to a puppet catalog graph.
         begin
-            @configuration = objects.to_configuration
+            @catalog = objects.to_catalog
         rescue => detail
             clear()
             puts detail.backtrace if Puppet[:trace]
             msg = "Configuration could not be instantiated: %s" % detail
-            msg += "; using cached configuration" if use_cached_config(true)
+            msg += "; using cached catalog" if use_cached_config(true)
             Puppet.warning msg
             return
         end
 
-        if ! @configuration.from_cache
+        if ! @catalog.from_cache
             self.cache(yaml_objects)
         end
 
         # Keep the state database up to date.
-        @configuration.host_config = true
+        @catalog.host_config = true
     end
     
     # A simple proxy method, so it's easy to test.
@@ -243,15 +243,15 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         end
     end
 
-    # The code that actually runs the configuration.  
-    # This just passes any options on to the configuration,
+    # The code that actually runs the catalog.  
+    # This just passes any options on to the catalog,
     # which accepts :tags and :ignoreschedules.
     def run(options = {})
         got_lock = false
         splay
         Puppet::Util.sync(:puppetrun).synchronize(Sync::EX) do
             if !lockfile.lock
-                Puppet.notice "Lock file %s exists; skipping configuration run" %
+                Puppet.notice "Lock file %s exists; skipping catalog run" %
                     lockfile.lockfile
             else
                 got_lock = true
@@ -261,14 +261,14 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
                     end
                 rescue => detail
                     puts detail.backtrace if Puppet[:trace]
-                    Puppet.err "Could not retrieve configuration: %s" % detail
+                    Puppet.err "Could not retrieve catalog: %s" % detail
                 end
 
-                if self.configuration
-                    @configuration.retrieval_duration = duration
-                    Puppet.notice "Starting configuration run" unless @local
-                    benchmark(:notice, "Finished configuration run") do
-                        @configuration.apply(options)
+                if self.catalog
+                    @catalog.retrieval_duration = duration
+                    Puppet.notice "Starting catalog run" unless @local
+                    benchmark(:notice, "Finished catalog run") do
+                        @catalog.apply(options)
                     end
                 end
             end
@@ -330,7 +330,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         if args[:ignore]
             hash[:ignore] = args[:ignore].split(/\s+/)
         end
-        downconfig = Puppet::Node::Configuration.new("downloading")
+        downconfig = Puppet::Node::Catalog.new("downloading")
         downconfig.add_resource Puppet::Type.type(:file).create(hash)
         
         Puppet.info "Retrieving #{args[:name]}s"
@@ -489,7 +489,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         end
     end
     
-    # Actually retrieve the configuration, either from the server or from a
+    # Actually retrieve the catalog, either from the server or from a
     # local master.
     def get_actual_config(facts)
         begin
@@ -508,18 +508,18 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
 
         textfacts = CGI.escape(YAML.dump(facts))
 
-        benchmark(:debug, "Retrieved configuration") do
+        benchmark(:debug, "Retrieved catalog") do
             # error handling for this is done in the network client
             begin
                 textobjects = @driver.getconfig(textfacts, "yaml")
                 begin
                     textobjects = CGI.unescape(textobjects)
                 rescue => detail
-                    raise Puppet::Error, "Could not CGI.unescape configuration"
+                    raise Puppet::Error, "Could not CGI.unescape catalog"
                 end
 
             rescue => detail
-                Puppet.err "Could not retrieve configuration: %s" % detail
+                Puppet.err "Could not retrieve catalog: %s" % detail
                 return nil
             end
         end
@@ -562,23 +562,23 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     # Use our cached config, optionally specifying whether this is
     # necessary because of a failure.
     def use_cached_config(because_of_failure = false)
-        return true if self.configuration
+        return true if self.catalog
 
         if because_of_failure and ! Puppet[:usecacheonfailure]
-            @configuration = nil
-            Puppet.warning "Not using cache on failed configuration"
+            @catalog = nil
+            Puppet.warning "Not using cache on failed catalog"
             return false
         end
 
         return false unless oldtext = self.retrievecache
 
         begin
-            @configuration = YAML.load(oldtext).to_configuration
-            @configuration.from_cache = true
-            @configuration.host_config = true
+            @catalog = YAML.load(oldtext).to_catalog
+            @catalog.from_cache = true
+            @catalog.host_config = true
         rescue => detail
             puts detail.backtrace if Puppet[:trace]
-            Puppet.warning "Could not load cached configuration: %s" % detail
+            Puppet.warning "Could not load cached catalog: %s" % detail
             clear
             return false
         end

@@ -107,8 +107,8 @@ module PackageEvaluationTesting
         Puppet::Type::Package.defaultprovider.stubs(:new).returns(@provider)
         @package = Puppet::Type::Package.create(:name => "yay")
 
-        @configuration = Puppet::Node::Configuration.new
-        @configuration.add_resource(@package)
+        @catalog = Puppet::Node::Catalog.new
+        @catalog.add_resource(@package)
     end
 
     def setprops(properties)
@@ -116,7 +116,7 @@ module PackageEvaluationTesting
     end
 
     def teardown
-        @configuration.clear(true)
+        @catalog.clear(true)
         Puppet::Type::Package.clear
     end
 end
@@ -128,14 +128,14 @@ describe Puppet::Type::Package, "when it should be purged" do
 
     it "should do nothing if it is :purged" do
         @provider.expects(:properties).returns(:ensure => :purged)
-        @configuration.apply
+        @catalog.apply
     end
 
     [:absent, :installed, :present, :latest].each do |state|
         it "should purge if it is #{state.to_s}" do
             @provider.stubs(:properties).returns(:ensure => state)
             @provider.expects(:purge)
-            @configuration.apply
+            @catalog.apply
         end
     end
 end
@@ -148,7 +148,7 @@ describe Puppet::Type::Package, "when it should be absent" do
     [:purged, :absent].each do |state|
         it "should do nothing if it is #{state.to_s}" do
             @provider.expects(:properties).returns(:ensure => state)
-            @configuration.apply
+            @catalog.apply
         end
     end
 
@@ -156,7 +156,7 @@ describe Puppet::Type::Package, "when it should be absent" do
         it "should uninstall if it is #{state.to_s}" do
             @provider.stubs(:properties).returns(:ensure => state)
             @provider.expects(:uninstall)
-            @configuration.apply
+            @catalog.apply
         end
     end
 end
@@ -169,7 +169,7 @@ describe Puppet::Type::Package, "when it should be present" do
     [:present, :latest, "1.0"].each do |state|
         it "should do nothing if it is #{state.to_s}" do
             @provider.expects(:properties).returns(:ensure => state)
-            @configuration.apply
+            @catalog.apply
         end
     end
 
@@ -177,7 +177,7 @@ describe Puppet::Type::Package, "when it should be present" do
         it "should install if it is #{state.to_s}" do
             @provider.stubs(:properties).returns(:ensure => state)
             @provider.expects(:install)
-            @configuration.apply
+            @catalog.apply
         end
     end
 end
@@ -191,7 +191,7 @@ describe Puppet::Type::Package, "when it should be latest" do
         it "should upgrade if it is #{state.to_s}" do
             @provider.stubs(:properties).returns(:ensure => state)
             @provider.expects(:update)
-            @configuration.apply
+            @catalog.apply
         end
     end
 
@@ -199,21 +199,21 @@ describe Puppet::Type::Package, "when it should be latest" do
         @provider.stubs(:properties).returns(:ensure => "1.0")
         @provider.stubs(:latest).returns("2.0")
         @provider.expects(:update)
-        @configuration.apply
+        @catalog.apply
     end
 
     it "should do nothing if it is equal to the latest version" do
         @provider.stubs(:properties).returns(:ensure => "1.0")
         @provider.stubs(:latest).returns("1.0")
         @provider.expects(:update).never
-        @configuration.apply
+        @catalog.apply
     end
 
     it "should do nothing if the provider returns :present as the latest version" do
         @provider.stubs(:properties).returns(:ensure => :present)
         @provider.stubs(:latest).returns("1.0")
         @provider.expects(:update).never
-        @configuration.apply
+        @catalog.apply
     end
 end
 
@@ -226,19 +226,19 @@ describe Puppet::Type::Package, "when it should be a specific version" do
         it "should install if it is #{state.to_s}" do
             @provider.stubs(:properties).returns(:ensure => state)
             @provider.expects(:install)
-            @configuration.apply
+            @catalog.apply
         end
     end
 
     it "should do nothing if the current version is equal to the desired version" do
         @provider.stubs(:properties).returns(:ensure => "1.0")
         @provider.expects(:install).never
-        @configuration.apply
+        @catalog.apply
     end
 
     it "should install if the current version is not equal to the specified version" do
         @provider.stubs(:properties).returns(:ensure => "2.0")
         @provider.expects(:install)
-        @configuration.apply
+        @catalog.apply
     end
 end

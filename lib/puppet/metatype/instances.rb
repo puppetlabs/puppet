@@ -221,8 +221,8 @@ class Puppet::Type
             hash.delete :name
         end
 
-        if configuration = hash[:configuration]
-            hash.delete(:configuration)
+        if catalog = hash[:catalog]
+            hash.delete(:catalog)
         end
 
         raise(Puppet::Error, "You must specify a title for objects of type %s" % self.to_s) unless title
@@ -236,7 +236,7 @@ class Puppet::Type
         # okay, now make a transobject out of hash
         begin
             trans = Puppet::TransObject.new(title, self.name.to_s)
-            trans.configuration = configuration if configuration
+            trans.catalog = catalog if catalog
             hash.each { |param, value|
                 trans[param] = value
             }

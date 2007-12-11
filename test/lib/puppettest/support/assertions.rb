@@ -52,7 +52,7 @@ module PuppetTest
             msg = resources.pop
         end
 
-        config = resources2config(*resources)
+        config = resources2catalog(*resources)
         transaction = Puppet::Transaction.new(config)
 
         run_events(:evaluate, transaction, events, msg)
@@ -62,7 +62,7 @@ module PuppetTest
 
     # A simpler method that just applies what we have.
     def assert_apply(*resources)
-        config = resources2config(*resources)
+        config = resources2catalog(*resources)
 
         events = nil
         assert_nothing_raised("Failed to evaluate") {

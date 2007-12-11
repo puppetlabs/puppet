@@ -67,8 +67,8 @@ module Puppet
 
         def apply
             bucket = export()
-            configuration = bucket.to_configuration
-            configuration.apply
+            catalog = bucket.to_catalog
+            catalog.apply
         end
 
         def export

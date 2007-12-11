@@ -9,7 +9,7 @@ require 'puppet/parser/scope'
 # The interpreter is a very simple entry-point class that
 # manages the existence of the parser (e.g., replacing it
 # when files are reparsed).  You can feed it a node and
-# get the node's configuration back.
+# get the node's catalog back.
 class Puppet::Parser::Interpreter
     include Puppet::Util
 

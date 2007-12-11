@@ -111,7 +111,7 @@ describe Puppet::Parser::Interpreter, " when managing parser instances" do
     end
 end
 
-describe Puppet::Parser::Interpreter, " when compiling configurations" do
+describe Puppet::Parser::Interpreter, " when compiling catalog" do
     before do
         @interp = Puppet::Parser::Interpreter.new
         @node = stub 'node', :environment => :myenv
@@ -132,12 +132,12 @@ describe Puppet::Parser::Interpreter, " when compiling configurations" do
     end
 end
 
-describe Puppet::Parser::Interpreter, " when returning configuration version" do
+describe Puppet::Parser::Interpreter, " when returning catalog version" do
     before do
         @interp = Puppet::Parser::Interpreter.new
     end
 
-    it "should ask the appropriate parser for the configuration version" do
+    it "should ask the appropriate parser for the catalog version" do
         node = mock 'node'
         node.expects(:environment).returns(:myenv)
         parser = mock 'parser'

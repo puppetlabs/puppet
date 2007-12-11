@@ -75,7 +75,7 @@ class TestFileIgnoreSources < Test::Unit::TestCase
             )
         }
 
-        config = mk_configuration(tofile)
+        config = mk_catalog(tofile)
         config.apply
   
       
@@ -141,7 +141,7 @@ class TestFileIgnoreSources < Test::Unit::TestCase
             )
         }
 
-        config = mk_configuration(tofile)
+        config = mk_catalog(tofile)
         config.apply
               
         #topath should exist as a directory with sourcedir as a directory
@@ -216,7 +216,7 @@ class TestFileIgnoreSources < Test::Unit::TestCase
             )
         }
 
-        config = mk_configuration(tofile)
+        config = mk_catalog(tofile)
         config.apply
 
         #topath should exist as a directory with sourcedir as a directory

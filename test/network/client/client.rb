@@ -46,13 +46,13 @@ class TestClient < Test::Unit::TestCase
         assert(File.exists?(certfile))
         assert(File.exists?(publickeyfile))
 
-        # verify we can retrieve the configuration
-        assert_nothing_raised("Client could not retrieve configuration") {
+        # verify we can retrieve the catalog
+        assert_nothing_raised("Client could not retrieve catalog") {
             client.getconfig
         }
 
         # and apply it
-        assert_nothing_raised("Client could not apply configuration") {
+        assert_nothing_raised("Client could not apply catalog") {
             client.apply
         }
 

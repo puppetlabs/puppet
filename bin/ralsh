@@ -228,10 +228,10 @@ else
             params.each do |param, value|
                 obj[param] = value
             end
-            config = Puppet::Node::Configuration.new
-            config.add_resource obj
+            catalog = Puppet::Node::Catalog.new
+            catalog.add_resource obj
             begin
-                config.apply
+                catalog.apply
             rescue => detail
                 if Puppet[:trace]
                     puts detail.backtrace

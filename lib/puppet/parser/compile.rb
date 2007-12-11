@@ -6,15 +6,15 @@ require 'puppet/external/gratr/import'
 require 'puppet/external/gratr/dot'
 
 require 'puppet/node'
-require 'puppet/node/configuration'
+require 'puppet/node/catalog'
 require 'puppet/util/errors'
 
 # Maintain a graph of scopes, along with a bunch of data
-# about the individual configuration we're compiling.
+# about the individual catalog we're compiling.
 class Puppet::Parser::Compile
     include Puppet::Util
     include Puppet::Util::Errors
-    attr_reader :parser, :node, :facts, :collections, :configuration, :node_scope
+    attr_reader :parser, :node, :facts, :collections, :catalog, :node_scope
 
     # Add a collection to the global list.
     def add_collection(coll)
@@ -37,7 +37,7 @@ class Puppet::Parser::Compile
             end
         end
         @class_scopes[name] = scope
-        @configuration.add_class(name) unless name == ""
+        @catalog.add_class(name) unless name == ""
     end
 
     # Return the scope associated with a class.  This is just here so
@@ -55,11 +55,11 @@ class Puppet::Parser::Compile
 
     # Return a list of all of the defined classes.
     def classlist
-        return @configuration.classes
+        return @catalog.classes
     end
 
-    # Compile our configuration.  This mostly revolves around finding and evaluating classes.
-    # This is the main entry into our configuration.
+    # Compile our catalog.  This mostly revolves around finding and evaluating classes.
+    # This is the main entry into our catalog.
     def compile
         # Set the client's parameters into the top scope.
         set_node_parameters()
@@ -80,7 +80,7 @@ class Puppet::Parser::Compile
             store()
         end
 
-        return @configuration
+        return @catalog
     end
 
     # LAK:FIXME There are no tests for this.
@@ -111,7 +111,7 @@ class Puppet::Parser::Compile
     end
 
     # Evaluate each specified class in turn.  If there are any classes we can't
-    # find, just tag the configuration and move on.  This method really just
+    # find, just tag the catalog and move on.  This method really just
     # creates resource objects that point back to the classes, and then the
     # resources are themselves evaluated later in the process.
     def evaluate_classes(classes, scope, lazy_evaluate = true)
@@ -130,11 +130,11 @@ class Puppet::Parser::Compile
                 # If they've disabled lazy evaluation (which the :include function does),
                 # then evaluate our resource immediately.
                 resource.evaluate unless lazy_evaluate
-                @configuration.tag(klass.classname)
+                @catalog.tag(klass.classname)
                 found << name
             else
                 Puppet.info "Could not find class %s for %s" % [name, node.name]
-                @configuration.tag(name)
+                @catalog.tag(name)
             end
         end
         found
@@ -224,7 +224,7 @@ class Puppet::Parser::Compile
         # And in the resource graph.  At some point, this might supercede
         # the global resource table, but the table is a lot faster
         # so it makes sense to maintain for now.
-        @configuration.add_edge!(scope.resource, resource)
+        @catalog.add_edge!(scope.resource, resource)
     end
 
     # The top scope is usually the top-level scope, but if we're using AST nodes,
@@ -253,7 +253,7 @@ class Puppet::Parser::Compile
         # of resources.
         resource = Puppet::Parser::Resource.new(:type => "node", :title => astnode.classname, :scope => topscope, :source => topscope.source)
         store_resource(topscope, resource)
-        @configuration.tag(astnode.classname)
+        @catalog.tag(astnode.classname)
 
         resource.evaluate
 
@@ -311,7 +311,7 @@ class Puppet::Parser::Compile
             done = false if evaluate_definitions
             break if done
             if count > 1000
-                raise Puppet::ParseError, "Somehow looped more than 1000 times while evaluating host configuration"
+                raise Puppet::ParseError, "Somehow looped more than 1000 times while evaluating host catalog"
             end
         end
     end
@@ -323,14 +323,14 @@ class Puppet::Parser::Compile
         @main_resource = Puppet::Parser::Resource.new(:type => "class", :title => :main, :scope => @topscope, :source => @main)
         @topscope.resource = @main_resource
 
-        @configuration.add_vertex!(@main_resource)
+        @catalog.add_vertex!(@main_resource)
 
         @resource_table["Class[main]"] = @main_resource
 
         @main_resource.evaluate
     end
 
-    # Make sure the entire configuration is evaluated.
+    # Make sure the entire catalog is evaluated.
     def fail_on_unevaluated
         fail_on_unevaluated_overrides
         fail_on_unevaluated_resource_collections
@@ -420,8 +420,8 @@ class Puppet::Parser::Compile
         @scope_graph = GRATR::Digraph.new
 
         # For maintaining the relationship between scopes and their resources.
-        @configuration = Puppet::Node::Configuration.new(@node.name)
-        @configuration.version = @parser.version
+        @catalog = Puppet::Node::Catalog.new(@node.name)
+        @catalog.version = @parser.version
     end
 
     # Set the node's parameters into the top-scope as variables.
@@ -431,7 +431,7 @@ class Puppet::Parser::Compile
         end
     end
 
-    # Store the configuration into the database.
+    # Store the catalog into the database.
     def store
         unless Puppet.features.rails?
             raise Puppet::Error,
@@ -451,7 +451,7 @@ class Puppet::Parser::Compile
     def store_to_active_record(node, resources)
         begin
             # We store all of the objects, even the collectable ones
-            benchmark(:info, "Stored configuration for #{node.name}") do
+            benchmark(:info, "Stored catalog for #{node.name}") do
                 Puppet::Rails::Host.transaction do
                     Puppet::Rails::Host.store(node, resources)
                 end

@@ -179,7 +179,7 @@ class TestExec < Test::Unit::TestCase
             )
         }
 
-        comp = mk_configuration("createstest", exec)
+        comp = mk_catalog("createstest", exec)
         assert_events([:executed_command], comp, "creates")
         assert_events([], comp, "creates")
     end
@@ -202,7 +202,7 @@ class TestExec < Test::Unit::TestCase
             :require => [:file, oexe]
         )
 
-        comp = mk_configuration("Testing", file, exec)
+        comp = mk_catalog("Testing", file, exec)
 
         assert_events([:file_created, :executed_command], comp)
     end
@@ -299,7 +299,7 @@ class TestExec < Test::Unit::TestCase
                 :path => ENV['PATH']
             )
         }
-        comp = mk_configuration(exec)
+        comp = mk_catalog(exec)
 
         assert_events([:executed_command], comp)
         assert_events([:executed_command], comp)
@@ -344,7 +344,7 @@ class TestExec < Test::Unit::TestCase
                 exec = Puppet.type(:exec).create(args)
             }
 
-            comp = mk_configuration("usertest", exec)
+            comp = mk_catalog("usertest", exec)
             assert_events([:executed_command], comp, "usertest")
 
             assert(FileTest.exists?(file), "File does not exist")
@@ -425,7 +425,7 @@ class TestExec < Test::Unit::TestCase
             )
         }
 
-        comp = mk_configuration(file, exec)
+        comp = mk_catalog(file, exec)
         comp.finalize
         assert_events([:executed_command, :file_changed], comp)
 

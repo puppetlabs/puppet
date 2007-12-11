@@ -65,7 +65,7 @@ class TestGroup < Test::Unit::TestCase
     def attrtest_ensure(group)
         group[:ensure] = :absent
 
-        comp = mk_configuration("ensuretest", group)
+        comp = mk_catalog("ensuretest", group)
         assert_apply(comp)
         assert_equal(:absent, group.provider.ensure,  "Group is still present")
         group[:ensure] = :present
@@ -91,7 +91,7 @@ class TestGroup < Test::Unit::TestCase
         assert_equal(15, group.should(:gid),
                      "Did not convert gid to number")
 
-        comp = mk_configuration(group)
+        comp = mk_catalog(group)
         trans = assert_events([:group_modified], comp, "group")
         assert_equal(15, group.provider.gid, "GID was not changed")
 

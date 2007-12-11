@@ -8,7 +8,7 @@ require 'puppet'
 # resources.
 class Puppet::ResourceReference
     attr_reader :type
-    attr_accessor :title, :configuration
+    attr_accessor :title, :catalog
 
     def initialize(type, title)
         # This will set @type if it looks like a resource reference.
@@ -22,8 +22,8 @@ class Puppet::ResourceReference
 
     # Find our resource.
     def resolve
-        if configuration
-            return configuration.resource(to_s)
+        if catalog
+            return catalog.resource(to_s)
         end
         # If it's builtin, then just ask for it directly from the type.
         if t = builtin_type

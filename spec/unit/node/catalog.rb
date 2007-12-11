@@ -2,34 +2,34 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-describe Puppet::Node::Configuration, " when compiling" do
+describe Puppet::Node::Catalog, " when compiling" do
     it "should accept tags" do
-        config = Puppet::Node::Configuration.new("mynode")
+        config = Puppet::Node::Catalog.new("mynode")
         config.tag("one")
         config.tags.should == %w{one}
     end
 
     it "should accept multiple tags at once" do
-        config = Puppet::Node::Configuration.new("mynode")
+        config = Puppet::Node::Catalog.new("mynode")
         config.tag("one", "two")
         config.tags.should == %w{one two}
     end
 
     it "should convert all tags to strings" do
-        config = Puppet::Node::Configuration.new("mynode")
+        config = Puppet::Node::Catalog.new("mynode")
         config.tag("one", :two)
         config.tags.should == %w{one two}
     end
 
     it "should tag with both the qualified name and the split name" do
-        config = Puppet::Node::Configuration.new("mynode")
+        config = Puppet::Node::Catalog.new("mynode")
         config.tag("one::two")
         config.tags.include?("one").should be_true
         config.tags.include?("one::two").should be_true
     end
 
     it "should accept classes" do
-        config = Puppet::Node::Configuration.new("mynode")
+        config = Puppet::Node::Catalog.new("mynode")
         config.add_class("one")
         config.classes.should == %w{one}
         config.add_class("two", "three")
@@ -37,22 +37,22 @@ describe Puppet::Node::Configuration, " when compiling" do
     end
 
     it "should tag itself with passed class names" do
-        config = Puppet::Node::Configuration.new("mynode")
+        config = Puppet::Node::Catalog.new("mynode")
         config.add_class("one")
         config.tags.should == %w{one}
     end
 end
 
-describe Puppet::Node::Configuration, " when extracting" do
+describe Puppet::Node::Catalog, " when extracting" do
     it "should return extraction result as the method result" do
-        config = Puppet::Node::Configuration.new("mynode")
+        config = Puppet::Node::Catalog.new("mynode")
         config.expects(:extraction_format).returns(:whatever)
         config.expects(:extract_to_whatever).returns(:result)
         config.extract.should == :result
     end
 end
 
-describe Puppet::Node::Configuration, " when extracting transobjects" do
+describe Puppet::Node::Catalog, " when extracting transobjects" do
 
     def mkscope
         @parser = Puppet::Parser::Parser.new :Code => ""
@@ -69,7 +69,7 @@ describe Puppet::Node::Configuration, " when extracting transobjects" do
     end
 
     it "should always create a TransBucket for the 'main' class" do
-        config = Puppet::Node::Configuration.new("mynode")
+        config = Puppet::Node::Catalog.new("mynode")
 
         @scope = mkscope
         @source = mock 'source'
@@ -87,7 +87,7 @@ describe Puppet::Node::Configuration, " when extracting transobjects" do
 
     # This isn't really a spec-style test, but I don't know how better to do it.
     it "should transform the resource graph into a tree of TransBuckets and TransObjects" do
-        config = Puppet::Node::Configuration.new("mynode")
+        config = Puppet::Node::Catalog.new("mynode")
 
         @scope = mkscope
         @source = mock 'source'
@@ -108,7 +108,7 @@ describe Puppet::Node::Configuration, " when extracting transobjects" do
 
     # Now try it with a more complicated graph -- a three tier graph, each tier
     it "should transform arbitrarily deep graphs into isomorphic trees" do
-        config = Puppet::Node::Configuration.new("mynode")
+        config = Puppet::Node::Catalog.new("mynode")
 
         @scope = mkscope
         @scope.stubs(:tags).returns([])
@@ -151,7 +151,7 @@ describe Puppet::Node::Configuration, " when extracting transobjects" do
     end
 end
 
-describe Puppet::Node::Configuration, " when converting to a transobject configuration" do
+describe Puppet::Node::Catalog, " when converting to a transobject catalog" do
     class TestResource
         attr_accessor :name, :virtual, :builtin
         def initialize(name, options = {})
@@ -181,7 +181,7 @@ describe Puppet::Node::Configuration, " when converting to a transobject configu
     end
 
     before do
-        @original = Puppet::Node::Configuration.new("mynode")
+        @original = Puppet::Node::Catalog.new("mynode")
         @original.tag(*%w{one two three})
         @original.add_class *%w{four five six}
 
@@ -219,11 +219,11 @@ describe Puppet::Node::Configuration, " when converting to a transobject configu
         @config.vertices.find { |v| v.name == "virtualobject" }.should be_nil
     end
 
-    it "should copy the tag list to the new configuration" do
+    it "should copy the tag list to the new catalog" do
         @config.tags.sort.should == @original.tags.sort
     end
 
-    it "should copy the class list to the new configuration" do
+    it "should copy the class list to the new catalog" do
         @config.classes.should == @original.classes
     end
 
@@ -239,14 +239,14 @@ describe Puppet::Node::Configuration, " when converting to a transobject configu
         end
     end
 
-    it "should set itself as the configuration for each converted resource" do
-        @config.vertices.each { |v| v.configuration.object_id.should equal(@config.object_id) }
+    it "should set itself as the catalog for each converted resource" do
+        @config.vertices.each { |v| v.catalog.object_id.should equal(@config.object_id) }
     end
 end
 
-describe Puppet::Node::Configuration, " when converting to a RAL configuration" do
+describe Puppet::Node::Catalog, " when converting to a RAL catalog" do
     before do
-        @original = Puppet::Node::Configuration.new("mynode")
+        @original = Puppet::Node::Catalog.new("mynode")
         @original.tag(*%w{one two three})
         @original.add_class *%w{four five six}
 
@@ -274,11 +274,11 @@ describe Puppet::Node::Configuration, " when converting to a RAL configuration" 
         @resources.each { |resource| @config.resource(resource.ref).should be_instance_of(Puppet::Type) }
     end
 
-    it "should copy the tag list to the new configuration" do
+    it "should copy the tag list to the new catalog" do
         @config.tags.sort.should == @original.tags.sort
     end
 
-    it "should copy the class list to the new configuration" do
+    it "should copy the class list to the new catalog" do
         @config.classes.should == @original.classes
     end
 
@@ -288,21 +288,21 @@ describe Puppet::Node::Configuration, " when converting to a RAL configuration" 
         end
     end
 
-    it "should set itself as the configuration for each converted resource" do
-        @config.vertices.each { |v| v.configuration.object_id.should equal(@config.object_id) }
+    it "should set itself as the catalog for each converted resource" do
+        @config.vertices.each { |v| v.catalog.object_id.should equal(@config.object_id) }
     end
 
     # This tests #931.
     it "should not lose track of resources whose names vary" do
         changer = Puppet::TransObject.new 'changer', 'test'
 
-        config = Puppet::Node::Configuration.new('test')
+        config = Puppet::Node::Catalog.new('test')
         config.add_resource(changer)
         config.add_resource(@top)
 
         config.add_edge!(@top, changer)
 
-        resource = stub 'resource', :name => "changer2", :title => "changer2", :ref => "Test[changer2]", :configuration= => nil, :remove => nil
+        resource = stub 'resource', :name => "changer2", :title => "changer2", :ref => "Test[changer2]", :catalog= => nil, :remove => nil
 
         changer.expects(:to_type).returns(resource)
 
@@ -320,12 +320,12 @@ describe Puppet::Node::Configuration, " when converting to a RAL configuration" 
     end
 end
 
-describe Puppet::Node::Configuration, " when functioning as a resource container" do
+describe Puppet::Node::Catalog, " when functioning as a resource container" do
     before do
-        @config = Puppet::Node::Configuration.new("host")
-        @one = stub 'resource1', :ref => "Me[one]", :configuration= => nil
-        @two = stub 'resource2', :ref => "Me[two]", :configuration= => nil
-        @dupe = stub 'resource3', :ref => "Me[one]", :configuration= => nil
+        @config = Puppet::Node::Catalog.new("host")
+        @one = stub 'resource1', :ref => "Me[one]", :catalog= => nil
+        @two = stub 'resource2', :ref => "Me[two]", :catalog= => nil
+        @dupe = stub 'resource3', :ref => "Me[one]", :catalog= => nil
     end
 
     it "should provide a method to add one or more resources" do
@@ -334,13 +334,13 @@ describe Puppet::Node::Configuration, " when functioning as a resource container
         @config.resource(@two.ref).should equal(@two)
     end
 
-    it "should set itself as the resource's configuration if it is not a relationship graph" do
-        @one.expects(:configuration=).with(@config)
+    it "should set itself as the resource's catalog if it is not a relationship graph" do
+        @one.expects(:catalog=).with(@config)
         @config.add_resource @one
     end
 
-    it "should not set itself as the resource's configuration if it is a relationship graph" do
-        @one.expects(:configuration=).never
+    it "should not set itself as the resource's catalog if it is a relationship graph" do
+        @one.expects(:catalog=).never
         @config.is_relationship_graph = true
         @config.add_resource @one
     end
@@ -392,14 +392,14 @@ describe Puppet::Node::Configuration, " when functioning as a resource container
     it "should optionally support an initialization block and should finalize after such blocks" do
         @one.expects :finish
         @two.expects :finish
-        config = Puppet::Node::Configuration.new("host") do |conf|
+        config = Puppet::Node::Catalog.new("host") do |conf|
             conf.add_resource @one
             conf.add_resource @two
         end
     end
 
-    it "should inform the resource that it is the resource's configuration" do
-        @one.expects(:configuration=).with(@config)
+    it "should inform the resource that it is the resource's catalog" do
+        @one.expects(:catalog=).with(@config)
         @config.add_resource @one
     end
 
@@ -448,9 +448,9 @@ describe Puppet::Node::Configuration, " when functioning as a resource container
     end
 end
 
-module ApplyingConfigurations
+module ApplyingCatalogs
     def setup
-        @config = Puppet::Node::Configuration.new("host")
+        @config = Puppet::Node::Catalog.new("host")
 
         @config.retrieval_duration = Time.now
         @transaction = mock 'transaction'
@@ -461,15 +461,15 @@ module ApplyingConfigurations
     end
 end
 
-describe Puppet::Node::Configuration, " when applying" do
-    include ApplyingConfigurations
+describe Puppet::Node::Catalog, " when applying" do
+    include ApplyingCatalogs
 
     it "should create and evaluate a transaction" do
         @transaction.expects(:evaluate)
         @config.apply
     end
 
-    it "should provide the configuration time to the transaction" do
+    it "should provide the catalog time to the transaction" do
         @transaction.expects(:addtimes).with do |arg|
             arg[:config_retrieval].should be_instance_of(Time)
             true
@@ -492,7 +492,7 @@ describe Puppet::Node::Configuration, " when applying" do
         end
     end
     
-    it "should default to not being a host configuration" do
+    it "should default to not being a host catalog" do
         @config.host_config.should be_nil
     end
 
@@ -507,8 +507,8 @@ describe Puppet::Node::Configuration, " when applying" do
     end
 end
 
-describe Puppet::Node::Configuration, " when applying host configurations" do
-    include ApplyingConfigurations
+describe Puppet::Node::Catalog, " when applying host catalogs" do
+    include ApplyingCatalogs
 
     # super() doesn't work in the setup method for some reason
     before do
@@ -529,7 +529,7 @@ describe Puppet::Node::Configuration, " when applying host configurations" do
         @config.apply
     end
 
-    it "should initialize the state database before applying a configuration" do
+    it "should initialize the state database before applying a catalog" do
         Puppet::Util::Storage.expects(:load)
 
         # Short-circuit the apply, so we know we're loading before the transaction
@@ -546,8 +546,8 @@ describe Puppet::Node::Configuration, " when applying host configurations" do
     after { Puppet.settings.clear }
 end
 
-describe Puppet::Node::Configuration, " when applying non-host configurations" do
-    include ApplyingConfigurations
+describe Puppet::Node::Catalog, " when applying non-host catalogs" do
+    include ApplyingCatalogs
 
     before do
         @config.host_config = false
@@ -569,9 +569,9 @@ describe Puppet::Node::Configuration, " when applying non-host configurations" d
     after { Puppet.settings.clear }
 end
 
-describe Puppet::Node::Configuration, " when creating a relationship graph" do
+describe Puppet::Node::Catalog, " when creating a relationship graph" do
     before do
-        @config = Puppet::Node::Configuration.new("host")
+        @config = Puppet::Node::Catalog.new("host")
         @compone = Puppet::Type::Component.create :name => "one"
         @comptwo = Puppet::Type::Component.create :name => "two", :require => ["class", "one"]
         @file = Puppet::Type.type(:file)
@@ -592,11 +592,11 @@ describe Puppet::Node::Configuration, " when creating a relationship graph" do
     end
 
     it "should be able to create a relationship graph" do
-        @relationships.should be_instance_of(Puppet::Node::Configuration)
+        @relationships.should be_instance_of(Puppet::Node::Catalog)
     end
 
     it "should copy its host_config setting to the relationship graph" do
-        config = Puppet::Node::Configuration.new
+        config = Puppet::Node::Catalog.new
         config.host_config = true
         config.relationship_graph.host_config.should be_true
     end
@@ -605,7 +605,7 @@ describe Puppet::Node::Configuration, " when creating a relationship graph" do
         @relationships.vertices.find { |r| r.instance_of?(Puppet::Type::Component) }.should be_nil
     end
 
-    it "should have all non-component resources from the configuration" do
+    it "should have all non-component resources from the catalog" do
         # The failures print out too much info, so i just do a class comparison
         @relationships.vertex?(@five).should be_true
     end
@@ -618,7 +618,7 @@ describe Puppet::Node::Configuration, " when creating a relationship graph" do
         @relationships.edge?(@one, @two).should be_true
     end
 
-    it "should get removed when the configuration is cleaned up" do
+    it "should get removed when the catalog is cleaned up" do
         @relationships.expects(:clear).with(false)
         @config.clear
         @config.instance_variable_get("@relationship_graph").should be_nil
@@ -627,18 +627,18 @@ describe Puppet::Node::Configuration, " when creating a relationship graph" do
     it "should create a new relationship graph after clearing the old one" do
         @relationships.expects(:clear).with(false)
         @config.clear
-        @config.relationship_graph.should be_instance_of(Puppet::Node::Configuration)
+        @config.relationship_graph.should be_instance_of(Puppet::Node::Catalog)
     end
 
-    it "should look up resources in the relationship graph if not found in the main configuration" do
-        five = stub 'five', :ref => "File[five]", :configuration= => nil
+    it "should look up resources in the relationship graph if not found in the main catalog" do
+        five = stub 'five', :ref => "File[five]", :catalog= => nil
         @relationships.add_resource five
         @config.resource(five.ref).should equal(five)
     end
 
     it "should provide a method to create additional resources that also registers the resource" do
         args = {:name => "/yay", :ensure => :file}
-        resource = stub 'file', :ref => "File[/yay]", :configuration= => @config
+        resource = stub 'file', :ref => "File[/yay]", :catalog= => @config
         Puppet::Type.type(:file).expects(:create).with(args).returns(resource)
         @config.create_resource :file, args
         @config.resource("File[/yay]").should equal(resource)
@@ -646,7 +646,7 @@ describe Puppet::Node::Configuration, " when creating a relationship graph" do
 
     it "should provide a mechanism for creating implicit resources" do
         args = {:name => "/yay", :ensure => :file}
-        resource = stub 'file', :ref => "File[/yay]", :configuration= => @config
+        resource = stub 'file', :ref => "File[/yay]", :catalog= => @config
         Puppet::Type.type(:file).expects(:create).with(args).returns(resource)
         resource.expects(:implicit=).with(true)
         @config.create_implicit_resource :file, args
@@ -655,7 +655,7 @@ describe Puppet::Node::Configuration, " when creating a relationship graph" do
 
     it "should add implicit resources to the relationship graph if there is one" do
         args = {:name => "/yay", :ensure => :file}
-        resource = stub 'file', :ref => "File[/yay]", :configuration= => @config
+        resource = stub 'file', :ref => "File[/yay]", :catalog= => @config
         resource.expects(:implicit=).with(true)
         Puppet::Type.type(:file).expects(:create).with(args).returns(resource)
         # build the graph
@@ -667,7 +667,7 @@ describe Puppet::Node::Configuration, " when creating a relationship graph" do
 
     it "should remove resources created mid-transaction" do
         args = {:name => "/yay", :ensure => :file}
-        resource = stub 'file', :ref => "File[/yay]", :configuration= => @config
+        resource = stub 'file', :ref => "File[/yay]", :catalog= => @config
         @transaction = mock 'transaction'
         Puppet::Transaction.stubs(:new).returns(@transaction)
         @transaction.stubs(:evaluate)
@@ -692,13 +692,13 @@ describe Puppet::Node::Configuration, " when creating a relationship graph" do
     end
 end
 
-describe Puppet::Node::Configuration, " when writing dot files" do
+describe Puppet::Node::Catalog, " when writing dot files" do
     before do
-        @config = Puppet::Node::Configuration.new("host")
+        @config = Puppet::Node::Catalog.new("host")
         @name = :test
         @file = File.join(Puppet[:graphdir], @name.to_s + ".dot")
     end
-    it "should only write when it is a host configuration" do
+    it "should only write when it is a host catalog" do
         File.expects(:open).with(@file).never
         @config.host_config = false
         Puppet[:graph] = true
@@ -725,7 +725,7 @@ describe Puppet::Node::Configuration, " when writing dot files" do
     end
 end
 
-describe Puppet::Node::Configuration, " when indirecting" do
+describe Puppet::Node::Catalog, " when indirecting" do
     before do
         @indirection = mock 'indirection'
 
@@ -733,13 +733,13 @@ describe Puppet::Node::Configuration, " when indirecting" do
     end
 
     it "should redirect to the indirection for retrieval" do
-        Puppet::Node::Configuration.stubs(:indirection).returns(@indirection)
+        Puppet::Node::Catalog.stubs(:indirection).returns(@indirection)
         @indirection.expects(:find).with(:myconfig)
-        Puppet::Node::Configuration.find(:myconfig)
+        Puppet::Node::Catalog.find(:myconfig)
     end
 
     it "should default to the 'compiler' terminus" do
-        Puppet::Node::Configuration.indirection.terminus_class.should == :compiler
+        Puppet::Node::Catalog.indirection.terminus_class.should == :compiler
     end
 
     after do
@@ -748,36 +748,36 @@ describe Puppet::Node::Configuration, " when indirecting" do
     end
 end
 
-describe Puppet::Node::Configuration, " when converting to yaml" do
+describe Puppet::Node::Catalog, " when converting to yaml" do
     before do
-        @configuration = Puppet::Node::Configuration.new("me")
-        @configuration.add_edge!("one", "two")
+        @catalog = Puppet::Node::Catalog.new("me")
+        @catalog.add_edge!("one", "two")
     end
 
     it "should be able to be dumped to yaml" do
-        YAML.dump(@configuration).should be_instance_of(String)
+        YAML.dump(@catalog).should be_instance_of(String)
     end
 end
 
-describe Puppet::Node::Configuration, " when converting from yaml" do
+describe Puppet::Node::Catalog, " when converting from yaml" do
     before do
-        @configuration = Puppet::Node::Configuration.new("me")
-        @configuration.add_edge!("one", "two")
+        @catalog = Puppet::Node::Catalog.new("me")
+        @catalog.add_edge!("one", "two")
 
-        text = YAML.dump(@configuration)
-        @newconfig = YAML.load(text)
+        text = YAML.dump(@catalog)
+        @newcatalog = YAML.load(text)
     end
 
-    it "should get converted back to a configuration" do
-        @newconfig.should be_instance_of(Puppet::Node::Configuration)
+    it "should get converted back to a catalog" do
+        @newcatalog.should be_instance_of(Puppet::Node::Catalog)
     end
 
     it "should have all vertices" do
-        @newconfig.vertex?("one").should be_true
-        @newconfig.vertex?("two").should be_true
+        @newcatalog.vertex?("one").should be_true
+        @newcatalog.vertex?("two").should be_true
     end
 
     it "should have all edges" do
-        @newconfig.edge?("one", "two").should be_true
+        @newcatalog.edge?("one", "two").should be_true
     end
 end

@@ -176,7 +176,7 @@ class TestRelationships < Test::Unit::TestCase
         
         # Now make sure that these relationships are added to the 
         # relationship graph
-        config = mk_configuration(file, exec)
+        config = mk_catalog(file, exec)
         config.apply do |trans|
             assert(config.relationship_graph.edge?(file, exec), "autorequire edge was not created")
         end

@@ -118,8 +118,8 @@ class Type
         #@validate = block
     end
 
-    # The configuration that this resource is stored in.
-    attr_accessor :configuration
+    # The catalog that this resource is stored in.
+    attr_accessor :catalog
     
     # create a log at specified level
     def log(msg)
@@ -186,7 +186,7 @@ class Type
             self.title = hash.name
 
             #self[:name] = hash[:name]
-            [:file, :line, :tags, :configuration].each { |getter|
+            [:file, :line, :tags, :catalog].each { |getter|
                 if hash.respond_to?(getter)
                     setter = getter.to_s + "="
                     if val = hash.send(getter)
@@ -289,7 +289,7 @@ class Type
         self.schedule
 
         # Make sure all of our relationships are valid.  Again, must be done
-        # when the entire configuration is instantiated.
+        # when the entire catalog is instantiated.
         self.class.relationship_params.collect do |klass|
             if param = @parameters[klass.name]
                 param.validate_relationship
@@ -323,16 +323,16 @@ class Type
         return self[:name]
     end
 
-    # Look up our parent in the configuration, if we have one.
+    # Look up our parent in the catalog, if we have one.
     def parent
-        return nil unless configuration
+        return nil unless catalog
 
         unless defined?(@parent)
             # This is kinda weird.
             if implicit?
-                parents = configuration.relationship_graph.adjacent(self, :direction => :in)
+                parents = catalog.relationship_graph.adjacent(self, :direction => :in)
             else
-                parents = configuration.adjacent(self, :direction => :in)
+                parents = catalog.adjacent(self, :direction => :in)
             end
             if parents
                 # We should never have more than one parent, so let's just ignore

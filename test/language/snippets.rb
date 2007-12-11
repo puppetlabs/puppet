@@ -197,7 +197,7 @@ class TestSnippets < Test::Unit::TestCase
     def snippet_classpathtest
         path = "/tmp/classtest"
 
-        file = @configuration.resource(:file, path)
+        file = @catalog.resource(:file, path)
         assert(file, "did not create file %s" % path)
 
         assert_nothing_raised {
@@ -460,13 +460,13 @@ class TestSnippets < Test::Unit::TestCase
                 node = Puppet::Node.new("testhost")
                 node.merge(facts)
 
-                config = nil
-                assert_nothing_raised("Could not compile configuration") {
-                    config = Puppet::Node::Configuration.find(node)
+                catalog = nil
+                assert_nothing_raised("Could not compile catalog") {
+                    catalog = Puppet::Node::Catalog.find(node)
                 }
 
-                assert_nothing_raised("Could not convert configuration") {
-                    config = config.to_ral
+                assert_nothing_raised("Could not convert catalog") {
+                    catalog = catalog.to_ral
                 }
 
                 Puppet::Type.eachtype { |type|
@@ -479,7 +479,7 @@ class TestSnippets < Test::Unit::TestCase
                         assert(obj.name)
                     }
                 }
-                @configuration = config
+                @catalog = catalog
                 assert_nothing_raised {
                     self.send(mname)
                 }
