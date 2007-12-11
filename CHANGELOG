@@ -1,3 +1,7 @@
+    External node support now requires that you set the 'node_terminus'
+    setting to 'exec'.  See the IndirectionReference on the wiki for more
+    information.
+
     http_enable_post_connection_check added as a configuration
     option for puppetd.  This defaults to true, which validates the server
     SSL certificate against the requested host name in new versions of ruby.
