@@ -123,8 +123,8 @@ describe Puppet::Node, " when indirecting" do
         Puppet::Node.find(:my_node.to_s)
     end
 
-    it "should default to the 'null' node terminus" do
-        Puppet::Node.indirection.terminus_class.should == :null
+    it "should default to the 'plain' node terminus" do
+        Puppet::Node.indirection.terminus_class.should == :plain
     end
 
     after do

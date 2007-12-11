@@ -153,7 +153,7 @@ module Puppet
             but then ship with tools that do not know how to handle signed ints, so the UIDs show up as
             huge numbers that can then not be fed back into the system.  This is a hackish way to fail in a
             slightly more useful way when that happens."],
-        :node_terminus => ["null", "Where to find information about nodes."]
+        :node_terminus => ["plain", "Where to find information about nodes."]
     )
 
     hostname = Facter["hostname"].value
