@@ -21,39 +21,24 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     #confine :exists => @defpath
 
     # List all services of this type.
-    def self.instances(name)
-        # We need to find all paths specified for our type or any parent types
-        paths = Puppet.type(:service).paths(name)
-
-        # Now see if there are any included modules
-        included_modules.each do |mod|
-            next unless mod.respond_to? :name
-
-            mname = mod.name
-
-            if mpaths = Puppet.type(:service).paths(mname) and ! mpaths.empty?
-                 paths += mpaths
-            end
+    def self.instances
+        path = self.defpath
+        unless FileTest.directory?(path)
+            Puppet.notice "Service path %s does not exist" % path
+            next
         end
 
-        paths.collect do |path|
-            unless FileTest.directory?(path)
-                Puppet.notice "Service path %s does not exist" % path
-                next
-            end
+        check = [:ensure]
 
-            check = [:ensure]
+        if public_method_defined? :enabled?
+            check << :enable
+        end
 
-            if public_method_defined? :enabled?
-                check << :enable
-            end
-
-            Dir.entries(path).reject { |e|
-                fullpath = File.join(path, e)
-                e =~ /^\./ or ! FileTest.executable?(fullpath)
-            }.collect do |name|
-                new(:name => name, :path => path)
-            end
+        Dir.entries(path).reject { |e|
+            fullpath = File.join(path, e)
+            e =~ /^\./ or ! FileTest.executable?(fullpath)
+        }.collect do |name|
+            new(:name => name, :path => path)
         end
     end
 

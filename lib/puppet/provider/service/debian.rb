@@ -7,6 +7,10 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
     commands :update => "/usr/sbin/update-rc.d"
     defaultfor :operatingsystem => :debian
 
+    def self.defpath
+        superclass.defpath
+    end
+
     # Remove the symlinks
     def disable
         update "-f", @resource[:name], "remove"

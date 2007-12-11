@@ -259,10 +259,8 @@ class Puppet::Type
         providers_by_source.collect do |provider|
             provider.instances.collect do |instance|
                 # First try to get the resource if it already exists
-                if resource = self[instance.name] and resource.provider.class != instance.class
-                    # Skip instances that map to a managed resource with a different provider
-                    next
-                end
+                # Skip instances that map to a managed resource with a different provider
+                next if resource = self[instance.name] and resource.provider.class != instance.class
 
                 # We always want to use the "first" provider instance we find, unless the resource
                 # is already managed and has a different provider set

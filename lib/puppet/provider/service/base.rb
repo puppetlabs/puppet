@@ -8,6 +8,10 @@ Puppet::Type.type(:service).provide :base do
 
     commands :kill => "kill"
 
+    def self.instances
+        []
+    end
+
     # Get the process ID for a running process. Requires the 'pattern'
     # parameter.
     def getpid
