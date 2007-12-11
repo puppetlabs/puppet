@@ -6,6 +6,50 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
         between Puppet and Facter.  It's only `somewhat` abstract because it always
         returns the local host's facts, regardless of what you attempt to find."
 
+    def self.loaddir(dir, type)
+        return unless FileTest.directory?(dir)
+
+        Dir.entries(dir).find_all { |e| e =~ /\.rb$/ }.each do |file|
+            fqfile = ::File.join(dir, file)
+            begin
+                Puppet.info "Loading #{type} %s" % ::File.basename(file.sub(".rb",''))
+                Timeout::timeout(self.timeout) do
+                    load fqfile
+                end
+            rescue => detail
+                Puppet.warning "Could not load #{type} %s: %s" % [fqfile, detail]
+            end
+        end
+    end
+
+    def self.loadfacts
+        Puppet[:factpath].split(":").each do |dir|
+            loaddir(dir, "fact")
+        end
+    end
+
+    def self.timeout
+        timeout = Puppet[:configtimeout]
+        case timeout
+        when String:
+            if timeout =~ /^\d+$/
+                timeout = Integer(timeout)
+            else
+                raise ArgumentError, "Configuration timeout must be an integer"
+            end
+        when Integer: # nothing
+        else
+            raise ArgumentError, "Configuration timeout must be an integer"
+        end
+
+        return timeout
+    end
+
+    def initialize(*args)
+        super
+        self.class.loadfacts
+    end
+
     def destroy(facts)
         raise Puppet::DevError, "You cannot destroy facts in the code store; it is only used for getting facts from Facter"
     end

@@ -24,6 +24,11 @@ describe Puppet::Node::Facts::Facter do
     it "should have its name set to :facter" do
         Puppet::Node::Facts::Facter.name.should == :facter
     end
+
+    it "should load facts on initialization" do
+        Puppet::Node::Facts::Facter.expects(:loadfacts)
+        Puppet::Node::Facts::Facter.new
+    end
 end
 
 module TestingCodeFacts
@@ -67,4 +72,8 @@ describe Puppet::Node::Facts::Facter, " when destroying facts" do
     it "should fail" do
         proc { @facter.destroy(@facts) }.should raise_error(Puppet::DevError)
     end
+end
+
+describe Puppet::Node::Facts::Facter, " when loading facts from the factpath" do
+    it "should load every fact in each factpath directory"
 end
