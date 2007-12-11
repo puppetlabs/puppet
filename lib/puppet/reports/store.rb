@@ -1,7 +1,7 @@
 require 'puppet'
 
 Puppet::Reports.register_report(:store) do
-    Puppet.settings.use(:main, :reporting)
+    Puppet.settings.use(:reporting)
 
     desc "Store the yaml report on disk.  Each host sends its report as a YAML dump
         and this just stores the file on disk, in the ``reportdir`` directory.
