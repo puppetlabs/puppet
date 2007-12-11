@@ -1,3 +1,13 @@
+    Modifying the behaviour of the certdnsnames setting.  It now defaults
+    to an empty string, and will only be used if it is set to something
+    else.  If it is set, then the host's FQDN will also be added as
+    an alias.  The default behaviour is now to add 'puppet' and
+    'puppet.$domain' as DNS aliases when the name for the cert being
+    signed is equal to the signing machine's name, which will only
+    be the case for CA servers.  This should result in servers always
+    having the alias set up and no one else, but you can still override
+    the aliases if you want.
+
     External node support now requires that you set the 'node_terminus'
     setting to 'exec'.  See the IndirectionReference on the wiki for more
     information.

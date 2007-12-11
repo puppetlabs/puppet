@@ -10,10 +10,6 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
     def self.defpath
         superclass.defpath
     end
-
-    if self.suitable?
-        Puppet.type(:service).newpath(:freebsd, defpath())
-    end
     
     # remove service file from rc.conf.d to disable it
     def disable

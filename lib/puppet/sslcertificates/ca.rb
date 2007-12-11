@@ -288,7 +288,6 @@ class Puppet::SSLCertificates::CA
         newcert = Puppet::SSLCertificates.mkcert(
             :type => :server,
             :name => csr.subject,
-            :dnsnames => Puppet[:certdnsnames],
             :ttl => ttl,
             :issuer => @cert,
             :serial => serial,
