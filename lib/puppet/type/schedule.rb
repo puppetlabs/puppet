@@ -350,7 +350,6 @@ module Puppet
             self.class.allattrs.each { |param|
                 if @parameters.include?(param) and
                     @parameters[param].respond_to?(:match?)
-                    self.notice "Trying to match %s" % param
                     return false unless @parameters[param].match?(previous, now)
                 end
             }
