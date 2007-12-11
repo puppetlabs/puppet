@@ -23,6 +23,13 @@ describe Puppet::SimpleGraph do
         @graph.add_edge!(:one, :two)
         @graph.reversal.edge?(:two, :one).should be_true
     end
+
+    it "should be able to produce a dot graph" do
+        @graph = Puppet::SimpleGraph.new
+        @graph.add_edge!(:one, :two)
+
+        proc { @graph.to_dot_graph }.should_not raise_error
+    end
 end
 
 describe Puppet::SimpleGraph, " when managing vertices" do
@@ -219,9 +226,4 @@ describe Puppet::SimpleGraph, " when reversing graphs" do
         edge = @graph.reversal.edge(:two, :one)
         edge.label.should == {:stuff => :awesome}
     end
-end
-
-describe Puppet::SimpleGraph, " when making DOT files" do
-    # LAK:FIXME yay
-    it "should have tests"
 end
