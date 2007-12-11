@@ -736,6 +736,8 @@ class Puppet::Network::Handler
                 relpath = abspath.sub(%r{^#{basepath}}, '')
                 relpath = "/#{relpath}" if relpath[0] != ?/  #/
                 
+                return unless FileTest.exists?(abspath)
+                
                 desc = [relpath]
                 
                 ftype = File.stat(abspath).ftype
@@ -784,59 +786,36 @@ class Puppet::Network::Handler
                 ''
             end
 
-            def path_exists?(relpath, client = nil)
-               !valid_modules.find { |m| File.exists?(File.join(m, PLUGINS, relpath)) }.nil?
+            def mod_path_exists?(mod, relpath, client = nil)
+                File.exists?(File.join(mod, PLUGINS, relpath))
             end
-            
+
+            def path_exists?(relpath, client = nil)
+               !valid_modules.find { |m| mod_path_exists?(m, relpath, client) }.nil?
+            end
+
             def valid?
                 true
             end
 
-            def file_path(relpath, client = nil)
-                mod = valid_modules.map { |m| File.exists?(File.join(m, PLUGINS, relpath)) ? m : nil }.compact.first
+            def mod_file_path(mod, relpath, client = nil)
                 File.join(mod, PLUGINS, relpath)
             end
+            
+            def file_path(relpath, client = nil)
+                mod = valid_modules.map { |m| mod_path_exists?(m, relpath, client) ? m : nil }.compact.first
+                mod_file_path(mod, relpath, client)
+            end
 
-            def reclist(basepath, abspath, recurse, ignore)
-                abspath = basepath if abspath.nil?
-                relpath = abspath.sub(%r{^#{basepath}}, '')
-                relpath = "/#{relpath}" unless relpath[0] == ?/  #/
-                
-                desc = [relpath]
-                
-                ftype = File.stat(file_path(abspath)).ftype
-
-                desc << ftype
-                if recurse.is_a?(Integer)
-                    recurse -= 1
+            # create a list of files by merging all modules
+            def list(relpath, recurse, ignore, client = nil)
+                result = []
+                valid_modules.each do |m|
+                    ary = reclist(mod_file_path(m, relpath, client), nil, recurse, ignore)
+                    ary = [] if ary.nil?
+                   result += ary
                 end
-
-                ary = [desc]
-                if recurse == true or (recurse.is_a?(Integer) and recurse > -1)
-                    if ftype == "directory"
-                        valid_modules.each do |mod|
-                            begin
-                                children = Dir.entries(File.join(mod, PLUGINS, abspath))
-                                if ignore
-                                    children = handleignore(children, abspath, ignore)
-                                end  
-                                children.each { |child|
-                                    next if child =~ /^\.\.?$/
-                                    reclist(basepath, File.join(abspath, child), recurse, ignore).each { |cobj|
-                                        ary << cobj
-                                    }
-                                }
-                            rescue Errno::ENOENT
-                                # A missing directory or whatever isn't a
-                                # massive problem in here; it'll happen
-                                # whenever we've got a module that doesn't
-                                # have a directory than another module does.
-                            end
-                        end
-                    end
-                end
-
-                return ary.compact
+                result
             end
 
             private
