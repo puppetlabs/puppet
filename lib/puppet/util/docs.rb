@@ -14,9 +14,11 @@ module Puppet::Util::Docs
         meta_def method, &block
     end
 
+    attr_writer :doc
+
     # Generate the full doc string.
     def doc
-        extra = methods.find_all { |m| m.to_s =~ /^dochook_.+/ }.collect { |m|
+        extra = methods.find_all { |m| m.to_s =~ /^dochook_.+/ }.sort.collect { |m|
             self.send(m)
         }.join("  ")
 

@@ -1,5 +1,11 @@
-# An actual indirection.
+require 'puppet/util/docs'
+
+# The class that connects functional classes with their different collection
+# back-ends.  Each indirection has a set of associated terminus classes,
+# each of which is a subclass of Puppet::Indirector::Terminus.
 class Puppet::Indirector::Indirection
+    include Puppet::Util::Docs
+
     @@indirections = []
 
     # Clear all cached termini from all indirections.
@@ -11,6 +17,12 @@ class Puppet::Indirector::Indirection
     # can specifically hook up with the indirections they are associated with.
     def self.instance(name)
         @@indirections.find { |i| i.name == name }
+    end
+
+    # Return a list of all known indirections.  Used to generate the
+    # reference.
+    def self.instances
+        @@indirections.collect { |i| i.name }
     end
     
     # Find an indirected model by name.  This is provided so that Terminus classes
@@ -51,6 +63,21 @@ class Puppet::Indirector::Indirection
     # This is only used for testing.
     def delete
         @@indirections.delete(self) if @@indirections.include?(self)
+    end
+
+    # Generate the full doc string.
+    def doc
+        text = ""
+
+        if defined? @doc and @doc
+            text += scrub(@doc) + "\n\n"
+        end
+
+        if s = terminus_setting()
+            text += "* **Terminus Setting**: %s" % terminus_setting
+        end
+
+        text
     end
 
     def initialize(model, name, options = {})

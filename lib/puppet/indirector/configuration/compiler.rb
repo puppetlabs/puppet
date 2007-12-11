@@ -5,9 +5,8 @@ require 'puppet/parser/interpreter'
 require 'yaml'
 
 class Puppet::Node::Configuration::Compiler < Puppet::Indirector::Code
-    desc "Puppet's configuration compilation interface.  Passed a node name
-        or other key, retrieves information about the node (using the ``node_source``)
-        and returns a compiled configuration."
+    desc "Puppet's configuration compilation interface, and its back-end is
+        Puppet's compiler"
 
     include Puppet::Util
 

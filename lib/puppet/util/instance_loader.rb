@@ -36,6 +36,9 @@ module Puppet::Util::InstanceLoader
     def instance_docs(type)
         docs = ""
 
+        # Load all instances.
+        instance_loader(type).loadall
+
         # Use this method so they all get loaded
         loaded_instances(type).sort { |a,b| a.to_s <=> b.to_s }.each do |name|
             mod = self.loaded_instance(name)

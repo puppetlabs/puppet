@@ -2,7 +2,8 @@ require 'puppet/node'
 require 'puppet/indirector/ldap'
 
 class Puppet::Node::Ldap < Puppet::Indirector::Ldap
-    desc "Search in LDAP for node configuration information."
+    desc "Search in LDAP for node configuration information.  See
+    the `LdapNodes`:trac: page for more information."
 
     # The attributes that Puppet class information is stored in.
     def class_attributes

@@ -2,7 +2,8 @@ require 'puppet/node'
 require 'puppet/indirector/exec'
 
 class Puppet::Node::Exec < Puppet::Indirector::Exec
-    desc "Call an external program to get node information."
+    desc "Call an external program to get node information.  See
+    the `ExternalNodes`:trac: page for more information."
     include Puppet::Util
 
     def command

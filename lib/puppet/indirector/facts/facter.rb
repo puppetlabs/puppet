@@ -3,7 +3,7 @@ require 'puppet/indirector/code'
 
 class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
     desc "Retrieve facts from Facter.  This provides a somewhat abstract interface
-        between Puppet and Facter.  It's only 'somewhat' abstract because it always
+        between Puppet and Facter.  It's only `somewhat` abstract because it always
         returns the local host's facts, regardless of what you attempt to find."
 
     def destroy(facts)

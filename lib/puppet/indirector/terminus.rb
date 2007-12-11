@@ -107,6 +107,17 @@ class Puppet::Indirector::Terminus
             loaded_instance(indirection_name, terminus_type)
         end
 
+        # Return all terminus classes for a given indirection.
+        def terminus_classes(indirection_name)
+            setup_instance_loading indirection_name
+            
+            # Load them all.
+            instance_loader(indirection_name).loadall
+
+            # And return the list of names.
+            loaded_instances(indirection_name)
+        end
+
         private
 
         def setup_instance_loading(type)
