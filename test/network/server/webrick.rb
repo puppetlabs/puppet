@@ -102,7 +102,7 @@ class TestWebrickServer < Test::Unit::TestCase
 
         assert_nothing_raised() {
             client = Puppet::Network::Client.status.new(
-                :Server => "localhost",
+                :Server => Facter.value(:fqdn),
                 :Port => @@port
             )
         }
