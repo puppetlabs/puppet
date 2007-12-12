@@ -46,7 +46,7 @@ class Puppet::Util::Storage
     self.init
 
     def self.load
-        Puppet.settings.use(:main)
+        Puppet.settings.use(:main) unless FileTest.directory?(Puppet[:statedir])
 
         unless File.exists?(Puppet[:statefile])
             unless defined? @@state and ! @@state.nil?
