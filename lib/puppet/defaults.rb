@@ -60,13 +60,6 @@ module Puppet
                 this directory can be removed without causing harm (although it
                 might result in spurious service restarts)."
         },
-        :statefile => { :default => "$statedir/state.yaml",
-            :mode => 0660,
-            :desc => "Where puppetd and puppetmasterd store state associated
-                with the running configuration.  In the case of puppetmasterd,
-                this file reflects the state discovered through interacting
-                with clients."
-            },
         :ssldir => {
             :default => "$confdir/ssl",
             :mode => 0771,
@@ -363,6 +356,13 @@ module Puppet
             :mode => 0660,
             :desc => "Where puppetd caches the local configuration.  An
                 extension indicating the cache format is added automatically."},
+        :statefile => { :default => "$statedir/state.yaml",
+            :mode => 0660,
+            :desc => "Where puppetd and puppetmasterd store state associated
+                with the running configuration.  In the case of puppetmasterd,
+                this file reflects the state discovered through interacting
+                with clients."
+            },
         :classfile => { :default => "$statedir/classes.txt",
             :owner => "root",
             :mode => 0644,
