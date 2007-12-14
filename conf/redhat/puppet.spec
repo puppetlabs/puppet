@@ -9,7 +9,7 @@ Summary: A network tool for managing many disparate systems
 Name: puppet
 Version: 0.24.0
 Release: 1%{?dist}
-License: GPL
+License: GPLv2+
 Group: System Environment/Base
 
 URL: http://puppet.reductivelabs.com/
@@ -48,6 +48,15 @@ The server can also function as a certificate authority and file server.
 for f in bin/* ; do 
   sed -i -e '1c#!/usr/bin/ruby' $f
 done
+# Fix some rpmlint complaints
+for f in mac_dscl.pp mac_dscl_revert.pp \
+         mac_netinfo.pp mac_pkgdmg.pp ; do
+  sed -i -e'1d' examples/code/$f
+  chmod a-x examples/code/$f
+done
+
+find examples/ -type f -empty | xargs rm
+find examples/ -type f | xargs chmod a-x
 
 %install
 rm -rf %{buildroot}
@@ -148,6 +157,10 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Fri Dec 14 2007 David Lutterkort <dlutter@redhat.com> - 0.24.0-1
+- Fixed license
+- Munge examples/ to make rpmlint happier
+
 * Wed Aug 22 2007 David Lutterkort <dlutter@redhat.com> - 0.23.2-1
 - New version
 
