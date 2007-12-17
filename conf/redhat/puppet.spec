@@ -8,7 +8,7 @@
 Summary: A network tool for managing many disparate systems
 Name: puppet
 Version: 0.24.0
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: GPLv2+
 Group: System Environment/Base
 
@@ -157,6 +157,9 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Mon Dec 17 2007 David Lutterkort <dlutter@redhat.com> - 0.24.0-2
+- Use updated upstream tarball that contains yumhelper.py
+
 * Fri Dec 14 2007 David Lutterkort <dlutter@redhat.com> - 0.24.0-1
 - Fixed license
 - Munge examples/ to make rpmlint happier
