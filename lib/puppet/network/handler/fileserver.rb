@@ -315,10 +315,6 @@ class Puppet::Network::Handler
                             value = $2
                             case var
                             when "path":
-                                if mount.name == PLUGINS
-                                    Puppet.warning "An explicit 'plugins' mount is deprecated.  Please switch to using modules."
-                                end
-                                
                                 if mount.name == MODULES
                                     Puppet.warning "The '#{mount.name}' module can not have a path. Ignoring attempt to set it"
                                 else
