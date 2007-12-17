@@ -1,3 +1,5 @@
+    Removed warning about deprecated explicit plugins mounts.
+
 0.24.0 (misspiggy)
     Modifying the behaviour of the certdnsnames setting.  It now defaults
     to an empty string, and will only be used if it is set to something

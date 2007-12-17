@@ -22,6 +22,7 @@ project = Rake::RedLabProject.new("puppet") do |p|
         '[A-Z]*',
         'lib/puppet.rb',
         'lib/puppet/**/*.rb',
+        'lib/puppet/**/*.py',
         'test/**/*.rb',
         'bin/**/*',
         'ext/**/*',
