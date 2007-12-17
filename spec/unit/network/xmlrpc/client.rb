@@ -14,7 +14,7 @@ describe Puppet::Network::XMLRPCClient, " when managing http instances" do
     end
 
     it "should return an http instance created with the passed host and port" do
-        http = stub 'http', :use_ssl= => nil, :read_timeout= => nil, :open_timeout= => nil, :enable_post_connection_check= => nil
+        http = stub 'http', :use_ssl= => nil, :read_timeout= => nil, :open_timeout= => nil, :enable_post_connection_check= => nil, :started? => false
         Net::HTTP.expects(:new).with("me", 54321, nil, nil).returns(http)
         Puppet::Network::XMLRPCClient.http_instance("me", 54321).should equal(http)
     end
@@ -62,6 +62,20 @@ describe Puppet::Network::XMLRPCClient, " when managing http instances" do
         Puppet::Network::XMLRPCClient.http_instance("me", 54321).should_not equal(old)
     end
 
+    it "should have a mechanism for getting a new http instance instead of the cached instance" do
+        stub_settings :http_keepalive => true, :http_proxy_host => "myhost", :http_proxy_port => 432, :http_enable_post_connection_check => true
+        old = Puppet::Network::XMLRPCClient.http_instance("me", 54321)
+        Puppet::Network::XMLRPCClient.http_instance("me", 54321, true).should_not equal(old)
+    end
+
+    it "should close existing, open connections when requesting a new connection" do
+        stub_settings :http_keepalive => true, :http_proxy_host => "myhost", :http_proxy_port => 432, :http_enable_post_connection_check => true
+        old = Puppet::Network::XMLRPCClient.http_instance("me", 54321)
+        old.expects(:started?).returns(true)
+        old.expects(:finish)
+        Puppet::Network::XMLRPCClient.http_instance("me", 54321, true)
+    end
+
     it "should have a mechanism for clearing the http cache" do
         stub_settings :http_keepalive => true, :http_proxy_host => "myhost", :http_proxy_port => 432, :http_enable_post_connection_check => true
         old = Puppet::Network::XMLRPCClient.http_instance("me", 54321)
@@ -69,6 +83,22 @@ describe Puppet::Network::XMLRPCClient, " when managing http instances" do
         old = Puppet::Network::XMLRPCClient.http_instance("me", 54321)
         Puppet::Network::XMLRPCClient.clear_http_instances
         Puppet::Network::XMLRPCClient.http_instance("me", 54321).should_not equal(old)
+    end
+
+    it "should close open http connections when clearing the cache" do
+        stub_settings :http_keepalive => true, :http_proxy_host => "myhost", :http_proxy_port => 432, :http_enable_post_connection_check => true
+        one = Puppet::Network::XMLRPCClient.http_instance("me", 54321)
+        one.expects(:started?).returns(true)
+        one.expects(:finish).returns(true)
+        Puppet::Network::XMLRPCClient.clear_http_instances
+    end
+
+    it "should not close unopened http connections when clearing the cache" do
+        stub_settings :http_keepalive => true, :http_proxy_host => "myhost", :http_proxy_port => 432, :http_enable_post_connection_check => true
+        one = Puppet::Network::XMLRPCClient.http_instance("me", 54321)
+        one.expects(:started?).returns(false)
+        one.expects(:finish).never
+        Puppet::Network::XMLRPCClient.clear_http_instances
     end
 
     after do

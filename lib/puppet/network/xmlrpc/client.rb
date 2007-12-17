@@ -19,8 +19,11 @@ module Puppet::Network
             include Puppet::Util::ClassGen
         end
 
-        # Clear our http cache.
+        # Clear our http cache, closing all connections.
         def self.clear_http_instances
+            @@http_cache.each do |name, connection|
+                connection.finish if connection.started?
+            end
             @@http_cache.clear
         end
 
@@ -34,31 +37,37 @@ module Puppet::Network
             # a cache, as long as we're not resetting the instance.
             return @@http_cache[key] if ! reset and Puppet[:http_keepalive] and @@http_cache[key]
 
+            # Clean up old connections if we have them.
+            if http = @@http_cache[key]
+                @@http_cache.delete(key)
+                http.finish if http.started?
+            end
+
             args = [host, port]
             if Puppet[:http_proxy_host] == "none"
                 args << nil << nil
             else
                 args << Puppet[:http_proxy_host] << Puppet[:http_proxy_port]
             end
-            @http = Net::HTTP.new(*args)
+            http = Net::HTTP.new(*args)
 
-            # Pop open @http a little; older versions of Net::HTTP(s) didn't
+            # Pop open the http client a little; older versions of Net::HTTP(s) didn't
             # give us a reader for ca_file... Grr...
-            class << @http; attr_accessor :ca_file; end
+            class << http; attr_accessor :ca_file; end
 
-            @http.use_ssl = true
-            @http.read_timeout = 120
-            @http.open_timeout = 120
+            http.use_ssl = true
+            http.read_timeout = 120
+            http.open_timeout = 120
             # JJM Configurable fix for #896.
             if Puppet[:http_enable_post_connection_check]
-                @http.enable_post_connection_check = true
+                http.enable_post_connection_check = true
             else
-                @http.enable_post_connection_check = false
+                http.enable_post_connection_check = false
             end
 
-            @@http_cache[key] = @http if Puppet[:http_keepalive]
+            @@http_cache[key] = http if Puppet[:http_keepalive]
 
-            return @http
+            return http
         end
 
         # Create a netclient for each handler
