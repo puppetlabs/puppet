@@ -239,9 +239,9 @@ class TestResource < PuppetTest::TestCase
         assert_equal("nobody", obj["owner"], "Single-value string was not passed correctly")
         assert_equal(%w{you me}, obj["group"], "Array of strings was not passed correctly")
         assert_equal("svn", obj["ignore"], "Array with single string was not turned into single value")
-        assert_equal(["File", refs[0].title], obj["require"], "Resource reference was not passed correctly")
-        assert_equal([["File", refs[1].title], ["File", refs[2].title]], obj["subscribe"], "Array of resource references was not passed correctly")
-        assert_equal(["File", refs[3].title], obj["notify"], "Array with single resource reference was not turned into single value")
+        assert_equal(["file", refs[0].title], obj["require"], "Resource reference was not passed correctly")
+        assert_equal([["file", refs[1].title], ["file", refs[2].title]], obj["subscribe"], "Array of resource references was not passed correctly")
+        assert_equal(["file", refs[3].title], obj["notify"], "Array with single resource reference was not turned into single value")
     end
 
     # FIXME This isn't a great test, but I need to move on.
@@ -332,7 +332,7 @@ class TestResource < PuppetTest::TestCase
         end
 
         assert_instance_of(Array, trans["require"])
-        assert_equal(["File", "/tmp/ref1"], trans["require"])
+        assert_equal(["file", "/tmp/ref1"], trans["require"])
 
         # Now try it when using an array of references.
         two = Parser::Resource::Reference.new(:type => "file", :title => "/tmp/ref2")
@@ -348,7 +348,7 @@ class TestResource < PuppetTest::TestCase
         assert_instance_of(Array, trans["require"][0])
         trans["require"].each do |val|
             assert_instance_of(Array, val)
-            assert_equal("File", val[0])
+            assert_equal("file", val[0])
             assert(val[1] =~ /\/tmp\/ref[0-9]/,
                 "Was %s instead of the file name" % val[1])
         end

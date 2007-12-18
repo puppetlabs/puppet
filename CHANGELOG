@@ -1,3 +1,7 @@
+    Fixed a backward compatibility issue when running 0.23.x
+    clients against 0.24.0 servers -- relationships would
+    consistently not work. (#967)
+
     Closing existing http connections when opening a new one,
     and closing all connections after each run. (#961)
 
