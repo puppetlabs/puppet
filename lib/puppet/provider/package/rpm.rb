@@ -92,16 +92,24 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     end
 
     def uninstall
+        query unless get(:arch)
+        nvr = "#{get(:name)}-#{get(:version)}-#{get(:release)}"
+        arch = ".#{get(:arch)}"
+        # If they specified an arch in the manifest, erase that Otherwise,
+        # erase the arch we got back from the query. If multiple arches are
+        # installed and only the package name is specified (without the
+        # arch), this will uninstall all of them on successive runs of the
+        # client, one after the other
+        if @resource[:name][-arch.size, arch.size] == arch
+            nvr += arch
+        else
+            nvr += ".#{get(:arch)}"
+        end
         rpm "-e", nvr
     end
 
     def update
         self.install
-    end
-
-    def nvr
-        query unless @nvr
-        @nvr
     end
 
     def self.nevra_to_hash(line)
