@@ -271,6 +271,10 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
                         @catalog.apply(options)
                     end
                 end
+
+                # Now close all of our existing http connections, since there's no
+                # reason to leave them lying open.
+                Puppet::Network::XMLRPCClient.clear_http_instances
             end
             
             lockfile.unlock

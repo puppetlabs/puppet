@@ -1,3 +1,6 @@
+    Closing existing http connections when opening a new one,
+    and closing all connections after each run. (#961)
+
     Removed warning about deprecated explicit plugins mounts.
 
 0.24.0 (misspiggy)
