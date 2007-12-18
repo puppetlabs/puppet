@@ -9,6 +9,11 @@ require 'socket'
 
 class TestPuppetMasterD < Test::Unit::TestCase
     include PuppetTest::ExeTest
+    def setup
+        super
+        Puppet[:certdnsnames] = "localhost"
+    end
+
     def getcerts
         include Puppet::Daemon
         if self.readcerts

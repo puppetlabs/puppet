@@ -12,8 +12,10 @@ class TestPuppetDExe < Test::Unit::TestCase
     include PuppetTest::ExeTest
     def setup
         super
+        Puppet[:certdnsnames] = "localhost"
         # start the master
         @manifest = startmasterd
+
 
         @cmd = "puppetd"
         @cmd += " --verbose"
