@@ -198,6 +198,8 @@ begin
     # Compile our catalog
     catalog = Puppet::Node::Catalog.find(node)
 
+    exit(0) if Puppet[:parseonly]
+
     # Translate it to a RAL catalog
     catalog = catalog.to_ral
 
