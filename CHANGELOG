@@ -1,3 +1,5 @@
+    Updated vim filetype detection. (#900 and #963)
+
     Default resources like schedules no longer conflict with
     managed resources. (#965)
 
