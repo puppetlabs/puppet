@@ -1,3 +1,9 @@
+    Refactored http keep-alive so it actually works again.
+    This should be sufficient enough that we no longer need the
+    ability to disable keep-alive.  There is now a central
+    module responsible for managing HTTP instances, along with
+    all certificates in those instances.
+
     Fixed a backward compatibility issue when running 0.23.x
     clients against 0.24.0 servers -- relationships would
     consistently not work. (#967)

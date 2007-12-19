@@ -221,34 +221,4 @@ class TestClient < Test::Unit::TestCase
             end
         end
     end
-
-    # Make sure that reading the cert in also sets up the cert stuff for the driver
-    def test_read_cert
-        Puppet::Util::SUIDManager.stubs(:asuser).yields
-
-        ca = Puppet::Network::Handler.ca.new
-        caclient = Puppet::Network::Client.ca.new :CA => ca
-
-        caclient.request_cert
-
-        # First make sure it doesn't get called when the driver doesn't support :cert_setup
-        client = FakeClient.new :Test => FakeDriver.new
-        driver = client.driver
-
-        assert_nothing_raised("Could not read cert") do
-            client.read_cert
-        end
-
-        # And then that it does when the driver supports it
-        client = FakeClient.new :Test => FakeDriver.new
-
-        driver = client.driver
-        driver.meta_def(:recycle_connection) { |c| }
-        driver.expects(:recycle_connection).with(client)
-
-        assert_nothing_raised("Could not read cert") do
-            client.read_cert
-        end
-    end
 end
-

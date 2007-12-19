@@ -30,25 +30,23 @@ module Puppet::SSLCertificates::Support
         define_method(reader) do
             return nil unless FileTest.exists?(Puppet[param])
             begin
-                instance_variable_set(var,
-                    klass.new(File.read(Puppet[param])))
+                instance_variable_set(var, klass.new(File.read(Puppet[param])))
             rescue => detail
-                raise InvalidCertificate, "Could not read %s: %s" %
-                    [param, detail]
+                raise InvalidCertificate, "Could not read %s: %s" % [param, detail]
             end
         end
 
         # Define the overall method, which just calls the reader and maker
         # as appropriate.
         define_method(name) do
-            unless instance_variable_get(var)
+            unless cert = instance_variable_get(var)
                 unless cert = send(reader)
                     cert = send(maker)
                     Puppet.settings.write(param) { |f| f.puts cert.to_pem }
                 end
                 instance_variable_set(var, cert)
             end
-            instance_variable_get(var)
+            cert
         end
     end
 

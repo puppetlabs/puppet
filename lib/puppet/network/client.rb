@@ -122,13 +122,8 @@ class Puppet::Network::Client
     end
 
     # Make sure we set the driver up when we read the cert in.
-    def read_cert
-        if super
-            @driver.recycle_connection(self) if @driver.respond_to?(:recycle_connection)
-            return true
-        else
-            return false
-        end
+    def recycle_connection
+        @driver.recycle_connection if @driver.respond_to?(:recycle_connection)
     end
 
     # A wrapper method to run and then store the last run time
@@ -141,9 +136,7 @@ class Puppet::Network::Client
             self.run
             self.lastrun = Time.now.to_i
         rescue => detail
-            if Puppet[:trace]
-                puts detail.backtrace
-            end
+            puts detail.backtrace if Puppet[:trace]
             Puppet.err "Could not run %s: %s" % [self.class, detail]
         end
     end

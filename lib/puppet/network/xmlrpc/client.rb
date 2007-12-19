@@ -1,4 +1,5 @@
 require 'puppet/sslcertificates'
+require 'puppet/network/http_pool'
 require 'openssl'
 require 'puppet/external/base64'
 
@@ -10,64 +11,13 @@ module Puppet::Network
     class ClientError < Puppet::Error; end
     class XMLRPCClientError < Puppet::Error; end
     class XMLRPCClient < ::XMLRPC::Client
+
         attr_accessor :puppet_server, :puppet_port
         @clients = {}
-        @@http_cache = {}
 
         class << self
             include Puppet::Util
             include Puppet::Util::ClassGen
-        end
-
-        # Clear our http cache, closing all connections.
-        def self.clear_http_instances
-            @@http_cache.each do |name, connection|
-                connection.finish if connection.started?
-            end
-            @@http_cache.clear
-        end
-
-        # Retrieve a cached http instance of caching is enabled, else return
-        # a new one.
-        def self.http_instance(host, port, reset = false)
-            # We overwrite the uninitialized @http here with a cached one.
-            key = "%s:%s" % [host, port]
-
-            # Return our cached instance if keepalive is enabled and we've got
-            # a cache, as long as we're not resetting the instance.
-            return @@http_cache[key] if ! reset and Puppet[:http_keepalive] and @@http_cache[key]
-
-            # Clean up old connections if we have them.
-            if http = @@http_cache[key]
-                @@http_cache.delete(key)
-                http.finish if http.started?
-            end
-
-            args = [host, port]
-            if Puppet[:http_proxy_host] == "none"
-                args << nil << nil
-            else
-                args << Puppet[:http_proxy_host] << Puppet[:http_proxy_port]
-            end
-            http = Net::HTTP.new(*args)
-
-            # Pop open the http client a little; older versions of Net::HTTP(s) didn't
-            # give us a reader for ca_file... Grr...
-            class << http; attr_accessor :ca_file; end
-
-            http.use_ssl = true
-            http.read_timeout = 120
-            http.open_timeout = 120
-            # JJM Configurable fix for #896.
-            if Puppet[:http_enable_post_connection_check]
-                http.enable_post_connection_check = true
-            else
-                http.enable_post_connection_check = false
-            end
-
-            @@http_cache[key] = http if Puppet[:http_keepalive]
-
-            return http
         end
 
         # Create a netclient for each handler
@@ -81,8 +31,7 @@ module Puppet::Network
             # they want.
             constant = handler.name.to_s.capitalize
             name = namespace.downcase
-            newclient = genclass(name, :hash => @clients,
-                :constant => constant)
+            newclient = genclass(name, :hash => @clients, :constant => constant)
 
             interface.methods.each { |ary|
                 method = ary[0]
@@ -97,7 +46,7 @@ module Puppet::Network
                     rescue OpenSSL::SSL::SSLError => detail
                         if detail.message =~ /bad write retry/
                             Puppet.warning "Transient SSL write error; restarting connection and retrying"
-                            self.recycle_connection(@cert_client)
+                            self.recycle_connection
                             retry
                         end
                         raise XMLRPCClientError,
@@ -118,7 +67,7 @@ module Puppet::Network
                         raise error
                     rescue Errno::EPIPE, EOFError
                         Puppet.warning "Other end went away; restarting connection and retrying"
-                        self.recycle_connection(@cert_client)
+                        self.recycle_connection
                         retry
                     rescue => detail
                         if detail.message =~ /^Wrong size\. Was \d+, should be \d+$/
@@ -139,30 +88,6 @@ module Puppet::Network
 
         def self.handler_class(handler)
             @clients[handler] || self.mkclient(handler)
-        end
-
-        # Use cert information from a Puppet client to set up the http object.
-        def cert_setup(client)
-            # Cache it for next time
-            @cert_client = client
-            
-            unless FileTest.exist?(Puppet[:localcacert])
-                raise Puppet::SSLCertificates::Support::MissingCertificate,
-                    "Could not find ca certificate %s" % Puppet[:localcacert]
-            end
-
-            # We can't overwrite certificates, @http will freeze itself
-            # once started.
-            unless @http.ca_file
-                @http.ca_file = Puppet[:localcacert]
-                store = OpenSSL::X509::Store.new
-                store.add_file Puppet[:localcacert]
-                store.purpose = OpenSSL::X509::PURPOSE_SSL_CLIENT
-                @http.cert_store = store
-                @http.cert = client.cert
-                @http.verify_mode = OpenSSL::SSL::VERIFY_PEER
-                @http.key = client.key
-            end
         end
 
         def initialize(hash = {})
@@ -188,13 +113,15 @@ module Puppet::Network
                 true, # use_ssl
                 120 # a two minute timeout, instead of 30 seconds
             )
-            @http = self.class.http_instance(@host, @port)
+            @http = Puppet::Network::HttpPool.http_instance(@host, @port)
         end
  
-        def recycle_connection(client)
-            @http = self.class.http_instance(@host, @port, true) # reset the instance
-
-            cert_setup(client)
+        # Get rid of our existing connection, replacing it with a new one.
+        # This should only happen if we lose our connection somehow (e.g., an EPIPE)
+        # or we've just downloaded certs and we need to create new http instances
+        # with the certs added.
+        def recycle_connection
+            @http = Puppet::Network::HttpPool.http_instance(@host, @port, true) # reset the instance
         end
         
         def start

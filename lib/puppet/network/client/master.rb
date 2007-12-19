@@ -1,6 +1,7 @@
 # The client for interacting with the puppetmaster config server.
 require 'sync'
 require 'timeout'
+require 'puppet/network/http_pool'
 
 class Puppet::Network::Client::Master < Puppet::Network::Client
     unless defined? @@sync
@@ -274,7 +275,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
 
                 # Now close all of our existing http connections, since there's no
                 # reason to leave them lying open.
-                Puppet::Network::XMLRPCClient.clear_http_instances
+                Puppet::Network::HttpPool.clear_http_instances
             end
             
             lockfile.unlock

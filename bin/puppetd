@@ -328,7 +328,7 @@ if Puppet[:daemonize]
     client.daemonize
 end
 
-unless client.read_cert
+unless Puppet::Network::HttpPool.read_cert
     # If we don't already have the certificate, then create a client to
     # request one.  Use the special ca stuff, don't use the normal server and port.
     caclient = Puppet::Network::Client.ca.new()
@@ -350,7 +350,9 @@ unless client.read_cert
     end
 
     # Now read the new cert in.
-    if client.read_cert
+    if Puppet::Network::HttpPool.read_cert
+        # If we read it in, then get rid of our existing http connection.
+        client.recycle_connection
         Puppet.notice "Got signed certificate"
     else
         Puppet.err "Could not read certificates after retrieving them"

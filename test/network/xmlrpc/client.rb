@@ -42,43 +42,4 @@ class TestXMLRPCClient < Test::Unit::TestCase
 
         assert(net, "did not get net client")
     end
-
-    # Make sure the xmlrpc client is correctly reading all of the cert stuff
-    # and setting it into the @http var
-    def test_cert_setup
-        client = nil
-        assert_nothing_raised do
-            client = Puppet::Network::XMLRPCClient.new()
-        end
-
-        caclient = mock 'client', :cert => :ccert, :key => :ckey
-
-        FileTest.expects(:exist?).with(Puppet[:localcacert]).returns(true)
-
-        store = mock 'sslstore'
-        OpenSSL::X509::Store.expects(:new).returns(store)
-        store.expects(:add_file).with(Puppet[:localcacert])
-        store.expects(:purpose=).with(OpenSSL::X509::PURPOSE_SSL_CLIENT)
-
-        class << client
-            attr_accessor :http
-        end
-
-        http = mock 'http'
-        client.http = http
-
-        http.expects(:ca_file).returns(false)
-        http.expects(:ca_file=).with(Puppet[:localcacert])
-        http.expects(:cert=).with(:ccert)
-        http.expects(:key=).with(:ckey)
-        http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
-        http.expects(:cert_store=)
-
-        assert_nothing_raised do
-            client.cert_setup(caclient)
-        end
-    end
-
-    def test_http_cache
-    end
 end

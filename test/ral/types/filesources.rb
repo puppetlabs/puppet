@@ -22,6 +22,11 @@ class TestFileSources < Test::Unit::TestCase
         Puppet[:filetimeout] = -1
         Puppet::Util::SUIDManager.stubs(:asuser).yields 
     end
+
+    def teardown
+        super
+        Puppet::Network::HttpPool.clear_http_instances
+    end
     
     def use_storage
         begin
