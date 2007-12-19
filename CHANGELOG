@@ -1,3 +1,6 @@
+    Default resources like schedules no longer conflict with
+    managed resources. (#965)
+
     Removing the ability to disable http keep-alive, since
     it didn't really work anyway and it should no longer
     be necessary.

@@ -333,14 +333,16 @@ end
         assert(FileTest.exists?(file), "file was not created on second run")
     end
 
-    def test_default_objects
+    def test_default_resources
+        client = mkclient()
+
         # Make sure they start out missing
         assert_nil(Puppet::Type.type(:filebucket)["puppet"],
             "default filebucket already exists")
         assert_nil(Puppet::Type.type(:schedule)["daily"],
             "default schedules already exists")
 
-        master = mkclient()
+        client.make_default_resources
 
         # Now make sure they got created
         assert(Puppet::Type.type(:filebucket)["puppet"],
@@ -354,7 +356,7 @@ end
             "default filebucket not removed")
         assert_nil(Puppet::Type.type(:schedule)["daily"],
             "default schedules not removed")
-        assert_nothing_raised  { master.mkdefault_objects }
+        assert_nothing_raised  { client.make_default_resources }
         assert(Puppet::Type.type(:filebucket)["puppet"],
             "default filebucket not found")
         assert(Puppet::Type.type(:schedule)["daily"],
@@ -364,6 +366,19 @@ end
         # Make sure we've got schedules
         assert(Puppet::Type.type(:schedule)["hourly"], "Could not retrieve hourly schedule")
         assert(Puppet::Type.type(:filebucket)["puppet"], "Could not retrieve default bucket")
+    end
+
+    # #965 - make sure default objects don't conflict with existing
+    # objects.
+    def test_default_resources_do_not_conflict_with_managed_resources
+        # Create some that conflict with our defaults
+        bucket = Puppet::Type.type(:filebucket).create :name => "puppet"
+        schedule = Puppet::Type.type(:schedule).create :name => "daily"
+
+        client = mkclient()
+
+        # Then make sure creating new defaults doesn't throw an exception.
+        assert_nothing_raised("Default resources conflicted with resources in the catalog") { client.make_default_resources }
     end
 
     # #540 - make sure downloads aren't affected by noop

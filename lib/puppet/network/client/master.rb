@@ -70,7 +70,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     def clear
         @catalog.clear(true) if @catalog
         Puppet::Type.allclear
-        mkdefault_objects
         @catalog = nil
     end
 
@@ -205,12 +204,10 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
 
         self.class.instance = self
         @running = false
-
-        mkdefault_objects
     end
 
     # Make the default objects necessary for function.
-    def mkdefault_objects
+    def make_default_resources
         # First create the default scheduling objects
         Puppet::Type.type(:schedule).mkdefaultschedules
         
@@ -266,6 +263,9 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
                 end
 
                 if self.catalog
+                    # Make our default schedules and such.
+                    make_default_resources
+
                     @catalog.retrieval_duration = duration
                     Puppet.notice "Starting catalog run" unless @local
                     benchmark(:notice, "Finished catalog run") do
