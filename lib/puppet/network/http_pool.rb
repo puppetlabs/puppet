@@ -51,9 +51,9 @@ module Puppet::Network::HttpPool
         # We overwrite the uninitialized @http here with a cached one.
         key = "%s:%s" % [host, port]
 
-        # Return our cached instance if keepalive is enabled and we've got
-        # a cache, as long as we're not resetting the instance.
-        return @http_cache[key] if ! reset and Puppet[:http_keepalive] and @http_cache[key]
+        # Return our cached instance if we've got a cache, as long as we're not
+        # resetting the instance.
+        return @http_cache[key] if ! reset and @http_cache[key]
 
         # Clean up old connections if we have them.
         if http = @http_cache[key]
@@ -85,7 +85,7 @@ module Puppet::Network::HttpPool
 
         cert_setup(http)
 
-        @http_cache[key] = http if Puppet[:http_keepalive]
+        @http_cache[key] = http
 
         return http
     end

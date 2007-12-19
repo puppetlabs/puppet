@@ -1,3 +1,7 @@
+    Removing the ability to disable http keep-alive, since
+    it didn't really work anyway and it should no longer
+    be necessary.
+
     Refactored http keep-alive so it actually works again.
     This should be sufficient enough that we no longer need the
     ability to disable keep-alive.  There is now a central

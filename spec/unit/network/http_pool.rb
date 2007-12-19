@@ -154,34 +154,24 @@ describe Puppet::Network::HttpPool, " when managing http instances" do
     end
 
     it "should create the http instance with the proxy host and port set if the http_proxy is not set to 'none'" do
-        stub_settings :http_keepalive => true, :http_proxy_host => "myhost", :http_proxy_port => 432, :http_enable_post_connection_check => true
+        stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :http_enable_post_connection_check => true
         Puppet::Network::HttpPool.http_instance("me", 54321).open_timeout.should == 120
     end
 
-    it "should default to keep-alive being enabled" do
-        Puppet.settings[:http_keepalive].should be_true
-    end
-
-    it "should cache http instances if keepalive is enabled" do
-        stub_settings :http_keepalive => true, :http_proxy_host => "myhost", :http_proxy_port => 432, :http_enable_post_connection_check => true
+    it "should cache http instances" do
+        stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :http_enable_post_connection_check => true
         old = Puppet::Network::HttpPool.http_instance("me", 54321)
         Puppet::Network::HttpPool.http_instance("me", 54321).should equal(old)
     end
 
-    it "should not cache http instances if keepalive is not enabled" do
-        stub_settings :http_keepalive => false, :http_proxy_host => "myhost", :http_proxy_port => 432, :http_enable_post_connection_check => true
-        old = Puppet::Network::HttpPool.http_instance("me", 54321)
-        Puppet::Network::HttpPool.http_instance("me", 54321).should_not equal(old)
-    end
-
     it "should have a mechanism for getting a new http instance instead of the cached instance" do
-        stub_settings :http_keepalive => true, :http_proxy_host => "myhost", :http_proxy_port => 432, :http_enable_post_connection_check => true
+        stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :http_enable_post_connection_check => true
         old = Puppet::Network::HttpPool.http_instance("me", 54321)
         Puppet::Network::HttpPool.http_instance("me", 54321, true).should_not equal(old)
     end
 
     it "should close existing, open connections when requesting a new connection" do
-        stub_settings :http_keepalive => true, :http_proxy_host => "myhost", :http_proxy_port => 432, :http_enable_post_connection_check => true
+        stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :http_enable_post_connection_check => true
         old = Puppet::Network::HttpPool.http_instance("me", 54321)
         old.expects(:started?).returns(true)
         old.expects(:finish)
@@ -189,7 +179,7 @@ describe Puppet::Network::HttpPool, " when managing http instances" do
     end
 
     it "should have a mechanism for clearing the http cache" do
-        stub_settings :http_keepalive => true, :http_proxy_host => "myhost", :http_proxy_port => 432, :http_enable_post_connection_check => true
+        stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :http_enable_post_connection_check => true
         old = Puppet::Network::HttpPool.http_instance("me", 54321)
         Puppet::Network::HttpPool.http_instance("me", 54321).should equal(old)
         old = Puppet::Network::HttpPool.http_instance("me", 54321)
@@ -198,7 +188,7 @@ describe Puppet::Network::HttpPool, " when managing http instances" do
     end
 
     it "should close open http connections when clearing the cache" do
-        stub_settings :http_keepalive => true, :http_proxy_host => "myhost", :http_proxy_port => 432, :http_enable_post_connection_check => true
+        stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :http_enable_post_connection_check => true
         one = Puppet::Network::HttpPool.http_instance("me", 54321)
         one.expects(:started?).returns(true)
         one.expects(:finish).returns(true)
@@ -206,7 +196,7 @@ describe Puppet::Network::HttpPool, " when managing http instances" do
     end
 
     it "should not close unopened http connections when clearing the cache" do
-        stub_settings :http_keepalive => true, :http_proxy_host => "myhost", :http_proxy_port => 432, :http_enable_post_connection_check => true
+        stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :http_enable_post_connection_check => true
         one = Puppet::Network::HttpPool.http_instance("me", 54321)
         one.expects(:started?).returns(false)
         one.expects(:finish).never
