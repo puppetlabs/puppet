@@ -179,7 +179,7 @@ class Puppet::Network::Client
                 self.runnow if self.scheduled?
             rescue => detail
                 puts detail.backtrace if Puppet[:trace]
-                Puppet.err "Could not run client: %s" % detail
+                Puppet.err "Could not run client; got otherwise uncaught exception: %s" % detail
             end
         end
 
