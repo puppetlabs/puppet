@@ -206,15 +206,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         @running = false
     end
 
-    # Make the default objects necessary for function.
-    def make_default_resources
-        # First create the default scheduling objects
-        Puppet::Type.type(:schedule).mkdefaultschedules
-        
-        # And filebuckets
-        Puppet::Type.type(:filebucket).mkdefaultbucket
-    end
-
     # Mark that we should restart.  The Puppet module checks whether we're running,
     # so this only gets called if we're in the middle of a run.
     def restart
@@ -263,9 +254,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
                 end
 
                 if self.catalog
-                    # Make our default schedules and such.
-                    make_default_resources
-
                     @catalog.retrieval_duration = duration
                     Puppet.notice "Starting catalog run" unless @local
                     benchmark(:notice, "Finished catalog run") do

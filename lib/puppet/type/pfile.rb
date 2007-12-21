@@ -72,12 +72,7 @@ module Puppet
                 filebucketed files.
                 "
 
-            defaultto  do
-                # Make sure the default file bucket exists.
-                obj = Puppet::Type.type(:filebucket)["puppet"] ||
-                    Puppet::Type.type(:filebucket).create(:name => "puppet")
-                obj.bucket
-            end
+            defaultto { "puppet" }
             
             munge do |value|
                 # I don't really know how this is happening.

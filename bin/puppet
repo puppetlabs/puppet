@@ -203,6 +203,8 @@ begin
     # Translate it to a RAL catalog
     catalog = catalog.to_ral
 
+    catalog.finalize
+
     # And apply it
     catalog.apply
 rescue => detail

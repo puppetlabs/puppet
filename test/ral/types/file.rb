@@ -1787,8 +1787,6 @@ class TestFile < Test::Unit::TestCase
 
         assert_instance_of(Puppet::Network::Client::Dipper, file.bucket,
             "did not default to a filebucket for backups")
-        assert_equal(Puppet::Type.type(:filebucket)["puppet"].bucket, file.bucket,
-            "did not default to the 'puppet' filebucket")
     end
 
     # #515 - make sure 'ensure' other than "link" is deleted during recursion

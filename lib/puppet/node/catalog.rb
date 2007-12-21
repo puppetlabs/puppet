@@ -260,6 +260,8 @@ class Puppet::Node::Catalog < Puppet::PGraph
 
     # Make sure all of our resources are "finished".
     def finalize
+        make_default_resources
+
         @resource_table.values.each { |resource| resource.finish }
         
         write_graph(:resources)
@@ -285,6 +287,20 @@ class Puppet::Node::Catalog < Puppet::PGraph
         if block_given?
             yield(self)
             finalize()
+        end
+    end
+
+    # Make the default objects necessary for function.
+    def make_default_resources
+        # We have to add the resources to the catalog, or else they won't get cleaned up after
+        # the transaction.
+
+        # First create the default scheduling objects
+        Puppet::Type.type(:schedule).mkdefaultschedules.each { |res| add_resource(res) unless resource(res.ref) }
+        
+        # And filebuckets
+        if bucket = Puppet::Type.type(:filebucket).mkdefaultbucket
+            add_resource(bucket)
         end
     end
     
@@ -365,6 +381,11 @@ class Puppet::Node::Catalog < Puppet::PGraph
         elsif defined?(@relationship_graph) and @relationship_graph
             @relationship_graph.resource(ref)
         end
+    end
+
+    # Return an array of all resources.
+    def resources
+        @resource_table.keys
     end
 
     # Add a tag.

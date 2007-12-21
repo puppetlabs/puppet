@@ -66,9 +66,9 @@ module Puppet
         # Create a default filebucket.
         def self.mkdefaultbucket
             unless default = self["puppet"]
-                default = self.create :name => "puppet", :path => Puppet[:clientbucketdir]
+                return self.create(:name => "puppet", :path => Puppet[:clientbucketdir])
             end
-            default
+            return nil
         end
 
         def self.instances
