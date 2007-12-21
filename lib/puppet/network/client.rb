@@ -175,8 +175,11 @@ class Puppet::Network::Client
             :tolerance => 1,
             :start? => true
         ) do
-            if self.scheduled?
-                self.runnow
+            begin
+                self.runnow if self.scheduled?
+            rescue => detail
+                puts detail.backtrace if Puppet[:trace]
+                Puppet.err "Could not run client: %s" % detail
             end
         end
 
