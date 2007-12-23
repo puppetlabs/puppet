@@ -27,14 +27,14 @@ module Puppet
                     return nil
                 end
                 unless File.exist?(Puppet[:cacrl])
-                    raise Puppet::Error, "Could not find CRL"
+                    raise Puppet::Error, "Could not find CRL; set 'cacrl' to 'none' to disable CRL usage"
                 end
                 crl = OpenSSL::X509::CRL.new(File.read(Puppet[:cacrl]))
                 store = OpenSSL::X509::Store.new
                 store.purpose = OpenSSL::X509::PURPOSE_ANY
                 store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
                 unless self.ca_cert
-                    raise Puppet::Error, "No CA certificate"
+                    raise Puppet::Error, "Could not find CA certificate"
                 end
 
                 store.add_file(Puppet[:localcacert])

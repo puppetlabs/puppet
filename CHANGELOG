@@ -1,3 +1,23 @@
+0.24.1
+    Updated vim filetype detection. (#900 and #963)
+
+    Default resources like schedules no longer conflict with
+    managed resources. (#965)
+
+    Removing the ability to disable http keep-alive, since
+    it didn't really work anyway and it should no longer
+    be necessary.
+
+    Refactored http keep-alive so it actually works again.
+    This should be sufficient enough that we no longer need the
+    ability to disable keep-alive.  There is now a central
+    module responsible for managing HTTP instances, along with
+    all certificates in those instances.
+
+    Fixed a backward compatibility issue when running 0.23.x
+    clients against 0.24.0 servers -- relationships would
+    consistently not work. (#967)
+
     Closing existing http connections when opening a new one,
     and closing all connections after each run. (#961)
 

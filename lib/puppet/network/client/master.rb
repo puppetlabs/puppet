@@ -1,6 +1,7 @@
 # The client for interacting with the puppetmaster config server.
 require 'sync'
 require 'timeout'
+require 'puppet/network/http_pool'
 
 class Puppet::Network::Client::Master < Puppet::Network::Client
     unless defined? @@sync
@@ -69,7 +70,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     def clear
         @catalog.clear(true) if @catalog
         Puppet::Type.allclear
-        mkdefault_objects
         @catalog = nil
     end
 
@@ -204,17 +204,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
 
         self.class.instance = self
         @running = false
-
-        mkdefault_objects
-    end
-
-    # Make the default objects necessary for function.
-    def mkdefault_objects
-        # First create the default scheduling objects
-        Puppet::Type.type(:schedule).mkdefaultschedules
-        
-        # And filebuckets
-        Puppet::Type.type(:filebucket).mkdefaultbucket
     end
 
     # Mark that we should restart.  The Puppet module checks whether we're running,
@@ -274,7 +263,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
 
                 # Now close all of our existing http connections, since there's no
                 # reason to leave them lying open.
-                Puppet::Network::XMLRPCClient.clear_http_instances
+                Puppet::Network::HttpPool.clear_http_instances
             end
             
             lockfile.unlock

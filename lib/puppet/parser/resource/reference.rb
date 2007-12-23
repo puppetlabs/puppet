@@ -62,7 +62,13 @@ class Puppet::Parser::Resource::Reference < Puppet::ResourceReference
     end
 
     def to_ref
-        return [type.to_s,title.to_s]
+        # We have to return different cases to provide backward compatibility
+        # from 0.24.x to 0.23.x.
+        if builtin?
+            return [type.to_s.downcase, title.to_s]
+        else
+            return [type.to_s, title.to_s]
+        end
     end
 
     def typeclass

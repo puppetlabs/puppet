@@ -14,6 +14,11 @@ class TestWebrickServer < Test::Unit::TestCase
         super
     end
 
+    def teardown
+        super
+        Puppet::Network::HttpPool.clear_http_instances
+    end
+
     # Make sure we can create a server, and that it knows how to create its
     # certs by default.
     def test_basics
@@ -102,7 +107,7 @@ class TestWebrickServer < Test::Unit::TestCase
 
         assert_nothing_raised() {
             client = Puppet::Network::Client.status.new(
-                :Server => Facter.value(:fqdn),
+                :Server => "localhost",
                 :Port => @@port
             )
         }
@@ -111,6 +116,7 @@ class TestWebrickServer < Test::Unit::TestCase
 
     def mk_status_server
         server = nil
+        Puppet[:certdnsnames] = "localhost"
         assert_nothing_raised() {
             server = Puppet::Network::HTTPServer::WEBrick.new(
                 :Port => @@port,

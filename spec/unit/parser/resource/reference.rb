@@ -21,9 +21,14 @@ describe Puppet::Parser::Resource::Reference do
         ref.builtintype.should equal(Puppet::Type.type(:file))
     end
 
-    it "should return a relationship-style resource reference when asked" do
+    it "should return a downcased relationship-style resource reference for defined types" do
         ref = @type.new(:type => "file", :title => "/tmp/yay")
-        ref.to_ref.should == ["File", "/tmp/yay"]
+        ref.to_ref.should == ["file", "/tmp/yay"]
+    end
+
+    it "should return a capitalized relationship-style resource reference for defined types" do
+        ref = @type.new(:type => "whatever", :title => "/tmp/yay")
+        ref.to_ref.should == ["Whatever", "/tmp/yay"]
     end
 
     it "should return a resource reference string when asked" do

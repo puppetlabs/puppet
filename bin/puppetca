@@ -10,7 +10,7 @@
 #
 #   puppetca [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
 #               [-g|--generate] [-l|--list] [-s|--sign] [-r|--revoke]
-#               [-c|--clean] [host]
+#               [-p|--print] [-c|--clean] [--verify] [host]
 #
 # = Description
 #
@@ -55,6 +55,9 @@
 #   List outstanding certificate requests.  If '--all' is specified, 
 #   signed certificates are also listed, prefixed by '+'.
 #
+# print::
+#   Print the full-text version of a host's certificate.
+#
 # revoke::
 #   Revoke the certificate of a client. The certificate can be specified
 #   either by its serial number, given as a decimal number or a hexadecimal
@@ -72,6 +75,9 @@
 #
 # version::
 #   Print the puppet version number and exit.
+#
+# verify::
+#   Verify the named certificate against the local CA certificate.
 #
 # = Example
 #
@@ -99,8 +105,10 @@ options = [
     [ "--generate", "-g",  GetoptLong::NO_ARGUMENT ],
     [ "--help",     "-h",  GetoptLong::NO_ARGUMENT ],
     [ "--list",     "-l",  GetoptLong::NO_ARGUMENT ],
+    [ "--print",    "-p",  GetoptLong::NO_ARGUMENT ],
     [ "--revoke",   "-r",  GetoptLong::NO_ARGUMENT ],
     [ "--sign",     "-s",  GetoptLong::NO_ARGUMENT ],
+    [ "--verify",          GetoptLong::NO_ARGUMENT ],
 	[ "--version",	"-V",  GetoptLong::NO_ARGUMENT ],
     [ "--verbose",  "-v",  GetoptLong::NO_ARGUMENT ]
 ]
@@ -114,13 +122,13 @@ mode = nil
 all = false
 generate = nil
 
+modes = [:clean, :list, :revoke, :generate, :sign, :print, :verify]
+
 begin
     result.each { |opt,arg|
         case opt
             when "--all"
                 all = true
-            when "--clean"
-                mode = :clean
             when "--debug"
                 Puppet::Util::Log.level = :debug
             when "--generate"
@@ -145,7 +153,12 @@ begin
             when "--verbose"
                 Puppet::Util::Log.level = :info
             else
-                Puppet.settings.handlearg(opt, arg)
+                tmp = opt.sub("--", '').to_sym
+                if modes.include?(tmp)
+                    mode = tmp
+                else
+                    Puppet.settings.handlearg(opt, arg)
+                end
         end
     }
 rescue GetoptLong::InvalidOption => detail
@@ -174,7 +187,7 @@ unless mode
     exit(12)
 end
 
-if [:generate, :clean, :revoke, :list].include?(mode)
+if [:verify, :print, :generate, :clean, :revoke, :list].include?(mode)
     hosts = ARGV.collect { |h| h.downcase }
 end
 
@@ -271,6 +284,11 @@ when :generate
         cert.cacert = cacert
         cert.write
     }
+when :print
+    hosts.each { |h|
+        cert = ca.getclientcert(h)[0]
+        puts cert.to_text
+    }
 when :revoke
     hosts.each { |h|
         serial = nil
@@ -291,6 +309,33 @@ when :revoke
             puts "Revoked certificate with serial #{serial}"
         end
     }
+when :verify
+    unless ssl = %x{which openssl}.chomp
+        raise "Can't verify certificates without the openssl binary and could not find one"
+    end
+    success = true
+
+    cacert = Puppet[:localcacert]
+
+    hosts.each do |host|
+        print "%s: " % host
+        file = ca.host2certfile(host)
+        unless FileTest.exist?(file)
+            puts "no certificate found"
+            success = false
+            next
+        end
+
+
+        command = %{#{ssl} verify -CAfile #{cacert} #{file}}
+        output = %x{#{command}}
+        if $? == 0
+            puts "valid"
+        else
+            puts output
+            success = false
+        end
+    end
 else
     $stderr.puts "Invalid mode %s" % mode
     exit(42)

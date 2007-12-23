@@ -22,6 +22,11 @@ class TestFileSources < Test::Unit::TestCase
         Puppet[:filetimeout] = -1
         Puppet::Util::SUIDManager.stubs(:asuser).yields 
     end
+
+    def teardown
+        super
+        Puppet::Network::HttpPool.clear_http_instances
+    end
     
     def use_storage
         begin
@@ -547,6 +552,7 @@ class TestFileSources < Test::Unit::TestCase
 
         Puppet[:masterport] = 8762
         Puppet[:name] = "puppetmasterd"
+        Puppet[:certdnsnames] = "localhost"
 
         serverpid = nil
         assert_nothing_raised() {
@@ -592,6 +598,7 @@ class TestFileSources < Test::Unit::TestCase
 
         Puppet[:autosign] = true
         Puppet[:masterport] = @port
+        Puppet[:certdnsnames] = "localhost"
 
         serverpid = nil
         assert_nothing_raised("Could not start on port %s" % @port) {

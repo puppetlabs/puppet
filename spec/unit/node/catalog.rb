@@ -204,43 +204,43 @@ describe Puppet::Node::Catalog, " when converting to a transobject catalog" do
         @original.add_edge!(@middle, @bottom)
         @original.add_edge!(@bottom, @bottomobject)
 
-        @config = @original.to_transportable
+        @catalog = @original.to_transportable
     end
 
     it "should add all resources as TransObjects" do
-        @resources.each { |resource| @config.resource(resource.ref).should be_instance_of(Puppet::TransObject) }
+        @resources.each { |resource| @catalog.resource(resource.ref).should be_instance_of(Puppet::TransObject) }
     end
 
     it "should not extract defined virtual resources" do
-        @config.vertices.find { |v| v.name == "virtual" }.should be_nil
+        @catalog.vertices.find { |v| v.name == "virtual" }.should be_nil
     end
 
     it "should not extract builtin virtual resources" do
-        @config.vertices.find { |v| v.name == "virtualobject" }.should be_nil
+        @catalog.vertices.find { |v| v.name == "virtualobject" }.should be_nil
     end
 
     it "should copy the tag list to the new catalog" do
-        @config.tags.sort.should == @original.tags.sort
+        @catalog.tags.sort.should == @original.tags.sort
     end
 
     it "should copy the class list to the new catalog" do
-        @config.classes.should == @original.classes
+        @catalog.classes.should == @original.classes
     end
 
     it "should duplicate the original edges" do
         @original.edges.each do |edge|
             next if edge.source.virtual? or edge.target.virtual?
-            source = @config.resource(edge.source.ref)
-            target = @config.resource(edge.target.ref)
+            source = @catalog.resource(edge.source.ref)
+            target = @catalog.resource(edge.target.ref)
 
             source.should_not be_nil
             target.should_not be_nil
-            @config.edge?(source, target).should be_true
+            @catalog.edge?(source, target).should be_true
         end
     end
 
     it "should set itself as the catalog for each converted resource" do
-        @config.vertices.each { |v| v.catalog.object_id.should equal(@config.object_id) }
+        @catalog.vertices.each { |v| v.catalog.object_id.should equal(@catalog.object_id) }
     end
 end
 
@@ -267,29 +267,29 @@ describe Puppet::Node::Catalog, " when converting to a RAL catalog" do
         @original.add_edge!(@middle, @bottom)
         @original.add_edge!(@bottom, @bottomobject)
 
-        @config = @original.to_ral
+        @catalog = @original.to_ral
     end
 
     it "should add all resources as RAL instances" do
-        @resources.each { |resource| @config.resource(resource.ref).should be_instance_of(Puppet::Type) }
+        @resources.each { |resource| @catalog.resource(resource.ref).should be_instance_of(Puppet::Type) }
     end
 
     it "should copy the tag list to the new catalog" do
-        @config.tags.sort.should == @original.tags.sort
+        @catalog.tags.sort.should == @original.tags.sort
     end
 
     it "should copy the class list to the new catalog" do
-        @config.classes.should == @original.classes
+        @catalog.classes.should == @original.classes
     end
 
     it "should duplicate the original edges" do
         @original.edges.each do |edge|
-            @config.edge?(@config.resource(edge.source.ref), @config.resource(edge.target.ref)).should be_true
+            @catalog.edge?(@catalog.resource(edge.source.ref), @catalog.resource(edge.target.ref)).should be_true
         end
     end
 
     it "should set itself as the catalog for each converted resource" do
-        @config.vertices.each { |v| v.catalog.object_id.should equal(@config.object_id) }
+        @catalog.vertices.each { |v| v.catalog.object_id.should equal(@catalog.object_id) }
     end
 
     # This tests #931.
@@ -310,83 +310,93 @@ describe Puppet::Node::Catalog, " when converting to a RAL catalog" do
 
         Puppet::Type.allclear
 
-        proc { @config = config.to_ral }.should_not raise_error
-        @config.resource("Test[changer2]").should equal(resource)
+        proc { @catalog = config.to_ral }.should_not raise_error
+        @catalog.resource("Test[changer2]").should equal(resource)
     end
 
     after do
         # Remove all resource instances.
-        @config.clear(true)
+        @catalog.clear(true)
     end
 end
 
 describe Puppet::Node::Catalog, " when functioning as a resource container" do
     before do
-        @config = Puppet::Node::Catalog.new("host")
+        @catalog = Puppet::Node::Catalog.new("host")
         @one = stub 'resource1', :ref => "Me[one]", :catalog= => nil
         @two = stub 'resource2', :ref => "Me[two]", :catalog= => nil
         @dupe = stub 'resource3', :ref => "Me[one]", :catalog= => nil
     end
 
     it "should provide a method to add one or more resources" do
-        @config.add_resource @one, @two
-        @config.resource(@one.ref).should equal(@one)
-        @config.resource(@two.ref).should equal(@two)
+        @catalog.add_resource @one, @two
+        @catalog.resource(@one.ref).should equal(@one)
+        @catalog.resource(@two.ref).should equal(@two)
     end
 
     it "should set itself as the resource's catalog if it is not a relationship graph" do
-        @one.expects(:catalog=).with(@config)
-        @config.add_resource @one
+        @one.expects(:catalog=).with(@catalog)
+        @catalog.add_resource @one
     end
 
     it "should not set itself as the resource's catalog if it is a relationship graph" do
         @one.expects(:catalog=).never
-        @config.is_relationship_graph = true
-        @config.add_resource @one
+        @catalog.is_relationship_graph = true
+        @catalog.add_resource @one
     end
 
     it "should make all vertices available by resource reference" do
-        @config.add_resource(@one)
-        @config.resource(@one.ref).should equal(@one)
-        @config.vertices.find { |r| r.ref == @one.ref }.should equal(@one)
+        @catalog.add_resource(@one)
+        @catalog.resource(@one.ref).should equal(@one)
+        @catalog.vertices.find { |r| r.ref == @one.ref }.should equal(@one)
     end
 
     it "should canonize how resources are referred to during retrieval when both type and title are provided" do
-        @config.add_resource(@one)
+        @catalog.add_resource(@one)
 
-        @config.resource("me", "one").should equal(@one)
+        @catalog.resource("me", "one").should equal(@one)
     end
 
     it "should canonize how resources are referred to during retrieval when just the title is provided" do
-        @config.add_resource(@one)
+        @catalog.add_resource(@one)
 
-        @config.resource("me[one]", nil).should equal(@one)
+        @catalog.resource("me[one]", nil).should equal(@one)
     end
 
     it "should not allow two resources with the same resource reference" do
-        @config.add_resource(@one)
-        proc { @config.add_resource(@dupe) }.should raise_error(ArgumentError)
+        @catalog.add_resource(@one)
+        proc { @catalog.add_resource(@dupe) }.should raise_error(ArgumentError)
     end
 
     it "should not store objects that do not respond to :ref" do
-        proc { @config.add_resource("thing") }.should raise_error(ArgumentError)
+        proc { @catalog.add_resource("thing") }.should raise_error(ArgumentError)
     end
 
     it "should remove all resources when asked" do
-        @config.add_resource @one
-        @config.add_resource @two
+        @catalog.add_resource @one
+        @catalog.add_resource @two
         @one.expects :remove
         @two.expects :remove
-        @config.clear(true)
+        @catalog.clear(true)
     end
 
     it "should support a mechanism for finishing resources" do
         @one.expects :finish
         @two.expects :finish
-        @config.add_resource @one
-        @config.add_resource @two
+        @catalog.add_resource @one
+        @catalog.add_resource @two
 
-        @config.finalize
+        @catalog.finalize
+    end
+
+    it "should make default resources when finalizing" do
+        @catalog.expects(:make_default_resources)
+        @catalog.finalize
+    end
+
+    it "should add default resources to the catalog upon creation" do
+        @catalog.make_default_resources
+        @catalog.resource(:schedule, "daily").should_not be_nil
     end
     
     it "should optionally support an initialization block and should finalize after such blocks" do
@@ -399,60 +409,64 @@ describe Puppet::Node::Catalog, " when functioning as a resource container" do
     end
 
     it "should inform the resource that it is the resource's catalog" do
-        @one.expects(:catalog=).with(@config)
-        @config.add_resource @one
+        @one.expects(:catalog=).with(@catalog)
+        @catalog.add_resource @one
     end
 
     it "should be able to find resources by reference" do
-        @config.add_resource @one
-        @config.resource(@one.ref).should equal(@one)
+        @catalog.add_resource @one
+        @catalog.resource(@one.ref).should equal(@one)
     end
 
     it "should be able to find resources by reference or by type/title tuple" do
-        @config.add_resource @one
-        @config.resource("me", "one").should equal(@one)
+        @catalog.add_resource @one
+        @catalog.resource("me", "one").should equal(@one)
     end
 
     it "should have a mechanism for removing resources" do
-        @config.add_resource @one
+        @catalog.add_resource @one
         @one.expects :remove
-        @config.remove_resource(@one)
-        @config.resource(@one.ref).should be_nil
-        @config.vertex?(@one).should be_false
+        @catalog.remove_resource(@one)
+        @catalog.resource(@one.ref).should be_nil
+        @catalog.vertex?(@one).should be_false
     end
 
     it "should have a method for creating aliases for resources" do
-        @config.add_resource @one
-        @config.alias(@one, "other")
-        @config.resource("me", "other").should equal(@one)
+        @catalog.add_resource @one
+        @catalog.alias(@one, "other")
+        @catalog.resource("me", "other").should equal(@one)
     end
 
     # This test is the same as the previous, but the behaviour should be explicit.
     it "should alias using the class name from the resource reference, not the resource class name" do
-        @config.add_resource @one
-        @config.alias(@one, "other")
-        @config.resource("me", "other").should equal(@one)
+        @catalog.add_resource @one
+        @catalog.alias(@one, "other")
+        @catalog.resource("me", "other").should equal(@one)
     end
 
     it "should fail to add an alias if the aliased name already exists" do
-        @config.add_resource @one
-        proc { @config.alias @two, "one" }.should raise_error(ArgumentError)
+        @catalog.add_resource @one
+        proc { @catalog.alias @two, "one" }.should raise_error(ArgumentError)
     end
 
     it "should remove resource aliases when the target resource is removed" do
-        @config.add_resource @one
-        @config.alias(@one, "other")
+        @catalog.add_resource @one
+        @catalog.alias(@one, "other")
         @one.expects :remove
-        @config.remove_resource(@one)
-        @config.resource("me", "other").should be_nil
+        @catalog.remove_resource(@one)
+        @catalog.resource("me", "other").should be_nil
+    end
+
+    after do
+        Puppet::Type.allclear
     end
 end
 
 module ApplyingCatalogs
     def setup
-        @config = Puppet::Node::Catalog.new("host")
+        @catalog = Puppet::Node::Catalog.new("host")
 
-        @config.retrieval_duration = Time.now
+        @catalog.retrieval_duration = Time.now
         @transaction = mock 'transaction'
         Puppet::Transaction.stubs(:new).returns(@transaction)
         @transaction.stubs(:evaluate)
@@ -466,7 +480,7 @@ describe Puppet::Node::Catalog, " when applying" do
 
     it "should create and evaluate a transaction" do
         @transaction.expects(:evaluate)
-        @config.apply
+        @catalog.apply
     end
 
     it "should provide the catalog time to the transaction" do
@@ -474,36 +488,36 @@ describe Puppet::Node::Catalog, " when applying" do
             arg[:config_retrieval].should be_instance_of(Time)
             true
         end
-        @config.apply
+        @catalog.apply
     end
 
     it "should clean up the transaction" do
         @transaction.expects :cleanup
-        @config.apply
+        @catalog.apply
     end
     
     it "should return the transaction" do
-        @config.apply.should equal(@transaction)
+        @catalog.apply.should equal(@transaction)
     end
 
     it "should yield the transaction if a block is provided" do
-        @config.apply do |trans|
+        @catalog.apply do |trans|
             trans.should equal(@transaction)
         end
     end
     
     it "should default to not being a host catalog" do
-        @config.host_config.should be_nil
+        @catalog.host_config.should be_nil
     end
 
     it "should pass supplied tags on to the transaction" do
         @transaction.expects(:tags=).with(%w{one two})
-        @config.apply(:tags => %w{one two})
+        @catalog.apply(:tags => %w{one two})
     end
 
     it "should set ignoreschedules on the transaction if specified in apply()" do
         @transaction.expects(:ignoreschedules=).with(true)
-        @config.apply(:ignoreschedules => true)
+        @catalog.apply(:ignoreschedules => true)
     end
 end
 
@@ -512,21 +526,21 @@ describe Puppet::Node::Catalog, " when applying host catalogs" do
 
     # super() doesn't work in the setup method for some reason
     before do
-        @config.host_config = true
+        @catalog.host_config = true
     end
 
     it "should send a report if reporting is enabled" do
         Puppet[:report] = true
         @transaction.expects :send_report
         @transaction.stubs :any_failed? => false
-        @config.apply
+        @catalog.apply
     end
 
     it "should send a report if report summaries are enabled" do
         Puppet[:summarize] = true
         @transaction.expects :send_report
         @transaction.stubs :any_failed? => false
-        @config.apply
+        @catalog.apply
     end
 
     it "should initialize the state database before applying a catalog" do
@@ -534,13 +548,13 @@ describe Puppet::Node::Catalog, " when applying host catalogs" do
 
         # Short-circuit the apply, so we know we're loading before the transaction
         Puppet::Transaction.expects(:new).raises ArgumentError
-        proc { @config.apply }.should raise_error(ArgumentError)
+        proc { @catalog.apply }.should raise_error(ArgumentError)
     end
 
     it "should sync the state database after applying" do
         Puppet::Util::Storage.expects(:store)
         @transaction.stubs :any_failed? => false
-        @config.apply
+        @catalog.apply
     end
 
     after { Puppet.settings.clear }
@@ -550,20 +564,20 @@ describe Puppet::Node::Catalog, " when applying non-host catalogs" do
     include ApplyingCatalogs
 
     before do
-        @config.host_config = false
+        @catalog.host_config = false
     end
     
     it "should never send reports" do
         Puppet[:report] = true
         Puppet[:summarize] = true
         @transaction.expects(:send_report).never
-        @config.apply
+        @catalog.apply
     end
 
     it "should never modify the state database" do
         Puppet::Util::Storage.expects(:load).never
         Puppet::Util::Storage.expects(:store).never
-        @config.apply
+        @catalog.apply
     end
 
     after { Puppet.settings.clear }
@@ -571,20 +585,20 @@ end
 
 describe Puppet::Node::Catalog, " when creating a relationship graph" do
     before do
-        @config = Puppet::Node::Catalog.new("host")
+        @catalog = Puppet::Node::Catalog.new("host")
         @compone = Puppet::Type::Component.create :name => "one"
         @comptwo = Puppet::Type::Component.create :name => "two", :require => ["class", "one"]
         @file = Puppet::Type.type(:file)
         @one = @file.create :path => "/one"
         @two = @file.create :path => "/two"
-        @config.add_edge! @compone, @one
-        @config.add_edge! @comptwo, @two
+        @catalog.add_edge! @compone, @one
+        @catalog.add_edge! @comptwo, @two
 
         @three = @file.create :path => "/three"
         @four = @file.create :path => "/four", :require => ["file", "/three"]
         @five = @file.create :path => "/five"
-        @config.add_resource @compone, @comptwo, @one, @two, @three, @four, @five
-        @relationships = @config.relationship_graph
+        @catalog.add_resource @compone, @comptwo, @one, @two, @three, @four, @five
+        @relationships = @catalog.relationship_graph
     end
 
     it "should fail when trying to create a relationship graph for a relationship graph" do
@@ -620,54 +634,54 @@ describe Puppet::Node::Catalog, " when creating a relationship graph" do
 
     it "should get removed when the catalog is cleaned up" do
         @relationships.expects(:clear).with(false)
-        @config.clear
-        @config.instance_variable_get("@relationship_graph").should be_nil
+        @catalog.clear
+        @catalog.instance_variable_get("@relationship_graph").should be_nil
     end
 
     it "should create a new relationship graph after clearing the old one" do
         @relationships.expects(:clear).with(false)
-        @config.clear
-        @config.relationship_graph.should be_instance_of(Puppet::Node::Catalog)
+        @catalog.clear
+        @catalog.relationship_graph.should be_instance_of(Puppet::Node::Catalog)
     end
 
     it "should look up resources in the relationship graph if not found in the main catalog" do
         five = stub 'five', :ref => "File[five]", :catalog= => nil
         @relationships.add_resource five
-        @config.resource(five.ref).should equal(five)
+        @catalog.resource(five.ref).should equal(five)
     end
 
     it "should provide a method to create additional resources that also registers the resource" do
         args = {:name => "/yay", :ensure => :file}
-        resource = stub 'file', :ref => "File[/yay]", :catalog= => @config
+        resource = stub 'file', :ref => "File[/yay]", :catalog= => @catalog
         Puppet::Type.type(:file).expects(:create).with(args).returns(resource)
-        @config.create_resource :file, args
-        @config.resource("File[/yay]").should equal(resource)
+        @catalog.create_resource :file, args
+        @catalog.resource("File[/yay]").should equal(resource)
     end
 
     it "should provide a mechanism for creating implicit resources" do
         args = {:name => "/yay", :ensure => :file}
-        resource = stub 'file', :ref => "File[/yay]", :catalog= => @config
+        resource = stub 'file', :ref => "File[/yay]", :catalog= => @catalog
         Puppet::Type.type(:file).expects(:create).with(args).returns(resource)
         resource.expects(:implicit=).with(true)
-        @config.create_implicit_resource :file, args
-        @config.resource("File[/yay]").should equal(resource)
+        @catalog.create_implicit_resource :file, args
+        @catalog.resource("File[/yay]").should equal(resource)
     end
 
     it "should add implicit resources to the relationship graph if there is one" do
         args = {:name => "/yay", :ensure => :file}
-        resource = stub 'file', :ref => "File[/yay]", :catalog= => @config
+        resource = stub 'file', :ref => "File[/yay]", :catalog= => @catalog
         resource.expects(:implicit=).with(true)
         Puppet::Type.type(:file).expects(:create).with(args).returns(resource)
         # build the graph
-        relgraph = @config.relationship_graph
+        relgraph = @catalog.relationship_graph
 
-        @config.create_implicit_resource :file, args
+        @catalog.create_implicit_resource :file, args
         relgraph.resource("File[/yay]").should equal(resource)
     end
 
     it "should remove resources created mid-transaction" do
         args = {:name => "/yay", :ensure => :file}
-        resource = stub 'file', :ref => "File[/yay]", :catalog= => @config
+        resource = stub 'file', :ref => "File[/yay]", :catalog= => @catalog
         @transaction = mock 'transaction'
         Puppet::Transaction.stubs(:new).returns(@transaction)
         @transaction.stubs(:evaluate)
@@ -675,16 +689,16 @@ describe Puppet::Node::Catalog, " when creating a relationship graph" do
         @transaction.stubs(:addtimes)
         Puppet::Type.type(:file).expects(:create).with(args).returns(resource)
         resource.expects :remove
-        @config.apply do |trans|
-            @config.create_resource :file, args
-            @config.resource("File[/yay]").should equal(resource)
+        @catalog.apply do |trans|
+            @catalog.create_resource :file, args
+            @catalog.resource("File[/yay]").should equal(resource)
         end
-        @config.resource("File[/yay]").should be_nil
+        @catalog.resource("File[/yay]").should be_nil
     end
 
     it "should remove resources from the relationship graph if it exists" do
-        @config.remove_resource(@one)
-        @config.relationship_graph.vertex?(@one).should be_false
+        @catalog.remove_resource(@one)
+        @catalog.relationship_graph.vertex?(@one).should be_false
     end
 
     after do
@@ -694,30 +708,30 @@ end
 
 describe Puppet::Node::Catalog, " when writing dot files" do
     before do
-        @config = Puppet::Node::Catalog.new("host")
+        @catalog = Puppet::Node::Catalog.new("host")
         @name = :test
         @file = File.join(Puppet[:graphdir], @name.to_s + ".dot")
     end
     it "should only write when it is a host catalog" do
         File.expects(:open).with(@file).never
-        @config.host_config = false
+        @catalog.host_config = false
         Puppet[:graph] = true
-        @config.write_graph(@name)
+        @catalog.write_graph(@name)
     end
 
     it "should only write when graphing is enabled" do
         File.expects(:open).with(@file).never
-        @config.host_config = true
+        @catalog.host_config = true
         Puppet[:graph] = false
-        @config.write_graph(@name)
+        @catalog.write_graph(@name)
     end
 
     it "should write a dot file based on the passed name" do
         File.expects(:open).with(@file, "w").yields(stub("file", :puts => nil))
-        @config.expects(:to_dot).with("name" => @name.to_s.capitalize)
-        @config.host_config = true
+        @catalog.expects(:to_dot).with("name" => @name.to_s.capitalize)
+        @catalog.host_config = true
         Puppet[:graph] = true
-        @config.write_graph(@name)
+        @catalog.write_graph(@name)
     end
 
     after do
