@@ -157,6 +157,9 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Sat Dec 22 2007 David Lutterkort <dlutter@redhat.com> - 0.24.1-1
+- New version
+
 * Mon Dec 17 2007 David Lutterkort <dlutter@redhat.com> - 0.24.0-2
 - Use updated upstream tarball that contains yumhelper.py
 
