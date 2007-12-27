@@ -180,7 +180,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
             matchers = resources.dup
             @records.each do |record|
                 # Skip things like comments and blank lines
-                next if record_type(record[:record_type]).text?
+                next if skip_record?(record)
 
                 if name = record[:name] and resource = resources[name]
                     resource.provider = new(record)
@@ -241,6 +241,12 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
                 @target = old
             end
         end
+    end
+
+    # Should we skip the record?  Basically, we skip text records.
+    # This is only here so subclasses can override it.
+    def self.skip_record?(record)
+        record_type(record[:record_type]).text?
     end
 
     # Initialize the object if necessary.
