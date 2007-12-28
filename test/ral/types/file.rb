@@ -1817,5 +1817,10 @@ class TestFile < Test::Unit::TestCase
         changes = obj.evaluate
         assert(changes.empty?, "Missing file with no ensure resulted in changes")
     end
+
+    def test_root_dir_is_named_correctly
+        obj = Puppet::Type.newfile(:path => '/', :mode => 0755)
+        assert_equal("/", obj.title, "/ directory was changed to empty string")
+    end
 end
 
