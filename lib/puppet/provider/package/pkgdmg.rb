@@ -87,14 +87,10 @@ Example usage::
 
 **WARNING**: Because I assume files will be downloaded to /tmp, the current
 implementation attempts to delete DMG files if you install directly from the
-file system and not via a URL method.
-"
-  
+file system and not via a URL method."
 
     confine :exists => "/Library/Receipts"
-    commands :installer => "/usr/sbin/installer"
-    commands :hdiutil => "/usr/bin/hdiutil"
-    commands :curl => "/usr/bin/curl"
+    commands :installer => "/usr/sbin/installer", :hdiutil => "/usr/bin/hdiutil", :curl => "/usr/bin/curl"
 
     # JJM We store a cookie for each installed .pkg.dmg in /var/db
     def self.instance_by_name
