@@ -66,11 +66,7 @@ module Puppet
             :owner => "root",
             :desc => "Where SSL certificates are kept."
         },
-        :rundir => { 
-            :default => rundir,
-            :mode => 0750,
-            :owner => "$user",
-            :group => "$group",
+        :rundir => { :default => rundir,
             :desc => "Where Puppet PID files are kept."
         },
         :genconfig => [false,
