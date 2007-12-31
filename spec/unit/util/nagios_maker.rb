@@ -63,6 +63,30 @@ describe Puppet::Util::NagiosMaker do
         @module.create_nagios_type(:test)
     end
 
+    it "should skip parameters that start with integers" do
+        type = stub 'type', :newparam => nil, :ensurable => nil, :provide => nil
+
+        @nagtype.stubs(:parameters).returns(["2dcoords".to_sym, :other])
+
+        type.expects(:newproperty).with(:other)
+        type.expects(:newproperty).with(:target)
+
+        Puppet::Type.expects(:newtype).with(:nagios_test).returns(type)
+        @module.create_nagios_type(:test)
+    end
+
+    it "should deduplicate the parameter list" do
+        type = stub 'type', :newparam => nil, :ensurable => nil, :provide => nil
+
+        @nagtype.stubs(:parameters).returns([:one, :one])
+
+        type.expects(:newproperty).with(:one)
+        type.expects(:newproperty).with(:target)
+
+        Puppet::Type.expects(:newtype).with(:nagios_test).returns(type)
+        @module.create_nagios_type(:test)
+    end
+
     it "should create a target property" do
         type = stub 'type', :newparam => nil, :ensurable => nil, :provide => nil
 
