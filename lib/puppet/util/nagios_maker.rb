@@ -47,7 +47,7 @@ module Puppet::Util::NagiosMaker
             same code and the same library.
 
             This type generates Nagios configuration statements in Nagios-parseable configuration
-            files.  By default, the statements will be added to ``#{provider.default_target}, but
+            files.  By default, the statements will be added to ``#{provider.default_target}``, but
             you can send them to a different file by setting their ``target`` attribute.
 
             .. _naginator: http://reductivelabs.com/trac/naginator
