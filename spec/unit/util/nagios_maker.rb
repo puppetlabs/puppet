@@ -26,14 +26,14 @@ describe Puppet::Util::NagiosMaker do
     end
 
     it "should create a new RAL type with the provided name prefixed with 'nagios_'" do
-        type = stub 'type', :newparam => nil, :newproperty => nil, :ensurable => nil, :provide => nil
+        type = stub 'type', :newparam => nil, :newproperty => nil, :ensurable => nil, :provide => nil, :desc => nil
 
         Puppet::Type.expects(:newtype).with(:nagios_test).returns(type)
         @module.create_nagios_type(:test)
     end
 
     it "should mark the created type as ensurable" do
-        type = stub 'type', :newparam => nil, :newproperty => nil, :provide => nil
+        type = stub 'type', :newparam => nil, :newproperty => nil, :provide => nil, :desc => nil
 
         type.expects(:ensurable)
 
@@ -42,7 +42,7 @@ describe Puppet::Util::NagiosMaker do
     end
 
     it "should create a namevar parameter for the nagios type's name parameter" do
-        type = stub 'type', :newproperty => nil, :ensurable => nil, :provide => nil
+        type = stub 'type', :newproperty => nil, :ensurable => nil, :provide => nil, :desc => nil
 
         type.expects(:newparam).with(:name, :namevar => true)
 
@@ -51,7 +51,7 @@ describe Puppet::Util::NagiosMaker do
     end
 
     it "should create a property for all non-namevar parameters" do
-        type = stub 'type', :newparam => nil, :ensurable => nil, :provide => nil
+        type = stub 'type', :newparam => nil, :ensurable => nil, :provide => nil, :desc => nil
 
         @nagtype.stubs(:parameters).returns([:one, :two])
 
@@ -64,7 +64,7 @@ describe Puppet::Util::NagiosMaker do
     end
 
     it "should skip parameters that start with integers" do
-        type = stub 'type', :newparam => nil, :ensurable => nil, :provide => nil
+        type = stub 'type', :newparam => nil, :ensurable => nil, :provide => nil, :desc => nil
 
         @nagtype.stubs(:parameters).returns(["2dcoords".to_sym, :other])
 
@@ -76,7 +76,7 @@ describe Puppet::Util::NagiosMaker do
     end
 
     it "should deduplicate the parameter list" do
-        type = stub 'type', :newparam => nil, :ensurable => nil, :provide => nil
+        type = stub 'type', :newparam => nil, :ensurable => nil, :provide => nil, :desc => nil
 
         @nagtype.stubs(:parameters).returns([:one, :one])
 
@@ -88,7 +88,7 @@ describe Puppet::Util::NagiosMaker do
     end
 
     it "should create a target property" do
-        type = stub 'type', :newparam => nil, :ensurable => nil, :provide => nil
+        type = stub 'type', :newparam => nil, :ensurable => nil, :provide => nil, :desc => nil
 
         type.expects(:newproperty).with(:target)
 
@@ -104,7 +104,7 @@ describe Puppet::Util::NagiosMaker, " when creating the naginator provider" do
         @nagtype = stub 'nagios type', :parameters => [], :namevar => :name
         Nagios::Base.stubs(:type).with(:test).returns(@nagtype)
 
-        @type = stub 'type', :newparam => nil, :ensurable => nil, :newproperty => nil
+        @type = stub 'type', :newparam => nil, :ensurable => nil, :newproperty => nil, :desc => nil
         Puppet::Type.stubs(:newtype).with(:nagios_test).returns(@type)
     end
 
