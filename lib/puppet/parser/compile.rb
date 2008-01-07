@@ -122,9 +122,12 @@ class Puppet::Parser::Compile
         classes.each do |name|
             # If we can find the class, then make a resource that will evaluate it.
             if klass = scope.findclass(name)
+                found << name and next if class_scope(klass)
+
                 # Create a resource to model this class, and then add it to the list
                 # of resources.
                 resource = Puppet::Parser::Resource.new(:type => "class", :title => klass.classname, :scope => scope, :source => scope.source)
+
                 store_resource(scope, resource)
 
                 # If they've disabled lazy evaluation (which the :include function does),
