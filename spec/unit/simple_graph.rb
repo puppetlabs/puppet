@@ -219,11 +219,51 @@ describe Puppet::SimpleGraph, " when reversing graphs" do
     end
 
     it "should add all vertices to the reversed graph" do
+        @graph.add_edge!(:one, :two)
+        @graph.vertex?(:one).should be_true
+        @graph.vertex?(:two).should be_true
     end
     
     it "should retain labels on edges" do
         @graph.add_edge!(:one, :two, :stuff => :awesome)
         edge = @graph.reversal.edge(:two, :one)
         edge.label.should == {:stuff => :awesome}
+    end
+end
+
+describe Puppet::SimpleGraph, " when sorting the graph" do
+    before do
+        @graph = Puppet::SimpleGraph.new
+    end
+
+    def add_edges(hash)
+        hash.each do |a,b|
+            @graph.add_edge!(a, b)
+        end
+    end
+
+    it "should sort the graph topologically" do
+        add_edges :a => :b, :b => :c
+        @graph.topsort.should == [:a, :b, :c]
+    end
+
+    it "should fail on two-vertex loops" do
+        add_edges :a => :b, :b => :a
+        proc { @graph.topsort }.should raise_error(Puppet::Error)
+    end
+
+    it "should fail on multi-vertex loops" do
+        add_edges :a => :b, :b => :c, :c => :a
+        proc { @graph.topsort }.should raise_error(Puppet::Error)
+    end
+
+    it "should fail when a larger tree contains a small cycle" do
+        add_edges :a => :b, :b => :a, :c => :a, :d => :c
+        proc { @graph.topsort }.should raise_error(Puppet::Error)
+    end
+
+    it "should succeed on trees with no cycles" do
+        add_edges :a => :b, :b => :e, :c => :a, :d => :c
+        proc { @graph.topsort }.should_not raise_error
     end
 end

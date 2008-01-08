@@ -17,20 +17,14 @@ module Puppet::Util::Graph
         self.each do |child|
             unless block_given? and ! yield(child)
                 graph.add_edge!(self, child)
-
-                if graph.cyclic?
-                    raise Puppet::Error, "%s created a cyclic graph" % self
-                end
                 
                 if child.respond_to?(:to_graph)
                     child.to_graph(graph, &block)
                 end
             end
         end
-        
-        if graph.cyclic?
-            raise Puppet::Error, "%s created a cyclic graph" % self
-        end
+
+        # Do a topsort, which will throw an exception if the graph is cyclic.
         
         graph
     end

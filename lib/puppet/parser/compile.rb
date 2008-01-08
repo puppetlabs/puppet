@@ -1,10 +1,6 @@
 #  Created by Luke A. Kanies on 2007-08-13.
 #  Copyright (c) 2007. All rights reserved.
 
-require 'puppet/external/gratr/digraph'
-require 'puppet/external/gratr/import'
-require 'puppet/external/gratr/dot'
-
 require 'puppet/node'
 require 'puppet/node/catalog'
 require 'puppet/util/errors'
@@ -420,7 +416,7 @@ class Puppet::Parser::Compile
         @tags = []
 
         # A graph for maintaining scope relationships.
-        @scope_graph = GRATR::Digraph.new
+        @scope_graph = Puppet::SimpleGraph.new
 
         # For maintaining the relationship between scopes and their resources.
         @catalog = Puppet::Node::Catalog.new(@node.name)
