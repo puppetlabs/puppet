@@ -1,10 +1,6 @@
 #  Created by Luke A. Kanies on 2006-11-24.
 #  Copyright (c) 2006. All rights reserved.
 
-require 'puppet/external/gratr/digraph'
-require 'puppet/external/gratr/import'
-require 'puppet/external/gratr/dot'
-
 require 'puppet/relationship'
 require 'puppet/simple_graph'
 
@@ -45,7 +41,7 @@ class Puppet::PGraph < Puppet::SimpleGraph
 
     # Which resources a given resource depends upon.
     def dependents(resource)
-        tree_from_vertex2(resource).keys
+        tree_from_vertex(resource).keys
     end
     
     # Which resources depend upon the given resource.
@@ -58,8 +54,7 @@ class Puppet::PGraph < Puppet::SimpleGraph
         # Strangely, it's significantly faster to search a reversed
         # tree in the :out direction than to search a normal tree
         # in the :in direction.
-        @reversal.tree_from_vertex2(resource, :out).keys
-        #tree_from_vertex2(resource, :in).keys
+        @reversal.tree_from_vertex(resource, :out).keys
     end
     
     # Override this method to use our class instead.
@@ -68,9 +63,9 @@ class Puppet::PGraph < Puppet::SimpleGraph
     end
     
     # Determine all of the leaf nodes below a given vertex.
-    def leaves(vertex, type = :dfs)
-        tree = tree_from_vertex(vertex, type)
-        l = tree.keys.find_all { |c| adjacent(c, :direction => :out).empty? }
+    def leaves(vertex, direction = :out)
+        tree = tree_from_vertex(vertex, direction)
+        l = tree.keys.find_all { |c| adjacent(c, :direction => direction).empty? }
         return l
     end
     
@@ -150,61 +145,14 @@ class Puppet::PGraph < Puppet::SimpleGraph
             remove_vertex!(container)
         end
     end
-    
-    # For some reason, unconnected vertices do not show up in
-    # this graph.
-    def to_jpg(path, name)
-        gv = vertices()
-        Dir.chdir(path) do
-            induced_subgraph(gv).write_to_graphic_file('jpg', name)
-        end
-    end
-
-    # Replace the default method, because we want to throw errors on back edges,
-    # not just skip them.
-    def topsort(start = nil, &block)
-        result  = []
-        go      = true 
-        cycles = []
-        back    = Proc.new { |e|
-            cycles << e
-            go = false
-        }
-        push    = Proc.new { |v| result.unshift(v) if go}
-        start   ||= vertices[0]
-        dfs({:exit_vertex => push, :back_edge => back, :start => start})
-        if block_given?
-            result.each {|v| yield(v) }
-        end
-
-        if cycles.length > 0
-            msg = "Found cycles in the following relationships:"
-            cycles.each { |edge| msg += " %s => %s" % [edge.source, edge.target] }
-            raise Puppet::Error, msg
-        end
-        return result
-    end
-
-    def to_yaml_properties
-        instance_variables
-    end
 
     # A different way of walking a tree, and a much faster way than the
     # one that comes with GRATR.
-    def tree_from_vertex2(start, direction = :out)
+    def tree_from_vertex(start, direction = :out)
         predecessor={}
         walk(start, direction) do |parent, child|
             predecessor[child] = parent
         end
         predecessor       
-    end
-
-    # A support method for tree_from_vertex2.  Just walk the tree and pass
-    # the parents and children.
-    def walk(source, direction, &block)
-        adjacent(source, :direction => direction).each do |target|
-            yield source, target
-            walk(target, direction, &block)
-        end
     end
 end

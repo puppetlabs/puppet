@@ -59,7 +59,11 @@ class Puppet::Relationship
     end
     
     def ref
-        "%s => %s" % [source.ref, target.ref]
+        "%s => %s" % [source, target]
+    end
+
+    def to_s
+        ref
     end
 end
 

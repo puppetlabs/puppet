@@ -1,10 +1,6 @@
 #  Created by Luke A. Kanies on 2007-08-13.
 #  Copyright (c) 2007. All rights reserved.
 
-require 'puppet/external/gratr/digraph'
-require 'puppet/external/gratr/import'
-require 'puppet/external/gratr/dot'
-
 require 'puppet/node'
 require 'puppet/node/catalog'
 require 'puppet/util/errors'
@@ -122,9 +118,12 @@ class Puppet::Parser::Compile
         classes.each do |name|
             # If we can find the class, then make a resource that will evaluate it.
             if klass = scope.findclass(name)
+                found << name and next if class_scope(klass)
+
                 # Create a resource to model this class, and then add it to the list
                 # of resources.
                 resource = Puppet::Parser::Resource.new(:type => "class", :title => klass.classname, :scope => scope, :source => scope.source)
+
                 store_resource(scope, resource)
 
                 # If they've disabled lazy evaluation (which the :include function does),
@@ -417,7 +416,7 @@ class Puppet::Parser::Compile
         @tags = []
 
         # A graph for maintaining scope relationships.
-        @scope_graph = GRATR::Digraph.new
+        @scope_graph = Puppet::SimpleGraph.new
 
         # For maintaining the relationship between scopes and their resources.
         @catalog = Puppet::Node::Catalog.new(@node.name)

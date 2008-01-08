@@ -24,7 +24,7 @@ describe Puppet::Relationship do
     end
 
     it "should provide a :ref method that describes the edge" do
-        @edge = Puppet::Relationship.new(stub("a", :ref => "a"), stub("b", :ref => "b"))
+        @edge = Puppet::Relationship.new("a", "b")
         @edge.ref.should == "a => b"
     end
 end

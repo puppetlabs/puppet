@@ -1,3 +1,6 @@
+    Fixed #971 -- classes can once again be included multiple
+    times.
+
     Added builtin support for Nagios types using
     Naginator to parse and generate the files.
 

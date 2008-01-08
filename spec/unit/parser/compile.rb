@@ -106,7 +106,7 @@ describe Puppet::Parser::Compile, " when evaluating found classes" do
         @class = stub 'class', :classname => "my::class"
         @scope.stubs(:findclass).with("myclass").returns(@class)
 
-        @resource = mock 'resource'
+        @resource = stub 'resource', :ref => 'Class[myclass]'
     end
 
     it "should create a resource for each found class" do
@@ -153,6 +153,19 @@ describe Puppet::Parser::Compile, " when evaluating found classes" do
         @resource.expects(:evaluate)
 
         Puppet::Parser::Resource.stubs(:new).returns(@resource)
+        @compile.evaluate_classes(%w{myclass}, @scope, false)
+    end
+
+    it "should skip classes that have already been evaluated" do
+        @compile.catalog.stubs(:tag)
+
+        @compile.expects(:class_scope).with(@class).returns("something")
+
+        @compile.expects(:store_resource).never
+
+        @resource.expects(:evaluate).never
+
+        Puppet::Parser::Resource.expects(:new).never
         @compile.evaluate_classes(%w{myclass}, @scope, false)
     end
 

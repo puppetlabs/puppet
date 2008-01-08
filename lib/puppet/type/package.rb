@@ -248,7 +248,7 @@ module Puppet
 
         newparam(:responsefile) do
             desc "A file containing any necessary answers to questions asked by
-                the package.  This is currently only used on Solaris.  The
+                the package.  This is currently used on Solaris and Debian.  The
                 value will be validated according to system rules, but it should
                 generally be a fully qualified path."
         end
