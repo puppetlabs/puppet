@@ -65,12 +65,9 @@ class TestFileBucket < Test::Unit::TestCase
     def test_simplebucket
         name = "yayness"
         bucketpath = tempfile()
-        mkbucket(name, bucketpath)
+        resource = mkbucket(name, bucketpath)
 
-        bucket = nil
-        assert_nothing_raised {
-            bucket = Puppet.type(:filebucket).bucket(name)
-        }
+        bucket = resource.bucket
 
         assert_instance_of(Puppet::Network::Client.dipper, bucket)
 
@@ -108,50 +105,6 @@ class TestFileBucket < Test::Unit::TestCase
         File.open(newpath) { |f| newmd5 = Digest::MD5.hexdigest(f.read) }
 
         assert_equal(md5, newmd5)
-    end
-
-    def test_fileswithbuckets
-        name = "yayness"
-        mkbucket(name, tempfile())
-
-        bucket = nil
-        assert_nothing_raised {
-            bucket = Puppet.type(:filebucket).bucket(name)
-        }
-
-        file = mktestfile()
-        assert_nothing_raised {
-            file[:backup] = name
-        }
-
-        opath = tempfile()
-        @@tmpfiles << opath
-        File.open(opath, "w") { |f| f.puts "yaytest" }
-
-        origmd5 = File.open(file.name) { |f| newmd5 = Digest::MD5.hexdigest(f.read) }
-
-        file[:source] = opath
-        #assert_nothing_raised {
-        #    file[:backup] = true
-        #}
-
-        assert_apply(file)
-
-        # so, we've now replaced the file with the opath file
-        assert_equal(
-            File.open(opath) { |f| newmd5 = Digest::MD5.hexdigest(f.read) },
-            File.open(file.name) { |f| newmd5 = Digest::MD5.hexdigest(f.read) }
-        )
-
-        #File.chmod(0644, file.name)
-        assert_nothing_raised {
-            bucket.restore(file.name, origmd5)
-        }
-
-        assert_equal(
-            origmd5,
-            File.open(file.name) { |f| newmd5 = Digest::MD5.hexdigest(f.read) }
-        )
     end
 end
 

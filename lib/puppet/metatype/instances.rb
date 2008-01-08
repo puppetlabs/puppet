@@ -8,11 +8,13 @@ class Puppet::Type
 
     # retrieve a named instance of the current type
     def self.[](name)
+        raise "Global resource access is deprecated"
         @objects[name] || @aliases[name]
     end
 
     # add an instance by name to the class list of instances
     def self.[]=(name,object)
+        raise "Global resource storage is deprecated"
         newobj = nil
         if object.is_a?(Puppet::Type)
             newobj = object
@@ -126,24 +128,6 @@ class Puppet::Type
         # XXX This will have to change when transobjects change to using titles
         title = hash.name
 
-        # if the object already exists
-        if self.isomorphic? and retobj = self[title]
-            # if only one of our objects is implicit, then it's easy to see
-            # who wins -- the non-implicit one.
-            if retobj.implicit? and ! implicit
-                Puppet.notice "Removing implicit %s" % retobj.title
-                # Remove all of the objects, but do not remove their subscriptions.
-                retobj.remove(false)
-
-                # now pass through and create the new object
-            elsif implicit
-                Puppet.debug "Ignoring implicit %s[%s]" % [self.name, title]
-                return nil
-            else
-                raise Puppet::Error, "%s is already being managed" % retobj.ref
-            end
-        end
-
         # create it anew
         # if there's a failure, destroy the object if it got that far, but raise
         # the error.
@@ -153,8 +137,6 @@ class Puppet::Type
             Puppet.err "Could not create %s: %s" % [title, detail.to_s]
             if obj
                 obj.remove(true)
-            elsif obj = self[title]
-                obj.remove(true)
             end
             raise
         end
@@ -162,9 +144,6 @@ class Puppet::Type
         if implicit
             obj.implicit = true
         end
-
-        # Store the object by title
-        self[obj.title] = obj
 
         return obj
     end
@@ -258,10 +237,6 @@ class Puppet::Type
         provider_instances = {}
         providers_by_source.collect do |provider|
             provider.instances.collect do |instance|
-                # First try to get the resource if it already exists
-                # Skip instances that map to a managed resource with a different provider
-                next if resource = self[instance.name] and resource.provider.class != instance.class
-
                 # We always want to use the "first" provider instance we find, unless the resource
                 # is already managed and has a different provider set
                 if other = provider_instances[instance.name]
@@ -271,12 +246,7 @@ class Puppet::Type
                 end
                 provider_instances[instance.name] = instance
 
-                if resource
-                    resource.provider = instance
-                    resource
-                else
-                    create(:name => instance.name, :provider => instance, :check => :all)
-                end
+                create(:name => instance.name, :provider => instance, :check => :all)
             end
         end.flatten.compact
     end

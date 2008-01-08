@@ -68,13 +68,6 @@ class TestBasic < Test::Unit::TestCase
         assert_equal("echo", @command.title)
     end
 
-    def test_object_retrieval
-        [@command, @configfile].each { |obj|
-            assert_equal(obj.class[obj.name].object_id, obj.object_id,
-                "%s did not match class version" % obj.ref)
-        }
-    end
-
     def test_paths
         [@configfile, @command, @component].each { |obj|
             assert_nothing_raised {

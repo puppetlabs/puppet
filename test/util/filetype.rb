@@ -85,7 +85,7 @@ class TestFileType < Test::Unit::TestCase
         assert_nothing_raised("Could not call backup with no buckets") do
             obj.backup
         end
-        puppet = type["puppet"]
+        puppet = type.mkdefaultbucket
         assert(puppet, "Did not create default filebucket")
 
         assert_equal("one", puppet.bucket.getfile(Digest::MD5.hexdigest(File.read(path))), "Could not get file from backup")
@@ -99,7 +99,7 @@ class TestFileType < Test::Unit::TestCase
         assert_equal("two", puppet.bucket.getfile(Digest::MD5.hexdigest(File.read(path))), "Could not get file from backup")
     end
 
-    if Facter["operatingsystem"].value == "Darwin"
+    if Facter["operatingsystem"].value == "Darwin" and Facter["operatingsystemrelease"] != "9.1.0"
     def test_ninfotoarray
         obj = nil
         type = nil

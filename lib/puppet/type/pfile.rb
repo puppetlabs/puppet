@@ -76,9 +76,8 @@ module Puppet
             
             munge do |value|
                 # I don't really know how this is happening.
-                if value.is_a?(Array)
-                    value = value.shift
-                end
+                value = value.shift if value.is_a?(Array)
+
                 case value
                 when false, "false", :false:
                     false
@@ -90,7 +89,7 @@ module Puppet
                     # We can't depend on looking this up right now,
                     # we have to do it after all of the objects
                     # have been instantiated.
-                    if bucketobj = Puppet::Type.type(:filebucket)[value]
+                    if resource.catalog and bucketobj = resource.catalog.resource(:filebucket, value)
                         @resource.bucket = bucketobj.bucket
                         bucketobj.title
                     else
@@ -304,30 +303,23 @@ module Puppet
         # We have to do some extra finishing, to retrieve our bucket if
         # there is one.
         def finish
-            # Let's cache these values, since there should really only be
-            # a couple of these buckets
-            @@filebuckets ||= {}
-
             # Look up our bucket, if there is one
             if bucket = self.bucket
                 case bucket
                 when String:
-                    if obj = @@filebuckets[bucket]
-                        # This sets the @value on :backup, too
-                        self.bucket = obj
+                    if catalog and obj = catalog.resource(:filebucket, bucket)
+                        self.bucket = obj.bucket
                     elsif bucket == "puppet"
                         obj = Puppet::Network::Client.client(:Dipper).new(
                             :Path => Puppet[:clientbucketdir]
                         )
                         self.bucket = obj
-                        @@filebuckets[bucket] = obj
-                    elsif obj = Puppet::Type.type(:filebucket).bucket(bucket)
-                        @@filebuckets[bucket] = obj
-                        self.bucket = obj
                     else
-                        self.fail "Could not find filebucket %s" % bucket
+                        self.fail "Could not find filebucket '%s'" % bucket
                     end
                 when Puppet::Network::Client.client(:Dipper): # things are hunky-dorey
+                when Puppet::Type::Filebucket # things are hunky-dorey
+                    self.bucket = bucket.bucket
                 else
                     self.fail "Invalid bucket type %s" % bucket.class
                 end
@@ -432,8 +424,7 @@ module Puppet
                 end
             when "link": return true
             else
-                self.notice "Cannot backup files of type %s" %
-                    File.stat(file).ftype
+                self.notice "Cannot backup files of type %s" % File.stat(file).ftype
                 return false
             end
         end
@@ -783,13 +774,9 @@ module Puppet
         def remove_existing(should)
             return unless s = stat(true)
 
-            unless handlebackup
-                self.fail "Could not back up; will not replace"
-            end
+            self.fail "Could not back up; will not replace" unless handlebackup
 
-            unless should.to_s == "link"
-                return if s.ftype.to_s == should.to_s 
-            end
+            return if s.ftype.to_s == should.to_s unless should.to_s == "link"
 
             case s.ftype
             when "directory":

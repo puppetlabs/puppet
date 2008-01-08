@@ -166,6 +166,7 @@ class TestRelationships < Test::Unit::TestCase
         exec = Puppet::Type.newexec(:title => "myexec", :cwd => path,
             :command => "/bin/echo")
         
+        catalog = mk_catalog(file, exec)
         reqs = nil
         assert_nothing_raised do
             reqs = exec.autorequire
@@ -176,7 +177,6 @@ class TestRelationships < Test::Unit::TestCase
         
         # Now make sure that these relationships are added to the 
         # relationship graph
-        config = mk_catalog(file, exec)
         config.apply do |trans|
             assert(config.relationship_graph.edge?(file, exec), "autorequire edge was not created")
         end

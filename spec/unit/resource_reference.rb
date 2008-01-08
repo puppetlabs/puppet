@@ -42,18 +42,6 @@ describe Puppet::ResourceReference do
     end
 end
 
-describe Puppet::ResourceReference, "when resolving resources without a catalog" do
-    it "should be able to resolve builtin resources from their types" do
-        Puppet::Type.type(:file).expects(:[]).with("myfile").returns(:myfile)
-        Puppet::ResourceReference.new(:file, "myfile").resolve.should == :myfile
-    end
-
-    it "should be able to resolve defined resources from Components" do
-        Puppet::Type.type(:component).expects(:[]).with("Foo::Bar[yay]").returns(:mything)
-        Puppet::ResourceReference.new("foo::bar", "yay").resolve.should == :mything
-    end
-end
-
 describe Puppet::ResourceReference, "when resolving resources with a catalog" do
     it "should resolve all resources using the catalog" do
         config = mock 'catalog'

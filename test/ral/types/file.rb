@@ -503,7 +503,7 @@ class TestFile < Test::Unit::TestCase
         # Create a test directory
         path = tempfile()
         dir = @file.create :path => path, :mode => 0755, :recurse => true
-        config = mk_catalog(dir)
+        catalog = mk_catalog(dir)
         
         Dir.mkdir(path)
         
@@ -516,7 +516,7 @@ class TestFile < Test::Unit::TestCase
         test = File.join(path, "file")
         File.open(test, "w") { |f| f.puts "yay" }
         assert_nothing_raised() { ret = dir.localrecurse(true) }
-        fileobj = @file[test]
+        fileobj = catalog.resource(:file, test)
         assert(fileobj, "child object was not created")
         assert_equal([fileobj], ret, "child object was not returned")
         
@@ -560,7 +560,7 @@ class TestFile < Test::Unit::TestCase
         assert_nothing_raised() { ret = dir.localrecurse(true) }
         assert_equal([bad], ret.collect { |f| f.title }, "purge failed")
         
-        badobj = @file[bad]
+        badobj = catalog.resource(:file, bad)
         assert(badobj, "did not create bad object")
     end
     
@@ -756,43 +756,6 @@ class TestFile < Test::Unit::TestCase
         assert(file.insync?(currentvalues))
     end
 
-    def test_remove
-        basedir = tempfile()
-        subdir = File.join(basedir, "this")
-        FileUtils.mkdir_p(subdir)
-
-        dir = nil
-        assert_nothing_raised {
-            dir = Puppet.type(:file).create(
-                :path => basedir,
-                :recurse => true,
-                :check => %w{owner mode group}
-            )
-        }
-        mk_catalog dir
-
-        assert_nothing_raised {
-            dir.eval_generate
-        }
-
-        obj = nil
-        assert_nothing_raised {
-            obj = Puppet.type(:file)[subdir]
-        }
-
-        assert(obj, "Could not retrieve subdir object")
-
-        assert_nothing_raised {
-            obj.remove(true)
-        }
-
-        assert_nothing_raised {
-            obj = Puppet.type(:file)[subdir]
-        }
-
-        assert_nil(obj, "Retrieved removed object")
-    end
-
     def test_path
         dir = tempfile()
 
@@ -812,15 +775,13 @@ class TestFile < Test::Unit::TestCase
                 :check => %w{mode owner group}
             )
         }
-        mk_catalog dirobj
+        catalog = mk_catalog dirobj
 
         assert_nothing_raised {
             dirobj.eval_generate
         }
 
-        assert_nothing_raised {
-            file = dirobj.class[path]
-        }
+        file = catalog.resource(:file, path)
 
         assert(file, "Could not retrieve file object")
 
@@ -840,6 +801,7 @@ class TestFile < Test::Unit::TestCase
             :name => subfile,
             :ensure => "file"
         )
+        catalog = mk_catalog(baseobj, subobj)
         edge = nil
         assert_nothing_raised do
             edge = subobj.autorequire.shift
@@ -1133,14 +1095,11 @@ class TestFile < Test::Unit::TestCase
 
         File.open(file, "w", 0411) { |f| f.puts "yayness" }
 
-        obj = nil
-        assert_nothing_raised {
-            obj = Puppet::Type.type(:file).create(
-                :path => file, :content => "rahness\n", :backup => ".puppet-bak"
-            )
-        }
-
-        assert_apply(obj)
+        obj = Puppet::Type.type(:file).create(
+            :path => file, :content => "rahness\n", :backup => ".puppet-bak"
+        )
+        catalog = mk_catalog(obj)
+        catalog.apply
 
         backupfile = file + obj[:backup]
         @@tmpfiles << backupfile
@@ -1150,16 +1109,16 @@ class TestFile < Test::Unit::TestCase
         assert_equal(0411, filemode(backupfile),
             "File mode is wrong for backupfile")
 
-        bucket = "bucket"
+        name = "bucket"
         bpath = tempfile()
         Dir.mkdir(bpath)
-        Puppet::Type.type(:filebucket).create(
-            :title => bucket, :path => bpath
-        )
+        bucket = Puppet::Type.type(:filebucket).create(:title => name, :path => bpath)
+        catalog.add_resource(bucket)
 
-        obj[:backup] = bucket
+        obj[:backup] = name
         obj[:content] = "New content"
-        assert_apply(obj)
+        catalog.finalize
+        catalog.apply
 
         md5 = "18cc17fa3047fcc691fdf49c0a7f539a"
         dir, file, pathfile = Puppet::Network::Handler.filebucket.paths(bpath, md5)
@@ -1371,7 +1330,6 @@ class TestFile < Test::Unit::TestCase
             end
 
             assert_equal("/my/file/for/testing", file.title)
-            assert_equal(file, Puppet::Type.type(:file)["/my/file/for/testing"])
             Puppet::Type.type(:file).clear
         end
     end
@@ -1390,7 +1348,9 @@ class TestFile < Test::Unit::TestCase
         obj = Puppet::Type.newfile :path => link, :ensure => :link,
             :target => file, :recurse => false, :backup => "main"
 
-        assert_apply(obj)
+        catalog = mk_catalog(bucket, obj)
+
+        catalog.apply
 
         assert_equal(file, File.readlink(link))
     end
@@ -1437,6 +1397,8 @@ class TestFile < Test::Unit::TestCase
 
         obj = Puppet::Type.newfile :path => path, :force => true,
             :links => :manage
+
+        catalog = mk_catalog(obj, bucket)
 
         Puppet[:trace] = true
         ["main", false].each do |backup|
@@ -1566,8 +1528,11 @@ class TestFile < Test::Unit::TestCase
         )
         assert(dipper, "did not receive bucket client")
         file = Puppet::Type.newfile :path => dest, :source => source, :recurse => true, :backup => "rtest"
+
+        catalog = mk_catalog(bucket, file)
         
-        assert_apply(file)
+        catalog.apply
+
         dfiles.each do |f|
             assert(FileTest.exists?(f), "destfile %s was not created" % f)
         end
@@ -1577,7 +1542,7 @@ class TestFile < Test::Unit::TestCase
             f.puts "boo: %s" % File.basename(sf)
         } }
         
-        assert_apply(file)
+        catalog.apply
         dfiles.each do |f|
             assert_equal("boo: %s\n" % File.basename(f), File.read(f),
                 "file was not copied correctly")
@@ -1603,6 +1568,9 @@ class TestFile < Test::Unit::TestCase
     def test_backup
         path = tempfile()
         file = Puppet::Type.newfile :path => path, :content => "yay"
+
+        catalog = mk_catalog(file)
+        catalog.finalize # adds the default resources.
         
         [false, :false, "false"].each do |val|
             assert_nothing_raised do
@@ -1632,6 +1600,7 @@ class TestFile < Test::Unit::TestCase
         
         # And then an existing bucket
         obj = Puppet::Type.type(:filebucket).create :name => "testing"
+        catalog.add_resource(obj)
         bucket = obj.bucket
         
         assert_nothing_raised do
@@ -1647,12 +1616,12 @@ class TestFile < Test::Unit::TestCase
         file = File.join(dir, "file")
         File.open(file, "w") { |f| f.puts "" }
         obj = Puppet::Type.newfile :path => dir, :recurse => true, :mode => 0755
-        mk_catalog obj
+        catalog = mk_catalog obj
         
         assert_equal("/%s" % obj.ref, obj.path)
         
         list = obj.eval_generate
-        fileobj = obj.class[file]
+        fileobj = catalog.resource(:file, file)
         assert(fileobj, "did not generate file object")
         assert_equal("/%s" % fileobj.ref, fileobj.path, "did not generate correct subfile path")
     end
@@ -1665,14 +1634,6 @@ class TestFile < Test::Unit::TestCase
         
         assert_apply(file)
         assert(! FileTest.exists?(path), "File was not removed")
-    end
-    
-    # Testing #434
-    def test_stripping_extra_slashes_during_lookup
-        file = Puppet::Type.newfile(:path => "/one/two")
-        %w{/one/two/ /one/two /one//two //one//two//}.each do |path|
-            assert(Puppet::Type.type(:file)[path], "could not look up file via path %s" % path)
-        end
     end
     
     # Testing #438
@@ -1758,20 +1719,20 @@ class TestFile < Test::Unit::TestCase
         File.open(file, "w") { |f| f.puts "yay" }
         File.chmod(0644, file)
         obj = Puppet::Type.newfile(:path => dir, :mode => 0750, :recurse => "2")
-        config = mk_catalog(obj)
+        catalog = mk_catalog(obj)
 
         children = nil
         assert_nothing_raised("Failure when recursing") do
             children = obj.eval_generate
         end
-        assert(obj.class[subdir], "did not create subdir object")
+        assert(catalog.resource(:file, subdir), "did not create subdir object")
         children.each do |c|
             assert_nothing_raised("Failure when recursing on %s" % c) do
-                c.catalog = config
+                c.catalog = catalog
                 others = c.eval_generate
             end
         end
-        oobj = obj.class[other]
+        oobj = catalog.resource(:file, other)
         assert(oobj, "did not create other object")
 
         assert_nothing_raised do
@@ -1799,12 +1760,12 @@ class TestFile < Test::Unit::TestCase
         obj = Puppet::Type.newfile(:path => dir, :ensure => :directory,
             :recurse => true)
 
-        config = mk_catalog(obj)
+        catalog = mk_catalog(obj)
         children = nil
         assert_nothing_raised do
             children = obj.eval_generate
         end
-        fobj = obj.class[file]
+        fobj = catalog.resource(:file, file)
         assert(fobj, "did not create file object")
         assert(fobj.should(:ensure) != :directory, "ensure was passed to child")
     end

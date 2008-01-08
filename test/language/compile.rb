@@ -64,7 +64,7 @@ class TestCompile < Test::Unit::TestCase
         end
         assert_instance_of(Scope, compile.topscope, "Did not create a topscope")
         graph = compile.instance_variable_get("@scope_graph")
-        assert_instance_of(GRATR::Digraph, graph, "Did not create scope graph")
+        assert_instance_of(Puppet::SimpleGraph, graph, "Did not create scope graph")
         assert(graph.vertex?(compile.topscope), "Did not add top scope as a vertex in the graph")
     end
 
@@ -111,7 +111,7 @@ class TestCompile < Test::Unit::TestCase
         compile = mkcompile
         graph = compile.instance_variable_get("@scope_graph")
         assert_instance_of(Scope, compile.topscope, "Did not create top scope")
-        assert_instance_of(GRATR::Digraph, graph, "Did not create graph")
+        assert_instance_of(Puppet::SimpleGraph, graph, "Did not create graph")
 
         assert(graph.vertex?(compile.topscope), "The top scope is not a vertex in the graph")
 

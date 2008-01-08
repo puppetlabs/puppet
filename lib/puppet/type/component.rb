@@ -88,8 +88,8 @@ Puppet::Type.newtype(:component) do
 
         @reference = Puppet::ResourceReference.new(:component, @title)
 
-        unless self.class[@reference.to_s]
-            self.class.alias(@reference.to_s, self)
+        if catalog and ! catalog.resource[@reference.to_s]
+            catalog.alias(self, @reference.to_s)
         end
     end
 

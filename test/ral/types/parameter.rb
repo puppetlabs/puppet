@@ -131,7 +131,7 @@ class TestParameter < Test::Unit::TestCase
         assert_instance_of(param, obj, "alias is an instance of the wrong class")
 
         # Make sure the alias got created
-        assert(type["foo"], "Did not retrieve object by its alias")
+        assert(config.resource(type.name, "foo"), "Did not retrieve object by its alias")
         
         # Now try it during initialization
         other = nil

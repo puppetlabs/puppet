@@ -22,15 +22,8 @@ class Puppet::ResourceReference
 
     # Find our resource.
     def resolve
-        if catalog
-            return catalog.resource(to_s)
-        end
-        # If it's builtin, then just ask for it directly from the type.
-        if t = builtin_type
-            t[@title]
-        else # Else, look for a component with the full reference as the name.
-            Puppet::Type::Component[to_s]
-        end
+        return catalog.resource(to_s) if catalog
+        return nil
     end
 
     # If the title has square brackets, treat it like a reference and

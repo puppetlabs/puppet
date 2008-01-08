@@ -146,10 +146,6 @@ class TestFileServer < Test::Unit::TestCase
             list = server.list(sfile, :ignore, true, false)
         }
 
-        assert_nothing_raised {
-            file = Puppet.type(:file)[tmpfile]
-        }
-
         output = "/\tfile"
 
         # verify it got listed as a file

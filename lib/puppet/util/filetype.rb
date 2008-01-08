@@ -74,8 +74,10 @@ class Puppet::Util::FileType
 
     # Pick or create a filebucket to use.
     def bucket
-        filebucket = Puppet::Type.type(:filebucket)
-        (filebucket["puppet"] || filebucket.mkdefaultbucket).bucket
+        unless defined?(@bucket)
+            @bucket = Puppet::Type.type(:filebucket).mkdefaultbucket.bucket
+        end
+        @bucket
     end
 
     def initialize(path)

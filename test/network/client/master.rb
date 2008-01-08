@@ -519,24 +519,6 @@ end
         assert_equal(facts["environment"], Puppet[:environment], "Did not add environment to client facts")
     end
 
-    # This is partially to fix #532, but also to save on memory.
-    def test_remove_objects_after_every_run
-        client = mkclient
-
-        ftype = Puppet::Type.type(:file)
-        file = ftype.create :title => "/what/ever", :ensure => :present
-        config = Puppet::Node::Catalog.new
-        config.add_resource(file)
-
-        config.expects :apply
-
-        client.catalog = config
-        client.expects(:getconfig)
-        client.run
-
-        assert_nil(ftype[@createdfile], "file object was not removed from memory")
-    end
-
     # #685
     def test_http_failures_do_not_kill_puppetd
         client = mkclient

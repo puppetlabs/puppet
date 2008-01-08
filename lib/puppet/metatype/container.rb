@@ -36,7 +36,6 @@ class Puppet::Type
             obj.remove
         end
         @parameters.clear
-        self.class.delete(self)
 
         @parent = nil
 

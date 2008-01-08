@@ -277,6 +277,7 @@ class Puppet::Type
                 # to an object...
                 tname, name = value
                 reference = Puppet::ResourceReference.new(tname, name)
+                reference.catalog = resource.catalog
                 
                 # Either of the two retrieval attempts could have returned
                 # nil.

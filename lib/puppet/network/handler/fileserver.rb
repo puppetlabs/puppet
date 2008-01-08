@@ -568,12 +568,14 @@ class Puppet::Network::Handler
                     @path = nil
                 end
 
+                @files = {}
+
                 super()
             end
 
             def fileobj(path, links, client)
                 obj = nil
-                if obj = Puppet.type(:file)[file_path(path, client)]
+                if obj = @files[file_path(path, client)]
                     # This can only happen in local fileserving, but it's an
                     # important one.  It'd be nice if we didn't just set
                     # the check params every time, but I'm not sure it's worth
@@ -584,6 +586,7 @@ class Puppet::Network::Handler
                         :name => file_path(path, client),
                         :check => CHECKPARAMS
                     )
+                    @files[file_path(path, client)] = obj
                 end
 
                 if links == :manage
@@ -600,7 +603,7 @@ class Puppet::Network::Handler
 
             # Read the contents of the file at the relative path given.
             def read_file(relpath, client)
-               File.read(file_path(relpath, client))
+                File.read(file_path(relpath, client))
             end
 
             # Cache this manufactured map, since if it's used it's likely

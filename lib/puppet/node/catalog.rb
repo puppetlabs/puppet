@@ -293,7 +293,7 @@ class Puppet::Node::Catalog < Puppet::PGraph
         
         # And filebuckets
         if bucket = Puppet::Type.type(:filebucket).mkdefaultbucket
-            add_resource(bucket)
+            add_resource(bucket) unless resource(bucket.ref)
         end
     end
     
