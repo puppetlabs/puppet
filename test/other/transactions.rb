@@ -6,10 +6,12 @@ require 'puppet'
 require 'puppettest'
 require 'mocha'
 require 'puppettest/support/resources'
+require 'puppettest/support/utils'
 
 class TestTransactions < Test::Unit::TestCase
     include PuppetTest::FileTesting
     include PuppetTest::Support::Resources
+    include PuppetTest::Support::Utils
     class Fakeprop <Puppet::Property
         attr_accessor :path, :is, :should, :name
         def should_to_s(value)
@@ -596,15 +598,15 @@ class TestTransactions < Test::Unit::TestCase
         
         yay = Puppet::Type.newgenerator :title => "yay"
         rah = Puppet::Type.newgenerator :title => "rah"
-        config = mk_catalog(yay, rah)
-        trans = Puppet::Transaction.new(config)
+        catalog = mk_catalog(yay, rah)
+        trans = Puppet::Transaction.new(catalog)
         
         assert_nothing_raised do
             trans.generate
         end
         
         %w{ya ra y r}.each do |name|
-            assert(trans.catalog.vertex?(Puppet::Type.type(:generator)[name]),
+            assert(catalog.resource(:generator, name),
                 "Generated %s was not a vertex" % name)
             assert($finished.include?(name), "%s was not finished" % name)
         end
@@ -615,10 +617,8 @@ class TestTransactions < Test::Unit::TestCase
         end
         
         %w{ya ra y r}.each do |name|
-            assert(!trans.catalog.vertex?(Puppet::Type.type(:generator)[name]),
+            assert(! catalog.resource(:generator, name),
                 "Generated vertex %s was not removed from graph" % name)
-            assert_nil(Puppet::Type.type(:generator)[name],
-                "Generated vertex %s was not removed from class" % name)
         end
     end
     
@@ -635,8 +635,8 @@ class TestTransactions < Test::Unit::TestCase
 
         yay = Puppet::Type.newgenerator :title => "yay"
         rah = Puppet::Type.newgenerator :title => "rah", :subscribe => yay
-        config = mk_catalog(yay, rah)
-        trans = Puppet::Transaction.new(config)
+        catalog = mk_catalog(yay, rah)
+        trans = Puppet::Transaction.new(catalog)
         
         trans.prepare
         
@@ -645,7 +645,7 @@ class TestTransactions < Test::Unit::TestCase
         assert_nothing_raised("failed to apply yay") do
             trans.eval_resource(yay)
         end
-        ya = type["ya"]
+        ya = catalog.resource(type.name, "ya")
         assert(ya, "Did not generate ya")
         assert(trans.relationship_graph.vertex?(ya),
             "Did not add ya to rel_graph")
@@ -658,11 +658,11 @@ class TestTransactions < Test::Unit::TestCase
         
         # Now make sure it in turn eval_generates appropriately
         assert_nothing_raised("failed to apply yay") do
-            trans.eval_resource(type["ya"])
+            trans.eval_resource(catalog.resource(type.name, "ya"))
         end
 
         %w{y}.each do |name|
-            res = type[name]
+            res = catalog.resource(type.name, "ya")
             assert(res, "Did not generate %s" % name)
             assert(trans.relationship_graph.vertex?(res),
                 "Did not add %s to rel_graph" % name)
@@ -670,7 +670,7 @@ class TestTransactions < Test::Unit::TestCase
         end
         
         assert_nothing_raised("failed to eval_generate with nil response") do
-            trans.eval_resource(type["y"])
+            trans.eval_resource(catalog.resource(type.name, "y"))
         end
         assert(trans.relationship_graph.edge?(yay, ya), "no edge was created for ya => yay")
         
@@ -678,7 +678,7 @@ class TestTransactions < Test::Unit::TestCase
             trans.eval_resource(rah)
         end
 
-        ra = type["ra"]
+        ra = catalog.resource(type.name, "ra")
         assert(ra, "Did not generate ra")
         assert(trans.relationship_graph.vertex?(ra),
             "Did not add ra to rel_graph" % name)
@@ -697,14 +697,12 @@ class TestTransactions < Test::Unit::TestCase
         end
         
         %w{ya ra y r}.each do |name|
-            assert(!trans.relationship_graph.vertex?(type[name]),
+            assert(!trans.relationship_graph.vertex?(catalog.resource(type.name, name)),
                 "Generated vertex %s was not removed from graph" % name)
-            assert_nil(type[name],
-                "Generated vertex %s was not removed from class" % name)
         end
         
         # Now, start over and make sure that everything gets evaluated.
-        trans = Puppet::Transaction.new(config)
+        trans = Puppet::Transaction.new(catalog)
         $evaluated.clear
         assert_nothing_raised do
             trans.evaluate

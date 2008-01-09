@@ -155,7 +155,7 @@ class Transaction
     # contained resources might never get cleaned up.
     def cleanup
         if defined? @generated
-            relationship_graph.remove_resource(*@generated)
+            catalog.remove_resource(*@generated)
         end
     end
 

@@ -89,21 +89,5 @@ class TestTypeInstances < Test::Unit::TestCase
         # Now make sure the resources have an 'ensure' property to go with the value in the provider
         assert(resources[:one].send(:instance_variable_get, "@parameters").include?(:ensure), "Did not create ensure property")
     end
-
-    # Make sure resources are entirely deleted.
-    def test_delete
-        aliases = %w{one}
-        catalog = mk_catalog
-        obj = @type.create(:name => "testing", :alias => "two", :catalog => catalog)
-        aliases << "two"
-
-        @type.alias("two", obj)
-
-        obj.remove
-        assert_nil(@type["testing"], "Object was not removed from objects hash")
-        assert_nil(@type["one"], "Object's alias was not removed")
-        assert_nil(@type["two"], "Object's second alias was not removed")
-
-    end
 end
 

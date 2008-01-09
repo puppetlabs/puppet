@@ -43,10 +43,6 @@ module ScheduleTesting
     def sec(method, count)
         diff(:sec, 1, method, count)
     end
-
-    def teardown
-        Puppet::Type::Schedule.clear
-    end
 end
 
 describe Puppet::Type::Schedule do

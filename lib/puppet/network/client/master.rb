@@ -69,7 +69,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
 
     def clear
         @catalog.clear(true) if @catalog
-        Puppet::Type.allclear
         @catalog = nil
     end
 

@@ -117,8 +117,6 @@ describe Puppet::Type::Service, "when validating attribute values" do
         svc = Puppet::Type::Service.create(:name => "yay", :path => ["/one:/two", "/three:/four"])
         svc[:path].should == %w{/one /two /three /four}
     end
-
-    after { Puppet::Type::Service.clear }
 end
 
 describe Puppet::Type::Service, "when setting default attribute values" do
@@ -141,8 +139,6 @@ describe Puppet::Type::Service, "when setting default attribute values" do
         svc = Puppet::Type::Service.create(:name => "other")
         svc[:pattern].should == "other"
     end
-
-    after { Puppet::Type::Service.clear }
 end
 
 describe Puppet::Type::Service, "when retrieving the host's current state" do
@@ -162,8 +158,6 @@ describe Puppet::Type::Service, "when retrieving the host's current state" do
         @service[:enable] = true
         @service.property(:enable).retrieve.should == :yepper
     end
-
-    after { Puppet::Type::Service.clear }
 end
 
 describe Puppet::Type::Service, "when changing the host" do
@@ -210,8 +204,6 @@ describe Puppet::Type::Service, "when changing the host" do
 
         @service.property(:ensure).sync
     end
-
-    after { Puppet::Type::Service.clear }
 end
 
 describe Puppet::Type::Service, "when refreshing the service" do
@@ -244,6 +236,4 @@ describe Puppet::Type::Service, "when refreshing the service" do
         @service.provider.expects(:restart)
         @service.refresh
     end
-
-    after { Puppet::Type::Service.clear }
 end

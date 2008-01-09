@@ -81,6 +81,9 @@ class TestRelationships < Test::Unit::TestCase
                 )
             end
 
+            catalog = mk_catalog(*files)
+            catalog.add_resource(*execs)
+
             # Add our first relationship
             if out[param]
                 files[0][param] = execs[0]
@@ -177,8 +180,8 @@ class TestRelationships < Test::Unit::TestCase
         
         # Now make sure that these relationships are added to the 
         # relationship graph
-        config.apply do |trans|
-            assert(config.relationship_graph.edge?(file, exec), "autorequire edge was not created")
+        catalog.apply do |trans|
+            assert(catalog.relationship_graph.edge?(file, exec), "autorequire edge was not created")
         end
     end
     

@@ -25,8 +25,4 @@ describe Puppet::Type::File, " when used with replace=>false and content" do
     it "should not be insync if the file doesnot exist" do
         @file.property(:content).insync?(:nil).should be_false
     end
-
-    after do
-        Puppet::Type::File.clear
-    end
 end

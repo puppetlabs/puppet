@@ -449,6 +449,7 @@ class TestUser < Test::Unit::TestCase
     # Testing #455
     def test_autorequire_with_no_group_should
         user = Puppet::Type.type(:user).create(:name => "yaytest", :check => :all)
+        catalog = mk_catalog(user)
         
         assert_nothing_raised do
             user.autorequire

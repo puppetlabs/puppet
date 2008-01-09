@@ -65,7 +65,6 @@ class TestType < Test::Unit::TestCase
         assert_nothing_raised() {
             file.evaluate
         }
-        Puppet.type(:file).clear
         assert_nothing_raised() {
             system("rm -f %s" % path)
             file = Puppet.type(:file).create(
@@ -110,47 +109,7 @@ class TestType < Test::Unit::TestCase
         assert_equal("testing", group.name, "Could not retrieve name")
     end
 
-    # Verify that values get merged correctly
-    def test_mergepropertyvalues
-        file = tempfile()
-
-        # Create the first version
-        assert_nothing_raised {
-            Puppet.type(:file).create(
-                :path => file,
-                :owner => ["root", "bin"]
-            )
-        }
-
-        # Make sure no other statements are allowed
-        assert_raise(Puppet::Error) {
-            Puppet.type(:file).create(
-                :path => file,
-                :group => "root"
-            )
-        }
-    end
-
-    def test_aliases_to_self_are_not_failures
-        resource = Puppet.type(:file).create(
-            :name => "/path/to/some/missing/file",
-            :ensure => "file"
-        )
-        resource.stubs(:path).returns("")
-
-        catalog = stub 'catalog'
-        catalog.expects(:resource).with(:file, "/path/to/some/missing/file").returns(resource)
-        resource.catalog = catalog
-
-        # Verify our adding ourselves as an alias isn't an error.
-        assert_nothing_raised("Could not add alias") {
-            resource[:alias] = "/path/to/some/missing/file"
-        }
-
-        assert_equal(resource.object_id, Puppet.type(:file)["/path/to/some/missing/file"].object_id, "Could not retrieve alias to self")
-    end
-
-    def test_aliases_are_added_to_class_and_catalog
+    def test_aliases_are_added_to_catalog
         resource = Puppet.type(:file).create(
             :name => "/path/to/some/missing/file",
             :ensure => "file"
@@ -165,8 +124,6 @@ class TestType < Test::Unit::TestCase
         assert_nothing_raised("Could not add alias") {
             resource[:alias] = "funtest"
         }
-
-        assert_equal(resource.object_id, Puppet.type(:file)["funtest"].object_id, "Could not retrieve alias")
     end
 
     def test_aliasing_fails_without_a_catalog
@@ -182,7 +139,7 @@ class TestType < Test::Unit::TestCase
 
     def test_catalogs_are_set_during_initialization_if_present_on_the_transobject
         trans = Puppet::TransObject.new("/path/to/some/file", :file)
-        trans.catalog = :my_config
+        trans.catalog = stub 'catalog', :resource => nil
         resource = trans.to_type
         assert_equal(resource.catalog, trans.catalog, "Did not set catalog on initialization")
     end
@@ -215,37 +172,6 @@ class TestType < Test::Unit::TestCase
 
 
         assert(twoobj.requires?(oneobj), "Requirement was not created")
-    end
-
-    # Verify that names are aliases, not equivalents
-    def test_nameasalias
-        file = nil
-        # Create the parent dir, so we make sure autorequiring the parent dir works
-        parentdir = tempfile()
-        dir = Puppet.type(:file).create(
-            :name => parentdir,
-            :ensure => "directory"
-        )
-        assert_apply(dir)
-        path = File.join(parentdir, "subdir")
-        name = "a test file"
-        transport = Puppet::TransObject.new(name, "file")
-        transport[:path] = path
-        transport[:ensure] = "file"
-        assert_nothing_raised {
-            file = transport.to_type
-        }
-
-        assert_equal(path, file[:path])
-        assert_equal(name, file.title)
-
-        assert_nothing_raised {
-            file.retrieve
-        }
-
-        assert_apply(file)
-
-        assert(Puppet.type(:file)[name], "Could not look up object by name")
     end
 
     def test_ensuredefault
@@ -434,7 +360,6 @@ class TestType < Test::Unit::TestCase
         assert_equal(path, file[:name], "Did not get correct name")
 
         file = nil
-        Puppet::Type.type(:file).clear
 
         # Now make sure we can specify both and still get the right answers
         assert_nothing_raised do
@@ -475,7 +400,6 @@ class TestType < Test::Unit::TestCase
         # Now try it using the class method on Type
         oldid = obj.object_id
         obj = nil
-        Puppet::Type.type(:file).clear
 
         assert_nothing_raised {
             obj = Puppet::Type.create(trans)
@@ -487,7 +411,6 @@ class TestType < Test::Unit::TestCase
         # Now try the same things with hashes instead of a transobject
         oldid = obj.object_id
         obj = nil
-        Puppet::Type.type(:file).clear
         hash = {
             :type => :file,
             :title => "Myfile",
@@ -510,7 +433,6 @@ class TestType < Test::Unit::TestCase
         # Now try it using the class method on Type
         oldid = obj.object_id
         obj = nil
-        Puppet::Type.type(:file).clear
 
         assert_nothing_raised {
             obj = Puppet::Type.create(hash)
@@ -531,25 +453,6 @@ class TestType < Test::Unit::TestCase
                 :path => path
             )
         end
-    end
-
-    def test_title_and_name
-        obj = nil
-        path = tempfile()
-        fileobj = Puppet::Type.type(:file)
-
-        assert_nothing_raised do
-            obj = fileobj.create(
-                :title => "myfile",
-                :path => path
-            )
-        end
-
-        assert_equal(obj, fileobj["myfile"],
-            "Could not retrieve obj by title")
-
-        assert_equal(obj, fileobj[path],
-            "Could not retrieve obj by name")
     end
 
     # Make sure default providers behave correctly
@@ -577,6 +480,7 @@ class TestType < Test::Unit::TestCase
     # Make sure that we can have multiple isomorphic objects with the same name,
     # but not with non-isomorphic objects.
     def test_isomorphic_names
+        catalog = mk_catalog
         # First do execs, since they're not isomorphic.
         echo = Puppet::Util.binary "echo"
         exec1 = exec2 = nil
@@ -586,37 +490,31 @@ class TestType < Test::Unit::TestCase
                 :command => "#{echo} funtest"
             )
         end
+        catalog.add_resource(exec1)
         assert_nothing_raised do
             exec2 = Puppet::Type.type(:exec).create(
                 :title => "exec2",
                 :command => "#{echo} funtest"
             )
         end
-
-        assert_apply(exec1, exec2)
+        catalog.add_resource(exec2)
 
         # Now do files, since they are. This should fail.
         file1 = file2 = nil
         path = tempfile()
-        assert_nothing_raised do
-            file1 = Puppet::Type.type(:file).create(
-                :title => "file1",
-                :path => path,
-                :content => "yayness"
-            )
-        end
+        file1 = Puppet::Type.type(:file).create(
+            :title => "file1",
+            :path => path,
+            :content => "yayness"
+        )
+        catalog.add_resource(file1)
 
-        # This will fail, but earlier systems will catch it.
-        assert_raise(Puppet::Error) do
-            file2 = Puppet::Type.type(:file).create(
-                :title => "file2",
-                :path => path,
-                :content => "rahness"
-            )
-        end
-
-        assert(file1, "Did not create first file")
-        assert_nil(file2, "Incorrectly created second file")
+        file2 = Puppet::Type.type(:file).create(
+            :title => "file2",
+            :path => path,
+            :content => "rahness"
+        )
+        assert_raise(ArgumentError) { catalog.add_resource(file2) }
     end
 
     def test_tags
@@ -654,20 +552,6 @@ class TestType < Test::Unit::TestCase
         end
     end
 
-    # Make sure that classes behave like hashes.
-    def test_class_hash_behaviour
-        path = tempfile()
-
-        filetype = Puppet::Type.type(:file)
-        one = Puppet::Type.newfile :path => path
-
-        assert_equal(one, filetype[path], "Did not get file back")
-
-        assert_raise(Puppet::Error) do
-            filetype[path] = one
-        end
-    end
-
     def test_ref
         path = tempfile()
         Puppet::Type.type(:exec) # uggh, the methods need to load the types
@@ -701,7 +585,7 @@ class TestType < Test::Unit::TestCase
         type = Puppet::Type.type(:exec)
         mk = Proc.new do |i, hash|
             hash[:title] = "exec%s" % i
-            hash[:command] = "/bin/echo"
+            hash[:command] = "/bin/echo %s" % i
             if parent = hash[:parent]
                 hash.delete(:parent)
             end
@@ -769,7 +653,8 @@ class TestType < Test::Unit::TestCase
 
     # Partially test #704, but also cover the rest of the schedule management bases.
     def test_schedule
-        Puppet::Type.type(:schedule).create(:name => "maint")
+        schedule = Puppet::Type.type(:schedule).create(:name => "maint")
+        catalog = mk_catalog(schedule)
 
         {"maint" => true, nil => false, :fail => :fail}.each do |name, should|
             args = {:name => tempfile, :ensure => :file}
@@ -777,21 +662,27 @@ class TestType < Test::Unit::TestCase
                 args[:schedule] = name
             end
             resource = Puppet::Type.type(:file).create(args)
+            catalog.add_resource(resource)
 
             if should == :fail
                 assert_raise(Puppet::Error, "Did not fail on missing schedule") do
                     resource.schedule
                 end
+            elsif should == false
+                assert_nil(resource.schedule, "Set the schedule tho it is set to nil")
             else
                 sched = nil
                 assert_nothing_raised("Failed when schedule was %s" % sched) do
                     sched = resource.schedule
                 end
 
+                assert(sched, "Did not find schedule %s" % sched.inspect)
+
                 if should
                     assert_equal(name, sched.name, "did not get correct schedule back")
                 end
             end
+            catalog.remove_resource(resource)
         end
     end
 

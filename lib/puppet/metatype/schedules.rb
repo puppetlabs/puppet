@@ -3,9 +3,13 @@ class Puppet::Type
     # the instantiation phase, so that the schedule can be anywhere in the
     # file.
     def schedule
+        unless catalog
+            warning "Cannot schedule without a schedule-containing catalog"
+            return nil
+        end
         unless defined? @schedule
             if name = self[:schedule]
-                if sched = Puppet.type(:schedule)[name]
+                if sched = catalog.resource(:schedule, name)
                     @schedule = sched
                 else
                     self.fail "Could not find schedule %s" % name

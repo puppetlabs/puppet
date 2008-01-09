@@ -49,26 +49,27 @@ class TestSSHKey < Test::Unit::TestCase
 
         @catalog ||= mk_catalog
 
-        assert_nothing_raised {
-            key = @sshkeytype.create(
-                :name => "host%s.madstop.com" % @kcount,
-                :key => "%sAAAAB3NzaC1kc3MAAACBAMnhSiku76y3EGkNCDsUlvpO8tRgS9wL4Eh54WZfQ2lkxqfd2uT/RTT9igJYDtm/+UHuBRdNGpJYW1Nw2i2JUQgQEEuitx4QKALJrBotejGOAWxxVk6xsh9xA0OW8Q3ZfuX2DDitfeC8ZTCl4xodUMD8feLtP+zEf8hxaNamLlt/AAAAFQDYJyf3vMCWRLjTWnlxLtOyj/bFpwAAAIEAmRxxXb4jjbbui9GYlZAHK00689DZuX0EabHNTl2yGO5KKxGC6Esm7AtjBd+onfu4Rduxut3jdI8GyQCIW8WypwpJofCIyDbTUY4ql0AQUr3JpyVytpnMijlEyr41FfIb4tnDqnRWEsh2H7N7peW+8DWZHDFnYopYZJ9Yu4/jHRYAAACAERG50e6aRRb43biDr7Ab9NUCgM9bC0SQscI/xdlFjac0B/kSWJYTGVARWBDWug705hTnlitY9cLC5Ey/t/OYOjylTavTEfd/bh/8FkAYO+pWdW3hx6p97TBffK0b6nrc6OORT2uKySbbKOn0681nNQh4a6ueR3JRppNkRPnTk5c=" % @kcount,
-                :type => "ssh-dss",
-                :alias => ["192.168.0.%s" % @kcount],
-                :catalog => @catalog
-            )
-        }
+        key = @sshkeytype.create(
+            :name => "host%s.madstop.com" % @kcount,
+            :key => "%sAAAAB3NzaC1kc3MAAACBAMnhSiku76y3EGkNCDsUlvpO8tRgS9wL4Eh54WZfQ2lkxqfd2uT/RTT9igJYDtm/+UHuBRdNGpJYW1Nw2i2JUQgQEEuitx4QKALJrBotejGOAWxxVk6xsh9xA0OW8Q3ZfuX2DDitfeC8ZTCl4xodUMD8feLtP+zEf8hxaNamLlt/AAAAFQDYJyf3vMCWRLjTWnlxLtOyj/bFpwAAAIEAmRxxXb4jjbbui9GYlZAHK00689DZuX0EabHNTl2yGO5KKxGC6Esm7AtjBd+onfu4Rduxut3jdI8GyQCIW8WypwpJofCIyDbTUY4ql0AQUr3JpyVytpnMijlEyr41FfIb4tnDqnRWEsh2H7N7peW+8DWZHDFnYopYZJ9Yu4/jHRYAAACAERG50e6aRRb43biDr7Ab9NUCgM9bC0SQscI/xdlFjac0B/kSWJYTGVARWBDWug705hTnlitY9cLC5Ey/t/OYOjylTavTEfd/bh/8FkAYO+pWdW3hx6p97TBffK0b6nrc6OORT2uKySbbKOn0681nNQh4a6ueR3JRppNkRPnTk5c=" % @kcount,
+            :type => "ssh-dss",
+            :alias => ["192.168.0.%s" % @kcount],
+            :catalog => @catalog
+        )
+
+        @catalog.add_resource(key)
 
         return key
     end
 
     def test_instances
+        list = nil
         assert_nothing_raised {
-            Puppet.type(:sshkey).instances
+            list = Puppet.type(:sshkey).instances
         }
 
         count = 0
-        @sshkeytype.each do |h|
+        list.each do |h|
             count += 1
         end
 
@@ -90,7 +91,6 @@ class TestSSHKey < Test::Unit::TestCase
         # Now create a new key object
         name = key.name
         key = nil
-        @sshkeytype.clear
         
         key = @sshkeytype.create :name => name, :target => file, :provider => :parsed
         key.retrieve
@@ -109,11 +109,10 @@ class TestSSHKey < Test::Unit::TestCase
         aliases = %w{madstop kirby yayness}
         key[:alias] = aliases
 
-        params = key.instance_variable_get("@parameters")
         assert_events([:sshkey_changed], key)
 
         aliases.each do |name|
-            assert_equal(key, key.class[name],
+            assert_equal(key, @catalog.resource(:sshkey, name),
                 "alias was not set")
         end
     end
@@ -136,7 +135,9 @@ class TestSSHKey < Test::Unit::TestCase
             key[:alias] = "testing"
         }
 
-        same = key.class["testing"]
+        key.finish
+
+        same = @catalog.resource(:sshkey, "testing")
         assert(same, "Could not retrieve by alias")
     end
 
@@ -170,7 +171,10 @@ class TestSSHKey < Test::Unit::TestCase
         }
         assert_apply(*keys)
         keys.clear
-        Puppet.type(:sshkey).clear
+
+        @catalog.clear(true)
+        @catalog = nil
+
         newkey = mkkey()
         #newkey[:ensure] = :present
         names << newkey.name
@@ -184,8 +188,7 @@ class TestSSHKey < Test::Unit::TestCase
 
         # And verify that we have data for everything
         names.each { |name|
-            key = Puppet.type(:sshkey)[name] ||
-                Puppet.type(:sshkey).create(:name => name)
+            key = @catalog.resource(:sshkey, name)
             assert(key, "Could not retrieve key for %s" % name)
             assert(key.provider.exists?, "key %s is missing" % name)
         }

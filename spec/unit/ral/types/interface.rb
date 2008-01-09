@@ -90,6 +90,4 @@ describe interface do
     it "should have a target parameter" do
         @class.attrtype(:target).should == :param
     end
-
-    after { @class.clear }
 end

@@ -64,6 +64,10 @@ class Puppet::Node::Catalog < Puppet::PGraph
             else
                 @resource_table[ref] = resource
             end
+
+            if resource.is_a?(Puppet::Type) and resource.class.isomorphic? and resource.title != resource.ref and resource.title != resource[:name]
+                self.alias(resource, resource[:name])
+            end
             resource.catalog = self unless is_relationship_graph
             add_vertex!(resource)
         end
@@ -74,7 +78,10 @@ class Puppet::Node::Catalog < Puppet::PGraph
         resource.ref =~ /^(.+)\[/
 
         newref = "%s[%s]" % [$1 || resource.class.name, name]
-        raise(ArgumentError, "Cannot alias %s to %s; resource %s already exists" % [resource.ref, name, newref]) if @resource_table[newref]
+        if res = @resource_table[newref]
+            return if res == resource
+            raise(ArgumentError, "Cannot alias %s to %s; resource %s already exists" % [resource.ref, name, newref])
+        end
         @resource_table[newref] = resource
         @aliases[resource.ref] << newref
     end
@@ -321,7 +328,7 @@ class Puppet::Node::Catalog < Puppet::PGraph
             
             # Lastly, add in any autorequires
             @relationship_graph.vertices.each do |vertex|
-                vertex.autorequire.each do |edge|
+                vertex.autorequire(@relationship_graph).each do |edge|
                     unless @relationship_graph.edge?(edge.source, edge.target) # don't let automatic relationships conflict with manual ones.
                         unless @relationship_graph.edge?(edge.target, edge.source)
                             vertex.debug "Autorequiring %s" % [edge.source]

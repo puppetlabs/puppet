@@ -165,10 +165,6 @@ describe provider_class, " when parsing information about the root filesystem" d
         @provider_class.prefetch("/" => @mount)
         @mount.provider.should be_mounted
     end
-
-    after do
-        Puppet::Type.allclear
-    end
 end
 
 describe provider_class, " when mounting and unmounting" do

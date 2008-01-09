@@ -29,8 +29,6 @@ describe Puppet::Type::Package do
         pkg = Puppet::Type::Package.create(:name => "yay")
         pkg.should(:ensure).should == :present
     end
-
-    after { Puppet::Type::Package.clear }
 end
 
 describe Puppet::Type::Package, "when validating attributes" do
@@ -97,8 +95,6 @@ describe Puppet::Type::Package, "when validating attribute values" do
     it "should only accept files and URLs as values to :source" do
         proc { Puppet::Type::Package.create(:name => "yay", :source => "stuff") }.should raise_error(Puppet::Error)
     end
-
-    after { Puppet::Type::Package.clear }
 end
 
 module PackageEvaluationTesting
@@ -113,11 +109,6 @@ module PackageEvaluationTesting
 
     def setprops(properties)
         @provider.stubs(:properties).returns(properties)
-    end
-
-    def teardown
-        @catalog.clear(true)
-        Puppet::Type::Package.clear
     end
 end
 

@@ -68,15 +68,11 @@ class Puppet::Network::Handler
             retrieve ||= :all
             ignore ||= []
 
-            if obj = typeklass[name]
-                obj[:check] = retrieve
-            else
-                begin
-                    obj = typeklass.create(:name => name, :check => retrieve)
-                rescue Puppet::Error => detail
-                    raise Puppet::Error, "%s[%s] could not be created: %s" %
-                        [type, name, detail]
-                end
+            begin
+                obj = typeklass.create(:name => name, :check => retrieve)
+            rescue Puppet::Error => detail
+                raise Puppet::Error, "%s[%s] could not be created: %s" %
+                    [type, name, detail]
             end
 
             unless obj

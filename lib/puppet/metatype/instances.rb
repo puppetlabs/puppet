@@ -46,6 +46,7 @@ class Puppet::Type
     # Create an alias.  We keep these in a separate hash so that we don't encounter
     # the objects multiple times when iterating over them.
     def self.alias(name, obj)
+        raise "Global resource aliasing is deprecated"
         if @objects.include?(name)
             unless @objects[name] == obj
                 raise Puppet::Error.new(
@@ -69,6 +70,7 @@ class Puppet::Type
 
     # remove all of the instances of a single type
     def self.clear
+        raise "Global resource removal is deprecated"
         if defined? @objects
             @objects.each do |name, obj|
                 obj.remove(true)
@@ -150,6 +152,7 @@ class Puppet::Type
 
     # remove a specified object
     def self.delete(resource)
+        raise "Global resource removal is deprecated"
         return unless defined? @objects
         if @objects.include?(resource.title)
             @objects.delete(resource.title)
@@ -170,6 +173,7 @@ class Puppet::Type
 
     # iterate across each of the type's instances
     def self.each
+        raise "Global resource iteration is deprecated"
         return unless defined? @objects
         @objects.each { |name,instance|
             yield instance
@@ -178,6 +182,7 @@ class Puppet::Type
 
     # does the type have an object with the given name?
     def self.has_key?(name)
+        raise "Global resource access is deprecated"
         return @objects.has_key?(name)
     end
 
