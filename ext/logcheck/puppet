@@ -15,3 +15,8 @@
 ^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetd\[[0-9]+\]: Restarting with .*$
 ^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetd\[[0-9]+\]: Starting catalog run$
 ^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetd\[[0-9]+\]: Finished catalog run in [.0-9]+ seconds$
+^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetd\[[0-9]+\]: Loading fact .*$
+^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetd\[[0-9]+\]: Ignoring cache$
+^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetd\[[0-9]+\]: Ignoring --listen on onetime run$
+^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetd\[[0-9]+\]: Retrieving plugins$
+
