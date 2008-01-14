@@ -240,16 +240,19 @@ end
 def build_man(bins)
     return unless $haveman
     begin
-        # Create man pages
+        # Create binary man pages
+        rst2man = %x{which rst2man.py}
+        rst2man.chomp!
+        %x{bin/puppetdoc --reference configuration > ./puppet.conf.rst}
+        %x{#{rst2man} ./puppet.conf.rst ./man/man8/puppet.conf.8}
+
         bins.each do |bin| 
-          rst2man = %x{which rst2man.py}
-          rst2man.chomp!
           b = bin.gsub( "bin/", "")
-          %x{#{bin} --help > ./#{b}.rst}
+          %x{#{bin} --help > ./#{b}.rst}  
           %x{#{rst2man} ./#{b}.rst ./man/man8/#{b}.8}
 
           # Delete temporary files
-          File.unlink("./#{b}.rst")
+          File.unlink("./#{b}.rst","./puppet.conf.rst")
         end
     rescue 
         $stderr.puts "Couldn't build man pages"
@@ -354,7 +357,7 @@ prepare_installation
 run_tests(tests) if InstallOptions.tests
 #build_rdoc(rdoc) if InstallOptions.rdoc
 #build_ri(ri) if InstallOptions.ri
-#build_man(bins) if InstallOptions.man
+build_man(bins) if InstallOptions.man
 do_bins(sbins, InstallOptions.sbin_dir)
 do_bins(bins, InstallOptions.bin_dir)
 do_libs(libs)
