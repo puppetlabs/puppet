@@ -618,13 +618,17 @@ describe Puppet::Node::Catalog, " when creating a relationship graph" do
         @file = Puppet::Type.type(:file)
         @one = @file.create :path => "/one"
         @two = @file.create :path => "/two"
+        @sub = @file.create :path => "/two/three"
+
+        @sub.stubs(:autorequire).returns([Puppet::Relationship.new(@two, @sub)])
+
         @catalog.add_edge! @compone, @one
         @catalog.add_edge! @comptwo, @two
 
         @three = @file.create :path => "/three"
         @four = @file.create :path => "/four", :require => ["file", "/three"]
         @five = @file.create :path => "/five"
-        @catalog.add_resource @compone, @comptwo, @one, @two, @three, @four, @five
+        @catalog.add_resource @compone, @comptwo, @one, @two, @three, @four, @five, @sub
         @relationships = @catalog.relationship_graph
     end
 
@@ -657,6 +661,10 @@ describe Puppet::Node::Catalog, " when creating a relationship graph" do
 
     it "should copy component relationships to all contained resources" do
         @relationships.edge?(@one, @two).should be_true
+    end
+
+    it "should add automatic relationships to the relationship graph" do
+        @relationships.edge?(@two, @sub).should be_true
     end
 
     it "should get removed when the catalog is cleaned up" do

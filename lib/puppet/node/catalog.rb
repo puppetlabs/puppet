@@ -328,7 +328,7 @@ class Puppet::Node::Catalog < Puppet::PGraph
             
             # Lastly, add in any autorequires
             @relationship_graph.vertices.each do |vertex|
-                vertex.autorequire(@relationship_graph).each do |edge|
+                vertex.autorequire(self).each do |edge|
                     unless @relationship_graph.edge?(edge.source, edge.target) # don't let automatic relationships conflict with manual ones.
                         unless @relationship_graph.edge?(edge.target, edge.source)
                             vertex.debug "Autorequiring %s" % [edge.source]

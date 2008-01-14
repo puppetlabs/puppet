@@ -505,7 +505,7 @@ class Transaction
     
         # Now add any dynamically generated resources
         generate()
-        
+
         # This will throw an error if there are cycles in the graph.
         @sorted_resources = relationship_graph.topsort
     end

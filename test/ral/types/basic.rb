@@ -40,11 +40,6 @@ class TestBasic < Test::Unit::TestCase
         @config.add_edge! @component, @command
     end
 
-    def teardown
-        super
-        stopservices
-    end
-
     def test_values
         [:ensure, :checksum].each do |param|
             prop = @configfile.property(param)

@@ -42,12 +42,6 @@ module PuppetTest::Support::Utils
 
     # stop any services that might be hanging around
     def stopservices
-        if stype = Puppet::Type.type(:service)
-            stype.each { |service|
-                service[:ensure] = :stopped
-                service.evaluate
-            }
-        end
     end
 
     # TODO: rewrite this to use the 'etc' module.
