@@ -34,10 +34,10 @@ class TestFile < Test::Unit::TestCase
         @file = Puppet::Type.type(:file)
         $method = @method_name
         Puppet[:filetimeout] = -1
+        Facter.stubs(:to_hash).returns({})
     end
 
     def teardown
-        Puppet::Util::Storage.clear
         system("rm -rf %s" % Puppet[:statefile])
         super
     end
@@ -420,7 +420,6 @@ class TestFile < Test::Unit::TestCase
                         of.puts "some more text, yo"
                     }
                 }
-                Puppet.type(:file).clear
 
                 # now recreate the file
                 assert_nothing_raised() {
@@ -455,11 +454,6 @@ class TestFile < Test::Unit::TestCase
                     }
                 }
                 assert_events([:file_changed], file)
-
-                # verify that we're actually getting notified when a file changes
-                assert_nothing_raised() {
-                    Puppet.type(:file).clear
-                }
 
                 if path =~ /nonexists/
                     File.unlink(path)
@@ -711,7 +705,6 @@ class TestFile < Test::Unit::TestCase
                 "Incorrect generated children when recurse == %s" % value.inspect)
             
             File.unlink(tmpfile)
-            Puppet.type(:file).clear
         end
     end
 
@@ -1330,7 +1323,6 @@ class TestFile < Test::Unit::TestCase
             end
 
             assert_equal("/my/file/for/testing", file.title)
-            Puppet::Type.type(:file).clear
         end
     end
 
@@ -1646,7 +1638,6 @@ class TestFile < Test::Unit::TestCase
             assert_nothing_raised("%s conflicted with ensure" % [param]) do
                 Puppet::Type.newfile(:path => file, param => first, :ensure => :file)
             end
-            Puppet::Type.type(:file).clear
             params.each do |other|
                 next if other == param
                 assert_raise(Puppet::Error, "%s and %s did not conflict" % [param, other]) do

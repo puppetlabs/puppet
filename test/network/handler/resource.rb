@@ -13,7 +13,6 @@ class TestResourceServer < Test::Unit::TestCase
 
     def verify_described(type, described)
         described.each do |name, trans|
-            type.clear
             obj = nil
             assert_nothing_raised do
                 obj = trans.to_type
@@ -28,7 +27,6 @@ class TestResourceServer < Test::Unit::TestCase
                 assert_equal(Puppet::Type.type(:package).defaultprovider.name, obj[:provider])
             end
         end
-        type.clear
     end
 
     def test_describe_file
@@ -63,9 +61,6 @@ class TestResourceServer < Test::Unit::TestCase
                 assert(result, "Could not retrieve file information")
 
                 assert_instance_of(Puppet::TransObject, result)
-
-                # Now we have to clear, so that the server's object gets removed
-                Puppet::Type.type(:file).clear
 
                 # And remove the file, so we can verify it gets recreated
                 if i == 0
@@ -140,9 +135,6 @@ class TestResourceServer < Test::Unit::TestCase
 
             assert_instance_of(Puppet::TransObject, result)
 
-            # Now we have to clear, so that the server's object gets removed
-            Puppet::Type.type(:file).clear
-
             # And remove the file, so we can verify it gets recreated
             Dir.rmdir(file)
 
@@ -198,8 +190,6 @@ class TestResourceServer < Test::Unit::TestCase
                 bucket = server.list(type.name)
             }
 
-            #type.clear
-
             count = 0
             described = {}
             bucket.each do |obj|
@@ -251,8 +241,6 @@ class TestResourceServer < Test::Unit::TestCase
             filetrans = server.describe("file", file)
         }
 
-        Puppet::Type.type(:file).clear
-
         bucket = Puppet::TransBucket.new
         bucket.type = "file"
         bucket.name = "test"
@@ -273,7 +261,6 @@ class TestResourceServer < Test::Unit::TestCase
             yaml = Base64.encode64(YAML::dump(bucket))
         }
 
-        Puppet::Type.type(:file).clear
         File.unlink(file)
 
         if Base64.decode64(yaml) =~ /(.{20}Loglevel.{20})/

@@ -18,6 +18,8 @@ class TestFileIgnoreSources < Test::Unit::TestCase
         rescue
             system("rm -rf %s" % Puppet[:statefile])
         end
+
+        Facter.stubs(:to_hash).returns({})
     end
 
 #This is not needed unless using md5 (correct me if I'm wrong)
@@ -86,8 +88,6 @@ class TestFileIgnoreSources < Test::Unit::TestCase
 
         #This file should not
         assert(!(FileTest.exists?(File.join(topath,sourcefile2))))
-     
-        Puppet::Type.allclear
     end
 
     def test_ignore_with_wildcard
@@ -155,8 +155,6 @@ class TestFileIgnoreSources < Test::Unit::TestCase
         assert(!(FileTest.exists?(File.join(topath,sourcefile2))))
         assert(!(FileTest.exists?(File.join(topath,subdir2))))
         assert(!(FileTest.exists?(File.join(File.join(topath,subdir),sourcefile2))))
-        Puppet::Type.allclear
-
     end
 
     def test_ignore_array
@@ -236,10 +234,5 @@ class TestFileIgnoreSources < Test::Unit::TestCase
         assert(!(FileTest.exists?(File.join(topath,subdir2))), "subdir2 in dest")
         assert(!(FileTest.exists?(File.join(topath,subdir3))), "anotherdir in dest")
         assert(!(FileTest.exists?(File.join(File.join(topath,subdir),sourcefile2))), "file2 in dest/sub")
-        
-
-        Puppet::Type.allclear
-
     end
-
 end

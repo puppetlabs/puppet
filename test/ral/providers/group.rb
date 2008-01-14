@@ -21,7 +21,6 @@ class TestGroupProvider < Test::Unit::TestCase
 
     def teardown
         super
-        Puppet.type(:group).clear
         @@tmpgroups.each { |group|
             unless missing?(group)
                 remove(group)

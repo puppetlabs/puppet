@@ -101,9 +101,6 @@ class TestWebrickServer < Test::Unit::TestCase
     
     def mk_status_client
         client = nil
-        # Otherwise, the client initalization will trip over itself
-        # since elements created in the last run are still around
-        Puppet::Type::allclear
 
         assert_nothing_raised() {
             client = Puppet::Network::Client.status.new(

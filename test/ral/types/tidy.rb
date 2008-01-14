@@ -207,8 +207,6 @@ class TestTidy < Test::Unit::TestCase
         assert_apply(tidy)
         assert(! FileTest.exists?(path), "file did not get tidied")
         
-        tidy.class.clear
-
         # Now try one with just an age attribute.
         time = Time.now - 10
         stat = stub 'stat', :mtime => time, :atime => time, :ftype => "file"

@@ -63,45 +63,6 @@ module Puppet::Util::POSIX
         return nil
     end
     
-    # Look in memory for an already-managed type and use its info if available.
-    # Currently unused.
-    def get_provider_value(type, field, id)
-        unless typeklass = Puppet::Type.type(type)
-            raise ArgumentError, "Invalid type %s" % type
-        end
-        
-        id = id.to_s
-        
-        chkfield = idfield(type)
-        obj = typeklass.find { |obj|
-            if id =~ /^\d+$/
-                obj.should(chkfield).to_s == id ||
-                    obj.provider.send(chkfield) == id
-            else 
-                obj[:name] == id
-            end                    
-        }
-        
-        return nil unless obj
-        
-        if obj.provider
-            begin
-                val = obj.provider.send(field)
-                if val == :absent
-                    return nil
-                else
-                    return val
-                end
-            rescue => detail
-                if Puppet[:trace]
-                    puts detail.backtrace
-                    Puppet.err detail
-                    return nil
-                end
-            end
-        end
-    end
-    
     # Determine what the field name is for users and groups.
     def idfield(space)
         case Puppet::Util.symbolize(space)

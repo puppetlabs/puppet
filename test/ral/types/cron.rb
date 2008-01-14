@@ -25,7 +25,6 @@ class TestCron < Test::Unit::TestCase
     def teardown
         super
         @crontype.defaultprovider = nil
-        Puppet::Util::FileType.filetype(:ram).clear
     end
 
     def eachprovider
@@ -145,8 +144,6 @@ class TestCron < Test::Unit::TestCase
                 next unless prop.name.to_s == "command"
                 assert(prop.insync?(value), "Property %s is not considered in sync with value %s" % [prop.name, value.inspect])
             end
-
-            @crontype.clear
         end
     end
 
@@ -247,7 +244,6 @@ class TestCron < Test::Unit::TestCase
                 next unless prop.name.to_s == "minute"
                 assert(prop.insync?(value), "Property %s is not considered in sync with value %s" % [prop.name, value.inspect])
             end
-            @crontype.clear
         end
     end
 
@@ -293,8 +289,6 @@ class TestCron < Test::Unit::TestCase
         )
         # Write it to our file
         assert_apply(cron)
-
-        @crontype.clear
 
         crons = []
         assert_nothing_raised {
@@ -484,7 +478,6 @@ class TestCron < Test::Unit::TestCase
         cron = @crontype.create(:name => "space testing", :command => string)
         assert_apply(cron)
 
-        cron.class.clear
         cron = @crontype.create(:name => "space testing", :command => string)
 
         # Now make sure that it's correctly in sync

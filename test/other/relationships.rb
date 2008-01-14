@@ -109,8 +109,6 @@ class TestRelationships < Test::Unit::TestCase
                     execs[0][param], "Incorrect source list")
             end
             check_relationship(sources, targets, out[param], refreshers.include?(param))
-
-            Puppet::Type.allclear
         end
     end
     

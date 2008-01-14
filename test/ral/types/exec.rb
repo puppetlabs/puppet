@@ -22,8 +22,6 @@ class TestExec < Test::Unit::TestCase
 
     def test_numvsstring
         [0, "0"].each { |val|
-            Puppet.type(:exec).clear
-            Puppet.type(:component).clear
             command = nil
             output = nil
             assert_nothing_raised {
@@ -50,13 +48,11 @@ class TestExec < Test::Unit::TestCase
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin"
             )
         }
-        Puppet.type(:exec).clear
         assert_nothing_raised {
             command = Puppet.type(:exec).create(
                 :command => "/bin/echo"
             )
         }
-        Puppet.type(:exec).clear
         assert_nothing_raised {
             command = Puppet.type(:exec).create(
                 :command => "/bin/echo",
@@ -204,6 +200,7 @@ class TestExec < Test::Unit::TestCase
 
         comp = mk_catalog("Testing", file, exec)
 
+        Facter.stubs(:to_hash).returns({})
         assert_events([:file_created, :executed_command], comp)
     end
 
@@ -353,10 +350,6 @@ class TestExec < Test::Unit::TestCase
             if user
                 assert_equal(user.uid, File.stat(file).uid, "File UIDs do not match")
             end
-
-            # We can't actually test group ownership, unfortunately, because
-            # behaviour changes wildlly based on platform.
-            Puppet::Type.allclear
         end
 
         def test_userngroup

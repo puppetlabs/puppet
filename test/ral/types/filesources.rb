@@ -21,6 +21,7 @@ class TestFileSources < Test::Unit::TestCase
         @file = Puppet::Type.type(:file)
         Puppet[:filetimeout] = -1
         Puppet::Util::SUIDManager.stubs(:asuser).yields 
+        Facter.stubs(:to_hash).returns({})
     end
 
     def teardown
@@ -364,7 +365,6 @@ class TestFileSources < Test::Unit::TestCase
     end
 
     def recursive_source_test(fromdir, todir)
-        Puppet::Type.allclear
         initstorage
         tofile = nil
         trans = nil

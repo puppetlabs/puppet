@@ -26,15 +26,6 @@ class TestParser < Test::Unit::TestCase
                 parser.file = file
                 parser.parse
             }
-
-            Puppet::Type.eachtype { |type|
-                type.each { |obj|
-                    assert(obj.file, "File is not set on %s" % obj.ref)
-                    assert(obj.name, "Name is not set on %s" % obj.ref)
-                    assert(obj.line, "Line is not set on %s" % obj.ref)
-                }
-            }
-            Puppet::Type.allclear
         }
     end
 
@@ -49,7 +40,6 @@ class TestParser < Test::Unit::TestCase
                 config.compile
                 #ast.classes[""].evaluate :scope => config.topscope
             }
-            Puppet::Type.allclear
         }
     end
 
@@ -680,7 +670,6 @@ file { "/tmp/yayness":
 
         manifest = File.join(modpath, "manifest.pp")
         manifest_texts.each do |txt|
-            Puppet::Type.allclear
             File.open(manifest, "w") { |f| f.puts txt }
 
             assert_nothing_raised {

@@ -299,19 +299,7 @@ module Puppet
                         group
                     end
                 }
-                groups.each { |group|
-                    case group
-                    when Integer:
-                        if obj = Puppet.type(:group).find { |gobj|
-                            gobj.should(:gid) == group
-                        }
-                            autos << obj
-                            
-                        end
-                    else
-                        autos << group
-                    end
-                }
+                autos = groups.reject { |g| g.is_a?(Integer) }
             end
 
             if obj = @parameters[:groups] and groups = obj.should

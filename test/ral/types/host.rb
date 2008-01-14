@@ -54,19 +54,6 @@ class TestHost < Test::Unit::TestCase
         return host
     end
 
-    def test_list
-        assert_nothing_raised do
-            @hosttype.defaultprovider.prefetch
-        end
-
-        count = 0
-        @hosttype.each do |h|
-            count += 1
-        end
-
-        assert_equal(0, count, "Found hosts in empty file somehow")
-    end
-
     # Darwin will actually write to netinfo here.
     if Facter.value(:operatingsystem) != "Darwin" or Process.uid == 0
     def test_simplehost

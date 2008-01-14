@@ -35,16 +35,6 @@ class TestPosixUtil < Test::Unit::TestCase
 	    end
     end
     
-    def test_get_provider_value
-        user = nonrootuser
-        obj = mk_posix_resource(:user, user)
-        
-        assert_nothing_raised do
-            assert_equal(user.uid, get_provider_value(:user, :uid, user.uid))
-            assert_equal(user.name, get_provider_value(:user, :name, user.name))
-        end
-    end
-    
     def test_gid_and_uid
         {:user => nonrootuser, :group => nonrootgroup}.each do |type, obj|
             method = idfield(type)

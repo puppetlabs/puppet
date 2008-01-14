@@ -92,7 +92,6 @@ class TestLexer < Test::Unit::TestCase
             assert_nothing_raised("Failed to lex %s" % file) {
                 lexer.fullscan()
             }
-            Puppet::Type.allclear
         }
     end
 

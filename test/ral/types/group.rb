@@ -39,7 +39,6 @@ class TestGroup < Test::Unit::TestCase
     end
 
     def teardown
-        Puppet.type(:group).clear
         Puppet::Type.type(:group).defaultprovider = nil
         super
     end
