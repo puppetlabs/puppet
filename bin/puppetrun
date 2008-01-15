@@ -40,7 +40,7 @@
 # you want any Puppet daemon to allow -- it is currently global to all Puppet
 # daemons.
 #
-# An example file looks like this:
+# An example file looks like this::
 #
 #     [fileserver]
 #         allow *.madstop.com

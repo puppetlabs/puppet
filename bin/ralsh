@@ -63,17 +63,18 @@
 #
 # = Example
 #
-#   $ ralsh user luke
-#   user { 'luke':
-#       home => '/home/luke',
-#       uid => '100',
-#       ensure => 'present',
-#       comment => 'Luke Kanies,,,',
-#       gid => '1000',
-#       shell => '/bin/bash',
-#       groups => ['sysadmin','audio','video','puppet']
-#   }
-#   $
+# This example uses ``ralsh`` to return Puppet configuration for the user ``luke``::
+#   
+# $ ralsh user luke
+#    user { 'luke':
+#      home => '/home/luke',
+#      uid => '100',
+#      ensure => 'present',
+#      comment => 'Luke Kanies,,,',
+#      gid => '1000',
+#      shell => '/bin/bash',
+#      groups => ['sysadmin','audio','video','puppet']
+#    }
 #
 # = Author
 #
