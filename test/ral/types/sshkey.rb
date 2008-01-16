@@ -102,18 +102,17 @@ class TestSSHKey < Test::Unit::TestCase
     def test_moddingkey
         key = mkkey()
 
-        assert_events([:sshkey_created], key)
+        @catalog.apply
 
         key.retrieve
 
         aliases = %w{madstop kirby yayness}
         key[:alias] = aliases
 
-        assert_events([:sshkey_changed], key)
+        @catalog.apply
 
         aliases.each do |name|
-            assert_equal(key, @catalog.resource(:sshkey, name),
-                "alias was not set")
+            assert_equal(key.object_id, @catalog.resource(:sshkey, name).object_id, "alias %s was not set" % name)
         end
     end
 
@@ -182,16 +181,9 @@ class TestSSHKey < Test::Unit::TestCase
 
         # Verify we can retrieve that info
         assert_nothing_raised("Could not retrieve after second write") {
-            newkey.provider.class.prefetch
-            newkey.retrieve
+            newkey.provider.prefetch
         }
 
-        # And verify that we have data for everything
-        names.each { |name|
-            key = @catalog.resource(:sshkey, name)
-            assert(key, "Could not retrieve key for %s" % name)
-            assert(key.provider.exists?, "key %s is missing" % name)
-        }
+        assert(newkey.provider.exists?, "Did not see key in file")
     end
 end
-

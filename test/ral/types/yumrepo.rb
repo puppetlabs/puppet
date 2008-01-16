@@ -19,6 +19,10 @@ class TestYumRepo < Test::Unit::TestCase
         Puppet.type(:yumrepo).yumconf = @yumconf
     end
 
+    def teardown
+        Puppet.type(:yumrepo).clear
+    end
+
     # Modify one existing section
     def test_modify
         copy_datafiles

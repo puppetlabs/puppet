@@ -181,11 +181,11 @@ module Puppet
             inifile.store
         end
 
+        # This is only used during testing.
         def self.clear
             @inifile = nil
             @yumconf = "/etc/yum.conf"
             @defaultrepodir = nil
-            super
         end
 
         # Return the Puppet::Util::IniConfig::Section for this yumrepo resource

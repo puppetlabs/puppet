@@ -106,6 +106,7 @@ class Puppet::Util::FileType
         # Overwrite the file.
         def write(text)
             backup()
+            raise("Cannot create file %s in absent directory" % @path) unless FileTest.exist?(File.dirname(@path))
             File.open(@path, "w") { |f| f.print text; f.flush }
         end
     end
