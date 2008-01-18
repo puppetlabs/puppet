@@ -305,7 +305,7 @@ module Puppet
         :manifest => ["$manifestdir/site.pp",
             "The entry-point manifest for puppetmasterd."],
         :code => ["", "Code to parse directly.  This is essentially only used
-            by ``puppet`, and should only be set if you're writing your own Puppet
+            by ``puppet``, and should only be set if you're writing your own Puppet
             executable"],
         :masterlog => { :default => "$logdir/puppetmaster.log",
             :owner => "$user",
@@ -343,11 +343,11 @@ module Puppet
         :ssl_client_header => ["HTTP_X_CLIENT_DN", "The header containing an authenticated
             client's SSL DN.  Only used with Mongrel.  This header must be set by the proxy
             to the authenticated client's SSL DN (e.g., ``/CN=puppet.reductivelabs.com``).
-            See the `UsingMongrel`:trac: wiki page for more information."],
+            See the http://reductivelabs.com/puppet/trac/wiki/UsingMongrel page for more information."],
         :ssl_client_verify_header => ["HTTP_X_CLIENT_VERIFY", "The header containing the status
             message of the client verification. Only used with Mongrel.  This header must be set by the proxy
             to 'SUCCESS' if the client successfully authenticated, and anything else otherwise.
-            See the `UsingMongrel`:trac: wiki page for more information."]
+            See the http://reductivelabs.com/puppet/trac/wiki/UsingMongrel page for more information."]
     )
 
     self.setdefaults(:puppetd,
@@ -597,7 +597,7 @@ module Puppet
     setdefaults(:ldap,
         :ldapnodes => [false,
             "Whether to search for node configurations in LDAP.  See
-            `LdapNodes`:trac: for more information."],
+            http://reductivelabs.com/puppet/trac/wiki/LdapNodes/ for more information."],
         :ldapssl => [false,
             "Whether SSL should be used when searching for nodes.
             Defaults to false because SSL usually requires certificates
