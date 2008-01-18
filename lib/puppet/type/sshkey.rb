@@ -53,14 +53,14 @@ module Puppet
         end
 
         newparam(:name) do
-            desc "The host name."
+            desc "The host name that the key is associated with."
 
             isnamevar
         end
 
         newproperty(:target) do
-            desc "The file in which to store the mount table.  Only used by
-                those providers that write to disk (i.e., not NetInfo)."
+            desc "The file in which to store the ssh key.  Only used by
+                the ``parsed`` provider."
 
             defaultto { if @resource.class.defaultprovider.ancestors.include?(Puppet::Provider::ParsedFile)
                     @resource.class.defaultprovider.default_target
