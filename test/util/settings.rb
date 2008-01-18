@@ -256,69 +256,6 @@ yay = /a/path
         end
     end
 
-    def test_old_parse
-        text = %{
-one = this is a test
-two = another test
-owner = root
-group = root
-yay = /a/path
-
-[section1]
-    attr = value
-    owner = puppet
-    group = puppet
-    attrdir = /some/dir
-    attr3 = $attrdir/other
-        }
-
-        file = tempfile()
-        File.open(file, "w") { |f| f.puts text }
-
-        assert_nothing_raised {
-            @config.setdefaults("puppet",
-                :one => ["a", "one"],
-                :two => ["a", "two"],
-                :yay => ["/default/path", "boo"],
-                :mkusers => [true, "uh, yeah"]
-            )
-        }
-
-        assert_nothing_raised {
-            @config.setdefaults("section1",
-                :attr => ["a", "one"],
-                :attrdir => ["/another/dir", "two"],
-                :attr3 => ["$attrdir/maybe", "boo"]
-            )
-        }
-        
-        assert_nothing_raised {
-            @config.old_parse(file)
-        }
-
-        assert_equal("value", @config[:attr])
-        assert_equal("/some/dir", @config[:attrdir])
-        assert_equal(:directory, @config.element(:attrdir).type)
-        assert_equal("/some/dir/other", @config[:attr3])
-
-        elem = nil
-        assert_nothing_raised {
-            elem = @config.element(:attr3)
-        }
-
-        assert(elem)
-        assert_equal("puppet", elem.owner)
-
-        config = nil
-        assert_nothing_raised {
-            config = @config.to_config
-        }
-
-        assert_nothing_raised("Could not create transportable config") {
-            @config.to_transportable
-        }
-    end
-
     def test_parse
         result = {
             :main => {:main => "main", :bad => "invalid", :cliparam => "reset"},

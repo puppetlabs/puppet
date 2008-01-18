@@ -284,11 +284,6 @@ describe Puppet::Util::Settings, " when parsing its configuration" do
         lambda { @settings.parse(file) }.should_not raise_error
     end
 
-    it "should support an old parse method when per-executable configuration files still exist" do
-        # I'm not going to bother testing this method.
-        @settings.should respond_to(:old_parse)
-    end
-
     it "should convert booleans in the configuration file into Ruby booleans" do
         text = "[main]
         one = true
