@@ -309,6 +309,9 @@ class Puppet::Parser::Compile
             done = false if evaluate_collections
             done = false if evaluate_definitions
             break if done
+
+            count += 1
+
             if count > 1000
                 raise Puppet::ParseError, "Somehow looped more than 1000 times while evaluating host catalog"
             end
