@@ -4,6 +4,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 # LAK: FIXME This is just new tests for resources; I have
 # not moved all tests over yet.
+
 describe Puppet::Parser::Resource, " when evaluating" do
     before do
         @type = Puppet::Parser::Resource
@@ -85,5 +86,64 @@ describe Puppet::Parser::Resource, " when finishing" do
         @resource.class.publicize_methods(:add_metaparams)  { @resource.add_metaparams }
 
         @resource["require"].sort.should == %w{container1 container2 resource1 resource2}
+    end
+
+    it "should add any tags from the scope resource" do
+        scope_resource = stub 'scope_resource', :tags => %w{one two}
+        @scope.stubs(:resource).returns(scope_resource)
+
+        @resource.class.publicize_methods(:add_scope_tags)  { @resource.add_scope_tags }
+
+        @resource.tags.should be_include("one")
+        @resource.tags.should be_include("two")
+    end
+end
+
+describe Puppet::Parser::Resource, "when being tagged" do
+    before do
+        @scope_resource = stub 'scope_resource', :tags => %w{srone srtwo}
+        @scope = stub 'scope', :resource => @scope_resource
+        @resource = Puppet::Parser::Resource.new(:type => "file", :title => "yay", :scope => @scope, :source => mock('source'))
+    end
+
+    it "should get tagged with the resource type" do
+        @resource.tags.should be_include("file")
+    end
+
+    it "should get tagged with the title" do
+        @resource.tags.should be_include("yay")
+    end
+
+    it "should get tagged with each name in the title if the title is a qualified class name" do
+        resource = Puppet::Parser::Resource.new(:type => "file", :title => "one::two", :scope => @scope, :source => mock('source'))
+        resource.tags.should be_include("one")
+        resource.tags.should be_include("two")
+    end
+
+    it "should get tagged with each name in the type if the type is a qualified class name" do
+        resource = Puppet::Parser::Resource.new(:type => "one::two", :title => "whatever", :scope => @scope, :source => mock('source'))
+        resource.tags.should be_include("one")
+        resource.tags.should be_include("two")
+    end
+
+    it "should not get tagged with non-alphanumeric titles" do
+        resource = Puppet::Parser::Resource.new(:type => "file", :title => "this is a test", :scope => @scope, :source => mock('source'))
+        resource.tags.should_not be_include("this is a test")
+    end
+
+    it "should fail on tags containing '*' characters" do
+        lambda { @resource.tag("bad*tag") }.should raise_error(Puppet::ParseError)
+    end
+
+    it "should fail on tags starting with '-' characters" do
+        lambda { @resource.tag("-badtag") }.should raise_error(Puppet::ParseError)
+    end
+
+    it "should fail on tags containing ' ' characters" do
+        lambda { @resource.tag("bad tag") }.should raise_error(Puppet::ParseError)
+    end
+
+    it "should allow alpha tags" do
+        lambda { @resource.tag("good_tag") }.should_not raise_error(Puppet::ParseError)
     end
 end

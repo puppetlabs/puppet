@@ -424,7 +424,7 @@ class Transaction
 
     # Should we ignore tags?
     def ignore_tags?
-        ! @catalog.host_config?
+        ! (@catalog.host_config? or Puppet[:name] == "puppet")
     end
 
     # this should only be called by a Puppet::Type::Component resource now
