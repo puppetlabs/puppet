@@ -97,38 +97,38 @@
       (indent-line-to 0)                ; First line is always non-indented
     (let ((not-indented t) cur-indent)
       (if (looking-at "^.*}") ; If the line we are looking at is the end of
-			      ; a block, then decrease the indentation
+                              ; a block, then decrease the indentation
           (progn
             (save-excursion
               (forward-line -1)
             
               (if (looking-at "^.*}")
-		  (progn
+                  (progn
                     (setq cur-indent (- (current-indentation) 2))
-		    (setq not-indented nil))
-		(setq cur-indent (- (current-indentation) 2))))
-	    (if (< cur-indent 0)     ; We can't indent past the left margin
-		(setq cur-indent 0)))
-	(save-excursion
-	  (while not-indented ; Iterate backwards until we find an
-			      ; indentation hint
-	    (forward-line -1)
-	    (if (looking-at "^.*}") ; This hint indicates that we need to
-				    ; indent at the level of the END_ token
-		(progn
-		  (setq cur-indent (current-indentation))
-		  (setq not-indented nil))
-	      (if (looking-at "^.*{") ; This hint indicates that we need to
-				      ; indent an extra level
-		  (progn
+                    (setq not-indented nil))
+                (setq cur-indent (- (current-indentation) 2))))
+            (if (< cur-indent 0)     ; We can't indent past the left margin
+                (setq cur-indent 0)))
+        (save-excursion
+          (while not-indented ; Iterate backwards until we find an
+                              ; indentation hint
+            (forward-line -1)
+            (if (looking-at "^.*}") ; This hint indicates that we need to
+                                    ; indent at the level of the END_ token
+                (progn
+                  (setq cur-indent (current-indentation))
+                  (setq not-indented nil))
+              (if (looking-at "^.*{") ; This hint indicates that we need to
+                                      ; indent an extra level
+                  (progn
                                         ; Do the actual indenting
-		    (setq cur-indent (+ (current-indentation) 2)) 
-		    (setq not-indented nil))
-		(if (bobp)
-		    (setq not-indented nil)))))))
+                    (setq cur-indent (+ (current-indentation) 2)) 
+                    (setq not-indented nil))
+                (if (bobp)
+                    (setq not-indented nil)))))))
       (if cur-indent
-	  (indent-line-to cur-indent)
-	(indent-line-to 0)))))
+          (indent-line-to cur-indent)
+        (indent-line-to 0)))))
 
 
 ;;;###autoload
@@ -155,31 +155,31 @@ The variable puppet-indent-level controls the amount of indentation.
       (setq font-lock-variable-name-face font-lock-type-face))
 
   (setq puppet-font-lock-syntactic-keywords
-	'(
-	  ("\\(^\\|[=(,~?:;]\\|\\(^\\|\\s \\)\\(if\\|elsif\\|unless\\|while\\|until\\|when\\|and\\|or\\|&&\\|||\\)\\|g?sub!?\\|scan\\|split!?\\)\\s *\\(/\\)[^/\n\\\\]*\\(\\\\.[^/\n\\\\]*\\)*\\(/\\)"
-	   (4 (7 . ?/))
-	   (6 (7 . ?/)))
-	  ("^\\(=\\)begin\\(\\s \\|$\\)" 1 (7 . nil))
-	  ("^\\(=\\)end\\(\\s \\|$\\)" 1 (7 . nil))))
+        '(
+          ("\\(^\\|[=(,~?:;]\\|\\(^\\|\\s \\)\\(if\\|elsif\\|unless\\|while\\|until\\|when\\|and\\|or\\|&&\\|||\\)\\|g?sub!?\\|scan\\|split!?\\)\\s *\\(/\\)[^/\n\\\\]*\\(\\\\.[^/\n\\\\]*\\)*\\(/\\)"
+           (4 (7 . ?/))
+           (6 (7 . ?/)))
+          ("^\\(=\\)begin\\(\\s \\|$\\)" 1 (7 . nil))
+          ("^\\(=\\)end\\(\\s \\|$\\)" 1 (7 . nil))))
 
   (cond ((featurep 'xemacs)
-	 (put 'puppet-mode 'font-lock-defaults
-	      '((puppet-font-lock-keywords)
-		nil nil nil
-		beginning-of-line
-		(font-lock-syntactic-keywords
-		 . puppet-font-lock-syntactic-keywords))))
-	(t
-	 (add-hook 'puppet-mode-hook
-	    '(lambda ()
-	       (make-local-variable 'font-lock-defaults)
-	       (make-local-variable 'font-lock-keywords)
-	       (make-local-variable 'font-lock-syntax-table)
-	       (make-local-variable 'font-lock-syntactic-keywords)
-	       (setq font-lock-defaults '((puppet-font-lock-keywords) nil nil))
-	       (setq font-lock-keywords puppet-font-lock-keywords)
-	       (setq font-lock-syntax-table puppet-font-lock-syntax-table)
-	       (setq font-lock-syntactic-keywords puppet-font-lock-syntactic-keywords)))))
+         (put 'puppet-mode 'font-lock-defaults
+              '((puppet-font-lock-keywords)
+                nil nil nil
+                beginning-of-line
+                (font-lock-syntactic-keywords
+                 . puppet-font-lock-syntactic-keywords))))
+        (t
+         (add-hook 'puppet-mode-hook
+            '(lambda ()
+               (make-local-variable 'font-lock-defaults)
+               (make-local-variable 'font-lock-keywords)
+               (make-local-variable 'font-lock-syntax-table)
+               (make-local-variable 'font-lock-syntactic-keywords)
+               (setq font-lock-defaults '((puppet-font-lock-keywords) nil nil))
+               (setq font-lock-keywords puppet-font-lock-keywords)
+               (setq font-lock-syntax-table puppet-font-lock-syntax-table)
+               (setq font-lock-syntactic-keywords puppet-font-lock-syntactic-keywords)))))
 
   (defvar puppet-font-lock-syntax-table
     (let* ((tbl (copy-syntax-table puppet-mode-syntax-table)))
@@ -196,23 +196,23 @@ The variable puppet-indent-level controls the amount of indentation.
        1 font-lock-reference-face)
      ;; keywords
      (cons (concat
-	    "\\b\\(\\("
-	    (mapconcat
-	     'identity
-	     '("case"
+            "\\b\\(\\("
+            (mapconcat
+             'identity
+             '("case"
                "class"
                "default"
                "define"
-	       "false"
-	       "import"
-	       "include"
-	       "inherits"
-	       "node"
-	       "true"
-	       )
-	     "\\|")
-	    "\\)\\>\\)")
-	   1)
+               "false"
+               "import"
+               "include"
+               "inherits"
+               "node"
+               "true"
+               )
+             "\\|")
+            "\\)\\>\\)")
+           1)
      ;; variables
      '("\\(^\\|[^_:.@$]\\|\\.\\.\\)\\b\\(nil\\|self\\|true\\|false\\)\\>"
        2 font-lock-variable-name-face)
