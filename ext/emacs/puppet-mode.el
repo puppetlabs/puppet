@@ -174,6 +174,8 @@ that array, else return nil."
           (while not-indented
             (forward-line -1)
             (cond
+             ((bobp)
+              (setq not-indented nil))
              ((puppet-comment-line-p)
               ;; ignore it and continue iterating backwards
               )
@@ -182,8 +184,6 @@ that array, else return nil."
               (setq not-indented nil))
              ((looking-at "^.*{") ; indent an extra level
               (setq cur-indent (+ (current-indentation) 2)) 
-              (setq not-indented nil))
-             ((bobp)
               (setq not-indented nil)))))))
       (if cur-indent
           (indent-line-to cur-indent)
