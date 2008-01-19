@@ -240,22 +240,23 @@ end
 def build_man(bins)
     return unless $haveman
     begin
-        # Create binary man pages
+        # Locate rst2man
         rst2man = %x{which rst2man.py}
         rst2man.chomp!
+        # Create puppet.conf.8 man page
         %x{bin/puppetdoc --reference configuration > ./puppet.conf.rst}
         %x{#{rst2man} ./puppet.conf.rst ./man/man8/puppet.conf.8}
+        File.unlink("./puppet.conf.rst")
 
+        # Create binary man pages
         bins.each do |bin| 
           b = bin.gsub( "bin/", "")
           %x{#{bin} --help > ./#{b}.rst}  
           %x{#{rst2man} ./#{b}.rst ./man/man8/#{b}.8}
-
-          # Delete temporary files
-          File.unlink("./#{b}.rst","./puppet.conf.rst")
+          File.unlink("./#{b}.rst") 
         end
-    rescue 
-        $stderr.puts "Couldn't build man pages"
+    rescue SystemCallError 
+        $stderr.puts "Couldn't build man pages: " + $!
         $stderr.puts "Continuing with install..."    
     end
 end
