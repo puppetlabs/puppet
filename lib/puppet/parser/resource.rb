@@ -3,17 +3,17 @@
 class Puppet::Parser::Resource
     require 'puppet/parser/resource/param'
     require 'puppet/parser/resource/reference'
+    require 'puppet/util/tagging'
     include Puppet::Util
     include Puppet::Util::MethodHelper
     include Puppet::Util::Errors
     include Puppet::Util::Logging
+    include Puppet::Util::Tagging
 
     attr_accessor :source, :line, :file, :scope, :rails_id
     attr_accessor :virtual, :override, :translated
 
     attr_reader :exported, :evaluated, :params
-
-    attr_writer :tags
 
     # Determine whether the provided parameter name is a relationship parameter.
     def self.relationship_parameter?(name)
@@ -86,6 +86,7 @@ class Puppet::Parser::Resource
         add_overrides()
         add_defaults()
         add_metaparams()
+        add_scope_tags()
         validate()
     end
 
@@ -130,13 +131,8 @@ class Puppet::Parser::Resource
             raise ArgumentError, "Resources do not accept %s" % options.keys.collect { |k| k.to_s }.join(", ")
         end
 
-        @tags = []
         tag(@ref.type)
-        tag(@ref.title) if @ref.title.to_s =~ /^[-\w]+$/
-
-        if scope.resource
-            @tags += scope.resource.tags
-        end
+        tag(@ref.title) if valid_tag?(@ref.title.to_s)
     end
 
     # Merge an override resource in.  This will throw exceptions if
@@ -221,23 +217,6 @@ class Puppet::Parser::Resource
     # Return the short version of our name.
     def ref
         @ref.to_s
-    end
-
-    # Add a tag to our current list.  These tags will be added to all
-    # of the objects contained in this scope.
-    def tag(*ary)
-        ary.collect { |tag| tag.to_s.downcase }.collect { |tag| tag.split("::") }.flatten.each do |tag|
-            unless tag =~ /^\w[-\w]*$/
-                fail Puppet::ParseError, "Invalid tag %s" % tag.inspect
-            end
-            unless @tags.include?(tag)
-                @tags << tag
-            end
-        end
-    end
-
-    def tags
-        @tags.dup
     end
 
     def to_hash
@@ -371,6 +350,12 @@ class Puppet::Parser::Resource
             # Remove the overrides, so that the configuration knows there
             # are none left.
             overrides.clear
+        end
+    end
+
+    def add_scope_tags
+        if scope_resource = scope.resource
+            tag(*scope_resource.tags)
         end
     end
 

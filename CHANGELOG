@@ -1,3 +1,13 @@
+    Fixing #976 -- both the full name of qualified classes and
+    the class parts are now added as tags.  I've also
+    created a Tagging module that we should push throughout
+    the rest of the system that uses tags.
+
+    Fixing #995 -- puppetd no longer dies at startup if the server
+    is not running.
+
+    Fixing #977 -- the rundir is again set to 1777.
+
     Fixed #971 -- classes can once again be included multiple
     times.
 

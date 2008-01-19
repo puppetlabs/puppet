@@ -90,6 +90,13 @@ module Puppet::Network
             @clients[handler] || self.mkclient(handler)
         end
 
+        def http
+            unless @http
+                @http = Puppet::Network::HttpPool.http_instance(@host, @port, true)
+            end
+            @http
+        end
+
         def initialize(hash = {})
             hash[:Path] ||= "/RPC2"
             hash[:Server] ||= Puppet[:server]
@@ -125,7 +132,11 @@ module Puppet::Network
         end
         
         def start
-            @http.start unless @http.started?
+            begin
+                @http.start unless @http.started?
+            rescue => detail
+                Puppet.err "Could not connect to server: %s" % detail
+            end
         end
 
         def local

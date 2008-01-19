@@ -9,8 +9,6 @@ Puppet::Type.type(:package).provide :fink, :parent => :dpkg, :source => :dpkg do
     commands :aptcache => "/sw/bin/apt-cache"
     commands :dpkgquery => "/sw/bin/dpkg-query"
 
-    defaultfor :operatingsystem => :darwin
-
     has_feature :versionable
 
     # A derivative of DPKG; this is how most people actually manage
