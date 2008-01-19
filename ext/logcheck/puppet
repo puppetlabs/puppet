@@ -13,3 +13,5 @@
 ^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetd\[[0-9]+\]: Caught (TERM|INT); shutting down$
 ^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetd\[[0-9]+\]: Shutting down$
 ^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetd\[[0-9]+\]: Restarting with .*$
+^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetd\[[0-9]+\]: Starting catalog run$
+^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetd\[[0-9]+\]: Finished catalog run in [.0-9]+ seconds$

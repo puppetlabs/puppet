@@ -14,7 +14,7 @@ Puppet::Type.type(:mount).provide(:parsed,
     :filetype => :flat
 ) do
     include Puppet::Provider::Mount
-    confine :exists => fstab
+    #confine :exists => fstab
 
     commands :mountcmd => "mount", :umount => "umount"
 

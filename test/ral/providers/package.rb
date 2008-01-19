@@ -46,7 +46,7 @@ class TestPackageProvider < Test::Unit::TestCase
         end
         facts = {}
         Facter.to_hash.each do |fact, value|
-            facts[fact.downcase.intern] = value.downcase.intern
+            facts[fact.to_s.downcase.intern] = value.to_s.downcase.intern
         end
         list.find_all { |hash| # First find the matching providers
             hash.include?(:provider) and providers.include?(hash[:provider])

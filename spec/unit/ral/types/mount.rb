@@ -9,7 +9,7 @@ describe Puppet::Type::Mount do
         Puppet::Type::Mount.provider_feature(:refreshable).methods.should == [:remount]
     end
 
-    it "should have no default value" do
+    it "should have no default value for :ensure" do
         mount = Puppet::Type::Mount.create(:name => "yay")
         mount.should(:ensure).should be_nil
     end

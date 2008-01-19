@@ -144,10 +144,6 @@ describe Puppet::PGraph, " when splicing the relationship graph" do
         splice
     end
 
-    it "should not create a cyclic graph" do
-        @depgraph.should_not be_cyclic
-    end
-
     # This is the real heart of splicing -- replacing all containers in
     # our relationship and exploding their relationships so that each
     # relationship to a container gets copied to all of its children.
@@ -209,37 +205,5 @@ describe Puppet::PGraph, " when splicing the relationship graph" do
             @depgraph.should be_edge(edge.source, edge.target)
             @depgraph.edge_label(edge.source, edge.target).should == {:callback => :refresh}
         end
-    end
-end
-
-describe Puppet::PGraph, " when sorting the graph" do
-    before do
-        @graph = Puppet::PGraph.new
-    end
-
-    def add_edges(hash)
-        hash.each do |a,b|
-            @graph.add_edge!(a, b)
-        end
-    end
-
-    it "should fail on two-vertex loops" do
-        add_edges :a => :b, :b => :a
-        proc { @graph.topsort }.should raise_error(Puppet::Error)
-    end
-
-    it "should fail on multi-vertex loops" do
-        add_edges :a => :b, :b => :c, :c => :a
-        proc { @graph.topsort }.should raise_error(Puppet::Error)
-    end
-
-    it "should fail when a larger tree contains a small cycle" do
-        add_edges :a => :b, :b => :a, :c => :a, :d => :c
-        proc { @graph.topsort }.should raise_error(Puppet::Error)
-    end
-
-    it "should succeed on trees with no cycles" do
-        add_edges :a => :b, :b => :e, :c => :a, :d => :c
-        proc { @graph.topsort }.should_not raise_error
     end
 end

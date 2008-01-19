@@ -1,5 +1,4 @@
 require 'puppet/indirector'
-require 'puppet/external/gratr/digraph'
 
 # This class models a node catalog.  It is the thing
 # meant to be passed from server to client, and it contains all
@@ -212,9 +211,8 @@ class Puppet::Node::Catalog < Puppet::PGraph
         # Create a proc for examining edges, which we'll use to build our tree
         # of TransBuckets and TransObjects.
         bucket = nil
-        edges = proc do |edge|
+        walk(main, :out) do |source, target|
             # The sources are always non-builtins.
-            source, target = edge.source, edge.target
             unless tmp = buckets[source.to_s]
                 if tmp = buckets[source.to_s] = source.to_trans
                     bucket = tmp
@@ -238,11 +236,6 @@ class Puppet::Node::Catalog < Puppet::PGraph
                     buckets[target.to_s] = child
                 end
             end
-        end
-        dfs(:start => main, :examine_edge => edges)
-
-        unless main
-            raise Puppet::DevError, "Could not find 'main' class; cannot generate catalog"
         end
 
         # Retrieve the bucket for the top-level scope and set the appropriate metadata.

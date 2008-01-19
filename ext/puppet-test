@@ -53,6 +53,9 @@
 # list::
 #   List all available tests.
 #
+# pause::
+#  Pause before starting test (useful for testing with dtrace).
+#
 # repeat::
 #  How many times to perform the test.
 #
@@ -88,7 +91,7 @@
 # Do an initial trap, so that cancels don't get a stack trace.
 trap(:INT) do
     $stderr.puts "Cancelling startup"
-    exit(0)
+    exit(1)
 end
 
 require 'puppet'
@@ -165,6 +168,12 @@ class Suite
         puts "Running %s %s test" % [@name, test]
         prepare()
 
+        if $options[:pause]
+            puts "Hit any key to continue"
+            $stdin.readline
+            puts "Continuing with test"
+        end
+
         if $options[:fork] > 0
             @forking = true
             $options[:fork].times {
@@ -197,6 +206,17 @@ class Suite
     # What tests are available on this suite?
     def tests
         @tests.keys
+    end
+end
+
+Suite.new :parser, "Manifest parsing" do
+    def prepare
+        @parser = Puppet::Parser::Parser.new(:environment => Puppet[:environment])
+        @parser.file = Puppet[:manifest]
+    end
+
+    newtest :parse, "Parsed files" do
+        @parser.parse
     end
 end
 
@@ -325,12 +345,13 @@ end
 
 $cmdargs = [
 	[ "--compile",    "-c",			GetoptLong::NO_ARGUMENT ],
-	[ "--describe",  "-D",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--describe",     			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--retrieve",  "-R",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--fork",          			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--fqdn",      "-F",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--suite",     "-s",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--test",      "-t",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--pause",	 "-p",			GetoptLong::NO_ARGUMENT ],
 	[ "--repeat",    "-r",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--debug",	 "-d",			GetoptLong::NO_ARGUMENT ],
 	[ "--help",		 "-h",			GetoptLong::NO_ARGUMENT ],
@@ -340,14 +361,14 @@ $cmdargs = [
 ]
 
 # Add all of the config parameters as valid $options.
-Puppet.config.addargs($cmdargs)
+Puppet.settings.addargs($cmdargs)
 Puppet::Util::Log.newdestination(:console)
 
 result = GetoptLong.new(*$cmdargs)
 
 $args = {}
 
-$options = {:repeat => 1, :fork => 0}
+$options = {:repeat => 1, :fork => 0, :pause => false}
 
 begin
     explicit_waitforcert = false
@@ -399,6 +420,8 @@ begin
                 $options[:test] = arg.intern
             when "--file"
                 $options[:file] = arg
+            when "--pause"
+                $options[:pause] = true
             when "--list"
                 Suite.suites.sort { |a,b| a.to_s <=> b.to_s }.each do |suite_name|
                     suite = Suite[suite_name]
@@ -407,7 +430,7 @@ begin
                 end
                 exit(0)
             else
-                Puppet.config.handlearg(opt, arg)
+                Puppet.settings.handlearg(opt, arg)
         end
     }
 rescue GetoptLong::InvalidOption => detail

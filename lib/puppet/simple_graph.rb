@@ -1,14 +1,11 @@
 #  Created by Luke A. Kanies on 2007-11-07.
 #  Copyright (c) 2007. All rights reserved.
 
-require 'puppet/external/gratr/dot'
+require 'puppet/external/dot'
 require 'puppet/relationship'
-require 'puppet/external/gratr/search'
 
 # A hopefully-faster graph class to replace the use of GRATR.
 class Puppet::SimpleGraph
-    include GRATR::Graph::Search
-
     # An internal class for handling a vertex's edges.
     class VertexWrapper
         attr_accessor :in, :out, :vertex
@@ -52,6 +49,17 @@ class Puppet::SimpleGraph
             return false
         end
 
+        # Create methods for returning the degree and edges.
+        [:in, :out].each do |direction|
+            define_method("%s_degree" % direction) do
+                @adjacencies[direction].length
+            end
+
+            define_method("%s_edges" % direction) do
+                @adjacencies[direction].values.flatten
+            end
+        end
+
         # The other vertex in the edge.
         def other_vertex(direction, edge)
             case direction
@@ -65,6 +73,10 @@ class Puppet::SimpleGraph
         # that the edge is valid.
         def remove_edge(direction, edge)
             @adjacencies[direction][other_vertex(direction, edge)].delete(edge)
+        end
+
+        def to_s
+            vertex.to_s
         end
     end
 
@@ -80,7 +92,7 @@ class Puppet::SimpleGraph
         @edges.clear
     end
 
-    # Whether our graph is directed.  Always true.  (Used by the GRATR search lib.)
+    # Whether our graph is directed.  Always true.  Used to produce dot files.
     def directed?
         true
     end
@@ -96,14 +108,45 @@ class Puppet::SimpleGraph
         result
     end
 
-    # Return the size of the graph. Used by GRATR.
+    # Return the size of the graph.
     def size
         @vertices.length
     end
 
-    # Return the graph as an array.  Again, used by GRATR.
+    # Return the graph as an array.
     def to_a
         @vertices.keys
+    end
+
+    # Provide a topological sort.
+    def topsort
+        degree = {}
+        zeros = []
+        result = []
+
+        # Collect each of our vertices, with the number of in-edges each has.
+        @vertices.each do |name, wrapper|
+            zeros << wrapper if wrapper.in_degree == 0
+            degree[wrapper.vertex] = wrapper.in_edges
+        end
+
+        # Iterate over each 0-degree vertex, decrementing the degree of
+        # each of its out-edges.
+        while wrapper = zeros.pop do
+            result << wrapper.vertex
+            wrapper.out_edges.each do |edge|
+                degree[edge.target].delete(edge)
+                zeros << @vertices[edge.target] if degree[edge.target].length == 0
+            end
+        end
+
+        # If we have any vertices left with non-zero in-degrees, then we've found a cycle.
+        if cycles = degree.find_all { |vertex, edges| edges.length > 0 } and cycles.length > 0
+            message = cycles.collect { |vertex, edges| edges.collect { |e| e.to_s }.join(", ") }.join(", ")
+            raise Puppet::Error, "Found dependency cycles in the following relationships: %s" % message
+        end
+
+        return result
     end
 
     # Add a new vertex to the graph.
@@ -195,6 +238,27 @@ class Puppet::SimpleGraph
     end
  
     public
+    
+#    # For some reason, unconnected vertices do not show up in
+#    # this graph.
+#    def to_jpg(path, name)
+#        gv = vertices()
+#        Dir.chdir(path) do
+#            induced_subgraph(gv).write_to_graphic_file('jpg', name)
+#        end
+#    end
+
+    def to_yaml_properties
+        instance_variables
+    end
+
+    # Just walk the tree and pass each edge.
+    def walk(source, direction, &block)
+        adjacent(source, :direction => direction).each do |target|
+            yield source, target
+            walk(target, direction, &block)
+        end
+    end
 
     # LAK:FIXME This is just a paste of the GRATR code with slight modifications.
 

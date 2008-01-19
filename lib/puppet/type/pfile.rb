@@ -460,7 +460,9 @@ module Puppet
             super
 
             # Get rid of any duplicate slashes, and remove any trailing slashes.
-            @title = @title.gsub(/\/+/, "/").sub(/\/$/, "")
+            @title = @title.gsub(/\/+/, "/")
+            
+            @title.sub!(/\/$/, "") unless @title == "/"
 
             # Clean out as many references to any file paths as possible.
             # This was the source of many, many bugs.
