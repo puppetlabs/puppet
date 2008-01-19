@@ -47,6 +47,18 @@ rescue LoadError
     $haverdoc = false
 end
 
+begin
+    if $haverdoc
+       rst2man = %x{which rst2man.py}
+       $haveman = true
+    else 
+       $haveman = false
+    end
+rescue 
+    puts "Missing rst2man; skipping man page creation"
+    $haveman = false
+end
+    
 PREREQS = %w{openssl facter xmlrpc/client xmlrpc/server cgi}
 
 InstallOptions = OpenStruct.new
@@ -114,6 +126,15 @@ def prepare_installation
   end
   InstallOptions.tests = true
 
+  if $haveman
+      InstallOptions.man = true
+      if RUBY_PLATFORM == "i386-mswin32"
+        InstallOptions.man  = false
+      end
+  else
+      InstallOptions.man = false
+  end
+
   ARGV.options do |opts|
     opts.banner = "Usage: #{File.basename($0)} [options]"
     opts.separator ""
@@ -122,6 +143,9 @@ def prepare_installation
     end
     opts.on('--[no-]ri', 'Prevents the creation of RI output.', 'Default off on mswin32.') do |onri|
       InstallOptions.ri = onri
+    end
+    opts.on('--[no-]man', 'Presents the creation of man pages.', 'Default on.') do |onman|
+      InstallOptions.man = onman
     end
     opts.on('--[no-]tests', 'Prevents the execution of unit tests.', 'Default on.') do |ontest|
       InstallOptions.tests = ontest
@@ -133,6 +157,7 @@ def prepare_installation
     end
     opts.on('--full', 'Performs a full installation. All', 'optional installation steps are run.') do |full|
       InstallOptions.rdoc   = true
+      InstallOptions.man    = true
       InstallOptions.ri     = true
       InstallOptions.tests  = true
     end
@@ -209,6 +234,29 @@ def build_ri(files)
     rescue Exception => e
         $stderr.puts "Couldn't build Ri documentation\n#{e.message}"
         $stderr.puts "Continuing with install..."
+    end
+end
+
+def build_man(bins)
+    return unless $haveman
+    begin
+        # Create binary man pages
+        rst2man = %x{which rst2man.py}
+        rst2man.chomp!
+        %x{bin/puppetdoc --reference configuration > ./puppet.conf.rst}
+        %x{#{rst2man} ./puppet.conf.rst ./man/man8/puppet.conf.8}
+
+        bins.each do |bin| 
+          b = bin.gsub( "bin/", "")
+          %x{#{bin} --help > ./#{b}.rst}  
+          %x{#{rst2man} ./#{b}.rst ./man/man8/#{b}.8}
+
+          # Delete temporary files
+          File.unlink("./#{b}.rst","./puppet.conf.rst")
+        end
+    rescue 
+        $stderr.puts "Couldn't build man pages"
+        $stderr.puts "Continuing with install..."    
     end
 end
 
@@ -309,6 +357,7 @@ prepare_installation
 run_tests(tests) if InstallOptions.tests
 #build_rdoc(rdoc) if InstallOptions.rdoc
 #build_ri(ri) if InstallOptions.ri
+build_man(bins) if InstallOptions.man
 do_bins(sbins, InstallOptions.sbin_dir)
 do_bins(bins, InstallOptions.bin_dir)
 do_libs(libs)
