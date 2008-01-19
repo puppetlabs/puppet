@@ -136,6 +136,11 @@ module Puppet
         # We have to treat :present specially, because it works with any
         # type of file.
         def insync?(currentvalue)
+            if property = @resource.property(:source) and ! property.described?
+                warning "No specified sources exist"
+                return true
+            end
+
             if self.should == :present
                 if currentvalue.nil? or currentvalue == :absent
                     return false
