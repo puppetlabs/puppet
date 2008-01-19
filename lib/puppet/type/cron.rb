@@ -8,6 +8,13 @@ Puppet::Type.newtype(:cron) do
         fields would result in the command being executed every
         minute.  While the name of the cron job is not part of the actual
         job, it is used by Puppet to store and retrieve it.
+
+        You may specify periodic fields as integers, using the standard cron
+        range syntax (two numbers separated by a hyphen to indicate a range
+        of values), or using the cron step syntax (for example, '*/2' to
+        indicate command execution every other time unit). This type does
+        not yet support the combiantion of these two syntaxes, or lists of
+        ranges.
         
         If you specify a cron job that matches an existing job in every way
         except name, then the jobs will be considered equivalent and the
