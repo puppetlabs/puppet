@@ -175,6 +175,9 @@ that array, else return nil."
             (forward-line -1)
             (cond
              ((bobp)
+              (if (and (not (puppet-comment-line-p)) (looking-at "^.*{"))
+                  (setq cur-indent 2)
+                (setq cur-indent 0))
               (setq not-indented nil))
              ((puppet-comment-line-p)
               ;; ignore it and continue iterating backwards
