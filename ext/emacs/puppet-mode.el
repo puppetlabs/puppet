@@ -174,20 +174,20 @@ that array, else return nil."
           (while not-indented
             (forward-line -1)
             (cond
-             ((bobp)
-              (if (and (not (puppet-comment-line-p)) (looking-at "^.*{"))
-                  (setq cur-indent 2)
-                (setq cur-indent 0))
-              (setq not-indented nil))
              ((puppet-comment-line-p)
-              ;; ignore it and continue iterating backwards
-              )
+              (if (bobp)
+                  (setq not-indented nil)
+                ;; else ignore the line and continue iterating backwards
+                ))
              ((looking-at "^.*}") ; indent at the level of the END_ token
               (setq cur-indent (current-indentation))
               (setq not-indented nil))
              ((looking-at "^.*{") ; indent an extra level
               (setq cur-indent (+ (current-indentation) 2)) 
-              (setq not-indented nil)))))))
+              (setq not-indented nil))
+             ((bobp)
+              (setq not-indented nil))
+             )))))
       (if cur-indent
           (indent-line-to cur-indent)
         (indent-line-to 0)))))
