@@ -597,6 +597,14 @@ describe Puppet::Util::Settings, " when being used to manage the host machine" d
         file.should be_nil
     end
 
+    it "should not try to manage files in memory" do
+        main = Puppet::Type.type(:file).create(:path => "/maindir")
+
+        trans = @settings.to_transportable
+
+        lambda { trans.to_catalog }.should_not raise_error
+    end
+
     it "should be able to turn the current configuration into a parseable manifest"
 
     it "should convert octal numbers correctly when producing a manifest"
@@ -635,4 +643,6 @@ describe Puppet::Util::Settings, " when being used to manage the host machine" d
 
         proc { @settings.use(:whatever) }.should raise_error(RuntimeError)
     end
+
+    after { Puppet::Type.allclear }
 end
