@@ -58,8 +58,8 @@ module PuppetTest::ParserTesting
         Puppet::Parser::Interpreter.new
     end
 
-    def mkparser
-        Puppet::Parser::Parser.new()
+    def mkparser(args = {})
+        Puppet::Parser::Parser.new(args)
     end
 
     def mkscope(hash = {})

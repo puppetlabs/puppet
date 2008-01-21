@@ -1188,5 +1188,17 @@ file { "/tmp/yayness":
         assert_equal(result, parser.finddefine("", "fUntEst"),
             "%s was not matched" % "fUntEst")
     end
+
+    def test_manifests_with_multiple_environments
+        parser = mkparser :environment => "something"
+
+        # We use an exception to cut short the processing to simplify our stubbing
+        #Puppet::Module.expects(:find_manifests).with("test", {:cwd => ".", :environment => "something"}).raises(Puppet::ParseError)
+        Puppet::Module.expects(:find_manifests).with("test", {:cwd => ".", :environment => "something"}).returns([])
+
+        assert_raise(Puppet::ImportError) do
+            parser.import("test") 
+        end
+    end
 end
 
