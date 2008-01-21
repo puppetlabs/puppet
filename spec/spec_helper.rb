@@ -6,7 +6,12 @@ $LOAD_PATH.unshift("#{dir}/../test/lib")  # Add the old test dir, so that we can
 
 # include any gems in vendor/gems
 Dir["#{dir}/../vendor/gems/**"].map do |path| 
-  $LOAD_PATH.unshift(File.directory?(lib = "#{dir}/lib") ? lib : path)
+    libpath = File.join(path, "lib")
+    if File.directory?(libpath)
+        $LOAD_PATH.unshift(libpath)
+    else
+        $LOAD_PATH.unshift(path)
+    end
 end
 
 require 'puppettest'

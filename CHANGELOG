@@ -1,3 +1,5 @@
+    The environment is now available as a variable in the manifests.
+
     Fixed #1017 -- environment-specific modulepath is no longer ignored.
 
     Fixed #971 -- classes can once again be included multiple

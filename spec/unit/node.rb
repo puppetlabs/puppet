@@ -113,6 +113,22 @@ describe Puppet::Node, " when merging facts" do
         @node.merge "two" => "three"
         @node.parameters["two"].should == "three"
     end
+
+    it "should add the environment to the list of parameters" do
+        Puppet.settings.stubs(:value).with(:environments).returns("one,two")
+        Puppet.settings.stubs(:value).with(:environment).returns("one")
+        @node = Puppet::Node.new("testnode", :environment => "one")
+        @node.merge "two" => "three"
+        @node.parameters["environment"].should == "one"
+    end
+
+    it "should not set the environment if it is already set in the parameters" do
+        Puppet.settings.stubs(:value).with(:environments).returns("one,two")
+        Puppet.settings.stubs(:value).with(:environment).returns("one")
+        @node = Puppet::Node.new("testnode", :environment => "one")
+        @node.merge "environment" => "two"
+        @node.parameters["environment"].should == "two"
+    end
 end
 
 describe Puppet::Node, " when indirecting" do
