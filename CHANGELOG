@@ -1,3 +1,5 @@
+    Fixed #1017 -- environment-specific modulepath is no longer ignored.
+
     Fixing #794 -- consolidating the gentoo configuration files.
 
     Fixing #976 -- both the full name of qualified classes and

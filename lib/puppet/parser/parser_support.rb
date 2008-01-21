@@ -177,7 +177,7 @@ class Puppet::Parser::Parser
                "in file #{@lexer.file} at line #{@lexer.line}"
             )
         end
-        files = Puppet::Module::find_manifests(pat, :cwd => dir)
+        files = Puppet::Module::find_manifests(pat, :cwd => dir, :environment => @environment)
         if files.size == 0
             raise Puppet::ImportError.new("No file(s) found for import " +
                                           "of '#{pat}'")
