@@ -510,18 +510,19 @@ class Puppet::Util::Settings
             end
 
             # Only files are convertable to transportable resources.
-            if obj.respond_to? :to_transportable
-                next if value(obj.name) =~ /^\/dev/
-                transobjects = obj.to_transportable
-                transobjects = [transobjects] unless transobjects.is_a? Array
-                transobjects.each do |trans|
-                    # transportable could return nil
-                    next unless trans
-                    unless done[:file].include? trans.name
-                        @created << trans.name
-                        objects << trans
-                        done[:file][trans.name] = trans
-                    end
+            next unless obj.respond_to? :to_transportable
+            next if value(obj.name) =~ /^\/dev/
+            next if Puppet::Type::File[obj.value] # skip files that are in our global resource list.
+
+            transobjects = obj.to_transportable
+            transobjects = [transobjects] unless transobjects.is_a? Array
+            transobjects.each do |trans|
+                # transportable could return nil
+                next unless trans
+                unless done[:file].include? trans.name
+                    @created << trans.name
+                    objects << trans
+                    done[:file][trans.name] = trans
                 end
             end
         end

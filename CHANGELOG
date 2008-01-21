@@ -1,3 +1,5 @@
+    Fixing #794 -- consolidating the gentoo configuration files.
+
     Fixing #976 -- both the full name of qualified classes and
     the class parts are now added as tags.  I've also
     created a Tagging module that we should push throughout
