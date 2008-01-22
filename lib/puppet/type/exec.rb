@@ -228,7 +228,7 @@ module Puppet
             end
         end
 
-        newparam(:env) do
+        newparam(:environment) do
             desc "Any additional environment variables you want to set for a
                 command.  Note that if you use this to set PATH, it will override
                 the ``path`` attribute.  Multiple environment variables should be
@@ -554,32 +554,32 @@ module Puppet
             begin
                 # Do our chdir
                 Dir.chdir(dir) do
-                    env = {}
+                    environment = {}
 
                     if self[:path]
-                        env[:PATH] = self[:path].join(":")
+                        environment[:PATH] = self[:path].join(":")
                     end
 
-                    if envlist = self[:env]
+                    if envlist = self[:environment]
                         envlist = [envlist] unless envlist.is_a? Array
                         envlist.each do |setting|
                             if setting =~ /^(\w+)=((.|\n)+)$/
                                 name = $1
                                 value = $2
-                                if env.include? name
+                                if environment.include? name
                                     warning(
                                     "Overriding environment setting '%s' with '%s'" %
                                         [name, value]
                                     )
                                 end
-                                env[name] = value
+                                environment[name] = value
                             else
-                                warning "Cannot understand env setting %s" % setting.inspect
+                                warning "Cannot understand environment setting %s" % setting.inspect
                             end
                         end
                     end
 
-                    withenv env do
+                    withenv environment do
                         Timeout::timeout(self[:timeout]) do
                             output, status = Puppet::Util::SUIDManager.run_and_capture(
                                 [command], self[:user], self[:group]
