@@ -285,11 +285,15 @@ class Puppet::Parser::Compile
     def evaluate_definitions
         exceptwrap do
             if ary = unevaluated_resources
+                evaluated = false
                 ary.each do |resource|
-                    resource.evaluate
+                    if not resource.virtual?
+                        resource.evaluate
+                        evaluated = true
+                    end
                 end
                 # If we evaluated, let the loop know.
-                return true
+                return evaluated
             else
                 return false
             end
