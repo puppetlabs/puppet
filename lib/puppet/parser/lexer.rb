@@ -62,8 +62,6 @@ module Puppet
                 "<<|" => "|>>"
             }
 
-            @@reverse_pairs = @@pairs.inject({}) { |hash, pair| hash[pair[1]] = pair[0]; hash }
-
             @@keywords = {
                 "case" => :CASE,
                 "class" => :CLASS,
@@ -105,15 +103,10 @@ module Puppet
             def fullscan
                 array = []
 
-                self.scan { |token,str|
+                self.scan { |token, str|
                     # Ignore any definition nesting problems
                     @indefine = false
-                    #Puppet.debug("got token '%s' => '%s'" % [token,str])
-                    if token.nil?
-                        return array
-                    else
-                        array.push([token,str])
-                    end
+                    array.push([token,str])
                 }
                 return array
             end
@@ -182,9 +175,7 @@ module Puppet
             # this is the heart of the lexer
             def scan
                 #Puppet.debug("entering scan")
-                if @scanner.nil?
-                    raise TypeError.new("Invalid or empty string")
-                end
+                raise TypeError.new("Invalid or empty string") unless @scanner
 
                 @scanner.skip(@skip)
                 until @scanner.eos? do
@@ -195,15 +186,10 @@ module Puppet
                     value = ""
 
                     # first find out which type of token we've got
-                    @@tokens.each { |regex,token|
+                    @@tokens.each { |regex, token|
                         # we're just checking, which doesn't advance the scan
                         # pointer
-                        tmp = @scanner.check(regex)
-                        if tmp.nil?
-                            #puppet.debug("did not match %s to '%s'" %
-                            #    [regex,@scanner.rest])
-                            next
-                        end
+                        next unless tmp = @scanner.check(regex)
 
                         # find the longest match
                         if tmp.length > value.length
@@ -231,9 +217,7 @@ module Puppet
 
                     value = @scanner.scan(sregex)
 
-                    if value == ""
-                        raise "Didn't match regex on token %s" % stoken
-                    end
+                    raise "Didn't match regex on token %s" % stoken if value == ""
 
                     # token-specific operations
                     # if this gets much more complicated, it should
