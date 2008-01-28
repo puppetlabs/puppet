@@ -464,8 +464,8 @@ class TestResource < PuppetTest::TestCase
         scope = stub 'scope', :resource => scope_resource
         resource = Puppet::Parser::Resource.new(:type => "file", :title => "yay", :scope => scope, :source => mock('source'))
 
-        # Make sure we get the scope resource's tags, plus the type and title
-        %w{srone srtwo yay file}.each do |tag|
+        # Make sure we get the type and title
+        %w{yay file}.each do |tag|
             assert(resource.tags.include?(tag), "Did not tag resource with %s" % tag)
         end
 
