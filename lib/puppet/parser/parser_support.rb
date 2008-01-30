@@ -47,11 +47,8 @@ class Puppet::Parser::Parser
 
     # Create an AST object, and automatically add the file and line information if
     # available.
-    def ast(klass, hash = nil)
-        hash ||= {}
-        unless hash.include?(:line)
-            hash[:line] = @lexer.line
-        end
+    def ast(klass, hash = {})
+        hash[:line] = @lexer.line unless hash.include?(:line)
 
         unless hash.include?(:file)
             if file = @lexer.file
