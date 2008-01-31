@@ -176,7 +176,7 @@ module Puppet
             a common name to packages::
 
                 # In the 'openssl' class
-                $ssl = $operationgsystem ? {
+                $ssl = $operatingsystem ? {
                     solaris => SMCossl,
                     default => openssl
                 }
@@ -190,7 +190,7 @@ module Puppet
 
                 . etc. .
 
-                $ssh = $operationgsystem ? {
+                $ssh = $operatingsystem ? {
                     solaris => SMCossh,
                     default => openssh
                 }
