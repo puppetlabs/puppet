@@ -37,7 +37,7 @@ class Puppet::ResourceReference
     # set things appropriately; else, just set it.
     def title=(value)
         if value =~ /^(.+)\[(.+)\]$/
-            self.type = $1
+            @type = $1
             @title = $2
         else
             @title = value
