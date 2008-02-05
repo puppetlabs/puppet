@@ -281,7 +281,7 @@ if File.exists? config
     Puppet.settings.parse(config)
 end
 
-if Puppet[:ldapnodes]
+if Puppet[:node_terminus] = "ldap"
     if options[:all]
         hosts = ldapnodes(:all, options[:fqdn])
         puts "all: %s" % hosts.join(", ")
