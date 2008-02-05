@@ -228,6 +228,15 @@ module Puppet
             end
         end
 
+        newparam(:env) do
+            desc "This parameter is deprecated. Use 'environment' instead."
+
+            munge do |value|
+                warning "'env' is deprecated on exec; use 'environment' instead."
+                resource[:environment] = value
+            end
+        end
+
         newparam(:environment) do
             desc "Any additional environment variables you want to set for a
                 command.  Note that if you use this to set PATH, it will override

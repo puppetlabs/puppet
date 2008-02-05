@@ -587,6 +587,46 @@ and stuff"
         assert_equal("A B\n", output)
     end
     
+    def test_environmentparam
+        exec = Puppet::Type.newexec(
+            :command => "echo $environmenttest",
+            :path => ENV["PATH"],
+            :environment => "environmenttest=yayness"
+        )
+
+        assert(exec, "Could not make exec")
+
+        output = status = nil
+        assert_nothing_raised {
+            output, status = exec.run("echo $environmenttest")
+        }
+
+        assert_equal("yayness\n", output)
+
+        # Now check whether we can do multiline settings
+        assert_nothing_raised do
+            exec[:environment] = "environmenttest=a list of things
+and stuff"
+        end
+
+        output = status = nil
+        assert_nothing_raised {
+            output, status = exec.run('echo "$environmenttest"')
+        }
+        assert_equal("a list of things\nand stuff\n", output)
+
+        # Now test arrays
+        assert_nothing_raised do
+            exec[:environment] = ["funtest=A", "yaytest=B"]
+        end
+
+        output = status = nil
+        assert_nothing_raised {
+            output, status = exec.run('echo "$funtest" "$yaytest"')
+        }
+        assert_equal("A B\n", output)
+    end
+
     def test_timeout
         exec = Puppet::Type.type(:exec).create(:command => "sleep 1", :path => ENV["PATH"], :timeout => "0.2")
         time = Time.now
