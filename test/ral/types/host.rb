@@ -147,8 +147,15 @@ class TestHost < Test::Unit::TestCase
         }
     end
 
+    def test_invalid_hostname
+        host = mkhost()
+
+        assert_raise(Puppet::Error) {
+            host[:name] = "!invalid.hostname.$$$"
+        }
     end
- 
+
+    end  
     def test_aliasisproperty
         assert_equal(:property, @hosttype.attrtype(:alias))
     end
