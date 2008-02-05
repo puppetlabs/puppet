@@ -138,8 +138,17 @@ class TestHost < Test::Unit::TestCase
         host[:ensure] = :absent
         assert_events([:host_removed], host)
     end
+ 
+    def test_invalid_ipaddress
+        host = mkhost()
+
+        assert_raise(Puppet::Error) {
+            host[:ip] = "abc.def.ghi.jkl"
+        }
     end
 
+    end
+ 
     def test_aliasisproperty
         assert_equal(:property, @hosttype.attrtype(:alias))
     end
