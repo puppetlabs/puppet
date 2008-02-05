@@ -36,8 +36,8 @@ class Puppet::ResourceReference
     # If the title has square brackets, treat it like a reference and
     # set things appropriately; else, just set it.
     def title=(value)
-        if value =~ /^(.+)\[(.+)\]$/
-            @type = $1
+        if value =~ /^([^\[\]]+)\[(.+)\]$/
+            self.type = $1
             @title = $2
         else
             @title = value
