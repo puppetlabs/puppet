@@ -239,6 +239,8 @@ class Puppet::Parser::Resource
         # Handle file specially
         db_resource.file = self.file
 
+        db_resource.save
+
         @params.each { |name, param|
             param.to_rails(db_resource)
         }
