@@ -509,12 +509,11 @@ class Puppet::Util::Settings
                 objects += add_user_resources(section, obj, done)
             end
 
-            # Only files are convertable to transportable resources.
-            next unless obj.respond_to? :to_transportable
-            next if value(obj.name) =~ /^\/dev/
-            next if Puppet::Type::File[obj.value] # skip files that are in our global resource list.
+            value = obj.value
 
-            transobjects = obj.to_transportable
+            # Only files are convertable to transportable resources.
+            next unless obj.respond_to? :to_transportable and transobjects = obj.to_transportable
+
             transobjects = [transobjects] unless transobjects.is_a? Array
             transobjects.each do |trans|
                 # transportable could return nil
@@ -1154,11 +1153,14 @@ Generated on #{Time.now}.
         def to_transportable
             type = self.type
             return nil unless type
-            path = @parent.value(self.name).split(File::SEPARATOR)
-            path.shift # remove the leading nil
+
+            path = self.value
+
+            return nil unless path.is_a?(String)
+            return nil if path =~ /^\/dev/
+            return nil if Puppet::Type::File[path] # skip files that are in our global resource list.
 
             objects = []
-            path = self.value
 
             # Skip plain files that don't exist, since we won't be managing them anyway.
             return nil unless self.name.to_s =~ /dir$/ or File.exist?(path) or self.create
