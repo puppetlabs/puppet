@@ -258,7 +258,7 @@ class Puppet::Type
             @value.each do |value|
                 unless @resource.catalog.resource(*value)
                     description = self.class.direction == :in ? "dependency" : "dependent"
-                    raise Puppet::Error, "Could not find #{description} %s[%s]" % [value[0].to_s.capitalize, value[1]]
+                    fail Puppet::Error, "Could not find #{description} %s[%s] for %s" % [value[0].to_s.capitalize, value[1], resource.ref]
                 end
             end
         end
