@@ -8,6 +8,10 @@ Puppet::Type.type(:service).provide :gentoo, :parent => :init do
 
     defaultfor :operatingsystem => :gentoo
 
+    def self.defpath
+        superclass.defpath
+    end
+
     def disable
         begin
             output = update :del, @resource[:name], :default
