@@ -1,3 +1,7 @@
+    Fixed #989 -- missing CRL files are correctly ignored, and the
+    value should be set to 'false' to explicitly not look for these
+    files.
+
     Fixed #1017 -- environment-specific modulepath is no longer ignored.
 
     Fixing #794 -- consolidating the gentoo configuration files.

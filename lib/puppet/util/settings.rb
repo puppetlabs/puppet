@@ -1124,7 +1124,7 @@ Generated on #{Time.now}.
         # the variable 'dir', or adding a slash at the end.
         def munge(value)
             # If it's not a fully qualified path...
-            if value.is_a?(String) and value !~ /^\$/ and value !~ /^\//
+            if value.is_a?(String) and value !~ /^\$/ and value !~ /^\// and value != 'false'
                 # Make it one
                 value = File.join(Dir.getwd, value)
             end
