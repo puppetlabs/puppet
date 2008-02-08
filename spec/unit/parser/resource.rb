@@ -21,20 +21,20 @@ describe Puppet::Parser::Resource, " when evaluating" do
 
     it "should evaluate the associated AST definition" do
         res = @type.new(:type => "mydefine", :title => "whatever", :scope => @scope, :source => @source)
-        @definition.expects(:evaluate).with(@scope, res)
+        @definition.expects(:evaluate_code).with(res)
 
         res.evaluate
     end
 
     it "should evaluate the associated AST class" do
         res = @type.new(:type => "class", :title => "myclass", :scope => @scope, :source => @source)
-        @class.expects(:evaluate).with(@scope, res)
+        @class.expects(:evaluate_code).with(res)
         res.evaluate
     end
 
     it "should evaluate the associated AST node" do
         res = @type.new(:type => "node", :title => "mynode", :scope => @scope, :source => @source)
-        @nodedef.expects(:evaluate).with(@scope, res)
+        @nodedef.expects(:evaluate_code).with(res)
         res.evaluate
     end
 end

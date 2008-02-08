@@ -26,7 +26,7 @@ describe Puppet::Parser::AST::Definition, "when evaluating" do
             true
         end
         @definition.stubs(:code).returns(code)
-        @definition.evaluate(@scope, @resource)
+        @definition.evaluate_code(@resource)
     end
 
 #    it "should copy its namespace to the scope"

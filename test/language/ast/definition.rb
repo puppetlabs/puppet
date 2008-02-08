@@ -63,7 +63,7 @@ class TestASTDefinition < Test::Unit::TestCase
 
         resource.stubs(:title)
         assert_nothing_raised do
-            klass.evaluate(scope, resource)
+            klass.evaluate_code(resource)
         end
 
         firstobj = config.findresource("File[/tmp/first]")
@@ -76,7 +76,7 @@ class TestASTDefinition < Test::Unit::TestCase
 
         # Make sure we can't evaluate it with the same args
         assert_raise(Puppet::ParseError) do
-            klass.evaluate(scope, resource)
+            klass.evaluate_code(resource)
         end
 
         # Now create another with different args
@@ -93,7 +93,7 @@ class TestASTDefinition < Test::Unit::TestCase
         resource2.send(:set_parameter, "owner", "daemon")
 
         assert_nothing_raised do
-            klass.evaluate(scope, resource2)
+            klass.evaluate_code(resource2)
         end
 
         secondobj = config.findresource("File[/tmp/second]")
@@ -136,7 +136,7 @@ class TestASTDefinition < Test::Unit::TestCase
             end
 
             assert_nothing_raised("Could not evaluate definition with %s" % hash.inspect) do
-                klass.evaluate(scope, resource)
+                klass.evaluate_code(resource)
             end
 
             name = hash[:name] || hash[:title]

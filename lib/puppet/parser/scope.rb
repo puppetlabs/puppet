@@ -19,6 +19,11 @@ class Puppet::Parser::Scope
     attr_accessor :base, :keyword, :nodescope
     attr_accessor :top, :translated, :compile
 
+    # A demeterific shortcut to the catalog.
+    def catalog
+        compile.catalog
+    end
+
     # Proxy accessors
     def host
         @compile.node.name
