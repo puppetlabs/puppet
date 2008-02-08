@@ -14,30 +14,6 @@ class Puppet::Parser::AST
     include Puppet::Util::MethodHelper
     attr_accessor :line, :file, :parent, :scope
 
-    # Just used for 'tree', which is only used in debugging.
-    @@pink = "[0;31m"
-    @@green = "[0;32m"
-    @@yellow = "[0;33m"
-    @@slate = "[0;34m"
-    @@reset = "[0m"
-
-    # Just used for 'tree', which is only used in debugging.
-    @@indent = " " * 4
-    @@indline = @@pink + ("-" * 4) + @@reset
-    @@midline = @@slate + ("-" * 4) + @@reset
-
-    @@settypes = {}
-
-    # Just used for 'tree', which is only used in debugging.
-    def AST.indention
-        return @@indent * @@indention
-    end
-
-    # Just used for 'tree', which is only used in debugging.
-    def AST.midline
-        return @@midline
-    end
-
     # Does this ast object set something?  If so, it gets evaluated first.
     def self.settor?
         if defined? @settor
@@ -47,16 +23,12 @@ class Puppet::Parser::AST
         end
     end
 
-    # Evaluate the current object.  Basically just iterates across all
+    # Evaluate the current object.  Just a stub method, since the subclass
+    # should override this method.
     # of the contained children and evaluates them in turn, returning a
     # list of all of the collected values, rejecting nil values
     def evaluate(args)
-        #Puppet.debug("Evaluating ast %s" % @name)
-        value = self.collect { |obj|
-            obj.safeevaluate(args)
-        }.reject { |obj|
-            obj.nil?
-        }
+        raise Puppet::DevError, "Did not override #evaluate in %s" % self.class
     end
 
     # Throw a parse error.
@@ -88,14 +60,6 @@ class Puppet::Parser::AST
             # not exceptions.
             raise adderrorcontext(error, detail)
         end
-    end
-
-    # Again, just used for printing out the parse tree.
-    def typewrap(string)
-        #return self.class.to_s.sub(/.+::/,'') +
-            #"(" + @@green + string.to_s + @@reset + ")"
-        return @@green + string.to_s + @@reset +
-            "(" + self.class.to_s.sub(/.+::/,'') + ")"
     end
 
     # Initialize the object.  Requires a hash as the argument, and
