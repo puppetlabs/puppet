@@ -27,7 +27,7 @@ class Puppet::Parser::AST
     # should override this method.
     # of the contained children and evaluates them in turn, returning a
     # list of all of the collected values, rejecting nil values
-    def evaluate(args)
+    def evaluate(*options)
         raise Puppet::DevError, "Did not override #evaluate in %s" % self.class
     end
 
@@ -47,11 +47,11 @@ class Puppet::Parser::AST
     # correctly handles errors.  It is critical to use this method because
     # it can enable you to catch the error where it happens, rather than
     # much higher up the stack.
-    def safeevaluate(options)
+    def safeevaluate(*options)
         # We duplicate code here, rather than using exceptwrap, because this
         # is called so many times during parsing.
         begin
-            return self.evaluate(options)
+            return self.evaluate(*options)
         rescue Puppet::Error => detail
             raise adderrorcontext(detail)
         rescue => detail

@@ -35,14 +35,14 @@ class TestAST < Test::Unit::TestCase
         # We initialized it to true, so we should get that first
         ret = nil
         assert_nothing_raised {
-            ret = astif.evaluate(:scope => "yay")
+            ret = astif.evaluate("yay")
         }
         assert_equal(:if, ret)
 
         # Now set it to false and check that
         faketest.evaluate = false
         assert_nothing_raised {
-            ret = astif.evaluate(:scope => "yay")
+            ret = astif.evaluate("yay")
         }
         assert_equal(:else, ret)
     end
@@ -60,7 +60,7 @@ class TestAST < Test::Unit::TestCase
         scope.compile.expects(:store_override).with(:override)
         ret = nil
         assert_nothing_raised do
-            ret = ref.evaluate :scope => scope
+            ret = ref.evaluate scope
         end
 
         assert_equal(:override, ret, "Did not return override")
@@ -74,7 +74,7 @@ class TestAST < Test::Unit::TestCase
         args = {:source => "/yay/ness", :group => "yayness"}
         assert_nothing_raised do
             obj = defaultobj "file", args
-            obj.evaluate :scope => scope
+            obj.evaluate scope
         end
 
         hash = nil
@@ -119,7 +119,7 @@ class TestAST < Test::Unit::TestCase
 
         # Now try evaluating the node
         assert_nothing_raised do
-            mynode.evaluate :scope => scope, :resource => scope.resource
+            mynode.evaluate scope, scope.resource
         end
 
         # Make sure that we can find each of the files
@@ -136,7 +136,7 @@ class TestAST < Test::Unit::TestCase
 
         newscope = mkscope :parser => parser
         assert_nothing_raised do
-            child.evaluate :scope => newscope, :resource => scope.resource
+            child.evaluate newscope, scope.resource
         end
 
         assert(newscope.findresource("File[/tmp/base]"),
@@ -155,7 +155,7 @@ class TestAST < Test::Unit::TestCase
 
         ret = nil
         assert_nothing_raised do
-            ret = coll.evaluate :scope => scope
+            ret = coll.evaluate scope
         end
 
         assert_instance_of(Puppet::Parser::Collector, ret)
@@ -175,7 +175,7 @@ class TestAST < Test::Unit::TestCase
         run_collection_queries(:virtual) do |string, result, query|
             code = nil
             assert_nothing_raised do
-                str, code = query.evaluate :scope => scope
+                str, code = query.evaluate scope
             end
 
             assert_instance_of(Proc, code)

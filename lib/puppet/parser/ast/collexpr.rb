@@ -9,9 +9,7 @@ class CollExpr < AST::Branch
     attr_accessor :test1, :test2, :oper, :form, :type, :parens
 
     # We return an object that does a late-binding evaluation.
-    def evaluate(hash)
-        scope = hash[:scope]
-
+    def evaluate(scope)
         # Make sure our contained expressions have all the info they need.
         [@test1, @test2].each do |t|
             if t.is_a?(self.class)
@@ -21,8 +19,8 @@ class CollExpr < AST::Branch
         end
 
         # The code is only used for virtual lookups
-        str1, code1 = @test1.safeevaluate :scope => scope
-        str2, code2 = @test2.safeevaluate :scope => scope
+        str1, code1 = @test1.safeevaluate scope
+        str2, code2 = @test2.safeevaluate scope
 
         # First build up the virtual code.
         # If we're a conjunction operator, then we're calling code.  I did

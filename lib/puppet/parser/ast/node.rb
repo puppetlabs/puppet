@@ -7,23 +7,15 @@ class Puppet::Parser::AST
         @name = :node
         attr_accessor :name
 
-        def evaluate(options)
-            scope = options[:scope]
-
-            #pscope = if ! Puppet[:lexical] or options[:asparent]
-            #    @scope
-            #else
-            #    origscope
-            #end
-
+        def evaluate(scope, resource)
             # We don't have to worry about the declarativeness of node parentage,
             # because the entry point is always a single node definition.
             if parent = self.parentobj
-                scope = parent.safeevaluate :scope => scope, :resource => options[:resource]
+                scope = parent.safeevaluate scope, resource
             end
 
             scope = scope.newscope(
-                :resource => options[:resource],
+                :resource => resource,
                 :keyword => @keyword,
                 :source => self,
                 :namespace => "" # nodes are always in ""
@@ -36,7 +28,7 @@ class Puppet::Parser::AST
 
             # And then evaluate our code if we have any
             if self.code
-                @code.safeevaluate(:scope => scope)
+                @code.safeevaluate(scope)
             end
 
             return scope

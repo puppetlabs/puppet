@@ -21,12 +21,12 @@ describe Puppet::Parser::AST::Definition, "when evaluating" do
     it "should create a new scope" do
         scope = nil
         code = mock 'code'
-        code.expects(:safeevaluate).with do |options|
-            options[:scope].object_id.should_not == @scope.object_id
+        code.expects(:safeevaluate).with do |scope|
+            scope.object_id.should_not == @scope.object_id
             true
         end
         @definition.stubs(:code).returns(code)
-        @definition.evaluate(:scope => @scope, :resource => @resource)
+        @definition.evaluate(@scope, @resource)
     end
 
 #    it "should copy its namespace to the scope"

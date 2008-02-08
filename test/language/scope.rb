@@ -284,7 +284,7 @@ class TestScope < Test::Unit::TestCase
         )
 
         assert_nothing_raised do
-            function.evaluate :scope => scope
+            function.evaluate scope
         end
 
         scope.compile.send(:evaluate_generators)
@@ -379,7 +379,7 @@ class TestScope < Test::Unit::TestCase
         obj.exported = true
 
         # And then evaluate it
-        obj.evaluate :scope => config.topscope
+        obj.evaluate config.topscope
 
         # And run the loop.
         config.send(:evaluate_generators)

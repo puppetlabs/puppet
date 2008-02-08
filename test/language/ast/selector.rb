@@ -37,7 +37,7 @@ class TestSelector < Test::Unit::TestCase
             params = maker.call()
             sel = AST::Selector.new(:param => param, :values => params.values)
             result = nil
-            assert_nothing_raised { result = sel.evaluate(:scope => scope) }
+            assert_nothing_raised { result = sel.evaluate(scope) }
             assert_equal(should[str], result, "did not case-sensitively match %s" % str)
         end
         
@@ -53,7 +53,7 @@ class TestSelector < Test::Unit::TestCase
             params.delete(:upper)
             sel = AST::Selector.new(:param => param, :values => params.values)
             result = nil
-            assert_nothing_raised { result = sel.evaluate(:scope => scope) }
+            assert_nothing_raised { result = sel.evaluate(scope) }
             assert_equal("lower", result, "did not case-insensitively match %s" % str)
         end
     end

@@ -59,7 +59,7 @@ class Puppet::Parser::Resource
         if klass = @ref.definedtype
             finish()
             scope.compile.delete_resource(self)
-            return klass.evaluate(:scope => scope, :resource => self)
+            return klass.evaluate(scope, self)
         elsif builtin?
             devfail "Cannot evaluate a builtin type"
         else

@@ -270,8 +270,7 @@ class TestResource < PuppetTest::TestCase
         res.scope.expects(:compile).returns(config)
         config.expects(:delete_resource).with(res)
 
-        args = {:scope => res.scope, :resource => res}
-        type.expects(:evaluate).with(args)
+        type.expects(:evaluate).with(res.scope, res)
 
         res.evaluate
     end

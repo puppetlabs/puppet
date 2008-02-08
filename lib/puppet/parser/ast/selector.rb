@@ -11,13 +11,12 @@ class Puppet::Parser::AST
         end
 
         # Find the value that corresponds with the test.
-        def evaluate(hash)
-            scope = hash[:scope]
+        def evaluate(scope)
             retvalue = nil
             found = nil
 
             # Get our parameter.
-            paramvalue = @param.safeevaluate(:scope => scope)
+            paramvalue = @param.safeevaluate(scope)
             
             sensitive = Puppet[:casesensitive]
             
@@ -33,13 +32,13 @@ class Puppet::Parser::AST
 
             # Then look for a match in the options.
             @values.each { |obj|
-                param = obj.param.safeevaluate(:scope => scope)
+                param = obj.param.safeevaluate(scope)
                 if ! sensitive && param.respond_to?(:downcase)
                     param = param.downcase
                 end
                 if param == paramvalue
                     # we found a matching option
-                    retvalue = obj.value.safeevaluate(:scope => scope)
+                    retvalue = obj.value.safeevaluate(scope)
                     found = true
                     break
                 elsif obj.param.is_a?(Default)
@@ -51,7 +50,7 @@ class Puppet::Parser::AST
             # Unless we found something, look for the default.
             unless found
                 if default
-                    retvalue = default.value.safeevaluate(:scope => scope)
+                    retvalue = default.value.safeevaluate(scope)
                 else
                     self.fail Puppet::ParseError,
                         "No matching value for selector param '%s'" % paramvalue

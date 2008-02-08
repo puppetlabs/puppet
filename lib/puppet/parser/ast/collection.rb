@@ -9,11 +9,9 @@ class Collection < AST::Branch
     attr_accessor :type, :query, :form
 
     # We return an object that does a late-binding evaluation.
-    def evaluate(hash)
-        scope = hash[:scope]
-
+    def evaluate(scope)
         if self.query
-            str, code = self.query.safeevaluate :scope => scope
+            str, code = self.query.safeevaluate scope
         else
             str = code = nil
         end

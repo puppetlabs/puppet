@@ -27,10 +27,7 @@ class Puppet::Parser::AST
             false
         end
 
-        def evaluate(options)
-            origscope = options[:scope]
-            resource = options[:resource]
-
+        def evaluate(origscope, resource)
             # Create a new scope.
             scope = subscope(origscope, resource)
 
@@ -49,7 +46,7 @@ class Puppet::Parser::AST
             set_resource_parameters(scope, resource)
 
             if self.code
-                return self.code.safeevaluate(:scope => scope)
+                return self.code.safeevaluate(scope)
             else
                 return nil
             end
@@ -181,7 +178,7 @@ class Puppet::Parser::AST
                     arg = symbolize(arg)
                     unless args.include?(arg)
                         if defined? default and ! default.nil?
-                            default = default.safeevaluate :scope => scope
+                            default = default.safeevaluate scope
                             args[arg] = default
                             #Puppet.debug "Got default %s for %s in %s" %
                             #    [default.inspect, arg.inspect, @name.inspect]

@@ -20,9 +20,7 @@ class Puppet::Parser::AST
         end
 
         # Evaluate the code associated with this class.
-        def evaluate(options)
-            scope = options[:scope]
-            raise(ArgumentError, "Classes require resources") unless options[:resource]
+        def evaluate(scope, resource)
             # Verify that we haven't already been evaluated.  This is
             # what provides the singleton aspect.
             if existing_scope = scope.compile.class_scope(self)
@@ -34,7 +32,7 @@ class Puppet::Parser::AST
 
             pnames = nil
             if pklass = self.parentobj
-                pklass.safeevaluate :scope => scope, :resource => options[:resource]
+                pklass.safeevaluate(scope, resource)
 
                 scope = parent_scope(scope, pklass)
                 pnames = scope.namespaces
@@ -42,8 +40,8 @@ class Puppet::Parser::AST
 
             # Don't create a subscope for the top-level class, since it already
             # has its own scope.
-            unless options[:resource].title == :main
-                scope = subscope(scope, options[:resource])
+            unless resource.title == :main
+                scope = subscope(scope, resource)
             end
 
             if pnames
@@ -58,7 +56,7 @@ class Puppet::Parser::AST
 
             # Now evaluate our code, yo.
             if self.code
-                return self.code.evaluate(:scope => scope)
+                return self.code.safeevaluate(scope)
             else
                 return nil
             end

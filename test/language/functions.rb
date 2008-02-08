@@ -41,7 +41,7 @@ class TestLangFunctions < Test::Unit::TestCase
         scope = mkscope
         val = nil
         assert_nothing_raised do
-            val = func.evaluate(:scope => scope)
+            val = func.evaluate(scope)
         end
 
         assert_equal("output avalue", val)
@@ -57,7 +57,7 @@ class TestLangFunctions < Test::Unit::TestCase
 
             val = nil
             assert_nothing_raised do
-                val = func.evaluate(:scope => scope)
+                val = func.evaluate(scope)
             end
 
             assert_equal(retval, val, "'tagged' returned %s for %s" % [val, tag])
@@ -86,7 +86,7 @@ class TestLangFunctions < Test::Unit::TestCase
         scope = mkscope
         val = nil
         assert_raise(Puppet::ParseError) do
-            val = func.evaluate(:scope => scope)
+            val = func.evaluate(scope)
         end
     end
 
@@ -117,16 +117,16 @@ class TestLangFunctions < Test::Unit::TestCase
 
         scope = mkscope
         assert_raise(Puppet::ParseError) do
-            ast.evaluate(:scope => scope)
+            ast.evaluate(scope)
         end
 
         scope.setvar("one", "One")
         assert_raise(Puppet::ParseError) do
-            ast.evaluate(:scope => scope)
+            ast.evaluate(scope)
         end
         scope.setvar("two", "Two")
         assert_nothing_raised do
-            ast.evaluate(:scope => scope)
+            ast.evaluate(scope)
         end
 
         assert_equal("template One\ntemplate Two\n", scope.lookupvar("output"),
@@ -155,13 +155,13 @@ class TestLangFunctions < Test::Unit::TestCase
 
         scope = mkscope
         assert_raise(Puppet::ParseError) do
-            ast.evaluate(:scope => scope)
+            ast.evaluate(scope)
         end
 
         scope.setvar("yayness", "this is yayness")
 
         assert_nothing_raised do
-            ast.evaluate(:scope => scope)
+            ast.evaluate(scope)
         end
 
         assert_equal("template this is yayness\n", scope.lookupvar("output"),
@@ -191,7 +191,7 @@ class TestLangFunctions < Test::Unit::TestCase
         scope = mkscope
         scope.setvar("myvar", "this is yayness")
         assert_raise(Puppet::ParseError) do
-            ast.evaluate(:scope => scope)
+            ast.evaluate(scope)
         end
     end
 
@@ -264,14 +264,14 @@ class TestLangFunctions < Test::Unit::TestCase
         }.each do |string, value|
             scope = mkscope
             assert_raise(Puppet::ParseError) do
-                ast.evaluate(:scope => scope)
+                ast.evaluate(scope)
             end
 
             scope.setvar("yayness", string)
             assert_equal(string, scope.lookupvar("yayness", false))
 
             assert_nothing_raised("An empty string was not a valid variable value") do
-                ast.evaluate(:scope => scope)
+                ast.evaluate(scope)
             end
 
             assert_equal("template #{value}\n", scope.lookupvar("output"),

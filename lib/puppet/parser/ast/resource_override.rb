@@ -17,17 +17,15 @@ class Puppet::Parser::AST
 
         # Does not actually return an object; instead sets an object
         # in the current scope.
-        def evaluate(hash)
-            scope = hash[:scope]
-
+        def evaluate(scope)
             # Get our object reference.
-            object = @object.safeevaluate(:scope => scope)
+            object = @object.safeevaluate(scope)
 
             hash = {}
 
             # Evaluate all of the specified params.
             params = @params.collect { |param|
-                param.safeevaluate(:scope => scope)
+                param.safeevaluate(scope)
             }
 
             # Now we just create a normal resource, but we call a very different

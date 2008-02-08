@@ -29,12 +29,12 @@ class TestASTHostClass < Test::Unit::TestCase
 
         resource = Puppet::Parser::Resource.new(:type => "class", :title => "first", :scope => scope)
         assert_nothing_raised do
-            klass.evaluate(:scope => scope, :resource => resource)
+            klass.evaluate(scope, resource)
         end
 
         # Then try it again
         assert_nothing_raised do
-            klass.evaluate(:scope => scope, :resource => resource)
+            klass.evaluate(scope, resource)
         end
 
         assert(scope.compile.class_scope(klass), "Class was not considered evaluated")
@@ -70,11 +70,11 @@ class TestASTHostClass < Test::Unit::TestCase
             )
 
         assert_nothing_raised do
-            newsub.evaluate(:scope => scope, :resource => resource)
+            newsub.evaluate(scope, resource)
         end
 
         assert_nothing_raised do
-            moresub.evaluate(:scope => scope, :resource => resource)
+            moresub.evaluate(scope, resource)
         end
 
         assert(scope.compile.class_scope(newbase), "Did not eval newbase")
@@ -174,11 +174,11 @@ class TestASTHostClass < Test::Unit::TestCase
         base = parser.newclass "base"
         sub = parser.newclass "sub", :parent => "base"
 
-        base.expects(:safeevaluate).with do |args|
+        base.expects(:safeevaluate).with do |*args|
             assert(scope.compile.catalog.tags.include?("sub"), "Did not tag with sub class name before evaluating base class")
-            base.evaluate(args)
+            base.evaluate(*args)
             true
         end
-        sub.evaluate :scope => scope, :resource => scope.resource
+        sub.evaluate scope, scope.resource
     end
 end

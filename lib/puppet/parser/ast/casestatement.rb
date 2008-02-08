@@ -8,9 +8,8 @@ class Puppet::Parser::AST
 
         # Short-curcuit evaluation.  Return the value of the statements for
         # the first option that matches.
-        def evaluate(hash)
-            scope = hash[:scope]
-            value = @test.safeevaluate(:scope => scope)
+        def evaluate(scope)
+            value = @test.safeevaluate(scope)
             sensitive = Puppet[:casesensitive]
             value = value.downcase if ! sensitive and value.respond_to?(:downcase)
 
@@ -30,7 +29,7 @@ class Puppet::Parser::AST
 
                 if found
                     # we found a matching option
-                    retvalue = option.safeevaluate(:scope => scope)
+                    retvalue = option.safeevaluate(scope)
                     break
                 end
 
@@ -42,7 +41,7 @@ class Puppet::Parser::AST
             # Unless we found something, look for the default.
             unless found
                 if default
-                    retvalue = default.safeevaluate(:scope => scope)
+                    retvalue = default.safeevaluate(scope)
                 else
                     Puppet.debug "No true answers and no default"
                     retvalue = nil
