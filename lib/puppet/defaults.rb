@@ -232,7 +232,7 @@ module Puppet
             :owner => "$user",
             :group => "$group",
             :mode => 0664,
-            :desc => "The certificate revocation list (CRL) for the CA. Set this to 'none' if you do not want to use a CRL."
+            :desc => "The certificate revocation list (CRL) for the CA. Set this to 'false' if you do not want to use a CRL."
         },
         :caprivatedir => { :default => "$cadir/private",
             :owner => "$user",

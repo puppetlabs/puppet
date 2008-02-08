@@ -605,6 +605,12 @@ describe Puppet::Util::Settings, " when being used to manage the host machine" d
         lambda { trans.to_catalog }.should_not raise_error
     end
 
+    it "should ignore file settings whose values are not strings" do
+        @settings[:maindir] = false
+
+        lambda { trans = @settings.to_transportable }.should_not raise_error
+    end
+
     it "should be able to turn the current configuration into a parseable manifest"
 
     it "should convert octal numbers correctly when producing a manifest"
