@@ -107,13 +107,27 @@ class Puppet::Parser::AST
         @line = nil
         set_options(args)
     end
-    #---------------------------------------------------------------
-    # Now autoload everything.
-    @autoloader = Puppet::Util::Autoload.new(self,
-        "puppet/parser/ast"
-    )
-    @autoloader.loadall
 end
 
+# And include all of the AST subclasses.
+require 'puppet/parser/ast/astarray'
+require 'puppet/parser/ast/branch'
+require 'puppet/parser/ast/caseopt'
+require 'puppet/parser/ast/casestatement'
+require 'puppet/parser/ast/collection'
+require 'puppet/parser/ast/collexpr'
+require 'puppet/parser/ast/definition'
+require 'puppet/parser/ast/else'
+require 'puppet/parser/ast/function'
+require 'puppet/parser/ast/hostclass'
+require 'puppet/parser/ast/ifstatement'
 require 'puppet/parser/ast/leaf'
-
+require 'puppet/parser/ast/node'
+require 'puppet/parser/ast/resource'
+require 'puppet/parser/ast/resource_defaults'
+require 'puppet/parser/ast/resource_override'
+require 'puppet/parser/ast/resource_reference'
+require 'puppet/parser/ast/resourceparam'
+require 'puppet/parser/ast/selector'
+require 'puppet/parser/ast/tag'
+require 'puppet/parser/ast/vardef'
