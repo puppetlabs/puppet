@@ -31,7 +31,7 @@ class Puppet::Parser::AST::Definition < Puppet::Parser::AST::Branch
 
         scope.catalog.tag(*resource.tags)
 
-        scope.compile.store_resource(scope, resource)
+        scope.compile.add_resource(scope, resource)
 
         return resource
     end

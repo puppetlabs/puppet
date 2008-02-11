@@ -51,7 +51,7 @@ class Resource < AST::ResourceReference
                 # And then store the resource in the compile.
                 # At some point, we need to switch all of this to return
                 # objects instead of storing them like this.
-                scope.compile.store_resource(scope, obj)
+                scope.compile.add_resource(scope, obj)
                 obj
             end
         }.reject { |obj| obj.nil? }

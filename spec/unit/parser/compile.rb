@@ -162,7 +162,7 @@ describe Puppet::Parser::Compile, " when compiling" do
     it "should ignore builtin resources" do
         resource = stub 'builtin', :ref => "File[testing]", :builtin? => true
 
-        @compile.store_resource(@scope, resource)
+        @compile.add_resource(@scope, resource)
         resource.expects(:evaluate).never
         
         @compile.compile
@@ -170,7 +170,7 @@ describe Puppet::Parser::Compile, " when compiling" do
 
     it "should evaluate unevaluated resources" do
         resource = stub 'notevaluated', :ref => "File[testing]", :builtin? => false, :evaluated? => false
-        @compile.store_resource(@scope, resource)
+        @compile.add_resource(@scope, resource)
 
         # We have to now mark the resource as evaluated
         resource.expects(:evaluate).with { |*whatever| resource.stubs(:evaluated?).returns true }
@@ -180,7 +180,7 @@ describe Puppet::Parser::Compile, " when compiling" do
 
     it "should not evaluate already-evaluated resources" do
         resource = stub 'already_evaluated', :ref => "File[testing]", :builtin? => false, :evaluated? => true
-        @compile.store_resource(@scope, resource)
+        @compile.add_resource(@scope, resource)
         resource.expects(:evaluate).never
         
         @compile.compile
@@ -188,12 +188,12 @@ describe Puppet::Parser::Compile, " when compiling" do
 
     it "should evaluate unevaluated resources created by evaluating other resources" do
         resource = stub 'notevaluated', :ref => "File[testing]", :builtin? => false, :evaluated? => false
-        @compile.store_resource(@scope, resource)
+        @compile.add_resource(@scope, resource)
 
         resource2 = stub 'created', :ref => "File[other]", :builtin? => false, :evaluated? => false
 
         # We have to now mark the resource as evaluated
-        resource.expects(:evaluate).with { |*whatever| resource.stubs(:evaluated?).returns(true); @compile.store_resource(@scope, resource2) }
+        resource.expects(:evaluate).with { |*whatever| resource.stubs(:evaluated?).returns(true); @compile.add_resource(@scope, resource2) }
         resource2.expects(:evaluate).with { |*whatever| resource2.stubs(:evaluated?).returns(true) }
 
         
@@ -205,19 +205,19 @@ describe Puppet::Parser::Compile, " when compiling" do
         resource = Puppet::Parser::Resource.new :scope => @scope, :type => "file", :title => "finish"
         resource.expects(:finish)
 
-        @compile.store_resource(@scope, resource)
+        @compile.add_resource(@scope, resource)
 
         # And one that does not
         dnf = stub "dnf", :ref => "File[dnf]"
 
-        @compile.store_resource(@scope, dnf)
+        @compile.add_resource(@scope, dnf)
 
         @compile.send(:finish)
     end
 
     it "should add resources that do not conflict with existing resources" do
         resource = stub "noconflict", :ref => "File[yay]"
-        @compile.store_resource(@scope, resource)
+        @compile.add_resource(@scope, resource)
 
         @compile.catalog.should be_vertex(resource)
     end
@@ -229,19 +229,19 @@ describe Puppet::Parser::Compile, " when compiling" do
         resource1 = stub "iso1conflict", :ref => "Mytype[yay]", :type => "mytype", :file => "eh", :line => 0
         resource2 = stub "iso2conflict", :ref => "Mytype[yay]", :type => "mytype", :file => "eh", :line => 0
 
-        @compile.store_resource(@scope, resource1)
-        lambda { @compile.store_resource(@scope, resource2) }.should raise_error(ArgumentError)
+        @compile.add_resource(@scope, resource1)
+        lambda { @compile.add_resource(@scope, resource2) }.should raise_error(ArgumentError)
     end
 
     it "should have a method for looking up resources" do
         resource = stub 'resource', :ref => "Yay[foo]"
-        @compile.store_resource(@scope, resource)
+        @compile.add_resource(@scope, resource)
         @compile.findresource("Yay[foo]").should equal(resource)
     end
 
     it "should be able to look resources up by type and title" do
         resource = stub 'resource', :ref => "Yay[foo]"
-        @compile.store_resource(@scope, resource)
+        @compile.add_resource(@scope, resource)
         @compile.findresource("Yay", "foo").should equal(resource)
     end
 end
@@ -349,7 +349,7 @@ describe Puppet::Parser::Compile, " when evaluating found classes" do
 
         @compile.expects(:class_scope).with(@class).returns("something")
 
-        @compile.expects(:store_resource).never
+        @compile.expects(:add_resource).never
 
         @resource.expects(:evaluate).never
 
@@ -360,7 +360,7 @@ describe Puppet::Parser::Compile, " when evaluating found classes" do
     it "should return the list of found classes" do
         @compile.catalog.stubs(:tag)
 
-        @compile.stubs(:store_resource)
+        @compile.stubs(:add_resource)
         @scope.stubs(:findclass).with("notfound").returns(nil)
 
         Puppet::Parser::Resource.stubs(:new).returns(@resource)
@@ -493,14 +493,14 @@ describe Puppet::Parser::Compile, "when managing resource overrides" do
     end
 
     it "should be able to store overrides" do
-        lambda { @compile.store_override(@override) }.should_not raise_error
+        lambda { @compile.add_override(@override) }.should_not raise_error
     end
 
     it "should apply overrides to the appropriate resources" do
-        @compile.store_resource(@scope, @resource)
+        @compile.add_resource(@scope, @resource)
         @resource.expects(:merge).with(@override)
 
-        @compile.store_override(@override)
+        @compile.add_override(@override)
 
         @compile.compile
     end
@@ -509,17 +509,17 @@ describe Puppet::Parser::Compile, "when managing resource overrides" do
         @resource.expects(:merge).with(@override)
 
         # First store the override
-        @compile.store_override(@override)
+        @compile.add_override(@override)
 
         # Then the resource
-        @compile.store_resource(@scope, @resource)
+        @compile.add_resource(@scope, @resource)
 
         # And compile, so they get resolved
         @compile.compile
     end
 
     it "should fail if the compile is finished and resource overrides have not been applied" do
-        @compile.store_override(@override)
+        @compile.add_override(@override)
 
         lambda { @compile.compile }.should raise_error(Puppet::ParseError)
     end

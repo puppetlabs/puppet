@@ -271,7 +271,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
         @compile.stubs(:resources).returns([])
         @scope.stubs(:findresource).returns(nil)
 
-        @compile.stubs(:store_resource)
+        @compile.stubs(:add_resource)
 
         @collector.evaluate.should == [resource]
     end
@@ -291,7 +291,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
         @compile.stubs(:resources).returns([])
         @scope.stubs(:findresource).returns(nil)
 
-        @compile.expects(:store_resource).with(@scope, resource)
+        @compile.expects(:add_resource).with(@scope, resource)
 
         @collector.evaluate.should == [resource]
     end
@@ -312,7 +312,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
         @compile.stubs(:resources).returns([])
         @scope.stubs(:findresource).returns(nil)
 
-        @compile.stubs(:store_resource)
+        @compile.stubs(:add_resource)
 
         @collector.evaluate
     end
@@ -331,7 +331,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
         @compile.stubs(:resources).returns([])
         @scope.stubs(:findresource).returns(inmemory)
 
-        @compile.stubs(:store_resource)
+        @compile.stubs(:add_resource)
 
         proc { @collector.evaluate }.should raise_error(Puppet::ParseError)
     end
@@ -350,7 +350,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
         @compile.stubs(:resources).returns([])
         @scope.stubs(:findresource).returns(inmemory)
 
-        @compile.stubs(:store_resource)
+        @compile.stubs(:add_resource)
 
         proc { @collector.evaluate }.should_not raise_error(Puppet::ParseError)
     end

@@ -318,7 +318,7 @@ class TestLangFunctions < Test::Unit::TestCase
             virtual = mkresource(:type => type, :title => title,
                 :virtual => true, :params => {}, :scope => scope)
         
-            scope.compile.store_resource(scope, virtual)
+            scope.compile.add_resource(scope, virtual)
 
             ref = Puppet::Parser::Resource::Reference.new(
                 :type => type, :title => title,
@@ -385,7 +385,7 @@ class TestLangFunctions < Test::Unit::TestCase
             "Multiple falses were somehow true")
         
         # Now make sure we can test resources
-        scope.compile.store_resource(scope, mkresource(:type => "file", :title => "/tmp/rahness",
+        scope.compile.add_resource(scope, mkresource(:type => "file", :title => "/tmp/rahness",
             :scope => scope, :source => scope.source,
             :params => {:owner => "root"}))
         

@@ -17,6 +17,28 @@ class Puppet::Parser::Compile
         @collections << coll
     end
 
+    # Store a resource override.
+    def add_override(override)
+        # If possible, merge the override in immediately.
+        if resource = @catalog.resource(override.ref)
+            resource.merge(override)
+        else
+            # Otherwise, store the override for later; these
+            # get evaluated in Resource#finish.
+            @resource_overrides[override.ref] << override
+        end
+    end
+
+    # Store a resource in our resource table.
+    def add_resource(scope, resource)
+        @catalog.add_resource(resource)
+
+        # And in the resource graph.  At some point, this might supercede
+        # the global resource table, but the table is a lot faster
+        # so it makes sense to maintain for now.
+        @catalog.add_edge!(scope.resource, resource)
+    end
+
     # Do we use nodes found in the code, vs. the external node sources?
     def ast_nodes?
         parser.nodes.length > 0
@@ -186,28 +208,6 @@ class Puppet::Parser::Compile
         @catalog.vertices
     end
 
-    # Store a resource override.
-    def store_override(override)
-        # If possible, merge the override in immediately.
-        if resource = @catalog.resource(override.ref)
-            resource.merge(override)
-        else
-            # Otherwise, store the override for later; these
-            # get evaluated in Resource#finish.
-            @resource_overrides[override.ref] << override
-        end
-    end
-
-    # Store a resource in our resource table.
-    def store_resource(scope, resource)
-        @catalog.add_resource(resource)
-
-        # And in the resource graph.  At some point, this might supercede
-        # the global resource table, but the table is a lot faster
-        # so it makes sense to maintain for now.
-        @catalog.add_edge!(scope.resource, resource)
-    end
-
     # The top scope is usually the top-level scope, but if we're using AST nodes,
     # then it is instead the node's scope.
     def topscope
@@ -233,7 +233,7 @@ class Puppet::Parser::Compile
         # Create a resource to model this node, and then add it to the list
         # of resources.
         resource = Puppet::Parser::Resource.new(:type => "node", :title => astnode.classname, :scope => topscope, :source => topscope.source)
-        store_resource(topscope, resource)
+        add_resource(topscope, resource)
         @catalog.tag(astnode.classname)
 
         resource.evaluate

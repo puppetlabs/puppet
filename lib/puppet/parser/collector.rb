@@ -150,7 +150,7 @@ class Puppet::Parser::Collector
 
         resource.exported = false
         
-        scope.compile.store_resource(scope, resource)
+        scope.compile.add_resource(scope, resource)
 
         return resource
     end
