@@ -49,7 +49,7 @@ class Puppet::Parser::Resource::Reference < Puppet::ResourceReference
             if tmp
                 @definedtype = tmp
             else
-                fail Puppet::ParseError, "Could not find resource '%s'" % self
+                fail Puppet::ParseError, "Could not find resource type '%s'" % self.type
             end
         end
 

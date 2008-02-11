@@ -68,9 +68,9 @@ class Puppet::Parser::Compile
 
         evaluate_generators()
 
-        fail_on_unevaluated()
-
         finish()
+
+        fail_on_unevaluated()
 
         if Puppet[:storeconfigs]
             store()
@@ -200,8 +200,6 @@ class Puppet::Parser::Compile
 
     # Store a resource override.
     def store_override(override)
-        override.override = true
-
         # If possible, merge the override in immediately.
         if resource = @resource_table[override.ref]
             resource.merge(override)
@@ -383,7 +381,20 @@ class Puppet::Parser::Compile
     # Make sure all of our resources and such have done any last work
     # necessary.
     def finish
-        @resource_table.each { |name, resource| resource.finish if resource.respond_to?(:finish) }
+        @resource_table.each do |name, resource|
+            # Add in any resource overrides.
+            if overrides = resource_overrides(resource)
+                overrides.each do |over|
+                    resource.merge(over)
+                end
+
+                # Remove the overrides, so that the configuration knows there
+                # are none left.
+                overrides.clear
+            end
+
+            resource.finish if resource.respond_to?(:finish)
+        end
     end
 
     # Initialize the top-level scope, class, and resource.

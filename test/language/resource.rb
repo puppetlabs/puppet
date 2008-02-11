@@ -106,7 +106,6 @@ class TestResource < PuppetTest::TestCase
 
     def test_finish
         res = mkresource
-        res.expects(:add_overrides)
         res.expects(:add_defaults)
         res.expects(:add_metaparams)
         res.expects(:validate)
@@ -273,38 +272,6 @@ class TestResource < PuppetTest::TestCase
         type.expects(:evaluate_code).with(res)
 
         res.evaluate
-    end
-
-    def test_add_overrides
-        # Try it with nil
-        res = mkresource
-        res.scope = mock('scope')
-        config = mock("config")
-        res.scope.expects(:compile).returns(config)
-        config.expects(:resource_overrides).with(res).returns(nil)
-        res.expects(:merge).never
-        res.send(:add_overrides)
-
-        # And an empty array
-        res = mkresource
-        res.scope = mock('scope')
-        config = mock("config")
-        res.scope.expects(:compile).returns(config)
-        config.expects(:resource_overrides).with(res).returns([])
-        res.expects(:merge).never
-        res.send(:add_overrides)
-
-        # And with some overrides
-        res = mkresource
-        res.scope = mock('scope')
-        config = mock("config")
-        res.scope.expects(:compile).returns(config)
-        returns = %w{a b}
-        config.expects(:resource_overrides).with(res).returns(returns)
-        res.expects(:merge).with("a")
-        res.expects(:merge).with("b")
-        res.send(:add_overrides)
-        assert(returns.empty?, "Did not clear overrides")
     end
 
     def test_proxymethods

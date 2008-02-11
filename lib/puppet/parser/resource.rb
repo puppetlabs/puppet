@@ -83,7 +83,6 @@ class Puppet::Parser::Resource
     # Do any finishing work on this object, called before evaluation or
     # before storage/translation.
     def finish
-        add_overrides()
         add_defaults()
         add_metaparams()
         add_scope_tags()
@@ -339,19 +338,6 @@ class Puppet::Parser::Resource
 
             # For relationship params, though, join the values (a la #446).
             @params[name].value = [@params[name].value, val].flatten
-        end
-    end
-
-    # Add any overrides for this object.
-    def add_overrides
-        if overrides = scope.compile.resource_overrides(self)
-            overrides.each do |over|
-                self.merge(over)
-            end
-
-            # Remove the overrides, so that the configuration knows there
-            # are none left.
-            overrides.clear
         end
     end
 
