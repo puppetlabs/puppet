@@ -7,7 +7,8 @@ module CompileTesting
         @node = Puppet::Node.new "testnode"
         @parser = Puppet::Parser::Parser.new :environment => "development"
 
-        @scope = stub 'scope', :resource => stub("scope_resource"), :source => mock("source")
+        @scope_resource = stub 'scope_resource', :builtin? => true
+        @scope = stub 'scope', :resource => @scope_resource, :source => mock("source")
         @compile = Puppet::Parser::Compile.new(@node, @parser)
     end
 end
@@ -89,8 +90,7 @@ describe Puppet::Parser::Compile, " when compiling" do
     it "should ignore builtin resources" do
         resource = stub 'builtin', :ref => "File[testing]", :builtin? => true
 
-        scope = stub 'scope', :resource => stub("scope_resource")
-        @compile.store_resource(scope, resource)
+        @compile.store_resource(@scope, resource)
         resource.expects(:evaluate).never
         
         @compile.compile
@@ -98,8 +98,7 @@ describe Puppet::Parser::Compile, " when compiling" do
 
     it "should evaluate unevaluated resources" do
         resource = stub 'notevaluated', :ref => "File[testing]", :builtin? => false, :evaluated? => false
-        scope = stub 'scope', :resource => stub("scope_resource")
-        @compile.store_resource(scope, resource)
+        @compile.store_resource(@scope, resource)
 
         # We have to now mark the resource as evaluated
         resource.expects(:evaluate).with { |*whatever| resource.stubs(:evaluated?).returns true }
@@ -109,8 +108,7 @@ describe Puppet::Parser::Compile, " when compiling" do
 
     it "should not evaluate already-evaluated resources" do
         resource = stub 'already_evaluated', :ref => "File[testing]", :builtin? => false, :evaluated? => true
-        scope = stub 'scope', :resource => stub("scope_resource")
-        @compile.store_resource(scope, resource)
+        @compile.store_resource(@scope, resource)
         resource.expects(:evaluate).never
         
         @compile.compile
@@ -118,13 +116,12 @@ describe Puppet::Parser::Compile, " when compiling" do
 
     it "should evaluate unevaluated resources created by evaluating other resources" do
         resource = stub 'notevaluated', :ref => "File[testing]", :builtin? => false, :evaluated? => false
-        scope = stub 'scope', :resource => stub("scope_resource")
-        @compile.store_resource(scope, resource)
+        @compile.store_resource(@scope, resource)
 
         resource2 = stub 'created', :ref => "File[other]", :builtin? => false, :evaluated? => false
 
         # We have to now mark the resource as evaluated
-        resource.expects(:evaluate).with { |*whatever| resource.stubs(:evaluated?).returns(true); @compile.store_resource(scope, resource2) }
+        resource.expects(:evaluate).with { |*whatever| resource.stubs(:evaluated?).returns(true); @compile.store_resource(@scope, resource2) }
         resource2.expects(:evaluate).with { |*whatever| resource2.stubs(:evaluated?).returns(true) }
 
         
@@ -133,15 +130,13 @@ describe Puppet::Parser::Compile, " when compiling" do
 
     it "should call finish() on all resources" do
         # Add a resource that does respond to :finish
-        yep = stub "finisher", :ref => "File[finish]"
-        yep.expects(:respond_to?).with(:finish).returns(true)
-        yep.expects(:finish)
+        resource = Puppet::Parser::Resource.new :scope => @scope, :type => "file", :title => "finish"
+        resource.expects(:finish)
 
-        @compile.store_resource(@scope, yep)
+        @compile.store_resource(@scope, resource)
 
         # And one that does not
         dnf = stub "dnf", :ref => "File[dnf]"
-        dnf.expects(:respond_to?).with(:finish).returns(false)
 
         @compile.store_resource(@scope, dnf)
 
@@ -155,17 +150,6 @@ describe Puppet::Parser::Compile, " when compiling" do
         @compile.catalog.should be_vertex(resource)
     end
 
-    it "should not fail when conflicting resources are non-isormphic" do
-        type = stub 'faketype', :isomorphic? => false, :name => "mytype"
-        Puppet::Type.stubs(:type).with("mytype").returns(type)
-
-        resource1 = stub "iso1conflict", :ref => "Mytype[yay]", :type => "mytype"
-        resource2 = stub "iso2conflict", :ref => "Mytype[yay]", :type => "mytype"
-
-        @compile.store_resource(@scope, resource1)
-        lambda { @compile.store_resource(@scope, resource2) }.should_not raise_error
-    end
-
     it "should fail to add resources that conflict with existing resources" do
         type = stub 'faketype', :isomorphic? => true, :name => "mytype"
         Puppet::Type.stubs(:type).with("mytype").returns(type)
@@ -174,7 +158,7 @@ describe Puppet::Parser::Compile, " when compiling" do
         resource2 = stub "iso2conflict", :ref => "Mytype[yay]", :type => "mytype", :file => "eh", :line => 0
 
         @compile.store_resource(@scope, resource1)
-        lambda { @compile.store_resource(@scope, resource2) }.should raise_error(Puppet::ParseError)
+        lambda { @compile.store_resource(@scope, resource2) }.should raise_error(ArgumentError)
     end
 
     it "should have a method for looking up resources" do
@@ -506,9 +490,8 @@ describe Puppet::Parser::Compile, "when storing compiled resources" do
         Puppet.features.expects(:rails?).returns(true)
         Puppet::Rails.expects(:connect)
 
-        resource_table = mock 'resources'
-        resource_table.expects(:values).returns(:resources)
-        @compile.instance_variable_set("@resource_table", resource_table)
+        @compile.catalog.expects(:vertices).returns(:resources)
+
         @compile.expects(:store_to_active_record).with(@node, :resources)
         @compile.send(:store)
     end

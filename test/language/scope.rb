@@ -339,7 +339,7 @@ class TestScope < Test::Unit::TestCase
         config.topscope.source = parser.newclass "", ""
 
         # And a scope resource
-        scope_res = stub 'scope_resource', :virtual? => true, :exported? => false, :tags => []
+        scope_res = stub 'scope_resource', :virtual? => true, :exported? => false, :tags => [], :builtin? => true, :type => "eh", :title => "bee"
         config.topscope.resource = scope_res
 
         args = AST::ASTArray.new(

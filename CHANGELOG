@@ -1,3 +1,7 @@
+    Exec resources must now have unique names.  This is easily accomplished
+    by just specifying a unique name with whatever (unique or otherwise)
+    command you need.
+
     Fixed #989 -- missing CRL files are correctly ignored, and the
     value should be set to 'false' to explicitly not look for these
     files.

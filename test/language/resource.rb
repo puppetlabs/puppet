@@ -265,9 +265,6 @@ class TestResource < PuppetTest::TestCase
         ref.expects(:definedtype).returns(type)
         res.expects(:finish)
         res.scope = mock("scope")
-        config = mock("config")
-        res.scope.expects(:compile).returns(config)
-        config.expects(:delete_resource).with(res)
 
         type.expects(:evaluate_code).with(res)
 

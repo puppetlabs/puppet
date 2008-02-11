@@ -17,7 +17,6 @@ class TestASTResource< Test::Unit::TestCase
         super
         @scope = mkscope
         @parser = @scope.compile.parser
-        @scope.compile.send(:evaluate_main)
     end
 
     def newdef(type, title, params = nil)

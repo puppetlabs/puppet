@@ -84,11 +84,6 @@ class Puppet::Parser::Compile
         @collections.delete(coll) if @collections.include?(coll)
     end
 
-    # LAK:FIXME There are no tests for this.
-    def delete_resource(resource)
-        @resource_table.delete(resource.ref) if @resource_table.include?(resource.ref)
-    end
-
     # Return the node's environment.
     def environment
         unless defined? @environment
@@ -140,10 +135,8 @@ class Puppet::Parser::Compile
     end
 
     # Return a resource by either its ref or its type and title.
-    def findresource(string, name = nil)
-        string = "%s[%s]" % [string.capitalize, name] if name
-
-        @resource_table[string]
+    def findresource(*args)
+        @catalog.resource(*args)
     end
 
     # Set up our compile.  We require a parser
@@ -195,13 +188,13 @@ class Puppet::Parser::Compile
 
     # Return a list of all resources.
     def resources
-        @resource_table.values
+        @catalog.vertices
     end
 
     # Store a resource override.
     def store_override(override)
         # If possible, merge the override in immediately.
-        if resource = @resource_table[override.ref]
+        if resource = @catalog.resource(override.ref)
             resource.merge(override)
         else
             # Otherwise, store the override for later; these
@@ -212,11 +205,7 @@ class Puppet::Parser::Compile
 
     # Store a resource in our resource table.
     def store_resource(scope, resource)
-        # This might throw an exception
-        verify_uniqueness(resource)
-
-        # Store it in the global table.
-        @resource_table[resource.ref] = resource
+        @catalog.add_resource(resource)
 
         # And in the resource graph.  At some point, this might supercede
         # the global resource table, but the table is a lot faster
@@ -323,9 +312,7 @@ class Puppet::Parser::Compile
         @main_resource = Puppet::Parser::Resource.new(:type => "class", :title => :main, :scope => @topscope, :source => @main)
         @topscope.resource = @main_resource
 
-        @catalog.add_vertex!(@main_resource)
-
-        @resource_table["Class[main]"] = @main_resource
+        @catalog.add_resource(@main_resource)
 
         @main_resource.evaluate
     end
@@ -381,7 +368,9 @@ class Puppet::Parser::Compile
     # Make sure all of our resources and such have done any last work
     # necessary.
     def finish
-        @resource_table.each do |name, resource|
+        @catalog.resources.each do |name|
+            resource = @catalog.resource(name)
+
             # Add in any resource overrides.
             if overrides = resource_overrides(resource)
                 overrides.each do |over|
@@ -409,9 +398,6 @@ class Puppet::Parser::Compile
         # The table for storing class singletons.  This will only actually
         # be used by top scopes and node scopes.
         @class_scopes = {}
-
-        # The table for all defined resources.
-        @resource_table = {}
 
         # The list of objects that will available for export.
         @exported_resources = {}
@@ -457,7 +443,7 @@ class Puppet::Parser::Compile
 
         # We used to have hooks here for forking and saving, but I don't
         # think it's worth retaining at this point.
-        store_to_active_record(@node, @resource_table.values)
+        store_to_active_record(@node, @catalog.vertices)
     end
 
     # Do the actual storage.
@@ -480,43 +466,12 @@ class Puppet::Parser::Compile
     # Return an array of all of the unevaluated resources.  These will be definitions,
     # which need to get evaluated into native resources.
     def unevaluated_resources
-        ary = @resource_table.find_all do |name, object|
-            ! object.builtin? and ! object.evaluated?
-        end.collect { |name, object| object }
+        ary = @catalog.vertices.reject { |resource| resource.builtin? or resource.evaluated?  }
 
         if ary.empty?
             return nil
         else
             return ary
         end
-    end
-
-    # Verify that the given resource isn't defined elsewhere.
-    def verify_uniqueness(resource)
-        # Short-curcuit the common case, 
-        unless existing_resource = @resource_table[resource.ref]
-            return true
-        end
-
-        if typeclass = Puppet::Type.type(resource.type) and ! typeclass.isomorphic?
-            Puppet.info "Allowing duplicate %s" % typeclass.name
-            return true
-        end
-
-        # Either it's a defined type, which are never
-        # isomorphic, or it's a non-isomorphic type, so
-        # we should throw an exception.
-        msg = "Duplicate definition: %s is already defined" % resource.ref
-
-        if existing_resource.file and existing_resource.line
-            msg << " in file %s at line %s" %
-                [existing_resource.file, existing_resource.line]
-        end
-
-        if resource.line or resource.file
-            msg << "; cannot redefine"
-        end
-
-        raise Puppet::ParseError.new(msg)
     end
 end
