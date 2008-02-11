@@ -57,7 +57,7 @@ class TestAST < Test::Unit::TestCase
         end
 
         Puppet::Parser::Resource.expects(:new).with { |o| o.is_a?(Hash) }.returns(:override)
-        scope.compile.expects(:add_override).with(:override)
+        scope.compiler.expects(:add_override).with(:override)
         ret = nil
         assert_nothing_raised do
             ret = ref.evaluate scope
@@ -111,7 +111,7 @@ class TestAST < Test::Unit::TestCase
         assert_instance_of(Puppet::Parser::Collector, ret)
 
         # Now make sure we get it back from the scope
-        colls = scope.compile.instance_variable_get("@collections")
+        colls = scope.compiler.instance_variable_get("@collections")
         assert_equal([ret], colls, "Did not store collector in config's collection list")
     end
 

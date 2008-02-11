@@ -3,7 +3,7 @@ require 'timeout'
 require 'puppet/rails'
 require 'puppet/util/methodhelper'
 require 'puppet/parser/parser'
-require 'puppet/parser/compile'
+require 'puppet/parser/compiler'
 require 'puppet/parser/scope'
 
 # The interpreter is a very simple entry-point class that
@@ -25,7 +25,7 @@ class Puppet::Parser::Interpreter
     # evaluate our whole tree
     def compile(node)
         raise Puppet::ParseError, "Could not parse configuration; cannot compile" unless env_parser = parser(node.environment)
-        return Puppet::Parser::Compile.new(node, env_parser).compile
+        return Puppet::Parser::Compiler.new(node, env_parser).compile
     end
 
     # create our interpreter

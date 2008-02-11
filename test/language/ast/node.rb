@@ -18,7 +18,7 @@ class TestASTNode < Test::Unit::TestCase
 
     def test_node
         scope = mkscope
-        parser = scope.compile.parser
+        parser = scope.compiler.parser
 
         # Define a base node
         basenode = parser.newnode "basenode", :code => AST::ASTArray.new(:children => [

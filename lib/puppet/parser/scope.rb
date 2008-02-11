@@ -17,20 +17,20 @@ class Puppet::Parser::Scope
     include Puppet::Util::Errors
     attr_accessor :parent, :level, :parser, :source, :resource
     attr_accessor :base, :keyword, :nodescope
-    attr_accessor :top, :translated, :compile
+    attr_accessor :top, :translated, :compiler
 
     # A demeterific shortcut to the catalog.
     def catalog
-        compile.catalog
+        compiler.catalog
     end
 
     # Proxy accessors
     def host
-        @compile.node.name
+        @compiler.node.name
     end
 
     def interpreter
-        @compile.interpreter
+        @compiler.interpreter
     end
 
     # Is the value true?  This allows us to control the definition of truth
@@ -77,7 +77,7 @@ class Puppet::Parser::Scope
     end
 
     def findresource(string, name = nil)
-        compile.findresource(string, name)
+        compiler.findresource(string, name)
     end
 
     # Initialize our new scope.  Defaults to having no parent.
@@ -152,7 +152,7 @@ class Puppet::Parser::Scope
         unless klass
             raise Puppet::ParseError, "Could not find class %s" % klassname
         end
-        unless kscope = compile.class_scope(klass)
+        unless kscope = compiler.class_scope(klass)
             raise Puppet::ParseError, "Class %s has not been evaluated so its variables cannot be referenced" % klass.classname
         end
         return kscope.lookupvar(shortname, usestring)
@@ -189,7 +189,7 @@ class Puppet::Parser::Scope
 
     # Create a new scope and set these options.
     def newscope(options = {})
-        compile.newscope(self, options)
+        compiler.newscope(self, options)
     end
 
     # Is this class for a node?  This is used to make sure that
@@ -204,7 +204,7 @@ class Puppet::Parser::Scope
     # than doing lots of queries.
     def parent
         unless defined?(@parent)
-            @parent = compile.parent(self)
+            @parent = compiler.parent(self)
         end
         @parent
     end

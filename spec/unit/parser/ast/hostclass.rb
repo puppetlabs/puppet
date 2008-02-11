@@ -7,9 +7,9 @@ module HostClassTesting
         @node = Puppet::Node.new "testnode"
         @parser = Puppet::Parser::Parser.new :environment => "development"
         @scope_resource = stub 'scope_resource', :builtin? => true
-        @compile = Puppet::Parser::Compile.new(@node, @parser)
+        @compiler = Puppet::Parser::Compiler.new(@node, @parser)
 
-        @scope = @compile.topscope
+        @scope = @compiler.topscope
     end
 end
 
@@ -24,13 +24,13 @@ describe Puppet::Parser::AST::HostClass, "when evaluating" do
     it "should create a resource that references itself" do
         @top.evaluate(@scope)
 
-        @compile.catalog.resource(:class, "top").should be_instance_of(Puppet::Parser::Resource)
+        @compiler.catalog.resource(:class, "top").should be_instance_of(Puppet::Parser::Resource)
     end
 
     it "should evaluate the parent class if one exists" do
         @middle.evaluate(@scope)
 
-        @compile.catalog.resource(:class, "top").should be_instance_of(Puppet::Parser::Resource)
+        @compiler.catalog.resource(:class, "top").should be_instance_of(Puppet::Parser::Resource)
     end
 
     it "should fail to evaluate if a parent class is defined but cannot be found" do
@@ -39,32 +39,32 @@ describe Puppet::Parser::AST::HostClass, "when evaluating" do
     end
 
     it "should not create a new resource if one already exists" do
-        @compile.catalog.expects(:resource).with(:class, "top").returns("something")
-        @compile.catalog.expects(:add_resource).never
+        @compiler.catalog.expects(:resource).with(:class, "top").returns("something")
+        @compiler.catalog.expects(:add_resource).never
         @top.evaluate(@scope)
     end
 
     it "should not create a new parent resource if one already exists and it has a parent class" do
         @top.evaluate(@scope)
 
-        top_resource = @compile.catalog.resource(:class, "top")
+        top_resource = @compiler.catalog.resource(:class, "top")
 
         @middle.evaluate(@scope)
 
-        @compile.catalog.resource(:class, "top").should equal(top_resource)
+        @compiler.catalog.resource(:class, "top").should equal(top_resource)
     end
 
     # #795 - tag before evaluation.
     it "should tag the catalog with the resource tags when it is evaluated" do
         @middle.evaluate(@scope)
 
-        @compile.catalog.should be_tagged("middle")
+        @compiler.catalog.should be_tagged("middle")
     end
 
     it "should tag the catalog with the parent class tags when it is evaluated" do
         @middle.evaluate(@scope)
 
-        @compile.catalog.should be_tagged("top")
+        @compiler.catalog.should be_tagged("top")
     end
 end
 
@@ -117,7 +117,7 @@ describe Puppet::Parser::AST::HostClass, "when evaluating code" do
         resource = @middle.evaluate(@scope)
         @middle.evaluate_code(resource)
 
-        @compile.class_scope(@middle).parent.should equal(@compile.class_scope(@top))
+        @compiler.class_scope(@middle).parent.should equal(@compiler.class_scope(@top))
     end
 
     it "should add the parent class's namespace to its namespace search path" do
@@ -126,6 +126,6 @@ describe Puppet::Parser::AST::HostClass, "when evaluating code" do
         resource = @middle.evaluate(@scope)
         @middle.evaluate_code(resource)
 
-        @compile.class_scope(@middle).namespaces.should be_include(@top.namespace)
+        @compiler.class_scope(@middle).namespaces.should be_include(@top.namespace)
     end
 end

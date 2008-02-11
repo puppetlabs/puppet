@@ -2,91 +2,91 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-module CompileTesting
+module CompilerTesting
     def setup
         @node = Puppet::Node.new "testnode"
         @parser = Puppet::Parser::Parser.new :environment => "development"
 
         @scope_resource = stub 'scope_resource', :builtin? => true
         @scope = stub 'scope', :resource => @scope_resource, :source => mock("source")
-        @compile = Puppet::Parser::Compile.new(@node, @parser)
+        @compiler = Puppet::Parser::Compiler.new(@node, @parser)
     end
 end
 
-describe Puppet::Parser::Compile do
-    include CompileTesting
+describe Puppet::Parser::Compiler do
+    include CompilerTesting
 
     it "should be able to store references to class scopes" do
-        lambda { @compile.class_set "myname", "myscope" }.should_not raise_error
+        lambda { @compiler.class_set "myname", "myscope" }.should_not raise_error
     end
 
     it "should be able to retrieve class scopes by name" do
-        @compile.class_set "myname", "myscope"
-        @compile.class_scope("myname").should == "myscope"
+        @compiler.class_set "myname", "myscope"
+        @compiler.class_scope("myname").should == "myscope"
     end
 
     it "should be able to retrieve class scopes by object" do
         klass = mock 'ast_class'
         klass.expects(:classname).returns("myname")
-        @compile.class_set "myname", "myscope"
-        @compile.class_scope(klass).should == "myscope"
+        @compiler.class_set "myname", "myscope"
+        @compiler.class_scope(klass).should == "myscope"
     end
 
     it "should be able to return a class list containing all set classes" do
-        @compile.class_set "", "empty"
-        @compile.class_set "one", "yep"
-        @compile.class_set "two", "nope"
+        @compiler.class_set "", "empty"
+        @compiler.class_set "one", "yep"
+        @compiler.class_set "two", "nope"
 
-        @compile.classlist.sort.should == %w{one two}.sort
+        @compiler.classlist.sort.should == %w{one two}.sort
     end
 end
 
-describe Puppet::Parser::Compile, " when initializing" do
-    include CompileTesting
+describe Puppet::Parser::Compiler, " when initializing" do
+    include CompilerTesting
 
     it "should set its node attribute" do
-        @compile.node.should equal(@node)
+        @compiler.node.should equal(@node)
     end
 
     it "should set its parser attribute" do
-        @compile.parser.should equal(@parser)
+        @compiler.parser.should equal(@parser)
     end
 
     it "should detect when ast nodes are absent" do
-        @compile.ast_nodes?.should be_false
+        @compiler.ast_nodes?.should be_false
     end
 
     it "should detect when ast nodes are present" do
         @parser.nodes["testing"] = "yay"
-        @compile.ast_nodes?.should be_true
+        @compiler.ast_nodes?.should be_true
     end
 end
 
-describe Puppet::Parser::Compile, "when managing scopes" do
-    include CompileTesting
+describe Puppet::Parser::Compiler, "when managing scopes" do
+    include CompilerTesting
 
     it "should create a top scope" do
-        @compile.topscope.should be_instance_of(Puppet::Parser::Scope)
+        @compiler.topscope.should be_instance_of(Puppet::Parser::Scope)
     end
 
     it "should be able to create new scopes" do
-        @compile.newscope(@compile.topscope).should be_instance_of(Puppet::Parser::Scope)
+        @compiler.newscope(@compiler.topscope).should be_instance_of(Puppet::Parser::Scope)
     end
 
     it "should correctly set the level of newly created scopes" do
-        @compile.newscope(@compile.topscope, :level => 5).level.should == 5
+        @compiler.newscope(@compiler.topscope, :level => 5).level.should == 5
     end
 
     it "should set the parent scope of the new scope to be the passed-in parent" do
         scope = mock 'scope'
-        newscope = @compile.newscope(scope)
+        newscope = @compiler.newscope(scope)
 
-        @compile.parent(newscope).should equal(scope)
+        @compiler.parent(newscope).should equal(scope)
     end
 end
 
-describe Puppet::Parser::Compile, " when compiling" do
-    include CompileTesting
+describe Puppet::Parser::Compiler, " when compiling" do
+    include CompilerTesting
 
     def compile_methods
         [:set_node_parameters, :evaluate_main, :evaluate_ast_node, :evaluate_node_classes, :evaluate_generators, :fail_on_unevaluated,
@@ -95,16 +95,16 @@ describe Puppet::Parser::Compile, " when compiling" do
 
     # Stub all of the main compile methods except the ones we're specifically interested in.
     def compile_stub(*except)
-        (compile_methods - except).each { |m| @compile.stubs(m) }
+        (compile_methods - except).each { |m| @compiler.stubs(m) }
     end
 
     it "should set node parameters as variables in the top scope" do
         params = {"a" => "b", "c" => "d"}
         @node.stubs(:parameters).returns(params)
         compile_stub(:set_node_parameters)
-        @compile.compile
-        @compile.topscope.lookupvar("a").should == "b"
-        @compile.topscope.lookupvar("c").should == "d"
+        @compiler.compile
+        @compiler.topscope.lookupvar("a").should == "b"
+        @compiler.topscope.lookupvar("c").should == "d"
     end
 
     it "should evaluate any existing classes named in the node" do
@@ -115,34 +115,34 @@ describe Puppet::Parser::Compile, " when compiling" do
         @node.stubs(:name).returns("whatever")
         @node.stubs(:classes).returns(classes)
 
-        @compile.expects(:evaluate_classes).with(classes, @compile.topscope)
-        @compile.class.publicize_methods(:evaluate_node_classes) { @compile.evaluate_node_classes }
+        @compiler.expects(:evaluate_classes).with(classes, @compiler.topscope)
+        @compiler.class.publicize_methods(:evaluate_node_classes) { @compiler.evaluate_node_classes }
     end
 
     it "should enable ast_nodes if the parser has any nodes" do
         @parser.expects(:nodes).returns(:one => :yay)
-        @compile.ast_nodes?.should be_true
+        @compiler.ast_nodes?.should be_true
     end
 
     it "should disable ast_nodes if the parser has no nodes" do
         @parser.expects(:nodes).returns({})
-        @compile.ast_nodes?.should be_false
+        @compiler.ast_nodes?.should be_false
     end
 
     it "should evaluate the main class if it exists" do
         compile_stub(:evaluate_main)
         main_class = mock 'main_class'
         main_class.expects(:evaluate_code).with { |r| r.is_a?(Puppet::Parser::Resource) }
-        @compile.topscope.expects(:source=).with(main_class)
+        @compiler.topscope.expects(:source=).with(main_class)
         @parser.stubs(:findclass).with("", "").returns(main_class)
 
-        @compile.compile
+        @compiler.compile
     end
 
     it "should evaluate any node classes" do
         @node.stubs(:classes).returns(%w{one two three four})
-        @compile.expects(:evaluate_classes).with(%w{one two three four}, @compile.topscope)
-        @compile.send(:evaluate_node_classes)
+        @compiler.expects(:evaluate_classes).with(%w{one two three four}, @compiler.topscope)
+        @compiler.send(:evaluate_node_classes)
     end
 
     it "should evaluate all added collections" do
@@ -152,52 +152,52 @@ describe Puppet::Parser::Compile, " when compiling" do
         colls << mock("coll2-false")
         colls.each { |c| c.expects(:evaluate).returns(false) }
 
-        @compile.add_collection(colls[0])
-        @compile.add_collection(colls[1])
+        @compiler.add_collection(colls[0])
+        @compiler.add_collection(colls[1])
 
         compile_stub(:evaluate_generators)
-        @compile.compile
+        @compiler.compile
     end
 
     it "should ignore builtin resources" do
         resource = stub 'builtin', :ref => "File[testing]", :builtin? => true
 
-        @compile.add_resource(@scope, resource)
+        @compiler.add_resource(@scope, resource)
         resource.expects(:evaluate).never
         
-        @compile.compile
+        @compiler.compile
     end
 
     it "should evaluate unevaluated resources" do
         resource = stub 'notevaluated', :ref => "File[testing]", :builtin? => false, :evaluated? => false
-        @compile.add_resource(@scope, resource)
+        @compiler.add_resource(@scope, resource)
 
         # We have to now mark the resource as evaluated
         resource.expects(:evaluate).with { |*whatever| resource.stubs(:evaluated?).returns true }
         
-        @compile.compile
+        @compiler.compile
     end
 
     it "should not evaluate already-evaluated resources" do
         resource = stub 'already_evaluated', :ref => "File[testing]", :builtin? => false, :evaluated? => true
-        @compile.add_resource(@scope, resource)
+        @compiler.add_resource(@scope, resource)
         resource.expects(:evaluate).never
         
-        @compile.compile
+        @compiler.compile
     end
 
     it "should evaluate unevaluated resources created by evaluating other resources" do
         resource = stub 'notevaluated', :ref => "File[testing]", :builtin? => false, :evaluated? => false
-        @compile.add_resource(@scope, resource)
+        @compiler.add_resource(@scope, resource)
 
         resource2 = stub 'created', :ref => "File[other]", :builtin? => false, :evaluated? => false
 
         # We have to now mark the resource as evaluated
-        resource.expects(:evaluate).with { |*whatever| resource.stubs(:evaluated?).returns(true); @compile.add_resource(@scope, resource2) }
+        resource.expects(:evaluate).with { |*whatever| resource.stubs(:evaluated?).returns(true); @compiler.add_resource(@scope, resource2) }
         resource2.expects(:evaluate).with { |*whatever| resource2.stubs(:evaluated?).returns(true) }
 
         
-        @compile.compile
+        @compiler.compile
     end
 
     it "should call finish() on all resources" do
@@ -205,21 +205,21 @@ describe Puppet::Parser::Compile, " when compiling" do
         resource = Puppet::Parser::Resource.new :scope => @scope, :type => "file", :title => "finish"
         resource.expects(:finish)
 
-        @compile.add_resource(@scope, resource)
+        @compiler.add_resource(@scope, resource)
 
         # And one that does not
         dnf = stub "dnf", :ref => "File[dnf]"
 
-        @compile.add_resource(@scope, dnf)
+        @compiler.add_resource(@scope, dnf)
 
-        @compile.send(:finish)
+        @compiler.send(:finish)
     end
 
     it "should add resources that do not conflict with existing resources" do
         resource = stub "noconflict", :ref => "File[yay]"
-        @compile.add_resource(@scope, resource)
+        @compiler.add_resource(@scope, resource)
 
-        @compile.catalog.should be_vertex(resource)
+        @compiler.catalog.should be_vertex(resource)
     end
 
     it "should fail to add resources that conflict with existing resources" do
@@ -229,86 +229,86 @@ describe Puppet::Parser::Compile, " when compiling" do
         resource1 = stub "iso1conflict", :ref => "Mytype[yay]", :type => "mytype", :file => "eh", :line => 0
         resource2 = stub "iso2conflict", :ref => "Mytype[yay]", :type => "mytype", :file => "eh", :line => 0
 
-        @compile.add_resource(@scope, resource1)
-        lambda { @compile.add_resource(@scope, resource2) }.should raise_error(ArgumentError)
+        @compiler.add_resource(@scope, resource1)
+        lambda { @compiler.add_resource(@scope, resource2) }.should raise_error(ArgumentError)
     end
 
     it "should have a method for looking up resources" do
         resource = stub 'resource', :ref => "Yay[foo]"
-        @compile.add_resource(@scope, resource)
-        @compile.findresource("Yay[foo]").should equal(resource)
+        @compiler.add_resource(@scope, resource)
+        @compiler.findresource("Yay[foo]").should equal(resource)
     end
 
     it "should be able to look resources up by type and title" do
         resource = stub 'resource', :ref => "Yay[foo]"
-        @compile.add_resource(@scope, resource)
-        @compile.findresource("Yay", "foo").should equal(resource)
+        @compiler.add_resource(@scope, resource)
+        @compiler.findresource("Yay", "foo").should equal(resource)
     end
 end
 
-describe Puppet::Parser::Compile, " when evaluating collections" do
-    include CompileTesting
+describe Puppet::Parser::Compiler, " when evaluating collections" do
+    include CompilerTesting
 
     it "should evaluate each collection" do
         2.times { |i|
             coll = mock 'coll%s' % i
-            @compile.add_collection(coll)
+            @compiler.add_collection(coll)
             
             # This is the hard part -- we have to emulate the fact that
             # collections delete themselves if they are done evaluating.
             coll.expects(:evaluate).with do
-                @compile.delete_collection(coll)
+                @compiler.delete_collection(coll)
             end
         }
 
-        @compile.class.publicize_methods(:evaluate_collections) { @compile.evaluate_collections }
+        @compiler.class.publicize_methods(:evaluate_collections) { @compiler.evaluate_collections }
     end
 
     it "should not fail when there are unevaluated resource collections that do not refer to specific resources" do
         coll = stub 'coll', :evaluate => false
         coll.expects(:resources).returns(nil)
 
-        @compile.add_collection(coll)
+        @compiler.add_collection(coll)
 
-        lambda { @compile.compile }.should_not raise_error
+        lambda { @compiler.compile }.should_not raise_error
     end
 
     it "should fail when there are unevaluated resource collections that refer to a specific resource" do
         coll = stub 'coll', :evaluate => false
         coll.expects(:resources).returns(:something)
 
-        @compile.add_collection(coll)
+        @compiler.add_collection(coll)
 
-        lambda { @compile.compile }.should raise_error(Puppet::ParseError)
+        lambda { @compiler.compile }.should raise_error(Puppet::ParseError)
     end
 
     it "should fail when there are unevaluated resource collections that refer to multiple specific resources" do
         coll = stub 'coll', :evaluate => false
         coll.expects(:resources).returns([:one, :two])
 
-        @compile.add_collection(coll)
+        @compiler.add_collection(coll)
 
-        lambda { @compile.compile }.should raise_error(Puppet::ParseError)
+        lambda { @compiler.compile }.should raise_error(Puppet::ParseError)
     end
 end
 
-describe Puppet::Parser::Compile, "when told to evaluate missing classes" do
-    include CompileTesting
+describe Puppet::Parser::Compiler, "when told to evaluate missing classes" do
+    include CompilerTesting
 
     it "should fail if there's no source listed for the scope" do
         scope = stub 'scope', :source => nil
-        proc { @compile.evaluate_classes(%w{one two}, scope) }.should raise_error(Puppet::DevError)
+        proc { @compiler.evaluate_classes(%w{one two}, scope) }.should raise_error(Puppet::DevError)
     end
 
     it "should tag the catalog with the name of each not-found class" do
-        @compile.catalog.expects(:tag).with("notfound")
+        @compiler.catalog.expects(:tag).with("notfound")
         @scope.expects(:findclass).with("notfound").returns(nil)
-        @compile.evaluate_classes(%w{notfound}, @scope)
+        @compiler.evaluate_classes(%w{notfound}, @scope)
     end
 end
 
-describe Puppet::Parser::Compile, " when evaluating found classes" do
-    include CompileTesting
+describe Puppet::Parser::Compiler, " when evaluating found classes" do
+    include CompilerTesting
 
     before do
         @class = stub 'class', :classname => "my::class"
@@ -318,76 +318,76 @@ describe Puppet::Parser::Compile, " when evaluating found classes" do
     end
 
     it "should evaluate each class" do
-        @compile.catalog.stubs(:tag)
+        @compiler.catalog.stubs(:tag)
 
         @class.expects(:evaluate).with(@scope)
 
-        @compile.evaluate_classes(%w{myclass}, @scope)
+        @compiler.evaluate_classes(%w{myclass}, @scope)
     end
 
     it "should not evaluate the resources created for found classes unless asked" do
-        @compile.catalog.stubs(:tag)
+        @compiler.catalog.stubs(:tag)
 
         @resource.expects(:evaluate).never
 
         @class.expects(:evaluate).returns(@resource)
 
-        @compile.evaluate_classes(%w{myclass}, @scope)
+        @compiler.evaluate_classes(%w{myclass}, @scope)
     end
 
     it "should immediately evaluate the resources created for found classes when asked" do
-        @compile.catalog.stubs(:tag)
+        @compiler.catalog.stubs(:tag)
 
         @resource.expects(:evaluate)
         @class.expects(:evaluate).returns(@resource)
 
-        @compile.evaluate_classes(%w{myclass}, @scope, false)
+        @compiler.evaluate_classes(%w{myclass}, @scope, false)
     end
 
     it "should skip classes that have already been evaluated" do
-        @compile.catalog.stubs(:tag)
+        @compiler.catalog.stubs(:tag)
 
-        @compile.expects(:class_scope).with(@class).returns("something")
+        @compiler.expects(:class_scope).with(@class).returns("something")
 
-        @compile.expects(:add_resource).never
+        @compiler.expects(:add_resource).never
 
         @resource.expects(:evaluate).never
 
         Puppet::Parser::Resource.expects(:new).never
-        @compile.evaluate_classes(%w{myclass}, @scope, false)
+        @compiler.evaluate_classes(%w{myclass}, @scope, false)
     end
 
     it "should return the list of found classes" do
-        @compile.catalog.stubs(:tag)
+        @compiler.catalog.stubs(:tag)
 
-        @compile.stubs(:add_resource)
+        @compiler.stubs(:add_resource)
         @scope.stubs(:findclass).with("notfound").returns(nil)
 
         Puppet::Parser::Resource.stubs(:new).returns(@resource)
         @class.stubs :evaluate
-        @compile.evaluate_classes(%w{myclass notfound}, @scope).should == %w{myclass}
+        @compiler.evaluate_classes(%w{myclass notfound}, @scope).should == %w{myclass}
     end
 end
 
-describe Puppet::Parser::Compile, " when evaluating AST nodes with no AST nodes present" do
-    include CompileTesting
+describe Puppet::Parser::Compiler, " when evaluating AST nodes with no AST nodes present" do
+    include CompilerTesting
 
     it "should do nothing" do
-        @compile.expects(:ast_nodes?).returns(false)
-        @compile.parser.expects(:nodes).never
+        @compiler.expects(:ast_nodes?).returns(false)
+        @compiler.parser.expects(:nodes).never
         Puppet::Parser::Resource.expects(:new).never
 
-        @compile.send(:evaluate_ast_node)
+        @compiler.send(:evaluate_ast_node)
     end
 end
 
-describe Puppet::Parser::Compile, " when evaluating AST nodes with AST nodes present" do
-    include CompileTesting
+describe Puppet::Parser::Compiler, " when evaluating AST nodes with AST nodes present" do
+    include CompilerTesting
 
     before do
         @nodes = mock 'node_hash'
-        @compile.stubs(:ast_nodes?).returns(true)
-        @compile.parser.stubs(:nodes).returns(@nodes)
+        @compiler.stubs(:ast_nodes?).returns(true)
+        @compiler.parser.stubs(:nodes).returns(@nodes)
 
         # Set some names for our test
         @node.stubs(:names).returns(%w{a b c})
@@ -400,7 +400,7 @@ describe Puppet::Parser::Compile, " when evaluating AST nodes with AST nodes pre
     end
 
     it "should fail if the named node cannot be found" do
-        proc { @compile.send(:evaluate_ast_node) }.should raise_error(Puppet::ParseError)
+        proc { @compiler.send(:evaluate_ast_node) }.should raise_error(Puppet::ParseError)
     end
 
     it "should evaluate the first node class matching the node name" do
@@ -410,7 +410,7 @@ describe Puppet::Parser::Compile, " when evaluating AST nodes with AST nodes pre
         node_resource = stub 'node resource', :ref => "Node[c]", :evaluate => nil
         node_class.expects(:evaluate).returns(node_resource)
 
-        @compile.compile
+        @compiler.compile
     end
 
     it "should match the default node if no matching node can be found" do
@@ -420,7 +420,7 @@ describe Puppet::Parser::Compile, " when evaluating AST nodes with AST nodes pre
         node_resource = stub 'node resource', :ref => "Node[default]", :evaluate => nil
         node_class.expects(:evaluate).returns(node_resource)
 
-        @compile.compile
+        @compiler.compile
     end
 
     it "should evaluate the node resource immediately rather than using lazy evaluation" do
@@ -432,7 +432,7 @@ describe Puppet::Parser::Compile, " when evaluating AST nodes with AST nodes pre
 
         node_resource.expects(:evaluate)
 
-        @compile.send(:evaluate_ast_node)
+        @compiler.send(:evaluate_ast_node)
     end
 
     it "should set the node's scope as the top scope" do
@@ -443,38 +443,38 @@ describe Puppet::Parser::Compile, " when evaluating AST nodes with AST nodes pre
 
         # The #evaluate method normally does this.
         scope = stub 'scope', :source => "mysource"
-        @compile.class_set(node_class.classname, scope)
+        @compiler.class_set(node_class.classname, scope)
         node_resource.stubs(:evaluate)
 
-        @compile.compile
+        @compiler.compile
 
-        @compile.topscope.should equal(scope)
+        @compiler.topscope.should equal(scope)
     end
 end
 
-describe Puppet::Parser::Compile, "when storing compiled resources" do
-    include CompileTesting
+describe Puppet::Parser::Compiler, "when storing compiled resources" do
+    include CompilerTesting
 
     it "should store the resources" do
         Puppet.features.expects(:rails?).returns(true)
         Puppet::Rails.expects(:connect)
 
-        @compile.catalog.expects(:vertices).returns(:resources)
+        @compiler.catalog.expects(:vertices).returns(:resources)
 
-        @compile.expects(:store_to_active_record).with(@node, :resources)
-        @compile.send(:store)
+        @compiler.expects(:store_to_active_record).with(@node, :resources)
+        @compiler.send(:store)
     end
 
     it "should store to active_record" do
         @node.expects(:name).returns("myname")
         Puppet::Rails::Host.stubs(:transaction).yields
         Puppet::Rails::Host.expects(:store).with(@node, :resources)
-        @compile.send(:store_to_active_record, @node, :resources)
+        @compiler.send(:store_to_active_record, @node, :resources)
     end
 end
 
-describe Puppet::Parser::Compile, "when managing resource overrides" do
-    include CompileTesting
+describe Puppet::Parser::Compiler, "when managing resource overrides" do
+    include CompilerTesting
 
     before do
         @override = stub 'override', :ref => "My[ref]"
@@ -482,41 +482,41 @@ describe Puppet::Parser::Compile, "when managing resource overrides" do
     end
 
     it "should be able to store overrides" do
-        lambda { @compile.add_override(@override) }.should_not raise_error
+        lambda { @compiler.add_override(@override) }.should_not raise_error
     end
 
     it "should apply overrides to the appropriate resources" do
-        @compile.add_resource(@scope, @resource)
+        @compiler.add_resource(@scope, @resource)
         @resource.expects(:merge).with(@override)
 
-        @compile.add_override(@override)
+        @compiler.add_override(@override)
 
-        @compile.compile
+        @compiler.compile
     end
 
     it "should accept overrides before the related resource has been created" do
         @resource.expects(:merge).with(@override)
 
         # First store the override
-        @compile.add_override(@override)
+        @compiler.add_override(@override)
 
         # Then the resource
-        @compile.add_resource(@scope, @resource)
+        @compiler.add_resource(@scope, @resource)
 
         # And compile, so they get resolved
-        @compile.compile
+        @compiler.compile
     end
 
     it "should fail if the compile is finished and resource overrides have not been applied" do
-        @compile.add_override(@override)
+        @compiler.add_override(@override)
 
-        lambda { @compile.compile }.should raise_error(Puppet::ParseError)
+        lambda { @compiler.compile }.should raise_error(Puppet::ParseError)
     end
 end
 
 # #620 - Nodes and classes should conflict, else classes don't get evaluated
-describe Puppet::Parser::Compile, "when evaluating nodes and classes with the same name (#620)" do
-    include CompileTesting
+describe Puppet::Parser::Compiler, "when evaluating nodes and classes with the same name (#620)" do
+    include CompilerTesting
 
     before do
         @node = stub :nodescope? => true
@@ -524,12 +524,12 @@ describe Puppet::Parser::Compile, "when evaluating nodes and classes with the sa
     end
 
     it "should fail if a node already exists with the same name as the class being evaluated" do
-        @compile.class_set("one", @node)
-        lambda { @compile.class_set("one", @class) }.should raise_error(Puppet::ParseError)
+        @compiler.class_set("one", @node)
+        lambda { @compiler.class_set("one", @class) }.should raise_error(Puppet::ParseError)
     end
 
     it "should fail if a class already exists with the same name as the node being evaluated" do
-        @compile.class_set("one", @class)
-        lambda { @compile.class_set("one", @node) }.should raise_error(Puppet::ParseError)
+        @compiler.class_set("one", @class)
+        lambda { @compiler.class_set("one", @node) }.should raise_error(Puppet::ParseError)
     end
 end

@@ -27,7 +27,7 @@ class TestScope < Test::Unit::TestCase
     end
 
     def test_variables
-        config = mkcompile
+        config = mkcompiler
         topscope = config.topscope
         midscope = config.newscope(topscope)
         botscope = config.newscope(midscope)
@@ -94,7 +94,7 @@ class TestScope < Test::Unit::TestCase
         classes = ["", "one", "one::two", "one::two::three"].each do |name|
             klass = parser.newclass(name)
             Puppet::Parser::Resource.new(:type => "class", :title => name, :scope => scope, :source => mock('source')).evaluate
-            scopes[name] = scope.compile.class_scope(klass)
+            scopes[name] = scope.compiler.class_scope(klass)
         end
 
         classes.each do |name|
@@ -125,7 +125,7 @@ class TestScope < Test::Unit::TestCase
     end
 
     def test_setdefaults
-        config = mkcompile
+        config = mkcompiler
 
         scope = config.topscope
 
@@ -151,7 +151,7 @@ class TestScope < Test::Unit::TestCase
     end
 
     def test_lookupdefaults
-        config = mkcompile
+        config = mkcompiler
         top = config.topscope
 
         # Make a subscope
@@ -179,7 +179,7 @@ class TestScope < Test::Unit::TestCase
     end
 
     def test_parent
-        config = mkcompile
+        config = mkcompiler
         top = config.topscope
 
         # Make a subscope
@@ -205,7 +205,7 @@ class TestScope < Test::Unit::TestCase
         %w{one one::two one::two::three}.each do |name|
             klass = parser.newclass(name)
             Puppet::Parser::Resource.new(:type => "class", :title => name, :scope => scope, :source => mock('source')).evaluate
-            scopes[name] = scope.compile.class_scope(klass)
+            scopes[name] = scope.compiler.class_scope(klass)
             scopes[name].setvar("test", "value-%s" % name.sub(/.+::/,''))
         end
 
@@ -287,10 +287,10 @@ class TestScope < Test::Unit::TestCase
             function.evaluate scope
         end
 
-        scope.compile.send(:evaluate_generators)
+        scope.compiler.send(:evaluate_generators)
 
         [myclass, otherclass].each do |klass|
-            assert(scope.compile.class_scope(klass),
+            assert(scope.compiler.class_scope(klass),
                 "%s was not set" % klass.classname)
         end
     end
@@ -332,7 +332,7 @@ class TestScope < Test::Unit::TestCase
     # Verify that we recursively mark as exported the results of collectable
     # components.
     def test_exportedcomponents
-        config = mkcompile
+        config = mkcompiler
         parser = config.parser
 
         # Create a default source

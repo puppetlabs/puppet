@@ -16,7 +16,7 @@ class TestASTResource< Test::Unit::TestCase
     def setup
         super
         @scope = mkscope
-        @parser = @scope.compile.parser
+        @parser = @scope.compiler.parser
     end
 
     def newdef(type, title, params = nil)

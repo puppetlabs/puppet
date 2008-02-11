@@ -341,7 +341,7 @@ class TestResource < PuppetTest::TestCase
         {:name => "one", :title => "two"},
         {:title => "three"},
         ].each do |hash|
-            config = mkcompile parser
+            config = mkcompiler parser
             args = {:type => "yayness", :title => hash[:title],
                 :source => klass, :scope => config.topscope}
             if hash[:name]
@@ -388,7 +388,7 @@ class TestResource < PuppetTest::TestCase
             :code => resourcedef("file", varref("name"),
                 "mode" => "644"))
 
-        config = mkcompile(parser)
+        config = mkcompiler(parser)
 
         res = mkresource :type => "yayness", :title => "foo", :params => {}, :scope => config.topscope
         res.virtual = true

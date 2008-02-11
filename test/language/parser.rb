@@ -45,7 +45,7 @@ class TestParser < Test::Unit::TestCase
             assert_raise(Puppet::ParseError, "Did not fail while parsing %s" % file) {
                 parser.file = file
                 ast = parser.parse
-                config = mkcompile(parser)
+                config = mkcompiler(parser)
                 config.compile
                 #ast.classes[""].evaluate config.topscope
             }
@@ -868,7 +868,7 @@ file { "/tmp/yayness":
 
     def test_newclass
         scope = mkscope
-        parser = scope.compile.parser
+        parser = scope.compiler.parser
 
         mkcode = proc do |ary|
             classes = ary.collect do |string|

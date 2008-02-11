@@ -115,14 +115,14 @@ describe Puppet::Parser::Interpreter, " when compiling catalog" do
     before do
         @interp = Puppet::Parser::Interpreter.new
         @node = stub 'node', :environment => :myenv
-        @compile = mock 'compile'
+        @compiler = mock 'compile'
         @parser = mock 'parser'
     end
 
     it "should create a compile with the node and parser" do
-        @compile.expects(:compile).returns(:config)
+        @compiler.expects(:compile).returns(:config)
         @interp.expects(:parser).with(:myenv).returns(@parser)
-        Puppet::Parser::Compile.expects(:new).with(@node, @parser).returns(@compile)
+        Puppet::Parser::Compiler.expects(:new).with(@node, @parser).returns(@compiler)
         @interp.compile(@node)
     end
 

@@ -25,7 +25,7 @@ class Puppet::Parser::AST::Node < Puppet::Parser::AST::HostClass
         # Mark our node name as a class, too, but strip it of the domain
         # name.  Make the mark before we evaluate the code, so that it is
         # marked within the code itself.
-        scope.compile.class_set(self.classname, scope)
+        scope.compiler.class_set(self.classname, scope)
 
         # And then evaluate our code if we have any
         @code.safeevaluate(scope) if self.code

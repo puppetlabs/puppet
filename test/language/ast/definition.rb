@@ -40,7 +40,7 @@ class TestASTDefinition < Test::Unit::TestCase
 
     def test_evaluate
         parser = mkparser
-        config = mkcompile
+        config = mkcompiler
         config.send(:evaluate_main)
         scope = config.topscope
         klass = parser.newdefine "yayness",

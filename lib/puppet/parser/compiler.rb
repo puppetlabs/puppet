@@ -7,7 +7,7 @@ require 'puppet/util/errors'
 
 # Maintain a graph of scopes, along with a bunch of data
 # about the individual catalog we're compiling.
-class Puppet::Parser::Compile
+class Puppet::Parser::Compiler
     include Puppet::Util
     include Puppet::Util::Errors
     attr_reader :parser, :node, :facts, :collections, :catalog, :node_scope
@@ -76,7 +76,7 @@ class Puppet::Parser::Compile
         return @catalog.classes
     end
 
-    # Compile our catalog.  This mostly revolves around finding and evaluating classes.
+    # Compiler our catalog.  This mostly revolves around finding and evaluating classes.
     # This is the main entry into our catalog.
     def compile
         # Set the client's parameters into the top scope.
@@ -168,7 +168,7 @@ class Puppet::Parser::Compile
             begin
                 send(param.to_s + "=", value)
             rescue NoMethodError
-                raise ArgumentError, "Compile objects do not accept %s" % param
+                raise ArgumentError, "Compiler objects do not accept %s" % param
             end
         end
 
@@ -181,7 +181,7 @@ class Puppet::Parser::Compile
     # its parent to the graph.
     def newscope(parent, options = {})
         parent ||= topscope
-        options[:compile] = self
+        options[:compiler] = self
         options[:parser] ||= self.parser
         scope = Puppet::Parser::Scope.new(options)
         @scope_graph.add_edge!(parent, scope)
@@ -382,7 +382,7 @@ class Puppet::Parser::Compile
     # Initialize the top-level scope, class, and resource.
     def init_main
         # Create our initial scope and a resource that will evaluate main.
-        @topscope = Puppet::Parser::Scope.new(:compile => self, :parser => self.parser)
+        @topscope = Puppet::Parser::Scope.new(:compiler => self, :parser => self.parser)
         @scope_graph.add_vertex!(@topscope)
     end
 

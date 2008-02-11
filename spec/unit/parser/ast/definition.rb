@@ -12,8 +12,8 @@ describe Puppet::Parser::AST::Definition, "when evaluating" do
         @source = @parser.newclass ""
         @definition = @parser.newdefine "mydefine"
         @node = Puppet::Node.new("yaynode")
-        @compile = Puppet::Parser::Compile.new(@node, @parser)
-        @scope = @compile.topscope
+        @compiler = Puppet::Parser::Compiler.new(@node, @parser)
+        @scope = @compiler.topscope
 
         @resource = Puppet::Parser::Resource.new(:type => "mydefine", :title => "myresource", :scope => @scope, :source => @source)
     end

@@ -20,7 +20,7 @@ class TestASTResourceReference < Test::Unit::TestCase
     def setup
         super
         @scope = mkscope
-        @parser = @scope.compile.parser
+        @parser = @scope.compiler.parser
     end
 
     def test_evaluate

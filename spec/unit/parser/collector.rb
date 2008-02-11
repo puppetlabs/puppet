@@ -79,8 +79,8 @@ describe Puppet::Parser::Collector, "when collecting specific virtual resources"
         @collector.resources = ["File[virtual1]"]
         one = mock 'one'
         one.stubs(:virtual=)
-        @compile.expects(:delete_collection).with(@collector)
-        @scope.expects(:compile).returns(@compile)
+        @compiler.expects(:delete_collection).with(@collector)
+        @scope.expects(:compiler).returns(@compiler)
         @scope.stubs(:findresource).with("File[virtual1]").returns(one)
         @collector.evaluate
     end
@@ -89,7 +89,7 @@ describe Puppet::Parser::Collector, "when collecting specific virtual resources"
         @collector.resources = ["File[virtual1]"]
         one = mock 'one'
         one.stubs(:virtual=)
-        @compile.expects(:delete_collection).never
+        @compiler.expects(:delete_collection).never
         @scope.stubs(:findresource).with("File[virtual1]").returns(nil)
         @collector.evaluate
     end
@@ -98,8 +98,8 @@ end
 describe Puppet::Parser::Collector, "when collecting virtual resources" do
     before do
         @scope = mock 'scope'
-        @compile = mock 'compile'
-        @scope.stubs(:compile).returns(@compile)
+        @compiler = mock 'compile'
+        @scope.stubs(:compiler).returns(@compiler)
         @resource_type = "Mytype"
         @vquery = proc { |res| true }
 
@@ -113,7 +113,7 @@ describe Puppet::Parser::Collector, "when collecting virtual resources" do
         one.stubs(:virtual=)
         two.stubs(:virtual=)
 
-        @compile.expects(:resources).returns([one, two])
+        @compiler.expects(:resources).returns([one, two])
 
         @collector.evaluate.should == [one, two]
     end
@@ -123,7 +123,7 @@ describe Puppet::Parser::Collector, "when collecting virtual resources" do
 
         one.expects(:virtual=).with(false)
 
-        @compile.expects(:resources).returns([one])
+        @compiler.expects(:resources).returns([one])
 
         @collector.evaluate
     end
@@ -135,7 +135,7 @@ describe Puppet::Parser::Collector, "when collecting virtual resources" do
         one.stubs(:virtual=)
         two.stubs(:virtual=)
 
-        @compile.expects(:resources).returns([one, two])
+        @compiler.expects(:resources).returns([one, two])
 
         @collector.evaluate.should == [one, two]
     end
@@ -147,7 +147,7 @@ describe Puppet::Parser::Collector, "when collecting virtual resources" do
         one.expects(:virtual=).with(false)
         two.expects(:virtual=).with(false)
 
-        @compile.expects(:resources).returns([one, two])
+        @compiler.expects(:resources).returns([one, two])
 
         @collector = Puppet::Parser::Collector.new(@scope, @resource_type, nil, nil, :virtual)
 
@@ -161,7 +161,7 @@ describe Puppet::Parser::Collector, "when collecting virtual resources" do
         one.expects(:virtual=).with(false)
         two.expects(:virtual=).never
 
-        @compile.expects(:resources).returns([one, two])
+        @compiler.expects(:resources).returns([one, two])
 
         @collector.evaluate.should == [one]
     end
@@ -173,7 +173,7 @@ describe Puppet::Parser::Collector, "when collecting virtual resources" do
         one.expects(:virtual=).never
         two.expects(:virtual=).never
 
-        @compile.expects(:resources).returns([one, two])
+        @compiler.expects(:resources).returns([one, two])
 
         @collector.evaluate.should be_false
     end
@@ -187,7 +187,7 @@ describe Puppet::Parser::Collector, "when collecting virtual resources" do
         one.expects(:virtual=).with(false)
         two.expects(:virtual=).never
 
-        @compile.expects(:resources).returns([one, two])
+        @compiler.expects(:resources).returns([one, two])
 
         @collector.evaluate.should == [one]
     end
@@ -198,8 +198,8 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
 
     before do
         @scope = stub 'scope', :host => "myhost", :debug => nil
-        @compile = mock 'compile'
-        @scope.stubs(:compile).returns(@compile)
+        @compiler = mock 'compile'
+        @scope.stubs(:compiler).returns(@compiler)
         @resource_type = "Mytype"
         @equery = "test = true"
         @vquery = proc { |r| true }
@@ -218,7 +218,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
     end
 
     it "should use initialize the Rails support if ActiveRecord is not connected" do
-        @compile.stubs(:resources).returns([])
+        @compiler.stubs(:resources).returns([])
         ActiveRecord::Base.expects(:connected?).returns(false)
         Puppet::Rails.expects(:init)
         Puppet::Rails::Host.stubs(:find_by_name).returns(nil)
@@ -238,7 +238,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
         two.stubs(:exported=)
         two.stubs(:virtual=)
 
-        @compile.expects(:resources).returns([one, two])
+        @compiler.expects(:resources).returns([one, two])
 
         @collector.evaluate.should == [one, two]
     end
@@ -251,7 +251,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
         one.stubs(:exported=)
         one.expects(:virtual=).with(false)
 
-        @compile.expects(:resources).returns([one])
+        @compiler.expects(:resources).returns([one])
 
         @collector.evaluate.should == [one]
     end
@@ -268,10 +268,10 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
         resource.stubs(:exported=)
         resource.stubs(:virtual=)
 
-        @compile.stubs(:resources).returns([])
+        @compiler.stubs(:resources).returns([])
         @scope.stubs(:findresource).returns(nil)
 
-        @compile.stubs(:add_resource)
+        @compiler.stubs(:add_resource)
 
         @collector.evaluate.should == [resource]
     end
@@ -288,10 +288,10 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
         resource.stubs(:exported=)
         resource.stubs(:virtual=)
 
-        @compile.stubs(:resources).returns([])
+        @compiler.stubs(:resources).returns([])
         @scope.stubs(:findresource).returns(nil)
 
-        @compile.expects(:add_resource).with(@scope, resource)
+        @compiler.expects(:add_resource).with(@scope, resource)
 
         @collector.evaluate.should == [resource]
     end
@@ -309,10 +309,10 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
         resource.expects(:exported=).with(false)
         resource.stubs(:virtual=)
 
-        @compile.stubs(:resources).returns([])
+        @compiler.stubs(:resources).returns([])
         @scope.stubs(:findresource).returns(nil)
 
-        @compile.stubs(:add_resource)
+        @compiler.stubs(:add_resource)
 
         @collector.evaluate
     end
@@ -328,10 +328,10 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
 
         resource = mock 'resource'
 
-        @compile.stubs(:resources).returns([])
+        @compiler.stubs(:resources).returns([])
         @scope.stubs(:findresource).returns(inmemory)
 
-        @compile.stubs(:add_resource)
+        @compiler.stubs(:add_resource)
 
         proc { @collector.evaluate }.should raise_error(Puppet::ParseError)
     end
@@ -347,10 +347,10 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
 
         resource = mock 'resource'
 
-        @compile.stubs(:resources).returns([])
+        @compiler.stubs(:resources).returns([])
         @scope.stubs(:findresource).returns(inmemory)
 
-        @compile.stubs(:add_resource)
+        @compiler.stubs(:add_resource)
 
         proc { @collector.evaluate }.should_not raise_error(Puppet::ParseError)
     end
@@ -361,14 +361,14 @@ describe Puppet::Parser::Collector, "when building its ActiveRecord query for co
 
     before do
         @scope = stub 'scope', :host => "myhost", :debug => nil
-        @compile = mock 'compile'
-        @scope.stubs(:compile).returns(@compile)
+        @compiler = mock 'compile'
+        @scope.stubs(:compiler).returns(@compiler)
         @resource_type = "Mytype"
         @equery = nil
         @vquery = proc { |r| true }
 
         @collector = Puppet::Parser::Collector.new(@scope, @resource_type, @equery, @vquery, :exported)
-        @compile.stubs(:resources).returns([])
+        @compiler.stubs(:resources).returns([])
 
         ActiveRecord::Base.stubs(:connected?).returns(false)
 

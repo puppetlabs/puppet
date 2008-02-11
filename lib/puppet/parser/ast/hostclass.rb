@@ -32,7 +32,7 @@ class Puppet::Parser::AST::HostClass < Puppet::Parser::AST::Definition
         scope = resource.scope
         # Verify that we haven't already been evaluated.  This is
         # what provides the singleton aspect.
-        if existing_scope = scope.compile.class_scope(self)
+        if existing_scope = scope.compiler.class_scope(self)
             Puppet.debug "Class '%s' already evaluated; not evaluating again" % (classname == "" ? "main" : classname)
             return nil
         end
@@ -57,7 +57,7 @@ class Puppet::Parser::AST::HostClass < Puppet::Parser::AST::Definition
 
         # Set the class before we do anything else, so that it's set
         # during the evaluation and can be inspected.
-        scope.compile.class_set(self.classname, scope)
+        scope.compiler.class_set(self.classname, scope)
 
         # Now evaluate our code, yo.
         if self.code
@@ -68,7 +68,7 @@ class Puppet::Parser::AST::HostClass < Puppet::Parser::AST::Definition
     end
 
     def parent_scope(scope, klass)
-        if s = scope.compile.class_scope(klass)
+        if s = scope.compiler.class_scope(klass)
             return s
         else
             raise Puppet::DevError, "Could not find scope for %s" % klass.classname

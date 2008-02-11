@@ -57,11 +57,11 @@ describe Puppet::Node::Catalog, " when extracting transobjects" do
     def mkscope
         @parser = Puppet::Parser::Parser.new :Code => ""
         @node = Puppet::Node.new("mynode")
-        @compile = Puppet::Parser::Compile.new(@node, @parser)
+        @compiler = Puppet::Parser::Compiler.new(@node, @parser)
 
         # XXX This is ridiculous.
-        @compile.send(:evaluate_main)
-        @scope = @compile.topscope
+        @compiler.send(:evaluate_main)
+        @scope = @compiler.topscope
     end
 
     def mkresource(type, name)

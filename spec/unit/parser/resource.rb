@@ -15,8 +15,8 @@ describe Puppet::Parser::Resource, " when evaluating" do
         @class = @parser.newclass "myclass"
         @nodedef = @parser.newnode("mynode")[0]
         @node = Puppet::Node.new("yaynode")
-        @compile = Puppet::Parser::Compile.new(@node, @parser)
-        @scope = @compile.topscope
+        @compiler = Puppet::Parser::Compiler.new(@node, @parser)
+        @scope = @compiler.topscope
     end
 
     it "should evaluate the associated AST definition" do
@@ -47,8 +47,8 @@ describe Puppet::Parser::Resource, " when finishing" do
         @class = @parser.newclass "myclass"
         @nodedef = @parser.newnode("mynode")[0]
         @node = Puppet::Node.new("yaynode")
-        @compile = Puppet::Parser::Compile.new(@node, @parser)
-        @scope = @compile.topscope
+        @compiler = Puppet::Parser::Compiler.new(@node, @parser)
+        @scope = @compiler.topscope
 
         @resource = Puppet::Parser::Resource.new(:type => "mydefine", :title => "whatever", :scope => @scope, :source => @source)
     end
