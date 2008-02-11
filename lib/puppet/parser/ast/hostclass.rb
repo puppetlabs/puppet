@@ -18,6 +18,15 @@ class Puppet::Parser::AST::HostClass < Puppet::Parser::AST::Definition
         end
     end
 
+    # Make sure our parent class has been evaluated, if we have one.
+    def evaluate(scope)
+        if parentclass and ! scope.catalog.resource(:class, parentclass)
+            resource = parentobj.evaluate(scope)
+        end
+
+        super
+    end
+
     # Evaluate the code associated with this class.
     def evaluate_code(resource)
         scope = resource.scope
@@ -56,11 +65,6 @@ class Puppet::Parser::AST::HostClass < Puppet::Parser::AST::Definition
         else
             return nil
         end
-    end
-
-    def initialize(options)
-        @parentclass = nil
-        super
     end
 
     def parent_scope(scope, klass)

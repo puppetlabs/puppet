@@ -13,6 +13,78 @@ module CompileTesting
     end
 end
 
+describe Puppet::Parser::Compile do
+    include CompileTesting
+
+    it "should be able to store references to class scopes" do
+        lambda { @compile.class_set "myname", "myscope" }.should_not raise_error
+    end
+
+    it "should be able to retrieve class scopes by name" do
+        @compile.class_set "myname", "myscope"
+        @compile.class_scope("myname").should == "myscope"
+    end
+
+    it "should be able to retrieve class scopes by object" do
+        klass = mock 'ast_class'
+        klass.expects(:classname).returns("myname")
+        @compile.class_set "myname", "myscope"
+        @compile.class_scope(klass).should == "myscope"
+    end
+
+    it "should be able to return a class list containing all set classes" do
+        @compile.class_set "", "empty"
+        @compile.class_set "one", "yep"
+        @compile.class_set "two", "nope"
+
+        @compile.classlist.sort.should == %w{one two}.sort
+    end
+end
+
+describe Puppet::Parser::Compile, " when initializing" do
+    include CompileTesting
+
+    it "should set its node attribute" do
+        @compile.node.should equal(@node)
+    end
+
+    it "should set its parser attribute" do
+        @compile.parser.should equal(@parser)
+    end
+
+    it "should detect when ast nodes are absent" do
+        @compile.ast_nodes?.should be_false
+    end
+
+    it "should detect when ast nodes are present" do
+        @parser.nodes["testing"] = "yay"
+        @compile.ast_nodes?.should be_true
+    end
+end
+
+describe Puppet::Parser::Compile, "when managing scopes" do
+    include CompileTesting
+
+    it "should create a top scope" do
+        @compile.topscope.should be_instance_of(Puppet::Parser::Scope)
+    end
+
+    it "should be able to create new scopes" do
+        @compile.newscope(@compile.topscope).should be_instance_of(Puppet::Parser::Scope)
+    end
+
+    it "should correctly set the level of newly created scopes" do
+        @compile.newscope(@compile.topscope, :level => 5).level.should == 5
+    end
+
+    it "should set the parent scope of the new scope to be the passed-in parent" do
+        scope = mock 'scope'
+        newscope = @compile.newscope(scope)
+
+        @compile.parent(newscope).should equal(scope)
+    end
+end
+
 describe Puppet::Parser::Compile, " when compiling" do
     include CompileTesting
 
@@ -174,21 +246,6 @@ describe Puppet::Parser::Compile, " when compiling" do
     end
 end
 
-describe Puppet::Parser::Compile, " when evaluating classes" do
-    include CompileTesting
-
-    it "should fail if there's no source listed for the scope" do
-        scope = stub 'scope', :source => nil
-        proc { @compile.evaluate_classes(%w{one two}, scope) }.should raise_error(Puppet::DevError)
-    end
-
-    it "should tag the catalog with the name of each not-found class" do
-        @compile.catalog.expects(:tag).with("notfound")
-        @scope.expects(:findclass).with("notfound").returns(nil)
-        @compile.evaluate_classes(%w{notfound}, @scope)
-    end
-end
-
 describe Puppet::Parser::Compile, " when evaluating collections" do
     include CompileTesting
 
@@ -235,6 +292,20 @@ describe Puppet::Parser::Compile, " when evaluating collections" do
     end
 end
 
+describe Puppet::Parser::Compile, "when told to evaluate missing classes" do
+    include CompileTesting
+
+    it "should fail if there's no source listed for the scope" do
+        scope = stub 'scope', :source => nil
+        proc { @compile.evaluate_classes(%w{one two}, scope) }.should raise_error(Puppet::DevError)
+    end
+
+    it "should tag the catalog with the name of each not-found class" do
+        @compile.catalog.expects(:tag).with("notfound")
+        @scope.expects(:findclass).with("notfound").returns(nil)
+        @compile.evaluate_classes(%w{notfound}, @scope)
+    end
+end
 
 describe Puppet::Parser::Compile, " when evaluating found classes" do
     include CompileTesting
@@ -243,53 +314,33 @@ describe Puppet::Parser::Compile, " when evaluating found classes" do
         @class = stub 'class', :classname => "my::class"
         @scope.stubs(:findclass).with("myclass").returns(@class)
 
-        @resource = stub 'resource', :ref => 'Class[myclass]'
+        @resource = stub 'resource', :ref => "Class[myclass]"
     end
 
-    it "should create a resource for each found class" do
+    it "should evaluate each class" do
         @compile.catalog.stubs(:tag)
 
-        @compile.stubs :store_resource
+        @class.expects(:evaluate).with(@scope)
 
-        Puppet::Parser::Resource.expects(:new).with(:scope => @scope, :source => @scope.source, :title => "my::class", :type => "class").returns(@resource)
-        @compile.evaluate_classes(%w{myclass}, @scope)
-    end
-
-    it "should store each created resource in the compile" do
-        @compile.catalog.stubs(:tag)
-
-        @compile.expects(:store_resource).with(@scope, @resource)
-
-        Puppet::Parser::Resource.stubs(:new).returns(@resource)
-        @compile.evaluate_classes(%w{myclass}, @scope)
-    end
-
-    it "should tag the catalog with the fully-qualified name of each found class" do
-        @compile.catalog.expects(:tag).with("my::class")
-
-        @compile.stubs(:store_resource)
-
-        Puppet::Parser::Resource.stubs(:new).returns(@resource)
         @compile.evaluate_classes(%w{myclass}, @scope)
     end
 
     it "should not evaluate the resources created for found classes unless asked" do
         @compile.catalog.stubs(:tag)
 
-        @compile.stubs(:store_resource)
         @resource.expects(:evaluate).never
 
-        Puppet::Parser::Resource.stubs(:new).returns(@resource)
+        @class.expects(:evaluate).returns(@resource)
+
         @compile.evaluate_classes(%w{myclass}, @scope)
     end
 
     it "should immediately evaluate the resources created for found classes when asked" do
         @compile.catalog.stubs(:tag)
 
-        @compile.stubs(:store_resource)
         @resource.expects(:evaluate)
+        @class.expects(:evaluate).returns(@resource)
 
-        Puppet::Parser::Resource.stubs(:new).returns(@resource)
         @compile.evaluate_classes(%w{myclass}, @scope, false)
     end
 
@@ -313,6 +364,7 @@ describe Puppet::Parser::Compile, " when evaluating found classes" do
         @scope.stubs(:findclass).with("notfound").returns(nil)
 
         Puppet::Parser::Resource.stubs(:new).returns(@resource)
+        @class.stubs :evaluate
         @compile.evaluate_classes(%w{myclass notfound}, @scope).should == %w{myclass}
     end
 end
@@ -408,78 +460,6 @@ describe Puppet::Parser::Compile, " when evaluating AST nodes with AST nodes pre
         @compile.send(:evaluate_ast_node)
 
         @compile.topscope.should == :my_node_scope
-    end
-end
-
-describe Puppet::Parser::Compile, " when initializing" do
-    include CompileTesting
-
-    it "should set its node attribute" do
-        @compile.node.should equal(@node)
-    end
-
-    it "should set its parser attribute" do
-        @compile.parser.should equal(@parser)
-    end
-
-    it "should detect when ast nodes are absent" do
-        @compile.ast_nodes?.should be_false
-    end
-
-    it "should detect when ast nodes are present" do
-        @parser.nodes["testing"] = "yay"
-        @compile.ast_nodes?.should be_true
-    end
-end
-
-describe Puppet::Parser::Compile do
-    include CompileTesting
-
-    it "should be able to store references to class scopes" do
-        lambda { @compile.class_set "myname", "myscope" }.should_not raise_error
-    end
-
-    it "should be able to retrieve class scopes by name" do
-        @compile.class_set "myname", "myscope"
-        @compile.class_scope("myname").should == "myscope"
-    end
-
-    it "should be able to retrieve class scopes by object" do
-        klass = mock 'ast_class'
-        klass.expects(:classname).returns("myname")
-        @compile.class_set "myname", "myscope"
-        @compile.class_scope(klass).should == "myscope"
-    end
-
-    it "should be able to return a class list containing all set classes" do
-        @compile.class_set "", "empty"
-        @compile.class_set "one", "yep"
-        @compile.class_set "two", "nope"
-
-        @compile.classlist.sort.should == %w{one two}.sort
-    end
-end
-
-describe Puppet::Parser::Compile, "when managing scopes" do
-    include CompileTesting
-
-    it "should create a top scope" do
-        @compile.topscope.should be_instance_of(Puppet::Parser::Scope)
-    end
-
-    it "should be able to create new scopes" do
-        @compile.newscope(@compile.topscope).should be_instance_of(Puppet::Parser::Scope)
-    end
-
-    it "should correctly set the level of newly created scopes" do
-        @compile.newscope(@compile.topscope, :level => 5).level.should == 5
-    end
-
-    it "should set the parent scope of the new scope to be the passed-in parent" do
-        scope = mock 'scope'
-        newscope = @compile.newscope(scope)
-
-        @compile.parent(newscope).should equal(scope)
     end
 end
 

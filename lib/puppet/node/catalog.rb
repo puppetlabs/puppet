@@ -395,6 +395,11 @@ class Puppet::Node::Catalog < Puppet::PGraph
         nil
     end
 
+    # Does our tag list include this tag?
+    def tagged?(tag)
+        @tags.include?(tag)
+    end
+
     # Return the list of tags.
     def tags
         @tags.dup

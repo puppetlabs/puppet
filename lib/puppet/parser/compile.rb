@@ -115,16 +115,11 @@ class Puppet::Parser::Compile
             if klass = scope.findclass(name)
                 found << name and next if class_scope(klass)
 
-                # Create a resource to model this class, and then add it to the list
-                # of resources.
-                resource = Puppet::Parser::Resource.new(:type => "class", :title => klass.classname, :scope => scope, :source => scope.source)
-
-                store_resource(scope, resource)
+                resource = klass.evaluate(scope)
 
                 # If they've disabled lazy evaluation (which the :include function does),
                 # then evaluate our resource immediately.
                 resource.evaluate unless lazy_evaluate
-                @catalog.tag(klass.classname)
                 found << name
             else
                 Puppet.info "Could not find class %s for %s" % [name, node.name]
@@ -411,9 +406,6 @@ class Puppet::Parser::Compile
         # The list of collections that have been created.  This is a global list,
         # but they each refer back to the scope that created them.
         @collections = []
-
-        # A list of tags we've generated; most class names.
-        @tags = []
 
         # A graph for maintaining scope relationships.
         @scope_graph = Puppet::SimpleGraph.new

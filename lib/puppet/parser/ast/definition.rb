@@ -24,7 +24,12 @@ class Puppet::Parser::AST::Definition < Puppet::Parser::AST::Branch
 
     # Create a resource that knows how to evaluate our actual code.
     def evaluate(scope)
-        resource = Puppet::Parser::Resource.new(:type => "class", :title => klass.classname, :scope => scope, :source => scope.source)
+        # Do nothing if the resource already exists; this provides the singleton nature classes need.
+        return if scope.catalog.resource(:class, self.classname)
+
+        resource = Puppet::Parser::Resource.new(:type => "class", :title => self.classname, :scope => scope, :source => scope.source)
+
+        scope.catalog.tag(*resource.tags)
 
         scope.compile.store_resource(scope, resource)
 
@@ -91,23 +96,21 @@ class Puppet::Parser::AST::Definition < Puppet::Parser::AST::Branch
 
     # Hunt down our class object.
     def parentobj
-        if @parentclass
-            # Cache our result, since it should never change.
-            unless defined?(@parentobj)
-                unless tmp = find_parentclass
-                    parsefail "Could not find %s %s" % [self.class.name, @parentclass]
-                end
+        return nil unless @parentclass
 
-                if tmp == self
-                    parsefail "Parent classes must have dissimilar names"
-                end
-
-                @parentobj = tmp
+        # Cache our result, since it should never change.
+        unless defined?(@parentobj)
+            unless tmp = find_parentclass
+                parsefail "Could not find %s parent %s" % [self.class.name, @parentclass]
             end
-            @parentobj
-        else
-            nil
+
+            if tmp == self
+                parsefail "Parent classes must have dissimilar names"
+            end
+
+            @parentobj = tmp
         end
+        @parentobj
     end
 
     # Create a new subscope in which to evaluate our code.
