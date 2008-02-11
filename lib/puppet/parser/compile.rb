@@ -232,9 +232,7 @@ class Puppet::Parser::Compile
 
         # Create a resource to model this node, and then add it to the list
         # of resources.
-        resource = Puppet::Parser::Resource.new(:type => "node", :title => astnode.classname, :scope => topscope, :source => topscope.source)
-        add_resource(topscope, resource)
-        @catalog.tag(astnode.classname)
+        resource = astnode.evaluate(topscope)
 
         resource.evaluate
 

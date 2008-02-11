@@ -403,35 +403,24 @@ describe Puppet::Parser::Compile, " when evaluating AST nodes with AST nodes pre
         proc { @compile.send(:evaluate_ast_node) }.should raise_error(Puppet::ParseError)
     end
 
-    it "should create a resource for the first node class matching the node name" do
-        node_class = stub 'node', :classname => "c"
+    it "should evaluate the first node class matching the node name" do
+        node_class = stub 'node', :classname => "c", :evaluate_code => nil
         @nodes.stubs(:[]).with("c").returns(node_class)
 
         node_resource = stub 'node resource', :ref => "Node[c]", :evaluate => nil
-        Puppet::Parser::Resource.expects(:new).with { |args| args[:title] == "c" and args[:type] == "node" }.returns(node_resource)
+        node_class.expects(:evaluate).returns(node_resource)
 
-        @compile.send(:evaluate_ast_node)
+        @compile.compile
     end
 
     it "should match the default node if no matching node can be found" do
-        node_class = stub 'node', :classname => "default"
+        node_class = stub 'node', :classname => "default", :evaluate_code => nil
         @nodes.stubs(:[]).with("default").returns(node_class)
 
         node_resource = stub 'node resource', :ref => "Node[default]", :evaluate => nil
-        Puppet::Parser::Resource.expects(:new).with { |args| args[:title] == "default" and args[:type] == "node" }.returns(node_resource)
+        node_class.expects(:evaluate).returns(node_resource)
 
-        @compile.send(:evaluate_ast_node)
-    end
-
-    it "should tag the catalog with the found node name" do
-        node_class = stub 'node', :classname => "c"
-        @nodes.stubs(:[]).with("c").returns(node_class)
-
-        node_resource = stub 'node resource', :ref => "Node[c]", :evaluate => nil
-        Puppet::Parser::Resource.stubs(:new).returns(node_resource)
-
-        @compile.catalog.expects(:tag).with("c")
-        @compile.send(:evaluate_ast_node)
+        @compile.compile
     end
 
     it "should evaluate the node resource immediately rather than using lazy evaluation" do
@@ -439,7 +428,7 @@ describe Puppet::Parser::Compile, " when evaluating AST nodes with AST nodes pre
         @nodes.stubs(:[]).with("c").returns(node_class)
 
         node_resource = stub 'node resource', :ref => "Node[c]"
-        Puppet::Parser::Resource.stubs(:new).returns(node_resource)
+        node_class.expects(:evaluate).returns(node_resource)
 
         node_resource.expects(:evaluate)
 
@@ -447,19 +436,19 @@ describe Puppet::Parser::Compile, " when evaluating AST nodes with AST nodes pre
     end
 
     it "should set the node's scope as the top scope" do
-        node_class = stub 'node', :classname => "c"
+        node_resource = stub 'node resource', :ref => "Node[c]", :evaluate => nil
+        node_class = stub 'node', :classname => "c", :evaluate => node_resource
+
         @nodes.stubs(:[]).with("c").returns(node_class)
 
-        node_resource = stub 'node resource', :ref => "Node[c]"
-        Puppet::Parser::Resource.stubs(:new).returns(node_resource)
-
         # The #evaluate method normally does this.
-        @compile.class_set(node_class.classname, :my_node_scope)
+        scope = stub 'scope', :source => "mysource"
+        @compile.class_set(node_class.classname, scope)
         node_resource.stubs(:evaluate)
 
-        @compile.send(:evaluate_ast_node)
+        @compile.compile
 
-        @compile.topscope.should == :my_node_scope
+        @compile.topscope.should equal(scope)
     end
 end
 
