@@ -52,23 +52,23 @@ describe Puppet::Parser::Resource::Reference, " when modeling defined types" do
         @nodedef = @parser.newnode("mynode")[0]
         @node = Puppet::Node.new("yaynode")
 
-        @compile = Puppet::Parser::Compile.new(@node, @parser)
+        @compiler = Puppet::Parser::Compiler.new(@node, @parser)
     end
 
     it "should be able to find defined types" do
-        ref = @type.new(:type => "mydefine", :title => "/tmp/yay", :scope => @compile.topscope)
+        ref = @type.new(:type => "mydefine", :title => "/tmp/yay", :scope => @compiler.topscope)
         ref.builtin?.should be_false
         ref.definedtype.should equal(@definition)
     end
 
     it "should be able to find classes" do
-        ref = @type.new(:type => "class", :title => "myclass", :scope => @compile.topscope)
+        ref = @type.new(:type => "class", :title => "myclass", :scope => @compiler.topscope)
         ref.builtin?.should be_false
         ref.definedtype.should equal(@class)
     end
 
     it "should be able to find nodes" do
-        ref = @type.new(:type => "node", :title => "mynode", :scope => @compile.topscope)
+        ref = @type.new(:type => "node", :title => "mynode", :scope => @compiler.topscope)
         ref.builtin?.should be_false
         ref.definedtype.object_id.should  == @nodedef.object_id
     end

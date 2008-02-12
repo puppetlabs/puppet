@@ -106,7 +106,6 @@ class TestResource < PuppetTest::TestCase
 
     def test_finish
         res = mkresource
-        res.expects(:add_overrides)
         res.expects(:add_defaults)
         res.expects(:add_metaparams)
         res.expects(:validate)
@@ -266,46 +265,10 @@ class TestResource < PuppetTest::TestCase
         ref.expects(:definedtype).returns(type)
         res.expects(:finish)
         res.scope = mock("scope")
-        config = mock("config")
-        res.scope.expects(:compile).returns(config)
-        config.expects(:delete_resource).with(res)
 
-        args = {:scope => res.scope, :resource => res}
-        type.expects(:evaluate).with(args)
+        type.expects(:evaluate_code).with(res)
 
         res.evaluate
-    end
-
-    def test_add_overrides
-        # Try it with nil
-        res = mkresource
-        res.scope = mock('scope')
-        config = mock("config")
-        res.scope.expects(:compile).returns(config)
-        config.expects(:resource_overrides).with(res).returns(nil)
-        res.expects(:merge).never
-        res.send(:add_overrides)
-
-        # And an empty array
-        res = mkresource
-        res.scope = mock('scope')
-        config = mock("config")
-        res.scope.expects(:compile).returns(config)
-        config.expects(:resource_overrides).with(res).returns([])
-        res.expects(:merge).never
-        res.send(:add_overrides)
-
-        # And with some overrides
-        res = mkresource
-        res.scope = mock('scope')
-        config = mock("config")
-        res.scope.expects(:compile).returns(config)
-        returns = %w{a b}
-        config.expects(:resource_overrides).with(res).returns(returns)
-        res.expects(:merge).with("a")
-        res.expects(:merge).with("b")
-        res.send(:add_overrides)
-        assert(returns.empty?, "Did not clear overrides")
     end
 
     def test_proxymethods
@@ -378,7 +341,7 @@ class TestResource < PuppetTest::TestCase
         {:name => "one", :title => "two"},
         {:title => "three"},
         ].each do |hash|
-            config = mkcompile parser
+            config = mkcompiler parser
             args = {:type => "yayness", :title => hash[:title],
                 :source => klass, :scope => config.topscope}
             if hash[:name]
@@ -425,7 +388,7 @@ class TestResource < PuppetTest::TestCase
             :code => resourcedef("file", varref("name"),
                 "mode" => "644"))
 
-        config = mkcompile(parser)
+        config = mkcompiler(parser)
 
         res = mkresource :type => "yayness", :title => "foo", :params => {}, :scope => config.topscope
         res.virtual = true
@@ -464,8 +427,8 @@ class TestResource < PuppetTest::TestCase
         scope = stub 'scope', :resource => scope_resource
         resource = Puppet::Parser::Resource.new(:type => "file", :title => "yay", :scope => scope, :source => mock('source'))
 
-        # Make sure we get the scope resource's tags, plus the type and title
-        %w{srone srtwo yay file}.each do |tag|
+        # Make sure we get the type and title
+        %w{yay file}.each do |tag|
             assert(resource.tags.include?(tag), "Did not tag resource with %s" % tag)
         end
 

@@ -173,7 +173,7 @@ class Transaction
             relationship_graph.add_resource(gen_child) unless relationship_graph.resource(gen_child.ref)
 
             unless relationship_graph.edge?(edge[1], edge[0])
-                relationship_graph.add_edge!(*edge)
+                relationship_graph.add_edge(*edge)
             else
                 resource.debug "Skipping automatic relationship to %s" % gen_child
             end
@@ -424,7 +424,7 @@ class Transaction
 
     # Should we ignore tags?
     def ignore_tags?
-        ! @catalog.host_config?
+        ! (@catalog.host_config? or Puppet[:name] == "puppet")
     end
 
     # this should only be called by a Puppet::Type::Component resource now

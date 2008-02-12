@@ -83,10 +83,6 @@ rule(/_is_runnable$/) do |t|
     end
 end
 
-file "debian" => :bzr_is_runnable do
-    system("bzr get http://www.hezmatt.org/~mpalmer/bzr/puppet.debian.svn debian") || exit(1)
-end
-
 task :check_build_deps => 'dpkg-checkbuilddeps_is_runnable' do
     system("dpkg-checkbuilddeps") || exit(1)
 end

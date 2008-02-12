@@ -16,7 +16,7 @@ module Puppet::Util::Graph
         
         self.each do |child|
             unless block_given? and ! yield(child)
-                graph.add_edge!(self, child)
+                graph.add_edge(self, child)
                 
                 if child.respond_to?(:to_graph)
                     child.to_graph(graph, &block)

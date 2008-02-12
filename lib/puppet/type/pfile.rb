@@ -650,7 +650,7 @@ module Puppet
 
             # LAK:FIXME This shouldn't be necessary, but as long as we're
             # modeling the relationship graph specifically, it is.
-            catalog.relationship_graph.add_edge! self, child
+            catalog.relationship_graph.add_edge self, child
 
             return child
         end

@@ -194,8 +194,8 @@ class Puppet::SSLCertificates::CA
     # Revoke the certificate with serial number SERIAL issued by this
     # CA. The REASON must be one of the OpenSSL::OCSP::REVOKED_* reasons
     def revoke(serial, reason = OpenSSL::OCSP::REVOKED_STATUS_KEYCOMPROMISE)
-        if @config[:cacrl] == 'none'
-            raise Puppet::Error, "Revocation requires a CRL, but ca_crl is set to 'none'"
+        if @config[:cacrl] == 'false'
+            raise Puppet::Error, "Revocation requires a CRL, but ca_crl is set to 'false'"
         end
         time = Time.now
         revoked = OpenSSL::X509::Revoked.new
@@ -372,7 +372,7 @@ class Puppet::SSLCertificates::CA
             @crl = OpenSSL::X509::CRL.new(
                 File.read(@config[:cacrl])
             )
-        elsif @config[:cacrl] == 'none'
+        elsif @config[:cacrl] == 'false'
             @crl = nil
         else
             # Create new CRL

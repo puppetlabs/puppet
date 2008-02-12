@@ -22,10 +22,8 @@ class Puppet::Parser::AST
 
         # Evaluate our object, but just return a simple array of the type
         # and name.
-        def evaluate(hash)
-            scope = hash[:scope]
-
-            title = @title.safeevaluate(:scope => scope)
+        def evaluate(scope)
+            title = @title.safeevaluate(scope)
             if @type.to_s.downcase == "class"
                 objtype = "class"
                 title = qualified_class(scope, title)

@@ -66,7 +66,11 @@ module Puppet
             :owner => "root",
             :desc => "Where SSL certificates are kept."
         },
-        :rundir => { :default => rundir,
+        :rundir => { 
+            :default => rundir,
+            :mode => 01777,
+            :owner => "$user",
+            :group => "$group",
             :desc => "Where Puppet PID files are kept."
         },
         :genconfig => [false,
@@ -228,7 +232,7 @@ module Puppet
             :owner => "$user",
             :group => "$group",
             :mode => 0664,
-            :desc => "The certificate revocation list (CRL) for the CA. Set this to 'none' if you do not want to use a CRL."
+            :desc => "The certificate revocation list (CRL) for the CA. Set this to 'false' if you do not want to use a CRL."
         },
         :caprivatedir => { :default => "$cadir/private",
             :owner => "$user",

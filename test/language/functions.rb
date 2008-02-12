@@ -41,7 +41,7 @@ class TestLangFunctions < Test::Unit::TestCase
         scope = mkscope
         val = nil
         assert_nothing_raised do
-            val = func.evaluate(:scope => scope)
+            val = func.evaluate(scope)
         end
 
         assert_equal("output avalue", val)
@@ -57,7 +57,7 @@ class TestLangFunctions < Test::Unit::TestCase
 
             val = nil
             assert_nothing_raised do
-                val = func.evaluate(:scope => scope)
+                val = func.evaluate(scope)
             end
 
             assert_equal(retval, val, "'tagged' returned %s for %s" % [val, tag])
@@ -66,7 +66,7 @@ class TestLangFunctions < Test::Unit::TestCase
         # Now make sure we correctly get tags.
         scope.resource.tag("resourcetag")
         assert(scope.function_tagged("resourcetag"), "tagged function did not catch resource tags")
-        scope.compile.catalog.tag("configtag")
+        scope.compiler.catalog.tag("configtag")
         assert(scope.function_tagged("configtag"), "tagged function did not catch catalog tags")
     end
 
@@ -86,7 +86,7 @@ class TestLangFunctions < Test::Unit::TestCase
         scope = mkscope
         val = nil
         assert_raise(Puppet::ParseError) do
-            val = func.evaluate(:scope => scope)
+            val = func.evaluate(scope)
         end
     end
 
@@ -117,16 +117,16 @@ class TestLangFunctions < Test::Unit::TestCase
 
         scope = mkscope
         assert_raise(Puppet::ParseError) do
-            ast.evaluate(:scope => scope)
+            ast.evaluate(scope)
         end
 
         scope.setvar("one", "One")
         assert_raise(Puppet::ParseError) do
-            ast.evaluate(:scope => scope)
+            ast.evaluate(scope)
         end
         scope.setvar("two", "Two")
         assert_nothing_raised do
-            ast.evaluate(:scope => scope)
+            ast.evaluate(scope)
         end
 
         assert_equal("template One\ntemplate Two\n", scope.lookupvar("output"),
@@ -155,13 +155,13 @@ class TestLangFunctions < Test::Unit::TestCase
 
         scope = mkscope
         assert_raise(Puppet::ParseError) do
-            ast.evaluate(:scope => scope)
+            ast.evaluate(scope)
         end
 
         scope.setvar("yayness", "this is yayness")
 
         assert_nothing_raised do
-            ast.evaluate(:scope => scope)
+            ast.evaluate(scope)
         end
 
         assert_equal("template this is yayness\n", scope.lookupvar("output"),
@@ -191,7 +191,7 @@ class TestLangFunctions < Test::Unit::TestCase
         scope = mkscope
         scope.setvar("myvar", "this is yayness")
         assert_raise(Puppet::ParseError) do
-            ast.evaluate(:scope => scope)
+            ast.evaluate(scope)
         end
     end
 
@@ -264,14 +264,14 @@ class TestLangFunctions < Test::Unit::TestCase
         }.each do |string, value|
             scope = mkscope
             assert_raise(Puppet::ParseError) do
-                ast.evaluate(:scope => scope)
+                ast.evaluate(scope)
             end
 
             scope.setvar("yayness", string)
             assert_equal(string, scope.lookupvar("yayness", false))
 
             assert_nothing_raised("An empty string was not a valid variable value") do
-                ast.evaluate(:scope => scope)
+                ast.evaluate(scope)
             end
 
             assert_equal("template #{value}\n", scope.lookupvar("output"),
@@ -308,7 +308,7 @@ class TestLangFunctions < Test::Unit::TestCase
 
     def test_realize
         scope = mkscope
-        parser = scope.compile.parser
+        parser = scope.compiler.parser
     
         # Make a definition
         parser.newdefine("mytype")
@@ -318,7 +318,7 @@ class TestLangFunctions < Test::Unit::TestCase
             virtual = mkresource(:type => type, :title => title,
                 :virtual => true, :params => {}, :scope => scope)
         
-            scope.compile.store_resource(scope, virtual)
+            scope.compiler.add_resource(scope, virtual)
 
             ref = Puppet::Parser::Resource::Reference.new(
                 :type => type, :title => title,
@@ -330,13 +330,13 @@ class TestLangFunctions < Test::Unit::TestCase
             end
 
             # Make sure it created a collection
-            assert_equal(1, scope.compile.collections.length,
+            assert_equal(1, scope.compiler.collections.length,
                 "Did not set collection")
 
             assert_nothing_raised do
-                scope.compile.collections.each do |coll| coll.evaluate end
+                scope.compiler.collections.each do |coll| coll.evaluate end
             end
-            scope.compile.collections.clear
+            scope.compiler.collections.clear
 
             # Now make sure the virtual resource is no longer virtual
             assert(! virtual.virtual?, "Did not make virtual resource real")
@@ -354,17 +354,17 @@ class TestLangFunctions < Test::Unit::TestCase
         end
 
         # Make sure it created a collection
-        assert_equal(1, scope.compile.collections.length,
+        assert_equal(1, scope.compiler.collections.length,
             "Did not set collection")
 
         # And the collection has our resource in it
-        assert_equal([none.to_s], scope.compile.collections[0].resources,
+        assert_equal([none.to_s], scope.compiler.collections[0].resources,
             "Did not set resources in collection")
     end
     
     def test_defined
         scope = mkscope
-        parser = scope.compile.parser
+        parser = scope.compiler.parser
         
         parser.newclass("yayness")
         parser.newdefine("rahness")
@@ -385,7 +385,7 @@ class TestLangFunctions < Test::Unit::TestCase
             "Multiple falses were somehow true")
         
         # Now make sure we can test resources
-        scope.compile.store_resource(scope, mkresource(:type => "file", :title => "/tmp/rahness",
+        scope.compiler.add_resource(scope, mkresource(:type => "file", :title => "/tmp/rahness",
             :scope => scope, :source => scope.source,
             :params => {:owner => "root"}))
         
@@ -420,7 +420,7 @@ class TestLangFunctions < Test::Unit::TestCase
 
     def test_include
         scope = mkscope
-        parser = scope.compile.parser
+        parser = scope.compiler.parser
 
         assert_raise(Puppet::ParseError, "did not throw error on missing class") do
             scope.function_include("nosuchclass")
@@ -428,7 +428,7 @@ class TestLangFunctions < Test::Unit::TestCase
 
         parser.newclass("myclass")
 
-        scope.compile.expects(:evaluate_classes).with(%w{myclass otherclass}, scope, false).returns(%w{myclass otherclass})
+        scope.compiler.expects(:evaluate_classes).with(%w{myclass otherclass}, scope, false).returns(%w{myclass otherclass})
 
         assert_nothing_raised do
             scope.function_include(["myclass", "otherclass"])
@@ -480,7 +480,7 @@ class TestLangFunctions < Test::Unit::TestCase
         assert_equal("yay-foo\n", %x{#{command} foo}, "command did not work")
 
         scope = mkscope
-        parser = scope.compile.parser
+        parser = scope.compiler.parser
 
         val = nil
         assert_nothing_raised("Could not call generator with no args") do

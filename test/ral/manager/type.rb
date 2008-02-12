@@ -708,7 +708,7 @@ class TestType < Test::Unit::TestCase
             res = type.create(hash)
             config.add_resource res
             if parent
-                config.add_edge!(parent, res)
+                config.add_edge(parent, res)
             end
             res
         end
@@ -741,7 +741,7 @@ class TestType < Test::Unit::TestCase
         
         newcomp = Puppet::Type.newcomponent :type => "yay", :name => "Good[bad]"
         config.add_resource newcomp
-        config.add_edge! comp, newcomp
+        config.add_edge comp, newcomp
         exec = mk.call(6, :parent => newcomp)
         assert_equal("//Good[bad]/Exec[exec6]", exec.path)
     end

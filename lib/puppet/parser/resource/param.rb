@@ -12,7 +12,7 @@ class Puppet::Parser::Resource::Param
     end
 
     def inspect
-        "#<#{self.class} @name => #{self.name}, @value => #{self.value}, @source => #{self.source.name}>"
+        "#<#{self.class} @name => #{name}, @value => #{value}, @source => #{source.name}>"
     end
 
     def line_to_i

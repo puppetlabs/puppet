@@ -12,15 +12,14 @@ class Puppet::Parser::AST
         # Short-curcuit evaluation.  If we're true, evaluate our statements,
         # else if there's an 'else' setting, evaluate it.
         # the first option that matches.
-        def evaluate(hash)
-            scope = hash[:scope]
-            value = @test.safeevaluate(:scope => scope)
+        def evaluate(scope)
+            value = @test.safeevaluate(scope)
 
             if Puppet::Parser::Scope.true?(value)
-                return @statements.safeevaluate(:scope => scope)
+                return @statements.safeevaluate(scope)
             else
                 if defined? @else
-                    return @else.safeevaluate(:scope => scope)
+                    return @else.safeevaluate(scope)
                 else
                     return nil
                 end

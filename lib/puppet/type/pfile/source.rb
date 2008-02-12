@@ -138,10 +138,10 @@ module Puppet
         # Use the info we get from describe() to check if we're in sync.
         def insync?(currentvalue)
             unless described?
-                info "No specified sources exist"
+                warning "No specified sources exist"
                 return true
             end
-            
+
             if currentvalue == :nocopy
                 return true
             end

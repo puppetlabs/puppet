@@ -66,7 +66,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
         info = pkginfo @resource[:name]
 
         # Search for the version info
-        if info =~ /Information for #{@resource[:name]}-(\S+)/
+        if info =~ /Information for (inst:)?#{@resource[:name]}-(\S+)/
             hash[:ensure] = $1
         else
             return nil
