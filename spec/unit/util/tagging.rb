@@ -76,4 +76,13 @@ describe Puppet::Util::Tagging, "when adding tags" do
         @tagger.tags.should be_include("two")
         @tagger.tags.should be_include("three")
     end
+
+    it "should indicate when the object is tagged with a provided tag" do
+        @tagger.tag("one")
+        @tagger.should be_tagged("one")
+    end
+
+    it "should indicate when the object is not tagged with a provided tag" do
+        @tagger.should_not be_tagged("one")
+    end
 end
