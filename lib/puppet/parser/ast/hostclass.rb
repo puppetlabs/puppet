@@ -20,7 +20,7 @@ class Puppet::Parser::AST::HostClass < Puppet::Parser::AST::Definition
 
     # Make sure our parent class has been evaluated, if we have one.
     def evaluate(scope)
-        if parentclass and ! scope.catalog.resource(:class, parentclass)
+        if parentclass and ! scope.catalog.resource(self.class.name, parentclass)
             resource = parentobj.evaluate(scope)
         end
 
@@ -39,7 +39,9 @@ class Puppet::Parser::AST::HostClass < Puppet::Parser::AST::Definition
 
         pnames = nil
         if pklass = self.parentobj
-            pklass.evaluate_code(resource)
+            parent_resource = resource.scope.compiler.catalog.resource(self.class.name, pklass.classname)
+            # This shouldn't evaluate if the class has already been evaluated.
+            pklass.evaluate_code(parent_resource)
 
             scope = parent_scope(scope, pklass)
             pnames = scope.namespaces
@@ -49,14 +51,15 @@ class Puppet::Parser::AST::HostClass < Puppet::Parser::AST::Definition
         # has its own scope.
         scope = subscope(scope, resource) unless resource.title == :main
 
+        # Add the parent scope namespaces to our own.
         if pnames
             pnames.each do |ns|
                 scope.add_namespace(ns)
             end
         end
 
-        # Set the class before we do anything else, so that it's set
-        # during the evaluation and can be inspected.
+        # Set the class before we evaluate the code, so that it's set during
+        # the evaluation and can be inspected.
         scope.compiler.class_set(self.classname, scope)
 
         # Now evaluate our code, yo.

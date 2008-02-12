@@ -31,6 +31,7 @@ class Puppet::Parser::Compiler
 
     # Store a resource in our resource table.
     def add_resource(scope, resource)
+        # Note that this will fail if the resource is not unique.
         @catalog.add_resource(resource)
 
         # And in the resource graph.  At some point, this might supercede
@@ -48,10 +49,10 @@ class Puppet::Parser::Compiler
     # the scope in which it was evaluated, so that we can look it up later.
     def class_set(name, scope)
         if existing = @class_scopes[name]
-            if existing.nodescope? or scope.nodescope?
+            if existing.nodescope? != scope.nodescope?
                 raise Puppet::ParseError, "Cannot have classes, nodes, or definitions with the same name"
             else
-                raise Puppet::DevError, "Somehow evaluated the same class twice"
+                raise Puppet::DevError, "Somehow evaluated %s %s twice" % [ existing.nodescope? ? "node" : "class", name]
             end
         end
         @class_scopes[name] = scope
