@@ -169,7 +169,7 @@ describe Puppet::Parser::Compiler, " when compiling" do
     end
 
     it "should evaluate unevaluated resources" do
-        resource = stub 'notevaluated', :ref => "File[testing]", :builtin? => false, :evaluated? => false
+        resource = stub 'notevaluated', :ref => "File[testing]", :builtin? => false, :evaluated? => false, :virtual? => false
         @compiler.add_resource(@scope, resource)
 
         # We have to now mark the resource as evaluated
@@ -179,7 +179,7 @@ describe Puppet::Parser::Compiler, " when compiling" do
     end
 
     it "should not evaluate already-evaluated resources" do
-        resource = stub 'already_evaluated', :ref => "File[testing]", :builtin? => false, :evaluated? => true
+        resource = stub 'already_evaluated', :ref => "File[testing]", :builtin? => false, :evaluated? => true, :virtual? => false
         @compiler.add_resource(@scope, resource)
         resource.expects(:evaluate).never
         
@@ -187,10 +187,10 @@ describe Puppet::Parser::Compiler, " when compiling" do
     end
 
     it "should evaluate unevaluated resources created by evaluating other resources" do
-        resource = stub 'notevaluated', :ref => "File[testing]", :builtin? => false, :evaluated? => false
+        resource = stub 'notevaluated', :ref => "File[testing]", :builtin? => false, :evaluated? => false, :virtual? => false
         @compiler.add_resource(@scope, resource)
 
-        resource2 = stub 'created', :ref => "File[other]", :builtin? => false, :evaluated? => false
+        resource2 = stub 'created', :ref => "File[other]", :builtin? => false, :evaluated? => false, :virtual? => false
 
         # We have to now mark the resource as evaluated
         resource.expects(:evaluate).with { |*whatever| resource.stubs(:evaluated?).returns(true); @compiler.add_resource(@scope, resource2) }
@@ -243,6 +243,15 @@ describe Puppet::Parser::Compiler, " when compiling" do
         resource = stub 'resource', :ref => "Yay[foo]"
         @compiler.add_resource(@scope, resource)
         @compiler.findresource("Yay", "foo").should equal(resource)
+    end
+
+    it "should not evaluate virtual defined resources" do
+        resource = stub 'notevaluated', :ref => "File[testing]", :builtin? => false, :evaluated? => false, :virtual? => true
+        @compiler.add_resource(@scope, resource)
+
+        resource.expects(:evaluate).never
+        
+        @compiler.compile
     end
 end
 

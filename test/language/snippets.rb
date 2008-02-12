@@ -424,6 +424,11 @@ class TestSnippets < Test::Unit::TestCase
         assert_file("/tmp/realize_defined_test2")
     end
 
+    def snippet_collection_within_virtual_definitions
+        assert_file("/tmp/collection_within_virtual_definitions1_foo.txt")
+        assert_file("/tmp/collection_within_virtual_definitions2_foo2.txt")
+    end
+
     def snippet_fqparents
         assert_file("/tmp/fqparent1", "Did not make file from parent class")
         assert_file("/tmp/fqparent2", "Did not make file from subclass")

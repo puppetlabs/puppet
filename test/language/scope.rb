@@ -328,10 +328,9 @@ class TestScope < Test::Unit::TestCase
             "undef considered true")
     end
 
-    if defined? ActiveRecord
     # Verify that we recursively mark as exported the results of collectable
     # components.
-    def test_exportedcomponents
+    def test_virtual_definitions_do_not_get_evaluated
         config = mkcompiler
         parser = config.parser
 
@@ -348,7 +347,7 @@ class TestScope < Test::Unit::TestCase
             :children => [nameobj("arg")]
         )
 
-        # Create a top-level component
+        # Create a top-level define
         parser.newdefine "one", :arguments => [%w{arg}],
             :code => AST::ASTArray.new(
                 :children => [
@@ -356,27 +355,11 @@ class TestScope < Test::Unit::TestCase
                 ]
             )
 
-        # And a component that calls it
-        parser.newdefine "two", :arguments => [%w{arg}],
-            :code => AST::ASTArray.new(
-                :children => [
-                    resourcedef("one", "ptest", {"arg" => varref("arg")})
-                ]
-            )
+        # create a resource that calls our third define
+        obj = resourcedef("one", "boo", {"arg" => "parentfoo"})
 
-        # And then a third component that calls the second
-        parser.newdefine "three", :arguments => [%w{arg}],
-            :code => AST::ASTArray.new(
-                :children => [
-                    resourcedef("two", "yay", {"arg" => varref("arg")})
-                ]
-            )
-
-        # lastly, create an object that calls our third component
-        obj = resourcedef("three", "boo", {"arg" => "parentfoo"})
-
-        # And mark it as exported
-        obj.exported = true
+        # And mark it as virtual
+        obj.virtual = true
 
         # And then evaluate it
         obj.evaluate config.topscope
@@ -385,12 +368,13 @@ class TestScope < Test::Unit::TestCase
         config.send(:evaluate_generators)
 
         %w{File}.each do |type|
-            objects = config.resources.find_all { |r| r.type == type and r.exported }
+            objects = config.resources.find_all { |r| r.type == type and r.virtual }
 
-            assert(!objects.empty?, "Did not get an exported %s" % type)
+            assert(objects.empty?, "Virtual define got evaluated")
         end
     end
 
+    if defined? ActiveRecord
     # Verify that we can both store and collect an object in the same
     # run, whether it's in the same scope as a collection or a different
     # scope.
