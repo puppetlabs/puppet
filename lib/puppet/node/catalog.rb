@@ -1,5 +1,7 @@
 require 'puppet/indirector'
 
+require 'puppet/util/tagging'
+
 # This class models a node catalog.  It is the thing
 # meant to be passed from server to client, and it contains all
 # of the information in the catalog, including the resources
@@ -7,6 +9,8 @@ require 'puppet/indirector'
 class Puppet::Node::Catalog < Puppet::PGraph
     extend Puppet::Indirector
     indirects :catalog, :terminus_class => :compiler
+
+    include Puppet::Util::Tagging
 
     # The host name this is a catalog for.
     attr_accessor :name
@@ -268,7 +272,6 @@ class Puppet::Node::Catalog < Puppet::PGraph
         super()
         @name = name if name
         @extraction_format ||= :transportable
-        @tags = []
         @classes = []
         @resource_table = {}
         @transient_resources = []
@@ -379,30 +382,6 @@ class Puppet::Node::Catalog < Puppet::PGraph
     # Return an array of all resources.
     def resources
         @resource_table.keys
-    end
-
-    # Add a tag.
-    def tag(*names)
-        names.each do |name|
-            name = name.to_s
-            @tags << name unless @tags.include?(name)
-            if name.include?("::")
-                name.split("::").each do |sub|
-                    @tags << sub unless @tags.include?(sub)
-                end
-            end
-        end
-        nil
-    end
-
-    # Does our tag list include this tag?
-    def tagged?(tag)
-        @tags.include?(tag)
-    end
-
-    # Return the list of tags.
-    def tags
-        @tags.dup
     end
 
     # Convert our catalog into a RAL catalog.
