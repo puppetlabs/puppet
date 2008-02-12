@@ -69,7 +69,7 @@ class Puppet::Node::Catalog < Puppet::PGraph
             @resource_table[ref] = resource
 
             resource.catalog = self if resource.respond_to?(:catalog=) and ! is_relationship_graph
-            add_vertex!(resource)
+            add_vertex(resource)
         end
     end
 
@@ -316,9 +316,9 @@ class Puppet::Node::Catalog < Puppet::PGraph
             
             # First create the dependency graph
             self.vertices.each do |vertex|
-                @relationship_graph.add_vertex! vertex
+                @relationship_graph.add_vertex vertex
                 vertex.builddepends.each do |edge|
-                    @relationship_graph.add_edge!(edge)
+                    @relationship_graph.add_edge(edge)
                 end
             end
             
@@ -328,7 +328,7 @@ class Puppet::Node::Catalog < Puppet::PGraph
                     unless @relationship_graph.edge?(edge.source, edge.target) # don't let automatic relationships conflict with manual ones.
                         unless @relationship_graph.edge?(edge.target, edge.source)
                             vertex.debug "Autorequiring %s" % [edge.source]
-                            @relationship_graph.add_edge!(edge)
+                            @relationship_graph.add_edge(edge)
                         else
                             vertex.debug "Skipping automatic relationship with %s" % (edge.source == vertex ? edge.target : edge.source)
                         end
@@ -487,7 +487,7 @@ class Puppet::Node::Catalog < Puppet::PGraph
                 raise Puppet::DevError, "Could not find resource %s when converting %s resources" % [edge.target.ref, message]
             end
 
-            result.add_edge!(source, target, edge.label)
+            result.add_edge(source, target, edge.label)
         end
 
         map.clear

@@ -36,7 +36,7 @@ class Puppet::Parser::Compiler
         # And in the resource graph.  At some point, this might supercede
         # the global resource table, but the table is a lot faster
         # so it makes sense to maintain for now.
-        @catalog.add_edge!(scope.resource, resource)
+        @catalog.add_edge(scope.resource, resource)
     end
 
     # Do we use nodes found in the code, vs. the external node sources?
@@ -184,7 +184,7 @@ class Puppet::Parser::Compiler
         options[:compiler] = self
         options[:parser] ||= self.parser
         scope = Puppet::Parser::Scope.new(options)
-        @scope_graph.add_edge!(parent, scope)
+        @scope_graph.add_edge(parent, scope)
         scope
     end
 
@@ -383,7 +383,7 @@ class Puppet::Parser::Compiler
     def init_main
         # Create our initial scope and a resource that will evaluate main.
         @topscope = Puppet::Parser::Scope.new(:compiler => self, :parser => self.parser)
-        @scope_graph.add_vertex!(@topscope)
+        @scope_graph.add_vertex(@topscope)
     end
 
     # Set up all of our internal variables.

@@ -75,7 +75,7 @@ describe Puppet::Node::Catalog, " when extracting transobjects" do
         @source = mock 'source'
 
         main = mkresource("class", :main)
-        config.add_vertex!(main)
+        config.add_vertex(main)
 
         bucket = mock 'bucket'
         bucket.expects(:classes=).with(config.classes)
@@ -95,7 +95,7 @@ describe Puppet::Node::Catalog, " when extracting transobjects" do
         defined = mkresource("class", :main)
         builtin = mkresource("file", "/yay")
 
-        config.add_edge!(defined, builtin)
+        config.add_edge(defined, builtin)
 
         bucket = []
         bucket.expects(:classes=).with(config.classes)
@@ -121,21 +121,21 @@ describe Puppet::Node::Catalog, " when extracting transobjects" do
         top.expects(:to_trans).returns(topbucket)
         topres = mkresource "file", "/top"
         topres.expects(:to_trans).returns(:topres)
-        config.add_edge! top, topres
+        config.add_edge top, topres
 
         middle = mkresource "class", "middle"
         middle.expects(:to_trans).returns([])
-        config.add_edge! top, middle
+        config.add_edge top, middle
         midres = mkresource "file", "/mid"
         midres.expects(:to_trans).returns(:midres)
-        config.add_edge! middle, midres
+        config.add_edge middle, midres
 
         bottom = mkresource "class", "bottom"
         bottom.expects(:to_trans).returns([])
-        config.add_edge! middle, bottom
+        config.add_edge middle, bottom
         botres = mkresource "file", "/bot"
         botres.expects(:to_trans).returns(:botres)
-        config.add_edge! bottom, botres
+        config.add_edge bottom, botres
 
         toparray = config.extract_to_transportable
 
@@ -196,13 +196,13 @@ describe Puppet::Node::Catalog, " when converting to a transobject catalog" do
 
         @resources = [@top, @topobject, @middle, @middleobject, @bottom, @bottomobject]
 
-        @original.add_edge!(@top, @topobject)
-        @original.add_edge!(@top, @virtual)
-        @original.add_edge!(@virtual, @virtualobject)
-        @original.add_edge!(@top, @middle)
-        @original.add_edge!(@middle, @middleobject)
-        @original.add_edge!(@middle, @bottom)
-        @original.add_edge!(@bottom, @bottomobject)
+        @original.add_edge(@top, @topobject)
+        @original.add_edge(@top, @virtual)
+        @original.add_edge(@virtual, @virtualobject)
+        @original.add_edge(@top, @middle)
+        @original.add_edge(@middle, @middleobject)
+        @original.add_edge(@middle, @bottom)
+        @original.add_edge(@bottom, @bottomobject)
 
         @catalog = @original.to_transportable
     end
@@ -261,11 +261,11 @@ describe Puppet::Node::Catalog, " when converting to a RAL catalog" do
 
         @original.add_resource(*@resources)
 
-        @original.add_edge!(@top, @topobject)
-        @original.add_edge!(@top, @middle)
-        @original.add_edge!(@middle, @middleobject)
-        @original.add_edge!(@middle, @bottom)
-        @original.add_edge!(@bottom, @bottomobject)
+        @original.add_edge(@top, @topobject)
+        @original.add_edge(@top, @middle)
+        @original.add_edge(@middle, @middleobject)
+        @original.add_edge(@middle, @bottom)
+        @original.add_edge(@bottom, @bottomobject)
 
         @catalog = @original.to_ral
     end
@@ -300,7 +300,7 @@ describe Puppet::Node::Catalog, " when converting to a RAL catalog" do
         config.add_resource(changer)
         config.add_resource(@top)
 
-        config.add_edge!(@top, changer)
+        config.add_edge(@top, changer)
 
         resource = stub 'resource', :name => "changer2", :title => "changer2", :ref => "Test[changer2]", :catalog= => nil, :remove => nil
 
@@ -597,8 +597,8 @@ describe Puppet::Node::Catalog, " when creating a relationship graph" do
         @file = Puppet::Type.type(:file)
         @one = @file.create :path => "/one"
         @two = @file.create :path => "/two"
-        @catalog.add_edge! @compone, @one
-        @catalog.add_edge! @comptwo, @two
+        @catalog.add_edge @compone, @one
+        @catalog.add_edge @comptwo, @two
 
         @three = @file.create :path => "/three"
         @four = @file.create :path => "/four", :require => ["file", "/three"]
@@ -771,7 +771,7 @@ end
 describe Puppet::Node::Catalog, " when converting to yaml" do
     before do
         @catalog = Puppet::Node::Catalog.new("me")
-        @catalog.add_edge!("one", "two")
+        @catalog.add_edge("one", "two")
     end
 
     it "should be able to be dumped to yaml" do
@@ -782,7 +782,7 @@ end
 describe Puppet::Node::Catalog, " when converting from yaml" do
     before do
         @catalog = Puppet::Node::Catalog.new("me")
-        @catalog.add_edge!("one", "two")
+        @catalog.add_edge("one", "two")
 
         text = YAML.dump(@catalog)
         @newcatalog = YAML.load(text)

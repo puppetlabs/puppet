@@ -18,7 +18,7 @@ module PuppetTest::Support::Resources
             if resource.is_a?(String)
                 resource = tree_resource(resource)
             end
-            config.add_edge!(comp, resource)
+            config.add_edge(comp, resource)
             config.add_resource resource unless config.resource(resource.ref)
         end
         return comp

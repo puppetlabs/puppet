@@ -36,8 +36,8 @@ class TestBasic < Test::Unit::TestCase
             )
         }
         @config = mk_catalog(@component, @configfile, @command)
-        @config.add_edge! @component, @configfile
-        @config.add_edge! @component, @command
+        @config.add_edge @component, @configfile
+        @config.add_edge @component, @command
     end
 
     def teardown
