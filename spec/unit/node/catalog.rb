@@ -365,6 +365,12 @@ describe Puppet::Node::Catalog, " when functioning as a resource container" do
 
     it "should not allow two resources with the same resource reference" do
         @catalog.add_resource(@one)
+
+        # These are used to build the failure
+        @dupe.stubs(:file)
+        @dupe.stubs(:line)
+        @one.stubs(:file)
+        @one.stubs(:line)
         proc { @catalog.add_resource(@dupe) }.should raise_error(ArgumentError)
     end
 

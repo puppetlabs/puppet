@@ -58,12 +58,12 @@ class Puppet::Node::Catalog < Puppet::PGraph
                 raise ArgumentError, "Can only add objects that respond to :ref"
             end
 
+            fail_unless_unique(resource)
+
             ref = resource.ref
-            if @resource_table.include?(ref)
-                raise ArgumentError, "Resource %s is already defined" % ref
-            else
-                @resource_table[ref] = resource
-            end
+
+            @resource_table[ref] = resource
+
             resource.catalog = self if resource.respond_to?(:catalog=) and ! is_relationship_graph
             add_vertex!(resource)
         end
@@ -452,6 +452,28 @@ class Puppet::Node::Catalog < Puppet::PGraph
         end
     end
 
+    # Verify that the given resource isn't defined elsewhere.
+    def fail_unless_unique(resource)
+        # Short-curcuit the common case, 
+        return unless existing_resource = @resource_table[resource.ref]
+
+        # Either it's a defined type, which are never
+        # isomorphic, or it's a non-isomorphic type, so
+        # we should throw an exception.
+        msg = "Duplicate definition: %s is already defined" % resource.ref
+
+        if existing_resource.file and existing_resource.line
+            msg << " in file %s at line %s" %
+                [existing_resource.file, existing_resource.line]
+        end
+
+        if resource.line or resource.file
+            msg << "; cannot redefine"
+        end
+
+        raise ArgumentError.new(msg)
+    end
+
     # An abstracted method for converting one catalog into another type of catalog.
     # This pretty much just converts all of the resources from one class to another, using
     # a conversion method.
@@ -495,29 +517,5 @@ class Puppet::Node::Catalog < Puppet::PGraph
         result.tag(*self.tags)
 
         return result
-    end
-
-    # Verify that the given resource isn't defined elsewhere.
-    def verify_resource_uniqueness(resource)
-        # Short-curcuit the common case, 
-        unless existing_resource = @resource_table[resource.ref]
-            return true
-        end
-
-        # Either it's a defined type, which are never
-        # isomorphic, or it's a non-isomorphic type, so
-        # we should throw an exception.
-        msg = "Duplicate definition: %s is already defined" % resource.ref
-
-        if existing_resource.file and existing_resource.line
-            msg << " in file %s at line %s" %
-                [existing_resource.file, existing_resource.line]
-        end
-
-        if resource.line or resource.file
-            msg << "; cannot redefine"
-        end
-
-        raise Puppet::ParseError.new(msg)
     end
 end
