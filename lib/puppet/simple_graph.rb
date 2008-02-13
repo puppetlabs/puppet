@@ -51,10 +51,12 @@ class Puppet::SimpleGraph
 
         # Create methods for returning the degree and edges.
         [:in, :out].each do |direction|
-            define_method("%s_degree" % direction) do
-                @adjacencies[direction].length
-            end
-
+            # LAK:NOTE If you decide to create methods for directly
+            # testing the degree, you'll have to get the values and flatten
+            # the results -- you might have duplicate edges, which can give
+            # a false impression of what the degree is.  That's just
+            # as expensive as just getting the edge list, so I've decided
+            # to only add this method.
             define_method("%s_edges" % direction) do
                 @adjacencies[direction].values.flatten
             end
@@ -126,8 +128,9 @@ class Puppet::SimpleGraph
 
         # Collect each of our vertices, with the number of in-edges each has.
         @vertices.each do |name, wrapper|
-            zeros << wrapper if wrapper.in_degree == 0
-            degree[wrapper.vertex] = wrapper.in_edges
+            edges = wrapper.in_edges
+            zeros << wrapper if edges.length == 0
+            degree[wrapper.vertex] = edges
         end
 
         # Iterate over each 0-degree vertex, decrementing the degree of
