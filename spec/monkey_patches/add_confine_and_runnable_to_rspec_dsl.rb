@@ -10,22 +10,34 @@ require 'puppettest/runnable_test'
 
 module Spec
   module Runner
-    class BehaviourRunner
-      def run_behaviours
-        @behaviours.each do |behaviour|
-          # LAK:NOTE: this 'runnable' test is Puppet-specific.
-          next unless behaviour.runnable?
-          behaviour.run(@options.reporter, @options.dry_run, @options.reverse, @options.timeout)
+    class ExampleGroupRunner
+      def run
+        prepare
+        success = true
+        example_groups.each do |example_group|
+          next unless example_group.runnable?
+          success = success & example_group.run
         end
+        return success
+      ensure
+        finish
       end
     end
   end
 end
 
 module Spec
-  module DSL
-    class EvalModule < Module
-      include PuppetTest::RunnableTest
+  module Example
+    class ExampleGroup
+      extend PuppetTest::RunnableTest
+    end
+  end
+end
+
+module Test
+  module Unit
+    class TestCase
+      extend PuppetTest::RunnableTest
     end
   end
 end

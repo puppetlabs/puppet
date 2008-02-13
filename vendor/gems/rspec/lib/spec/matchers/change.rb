@@ -21,6 +21,8 @@ EOF
         return false if @from && (@from != @before)
         return false if @to && (@to != @after)
         return (@before + @amount == @after) if @amount
+        return ((@after - @before) >= @minimum) if @minimum
+        return ((@after - @before) <= @maximum) if @maximum        
         return @before != @after
       end
       
@@ -37,6 +39,10 @@ EOF
           "#{result} should have initially been #{@from.inspect}, but was #{@before.inspect}"
         elsif @amount
           "#{result} should have been changed by #{@amount.inspect}, but was changed by #{actual_delta.inspect}"
+        elsif @minimum
+          "#{result} should have been changed by at least #{@minimum.inspect}, but was changed by #{actual_delta.inspect}"
+        elsif @maximum
+          "#{result} should have been changed by at most #{@maximum.inspect}, but was changed by #{actual_delta.inspect}"
         else
           "#{result} should have changed, but is still #{@before.inspect}"
         end
@@ -58,6 +64,16 @@ EOF
         @amount = amount
         self
       end
+      
+      def by_at_least(minimum)
+        @minimum = minimum
+        self
+      end
+      
+      def by_at_most(maximum)
+        @maximum = maximum
+        self
+      end      
       
       def to(to)
         @to = to
@@ -88,6 +104,14 @@ EOF
     #     team.add_player(player) 
     #   }.should change(roster, :count).by(1)
     #
+    #   lambda {
+    #     team.add_player(player) 
+    #   }.should change(roster, :count).by_at_least(1)
+    #
+    #   lambda {
+    #     team.add_player(player)
+    #   }.should change(roster, :count).by_at_most(1)    
+    #
     #   string = "string"
     #   lambda {
     #     string.reverse
@@ -109,7 +133,7 @@ EOF
     #
     # == Warning
     # +should_not+ +change+ only supports the form with no subsequent calls to
-    # +be+, +to+ or +from+.
+    # +by+, +by_at_least+, +by_at_most+, +to+ or +from+.
     #
     # blocks passed to +should+ +change+ and +should_not+ +change+
     # must use the <tt>{}</tt> form (<tt>do/end</tt> is not supported)

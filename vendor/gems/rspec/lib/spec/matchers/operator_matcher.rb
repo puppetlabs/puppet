@@ -1,6 +1,7 @@
 module Spec
   module Matchers
     class BaseOperatorMatcher
+      attr_reader :generated_description
       
       def initialize(target)
         @target = target

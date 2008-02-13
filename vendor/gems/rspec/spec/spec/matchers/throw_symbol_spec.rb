@@ -27,7 +27,7 @@ module Spec
       it "should match if correct Symbol is thrown" do
         @matcher.matches?(lambda{ throw :sym }).should be_true
       end
-      it "should not match no Symbol is thrown" do
+      it "should not match if no Symbol is thrown" do
         @matcher.matches?(lambda{ }).should be_false
       end
       it "should not match if correct Symbol is thrown" do
@@ -45,6 +45,9 @@ module Spec
       it "should provide a negative failure message" do
         @matcher.matches?(lambda{ throw :sym })
         @matcher.negative_failure_message.should == "expected :sym not to be thrown"
+      end
+      it "should only match NameErrors raised by uncaught throws" do
+        @matcher.matches?(lambda{ sym }).should be_false
       end
     end
   end

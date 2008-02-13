@@ -1,4 +1,5 @@
 require File.dirname(__FILE__) + '/../spec_helper.rb'
+require 'spec/translator'
 
 describe "Translator" do
   before do
@@ -7,7 +8,7 @@ describe "Translator" do
   
   it "should translate files" do
     from = File.dirname(__FILE__) + '/..'
-    to = File.dirname(__FILE__) + '/../../translated_specs'
+    to = "#{Dir.tmpdir}/translated_specs"
     @t.translate_dir(from, to)
   end
 

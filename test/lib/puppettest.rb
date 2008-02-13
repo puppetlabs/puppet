@@ -6,7 +6,16 @@ mainlib = File.expand_path(File.join(File.dirname(__FILE__), '../../lib'))
 $LOAD_PATH.unshift(mainlib) unless $LOAD_PATH.include?(mainlib)
 
 require 'puppet'
-require 'mocha'
+
+# include any gems in vendor/gems
+Dir["#{mainlib}/../vendor/gems/**"].each do |path| 
+    libpath = File.join(path, "lib")
+    if File.directory?(libpath)
+        $LOAD_PATH.unshift(libpath)
+    else
+        $LOAD_PATH.unshift(path)
+    end
+end
 
 # Only load the test/unit class if we're not in the spec directory.
 # Else we get the bogus 'no tests, no failures' message.

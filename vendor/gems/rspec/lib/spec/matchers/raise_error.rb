@@ -21,25 +21,29 @@ module Spec
           if @expected_message.nil?
             @raised_expected_error = true
           else
-            case @expected_message
-            when Regexp
-              if @expected_message =~ @actual_error.message
-                @raised_expected_error = true
-              else
-                @raised_other = true
-              end
-            else
-              if @expected_message == @actual_error.message
-                @raised_expected_error = true
-              else
-                @raised_other = true
-              end
-            end
+            verify_message
           end
-        rescue => @actual_error
+        rescue Exception => @actual_error
           @raised_other = true
         ensure
           return @raised_expected_error
+        end
+      end
+
+      def verify_message
+        case @expected_message
+        when Regexp
+          if @expected_message =~ @actual_error.message
+            @raised_expected_error = true
+          else
+            @raised_other = true
+          end
+        else
+          if @expected_message == @actual_error.message
+            @raised_expected_error = true
+          else
+            @raised_other = true
+          end
         end
       end
       

@@ -13,112 +13,74 @@ module Spec
             :original_value
           end
         end
-        @obj = @class.new
+        @instance = @class.new
       end
 
-      it "should allow for a mock expectation to temporarily replace a method stub on a mock" do
-        mock = Spec::Mocks::Mock.new("a mock")
-        mock.stub!(:msg).and_return(:stub_value)
-        mock.should_receive(:msg).with(:arg).and_return(:mock_value)
-        mock.msg(:arg).should equal(:mock_value)
-        mock.msg.should equal(:stub_value)
-        mock.msg.should equal(:stub_value)
-        mock.rspec_verify
-      end
-
-      it "should allow for a mock expectation to temporarily replace a method stub on a non-mock" do
-        @obj.stub!(:msg).and_return(:stub_value)
-        @obj.should_receive(:msg).with(:arg).and_return(:mock_value)
-        @obj.msg(:arg).should equal(:mock_value)
-        @obj.msg.should equal(:stub_value)
-        @obj.msg.should equal(:stub_value)
-        @obj.rspec_verify
-      end
-
-      it "should ignore when expected message is not received" do
-        @obj.stub!(:msg)
-        lambda do
-          @obj.rspec_verify
-        end.should_not raise_error
-      end
-      
-      it "should clear itself on rspec_verify" do
-        @obj.stub!(:this_should_go).and_return(:blah)
-        @obj.this_should_go.should == :blah
-        @obj.rspec_verify
-        lambda do
-          @obj.this_should_go
-        end.should raise_error
+      it "should return expected value when expected message is received" do
+        @instance.stub!(:msg).and_return(:return_value)
+        @instance.msg.should equal(:return_value)
+        @instance.rspec_verify
       end
 
       it "should ignore when expected message is received" do
-        @obj.stub!(:msg)
-        @obj.msg
-        @obj.rspec_verify
+        @instance.stub!(:msg)
+        @instance.msg
+        lambda do
+          @instance.rspec_verify
+        end.should_not raise_error
       end
 
       it "should ignore when message is received with args" do
-        @obj.stub!(:msg)
-        @obj.msg(:an_arg)
-        @obj.rspec_verify
+        @instance.stub!(:msg)
+        @instance.msg(:an_arg)
+        lambda do
+          @instance.rspec_verify
+        end.should_not raise_error
       end
 
-      it "should not support with" do
+      it "should ignore when expected message is not received" do
+        @instance.stub!(:msg)
         lambda do
-          Spec::Mocks::Mock.new("a mock").stub!(:msg).with(:arg)
-        end.should raise_error(NoMethodError)
+          @instance.rspec_verify
+        end.should_not raise_error
       end
       
-      it "should return expected value when expected message is received" do
-        @obj.stub!(:msg).and_return(:return_value)
-        @obj.msg.should equal(:return_value)
-        @obj.rspec_verify
+      it "should clear itself when verified" do
+        @instance.stub!(:this_should_go).and_return(:blah)
+        @instance.this_should_go.should == :blah
+        @instance.rspec_verify
+        lambda do
+          @instance.this_should_go
+        end.should raise_error(NameError)
       end
 
       it "should return values in order to consecutive calls" do
         return_values = ["1",2,Object.new]
-        @obj.stub!(:msg).and_return(return_values[0],return_values[1],return_values[2])
-        @obj.msg.should == return_values[0]
-        @obj.msg.should == return_values[1]
-        @obj.msg.should == return_values[2]
+        @instance.stub!(:msg).and_return(return_values[0],return_values[1],return_values[2])
+        @instance.msg.should == return_values[0]
+        @instance.msg.should == return_values[1]
+        @instance.msg.should == return_values[2]
       end
 
       it "should keep returning last value in consecutive calls" do
         return_values = ["1",2,Object.new]
-        @obj.stub!(:msg).and_return(return_values[0],return_values[1],return_values[2])
-        @obj.msg.should == return_values[0]
-        @obj.msg.should == return_values[1]
-        @obj.msg.should == return_values[2]
-        @obj.msg.should == return_values[2]
-        @obj.msg.should == return_values[2]
+        @instance.stub!(:msg).and_return(return_values[0],return_values[1],return_values[2])
+        @instance.msg.should == return_values[0]
+        @instance.msg.should == return_values[1]
+        @instance.msg.should == return_values[2]
+        @instance.msg.should == return_values[2]
+        @instance.msg.should == return_values[2]
       end
 
-      it "should revert to original instance method if existed" do
-        @obj.existing_instance_method.should equal(:original_value)
-        @obj.stub!(:existing_instance_method).and_return(:mock_value)
-        @obj.existing_instance_method.should equal(:mock_value)
-        @obj.rspec_verify
-        # TODO JRUBY: This causes JRuby to fail with:
-        # NativeException in 'Stub should revert to original instance method if existed'
-        # java.lang.ArrayIndexOutOfBoundsException: 0
-        # org.jruby.internal.runtime.methods.IterateCallable.internalCall(IterateCallable.java:63)
-        # org.jruby.internal.runtime.methods.AbstractCallable.call(AbstractCallable.java:64)
-        # org.jruby.runtime.ThreadContext.yieldInternal(ThreadContext.java:574)
-        # org.jruby.runtime.ThreadContext.yieldSpecificBlock(ThreadContext.java:549)
-        # org.jruby.runtime.Block.call(Block.java:158)
-        # org.jruby.RubyProc.call(RubyProc.java:118)
-        # org.jruby.internal.runtime.methods.ProcMethod.internalCall(ProcMethod.java:69)
-        # org.jruby.internal.runtime.methods.AbstractMethod.call(AbstractMethod.java:58)
-        # org.jruby.RubyObject.callMethod(RubyObject.java:379)
-        # org.jruby.RubyObject.callMethod(RubyObject.java:331)
-        # org.jruby.evaluator.EvaluationState.evalInternal(EvaluationState.java:472)
-        # org.jruby.evaluator.EvaluationState.evalInternal(EvaluationState.java:462)
-        # org.jruby.evaluator.EvaluationState.evalInternal(EvaluationState.java:390)
-        # org.jruby.evaluator.EvaluationState.eval(EvaluationState.java:133)
-        @obj.existing_instance_method.should equal(:original_value)
+      it "should revert to original instance method if there is one" do
+        @instance.existing_instance_method.should equal(:original_value)
+        @instance.stub!(:existing_instance_method).and_return(:mock_value)
+        @instance.existing_instance_method.should equal(:mock_value)
+        @instance.rspec_verify
+        @instance.existing_instance_method.should equal(:original_value)
       end
       
-      it "should revert to original class method if existed" do
+      it "should revert to original class method if there is one" do
         @class.existing_class_method.should equal(:original_value)
         @class.stub!(:existing_class_method).and_return(:mock_value)
         @class.existing_class_method.should equal(:mock_value)
@@ -126,34 +88,94 @@ module Spec
         @class.existing_class_method.should equal(:original_value)
       end
 
-      it "should clear itself on rspec_verify" do
-        @obj.stub!(:this_should_go).and_return(:blah)
-        @obj.this_should_go.should == :blah
-        @obj.rspec_verify
-        lambda do
-          @obj.this_should_go
-        end.should raise_error
+      it "should yield a specified object" do
+        @instance.stub!(:method_that_yields).and_yield(:yielded_obj)
+        current_value = :value_before
+        @instance.method_that_yields {|val| current_value = val}
+        current_value.should == :yielded_obj
+        @instance.rspec_verify
+      end
+
+      it "should yield multiple times with multiple calls to and_yield" do
+        @instance.stub!(:method_that_yields_multiple_times).and_yield(:yielded_value).
+                                                       and_yield(:another_value)
+        current_value = []
+        @instance.method_that_yields_multiple_times {|val| current_value << val}
+        current_value.should == [:yielded_value, :another_value]
+        @instance.rspec_verify
       end
       
-      it "should support yielding" do
-        @obj.stub!(:method_that_yields).and_yield(:yielded_value)
-        current_value = :value_before
-        @obj.method_that_yields {|val| current_value = val}
-        current_value.should == :yielded_value
-        @obj.rspec_verify
+      it "should yield a specified object and return another specified object" do
+        yielded_obj = mock("my mock")
+        yielded_obj.should_receive(:foo).with(:bar)
+        @instance.stub!(:method_that_yields_and_returns).and_yield(yielded_obj).and_return(:baz)
+        @instance.method_that_yields_and_returns { |o| o.foo :bar }.should == :baz
       end
 
       it "should throw when told to" do
-        @mock.stub!(:something).and_throw(:blech)
+        @mock.stub!(:something).and_throw(:up)
         lambda do
           @mock.something
-        end.should throw_symbol(:blech)
+        end.should throw_symbol(:up)
       end
       
-      it "should support overriding w/ a new stub" do
+      it "should override a pre-existing stub" do
         @stub.stub!(:existing_instance_method).and_return(:updated_stub_value)
         @stub.existing_instance_method.should == :updated_stub_value
       end
+      
+      it "should limit " do
+        @stub.stub!(:foo).with("bar")
+        @stub.should_receive(:foo).with("baz")
+        @stub.foo("bar")
+        @stub.foo("baz")
+      end
     end
+    
+    describe "A method stub with args" do
+      before(:each) do
+        @stub = Object.new
+        @stub.stub!(:foo).with("bar")
+      end
+
+      it "should not complain if not called" do
+      end
+
+      it "should not complain if called with arg" do
+        @stub.foo("bar")
+      end
+
+      it "should complain if called with no arg" do
+        lambda do
+          @stub.foo
+        end.should raise_error
+      end
+
+      it "should complain if called with other arg" do
+        lambda do
+          @stub.foo("other")
+        end.should raise_error
+      end
+
+      it "should not complain if also mocked w/ different args" do
+        @stub.should_receive(:foo).with("baz")
+        @stub.foo("bar")
+        @stub.foo("baz")
+      end
+
+      it "should complain if also mocked w/ different args AND called w/ a 3rd set of args" do
+        @stub.should_receive(:foo).with("baz")
+        @stub.foo("bar")
+        @stub.foo("baz")
+        lambda do
+          @stub.foo("other")
+        end.should raise_error
+      end
+      
+      it "should support options" do
+        @stub.stub!(:foo, :expected_from => "bar")
+      end
+    end
+
   end
 end

@@ -11,11 +11,11 @@ describe Puppet::Parser::Lexer::Token do
 
     [:regex, :name, :string, :skip, :incr_line, :skip_text].each do |param|
         it "should have a #{param.to_s} reader" do
-            @token.should respond_to?(param)
+            @token.should be_respond_to(param)
         end
 
         it "should have a #{param.to_s} writer" do
-            @token.should respond_to?(param.to_s + "=")
+            @token.should be_respond_to(param.to_s + "=")
         end
     end
 end

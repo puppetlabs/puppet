@@ -1,85 +1,65 @@
 require 'autotest'
 
+Autotest.add_hook :initialize do |at|
+  at.clear_mappings
+  # watch out: Ruby bug (1.8.6):
+  # %r(/) != /\//
+  at.add_mapping(%r%^spec/.*\.rb$%) { |filename, _| 
+    filename 
+  }
+  at.add_mapping(%r%^lib/(.*)\.rb$%) { |_, m| 
+    ["spec/#{m[1]}_spec.rb"]
+  }
+  at.add_mapping(%r%^spec/(spec_helper|shared/.*)\.rb$%) { 
+    at.files_matching %r%^spec/.*_spec\.rb$%
+  }
+end
+
 class RspecCommandError < StandardError; end
 
 class Autotest::Rspec < Autotest
-  
-  def initialize(kernel=Kernel, separator=File::SEPARATOR, alt_separator=File::ALT_SEPARATOR) # :nodoc:
-    super()
-    @kernel, @separator, @alt_separator = kernel, separator, alt_separator
-    @spec_command = spec_command
 
-    # watch out: Ruby bug (1.8.6):
-    # %r(/) != /\//
-    # since Ruby compares the REGEXP source, not the resulting pattern
-    @test_mappings = {
-      %r%^spec/.*\.rb$% => kernel.proc { |filename, _| 
-        filename 
-      },
-      %r%^lib/(.*)\.rb$% => kernel.proc { |_, m| 
-        ["spec/#{m[1]}_spec.rb"] 
-      },
-      %r%^spec/(spec_helper|shared/.*)\.rb$% => kernel.proc { 
-        files_matching %r%^spec/.*_spec\.rb$% 
-      }
-    }
-  end
-  
-  def tests_for_file(filename)
-    super.select { |f| @files.has_key? f }
-  end
-  
-  alias :specs_for_file :tests_for_file
-  
-  def failed_results(results)
-    results.scan(/^\d+\)\n(?:\e\[\d*m)?(?:.*?Error in )?'([^\n]*)'(?: FAILED)?(?:\e\[\d*m)?\n(.*?)\n\n/m)
-  end
+  def initialize
+    super
 
-  def handle_results(results)
-    @files_to_test = consolidate_failures failed_results(results)
-    unless @files_to_test.empty? then
-      hook :red
-    else
-      hook :green
-    end unless $TESTING
-    @tainted = true unless @files_to_test.empty?
+    self.failed_results_re = /^\d+\)\n(?:\e\[\d*m)?(?:.*?Error in )?'([^\n]*)'(?: FAILED)?(?:\e\[\d*m)?\n(.*?)\n\n/m
+    self.completed_re = /\Z/ # FIX: some sort of summary line at the end?
   end
 
   def consolidate_failures(failed)
     filters = Hash.new { |h,k| h[k] = [] }
     failed.each do |spec, failed_trace|
-      @files.keys.select{|f| f =~ /spec\//}.each do |f|
-        if failed_trace =~ Regexp.new(f)
-          filters[f] << spec
-          break
-        end
+      if f = test_files_for(failed).find { |f| failed_trace =~ Regexp.new(f) } then
+        filters[f] << spec
+        break
       end
     end
     return filters
   end
 
   def make_test_cmd(files_to_test)
-    return "#{ruby} -S #{@spec_command} #{add_options_if_present} #{files_to_test.keys.flatten.join(' ')}"
+    return "#{ruby} -S #{spec_command} #{add_options_if_present} #{files_to_test.keys.flatten.join(' ')}"
   end
   
   def add_options_if_present
     File.exist?("spec/spec.opts") ? "-O spec/spec.opts " : ""
   end
 
-  # Finds the proper spec command to use.  Precendence
-  # is set in the lazily-evaluated method spec_commands.  Alias + Override
-  # that in ~/.autotest to provide a different spec command
-  # then the default paths provided.
-  def spec_command
-    spec_commands.each do |command|
-      if File.exists?(command)
-        return @alt_separator ? (command.gsub @separator, @alt_separator) : command
-      end
+  # Finds the proper spec command to use.  Precendence is set in the
+  # lazily-evaluated method spec_commands.  Alias + Override that in
+  # ~/.autotest to provide a different spec command then the default
+  # paths provided.
+  def spec_command(separator=File::ALT_SEPARATOR)
+    unless defined? @spec_command then
+      @spec_command = spec_commands.find { |cmd| File.exists? cmd }
+
+      raise RspecCommandError, "No spec command could be found!" unless @spec_command
+
+      @spec_command.gsub! File::SEPARATOR, separator if separator
     end
-    
-    raise RspecCommandError, "No spec command could be found!"
+    @spec_command
   end
-  
+
   # Autotest will look for spec commands in the following
   # locations, in this order:
   #
@@ -87,9 +67,8 @@ class Autotest::Rspec < Autotest
   #   * default spec bin/loader installed in Rubygems
   def spec_commands
     [
-      File.join('bin', 'spec'),
+      File.expand_path(File.join(File.dirname(__FILE__), '..', '..', 'bin', 'spec')),
       File.join(Config::CONFIG['bindir'], 'spec')
     ]
   end
-
 end

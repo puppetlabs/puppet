@@ -73,10 +73,16 @@ describe "should raise_error(NamedError)" do
     }.should fail_with("expected NameError but nothing was raised")
   end
   
-  it "should fail if another error is raised" do
+  it "should fail if another error is raised (NameError)" do
     lambda {
       lambda { raise }.should raise_error(NameError)
     }.should fail_with("expected NameError, got RuntimeError")
+  end
+  
+  it "should fail if another error is raised (NameError)" do
+    lambda {
+      lambda { load "non/existent/file" }.should raise_error(NameError)
+    }.should fail_with(/expected NameError, got #<LoadError/)
   end
 end
 

@@ -7,7 +7,7 @@ module Spec
     end
 
     class NoisyBacktraceTweaker < BacktraceTweaker
-      def tweak_backtrace(error, spec_name)
+      def tweak_backtrace(error)
         return if error.backtrace.nil?
         error.backtrace.each do |line|
           clean_up_double_slashes(line)
@@ -19,7 +19,7 @@ module Spec
     class QuietBacktraceTweaker < BacktraceTweaker
       unless defined?(IGNORE_PATTERNS)
         root_dir = File.expand_path(File.join(__FILE__, '..', '..', '..', '..'))
-        spec_files = Dir["#{root_dir}/lib/spec/*"].map do |path| 
+        spec_files = Dir["#{root_dir}/lib/*"].map do |path| 
           subpath = path[root_dir.length..-1]
           /#{subpath}/
         end
@@ -38,7 +38,7 @@ module Spec
         ]
       end
       
-      def tweak_backtrace(error, spec_name)
+      def tweak_backtrace(error)
         return if error.backtrace.nil?
         error.backtrace.collect! do |line|
           clean_up_double_slashes(line)

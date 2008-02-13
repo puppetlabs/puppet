@@ -138,7 +138,7 @@ module Spec
       end
       
       def warn_deprecated(deprecated_method, instead)
-        STDERR.puts "The #{deprecated_method} constraint is deprecated. Use #{instead} instead."
+        Kernel.warn "The #{deprecated_method} constraint is deprecated. Use #{instead} instead."
       end
       
       def convert_constraint(constraint)

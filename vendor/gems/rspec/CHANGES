@@ -1,3 +1,163 @@
+== Version 1.1.3
+
+Maintenance release.
+
+* Tightened up exceptions list in autotest/rails_spec. Closes #264.
+* Applied patch from Ryan Davis for ZenTest-3.9.0 compatibility
+* Applied patch from Kero to add step_upcoming to story listeners. Closes #253.
+* Fixed bug where the wrong named error was not always caught by "should raise_error"
+* Applied patch from Luis Lavena: No coloured output on Windows due missing RUBYOPT. Closes #244.
+* Applied patch from Craig Demyanovich to add support for "should_not render_template" to rspec_on_rails. Closes #241.
+* Added --pattern (-p for short) option to control what files get loaded. Defaults to '**/*_spec.rb'
+* Exit with non-0 exit code if examples *or tests* (in test/unit interop mode) fail. Closes #203.
+* Moved at_exit hook to a method in Spec::Runner which only runs if specs get loaded. Closes #242.
+* Applied patch from kakutani ensuring that base_view_path gets cleared after each view example. Closes #235.
+* More tweaks to regexp step names
+* Fixed focused specs in nested ExampleGroups. Closes #225.
+
+== Version 1.1.2
+
+Minor bug fixes/enhancements.
+
+* RSpec's Autotest subclasses compatible with ZenTest-3.8.0 (thanks to Ryan Davis for making it easier on Autotest subs).
+* Applied patch from idl to add spec/lib to rake stats. Closes #226.
+* calling setup_fixtures and teardown_fixtures for Rails >= r8570. Closes #219.
+* Applied patch from Josh Knowles using ActiveSupport's Inflector (when available) to make 'should have' read a bit better. Closes #197.
+* Fixed regression in 1.1 that caused failing examples to fail to generate their own names. Closes #209.
+* Applied doc patch from Jens KrÃ¤mer for capturing content_for
+* Applied patch from Alexander Lang to clean up story steps after each story. Closes #198.
+* Applied patch from Josh Knowles to support 'string_or_response.should have_text(...)'. Closes #193.
+* Applied patch from Ian Dees to quiet the Story Runner backtrace. Closes #183.
+* Complete support for defining steps with regexp 'names'.
+
+== Version 1.1.1
+
+Bug fix release.
+
+* Fix regression in 1.1.0 that caused transactions to not get rolled back between examples.
+* Applied patch from Bob Cotton to reintroduce ExampleGroup.description_options. Closes LH[#186]
+
+== Version 1.1.0
+
+The "tell me a story and go nest yourself" release.
+
+* Applied patch from Mike Vincent to handle generators rails > 2.0.1. Closes LH[#181]
+* Formatter.pending signature changed so it gets passed an ExampleGroup instance instead of the name ( LH[#180])
+* Fixed LH[#180] Spec::Rails::Example::ModelExampleGroup and friends show up in rspec/rails output
+* Spec::Rails no longer loads ActiveRecord extensions if it's disabled in config/boot.rb
+* Applied LH[#178] small annoyances running specs with warnings enabled (Patch from Mikko Lehtonen)
+* Tighter integration with Rails fixtures. Take advantage of fixture caching to get performance improvements (Thanks to Pat Maddox, Nick Kallen, Jonathan Barnes, and Curtis)
+
+== Version 1.1.0-RC1
+
+Textmate Bundle users - this release adds a new RSpec bundle that highlights describe, it, before and after and
+provides navigation to descriptions and examples (rather than classes and methods). When you first install this,
+it is going to try to hijack all of your .rb files. All you need to do is open a .rb file that does not end with
+'spec.rb' and change the bundle selection from RSpec to Ruby. TextMate will do the right thing from then on.
+
+Shortcuts for tab-activated snippets all follow the TextMate convention of 2 or 3 letters of the first word, followed by the first letter of each subsequent word. So "should have_at_least" would be triggered by shhal.
+
+We reduced the scope for running spec directories, files, a single file or individual spec in TextMate to source.ruby.rspec. This allowed us to restore the standard Ruby shortcuts:
+
+CMD-R runs all the specs in one file
+CMD-SHIFT-R runs an individual spec
+CMD-OPT-R runs any files or directories selected in the TextMate drawer
+
+rspec_on_rails users - don't forget to run script/generate rspec
+
+* Added shared_examples_for method, which you can (should) use instead of describe Foo, :shared => true
+* Applied LH[#168] Fix describe Object, "description contains a # in it" (Patch from Martin Emde)
+* Applied LH[#15] Reverse loading of ActionView::Base helper modules (Patch from Mark Van Holstyn)
+* Applied LH[#149] Update contribute page to point towards lighthouse (Patch from Josh Knowles)
+* Applied LH[#142] verify_rcov fails with latest rcov (Patch from Kyle Hargraves)
+* Applied LH[#10] Allow stubs to yield and return values (Patch from Pat Maddox)
+* Fixed LH[#139] version.rb in trunk missing svn last changed number
+* Applied LH[#14] Adding support for by_at_least/by_at_most in Change matcher (Patch from Saimon Moore)
+* Applied LH[#12] Fix for TM when switching to alternate file (Patch from Trevor Squires)
+* Applied LH[#133] ExampleMatcher should match against before(:all) (Patch from Bob Cotton)
+* Applied LH[#134] Only load spec inside spec_helper.rb (Patch from Mark Van Holstyn)
+* RSpec now bails immediately if there are examples with identical names.
+* Applied LH[#132]  Plain Text stories should support Given and Given: (Patch from Jarkko Laine)
+* Applied patch from Pat Maddox: Story Mediator - the glue that binds the plain text story parser with the rest of the system
+* Applied LH[#16] Have SimpleMatchers expose their description for specdocs (Patch from Bryan Helmkamp)
+* Stories now support --colour
+* Changed the DSL modules to Example (i.e. Spec::Example instead of Spec::DSL)
+* Applied [#15608] Story problem if parenthesis used in Given, When, Then or And (Patch from Sinclair Bain)
+* Applied [#15659] GivenScenario fails when it is a RailsStory (Patch from Nathan Sutton)
+* Fixed [#15639] rcov exclusion configuration. (Spec::Rails projects can configure rcov with spec/rcov.opts)
+* The rdoc formatter (--format rdoc) is gone. It was buggy and noone was using it.
+* Changed Spec::DSL::Behaviour to Spec::DSL::ExampleGroup
+* Changed Spec::DSL::SharedBehaviour to Spec::DSL::SharedExampleGroup
+* Applied [#14023] Small optimization for heavily proxied objects. (Patch from Ian Leitch)
+* Applied [#13943] ProfileFormatter (Top 10 slowest examples) (Patch from Ian Leitch)
+* Fixed [#15232] heckle is not working correctly in trunk (as of r2801)
+* Applied [#14399] Show pending reasons in HTML report (Patch from Bryan Helmkamp)
+* Discovered fixed: [#10263] mock "leak" when setting an expectation in a block passed to mock#should_receive
+* Fixed [#14671] Spec::DSL::ExampleRunner gives "NO NAME because of --dry-run" for every example for 'rake spec:doc'
+* Fixed [#14543] rspec_scaffold broken with Rails 2.0
+* Removed Patch [#10577] Rails with Oracle breaks 0.9.2 - was no longer necessary since we moved describe to the Main object (instead of Object)
+* Fixed [#14527] specs run twice on rails 1.2.4 and rspec/rspec_on_rails trunk
+* Applied [#14043] Change output ordering to show pending before errors (Patch from Mike Mangino)
+* Applied [#14095] Don't have ./script/generate rspec create previous_failures.txt (Patch from Bryan Helmkamp)
+* Applied [#14254] Improved error handling for Object#should and Object#should_not (Patch from Antti Tarvainen)
+* Applied [#14186] Remove dead code from message_expecation.rb (Patch from Antti Tarvainen)
+* Applied [#14183] Tiny improvement on mock_spec.rb (Patch from Antti Tarvainen)
+* Applied [#14208] Fix to Mock#method_missing raising NameErrors instead of MockExpectationErrors (Patch from Antti Tarvainen)
+* Applied [#14255] Fixed examples in mock_spec.rb and shared_behaviour_spec.rb (Patch from Antti Tarvainen)
+* Applied [#14362] partially mocking objects that define == can blow up (Patch from Pat Maddox)
+* test_ methods with an arity of 0 defined in a describe block or Example object will be run as an Example, providing a seamless transition from Test::Unit
+* Removed BehaviourRunner
+* Fixed [#13969] Spec Failures on Trunk w/ Autotest
+* Applied [#14156] False positives with should_not (Patch from Antti Tarvainen)
+* Applied [#14170] route_for and params_from internal specs fixed (Patch from Antti Tarvainen)
+* Fixed [#14166] Cannot build trunk
+* Applied [#14142] Fix for bug #11602: Nested #have_tag specifications fails on the wrong line number (Patch from Antti Tarvainen)
+* Removed warn_if_no_files argument and feature
+* Steps (Given/When/Then) with no blocks are treated as pending
+* Applied [#13913] Scenario should treat no code block as pending (Patch from Evan Light)
+* Fixed [#13370] Weird mock expectation error (Patch from Mike Mangino)
+* Applied [#13952] Fix for performance regression introduced in r2096 (Patch from Ian Leitch)
+* Applied [#13881] Dynamically include Helpers that are included on ActionView::Base (Patch from Brandon Keepers)
+* Applied [#13833] ActionView::Helpers::JavaScriptMacrosHelper removed after 1.2.3 (Patch from Yurii Rashkovskii)
+* Applied [#13814] RSpec on Rails w/ fixture-scenarios (Patch from Shintaro Kakutani)
+* Add ability to define Example subclass instead of using describe
+* Applied Patch from James Edward Gray II to improve syntax highlighting in TextMate
+* Fixed [#13579] NoMethodError not raised for missing helper methods
+* Fixed [#13713] form helper method 'select' can not be called when calling custom helper methods from specs
+* Example subclasses Test::Unit::TestCase
+* Added stub_everything method to create a stub that will return itself for any message it doesn't understand
+* Added stories directory with stories/all.rb and stories/helper.rb when you script/generate rspec
+* Applied [#13554] Add "And" so you can say Given... And... When... Then... And...
+* Applied [#11254] RSpec syntax coloring and function pop-up integration in TextMate (Patch from Wincent Colaiuta)
+* Applied [#13143] ActionView::Helpers::RecordIdentificationHelper should be included if present (Patch from Jay Levitt)
+* Applied [#13567] patch to allow stubs to yield consecutive values (Patch from Rupert Voelcker)
+* Applied [#13559] reverse version of route_for (Patch from Rupert Voelcker)
+* Added [#13532] /lib specs should get base EvalContext
+* Applied [#13451] Add a null_object option to mock_model (Patch from James Deville)
+* Applied [#11919] Making non-implemented specs easy in textmate (Patch from Scott Taylor)
+* Applied [#13274] ThrowSymbol recognized a NameError triggered by Kernel#method_missing as a thrown Symbol
+* Applied [#12722] the alternate file command does not work in rails views due to scope (Patch from Carl Porth)
+* Behaviour is now a Module that is used by Example class methods and SharedBehaviour
+* Added ExampleDefinition
+* Added story runner framework based on rbehave [#12628]
+* Applied [#13336] Helper directory incorrect for rake stats in statsetup task (Patch from Curtis Miller)
+* Applied [#13339] Add the ability for spec_parser to parse describes with :behaviour_type set (Patch from Will Leinweber and Dav Yaginuma)
+* Fixed [#13271] incorrect behaviour with expect_render and stub_render
+* Applied [#13129] Fix failing specs in spec_distributed (Patch from Bob Cotton)
+* Applied [#13118] Rinda support for Spec::Distributed (Patch from Bob Cotton)
+* Removed BehaviourEval
+* Removed Behaviour#inherit
+* Moved implementation of install_dependencies to example_rails_app
+* Renamed RSPEC_DEPS to VENDOR_DEPS
+* Added Example#not_implemented?
+* You can now stub!(:msg).with(specific args)
+* describe("A", Hash, "with one element") will generate description "A Hash with one element" (Tip from Ola Bini)
+* Applied [#13016] [DOC] Point out that view specs render, well, a view (Patch from Jay Levitt)
+* Applied [#13078] Develop rspec with autotest (Patch from Scott Taylor)
+* Fixed [#13065] Named routes throw a NoMethodError in Helper specs (Patches from James Deville and Mike Mangino)
+* Added (back) the verbose attribute in Spec::Rake::SpecTask
+* Changed documentation to point at the new http svn URL, which is more accessible.
+
 == Version 1.0.8
 
 Another bugfix release - this time to resolve the version mismatch
@@ -31,7 +191,7 @@ able to use the passed Example instance as if it were a String.
 * Applied [#12935] Remove requirement that mocha must be installed as a gem when used as mocking framework. (Patch from Ryan Kinderman).
 * Fixed [#12893] RSpec's Autotest should work with rspec's trunk
 * Fixed [#12865] Partial mock error when object has an @options instance var
-* Applied [#12701] Allow checking of content captured with content_for in view specs (Patch from Jens Krämer)
+* Applied [#12701] Allow checking of content captured with content_for in view specs (Patch from Jens Krï¿½mer)
 * Applied [#12817] Cannot include same shared behaviour when required with absolute paths (Patch from Ian Leitch)
 * Applied [#12719] rspec_on_rails should not include pagination helper (Patch from Matthijs Langenberg)
 * Fixed [#12714] helper spec not finding rails core helpers
@@ -56,7 +216,7 @@ able to use the passed Example instance as if it were a String.
 * Fixed [#12079] auto-generated example name incomplete: should have 1 error on ....]
 * Applied [#12066] Docfix for mocks/mocks.page (Patch from Kyle Hargraves)
 * Fixed [#11891] script/generate rspec_controller fails to create appropriate views (from templates) on edge rails
-* Applied [#11921] Adds the correct controller_name from derived_controller_name() to the ViewExampleController (Patch from Eloy Duran)
+* Applied [#11921] Adds the correct controller_name from derived_controller_name() to the ViewExampleGroupController (Patch from Eloy Duran)
 * Fixed [#11903] config.include with behaviour_type 'hash' does not work
 * Examples without blocks and pending is now reported with a P instead of a *
 * Pending blocks that now pass are rendered blue

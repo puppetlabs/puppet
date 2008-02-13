@@ -199,6 +199,21 @@ describe "should be ===" do
   end
 end
 
+describe "should be" do
+  it "should pass if actual is true or a set value" do
+    true.should be
+    1.should be
+  end
+
+  it "should fail if actual is false" do
+    lambda {false.should be}.should fail_with("expected if to be satisfied, got false")
+  end
+
+  it "should fail if actual is nil" do
+    lambda {nil.should be}.should fail_with("expected if to be satisfied, got nil")
+  end
+end
+
 describe "should be(value)" do
   it "should pass if actual.equal?(value)" do
     5.should be(5)

@@ -38,7 +38,7 @@ module RCov
         total_coverage = nil
 
         File.open(index_html).each_line do |line|
-          if line =~ /<tt.*>(\d+\.\d+)%<\/tt>&nbsp;<\/td>/
+          if line =~ /<tt class='coverage_total'>(\d+\.\d+)%<\/tt>/
             total_coverage = eval($1)
             break
           end
