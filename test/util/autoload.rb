@@ -103,7 +103,7 @@ TestAutoload.newthing(:#{name.to_s})
         assert(loader.send(:searchpath).include?(dir), "searchpath does not include the libdir")
     end
 
-    # This tests #1064, which was caused by using the unqualified
+    # This tests #1027, which was caused by using the unqualified
     # path for requires, which was initially done so that the kernel
     # would keep track of which files got loaded.
     def test_require_uses_full_path
