@@ -112,9 +112,8 @@ class Puppet::Util::Autoload
             Dir.glob("#{dir}/*.rb").each do |file|
                 name = File.basename(file).sub(".rb", '').intern
                 next if loaded?(name)
-                rubypath = File.join(@path, name.to_s)
                 begin
-                    Kernel.require rubypath
+                    Kernel.require file
                     loaded(name, file)
                 rescue => detail
                     if Puppet[:trace]
