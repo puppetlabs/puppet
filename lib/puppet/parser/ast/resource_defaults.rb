@@ -8,13 +8,11 @@ class Puppet::Parser::AST
 
         # As opposed to ResourceDef, this stores each default for the given
         # object type.
-        def evaluate(hash)
-            scope = hash[:scope]
-
+        def evaluate(scope)
             # Use a resource reference to canonize the type
             ref = Puppet::ResourceReference.new(@type, "whatever")
             type = ref.type
-            params = @params.safeevaluate(:scope => scope)
+            params = @params.safeevaluate(scope)
 
             parsewrap do
                 scope.setdefaults(type, params)

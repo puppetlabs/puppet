@@ -15,26 +15,26 @@ describe Puppet::Parser::Resource, " when evaluating" do
         @class = @parser.newclass "myclass"
         @nodedef = @parser.newnode("mynode")[0]
         @node = Puppet::Node.new("yaynode")
-        @compile = Puppet::Parser::Compile.new(@node, @parser)
-        @scope = @compile.topscope
+        @compiler = Puppet::Parser::Compiler.new(@node, @parser)
+        @scope = @compiler.topscope
     end
 
     it "should evaluate the associated AST definition" do
         res = @type.new(:type => "mydefine", :title => "whatever", :scope => @scope, :source => @source)
-        @definition.expects(:evaluate).with(:scope => @scope, :resource => res)
+        @definition.expects(:evaluate_code).with(res)
 
         res.evaluate
     end
 
     it "should evaluate the associated AST class" do
         res = @type.new(:type => "class", :title => "myclass", :scope => @scope, :source => @source)
-        @class.expects(:evaluate).with(:scope => @scope, :resource => res)
+        @class.expects(:evaluate_code).with(res)
         res.evaluate
     end
 
     it "should evaluate the associated AST node" do
         res = @type.new(:type => "node", :title => "mynode", :scope => @scope, :source => @source)
-        @nodedef.expects(:evaluate).with(:scope => @scope, :resource => res)
+        @nodedef.expects(:evaluate_code).with(res)
         res.evaluate
     end
 end
@@ -47,8 +47,8 @@ describe Puppet::Parser::Resource, " when finishing" do
         @class = @parser.newclass "myclass"
         @nodedef = @parser.newnode("mynode")[0]
         @node = Puppet::Node.new("yaynode")
-        @compile = Puppet::Parser::Compile.new(@node, @parser)
-        @scope = @compile.topscope
+        @compiler = Puppet::Parser::Compiler.new(@node, @parser)
+        @scope = @compiler.topscope
 
         @resource = Puppet::Parser::Resource.new(:type => "mydefine", :title => "whatever", :scope => @scope, :source => @source)
     end

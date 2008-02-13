@@ -1,3 +1,18 @@
+    Fixed #997 -- virtual defined types are no longer evaluated.
+    NOTE: This introduces a behaviour change, in that you previously
+    could realize a resource within a virtual defined resource, and now
+    you must realize the entire defined resource, rather than just
+    the contained resource.
+
+    Fixed #1030 - class and definition evaluation has been significantly
+    refactored, fixing this problem and making the whole interplay
+    between the classes, definitions, and nodes, and the Compile class much
+    cleaner.
+
+    Exec resources must now have unique names.  This is easily accomplished by
+    just specifying a unique name with whatever (unique or otherwise) command
+    you need.
+
     Fixed #989 -- missing CRL files are correctly ignored, and the
     value should be set to 'false' to explicitly not look for these
     files.

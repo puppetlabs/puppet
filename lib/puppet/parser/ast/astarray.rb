@@ -15,8 +15,7 @@ class Puppet::Parser::AST
         end
 
         # Evaluate our children.
-        def evaluate(hash)
-            scope = hash[:scope]
+        def evaluate(scope)
             rets = nil
             # We basically always operate declaratively, and when we
             # do we need to evaluate the settor-like statements first.  This
@@ -51,7 +50,7 @@ class Puppet::Parser::AST
             }
 
             rets = [settors, others].flatten.collect { |child|
-                child.safeevaluate(:scope => scope)
+                child.safeevaluate(scope)
             }
             return rets.reject { |o| o.nil? }
         end

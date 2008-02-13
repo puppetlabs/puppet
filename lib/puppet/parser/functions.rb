@@ -111,7 +111,7 @@ module Functions
         vals = [vals] unless vals.is_a?(Array)
 
         # The 'false' disables lazy evaluation.
-        klasses = compile.evaluate_classes(vals, self, false)
+        klasses = compiler.evaluate_classes(vals, self, false)
 
         missing = vals.find_all do |klass|
             ! klasses.include?(klass)
@@ -146,7 +146,7 @@ module Functions
     tells you whether the current container is tagged with the specified tags.
     The tags are ANDed, so that all of the specified tags must be included for
     the function to return true.") do |vals|
-        configtags = compile.catalog.tags
+        configtags = compiler.catalog.tags
         resourcetags = resource.tags
 
         retval = true
@@ -235,7 +235,7 @@ module Functions
         vals = [vals] unless vals.is_a?(Array)
         coll.resources = vals
 
-        compile.add_collection(coll)
+        compiler.add_collection(coll)
     end
 
     newfunction(:search, :doc => "Add another namespace for this class to search.

@@ -14,30 +14,6 @@ class Puppet::Parser::AST
     include Puppet::Util::MethodHelper
     attr_accessor :line, :file, :parent, :scope
 
-    # Just used for 'tree', which is only used in debugging.
-    @@pink = "[0;31m"
-    @@green = "[0;32m"
-    @@yellow = "[0;33m"
-    @@slate = "[0;34m"
-    @@reset = "[0m"
-
-    # Just used for 'tree', which is only used in debugging.
-    @@indent = " " * 4
-    @@indline = @@pink + ("-" * 4) + @@reset
-    @@midline = @@slate + ("-" * 4) + @@reset
-
-    @@settypes = {}
-
-    # Just used for 'tree', which is only used in debugging.
-    def AST.indention
-        return @@indent * @@indention
-    end
-
-    # Just used for 'tree', which is only used in debugging.
-    def AST.midline
-        return @@midline
-    end
-
     # Does this ast object set something?  If so, it gets evaluated first.
     def self.settor?
         if defined? @settor
@@ -47,16 +23,12 @@ class Puppet::Parser::AST
         end
     end
 
-    # Evaluate the current object.  Basically just iterates across all
+    # Evaluate the current object.  Just a stub method, since the subclass
+    # should override this method.
     # of the contained children and evaluates them in turn, returning a
     # list of all of the collected values, rejecting nil values
-    def evaluate(args)
-        #Puppet.debug("Evaluating ast %s" % @name)
-        value = self.collect { |obj|
-            obj.safeevaluate(args)
-        }.reject { |obj|
-            obj.nil?
-        }
+    def evaluate(*options)
+        raise Puppet::DevError, "Did not override #evaluate in %s" % self.class
     end
 
     # Throw a parse error.
@@ -75,11 +47,11 @@ class Puppet::Parser::AST
     # correctly handles errors.  It is critical to use this method because
     # it can enable you to catch the error where it happens, rather than
     # much higher up the stack.
-    def safeevaluate(options)
+    def safeevaluate(*options)
         # We duplicate code here, rather than using exceptwrap, because this
         # is called so many times during parsing.
         begin
-            return self.evaluate(options)
+            return self.evaluate(*options)
         rescue Puppet::Error => detail
             raise adderrorcontext(detail)
         rescue => detail
@@ -88,14 +60,6 @@ class Puppet::Parser::AST
             # not exceptions.
             raise adderrorcontext(error, detail)
         end
-    end
-
-    # Again, just used for printing out the parse tree.
-    def typewrap(string)
-        #return self.class.to_s.sub(/.+::/,'') +
-            #"(" + @@green + string.to_s + @@reset + ")"
-        return @@green + string.to_s + @@reset +
-            "(" + self.class.to_s.sub(/.+::/,'') + ")"
     end
 
     # Initialize the object.  Requires a hash as the argument, and
@@ -107,13 +71,27 @@ class Puppet::Parser::AST
         @line = nil
         set_options(args)
     end
-    #---------------------------------------------------------------
-    # Now autoload everything.
-    @autoloader = Puppet::Util::Autoload.new(self,
-        "puppet/parser/ast"
-    )
-    @autoloader.loadall
 end
 
+# And include all of the AST subclasses.
+require 'puppet/parser/ast/astarray'
+require 'puppet/parser/ast/branch'
+require 'puppet/parser/ast/caseopt'
+require 'puppet/parser/ast/casestatement'
+require 'puppet/parser/ast/collection'
+require 'puppet/parser/ast/collexpr'
+require 'puppet/parser/ast/definition'
+require 'puppet/parser/ast/else'
+require 'puppet/parser/ast/function'
+require 'puppet/parser/ast/hostclass'
+require 'puppet/parser/ast/ifstatement'
 require 'puppet/parser/ast/leaf'
-
+require 'puppet/parser/ast/node'
+require 'puppet/parser/ast/resource'
+require 'puppet/parser/ast/resource_defaults'
+require 'puppet/parser/ast/resource_override'
+require 'puppet/parser/ast/resource_reference'
+require 'puppet/parser/ast/resourceparam'
+require 'puppet/parser/ast/selector'
+require 'puppet/parser/ast/tag'
+require 'puppet/parser/ast/vardef'

@@ -19,6 +19,11 @@ module Puppet::Util::Tagging
         qualified.collect { |name| name.split("::") }.flatten.each { |tag| @tags << tag unless @tags.include?(tag) }
     end
 
+    # Are we tagged with the provided tag?
+    def tagged?(tag)
+        defined?(@tags) and @tags.include?(tag.to_s)
+    end
+
     # Return a copy of the tag list, so someone can't ask for our tags
     # and then modify them.
     def tags

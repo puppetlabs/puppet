@@ -7,18 +7,11 @@ class Puppet::Parser::AST
 
         @settor = true
 
-        def evaluate(hash)
+        def evaluate(scope)
             # We don't need to evaluate the name, because it's plaintext
+            args = @arguments.safeevaluate(scope)
 
-            # Just evaluate the arguments
-            scope = hash[:scope]
-
-            args = @arguments.safeevaluate(:scope => scope)
-
-            #exceptwrap :message => "Failed to execute %s" % @name,
-            #        :type => Puppet::ParseError do
-                return scope.send("function_" + @name, args)
-            #end
+            return scope.send("function_" + @name, args)
         end
 
         def initialize(hash)

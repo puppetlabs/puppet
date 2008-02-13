@@ -10,12 +10,10 @@ class Puppet::Parser::AST
         end
 
         # Return the parameter and the value.
-        def evaluate(hash)
-            scope = hash[:scope]
-
+        def evaluate(scope)
             return Puppet::Parser::Resource::Param.new(
                 :name => @param,
-                :value => @value.safeevaluate(:scope => scope),
+                :value => @value.safeevaluate(scope),
                 :source => scope.source, :line => self.line, :file => self.file,
                 :add => self.add
             )

@@ -193,7 +193,7 @@ module Puppet
                             next unless resource = child.to_type
                             config.add_resource resource
                         end
-                        config.add_edge!(container, resource)
+                        config.add_edge(container, resource)
                         if child.is_a?(self.class)
                             delver.call(child)
                         end

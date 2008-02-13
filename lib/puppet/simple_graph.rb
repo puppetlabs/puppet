@@ -100,10 +100,10 @@ class Puppet::SimpleGraph
     # Return a reversed version of this graph.
     def reversal
         result = self.class.new
-        vertices.each { |vertex| result.add_vertex!(vertex) }
+        vertices.each { |vertex| result.add_vertex(vertex) }
         edges.each do |edge|
             newedge = edge.class.new(edge.target, edge.source, edge.label)
-            result.add_edge!(newedge)
+            result.add_edge(newedge)
         end
         result
     end
@@ -150,7 +150,7 @@ class Puppet::SimpleGraph
     end
 
     # Add a new vertex to the graph.
-    def add_vertex!(vertex)
+    def add_vertex(vertex)
         return false if vertex?(vertex)
         setup_vertex(vertex)
         true # don't return the VertexWrapper instance.
@@ -176,7 +176,7 @@ class Puppet::SimpleGraph
 
     # Add a new edge.  The graph user has to create the edge instance,
     # since they have to specify what kind of edge it is.
-    def add_edge!(source, target = nil, label = nil)
+    def add_edge(source, target = nil, label = nil)
         if target
             edge = Puppet::Relationship.new(source, target, label)
         else

@@ -35,8 +35,8 @@ describe Puppet::PGraph do
     end
 
     it "should correctly clear vertices and edges when asked" do
-	    @graph.add_edge!("a", "b")
-	    @graph.add_vertex! "c"
+	    @graph.add_edge("a", "b")
+	    @graph.add_vertex "c"
         @graph.clear
         @graph.vertices.should be_empty
         @graph.edges.should be_empty
@@ -52,7 +52,7 @@ describe Puppet::PGraph, " when matching edges" do
 	    @edges = {}
 	    @edges["a/b"] = Puppet::Relationship.new("a", "b", {:event => :yay, :callback => :refresh})
 	    @edges["a/c"] = Puppet::Relationship.new("a", "c", {:event => :yay, :callback => :refresh})
-	    @graph.add_edge!(@edges["a/b"])
+	    @graph.add_edge(@edges["a/b"])
     end
 
     it "should match edges whose source matches the source of the event" do
@@ -64,7 +64,7 @@ describe Puppet::PGraph, " when matching edges" do
     end
 
     it "should match multiple edges" do
-	    @graph.add_edge!(@edges["a/c"])
+	    @graph.add_edge(@edges["a/c"])
         edges = @graph.matching_edges([@event])
         edges.should be_include(@edges["a/b"])
         edges.should be_include(@edges["a/c"])
@@ -75,9 +75,9 @@ describe Puppet::PGraph, " when determining dependencies" do
     before do
         @graph = Puppet::PGraph.new
         
-        @graph.add_edge!("a", "b")
-        @graph.add_edge!("a", "c")
-        @graph.add_edge!("b", "d")
+        @graph.add_edge("a", "b")
+        @graph.add_edge("a", "c")
+        @graph.add_edge("b", "d")
     end
 
     it "should find all dependents when they are on multiple levels" do
@@ -118,19 +118,19 @@ describe Puppet::PGraph, " when splicing the relationship graph" do
 
         # We have to add the container to the main graph, else it won't
         # be spliced in the dependency graph.
-        @contgraph.add_vertex!(@empty)
+        @contgraph.add_vertex(@empty)
     end
 
     def dependency_graph
         @depgraph = Puppet::PGraph.new
         @contgraph.vertices.each do |v|
-            @depgraph.add_vertex!(v)
+            @depgraph.add_vertex(v)
         end
 
         # We have to specify a relationship to our empty container, else it
         # never makes it into the dep graph in the first place.
         {@one => @two, "f" => "c", "h" => @middle, "c" => @empty}.each do |source, target|
-            @depgraph.add_edge!(source, target, :callback => :refresh)
+            @depgraph.add_edge(source, target, :callback => :refresh)
         end
     end
 
@@ -176,13 +176,13 @@ describe Puppet::PGraph, " when splicing the relationship graph" do
     end
 
     it "should not add labels to edges that have none" do
-        @depgraph.add_edge!(@two, @three)
+        @depgraph.add_edge(@two, @three)
         splice
         @depgraph.edge_label("c", "i").should == {}
     end
 
     it "should copy labels over edges that have none" do
-        @depgraph.add_edge!("c", @three, {:callback => :refresh})
+        @depgraph.add_edge("c", @three, {:callback => :refresh})
         splice
         # And make sure the label got copied.
         @depgraph.edge_label("c", "i").should == {:callback => :refresh}
@@ -190,18 +190,18 @@ describe Puppet::PGraph, " when splicing the relationship graph" do
 
     it "should not replace a label with a nil label" do
         # Lastly, add some new label-less edges and make sure the label stays.
-        @depgraph.add_edge!(@middle, @three)
-        @depgraph.add_edge!("c", @three, {:callback => :refresh})
+        @depgraph.add_edge(@middle, @three)
+        @depgraph.add_edge("c", @three, {:callback => :refresh})
         splice
         @depgraph.edge_label("c", "i").should == {:callback => :refresh}
     end
 
     it "should copy labels to all created edges" do
-        @depgraph.add_edge!(@middle, @three)
-        @depgraph.add_edge!("c", @three, {:callback => :refresh})
+        @depgraph.add_edge(@middle, @three)
+        @depgraph.add_edge("c", @three, {:callback => :refresh})
         splice
         @three.each do |child|
-            edge = @depgraph.edge_class.new("c", child)
+            edge = Puppet::Relationship.new("c", child)
             @depgraph.should be_edge(edge.source, edge.target)
             @depgraph.edge_label(edge.source, edge.target).should == {:callback => :refresh}
         end
