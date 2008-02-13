@@ -423,8 +423,8 @@ end
 require 'puppet/propertychange'
 require 'puppet/provider'
 require 'puppet/type/component'
-require 'puppet/type/pfile'
-require 'puppet/type/pfilebucket'
+require 'puppet/type/file'
+require 'puppet/type/filebucket'
 require 'puppet/type/tidy'
 
 

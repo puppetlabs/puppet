@@ -2,7 +2,7 @@
 
 require File.dirname(__FILE__) + '/../../../spec_helper'
 
-require 'puppet/type/pfile'
+require 'puppet/type/file'
 
 describe Puppet::Type::File, " when used with replace=>false and content" do
     before do

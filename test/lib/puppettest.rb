@@ -315,7 +315,6 @@ module PuppetTest
         rescue Timeout::Error
             # just move on
         end
-        mocha_verify
     end
 
     def logstore
