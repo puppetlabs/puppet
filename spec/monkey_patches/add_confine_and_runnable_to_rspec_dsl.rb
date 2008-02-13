@@ -11,12 +11,16 @@ require 'puppettest/runnable_test'
 module Spec
   module Runner
     class ExampleGroupRunner
-      def run_behaviours
-        @behaviours.each do |behaviour|
-          # LAK:NOTE: this 'runnable' test is Puppet-specific.
-          next unless behaviour.runnable?
-          behaviour.run(@options.reporter, @options.dry_run, @options.reverse, @options.timeout)
+      def run
+        prepare
+        success = true
+        example_groups.each do |example_group|
+          next unless example_group.runnable?
+          success = success & example_group.run
         end
+        return success
+      ensure
+        finish
       end
     end
   end

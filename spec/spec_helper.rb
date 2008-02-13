@@ -19,19 +19,18 @@ require 'puppettest/runnable_test'
 require 'mocha'
 require 'spec'
 
+# load any monkey-patches
+Dir["#{dir}/monkey_patches/*.rb"].map { |file| require file }
 
 Spec::Runner.configure do |config|
   config.mock_with :mocha
 
-  config.prepend_before :all do
-      setup_mocks_for_rspec
-      setup() if respond_to? :setup
-  end
-
-  config.prepend_after :all do
-      teardown() if respond_to? :teardown
-  end
+#  config.prepend_before :all do
+#      setup_mocks_for_rspec
+#      setup() if respond_to? :setup
+#  end
+#
+#  config.prepend_after :all do
+#      teardown() if respond_to? :teardown
+#  end
 end
-
-# load any monkey-patches
-Dir["#{dir}/monkey_patches/*.rb"].map { |file| require file }

@@ -66,6 +66,7 @@ class Puppet::Indirector::Terminus
             subclass.terminus_type = self.name
 
             # Our subclass is specifically associated with an indirection.
+            raise("Invalid name %s" % longname) unless names.length > 0
             indirection_name = names.pop.sub(/^[A-Z]/) { |i| i.downcase }.gsub(/[A-Z]/) { |i| "_" + i.downcase }.intern
 
             if indirection_name == "" or indirection_name.nil?
