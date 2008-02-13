@@ -3,14 +3,17 @@ module Spec
     
     class Be #:nodoc:
       def initialize(*args)
-        @expected = parse_expected(args.shift)
+        if args.empty?
+          @expected = :satisfy_if
+        else
+          @expected = parse_expected(args.shift)
+        end
         @args = args
         @comparison = ""
       end
       
       def matches?(actual)
         @actual = actual
-        return true if match_or_compare unless handling_predicate?
         if handling_predicate?
           begin
             return @result = actual.__send__(predicate, *@args)
@@ -28,8 +31,9 @@ module Spec
           rescue
             raise predicate_error
           end
+        else
+          return match_or_compare
         end
-        return false
       end
       
       def failure_message
@@ -43,6 +47,7 @@ module Spec
       end
       
       def expected
+        return "if to be satisfied" if @expected == :satisfy_if
         return true if @expected == :true
         return false if @expected == :false
         return "nil" if @expected == :nil
@@ -50,6 +55,7 @@ module Spec
       end
       
       def match_or_compare
+        return @actual ? true : false if @expected == :satisfy_if
         return @actual == true if @expected == :true
         return @actual == false if @expected == :false
         return @actual.nil? if @expected == :nil
@@ -63,6 +69,7 @@ module Spec
       end
       
       def ==(expected)
+        @prefix = "be "
         @double_equal = true
         @comparison = "== "
         @expected = expected
@@ -70,6 +77,7 @@ module Spec
       end
 
       def ===(expected)
+        @prefix = "be "
         @triple_equal = true
         @comparison = "=== "
         @expected = expected
@@ -77,6 +85,7 @@ module Spec
       end
 
       def <(expected)
+        @prefix = "be "
         @less_than = true
         @comparison = "< "
         @expected = expected
@@ -84,6 +93,7 @@ module Spec
       end
 
       def <=(expected)
+        @prefix = "be "
         @less_than_or_equal = true
         @comparison = "<= "
         @expected = expected
@@ -91,6 +101,7 @@ module Spec
       end
 
       def >=(expected)
+        @prefix = "be "
         @greater_than_or_equal = true
         @comparison = ">= "
         @expected = expected
@@ -98,6 +109,7 @@ module Spec
       end
 
       def >(expected)
+        @prefix = "be "
         @greater_than = true
         @comparison = "> "
         @expected = expected
@@ -112,11 +124,14 @@ module Spec
         def parse_expected(expected)
           if Symbol === expected
             @handling_predicate = true
-            ["be_an_","be_a_","be_"].each do |@prefix|
-              return "#{expected.to_s.sub(@prefix,"")}".to_sym if expected.starts_with?(@prefix)
+            ["be_an_","be_a_","be_"].each do |prefix|
+              if expected.starts_with?(prefix)
+                @prefix = prefix
+                return "#{expected.to_s.sub(@prefix,"")}".to_sym
+              end
             end
           end
-          @prefix = "be "
+          @prefix = ""
           return expected
         end
         
@@ -169,6 +184,7 @@ module Spec
     end
  
     # :call-seq:
+    #   should be
     #   should be_true
     #   should be_false
     #   should be_nil
@@ -177,7 +193,8 @@ module Spec
     #   should_not be_arbitrary_predicate(*args)
     #
     # Given true, false, or nil, will pass if actual is
-    # true, false or nil (respectively).
+    # true, false or nil (respectively). Given no args means
+    # the caller should satisfy an if condition (to be or not to be). 
     #
     # Predicates are any Ruby method that ends in a "?" and returns true or false.
     # Given be_ followed by arbitrary_predicate (without the "?"), RSpec will match
@@ -189,6 +206,7 @@ module Spec
     #
     # == Examples 
     #
+    #   target.should be
     #   target.should be_true
     #   target.should be_false
     #   target.should be_nil

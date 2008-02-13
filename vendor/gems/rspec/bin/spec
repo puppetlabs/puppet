@@ -1,3 +1,4 @@
+#!/usr/bin/env ruby
 $LOAD_PATH.unshift(File.expand_path(File.dirname(__FILE__) + "/../lib"))
 require 'spec'
-::Spec::Runner::CommandLine.run(ARGV, STDERR, STDOUT, true, true)
+exit ::Spec::Runner::CommandLine.run(rspec_options)

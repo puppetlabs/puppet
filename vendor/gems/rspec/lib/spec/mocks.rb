@@ -170,7 +170,9 @@ module Spec
   #     #error can be an instantiated object or a class
   #     #if it is a class, it must be instantiable with no args
   #   my_mock.should_receive(:sym).and_throw(:sym)
-  #   my_mock.should_receive(:sym).and_yield([array,of,values,to,yield])
+  #   my_mock.should_receive(:sym).and_yield(values,to,yield)
+  #   my_mock.should_receive(:sym).and_yield(values,to,yield).and_yield(some,other,values,this,time)
+  #     # for methods that yield to a block multiple times
   #
   # Any of these responses can be applied to a stub as well, but stubs do
   # not support any qualifiers about the message received (i.e. you can't specify arguments
@@ -180,7 +182,8 @@ module Spec
   #   my_mock.stub!(:sym).and_return(value1, value2, value3)
   #   my_mock.stub!(:sym).and_raise(error)
   #   my_mock.stub!(:sym).and_throw(:sym)
-  #   my_mock.stub!(:sym).and_yield([array,of,values,to,yield])
+  #   my_mock.stub!(:sym).and_yield(values,to,yield)
+  #   my_mock.stub!(:sym).and_yield(values,to,yield).and_yield(some,other,values,this,time)
   #
   # == Arbitrary Handling
   #

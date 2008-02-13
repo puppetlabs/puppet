@@ -5,7 +5,7 @@ $LOAD_PATH.unshift("#{dir}/../lib")
 $LOAD_PATH.unshift("#{dir}/../test/lib")  # Add the old test dir, so that we can still find our local mocha and spec
 
 # include any gems in vendor/gems
-Dir["#{dir}/../vendor/gems/**"].map do |path| 
+Dir["#{dir}/../vendor/gems/**"].each do |path| 
     libpath = File.join(path, "lib")
     if File.directory?(libpath)
         $LOAD_PATH.unshift(libpath)
@@ -19,13 +19,16 @@ require 'puppettest/runnable_test'
 require 'mocha'
 require 'spec'
 
+
 Spec::Runner.configure do |config|
   config.mock_with :mocha
-  config.prepend_before :each do
+
+  config.prepend_before :all do
+      setup_mocks_for_rspec
       setup() if respond_to? :setup
   end
 
-  config.prepend_after :each do
+  config.prepend_after :all do
       teardown() if respond_to? :teardown
   end
 end

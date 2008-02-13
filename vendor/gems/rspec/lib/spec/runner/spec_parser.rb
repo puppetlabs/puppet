@@ -2,14 +2,28 @@ module Spec
   module Runner
     # Parses a spec file and finds the nearest example for a given line number.
     class SpecParser
-      def spec_name_for(io, line_number)
-        source  = io.read
-        behaviour, behaviour_line = behaviour_at_line(source, line_number)
-        example, example_line = example_at_line(source, line_number)
-        if behaviour && example && (behaviour_line < example_line)
-          "#{behaviour} #{example}"
-        elsif behaviour
-          behaviour
+      attr_reader :best_match
+
+      def initialize
+        @best_match = {}
+      end
+
+      def spec_name_for(file, line_number)
+        best_match.clear
+        file = File.expand_path(file)
+        rspec_options.example_groups.each do |example_group|
+          consider_example_groups_for_best_match example_group, file, line_number
+
+          example_group.examples.each do |example|
+            consider_example_for_best_match example, example_group, file, line_number
+          end
+        end
+        if best_match[:example_group]
+          if best_match[:example]
+            "#{best_match[:example_group].description} #{best_match[:example].description}"
+          else
+            best_match[:example_group].description
+          end
         else
           nil
         end
@@ -17,33 +31,40 @@ module Spec
 
     protected
 
-      def behaviour_at_line(source, line_number)
-        find_above(source, line_number, /^\s*(context|describe)\s+(.*)\s+do/)
-      end
-
-      def example_at_line(source, line_number)
-        find_above(source, line_number, /^\s*(specify|it)\s+(.*)\s+do/)
-      end
-
-      # Returns the context/describe or specify/it name and the line number
-      def find_above(source, line_number, pattern)
-        lines_above_reversed(source, line_number).each_with_index do |line, n|
-          return [parse_description($2), line_number-n] if line =~ pattern
+      def consider_example_groups_for_best_match(example_group, file, line_number)
+        parsed_backtrace = parse_backtrace(example_group.registration_backtrace)
+        parsed_backtrace.each do |example_file, example_line|
+          if is_best_match?(file, line_number, example_file, example_line)
+            best_match.clear
+            best_match[:example_group] = example_group
+            best_match[:line] = example_line
+          end
         end
-        nil
       end
 
-      def lines_above_reversed(source, line_number)
-        lines = source.split("\n")
-        lines[0...line_number].reverse
-      end
-      
-      def parse_description(str)
-        return str[1..-2] if str =~ /^['"].*['"]$/
-        if matches = /^(.*)\s*,\s*['"](.*)['"]$/.match(str)
-          return ::Spec::DSL::Description.generate_description(matches[1], matches[2])
+      def consider_example_for_best_match(example, example_group, file, line_number)
+        parsed_backtrace = parse_backtrace(example.implementation_backtrace)
+        parsed_backtrace.each do |example_file, example_line|
+          if is_best_match?(file, line_number, example_file, example_line)
+            best_match.clear
+            best_match[:example_group] = example_group
+            best_match[:example] = example
+            best_match[:line] = example_line
+          end
         end
-        return str
+      end
+
+      def is_best_match?(file, line_number, example_file, example_line)
+        file == File.expand_path(example_file) &&
+        example_line <= line_number &&
+        example_line > best_match[:line].to_i
+      end
+
+      def parse_backtrace(backtrace)
+        backtrace.collect do |trace_line|
+          split_line = trace_line.split(':')
+          [split_line[0], Integer(split_line[1])]
+        end
       end
     end
   end

@@ -10,7 +10,7 @@ require 'puppettest/runnable_test'
 
 module Spec
   module Runner
-    class BehaviourRunner
+    class ExampleGroupRunner
       def run_behaviours
         @behaviours.each do |behaviour|
           # LAK:NOTE: this 'runnable' test is Puppet-specific.
@@ -23,9 +23,17 @@ module Spec
 end
 
 module Spec
-  module DSL
-    class EvalModule < Module
-      include PuppetTest::RunnableTest
+  module Example
+    class ExampleGroup
+      extend PuppetTest::RunnableTest
+    end
+  end
+end
+
+module Test
+  module Unit
+    class TestCase
+      extend PuppetTest::RunnableTest
     end
   end
 end

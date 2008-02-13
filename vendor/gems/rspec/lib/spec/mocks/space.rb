@@ -2,7 +2,7 @@ module Spec
   module Mocks
     class Space
       def add(obj)
-        mocks << obj unless mocks.include?(obj)
+        mocks << obj unless mocks.detect {|m| m.equal? obj}
       end
 
       def verify_all

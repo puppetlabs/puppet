@@ -67,7 +67,7 @@ module Spec
     describe "a Mock expectation with multiple return values specifying at_least less than the number of values" do
       before(:each) do
         @mock = Mock.new("mock")
-        @mock.should_receive(:message).at_least(:twice).with(:no_args).and_return(11, 22)
+        @mock.should_receive(:message).at_least(:twice).with(no_args).and_return(11, 22)
       end
       
       it "should use last return value for subsequent calls" do

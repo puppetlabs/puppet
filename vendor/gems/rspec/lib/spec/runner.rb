@@ -1,22 +1,20 @@
-require 'spec/runner/formatter'
-require 'spec/runner/behaviour_runner'
 require 'spec/runner/options'
 require 'spec/runner/option_parser'
+require 'spec/runner/example_group_runner'
 require 'spec/runner/command_line'
 require 'spec/runner/drb_command_line'
 require 'spec/runner/backtrace_tweaker'
 require 'spec/runner/reporter'
-require 'spec/runner/extensions/object'
-require 'spec/runner/extensions/kernel'
 require 'spec/runner/spec_parser'
+require 'spec/runner/class_and_arguments_parser'
 
 module Spec
-  # == Behaviours and Examples
+  # == ExampleGroups and Examples
   # 
-  # Rather than expressing examples in classes, RSpec uses a custom domain specific language to 
-  # describe Behaviours and Examples of those behaviours.
+  # Rather than expressing examples in classes, RSpec uses a custom DSLL (DSL light) to 
+  # describe groups of examples.
   # 
-  # A Behaviour is the equivalent of a fixture in xUnit-speak. It is a metaphor for the context
+  # A ExampleGroup is the equivalent of a fixture in xUnit-speak. It is a metaphor for the context
   # in which you will run your executable example - a set of known objects in a known starting state.
   # We begin be describing
   # 
@@ -32,7 +30,7 @@ module Spec
   # 
   #   end
   # 
-  # We use the before block to set up the Behaviour (given), and then the #it method to
+  # We use the before block to set up the Example (given), and then the #it method to
   # hold the example code that expresses the event (when) and the expected outcome (then).
   # 
   # == Helper Methods
@@ -47,7 +45,7 @@ module Spec
   # 
   # == Setup and Teardown
   # 
-  # You can use before and after within a Behaviour. Both methods take an optional
+  # You can use before and after within a Example. Both methods take an optional
   # scope argument so you can run the block before :each example or before :all examples
   # 
   #   describe "..." do
@@ -125,11 +123,11 @@ module Spec
   #     end
   #   end
   # 
-  # == Shared behaviour
+  # == Shared Example Groups
   # 
-  # You can define a shared behaviour, that may be used on other behaviours
+  # You can define a shared Example Group, that may be used on other groups
   #
-  #  describe "All Editions", :shared => true do
+  #  share_examples_for "All Editions" do
   #    it "all editions behaviour" ...
   #  end
   #
@@ -140,10 +138,35 @@ module Spec
   #      ...
   #    end
   #  end
+  #
+  # You can also assign the shared group to a module and include that
+  #
+  #  share_as :AllEditions do
+  #    it "should do all editions stuff" ...
+  #  end
+  #
+  #  describe SmallEdition do
+  #    it_should_behave_like AllEditions
+  #  
+  #    it "should do small edition stuff" do
+  #      ...
+  #    end
+  #  end
+  #
+  # And, for those of you who prefer to use something more like Ruby, you
+  # can just include the module directly
+  #
+  #  describe SmallEdition do
+  #    include AllEditions
+  #  
+  #    it "should do small edition stuff" do
+  #      ...
+  #    end
+  #  end
   module Runner
     class << self
       def configuration # :nodoc:
-        @configuration ||= Spec::DSL::Configuration.new
+        @configuration ||= Spec::Example::Configuration.new
       end
       
       # Use this to configure various configurable aspects of
@@ -154,12 +177,26 @@ module Spec
       #   end
       #
       # The yielded <tt>configuration</tt> object is a
-      # Spec::DSL::Configuration instance. See its RDoc
+      # Spec::Example::Configuration instance. See its RDoc
       # for details about what you can do with it.
       #
       def configure
-        yield configuration if @configuration.nil?
+        yield configuration
       end
+      
+      def register_at_exit_hook # :nodoc:
+        $spec_runner_at_exit_hook_registered ||= nil
+        unless $spec_runner_at_exit_hook_registered
+          at_exit do
+            unless $! || Spec.run?; \
+              success = Spec.run; \
+              exit success if Spec.exit?; \
+            end
+          end
+          $spec_runner_at_exit_hook_registered = true
+        end
+      end
+      
     end
   end
 end

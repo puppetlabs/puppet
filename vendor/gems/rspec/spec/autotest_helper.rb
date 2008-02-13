@@ -1,4 +1,6 @@
+require "rubygems"
 require 'autotest'
-require File.dirname(__FILE__) + "/../lib/autotest/rspec"
-
-
+dir = File.dirname(__FILE__)
+require "#{dir}/spec_helper"
+require File.expand_path("#{dir}/../lib/autotest/rspec")
+require "#{dir}/autotest_matchers"

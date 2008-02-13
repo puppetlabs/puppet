@@ -12,7 +12,7 @@ describe "An object where respond_to? is true and does not have method" do
   # The fix was to keep track of whether :respond_to? had been proxied and, if
   # so, call the munged copy of :respond_to? on the object.
 
-  it "should not raise an exception" do
+  it "should not raise an exception for Object" do
     obj = Object.new
     obj.should_receive(:respond_to?).with(:foobar).and_return(true)
     obj.should_receive(:foobar).and_return(:baz)
@@ -20,7 +20,7 @@ describe "An object where respond_to? is true and does not have method" do
     obj.foobar.should == :baz
   end
 
-  it "should not raise an exception" do
+  it "should not raise an exception for mock" do
     obj = mock("obj")
     obj.should_receive(:respond_to?).with(:foobar).and_return(true)
     obj.should_receive(:foobar).and_return(:baz)

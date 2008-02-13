@@ -4,12 +4,14 @@ module Spec
     class ThrowSymbol #:nodoc:
       def initialize(expected=nil)
         @expected = expected
+        @actual = nil
       end
       
       def matches?(proc)
         begin
           proc.call
         rescue NameError => e
+          raise e unless e.message =~ /uncaught throw/
           @actual = e.name.to_sym
         ensure
           if @expected.nil?

@@ -4,14 +4,14 @@ require 'rake/gempackagetask'
 require 'rake/contrib/rubyforgepublisher'
 require 'rake/clean'
 require 'rake/rdoctask'
+require 'rake/testtask'
 require 'spec/version'
 dir = File.dirname(__FILE__)
-$LOAD_PATH.unshift(File.expand_path("#{dir}/../pre_commit/lib"))
+$LOAD_PATH.unshift(File.expand_path("#{dir}/pre_commit/lib"))
 require "pre_commit"
 
 # Some of the tasks are in separate files since they are also part of the website documentation
 load File.dirname(__FILE__) + '/rake_tasks/examples.rake'
-load File.dirname(__FILE__) + '/rake_tasks/examples_specdoc.rake'
 load File.dirname(__FILE__) + '/rake_tasks/examples_with_rcov.rake'
 load File.dirname(__FILE__) + '/rake_tasks/failing_examples_with_html.rake'
 load File.dirname(__FILE__) + '/rake_tasks/verify_rcov.rake'
@@ -22,44 +22,41 @@ PKG_FILE_NAME = "#{PKG_NAME}-#{PKG_VERSION}"
 PKG_FILES = FileList[
   '[A-Z]*',
   'lib/**/*.rb', 
-  'spec/**/*.rb', 
+  'spec/**/*',
   'examples/**/*',
-  'plugins/**/*'
+  'failing_examples/**/*',
+  'plugins/**/*',
+  'stories/**/*',
+  'pre_commit/**/*',
+  'rake_tasks/**/*'
 ]
-FileUtils.touch(File.dirname(__FILE__) + '/previous_failures.txt')
 
 task :default => [:verify_rcov]
+task :verify_rcov => [:spec, :stories]
 
 desc "Run all specs"
 Spec::Rake::SpecTask.new do |t|
-  t.spec_files = FileList[
-    'spec/**/*_spec.rb',
-    '../RSpec.tmbundle/Support/spec/*_spec.rb'
-    # TODO: get these in too - need to fix coverage
-    # '../spec_ui/spec/**/*_spec.rb'
-  ]
-  t.spec_opts = ['--options', 'spec.opts']
-  t.rcov = true
-  t.rcov_dir = '../doc/output/coverage'
-  t.rcov_opts = ['--exclude', 'spec\/spec,bin\/spec,examples']
+  t.spec_files = FileList['spec/**/*_spec.rb']
+  t.spec_opts = ['--options', 'spec/spec.opts']
+  unless ENV['NO_RCOV']
+    t.rcov = true
+    t.rcov_dir = '../doc/output/coverage'
+    t.rcov_opts = ['--exclude', 'spec\/spec,bin\/spec,examples,\/var\/lib\/gems,\/Library\/Ruby,\.autotest']
+  end
 end
 
-desc "Run all translated specs"
-Spec::Rake::SpecTask.new('translated_specs') do |t|
-  t.spec_files = FileList['translated_specs/**/*_spec.rb'].exclude( # These translate, but have other quirks
-    'translated_specs/spec/translator_spec.rb',
-    'translated_specs/spec/runner/formatter/html_formatter_spec.rb',
-    'translated_specs/spec/runner/option_parser_spec.rb'
-  )
-  t.spec_opts = ['--options', 'spec.opts']
-  t.rcov = true
-  t.rcov_dir = '../doc/output/coverage'
-  t.rcov_opts = ['--exclude', 'spec\/spec,bin\/spec,examples']
+desc "Run all stories"
+task :stories do
+  html = 'story_server/prototype/rspec_stories.html'
+  ruby "stories/all.rb --colour --format plain --format html:#{html}"
+  unless IO.read(html) =~ /<span class="param">/m
+    raise 'highlighted parameters are broken in story HTML'
+  end
 end
 
 desc "Run all specs and store html output in doc/output/report.html"
 Spec::Rake::SpecTask.new('spec_html') do |t|
-  t.spec_files = FileList['spec/**/*_spec.rb', 'vendor/RSpec.tmbundle/Support/spec/*_spec.rb']
+  t.spec_files = FileList['spec/**/*_spec.rb', '../../RSpec.tmbundle/Support/spec/*_spec.rb']
   t.spec_opts = ['--format html:../doc/output/report.html','--backtrace']
 end
 
@@ -68,21 +65,11 @@ Spec::Rake::SpecTask.new('failing_examples') do |t|
   t.spec_files = FileList['failing_examples/**/*_spec.rb']
 end
 
-desc 'Generate HTML documentation for website'
-task :webgen do
-  core.webgen
-end
-
 desc 'Generate RDoc'
 rd = Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_dir = '../doc/output/rdoc'
   rdoc.options << '--title' << 'RSpec' << '--line-numbers' << '--inline-source' << '--main' << 'README'
-  rdoc.rdoc_files.include('README', 'CHANGES', 'MIT-LICENSE', 'EXAMPLES.rd', 'UPGRADE', 'lib/**/*.rb')
-end
-
-desc "Generate EXAMPLES.rb"
-task :rdoc do
-  core.rdoc
+  rdoc.rdoc_files.include('README', 'CHANGES', 'MIT-LICENSE', 'UPGRADE', 'lib/**/*.rb')
 end
 
 spec = Gem::Specification.new do |s|
@@ -103,13 +90,13 @@ spec = Gem::Specification.new do |s|
   s.rdoc_options = rd.options
   s.extra_rdoc_files = rd.rdoc_files.reject { |fn| fn =~ /\.rb$|^EXAMPLES.rd$/ }.to_a
 
-  s.autorequire = 'spec'
   s.bindir = 'bin'
   s.executables = ['spec', 'spec_translator']
   s.default_executable = 'spec'
   s.author = "RSpec Development Team"
   s.email = "rspec-devel@rubyforge.org"
   s.homepage = "http://rspec.rubyforge.org"
+  s.platform = Gem::Platform::RUBY
   s.rubyforge_project = "rspec"
 end
 
@@ -141,7 +128,7 @@ task :clobber do
   core.clobber
 end
 
-task :release => [:clobber, :verify_committed, :verify_user, :spec, :publish_packages, :tag, :publish_website, :publish_news]
+task :release => [:clobber, :verify_committed, :verify_user, :spec, :publish_packages, :tag, :publish_news]
 
 desc "Verifies that there is no uncommitted code"
 task :verify_committed do
@@ -177,9 +164,7 @@ task(:pre_commit) {core.pre_commit}
 desc "Build the website, but do not publish it"
 task(:website) {core.website}
 
-task :rdoc_rails do
-  core.rdoc_rails
-end
+task(:rdoc_rails) {core.rdoc_rails}
 
 task :verify_user do
   raise "RUBYFORGE_USER environment variable not set!" unless ENV['RUBYFORGE_USER']
@@ -231,24 +216,14 @@ task :package_tmbundle do
 end
 task :pkg => :package_tmbundle
 
-desc "Package the Spec::Ui gem"
-task :package_spec_ui do
-  Dir.chdir '../spec_ui' do
-    `rake clobber gem`
-  end
-end
-task :pkg => :package_spec_ui
-
 desc "Publish gem+tgz+zip on RubyForge. You must make sure lib/version.rb is aligned with the CHANGELOG file"
 task :publish_packages => [:verify_user, :package] do
-  require File.dirname(__FILE__) + '/../spec_ui/lib/spec/ui/version'
   release_files = FileList[
     "pkg/#{PKG_FILE_NAME}.gem",
     "pkg/#{PKG_FILE_NAME}.tgz",
     "pkg/rspec_on_rails-#{PKG_VERSION}.tgz",
     "pkg/#{PKG_FILE_NAME}.zip",
-    "pkg/RSpec-#{PKG_VERSION}.tmbundle.tgz",
-    "../spec_ui/pkg/spec_ui-#{Spec::Ui::VERSION::STRING}.gem"
+    "pkg/RSpec-#{PKG_VERSION}.tmbundle.tgz"
   ]
   unless Spec::VERSION::RELEASE_CANDIDATE
     require 'meta_project'

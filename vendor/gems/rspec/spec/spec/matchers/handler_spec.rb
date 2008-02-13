@@ -33,7 +33,7 @@ module ExampleExpectations
   end
   
   class PositiveOnlyMatcher < ArbitraryMatcher
-    undef negative_failure_message
+    undef negative_failure_message rescue nil
   end
   
   def arbitrary_matcher(*args, &block)
@@ -54,6 +54,47 @@ module Spec
         actual = Object.new
         matcher.should_receive(:matches?).with(actual).and_return(true)
         ExpectationMatcherHandler.handle_matcher(actual, matcher)
+      end
+      
+      it "should explain when the matcher parameter is not a matcher" do
+        begin
+          nonmatcher = mock("nonmatcher")
+          actual = Object.new
+          ExpectationMatcherHandler.handle_matcher(actual, nonmatcher)
+        rescue Spec::Expectations::InvalidMatcherError => e
+        end
+
+        e.message.should =~ /^Expected a matcher, got /
+      end
+    end
+
+    describe NegativeExpectationMatcherHandler, ".handle_matcher" do
+      it "should explain when matcher does not support should_not" do
+        matcher = mock("matcher")
+        matcher.stub!(:matches?)
+        actual = Object.new
+        lambda {
+          NegativeExpectationMatcherHandler.handle_matcher(actual, matcher)
+        }.should fail_with(/Matcher does not support should_not.\n/)
+      end      
+      
+      it "should ask the matcher if it matches" do
+        matcher = mock("matcher")
+        actual = Object.new
+        matcher.stub!(:negative_failure_message)
+        matcher.should_receive(:matches?).with(actual).and_return(false)
+        NegativeExpectationMatcherHandler.handle_matcher(actual, matcher)
+      end
+      
+      it "should explain when the matcher parameter is not a matcher" do
+        begin
+          nonmatcher = mock("nonmatcher")
+          actual = Object.new
+          NegativeExpectationMatcherHandler.handle_matcher(actual, nonmatcher)
+        rescue Spec::Expectations::InvalidMatcherError => e
+        end
+
+        e.message.should =~ /^Expected a matcher, got /
       end
     end
     

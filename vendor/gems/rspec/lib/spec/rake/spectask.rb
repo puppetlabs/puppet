@@ -8,7 +8,7 @@ require 'rake/tasklib'
 module Spec
   module Rake
 
-    # A Rake task that runs a set of RSpec contexts.
+    # A Rake task that runs a set of specs.
     #
     # Example:
     #  
@@ -44,6 +44,17 @@ module Spec
     # Each attribute of this task may be a proc. This allows for lazy evaluation,
     # which is sometimes handy if you want to defer the evaluation of an attribute value
     # until the task is run (as opposed to when it is defined).
+    #
+    # This task can also be used to run existing Test::Unit tests and get RSpec
+    # output, for example like this:
+    #
+    #   require 'rubygems'
+    #   require 'spec/rake/spectask'
+    #   Spec::Rake::SpecTask.new do |t|
+    #     t.ruby_opts = ['-rtest/unit']
+    #     t.spec_files = FileList['test/**/*_test.rb']
+    #   end
+    #
     class SpecTask < ::Rake::TaskLib
       class << self
         def attr_accessor(*names)
@@ -106,6 +117,10 @@ module Spec
       # used, then the list of spec files is the union of the two.
       # Setting the SPEC environment variable overrides this.
       attr_accessor :spec_files
+      
+      # Use verbose output. If this is set to true, the task will print
+      # the executed spec command to stdout. Defaults to false.
+      attr_accessor :verbose
 
       # Defines a new task, using the name +name+.
       def initialize(name=:spec)
@@ -150,7 +165,7 @@ module Spec
               cmd << " "
               cmd << rcov_option_list
               cmd << %[ -o "#{rcov_dir}" ] if rcov
-              cmd << %Q|"#{spec_script}"|
+              #cmd << %Q|"#{spec_script}"|
               cmd << " "
               cmd << "-- " if rcov
               cmd << spec_file_list.collect { |fn| %["#{fn}"] }.join(' ')
@@ -160,6 +175,9 @@ module Spec
                 cmd << " "
                 cmd << %Q| > "#{out}"|
                 STDERR.puts "The Spec::Rake::SpecTask#out attribute is DEPRECATED and will be removed in a future version. Use --format FORMAT:WHERE instead."
+              end
+              if verbose
+                puts cmd
               end
               unless system(cmd)
                 STDERR.puts failure_message if failure_message
