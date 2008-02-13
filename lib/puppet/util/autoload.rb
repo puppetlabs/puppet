@@ -139,10 +139,6 @@ class Puppet::Util::Autoload
         # JJM: Search for optional lib directories in each module bundle.
         module_lib_dirs = Puppet[:modulepath].split(":").collect do |d|
             Dir.glob("%s/*/{plugins,lib}" % d).select do |f|
-                if f =~ /lib$/
-                    # LAK: Deprecated on 2/14/08
-                    warnonce "Using 'lib' in modules is deprecated; switch %s to 'plugins'" % f
-                end
                 FileTest.directory?(f) 
             end
         end.flatten
