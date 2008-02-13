@@ -33,7 +33,11 @@ class Puppet::Parser::Lexer
         end
 
         def to_s
-            "Lexer token %s" % @name.to_s
+            if self.string
+                @string
+            else
+                @name.to_s
+            end
         end
     end
 
