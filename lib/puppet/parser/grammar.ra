@@ -151,7 +151,7 @@ resourceoverride:     resourceref LBRACE anyparams endcomma RBRACE {
 virtualresource:  at resource {
     type = val[0]
 
-    if type == :exported and ! Puppet[:storeconfigs]
+    if (type == :exported and ! Puppet[:storeconfigs]) and ! Puppet[:parseonly]
         error "You cannot collect without storeconfigs being set"
     end
 
@@ -192,7 +192,7 @@ collection:     classref collectrhand {
     else
         args[:form] = val[1]
     end
-    if args[:form] == :exported and ! Puppet[:storeconfigs]
+    if args[:form] == :exported and ! Puppet[:storeconfigs] and ! Puppet[:parseonly]
         error "You cannot collect exported resources without storeconfigs being set"
     end
     result = ast AST::Collection, args

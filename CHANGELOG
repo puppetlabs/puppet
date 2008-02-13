@@ -1,3 +1,7 @@
+    Fixed #968 again, this time with tests -- parseonly works,
+    including not compiling the configurations, and also storeconfigs
+    is no longer required during parse-testing.
+
     Fixed #1021 -- the problem was that my method of determining
     the in-degree sometimes resulted in a lower number than the
     number of in-edges.

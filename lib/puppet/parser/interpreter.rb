@@ -42,6 +42,26 @@ class Puppet::Parser::Interpreter
         @parsers = {}
     end
 
+    # Return the parser for a specific environment.
+    def parser(environment)
+        if ! @parsers[environment] or @parsers[environment].reparse?
+            # This will throw an exception if it does not succeed.  We only
+            # want to get rid of the old parser if we successfully create a new
+            # one.
+            begin
+                tmp = create_parser(environment)
+                @parsers[environment].clear if @parsers[environment]
+                @parsers[environment] = tmp
+            rescue => detail
+                # If a parser already exists, than assume that we logged the
+                # exception elsewhere and reuse the parser.  If one doesn't
+                # exist, then reraise.
+                raise detail unless @parsers[environment]
+            end
+        end
+        @parsers[environment]
+    end
+
     private
 
     # Create a new parser object and pre-parse the configuration.
@@ -66,25 +86,5 @@ class Puppet::Parser::Interpreter
             error.set_backtrace(detail.backtrace)
             raise error
         end
-    end
-
-    # Return the parser for a specific environment.
-    def parser(environment)
-        if ! @parsers[environment] or @parsers[environment].reparse?
-            # This will throw an exception if it does not succeed.  We only
-            # want to get rid of the old parser if we successfully create a new
-            # one.
-            begin
-                tmp = create_parser(environment)
-                @parsers[environment].clear if @parsers[environment]
-                @parsers[environment] = tmp
-            rescue => detail
-                # If a parser already exists, than assume that we logged the
-                # exception elsewhere and reuse the parser.  If one doesn't
-                # exist, then reraise.
-                raise detail unless @parsers[environment]
-            end
-        end
-        @parsers[environment]
     end
 end

@@ -1159,13 +1159,13 @@ module Puppet
     # We put all of the properties in separate files, because there are so many
     # of them.  The order these are loaded is important, because it determines
     # the order they are in the property lit.
-    require 'puppet/type/pfile/checksum'
-    require 'puppet/type/pfile/content'     # can create the file
-    require 'puppet/type/pfile/source'      # can create the file
-    require 'puppet/type/pfile/target'      # creates a different type of file
-    require 'puppet/type/pfile/ensure'      # can create the file
-    require 'puppet/type/pfile/owner'
-    require 'puppet/type/pfile/group'
-    require 'puppet/type/pfile/mode'
-    require 'puppet/type/pfile/type'
+    require 'puppet/type/file/checksum'
+    require 'puppet/type/file/content'     # can create the file
+    require 'puppet/type/file/source'      # can create the file
+    require 'puppet/type/file/target'      # creates a different type of file
+    require 'puppet/type/file/ensure'      # can create the file
+    require 'puppet/type/file/owner'
+    require 'puppet/type/file/group'
+    require 'puppet/type/file/mode'
+    require 'puppet/type/file/type'
 end
