@@ -51,7 +51,7 @@ class Puppet::Parser::Collector
         search = "(exported=? AND restype=?)"
         values = [true, @type]
 
-        search += " AND (?)" and values << @equery if @equery
+        search += " AND (%s)" % @equery if @equery
 
         # We're going to collect objects from rails, but we don't want any
         # objects from this host.
