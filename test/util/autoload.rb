@@ -123,4 +123,23 @@ TestAutoload.newthing(:#{name.to_s})
         Kernel.expects(:require).with(File.join(loadname, subname))
         loader.loadall
     end
+
+    def test_searchpath_includes_plugin_dirs
+        moddir = "/what/ever"
+        libdir = "/other/dir"
+        Puppet.settings.stubs(:value).with(:modulepath).returns(moddir)
+        Puppet.settings.stubs(:value).with(:libdir).returns(libdir)
+
+        loadname = "testing"
+        loader = Puppet::Util::Autoload.new(self.class, loadname)
+
+        # Currently, include both plugins and libs.
+        paths = %w{plugins lib}.inject({}) { |hash, d| hash[d] = File.join(moddir, "testing", d); FileTest.stubs(:directory?).with(hash[d]).returns(true); hash  }
+        Dir.expects(:glob).with("#{moddir}/*/{plugins,lib}").returns(paths.values)
+
+        searchpath = loader.searchpath
+        paths.each do |dir, path|
+            assert(searchpath.include?(path), "search path did not include path for %s" % dir)
+        end
+    end
 end

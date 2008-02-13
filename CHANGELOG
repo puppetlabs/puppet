@@ -1,3 +1,8 @@
+    Fixed #1043 -- autoloading now searches the plugins directory
+    in each module, in addition to the lib directory.  The 'lib'
+    directory is also deprecated, but supported for now to give
+    people a chance to convert.
+
     Fixed #1003 -- Applying DavidS's patch to fix searching for
     tags in sql.
 
