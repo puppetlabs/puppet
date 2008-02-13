@@ -51,6 +51,9 @@ module Spec
           [1]
         end
         
+        def items
+          @items_in_collection_with_size_method
+        end
       end
 
       class HandCodedMock
@@ -96,10 +99,12 @@ module Spec
 end
 
 module Custom
+  require 'spec/runner/formatter/base_text_formatter'
   class Formatter < Spec::Runner::Formatter::BaseTextFormatter
-    attr_reader :where
+    attr_reader :options, :where
     
-    def initialize(where)
+    def initialize(options, where)
+      @options = options
       @where = where
     end
   end
@@ -107,13 +112,22 @@ module Custom
   class BadFormatter < Spec::Runner::Formatter::BaseTextFormatter
     attr_reader :where
     
-    def initialize(where)
+    def initialize(options, where)
       bad_method
     end
   end
 
-  class BehaviourRunner
-    def initialize(options, arg=nil); end
+  class Differ
+    attr_reader :options
+    def initialize(options)
+      @options = options
+    end
+
+    def diff_as_object(target, expected)
+      ""
+    end
   end
 end
 
+class FakeReporter < Spec::Runner::Reporter
+end

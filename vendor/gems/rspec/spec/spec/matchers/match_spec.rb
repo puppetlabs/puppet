@@ -5,12 +5,12 @@ describe "should match(expected)" do
     "string".should match(/tri/)
   end
 
-  it "should fail when target (String) matches expected (Regexp)" do
+  it "should fail when target (String) does not match expected (Regexp)" do
     lambda {
       "string".should match(/rings/)
     }.should fail
   end
-
+  
   it "should provide message, expected and actual on failure" do
     matcher = match(/rings/)
     matcher.matches?("string")
@@ -19,7 +19,7 @@ describe "should match(expected)" do
 end
 
 describe "should_not match(expected)" do
-  it "should pass when target (String) matches expected (Regexp)" do
+  it "should pass when target (String) matches does not match (Regexp)" do
     "string".should_not match(/rings/)
   end
 

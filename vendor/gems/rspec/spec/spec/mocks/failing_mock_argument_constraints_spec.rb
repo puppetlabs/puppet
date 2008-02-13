@@ -81,6 +81,7 @@ module Spec
       before(:each) do
         @mock = mock("test mock")
         @reporter = Mock.new("reporter", :null_object => true)
+        Kernel.stub!(:warn)
       end
 
       after(:each) do

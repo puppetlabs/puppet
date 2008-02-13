@@ -1,5 +1,4 @@
 require 'stringio'
-require 'rbconfig'
 
 dir = File.dirname(__FILE__)
 lib_path = File.expand_path("#{dir}/../lib")
@@ -8,9 +7,10 @@ $_spec_spec = true # Prevents Kernel.exit in various places
 
 require 'spec'
 require 'spec/mocks'
-require 'hpricot' # Needed to compare generated with wanted HTML
+require 'spec/story'
 spec_classes_path = File.expand_path("#{dir}/../spec/spec/spec_classes")
 require spec_classes_path unless $LOAD_PATH.include?(spec_classes_path)
+require File.dirname(__FILE__) + '/../lib/spec/expectations/differs/default'
 
 module Spec
   module Matchers
@@ -40,7 +40,64 @@ module Spec
     def pass
       Pass.new
     end
+    
+    class CorrectlyOrderedMockExpectation
+      def initialize(&event)
+        @event = event
+      end
+      
+      def expect(&expectations)
+        expectations.call
+        @event.call
+      end
+    end
+    
+    def during(&block)
+      CorrectlyOrderedMockExpectation.new(&block) 
+    end
   end
 end
 
 class NonStandardError < Exception; end
+
+module Custom
+  class ExampleGroupRunner
+    attr_reader :options, :arg
+    def initialize(options, arg)
+      @options, @arg = options, arg
+    end
+
+    def load_files(files)
+    end
+
+    def run
+    end
+  end  
+end
+
+def exception_from(&block)
+  exception = nil
+  begin
+    yield
+  rescue StandardError => e
+    exception = e
+  end
+  exception
+end
+
+describe "sandboxed rspec_options", :shared => true do
+  attr_reader :options
+
+  before(:all) do
+    @original_rspec_options = $rspec_options
+  end
+
+  before(:each) do
+    @options = ::Spec::Runner::Options.new(StringIO.new, StringIO.new)
+    $rspec_options = options
+  end
+
+  after do
+    $rspec_options = @original_rspec_options
+  end
+end

@@ -1,49 +1,48 @@
 require 'autotest'
 require 'autotest/rspec'
 
-class Autotest::PuppetRspec < Autotest::Rspec
-  def initialize # :nodoc:
-    super
-    @test_mappings = {
-        # the libraries under lib/puppet
-        %r%^lib/puppet/(.*)\.rb$% => proc { |filename, m|
-          files_matching %r!spec/(unit|integration)/#{m[1]}.rb!
-        },
+Autotest.add_hook :initialize do |at|
+    at.clear_mappings
 
-	# the actual spec files themselves
-        %r%^spec/(unit|integration)/.*\.rb$% => proc { |filename, _|
-          filename
-        },
+    # the libraries under lib/puppet
+    at.add_mapping(%r%^lib/puppet/(.*)\.rb$%) { |filename, m|
+        at.files_matching %r!spec/(unit|integration)/#{m[1]}.rb!
+    }
+
+    # the actual spec files themselves
+    at.add_mapping(%r%^spec/(unit|integration)/.*\.rb$%) { |filename, _|
+        filename
+    }
 
     # force a complete re-run for all of these:
 
 	# main puppet lib
-	%r!^lib/puppet\.rb$! => proc { |filename, _|
-          files_matching %r!spec/(unit|integration)/.*\.rb!
-	},
+	at.add_mapping(%r!^lib/puppet\.rb$!) { |filename, _|
+        at.files_matching %r!spec/(unit|integration)/.*\.rb!
+	}
 
 	# the spec_helper
-	%r!^spec/spec_helper\.rb$! => proc { |filename, _|
-          files_matching %r!spec/(unit|integration)/.*\.rb!
-	},
+	at.add_mapping(%r!^spec/spec_helper\.rb$!) { |filename, _|
+        at.files_matching %r!spec/(unit|integration)/.*\.rb!
+	}
 
 	# the puppet test libraries
-	%r!^test/lib/puppettest/.*! => proc { |filename, _|
-          files_matching %r!spec/(unit|integration)/.*\.rb!
-	},
+	at.add_mapping(%r!^test/lib/puppettest/.*!) { |filename, _|
+        at.files_matching %r!spec/(unit|integration)/.*\.rb!
+	}
 
         # the puppet spec libraries
-	%r!^spec/lib/spec.*! => proc { |filename, _|
-          files_matching %r!spec/(unit|integration)/.*\.rb!
-	},
+	at.add_mapping(%r!^spec/lib/spec.*!) { |filename, _|
+        at.files_matching %r!spec/(unit|integration)/.*\.rb!
+	}
 
         # the monkey patches for rspec
-	%r!^spec/lib/monkey_patches/.*! => proc { |filename, _|
-          files_matching %r!spec/(unit|integration)/.*\.rb!
-	},
-    }
-  end
+	at.add_mapping(%r!^spec/lib/monkey_patches/.*!) { |filename, _|
+        at.files_matching %r!spec/(unit|integration)/.*\.rb!
+	}
+end
 
+class Autotest::PuppetRspec < Autotest::Rspec
   # Autotest will look for spec commands in the following
   # locations, in this order:
   #

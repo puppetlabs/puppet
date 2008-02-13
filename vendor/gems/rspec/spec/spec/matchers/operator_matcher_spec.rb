@@ -48,7 +48,7 @@ describe "should ===" do
     Spec::Expectations.should_receive(:fail_with).with(%[expected: "orange",\n     got: "apple" (using ===)], "orange", "apple")
     subject.should === "orange"
   end
-
+  
 end
 
 describe "should_not ===" do

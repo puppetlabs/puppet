@@ -19,6 +19,6 @@ describe "The boolean() mock argument constraint matcher" do
 end
 
 describe "The an_instance_of() mock argument constraint matcher" do
-  # NOTE - this is implemented as a predicate_matcher - see behaviour.rb
+  # NOTE - this is implemented as a predicate_matcher - see example_group_methods.rb
   specify { an_instance_of(String).should == "string"  }
 end

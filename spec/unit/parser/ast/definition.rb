@@ -45,7 +45,7 @@ describe Puppet::Parser::AST::Definition, "when evaluating" do
 #
 #    it "should evaluate the associated code with the new scope"
 
-    def test_initialize
+    def old_test_initialize
         parser = mkparser
 
         # Create a new definition
@@ -67,7 +67,7 @@ describe Puppet::Parser::AST::Definition, "when evaluating" do
 
     end
 
-    def test_evaluate
+    def oldtest_evaluate
         parser = mkparser
         config = mkcompiler
         config.send(:evaluate_main)
@@ -135,7 +135,7 @@ describe Puppet::Parser::AST::Definition, "when evaluating" do
     end
 
     # #539 - definitions should support both names and titles
-    def test_names_and_titles
+    def oldtest_names_and_titles
         parser = mkparser
         scope = mkscope :parser => parser
 
@@ -186,7 +186,7 @@ describe Puppet::Parser::AST::Definition, "when evaluating" do
 
     # Testing the root cause of #615.  We should be using the fqname for the type, instead
     # of just the short name.
-    def test_fully_qualified_types
+    def oldtest_fully_qualified_types
         parser = mkparser
         klass = parser.newclass("one::two")
 

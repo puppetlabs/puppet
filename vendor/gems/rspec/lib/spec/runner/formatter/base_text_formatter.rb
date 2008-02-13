@@ -1,3 +1,5 @@
+require 'spec/runner/formatter/base_formatter'
+
 module Spec
   module Runner
     module Formatter
@@ -5,13 +7,12 @@ module Spec
       # non-text based ones too - just ignore the +output+ constructor
       # argument.
       class BaseTextFormatter < BaseFormatter
-        attr_writer :dry_run
-        
+        attr_reader :output, :pending_examples
         # Creates a new instance that will write to +where+. If +where+ is a
         # String, output will be written to the File with that name, otherwise
         # +where+ is exected to be an IO (or an object that responds to #puts and #write).
-        def initialize(where)
-          super(where)
+        def initialize(options, where)
+          super
           if where.is_a?(String)
             @output = File.open(where, 'w')
           elsif where == STDOUT
@@ -22,21 +23,13 @@ module Spec
           else
             @output = where
           end
-          @colour = false
-          @dry_run = false
-          @snippet_extractor = SnippetExtractor.new
           @pending_examples = []
         end
         
-        def example_pending(behaviour_name, example_name, message)
-          @pending_examples << ["#{behaviour_name} #{example_name}", message]
+        def example_pending(example_group_description, example, message)
+          @pending_examples << ["#{example_group_description} #{example.description}", message]
         end
         
-        def colour=(colour)
-          @colour = colour
-          begin ; require 'Win32/Console/ANSI' if @colour && PLATFORM =~ /win32/ ; rescue LoadError ; raise "You must gem install win32console to use colour on Windows" ; end
-        end
-
         def dump_failure(counter, failure)
           @output.puts
           @output.puts "#{counter.to_s})"
@@ -56,7 +49,7 @@ module Spec
         end
       
         def dump_summary(duration, example_count, failure_count, pending_count)
-          return if @dry_run
+          return if dry_run?
           @output.puts
           @output.puts "Finished in #{duration} seconds"
           @output.puts
@@ -74,7 +67,6 @@ module Spec
             @output.puts red(summary)
           end
           @output.flush
-          dump_pending
         end
 
         def dump_pending
@@ -100,13 +92,21 @@ module Spec
         end
       
       protected
-      
+
+        def colour?
+          @options.colour ? true : false
+        end
+
+        def dry_run?
+          @options.dry_run ? true : false
+        end
+        
         def backtrace_line(line)
           line.sub(/\A([^:]+:\d+)$/, '\\1:')
         end
 
         def colour(text, colour_code)
-          return text unless @colour && output_to_tty?
+          return text unless colour? && output_to_tty?
           "#{colour_code}#{text}\e[0m"
         end
 

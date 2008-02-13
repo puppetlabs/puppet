@@ -9,8 +9,8 @@ module Spec
         __mock_proxy.add_negative_message_expectation(caller(1)[0], sym.to_sym, &block)
       end
       
-      def stub!(sym)
-        __mock_proxy.add_stub(caller(1)[0], sym.to_sym)
+      def stub!(sym, opts={})
+        __mock_proxy.add_stub(caller(1)[0], sym.to_sym, opts)
       end
       
       def received_message?(sym, *args, &block) #:nodoc:

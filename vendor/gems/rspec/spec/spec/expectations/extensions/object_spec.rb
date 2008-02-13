@@ -9,8 +9,7 @@ describe Object, "#should" do
   end
   
   it "should accept and interact with a matcher" do
-    @matcher.should_receive(:matches?).with(@target).and_return(true)
-    
+    @matcher.should_receive(:matches?).with(@target).and_return(true)    
     @target.should @matcher
   end
   
@@ -20,6 +19,37 @@ describe Object, "#should" do
     lambda {
       @target.should @matcher
     }.should fail_with("the failure message")
+  end
+  
+  it "should raise error if it receives false directly" do
+    lambda {
+      @target.should false
+    }.should raise_error(Spec::Expectations::InvalidMatcherError)
+  end
+  
+  it "should raise error if it receives false (evaluated)" do
+    lambda {
+      @target.should eql?("foo")
+    }.should raise_error(Spec::Expectations::InvalidMatcherError)
+  end
+  
+  it "should raise error if it receives true" do
+    lambda {
+      @target.should true
+    }.should raise_error(Spec::Expectations::InvalidMatcherError)
+  end
+  
+  it "should raise error if it receives nil" do
+    lambda {
+      @target.should nil
+    }.should raise_error(Spec::Expectations::InvalidMatcherError)
+  end
+
+  it "should raise error if it receives no argument and it is not used as a left side of an operator" do
+    pending "Is it even possible to catch this?"
+    lambda {
+      @target.should
+    }.should raise_error(Spec::Expectations::InvalidMatcherError)
   end
 end
 
@@ -42,5 +72,36 @@ describe Object, "#should_not" do
     lambda {
       @target.should_not @matcher
     }.should fail_with("the negative failure message")
+  end
+
+  it "should raise error if it receives false directly" do
+    lambda {
+      @target.should_not false
+    }.should raise_error(Spec::Expectations::InvalidMatcherError)
+  end
+  
+  it "should raise error if it receives false (evaluated)" do
+    lambda {
+      @target.should_not eql?("foo")
+    }.should raise_error(Spec::Expectations::InvalidMatcherError)
+  end
+  
+  it "should raise error if it receives true" do
+    lambda {
+      @target.should_not true
+    }.should raise_error(Spec::Expectations::InvalidMatcherError)
+  end
+
+  it "should raise error if it receives nil" do
+    lambda {
+      @target.should_not nil
+    }.should raise_error(Spec::Expectations::InvalidMatcherError)
+  end
+
+  it "should raise error if it receives no argument and it is not used as a left side of an operator" do
+    pending "Is it even possible to catch this?"
+    lambda {
+      @target.should_not
+    }.should raise_error(Spec::Expectations::InvalidMatcherError)
   end
 end
