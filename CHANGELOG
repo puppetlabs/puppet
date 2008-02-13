@@ -1,3 +1,6 @@
+    Fixed #1003 -- Applying DavidS's patch to fix searching for
+    tags in sql.
+
     Fixed #992 -- Puppet is now compatible with gems 1.0.1.
 
     Fixed #968 again, this time with tests -- parseonly works,
