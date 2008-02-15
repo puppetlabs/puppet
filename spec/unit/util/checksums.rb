@@ -13,16 +13,6 @@ describe Puppet::Util::Checksums do
         @summer.extend(Puppet::Util::Checksums)
     end
 
-    class LineYielder
-        def initialize(content)
-            @content = content
-        end
-
-        def each_line
-            @content.split("\n").each { |line| yield line }
-        end
-    end
-
     content_sums = [:md5, :md5lite, :sha1, :sha1lite]
     file_only = [:timestamp, :mtime]
 
@@ -51,8 +41,10 @@ describe Puppet::Util::Checksums do
 
                 file = "/path/to/my/file"
 
-                # Mocha doesn't seem to be able to mock multiple yields, yay.
-                fh = LineYielder.new("firstline\nsecondline")
+                fh = mock 'filehandle'
+                fh.expects(:read).with(512).times(3).returns("firstline").then.returns("secondline").then.returns(nil)
+                #fh.expects(:read).with(512).returns("secondline")
+                #fh.expects(:read).with(512).returns(nil)
 
                 File.expects(:open).with(file, "r").yields(fh)
 
@@ -67,23 +59,25 @@ describe Puppet::Util::Checksums do
 
     {:md5lite => Digest::MD5, :sha1lite => Digest::SHA1}.each do |sum, klass|
         describe("when using %s" % sum) do
-            it "should use #{klass} to calculate string checksums from the first 500 characters of the string" do
+            it "should use #{klass} to calculate string checksums from the first 512 characters of the string" do
                 content = "this is a test" * 100
-                klass.expects(:hexdigest).with(content[0..499]).returns "whatever"
+                klass.expects(:hexdigest).with(content[0..511]).returns "whatever"
                 @summer.send(sum, content).should == "whatever"
             end
 
-            it "should use #{klass} to calculate a sum from the first 500 characters in the file" do
+            it "should use #{klass} to calculate a sum from the first 512 characters in the file" do
                 digest = mock 'digest'
+                klass.expects(:new).returns digest
 
                 file = "/path/to/my/file"
 
                 fh = mock 'filehandle'
+                fh.expects(:read).with(512).returns('my content')
+
                 File.expects(:open).with(file, "r").yields(fh)
 
-                fh.expects(:read).with(500).returns('my content')
-
-                klass.expects(:hexdigest).with("my content").returns :mydigest
+                digest.expects(:<<).with "my content"
+                digest.expects(:hexdigest).returns :mydigest
 
                 @summer.send(sum.to_s + "_file", file).should == :mydigest
             end
