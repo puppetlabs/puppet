@@ -18,7 +18,7 @@ pidfile="/var/run/$name.pid"
 # read configuration and set defaults
 load_rc_config "$name"
 : ${puppetd_enable="NO"}
-: ${puppetd_config="/usr/local/etc/puppetd.conf"}
+: ${puppetd_config="/usr/local/etc/puppet.conf"}
 : ${puppetd_flags=""}
 
 command_args="--config $puppetd_config $puppetd_flags"

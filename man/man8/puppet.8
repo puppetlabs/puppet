@@ -44,10 +44,9 @@ Note that boolean options are turned on and off with a slightly different syntax
 .PP
 The invocations above will enable and disable, respectively, the storage of the client configuration.
 .PP
-As mentioned above, the configuration parameters can also be stored in a configuration file located in the configuration directory (/etc/puppet by default). The file is named for the executable it is intended for, for example /etc/puppetd.conf is the configuration file for 
-.B puppetd.
+As mentioned above, the configuration parameters can also be stored in a configuration file located in the configuration directory (/etc/puppet by default). The file is called puppet.conf.
 .PP
-The file, which follows INI-style formatting, should contain a bracketed heading named for the executable, followed by pairs of parameters with their values. Here is an example of a very simple puppetd.conf file:
+The file, which follows INI-style formatting, should contain a bracketed heading named for each executable, followed by pairs of parameters with their values. Here is an example of a very simple puppet.conf file:
 .PP
 \h"4"[puppetd]
 .br
@@ -60,9 +59,9 @@ Note that boolean parameters must be explicitly specified as true or false as se
 .PP
 If you're starting out with a fresh configuration, you may wish to let the executable generate a template configuration file for you by invoking the executable in question with the --genconfig command. The executable will print a template configuration to standard output, which can be redirected to a file like so:
 .PP
-\h"4"$ puppetd --genconfig > /etc/puppet/puppetd.conf
+\h"4"$ puppetd --genconfig > /etc/puppet/puppet.conf
 .PP
-Note that this invocation will "clobber" (throw away) the contents of any pre-existing puppetd.conf file, so make a backup of your present config if it contains valuable information.
+Note that this invocation will "clobber" (throw away) the contents of any pre-existing puppet.conf file, so make a backup of your present config if it contains valuable information.
 .PP
 Like the --genconfig argument, the executables also accept a --genmanifest argument, which will generate a manifest that can be used to manage all of 
 .B Puppet's

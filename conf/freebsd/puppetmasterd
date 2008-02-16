@@ -18,7 +18,7 @@ pidfile="/var/run/$name.pid"
 # read configuration and set defaults
 load_rc_config "$name"
 : ${puppetmasterd_enable="NO"}
-: ${puppetmasterd_config="/usr/local/etc/puppetmasterd.conf"}
+: ${puppetmasterd_config="/usr/local/etc/puppet.conf"}
 : ${puppetmasterd_flags=""}
 
 command_args="--config $puppetmasterd_config $puppetmasterd_flags"
