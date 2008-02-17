@@ -12,6 +12,10 @@ test -x $DAEMON || exit 0
 
 . /lib/lsb/init-functions
 
+reload_puppet() {
+	start-stop-daemon --stop --quiet --signal HUP --pidfile /var/run/puppet/$NAME.pid
+}
+
 start_puppet() {
 	start-stop-daemon --start --quiet --pidfile /var/run/puppet/$NAME.pid \
 		--startas $DAEMON -- $DAEMON_OPTS
@@ -39,7 +43,12 @@ case "$1" in
 	stop_puppet
 	log_end_msg 0
 	;;
-  restart|force-reload)
+    reload)
+    	log_begin_msg "Reloading $DESC"
+    	reload_puppet
+    	log_end_msg 0
+    	;;
+    restart|force-reload)
 	log_begin_msg "Restarting $DESC"
 	stop_puppet
 	sleep 1
@@ -47,7 +56,7 @@ case "$1" in
 	log_end_msg 0
 	;;
   *)
-	echo "Usage: $0 {start|stop|restart|force-reload}" >&2
+	echo "Usage: $0 {start|stop|restart|force-reload|reload}" >&2
 	exit 1
 	;;
 esac
