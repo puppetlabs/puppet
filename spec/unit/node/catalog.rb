@@ -455,12 +455,25 @@ describe Puppet::Node::Catalog, " when functioning as a resource container" do
         proc { @catalog.alias @two, "one" }.should raise_error(ArgumentError)
     end
 
+    it "should not fail when a resource has duplicate aliases created" do
+        @catalog.add_resource @one
+        proc { @catalog.alias @one, "one" }.should_not raise_error
+    end
+
     it "should remove resource aliases when the target resource is removed" do
         @catalog.add_resource @one
         @catalog.alias(@one, "other")
         @one.expects :remove
         @catalog.remove_resource(@one)
         @catalog.resource("me", "other").should be_nil
+    end
+
+    it "should add an alias for the namevar when the title and name differ" do
+        @one.stubs(:name).returns "other"
+        resource = Puppet::Type.type(:file).create :path => "/something", :title => "other", :content => "blah"
+        @catalog.add_resource(resource)
+        @catalog.resource(:file, "other").should equal(resource)
+        @catalog.resource(:file, "/something").should equal(resource)
     end
 
     after do

@@ -1,3 +1,7 @@
+    Fixed #1018 -- resources now have their namevars added as
+    aliases in the resource catalog, just like they were added
+    in the resource classes.
+
     Fixed #1037 -- remote unreadable files no longer have the
     permission denied exceptions caught, thus forbidding them
     from being replaced with 'nil'.
