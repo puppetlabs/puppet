@@ -139,10 +139,12 @@ class DirectoryService < Puppet::Provider::NameService
         dscl_output.split("\n").each do |line|
             # JJM: Split the attribute name and the list of values.
             ds_attribute, ds_values_string = line.split(':')
+
+            # Split sets the values to nil if there's nothing after the :
+            ds_values_string ||= ""
             
             # JJM: skip this attribute line if the Puppet::Type doesn't care about it.
-            next unless (@@ds_to_ns_attribute_map.keys.include?(ds_attribute) \
-                and type_properties.include? @@ds_to_ns_attribute_map[ds_attribute])
+            next unless (@@ds_to_ns_attribute_map.keys.include?(ds_attribute) and type_properties.include? @@ds_to_ns_attribute_map[ds_attribute])
 
             # JJM: We asked dscl to output url encoded values so we're able
             #     to machine parse on whitespace.  We need to urldecode:

@@ -58,10 +58,11 @@ describe Puppet::FileServing::Metadata, " when collecting attributes" do
         @stat = stub 'stat', :uid => 10, :gid => 20, :mode => 0755, :ftype => "file"
         File.stubs(:lstat).returns(@stat)
         @filehandle = mock 'filehandle'
-        @filehandle.expects(:each_line).yields("some content\n")
+        #@filehandle.expects(:read).with(512).returns("some content\n").then.returns(nil)
         File.stubs(:open).with(@path, 'r').yields(@filehandle)
         @checksum = Digest::MD5.hexdigest("some content\n")
         @metadata = Puppet::FileServing::Metadata.new("file", :path => "/my/file")
+        @metadata.expects(:md5_file).returns(@checksum)
         @metadata.collect_attributes
     end
 
