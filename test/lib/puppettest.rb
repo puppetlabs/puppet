@@ -17,6 +17,8 @@ Dir["#{mainlib}/../vendor/gems/**"].each do |path|
     end
 end
 
+require 'mocha'
+
 # Only load the test/unit class if we're not in the spec directory.
 # Else we get the bogus 'no tests, no failures' message.
 unless Dir.getwd =~ /spec/
@@ -315,7 +317,6 @@ module PuppetTest
         rescue Timeout::Error
             # just move on
         end
-        mocha_verify
     end
 
     def logstore

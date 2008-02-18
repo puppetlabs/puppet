@@ -288,7 +288,7 @@ module Puppet
                     # Rebuild the database, but only when the file changes
                     exec { newaliases:
                         path => [\"/usr/bin\", \"/usr/sbin\"],
-                        subscribe => file[\"/etc/aliases\"],
+                        subscribe => File[\"/etc/aliases\"],
                         refreshonly => true
                     }
                 

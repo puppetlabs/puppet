@@ -83,5 +83,22 @@ class TestPuppetBin < Test::Unit::TestCase
 
         assert(FileTest.exists?(path), "Failed to create config'ed file")
     end
+
+    def test_parseonly
+        path = tempfile()
+        manifest = tempfile()
+        puppet = %x{which puppet}.chomp
+        if puppet == ""
+            Puppet.info "cannot find puppet; cannot test parseonly"
+            return
+        end
+        code = 'File <<| |>>
+        include nosuchclass'
+
+        assert_nothing_raised {
+            IO.popen("#{puppet} --parseonly", 'w') { |p| p.puts code }
+        }
+        assert($? == 0, "parseonly test exited with code %s" % $?.to_i)
+    end
 end
 

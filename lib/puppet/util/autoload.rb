@@ -1,6 +1,9 @@
+require 'puppet/util/warnings'
+
 # Autoload paths, either based on names or all at once.
 class Puppet::Util::Autoload
     include Puppet::Util
+    include Puppet::Util::Warnings
 
     @autoloaders = {}
     @loaded = []
@@ -109,9 +112,8 @@ class Puppet::Util::Autoload
             Dir.glob("#{dir}/*.rb").each do |file|
                 name = File.basename(file).sub(".rb", '').intern
                 next if loaded?(name)
-                rubypath = File.join(@path, name.to_s)
                 begin
-                    Kernel.require rubypath
+                    Kernel.require file
                     loaded(name, file)
                 rescue => detail
                     if Puppet[:trace]
@@ -122,8 +124,6 @@ class Puppet::Util::Autoload
             end
         end
     end
-
-    private
 
     # Yield each subdir in turn.
     def eachdir
@@ -137,7 +137,7 @@ class Puppet::Util::Autoload
     def searchpath
         # JJM: Search for optional lib directories in each module bundle.
         module_lib_dirs = Puppet[:modulepath].split(":").collect do |d|
-            Dir.glob("%s/*/lib" % d).select do |f|
+            Dir.glob("%s/*/{plugins,lib}" % d).select do |f|
                 FileTest.directory?(f) 
             end
         end.flatten

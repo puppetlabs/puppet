@@ -18,7 +18,7 @@
                     grouping='require_all'
                     restart_on='none'
                     type='path'>
-                <service_fmri value='file:///etc/puppet/puppetd.conf'/>
+                <service_fmri value='file:///etc/puppet/puppet.conf'/>
         </dependency>
         
 	<dependency name='loopback'

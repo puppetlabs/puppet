@@ -266,4 +266,15 @@ describe Puppet::SimpleGraph, " when sorting the graph" do
         add_edges :a => :b, :b => :e, :c => :a, :d => :c
         proc { @graph.topsort }.should_not raise_error
     end
+
+    # Our graph's add_edge method is smart enough not to add
+    # duplicate edges, so we use the objects, which it doesn't
+    # check.
+    it "should be able to sort graphs with duplicate edges" do
+        one = Puppet::Relationship.new(:a, :b)
+        @graph.add_edge(one)
+        two = Puppet::Relationship.new(:a, :b)
+        @graph.add_edge(two)
+        proc { @graph.topsort }.should_not raise_error
+    end
 end

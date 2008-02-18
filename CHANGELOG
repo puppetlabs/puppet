@@ -1,5 +1,23 @@
     The environment is now available as a variable in the manifests.
 
+    Fixed #1043 -- autoloading now searches the plugins directory
+    in each module, in addition to the lib directory.  The 'lib'
+    directory is also deprecated, but supported for now to give
+    people a chance to convert.
+
+    Fixed #1003 -- Applying DavidS's patch to fix searching for
+    tags in sql.
+
+    Fixed #992 -- Puppet is now compatible with gems 1.0.1.
+
+    Fixed #968 again, this time with tests -- parseonly works,
+    including not compiling the configurations, and also storeconfigs
+    is no longer required during parse-testing.
+
+    Fixed #1021 -- the problem was that my method of determining
+    the in-degree sometimes resulted in a lower number than the
+    number of in-edges.
+
     Fixed #997 -- virtual defined types are no longer evaluated.
     NOTE: This introduces a behaviour change, in that you previously
     could realize a resource within a virtual defined resource, and now
