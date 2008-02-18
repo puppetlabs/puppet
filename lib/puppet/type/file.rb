@@ -642,7 +642,6 @@ module Puppet
                     # :file.
                     return nil unless child = catalog.create_implicit_resource(self.class.name, args)
                 rescue => detail
-                    puts detail.backtrace
                     self.notice "Cannot manage: %s" % [detail]
                     return nil
                 end
@@ -769,11 +768,8 @@ module Puppet
             begin
                 File.unlink(newfile)
             rescue => detail
-                if Puppet[:trace]
-                    puts detail.backtrace
-                end
-                self.err "Could not remove old backup: %s" %
-                    detail
+                puts detail.backtrace if Puppet[:trace]
+                self.err "Could not remove old backup: %s" % detail
                 return false
             end
         end
@@ -979,7 +975,7 @@ module Puppet
         end
 
         def uri2obj(source)
-            sourceobj = FileSource.new
+            sourceobj = Puppet::Type::File::FileSource.new
             path = nil
             unless source
                 devfail "Got a nil source"
@@ -1152,7 +1148,7 @@ module Puppet
 
     # the filesource class can't include the path, because the path
     # changes for every file instance
-    class FileSource
+    class ::Puppet::Type::File::FileSource
         attr_accessor :mount, :root, :server, :local
     end
 

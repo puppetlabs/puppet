@@ -1,3 +1,7 @@
+    Fixed #1037 -- remote unreadable files no longer have the
+    permission denied exceptions caught, thus forbidding them
+    from being replaced with 'nil'.
+
     Fixed #1043 -- autoloading now searches the plugins directory
     in each module, in addition to the lib directory.  The 'lib'
     directory is also deprecated, but supported for now to give
