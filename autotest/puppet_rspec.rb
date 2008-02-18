@@ -51,9 +51,9 @@ class Autotest::PuppetRspec < Autotest::Rspec
   #   * our local vendor/gems/rspec/bin/spec
   def spec_commands
     [
+      File.join('vendor', 'gems', 'rspec', 'bin', 'spec') ,
       File.join('bin', 'spec'),
-      File.join(Config::CONFIG['bindir'], 'spec'),
-      File.join('vendor', 'gems', 'rspec', 'bin', 'spec') 
+      File.join(Config::CONFIG['bindir'], 'spec')
     ]
   end
 
