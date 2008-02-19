@@ -23,7 +23,7 @@ describe Puppet::Network::HTTP::Mongrel, "when turning on listening" do
         @mock_mongrel.stubs(:run)
         @mock_mongrel.stubs(:register)
         Mongrel::HttpServer.stubs(:new).returns(@mock_mongrel)
-        @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => [ :node, :catalog ], :protocols => [ :rest, :xmlrpc ] }
+        @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => [ :node, :catalog ], :protocols => [ :rest ] }
     end
     
     it "should fail if already listening" do
@@ -82,11 +82,6 @@ describe Puppet::Network::HTTP::Mongrel, "when turning on listening" do
         @server.listen(@listen_params.merge(:protocols => [:rest]))
     end
     
-    it "should use a Mongrel + XMLRPC class to configure Mongrel when XMLRPC services are requested" do
-        Puppet::Network::HTTP::MongrelXMLRPC.expects(:new).at_least_once
-        @server.listen(@listen_params.merge(:protocols => [:xmlrpc]))        
-    end
-    
     it "should fail if services from an unknown protocol are requested" do
         Proc.new { @server.listen(@listen_params.merge(:protocols => [ :foo ]))}.should raise_error(ArgumentError)
     end
@@ -102,7 +97,7 @@ describe Puppet::Network::HTTP::Mongrel, "when turning off listening" do
         @mock_mongrel.stubs(:register)
         Mongrel::HttpServer.stubs(:new).returns(@mock_mongrel)
         @server = Puppet::Network::HTTP::Mongrel.new        
-        @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => [ :node, :catalog ], :protocols => [ :rest, :xmlrpc ] }
+        @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => [ :node, :catalog ], :protocols => [ :rest ] }
     end
     
     it "should fail unless listening" do

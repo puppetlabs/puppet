@@ -1,7 +1,6 @@
 require 'mongrel' if Puppet.features.mongrel?
 
 require 'puppet/network/http/mongrel/rest'
-require 'puppet/network/http/mongrel/xmlrpc'
 
 class Puppet::Network::HTTP::Mongrel
     def initialize(args = {})
@@ -47,7 +46,6 @@ class Puppet::Network::HTTP::Mongrel
   
     def class_for_protocol(protocol)
         return Puppet::Network::HTTP::MongrelREST if protocol.to_sym == :rest
-        return Puppet::Network::HTTP::MongrelXMLRPC if protocol.to_sym == :xmlrpc
         raise ArgumentError, "Unknown protocol [#{protocol}]."
     end
 end

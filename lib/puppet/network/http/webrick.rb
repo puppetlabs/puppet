@@ -1,7 +1,6 @@
 require 'webrick'
 require 'webrick/https'
 require 'puppet/network/http/webrick/rest'
-require 'puppet/network/http/webrick/xmlrpc'
 
 class Puppet::Network::HTTP::WEBrick
     def initialize(args = {})
@@ -45,7 +44,6 @@ class Puppet::Network::HTTP::WEBrick
     
     def class_for_protocol(protocol)
         return Puppet::Network::HTTP::WEBrickREST if protocol.to_sym == :rest
-        return Puppet::Network::HTTP::WEBrickXMLRPC if protocol.to_sym == :xmlrpc
         raise ArgumentError, "Unknown protocol [#{protocol}]."
     end
 end

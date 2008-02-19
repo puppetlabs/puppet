@@ -18,7 +18,7 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
         [:mount, :start, :shutdown].each {|meth| @mock_webrick.stubs(meth)}        
         WEBrick::HTTPServer.stubs(:new).returns(@mock_webrick)
         @server = Puppet::Network::HTTP::WEBrick.new
-        @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => [ :node, :catalog ], :protocols => [ :rest, :xmlrpc ] }
+        @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => [ :node, :catalog ], :protocols => [ :rest ] }
     end
     
     it "should fail if already listening" do
@@ -78,11 +78,6 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
         @server.listen(@listen_params.merge(:protocols => [:rest]))
     end
     
-    it "should use a WEBrick + XMLRPC class to configure WEBrick when XMLRPC services are requested" do
-        Puppet::Network::HTTP::WEBrickXMLRPC.expects(:new).at_least_once
-        @server.listen(@listen_params.merge(:protocols => [:xmlrpc]))        
-    end
-    
     it "should fail if services from an unknown protocol are requested" do
         Proc.new { @server.listen(@listen_params.merge(:protocols => [ :foo ]))}.should raise_error(ArgumentError)
     end
@@ -94,7 +89,7 @@ describe Puppet::Network::HTTP::WEBrick, "when turning off listening" do
         [:mount, :start, :shutdown].each {|meth| @mock_webrick.stubs(meth)}
         WEBrick::HTTPServer.stubs(:new).returns(@mock_webrick)
         @server = Puppet::Network::HTTP::WEBrick.new        
-        @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => [ :node, :catalog ], :protocols => [ :rest, :xmlrpc ] }
+        @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => [ :node, :catalog ], :protocols => [ :rest ] }
     end
     
     it "should fail unless listening" do
