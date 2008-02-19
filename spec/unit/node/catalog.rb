@@ -455,6 +455,11 @@ describe Puppet::Node::Catalog, " when functioning as a resource container" do
         proc { @catalog.alias @two, "one" }.should raise_error(ArgumentError)
     end
 
+    it "should not fail when a resource has duplicate aliases created" do
+        @catalog.add_resource @one
+        proc { @catalog.alias @one, "one" }.should_not raise_error
+    end
+
     it "should remove resource aliases when the target resource is removed" do
         @catalog.add_resource @one
         @catalog.alias(@one, "other")
@@ -463,13 +468,21 @@ describe Puppet::Node::Catalog, " when functioning as a resource container" do
         @catalog.resource("me", "other").should be_nil
     end
 
+    it "should add an alias for the namevar when the title and name differ" do
+        @one.stubs(:name).returns "other"
+        resource = Puppet::Type.type(:file).create :path => "/something", :title => "other", :content => "blah"
+        @catalog.add_resource(resource)
+        @catalog.resource(:file, "other").should equal(resource)
+        @catalog.resource(:file, "/something").should equal(resource)
+    end
+
     after do
         Puppet::Type.allclear
     end
 end
 
-module ApplyingCatalogs
-    def setup
+describe Puppet::Node::Catalog do
+    before :each do
         @catalog = Puppet::Node::Catalog.new("host")
 
         @catalog.retrieval_duration = Time.now
@@ -479,114 +492,111 @@ module ApplyingCatalogs
         @transaction.stubs(:cleanup)
         @transaction.stubs(:addtimes)
     end
-end
 
-describe Puppet::Node::Catalog, " when applying" do
-    include ApplyingCatalogs
+    describe Puppet::Node::Catalog, " when applying" do
 
-    it "should create and evaluate a transaction" do
-        @transaction.expects(:evaluate)
-        @catalog.apply
-    end
-
-    it "should provide the catalog time to the transaction" do
-        @transaction.expects(:addtimes).with do |arg|
-            arg[:config_retrieval].should be_instance_of(Time)
-            true
+        it "should create and evaluate a transaction" do
+            @transaction.expects(:evaluate)
+            @catalog.apply
         end
-        @catalog.apply
-    end
 
-    it "should clean up the transaction" do
-        @transaction.expects :cleanup
-        @catalog.apply
-    end
+        it "should provide the catalog time to the transaction" do
+            @transaction.expects(:addtimes).with do |arg|
+                arg[:config_retrieval].should be_instance_of(Time)
+                true
+            end
+            @catalog.apply
+        end
+
+        it "should clean up the transaction" do
+            @transaction.expects :cleanup
+            @catalog.apply
+        end
     
-    it "should return the transaction" do
-        @catalog.apply.should equal(@transaction)
-    end
+        it "should return the transaction" do
+            @catalog.apply.should equal(@transaction)
+        end
 
-    it "should yield the transaction if a block is provided" do
-        @catalog.apply do |trans|
-            trans.should equal(@transaction)
+        it "should yield the transaction if a block is provided" do
+            @catalog.apply do |trans|
+                trans.should equal(@transaction)
+            end
+        end
+    
+        it "should default to not being a host catalog" do
+            @catalog.host_config.should be_nil
+        end
+
+        it "should pass supplied tags on to the transaction" do
+            @transaction.expects(:tags=).with(%w{one two})
+            @catalog.apply(:tags => %w{one two})
+        end
+
+        it "should set ignoreschedules on the transaction if specified in apply()" do
+            @transaction.expects(:ignoreschedules=).with(true)
+            @catalog.apply(:ignoreschedules => true)
         end
     end
+
+    describe Puppet::Node::Catalog, " when applying host catalogs" do
+
+        # super() doesn't work in the setup method for some reason
+        before do
+            @catalog.host_config = true
+        end
+
+        it "should send a report if reporting is enabled" do
+            Puppet[:report] = true
+            @transaction.expects :send_report
+            @transaction.stubs :any_failed? => false
+            @catalog.apply
+        end
+
+        it "should send a report if report summaries are enabled" do
+            Puppet[:summarize] = true
+            @transaction.expects :send_report
+            @transaction.stubs :any_failed? => false
+            @catalog.apply
+        end
+
+        it "should initialize the state database before applying a catalog" do
+            Puppet::Util::Storage.expects(:load)
+
+            # Short-circuit the apply, so we know we're loading before the transaction
+            Puppet::Transaction.expects(:new).raises ArgumentError
+            proc { @catalog.apply }.should raise_error(ArgumentError)
+        end
+
+        it "should sync the state database after applying" do
+            Puppet::Util::Storage.expects(:store)
+            @transaction.stubs :any_failed? => false
+            @catalog.apply
+        end
+
+        after { Puppet.settings.clear }
+    end
+
+    describe Puppet::Node::Catalog, " when applying non-host catalogs" do
+
+        before do
+            @catalog.host_config = false
+        end
     
-    it "should default to not being a host catalog" do
-        @catalog.host_config.should be_nil
+        it "should never send reports" do
+            Puppet[:report] = true
+            Puppet[:summarize] = true
+            @transaction.expects(:send_report).never
+            @catalog.apply
+        end
+
+        it "should never modify the state database" do
+            Puppet::Util::Storage.expects(:load).never
+            Puppet::Util::Storage.expects(:store).never
+            @catalog.apply
+        end
+
+        after { Puppet.settings.clear }
     end
-
-    it "should pass supplied tags on to the transaction" do
-        @transaction.expects(:tags=).with(%w{one two})
-        @catalog.apply(:tags => %w{one two})
-    end
-
-    it "should set ignoreschedules on the transaction if specified in apply()" do
-        @transaction.expects(:ignoreschedules=).with(true)
-        @catalog.apply(:ignoreschedules => true)
-    end
-end
-
-describe Puppet::Node::Catalog, " when applying host catalogs" do
-    include ApplyingCatalogs
-
-    # super() doesn't work in the setup method for some reason
-    before do
-        @catalog.host_config = true
-    end
-
-    it "should send a report if reporting is enabled" do
-        Puppet[:report] = true
-        @transaction.expects :send_report
-        @transaction.stubs :any_failed? => false
-        @catalog.apply
-    end
-
-    it "should send a report if report summaries are enabled" do
-        Puppet[:summarize] = true
-        @transaction.expects :send_report
-        @transaction.stubs :any_failed? => false
-        @catalog.apply
-    end
-
-    it "should initialize the state database before applying a catalog" do
-        Puppet::Util::Storage.expects(:load)
-
-        # Short-circuit the apply, so we know we're loading before the transaction
-        Puppet::Transaction.expects(:new).raises ArgumentError
-        proc { @catalog.apply }.should raise_error(ArgumentError)
-    end
-
-    it "should sync the state database after applying" do
-        Puppet::Util::Storage.expects(:store)
-        @transaction.stubs :any_failed? => false
-        @catalog.apply
-    end
-
-    after { Puppet.settings.clear }
-end
-
-describe Puppet::Node::Catalog, " when applying non-host catalogs" do
-    include ApplyingCatalogs
-
-    before do
-        @catalog.host_config = false
-    end
-    
-    it "should never send reports" do
-        Puppet[:report] = true
-        Puppet[:summarize] = true
-        @transaction.expects(:send_report).never
-        @catalog.apply
-    end
-
-    it "should never modify the state database" do
-        Puppet::Util::Storage.expects(:load).never
-        Puppet::Util::Storage.expects(:store).never
-        @catalog.apply
-    end
-
-    after { Puppet.settings.clear }
 end
 
 describe Puppet::Node::Catalog, " when creating a relationship graph" do

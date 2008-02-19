@@ -68,7 +68,11 @@ class Puppet::Node::Catalog < Puppet::PGraph
 
             @resource_table[ref] = resource
 
+            # If the name and title differ, set up an alias
+            self.alias(resource, resource.name) if resource.respond_to?(:name) and resource.respond_to?(:title) and resource.name != resource.title
+
             resource.catalog = self if resource.respond_to?(:catalog=) and ! is_relationship_graph
+
             add_vertex(resource)
         end
     end
@@ -78,7 +82,10 @@ class Puppet::Node::Catalog < Puppet::PGraph
         resource.ref =~ /^(.+)\[/
 
         newref = "%s[%s]" % [$1 || resource.class.name, name]
-        raise(ArgumentError, "Cannot alias %s to %s; resource %s already exists" % [resource.ref, name, newref]) if @resource_table[newref]
+        if existing = @resource_table[newref]
+            return if existing == resource
+            raise(ArgumentError, "Cannot alias %s to %s; resource %s already exists" % [resource.ref, name, newref])
+        end
         @resource_table[newref] = resource
         @aliases[resource.ref] << newref
     end
