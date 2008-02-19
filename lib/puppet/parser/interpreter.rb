@@ -24,11 +24,14 @@ class Puppet::Parser::Interpreter
 
     # evaluate our whole tree
     def compile(node)
-        raise Puppet::ParseError, "Could not parse configuration; cannot compile" unless env_parser = parser(node.environment)
+        raise Puppet::ParseError, "Could not parse configuration; cannot compile on node %s" % node.name unless env_parser = parser(node.environment)
         begin
           return Puppet::Parser::Compiler.new(node, env_parser).compile
-        rescue
-          raise Puppet::Error, "Could not compile node %s" % node
+        rescue => detail
+          raise Puppet::Error, detail.to_s + " on node %s" % node.name
+          if Puppet[:trace]
+              puts detail.backtrace
+          end
         end
     end
 
