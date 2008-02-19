@@ -45,7 +45,6 @@ class Puppet::Network::HTTP::Mongrel
         end
     end
   
-    # TODO/FIXME: need a spec which forces delegation to the real class
     def class_for_protocol(protocol)
         return Puppet::Network::HTTP::MongrelREST if protocol.to_sym == :rest
         return Puppet::Network::HTTP::MongrelXMLRPC if protocol.to_sym == :xmlrpc
