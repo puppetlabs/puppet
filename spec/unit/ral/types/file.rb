@@ -47,10 +47,7 @@ describe Puppet::Type::File do
             # create the file, because we only get the problem when it starts
             # out absent.
             File.open(@file[:path], "w") { |f| f.puts "a" }
-            Puppet::Util::Log.level = :debug
-            Puppet::Util::Log.newdestination :console
             @file.expects(:write).never
-
 
             @filesource.server.stubs(:describe).returns("493\tfile\t100\t0\t{md5}3f5fef3bddbc4398c46a7bd7ba7b3af7")
             @filesource.server.stubs(:retrieve).raises(RuntimeError)
