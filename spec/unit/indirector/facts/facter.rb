@@ -31,49 +31,46 @@ describe Puppet::Node::Facts::Facter do
     end
 end
 
-module TestingCodeFacts
-    def setup
+describe Puppet::Node::Facts::Facter do
+    before :each do
         @facter = Puppet::Node::Facts::Facter.new
         Facter.stubs(:to_hash).returns({})
         @name = "me"
         @facts = @facter.find(@name)
     end
-end
 
-describe Puppet::Node::Facts::Facter, " when finding facts" do
-    include TestingCodeFacts
+    describe Puppet::Node::Facts::Facter, " when finding facts" do
 
-    it "should return a Facts instance" do
-        @facts.should be_instance_of(Puppet::Node::Facts)
+        it "should return a Facts instance" do
+            @facts.should be_instance_of(Puppet::Node::Facts)
+        end
+
+        it "should return a Facts instance with the provided key as the name" do
+            @facts.name.should == @name
+        end
+
+        it "should return the Facter facts as the values in the Facts instance" do
+            Facter.expects(:to_hash).returns("one" => "two")
+            facts = @facter.find(@name)
+            facts.values["one"].should == "two"
+        end
     end
 
-    it "should return a Facts instance with the provided key as the name" do
-        @facts.name.should == @name
+    describe Puppet::Node::Facts::Facter, " when saving facts" do
+
+        it "should fail" do
+            proc { @facter.save(@facts) }.should raise_error(Puppet::DevError)
+        end
     end
 
-    it "should return the Facter facts as the values in the Facts instance" do
-        Facter.expects(:to_hash).returns("one" => "two")
-        facts = @facter.find(@name)
-        facts.values["one"].should == "two"
+    describe Puppet::Node::Facts::Facter, " when destroying facts" do
+
+        it "should fail" do
+            proc { @facter.destroy(@facts) }.should raise_error(Puppet::DevError)
+        end
     end
-end
 
-describe Puppet::Node::Facts::Facter, " when saving facts" do
-    include TestingCodeFacts
-
-    it "should fail" do
-        proc { @facter.save(@facts) }.should raise_error(Puppet::DevError)
+    describe Puppet::Node::Facts::Facter, " when loading facts from the factpath" do
+        it "should load every fact in each factpath directory"
     end
-end
-
-describe Puppet::Node::Facts::Facter, " when destroying facts" do
-    include TestingCodeFacts
-
-    it "should fail" do
-        proc { @facter.destroy(@facts) }.should raise_error(Puppet::DevError)
-    end
-end
-
-describe Puppet::Node::Facts::Facter, " when loading facts from the factpath" do
-    it "should load every fact in each factpath directory"
 end

@@ -12,11 +12,6 @@ module ParsedMountTesting
     include PuppetTest::Support::Utils
     include PuppetTest::FileParsing
 
-    def setup
-        @mount_class = Puppet.type(:mount)
-        @provider_class = @mount_class.provider(:parsed)
-    end
-
     def fake_fstab
         os = Facter['operatingsystem']
         if os == "Solaris"
@@ -79,104 +74,112 @@ end
 provider_class = Puppet::Type.type(:mount).provider(:parsed)
 
 describe provider_class do
-    include ParsedMountTesting
+    before :each do
+        @mount_class = Puppet.type(:mount)
+        @provider_class = @mount_class.provider(:parsed)
+    end
 
-    it "should be able to parse all of the example mount tabs" do
-        tab = fake_fstab
-        @provider = @provider_class
 
-        # LAK:FIXME Again, a relatively bad test, but I don't know how to rspec-ify this.
-        # I suppose this is more of an integration test?  I dunno.
-        fakedataparse(tab) do
-            # Now just make we've got some mounts we know will be there
-            hashes = @provider_class.target_records(tab).find_all { |i| i.is_a? Hash }
-            (hashes.length > 0).should be_true
-            root = hashes.find { |i| i[:name] == "/" }
+    describe provider_class do
+        include ParsedMountTesting
 
-            proc { @provider_class.to_file(hashes) }.should_not raise_error
+        it "should be able to parse all of the example mount tabs" do
+            tab = fake_fstab
+            @provider = @provider_class
+
+            # LAK:FIXME Again, a relatively bad test, but I don't know how to rspec-ify this.
+            # I suppose this is more of an integration test?  I dunno.
+            fakedataparse(tab) do
+                # Now just make we've got some mounts we know will be there
+                hashes = @provider_class.target_records(tab).find_all { |i| i.is_a? Hash }
+                (hashes.length > 0).should be_true
+                root = hashes.find { |i| i[:name] == "/" }
+
+                proc { @provider_class.to_file(hashes) }.should_not raise_error
+            end
+        end
+
+        # LAK:FIXME I can't mock Facter because this test happens at parse-time.
+        it "should default to /etc/vfstab on Solaris and /etc/fstab everywhere else" do
+            should = case Facter.value(:operatingsystem)
+                when "Solaris": "/etc/vfstab"
+                else
+                    "/etc/fstab"
+                end
+            Puppet::Type.type(:mount).provider(:parsed).default_target.should == should
         end
     end
 
-    # LAK:FIXME I can't mock Facter because this test happens at parse-time.
-    it "should default to /etc/vfstab on Solaris and /etc/fstab everywhere else" do
-        should = case Facter.value(:operatingsystem)
-            when "Solaris": "/etc/vfstab"
-            else
-                "/etc/fstab"
-            end
-        Puppet::Type.type(:mount).provider(:parsed).default_target.should == should
-    end
-end
+    describe provider_class, " when mounting an absent filesystem" do
+        include ParsedMountTesting
 
-describe provider_class, " when mounting an absent filesystem" do
-    include ParsedMountTesting
+        # #730 - Make sure 'flush' is called when a mount is moving from absent to mounted
+        it "should flush the fstab to disk" do
+            mount = mkmount
 
-    # #730 - Make sure 'flush' is called when a mount is moving from absent to mounted
-    it "should flush the fstab to disk" do
-        mount = mkmount
+            # Mark the mount as absent
+            mount.property_hash[:ensure] = :absent
 
-        # Mark the mount as absent
-        mount.property_hash[:ensure] = :absent
+            mount.stubs(:mountcmd) # just so we don't actually try to mount anything
 
-        mount.stubs(:mountcmd) # just so we don't actually try to mount anything
-
-        mount.expects(:flush)
-        mount.mount
-    end
-end
-
-describe provider_class, " when modifying the filesystem tab" do
-    include ParsedMountTesting
-    before do
-        @mount = mkmount
-        @target = @provider_class.default_target
-
-        # Never write to disk, only to RAM.
-        @provider_class.stubs(:filetype).returns(Puppet::Util::FileType.filetype(:ram))
+            mount.expects(:flush)
+            mount.mount
+        end
     end
 
-    it "should write the mount to disk when :flush is called" do
-        @mount.flush
+    describe provider_class, " when modifying the filesystem tab" do
+        include ParsedMountTesting
+        before do
+            @mount = mkmount
+            @target = @provider_class.default_target
 
-        text = @provider_class.target_object(@provider_class.default_target).read
-        text.should == @mount.class.to_line(@mount.property_hash) + "\n"
-    end
-end
+            # Never write to disk, only to RAM.
+            @provider_class.stubs(:filetype).returns(Puppet::Util::FileType.filetype(:ram))
+        end
 
-describe provider_class, " when parsing information about the root filesystem" do
-    confine "Mount type not tested on Darwin" => Facter["operatingsystem"].value != "Darwin"
-    include ParsedMountTesting
+        it "should write the mount to disk when :flush is called" do
+            @mount.flush
 
-    before do
-        @mount = @mount_class.create :name => "/"
-        @provider = @mount.provider
-    end
-
-    it "should have a filesystem tab" do
-        FileTest.should be_exist(@provider_class.default_target)
+            text = @provider_class.target_object(@provider_class.default_target).read
+            text.should == @mount.class.to_line(@mount.property_hash) + "\n"
+        end
     end
 
-    it "should find the root filesystem" do
-        @provider_class.prefetch("/" => @mount)
-        @mount.provider.property_hash[:ensure].should == :present
+    describe provider_class, " when parsing information about the root filesystem" do
+        confine "Mount type not tested on Darwin" => Facter["operatingsystem"].value != "Darwin"
+        include ParsedMountTesting
+
+        before do
+            @mount = @mount_class.create :name => "/"
+            @provider = @mount.provider
+        end
+
+        it "should have a filesystem tab" do
+            FileTest.should be_exist(@provider_class.default_target)
+        end
+
+        it "should find the root filesystem" do
+            @provider_class.prefetch("/" => @mount)
+            @mount.provider.property_hash[:ensure].should == :present
+        end
+
+        it "should determine that the root fs is mounted" do
+            @provider_class.prefetch("/" => @mount)
+            @mount.provider.should be_mounted
+        end
+
+        after do
+            Puppet::Type.allclear
+        end
     end
 
-    it "should determine that the root fs is mounted" do
-        @provider_class.prefetch("/" => @mount)
-        @mount.provider.should be_mounted
+    describe provider_class, " when mounting and unmounting" do
+        include ParsedMountTesting
+
+        it "should call the 'mount' command to mount the filesystem"
+
+        it "should call the 'unmount' command to unmount the filesystem"
+
+        it "should specify the filesystem when remounting a filesystem"
     end
-
-    after do
-        Puppet::Type.allclear
-    end
-end
-
-describe provider_class, " when mounting and unmounting" do
-    include ParsedMountTesting
-
-    it "should call the 'mount' command to mount the filesystem"
-
-    it "should call the 'unmount' command to unmount the filesystem"
-
-    it "should specify the filesystem when remounting a filesystem"
 end

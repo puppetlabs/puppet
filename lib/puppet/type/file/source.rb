@@ -101,8 +101,7 @@ module Puppet
             begin
                 desc = server.describe(path, @resource[:links])
             rescue Puppet::Network::XMLRPCClientError => detail
-                self.err "Could not describe %s: %s" %
-                    [path, detail]
+                self.err "Could not describe %s: %s" % [path, detail]
                 return nil
             end
 
@@ -163,7 +162,7 @@ module Puppet
 
             # Diff the contents if they ask it.  This is quite annoying -- we need to do this in
             # 'insync?' because they might be in noop mode, but we don't want to do the file
-            # retrieval twice, so we cache the value annoyingly.
+            # retrieval twice, so we cache the value.
             if ! result and Puppet[:show_diff] and File.exists?(@resource[:path]) and ! @stats[:_diffed]
                 @stats[:_remote_content] = get_remote_content
                 string_file_diff(@resource[:path], @stats[:_remote_content])
@@ -203,13 +202,10 @@ module Puppet
             
             case @stats[:type]
             when "directory", "file":
-                unless @resource.deleting?
-                    @resource[:ensure] = @stats[:type]
-                end
+                @resource[:ensure] = @stats[:type] unless @resource.deleting?
             else
                 self.info @stats.inspect
-                self.err "Cannot use files of type %s as sources" %
-                    @stats[:type]
+                self.err "Cannot use files of type %s as sources" % @stats[:type]
                 return :nocopy
             end
 
@@ -221,11 +217,9 @@ module Puppet
 
                 # was the stat already specified, or should the value
                 # be inherited from the source?
-                unless @resource.argument?(stat)
-                    @resource[stat] = value
-                end
+                @resource[stat] = value unless @resource.argument?(stat)
             }
-            
+
             return @stats[:checksum]
         end
         
@@ -261,34 +255,22 @@ module Puppet
         end
 
         private
+
         def get_remote_content
-            unless @stats[:type] == "file"
-                #if @stats[:type] == "directory"
-                        #[@resource.name, @should.inspect]
-                #end
-                raise Puppet::DevError, "Got told to copy non-file %s" %
-                    @resource[:path]
-            end
+            raise Puppet::DevError, "Got told to copy non-file %s" % @resource[:path] unless @stats[:type] == "file"
 
             sourceobj, path = @resource.uri2obj(@source)
 
             begin
                 contents = sourceobj.server.retrieve(path, @resource[:links])
-            rescue Puppet::Network::XMLRPCClientError => detail
-                self.err "Could not retrieve %s: %s" %
-                    [path, detail]
-                return nil
+            rescue => detail
+                self.fail "Could not retrieve %s: %s" % [path, detail]
             end
 
-            # FIXME It's stupid that this isn't taken care of in the
-            # protocol.
-            unless sourceobj.server.local
-                contents = CGI.unescape(contents)
-            end
+            contents = CGI.unescape(contents) unless sourceobj.server.local
 
             if contents == ""
-                self.notice "Could not retrieve contents for %s" %
-                    @source
+                self.notice "Could not retrieve contents for %s" % @source
             end
 
             return contents
