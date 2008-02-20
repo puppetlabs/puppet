@@ -127,6 +127,7 @@ describe Puppet::Parser::Interpreter, " when compiling catalog" do
     end
 
     it "should fail intelligently when no parser can be found" do
+        @node.stubs(:name).returns("whatever")
         @interp.expects(:parser).with(:myenv).returns(nil)
         proc { @interp.compile(@node) }.should raise_error(Puppet::ParseError)
     end
