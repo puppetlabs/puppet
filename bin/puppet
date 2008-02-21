@@ -136,6 +136,14 @@ end
 
 Puppet.parse_config
 
+# Now parse the config
+if Puppet[:config] and File.exists? Puppet[:config]
+    Puppet.settings.parse(Puppet[:config])
+end
+
+Puppet.genconfig
+Puppet.genmanifest
+
 # If noop is set, then also enable diffs
 if Puppet[:noop]
     Puppet[:show_diff] = true
@@ -155,14 +163,6 @@ if options[:debug]
 elsif options[:verbose]
     Puppet::Util::Log.level = :info
 end
-
-# Now parse the config
-if Puppet[:config] and File.exists? Puppet[:config]
-    Puppet.settings.parse(Puppet[:config])
-end
-
-Puppet.genconfig
-Puppet.genmanifest
 
 # Set our code or file to use.
 if options[:code] or ARGV.length == 0
