@@ -1,3 +1,7 @@
+    Hopefully partially fixed #1010 -- clients should now fail
+    to install files whose checksums do not match the checksum
+    from the server.
+
     Fixed #1018 -- resources now have their namevars added as
     aliases in the resource catalog, just like they were added
     in the resource classes.
