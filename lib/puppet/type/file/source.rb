@@ -235,9 +235,7 @@ module Puppet
             checks.delete(:checksum)
             
             @resource[:check] = checks
-            unless @resource.property(:checksum)
-                @resource[:checksum] = :md5
-            end
+            @resource[:checksum] = :md5 unless @resource.property(:checksum)
         end
 
         def sync
@@ -245,7 +243,7 @@ module Puppet
 
             exists = File.exists?(@resource[:path])
 
-            @resource.write(:source) { |f| f.print contents }
+            @resource.write(contents, :source, @stats[:checksum])
 
             if exists
                 return :file_changed

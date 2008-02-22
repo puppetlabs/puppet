@@ -46,7 +46,7 @@ module Puppet
             if property = (@resource.property(:content) || @resource.property(:source))
                 property.sync
             else
-                @resource.write(false) { |f| f.flush }
+                @resource.write("", :ensure)
                 mode = @resource.should(:mode)
             end
             return :file_created
@@ -67,14 +67,12 @@ module Puppet
                     "Cannot create %s; parent directory %s does not exist" %
                         [@resource[:path], parent]
             end
-            @resource.write_if_writable(parent) do
-                if mode
-                    Puppet::Util.withumask(000) do
-                        Dir.mkdir(@resource[:path],mode)
-                    end
-                else
-                    Dir.mkdir(@resource[:path])
+            if mode
+                Puppet::Util.withumask(000) do
+                    Dir.mkdir(@resource[:path],mode)
                 end
+            else
+                Dir.mkdir(@resource[:path])
             end
             @resource.send(:property_fix)
             @resource.setchecksum

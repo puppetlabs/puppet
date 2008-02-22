@@ -5,10 +5,12 @@ require 'uri'
 require 'fileutils'
 require 'puppet/network/handler'
 require 'puppet/util/diff'
+require 'puppet/util/checksums'
 
 module Puppet
     newtype(:file) do
         include Puppet::Util::MethodHelper
+        include Puppet::Util::Checksums
         @doc = "Manages local files, including setting ownership and
             permissions, creation of both files and directories, and
             retrieving entire files from remote servers.  As Puppet matures, it
@@ -1031,54 +1033,38 @@ module Puppet
             return [sourceobj, path.sub(/\/\//, '/')]
         end
 
-        # Write out the file.  We open the file correctly, with all of the
-        # uid and mode and such, and then yield the file handle for actual
-        # writing.
-        def write(property, usetmp = true)
-            mode = self.should(:mode)
+        # Write out the file.  Requires the content to be written,
+        # the property name for logging, and the checksum for validation.
+        def write(content, property, checksum = nil)
+            if validate = validate_checksum?
+                # Use the appropriate checksum type -- md5, md5lite, etc.
+                sumtype = property(:checksum).checktype
+                checksum ||= "{#{sumtype}}" + property(:checksum).send(sumtype, content)
+            end
 
             remove_existing(:file)
 
-            # The temporary file
-            path = nil
-            if usetmp
-                path = self[:path] + ".puppettmp"
-            else
-                path = self[:path]
-            end
+            use_temporary_file = (content.length != 0)
+            path = self[:path]
+            path += ".puppettmp" if use_temporary_file
 
-            # As the correct user and group
-            write_if_writable(File.dirname(path)) do
-                f = nil
-                # Open our file with the correct modes
-                if mode
-                    Puppet::Util.withumask(000) do
-                        f = File.open(path,
-                            File::CREAT|File::WRONLY|File::TRUNC, mode)
-                    end
-                else
-                    f = File.open(path, File::CREAT|File::WRONLY|File::TRUNC)
-                end
+            mode = self.should(:mode) # might be nil
+            umask = mode ? 000 : 022
 
-                # Yield it
-                yield f
-
-                f.flush
-                f.close
+            Puppet::Util.withumask(umask) do
+                File.open(path, File::CREAT|File::WRONLY|File::TRUNC, mode) { |f| f.print content }
             end
 
             # And put our new file in place
-            if usetmp
+            if use_temporary_file # This is only not true when our file is empty.
                 begin
+                    fail_if_checksum_is_wrong(path, checksum) if validate
                     File.rename(path, self[:path])
                 rescue => detail
-                    self.err "Could not rename tmp %s for replacing: %s" %
-                        [self[:path], detail]
+                    self.err "Could not rename tmp %s for replacing: %s" % [self[:path], detail]
                 ensure
                     # Make sure the created file gets removed
-                    if FileTest.exists?(path)
-                        File.unlink(path)
-                    end
+                    File.unlink(path) if FileTest.exists?(path)
                 end
             end
 
@@ -1086,31 +1072,34 @@ module Puppet
             property_fix
 
             # And then update our checksum, so the next run doesn't find it.
-            # FIXME This is extra work, because it's going to read the whole
-            # file back in again.
-            self.setchecksum
-            
+            self.setchecksum(checksum)
         end
-        
-        # Run the block as the specified user if the dir is writeable, else
-        # run it as root (or the current user).
-        def write_if_writable(dir)
-            yield
-            # We're getting different behaviors from different versions of ruby, so...
-            # asroot = true
-            # Puppet::Util::SUIDManager.asuser(asuser(), self.should(:group)) do
-            #     if FileTest.writable?(dir)
-            #         asroot = false
-            #         yield
-            #     end
-            # end
-            # 
-            # if asroot
-            #     yield
-            # end
+
+        # Should we validate the checksum of the file we're writing?
+        def validate_checksum?
+            if sumparam = @parameters[:checksum]
+                return sumparam.checktype.to_s !~ /time/
+            else
+                return false
+            end
         end
 
         private
+
+        # Make sure the file we wrote out is what we think it is.
+        def fail_if_checksum_is_wrong(path, checksum)
+            if checksum =~ /^\{(\w+)\}.+/
+                sumtype = $1
+            else
+                # This shouldn't happen, but if it happens to, it's nicer
+                # to just use a default sumtype than fail.
+                sumtype = "md5"
+            end
+            newsum = property(:checksum).getsum(sumtype, path)
+            return if newsum == checksum
+
+            self.fail "File written to disk did not match checksum; discarding changes (%s vs %s)" % [checksum, newsum]
+        end
 
         # Override the parent method, because we don't want to generate changes
         # when the file is missing and there is no 'ensure' state.

@@ -74,12 +74,17 @@ module Puppet
             end
         end
 
+        # Make sure we're also managing the checksum property.
+        def should=(value)
+            super
+            @resource.newattr(:checksum) unless @resource.property(:checksum)
+        end
 
         # Just write our content out to disk.
         def sync
             return_event = @resource.stat ? :file_changed : :file_created
             
-            @resource.write(:content) { |f| f.print self.should }
+            @resource.write(self.should, :content)
 
             return return_event
         end
