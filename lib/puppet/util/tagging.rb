@@ -34,6 +34,6 @@ module Puppet::Util::Tagging
     private
 
     def valid_tag?(tag)
-        tag =~ /^\w[-\w:]*$/
+        tag =~ /^\w[-\w:.]*$/
     end
 end
