@@ -99,9 +99,13 @@ module Puppet
         munge do |value|
             value = super(value)
 
+            # It doesn't make sense to try to manage links unless, well,
+            # we're managing links.
+            resource[:links] = :manage if value == :link
             return value if value.is_a? Symbol
 
             @resource[:target] = value
+            resource[:links] = :manage
 
             return :link
         end

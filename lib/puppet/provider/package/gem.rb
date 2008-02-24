@@ -78,7 +78,11 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
             command << @resource[:name]
         end
 
-        gemcmd(*command)
+        output = gemcmd(*command)
+        # Apparently some stupid gem versions don't exit non-0 on failure
+        if output.include?("ERROR")
+            self.fail "Could not install: %s" % output.chomp
+        end
     end
 
     def latest

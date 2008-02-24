@@ -175,11 +175,9 @@ module Puppet
                 recursion), and ``follow`` will manage the file to which the
                 link points."
 
-            newvalues(:follow, :manage, :ignore)
+            newvalues(:follow, :manage)
 
-            # :ignore and :manage behave equivalently on local files,
-            # but don't copy remote links
-            defaultto :ignore
+            defaultto :manage
         end
 
         newparam(:purge, :boolean => true) do
@@ -781,9 +779,7 @@ module Puppet
         def remove_existing(should)
             return unless s = stat(true)
 
-            unless handlebackup
-                self.fail "Could not back up; will not replace"
-            end
+            self.fail "Could not back up; will not replace" unless handlebackup
 
             unless should.to_s == "link"
                 return if s.ftype.to_s == should.to_s 
@@ -792,8 +788,7 @@ module Puppet
             case s.ftype
             when "directory":
                 if self[:force] == :true
-                    debug "Removing existing directory for replacement with %s" %
-                        should
+                    debug "Removing existing directory for replacement with %s" % should
                     FileUtils.rmtree(self[:path])
                 else
                     notice "Not removing directory; use 'force' to override"

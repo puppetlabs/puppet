@@ -165,7 +165,7 @@ class Puppet::Util::FileType
 
         # Remove a specific @path's cron tab.
         def remove
-            if Facter.value("operatingsystem") == "FreeBSD"
+            if %w{Darwin FreeBSD}.include?(Facter.value("operatingsystem"))
                 %x{/bin/echo yes | #{cmdbase()} -r 2>/dev/null}
             else
                 %x{#{cmdbase()} -r 2>/dev/null}

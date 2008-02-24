@@ -8,6 +8,7 @@ require 'puppet/sslcertificates/support'
 require 'puppet/network/xmlrpc/webrick_servlet'
 require 'puppet/network/http_server'
 require 'puppet/network/client'
+require 'puppet/network/handler'
 
 module Puppet
     class ServerError < RuntimeError; end
@@ -133,7 +134,7 @@ module Puppet
 
                 handlers.collect { |handler, args|
                     hclass = nil
-                    unless hclass = Handler.handler(handler)
+                    unless hclass = Puppet::Network::Handler.handler(handler)
                         raise ServerError, "Invalid handler %s" % handler
                     end
                     hclass.new(args)

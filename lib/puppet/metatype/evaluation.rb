@@ -125,26 +125,14 @@ class Puppet::Type
             raise Puppet::DevError, "Parameter ensure defined but missing from current values"
         end
         if @parameters.include?(:ensure) and ! ensureparam.insync?(currentvalues[ensureparam])
-#            self.info "ensuring %s from %s" %
-#                [@parameters[:ensure].should, @parameters[:ensure].is]
             changes << Puppet::PropertyChange.new(ensureparam, currentvalues[ensureparam])
         # Else, if the 'ensure' property is correctly absent, then do
         # nothing
         elsif @parameters.include?(:ensure) and currentvalues[ensureparam] == :absent
-            #            self.info "Object is correctly absent"
             return []
         else
-#            if @parameters.include?(:ensure)
-#                self.info "ensure: Is: %s, Should: %s" %
-#                    [@parameters[:ensure].is, @parameters[:ensure].should]
-#            else
-#                self.info "no ensure property"
-#            end
             changes = properties().find_all { |property|
-                unless currentvalues.include?(property)
-                    raise Puppet::DevError, "Property %s does not have a current value", 
-                               [property.name]
-                end
+                currentvalues[property] ||= :absent
                 ! property.insync?(currentvalues[property])
             }.collect { |property|
                 Puppet::PropertyChange.new(property, currentvalues[property])
@@ -152,10 +140,7 @@ class Puppet::Type
         end
 
         if Puppet[:debug] and changes.length > 0
-            self.debug("Changing " + changes.collect { |ch|
-                    ch.property.name
-                }.join(",")
-            )
+            self.debug("Changing " + changes.collect { |ch| ch.property.name }.join(","))
         end
 
         changes

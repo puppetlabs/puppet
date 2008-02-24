@@ -109,13 +109,13 @@ class TestFileServer < Test::Unit::TestCase
         # and verify different iterations of 'root' return the same value
         list = nil
         assert_nothing_raised {
-            list = server.list("/test/", :ignore, true, false)
+            list = server.list("/test/", :manage, true, false)
         }
 
         assert(list =~ pattern)
 
         assert_nothing_raised {
-            list = server.list("/test", :ignore, true, false)
+            list = server.list("/test", :manage, true, false)
         }
         assert(list =~ pattern)
 
@@ -143,7 +143,7 @@ class TestFileServer < Test::Unit::TestCase
         list = nil
         sfile = "/test/tmpfile"
         assert_nothing_raised {
-            list = server.list(sfile, :ignore, true, false)
+            list = server.list(sfile, :manage, true, false)
         }
 
         assert_nothing_raised {
@@ -200,7 +200,7 @@ class TestFileServer < Test::Unit::TestCase
         list = nil
         sfile = "/test/"
         assert_nothing_raised {
-            list = server.list(sfile, :ignore, true, false)
+            list = server.list(sfile, :manage, true, false)
         }
 
         # create the new file
@@ -210,7 +210,7 @@ class TestFileServer < Test::Unit::TestCase
 
         newlist = nil
         assert_nothing_raised {
-            newlist = server.list(sfile, :ignore, true, false)
+            newlist = server.list(sfile, :manage, true, false)
         }
 
         # verify the list has changed
@@ -239,12 +239,12 @@ class TestFileServer < Test::Unit::TestCase
 
         list = nil
         assert_nothing_raised {
-            list = server.list("/root/" + testdir, :ignore, true, false)
+            list = server.list("/root/" + testdir, :manage, true, false)
         }
 
         assert(list =~ pattern)
         assert_nothing_raised {
-            list = server.list("/root" + testdir, :ignore, true, false)
+            list = server.list("/root" + testdir, :manage, true, false)
         }
 
         assert(list =~ pattern)
@@ -279,7 +279,7 @@ class TestFileServer < Test::Unit::TestCase
         # get our list
         list = nil
         assert_nothing_raised {
-            list = server.list("/test/with", :ignore, false, false)
+            list = server.list("/test/with", :manage, false, false)
         }
 
         # make sure we only got one line, since we're not recursing
@@ -288,7 +288,7 @@ class TestFileServer < Test::Unit::TestCase
         # for each level of recursion, make sure we get the right list
         [0, 1, 2].each { |num|
             assert_nothing_raised {
-                list = server.list("/test/with", :ignore, num, false)
+                list = server.list("/test/with", :manage, num, false)
             }
 
             count = 0
@@ -332,13 +332,13 @@ class TestFileServer < Test::Unit::TestCase
         list = nil
         # and then check a few dirs
         assert_nothing_raised {
-            list = server.list("/localhost/with", :ignore, false, false)
+            list = server.list("/localhost/with", :manage, false, false)
         }
 
         assert(list !~ /with/)
 
         assert_nothing_raised {
-            list = server.list("/localhost/with/some/sub", :ignore, true, false)
+            list = server.list("/localhost/with/some/sub", :manage, true, false)
         }
 
         assert(list !~ /sub/)
@@ -370,7 +370,7 @@ class TestFileServer < Test::Unit::TestCase
 
         list = nil
         assert_nothing_raised {
-            list = server.list("/localhost/", :ignore, 1, false)
+            list = server.list("/localhost/", :manage, 1, false)
         }
         assert_instance_of(String, list, "Server returned %s instead of string")
         list = list.split("\n")
@@ -402,7 +402,7 @@ class TestFileServer < Test::Unit::TestCase
         list = nil
         sfile = "/test/"
         assert_nothing_raised {
-            list = server.list(sfile, :ignore, true, false)
+            list = server.list(sfile, :manage, true, false)
         }
 
         # and describe each file in the list
@@ -492,7 +492,7 @@ class TestFileServer < Test::Unit::TestCase
         mounts.each { |mount, files|
             mount = "/#{mount}/"
             assert_nothing_raised {
-                list = server.list(mount, :ignore, true, false)
+                list = server.list(mount, :manage, true, false)
             }
 
             assert_nothing_raised {
@@ -544,12 +544,12 @@ class TestFileServer < Test::Unit::TestCase
                         assert_raise(Puppet::AuthorizationError,
                             "Host %s, ip %s, allowed %s" %
                             [host, ip, mount]) {
-                                list = server.list(mount, :ignore, true, false, host, ip)
+                                list = server.list(mount, :manage, true, false, host, ip)
                         }
                     when :allow:
                         assert_nothing_raised("Host %s, ip %s, denied %s" %
                             [host, ip, mount]) {
-                                list = server.list(mount, :ignore, true, false, host, ip)
+                                list = server.list(mount, :manage, true, false, host, ip)
                         }
                     end
                 }
@@ -602,7 +602,7 @@ class TestFileServer < Test::Unit::TestCase
 
             assert_raise(Puppet::Network::Handler::FileServerError,
                 "Invalid mount was mounted") {
-                    server.list(mount, :ignore)
+                    server.list(mount, :manage)
             }
         }
 
@@ -654,13 +654,13 @@ class TestFileServer < Test::Unit::TestCase
 
         list = nil
         assert_nothing_raised {
-            list = server.list("/thing/", :ignore, false, false,
+            list = server.list("/thing/", :manage, false, false,
                 "test1.domain.com", "127.0.0.1")
         }
         assert(list != "", "List returned nothing in rereard test")
 
         assert_raise(Puppet::AuthorizationError, "List allowed invalid host") {
-            list = server.list("/thing/", :ignore, false, false,
+            list = server.list("/thing/", :manage, false, false,
                 "test2.domain.com", "127.0.0.1")
         }
 
@@ -675,12 +675,12 @@ class TestFileServer < Test::Unit::TestCase
         }
         
         assert_raise(Puppet::AuthorizationError, "List allowed invalid host") {
-            list = server.list("/thing/", :ignore, false, false,
+            list = server.list("/thing/", :manage, false, false,
                 "test1.domain.com", "127.0.0.1")
         }
 
         assert_nothing_raised {
-            list = server.list("/thing/", :ignore, false, false,
+            list = server.list("/thing/", :manage, false, false,
                 "test2.domain.com", "127.0.0.1")
         }
 
@@ -735,7 +735,7 @@ class TestFileServer < Test::Unit::TestCase
         # Then not
         results = {}
         assert_nothing_raised {
-            server.describe("/mount/link", :ignore).split("\t").zip(
+            server.describe("/mount/link", :manage).split("\t").zip(
                 Puppet::Network::Handler.fileserver::CHECKPARAMS
             ).each { |v,p| results[p] = v }
         }
@@ -801,28 +801,28 @@ allow *
         list = nil
         sfile = "/host/file.txt"
         assert_nothing_raised {
-            list = server.list(sfile, :ignore, true, false, client1, ip)
+            list = server.list(sfile, :manage, true, false, client1, ip)
         }
         assert_equal("/\tfile", list)
         assert_nothing_raised {
-            list = server.list(sfile, :ignore, true, false, client2, ip)
+            list = server.list(sfile, :manage, true, false, client2, ip)
         }
         assert_equal("", list)
 
         sfile = "/fqdn/file.txt"
         assert_nothing_raised {
-            list = server.list(sfile, :ignore, true, false, client1, ip)
+            list = server.list(sfile, :manage, true, false, client1, ip)
         }
         assert_equal("", list)
         assert_nothing_raised {
-            list = server.list(sfile, :ignore, true, false, client2, ip)
+            list = server.list(sfile, :manage, true, false, client2, ip)
         }
         assert_equal("/\tfile", list)
 
         # check describe
         sfile = "/host/file.txt"
         assert_nothing_raised {
-            list = server.describe(sfile, :ignore, client1, ip).split("\t")
+            list = server.describe(sfile, :manage, client1, ip).split("\t")
         }
         assert_equal(5, list.size)
         assert_equal("file", list[1])
@@ -830,18 +830,18 @@ allow *
         assert_equal("{md5}#{md5}", list[4])
 
         assert_nothing_raised {
-            list = server.describe(sfile, :ignore, client2, ip).split("\t")
+            list = server.describe(sfile, :manage, client2, ip).split("\t")
         }
         assert_equal([], list)
 
         sfile = "/fqdn/file.txt"
         assert_nothing_raised {
-            list = server.describe(sfile, :ignore, client1, ip).split("\t")
+            list = server.describe(sfile, :manage, client1, ip).split("\t")
         }
         assert_equal([], list)
 
         assert_nothing_raised {
-            list = server.describe(sfile, :ignore, client2, ip).split("\t")
+            list = server.describe(sfile, :manage, client2, ip).split("\t")
         }
         assert_equal(5, list.size)
         assert_equal("file", list[1])
@@ -851,23 +851,23 @@ allow *
         # Check retrieve
         sfile = "/host/file.txt"
         assert_nothing_raised {
-            list = server.retrieve(sfile, :ignore, client1, ip).chomp
+            list = server.retrieve(sfile, :manage, client1, ip).chomp
         }
         assert_equal(contents[client1_hostdir].chomp, list)
 
         assert_nothing_raised {
-            list = server.retrieve(sfile, :ignore, client2, ip).chomp
+            list = server.retrieve(sfile, :manage, client2, ip).chomp
         }
         assert_equal("", list)
 
         sfile = "/fqdn/file.txt"
         assert_nothing_raised {
-            list = server.retrieve(sfile, :ignore, client1, ip).chomp
+            list = server.retrieve(sfile, :manage, client1, ip).chomp
         }
         assert_equal("", list)
 
         assert_nothing_raised {
-            list = server.retrieve(sfile, :ignore, client2, ip).chomp
+            list = server.retrieve(sfile, :manage, client2, ip).chomp
         }
         assert_equal(contents[client2_fqdndir].chomp, list)
     end
@@ -945,12 +945,14 @@ allow *
         # Now, check that they use Facter info 
         Puppet.notice "The following messages are normal"
         client = nil
-        local = Facter["hostname"].value
-        domain = Facter["domain"].value
-        fqdn = [local, domain].join(".")
-        {"%h" => local, # Short name
-         "%H" => fqdn, # Full name
-         "%d" => domain, # domain
+        Facter.stubs(:value).with(:ipaddress).returns("127.0.0.1")
+        Facter.stubs(:value).with { |v| v.to_s == "hostname" }.returns("myhost")
+        Facter.stubs(:value).with { |v| v.to_s == "domain" }.returns("mydomain.com")
+        Facter.stubs(:value).with(:domain).returns("mydomain.com")
+
+        {"%h" => "myhost", # Short name
+         "%H" => "myhost.mydomain.com", # Full name
+         "%d" => "mydomain.com", # domain
          "%%" => "%", # escape
          "%o" => "%o" # other
          }.each do |pat, repl|
@@ -993,18 +995,18 @@ allow *
 
             ret = nil
             assert_nothing_raised do
-                ret = server.list("/name", :ignore, false, false, host, ip)
+                ret = server.list("/name", :manage, false, false, host, ip)
             end
 
             assert_equal("/\tfile", ret)
 
             assert_nothing_raised do
-                ret = server.describe("/name", :ignore, host, ip)
+                ret = server.describe("/name", :manage, host, ip)
             end
-            assert(ret =~ /\tfile\t/, "Did not get valid a description")
+            assert(ret =~ /\tfile\t/, "Did not get valid a description (#{ret.inspect})")
 
             assert_nothing_raised do
-                ret = server.retrieve("/name", :ignore, host, ip)
+                ret = server.retrieve("/name", :manage, host, ip)
             end
 
             assert_equal(ret, File.read(file))
@@ -1050,7 +1052,7 @@ allow *
             mount = "/#{mod.name}/"
             list = nil
             assert_nothing_raised {
-                list = server.list(mount, :ignore, true, false)
+                list = server.list(mount, :manage, true, false)
             }
             list = list.split("\n")
             if mod.name == "green"
@@ -1063,7 +1065,7 @@ allow *
             end
 
             assert_nothing_raised("Host 'allow' denied #{mount}") {
-                server.list(mount, :ignore, true, false,
+                server.list(mount, :manage, true, false,
                             'allow.example.com', "192.168.0.1")
             }
         end
@@ -1106,7 +1108,7 @@ allow *
         list = nil
         mount = "/#{mod.name}/"
         assert_nothing_raised {
-            list = server.list(mount, :ignore, true, false)
+            list = server.list(mount, :manage, true, false)
         }
 
         assert_nothing_raised {
@@ -1121,11 +1123,11 @@ allow *
         # now let's check that things are being correctly forbidden
         assert_raise(Puppet::AuthorizationError,
                      "Host 'deny' allowed #{mount}") {
-            server.list(mount, :ignore, true, false,
+            server.list(mount, :manage, true, false,
                         'deny.example.com', "192.168.1.1")
         }
         assert_nothing_raised("Host 'allow' denied #{mount}") {
-            server.list(mount, :ignore, true, false,
+            server.list(mount, :manage, true, false,
                         'allow.example.com', "192.168.0.1")
         }
     end

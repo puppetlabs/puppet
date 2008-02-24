@@ -5,6 +5,9 @@ require 'cgi'
 require 'delegate'
 require 'sync'
 
+require 'puppet/file_serving'
+require 'puppet/file_serving/metadata'
+
 class Puppet::Network::Handler
     AuthStoreError = Puppet::AuthStoreError
     class FileServerError < Puppet::Error; end
@@ -59,40 +62,27 @@ class Puppet::Network::Handler
 
         # Describe a given file.  This returns all of the manageable aspects
         # of that file.
-        def describe(url, links = :ignore, client = nil, clientip = nil)
+        def describe(url, links = :follow, client = nil, clientip = nil)
             links = links.intern if links.is_a? String
-
-            if links == :manage
-                raise Puppet::Network::Handler::FileServerError, "Cannot currently copy links"
-            end
 
             mount, path = convert(url, client, clientip)
 
-            if client
-                mount.debug "Describing %s for %s" % [url, client]
-            end
+            mount.debug("Describing %s for %s" % [url, client]) if client
 
-            obj = nil
-            unless obj = mount.getfileobject(path, links, client)
+            # Remove any leading slashes, since Metadata doesn't like them, yo.
+            metadata = Puppet::FileServing::Metadata.new(url, :path => mount.path(client), :relative_path => path.sub(/^\//, ''), :links => links)
+
+            return "" unless metadata.exist?
+
+            begin
+                metadata.collect_attributes
+            rescue => detail
+                puts detail.backtrace if Puppet[:trace]
+                Puppet.err detail
                 return ""
             end
 
-            currentvalues = mount.check(obj)
-    
-            desc = []
-            CHECKPARAMS.each { |check|
-                if value = currentvalues[check]
-                    desc << value
-                else
-                    if check == "checksum" and currentvalues[:type] == "file"
-                        mount.notice "File %s does not have data for %s" %
-                            [obj.name, check]
-                    end
-                    desc << nil
-                end
-            }
-
-            return desc.join("\t")
+            return metadata.attributes_with_tabs
         end
 
         # Create a new fileserving module.
@@ -140,26 +130,18 @@ class Puppet::Network::Handler
         def list(url, links = :ignore, recurse = false, ignore = false, client = nil, clientip = nil)
             mount, path = convert(url, client, clientip)
 
-            if client
-                mount.debug "Listing %s for %s" % [url, client]
-            end
+            mount.debug "Listing %s for %s" % [url, client] if client
 
-            obj = nil
-            unless mount.path_exists?(path, client)
-                return ""
-            end
+            return "" unless mount.path_exists?(path, client)
 
             desc = mount.list(path, recurse, ignore, client)
 
             if desc.length == 0
-                mount.notice "Got no information on //%s/%s" %
-                    [mount, path]
+                mount.notice "Got no information on //%s/%s" % [mount, path]
                 return ""
             end
-            
-            desc.collect { |sub|
-                sub.join("\t")
-            }.join("\n")
+
+            desc.collect { |sub| sub.join("\t") }.join("\n")
         end
         
         def local?
@@ -213,12 +195,7 @@ class Puppet::Network::Handler
                 return ""
             end
 
-            str = nil
-            if links == :manage
-                raise Puppet::Error, "Cannot copy links yet."
-            else
-                str = mount.read_file(path, client)
-            end
+            str = mount.read_file(path, client)
 
             if @local
                 return str

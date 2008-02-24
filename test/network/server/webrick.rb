@@ -95,7 +95,7 @@ class TestWebrickServer < Test::Unit::TestCase
         # the client starts its connection immediately, thus throwing
         # the error.
         assert_raise(OpenSSL::SSL::SSLError) {
-            client = Puppet::Network::Client.status.new(:Server => "localhost", :Port => @@port)
+            Puppet::Network::HttpPool.http_instance("localhost", @@port).start
         }
     end
     

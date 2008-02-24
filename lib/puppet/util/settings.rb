@@ -1158,7 +1158,7 @@ Generated on #{Time.now}.
 
             return nil unless path.is_a?(String)
             return nil if path =~ /^\/dev/
-            return nil if Puppet::Type::File[path] # skip files that are in our global resource list.
+            return nil if Puppet::Type.type(:file)[path] # skip files that are in our global resource list.
 
             objects = []
 

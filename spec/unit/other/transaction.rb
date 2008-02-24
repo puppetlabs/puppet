@@ -2,6 +2,8 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
+require 'puppet/transaction'
+
 describe Puppet::Transaction, " when determining tags" do
     before do
         @config = Puppet::Node::Catalog.new

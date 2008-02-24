@@ -1,5 +1,5 @@
 module Puppet
-    Puppet.type(:file).newproperty(:content) do
+    Puppet::Type.type(:file).newproperty(:content) do
         include Puppet::Util::Diff
 
         desc "Specify the contents of a file as a string.  Newlines, tabs, and
@@ -47,23 +47,13 @@ module Puppet
             return result
         end
 
-        # We should probably take advantage of existing md5 sums if they're there,
-        # but I really don't feel like dealing with the complexity right now.
         def retrieve
-            stat = nil
-            unless stat = @resource.stat
-                return :absent
-            end
+            return :absent unless stat = @resource.stat
 
-            if stat.ftype == "link" and @resource[:links] == :ignore
-                return self.should
-            end
+            return self.should if stat.ftype == "link" and @resource[:links] == :ignore
 
             # Don't even try to manage the content on directories
-            if stat.ftype == "directory" and @resource[:links] == :ignore
-                @resource.delete(:content)
-                return nil
-            end
+            return nil if stat.ftype == "directory"
 
             begin
                 currentvalue = File.read(@resource[:path])

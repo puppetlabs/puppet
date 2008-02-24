@@ -105,10 +105,13 @@ module Puppet
                 return nil
             end
 
+            return nil if desc == ""
+
+            # Collect everything except the checksum
+            values = desc.split("\t")
+            other = values.pop
             args = {}
-            pinparams.zip(
-                desc.split("\t")
-            ).each { |param, value|
+            pinparams.zip(values).each { |param, value|
                 if value =~ /^[0-9]+$/
                     value = value.to_i
                 end
@@ -117,16 +120,19 @@ module Puppet
                 end
             }
 
-            # we can't manage ownership as root, so don't even try
+            # Now decide whether we're doing checksums or symlinks
+            if args[:type] == "link"
+                args[:target] = other
+            else
+                args[:checksum] = other
+            end
+
+            # we can't manage ownership unless we're root, so don't even try
             unless Puppet::Util::SUIDManager.uid == 0
                 args.delete(:owner)
             end
-
-            if args.empty? or (args[:type] == "link" and @resource[:links] == :ignore)
-                return nil
-            else
-                return args
-            end
+            
+            return args
         end
         
         # Have we successfully described the remote source?
@@ -172,7 +178,7 @@ module Puppet
         end
 
         def pinparams
-            Puppet::Network::Handler.handler(:fileserver).params
+            [:mode, :type, :owner, :group]
         end
         
         # This basically calls describe() on our file, and then sets all
@@ -201,7 +207,7 @@ module Puppet
             end
             
             case @stats[:type]
-            when "directory", "file":
+            when "directory", "file", "link":
                 @resource[:ensure] = @stats[:type] unless @resource.deleting?
             else
                 self.info @stats.inspect

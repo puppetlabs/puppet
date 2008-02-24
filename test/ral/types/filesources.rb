@@ -84,8 +84,7 @@ class TestFileSources < Test::Unit::TestCase
         source = tempfile()
         dest = tempfile()
         
-        file = Puppet::Type.newfile :path => dest, :source => source,
-            :title => "copier"
+        file = Puppet::Type.newfile :path => dest, :source => source, :title => "copier"
         
         property = file.property(:source)
         
@@ -124,17 +123,10 @@ class TestFileSources < Test::Unit::TestCase
         File.open(target, "w") { |f| f.puts "yay" }
         File.symlink(target, source)
         
-        file[:links] = :ignore
-        assert_nil(property.describe(source),
-            "Links were not ignored")
-        
         file[:links] = :manage
-        # We can't manage links at this point
-        assert_raise(Puppet::Network::Handler::FileServerError) do
-            property.describe(source)
-        end
+        assert_equal("link", property.describe(source)[:type])
         
-        # And then make sure links get followed, otherwise
+        # And then make sure links get followed
         file[:links] = :follow
         assert_equal("file", property.describe(source)[:type])
     end
@@ -753,29 +745,18 @@ class TestFileSources < Test::Unit::TestCase
         assert_nothing_raised {
             file = Puppet.type(:file).create(
                 :name => dest,
-                :source => link
+                :source => link,
+                :links => :follow
             )
         }
 
-        # Default to skipping links
-        assert_events([], file)
-        assert(! FileTest.exists?(dest), "Created link")
-
-        # Now follow the links
-        file[:links] = :follow
         assert_events([:file_created], file)
         assert(FileTest.file?(dest), "Destination is not a file")
 
         # Now copy the links
-        #assert_raise(Puppet::Network::Handler::FileServerError) {
-        trans = nil
-        assert_nothing_raised {
-            file[:links] = :manage
-            comp = mk_catalog(file)
-            trans = comp.apply
-        }
-
-        assert(trans.failed?(file), "Object did not fail to copy links")
+        file[:links] = :manage
+        assert_events([:link_created], file)
+        assert(FileTest.symlink?(dest), "Destination is not a link")
     end
 
     def test_changes

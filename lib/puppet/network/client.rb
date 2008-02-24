@@ -95,9 +95,7 @@ class Puppet::Network::Client
 
             # We have to start the HTTP connection manually before we start
             # sending it requests or keep-alive won't work.
-            if @driver.respond_to? :start
-                @driver.start
-            end
+            @driver.start if @driver.respond_to? :start
 
             @local = false
         elsif hash.include?(driverparam)
@@ -107,8 +105,7 @@ class Puppet::Network::Client
             end
             @local = true
         else
-            raise Puppet::Network::ClientError, "%s must be passed a Server or %s" %
-                [self.class, driverparam]
+            raise Puppet::Network::ClientError, "%s must be passed a Server or %s" % [self.class, driverparam]
         end
     end
 

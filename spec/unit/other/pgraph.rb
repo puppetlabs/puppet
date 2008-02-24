@@ -5,6 +5,7 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
+require 'puppet/pgraph'
 require 'puppet/util/graph'
 
 class Container
