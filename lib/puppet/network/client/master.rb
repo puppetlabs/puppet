@@ -40,8 +40,10 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         facts["clientversion"] = Puppet.version.to_s
 
         # And add our environment as a fact.
-        facts["environment"] = Puppet[:environment]
-
+        unless facts.include?("environment")
+            facts["environment"] = Puppet[:environment]
+        end
+ 
         facts
     end
 

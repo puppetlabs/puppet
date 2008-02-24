@@ -61,6 +61,10 @@ describe Puppet::Util::Tagging, "when adding tags" do
         lambda { @tagger.tag("good_tag") }.should_not raise_error(Puppet::ParseError)
     end
 
+    it "should allow tags containing '.' characters" do
+        lambda { @tagger.tag("good.tag") }.should_not raise_error(Puppet::ParseError)
+    end
+
     it "should provide a method for testing tag validity" do
         @tagger.metaclass.publicize_methods(:valid_tag?)  { @tagger.should be_respond_to(:valid_tag?) }
     end
