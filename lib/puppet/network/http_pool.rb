@@ -1,6 +1,9 @@
 require 'puppet/sslcertificates/support'
 require 'net/https'
 
+module Puppet::Network
+end
+
 # Manage Net::HTTP instances for keep-alive.
 module Puppet::Network::HttpPool
     # This handles reading in the key and such-like.
