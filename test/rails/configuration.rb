@@ -24,7 +24,7 @@ class ConfigurationRailsTests < PuppetTest::TestCase
     # We need to make sure finished objects are stored in the db.
     def test_finish_before_store
         railsinit
-        compile = mkcompile
+        compile = mkcompiler
         parser = compile.parser
 
         node = parser.newnode [compile.node.name], :code => AST::ASTArray.new(:children => [

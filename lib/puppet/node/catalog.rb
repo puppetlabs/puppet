@@ -1,4 +1,6 @@
 require 'puppet/indirector'
+require 'puppet/pgraph'
+require 'puppet/transaction'
 
 require 'puppet/util/tagging'
 
@@ -69,7 +71,10 @@ class Puppet::Node::Catalog < Puppet::PGraph
             @resource_table[ref] = resource
 
             # If the name and title differ, set up an alias
-            self.alias(resource, resource.name) if resource.respond_to?(:name) and resource.respond_to?(:title) and resource.name != resource.title
+            #self.alias(resource, resource.name) if resource.respond_to?(:name) and resource.respond_to?(:title) and resource.name != resource.title
+            if resource.respond_to?(:name) and resource.respond_to?(:title) and resource.name != resource.title
+                self.alias(resource, resource.name) if resource.class.isomorphic?
+            end
 
             resource.catalog = self if resource.respond_to?(:catalog=) and ! is_relationship_graph
 
@@ -499,7 +504,7 @@ class Puppet::Node::Catalog < Puppet::PGraph
 
         map.clear
 
-        result.add_class *self.classes
+        result.add_class(*self.classes)
         result.tag(*self.tags)
 
         return result

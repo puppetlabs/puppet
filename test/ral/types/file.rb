@@ -9,9 +9,7 @@ require 'fileutils'
 class TestFile < Test::Unit::TestCase
     include PuppetTest::Support::Utils
     include PuppetTest::FileTesting
-    # hmmm
-    # this is complicated, because we store references to the created
-    # objects in a central store
+
     def mkfile(hash)
         file = nil
         assert_nothing_raised {
@@ -21,8 +19,6 @@ class TestFile < Test::Unit::TestCase
     end
 
     def mktestfile
-        # because luke's home directory is on nfs, it can't be used for testing
-        # as root
         tmpfile = tempfile()
         File.open(tmpfile, "w") { |f| f.puts rand(100) }
         @@tmpfiles.push tmpfile
@@ -181,7 +177,7 @@ class TestFile < Test::Unit::TestCase
             assert_equal(inituser, File.stat(file).uid)
 
             obj.delete(:owner)
-            obj[:links] = :ignore
+            obj[:links] = :follow
 
             # And then test 'group'
             group = nonrootgroup
@@ -407,8 +403,7 @@ class TestFile < Test::Unit::TestCase
 
                 assert(events)
 
-                assert(! events.include?(:file_changed),
-                    "File incorrectly changed")
+                assert(! events.include?(:file_changed), "File incorrectly changed")
                 assert_events([], file)
 
                 # We have to sleep because the time resolution of the time-based
@@ -1046,66 +1041,6 @@ class TestFile < Test::Unit::TestCase
             "directory mode is incorrect")
     end
 
-    def test_followlinks
-        File.umask(0022)
-      
-        basedir = tempfile()
-        Dir.mkdir(basedir)
-        file = File.join(basedir, "file")
-        link = File.join(basedir, "link")
-
-        File.open(file, "w", 0644) { |f| f.puts "yayness"; f.flush }
-        File.symlink(file, link)
-
-        obj = nil
-        assert_nothing_raised {
-            obj = Puppet.type(:file).create(
-                :path => link,
-                :mode => "755"
-            )
-        }
-        obj.retrieve
-
-        assert_events([], obj)
-
-        # Assert that we default to not following links
-        assert_equal("%o" % 0644, "%o" % (File.stat(file).mode & 007777))
-
-        # Assert that we can manage the link directly, but modes still don't change
-        obj[:links] = :manage
-        assert_events([], obj)
-
-        assert_equal("%o" % 0644, "%o" % (File.stat(file).mode & 007777))
-
-        obj[:links] = :follow
-        assert_events([:file_changed], obj)
-
-        assert_equal("%o" % 0755, "%o" % (File.stat(file).mode & 007777))
-
-        # Now verify that content and checksum don't update, either
-        obj.delete(:mode)
-        obj[:checksum] = "md5"
-        obj[:links] = :ignore
-
-        assert_events([], obj)
-        File.open(file, "w") { |f| f.puts "more text" }
-        assert_events([], obj)
-        obj[:links] = :follow
-        assert_events([], obj)
-        File.open(file, "w") { |f| f.puts "even more text" }
-        assert_events([:file_changed], obj)
-
-        obj.delete(:checksum)
-        obj[:content] = "this is some content"
-        obj[:links] = :ignore
-
-        assert_events([], obj)
-        File.open(file, "w") { |f| f.puts "more text" }
-        assert_events([], obj)
-        obj[:links] = :follow
-        assert_events([:file_changed], obj)
-    end
-
     # If both 'ensure' and 'content' are used, make sure that all of the other
     # properties are handled correctly.
     def test_contentwithmode
@@ -1292,6 +1227,7 @@ class TestFile < Test::Unit::TestCase
             :title => "localfile",
             :path => localfile,
             :content => "rahtest",
+            :ensure => :file,
             :backup => false
         )
 
@@ -1304,8 +1240,8 @@ class TestFile < Test::Unit::TestCase
         config.apply
 
         assert(FileTest.exists?(dsourcefile), "File did not get copied")
-        assert(FileTest.exists?(localfile), "File did not get created")
-        assert(FileTest.exists?(purgee), "File got prematurely purged")
+        assert(FileTest.exists?(localfile), "Local file did not get created")
+        assert(FileTest.exists?(purgee), "Purge target got prematurely purged")
 
         assert_nothing_raised { destobj[:purge] = true }
         config.apply
@@ -1387,8 +1323,7 @@ class TestFile < Test::Unit::TestCase
         File.symlink(dir, link)
         File.open(file, "w") { |f| f.puts "" }
         assert_equal(dir, File.readlink(link))
-        obj = Puppet::Type.newfile :path => link, :ensure => :link,
-            :target => file, :recurse => false, :backup => "main"
+        obj = Puppet::Type.newfile :path => link, :ensure => :link, :target => file, :recurse => false, :backup => "main"
 
         assert_apply(obj)
 
@@ -1822,5 +1757,26 @@ class TestFile < Test::Unit::TestCase
         obj = Puppet::Type.newfile(:path => '/', :mode => 0755)
         assert_equal("/", obj.title, "/ directory was changed to empty string")
     end
-end
 
+    # #1010 and #1037 -- write should fail if the written checksum does not
+    # match the file we thought we were writing.
+    def test_write_validates_checksum
+        file = tempfile
+        inst = Puppet::Type.newfile(:path => file, :content => "something")
+
+        tmpfile = file + ".puppettmp"
+
+        wh = mock 'writehandle', :print => nil
+        rh = mock 'readhandle'
+        rh.expects(:read).with(512).times(2).returns("other").then.returns(nil)
+        File.expects(:open).with { |*args| args[0] == tmpfile and args[1] != "r" }.yields(wh)
+        File.expects(:open).with { |*args| args[0] == tmpfile and args[1] == "r" }.yields(rh)
+
+        File.stubs(:rename)
+        FileTest.stubs(:exist?).returns(true)
+        FileTest.stubs(:file?).returns(true)
+
+        inst.expects(:fail)
+        inst.write("something", :whatever)
+    end
+end

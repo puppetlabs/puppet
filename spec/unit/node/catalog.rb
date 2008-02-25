@@ -460,6 +460,12 @@ describe Puppet::Node::Catalog, " when functioning as a resource container" do
         proc { @catalog.alias @one, "one" }.should_not raise_error
     end
 
+    it "should be able to look resources up by their aliases" do
+        @catalog.add_resource @one
+        @catalog.alias @one, "two"
+        @catalog.resource(:me, "two").should equal(@one)
+    end
+
     it "should remove resource aliases when the target resource is removed" do
         @catalog.add_resource @one
         @catalog.alias(@one, "other")
@@ -468,12 +474,21 @@ describe Puppet::Node::Catalog, " when functioning as a resource container" do
         @catalog.resource("me", "other").should be_nil
     end
 
-    it "should add an alias for the namevar when the title and name differ" do
-        @one.stubs(:name).returns "other"
+    it "should add an alias for the namevar when the title and name differ on isomorphic resource types" do
         resource = Puppet::Type.type(:file).create :path => "/something", :title => "other", :content => "blah"
         @catalog.add_resource(resource)
         @catalog.resource(:file, "other").should equal(resource)
-        @catalog.resource(:file, "/something").should equal(resource)
+        @catalog.resource(:file, "/something").ref.should == resource.ref
+    end
+
+    it "should not add an alias for the namevar when the title and name differ on non-isomorphic resource types" do
+        resource = Puppet::Type.type(:exec).create :command => "/bin/true", :title => "other"
+        @catalog.add_resource(resource)
+        @catalog.resource(:exec, resource.title).should equal(resource)
+        # We can't use .should here, because the resources respond to that method.
+        if @catalog.resource(:exec, resource.name)
+            raise "Aliased non-isomorphic resource"
+        end
     end
 
     after do
@@ -601,6 +616,7 @@ end
 
 describe Puppet::Node::Catalog, " when creating a relationship graph" do
     before do
+        Puppet::Type.type(:component)
         @catalog = Puppet::Node::Catalog.new("host")
         @compone = Puppet::Type::Component.create :name => "one"
         @comptwo = Puppet::Type::Component.create :name => "two", :require => ["class", "one"]

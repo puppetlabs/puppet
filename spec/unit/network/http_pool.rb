@@ -19,6 +19,7 @@ describe Puppet::Network::HttpPool, " when adding certificate information to htt
 
     it "should add a certificate store" do
         Puppet::Network::HttpPool.stubs(:read_cert).returns(true)
+        Puppet::Network::HttpPool.stubs(:key).returns(:mykey)
         store = stub "store"
         OpenSSL::X509::Store.expects(:new).returns(store)
         store.stubs(:add_file)
@@ -47,6 +48,7 @@ describe Puppet::Network::HttpPool, " when adding certificate information to htt
 
     it "should set the purpose of the cert store to OpenSSL::X509::PURPOSE_SSL_CLIENT" do
         Puppet::Network::HttpPool.stubs(:read_cert).returns(true)
+        Puppet::Network::HttpPool.stubs(:key).returns(:mykey)
         store = stub "store"
         OpenSSL::X509::Store.expects(:new).returns(store)
         store.stubs(:add_file)
@@ -60,6 +62,7 @@ describe Puppet::Network::HttpPool, " when adding certificate information to htt
     it "should add the client certificate" do
         Puppet::Network::HttpPool.stubs(:read_cert).returns(true)
         Puppet::Network::HttpPool.stubs(:cert).returns(:mycert)
+        Puppet::Network::HttpPool.stubs(:key).returns(:mykey)
         [:cert_store=, :verify_mode=, :ca_file=, :key=].each { |method| @http.stubs(method) }
 
         @http.expects(:cert=).with(:mycert)
@@ -79,6 +82,7 @@ describe Puppet::Network::HttpPool, " when adding certificate information to htt
 
     it "should set the verify mode to OpenSSL::SSL::VERIFY_PEER" do
         Puppet::Network::HttpPool.stubs(:read_cert).returns(true)
+        Puppet::Network::HttpPool.stubs(:key).returns(:mykey)
         [:key=, :cert=, :cert_store=, :ca_file=].each { |method| @http.stubs(method) }
 
         @http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)

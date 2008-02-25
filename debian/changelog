@@ -1,3 +1,114 @@
+puppet (0.24.1-2) unstable; urgency=low
+
+  * Set rundir correctly (Closes: #460203, #459579)
+  * Apply patch for puppet#1003 to enable collection of tagged resources
+
+ -- Thom May <thom@debian.org>  Wed, 16 Jan 2008 11:08:55 +0100
+
+puppet (0.24.1-1) unstable; urgency=low
+
+  * New upstream release (Closes: #445626)
+  * Set maintainer to pkg-puppet-devel
+
+ -- Thom May <thom@debian.org>  Sun, 30 Dec 2007 19:13:47 +0100
+
+puppet (0.24.0-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Thom May <thom@debian.org>  Wed, 19 Dec 2007 16:00:34 +0100
+
+puppet (0.23.2-15) unstable; urgency=low
+
+  * No change upload setting maintainer to me whilst waiting for an alioth
+    project.
+
+ -- Thom May <thom@debian.org>  Thu, 29 Nov 2007 10:44:50 +0100
+
+puppet (0.23.2-14) unstable; urgency=low
+
+  * Orphaning.
+  * Create /var/lib/puppet in the puppet package.  Closes: #452506.
+  * Start the puppet init script after puppetmaster, to silence whiny bug
+    reports.  Closes: #452064.
+  * Add a reload command to the Puppet init script.  Closes: #452060.
+
+ -- Matthew Palmer <mpalmer@debian.org>  Thu, 29 Nov 2007 10:48:21 +1100
+
+puppet (0.23.2-13) unstable; urgency=low
+
+  * Drop quotes from an already-quoted value in a query.  Closes: #448179.
+  * Remove excessive quoting from puppet/network/handler/master.rb.
+    Closes: #448221.
+  * Force removal of directories during pluginsync.  Closes: #448180.
+
+ -- Matthew Palmer <mpalmer@debian.org>  Tue, 30 Oct 2007 14:55:19 +1100
+
+puppet (0.23.2-12) unstable; urgency=low
+
+  * Create /var/run/puppet and set the perms in the various initscripts, as
+    well as hardcoding the rundir better in configuration.rb and removing
+    the explicit rundir setting from puppet.conf.  Closes: #447314.
+  * Apply additional patch given (backwards) to fix export/collect on some
+    database backends.  Closes: #445591 (again!)
+
+ -- Matthew Palmer <mpalmer@debian.org>  Sat, 20 Oct 2007 11:28:50 +1000
+
+puppet (0.23.2-11) unstable; urgency=low
+
+  * Apply patch from puppet#786 to fix a problem with exported resources not
+    being properly detected as needing a rerun.  Closes: #445591.
+  * Fix ignore handling for the plugins mount.  Closes: #446390.
+
+ -- Matthew Palmer <mpalmer@debian.org>  Mon, 15 Oct 2007 09:11:25 +1000
+
+puppet (0.23.2-10) unstable; urgency=low
+
+  * Recycle connections when we change (or get) certs.
+  * Catch and retry more transient errors in the XMLRPC wrapper.
+
+ -- Matthew Palmer <mpalmer@debian.org>  Thu, 27 Sep 2007 15:06:11 +1000
+
+puppet (0.23.2-9) unstable; urgency=low
+
+  * Recycle the HTTP connection if we get an EPIPE during a request. 
+    Closes: #444177.  Thanks to Jos Backus for helping with testing.
+
+ -- Matthew Palmer <mpalmer@debian.org>  Thu, 27 Sep 2007 09:55:34 +1000
+
+puppet (0.23.2-8) unstable; urgency=low
+
+  * Remove extraneous debugging output accidentally left behind in the last
+    release.
+  * Fix spelling mistakes in debian/control and debian/puppet.preinst. 
+    Closes: #444158.
+
+ -- Matthew Palmer <mpalmer@debian.org>  Thu, 27 Sep 2007 07:45:07 +1000
+
+puppet (0.23.2-7) unstable; urgency=low
+
+  * Ignore ENOENT errors in the module plugin syncing code, since they're
+    innocuous and expected.
+  * Allow facts that are downloaded through pluginsync to be used like any
+    other fact.
+  * Allow users to still have an old-style plugins mount if they want, by
+    specifying a path for the mount.  Also track down a fault in old-style
+    fileserving which did strange slash-stripping.  Closes: #443932.
+
+ -- Matthew Palmer <mpalmer@debian.org>  Tue, 25 Sep 2007 16:41:32 +1000
+
+puppet (0.23.2-6) unstable; urgency=low
+
+  * Patch rails/param_name.rb to stop query failures, as per puppet#784.
+  * Actually honour namevar.
+  * Only set dbuser if explicitly asked for.
+  * Fix annoying database deletion error for ParamValue objects.
+  * Add an accessor for ca_file, since older openssl-ruby only had a writer.
+  * Fix the fileserver to honour ignore.  Thanks to Nathan Ward for the
+    bug report on IRC.
+
+ -- Matthew Palmer <mpalmer@debian.org>  Thu, 20 Sep 2007 16:10:41 +1000
+
 puppet (0.23.2-5) unstable; urgency=low
 
   * Add some NEWS for the ssldir transition.  Should have done that earlier.

@@ -6,10 +6,12 @@ require 'puppet'
 require 'puppettest'
 require 'mocha'
 require 'puppettest/support/resources'
+require 'puppettest/support/utils'
 
 class TestTransactions < Test::Unit::TestCase
     include PuppetTest::FileTesting
     include PuppetTest::Support::Resources
+    include PuppetTest::Support::Utils
     class Fakeprop <Puppet::Property
         attr_accessor :path, :is, :should, :name
         def should_to_s(value)

@@ -12,7 +12,7 @@ class TestDSL < Test::Unit::TestCase
 
     def teardown
         super
-        Puppet::Aspect.clear
+        Puppet::DSL::Aspect.clear
     end
 
     def test_aspect
@@ -22,7 +22,7 @@ class TestDSL < Test::Unit::TestCase
             end
         end
 
-        assert_equal(a, Puppet::Aspect[:yaytest])
+        assert_equal(a, Puppet::DSL::Aspect[:yaytest])
 
         # Now make a child aspect
         b = nil
@@ -154,8 +154,7 @@ class TestDSL < Test::Unit::TestCase
 
         resource = nil
         assert_nothing_raised do
-            resource = a.newresource filetype, path,
-                :content => "yay", :mode => "640"
+            resource = a.newresource filetype, path, :content => "yay", :mode => "640"
         end
 
         assert_instance_of(Puppet::Parser::Resource, resource)

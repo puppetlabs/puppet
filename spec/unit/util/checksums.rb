@@ -14,7 +14,7 @@ describe Puppet::Util::Checksums do
     end
 
     content_sums = [:md5, :md5lite, :sha1, :sha1lite]
-    file_only = [:timestamp, :mtime]
+    file_only = [:ctime, :mtime]
 
     content_sums.each do |sumtype|
         it "should be able to calculate %s sums from strings" % sumtype do
@@ -84,11 +84,11 @@ describe Puppet::Util::Checksums do
         end
     end
 
-    {:timestamp => :ctime, :mtime => :mtime}.each do |sum, method|
+    [:ctime, :mtime].each do |sum|
         describe("when using %s" % sum) do
-            it "should use the '#{method}' on the file to determine the timestamp" do
+            it "should use the '#{sum}' on the file to determine the ctime" do
                 file = "/my/file"
-                stat = mock 'stat', method => "mysum"
+                stat = mock 'stat', sum => "mysum"
 
                 File.expects(:stat).with(file).returns(stat)
 

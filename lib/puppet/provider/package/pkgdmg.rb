@@ -145,11 +145,8 @@ file system and not via a URL method."
         begin
             open(cached_source) do |dmg|
                 xml_str = hdiutil "mount", "-plist", "-nobrowse", "-readonly", "-noidme", "-mountrandom", "/tmp", dmg.path
-                ptable = Plist::parse_xml xml_str
-                # JJM Filter out all mount-paths into a single array, discard the rest.
-                mounts = ptable['system-entities'].collect { |entity|
-                    entity['mount-point']
-                }.select { |mountloc|; mountloc }
+                # JJM THIS IS A HORRIBLE HACK (Well, actually it's not so bad...)
+                mounts = xml_str.scan(/<string>(\/tmp.*?)<\/string>/)[0]
                 begin
                     mounts.each do |fspath|
                         Dir.entries(fspath).select { |f|

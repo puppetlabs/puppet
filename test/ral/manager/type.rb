@@ -574,8 +574,8 @@ class TestType < Test::Unit::TestCase
         assert_equal(greater, type.defaultprovider)
     end
 
-    # Make sure that we can have multiple isomorphic objects with the same name,
-    # but not with non-isomorphic objects.
+    # Make sure that we can have multiple non-isomorphic objects with the same name,
+    # but not with isomorphic objects.
     def test_isomorphic_names
         # First do execs, since they're not isomorphic.
         echo = Puppet::Util.binary "echo"

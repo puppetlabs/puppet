@@ -55,7 +55,7 @@ module Puppet::Util::Checksums
     end
 
     # Return the :ctime of a file.
-    def timestamp_file(filename)
+    def ctime_file(filename)
         File.stat(filename).send(:ctime)
     end
 

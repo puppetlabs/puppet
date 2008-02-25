@@ -211,6 +211,24 @@ end
             "Lost value to hostname")
     end
 
+    # Make sure that setting environment by fact takes precedence to configuration
+    def test_setenvironmentwithfact
+        name = "environment"
+        value = "test_environment"
+
+        Puppet[:filetimeout] = -1
+        Puppet[:factsource] = tempfile()
+        Dir.mkdir(Puppet[:factsource])
+        file = File.join(Puppet[:factsource], "#{name}.rb")
+        File.open(file, "w") do |f|
+            f.puts %{Facter.add("#{name}") do setcode { "#{value}" } end }
+        end
+
+        Puppet::Network::Client.master.getfacts
+
+        assert_equal(value, Puppet::Network::Client.master.facts[name])
+    end
+
     # Make sure we load all facts on startup.
     def test_loadfacts
         dirs = [tempfile(), tempfile()]

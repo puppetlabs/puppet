@@ -257,10 +257,7 @@ class Type
                 rescue ArgumentError, Puppet::Error, TypeError
                     raise
                 rescue => detail
-                    error = Puppet::DevError.new(
-                        "Could not set %s on %s: %s" %
-                            [attr, self.class.name, detail]
-                    )
+                    error = Puppet::DevError.new( "Could not set %s on %s: %s" % [attr, self.class.name, detail])
                     error.set_backtrace(detail.backtrace)
                     raise error
                 end
@@ -422,10 +419,6 @@ end
 
 require 'puppet/propertychange'
 require 'puppet/provider'
+
+# Always load these types.
 require 'puppet/type/component'
-require 'puppet/type/file'
-require 'puppet/type/filebucket'
-require 'puppet/type/tidy'
-
-
-

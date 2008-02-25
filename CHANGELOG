@@ -1,3 +1,12 @@
+    Somewhat refactored fileserving so that it no longer caches
+    any objects, nor does it use Puppet's RAL resources.  In the
+    process, I fixed #894 (you can now copy links) and refactored
+    other classes as necessary.  Mostly it was fixing tests.
+
+    Hopefully partially fixed #1010 -- clients should now fail
+    to install files whose checksums do not match the checksum
+    from the server.
+
     Fixed #1018 -- resources now have their namevars added as
     aliases in the resource catalog, just like they were added
     in the resource classes.
@@ -37,9 +46,9 @@
     between the classes, definitions, and nodes, and the Compile class much
     cleaner.
 
-    Exec resources must now have unique names.  This is easily accomplished by
-    just specifying a unique name with whatever (unique or otherwise) command
-    you need.
+    Exec resources must now have unique names, although the commands can still
+    be duplicated.  This is easily accomplished by just specifying a unique
+    name with whatever (unique or otherwise) command you need.
 
     Fixed #989 -- missing CRL files are correctly ignored, and the
     value should be set to 'false' to explicitly not look for these

@@ -200,7 +200,7 @@ module Puppet
                 package { $ssh:
                     ensure => installed,
                     alias => openssh,
-                    require => package[openssl]
+                    require => Package[openssl]
                 }
             
             "

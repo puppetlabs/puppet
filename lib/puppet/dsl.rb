@@ -46,58 +46,56 @@
 # 
 # apply
 
-module Puppet
-    # Provide the actual commands for acting like a language.
-    module DSL
-        def aspect(name, options = {}, &block)
-            Puppet::Aspect.new(name, options, &block)
-        end
+require 'puppet'
 
-        def acquire(*names)
-            names.each do |name|
-                if aspect = Puppet::Aspect[name]
-                    unless aspect.evaluated?
-                        aspect.evaluate
-                    end
-                else
-                    raise "Could not find aspect %s" % name
+# Provide the actual commands for acting like a language.
+module Puppet::DSL
+    def aspect(name, options = {}, &block)
+        Puppet::DSL::Aspect.new(name, options, &block)
+    end
+
+    def acquire(*names)
+        names.each do |name|
+            if aspect = Puppet::DSL::Aspect[name]
+                unless aspect.evaluated?
+                    aspect.evaluate
                 end
+            else
+                raise "Could not find aspect %s" % name
             end
         end
+    end
 
-        def apply
-            bucket = export()
-            catalog = bucket.to_catalog
-            catalog.apply
-        end
+    def apply
+        bucket = export()
+        catalog = bucket.to_catalog
+        catalog.apply
+    end
 
-        def export
-            objects = Puppet::Aspect.collect do |name, aspect|
-                if aspect.evaluated?
-                    aspect.export
-                end
-            end.reject { |a| a.nil? }.flatten.collect do |obj|
-                obj.to_trans
+    def export
+        objects = Puppet::DSL::Aspect.collect do |name, aspect|
+            if aspect.evaluated?
+                aspect.export
             end
-            bucket = Puppet::TransBucket.new(objects)
-            bucket.name = "top"
-            bucket.type = "class"
-
-            return bucket
+        end.reject { |a| a.nil? }.flatten.collect do |obj|
+            obj.to_trans
         end
+        bucket = Puppet::TransBucket.new(objects)
+        bucket.name = "top"
+        bucket.type = "class"
 
-        def init
-            unless Process.uid == 0
-                Puppet[:confdir] = File.expand_path("~/.puppet")
-                Puppet[:vardir] = File.expand_path("~/.puppet/var")
-            end
-            Puppet[:user] = Process.uid
-            Puppet[:group] = Process.gid
-            Puppet::Util::Log.newdestination(:console)
-            Puppet::Util::Log.level = :info
+        return bucket
+    end
+
+    def init
+        unless Process.uid == 0
+            Puppet[:confdir] = File.expand_path("~/.puppet")
+            Puppet[:vardir] = File.expand_path("~/.puppet/var")
         end
-
-        private
+        Puppet[:user] = Process.uid
+        Puppet[:group] = Process.gid
+        Puppet::Util::Log.newdestination(:console)
+        Puppet::Util::Log.level = :info
     end
 
     class Aspect
@@ -224,10 +222,10 @@ module Puppet
         end
 
         def newresource(type, name, params = {})
-            if self.is_a?(Puppet::Aspect)
+            if self.is_a?(Puppet::DSL::Aspect)
                 source = self
             else
-                source = Puppet::Aspect[:main]
+                source = Puppet::DSL::Aspect[:main]
             end
             unless obj = @@objects[type][name]
                 obj = Resource.new :title => name, :type => type.name,
@@ -262,7 +260,7 @@ module Puppet
                     env = nil
                 end
                 @node.parameters = Facter.to_hash
-                @compile = Puppet::Parser::Compile.new(@node, @interp.send(:parser, env))
+                @compile = Puppet::Parser::Compiler.new(@node, @interp.send(:parser, env))
                 @scope = @compile.topscope
             end
             @scope

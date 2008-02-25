@@ -110,7 +110,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     # we just return that; otherwise, we return false, which causes it to
     # fallback to other mechanisms.
     def statuscmd
-        if @resource[:hasstatus]
+        if @resource[:hasstatus] == :true
             return [self.initscript, :status]
         else
             return false

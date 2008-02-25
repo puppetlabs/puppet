@@ -56,6 +56,43 @@ describe Puppet::Type::File do
         end
     end
 
+    describe "when managing links" do
+        require 'puppettest/support/assertions'
+        include PuppetTest
+
+        before do
+            @basedir = tempfile()
+            Dir.mkdir(@basedir)
+            @file = File.join(@basedir, "file")
+            @link = File.join(@basedir, "link")
+
+            File.open(@file, "w", 0644) { |f| f.puts "yayness"; f.flush }
+            File.symlink(@file, @link)
+
+            @resource = Puppet.type(:file).create(
+                :path => @link,
+                :mode => "755"
+            )
+        end
+
+        after do
+            teardown
+        end
+
+        it "should default to managing the link" do
+            assert_events([], @resource)
+            # I convert them to strings so they display correctly if there's an error.
+            ("%o" % (File.stat(@file).mode & 007777)).should == "%o" % 0644
+        end
+
+        it "should be able to follow links" do
+            @resource[:links] = :follow
+            assert_events([:file_changed], @resource)
+
+            ("%o" % (File.stat(@file).mode & 007777)).should == "%o" % 0755
+        end
+    end
+
     after do
         Puppet::Type::File.clear
     end

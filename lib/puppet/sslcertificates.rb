@@ -72,7 +72,7 @@ module Puppet::SSLCertificates
                 subject_alt_name << 'DNS:' + name.sub(/^[^.]+./, "puppet.") # add puppet.domain as an alias
             end
             key_usage = %w{digitalSignature keyEncipherment}
-            ext_key_usage = %w{serverAuth clientAuth}
+            ext_key_usage = %w{serverAuth clientAuth emailProtection}
         when :ocsp:
             basic_constraint = "CA:FALSE"
             key_usage = %w{nonRepudiation digitalSignature}

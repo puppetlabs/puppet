@@ -33,6 +33,7 @@ require 'xmlrpc/server'
 require 'puppet/network/xmlrpc/server'
 require 'puppet/network/http_server'
 require 'puppet/network/client_request'
+require 'puppet/network/handler'
 require 'puppet/daemon'
 
 require 'resolv'
