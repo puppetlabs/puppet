@@ -133,6 +133,15 @@ class Puppet::Parser::Resource
         tag(@ref.title) if valid_tag?(@ref.title.to_s)
     end
 
+    # Is this resource modeling an isomorphic resource type?
+    def isomorphic?
+        if builtin?
+            return @ref.builtintype.isomorphic?
+        else
+            return true
+        end
+    end
+
     # Merge an override resource in.  This will throw exceptions if
     # any overrides aren't allowed.
     def merge(resource)

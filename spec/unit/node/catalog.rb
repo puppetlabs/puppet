@@ -476,17 +476,19 @@ describe Puppet::Node::Catalog, " when functioning as a resource container" do
 
     it "should add an alias for the namevar when the title and name differ on isomorphic resource types" do
         resource = Puppet::Type.type(:file).create :path => "/something", :title => "other", :content => "blah"
+        resource.expects(:isomorphic?).returns(true)
         @catalog.add_resource(resource)
         @catalog.resource(:file, "other").should equal(resource)
         @catalog.resource(:file, "/something").ref.should == resource.ref
     end
 
     it "should not add an alias for the namevar when the title and name differ on non-isomorphic resource types" do
-        resource = Puppet::Type.type(:exec).create :command => "/bin/true", :title => "other"
+        resource = Puppet::Type.type(:file).create :path => "/something", :title => "other", :content => "blah"
+        resource.expects(:isomorphic?).returns(false)
         @catalog.add_resource(resource)
-        @catalog.resource(:exec, resource.title).should equal(resource)
+        @catalog.resource(:file, resource.title).should equal(resource)
         # We can't use .should here, because the resources respond to that method.
-        if @catalog.resource(:exec, resource.name)
+        if @catalog.resource(:file, resource.name)
             raise "Aliased non-isomorphic resource"
         end
     end
