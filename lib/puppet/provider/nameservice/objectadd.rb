@@ -25,9 +25,15 @@ class ObjectAdd < Puppet::Provider::NameService
         cmd = [command(:modify),
             flag(param),
             value]
+
         if @resource[:allowdupe]  == :true
             cmd << "-o"
         end
+
+        if @resource.managehome?
+            cmd << "-m"
+        end
+
         cmd << @resource[:name]
 
         return cmd
