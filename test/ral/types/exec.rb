@@ -394,8 +394,8 @@ class TestExec < Test::Unit::TestCase
         assert_apply(exec)
 
         assert_nothing_raised {
-            exec[:command] = "echo logoutput is warning"
-            exec[:logoutput] = "warning"
+            exec[:command] = "echo logoutput is on_failure"
+            exec[:logoutput] = "on_failure"
         }
 
         assert_apply(exec)
