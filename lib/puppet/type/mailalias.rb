@@ -9,7 +9,7 @@ module Puppet
         end
 
         newproperty(:recipient, :array_matching => :all) do
-            desc "Where email should should be sent.  Multiple values
+            desc "Where email should be sent.  Multiple values
                 should be specified as an array."
 
             def is_to_s(value)

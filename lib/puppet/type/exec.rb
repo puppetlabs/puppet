@@ -211,10 +211,7 @@ module Puppet
                 log the output when the command reports an error.  Values are
                 **true**, *false*, *on_failure*, and any legal log level."
 
-            values = [:true, :false, :on_failure]
-            # And all of the log levels
-            Puppet::Util::Log.eachlevel { |level| values << level }
-            newvalues(*values)
+            newvalues(:true, :false, :on_failure)
         end
 
         newparam(:refresh) do
