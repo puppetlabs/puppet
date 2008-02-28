@@ -1,3 +1,6 @@
+    Fixed #1063 -- the master correctly logs syntax errors when
+    reparsing during a single run.
+
     Removed the loglevels from the valid values for `logoutput`
     in the Exec resource type -- the log levels are specified
     using the `loglevel` parameter, not `logoutput`.  This never
