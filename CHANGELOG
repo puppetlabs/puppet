@@ -1,3 +1,7 @@
+    Fixing #1062 by moving the yamldir setting to its own yaml
+    section.  This should keep the yamldir from being created
+    on clients.
+
     Fixed #1047 -- Puppet's parser no longer changes the order
     in which statements are evaluated, which means that case
     statements can now set variables that are used by other
