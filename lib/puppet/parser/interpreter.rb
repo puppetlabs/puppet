@@ -28,10 +28,8 @@ class Puppet::Parser::Interpreter
         begin
           return Puppet::Parser::Compiler.new(node, env_parser).compile
         rescue => detail
+          puts detail.backtrace if Puppet[:trace]
           raise Puppet::Error, detail.to_s + " on node %s" % node.name
-          if Puppet[:trace]
-              puts detail.backtrace
-          end
         end
     end
 

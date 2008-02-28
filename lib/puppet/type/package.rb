@@ -211,14 +211,6 @@ module Puppet
             desc "Where to find the actual package.  This must be a local file
                 (or on a network file system) or a URL that your specific
                 packaging type understands; Puppet will not retrieve files for you."
-
-            validate do |value|
-                unless value =~ /^#{File::SEPARATOR}/ or value =~ /\w+:\/\//
-                    self.fail(
-                        "Package sources must be fully qualified files or URLs, depending on the platform."
-                    )
-                end
-            end
         end
         newparam(:instance) do
             desc "A read-only parameter set by the package."

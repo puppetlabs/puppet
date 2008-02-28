@@ -5,7 +5,7 @@ Puppet::Type.type(:interface).provide(:redhat) do
     desc "Manage network interfaces on Red Hat operating systems.  This provider
         parses and generates configuration files in ``/etc/sysconfig/network-scripts``."
 
-	INTERFACE_DIR = "/etc/sysconfig/network-scripts"
+    INTERFACE_DIR = "/etc/sysconfig/network-scripts"
     confine :exists => INTERFACE_DIR
     defaultfor :operatingsystem => [:fedora, :centos, :redhat]
 
@@ -43,52 +43,52 @@ NETMASK=<%= self.netmask %>
 BROADCAST=
 LOOPBACKDUMMY
 
-	# maximum number of dummy interfaces
-	@max_dummies = 10
+    # maximum number of dummy interfaces
+    @max_dummies = 10
 
-	# maximum number of aliases per interface
-	@max_aliases_per_iface = 10
+    # maximum number of aliases per interface
+    @max_aliases_per_iface = 10
 
-	@@dummies = []
-	@@aliases = Hash.new { |hash, key| hash[key] = [] }
+    @@dummies = []
+    @@aliases = Hash.new { |hash, key| hash[key] = [] }
 
-	# calculate which dummy interfaces are currently already in
-	# use prior to needing to call self.next_dummy later on.
-	def self.instances
-		# parse all of the config files at once
-		Dir.glob("%s/ifcfg-*" % INTERFACE_DIR).collect do |file|
-			record = parse(file)
+    # calculate which dummy interfaces are currently already in
+    # use prior to needing to call self.next_dummy later on.
+    def self.instances
+        # parse all of the config files at once
+        Dir.glob("%s/ifcfg-*" % INTERFACE_DIR).collect do |file|
+            record = parse(file)
 
-			# store the existing dummy interfaces
+            # store the existing dummy interfaces
             @@dummies << record[:ifnum] if (record[:interface_type] == :dummy and ! @@dummies.include?(record[:ifnum]))
 
             @@aliases[record[:interface]] << record[:ifnum] if record[:interface_type] == :alias
 
             new(record)
-		end
-	end
+        end
+    end
 
-	# return the next avaliable dummy interface number, in the case where
-	# ifnum is not manually specified
-	def self.next_dummy
-		@max_dummies.times do |i|
-			unless @@dummies.include?(i.to_s)
-				@@dummies << i.to_s
-				return i.to_s
-			end
-		end
-	end
+    # return the next avaliable dummy interface number, in the case where
+    # ifnum is not manually specified
+    def self.next_dummy
+        @max_dummies.times do |i|
+            unless @@dummies.include?(i.to_s)
+                @@dummies << i.to_s
+                return i.to_s
+            end
+        end
+    end
 
-	# return the next available alias on a given interface, in the case
-	# where ifnum if not manually specified
-	def self.next_alias(interface)
-		@max_aliases_per_iface.times do |i|
-			unless @@aliases[interface].include?(i.to_s)
-				@@aliases[interface] << i.to_s
-				return i.to_s
-			end
-		end
-	end
+    # return the next available alias on a given interface, in the case
+    # where ifnum if not manually specified
+    def self.next_alias(interface)
+        @max_aliases_per_iface.times do |i|
+            unless @@aliases[interface].include?(i.to_s)
+                @@aliases[interface] << i.to_s
+                return i.to_s
+            end
+        end
+    end
 
     # base the ifnum, for dummy / loopback interface in linux
     # on the last octect of the IP address
@@ -139,14 +139,14 @@ LOOPBACKDUMMY
     # on whether we are adding an alias to a real interface, or a loopback
     # address (also dummy) on linux. For linux it's quite involved, and we
     # will use an ERB template
-	def generate
+    def generate
         itype = self.interface_type == :alias ? :alias : :normal
         self.class.template(itype).result(binding)
-	end
+    end
 
     # Where should the file be written out?
-	# This defaults to INTERFACE_DIR/ifcfg-<namevar>, but can have a
-	# more symbolic name by setting interface_desc in the type. 
+    # This defaults to INTERFACE_DIR/ifcfg-<namevar>, but can have a
+    # more symbolic name by setting interface_desc in the type. 
     def file_path
         if resource and val = resource[:interface_desc]
             desc = val
@@ -185,16 +185,16 @@ LOOPBACKDUMMY
         end
     end
 
-	# create the device name, so this based on the IP, and interface + type
-	def device
-		case @resource.should(:interface_type)
-		when :loopback
-			@property_hash[:ifnum] ||= self.class.next_dummy
-        	return "dummy" + @property_hash[:ifnum]
-		when :alias
-			@property_hash[:ifnum] ||= self.class.next_alias(@resource[:interface])
-        	return @resource[:interface] + ":" + @property_hash[:ifnum]
-		end
+    # create the device name, so this based on the IP, and interface + type
+    def device
+        case @resource.should(:interface_type)
+        when :loopback
+            @property_hash[:ifnum] ||= self.class.next_dummy
+            return "dummy" + @property_hash[:ifnum]
+        when :alias
+            @property_hash[:ifnum] ||= self.class.next_alias(@resource[:interface])
+            return @resource[:interface] + ":" + @property_hash[:ifnum]
+        end
     end
 
     # Set the name to our ip address.
@@ -202,19 +202,19 @@ LOOPBACKDUMMY
         @property_hash[:name] = value
     end
 
-	# whether the device is to be brought up on boot or not. converts
-	# the true / false of the type, into yes / no values respectively
-	# writing out the ifcfg-* files
-	def on_boot
-		case @property_hash[:onboot].to_s
-		when "true"
-			return "yes"
-		when "false"
-			return "no"
-		else
-			return "neither"
-		end
-	end
+    # whether the device is to be brought up on boot or not. converts
+    # the true / false of the type, into yes / no values respectively
+    # writing out the ifcfg-* files
+    def on_boot
+        case @property_hash[:onboot].to_s
+        when "true"
+            return "yes"
+        when "false"
+            return "no"
+        else
+            return "neither"
+        end
+    end
 
     # Mark whether the interface should be started on boot.
     def on_boot=(value)

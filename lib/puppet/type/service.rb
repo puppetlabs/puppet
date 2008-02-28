@@ -28,6 +28,8 @@ module Puppet
         feature :enableable, "The provider can enable and disable the service",
             :methods => [:disable, :enable, :enabled?]
 
+        feature :controllable, "The provider uses a control variable."
+
         newproperty(:enable, :required_features => :enableable) do
             desc "Whether a service should be enabled to start at boot.
                 This property behaves quite differently depending on the platform;
@@ -161,6 +163,13 @@ module Puppet
 
         newparam(:stop) do
             desc "Specify a *stop* command manually."
+        end
+
+        newparam(:control) do
+            desc "The control variable used to manage services (originally for HP-UX).
+                Defaults to the upcased service name plus ``START`` replacing dots with
+                underscores, for those providers that support the ``controllable`` feature."
+            defaultto { resource.name.gsub(".","_").upcase + "_START" if resource.provider.controllable? }
         end
 
         newparam :hasrestart do

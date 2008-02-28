@@ -15,7 +15,7 @@ describe Puppet::Type::Service do
 end
 
 describe Puppet::Type::Service, "when validating attributes" do
-    [:name, :binary, :hasstatus, :path, :pattern, :start, :restart, :stop, :status, :hasrestart].each do |param|
+    [:name, :binary, :hasstatus, :path, :pattern, :start, :restart, :stop, :status, :hasrestart, :control].each do |param|
         it "should have a #{param} parameter" do
             Puppet::Type::Service.attrtype(param).should == :param
         end
@@ -30,7 +30,7 @@ end
 
 describe Puppet::Type::Service, "when validating attribute values" do
     before do
-        @provider = stub 'provider', :class => Puppet::Type::Service.defaultprovider, :clear => nil
+        @provider = stub 'provider', :class => Puppet::Type::Service.defaultprovider, :clear => nil, :controllable? => false
         Puppet::Type::Service.defaultprovider.stubs(:new).returns(@provider)
     end
 
@@ -132,14 +132,21 @@ describe Puppet::Type::Service, "when setting default attribute values" do
         svc[:path].should == ["testing"]
     end
 
-    it "should default to the binary for the pattern if one is provided" do
+    it "should default 'pattern' to the binary if one is provided" do
         svc = Puppet::Type::Service.create(:name => "other", :binary => "/some/binary")
         svc[:pattern].should == "/some/binary"
     end
 
-    it "should default to the name for the pattern if no pattern is provided" do
+    it "should default 'pattern' to the name if no pattern is provided" do
         svc = Puppet::Type::Service.create(:name => "other")
         svc[:pattern].should == "other"
+    end
+
+    it "should default 'control' to the upcased service name with periods replaced by underscores if the provider supports the 'controllable' feature" do
+        provider = stub 'provider', :controllable? => true, :class => Puppet::Type::Service.defaultprovider, :clear => nil
+        Puppet::Type::Service.defaultprovider.stubs(:new).returns(provider)
+        svc = Puppet::Type::Service.create(:name => "nfs.client")
+        svc[:control].should == "NFS_CLIENT_START"
     end
 
     after { Puppet::Type::Service.clear }

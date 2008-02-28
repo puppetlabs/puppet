@@ -21,7 +21,14 @@ class Puppet::Parser::AST::HostClass < Puppet::Parser::AST::Definition
     # Make sure our parent class has been evaluated, if we have one.
     def evaluate(scope)
         if parentclass and ! scope.catalog.resource(self.class.name, parentclass)
-            resource = parentobj.evaluate(scope)
+            parent_resource = parentobj.evaluate(scope)
+        end
+
+        # Do nothing if the resource already exists; this makes sure we don't
+        # get multiple copies of the class resource, which helps provide the
+        # singleton nature of classes.
+        if resource = scope.catalog.resource(self.class.name, self.classname)
+            return resource
         end
 
         super

@@ -94,8 +94,8 @@ describe Puppet::Type::Package, "when validating attribute values" do
         proc { Puppet::Type::Package.create(:name => "yay", :ensure => "1.0") }.should raise_error(Puppet::Error)
     end
 
-    it "should only accept files and URLs as values to :source" do
-        proc { Puppet::Type::Package.create(:name => "yay", :source => "stuff") }.should raise_error(Puppet::Error)
+    it "should accept any string as an argument to :source" do
+        proc { Puppet::Type::Package.create(:name => "yay", :source => "stuff") }.should_not raise_error(Puppet::Error)
     end
 
     after { Puppet::Type::Package.clear }
