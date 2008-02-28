@@ -1,7 +1,7 @@
-    Removed the loglevels from the valid values for 'logoutput'
+    Removed the loglevels from the valid values for `logoutput`
     in the Exec resource type -- the log levels are specified
-    using the 'loglevel' parameter, not 'logoutput'.  This never
-    worked, or at least hasn't for ages, and now the docs are
+    using the `loglevel` parameter, not `logoutput`.  This never
+    worked, or at least hasn`t for ages, and now the docs are
     just correct.
 
     Somewhat refactored fileserving so that it no longer caches
