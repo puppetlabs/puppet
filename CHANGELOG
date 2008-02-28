@@ -1,3 +1,8 @@
+    Fixed #1047 -- Puppet's parser no longer changes the order
+    in which statements are evaluated, which means that case
+    statements can now set variables that are used by other
+    variables.
+
     Fixed #1063 -- the master correctly logs syntax errors when
     reparsing during a single run.
 
