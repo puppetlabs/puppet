@@ -7,6 +7,8 @@ require 'puppet/util/subclass_loader'
 require 'puppet/util/methodhelper'
 require 'puppet/sslcertificates/support'
 
+require 'puppet/network/handler'
+
 require 'net/http'
 
 # Some versions of ruby don't have this method defined, which basically causes
