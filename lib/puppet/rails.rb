@@ -91,6 +91,10 @@ module Puppet::Rails
             raise Puppet::Error, "Could not find Puppet::Rails database dir"
         end
 
+        unless ActiveRecord::Base.connection.tables.include?("resources")
+            raise Puppet::Error, "Database has problems, can't migrate."
+        end    
+
         Puppet.notice "Migrating"
 
         begin
