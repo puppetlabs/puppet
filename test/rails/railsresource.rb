@@ -29,6 +29,7 @@ class TestRailsResource < Test::Unit::TestCase
     def mktest_resource
         # We need a host for resources
         host = Puppet::Rails::Host.new(:name => "myhost")
+        host.save
 
         # Now build a resource
         resource = host.resources.create(
