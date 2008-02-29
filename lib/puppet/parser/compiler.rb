@@ -366,9 +366,8 @@ class Puppet::Parser::Compiler
     # Make sure all of our resources and such have done any last work
     # necessary.
     def finish
-        @catalog.resources.each do |name|
-            resource = @catalog.resource(name)
-
+        #@catalog.resources.each do |name|
+        @catalog.vertices.each do |resource|
             # Add in any resource overrides.
             if overrides = resource_overrides(resource)
                 overrides.each do |over|

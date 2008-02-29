@@ -1,3 +1,21 @@
+    Fixing #1062 by moving the yamldir setting to its own yaml
+    section.  This should keep the yamldir from being created
+    on clients.
+
+    Fixed #1047 -- Puppet's parser no longer changes the order
+    in which statements are evaluated, which means that case
+    statements can now set variables that are used by other
+    variables.
+
+    Fixed #1063 -- the master correctly logs syntax errors when
+    reparsing during a single run.
+
+    Removed the loglevels from the valid values for `logoutput`
+    in the Exec resource type -- the log levels are specified
+    using the `loglevel` parameter, not `logoutput`.  This never
+    worked, or at least hasn`t for ages, and now the docs are
+    just correct.
+
     Somewhat refactored fileserving so that it no longer caches
     any objects, nor does it use Puppet's RAL resources.  In the
     process, I fixed #894 (you can now copy links) and refactored

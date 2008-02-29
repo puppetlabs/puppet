@@ -67,6 +67,12 @@ describe Puppet::Parser::Resource do
             @resource = Puppet::Parser::Resource.new(:type => "mydefine", :title => "whatever", :scope => @scope, :source => @source)
         end
 
+        it "should do nothing if it has already been finished" do
+            @resource.finish
+            @resource.expects(:add_metaparams).never
+            @resource.finish
+        end
+
         it "should copy metaparams from its scope" do
             @scope.setvar("noop", "true")
 

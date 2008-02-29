@@ -82,10 +82,17 @@ class Puppet::Parser::Resource
     # Do any finishing work on this object, called before evaluation or
     # before storage/translation.
     def finish
+        return if finished?
+        @finished = true
         add_defaults()
         add_metaparams()
         add_scope_tags()
         validate()
+    end
+
+    # Has this resource already been finished?
+    def finished?
+        defined?(@finished) and @finished
     end
 
     def initialize(options)

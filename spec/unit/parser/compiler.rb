@@ -7,7 +7,7 @@ describe Puppet::Parser::Compiler do
         @node = Puppet::Node.new "testnode"
         @parser = Puppet::Parser::Parser.new :environment => "development"
 
-        @scope_resource = stub 'scope_resource', :builtin? => true
+        @scope_resource = stub 'scope_resource', :builtin? => true, :finish => nil, :ref => 'Class[main]'
         @scope = stub 'scope', :resource => @scope_resource, :source => mock("source")
         @compiler = Puppet::Parser::Compiler.new(@node, @parser)
     end
