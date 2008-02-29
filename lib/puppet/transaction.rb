@@ -15,8 +15,6 @@ class Transaction
     # The list of events generated in this transaction.
     attr_reader :events
     
-    attr_writer :tags
-
     include Puppet::Util
 
     # Add some additional times for reporting
@@ -635,6 +633,11 @@ class Transaction
         end
         
         @tags
+    end
+
+    def tags=(tags)
+        tags = [tags] unless tags.is_a?(Array)
+        @tags = tags
     end
     
     # Is this resource tagged appropriately?
