@@ -11,8 +11,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
 
     has_many :fact_values, :dependent => :destroy
     has_many :fact_names, :through => :fact_values
-    belongs_to :puppet_classes
-    has_many :source_files
+    belongs_to :source_file
     has_many :resources,
         :include => :param_values,
         :dependent => :destroy
