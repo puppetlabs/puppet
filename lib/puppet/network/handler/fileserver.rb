@@ -69,8 +69,8 @@ class Puppet::Network::Handler
 
             mount.debug("Describing %s for %s" % [url, client]) if client
 
-            # Remove any leading slashes, since Metadata doesn't like them, yo.
-            metadata = Puppet::FileServing::Metadata.new(url, :path => mount.path(client), :relative_path => path.sub(/^\//, ''), :links => links)
+            # use the mount to resolve the path for us.
+            metadata = Puppet::FileServing::Metadata.new(url, :path => mount.file_path(path, client), :links => links)
 
             return "" unless metadata.exist?
 
