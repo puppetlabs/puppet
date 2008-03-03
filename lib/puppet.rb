@@ -423,6 +423,7 @@ module Puppet
 end
 
 require 'puppet/type'
+require 'puppet/network'
 require 'puppet/module'
 require 'puppet/util/storage'
 require 'puppet/parser/interpreter'

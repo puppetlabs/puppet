@@ -26,14 +26,15 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         
         down = Puppet[:downcasefacts]
 
-        facts = {}
-        Facter.each { |name,fact|
+        facts = Facter.to_hash.inject({}) do |newhash, array|
+            name, fact = array
             if down
-                facts[name] = fact.to_s.downcase
+                newhash[name] = fact.to_s.downcase
             else
-                facts[name] = fact.to_s
+                newhash[name] = fact.to_s
             end
-        }
+            newhash
+        end
 
         # Add our client version to the list of facts, so people can use it
         # in their manifests

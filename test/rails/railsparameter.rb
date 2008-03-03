@@ -25,6 +25,8 @@ class TestRailsParameter < Test::Unit::TestCase
         source = parser.newclass "myclass"
 
         host = Puppet::Rails::Host.new(:name => "myhost")
+
+        host.save
         
         resource = host.resources.create(
             :title => "/tmp/to_resource", 

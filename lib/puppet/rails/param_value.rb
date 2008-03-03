@@ -20,5 +20,9 @@ class Puppet::Rails::ParamValue < ActiveRecord::Base
             self[:value] = val
         end
     end
+
+    def to_label
+      "#{self.param_name.name}"
+    end  
 end
 

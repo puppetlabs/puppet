@@ -81,6 +81,7 @@ end
 
 require 'getoptlong'
 require 'puppet'
+require 'puppet/network/handler'
 require 'puppet/sslcertificates'
 
 options = [
