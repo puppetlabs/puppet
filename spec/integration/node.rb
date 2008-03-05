@@ -10,8 +10,13 @@ require 'puppet/node'
 describe Puppet::Node, " when using the memory terminus" do
     before do
         @name = "me"
+        @old_terminus = Puppet::Node.indirection.terminus_class
         Puppet::Node.terminus_class = :memory
         @node = Puppet::Node.new(@name)
+    end
+
+    after do
+        Puppet::Node.terminus_class = @old_terminus
     end
 
     it "should find no nodes by default" do

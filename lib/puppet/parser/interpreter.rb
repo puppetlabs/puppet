@@ -61,7 +61,11 @@ class Puppet::Parser::Interpreter
                 # If a parser already exists, than assume that we logged the
                 # exception elsewhere and reuse the parser.  If one doesn't
                 # exist, then reraise.
-                raise detail unless @parsers[environment]
+                if @parsers[environment]
+                    Puppet.err detail
+                else
+                    raise detail
+                end
             end
         end
         @parsers[environment]

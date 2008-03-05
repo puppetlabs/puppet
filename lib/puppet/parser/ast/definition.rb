@@ -24,9 +24,6 @@ class Puppet::Parser::AST::Definition < Puppet::Parser::AST::Branch
 
     # Create a resource that knows how to evaluate our actual code.
     def evaluate(scope)
-        # Do nothing if the resource already exists; this provides the singleton nature classes need.
-        return if scope.catalog.resource(self.class.name, self.classname)
-
         resource = Puppet::Parser::Resource.new(:type => self.class.name, :title => self.classname, :scope => scope, :source => scope.source)
 
         scope.catalog.tag(*resource.tags)

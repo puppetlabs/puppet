@@ -185,12 +185,6 @@ class TestFile < Test::Unit::TestCase
             initgroup = File.stat(file).gid
             obj[:group] = group.name
 
-            assert_events([:file_changed], obj)
-            assert_equal(initgroup, File.stat(file).gid)
-            assert_equal(group.gid, File.lstat(link).gid)
-            File.chown(nil, initgroup, file)
-            File.lchown(nil, initgroup, link)
-
             obj[:links] = :follow
             assert_events([:file_changed], obj)
             assert_equal(group.gid, File.stat(file).gid)

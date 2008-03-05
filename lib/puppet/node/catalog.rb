@@ -73,7 +73,7 @@ class Puppet::Node::Catalog < Puppet::PGraph
             # If the name and title differ, set up an alias
             #self.alias(resource, resource.name) if resource.respond_to?(:name) and resource.respond_to?(:title) and resource.name != resource.title
             if resource.respond_to?(:name) and resource.respond_to?(:title) and resource.name != resource.title
-                self.alias(resource, resource.name) if resource.class.isomorphic?
+                self.alias(resource, resource.name) if resource.isomorphic?
             end
 
             resource.catalog = self if resource.respond_to?(:catalog=) and ! is_relationship_graph

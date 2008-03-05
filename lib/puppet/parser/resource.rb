@@ -82,10 +82,17 @@ class Puppet::Parser::Resource
     # Do any finishing work on this object, called before evaluation or
     # before storage/translation.
     def finish
+        return if finished?
+        @finished = true
         add_defaults()
         add_metaparams()
         add_scope_tags()
         validate()
+    end
+
+    # Has this resource already been finished?
+    def finished?
+        defined?(@finished) and @finished
     end
 
     def initialize(options)
@@ -131,6 +138,15 @@ class Puppet::Parser::Resource
 
         tag(@ref.type)
         tag(@ref.title) if valid_tag?(@ref.title.to_s)
+    end
+
+    # Is this resource modeling an isomorphic resource type?
+    def isomorphic?
+        if builtin?
+            return @ref.builtintype.isomorphic?
+        else
+            return true
+        end
     end
 
     # Merge an override resource in.  This will throw exceptions if

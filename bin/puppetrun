@@ -274,12 +274,7 @@ else
 end
 
 # Now parse the config
-config = File.join(Puppet[:confdir], "puppet.conf")
-Puppet.parse_config(config)
-
-if File.exists? config
-    Puppet.settings.parse(config)
-end
+Puppet.parse_config
 
 if Puppet[:node_terminus] = "ldap"
     if options[:all]

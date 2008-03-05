@@ -20,6 +20,10 @@ class Puppet::Type
         end
     end
 
+    def isomorphic?
+        self.class.isomorphic?
+    end
+
     # is the instance a managed instance?  A 'yes' here means that
     # the instance was created from the language, vs. being created
     # in order resolve other questions, such as finding a package

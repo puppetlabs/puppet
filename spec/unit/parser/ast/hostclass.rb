@@ -42,6 +42,12 @@ describe Puppet::Parser::AST::HostClass do
             @top.evaluate(@scope)
         end
 
+        it "should return the existing resource when not creating a new one" do
+            @compiler.catalog.expects(:resource).with(:class, "top").returns("something")
+            @compiler.catalog.expects(:add_resource).never
+            @top.evaluate(@scope).should == "something"
+        end
+
         it "should not create a new parent resource if one already exists and it has a parent class" do
             @top.evaluate(@scope)
 

@@ -13,7 +13,11 @@ describe Puppet::FileServing::FileBase do
         Puppet::FileServing::FileBase.new("puppet://host/module/dir/file", :links => :manage).links.should == :manage
     end
 
-    it "should fail if :links is set to anything other than :manage or :follow" do
+    it "should consider :ignore links equivalent to :manage links" do
+        Puppet::FileServing::FileBase.new("puppet://host/module/dir/file", :links => :ignore).links.should == :manage
+    end
+
+    it "should fail if :links is set to anything other than :manage, :follow, or :ignore" do
         proc { Puppet::FileServing::FileBase.new("puppet://host/module/dir/file", :links => :else) }.should raise_error(ArgumentError)
     end
 
