@@ -258,6 +258,7 @@ module Puppet
         :serial => { :default => "$cadir/serial",
             :owner => "$user",
             :group => "$group",
+            :mode => 0600,
             :desc => "Where the serial number for certificates is stored."
         },
         :autosign => { :default => "$confdir/autosign.conf",
