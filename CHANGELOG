@@ -1,3 +1,4 @@
+0.24.2
     Fixing #1062 by moving the yamldir setting to its own yaml
     section.  This should keep the yamldir from being created
     on clients.
