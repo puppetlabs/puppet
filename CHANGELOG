@@ -1,3 +1,11 @@
+    The change in checksums from 'timestamp' to 'mtime' no longer
+    result in updates on every run (#1116).
+
+    Aliases again work in relationships (#1094).
+
+    The CA serial file will no longer ever be owned by
+    root (#1041).
+
     Fixing the rest of #1113: External node commands can specify
     an environment and Puppet will now use it.
 
