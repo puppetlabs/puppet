@@ -84,6 +84,7 @@ class Puppet::Node::Catalog < Puppet::PGraph
 
     # Create an alias for a resource.
     def alias(resource, name)
+        #set $1 
         resource.ref =~ /^(.+)\[/
 
         newref = "%s[%s]" % [$1 || resource.class.name, name]
@@ -474,6 +475,15 @@ class Puppet::Node::Catalog < Puppet::PGraph
         map = {}
         vertices.each do |resource|
             next if resource.respond_to?(:virtual?) and resource.virtual?
+
+            #This is hackity hack for 1094
+            #Aliases aren't working in the ral catalog because the current instance of the resource
+            #has a reference to the catalog being converted. . . So, give it a reference to the new one
+            #problem solved. . .
+            if resource.is_a?(Puppet::TransObject)
+                resource = resource.dup
+                resource.catalog = result
+            end
 
             newres = resource.send(convert)
 

@@ -304,6 +304,8 @@ describe Puppet::Node::Catalog, " when converting to a RAL catalog" do
 
         resource = stub 'resource', :name => "changer2", :title => "changer2", :ref => "Test[changer2]", :catalog= => nil, :remove => nil
 
+        #changer is going to get duplicated as part of a fix for aliases 1094
+        changer.expects(:dup).returns(changer)
         changer.expects(:to_type).returns(resource)
 
         newconfig = nil
