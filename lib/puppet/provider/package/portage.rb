@@ -10,8 +10,8 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
     defaultfor :operatingsystem => :gentoo
 
     def self.instances
-        result_format = /(\S+) (\S+) \[([^\[]*)(\[[^\]]*\])?\] \[[^0-9]*([^\s:\[]*)(\[[^\]]*\])?(:\S*)?\] ([\S]*) (.*)/
-        result_fields = [:category, :name, :ensure, :ensure_overlay, :version_available, :overlay, :slot, :vendor, :description]
+        result_format = /(\S+) (\S+) \[(?:([0-9.a-zA-Z]+(?:_(?:alpha|beta|pre|rc|p)[0-9]*)*(?:-r[0-9]*)?)(?:\([^\)]+\))?(?:\[([^\]]+)\])?[ ]*)*\] \[(?:(?:\{M\})?(?:\([~*]+\))?([0-9.a-zA-Z]+(?:_(?:alpha|beta|pre|rc|p)[0-9]*)*(?:-r[0-9]*)?)(?:\(([^\)]+)\))?(?:![mf])*(?:\[([^\]]+)\])?)?\] ([\S]*) (.*)/
+        result_fields = [:category, :name, :ensure, :ensure_overlay, :version_available, :slot, :overlay, :vendor, :description]
 
         search_format = "{installedversionsshort}<category> <name> [<installedversionsshort>] [<best>] <homepage> <description>{}"
 
@@ -67,8 +67,8 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
     end
 
     def query
-        result_format = /(\S+) (\S+) \[([^\[]*)(\[[^\]]*\])?\] \[[^0-9]*([^\s:\[]*)(\[[^\]]*\])?(:\S*)?\] ([\S]*) (.*)/
-        result_fields = [:category, :name, :ensure, :ensure_overlay, :version_available, :overlay, :slot, :vendor, :description]
+        result_format = /(\S+) (\S+) \[(?:([0-9.a-zA-Z]+(?:_(?:alpha|beta|pre|rc|p)[0-9]*)*(?:-r[0-9]*)?)(?:\([^\)]+\))?(?:\[([^\]]+)\])?[ ]*)*\] \[(?:(?:\{M\})?(?:\([~*]+\))?([0-9.a-zA-Z]+(?:_(?:alpha|beta|pre|rc|p)[0-9]*)*(?:-r[0-9]*)?)(?:\(([^\)]+)\))?(?:![mf])*(?:\[([^\]]+)\])?)?\] ([\S]*) (.*)/
+        result_fields = [:category, :name, :ensure, :ensure_overlay, :version_available, :slot, :overlay, :vendor, :description]
 
         search_field = @resource[:category] ? "--category-name" : "--name"
         search_value = package_name
