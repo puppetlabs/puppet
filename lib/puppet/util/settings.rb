@@ -243,7 +243,7 @@ class Puppet::Util::Settings
 
     # Make a directory with the appropriate user, group, and mode
     def mkdir(default)
-        obj = get_config_default(default)
+        obj = get_config_file_default(default)
 
         Puppet::Util::SUIDManager.asuser(obj.owner, obj.group) do
             mode = obj.mode || 0750
@@ -731,14 +731,14 @@ Generated on #{Time.now}.
 
     # Open a file with the appropriate user, group, and mode
     def write(default, *args, &bloc)
-        obj = get_config_default(default)
+        obj = get_config_file_default(default)
         writesub(default, value(obj.name), *args, &bloc)
     end
 
     # Open a non-default file under a default dir with the appropriate user,
     # group, and mode
     def writesub(default, file, *args, &bloc)
-        obj = get_config_default(default)
+        obj = get_config_file_default(default)
         chown = nil
         if Puppet::Util::SUIDManager.uid == 0
             chown = [obj.owner, obj.group]
@@ -764,7 +764,7 @@ Generated on #{Time.now}.
     end
 
     def readwritelock(default, *args, &bloc)
-        file = value(get_config_default(default).name)
+        file = value(get_config_file_default(default).name)
         tmpfile = file + ".tmp"
         sync = Sync.new
         unless FileTest.directory?(File.dirname(tmpfile))
@@ -795,7 +795,7 @@ Generated on #{Time.now}.
 
     private
 
-    def get_config_default(default)
+    def get_config_file_default(default)
         obj = nil
         unless obj = @config[default]
             raise ArgumentError, "Unknown default %s" % default
