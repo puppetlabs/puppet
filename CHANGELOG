@@ -1,3 +1,6 @@
+    Fixing the rest of #1113: External node commands can specify
+    an environment and Puppet will now use it.
+
     Partially fixing #1113: LDAP nodes now support environments,
     and the schema has been updated accordingly.
 
