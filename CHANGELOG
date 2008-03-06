@@ -1,3 +1,6 @@
+    Partially fixing #1113: LDAP nodes now support environments,
+    and the schema has been updated accordingly.
+
     Always duplicating resource defaults in the parser, so that
     stacked metaparameter values do not result in all resources
     that receive a given default also getting those stacked
