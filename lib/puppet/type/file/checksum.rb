@@ -66,6 +66,9 @@ Puppet::Type.type(:file).newproperty(:checksum) do
             raise ArgumentError, "A type must be specified to cache a checksum"
         end
         type = symbolize(type)
+        type = :mtime if type == :timestamp
+        type = :ctime if type == :time
+
         unless state = @resource.cached(:checksums) 
             self.debug "Initializing checksum hash"
             state = {}
