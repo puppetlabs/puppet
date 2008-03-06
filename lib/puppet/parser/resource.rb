@@ -233,6 +233,20 @@ class Puppet::Parser::Resource
         @ref.to_s
     end
 
+    # Define a parameter in our resource.
+    def set_parameter(param, value = nil)
+        if value
+            param = Puppet::Parser::Resource::Param.new(
+                :name => param, :value => value, :source => self.source
+            )
+        elsif ! param.is_a?(Puppet::Parser::Resource::Param)
+            raise ArgumentError, "Must pass a parameter or all necessary values"
+        end
+
+        # And store it in our parameter hash.
+        @params[param.name] = param
+    end
+
     def to_hash
         @params.inject({}) do |hash, ary|
             param = ary[1]
@@ -331,7 +345,7 @@ class Puppet::Parser::Resource
             unless @params.include?(name)
                 self.debug "Adding default for %s" % name
 
-                @params[name] = param
+                @params[name] = param.dup
             end
         end
     end
@@ -370,11 +384,8 @@ class Puppet::Parser::Resource
 
         # The parameter is already set.  Fail if they're not allowed to override it.
         unless param.source.child_of?(current.source)
-            if Puppet[:trace]
-                puts caller
-            end
-            msg = "Parameter '%s' is already set on %s" % 
-                [param.name, self.to_s]
+            puts caller if Puppet[:trace]
+            msg = "Parameter '%s' is already set on %s" % [param.name, self.to_s]
             if current.source.to_s != ""
                 msg += " by %s" % current.source
             end
@@ -424,20 +435,6 @@ class Puppet::Parser::Resource
             end
             hash
         end
-    end
-
-    # Define a parameter in our resource.
-    def set_parameter(param, value = nil)
-        if value
-            param = Puppet::Parser::Resource::Param.new(
-                :name => param, :value => value, :source => self.source
-            )
-        elsif ! param.is_a?(Puppet::Parser::Resource::Param)
-            raise ArgumentError, "Must pass a parameter or all necessary values"
-        end
-
-        # And store it in our parameter hash.
-        @params[param.name] = param
     end
 
     # Make sure the resource's parameters are all valid for the type.

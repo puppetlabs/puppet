@@ -1,3 +1,8 @@
+    Always duplicating resource defaults in the parser, so that
+    stacked metaparameter values do not result in all resources
+    that receive a given default also getting those stacked
+    values.
+
 0.24.2
     Fixing #1062 by moving the yamldir setting to its own yaml
     section.  This should keep the yamldir from being created
