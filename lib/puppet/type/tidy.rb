@@ -1,5 +1,5 @@
 module Puppet
-    newtype(:tidy, Puppet.type(:file)) do
+    newtype(:tidy, :parent => Puppet.type(:file)) do
         @doc = "Remove unwanted files based on specific criteria.  Multiple
             criteria are OR'd together, so a file that is too large but is not
             old enough will still get tidied."
