@@ -23,95 +23,6 @@ class TestResource < PuppetTest::TestCase
         mocha_verify
     end
 
-    def test_initialize
-        args = {:type => "resource", :title => "testing",
-            :scope => mkscope}
-        # Check our arg requirements
-        args.each do |name, value|
-            try = args.dup
-            try.delete(name)
-            assert_raise(ArgumentError, "Did not fail when %s was missing" % name) do
-                Parser::Resource.new(try)
-            end
-        end
-
-        res = nil
-        assert_nothing_raised do
-            res = Parser::Resource.new(args)
-        end
-
-        ref = res.instance_variable_get("@ref")
-        assert_equal("Resource", ref.type, "did not set resource type")
-        assert_equal("testing", ref.title, "did not set resource title")
-    end
-
-    def test_merge
-        res = mkresource
-        other = mkresource
-
-        # First try the case where the resource is not allowed to override
-        res.source = "source1"
-        other.source = "source2"
-        other.source.expects(:child_of?).with("source1").returns(false)
-        assert_raise(Puppet::ParseError, "Allowed unrelated resources to override") do
-            res.merge(other)
-        end
-
-        # Next try it when the sources are equal.
-        res.source = "source3"
-        other.source = res.source
-        other.source.expects(:child_of?).with("source3").never
-        params = {:a => :b, :c => :d}
-        other.expects(:params).returns(params)
-        res.expects(:override_parameter).with(:b)
-        res.expects(:override_parameter).with(:d)
-        res.merge(other)
-
-        # And then parentage is involved
-        other = mkresource
-        res.source = "source3"
-        other.source = "source4"
-        other.source.expects(:child_of?).with("source3").returns(true)
-        params = {:a => :b, :c => :d}
-        other.expects(:params).returns(params)
-        res.expects(:override_parameter).with(:b)
-        res.expects(:override_parameter).with(:d)
-        res.merge(other)
-    end
-
-    # the [] method
-    def test_array_accessors
-        res = mkresource
-        params = res.instance_variable_get("@params")
-        assert_nil(res[:missing], "Found a missing parameter somehow")
-        params[:something] = stub(:value => "yay")
-        assert_equal("yay", res[:something], "Did not correctly call value on the parameter")
-
-        res.expects(:title).returns(:mytitle)
-        assert_equal(:mytitle, res[:title], "Did not call title when asked for it as a param")
-    end
-
-    # Make sure any defaults stored in the scope get added to our resource.
-    def test_add_defaults
-        res = mkresource
-        params = res.instance_variable_get("@params")
-        params[:a] = :b
-        res.scope.expects(:lookupdefaults).with(res.type).returns(:a => :replaced, :c => :d)
-        res.expects(:debug)
-
-        res.send(:add_defaults)
-        assert_equal(:d, params[:c], "Did not set default")
-        assert_equal(:b, params[:a], "Replaced parameter with default")
-    end
-
-    def test_finish
-        res = mkresource
-        res.expects(:add_defaults)
-        res.expects(:add_metaparams)
-        res.expects(:validate)
-        res.finish
-    end
-
     # Make sure we paramcheck our params
     def test_validate
         res = mkresource
@@ -121,43 +32,6 @@ class TestResource < PuppetTest::TestCase
         res.expects(:paramcheck).with(:one)
         res.expects(:paramcheck).with(:three)
         res.send(:validate)
-    end
-
-    def test_override_parameter
-        res = mkresource
-        params = res.instance_variable_get("@params")
-
-        # There are three cases, with the second having two options:
-
-        # No existing parameter.
-        param = stub(:name => "myparam")
-        res.send(:override_parameter, param)
-        assert_equal(param, params["myparam"], "Override was not added to param list")
-
-        # An existing parameter that we can override.
-        source = stub(:child_of? => true)
-        # Start out without addition
-        params["param2"] = stub(:source => :whatever)
-        param = stub(:name => "param2", :source => source, :add => false)
-        res.send(:override_parameter, param)
-        assert_equal(param, params["param2"], "Override was not added to param list")
-
-        # Try with addition.
-        params["param2"] = stub(:value => :a, :source => :whatever)
-        param = stub(:name => "param2", :source => source, :add => true, :value => :b)
-        param.expects(:value=).with([:a, :b])
-        res.send(:override_parameter, param)
-        assert_equal(param, params["param2"], "Override was not added to param list")
-
-        # And finally, make sure we throw an exception when the sources aren't related
-        source = stub(:child_of? => false)
-        params["param2"] = stub(:source => :whatever, :file => :f, :line => :l)
-        old = params["param2"]
-        param = stub(:name => "param2", :source => source, :file => :f, :line => :l)
-        assert_raise(Puppet::ParseError, "Did not fail when params conflicted") do
-            res.send(:override_parameter, param)
-        end
-        assert_equal(old, params["param2"], "Param was replaced irrespective of conflict")
     end
 
     def test_set_parameter
@@ -419,38 +293,5 @@ class TestResource < PuppetTest::TestCase
 
         assert(newres.exported?, "Exported defined resource generated non-exported resources")
         assert(newres.virtual?, "Exported defined resource generated non-virtual resources")
-    end
-
-    # Make sure tags behave appropriately.
-    def test_tags
-        scope_resource = stub 'scope_resource', :tags => %w{srone srtwo}
-        scope = stub 'scope', :resource => scope_resource
-        resource = Puppet::Parser::Resource.new(:type => "file", :title => "yay", :scope => scope, :source => mock('source'))
-
-        # Make sure we get the type and title
-        %w{yay file}.each do |tag|
-            assert(resource.tags.include?(tag), "Did not tag resource with %s" % tag)
-        end
-
-        # make sure we can only set legal tags
-        ["an invalid tag", "-anotherinvalid", "bad*tag"].each do |tag|
-            assert_raise(Puppet::ParseError, "Tag #{tag} was considered valid") do
-                resource.tag tag
-            end
-        end
-
-        # make sure good tags make it through.
-        tags = %w{good-tag yaytag GoodTag another_tag a ab A}
-        tags.each do |tag|
-            assert_nothing_raised("Tag #{tag} was considered invalid") do
-                resource.tag tag
-            end
-        end
-
-        # make sure we get each of them.
-        ptags = resource.tags
-        tags.each do |tag|
-            assert(ptags.include?(tag.downcase), "missing #{tag}")
-        end
     end
 end

@@ -59,4 +59,10 @@ describe Puppet::Node::Exec, " when handling the results of the command" do
         @node.expects(:fact_merge)
         @searcher.find(@name)
     end
+
+    it "should set the node's environment if one is provided" do
+        @result[:environment] = "yay"
+        @node.expects(:environment=).with "yay"
+        @searcher.find(@name)
+    end
 end

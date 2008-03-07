@@ -243,14 +243,7 @@ class Puppet::Util::Settings
 
     # Make a directory with the appropriate user, group, and mode
     def mkdir(default)
-        obj = nil
-        unless obj = @config[default]
-            raise ArgumentError, "Unknown default %s" % default
-        end
-
-        unless obj.is_a? CFile
-            raise ArgumentError, "Default %s is not a file" % default
-        end
+        obj = get_config_file_default(default)
 
         Puppet::Util::SUIDManager.asuser(obj.owner, obj.group) do
             mode = obj.mode || 0750
@@ -649,49 +642,15 @@ Generated on #{Time.now}.
     end
 
     # Open a file with the appropriate user, group, and mode
-    def write(default, *args)
-        obj = nil
-        unless obj = @config[default]
-            raise ArgumentError, "Unknown default %s" % default
-        end
-
-        unless obj.is_a? CFile
-            raise ArgumentError, "Default %s is not a file" % default
-        end
-
-        chown = nil
-        if Puppet::Util::SUIDManager.uid == 0
-            chown = [obj.owner, obj.group]
-        else
-            chown = [nil, nil]
-        end
-        Puppet::Util::SUIDManager.asuser(*chown) do
-            mode = obj.mode || 0640
-
-            if args.empty?
-                args << "w"
-            end
-
-            args << mode
-
-            File.open(value(obj.name), *args) do |file|
-                yield file
-            end
-        end
+    def write(default, *args, &bloc)
+        obj = get_config_file_default(default)
+        writesub(default, value(obj.name), *args, &bloc)
     end
 
     # Open a non-default file under a default dir with the appropriate user,
     # group, and mode
-    def writesub(default, file, *args)
-        obj = nil
-        unless obj = @config[default]
-            raise ArgumentError, "Unknown default %s" % default
-        end
-
-        unless obj.is_a? CFile
-            raise ArgumentError, "Default %s is not a file" % default
-        end
-
+    def writesub(default, file, *args, &bloc)
+        obj = get_config_file_default(default)
         chown = nil
         if Puppet::Util::SUIDManager.uid == 0
             chown = [obj.owner, obj.group]
@@ -716,8 +675,51 @@ Generated on #{Time.now}.
         end
     end
 
+    def readwritelock(default, *args, &bloc)
+        file = value(get_config_file_default(default).name)
+        tmpfile = file + ".tmp"
+        sync = Sync.new
+        unless FileTest.directory?(File.dirname(tmpfile))
+            raise Puppet::DevError, "Cannot create %s; directory %s does not exist" %
+                [file, File.dirname(file)]
+        end
+
+        sync.synchronize(Sync::EX) do
+            File.open(file, "r+", 0600) do |rf|
+                rf.lock_exclusive do
+                    if File.exist?(tmpfile)
+                        raise Puppet::Error, ".tmp file already exists for %s; Aborting locked write. Check the .tmp file and delete if appropriate" %
+                            [file]
+                    end
+
+                    writesub(default, tmpfile, *args, &bloc)
+
+                    begin
+                        File.rename(tmpfile, file)
+                    rescue => detail
+                        Puppet.err "Could not rename %s to %s: %s" %
+                            [file, tmpfile, detail]
+                    end
+                end
+            end
+        end
+    end
+
     private
 
+    def get_config_file_default(default)
+        obj = nil
+        unless obj = @config[default]
+            raise ArgumentError, "Unknown default %s" % default
+        end
+
+        unless obj.is_a? CFile
+            raise ArgumentError, "Default %s is not a file" % default
+        end
+
+        return obj
+    end
+    
     # Create the transportable objects for users and groups.
     def add_user_resources(section, obj, done)
         resources = []

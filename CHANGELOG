@@ -1,3 +1,22 @@
+    The change in checksums from 'timestamp' to 'mtime' no longer
+    result in updates on every run (#1116).
+
+    Aliases again work in relationships (#1094).
+
+    The CA serial file will no longer ever be owned by
+    root (#1041).
+
+    Fixing the rest of #1113: External node commands can specify
+    an environment and Puppet will now use it.
+
+    Partially fixing #1113: LDAP nodes now support environments,
+    and the schema has been updated accordingly.
+
+    Always duplicating resource defaults in the parser, so that
+    stacked metaparameter values do not result in all resources
+    that receive a given default also getting those stacked
+    values.
+
 0.24.2
     Fixing #1062 by moving the yamldir setting to its own yaml
     section.  This should keep the yamldir from being created

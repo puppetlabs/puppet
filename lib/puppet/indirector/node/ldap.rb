@@ -36,11 +36,14 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
                 information[:parameters][param] = value unless information[:parameters].include?(param)
             end
 
+            information[:environment] ||= parent_info[:environment]
+
             parent = parent_info[:parent]
         end
 
         node.classes = information[:classes].uniq unless information[:classes].empty?
         node.parameters = information[:parameters] unless information[:parameters].empty?
+        node.environment = information[:environment] if information[:environment]
         node.fact_merge
 
         return node
@@ -86,6 +89,8 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
             end
             hash
         end
+
+        result[:environment] = result[:parameters]["environment"] if result[:parameters]["environment"]
 
         return result
     end
