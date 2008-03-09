@@ -2,7 +2,7 @@ require 'puppet/ssl'
 require 'puppet/indirector'
 
 # Manage private and public keys as a pair.
-class Puppet::SSL::Key # :nodoc:
+class Puppet::SSL::Key
     extend Puppet::Indirector
 
     indirects :key #, :terminus_class => :file
