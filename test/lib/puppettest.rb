@@ -233,6 +233,7 @@ module PuppetTest
         end
 
         f = File.join(self.tmpdir(), "tempfile_" + @@tmpfilenum.to_s)
+        @@tmpfiles ||= []
         @@tmpfiles << f
         return f
     end
