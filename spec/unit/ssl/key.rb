@@ -28,6 +28,25 @@ describe Puppet::SSL::Key do
         it "should have a content attribute" do
             @key.should respond_to(:content)
         end
+
+        it "should be able to read keys from disk" do
+            path = "/my/path"
+            File.expects(:read).with(path).returns("my key")
+            key = mock 'key'
+            OpenSSL::PKey::RSA.expects(:new).with("my key").returns(key)
+            @key.read(path).should equal(key)
+            @key.content.should equal(key)
+        end
+
+        it "should return an empty string when converted to a string with no key" do
+            @key.to_s.should == ""
+        end
+
+        it "should convert the key to pem format when converted to a string" do
+            key = mock 'key', :to_pem => "pem"
+            @key.content = key
+            @key.to_s.should == "pem"
+        end
     end
 
     describe "when generating the private key" do

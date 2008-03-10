@@ -19,15 +19,34 @@ describe Puppet::SSL::Certificate do
 
     describe "when managing instances" do
         before do
-            @cert = @class.new("myname")
+            @certificate = @class.new("myname")
         end
 
         it "should have a name attribute" do
-            @cert.name.should == "myname"
+            @certificate.name.should == "myname"
         end
 
         it "should have a content attribute" do
-            @cert.should respond_to(:content)
+            @certificate.should respond_to(:content)
+        end
+
+        it "should be able to read certificates from disk" do
+            path = "/my/path"
+            File.expects(:read).with(path).returns("my certificate")
+            certificate = mock 'certificate'
+            OpenSSL::X509::Certificate.expects(:new).with("my certificate").returns(certificate)
+            @certificate.read(path).should equal(certificate)
+            @certificate.content.should equal(certificate)
+        end
+
+        it "should return an empty string when converted to a string with no certificate" do
+            @certificate.to_s.should == ""
+        end
+
+        it "should convert the certificate to pem format when converted to a string" do
+            certificate = mock 'certificate', :to_pem => "pem"
+            @certificate.content = certificate
+            @certificate.to_s.should == "pem"
         end
     end
 

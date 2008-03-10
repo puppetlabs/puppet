@@ -1,12 +1,11 @@
-require 'puppet/ssl'
+require 'puppet/ssl/base'
 
 # This constant just exists for us to use for adding our request terminii.
-class Puppet::SSL::CertificateRequest # :nodoc:
+class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
+    wraps OpenSSL::X509::Request
+
     extend Puppet::Indirector
-
     indirects :certificate_request #, :terminus_class => :file
-
-    attr_reader :name, :content
 
     # How to create a certificate request with our system defaults.
     def generate(key)
@@ -19,9 +18,5 @@ class Puppet::SSL::CertificateRequest # :nodoc:
         csr.sign(key, OpenSSL::Digest::MD5.new)
 
         @content = csr
-    end
-
-    def initialize(name)
-        @name = name
     end
 end

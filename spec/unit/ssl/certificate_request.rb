@@ -22,6 +22,39 @@ describe Puppet::SSL::CertificateRequest do
         @class.new("myname").name.should == "myname"
     end
 
+    describe "when managing instances" do
+        before do
+            @request = @class.new("myname")
+        end
+
+        it "should have a name attribute" do
+            @request.name.should == "myname"
+        end
+
+        it "should have a content attribute" do
+            @request.should respond_to(:content)
+        end
+
+        it "should be able to read requests from disk" do
+            path = "/my/path"
+            File.expects(:read).with(path).returns("my request")
+            request = mock 'request'
+            OpenSSL::X509::Request.expects(:new).with("my request").returns(request)
+            @request.read(path).should equal(request)
+            @request.content.should equal(request)
+        end
+
+        it "should return an empty string when converted to a string with no request" do
+            @request.to_s.should == ""
+        end
+
+        it "should convert the request to pem format when converted to a string" do
+            request = mock 'request', :to_pem => "pem"
+            @request.content = request
+            @request.to_s.should == "pem"
+        end
+    end
+
     describe "when generating" do
         before do
             @instance = @class.new("myname")
