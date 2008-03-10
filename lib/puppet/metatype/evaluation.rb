@@ -125,14 +125,19 @@ class Puppet::Type
         # the other properties matter.
         changes = []
         ensureparam = @parameters[:ensure]
-        if @parameters.include?(:ensure) && !currentvalues.include?(ensureparam)
+
+        # This allows resource types to have 'ensure' be a parameter, which allows them to
+        # just pass the parameter on to other generated resources.
+        ensureparam = nil unless ensureparam.is_a?(Puppet::Property)
+        if ensureparam && !currentvalues.include?(ensureparam)
             raise Puppet::DevError, "Parameter ensure defined but missing from current values"
         end
-        if @parameters.include?(:ensure) and ! ensureparam.insync?(currentvalues[ensureparam])
+
+        if ensureparam and ! ensureparam.insync?(currentvalues[ensureparam])
             changes << Puppet::PropertyChange.new(ensureparam, currentvalues[ensureparam])
         # Else, if the 'ensure' property is correctly absent, then do
         # nothing
-        elsif @parameters.include?(:ensure) and currentvalues[ensureparam] == :absent
+        elsif ensureparam and currentvalues[ensureparam] == :absent
             return []
         else
             changes = properties().find_all { |property|
