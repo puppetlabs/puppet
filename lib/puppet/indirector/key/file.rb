@@ -1,40 +1,36 @@
-require 'puppet/indirector/file'
+require 'puppet/indirector/ssl_file'
 require 'puppet/ssl/key'
 
-class Puppet::SSL::Key::File < Puppet::Indirector::File
+class Puppet::SSL::Key::File < Puppet::Indirector::SslFile
     desc "Manage SSL private and public keys on disk."
 
-    def path(name)
-        if name == :ca
-            Puppet.settings[:cakey]
-        else
-            File.join(Puppet.settings[:privatekeydir], name.to_s + ".pem")
-        end
-    end
+    store_in :privatekeydir
 
     def public_key_path(name)
-        if name == :ca
-            Puppet.settings[:capub]
-        else
-            File.join(Puppet.settings[:publickeydir], name.to_s + ".pem")
+        File.join(Puppet[:publickeydir], name.to_s + ".pem")
+    end
+
+    # Remove the public key, in addition to the private key
+    def destroy(key)
+        super
+
+        return unless FileTest.exist?(public_key_path(key.name))
+
+        begin
+            File.unlink(public_key_path(key.name))
+        rescue => detail
+            raise Puppet::Error, "Could not remove %s public key: %s" % [key.name, detail]
         end
     end
 
+    # Save the public key, in addition to the private key.
     def save(key)
-        # Save the private key
-        File.open(path(key.name), "w") { |f| f.print key.to_pem }
+        super
 
-        # Now save the public key
-        File.open(public_key_path(name), "w") { |f| f.print key.to_pem }
-    end
-
-    def find(name)
-        return nil unless FileTest.exist?(path(name))
-        OpenSSL::PKey::RSA.new(File.read(path(name)))
-    end
-
-    def destroy(name)
-        return nil unless FileTest.exist?(path(name))
-        File.unlink(path(name)) and true
+        begin
+            File.open(public_key_path(key.name), "w") { |f| f.print key.content.public_key.to_pem }
+        rescue => detail
+            raise Puppet::Error, "Could not write %s: %s" % [key, detail]
+        end
     end
 end

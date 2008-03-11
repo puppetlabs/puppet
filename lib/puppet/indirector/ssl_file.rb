@@ -9,6 +9,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
         attr_reader :directory_setting
     end
 
+    # The full path to where we should store our files.
     def self.collection_directory
         raise(Puppet::DevError, "No setting defined for %s" % self) unless @directory_setting
         Puppet.settings[@directory_setting]
@@ -23,6 +24,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
         File.join(collection_directory, name.to_s + ".pem")
     end
 
+    # Remove our file.
     def destroy(file)
         path = path(file.name)
         raise Puppet::Error.new("File %s does not exist; cannot destroy" % [file]) unless FileTest.exist?(path)
@@ -34,6 +36,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
         end
     end
 
+    # Find the file on disk, returning an instance of the model.
     def find(name)
         path = path(name)
 
@@ -44,6 +47,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
         result
     end
 
+    # Save our file to disk.
     def save(file)
         path = path(file.name)
         dir = File.dirname(path)
@@ -60,6 +64,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
 
     private
 
+    # A demeterish pointer to the collection directory.
     def collection_directory
         self.class.collection_directory
     end
