@@ -6,7 +6,7 @@ class Puppet::SSL::Key < Puppet::SSL::Base
     wraps OpenSSL::PKey::RSA
 
     extend Puppet::Indirector
-    indirects :key #, :terminus_class => :file
+    indirects :key, :terminus_class => :file
 
     # Knows how to create keys with our system defaults.
     def generate

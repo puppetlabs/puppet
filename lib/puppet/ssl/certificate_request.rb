@@ -1,6 +1,6 @@
 require 'puppet/ssl/base'
 
-# This constant just exists for us to use for adding our request terminii.
+# Manage certificate requests.
 class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
     wraps OpenSSL::X509::Request
 

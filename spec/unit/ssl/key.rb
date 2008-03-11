@@ -8,12 +8,17 @@ describe Puppet::SSL::Key do
     before do
         @class = Puppet::SSL::Key
     end
+
     it "should be extended with the Indirector module" do
         @class.metaclass.should be_include(Puppet::Indirector)
     end
 
     it "should indirect key" do
         @class.indirection.name.should == :key
+    end
+
+    it "should default to the :file terminus class" do
+        @class.indirection.terminus_class.should == :file
     end
 
     describe "when managing instances" do

@@ -17,6 +17,10 @@ describe Puppet::SSL::Certificate do
         @class.indirection.name.should == :certificate
     end
 
+    it "should default to the :file terminus class" do
+        @class.indirection.terminus_class.should == :file
+    end
+
     describe "when managing instances" do
         before do
             @certificate = @class.new("myname")
