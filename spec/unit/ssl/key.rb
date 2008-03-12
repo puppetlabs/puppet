@@ -44,6 +44,18 @@ describe Puppet::SSL::Key do
             @key.content.should equal(key)
         end
 
+        it "should read the key with the password retrieved from the password file if one is provided" do
+            @key.password_file = "/path/to/password"
+
+            path = "/my/path"
+            File.expects(:read).with(path).returns("my key")
+            File.expects(:read).with("/path/to/password").returns("my password")
+            key = mock 'key'
+            OpenSSL::PKey::RSA.expects(:new).with("my key", "my password").returns(key)
+            @key.read(path).should equal(key)
+            @key.content.should equal(key)
+        end
+
         it "should return an empty string when converted to a string with no key" do
             @key.to_s.should == ""
         end
