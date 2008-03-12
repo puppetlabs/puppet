@@ -71,6 +71,11 @@ describe Puppet::SSL::CertificateRequest do
 
             key = Puppet::SSL::Key.new("myname")
             @key = key.generate
+
+            @request = OpenSSL::X509::Request.new
+            OpenSSL::X509::Request.expects(:new).returns(@request)
+
+            @request.stubs(:verify).returns(true)
         end
 
         it "should log that it is creating a new certificate request" do
@@ -78,64 +83,51 @@ describe Puppet::SSL::CertificateRequest do
             @instance.generate(@key)
         end
 
-        # It just doesn't make sense to work so hard around mocking all of this crap five times in order to get this test down to one expectation
-        # per test.
-        it "should create a new certificate request with the subject set to [CN, name], the version set to 0, the public key set to the privided key's public key, and signed by the provided key" do
-            @request = mock 'request'
-            OpenSSL::X509::Request.expects(:new).returns(@request)
-
+        it "should set the subject to [CN, name]" do
             subject = mock 'subject'
             OpenSSL::X509::Name.expects(:new).with([["CN", @instance.name]]).returns(subject)
-            @request.expects(:version=).with 0
+            @request.expects(:subject=).with(subject)
+            @instance.generate(@key)
+        end
 
-            # For some reason, this is failing, even though the values are correct.
-            # It seems to be considering the values different if i use 'with'.
-            @request.expects(:public_key=)
-            @request.expects(:subject=).with subject
+        it "should set the version to 0" do
+            @request.expects(:version=).with(0)
+            @instance.generate(@key)
+        end
 
-            # Again, this is weirdly failing, even though it's painfully simple.
-            @request.expects(:sign)
+        it "should set the public key to the provided key's public key" do
+            # Yay, the private key extracts a new key each time.
+            pubkey = @key.public_key
+            @key.stubs(:public_key).returns pubkey
+            @request.expects(:public_key=).with(@key.public_key)
+            @instance.generate(@key)
+        end
 
-            @request.stubs(:verify).returns(true)
-
-            @instance.generate(@key).should == @request
+        it "should sign the csr with the provided key and a digest" do
+            digest = mock 'digest'
+            OpenSSL::Digest::MD5.expects(:new).returns(digest)
+            @request.expects(:sign).with(@key, digest)
+            @instance.generate(@key)
         end
 
         it "should verify the generated request using the public key" do
-            @request = mock 'request'
-            OpenSSL::X509::Request.expects(:new).returns(@request)
-
-            subject = mock 'subject'
-            OpenSSL::X509::Name.stubs(:new)
-
-            @request.stubs(:version=)
-            @request.stubs(:public_key=)
-            @request.stubs(:subject=)
-            @request.stubs(:sign)
-
-            # Grr, mocha is broken in this class for some reason; I can't get
-            # the 'with' arguments to register correctly.
-            @request.expects(:verify).returns true
-
-            @instance.generate(@key).should == @request
+            @request.expects(:verify).with(@key.public_key)
+            @instance.generate(@key)
         end
 
         it "should fail if verification fails" do
-            @request = OpenSSL::X509::Request.new
-            OpenSSL::X509::Request.expects(:new).returns(@request)
-
             @request.expects(:verify).returns false
 
             lambda { @instance.generate(@key) }.should raise_error(Puppet::Error)
         end
 
         it "should return the generated request" do
-            @instance.generate(@key).should be_instance_of(OpenSSL::X509::Request)
+            @instance.generate(@key).should equal(@request)
         end
 
         it "should set its content to the generated request" do
             @instance.generate(@key)
-            @instance.content.should be_instance_of(OpenSSL::X509::Request)
+            @instance.content.should equal(@request)
         end
     end
 end
