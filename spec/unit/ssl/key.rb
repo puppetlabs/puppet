@@ -18,7 +18,8 @@ describe Puppet::SSL::Key do
     end
 
     it "should default to the :file terminus class" do
-        @class.indirection.terminus_class.should == :file
+        @class.indirection.terminus(:file).expects(:find).with "myname"
+        @class.find("myname")
     end
 
     describe "when managing instances" do

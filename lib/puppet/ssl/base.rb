@@ -1,4 +1,5 @@
 require 'puppet/ssl'
+require 'puppet/ssl/indirection_hooks'
 
 # The base class for wrapping SSL instances.
 class Puppet::SSL::Base

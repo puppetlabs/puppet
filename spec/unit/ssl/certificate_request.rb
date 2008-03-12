@@ -22,6 +22,16 @@ describe Puppet::SSL::CertificateRequest do
         @class.new("myname").name.should == "myname"
     end
 
+    it "should default to the :file terminus class" do
+        @class.indirection.terminus(:file).expects(:find).with "myname"
+        @class.find("myname")
+    end
+
+    it "should allow specification of a different terminus class" do
+        @class.indirection.terminus(:ca_file).expects(:find).with { |*args| args[0] == "myname" }
+        @class.find("myname", :in => :ca_file)
+    end
+
     describe "when managing instances" do
         before do
             @request = @class.new("myname")
@@ -86,7 +96,37 @@ describe Puppet::SSL::CertificateRequest do
             # Again, this is weirdly failing, even though it's painfully simple.
             @request.expects(:sign)
 
+            @request.stubs(:verify).returns(true)
+
             @instance.generate(@key).should == @request
+        end
+
+        it "should verify the generated request using the public key" do
+            @request = mock 'request'
+            OpenSSL::X509::Request.expects(:new).returns(@request)
+
+            subject = mock 'subject'
+            OpenSSL::X509::Name.stubs(:new)
+
+            @request.stubs(:version=)
+            @request.stubs(:public_key=)
+            @request.stubs(:subject=)
+            @request.stubs(:sign)
+
+            # Grr, mocha is broken in this class for some reason; I can't get
+            # the 'with' arguments to register correctly.
+            @request.expects(:verify).returns true
+
+            @instance.generate(@key).should == @request
+        end
+
+        it "should fail if verification fails" do
+            @request = OpenSSL::X509::Request.new
+            OpenSSL::X509::Request.expects(:new).returns(@request)
+
+            @request.expects(:verify).returns false
+
+            lambda { @instance.generate(@key) }.should raise_error(Puppet::Error)
         end
 
         it "should return the generated request" do

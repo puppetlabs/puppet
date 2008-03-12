@@ -25,7 +25,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
     end
 
     # Remove our file.
-    def destroy(file)
+    def destroy(file, options = {})
         path = path(file.name)
         raise Puppet::Error.new("File %s does not exist; cannot destroy" % [file]) unless FileTest.exist?(path)
 
@@ -37,7 +37,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
     end
 
     # Find the file on disk, returning an instance of the model.
-    def find(name)
+    def find(name, options = {})
         path = path(name)
 
         return nil unless FileTest.exist?(path)
@@ -48,7 +48,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
     end
 
     # Save our file to disk.
-    def save(file)
+    def save(file, options = {})
         path = path(file.name)
         dir = File.dirname(path)
 

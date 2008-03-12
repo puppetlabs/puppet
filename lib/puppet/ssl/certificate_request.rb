@@ -5,7 +5,7 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
     wraps OpenSSL::X509::Request
 
     extend Puppet::Indirector
-    indirects :certificate_request #, :terminus_class => :file
+    indirects :certificate_request, :extend => Puppet::SSL::IndirectionHooks
 
     # How to create a certificate request with our system defaults.
     def generate(key)
@@ -16,6 +16,8 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
         csr.subject = OpenSSL::X509::Name.new([["CN", name]])
         csr.public_key = key.public_key
         csr.sign(key, OpenSSL::Digest::MD5.new)
+
+        raise Puppet::Error, "CSR sign verification failed; you need to clean the certificate request for %s on the server" % name unless csr.verify(key.public_key)
 
         @content = csr
     end
