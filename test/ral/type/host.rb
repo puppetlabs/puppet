@@ -153,6 +153,50 @@ class TestHost < Test::Unit::TestCase
         assert_raise(Puppet::Error) {
             host[:name] = "!invalid.hostname.$$$"
         }
+
+        assert_raise(Puppet::Error) {
+            host[:name] = "-boo"
+        }
+
+        assert_raise(Puppet::Error) {
+            host[:name] = "boo-.ness"
+        }
+
+        assert_raise(Puppet::Error) {
+            host[:name] = "boo..ness"
+        }
+    end
+
+    def test_valid_hostname
+        host = mkhost()
+
+        assert_nothing_raised {
+            host[:name] = "yayness"
+        }
+
+        assert_nothing_raised {
+            host[:name] = "yay-ness"
+        }
+
+        assert_nothing_raised {
+            host[:name] = "yay.ness"
+        }
+
+        assert_nothing_raised {
+            host[:name] = "yay.ne-ss"
+        }
+
+        assert_nothing_raised {
+            host[:name] = "y.ay-ne-ss.com"
+        }
+
+        assert_nothing_raised {
+            host[:name] = "y4y.n3-ss"
+        }
+
+        assert_nothing_raised {
+            host[:name] = "y"
+        }
     end
 
     end  

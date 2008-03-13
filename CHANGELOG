@@ -1,3 +1,6 @@
+    Fixing #1132 -- host names can now have dashes anywhere.
+    (Patch by freiheit.)
+
     Fixing #1118 -- downloading plugins and facts now ignores noop.
     Note that this changes the behaviour a bit -- the resource's
     noop setting always beats the global setting (previously,
