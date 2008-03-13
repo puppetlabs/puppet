@@ -1,3 +1,8 @@
+    Fixing #1118 -- downloading plugins and facts now ignores noop.
+    Note that this changes the behaviour a bit -- the resource's
+    noop setting always beats the global setting (previously,
+    whichever was true would win).
+
     The change in checksums from 'timestamp' to 'mtime' no longer
     result in updates on every run (#1116).
 

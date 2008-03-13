@@ -108,7 +108,11 @@ class Puppet::Type
 
     # Are we running in noop mode?
     def noop?
-        @noop || Puppet[:noop]
+        if defined?(@noop)
+            @noop
+        else
+            Puppet[:noop]
+        end
     end
 
     def noop

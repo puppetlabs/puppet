@@ -678,22 +678,6 @@ class TestType < Test::Unit::TestCase
         assert_equal("Exec[yay]", exec.ref)
     end
     
-    def test_noop_metaparam
-        file = Puppet::Type.newfile :path => tempfile
-        assert(!file.noop, "file incorrectly in noop")
-        
-        assert_nothing_raised do
-            file[:noop] = true
-        end
-        assert(file.noop, "file should be in noop")
-        
-        # Now set the main one
-        Puppet[:noop] = true
-        assert(file.noop, "file should be in noop")
-        file[:noop] = false
-        assert(file.noop, "file should be in noop")
-    end
-    
     def test_path
         config = mk_catalog
 

@@ -320,7 +320,8 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
             :group => Process.gid,
             :purge => true,
             :force => true,
-            :backup => false
+            :backup => false,
+            :noop => false
         }
 
         if args[:ignore]
@@ -330,9 +331,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         downconfig.add_resource Puppet::Type.type(:file).create(hash)
         
         Puppet.info "Retrieving #{args[:name]}s"
-
-        noop = Puppet[:noop]
-        Puppet[:noop] = false
 
         files = []
         begin
@@ -355,14 +353,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         downconfig.clear
 
         return files
-    ensure
-        # I can't imagine why this is necessary, but apparently at last one person has had problems with noop
-        # being nil here.
-        if noop.nil?
-            Puppet[:noop] = false
-        else
-            Puppet[:noop] = noop
-        end
     end
 
     # Retrieve facts from the central server.
