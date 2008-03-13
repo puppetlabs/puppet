@@ -106,13 +106,13 @@ describe Puppet::Network::HTTP::Mongrel, "when turning off listening" do
     
     it "should order mongrel server to stop" do
         @server.listen(@listen_params)
-        @mock_mongrel.expects(:graceful_shutdown)
+        @mock_mongrel.expects(:stop)
         @server.unlisten
     end
     
     it "should not be listening" do
         @server.listen(@listen_params)
-        @mock_mongrel.stubs(:graceful_shutdown)
+        @mock_mongrel.stubs(:stop)
         @server.unlisten
         @server.should_not be_listening
     end

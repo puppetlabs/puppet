@@ -1,3 +1,5 @@
+require 'puppet/network/http'
+
 class Puppet::Network::Server
 	attr_reader :server_type, :protocols, :address, :port
 
@@ -8,7 +10,7 @@ class Puppet::Network::Server
             raise(ArgumentError, "Must specify :address or configure Puppet :bindaddress.")
         @port = args[:port] || Puppet[:masterport] ||
             raise(ArgumentError, "Must specify :port or configure Puppet :masterport")
-        @protocols = []
+        @protocols = [ :rest ]
         @listening = false
         @routes = {}
         self.register(args[:handlers]) if args[:handlers]
@@ -38,8 +40,8 @@ class Puppet::Network::Server
   
     def listen
   	    raise "Cannot listen -- already listening." if listening?
-  	    http_server.listen(@routes.dup)
   	    @listening = true
+  	    http_server.listen(:address => address, :port => port, :handlers => @routes.keys, :protocols => protocols)
     end
   
     def unlisten

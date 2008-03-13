@@ -161,8 +161,12 @@ describe Puppet::Network::Server, "in general" do
         Proc.new { @server2.unregister(:bar) }.should raise_error(ArgumentError)
     end  
 
-    it "should provide a means of determining which style of service is being offered to clients" do
-        @server.protocols.should == []
+    it "should provide a means of determining which protocols are in use" do
+        @server.should respond_to(:protocols)
+    end
+    
+    it "should only support the REST protocol at this time" do
+        @server.protocols.should == [ :rest ]
     end
     
     it "should provide a means of determining the listening address" do
@@ -230,22 +234,53 @@ describe Puppet::Network::Server, "when listening is being turned on" do
         @mock_http_server_class = mock('http server class')
         Puppet::Network::HTTP.stubs(:server_class_by_type).returns(@mock_http_server_class)
         Puppet.stubs(:[]).with(:servertype).returns(:suparserver)
-        @server = Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337)
+        @server = Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337, :handlers => [:node])
         @mock_http_server = mock('http server')
         @mock_http_server.stubs(:listen)
     end
 
-    it "should fetch an instance of an HTTP server when listening is turned on" do
-        mock_http_server_class = mock('http server class')
-        mock_http_server_class.expects(:new).returns(@mock_http_server)
-        @server.expects(:http_server_class).returns(mock_http_server_class)
+    it "should fetch an instance of an HTTP server" do
+        @server.stubs(:http_server_class).returns(@mock_http_server_class)
+        @mock_http_server_class.expects(:new).returns(@mock_http_server)
         @server.listen        
     end
 
-    it "should cause the HTTP server to listen when listening is turned on" do
+    it "should cause the HTTP server to listen" do
+        @server.stubs(:http_server).returns(@mock_http_server)
         @mock_http_server.expects(:listen)
-        @server.expects(:http_server).returns(@mock_http_server)
         @server.listen
+    end
+    
+    it "should pass the listening address to the HTTP server" do
+       @server.stubs(:http_server).returns(@mock_http_server)
+       @mock_http_server.expects(:listen).with do |args|
+            args[:address] == '127.0.0.1'
+       end
+       @server.listen
+    end
+    
+    it "should pass the listening port to the HTTP server" do
+      @server.stubs(:http_server).returns(@mock_http_server)
+      @mock_http_server.expects(:listen).with do |args|
+           args[:port] == 31337
+      end
+      @server.listen
+    end
+    
+    it "should pass a list of handlers to the HTTP server" do
+      @server.stubs(:http_server).returns(@mock_http_server)
+      @mock_http_server.expects(:listen).with do |args|
+           args[:handlers] == [ :node ]
+      end
+      @server.listen
+    end
+    
+    it "should pass a list of protocols to the HTTP server" do
+      @server.stubs(:http_server).returns(@mock_http_server)
+      @mock_http_server.expects(:listen).with do |args|
+           args[:protocols] == [ :rest ]
+      end
+      @server.listen      
     end
 end
 

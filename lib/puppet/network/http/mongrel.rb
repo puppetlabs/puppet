@@ -13,20 +13,20 @@ class Puppet::Network::HTTP::Mongrel
         raise ArgumentError, ":address must be specified." unless args[:address]
         raise ArgumentError, ":port must be specified." unless args[:port]
         raise "Mongrel server is already listening" if listening?
-        
+
         @protocols = args[:protocols]
         @handlers = args[:handlers]
-        @server = Mongrel::HttpServer.new(args[:address], args[:port])
-
+        @server = Mongrel::HttpServer.new(args[:address], args[:port]) 
         setup_handlers
 
-        @server.run
         @listening = true
+        @server.run
     end
     
     def unlisten
         raise "Mongrel server is not listening" unless listening?
-        @server.graceful_shutdown
+        @server.stop
+        @server = nil
         @listening = false
     end
     

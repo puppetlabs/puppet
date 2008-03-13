@@ -1,4 +1,5 @@
-class Puppet::Network::HTTP::Handler
+module Puppet::Network::HTTP::Handler
+
     def initialize(args = {})
         raise ArgumentError unless @server = args[:server]
         raise ArgumentError unless @handler = args[:handler]
@@ -77,7 +78,7 @@ class Puppet::Network::HTTP::Handler
         %r{/#{@handler.to_s}s$}.match(path(request))
     end
     
-  # methods specific to a given web server
+  # methods to be overridden by the including web server class
     
     def register_handler
         raise NotImplementedError

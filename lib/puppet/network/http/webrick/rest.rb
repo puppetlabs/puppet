@@ -1,6 +1,8 @@
 require 'puppet/network/http/handler'
 
-class Puppet::Network::HTTP::WEBrickREST < Puppet::Network::HTTP::Handler
+class Puppet::Network::HTTP::WEBrickREST
+
+    include Puppet::Network::HTTP::Handler
 
     # WEBrick uses a service() method to respond to requests.  Simply delegate to the handler response() method.
     def service(request, response)

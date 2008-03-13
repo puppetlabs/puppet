@@ -1,10 +1,12 @@
 require 'webrick'
 require 'webrick/https'
 require 'puppet/network/http/webrick/rest'
+require 'thread'
 
 class Puppet::Network::HTTP::WEBrick
     def initialize(args = {})
         @listening = false
+        @mutex = Mutex.new
     end
     
     def listen(args = {})
@@ -12,24 +14,33 @@ class Puppet::Network::HTTP::WEBrick
         raise ArgumentError, ":protocols must be specified." if !args[:protocols] or args[:protocols].empty?
         raise ArgumentError, ":address must be specified." unless args[:address]
         raise ArgumentError, ":port must be specified." unless args[:port]
-        raise "WEBrick server is already listening" if listening?
         
         @protocols = args[:protocols]
         @handlers = args[:handlers]        
         @server = WEBrick::HTTPServer.new(:BindAddress => args[:address], :Port => args[:port])
         setup_handlers
-        @server.start
-        @listening = true
+
+        @mutex.synchronize do
+            raise "WEBrick server is already listening" if @listening        
+            @listening = true
+            @thread = Thread.new { @server.start }
+        end
     end
     
     def unlisten
-        raise "WEBrick server is not listening" unless listening?
-        @server.shutdown
-        @listening = false
+        @mutex.synchronize do
+            raise "WEBrick server is not listening" unless @listening
+            @server.shutdown
+            @thread.join
+            @server = nil
+            @listening = false
+        end
     end
     
     def listening?
-        @listening
+        @mutex.synchronize do
+            @listening
+        end
     end
     
   private
