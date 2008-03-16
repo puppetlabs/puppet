@@ -143,10 +143,6 @@ class Suite
         instance_eval(&block)
     end
 
-    def prepare
-        raise "Test %s did not override 'prepare'" % @name
-    end
-
     # Define a new type of test on this suite.
     def newtest(name, doc, &block)
         @tests[name] = doc
@@ -166,7 +162,8 @@ class Suite
             raise "Suite %s only supports tests %s; not %s" % [@name, @tests.keys.collect { |k| k.to_s }.join(","), test]
         end
         puts "Running %s %s test" % [@name, test]
-        prepare()
+
+        prepare() if respond_to?(:prepare)
 
         if $options[:pause]
             puts "Hit any key to continue"
@@ -210,9 +207,6 @@ class Suite
 end
 
 Suite.new :parser, "Manifest parsing" do
-    def prepare
-    end
-
     newtest :parse, "Parsed files" do
         @parser = Puppet::Parser::Parser.new(:environment => Puppet[:environment])
         @parser.file = Puppet[:manifest]
@@ -285,6 +279,21 @@ Suite.new :file, "File interactions" do
 
     newtest :retrieve, "Retrieved file" do
         @client.retrieve($options[:file], :ignore)
+    end
+end
+
+Suite.new :filebucket, "Filebucket interactions" do
+    def prepare
+        require 'tempfile'
+        @client = Puppet::Network::Client.dipper.new($args)
+    end
+
+    newtest :backup, "Backed up file" do
+        Tempfile.open("bucket_testing") do |f|
+            f.print rand(1024)
+            f.close
+            @client.backup(f.path)
+        end
     end
 end
 
