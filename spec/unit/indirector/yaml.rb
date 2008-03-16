@@ -24,6 +24,16 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
         Puppet.settings.stubs(:value).with(:yamldir).returns(@dir)
     end
 
+    it "should use the mtime of the written file as the version" do
+        stat = mock 'stat'
+        FileTest.stubs(:exist?).returns true
+        File.expects(:stat).returns stat
+        time = Time.now
+        stat.expects(:mtime).returns time
+
+        @store.version(:me).should equal(time)
+    end
+
     describe Puppet::Indirector::Yaml, " when choosing file location" do
 
         it "should store all files in a single file root set in the Puppet defaults" do
