@@ -220,7 +220,16 @@ Suite.new :parser, "Manifest parsing" do
     end
 end
 
-Suite.new :catalog, "Catalog handling" do
+Suite.new :local_catalog, "Local catalog handling" do
+    def prepare
+    end
+
+    newtest :compile, "Compiled catalog" do
+        Puppet::Node::Catalog.find(Puppet[:certname])
+    end
+end
+
+Suite.new :remote_catalog, "Remote catalog handling" do
     def prepare
         $args[:cache] = false
         # Create a config client and pull the config down
@@ -249,7 +258,7 @@ Suite.new :catalog, "Catalog handling" do
         @facts = YAML.dump(@facts)
     end
 
-    newtest :compile, "Compiled catalog" do
+    newtest :getconfig, "Compiled catalog" do
         @client.driver.getconfig(@facts, "yaml")
     end
 
@@ -447,8 +456,8 @@ Puppet.parse_config
 $args[:Server] = Puppet[:server]
 
 unless $options[:test]
-    $options[:suite] = :configuration
-    $options[:test] = :compile
+    $options[:suite] = :remote_catalog
+    $options[:test] = :getconfig
 end
 
 unless $options[:test]
