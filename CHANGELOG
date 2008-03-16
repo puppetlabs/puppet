@@ -1,3 +1,12 @@
+    Caching node information in yaml (I figured caching in memory will
+    cause ever-larger memory growth), and changing the external node
+    terminus to use the version of the facts as their version.  This
+    will usually result in the cached node information being used,
+    instead of always hitting the external node app during file
+    serving. Note that if the facts aren't changed by the client,
+    then this will result in the cached node being used, but at this
+    point, the client always updates its facts.  (#1130)
+
     Fixing #1132 -- host names can now have dashes anywhere.
     (Patch by freiheit.)
 
