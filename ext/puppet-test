@@ -232,10 +232,12 @@ Suite.new :catalog, "Catalog handling" do
         # Use the facts from the cache, to skip the time it takes
         # to load them.
         @client.dostorage
-        @facts = Puppet::Util::Storage.cache(:configuration)[:facts]
+        @facts = Puppet::Util::Storage.cache(:configuration)[:facts] || {}
 
         if @facts.empty?
-            @facts = @client.master.getfacts
+            if tmp = Puppet::Node::Facts.find("me")
+                @facts = tmp.values
+            end
         end
 
         if host = $options[:fqdn]
