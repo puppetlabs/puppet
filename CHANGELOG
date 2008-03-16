@@ -1,3 +1,7 @@
+    Modified the ldap node terminus to also use the facts version
+    as the version for a node, which should similarly encourage the
+    use of the yaml cache.  (Related to #1130)
+
     Caching node information in yaml (I figured caching in memory will
     cause ever-larger memory growth), and changing the external node
     terminus to use the version of the facts as their version.  This
