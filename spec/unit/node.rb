@@ -127,6 +127,10 @@ describe Puppet::Node, " when indirecting" do
         Puppet::Node.indirection.terminus_class.should == :plain
     end
 
+    it "should use yaml for caching" do
+        Puppet::Node.indirection.cache_class.should == :yaml
+    end
+
     after do
         Puppet::Indirector::Indirection.clear_cache
     end
