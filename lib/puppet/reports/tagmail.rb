@@ -35,8 +35,6 @@ Puppet::Reports.register_report(:tagmail) do
         "
 
 
-    Puppet.settings.use(:tagmail)
-
     # Find all matching messages.
     def match(taglists)
         reports = []
