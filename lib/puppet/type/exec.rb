@@ -390,6 +390,11 @@ module Puppet
 
                 Note that this command follows the same rules as the main command,
                 which is to say that it must be fully qualified if the path is not set.
+
+                Also note that onlyif can take an array as its value, eg:
+                    onlyif => [\"test -f /tmp/file1\", \"test -f /tmp/file2\"]
+
+                This will only run the exec if /all/ conditions in the array return true.
                 "
 
             validate do |cmds|
