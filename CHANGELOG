@@ -1,3 +1,4 @@
+0.24.3
     Modified the ldap node terminus to also use the facts version
     as the version for a node, which should similarly encourage the
     use of the yaml cache.  (Related to #1130)
