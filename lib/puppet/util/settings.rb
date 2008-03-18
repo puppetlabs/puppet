@@ -674,7 +674,6 @@ Generated on #{Time.now}.
 
             begin
                 catalog = bucket.to_catalog
-                raise "wtf?(%s)" % sections.inspect unless catalog
                 catalog.host_config = false
                 catalog.apply do |transaction|
                     if failures = transaction.any_failed?
