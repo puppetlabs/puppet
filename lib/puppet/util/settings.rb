@@ -669,14 +669,17 @@ Generated on #{Time.now}.
 
             bucket = to_transportable(*sections)
 
-            config = bucket.to_catalog
-            config.host_config = false
-            config.apply do |transaction|
-                if failures = transaction.any_failed?
-                    raise "Could not configure for running; got %s failure(s)" % failures
+            begin
+                config = bucket.to_catalog
+                config.host_config = false
+                config.apply do |transaction|
+                    if failures = transaction.any_failed?
+                        raise "Could not configure for running; got %s failure(s)" % failures
+                    end
                 end
+            ensure
+                config.clear
             end
-            config.clear
 
             sections.each { |s| @used << s }
             @used.uniq

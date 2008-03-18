@@ -1,3 +1,8 @@
+    Hopefully *finally* fixed the "already being managed" problem
+    (#1036).  The problem only cropped up if there was a failure
+    when trying to manage the system -- this would cause the
+    setting-based resources not to get cleaned up.
+
 0.24.3
     Modified the ldap node terminus to also use the facts version
     as the version for a node, which should similarly encourage the
