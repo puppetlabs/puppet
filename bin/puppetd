@@ -289,7 +289,7 @@ if options[:test]
     Puppet.settings.handlearg("--no-splay")
     Puppet.settings.handlearg("--show_diff")
     Puppet.settings.handlearg("--no-daemonize")
-    Puppet.settings.handlearg("--verbose")
+    options[:verbose] = true
     options[:onetime] = true
     options[:waitforcert] = 0
 end
