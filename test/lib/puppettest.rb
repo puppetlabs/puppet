@@ -43,6 +43,10 @@ class Class
 end
 
 module PuppetTest
+    # These need to be here for when rspec tests use these
+    # support methods.
+    @@tmpfiles = []
+
     # Munge cli arguments, so we can enable debugging if we want
     # and so we can run just specific methods.
     def self.munge_argv
@@ -189,7 +193,7 @@ module PuppetTest
             Dir.mkdir(@configpath)
         end
 
-        @@tmpfiles = [@configpath, tmpdir()]
+        @@tmpfiles << @configpath << tmpdir()
         @@tmppids = []
 
         @@cleaners = []
@@ -293,6 +297,7 @@ module PuppetTest
         }
 
         @@tmppids.clear
+
         Puppet::Type.allclear
         Puppet::Util::Storage.clear
         Puppet.clear
