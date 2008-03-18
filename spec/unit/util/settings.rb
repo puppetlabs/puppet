@@ -633,6 +633,19 @@ describe Puppet::Util::Settings, " when being used to manage the host machine" d
         lambda { @settings.use(:mysection) }.should raise_error
     end
 
+    it "should do nothing if all specified sections have already been used" do
+        bucket = mock 'bucket'
+        catalog = mock 'catalog'
+
+        @settings.expects(:to_transportable).once.returns(bucket)
+        bucket.expects(:to_catalog).returns catalog
+        catalog.stub_everything
+
+        @settings.use(:whatever)
+
+        @settings.use(:whatever)
+    end
+
     it "should ignore file settings whose values are not strings" do
         @settings[:maindir] = false
 

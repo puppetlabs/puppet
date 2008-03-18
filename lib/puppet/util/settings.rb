@@ -225,6 +225,9 @@ class Puppet::Util::Settings
 
         # A central concept of a name.
         @name = nil
+
+        # The list of sections we've used.
+        @used = []
     end
 
     # Return a given object's file metadata.
@@ -663,26 +666,28 @@ Generated on #{Time.now}.
     # you can 'use' a section as many times as you want.
     def use(*sections)
         @@sync.synchronize do # yay, thread-safe
-            unless defined? @used
-                @used = []
-            end
+            sections = sections.reject { |s| @used.include?(s.to_sym) }
+
+            return if sections.empty?
 
             bucket = to_transportable(*sections)
 
             begin
-                config = bucket.to_catalog
-                config.host_config = false
-                config.apply do |transaction|
+                catalog = bucket.to_catalog
+                raise "wtf?(%s)" % sections.inspect unless catalog
+                catalog.host_config = false
+                catalog.apply do |transaction|
                     if failures = transaction.any_failed?
                         raise "Could not configure for running; got %s failure(s)" % failures
                     end
                 end
             ensure
-                config.clear
+                # The catalog won't exist if there was an error creating it.
+                catalog.clear if catalog
             end
 
             sections.each { |s| @used << s }
-            @used.uniq
+            @used.uniq!
         end
     end
 
