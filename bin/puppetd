@@ -289,6 +289,10 @@ if options[:test]
     Puppet.settings.handlearg("--no-splay")
     Puppet.settings.handlearg("--show_diff")
     Puppet.settings.handlearg("--no-daemonize")
+    Puppet::Util::Log.newdestination(:console)
+    unless options[:debug] = true
+        Puppet::Util::Log.level = :info
+    end
     options[:verbose] = true
     options[:onetime] = true
     options[:waitforcert] = 0
