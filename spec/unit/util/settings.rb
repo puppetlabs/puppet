@@ -605,6 +605,17 @@ describe Puppet::Util::Settings, " when being used to manage the host machine" d
         lambda { trans.to_catalog }.should_not raise_error
     end
 
+    it "should do nothing if a catalog cannot be created" do
+        bucket = mock 'bucket'
+        catalog = mock 'catalog'
+
+        @settings.expects(:to_transportable).returns bucket
+        bucket.expects(:to_catalog).raises RuntimeError
+        catalog.expects(:apply).never
+
+        @settings.use(:mysection)
+    end
+
     it "should clear the catalog after applying" do
         bucket = mock 'bucket'
         catalog = mock 'catalog'

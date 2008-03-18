@@ -44,19 +44,6 @@ class Puppet::Util::Settings
         return value
     end
 
-    # A simplified equality operator.
-    # LAK: For some reason, this causes mocha to not be able to mock
-    # the 'value' method, and it's not used anywhere.
-#    def ==(other)
-#        self.each { |myname, myobj|
-#            unless other[myname] == value(myname)
-#                return false
-#            end
-#        }
-#
-#        return true
-#    end
-
     # Generate the list of valid arguments, in a format that GetoptLong can
     # understand, and add them to the passed option list.
     def addargs(options)
@@ -674,6 +661,16 @@ Generated on #{Time.now}.
 
             begin
                 catalog = bucket.to_catalog
+            rescue => detail
+                puts detail.backtrace if Puppet[:trace]
+                Puppet.err "Could not create resources for managing Puppet's files and directories: %s" % detail
+
+                # We need some way to get rid of any resources created during the catalog creation
+                # but not cleaned up.
+                return
+            end
+
+            begin
                 catalog.host_config = false
                 catalog.apply do |transaction|
                     if failures = transaction.any_failed?
@@ -681,8 +678,7 @@ Generated on #{Time.now}.
                     end
                 end
             ensure
-                # The catalog won't exist if there was an error creating it.
-                catalog.clear if catalog
+                catalog.clear
             end
 
             sections.each { |s| @used << s }
