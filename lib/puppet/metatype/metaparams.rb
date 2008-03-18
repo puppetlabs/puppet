@@ -375,7 +375,7 @@ class Puppet::Type
                     }
                     service { nagios:
                         running => true,
-                        subscribe => file[nagconf]
+                        subscribe => File[nagconf]
                     }
                 }
 	 		
@@ -392,7 +392,7 @@ class Puppet::Type
                 file { "/var/nagios/configuration":
                     source  => "...",
                     recurse => true,
-                    before => exec["nagios-rebuid"]
+                    before => Exec["nagios-rebuid"]
                 }
 
                 exec { "nagios-rebuild":
@@ -410,7 +410,7 @@ class Puppet::Type
 
                 file { "/etc/sshd_config":
                     source => "....",
-                    notify => service[sshd]
+                    notify => Service[sshd]
                 }
 
                 service { sshd:
