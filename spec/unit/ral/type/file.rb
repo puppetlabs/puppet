@@ -2,9 +2,7 @@
 
 require File.dirname(__FILE__) + '/../../../spec_helper'
 
-require 'puppet/type/file'
-
-describe Puppet::Type::File do
+describe Puppet::Type.type(:file) do
     before do
         @path = Tempfile.new("puppetspec")
         @path.close!()
