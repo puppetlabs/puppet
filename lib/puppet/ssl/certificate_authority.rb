@@ -61,28 +61,28 @@ class Puppet::SSL::CertificateAuthority < Puppet::SSL::Host
     end
 
     # Sign a given certificate request.
-    def sign(host, cert_type = :service, self_signed = false)
-        # This is only used by the CA for self-signing.
-        if host.is_a?(Puppet::SSL::CertificateRequest)
-            csr = host
-            host = csr.name
+    def sign(host, cert_type = :server, self_signing_csr = nil)
+
+        # This is a self-signed certificate
+        if self_signing_csr
+            csr = self_signing_csr
             issuer = csr.content
         else
+            raise ArgumentError, "Cannot find CA certificate; cannot sign certificate for %s" % host unless certificate
             unless csr = Puppet::SSL::CertificateRequest.find(host, :in => :ca_file)
-                raise Puppet::Error, "Could not find certificate request for %s" % host
+                raise ArgumentError, "Could not find certificate request for %s" % host
             end
             issuer = certificate.content
         end
-
-        raise Puppet::Error, "Certificate request for #{host} does not match its own public key" unless csr.content.verify(csr.content.public_key)
-        raise ArgumentError, "Cannot find CA certificate; cannot sign certificate for %s" % host unless self_signed or certificate
 
         cert = Puppet::SSL::Certificate.new(host)
         cert.content = Puppet::SSL::CertificateFactory.new(cert_type, csr.content, issuer, next_serial).result
 
         # Save the now-signed cert, unless it's a self-signed cert, since we
         # assume it goes somewhere else.
-        cert.save(:in => :ca_file) unless self_signed
+        cert.save(:in => :ca_file) unless self_signing_csr
+
+        return cert
     end
 
     # Do all of the initialization necessary to set up our
