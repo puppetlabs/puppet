@@ -45,11 +45,13 @@ describe Puppet::SSL::Key do
         end
 
         it "should read the key with the password retrieved from the password file if one is provided" do
+            FileTest.stubs(:exist?).returns true
             @key.password_file = "/path/to/password"
 
             path = "/my/path"
             File.expects(:read).with(path).returns("my key")
             File.expects(:read).with("/path/to/password").returns("my password")
+
             key = mock 'key'
             OpenSSL::PKey::RSA.expects(:new).with("my key", "my password").returns(key)
             @key.read(path).should equal(key)
@@ -83,6 +85,34 @@ describe Puppet::SSL::Key do
         it "should create the private key with the keylength specified in the settings" do
             Puppet.settings.expects(:value).with(:keylength).returns(50)
             OpenSSL::PKey::RSA.expects(:new).with(50).returns(@key)
+
+            @instance.generate
+        end
+
+        it "should fail if a provided password file does not exist" do
+            FileTest.expects(:exist?).with("/path/to/pass").returns false
+
+            lambda { @instance.password_file = "/path/to/pass" }.should raise_error(ArgumentError)
+        end
+
+        it "should return the contents of the password file as its password" do
+            FileTest.expects(:exist?).with("/path/to/pass").returns true
+            File.expects(:read).with("/path/to/pass").returns "my password"
+
+            @instance.password_file = "/path/to/pass"
+
+            @instance.password.should == "my password"
+        end
+
+        it "should create the private key with any provided password" do
+            Puppet.settings.stubs(:value).with(:keylength).returns(50)
+
+            FileTest.expects(:exist?).with("/path/to/pass").returns true
+            File.expects(:read).with("/path/to/pass").returns "my password"
+
+            @instance.password_file = "/path/to/pass"
+
+            OpenSSL::PKey::RSA.expects(:new).with(50, "my password").returns(@key)
 
             @instance.generate
         end

@@ -10,7 +10,7 @@ class Puppet::SSL::CertificateAuthority < Puppet::SSL::Host
     def read_key
         return nil unless FileTest.exist?(Puppet[:cakey])
 
-        key = Puppet::SSL::Key.new(:ca)
+        key = Puppet::SSL::Key.new(name)
         key.password_file = Puppet[:capass]
         key.read(Puppet[:cakey])
 
@@ -20,8 +20,9 @@ class Puppet::SSL::CertificateAuthority < Puppet::SSL::Host
     # Generate and write the key out.
     def generate_key
         @key = Key.new(name)
+        @key.password_file = Puppet[:capass]
         @key.generate
-        Puppet.settings.write(:cacert) do |f|
+        Puppet.settings.write(:cakey) do |f|
             f.print @key.to_s
         end
         true
@@ -56,7 +57,7 @@ class Puppet::SSL::CertificateAuthority < Puppet::SSL::Host
         # Always name the ca after the host we're running on.
         super(Puppet[:certname])
 
-        setup_ca
+        setup_ca()
     end
 
     # Sign a given certificate request.
@@ -84,15 +85,13 @@ class Puppet::SSL::CertificateAuthority < Puppet::SSL::Host
         cert.save(:in => :ca_file) unless self_signed
     end
 
-    private
-
     # Do all of the initialization necessary to set up our
     # ca.
     def setup_ca
         generate_key unless key
 
         # Make sure we've got a password protecting our private key.
-        generate_password unless read_password
+        generate_password unless password?
 
         # And then make sure we've got the whole kaboodle.  This will
         # create a self-signed CA certificate if we don't already have one,
@@ -134,17 +133,8 @@ class Puppet::SSL::CertificateAuthority < Puppet::SSL::Host
         return serial
     end
 
-    # Get the CA password.
-    def read_password
-        unless defined?(@password) and @password
-            path = Puppet[:capass]
-            return nil unless FileTest.exist?(path)
-
-            raise(Puppet::Error, "Could not read CA passfile %s" % path) unless FileTest.readable?(path)
-
-            @password = File.read(path)
-        end
-
-        @password
+    # Does the password file exist?
+    def password?
+        FileTest.exist? Puppet[:capass]
     end
 end
