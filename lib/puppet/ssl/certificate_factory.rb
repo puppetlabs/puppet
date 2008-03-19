@@ -1,3 +1,5 @@
+require 'puppet/ssl'
+
 # The tedious class that does all the manipulations to the
 # certificate to correctly sign it.  Yay.
 class Puppet::SSL::CertificateFactory
@@ -8,23 +10,30 @@ class Puppet::SSL::CertificateFactory
         "h" => 60 * 60,
         "s" => 1
     }
+
+    attr_reader :name, :cert_type, :csr, :issuer, :serial
     
     def initialize(cert_type, csr, issuer, serial)
-        @cert_type, @csr, @issuer = cert_type, csr, issuer
+        @cert_type, @csr, @issuer, @serial = cert_type, csr, issuer, serial
 
         @name = @csr.subject
+    end
 
+    # Actually generate our certificate.
+    def result
         @cert = OpenSSL::X509::Certificate.new
 
         @cert.version = 2 # X509v3
-        @cert.subject = csr.subject
-        @cert.issuer = issuer.subject
-        @cert.public_key = csr.public_key
-        @cert.serial = serial
+        @cert.subject = @csr.subject
+        @cert.issuer = @issuer.subject
+        @cert.public_key = @csr.public_key
+        @cert.serial = @serial
 
         build_extensions()
 
         set_ttl
+
+        @cert
     end
 
     private
