@@ -268,6 +268,18 @@ end
 # Now parse the config
 Puppet.parse_config
 
+if options[:test]
+    # Enable all of the most common test options.
+    Puppet.settings.handlearg("--ignorecache")
+    Puppet.settings.handlearg("--no-usecacheonfailure")
+    Puppet.settings.handlearg("--no-splay")
+    Puppet.settings.handlearg("--show_diff")
+    Puppet.settings.handlearg("--no-daemonize")
+    options[:verbose] = true
+    options[:onetime] = true
+    options[:waitforcert] = 0
+end
+
 # Handle the logging settings.
 if options[:debug] or options[:verbose]
     Puppet::Util::Log.newdestination(:console)
@@ -280,22 +292,6 @@ end
 
 unless options[:setdest]
     Puppet::Util::Log.newdestination(:syslog)
-end
-
-if options[:test]
-    # Enable all of the most common test options.
-    Puppet.settings.handlearg("--ignorecache")
-    Puppet.settings.handlearg("--no-usecacheonfailure")
-    Puppet.settings.handlearg("--no-splay")
-    Puppet.settings.handlearg("--show_diff")
-    Puppet.settings.handlearg("--no-daemonize")
-    Puppet::Util::Log.newdestination(:console)
-    unless options[:debug] = true
-        Puppet::Util::Log.level = :info
-    end
-    options[:verbose] = true
-    options[:onetime] = true
-    options[:waitforcert] = 0
 end
 
 Puppet.genconfig

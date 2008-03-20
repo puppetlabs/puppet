@@ -1,3 +1,5 @@
+    Fixed #1136: Verbose and Debug no longer clobber each other.
+
     Hopefully *finally* fixed the "already being managed" problem
     (#1036).  The problem only cropped up if there was a failure
     when trying to manage the system -- this would cause the
