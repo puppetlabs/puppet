@@ -58,9 +58,11 @@ class Puppet::SSL::CertificateFactory
 
         method = "add_#{@cert_type.to_s}_extensions"
 
-        raise ArgumentError, "%s is an invalid certificate type" % @cert_type unless respond_to?(method)
-
-        send(method)
+        begin
+            send(method)
+        rescue NoMethodError
+            raise ArgumentError, "%s is an invalid certificate type" % @cert_type
+        end
 
         @extensions << @ef.create_extension("nsComment", "Puppet Ruby/OpenSSL Generated Certificate")
         @extensions << @ef.create_extension("basicConstraints", @basic_constraint, true)
@@ -72,7 +74,7 @@ class Puppet::SSL::CertificateFactory
         @cert.extensions = @extensions
 
         # for some reason this _must_ be the last extension added
-        @extensions << ef.create_extension("authorityKeyIdentifier", "keyid:always,issuer:always") if @cert_type == :ca
+        @extensions << @ef.create_extension("authorityKeyIdentifier", "keyid:always,issuer:always") if @cert_type == :ca
     end
 
     # TTL for new certificates in seconds. If config param :ca_ttl is set, 

@@ -44,7 +44,7 @@ class Puppet::SSL::CertificateAuthority < Puppet::SSL::Host
         request.generate(key)
 
         # Create a self-signed certificate.
-        @certificate = sign(request, :ca, true)
+        @certificate = sign(name, :ca, request)
 
         Puppet.settings.write(:cacert) do |f|
             f.print @certificate.to_s
@@ -54,6 +54,8 @@ class Puppet::SSL::CertificateAuthority < Puppet::SSL::Host
     end
 
     def initialize
+        Puppet.settings.use :main, :ssl, :ca
+
         # Always name the ca after the host we're running on.
         super(Puppet[:certname])
 
@@ -72,11 +74,13 @@ class Puppet::SSL::CertificateAuthority < Puppet::SSL::Host
             unless csr = Puppet::SSL::CertificateRequest.find(host, :in => :ca_file)
                 raise ArgumentError, "Could not find certificate request for %s" % host
             end
-            issuer = certificate.content
+            issuer = certificate
         end
 
         cert = Puppet::SSL::Certificate.new(host)
         cert.content = Puppet::SSL::CertificateFactory.new(cert_type, csr.content, issuer, next_serial).result
+
+        Puppet.notice "Signed certificate request for %s" % host
 
         # Save the now-signed cert, unless it's a self-signed cert, since we
         # assume it goes somewhere else.
@@ -88,10 +92,10 @@ class Puppet::SSL::CertificateAuthority < Puppet::SSL::Host
     # Do all of the initialization necessary to set up our
     # ca.
     def setup_ca
-        generate_key unless key
-
         # Make sure we've got a password protecting our private key.
         generate_password unless password?
+
+        generate_key unless key
 
         # And then make sure we've got the whole kaboodle.  This will
         # create a self-signed CA certificate if we don't already have one,

@@ -57,7 +57,7 @@ class Puppet::SSL::Host
     manage_file :key do
         @key = Key.new(name)
         @key.generate
-        @key.save
+        @key.save :in => :file
         true
     end
 
@@ -66,7 +66,7 @@ class Puppet::SSL::Host
         generate_key unless key
         @certificate_request = CertificateRequest.new(name)
         @certificate_request.generate(key)
-        @certificate_request.save
+        @certificate_request.save :in => :file
         return true
     end
 
@@ -78,7 +78,7 @@ class Puppet::SSL::Host
 
         @certificate = Certificate.new(name)
         if @certificate.generate(certificate_request)
-            @certificate.save
+            @certificate.save :in => :file
             return true
         else
             return false
@@ -106,5 +106,24 @@ class Puppet::SSL::Host
     # Extract the public key from the private key.
     def public_key
         key.public_key
+    end
+
+    # Try to get our signed certificate.
+    def retrieve_signed_certificate(source = :ca_file)
+        if cert = Puppet::SSL::Certificate.find(name, :in => source)
+            @certificate = cert
+            @certificate.save :in => :file
+            return true
+        else
+            return false
+        end
+    end
+
+    # Send our CSR to the server, defaulting to the
+    # local CA.
+    def send_certificate_request(dest = :ca_file)
+        raise ArgumentError, "Must generate CSR before sending to server" unless certificate_request
+
+        @certificate_request.save :in => dest
     end
 end

@@ -685,7 +685,7 @@ Generated on #{Time.now}.
         end
 
         sync.synchronize(Sync::EX) do
-            File.open(file, "r+", 0600) do |rf|
+            File.open(file, ::File::CREAT|::File::RDWR, 0600) do |rf|
                 rf.lock_exclusive do
                     if File.exist?(tmpfile)
                         raise Puppet::Error, ".tmp file already exists for %s; Aborting locked write. Check the .tmp file and delete if appropriate" %

@@ -13,11 +13,7 @@ class Puppet::SSL::Key < Puppet::SSL::Base
     # Knows how to create keys with our system defaults.
     def generate
         Puppet.info "Creating a new SSL key for %s" % name
-        if pass = password
-            @content = OpenSSL::PKey::RSA.new(Puppet[:keylength], pass)
-        else
-            @content = OpenSSL::PKey::RSA.new(Puppet[:keylength])
-        end
+        @content = OpenSSL::PKey::RSA.new(Puppet[:keylength].to_i)
     end
 
     def password
@@ -38,5 +34,13 @@ class Puppet::SSL::Key < Puppet::SSL::Base
         return super unless password_file
 
         @content = wrapped_class.new(::File.read(path), password)
+    end
+
+    def to_s
+        if pass = password
+            @content.export(OpenSSL::Cipher::DES.new(:EDE3, :CBC), pass)
+        else
+            return super
+        end
     end
 end

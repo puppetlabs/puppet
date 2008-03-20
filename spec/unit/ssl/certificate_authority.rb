@@ -7,6 +7,7 @@ require 'puppet/ssl/certificate_authority'
 describe Puppet::SSL::CertificateAuthority do
     describe "when initializing" do
         it "should always set its name to the value of :certname" do
+            Puppet.settings.stubs(:use)
             Puppet.settings.expects(:value).with(:certname).returns "whatever"
 
             Puppet::SSL::CertificateAuthority.any_instance.stubs(:setup_ca)
@@ -14,8 +15,15 @@ describe Puppet::SSL::CertificateAuthority do
             Puppet::SSL::CertificateAuthority.new.name.should == "whatever"
         end
 
+        it "should use the :main, :ca, and :ssl settings sections" do
+            Puppet.settings.expects(:use).with(:main, :ssl, :ca)
+            Puppet::SSL::CertificateAuthority.any_instance.stubs(:setup_ca)
+            Puppet::SSL::CertificateAuthority.new
+        end
+
         describe "a new certificate authority" do
             before do
+                Puppet.settings.stubs(:use)
                 Puppet.settings.stubs(:value).with(:certname).returns "whatever"
             end
 
@@ -73,7 +81,7 @@ describe Puppet::SSL::CertificateAuthority do
 
                 cert = mock 'cert'
                 cert.expects(:to_s).returns "my cert"
-                Puppet::SSL::CertificateAuthority.any_instance.expects(:sign).with(request, :ca, true).returns cert
+                Puppet::SSL::CertificateAuthority.any_instance.expects(:sign).with("whatever", :ca, request).returns cert
 
                 fh = mock 'filehandle'
                 Puppet.settings.expects(:write).with(:cacert).yields fh
@@ -90,6 +98,7 @@ describe Puppet::SSL::CertificateAuthority do
         describe "an existing certificate authority" do
             it "should read and decrypt the key at :cakey using the password at :capass and it should read the cert at :cacert" do
                 Puppet.settings.stubs(:value).with(:certname).returns "whatever"
+                Puppet.settings.stubs(:use)
 
                 paths = {}
                 [:capass, :cakey, :cacert].each do |value|
@@ -117,6 +126,7 @@ describe Puppet::SSL::CertificateAuthority do
     describe "when signing" do
         before do
             Puppet.settings.stubs(:value).with(:certname).returns "whatever"
+            Puppet.settings.stubs(:use)
 
             Puppet::SSL::CertificateAuthority.any_instance.stubs(:password?).returns true
 
@@ -259,7 +269,7 @@ describe Puppet::SSL::CertificateAuthority do
 
             it "should use the CA certificate as the issuer" do
                 Puppet::SSL::CertificateFactory.expects(:new).with do |*args|
-                    args[2] == @cacert.content
+                    args[2] == @cacert
                 end.returns @factory
                 @ca.sign(@name)
             end

@@ -11,7 +11,7 @@ class Puppet::SSL::Key::File < Puppet::Indirector::SslFile
     end
 
     # Remove the public key, in addition to the private key
-    def destroy(key)
+    def destroy(key, options = {})
         super
 
         return unless FileTest.exist?(public_key_path(key.name))
@@ -24,7 +24,7 @@ class Puppet::SSL::Key::File < Puppet::Indirector::SslFile
     end
 
     # Save the public key, in addition to the private key.
-    def save(key)
+    def save(key, options = {})
         super
 
         begin
