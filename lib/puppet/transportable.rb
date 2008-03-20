@@ -83,14 +83,11 @@ module Puppet
         end
 
         def to_type
-            retobj = nil
             if typeklass = Puppet::Type.type(self.type)
                 return typeklass.create(self)
             else
                 return to_component
             end
-
-            return retobj
         end
     end
 
@@ -179,28 +176,39 @@ module Puppet
         end
 
         # Create a resource graph from our structure.
-        def to_catalog
-            catalog = Puppet::Node::Catalog.new(Facter.value("hostname")) do |config|
-                delver = proc do |obj|
-                    obj.catalog = config
-                    unless container = config.resource(obj.to_ref)
-                        container = obj.to_type
-                        config.add_resource container
+        def to_catalog(clear_on_failure = true)
+            catalog = Puppet::Node::Catalog.new(Facter.value("hostname"))
+
+            # This should really use the 'delve' method, but this
+            # whole class is going away relatively soon, hopefully,
+            # so it's not worth it.
+            delver = proc do |obj|
+                obj.catalog = catalog
+                unless container = catalog.resource(obj.to_ref)
+                    container = obj.to_type
+                    catalog.add_resource container
+                end
+                obj.each do |child|
+                    child.catalog = catalog
+                    unless resource = catalog.resource(child.to_ref)
+                        resource = child.to_type
+                        catalog.add_resource resource
                     end
-                    obj.each do |child|
-                        child.catalog = config
-                        unless resource = config.resource(child.to_ref)
-                            next unless resource = child.to_type
-                            config.add_resource resource
-                        end
-                        config.add_edge(container, resource)
-                        if child.is_a?(self.class)
-                            delver.call(child)
-                        end
+
+                    catalog.add_edge(container, resource)
+                    if child.is_a?(self.class)
+                        delver.call(child)
                     end
                 end
+            end
                 
+            begin
                 delver.call(self)
+                catalog.finalize
+            rescue => detail
+                # This is important until we lose the global resource references.
+                catalog.clear if (clear_on_failure)
+                raise
             end
             
             return catalog

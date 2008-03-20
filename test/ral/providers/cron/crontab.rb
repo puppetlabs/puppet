@@ -5,7 +5,6 @@ require File.dirname(__FILE__) + '/../../../lib/puppettest'
 require 'puppettest'
 require 'mocha'
 require 'puppettest/fileparsing'
-require 'puppet/type/cron'
 
 class TestCronParsedProvider < Test::Unit::TestCase
 	include PuppetTest

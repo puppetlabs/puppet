@@ -14,7 +14,7 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
     # Remove the symlinks
     def disable
         update "-f", @resource[:name], "remove"
-        update @resource[:name], "stop 1 2 3 4 5 6 ."
+        update @resource[:name], "stop", "00", "1", "2", "3", "4", "5", "6", "."
     end
 
     def enabled?
@@ -34,4 +34,3 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
         update @resource[:name], "defaults"
     end
 end
-

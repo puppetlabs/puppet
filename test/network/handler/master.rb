@@ -76,8 +76,15 @@ class TestMaster < Test::Unit::TestCase
         Puppet[:node_name] = "cert"
 
         # Make sure we get the fact data back when nothing is set
-        facts = {"hostname" => "fact_hostname", "ipaddress" => "fact_ip"}
-        certname = "cert_hostname"
+        facts = {
+            "hostname" => "fact_hostname",
+            "domain" => "fact_domain",
+            "fqdn" => "fact_hostname.fact_domain",
+            "ipaddress" => "fact_ip"
+        }
+        certhostname = "cert_hostname"
+        certdomain = "cert_domain"
+        certname = certhostname + "." + certdomain
         certip = "cert_ip"
 
         resname, resip = master.send(:clientname, nil, nil, facts)

@@ -89,46 +89,108 @@
   (make-local-variable 'paragraph-ignore-fill-prefix)
   (setq paragraph-ignore-fill-prefix t))
 
+(defun puppet-comment-line-p ()
+  "Return non-nil iff this line is a comment."
+  (save-excursion
+    (beginning-of-line)
+    (looking-at (format "\\s-*%s" comment-start))))
+
+(defun puppet-in-array ()
+  "If point is in an array, return the position of the opening '[' of
+that array, else return nil."
+  (save-excursion
+    (save-match-data
+      (let ((opoint (point))
+            (apoint (search-backward "[" nil t)))
+        (when apoint
+          ;; An array opens before point.  If it doesn't close before
+          ;; point, then point must be in it.
+          ;; ### TODO: of course, the '[' could be in a string literal,
+          ;; ### in which case this whole idea is bogus.  But baby
+          ;; ### steps, baby steps.  A more robust strategy might be
+          ;; ### to walk backwards by sexps, until hit a wall, then
+          ;; ### inspect the nature of that wall.
+          (if (= (count-matches "\\]" apoint opoint) 0)
+              apoint))))))
+
 (defun puppet-indent-line ()
   "Indent current line as puppet code."
   (interactive)
   (beginning-of-line)
   (if (bobp)
       (indent-line-to 0)                ; First line is always non-indented
-    (let ((not-indented t) cur-indent)
-      (if (looking-at "^.*}") ; If the line we are looking at is the end of
-			      ; a block, then decrease the indentation
-          (progn
-            (save-excursion
-              (forward-line -1)
-            
-              (if (looking-at "^.*}")
-		  (progn
-                    (setq cur-indent (- (current-indentation) 2))
-		    (setq not-indented nil))
-		(setq cur-indent (- (current-indentation) 2))))
-	    (if (< cur-indent 0)     ; We can't indent past the left margin
-		(setq cur-indent 0)))
-	(save-excursion
-	  (while not-indented ; Iterate backwards until we find an
-			      ; indentation hint
-	    (forward-line -1)
-	    (if (looking-at "^.*}") ; This hint indicates that we need to
-				    ; indent at the level of the END_ token
-		(progn
-		  (setq cur-indent (current-indentation))
-		  (setq not-indented nil))
-	      (if (looking-at "^.*{") ; This hint indicates that we need to
-				      ; indent an extra level
-		  (progn
-                                        ; Do the actual indenting
-		    (setq cur-indent (+ (current-indentation) 2)) 
-		    (setq not-indented nil))
-		(if (bobp)
-		    (setq not-indented nil)))))))
+    (let ((not-indented t)
+          (array-start (puppet-in-array))
+          cur-indent)
+      (cond
+       (array-start
+        ;; This line probably starts with an element from an array.
+        ;; Indent the line to the same indentation as the first
+        ;; element in that array.  That is, this...
+        ;;
+        ;;    exec {     
+        ;;      "add_puppetmaster_mongrel_startup_links":
+        ;;      command => "string1",
+        ;;      creates => [ "string2", "string3", 
+        ;;      "string4", "string5", 
+        ;;      "string6", "string7",
+        ;;      "string3" ],
+        ;;      refreshonly => true,
+        ;;    }
+        ;; 
+        ;; ...should instead look like this:
+        ;;
+        ;;    exec {     
+        ;;      "add_puppetmaster_mongrel_startup_links":
+        ;;      command => "string1",
+        ;;      creates => [ "string2", "string3", 
+        ;;                   "string4", "string5", 
+        ;;                   "string6", "string7",
+        ;;                   "string8" ],
+        ;;      refreshonly => true,
+        ;;    }
+        (save-excursion
+          (goto-char array-start)
+          (forward-char 1)
+          (re-search-forward "\\S-")
+          (forward-char -1)
+          (setq cur-indent (current-column))))
+       ((looking-at "^[^{\n]*}")
+        ;; This line contains the end of a block, but the block does
+        ;; not also begin on this line, so decrease the indentation.
+        (save-excursion
+          (forward-line -1)
+          (if (looking-at "^.*}")
+              (progn
+                (setq cur-indent (- (current-indentation) 2))
+                (setq not-indented nil))
+            (setq cur-indent (- (current-indentation) 2))))
+        (if (< cur-indent 0)     ; We can't indent past the left margin
+            (setq cur-indent 0)))
+       (t
+        ;; Otherwise, we did not start on a block-ending-only line.
+        (save-excursion
+          ;; Iterate backwards until we find an indentation hint
+          (while not-indented
+            (forward-line -1)
+            (cond
+             ((puppet-comment-line-p)
+              (if (bobp)
+                  (setq not-indented nil)
+                ;; else ignore the line and continue iterating backwards
+                ))
+             ((looking-at "^.*}") ; indent at the level of the END_ token
+              (setq cur-indent (current-indentation))
+              (setq not-indented nil))
+             ((looking-at "^.*{") ; indent an extra level
+              (setq cur-indent (+ (current-indentation) 2)) 
+              (setq not-indented nil))
+             ((bobp)
+              (setq not-indented nil))
+             )))))
       (if cur-indent
-	  (indent-line-to cur-indent)
-	(indent-line-to 0)))))
+          (indent-line-to cur-indent)
+        (indent-line-to 0)))))
 
 
 ;;;###autoload
@@ -155,31 +217,31 @@ The variable puppet-indent-level controls the amount of indentation.
       (setq font-lock-variable-name-face font-lock-type-face))
 
   (setq puppet-font-lock-syntactic-keywords
-	'(
-	  ("\\(^\\|[=(,~?:;]\\|\\(^\\|\\s \\)\\(if\\|elsif\\|unless\\|while\\|until\\|when\\|and\\|or\\|&&\\|||\\)\\|g?sub!?\\|scan\\|split!?\\)\\s *\\(/\\)[^/\n\\\\]*\\(\\\\.[^/\n\\\\]*\\)*\\(/\\)"
-	   (4 (7 . ?/))
-	   (6 (7 . ?/)))
-	  ("^\\(=\\)begin\\(\\s \\|$\\)" 1 (7 . nil))
-	  ("^\\(=\\)end\\(\\s \\|$\\)" 1 (7 . nil))))
+        '(
+          ("\\(^\\|[=(,~?:;]\\|\\(^\\|\\s \\)\\(if\\|elsif\\|unless\\|while\\|until\\|when\\|and\\|or\\|&&\\|||\\)\\|g?sub!?\\|scan\\|split!?\\)\\s *\\(/\\)[^/\n\\\\]*\\(\\\\.[^/\n\\\\]*\\)*\\(/\\)"
+           (4 (7 . ?/))
+           (6 (7 . ?/)))
+          ("^\\(=\\)begin\\(\\s \\|$\\)" 1 (7 . nil))
+          ("^\\(=\\)end\\(\\s \\|$\\)" 1 (7 . nil))))
 
   (cond ((featurep 'xemacs)
-	 (put 'puppet-mode 'font-lock-defaults
-	      '((puppet-font-lock-keywords)
-		nil nil nil
-		beginning-of-line
-		(font-lock-syntactic-keywords
-		 . puppet-font-lock-syntactic-keywords))))
-	(t
-	 (add-hook 'puppet-mode-hook
-	    '(lambda ()
-	       (make-local-variable 'font-lock-defaults)
-	       (make-local-variable 'font-lock-keywords)
-	       (make-local-variable 'font-lock-syntax-table)
-	       (make-local-variable 'font-lock-syntactic-keywords)
-	       (setq font-lock-defaults '((puppet-font-lock-keywords) nil nil))
-	       (setq font-lock-keywords puppet-font-lock-keywords)
-	       (setq font-lock-syntax-table puppet-font-lock-syntax-table)
-	       (setq font-lock-syntactic-keywords puppet-font-lock-syntactic-keywords)))))
+         (put 'puppet-mode 'font-lock-defaults
+              '((puppet-font-lock-keywords)
+                nil nil nil
+                beginning-of-line
+                (font-lock-syntactic-keywords
+                 . puppet-font-lock-syntactic-keywords))))
+        (t
+         (add-hook 'puppet-mode-hook
+            '(lambda ()
+               (make-local-variable 'font-lock-defaults)
+               (make-local-variable 'font-lock-keywords)
+               (make-local-variable 'font-lock-syntax-table)
+               (make-local-variable 'font-lock-syntactic-keywords)
+               (setq font-lock-defaults '((puppet-font-lock-keywords) nil nil))
+               (setq font-lock-keywords puppet-font-lock-keywords)
+               (setq font-lock-syntax-table puppet-font-lock-syntax-table)
+               (setq font-lock-syntactic-keywords puppet-font-lock-syntactic-keywords)))))
 
   (defvar puppet-font-lock-syntax-table
     (let* ((tbl (copy-syntax-table puppet-mode-syntax-table)))
@@ -196,23 +258,23 @@ The variable puppet-indent-level controls the amount of indentation.
        1 font-lock-reference-face)
      ;; keywords
      (cons (concat
-	    "\\b\\(\\("
-	    (mapconcat
-	     'identity
-	     '("case"
+            "\\b\\(\\("
+            (mapconcat
+             'identity
+             '("case"
                "class"
                "default"
                "define"
-	       "false"
-	       "import"
-	       "include"
-	       "inherits"
-	       "node"
-	       "true"
-	       )
-	     "\\|")
-	    "\\)\\>\\)")
-	   1)
+               "false"
+               "import"
+               "include"
+               "inherits"
+               "node"
+               "true"
+               )
+             "\\|")
+            "\\)\\>\\)")
+           1)
      ;; variables
      '("\\(^\\|[^_:.@$]\\|\\.\\.\\)\\b\\(nil\\|self\\|true\\|false\\)\\>"
        2 font-lock-variable-name-face)

@@ -5,6 +5,13 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 require 'puppet/indirector/node/ldap'
 
 describe Puppet::Node::Ldap do
+    it "should use the version of the facts as its version" do
+        @searcher = Puppet::Node::Ldap.new
+        version = mock 'version'
+        Puppet::Node::Facts.expects(:version).with("me").returns version
+        @searcher.version("me").should equal(version)
+    end
+
     describe "when searching for nodes" do
         before :each do
             @searcher = Puppet::Node::Ldap.new

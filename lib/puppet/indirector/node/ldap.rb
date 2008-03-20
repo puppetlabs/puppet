@@ -122,4 +122,8 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
         end
         filter
     end
+
+    def version(name)
+        Puppet::Node::Facts.version(name)
+    end
 end

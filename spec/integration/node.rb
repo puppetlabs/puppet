@@ -11,12 +11,9 @@ describe Puppet::Node, " when using the memory terminus" do
     before do
         @name = "me"
         @old_terminus = Puppet::Node.indirection.terminus_class
-        Puppet::Node.terminus_class = :memory
+        @terminus = Puppet::Node.indirection.terminus(:memory)
+        Puppet::Node.indirection.stubs(:terminus).returns @terminus
         @node = Puppet::Node.new(@name)
-    end
-
-    after do
-        Puppet::Node.terminus_class = @old_terminus
     end
 
     it "should find no nodes by default" do
@@ -43,9 +40,5 @@ describe Puppet::Node, " when using the memory terminus" do
 
     it "should fail when asked to destroy a node that does not exist" do
         proc { Puppet::Node.destroy(@node) }.should raise_error(ArgumentError)
-    end
-
-    after do
-        Puppet.settings.clear
     end
 end

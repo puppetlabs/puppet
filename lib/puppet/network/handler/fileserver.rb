@@ -429,55 +429,6 @@ class Puppet::Network::Handler
 
             Puppet::Util.logmethods(self, true)
 
-            def getfileobject(dir, links, client = nil)
-                unless path_exists?(dir, client)
-                    self.debug "File source %s does not exist" % dir
-                    return nil
-                end
-
-                return fileobj(dir, links, client)
-            end
-             
-            # Run 'retrieve' on a file.  This gets the actual parameters, so
-            # we can pass them to the client.
-            def check(obj)
-                # Retrieval is enough here, because we don't want to cache
-                # any information in the state file, and we don't want to generate
-                # any state changes or anything.  We don't even need to sync
-                # the checksum, because we're always going to hit the disk
-                # directly.
-
-                # We're now caching file data, using the LoadedFile to check the
-                # disk no more frequently than the :filetimeout.
-                path = obj[:path]
-                sync = sync(path)
-                unless data = @@files[path]
-                    data = {}
-                    sync.synchronize(Sync::EX) do
-                        @@files[path] = data
-                        data[:loaded_obj] = Puppet::Util::LoadedFile.new(path)
-                        data[:values] = properties(obj)
-                        return data[:values]
-                    end
-                end
-
-                changed = nil
-                sync.synchronize(Sync::SH) do
-                    changed = data[:loaded_obj].changed?
-                end
-
-                if changed
-                    sync.synchronize(Sync::EX) do
-                        data[:values] = properties(obj)
-                        return data[:values]
-                    end
-                else
-                    sync.synchronize(Sync::SH) do
-                        return data[:values]
-                    end
-                end
-            end
-
             # Create a map for a specific client.
             def clientmap(client)
                 {

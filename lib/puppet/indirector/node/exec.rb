@@ -24,6 +24,13 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
         return create_node(name, result)
     end
 
+    # Use the version of the facts, since we assume that's the main thing
+    # that changes.  If someone wants their own way of defining version,
+    # they can easily provide their own, um, version of this class.
+    def version(name)
+        Puppet::Node::Facts.version(name)
+    end
+
     private
 
     # Turn our outputted objects into a Puppet::Node instance.

@@ -327,8 +327,8 @@ module Puppet
         :masterport => [8140, "Which port puppetmasterd listens on."],
         :parseonly => [false, "Just check the syntax of the manifests."],
         :node_name => ["cert", "How the puppetmaster determines the client's identity 
-           and sets the 'hostname' fact for use in the manifest, in particular 
-           for determining which 'node' statement applies to the client. 
+           and sets the 'hostname', 'fqdn' and 'domain' facts for use in the manifest, 
+           in particular for determining which 'node' statement applies to the client. 
            Possible values are 'cert' (use the subject's CN in the client's 
            certificate) and 'facter' (use the hostname that the client 
            reported in its facts)"],

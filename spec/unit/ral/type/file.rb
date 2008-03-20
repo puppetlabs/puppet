@@ -2,9 +2,7 @@
 
 require File.dirname(__FILE__) + '/../../../spec_helper'
 
-require 'puppet/type/file'
-
-describe Puppet::Type::File do
+describe Puppet::Type.type(:file) do
     before do
         @path = Tempfile.new("puppetspec")
         @path.close!()
@@ -59,9 +57,10 @@ describe Puppet::Type::File do
     describe "when managing links" do
         require 'puppettest/support/assertions'
         include PuppetTest
+        require 'tempfile'
 
         before do
-            @basedir = tempfile()
+            @basedir = tempfile
             Dir.mkdir(@basedir)
             @file = File.join(@basedir, "file")
             @link = File.join(@basedir, "link")
@@ -73,21 +72,23 @@ describe Puppet::Type::File do
                 :path => @link,
                 :mode => "755"
             )
+            @catalog = Puppet::Node::Catalog.new
+            @catalog.add_resource @resource
         end
 
         after do
-            teardown
+            remove_tmp_files
         end
 
         it "should default to managing the link" do
-            assert_events([], @resource)
+            @catalog.apply
             # I convert them to strings so they display correctly if there's an error.
             ("%o" % (File.stat(@file).mode & 007777)).should == "%o" % 0644
         end
 
         it "should be able to follow links" do
             @resource[:links] = :follow
-            assert_events([:file_changed], @resource)
+            @catalog.apply
 
             ("%o" % (File.stat(@file).mode & 007777)).should == "%o" % 0755
         end

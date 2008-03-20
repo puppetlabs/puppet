@@ -257,9 +257,7 @@ describe Puppet::Parser::Resource do
         it "should fail when the override was not created by a parent class" do
             @override.source = "source2"
             @override.source.expects(:child_of?).with("source1").returns(false)
-            assert_raise(Puppet::ParseError, "Allowed unrelated resources to override") do
-                @resource.merge(@override)
-            end
+            lambda { @resource.merge(@override) }.should raise_error(Puppet::ParseError)
         end
 
         it "should succeed when the override was created in the current scope" do

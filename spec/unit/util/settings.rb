@@ -476,7 +476,7 @@ describe Puppet::Util::Settings, " when being used to manage the host machine" d
 
     def stub_transaction
         @bucket = mock 'bucket'
-        @config = mock 'config'
+        @config = mock 'config', :clear => nil
         @trans = mock 'transaction'
 
         @settings.expects(:to_transportable).with(:whatever).returns(@bucket)
@@ -598,6 +598,58 @@ describe Puppet::Util::Settings, " when being used to manage the host machine" d
         trans = @settings.to_transportable
 
         lambda { trans.to_catalog }.should_not raise_error
+    end
+
+    it "should do nothing if a catalog cannot be created" do
+        bucket = mock 'bucket'
+        catalog = mock 'catalog'
+
+        @settings.expects(:to_transportable).returns bucket
+        bucket.expects(:to_catalog).raises RuntimeError
+        catalog.expects(:apply).never
+
+        @settings.use(:mysection)
+    end
+
+    it "should clear the catalog after applying" do
+        bucket = mock 'bucket'
+        catalog = mock 'catalog'
+
+        @settings.expects(:to_transportable).returns bucket
+        bucket.expects(:to_catalog).returns catalog
+        catalog.stubs(:host_config=)
+        catalog.stubs(:apply)
+        catalog.expects(:clear)
+
+        @settings.use(:mysection)
+    end
+
+    it "should clear the catalog even if there is an exception during applying" do
+        bucket = mock 'bucket'
+        catalog = mock 'catalog'
+
+        @settings.expects(:to_transportable).returns bucket
+        bucket.expects(:to_catalog).returns catalog
+        catalog.stubs(:host_config=)
+        catalog.expects(:apply).raises(ArgumentError)
+        catalog.expects(:clear)
+
+        # We don't care about the raised exception, we just care that
+        # we clear the catalog even with the exception
+        lambda { @settings.use(:mysection) }.should raise_error
+    end
+
+    it "should do nothing if all specified sections have already been used" do
+        bucket = mock 'bucket'
+        catalog = mock 'catalog'
+
+        @settings.expects(:to_transportable).once.returns(bucket)
+        bucket.expects(:to_catalog).returns catalog
+        catalog.stub_everything
+
+        @settings.use(:whatever)
+
+        @settings.use(:whatever)
     end
 
     it "should ignore file settings whose values are not strings" do

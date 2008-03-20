@@ -349,6 +349,8 @@ end
         File.open(source, "w") { |f| f.puts "something" }
         dest = tempfile
         Puppet[:noop] = true
+        node = stub 'node', :environment => "development"
+        Puppet::Node.stubs(:find).returns node
         assert_nothing_raised("Could not download in noop") do
             @master.download(:dest => dest, :source => source, :tag => "yay")
         end

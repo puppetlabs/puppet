@@ -87,42 +87,54 @@ describe Puppet::TransBucket, " when generating a catalog" do
         @top.push(@topobj)
         @top.push(@middle)
 
-        @config = @top.to_catalog
-
         @users = %w{top middle bottom}
         @fakes = %w{Fake[bottom] Fake[middle] Fake[top]}
     end
 
+    after do
+        Puppet::Type.allclear
+    end
+
     it "should convert all transportable objects to RAL resources" do
+        @catalog = @top.to_catalog
         @users.each do |name|
-            @config.vertices.find { |r| r.class.name == :user and r.title == name }.should be_instance_of(Puppet::Type.type(:user))
+            @catalog.vertices.find { |r| r.class.name == :user and r.title == name }.should be_instance_of(Puppet::Type.type(:user))
         end
     end
 
+    it "should fail if any transportable resources fail to convert to RAL resources" do
+        @bottomobj.expects(:to_type).raises ArgumentError
+        lambda { @bottom.to_catalog }.should raise_error(ArgumentError)
+    end
+
     it "should convert all transportable buckets to RAL components" do
+        @catalog = @top.to_catalog
         @fakes.each do |name|
-            @config.vertices.find { |r| r.class.name == :component and r.title == name }.should be_instance_of(Puppet::Type.type(:component))
+            @catalog.vertices.find { |r| r.class.name == :component and r.title == name }.should be_instance_of(Puppet::Type.type(:component))
         end
     end
 
     it "should add all resources to the graph's resource table" do
-        @config.resource("fake[top]").should equal(@top)
+        @catalog = @top.to_catalog
+        @catalog.resource("fake[top]").should equal(@top)
     end
 
     it "should finalize all resources" do
-        @config.vertices.each do |vertex| vertex.should be_finalized end
+        @catalog = @top.to_catalog
+        @catalog.vertices.each do |vertex| vertex.should be_finalized end
     end
 
     it "should only call to_type on each resource once" do
-        @topobj.expects(:to_type)
-        @bottomobj.expects(:to_type)
-        Puppet::Type.allclear
+        # We just raise exceptions here because we're not interested in
+        # what happens with the result, only that the method only
+        # gets called once.
+        resource = @topobj.to_type
+        @topobj.expects(:to_type).once.returns resource
         @top.to_catalog
     end
 
     it "should set each TransObject's catalog before converting to a RAL resource" do
         @middleobj.expects(:catalog=).with { |c| c.is_a?(Puppet::Node::Catalog) }
-        Puppet::Type.allclear
         @top.to_catalog
     end
 
@@ -130,12 +142,7 @@ describe Puppet::TransBucket, " when generating a catalog" do
         # each bucket is seen twice in the loop, so we have to handle the case where the config
         # is set twice
         @bottom.expects(:catalog=).with { |c| c.is_a?(Puppet::Node::Catalog) }.at_least_once
-        Puppet::Type.allclear
         @top.to_catalog
-    end
-
-    after do
-        Puppet::Type.allclear
     end
 end
 

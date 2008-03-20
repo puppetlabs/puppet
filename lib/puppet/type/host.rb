@@ -87,8 +87,10 @@ module Puppet
             isnamevar
 
             validate do |value|
-               unless value =~ /^\w+-?[\w+]?\.?[\w+.{1}]*\w+$/
-                  raise Puppet::Error, "Invalid host name"
+               value.split('.').each do |hostpart| 
+                  unless hostpart =~ /^([\d\w]+|[\d\w][\d\w\-]+[\d\w])$/
+                     raise Puppet::Error, "Invalid host name"
+                  end
                end
             end 
         end

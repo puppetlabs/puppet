@@ -155,8 +155,6 @@ class Type
             @parameters = {}
         end
 
-        # set defalts
-        @noop = false
         # keeping stats for the total number of changes, and how many were
         # completely sync'ed
         # this isn't really sufficient either, because it adds lots of special

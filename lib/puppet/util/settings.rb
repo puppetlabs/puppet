@@ -44,19 +44,6 @@ class Puppet::Util::Settings
         return value
     end
 
-    # A simplified equality operator.
-    # LAK: For some reason, this causes mocha to not be able to mock
-    # the 'value' method, and it's not used anywhere.
-#    def ==(other)
-#        self.each { |myname, myobj|
-#            unless other[myname] == value(myname)
-#                return false
-#            end
-#        }
-#
-#        return true
-#    end
-
     # Generate the list of valid arguments, in a format that GetoptLong can
     # understand, and add them to the passed option list.
     def addargs(options)
@@ -225,6 +212,9 @@ class Puppet::Util::Settings
 
         # A central concept of a name.
         @name = nil
+
+        # The list of sections we've used.
+        @used = []
     end
 
     # Return a given object's file metadata.
@@ -575,23 +565,36 @@ Generated on #{Time.now}.
     # you can 'use' a section as many times as you want.
     def use(*sections)
         @@sync.synchronize do # yay, thread-safe
-            unless defined? @used
-                @used = []
-            end
+            sections = sections.reject { |s| @used.include?(s.to_sym) }
+
+            return if sections.empty?
 
             bucket = to_transportable(*sections)
 
-            config = bucket.to_catalog
-            config.host_config = false
-            config.apply do |transaction|
-                if failures = transaction.any_failed?
-                    raise "Could not configure for running; got %s failure(s)" % failures
-                end
+            begin
+                catalog = bucket.to_catalog
+            rescue => detail
+                puts detail.backtrace if Puppet[:trace]
+                Puppet.err "Could not create resources for managing Puppet's files and directories: %s" % detail
+
+                # We need some way to get rid of any resources created during the catalog creation
+                # but not cleaned up.
+                return
             end
-            config.clear
+
+            begin
+                catalog.host_config = false
+                catalog.apply do |transaction|
+                    if failures = transaction.any_failed?
+                        raise "Could not configure for running; got %s failure(s)" % failures
+                    end
+                end
+            ensure
+                catalog.clear
+            end
 
             sections.each { |s| @used << s }
-            @used.uniq
+            @used.uniq!
         end
     end
 

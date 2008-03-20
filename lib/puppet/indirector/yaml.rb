@@ -40,6 +40,11 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
         end
     end
 
+    def version(name)
+        return nil unless FileTest.exist?(path(name))
+        return File.stat(path(name)).mtime
+    end
+
     private
 
     def from_yaml(text)

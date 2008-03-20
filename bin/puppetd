@@ -188,6 +188,8 @@ args = {}
 options = {
     :waitforcert => 120,  # Default to checking for certs every 5 minutes
     :onetime => false,
+    :verbose => false,
+    :debug => false,
     :centrallogs => false,
     :setdest => false,
     :enable => false,
@@ -228,11 +230,9 @@ begin
                 puts "%s" % Puppet.version
                 exit
             when "--verbose"
-                Puppet::Util::Log.level = :info
-                Puppet::Util::Log.newdestination(:console)
+                options[:verbose] = true
             when "--debug"
-                Puppet::Util::Log.level = :debug
-                Puppet::Util::Log.newdestination(:console)
+                options[:debug] = true
             when "--fqdn"
                 options[:fqdn] = arg
             when "--no-client"
@@ -247,6 +247,9 @@ begin
                     Puppet::Util::Log.newdestination(arg)
                     options[:setdest] = true
                 rescue => detail
+                    if Puppet[:debug]
+                        puts detail.backtrace
+                    end
                     $stderr.puts detail.to_s
                 end
             when "--waitforcert"
@@ -272,12 +275,23 @@ if options[:test]
     Puppet.settings.handlearg("--no-splay")
     Puppet.settings.handlearg("--show_diff")
     Puppet.settings.handlearg("--no-daemonize")
+    options[:verbose] = true
     options[:onetime] = true
     options[:waitforcert] = 0
-    unless Puppet::Util::Log.level == :debug
+end
+
+# Handle the logging settings.
+if options[:debug] or options[:verbose]
+    Puppet::Util::Log.newdestination(:console)
+    if options[:debug]
+        Puppet::Util::Log.level = :debug
+    else
         Puppet::Util::Log.level = :info
     end
-    Puppet::Util::Log.newdestination(:console)
+end
+
+unless options[:setdest]
+    Puppet::Util::Log.newdestination(:syslog)
 end
 
 Puppet.genconfig
@@ -286,10 +300,6 @@ Puppet.genmanifest
 # If noop is set, then also enable diffs
 if Puppet[:noop]
     Puppet[:show_diff] = true
-end
-
-unless options[:setdest]
-    Puppet::Util::Log.newdestination(:syslog)
 end
 
 args[:Server] = Puppet[:server]
