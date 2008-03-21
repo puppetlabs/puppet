@@ -1,3 +1,12 @@
+    Found an array that leaked pretty quickly between reparsing
+    files, thanks to work by Adam Jacob and Arjuna Christenson
+    (the finding, not the leak).  I'm going to act like this
+    fixes #1131, at least for now, but I doubt it does,
+    since that shows general memory growth over time, whereas
+    the leak here should go away as soon as files are reparsed
+    (because the parser is holding the reference to the leaking
+    array).
+
     Fixed #1147: Cached nodes are correctly considered out of
     date if the node facts have been updated (thus causing
     node facts to again be available in manifests, for those
