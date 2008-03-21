@@ -49,7 +49,8 @@ class Puppet::ResourceReference
         if value.nil? or value.to_s.downcase == "component"
             @type = "Class"
         else
-            @type = value.to_s.split("::").collect { |s| s.capitalize }.join("::")
+            # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
+            x = @type = value.to_s.split("::").collect { |s| s.capitalize }.join("::")
         end
     end
 

@@ -10,7 +10,10 @@ Puppet::Type.type(:mailalias).provide(:aliases,
 
     record_line :aliases, :fields => %w{name recipient}, :separator => /\s*:\s*/, :block_eval => :instance do
         def post_parse(record)
-            record[:recipient] = record[:recipient].split(/\s*,\s*/).collect { |d| d.gsub(/^['"]|['"]$/, '') }
+            # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
+            # It's not sufficient to assign to an existing hash.
+            recipient = record[:recipient].split(/\s*,\s*/).collect { |d| d.gsub(/^['"]|['"]$/, '') }
+            record[:recipient] = recipient
             record
         end
 

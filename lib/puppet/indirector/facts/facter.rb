@@ -23,7 +23,8 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
     end
 
     def self.loadfacts
-        Puppet[:factpath].split(":").each do |dir|
+        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
+        x = Puppet[:factpath].split(":").each do |dir|
             loaddir(dir, "fact")
         end
     end

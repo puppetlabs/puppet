@@ -113,7 +113,9 @@ module Puppet
 
             munge do |value|
                 value = [value] unless value.is_a?(Array)
-                paths = value.flatten.collect { |p| p.split(":") }.flatten.find_all do |path|
+                # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
+                # It affects stand-alone blocks, too.
+                paths = value.flatten.collect { |p| x = p.split(":") }.flatten.find_all do |path|
                     if FileTest.directory?(path)
                         true
                     else
