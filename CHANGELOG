@@ -1,3 +1,11 @@
+    Fixed #1147: Cached nodes are correctly considered out of
+    date if the node facts have been updated (thus causing
+    node facts to again be available in manifests, for those
+    cases where they were not).
+
+    Fixed #1137: The certificate name is correctly being added
+    to the facts hash.
+
     Fixed #1136: Verbose and Debug no longer clobber each other.
 
     Hopefully *finally* fixed the "already being managed" problem
