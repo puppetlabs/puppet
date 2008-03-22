@@ -76,6 +76,7 @@ sbins = glob(%w{sbin/*})
 bins  = glob(%w{bin/*})
 rdoc  = glob(%w{bin/* sbin/* lib/**/*.rb README README-library CHANGELOG TODO Install}).reject { |e| e=~ /\.(bat|cmd)$/ }
 ri    = glob(%w(bin/*.rb sbin/* lib/**/*.rb)).reject { |e| e=~ /\.(bat|cmd)$/ }
+man   = glob(%w{man/man8/*})
 libs  = glob(%w{lib/**/*.rb lib/**/*.py})
 tests = glob(%w{tests/**/*.rb})
 
@@ -93,6 +94,19 @@ def do_libs(libs, strip = 'lib/')
     File.makedirs(op, true)
     File.chmod(0755, op)
     File.install(lf, olf, 0755, true)
+  end
+end
+
+def do_man(man, strip = 'man/')
+  man.each do |mf|
+    omf = File.join(InstallOptions.man_dir, mf.gsub(/#{strip}/, ''))
+    om = File.dirname(omf)
+    File.makedirs(om, true)
+    File.chmod(0644, om)
+    File.install(mf, omf, 0644, true)
+    gzip = %x{which gzip}
+    gzip.chomp!
+    %x{#{gzip} #{omf}}
   end
 end
 
@@ -189,15 +203,18 @@ def prepare_installation
   if (destdir = ENV['DESTDIR'])
     bindir = "#{destdir}#{Config::CONFIG['bindir']}"
     sbindir = "#{destdir}#{Config::CONFIG['sbindir']}"
+    mandir = "#{destdir}#{Config::CONFIG['mandir']}"
     sitelibdir = "#{destdir}#{sitelibdir}"
     tmpdirs << bindir
 
     FileUtils.makedirs(bindir)
     FileUtils.makedirs(sbindir)
+    FileUtils.makedirs(mandir)
     FileUtils.makedirs(sitelibdir)
   else
     bindir = Config::CONFIG['bindir']
     sbindir = Config::CONFIG['sbindir']
+    mandir = Config::CONFIG['mandir']
     tmpdirs << Config::CONFIG['bindir']
   end
 
@@ -206,6 +223,7 @@ def prepare_installation
   InstallOptions.bin_dir  = bindir
   InstallOptions.sbin_dir = sbindir
   InstallOptions.lib_dir  = libdir
+  InstallOptions.man_dir  = mandir
 end
 
 ##
@@ -363,3 +381,4 @@ build_man(bins) if InstallOptions.man
 do_bins(sbins, InstallOptions.sbin_dir)
 do_bins(bins, InstallOptions.bin_dir)
 do_libs(libs)
+do_man(man)

@@ -1,513 +1,78 @@
-.\" -*- nroff -*-
-.\" This file may be copied under the terms of the GNU Public License.
-.\" 
-.TH PUPPET 8 "Jan 2007" "Reductive Labs"
+.TH   "" "" ""
 .SH NAME
-puppet, puppetmasterd, ca \- automated configuration management
-.SH SYNOPSIS
-.B puppet
-.RI [options]
-.br
-.B puppetmasterd
-.RI [options]
-.br
-.B ca
-.RI [options]
-.SH DESCRIPTION
-This document is intended as a secondary reference only.  Please refer to the complete documentation on the
-.B puppet
-website:
-.PP
-\h"4"http://www.reductivelabs.com/trac/puppet/wiki/DocumentationStart
-.PP
-Every 
-.B puppet
-executable (with the exception of 
-.B puppetdoc
-) accepts all of the arguments below, but not all of the arguments make sense for every executable. Each argument has a section listed with it in parentheses; often, that section will map to an executable (e.g., 
-.B puppetd
-), in which case it probably only makes sense for that one executable. If 
-.B puppet
-is listed as the section, it is most likely an option that is valid for everyone.
-.PP
-This will not always be the case. I have tried to be as thorough as possible in the descriptions of the arguments, so it should be obvious whether an argument is appropriate or not.
-.PP
-These arguments can be supplied to the executables either as command-line arugments or in the configuration file for the appropriate executable. For instance, the command-line invocation below would set the configuration directory to /private/puppet:
-.PP
-\h"4"$ puppetd --confdir=/private/puppet
-.PP
-Note that boolean options are turned on and off with a slightly different syntax on the command line:
-.PP
-\h"4"$ puppetd --storeconfigs
-.PP
-\h"4"$ puppetd --no-storeconfigs
-.PP
-The invocations above will enable and disable, respectively, the storage of the client configuration.
-.PP
-As mentioned above, the configuration parameters can also be stored in a configuration file located in the configuration directory (/etc/puppet by default). The file is called puppet.conf.
-.PP
-The file, which follows INI-style formatting, should contain a bracketed heading named for each executable, followed by pairs of parameters with their values. Here is an example of a very simple puppet.conf file:
-.PP
-\h"4"[puppetd]
-.br
-\h"4"confdir = /private/puppet
-.br
-\h"4"storeconfigs = true
-.br
-.PP
-Note that boolean parameters must be explicitly specified as true or false as seen above.
-.PP
-If you're starting out with a fresh configuration, you may wish to let the executable generate a template configuration file for you by invoking the executable in question with the --genconfig command. The executable will print a template configuration to standard output, which can be redirected to a file like so:
-.PP
-\h"4"$ puppetd --genconfig > /etc/puppet/puppet.conf
-.PP
-Note that this invocation will "clobber" (throw away) the contents of any pre-existing puppet.conf file, so make a backup of your present config if it contains valuable information.
-.PP
-Like the --genconfig argument, the executables also accept a --genmanifest argument, which will generate a manifest that can be used to manage all of 
-.B Puppet's
-directories and files and prints it to standard output. This can likewise be redirected to a file:
-.PP
-\h"4"$ puppetd --genmanifest > /etc/puppet/manifests/site.pp
-.PP
-.B Puppet
-can also create user and group accounts for itself (one puppet group and one puppet user) if it is invoked as root with the --mkusers argument:
-.PP
-\h"4"$ puppetd --mkusers
-.PP
-.SH SIGNALS
-The 
-.B puppetd
-and
-.B puppetmasterd
-executables catch some signals for special handling. Both daemons catch (SIGHUP), which forces the server to restart tself. Predictably, interrupt and terminate (SIGINT and SIGHUP) will shut down the server, whether it be an instance of 
-.B puppetd
-or
-.B puppetmasterd.
-.PP
-Sending the SIGUSR1 signal to an instance of 
-.B puppetd
-will cause it to immediately begin a new configuration transaction with the server. This signal has no effect on 
-.B puppetmasterd.
-.SH OPTIONS
-.TP
-.B \-\-authconfig
-(puppet) The configuration file that defines the rights to the different namespaces and methods. This can be used as a coarse-grained authorization system for both 
-.B puppetd
-and
-.B puppetmasterd
-. Default value is: /etc/puppet/namespaceauth.conf
-.TP
-.B \-\-autoflush
-(puppet) Whether log files should always flush to disk.
-.TP
-.B \-\-autosign
-(ca) Whether to enable autosign. Valid values are true (which autosigns any key request, and is a very bad idea), false (which never autosigns any key request), and the path to a file, which uses that configuration file to determine which keys to sign. Default value is: /etc/puppet/autosign.conf
-.TP
-.B \-\-bucketdir
-(puppetmasterd) Where FileBucket files are stored. Default value is: /var/puppet/bucket
-.TP
-.B \-\-ca_days
-(ca) How long a certificate should be valid. This parameter is deprecated, use ca_ttl instead
-.TP
-.B \-\-ca_md
-(ca) The type of hash used in certificates. Default value is: md5
-.TP
-.B \-\-ca_ttl
-(ca) The default TTL for new certificates; valid values must be an integer, optionally followed by one of the units 'y' (years of 365 days), 'd' (days), 'h' (hours), or 's' (seconds). The unit defaults to seconds. If this parameter is set, ca_days is ignored. Examples are '3600' (one hour) and '1825d', which is the same as '5y' (5 years) 5y
-.TP
-.B \-\-cacert
-(ca) The CA certificate. Default value is: /etc/puppet/ssl/ca/ca_crt.pem
-.TP
-.B \-\-cacrl
-(ca) The certificate revocation list (CRL) for the CA. Set this to 'none' if you do not want to use a CRL. Default value is: /etc/puppet/ssl/ca/ca_crl.pem
-.TP
-.B \-\-cadir
-(ca) The root directory for the certificate authority. Default value is: /etc/puppet/ssl/ca
-.TP
-.B \-\-cakey
-(ca) The CA private key. Default value is: /etc/puppet/ssl/ca/ca_key.pem
-.TP
-.B \-\-capass
-(ca) Where the CA stores the password for the private key. Default value is: /etc/puppet/ssl/ca/private/ca.pass
-.TP
-.B \-\-caprivatedir
-(ca) Where the CA stores private certificate information. Default value is: /etc/puppet/ssl/ca/private
-.TP
-.B \-\-capub
-(ca) The CA public key. Default value is: /etc/puppet/ssl/ca/ca_pub.pem
-.TP
-.B \-\-casesensitive
-(puppet) Whether matching in case statements and selectors should be case-sensitive. Case insensitivity is handled by downcasing all values before comparison.
-.TP
-.B \-\-cert_inventory
-(ca) A Complete listing of all certificates. Default value is: /etc/puppet/ssl/ca/inventory.txt
-.TP
-.B \-\-certdir
-(certificates) The certificate directory. Default value is: /etc/puppet/ssl/certs
-.TP
-.B \-\-classfile
-(puppetd) The file in which 
-.B puppetd
-stores a list of the classes associated with the retrieved configuratiion. Can be loaded in the separate puppet executable using the --loadclasses option. Default value is: /etc/puppet/classes.txt
-.TP
-.B \-\-clientbucketdir
-(filebucket) Where FileBucket files are stored locally. Default value is: /var/puppet/clientbucket
-.TP
-.B \-\-color
-(puppet) Whether to use colors when logging to the console. Valid values are ansi (equivalent to true), html (mostly used during testing with TextMate), and false, which produces no color. Default value is: ansi
-.TP
-.B \-\-confdir
-(puppet) The main Puppet configuration directory. Default value is: /etc/puppet
-.TP
-.B \-\-config
-(puppetdoc) The configuration file for puppetdoc. Default value is: /etc/puppet/puppetdoc.conf
-.TP
-.B \-\-configprint
-(puppet) Print the value of a specific configuration parameter. If a parameter is provided for this, then the value is printed and puppet exits. Comma-separate mul.TPle values. For a list of all values, specify 'all'. This feature is only available in Puppet versions higher than 0.18.4.
-.TP
-.B \-\-csrdir
-(ca) Where the CA stores certificate requests Default value is: /etc/puppet/ssl/ca/requests
-.TP
-.B \-\-dbadapter
-(puppetmaster) The type of database to use. Default value is: sqlite3
-.TP
-.B \-\-dblocation
-(puppetmaster) The database cache for client configurations. Used for querying within the language. Default value is: /var/puppet/state/clientconfigs.sqlite3
-.TP
-.B \-\-dbmigrate
-(puppetmaster) Whether to automatically migrate the database.
-.TP
-.B \-\-dbname
-(puppetmaster) The name of the database to use. Default value is: puppet
-.TP
-.B \-\-dbpassword
-(puppetmaster) The database password for Client caching. Only used when networked databases are used. Default value is: puppet
-.TP
-.B \-\-dbserver
-(puppetmaster) The database server for Client caching. Only used when networked databases are used. Default value is: localhost
-.TP
-.B \-\-dbuser
-(puppetmaster) The database user for Client caching. Only used when networked databases are used. Default value is: puppet
-.TP
-.B \-\-evaltrace
-(transaction) Whether each resource should log when it is being evaluated. This allows you to interactively see exactly what is being done.
-.TP
-.B \-\-external_nodes
-(puppet) An external command that can produce node information. The first line of output must be either the parent node or blank, and if there is a second line of output it should be a list of whitespace-separated classes to include on that node. This command makes it straightforward to store your node mapping information in other data sources like databases. For unknown nodes, the commands should exit with an exit code of 1. Default value is: none
-.TP
-.B \-\-factdest
-(puppet) Where Puppet should store facts that it pulls down from the central server. Default value is: /var/puppet/facts
-.TP
-.B \-\-factpath
-(puppet) Where Puppet should look for facts. Mul.TPle directories should be colon-separated, like normal PATH variables. Default value is: /var/puppet/facts
-.TP
-.B \-\-factsignore
-(puppet) What files to ignore when pulling down facts. Default value is: .svn CVS
-.TP
-.B \-\-factsource
-(puppet) From where to retrieve facts. The standard Puppet file type is used for retrieval, so anything that is a valid file source can be used here. Default value is: puppet://puppet/facts
-.TP
-.B \-\-factsync
-(puppet) Whether facts should be synced with the central server.
-.TP
-.B \-\-fileserverconfig
-(fileserver) Where the fileserver configuration is stored. Default value is: /etc/puppet/fileserver.conf
-.TP
-.B \-\-filetimeout
-(puppet) The minimum time to wait between checking for updates in configuration files. Default value is: 15
-.TP
-.B \-\-genconfig
-(puppet) Whether to just print a configuration to stdout and exit. Only makes sense when used interactively. Takes into account arguments specified on the CLI.
-.TP
-.B \-\-genmanifest
-(puppet) Whether to just print a manifest to stdout and exit. Only makes sense when used interactively. Takes into account arguments specified on the CLI.
-.TP
-.B \-\-graph
-(puppet) Whether to create dot graph files for the different configuration graphs. These dot files can be interpreted by tools like OmniGraffle or dot (which is part of ImageMagick).
-.TP
-.B \-\-graphdir
-(puppet) Where to store dot-outputted graphs. Default value is: /var/puppet/state/graphs
-.TP
-.B \-\-group
-(puppetmasterd) The group 
-.B puppetmasterd
- should run as. Default value is: puppet
-.TP
-.B \-\-hostcert
-(certificates) Where individual hosts store and look for their certificates. Default value is: /etc/puppet/ssl/certs/culain.madstop.com.pem
-.TP
-.B \-\-hostprivkey
-(certificates) Where individual hosts store and look for their private key. Default value is: /etc/puppet/ssl/private_keys/culain.madstop.com.pem
-.TP
-.B \-\-hostpubkey
-(certificates) Where individual hosts store and look for their public key. Default value is: /etc/puppet/ssl/public_keys/culain.madstop.com.pem
-.TP
-.B \-\-httplog
-(puppetd) Where the 
-.B puppetd
-web server logs. Default value is: /var/puppet/log/http.log
-.TP
-.B \-\-ignoreschedules
-(puppetd) Boolean; whether 
-.B puppetd
-should ignore schedules. Default value is: This is useful for initial 
-.B puppetd
-runs.
-.TP
-.B \-\-keylength
-(ca) The bit length of keys. Default value is: 1024
-.TP
-.B \-\-ldapattrs
-(ldap) The LDAP attributes to use to define Puppet classes. Values should be comma-separated. Default value is: puppetclass
-.TP
-.B \-\-ldapbase
-(ldap) The search base for LDAP searches. It's impossible to provide a meaningful default here, although the LDAP libraries might have one already set. Generally, it should be the 'ou=Hosts' branch under your main directory.
-.TP
-.B \-\-ldapnodes
-(ldap) Whether to search for node configurations in LDAP.
-.TP
-.B \-\-ldapparentattr
-(ldap) The attribute to use to define the parent node. Default value is: parentnode
-.TP
-.B \-\-ldappassword
-(ldap) The password to use to connect to LDAP.
-.TP
-.B \-\-ldapport
-(ldap) The LDAP port. Only used if ldapnodes is enabled. Default value is: 389
-.TP
-.B \-\-ldapserver
-(ldap) The LDAP server. Only used if ldapnodes is enabled. Default value is: ldap
-.TP
-.B \-\-ldapssl
-(ldap) Whether SSL should be used when searching for nodes. Defaults to false because SSL usually requires certificates to be set up on the client side.
-.TP
-.B \-\-ldapstring
-Default value is: (ldap) 
-.TP
-.B \-\-The search string used to find an LDAP node.
-Default value is: (&(objectclass=puppetClient)(cn=%s)) 
-.TP
-.B \-\-ldaptls
-(ldap) Whether TLS should be used when searching for nodes. Defaults to false because TLS usually requires certificates to be set up on the client side.
-.TP
-.B \-\-ldapuser
-(ldap) The user to use to connect to LDAP. Must be specified as a full DN.
-.TP
-.B \-\-lexical
-(puppet) Whether to use lexical scoping (vs. dynamic).
-.TP
-.B \-\-listen
-(puppetd) Whether 
-.B puppetd
-should listen for connections. If this is true, then by default only the runner server is started, which allows remote authorized and authenticated nodes to connect and trigger 
-.B puppetd
-runs.
-.TP
-.B \-\-localcacert
-(certificates) Where each client stores the CA certificate. Default value is: /etc/puppet/ssl/certs/ca.pem
-.TP
-.B \-\-localconfig
-(puppetd) Where 
-.B puppetd
-caches the local configuration. An extension indicating the cache format is added automatically. Default value is: /etc/puppet/localconfig
-.TP
-.B \-\-lockdir
-(puppet) Where lock files are kept. Default value is: /var/puppet/locks
-.TP
-.B \-\-logdir
-(puppet) The Puppet log directory. Default value is: /var/puppet/log
-.TP
-.B \-\-manifest
-(puppetmasterd) The entry-point manifest for 
-.B puppetmasterd
-. Default value is: /etc/puppet/manifests/site.pp
-.TP
-.B \-\-manifestdir
-(puppetmasterd) Where 
-.B puppetmasterd
- looks for its manifests. Default value is: /etc/puppet/manifests
-.TP
-.B \-\-masterhttplog
-(puppetmasterd) Where the 
-.B puppetmasterd
- web server logs. Default value is: /var/puppet/log/masterhttp.log
-.TP
-.B \-\-masterlog
-(puppetmasterd) Where 
-.B puppetmasterd
- logs. This is generally not used, since syslog is the default log destination. Default value is: /var/puppet/log/puppetmaster.log
-.TP
-.B \-\-masterport
-(puppetmasterd) Which port 
-.B puppetmasterd
- listens on. Default value is: 8140
-.TP
-.B \-\-mkusers
-(puppet) Whether to create the necessary user and group that 
-.B puppetd
-will run as.
-.TP
-.B \-\-node_name
-(puppetmasterd) How the puppetmaster determines the client's identity and sets the 'hostname' fact for use in the manifest, in particular for determining which 'node' statement applies to the client. Possible values are 'cert' (use the subject's CN in the client's certificate) and 'facter' (use the hostname that the client reported in its facts) Default value is: cert
-.TP
-.B \-\-noop
-(puppetd) Whether 
-.B puppetd
-should be run in noop mode.
-.TP
-.B \-\-paramcheck
-(ast) Whether to validate parameters during parsing. Default value is: true
-.TP
-.B \-\-parseonly
-(puppetmasterd) Just check the syntax of the manifests.
-.TP
-.B \-\-passfile
-(certificates) Where 
-.B puppetd
-stores the password for its private key. Generally unused. Default value is: /etc/puppet/ssl/private/password
-.TP
-.B \-\-path
-(puppet) The shell search path. Defaults to whatever is inherited from the parent process. Default value is: none
-.TP
-.B \-\-plugindest
-(puppet) Where Puppet should store plugins that it pulls down from the central server. Default value is: /var/puppet/plugins
-.TP
-.B \-\-pluginpath
-(puppet) Where Puppet should look for plugins. Mul.TPle directories should be colon-separated, like normal PATH variables. Default value is: /var/puppet/plugins
-.TP
-.B \-\-pluginsignore
-(puppet) What files to ignore when pulling down plugins. Default value is: .svn CVS
-.TP
-.B \-\-pluginsource
-(puppet) From where to retrieve plugins. The standard Puppet file type is used for retrieval, so anything that is a valid file source can be used here. Default value is: puppet://puppet/plugins
-.TP
-.B \-\-pluginsync
-(puppet) Whether plugins should be synced with the central server.
-.TP
-.B \-\-privatedir
-(certificates) Where the client stores private certificate information. Default value is: /etc/puppet/ssl/private
-.TP
-.B \-\-privatekeydir
-(certificates) The private key directory. Default value is: /etc/puppet/ssl/private_keys
-.TP
-.B \-\-publickeydir
-(certificates) The public key directory. Default value is: /etc/puppet/ssl/public_keys
-.TP
-.B \-\-puppetdlockfile
-(puppetd) A lock file to temporarily stop 
-.B puppetd
-from doing anything. Default value is: /var/puppet/state/puppetdlock
-.TP
-.B \-\-puppetdlog
-(puppetd) The log file for puppetd. This is generally not used. Default value is: /var/puppet/log/puppetd.log
-.TP
-.B \-\-puppetport
-(puppetd) Which port 
-.B puppetd
-listens on. Default value is: 8139
-.TP
-.B \-\-railslog
-(puppetmaster) Where Rails-specific logs are sent Default value is: /var/puppet/log/rails.log
-.TP
-.B \-\-report
-(puppetd) Whether to send reports after every transaction.
-.TP
-.B \-\-reportdir
-(reporting) The directory in which to store reports received from the client. Each client gets a separate subdirectory. /var/puppet/reports
-.TP
-.B \-\-reports
-(reporting) The list of reports to generate. All reports are looked for in puppet/reports/.rb, and mul.TPle report names should be comma-separated (whitespace is okay). Default value is: store
-.TP
-.B \-\-reportserver
-(puppetd) The server to which to send transaction reports. Default value is: puppet
-.TP
-.B \-\-req_bits
-(ca) The bit length of the certificates. Default value is: 2048
-.TP
-.B \-\-rrddir
-(metrics) The directory where RRD database files are stored. Directories for each reporting host will be created under this directory. Default value is: /var/puppet/rrd
-.TP
-.B \-\-rrdgraph
-(metrics) Whether RRD information should be graphed.
-.TP
-.B \-\-rrdinterval
-(metrics) How often RRD should expect data. This should match how often the hosts report back to the server. Default value is: 1800
-.TP
-.B \-\-rundir
-(puppet) Where Puppet PID files are kept. Default value is: /var/puppet/run
-.TP
-.B \-\-runinterval
-(puppetd) How often 
-.B puppetd
-applies the client configuration; in seconds Default value is: 1800
-.TP
-.B \-\-serial
-(ca) Where the serial number for certificates is stored. Default value is: /etc/puppet/ssl/ca/serial
-.TP
-.B \-\-server
-(puppetd) The server to which server 
-.B puppetd
-should connect puppet
-.TP
-.B \-\-setpidfile
-(puppet) Whether to store a PID file for the daemon. Default value is: true
-.TP
-.B \-\-signeddir
-(ca) Where the CA stores signed certificates. Default value is: /etc/puppet/ssl/ca/signed
-.TP
-.B \-\-ssldir
-(puppet) Where SSL certificates are kept. Default value is: /etc/puppet/ssl
-.TP
-.B \-\-statedir
-(puppet) The directory where Puppet state is stored. Generally, this directory can be removed without causing harm (although it might result in spurious service restarts). Default value is: /var/puppet/state
-.TP
-.B \-\-statefile
-(puppet) Where 
-.B puppetd
-and 
-.B puppetmasterd
- store state associated with the running configuration. In the case of puppetmasterd, this file reflects the state discovered through interacting with clients. Default value is: /var/puppet/state/state.yaml
-.TP
-.B \-\-storeconfigs
-(puppetmaster) Whether to store each client's configuration. This requires ActiveRecord from Ruby on Rails.
-.TP
-.B \-\-syslogfacility
-(puppet) What syslog facility to use when logging to syslog. Syslog has a fixed list of valid facilities, and you must choose one of those; you cannot just make one up. daemon
-.TP
-.B \-\-tags
-(transaction) Tags to use to find resources. If this is set, then only resources tagged with the specified tags will be applied. Values must be comma-separated.
-.TP
-.B \-\-templatedir
-(puppet) Where Puppet looks for template files. Default value is: /var/puppet/templates
-.TP
-.B \-\-trace
-(puppet) Whether to print stack traces on some errors
-.TP
-.B \-\-typecheck
-(ast) Whether to validate types during parsing. Default value is: true
-.TP
-.B \-\-usecacheonfailure
-(puppetd) Whether to use the cached configuration when the remote configuration will not compile. This option is useful for testing new configurations, where you want to fix the broken configuration rather than reverting to a known-good one. Default value is: true
-.TP
-.B \-\-user
-(puppetmasterd) The user 
-.B puppetmasterd
- should run as. Default value is: puppet
-.TP
-.B \-\-vardir
-(puppet) Where Puppet stores dynamic and growing data. Default value is: /var/puppet
-.SH SEE ALSO
-.br
-http://www.reductivelabs.com/projects/puppet
-.br
-http://www.reductivelabs.com/trac/puppet/wiki/DocumentationStart
-.PP
-.SH AUTHOR
-.B puppet 
-was written by Luke Kanies (luke@reductivelabs.com) along with contributions from a great many tireless developers.
-.SH AVAILABILITY
-.B puppet
-is available from http://www.reductivelabs.com/downloads/.
-.SH SEE ALSO
-.BR facter (8)
+ \- 
 
+.\" Man page generated from reStructeredText.
+
+.SH SYNOPSIS
+Run a stand\-alone +puppet+ script.
+
+
+.SH USAGE
+
+.\" visit_block_quote
+
+.TP
+.B puppet [\-h|\-\-help] [\-V|\-\-version] [\-d|\-\-debug] [\-v|\-\-verbose]
+[\-l|\-\-logdest <file>] <file>
+
+
+.\" depart_block_quote
+
+.SH DESCRIPTION
+This is the standalone puppet execution script; use it to execute
+individual scripts that you write. If you need to execute site\-wide
+scripts, use +puppetd+ and +puppetmasterd+.
+
+
+.SH OPTIONS
+Note that any configuration parameter that\'s valid in the configuration
+file is also a valid long argument. For example, \'ssldir\' is a valid
+configuration parameter, so you can specify \'\-\-ssldir <directory>\' as an
+argument.
+
+See the configuration file documentation at
+http://reductivelabs.com/projects/puppet/reference/configref.html for
+the full list of acceptable parameters. A commented list of all
+configuration options can also be generated by running puppet with
+\'\-\-genconfig\'.
+
+debug:       Enable full debugging.
+
+help:        Print this help message
+
+
+.TP
+.B loadclasses: Load any stored classes. +puppetd+ caches configured
+classes (usually at /etc/puppet/classes.txt), and setting
+this option causes all of those classes to be set in your
++puppet+ manifest.
+
+
+.TP
+.B logdest:     Where to send messages. Choose between syslog, the console,
+and a log file. Defaults to sending messages to the
+console.
+
+verbose:     Print extra information.
+
+
+.SH EXAMPLE
+
+.\" visit_block_quote
+puppet \-l /tmp/script.log script.pp
+
+
+.\" depart_block_quote
+
+.SH AUTHOR
+Luke Kanies
+
+
+.SH COPYRIGHT
+Copyright (c) 2005 Reductive Labs, LLC Licensed under the GNU Public
+License
+
+
+.\" Generated by docutils manpage writer on 2008-03-22 17:46.
+.\" 
