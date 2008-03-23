@@ -1,3 +1,6 @@
+    Applying patch by Ryan McBride to fix OpenBSD package 
+    matching.  The actual problem was caused by the fix to #1001.
+
     Found all instances of methods where split() is used without
     any local variables and added a local variable -- see
     http://snurl.com/21zf8.  My own testing showed that this
