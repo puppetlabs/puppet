@@ -73,11 +73,6 @@ class TestTypeProviders < Test::Unit::TestCase
             confine :exists => "/no/such/file"
         end
 
-        inst = provider.new(:name => "bar")
-        assert_raise(Puppet::Error, "Did not fail on unsuitable provider instance") do
-            resource = @type.create :name => "bar", :provider => inst
-        end
-
         # And make sure the provider must be a valid provider type for this resource
         pkgprov = Puppet::Type.type(:package).create(:name => "yayness").provider
         assert(provider, "did not get package provider")
@@ -86,6 +81,27 @@ class TestTypeProviders < Test::Unit::TestCase
             resource = @type.create :name => "bar", :provider => pkgprov
         end
 
+    end
+
+    # #571 -- so we can cause a provider to become suitable within
+    # a run.
+    def test_unsuitable_providers_should_not_fail_at_initialization
+        Puppet::Type.type(:user).provider(:useradd).stubs(:suitable?).returns false
+
+        assert_nothing_raised("Unsuitable providers failed at initialization") do
+            Puppet::Type.type(:user).create :name => "luke", :ensure => :present, :provider => :useradd
+        end
+    end
+
+    # #571 -- so we can cause a provider to become suitable within
+    # a run.
+    def test_unsuitable_providers_should_fail_at_evaluation
+        Puppet::Type.type(:user).provider(:useradd).stubs(:suitable?).returns false
+
+        user = Puppet::Type.type(:user).create :name => "luke", :ensure => :present, :provider => :useradd
+        assert_raise(Puppet::Error, "Unsuitable provider did not fail at evaluation") do
+            user.evaluate
+        end
     end
 end
 

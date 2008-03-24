@@ -4,6 +4,11 @@ class Puppet::Type
     # This returns any changes resulting from testing, thus 'collect' rather
     # than 'each'.
     def evaluate
+        if self.provider.is_a?(Puppet::Provider)
+            unless provider.class.suitable?
+                raise Puppet::Error, "Provider %s is not functional on this platform" % provider.class.name
+            end
+        end
         #Puppet.err "Evaluating %s" % self.path.join(":")
         unless defined? @evalcount
             self.err "No evalcount defined on '%s' of type '%s'" %

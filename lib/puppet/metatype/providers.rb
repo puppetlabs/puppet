@@ -188,15 +188,8 @@ class Puppet::Type
                     provider_class = provider_class.class.name
                 end
 
-                if provider = @resource.class.provider(provider_class)
-                    unless provider.suitable?
-                        raise ArgumentError,
-                            "Provider '%s' is not functional on this platform" %
-                            [provider_class]
-                    end
-                else
-                    raise ArgumentError, "Invalid %s provider '%s'" %
-                        [@resource.class.name, provider_class]
+                unless provider = @resource.class.provider(provider_class)
+                    raise ArgumentError, "Invalid %s provider '%s'" % [@resource.class.name, provider_class]
                 end
             end
 

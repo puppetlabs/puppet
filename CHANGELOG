@@ -1,3 +1,9 @@
+    Fixing #571 -- provider suitability is now checked at resource
+    evaluation time, rather than resource instantiation time.  This
+    means that you don't catch your "errors" as early, but it also
+    means you should be able to realistically configure a whole host
+    in one run.
+
     Moved the configuration of the Node cache to the puppetmasterd
     executable, since it otherwise causes caches to be used in all
     cases, which we don't want (e.g., bin/puppet was using them).
