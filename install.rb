@@ -377,7 +377,7 @@ prepare_installation
 run_tests(tests) if InstallOptions.tests
 #build_rdoc(rdoc) if InstallOptions.rdoc
 #build_ri(ri) if InstallOptions.ri
-build_man(bins) if InstallOptions.man
+#build_man(bins) if InstallOptions.man
 do_bins(sbins, InstallOptions.sbin_dir)
 do_bins(bins, InstallOptions.bin_dir)
 do_libs(libs)
