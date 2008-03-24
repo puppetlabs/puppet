@@ -6,6 +6,15 @@ end
 
 # Manage Net::HTTP instances for keep-alive.
 module Puppet::Network::HttpPool
+    # 2008/03/23
+    # LAK:WARNING: Enabling this has a high propability of
+    # causing corrupt files and who knows what else.  See #1010.
+    HTTP_KEEP_ALIVE = false
+
+    def self.keep_alive?
+        HTTP_KEEP_ALIVE
+    end
+
     # This handles reading in the key and such-like.
     extend Puppet::SSLCertificates::Support
     @http_cache = {}
@@ -56,12 +65,14 @@ module Puppet::Network::HttpPool
 
         # Return our cached instance if we've got a cache, as long as we're not
         # resetting the instance.
-        return @http_cache[key] if ! reset and @http_cache[key]
+        if keep_alive?
+            return @http_cache[key] if ! reset and @http_cache[key]
 
-        # Clean up old connections if we have them.
-        if http = @http_cache[key]
-            @http_cache.delete(key)
-            http.finish if http.started?
+            # Clean up old connections if we have them.
+            if http = @http_cache[key]
+                @http_cache.delete(key)
+                http.finish if http.started?
+            end
         end
 
         args = [host, port]
@@ -88,7 +99,7 @@ module Puppet::Network::HttpPool
 
         cert_setup(http)
 
-        @http_cache[key] = http
+        @http_cache[key] = http if keep_alive?
 
         return http
     end

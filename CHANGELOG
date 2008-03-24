@@ -1,3 +1,9 @@
+    Disabling http keep-alive as a means of preventing #1010.
+    There is now a constant in Puppet::Network::HttpPool that will
+    disable or enable this feature, but note that we determined
+    that it can cause corruption, especially in file serving (but
+    it's client-side corruption).
+
     Applying patch by Ryan McBride to fix OpenBSD package 
     matching.  The actual problem was caused by the fix to #1001.
 
