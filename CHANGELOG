@@ -1,3 +1,7 @@
+    Moved the configuration of the Node cache to the puppetmasterd
+    executable, since it otherwise causes caches to be used in all
+    cases, which we don't want (e.g., bin/puppet was using them).
+
     Ported #198 man page creation functionality to 0.24.x branch and
     added man pages and man page creation logic to install.rb.  The
     man pages are stored in man/man8 and will install to config::CONFIG
