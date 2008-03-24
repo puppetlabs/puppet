@@ -1,3 +1,7 @@
+    Fixing #1138 -- the yamldir is automatically created by the
+    server now that it's in the :puppetmasterd section rather than
+    a separate :yaml section.
+
     Disabling http keep-alive as a means of preventing #1010.
     There is now a constant in Puppet::Network::HttpPool that will
     disable or enable this feature, but note that we determined

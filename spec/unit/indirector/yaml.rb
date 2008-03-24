@@ -20,7 +20,6 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
         @subject.name = :me
 
         @dir = "/what/ever"
-        Puppet.settings.stubs(:use)
         Puppet.settings.stubs(:value).with(:yamldir).returns(@dir)
     end
 
