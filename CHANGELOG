@@ -1,3 +1,8 @@
+    Pass source to pkg_add via the PKG_PATH environment variable if
+    it ends in a '/' indicating it is a directory. Allows pkg_add
+    to resolve dependancies, and make it possible to specify packages
+    without version numbers.
+
     Fixing #571 -- provider suitability is now checked at resource
     evaluation time, rather than resource instantiation time.  This
     means that you don't catch your "errors" as early, but it also
