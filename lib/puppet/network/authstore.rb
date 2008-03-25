@@ -235,7 +235,8 @@ module Puppet
 
             # Convert the name to a common pattern.
             def munge_name(name)
-                name.downcase.split(".").reverse
+                # LAK:NOTE http://snurl.com/21zf8  [groups_google_com]
+                x = name.downcase.split(".").reverse
             end
 
             # Parse our input pattern and figure out what kind of allowal

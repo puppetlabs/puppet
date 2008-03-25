@@ -4,7 +4,6 @@ require File.dirname(__FILE__) + '/../../../lib/puppettest'
 
 require 'puppettest'
 require 'puppettest/fileparsing'
-require 'puppet/type/mailalias'
 
 class TestMailaliasAliasesProvider < Test::Unit::TestCase
 	include PuppetTest

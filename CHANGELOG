@@ -1,3 +1,62 @@
+    Pass source to pkg_add via the PKG_PATH environment variable if
+    it ends in a '/' indicating it is a directory. Allows pkg_add
+    to resolve dependancies, and make it possible to specify packages
+    without version numbers.
+
+    Fixing #571 -- provider suitability is now checked at resource
+    evaluation time, rather than resource instantiation time.  This
+    means that you don't catch your "errors" as early, but it also
+    means you should be able to realistically configure a whole host
+    in one run.
+
+    Moved the configuration of the Node cache to the puppetmasterd
+    executable, since it otherwise causes caches to be used in all
+    cases, which we don't want (e.g., bin/puppet was using them).
+
+    Ported #198 man page creation functionality to 0.24.x branch and
+    added man pages and man page creation logic to install.rb.  The
+    man pages are stored in man/man8 and will install to config::CONFIG
+    mandir/man8.
+
+    Fixing #1138 -- the yamldir is automatically created by the
+    server now that it's in the :puppetmasterd section rather than
+    a separate :yaml section.
+
+    Disabling http keep-alive as a means of preventing #1010.
+    There is now a constant in Puppet::Network::HttpPool that will
+    disable or enable this feature, but note that we determined
+    that it can cause corruption, especially in file serving (but
+    it's client-side corruption).
+
+    Applying patch by Ryan McBride to fix OpenBSD package 
+    matching.  The actual problem was caused by the fix to #1001.
+
+    Found all instances of methods where split() is used without
+    any local variables and added a local variable -- see
+    http://snurl.com/21zf8.  My own testing showed that this
+    caused memory growth to level off at a reasonable level.
+    Note that the link above says the problem is only with class
+    methods, but my own testing showed that it's any method that
+    meets these criteria.  This is not a functional change, but
+    should hopefully be the last nail in the coffin of #1131.
+
+    Found an array that leaked pretty quickly between reparsing
+    files, thanks to work by Adam Jacob and Arjuna Christenson
+    (the finding, not the leak).  I'm going to act like this
+    fixes #1131, at least for now, but I doubt it does,
+    since that shows general memory growth over time, whereas
+    the leak here should go away as soon as files are reparsed
+    (because the parser is holding the reference to the leaking
+    array).
+
+    Fixed #1147: Cached nodes are correctly considered out of
+    date if the node facts have been updated (thus causing
+    node facts to again be available in manifests, for those
+    cases where they were not).
+
+    Fixed #1137: The certificate name is correctly being added
+    to the facts hash.
+
     Fixed #1136: Verbose and Debug no longer clobber each other.
 
     Hopefully *finally* fixed the "already being managed" problem

@@ -1141,6 +1141,7 @@ file { "/tmp/yayness":
         name = "sub"
         mk_module(modname, :init => %w{separate}, :sub => %w{separate::sub})
 
+        Puppet.err :yay
         # First try it with a namespace
         klass = parser.findclass("separate", name)
         assert_instance_of(AST::HostClass, klass, "Did not autoload sub class from separate file with a namespace")

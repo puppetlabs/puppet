@@ -216,10 +216,11 @@ end
 
 Suite.new :local_catalog, "Local catalog handling" do
     def prepare
+        @node = Puppet::Node.find(Puppet[:certname])
     end
 
     newtest :compile, "Compiled catalog" do
-        Puppet::Node::Catalog.find(Puppet[:certname])
+        Puppet::Node::Catalog.find(@node)
     end
 end
 

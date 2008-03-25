@@ -19,11 +19,13 @@ class Puppet::Network::HTTP::WEBrickREST < Puppet::Network::HTTP::Handler
     end
     
     def path(request)
-        '/' + request.path.split('/')[1]
+        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
+        x = '/' + request.path.split('/')[1]
     end
     
     def request_key(request)
-        request.path.split('/')[2]
+        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
+        x = request.path.split('/')[2]
     end
     
     def body(request)

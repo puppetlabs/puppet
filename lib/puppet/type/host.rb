@@ -87,7 +87,8 @@ module Puppet
             isnamevar
 
             validate do |value|
-               value.split('.').each do |hostpart| 
+               # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
+               x = value.split('.').each do |hostpart| 
                   unless hostpart =~ /^([\d\w]+|[\d\w][\d\w\-]+[\d\w])$/
                      raise Puppet::Error, "Invalid host name"
                   end

@@ -4,7 +4,6 @@ require File.dirname(__FILE__) + '/../../lib/puppettest'
 
 require 'puppettest'
 require 'puppettest/support/utils'
-require 'puppet/type/tidy'
 
 class TestTidy < Test::Unit::TestCase
     include PuppetTest::Support::Utils
@@ -76,7 +75,7 @@ class TestTidy < Test::Unit::TestCase
 
     # Test the different age iterations.
     def test_age_conversions
-        tidy = Puppet::Type.newtidy :path => tempfile(), :age => "1m"
+        tidy = Puppet::Type.type(:tidy).create :path => tempfile(), :age => "1m"
 
         convertors = {
             :second => 1,
@@ -119,7 +118,7 @@ class TestTidy < Test::Unit::TestCase
             :gb => 3
         }
 
-        tidy = Puppet::Type.newtidy :path => tempfile(), :age => "1m"
+        tidy = Puppet::Type.type(:tidy).create :path => tempfile(), :age => "1m"
 
         # First make sure we default to kb
         assert_nothing_raised do
@@ -149,7 +148,7 @@ class TestTidy < Test::Unit::TestCase
     end
 
     def test_agetest
-        tidy = Puppet::Type.newtidy :path => tempfile(), :age => "1m"
+        tidy = Puppet::Type.type(:tidy).create :path => tempfile(), :age => "1m"
 
         age = tidy.property(:age)
 
@@ -161,7 +160,7 @@ class TestTidy < Test::Unit::TestCase
     end
 
     def test_sizetest
-        tidy = Puppet::Type.newtidy :path => tempfile(), :size => "1k"
+        tidy = Puppet::Type.type(:tidy).create :path => tempfile(), :size => "1k"
 
         size = tidy.property(:size)
 
@@ -175,7 +174,7 @@ class TestTidy < Test::Unit::TestCase
     # Make sure we can remove different types of files
     def test_tidytypes
         path = tempfile()
-        tidy = Puppet::Type.newtidy :path => path, :size => "1b", :age => "1s"
+        tidy = Puppet::Type.type(:tidy).create :path => path, :size => "1b", :age => "1s"
 
         # Start with a file
         File.open(path, "w") { |f| f.puts "this is a test" }
@@ -232,7 +231,7 @@ class TestTidy < Test::Unit::TestCase
         Dir.mkdir(dir)
         File.symlink(target, link)
         
-        tidy = Puppet::Type.newtidy :path => dir, :size => "1b", :recurse => true
+        tidy = Puppet::Type.type(:tidy).create :path => dir, :size => "1b", :recurse => true
         assert_apply(tidy)
         assert(! FileTest.symlink?(link), "link was not tidied")
     end

@@ -5,7 +5,8 @@
 # file names.
 module Puppet::Util::ConstantInflector
     def file2constant(file)
-        file.split("/").collect { |name| name.capitalize }.join("::").gsub(/_+(.)/) { |term| $1.capitalize }
+        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
+        x = file.split("/").collect { |name| name.capitalize }.join("::").gsub(/_+(.)/) { |term| $1.capitalize }
     end
 
     def constant2file(constant)

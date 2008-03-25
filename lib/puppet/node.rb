@@ -10,7 +10,7 @@ class Puppet::Node
     extend Puppet::Indirector
 
     # Use the node source as the indirection terminus.
-    indirects :node, :terminus_setting => :node_terminus, :cache_class => :yaml, :doc => "Where to find node information.
+    indirects :node, :terminus_setting => :node_terminus, :doc => "Where to find node information.
         A node is composed of its name, its facts, and its environment."
 
     # Retrieve a node from the node source, with some additional munging

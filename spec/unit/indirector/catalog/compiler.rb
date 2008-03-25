@@ -171,7 +171,7 @@ describe Puppet::Node::Catalog::Compiler, " when determining a client's availabl
     end
 
     it "should use the client's Facts version as the available catalog version if it is the most recent" do
-        Puppet::Node::Facts.expects(:version).with(@name).returns(5)
+        Puppet::Node::Facts.stubs(:version).with(@name).returns(5)
         Puppet::Node.expects(:version).with(@name).returns(3)
         @catalog.interpreter.stubs(:catalog_version).returns(4)
 
@@ -179,7 +179,7 @@ describe Puppet::Node::Catalog::Compiler, " when determining a client's availabl
     end
 
     it "should use the client's Node version as the available catalog version if it is the most recent" do
-        Puppet::Node::Facts.expects(:version).with(@name).returns(3)
+        Puppet::Node::Facts.stubs(:version).with(@name).returns(3)
         Puppet::Node.expects(:version).with(@name).returns(5)
         @catalog.interpreter.stubs(:catalog_version).returns(4)
 
@@ -187,7 +187,7 @@ describe Puppet::Node::Catalog::Compiler, " when determining a client's availabl
     end
 
     it "should use the last parse date as the available catalog version if it is the most recent" do
-        Puppet::Node::Facts.expects(:version).with(@name).returns(3)
+        Puppet::Node::Facts.stubs(:version).with(@name).returns(3)
         Puppet::Node.expects(:version).with(@name).returns(4)
         @catalog.interpreter.stubs(:catalog_version).returns(5)
 

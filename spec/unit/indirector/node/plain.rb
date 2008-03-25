@@ -15,4 +15,10 @@ describe Puppet::Node::Plain do
         node.expects(:fact_merge)
         @searcher.find("mynode")
     end
+
+    it "should use the version of the facts as its version" do
+        version = mock 'version'
+        Puppet::Node::Facts.expects(:version).with("me").returns version
+        @searcher.version("me").should equal(version)
+    end
 end

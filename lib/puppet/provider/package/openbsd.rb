@@ -2,6 +2,7 @@ require 'puppet/provider/package'
 
 # Packaging on OpenBSD.  Doesn't work anywhere else that I know of.
 Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Package do
+    include Puppet::Util::Execution
     desc "OpenBSD's form of ``pkg_add`` support."
 
     commands :pkginfo => "pkg_info", :pkgadd => "pkg_add", :pkgdelete => "pkg_delete"
@@ -58,7 +59,14 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
                 "You must specify a package source for BSD packages"
         end
 
-        pkgadd @resource[:source]
+        if @resource[:source] =~ /\/$/
+            withenv :PKG_PATH => @resource[:source] do
+                pkgadd @resource[:name]
+            end
+        else
+            pkgadd @resource[:source]
+        end
+
     end
 
     def query
@@ -67,7 +75,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
 
         # Search for the version info
         if info =~ /Information for (inst:)?#{@resource[:name]}-(\S+)/
-            hash[:ensure] = $1
+            hash[:ensure] = $2
         else
             return nil
         end

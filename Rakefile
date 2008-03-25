@@ -27,7 +27,8 @@ project = Rake::RedLabProject.new("puppet") do |p|
         'bin/**/*',
         'ext/**/*',
         'examples/**/*',
-        'conf/**/*'
+        'conf/**/*',
+        'man/**/*'
     ]
     p.filelist.exclude("bin/pi")
 

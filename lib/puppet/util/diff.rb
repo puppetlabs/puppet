@@ -27,7 +27,7 @@ module Puppet::Util::Diff
 
         output = ""
 
-        diffs = Diff::LCS.diff(data_old, data_new)
+        diffs = ::Diff::LCS.diff(data_old, data_new)
         return output if diffs.empty?
 
         oldhunk = hunk = nil
@@ -35,7 +35,7 @@ module Puppet::Util::Diff
 
         diffs.each do |piece|
             begin
-                hunk = Diff::LCS::Hunk.new(data_old, data_new, piece, 
+                hunk = ::Diff::LCS::Hunk.new(data_old, data_new, piece, 
                                            context_lines, 
                                            file_length_difference)
                 file_length_difference = hunk.file_length_difference

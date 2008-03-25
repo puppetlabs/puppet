@@ -2,11 +2,6 @@ require 'puppet/indirector/terminus'
 
 # The base class for YAML indirection termini.
 class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
-    def initialize
-        # Make sure our base directory exists.
-        Puppet.settings.use(:yaml)
-    end
-
     # Read a given name's file in and convert it from YAML.
     def find(name)
         raise ArgumentError.new("You must specify the name of the object to retrieve") unless name

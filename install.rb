@@ -58,7 +58,7 @@ rescue
     puts "Missing rst2man; skipping man page creation"
     $haveman = false
 end
-    
+
 PREREQS = %w{openssl facter xmlrpc/client xmlrpc/server cgi}
 
 InstallOptions = OpenStruct.new
@@ -76,6 +76,7 @@ sbins = glob(%w{sbin/*})
 bins  = glob(%w{bin/*})
 rdoc  = glob(%w{bin/* sbin/* lib/**/*.rb README README-library CHANGELOG TODO Install}).reject { |e| e=~ /\.(bat|cmd)$/ }
 ri    = glob(%w(bin/*.rb sbin/* lib/**/*.rb)).reject { |e| e=~ /\.(bat|cmd)$/ }
+man   = glob(%w{man/man8/*})
 libs  = glob(%w{lib/**/*.rb lib/**/*.py})
 tests = glob(%w{tests/**/*.rb})
 
@@ -93,6 +94,19 @@ def do_libs(libs, strip = 'lib/')
     File.makedirs(op, true)
     File.chmod(0755, op)
     File.install(lf, olf, 0755, true)
+  end
+end
+
+def do_man(man, strip = 'man/')
+  man.each do |mf|
+    omf = File.join(InstallOptions.man_dir, mf.gsub(/#{strip}/, ''))
+    om = File.dirname(omf)
+    File.makedirs(om, true)
+    File.chmod(0644, om)
+    File.install(mf, omf, 0644, true)
+    gzip = %x{which gzip}
+    gzip.chomp!
+    %x{#{gzip} #{omf}}
   end
 end
 
@@ -124,6 +138,17 @@ def prepare_installation
       InstallOptions.rdoc  = false
       InstallOptions.ri  = false
   end
+
+
+  if $haveman
+      InstallOptions.man = true
+      if RUBY_PLATFORM == "i386-mswin32"
+        InstallOptions.man  = false
+      end
+  else
+      InstallOptions.man = false
+  end
+
   InstallOptions.tests = true
 
   if $haveman
@@ -145,7 +170,7 @@ def prepare_installation
       InstallOptions.ri = onri
     end
     opts.on('--[no-]man', 'Presents the creation of man pages.', 'Default on.') do |onman|
-      InstallOptions.man = onman
+    InstallOptions.man = onman
     end
     opts.on('--[no-]tests', 'Prevents the execution of unit tests.', 'Default on.') do |ontest|
       InstallOptions.tests = ontest
@@ -188,15 +213,18 @@ def prepare_installation
   if (destdir = ENV['DESTDIR'])
     bindir = "#{destdir}#{Config::CONFIG['bindir']}"
     sbindir = "#{destdir}#{Config::CONFIG['sbindir']}"
+    mandir = "#{destdir}#{Config::CONFIG['mandir']}"
     sitelibdir = "#{destdir}#{sitelibdir}"
     tmpdirs << bindir
 
     FileUtils.makedirs(bindir)
     FileUtils.makedirs(sbindir)
+    FileUtils.makedirs(mandir)
     FileUtils.makedirs(sitelibdir)
   else
     bindir = Config::CONFIG['bindir']
     sbindir = Config::CONFIG['sbindir']
+    mandir = Config::CONFIG['mandir']
     tmpdirs << Config::CONFIG['bindir']
   end
 
@@ -205,6 +233,7 @@ def prepare_installation
   InstallOptions.bin_dir  = bindir
   InstallOptions.sbin_dir = sbindir
   InstallOptions.lib_dir  = libdir
+  InstallOptions.man_dir  = mandir
 end
 
 ##
@@ -251,13 +280,13 @@ def build_man(bins)
         # Create binary man pages
         bins.each do |bin| 
           b = bin.gsub( "bin/", "")
-          %x{#{bin} --help > ./#{b}.rst}  
+          %x{#{bin} --help > ./#{b}.rst}
           %x{#{rst2man} ./#{b}.rst ./man/man8/#{b}.8}
-          File.unlink("./#{b}.rst") 
+          File.unlink("./#{b}.rst")
         end
     rescue SystemCallError 
         $stderr.puts "Couldn't build man pages: " + $!
-        $stderr.puts "Continuing with install..."    
+        $stderr.puts "Continuing with install..."
     end
 end
 
@@ -358,7 +387,8 @@ prepare_installation
 run_tests(tests) if InstallOptions.tests
 #build_rdoc(rdoc) if InstallOptions.rdoc
 #build_ri(ri) if InstallOptions.ri
-build_man(bins) if InstallOptions.man
+#build_man(bins) if InstallOptions.man
 do_bins(sbins, InstallOptions.sbin_dir)
 do_bins(bins, InstallOptions.bin_dir)
 do_libs(libs)
+do_man(man)

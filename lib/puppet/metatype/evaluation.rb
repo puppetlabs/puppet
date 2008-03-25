@@ -4,6 +4,11 @@ class Puppet::Type
     # This returns any changes resulting from testing, thus 'collect' rather
     # than 'each'.
     def evaluate
+        if self.provider.is_a?(Puppet::Provider)
+            unless provider.class.suitable?
+                raise Puppet::Error, "Provider %s is not functional on this platform" % provider.class.name
+            end
+        end
         #Puppet.err "Evaluating %s" % self.path.join(":")
         unless defined? @evalcount
             self.err "No evalcount defined on '%s' of type '%s'" %
@@ -125,14 +130,19 @@ class Puppet::Type
         # the other properties matter.
         changes = []
         ensureparam = @parameters[:ensure]
-        if @parameters.include?(:ensure) && !currentvalues.include?(ensureparam)
+
+        # This allows resource types to have 'ensure' be a parameter, which allows them to
+        # just pass the parameter on to other generated resources.
+        ensureparam = nil unless ensureparam.is_a?(Puppet::Property)
+        if ensureparam && !currentvalues.include?(ensureparam)
             raise Puppet::DevError, "Parameter ensure defined but missing from current values"
         end
-        if @parameters.include?(:ensure) and ! ensureparam.insync?(currentvalues[ensureparam])
+
+        if ensureparam and ! ensureparam.insync?(currentvalues[ensureparam])
             changes << Puppet::PropertyChange.new(ensureparam, currentvalues[ensureparam])
         # Else, if the 'ensure' property is correctly absent, then do
         # nothing
-        elsif @parameters.include?(:ensure) and currentvalues[ensureparam] == :absent
+        elsif ensureparam and currentvalues[ensureparam] == :absent
             return []
         else
             changes = properties().find_all { |property|

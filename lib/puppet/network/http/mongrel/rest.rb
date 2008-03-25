@@ -14,11 +14,13 @@ class Puppet::Network::HTTP::MongrelREST < Puppet::Network::HTTP::Handler
     end
     
     def path(request)
-        '/' + request.params[Mongrel::Const::REQUEST_PATH].split('/')[1]
+        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
+        x = '/' + request.params[Mongrel::Const::REQUEST_PATH].split('/')[1]
     end
     
     def request_key(request)
-        request.params[Mongrel::Const::REQUEST_PATH].split('/')[2]        
+        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
+        x = request.params[Mongrel::Const::REQUEST_PATH].split('/')[2]        
     end
     
     def body(request)
