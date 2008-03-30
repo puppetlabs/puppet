@@ -48,7 +48,11 @@ module Puppet::Network
                             Puppet.warning "Transient SSL write error; restarting connection and retrying"
                             self.recycle_connection
                             retry
-                        end
+                        elsif detail.message =~ /certificate verify failed/ || /hostname was not match/ || /hostname not match/
+                            Puppet.warning "Certificate verification failed; consider using the certname configuration option"
+                            self.recycle_connection
+                            retry
+                        end 
                         raise XMLRPCClientError,
                             "Certificates were not trusted: %s" % detail
                     rescue ::XMLRPC::FaultException => detail
