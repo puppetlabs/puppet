@@ -95,7 +95,7 @@ module Puppet
 
         # Solaris specifies two devices, not just one.
         newproperty(:blockdevice) do
-            desc "The the device to fsck.  This is property is only valid
+            desc "The device to fsck.  This is property is only valid
                 on Solaris, and in most cases will default to the correct
                 value."
 
