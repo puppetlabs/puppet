@@ -79,9 +79,9 @@ describe Puppet::Indirector::REST do
         Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:model).returns(@mock_model)        
       end
       
-      # it "should raise an exception" do
-      #   lambda { Puppet::TestIndirectedFoo.find('bar') }.should raise_error(RuntimeError)     
-      # end
+      it "should raise an exception" do
+        lambda { Puppet::TestIndirectedFoo.find('bar') }.should raise_error(RuntimeError) 
+      end
     end
   end
 
