@@ -49,6 +49,11 @@ module Puppet::Network
                             self.recycle_connection
                             retry
                         end
+                        ["certificate verify failed", "hostname was not match", "hostname not match"].each do |str|
+                            if detail.message.include?(str)
+                                Puppet.warning "Certificate validation failed; considering using the certname configuration option"
+                            end
+                        end 
                         raise XMLRPCClientError,
                             "Certificates were not trusted: %s" % detail
                     rescue ::XMLRPC::FaultException => detail
