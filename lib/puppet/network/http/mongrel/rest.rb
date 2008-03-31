@@ -3,6 +3,10 @@ require 'puppet/network/http/handler'
 class Puppet::Network::HTTP::MongrelREST < Mongrel::HttpHandler
 
   include Puppet::Network::HTTP::Handler
+  
+  def initialize(args={})
+    initialize_for_puppet(args)
+  end
 
   private
  

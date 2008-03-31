@@ -315,10 +315,4 @@ describe Class.new, "put these somewhere" do
     it "should allow from_* on the inbound :data packet (look at its content_type) when doing a PUT/.new.save"
     it "should prepend a rest version number on the path (w00t)"
     it "should ... on server side, .save should from_yaml, then foo.save(args) instead of just Foo.new.save(args)"
-    it "should have a from_yaml class_method in the indirector (... default:  yaml.load(data) => instance, but can be overridden)"
-end
-
-describe Puppet::Indirector, "stuff required by HTTP servers" do
-    it "should provide the model with the ability to serialize to XML"
-    it "should provide the model with the ability to deserialize from XML"
 end

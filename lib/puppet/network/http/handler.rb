@@ -1,10 +1,9 @@
 module Puppet::Network::HTTP::Handler
-
-    def initialize(args = {})
+    
+    def initialize_for_puppet(args = {})
         raise ArgumentError unless @server = args[:server]
         raise ArgumentError unless @handler = args[:handler]
         @model = find_model_for_handler(@handler)
-        register_handler
     end
     
     # handle an HTTP request
@@ -19,24 +18,28 @@ module Puppet::Network::HTTP::Handler
     end
     
   private
+
+    def model
+      @model
+    end
     
     def do_find(request, response)
         key = request_key(request) || raise(ArgumentError, "Could not locate lookup key in request path [#{path}]")
         args = params(request)
-        result = @model.find(key, args).to_yaml
+        result = model.find(key, args).to_yaml
         encode_result(request, response, result)
     end
 
     def do_search(request, response)
         args = params(request)
-        result = @model.search(args).collect {|obj| obj.to_yaml }
+        result = model.search(args).collect {|obj| obj.to_yaml }
         encode_result(request, response, result) 
     end
 
     def do_destroy(request, response)
         key = request_key(request) || raise(ArgumentError, "Could not locate lookup key in request path [#{path}]")
         args = params(request)
-        result = @model.destroy(key, args)
+        result = model.destroy(key, args)
         encode_result(request, response, YAML.dump(result))
     end
 
@@ -44,7 +47,7 @@ module Puppet::Network::HTTP::Handler
         data = body(request)
         raise ArgumentError, "No data to save" if !data or data.empty?
         args = params(request)
-        obj = @model.new
+        obj = model.new
         result = obj.save(args.merge(:data => data)).to_yaml
         encode_result(request, response, result)
     end

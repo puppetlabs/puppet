@@ -8,42 +8,31 @@ require 'puppet/network/http'
 
 describe Puppet::Network::HTTP::WEBrickREST, "when initializing" do
     before do
-        @mock_webrick = stub('WEBrick server', :mount => true)
+        @mock_webrick = stub('WEBrick server', :mount => true, :[] => {})
         @mock_model = mock('indirected model')
         Puppet::Indirector::Indirection.stubs(:model).returns(@mock_model)
-        @params = { :server => @mock_webrick, :handler => :foo }
+        @params = [ @mock_webrick, :foo ]
     end
     
     it "should require access to a WEBrick server" do
-        Proc.new { Puppet::Network::HTTP::WEBrickREST.new(@params.delete_if {|k,v| :server == k })}.should raise_error(ArgumentError)
+        Proc.new { 
+            @params[0] = nil
+            Puppet::Network::HTTP::WEBrickREST.new(*@params)
+        }.should raise_error(ArgumentError)
     end
     
     it "should require an indirection name" do
-        Proc.new { Puppet::Network::HTTP::WEBrickREST.new(@params.delete_if {|k,v| :handler == k })}.should raise_error(ArgumentError)        
+        Proc.new { Puppet::Network::HTTP::WEBrickREST.new(@params.first) }.should raise_error(ArgumentError)        
     end
     
     it "should look up the indirection model from the indirection name" do
         Puppet::Indirector::Indirection.expects(:model).returns(@mock_model)
-        Puppet::Network::HTTP::WEBrickREST.new(@params)
+        Puppet::Network::HTTP::WEBrickREST.new(*@params)
     end
     
     it "should fail if the indirection is not known" do
         Puppet::Indirector::Indirection.expects(:model).returns(nil)
-        Proc.new { Puppet::Network::HTTP::WEBrickREST.new(@params) }.should raise_error(ArgumentError)
-    end
-    
-    it "should register itself with the WEBrick server for the singular HTTP methods" do
-        @mock_webrick.expects(:mount).with do |*args|
-            args.first == '/foo' and args.last.is_a?(Puppet::Network::HTTP::WEBrickREST)
-        end
-        Puppet::Network::HTTP::WEBrickREST.new(@params)
-    end
-
-    it "should register itself with the WEBrick server for the plural GET method" do
-        @mock_webrick.expects(:mount).with do |*args|
-            args.first == '/foos' and args.last.is_a?(Puppet::Network::HTTP::WEBrickREST)
-        end
-        Puppet::Network::HTTP::WEBrickREST.new(@params)
+        Proc.new { Puppet::Network::HTTP::WEBrickREST.new(*@params) }.should raise_error(ArgumentError)
     end
 end
 
@@ -52,9 +41,9 @@ describe Puppet::Network::HTTP::WEBrickREST, "when receiving a request" do
         @mock_request     = stub('webrick http request', :query => {})
         @mock_response    = stub('webrick http response', :status= => true, :body= => true)
         @mock_model_class = stub('indirected model class')
-        @mock_webrick     = stub('mongrel http server', :mount => true)
+        @mock_webrick     = stub('webrick http server', :mount => true, :[] => {})
         Puppet::Indirector::Indirection.stubs(:model).with(:foo).returns(@mock_model_class)
-        @handler = Puppet::Network::HTTP::WEBrickREST.new(:server => @mock_webrick, :handler => :foo)
+        @handler = Puppet::Network::HTTP::WEBrickREST.new(@mock_webrick, :foo)
     end
 
     def setup_find_request

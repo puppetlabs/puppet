@@ -9,6 +9,11 @@ class Puppet::Network::HTTP::WEBrick
         @mutex = Mutex.new
     end
     
+    def self.class_for_protocol(protocol)
+        return Puppet::Network::HTTP::WEBrickREST if protocol.to_sym == :rest
+        raise "Unknown protocol [#{protocol}]."
+    end
+    
     def listen(args = {})
         raise ArgumentError, ":handlers must be specified." if !args[:handlers] or args[:handlers].empty?
         raise ArgumentError, ":protocols must be specified." if !args[:protocols] or args[:protocols].empty?
@@ -42,19 +47,16 @@ class Puppet::Network::HTTP::WEBrick
             @listening
         end
     end
-    
+
   private
     
     def setup_handlers
         @protocols.each do |protocol|
+            klass = self.class.class_for_protocol(protocol)
             @handlers.each do |handler|
-                class_for_protocol(protocol).new(:server => @server, :handler => handler)
+                @server.mount('/' + handler.to_s, klass, handler)
+                @server.mount('/' + handler.to_s + 's', klass, handler)
             end
         end
-    end
-    
-    def class_for_protocol(protocol)
-        return Puppet::Network::HTTP::WEBrickREST if protocol.to_sym == :rest
-        raise ArgumentError, "Unknown protocol [#{protocol}]."
     end
 end
