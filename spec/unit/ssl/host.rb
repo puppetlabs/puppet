@@ -236,7 +236,7 @@ describe Puppet::SSL::Host do
         end
 
         it "should return true and set its certificate if retrieval was successful" do
-            cert = stub 'cert', :content => "mycert"
+            cert = stub 'cert', :content => "mycert", :save => nil
             Puppet::SSL::Certificate.stubs(:find).returns cert
 
             @host.retrieve_signed_certificate.should be_true

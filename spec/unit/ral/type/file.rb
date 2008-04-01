@@ -10,8 +10,6 @@ describe Puppet::Type.type(:file) do
         @file = Puppet::Type::File.create(:name => @path)
     end
 
-    after { Puppet::Type::File.clear }
-
     describe "when used with content and replace=>false" do
         before do
             @file[:content] = "foo"
