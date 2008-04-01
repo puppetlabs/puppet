@@ -126,5 +126,44 @@ describe Puppet::Indirector::SslFile do
                 end
             end
         end
+
+        describe "when searching for certificates" do
+            before do
+                @model = mock 'model'
+                @file_class.stubs(:model).returns @model
+            end
+            it "should return a certificate instance for all files that exist" do
+                Dir.expects(:entries).with(@path).returns %w{one.pem two.pem}
+
+                one = stub 'one', :read => nil
+                two = stub 'two', :read => nil
+
+                @model.expects(:new).with("one").returns one
+                @model.expects(:new).with("two").returns two
+
+                @searcher.search.should == [one, two]
+            end
+
+            it "should read each certificate in using the model's :read method" do
+                Dir.expects(:entries).with(@path).returns %w{one.pem}
+
+                one = stub 'one'
+                one.expects(:read).with(File.join(@path, "one.pem"))
+
+                @model.expects(:new).with("one").returns one
+
+                @searcher.search
+            end
+
+            it "should skip any files that do not match /\.pem$/" do
+                Dir.expects(:entries).with(@path).returns %w{. .. one.pem}
+
+                one = stub 'one', :read => nil
+
+                @model.expects(:new).with("one").returns one
+
+                @searcher.search
+            end
+        end
     end
 end

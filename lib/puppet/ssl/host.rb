@@ -17,6 +17,25 @@ class Puppet::SSL::Host
     attr_reader :name
     attr_accessor :ca
 
+    # Search for more than one host, optionally only specifying
+    # an interest in hosts with a given file type.
+    def self.search(options = {})
+        classes = [Key, CertificateRequest, Certificate]
+        if klass = options[:for]
+            classlist = [klass].flatten
+        else
+            classlist = [Key, CertificateRequest, Certificate]
+        end
+        args = {}
+        args[:in] = options[:in] if options[:in]
+
+        # Collect the results from each class, flatten them, collect all of the names, make the name list unique,
+        # then create a Host instance for each one.
+        classlist.collect { |klass| klass.search(args) }.flatten.collect { |r| r.name }.uniq.collect do |name|
+            new(name)
+        end
+    end
+
     # A bit of metaprogramming that we use to define all of
     # the methods for managing our ssl-related files.
     def self.manage_file(name, &block)

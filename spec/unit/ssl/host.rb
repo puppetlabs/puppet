@@ -260,4 +260,74 @@ describe Puppet::SSL::Host do
             @host.certificate.should be_nil
         end
     end
+
+    it "should have a method for listing certificate hosts" do
+        Puppet::SSL::Host.should respond_to(:search)
+    end
+
+    describe "when listing certificate hosts" do
+        it "should default to listing all clients with any file types" do
+            Puppet::SSL::Key.expects(:search).returns []
+            Puppet::SSL::Certificate.expects(:search).returns []
+            Puppet::SSL::CertificateRequest.expects(:search).returns []
+            Puppet::SSL::Host.search
+        end
+
+        it "should be able to list only clients with a key" do
+            Puppet::SSL::Key.expects(:search).returns []
+            Puppet::SSL::Certificate.expects(:search).never
+            Puppet::SSL::CertificateRequest.expects(:search).never
+            Puppet::SSL::Host.search :for => Puppet::SSL::Key
+        end
+
+        it "should be able to list only clients with a certificate" do
+            Puppet::SSL::Key.expects(:search).never
+            Puppet::SSL::Certificate.expects(:search).returns []
+            Puppet::SSL::CertificateRequest.expects(:search).never
+            Puppet::SSL::Host.search :for => Puppet::SSL::Certificate
+        end
+
+        it "should be able to list only clients with a certificate request" do
+            Puppet::SSL::Key.expects(:search).never
+            Puppet::SSL::Certificate.expects(:search).never
+            Puppet::SSL::CertificateRequest.expects(:search).returns []
+            Puppet::SSL::Host.search :for => Puppet::SSL::CertificateRequest
+        end
+
+        it "should default to not specifying a search terminus" do
+            Puppet::SSL::Key.expects(:search).with({}).returns []
+            Puppet::SSL::Certificate.expects(:search).with({}).returns []
+            Puppet::SSL::CertificateRequest.expects(:search).with({}).returns []
+            Puppet::SSL::Host.search
+        end
+
+        it "should use any specified search terminus" do
+            Puppet::SSL::Key.expects(:search).with(:in => :ca_file).returns []
+            Puppet::SSL::Certificate.expects(:search).with(:in => :ca_file).returns []
+            Puppet::SSL::CertificateRequest.expects(:search).with(:in => :ca_file).returns []
+            Puppet::SSL::Host.search :in => :ca_file
+        end
+
+        it "should return a Host instance created with the name of each found instance" do
+            key = stub 'key', :name => "key"
+            cert = stub 'cert', :name => "cert"
+            csr = stub 'csr', :name => "csr"
+
+            Puppet::SSL::Key.expects(:search).returns [key]
+            Puppet::SSL::Certificate.expects(:search).returns [cert]
+            Puppet::SSL::CertificateRequest.expects(:search).returns [csr]
+
+            returned = []
+            %w{key cert csr}.each do |name|
+                result = mock(name)
+                returned << result
+                Puppet::SSL::Host.expects(:new).with(name).returns result
+            end
+
+            result = Puppet::SSL::Host.search
+            returned.each do |r|
+                result.should be_include(r)
+            end
+        end
+    end
 end

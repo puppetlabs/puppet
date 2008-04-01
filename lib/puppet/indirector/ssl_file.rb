@@ -62,6 +62,18 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
         end
     end
 
+    # Search for more than one file.  At this point, it just returns
+    # an instance for every file in the directory.
+    def search(options = {})
+        dir = collection_directory
+        Dir.entries(dir).reject { |file| file !~ /\.pem$/ }.collect do |file|
+            name = file.sub(/\.pem$/, '')
+            result = model.new(name)
+            result.read(File.join(dir, file))
+            result
+        end
+    end
+
     private
 
     # A demeterish pointer to the collection directory.
