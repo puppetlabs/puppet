@@ -61,7 +61,7 @@ class Puppet::Node::Catalog < Puppet::PGraph
     def add_resource(*resources)
         resources.each do |resource|
             unless resource.respond_to?(:ref)
-                raise ArgumentError, "Can only add objects that respond to :ref"
+                raise ArgumentError, "Can only add objects that respond to :ref, not instances of %s" % resource.class
             end
 
             fail_unless_unique(resource)

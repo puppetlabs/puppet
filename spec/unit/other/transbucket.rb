@@ -91,10 +91,6 @@ describe Puppet::TransBucket, " when generating a catalog" do
         @fakes = %w{Fake[bottom] Fake[middle] Fake[top]}
     end
 
-    after do
-        Puppet::Type.allclear
-    end
-
     it "should convert all transportable objects to RAL resources" do
         @catalog = @top.to_catalog
         @users.each do |name|

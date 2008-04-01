@@ -9,8 +9,6 @@ describe Puppet::Type.type(:file).attrclass(:noop) do
         @file = Puppet::Type.newfile :path => "/what/ever"
     end
 
-    after { Puppet::Type::File.clear }
-
     it "should accept true as a value" do
         lambda { @file[:noop] = true }.should_not raise_error
     end

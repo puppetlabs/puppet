@@ -65,7 +65,6 @@ class Puppet::Util::Settings
             config = trans.to_catalog
             config.store_state = false
             config.apply
-            config.clear
         rescue => detail
             if Puppet[:trace]
                 puts detail.backtrace
@@ -589,8 +588,6 @@ Generated on #{Time.now}.
                         raise "Could not configure for running; got %s failure(s)" % failures
                     end
                 end
-            ensure
-                catalog.clear
             end
 
             sections.each { |s| @used << s }
@@ -1075,7 +1072,6 @@ Generated on #{Time.now}.
 
             return nil unless path.is_a?(String)
             return nil if path =~ /^\/dev/
-            return nil if Puppet::Type.type(:file)[path] # skip files that are in our global resource list.
 
             objects = []
 

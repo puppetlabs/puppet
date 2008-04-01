@@ -514,10 +514,6 @@ describe Puppet::Node::Catalog, " when functioning as a resource container" do
             raise "Aliased non-isomorphic resource"
         end
     end
-
-    after do
-        Puppet::Type.allclear
-    end
 end
 
 describe Puppet::Node::Catalog do
@@ -647,6 +643,7 @@ describe Puppet::Node::Catalog, " when creating a relationship graph" do
         @file = Puppet::Type.type(:file)
         @one = @file.create :path => "/one"
         @two = @file.create :path => "/two"
+        @sub = @file.create :path => "/two/subdir"
         @catalog.add_edge @compone, @one
         @catalog.add_edge @comptwo, @two
 
