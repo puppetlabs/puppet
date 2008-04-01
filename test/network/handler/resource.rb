@@ -40,68 +40,38 @@ class TestResourceServer < Test::Unit::TestCase
             server = Puppet::Network::Handler.resource.new()
         end
 
-        # The first run we create the file on the copy, the second run
-        # the file is already there so the object should be in sync
-        2.times do |i|
-            [   [nil],
-                [[:content, :mode], []],
-                [[], [:content]],
-                [[:content], [:mode]]
-            ].each do |ary|
-                retrieve = ary[0] || []
-                ignore = ary[1] || []
+        [   [nil],
+            [[:content, :mode], []],
+            [[], [:content]],
+            [[:content], [:mode]]
+        ].each do |ary|
+            retrieve = ary[0] || []
+            ignore = ary[1] || []
 
-                File.open(file, "w") { |f| f.print str }
+            File.open(file, "w") { |f| f.print str }
 
-                result = nil
-                assert_nothing_raised do
-                    result = server.describe("file", file, *ary)
-                end
+            result = nil
+            assert_nothing_raised do
+                result = server.describe("file", file, *ary)
+            end
 
-                assert(result, "Could not retrieve file information")
+            assert(result, "Could not retrieve file information")
 
-                assert_instance_of(Puppet::TransObject, result)
+            assert_instance_of(Puppet::TransObject, result)
 
-                # And remove the file, so we can verify it gets recreated
-                if i == 0
-                    File.unlink(file)
-                end
+            object = nil
+            assert_nothing_raised do
+                object = result.to_type
+            end
 
-                object = nil
-                assert_nothing_raised do
-                    object = result.to_type
-                end
+            assert(object, "Could not create type")
 
-                assert(object, "Could not create type")
+            retrieve.each do |property|
+                assert(object.should(property), "Did not retrieve %s" % property)
+            end
 
-                retrieve.each do |property|
-                    assert(object.should(property), "Did not retrieve %s" % property)
-                end
-
-                ignore.each do |property|
-                    assert(! object.should(property), "Incorrectly retrieved %s" % property)
-                end
-
-                if i == 0
-                    assert_events([:file_created], object)
-                else
-                    assert_nothing_raised {
-                        assert(object.insync?(object.retrieve), "Object was not in sync")
-                    }
-                end
-
-                assert(FileTest.exists?(file), "File did not get recreated")
-
-                if i == 0
-                if object.should(:content)
-                    assert_equal(str, File.read(file), "File contents are not the same")
-                else
-                    assert_equal("", File.read(file), "File content was incorrectly made")
-                end
-                end
-                if FileTest.exists? file
-                    File.unlink(file)
-                end
+            ignore.each do |property|
+                assert(! object.should(property), "Incorrectly retrieved %s" % property)
             end
         end
     end
@@ -143,6 +113,8 @@ class TestResourceServer < Test::Unit::TestCase
                 object = result.to_type
             end
 
+            catalog = mk_catalog(object)
+
             assert(object, "Could not create type")
 
             retrieve.each do |property|
@@ -152,11 +124,6 @@ class TestResourceServer < Test::Unit::TestCase
             ignore.each do |property|
                 assert(! object.should(property), "Incorrectly retrieved %s" % property)
             end
-
-            #assert_apply(object)
-            assert_events([:directory_created], object)
-            assert(FileTest.directory?(file), "Directory did not get recreated")
-            Dir.rmdir(file)
         end
     end
 

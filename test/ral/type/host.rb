@@ -55,16 +55,12 @@ class TestHost < Test::Unit::TestCase
     end
 
     def test_list
+        list = nil
         assert_nothing_raised do
-            @hosttype.defaultprovider.prefetch
+            list = @hosttype.defaultprovider.instances
         end
 
-        count = 0
-        @hosttype.each do |h|
-            count += 1
-        end
-
-        assert_equal(0, count, "Found hosts in empty file somehow")
+        assert_equal(0, list.length, "Found hosts in empty file somehow")
     end
 
     # Darwin will actually write to netinfo here.

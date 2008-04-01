@@ -125,16 +125,6 @@ class TestFileSources < Test::Unit::TestCase
         File.open(target, "w") { |f| f.puts "yay" }
         File.symlink(target, source)
         
-        file[:links] = :ignore
-        assert_nil(property.describe(source),
-            "Links were not ignored")
-        
-        file[:links] = :manage
-        # We can't manage links at this point
-        assert_raise(Puppet::Network::Handler::FileServerError) do
-            property.describe(source)
-        end
-        
         # And then make sure links get followed, otherwise
         file[:links] = :follow
         assert_equal("file", property.describe(source)[:type])
@@ -744,33 +734,18 @@ class TestFileSources < Test::Unit::TestCase
         File.open(source, "w") { |f| f.puts "yay" }
         File.symlink(source, link)
 
-        file = nil
-        assert_nothing_raised {
-            file = Puppet.type(:file).create(
-                :name => dest,
-                :source => link
-            )
-        }
+        file = Puppet.type(:file).create(:name => dest, :source => link)
 
-        # Default to skipping links
-        assert_events([], file)
-        assert(! FileTest.exists?(dest), "Created link")
+        catalog = mk_catalog(file)
+
+        # Default to managing links
+        catalog.apply
+        assert(FileTest.symlink?(dest), "Did not create link")
 
         # Now follow the links
         file[:links] = :follow
-        assert_events([:file_created], file)
+        catalog.apply
         assert(FileTest.file?(dest), "Destination is not a file")
-
-        # Now copy the links
-        #assert_raise(Puppet::Network::Handler::FileServerError) {
-        trans = nil
-        assert_nothing_raised {
-            file[:links] = :manage
-            comp = mk_catalog(file)
-            trans = comp.apply
-        }
-
-        assert(trans.failed?(file), "Object did not fail to copy links")
     end
 
     def test_changes

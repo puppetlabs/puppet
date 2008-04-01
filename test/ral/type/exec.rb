@@ -238,6 +238,8 @@ class TestExec < Test::Unit::TestCase
             :command => "cat %s %s" % [exe, oexe],
             :path => ENV["PATH"]
         )
+
+        catalog = mk_catalog(file, baseobj, ofile, exec, cat)
         
         rels = nil
         assert_nothing_raised do

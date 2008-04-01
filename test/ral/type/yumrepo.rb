@@ -17,6 +17,9 @@ class TestYumRepo < Test::Unit::TestCase
             f.print "[main]\nreposdir=#{@yumdir} /no/such/dir\n"
         end
         Puppet.type(:yumrepo).yumconf = @yumconf
+
+        # It needs to be reset each time, otherwise the cache is used.
+        Puppet.type(:yumrepo).inifile = nil
     end
 
     # Modify one existing section
@@ -24,19 +27,17 @@ class TestYumRepo < Test::Unit::TestCase
         copy_datafiles
         devel = make_repo("development", { :descr => "New description" })
         current_values = devel.retrieve
+
         assert_equal("development", devel[:name])
-        assert_equal('Fedora Core $releasever - Development Tree', 
-                     current_values[devel.property(:descr)])
-        assert_equal('New description', 
-                     devel.property(:descr).should)
+        assert_equal('Fedora Core $releasever - Development Tree', current_values[devel.property(:descr)])
+        assert_equal('New description', devel.property(:descr).should)
         assert_apply(devel)
+
         inifile = Puppet.type(:yumrepo).read()
         assert_equal('New description', inifile['development']['name'])
-        assert_equal('Fedora Core $releasever - $basearch - Base',
-                     inifile['base']['name'])
+        assert_equal('Fedora Core $releasever - $basearch - Base', inifile['base']['name'])
         assert_equal("foo\n  bar\n  baz", inifile['base']['exclude'])
-        assert_equal(['base', 'development', 'main'],
-                     all_sections(inifile))
+        assert_equal(['base', 'development', 'main'], all_sections(inifile))
     end
 
     # Create a new section
