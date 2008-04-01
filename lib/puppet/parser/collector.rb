@@ -51,7 +51,7 @@ class Puppet::Parser::Collector
         search = "(exported=? AND restype=?)"
         values = [true, @type]
 
-        search += " AND (?)" and values << @equery if @equery
+        search += " AND (%s)" % @equery if @equery
 
         # We're going to collect objects from rails, but we don't want any
         # objects from this host.
@@ -118,20 +118,20 @@ class Puppet::Parser::Collector
         # If there are no more resources to find, delete this from the list
         # of collections.
         if @resources.empty?
-            @scope.compile.delete_collection(self)
+            @scope.compiler.delete_collection(self)
         end
 
         return result
     end
 
-    # Collect just virtual objects, from our local compile.
+    # Collect just virtual objects, from our local compiler.
     def collect_virtual(exported = false)
         if exported
             method = :exported?
         else
             method = :virtual?
         end
-        scope.compile.resources.find_all do |resource|
+        scope.compiler.resources.find_all do |resource|
             resource.type == @type and resource.send(method) and match?(resource)
         end
     end
@@ -150,7 +150,7 @@ class Puppet::Parser::Collector
 
         resource.exported = false
         
-        scope.compile.store_resource(scope, resource)
+        scope.compiler.add_resource(scope, resource)
 
         return resource
     end

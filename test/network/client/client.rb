@@ -140,35 +140,6 @@ class TestClient < Test::Unit::TestCase
         }
     end
 
-    def test_classfile
-        Puppet[:code] = "class yaytest {}\n class bootest {}\n include yaytest, bootest"
-
-        Puppet::Node::Facts.indirection.stubs(:save)
-
-        master = client = nil
-        assert_nothing_raised() {
-            master = Puppet::Network::Handler.master.new(
-                :Local => false
-            )
-        }
-        assert_nothing_raised() {
-            client = Puppet::Network::Client.master.new(
-                :Master => master
-            )
-        }
-
-        # Fake that it's local, so it creates the class file
-        client.local = false
-
-        # We can't guarantee class ordering
-        client.expects(:setclasses).with do |array|
-            array.length == 2 and array.include?("yaytest") and array.include?("bootest")
-        end
-        assert_nothing_raised {
-            client.getconfig
-        }
-    end
-
     def test_client_loading
         # Make sure we don't get a failure but that we also get nothing back
         assert_nothing_raised do

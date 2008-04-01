@@ -211,6 +211,16 @@ end
             "Lost value to hostname")
     end
 
+    # Make sure that setting environment by fact takes precedence to configuration
+    def test_setenvironmentwithfact
+        name = "environment"
+        value = "test_environment"
+
+        Facter.stubs(:to_hash).returns(name => value)
+
+        assert_equal(value, Puppet::Network::Client.master.facts[name])
+    end
+
     # Make sure we load all facts on startup.
     def test_loadfacts
         dirs = [tempfile(), tempfile()]
@@ -339,6 +349,8 @@ end
         File.open(source, "w") { |f| f.puts "something" }
         dest = tempfile
         Puppet[:noop] = true
+        node = stub 'node', :environment => "development"
+        Puppet::Node.stubs(:find).returns node
         assert_nothing_raised("Could not download in noop") do
             @master.download(:dest => dest, :source => source, :tag => "yay")
         end
@@ -545,5 +557,34 @@ end
         client.getconfig
         # Doesn't throw an exception, but definitely fails.
         client.run
+    end
+
+    def test_classfile
+        Puppet[:code] = "class yaytest {}\n class bootest {}\n include yaytest, bootest"
+
+        Puppet::Node::Facts.indirection.stubs(:save)
+
+        master = client = nil
+        assert_nothing_raised() {
+            master = Puppet::Network::Handler.master.new(
+                :Local => false
+            )
+        }
+        assert_nothing_raised() {
+            client = Puppet::Network::Client.master.new(
+                :Master => master
+            )
+        }
+
+        # Fake that it's local, so it creates the class file
+        client.local = false
+
+        # We can't guarantee class ordering
+        client.expects(:setclasses).with do |array|
+            array.length == 2 and array.include?("yaytest") and array.include?("bootest")
+        end
+        assert_nothing_raised {
+            client.getconfig
+        }
     end
 end

@@ -13,8 +13,7 @@ OVERRIDE_OPTS = {
     'logfile': '/dev/null'
 }
 
-def pkg_lists():
-    my = yum.YumBase()
+def pkg_lists(my):
     my.doConfigSetup()
 
     for k in OVERRIDE_OPTS.keys():
@@ -28,10 +27,13 @@ def pkg_lists():
     return my.doPackageLists('updates')
 
 try:
-    ypl = pkg_lists()
+    try:
+        my = yum.YumBase()
+        ypl = pkg_lists(my)
+        for pkg in ypl.updates:
+            print "_pkg %s %s %s %s %s" % (pkg.name, pkg.epoch, pkg.version, pkg.release, pkg.arch)
+    finally:
+        my.closeRpmDB()
 except IOError, e:
     print "_err IOError %d %s" % (e.errno, e)
     sys.exit(1)
-    
-for pkg in ypl.updates:
-    print "_pkg %s %s %s %s %s" % (pkg.name, pkg.epoch, pkg.version, pkg.release, pkg.arch)

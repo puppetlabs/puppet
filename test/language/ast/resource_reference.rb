@@ -20,7 +20,7 @@ class TestASTResourceReference < Test::Unit::TestCase
     def setup
         super
         @scope = mkscope
-        @parser = @scope.compile.parser
+        @parser = @scope.compiler.parser
     end
 
     def test_evaluate
@@ -31,7 +31,7 @@ class TestASTResourceReference < Test::Unit::TestCase
 
             evaled = nil
             assert_nothing_raised("Could not evaluate resource ref") do
-                evaled = ref.evaluate(:scope => @scope)
+                evaled = ref.evaluate(@scope)
             end
 
             assert_equal(type, evaled.type, "Type did not translate correctly")
@@ -44,7 +44,7 @@ class TestASTResourceReference < Test::Unit::TestCase
         ref = newref("Class", "one")
         evaled = nil
         assert_nothing_raised("Could not evaluate resource ref") do
-            evaled = ref.evaluate(:scope => @scope)
+            evaled = ref.evaluate(@scope)
         end
 
         assert_equal("Class", evaled.type, "Did not set type to 'class'")
@@ -61,24 +61,24 @@ class TestASTResourceReference < Test::Unit::TestCase
         title = "title"
 
         # First try a qualified type
-        assert_equal("One::Two", newref("two", title).evaluate(:scope => twoscope).type,
+        assert_equal("One::Two", newref("two", title).evaluate(twoscope).type,
             "Defined type was not made fully qualified")
 
         # Then try a type that does not need to be qualified
-        assert_equal("One", newref("one", title).evaluate(:scope => twoscope).type,
+        assert_equal("One", newref("one", title).evaluate(twoscope).type,
             "Unqualified defined type was not handled correctly")
 
         # Then an unqualified type from within the one namespace
-        assert_equal("Three", newref("three", title).evaluate(:scope => twoscope).type,
+        assert_equal("Three", newref("three", title).evaluate(twoscope).type,
             "Defined type was not made fully qualified")
 
         # Then a builtin type
-        assert_equal("File", newref("file", title).evaluate(:scope => twoscope).type,
+        assert_equal("File", newref("file", title).evaluate(twoscope).type,
             "Builtin type was not handled correctly")
 
         # Now try a type that does not exist, which should throw an error.
         assert_raise(Puppet::ParseError, "Did not fail on a missing type in a resource reference") do
-            newref("nosuchtype", title).evaluate(:scope => twoscope)
+            newref("nosuchtype", title).evaluate(twoscope)
         end
 
         # Now run the same tests, but with the classes
@@ -86,20 +86,20 @@ class TestASTResourceReference < Test::Unit::TestCase
         @parser.newclass "one::five"
 
         # First try an unqualified type
-        assert_equal("four", newref("class", "four").evaluate(:scope => twoscope).title,
+        assert_equal("four", newref("class", "four").evaluate(twoscope).title,
             "Unqualified class was not found")
 
         # Then a qualified class
-        assert_equal("one::five", newref("class", "five").evaluate(:scope => twoscope).title,
+        assert_equal("one::five", newref("class", "five").evaluate(twoscope).title,
             "Class was not made fully qualified")
 
         # Then try a type that does not need to be qualified
-        assert_equal("four", newref("class", "four").evaluate(:scope => twoscope).title,
+        assert_equal("four", newref("class", "four").evaluate(twoscope).title,
             "Unqualified class was not handled correctly")
 
         # Now try a type that does not exist, which should throw an error.
         assert_raise(Puppet::ParseError, "Did not fail on a missing type in a resource reference") do
-            newref("class", "nosuchclass").evaluate(:scope => twoscope)
+            newref("class", "nosuchclass").evaluate(twoscope)
         end
     end
 end

@@ -284,11 +284,6 @@ describe Puppet::Util::Settings, " when parsing its configuration" do
         lambda { @settings.parse(file) }.should_not raise_error
     end
 
-    it "should support an old parse method when per-executable configuration files still exist" do
-        # I'm not going to bother testing this method.
-        @settings.should respond_to(:old_parse)
-    end
-
     it "should convert booleans in the configuration file into Ruby booleans" do
         text = "[main]
         one = true
@@ -481,7 +476,7 @@ describe Puppet::Util::Settings, " when being used to manage the host machine" d
 
     def stub_transaction
         @bucket = mock 'bucket'
-        @config = mock 'config'
+        @config = mock 'config', :clear => nil
         @trans = mock 'transaction'
 
         @settings.expects(:to_transportable).with(:whatever).returns(@bucket)
@@ -597,6 +592,72 @@ describe Puppet::Util::Settings, " when being used to manage the host machine" d
         file.should be_nil
     end
 
+    it "should not try to manage files in memory" do
+        main = Puppet::Type.type(:file).create(:path => "/maindir")
+
+        trans = @settings.to_transportable
+
+        lambda { trans.to_catalog }.should_not raise_error
+    end
+
+    it "should do nothing if a catalog cannot be created" do
+        bucket = mock 'bucket'
+        catalog = mock 'catalog'
+
+        @settings.expects(:to_transportable).returns bucket
+        bucket.expects(:to_catalog).raises RuntimeError
+        catalog.expects(:apply).never
+
+        @settings.use(:mysection)
+    end
+
+    it "should clear the catalog after applying" do
+        bucket = mock 'bucket'
+        catalog = mock 'catalog'
+
+        @settings.expects(:to_transportable).returns bucket
+        bucket.expects(:to_catalog).returns catalog
+        catalog.stubs(:host_config=)
+        catalog.stubs(:apply)
+        catalog.expects(:clear)
+
+        @settings.use(:mysection)
+    end
+
+    it "should clear the catalog even if there is an exception during applying" do
+        bucket = mock 'bucket'
+        catalog = mock 'catalog'
+
+        @settings.expects(:to_transportable).returns bucket
+        bucket.expects(:to_catalog).returns catalog
+        catalog.stubs(:host_config=)
+        catalog.expects(:apply).raises(ArgumentError)
+        catalog.expects(:clear)
+
+        # We don't care about the raised exception, we just care that
+        # we clear the catalog even with the exception
+        lambda { @settings.use(:mysection) }.should raise_error
+    end
+
+    it "should do nothing if all specified sections have already been used" do
+        bucket = mock 'bucket'
+        catalog = mock 'catalog'
+
+        @settings.expects(:to_transportable).once.returns(bucket)
+        bucket.expects(:to_catalog).returns catalog
+        catalog.stub_everything
+
+        @settings.use(:whatever)
+
+        @settings.use(:whatever)
+    end
+
+    it "should ignore file settings whose values are not strings" do
+        @settings[:maindir] = false
+
+        lambda { trans = @settings.to_transportable }.should_not raise_error
+    end
+
     it "should be able to turn the current configuration into a parseable manifest"
 
     it "should convert octal numbers correctly when producing a manifest"
@@ -635,4 +696,6 @@ describe Puppet::Util::Settings, " when being used to manage the host machine" d
 
         proc { @settings.use(:whatever) }.should raise_error(RuntimeError)
     end
+
+    after { Puppet::Type.allclear }
 end

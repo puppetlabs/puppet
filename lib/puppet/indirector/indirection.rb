@@ -162,7 +162,7 @@ class Puppet::Indirector::Indirection
 
         # See if our instance is in the cache and up to date.
         if cache? and cache.has_most_recent?(key, terminus(terminus_name).version(key))
-            Puppet.info "Using cached %s %s" % [self.name, key]
+            Puppet.debug "Using cached %s %s" % [self.name, key]
             return cache.find(key, *args)
         end
 

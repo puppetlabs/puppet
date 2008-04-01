@@ -128,11 +128,19 @@ else
     else
         with_contents = true
     end
+    exit_code = 0
     options[:references].sort { |a,b| a.to_s <=> b.to_s }.each do |name|
-        section = Puppet::Util::Reference.reference(name)
+        raise "Could not find reference %s" % name unless section = Puppet::Util::Reference.reference(name)
 
-        # Add the per-section text, but with no ToC
-        text += section.send(options[:format], with_contents)
+        begin
+            # Add the per-section text, but with no ToC
+            text += section.send(options[:format], with_contents)
+        rescue => detail
+            puts detail.backtrace
+            $stderr.puts "Could not generate reference %s: %s" % [name, detail]
+            exit_code = 1
+            next
+        end
     end
 
     unless with_contents # We've only got one reference
@@ -147,6 +155,8 @@ else
     else
         puts text
     end
+
+    exit exit_code
 end
 
 

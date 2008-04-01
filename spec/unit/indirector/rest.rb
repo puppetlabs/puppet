@@ -13,7 +13,7 @@ describe Puppet::Indirector::REST do
 
         @rest_class = Class.new(Puppet::Indirector::REST) do
             def self.to_s
-                "Testing"
+                "This::Is::A::Test::Class"
             end
         end
 

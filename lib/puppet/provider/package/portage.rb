@@ -10,8 +10,8 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
     defaultfor :operatingsystem => :gentoo
 
     def self.instances
-        result_format = /(\S+) (\S+) \[([^\[]*)(\[[^\]]*\])?\] \[[^0-9]*([^\s:\[]*)(\[[^\]]*\])?(:\S*)?\] ([\S]*) (.*)/
-        result_fields = [:category, :name, :ensure, :ensure_overlay, :version_available, :overlay, :slot, :vendor, :description]
+        result_format = /(\S+) (\S+) \[(?:([0-9.a-zA-Z]+(?:_(?:alpha|beta|pre|rc|p)[0-9]*)*(?:-r[0-9]*)?)(?:\([^\)]+\))?(?:\[([^\]]+)\])?[ ]*)*\] \[(?:(?:\{M\})?(?:\([~*]+\))?([0-9.a-zA-Z]+(?:_(?:alpha|beta|pre|rc|p)[0-9]*)*(?:-r[0-9]*)?)(?:\(([^\)]+)\))?(?:![mf])*(?:\[([^\]]+)\])?)?\] ([\S]*) (.*)/
+        result_fields = [:category, :name, :ensure, :ensure_overlay, :version_available, :slot, :overlay, :vendor, :description]
 
         search_format = "{installedversionsshort}<category> <name> [<installedversionsshort>] [<best>] <homepage> <description>{}"
 
@@ -39,7 +39,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
             return packages
         rescue Puppet::ExecutionFailure => detail
-            raise Puppet::PackageError.new(detail)
+            raise Puppet::Error.new(detail)
         end
     end
 
@@ -67,8 +67,8 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
     end
 
     def query
-        result_format = /(\S+) (\S+) \[([^\[]*)(\[[^\]]*\])?\] \[[^0-9]*([^\s:\[]*)(\[[^\]]*\])?(:\S*)?\] ([\S]*) (.*)/
-        result_fields = [:category, :name, :ensure, :ensure_overlay, :version_available, :overlay, :slot, :vendor, :description]
+        result_format = /(\S+) (\S+) \[(?:([0-9.a-zA-Z]+(?:_(?:alpha|beta|pre|rc|p)[0-9]*)*(?:-r[0-9]*)?)(?:\([^\)]+\))?(?:\[([^\]]+)\])?[ ]*)*\] \[(?:(?:\{M\})?(?:\([~*]+\))?([0-9.a-zA-Z]+(?:_(?:alpha|beta|pre|rc|p)[0-9]*)*(?:-r[0-9]*)?)(?:\(([^\)]+)\))?(?:![mf])*(?:\[([^\]]+)\])?)?\] ([\S]*) (.*)/
+        result_fields = [:category, :name, :ensure, :ensure_overlay, :version_available, :slot, :overlay, :vendor, :description]
 
         search_field = @resource[:category] ? "--category-name" : "--name"
         search_value = package_name
@@ -99,14 +99,14 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
             case packages.size
                 when 0
 		    not_found_value = "%s/%s" % [@resource[:category] ? @resource[:category] : "<unspecified category>", @resource[:name]]
-                    raise Puppet::PackageError.new("No package found with the specified name [#{not_found_value}]")
+                    raise Puppet::Error.new("No package found with the specified name [#{not_found_value}]")
                 when 1
                     return packages[0]
                 else
-                    raise Puppet::PackageError.new("More than one package with the specified name [#{search_value}], please use the category parameter to disambiguate")
+                    raise Puppet::Error.new("More than one package with the specified name [#{search_value}], please use the category parameter to disambiguate")
             end
         rescue Puppet::ExecutionFailure => detail
-            raise Puppet::PackageError.new(detail)
+            raise Puppet::Error.new(detail)
         end
     end
 

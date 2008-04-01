@@ -3,7 +3,7 @@ require 'timeout'
 require 'puppet/rails'
 require 'puppet/util/methodhelper'
 require 'puppet/parser/parser'
-require 'puppet/parser/compile'
+require 'puppet/parser/compiler'
 require 'puppet/parser/scope'
 
 # The interpreter is a very simple entry-point class that
@@ -24,8 +24,13 @@ class Puppet::Parser::Interpreter
 
     # evaluate our whole tree
     def compile(node)
-        raise Puppet::ParseError, "Could not parse configuration; cannot compile" unless env_parser = parser(node.environment)
-        return Puppet::Parser::Compile.new(node, env_parser).compile
+        raise Puppet::ParseError, "Could not parse configuration; cannot compile on node %s" % node.name unless env_parser = parser(node.environment)
+        begin
+          return Puppet::Parser::Compiler.new(node, env_parser).compile
+        rescue => detail
+          puts detail.backtrace if Puppet[:trace]
+          raise Puppet::Error, detail.to_s + " on node %s" % node.name
+        end
     end
 
     # create our interpreter
@@ -40,6 +45,30 @@ class Puppet::Parser::Interpreter
         end
 
         @parsers = {}
+    end
+
+    # Return the parser for a specific environment.
+    def parser(environment)
+        if ! @parsers[environment] or @parsers[environment].reparse?
+            # This will throw an exception if it does not succeed.  We only
+            # want to get rid of the old parser if we successfully create a new
+            # one.
+            begin
+                tmp = create_parser(environment)
+                @parsers[environment].clear if @parsers[environment]
+                @parsers[environment] = tmp
+            rescue => detail
+                # If a parser already exists, than assume that we logged the
+                # exception elsewhere and reuse the parser.  If one doesn't
+                # exist, then reraise.
+                if @parsers[environment]
+                    Puppet.err detail
+                else
+                    raise detail
+                end
+            end
+        end
+        @parsers[environment]
     end
 
     private
@@ -66,25 +95,5 @@ class Puppet::Parser::Interpreter
             error.set_backtrace(detail.backtrace)
             raise error
         end
-    end
-
-    # Return the parser for a specific environment.
-    def parser(environment)
-        if ! @parsers[environment] or @parsers[environment].reparse?
-            # This will throw an exception if it does not succeed.  We only
-            # want to get rid of the old parser if we successfully create a new
-            # one.
-            begin
-                tmp = create_parser(environment)
-                @parsers[environment].clear if @parsers[environment]
-                @parsers[environment] = tmp
-            rescue => detail
-                # If a parser already exists, than assume that we logged the
-                # exception elsewhere and reuse the parser.  If one doesn't
-                # exist, then reraise.
-                raise detail unless @parsers[environment]
-            end
-        end
-        @parsers[environment]
     end
 end

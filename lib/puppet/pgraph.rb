@@ -7,36 +7,16 @@ require 'puppet/simple_graph'
 # This class subclasses a graph class in order to handle relationships
 # among resources.
 class Puppet::PGraph < Puppet::SimpleGraph
-    # This is the type used for splicing.
-    attr_accessor :container_type
-
     include Puppet::Util
 
-    def add_edge!(*args)
+    def add_edge(*args)
         @reversal = nil
         super
     end
 
-    def add_vertex!(*args)
+    def add_vertex(*args)
         @reversal = nil
         super
-    end
-
-    # Make sure whichever edge has a label keeps the label
-    def copy_label(source, target, label)
-        # 'require' relationships will not have a label,
-        # and all 'subscribe' relationships have the same
-        # label, at least for now.
-
-        # Labels default to {}, so we can't just test for nil.
-        newlabel = label || {}
-        oldlabel = edge_label(source, target) || {}
-        if ! newlabel.empty? and oldlabel.empty?
-            edge_label_set(source, target, label)
-            # We should probably check to see if the labels both exist
-            # and don't match, but we'd just throw an error which the user
-            # couldn't do anyting about.
-        end
     end
 
     # Which resources a given resource depends upon.
@@ -55,11 +35,6 @@ class Puppet::PGraph < Puppet::SimpleGraph
         # tree in the :out direction than to search a normal tree
         # in the :in direction.
         @reversal.tree_from_vertex(resource, :out).keys
-    end
-    
-    # Override this method to use our class instead.
-    def edge_class()
-        Puppet::Relationship
     end
     
     # Determine all of the leaf nodes below a given vertex.
@@ -123,23 +98,11 @@ class Puppet::PGraph < Puppet::SimpleGraph
                             t = edge.target
                         end
 
-                        # We don't want to add multiple copies of the
-                        # same edge, but we *do* want to make sure we
-                        # keep labels around.
-                        # XXX This will *not* work when we support multiple
-                        # types of labels, and only works now because
-                        # you can only do simple subscriptions.
-                        if edge?(s, t)
-                            copy_label(s, t, edge.label)
-                            next
-                        end
-                        add_edge!(s, t, edge.label)
+                        add_edge(s, t, edge.label)
                     end
 
                     # Now get rid of the edge, so remove_vertex! works correctly.
                     remove_edge!(edge)
-                    Puppet.debug "%s: %s => %s: %s" % [container,
-                        edge.source, edge.target, edge?(edge.source, edge.target)]
                 end
             end
             remove_vertex!(container)

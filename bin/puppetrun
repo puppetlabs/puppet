@@ -40,7 +40,7 @@
 # you want any Puppet daemon to allow -- it is currently global to all Puppet
 # daemons.
 #
-# An example file looks like this:
+# An example file looks like this::
 #
 #     [fileserver]
 #         allow *.madstop.com
@@ -274,14 +274,9 @@ else
 end
 
 # Now parse the config
-config = File.join(Puppet[:confdir], "puppetmasterd.conf")
-Puppet.parse_config(config)
+Puppet.parse_config
 
-if File.exists? config
-    Puppet.settings.parse(config)
-end
-
-if Puppet[:ldapnodes]
+if Puppet[:node_terminus] = "ldap"
     if options[:all]
         hosts = ldapnodes(:all, options[:fqdn])
         puts "all: %s" % hosts.join(", ")

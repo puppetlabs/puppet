@@ -44,17 +44,17 @@ class Puppet::Parser::AST
         def eachvalue(scope)
             if @value.is_a?(AST::ASTArray)
                 @value.each { |subval|
-                    yield subval.evaluate(:scope => scope)
+                    yield subval.safeevaluate(scope)
                 }
             else
-                yield @value.evaluate(:scope => scope)
+                yield @value.safeevaluate(scope)
             end
         end
 
         # Evaluate the actual statements; this only gets called if
         # our option matched.
-        def evaluate(hash)
-            return @statements.safeevaluate(hash)
+        def evaluate(scope)
+            return @statements.safeevaluate(scope)
         end
     end
 end

@@ -155,8 +155,6 @@ class Type
             @parameters = {}
         end
 
-        # set defalts
-        @noop = false
         # keeping stats for the total number of changes, and how many were
         # completely sync'ed
         # this isn't really sufficient either, because it adds lots of special
@@ -257,10 +255,7 @@ class Type
                 rescue ArgumentError, Puppet::Error, TypeError
                     raise
                 rescue => detail
-                    error = Puppet::DevError.new(
-                        "Could not set %s on %s: %s" %
-                            [attr, self.class.name, detail]
-                    )
+                    error = Puppet::DevError.new( "Could not set %s on %s: %s" % [attr, self.class.name, detail])
                     error.set_backtrace(detail.backtrace)
                     raise error
                 end
@@ -422,10 +417,6 @@ end
 
 require 'puppet/propertychange'
 require 'puppet/provider'
+
+# Always load these types.
 require 'puppet/type/component'
-require 'puppet/type/pfile'
-require 'puppet/type/pfilebucket'
-require 'puppet/type/tidy'
-
-
-

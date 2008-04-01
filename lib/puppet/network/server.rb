@@ -1,3 +1,5 @@
+require 'puppet/network/http'
+
 class Puppet::Network::Server
 	attr_reader :server_type, :protocols, :address, :port
 

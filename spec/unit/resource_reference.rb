@@ -40,6 +40,12 @@ describe Puppet::ResourceReference do
         ref.type.should == "Foo::Bar"
         ref.title.should == "yay"
     end
+
+    it "should interpret the title as a reference and assign appropriately if the type is nil and the title contains nested square brackets" do
+        ref = Puppet::ResourceReference.new(nil, "foo::bar[baz[yay]]")
+        ref.type.should == "Foo::Bar"
+        ref.title.should =="baz[yay]"
+    end
 end
 
 describe Puppet::ResourceReference, "when resolving resources with a catalog" do

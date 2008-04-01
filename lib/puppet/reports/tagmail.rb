@@ -28,10 +28,12 @@ Puppet::Reports.register_report(:tagmail) do
 
         This will send all messages to ``me@domain.com``, and all messages from
         webservers that are not also from mailservers to ``httpadmins@domain.com``.
+
+        If you are using anti-spam controls, such as grey-listing, on your mail 
+        server you should whitelist the sending email (controlled by ``reportform`` 
+        configuration option) to ensure your email is not discarded as spam.  
         "
 
-
-    Puppet.settings.use(:tagmail)
 
     # Find all matching messages.
     def match(taglists)
@@ -127,7 +129,14 @@ Puppet::Reports.register_report(:tagmail) do
                     Net::SMTP.start(Puppet[:smtpserver]) do |smtp|
                         reports.each do |emails, messages|
                             Puppet.info "Sending report to %s" % emails.join(", ")
-                            smtp.send_message(messages, Puppet[:reportfrom], *emails)
+                            smtp.open_message_stream(Puppet[:reportfrom], *emails) do |p|
+                              p.puts "From: #{Puppet[:reportfrom]}"
+                              p.puts "Subject: Puppet Report for %s" % self.host
+                              p.puts "To: " + emails.join(", ")
+                              p.puts "Date: " + Time.now.rfc2822
+                              p.puts
+                              p.puts messages
+                            end 
                         end
                     end
                 rescue => detail

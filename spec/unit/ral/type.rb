@@ -11,8 +11,8 @@ describe Puppet::Type, " when in a configuration" do
         @catalog.add_resource @container
         @catalog.add_resource @one
         @catalog.add_resource @two
-        @catalog.add_edge! @container, @one
-        @catalog.add_edge! @container, @two
+        @catalog.add_edge @container, @one
+        @catalog.add_edge @container, @two
     end
 
     it "should have no parent if there is no in edge" do

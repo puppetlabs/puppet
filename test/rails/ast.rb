@@ -44,12 +44,12 @@ class TestRailsAST < PuppetTest::TestCase
             # And if it is, make sure we throw an error.
             if bad
                 assert_raise(Puppet::ParseError, "Evaluated '#{string}'") do
-                    str, code = query.evaluate :scope => @scope
+                    str, code = query.evaluate @scope
                 end
                 next
             else
                 assert_nothing_raised("Could not evaluate '#{string}'") do
-                    str, code = query.evaluate :scope => @scope
+                    str, code = query.evaluate @scope
                 end
             end
             assert_nothing_raised("Could not find resource") do

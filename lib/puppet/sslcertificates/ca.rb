@@ -194,8 +194,8 @@ class Puppet::SSLCertificates::CA
     # Revoke the certificate with serial number SERIAL issued by this
     # CA. The REASON must be one of the OpenSSL::OCSP::REVOKED_* reasons
     def revoke(serial, reason = OpenSSL::OCSP::REVOKED_STATUS_KEYCOMPROMISE)
-        if @config[:cacrl] == 'none'
-            raise Puppet::Error, "Revocation requires a CRL, but ca_crl is set to 'none'"
+        if @config[:cacrl] == 'false'
+            raise Puppet::Error, "Revocation requires a CRL, but ca_crl is set to 'false'"
         end
         time = Time.now
         revoked = OpenSSL::X509::Revoked.new
@@ -238,33 +238,6 @@ class Puppet::SSLCertificates::CA
         }
     end
 
-    # Create an exclusive lock for reading and writing, and do the
-    # writing in a tmp file.
-    def readwritelock(file, mode = 0600)
-        tmpfile = file + ".tmp"
-        sync = Sync.new
-        unless FileTest.directory?(File.dirname(tmpfile))
-            raise Puppet::DevError, "Cannot create %s; directory %s does not exist" %
-                [file, File.dirname(file)]
-        end
-        sync.synchronize(Sync::EX) do
-            File.open(file, "r+", mode) do |rf|
-                rf.lock_exclusive do
-                    File.open(tmpfile, "w", mode) do |tf|
-                        yield tf
-                    end
-                    begin
-                        File.rename(tmpfile, file)
-                    rescue => detail
-                        Puppet.err "Could not rename %s to %s: %s" %
-                            [file, tmpfile, detail]
-                    end
-                end
-            end
-        end
-    end
-
-
     # Sign a given certificate request.
     def sign(csr)
         unless csr.is_a?(OpenSSL::X509::Request)
@@ -278,9 +251,8 @@ class Puppet::SSLCertificates::CA
         end
 
         serial = nil
-        readwritelock(@config[:serial]) { |f|
+        Puppet.settings.readwritelock(:serial) { |f|
             serial = File.read(@config[:serial]).chomp.hex
-
             # increment the serial
             f << "%04X" % (serial + 1)
         }
@@ -372,7 +344,7 @@ class Puppet::SSLCertificates::CA
             @crl = OpenSSL::X509::CRL.new(
                 File.read(@config[:cacrl])
             )
-        elsif @config[:cacrl] == 'none'
+        elsif @config[:cacrl] == 'false'
             @crl = nil
         else
             # Create new CRL

@@ -9,16 +9,28 @@ require 'puppet/file_serving'
 class Puppet::FileServing::FileBase
     attr_accessor :key
 
+    # Does our file exist?
+    def exist?
+        begin
+            stat
+            return true
+        rescue => detail
+            return false
+        end
+    end
+
     # Return the full path to our file.  Fails if there's no path set.
     def full_path
         raise(ArgumentError, "You must set a path to get a file's path") unless self.path
 
-        relative_path ? File.join(path, relative_path) : path
+        if relative_path.nil? or relative_path == ""
+            path
+        else
+            File.join(path, relative_path)
+        end
     end
 
     def initialize(key, options = {})
-        raise ArgumentError.new("Files must not be fully qualified") if path =~ /^#{::File::SEPARATOR}/
-
         @key = key
         @links = :manage
 
@@ -34,6 +46,7 @@ class Puppet::FileServing::FileBase
     # Determine how we deal with links.
     attr_reader :links
     def links=(value)
+        value = :manage if value == :ignore
         raise(ArgumentError, ":links can only be set to :manage or :follow") unless [:manage, :follow].include?(value) 
         @links = value
     end

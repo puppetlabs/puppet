@@ -47,11 +47,8 @@ class Puppet::Parser::Parser
 
     # Create an AST object, and automatically add the file and line information if
     # available.
-    def ast(klass, hash = nil)
-        hash ||= {}
-        unless hash.include?(:line)
-            hash[:line] = @lexer.line
-        end
+    def ast(klass, hash = {})
+        hash[:line] = @lexer.line unless hash.include?(:line)
 
         unless hash.include?(:file)
             if file = @lexer.file
@@ -126,13 +123,17 @@ class Puppet::Parser::Parser
     def fqfind(namespace, name, table)
         namespace = namespace.downcase
         name = name.to_s.downcase
+
+        # If our classname is fully qualified or we have no namespace,
+        # just try directly for the class, and return either way.
         if name =~ /^::/ or namespace == ""
             classname = name.sub(/^::/, '')
-            unless table[classname]
-                self.load(classname)
-            end
+            self.load(classname) unless table[classname]
             return table[classname]
         end
+
+        # Else, build our namespace up piece by piece, checking
+        # for the class in each namespace.
         ary = namespace.split("::")
 
         while ary.length > 0
@@ -180,7 +181,7 @@ class Puppet::Parser::Parser
                "in file #{@lexer.file} at line #{@lexer.line}"
             )
         end
-        files = Puppet::Module::find_manifests(pat, :cwd => dir)
+        files = Puppet::Module::find_manifests(pat, :cwd => dir, :environment => @environment)
         if files.size == 0
             raise Puppet::ImportError.new("No file(s) found for import " +
                                           "of '#{pat}'")
@@ -224,7 +225,6 @@ class Puppet::Parser::Parser
         return false if classname == ""
         filename = classname.gsub("::", File::SEPARATOR)
 
-        loaded = false
         # First try to load the top-level module
         mod = filename.scan(/^[\w-]+/).shift
         unless @loaded.include?(mod)
@@ -232,24 +232,24 @@ class Puppet::Parser::Parser
             begin
                 import(mod)
                 Puppet.info "Autoloaded module %s" % mod
-                loaded = true
             rescue Puppet::ImportError => detail
                 # We couldn't load the module
             end
         end
 
-        unless filename == mod and ! @loaded.include?(mod)
-            @loaded << mod
+        return true if classes.include?(classname)
+
+        unless @loaded.include?(filename)
+            @loaded << filename
             # Then the individual file
             begin
                 import(filename)
                 Puppet.info "Autoloaded file %s from module %s" % [filename, mod]
-                loaded = true
             rescue Puppet::ImportError => detail
                 # We couldn't load the file
             end
         end
-        return loaded
+        return classes.include?(classname)
     end
 
     # Split an fq name into a namespace and name

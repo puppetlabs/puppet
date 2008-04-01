@@ -51,10 +51,12 @@ class Puppet::SimpleGraph
 
         # Create methods for returning the degree and edges.
         [:in, :out].each do |direction|
-            define_method("%s_degree" % direction) do
-                @adjacencies[direction].length
-            end
-
+            # LAK:NOTE If you decide to create methods for directly
+            # testing the degree, you'll have to get the values and flatten
+            # the results -- you might have duplicate edges, which can give
+            # a false impression of what the degree is.  That's just
+            # as expensive as just getting the edge list, so I've decided
+            # to only add this method.
             define_method("%s_edges" % direction) do
                 @adjacencies[direction].values.flatten
             end
@@ -100,10 +102,10 @@ class Puppet::SimpleGraph
     # Return a reversed version of this graph.
     def reversal
         result = self.class.new
-        vertices.each { |vertex| result.add_vertex!(vertex) }
+        vertices.each { |vertex| result.add_vertex(vertex) }
         edges.each do |edge|
             newedge = edge.class.new(edge.target, edge.source, edge.label)
-            result.add_edge!(newedge)
+            result.add_edge(newedge)
         end
         result
     end
@@ -126,8 +128,9 @@ class Puppet::SimpleGraph
 
         # Collect each of our vertices, with the number of in-edges each has.
         @vertices.each do |name, wrapper|
-            zeros << wrapper if wrapper.in_degree == 0
-            degree[wrapper.vertex] = wrapper.in_edges
+            edges = wrapper.in_edges
+            zeros << wrapper if edges.length == 0
+            degree[wrapper.vertex] = edges
         end
 
         # Iterate over each 0-degree vertex, decrementing the degree of
@@ -150,7 +153,7 @@ class Puppet::SimpleGraph
     end
 
     # Add a new vertex to the graph.
-    def add_vertex!(vertex)
+    def add_vertex(vertex)
         return false if vertex?(vertex)
         setup_vertex(vertex)
         true # don't return the VertexWrapper instance.
@@ -176,7 +179,7 @@ class Puppet::SimpleGraph
 
     # Add a new edge.  The graph user has to create the edge instance,
     # since they have to specify what kind of edge it is.
-    def add_edge!(source, target = nil, label = nil)
+    def add_edge(source, target = nil, label = nil)
         if target
             edge = Puppet::Relationship.new(source, target, label)
         else

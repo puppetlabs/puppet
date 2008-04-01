@@ -9,15 +9,13 @@ class Resource < AST::ResourceReference
 
     # Does not actually return an object; instead sets an object
     # in the current scope.
-    def evaluate(options)
-        scope = options[:scope]
-
+    def evaluate(scope)
         # Evaluate all of the specified params.
         paramobjects = @params.collect { |param|
-            param.safeevaluate(:scope => scope)
+            param.safeevaluate(scope)
         }
 
-        objtitles = @title.safeevaluate(:scope => scope)
+        objtitles = @title.safeevaluate(scope)
 
         # it's easier to always use an array, even for only one name
         unless objtitles.is_a?(Array)
@@ -50,10 +48,10 @@ class Resource < AST::ResourceReference
                     :scope => scope
                 )
 
-                # And then store the resource in the compile.
+                # And then store the resource in the compiler.
                 # At some point, we need to switch all of this to return
                 # objects instead of storing them like this.
-                scope.compile.store_resource(scope, obj)
+                scope.compiler.add_resource(scope, obj)
                 obj
             end
         }.reject { |obj| obj.nil? }

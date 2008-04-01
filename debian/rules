@@ -66,10 +66,10 @@ install: build
 	$(INSTALL) -m0644 debian/puppet.conf $(pkgconfdir)/puppet.conf
 
 	# Vim auto-syntax-highlighting stuff
-	$(INSTALL) -m0644 ext/vim/puppet.vim				\
-		$(CURDIR)/debian/puppet/usr/share/vim/vim70/syntax/puppet.vim
-	$(INSTALL) -m0644 ext/vim/filetype.vim				\
-		$(CURDIR)/debian/puppet/usr/share/vim/addons/ftdetect/puppet.vim
+	$(INSTALL) -m0644 ext/vim/syntax/puppet.vim				\
+		$(CURDIR)/debian/puppet/usr/share/vim/vim71/syntax/
+	$(INSTALL) -m0644 ext/vim/ftdetect/puppet.vim				\
+		$(CURDIR)/debian/puppet/usr/share/vim/addons/ftdetect/
 
 	# Emacs keeping up with the Joneses
 	$(INSTALL) -m0644 ext/emacs/puppet-mode-init.el			\
@@ -100,7 +100,8 @@ binary-indep: build install
 	dh_movefiles -i
 	dh_installchangelogs -i CHANGELOG
 	dh_installdocs -i
-	dh_installinit -i
+	dh_installinit -ppuppetmaster
+	dh_installinit -ppuppet -- defaults 21
 	dh_installlogrotate -i
 	dh_compress -i
 	dh_fixperms -i

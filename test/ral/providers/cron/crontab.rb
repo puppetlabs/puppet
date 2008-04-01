@@ -5,7 +5,6 @@ require File.dirname(__FILE__) + '/../../../lib/puppettest'
 require 'puppettest'
 require 'mocha'
 require 'puppettest/fileparsing'
-require 'puppet/type/cron'
 
 class TestCronParsedProvider < Test::Unit::TestCase
 	include PuppetTest
@@ -344,7 +343,9 @@ class TestCronParsedProvider < Test::Unit::TestCase
         end
     end
 
-    # Make sure we can create a cron in an empty tab
+    # Make sure we can create a cron in an empty tab.
+    # LAK:FIXME This actually modifies the user's crontab,
+    # which is pretty heinous.
     def test_mkcron_if_empty
         setme
         @provider.filetype = @oldfiletype

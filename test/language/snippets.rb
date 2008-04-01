@@ -14,6 +14,7 @@ class TestSnippets < Test::Unit::TestCase
 
     def setup
         super
+        @file = Puppet::Type.type(:file)
         Facter.stubs(:to_hash).returns({})
         Facter.stubs(:value).returns("whatever")
     end
@@ -420,6 +421,11 @@ class TestSnippets < Test::Unit::TestCase
     def snippet_realize_defined_types
         assert_file("/tmp/realize_defined_test1")
         assert_file("/tmp/realize_defined_test2")
+    end
+
+    def snippet_collection_within_virtual_definitions
+        assert_file("/tmp/collection_within_virtual_definitions1_foo.txt")
+        assert_file("/tmp/collection_within_virtual_definitions2_foo2.txt")
     end
 
     def snippet_fqparents

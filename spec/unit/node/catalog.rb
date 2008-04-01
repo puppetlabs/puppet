@@ -57,11 +57,11 @@ describe Puppet::Node::Catalog, " when extracting transobjects" do
     def mkscope
         @parser = Puppet::Parser::Parser.new :Code => ""
         @node = Puppet::Node.new("mynode")
-        @compile = Puppet::Parser::Compile.new(@node, @parser)
+        @compiler = Puppet::Parser::Compiler.new(@node, @parser)
 
         # XXX This is ridiculous.
-        @compile.send(:evaluate_main)
-        @scope = @compile.topscope
+        @compiler.send(:evaluate_main)
+        @scope = @compiler.topscope
     end
 
     def mkresource(type, name)
@@ -75,7 +75,7 @@ describe Puppet::Node::Catalog, " when extracting transobjects" do
         @source = mock 'source'
 
         main = mkresource("class", :main)
-        config.add_vertex!(main)
+        config.add_vertex(main)
 
         bucket = mock 'bucket'
         bucket.expects(:classes=).with(config.classes)
@@ -95,7 +95,7 @@ describe Puppet::Node::Catalog, " when extracting transobjects" do
         defined = mkresource("class", :main)
         builtin = mkresource("file", "/yay")
 
-        config.add_edge!(defined, builtin)
+        config.add_edge(defined, builtin)
 
         bucket = []
         bucket.expects(:classes=).with(config.classes)
@@ -121,21 +121,21 @@ describe Puppet::Node::Catalog, " when extracting transobjects" do
         top.expects(:to_trans).returns(topbucket)
         topres = mkresource "file", "/top"
         topres.expects(:to_trans).returns(:topres)
-        config.add_edge! top, topres
+        config.add_edge top, topres
 
         middle = mkresource "class", "middle"
         middle.expects(:to_trans).returns([])
-        config.add_edge! top, middle
+        config.add_edge top, middle
         midres = mkresource "file", "/mid"
         midres.expects(:to_trans).returns(:midres)
-        config.add_edge! middle, midres
+        config.add_edge middle, midres
 
         bottom = mkresource "class", "bottom"
         bottom.expects(:to_trans).returns([])
-        config.add_edge! middle, bottom
+        config.add_edge middle, bottom
         botres = mkresource "file", "/bot"
         botres.expects(:to_trans).returns(:botres)
-        config.add_edge! bottom, botres
+        config.add_edge bottom, botres
 
         toparray = config.extract_to_transportable
 
@@ -196,13 +196,13 @@ describe Puppet::Node::Catalog, " when converting to a transobject catalog" do
 
         @resources = [@top, @topobject, @middle, @middleobject, @bottom, @bottomobject]
 
-        @original.add_edge!(@top, @topobject)
-        @original.add_edge!(@top, @virtual)
-        @original.add_edge!(@virtual, @virtualobject)
-        @original.add_edge!(@top, @middle)
-        @original.add_edge!(@middle, @middleobject)
-        @original.add_edge!(@middle, @bottom)
-        @original.add_edge!(@bottom, @bottomobject)
+        @original.add_edge(@top, @topobject)
+        @original.add_edge(@top, @virtual)
+        @original.add_edge(@virtual, @virtualobject)
+        @original.add_edge(@top, @middle)
+        @original.add_edge(@middle, @middleobject)
+        @original.add_edge(@middle, @bottom)
+        @original.add_edge(@bottom, @bottomobject)
 
         @catalog = @original.to_transportable
     end
@@ -261,11 +261,11 @@ describe Puppet::Node::Catalog, " when converting to a RAL catalog" do
 
         @original.add_resource(*@resources)
 
-        @original.add_edge!(@top, @topobject)
-        @original.add_edge!(@top, @middle)
-        @original.add_edge!(@middle, @middleobject)
-        @original.add_edge!(@middle, @bottom)
-        @original.add_edge!(@bottom, @bottomobject)
+        @original.add_edge(@top, @topobject)
+        @original.add_edge(@top, @middle)
+        @original.add_edge(@middle, @middleobject)
+        @original.add_edge(@middle, @bottom)
+        @original.add_edge(@bottom, @bottomobject)
 
         @catalog = @original.to_ral
     end
@@ -300,10 +300,12 @@ describe Puppet::Node::Catalog, " when converting to a RAL catalog" do
         config.add_resource(changer)
         config.add_resource(@top)
 
-        config.add_edge!(@top, changer)
+        config.add_edge(@top, changer)
 
         resource = stub 'resource', :name => "changer2", :title => "changer2", :ref => "Test[changer2]", :catalog= => nil, :remove => nil
 
+        #changer is going to get duplicated as part of a fix for aliases 1094
+        changer.expects(:dup).returns(changer)
         changer.expects(:to_type).returns(resource)
 
         newconfig = nil
@@ -363,6 +365,12 @@ describe Puppet::Node::Catalog, " when functioning as a resource container" do
 
     it "should not allow two resources with the same resource reference" do
         @catalog.add_resource(@one)
+
+        # These are used to build the failure
+        @dupe.stubs(:file)
+        @dupe.stubs(:line)
+        @one.stubs(:file)
+        @one.stubs(:line)
         proc { @catalog.add_resource(@dupe) }.should raise_error(ArgumentError)
     end
 
@@ -469,9 +477,15 @@ describe Puppet::Node::Catalog, " when functioning as a resource container" do
         proc { @catalog.alias @two, "one" }.should raise_error(ArgumentError)
     end
 
-    it "should fail to add an alias if the aliased name already exists as an alias" do
-        @catalog.alias(@one, "yayness")
-        proc { @catalog.alias @two, "yayness" }.should raise_error(ArgumentError)
+    it "should not fail when a resource has duplicate aliases created" do
+        @catalog.add_resource @one
+        proc { @catalog.alias @one, "one" }.should_not raise_error
+    end
+
+    it "should be able to look resources up by their aliases" do
+        @catalog.add_resource @one
+        @catalog.alias @one, "two"
+        @catalog.resource(:me, "two").should equal(@one)
     end
 
     it "should remove resource aliases when the target resource is removed" do
@@ -482,15 +496,32 @@ describe Puppet::Node::Catalog, " when functioning as a resource container" do
         @catalog.resource("me", "other").should be_nil
     end
 
-    it "should return aliased resources when asked for the resource by the alias" do
-        @catalog.add_resource @one
-        @catalog.alias(@one, "other")
-        @catalog.resource("Me[other]").should equal(@one)
+    it "should add an alias for the namevar when the title and name differ on isomorphic resource types" do
+        resource = Puppet::Type.type(:file).create :path => "/something", :title => "other", :content => "blah"
+        resource.expects(:isomorphic?).returns(true)
+        @catalog.add_resource(resource)
+        @catalog.resource(:file, "other").should equal(resource)
+        @catalog.resource(:file, "/something").ref.should == resource.ref
+    end
+
+    it "should not add an alias for the namevar when the title and name differ on non-isomorphic resource types" do
+        resource = Puppet::Type.type(:file).create :path => "/something", :title => "other", :content => "blah"
+        resource.expects(:isomorphic?).returns(false)
+        @catalog.add_resource(resource)
+        @catalog.resource(:file, resource.title).should equal(resource)
+        # We can't use .should here, because the resources respond to that method.
+        if @catalog.resource(:file, resource.name)
+            raise "Aliased non-isomorphic resource"
+        end
+    end
+
+    after do
+        Puppet::Type.allclear
     end
 end
 
-module ApplyingCatalogs
-    def setup
+describe Puppet::Node::Catalog do
+    before :each do
         @catalog = Puppet::Node::Catalog.new("host")
 
         @catalog.retrieval_duration = Time.now
@@ -500,130 +531,124 @@ module ApplyingCatalogs
         @transaction.stubs(:cleanup)
         @transaction.stubs(:addtimes)
     end
-end
 
-describe Puppet::Node::Catalog, " when applying" do
-    include ApplyingCatalogs
+    describe Puppet::Node::Catalog, " when applying" do
 
-    it "should create and evaluate a transaction" do
-        @transaction.expects(:evaluate)
-        @catalog.apply
-    end
-
-    it "should provide the catalog time to the transaction" do
-        @transaction.expects(:addtimes).with do |arg|
-            arg[:config_retrieval].should be_instance_of(Time)
-            true
+        it "should create and evaluate a transaction" do
+            @transaction.expects(:evaluate)
+            @catalog.apply
         end
-        @catalog.apply
-    end
 
-    it "should clean up the transaction" do
-        @transaction.expects :cleanup
-        @catalog.apply
-    end
+        it "should provide the catalog time to the transaction" do
+            @transaction.expects(:addtimes).with do |arg|
+                arg[:config_retrieval].should be_instance_of(Time)
+                true
+            end
+            @catalog.apply
+        end
+
+        it "should clean up the transaction" do
+            @transaction.expects :cleanup
+            @catalog.apply
+        end
     
-    it "should return the transaction" do
-        @catalog.apply.should equal(@transaction)
-    end
+        it "should return the transaction" do
+            @catalog.apply.should equal(@transaction)
+        end
 
-    it "should yield the transaction if a block is provided" do
-        @catalog.apply do |trans|
-            trans.should equal(@transaction)
+        it "should yield the transaction if a block is provided" do
+            @catalog.apply do |trans|
+                trans.should equal(@transaction)
+            end
+        end
+    
+        it "should default to not being a host catalog" do
+            @catalog.host_config.should be_nil
+        end
+
+        it "should pass supplied tags on to the transaction" do
+            @transaction.expects(:tags=).with(%w{one two})
+            @catalog.apply(:tags => %w{one two})
+        end
+
+        it "should set ignoreschedules on the transaction if specified in apply()" do
+            @transaction.expects(:ignoreschedules=).with(true)
+            @catalog.apply(:ignoreschedules => true)
         end
     end
+
+    describe Puppet::Node::Catalog, " when applying host catalogs" do
+
+        # super() doesn't work in the setup method for some reason
+        before do
+            @catalog.host_config = true
+        end
+
+        it "should send a report if reporting is enabled" do
+            Puppet[:report] = true
+            @transaction.expects :send_report
+            @transaction.stubs :any_failed? => false
+            @catalog.apply
+        end
+
+        it "should send a report if report summaries are enabled" do
+            Puppet[:summarize] = true
+            @transaction.expects :send_report
+            @transaction.stubs :any_failed? => false
+            @catalog.apply
+        end
+
+        it "should initialize the state database before applying a catalog" do
+            Puppet::Util::Storage.expects(:load)
+
+            # Short-circuit the apply, so we know we're loading before the transaction
+            Puppet::Transaction.expects(:new).raises ArgumentError
+            proc { @catalog.apply }.should raise_error(ArgumentError)
+        end
+
+        it "should sync the state database after applying" do
+            Puppet::Util::Storage.expects(:store)
+            @transaction.stubs :any_failed? => false
+            @catalog.apply
+        end
+
+        after { Puppet.settings.clear }
+    end
+
+    describe Puppet::Node::Catalog, " when applying non-host catalogs" do
+
+        before do
+            @catalog.host_config = false
+        end
     
-    it "should default to not being a host catalog" do
-        @catalog.host_config.should be_nil
+        it "should never send reports" do
+            Puppet[:report] = true
+            Puppet[:summarize] = true
+            @transaction.expects(:send_report).never
+            @catalog.apply
+        end
+
+        it "should never modify the state database" do
+            Puppet::Util::Storage.expects(:load).never
+            Puppet::Util::Storage.expects(:store).never
+            @catalog.apply
+        end
+
+        after { Puppet.settings.clear }
     end
-
-    it "should pass supplied tags on to the transaction" do
-        @transaction.expects(:tags=).with(%w{one two})
-        @catalog.apply(:tags => %w{one two})
-    end
-
-    it "should set ignoreschedules on the transaction if specified in apply()" do
-        @transaction.expects(:ignoreschedules=).with(true)
-        @catalog.apply(:ignoreschedules => true)
-    end
-end
-
-describe Puppet::Node::Catalog, " when applying host catalogs" do
-    include ApplyingCatalogs
-
-    # super() doesn't work in the setup method for some reason
-    before do
-        @catalog.host_config = true
-    end
-
-    it "should send a report if reporting is enabled" do
-        Puppet[:report] = true
-        @transaction.expects :send_report
-        @transaction.stubs :any_failed? => false
-        @catalog.apply
-    end
-
-    it "should send a report if report summaries are enabled" do
-        Puppet[:summarize] = true
-        @transaction.expects :send_report
-        @transaction.stubs :any_failed? => false
-        @catalog.apply
-    end
-
-    it "should initialize the state database before applying a catalog" do
-        Puppet::Util::Storage.expects(:load)
-
-        # Short-circuit the apply, so we know we're loading before the transaction
-        Puppet::Transaction.expects(:new).raises ArgumentError
-        proc { @catalog.apply }.should raise_error(ArgumentError)
-    end
-
-    it "should sync the state database after applying" do
-        Puppet::Util::Storage.expects(:store)
-        @transaction.stubs :any_failed? => false
-        @catalog.apply
-    end
-
-    after { Puppet.settings.clear }
-end
-
-describe Puppet::Node::Catalog, " when applying non-host catalogs" do
-    include ApplyingCatalogs
-
-    before do
-        @catalog.host_config = false
-    end
-    
-    it "should never send reports" do
-        Puppet[:report] = true
-        Puppet[:summarize] = true
-        @transaction.expects(:send_report).never
-        @catalog.apply
-    end
-
-    it "should never modify the state database" do
-        Puppet::Util::Storage.expects(:load).never
-        Puppet::Util::Storage.expects(:store).never
-        @catalog.apply
-    end
-
-    after { Puppet.settings.clear }
 end
 
 describe Puppet::Node::Catalog, " when creating a relationship graph" do
     before do
+        Puppet::Type.type(:component)
         @catalog = Puppet::Node::Catalog.new("host")
         @compone = Puppet::Type::Component.create :name => "one"
         @comptwo = Puppet::Type::Component.create :name => "two", :require => ["class", "one"]
         @file = Puppet::Type.type(:file)
         @one = @file.create :path => "/one"
         @two = @file.create :path => "/two"
-        @sub = @file.create :path => "/two/three"
-
-        @sub.stubs(:autorequire).returns([Puppet::Relationship.new(@two, @sub)])
-
-        @catalog.add_edge! @compone, @one
-        @catalog.add_edge! @comptwo, @two
+        @catalog.add_edge @compone, @one
+        @catalog.add_edge @comptwo, @two
 
         @three = @file.create :path => "/three"
         @four = @file.create :path => "/four", :require => ["file", "/three"]
@@ -796,7 +821,7 @@ end
 describe Puppet::Node::Catalog, " when converting to yaml" do
     before do
         @catalog = Puppet::Node::Catalog.new("me")
-        @catalog.add_edge!("one", "two")
+        @catalog.add_edge("one", "two")
     end
 
     it "should be able to be dumped to yaml" do
@@ -807,7 +832,7 @@ end
 describe Puppet::Node::Catalog, " when converting from yaml" do
     before do
         @catalog = Puppet::Node::Catalog.new("me")
-        @catalog.add_edge!("one", "two")
+        @catalog.add_edge("one", "two")
 
         text = YAML.dump(@catalog)
         @newcatalog = YAML.load(text)

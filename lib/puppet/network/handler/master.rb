@@ -82,6 +82,8 @@ class Puppet::Network::Handler
             if Puppet[:node_name] == 'cert'
                 if name
                     client = name
+                    facts["fqdn"] = client
+                    facts["hostname"], facts["domain"] = client.split('.', 2)
                 end
                 if ip
                     clientip = ip

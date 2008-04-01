@@ -12,6 +12,8 @@ Puppet::Type.type(:sshkey).provide(:parsed,
     :default_target => known,
     :filetype => :flat
 ) do
+    desc "Parse and generate host-wide known hosts files for SSH."
+
     text_line :comment, :match => /^#/
     text_line :blank, :match => /^\s+/
 

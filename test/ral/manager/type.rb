@@ -477,8 +477,8 @@ class TestType < Test::Unit::TestCase
         assert_equal(greater, type.defaultprovider)
     end
 
-    # Make sure that we can have multiple isomorphic objects with the same name,
-    # but not with non-isomorphic objects.
+    # Make sure that we can have multiple non-isomorphic objects with the same name,
+    # but not with isomorphic objects.
     def test_isomorphic_names
         catalog = mk_catalog
         # First do execs, since they're not isomorphic.
@@ -562,22 +562,6 @@ class TestType < Test::Unit::TestCase
         assert_equal("Exec[yay]", exec.ref)
     end
     
-    def test_noop_metaparam
-        file = Puppet::Type.newfile :path => tempfile
-        assert(!file.noop, "file incorrectly in noop")
-        
-        assert_nothing_raised do
-            file[:noop] = true
-        end
-        assert(file.noop, "file should be in noop")
-        
-        # Now set the main one
-        Puppet[:noop] = true
-        assert(file.noop, "file should be in noop")
-        file[:noop] = false
-        assert(file.noop, "file should be in noop")
-    end
-    
     def test_path
         config = mk_catalog
 
@@ -592,7 +576,7 @@ class TestType < Test::Unit::TestCase
             res = type.create(hash)
             config.add_resource res
             if parent
-                config.add_edge!(parent, res)
+                config.add_edge(parent, res)
             end
             res
         end
@@ -625,7 +609,7 @@ class TestType < Test::Unit::TestCase
         
         newcomp = Puppet::Type.newcomponent :type => "yay", :name => "Good[bad]"
         config.add_resource newcomp
-        config.add_edge! comp, newcomp
+        config.add_edge comp, newcomp
         exec = mk.call(6, :parent => newcomp)
         assert_equal("//Good[bad]/Exec[exec6]", exec.path)
     end

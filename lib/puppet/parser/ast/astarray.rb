@@ -15,18 +15,7 @@ class Puppet::Parser::AST
         end
 
         # Evaluate our children.
-        def evaluate(hash)
-            scope = hash[:scope]
-            rets = nil
-            # We basically always operate declaratively, and when we
-            # do we need to evaluate the settor-like statements first.  This
-            # is basically variable and type-default declarations.
-            # This is such a stupid hack.  I've no real idea how to make a
-            # "real" declarative language, so I hack it so it looks like
-            # one, yay.
-            settors = []
-            others = []
-
+        def evaluate(scope)
             # Make a new array, so we don't have to deal with the details of
             # flattening and such
             items = []
@@ -35,23 +24,15 @@ class Puppet::Parser::AST
             @children.each { |child|
                 if child.instance_of?(AST::ASTArray)
                     child.each do |ac|
-                        if ac.class.settor?
-                            settors << ac
-                        else
-                            others << ac
-                        end
+                        items << ac
                     end
                 else
-                    if child.class.settor?
-                        settors << child
-                    else
-                        others << child
-                    end
+                    items << child
                 end
             }
 
-            rets = [settors, others].flatten.collect { |child|
-                child.safeevaluate(:scope => scope)
+            rets = items.flatten.collect { |child|
+                child.safeevaluate(scope)
             }
             return rets.reject { |o| o.nil? }
         end

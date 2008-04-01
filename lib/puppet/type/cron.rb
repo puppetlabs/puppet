@@ -23,6 +23,24 @@ Puppet::Type.newtype(:cron) do
                 hour => 2,
                 minute => 0
             }
+
+        Note that all cron values can be specified as an array of values::
+
+            cron { logrotate:
+                command => \"/usr/sbin/logrotate\",
+                user => root,
+                hour => [2, 4]
+            }
+
+        Or using ranges, or the step syntax ``*/2`` (although there's no guarantee that
+        your ``cron`` daemon supports it)::
+
+            cron { logrotate:
+                command => \"/usr/sbin/logrotate\",
+                user => root,
+                hour => ['2-4'],
+                minute => '*/10'
+            }
         "
     ensurable
 

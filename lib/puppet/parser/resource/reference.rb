@@ -37,10 +37,14 @@ class Puppet::Parser::Resource::Reference < Puppet::ResourceReference
                 if self.title == :main
                     tmp = @scope.findclass("")
                 else
-                    tmp = @scope.findclass(self.title)
+                    unless tmp = @scope.findclass(self.title)
+                        fail Puppet::ParseError, "Could not find class '%s'" % self.title
+                    end
                 end
             when "Node": # look for node definitions
-                tmp = @scope.parser.nodes[self.title]
+                unless tmp = @scope.parser.nodes[self.title]
+                    fail Puppet::ParseError, "Could not find node '%s'" % self.title
+                end
             else # normal definitions
                 # We have to swap these variables around so the errors are right.
                 tmp = @scope.finddefine(self.type)
@@ -49,7 +53,7 @@ class Puppet::Parser::Resource::Reference < Puppet::ResourceReference
             if tmp
                 @definedtype = tmp
             else
-                fail Puppet::ParseError, "Could not find resource '%s'" % self
+                fail Puppet::ParseError, "Could not find resource type '%s'" % self.type
             end
         end
 

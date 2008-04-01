@@ -6,7 +6,7 @@ class Puppet::Parser::AST
         attr_accessor :value, :type
 
         # Return our value.
-        def evaluate(hash)
+        def evaluate(scope)
             return @value
         end
 
@@ -35,14 +35,14 @@ class Puppet::Parser::AST
     class String < AST::Leaf
         # Interpolate the string looking for variables, and then return
         # the result.
-        def evaluate(hash)
-            return hash[:scope].strinterp(@value, @file, @line)
+        def evaluate(scope)
+            return scope.strinterp(@value, @file, @line)
         end
     end
 
     # An uninterpreted string.
     class FlatString < AST::Leaf
-        def evaluate(hash)
+        def evaluate(scope)
             return @value
         end
     end
@@ -81,9 +81,9 @@ class Puppet::Parser::AST
     class Variable < Name
         # Looks up the value of the object in the scope tree (does
         # not include syntactical constructs, like '$' and '{}').
-        def evaluate(hash)
+        def evaluate(scope)
             parsewrap do
-                return hash[:scope].lookupvar(@value)
+                return scope.lookupvar(@value)
             end
         end
     end

@@ -5,7 +5,7 @@ module PuppetTest::ParserTesting
     include PuppetTest
     AST = Puppet::Parser::AST
 
-    Compile = Puppet::Parser::Compile
+    Compiler = Puppet::Parser::Compiler
 
     # A fake class that we can use for testing evaluation.
     class FakeAST
@@ -41,10 +41,10 @@ module PuppetTest::ParserTesting
         )
     end
 
-    def mkcompile(parser = nil)
+    def mkcompiler(parser = nil)
         parser ||= mkparser
         node = mknode
-        return Compile.new(node, parser)
+        return Compiler.new(node, parser)
     end
 
     def mknode(name = nil)
@@ -58,21 +58,21 @@ module PuppetTest::ParserTesting
         Puppet::Parser::Interpreter.new
     end
 
-    def mkparser
-        Puppet::Parser::Parser.new()
+    def mkparser(args = {})
+        Puppet::Parser::Parser.new(args)
     end
 
     def mkscope(hash = {})
         hash[:parser] ||= mkparser
-        compile ||= mkcompile(hash[:parser])
-        compile.topscope.source = (hash[:parser].findclass("", "") || hash[:parser].newclass(""))
+        compiler ||= mkcompiler(hash[:parser])
+        compiler.topscope.source = (hash[:parser].findclass("", "") || hash[:parser].newclass(""))
 
-        unless compile.topscope.source
+        unless compiler.topscope.source
             raise "Could not find source for scope"
         end
         # Make the 'main' stuff
-        compile.send(:evaluate_main)
-        compile.topscope
+        compiler.send(:evaluate_main)
+        compiler.topscope
     end
 
     def classobj(name, hash = {})

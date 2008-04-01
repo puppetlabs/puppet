@@ -25,7 +25,7 @@ require 'puppet/util/suidmanager'
 # it's also a place to find top-level commands like 'debug'
 
 module Puppet
-    PUPPETVERSION = '0.24.1'
+    PUPPETVERSION = '0.24.4'
 
     def Puppet.version
         return PUPPETVERSION
@@ -205,16 +205,7 @@ module Puppet
     end
 
     # Parse the config file for this process.
-    def self.parse_config(oldconfig = nil)
-        # First look for the old configuration file.
-        oldconfig ||= File.join(Puppet[:confdir], Puppet[:name].to_s + ".conf")
-        if FileTest.exists?(oldconfig) and Puppet[:name] != "puppet"
-            Puppet.warning "Individual config files are deprecated; remove %s and use puppet.conf" % oldconfig
-            Puppet.settings.old_parse(oldconfig)
-            return
-        end
-
-        # Now check for the normal config.
+    def self.parse_config
         if Puppet[:config] and File.exists? Puppet[:config]
             Puppet.debug "Parsing %s" % Puppet[:config]
             Puppet.settings.parse(Puppet[:config])
@@ -423,6 +414,7 @@ module Puppet
 end
 
 require 'puppet/type'
+require 'puppet/network'
 require 'puppet/module'
 require 'puppet/util/storage'
 require 'puppet/parser/interpreter'

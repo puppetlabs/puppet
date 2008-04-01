@@ -5,9 +5,6 @@
 
 require File.dirname(__FILE__) + '/../../../../spec_helper'
 
-require 'puppet/provider/interface/redhat'
-
-
 provider_class = Puppet::Type.type(:interface).provider(:redhat)
 
 describe provider_class do

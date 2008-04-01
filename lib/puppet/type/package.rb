@@ -176,7 +176,7 @@ module Puppet
             a common name to packages::
 
                 # In the 'openssl' class
-                $ssl = $operationgsystem ? {
+                $ssl = $operatingsystem ? {
                     solaris => SMCossl,
                     default => openssl
                 }
@@ -190,7 +190,7 @@ module Puppet
 
                 . etc. .
 
-                $ssh = $operationgsystem ? {
+                $ssh = $operatingsystem ? {
                     solaris => SMCossh,
                     default => openssh
                 }
@@ -200,7 +200,7 @@ module Puppet
                 package { $ssh:
                     ensure => installed,
                     alias => openssh,
-                    require => package[openssl]
+                    require => Package[openssl]
                 }
             
             "
@@ -211,14 +211,6 @@ module Puppet
             desc "Where to find the actual package.  This must be a local file
                 (or on a network file system) or a URL that your specific
                 packaging type understands; Puppet will not retrieve files for you."
-
-            validate do |value|
-                unless value =~ /^#{File::SEPARATOR}/ or value =~ /\w+:\/\//
-                    self.fail(
-                        "Package sources must be fully qualified files or URLs, depending on the platform."
-                    )
-                end
-            end
         end
         newparam(:instance) do
             desc "A read-only parameter set by the package."

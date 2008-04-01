@@ -226,7 +226,8 @@ module Util
                 return nil
             end
         else
-            ENV['PATH'].split(":").each do |dir|
+            # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
+            x = ENV['PATH'].split(":").each do |dir|
                 if FileTest.exists? File.join(dir, bin)
                     return File.join(dir, bin)
                 end

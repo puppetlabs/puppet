@@ -26,28 +26,32 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         
         down = Puppet[:downcasefacts]
 
-        facts = {}
-        Facter.each { |name,fact|
+        facts = Facter.to_hash.inject({}) do |newhash, array|
+            name, fact = array
             if down
-                facts[name] = fact.to_s.downcase
+                newhash[name] = fact.to_s.downcase
             else
-                facts[name] = fact.to_s
+                newhash[name] = fact.to_s
             end
-        }
+            newhash
+        end
 
         # Add our client version to the list of facts, so people can use it
         # in their manifests
         facts["clientversion"] = Puppet.version.to_s
 
         # And add our environment as a fact.
-        facts["environment"] = Puppet[:environment]
-
+        unless facts.include?("environment")
+            facts["environment"] = Puppet[:environment]
+        end
+ 
         facts
     end
 
     # Return the list of dynamic facts as an array of symbols
     def self.dynamic_facts
-        Puppet.settings[:dynamicfacts].split(/\s*,\s*/).collect { |fact| fact.downcase }
+        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
+        x = Puppet.settings[:dynamicfacts].split(/\s*,\s*/).collect { |fact| fact.downcase }
     end
 
     # Cache the config
@@ -316,7 +320,8 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
             :group => Process.gid,
             :purge => true,
             :force => true,
-            :backup => false
+            :backup => false,
+            :noop => false
         }
 
         if args[:ignore]
@@ -326,9 +331,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         downconfig.add_resource Puppet::Type.type(:file).create(hash)
         
         Puppet.info "Retrieving #{args[:name]}s"
-
-        noop = Puppet[:noop]
-        Puppet[:noop] = false
 
         files = []
         begin
@@ -351,14 +353,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         downconfig.clear
 
         return files
-    ensure
-        # I can't imagine why this is necessary, but apparently at last one person has had problems with noop
-        # being nil here.
-        if noop.nil?
-            Puppet[:noop] = false
-        else
-            Puppet[:noop] = noop
-        end
     end
 
     # Retrieve facts from the central server.
@@ -431,7 +425,8 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     end
 
     def self.loadfacts
-        Puppet[:factpath].split(":").each do |dir|
+        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
+        x = Puppet[:factpath].split(":").each do |dir|
             loaddir(dir, "fact")
         end
     end

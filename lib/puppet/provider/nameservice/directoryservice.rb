@@ -139,10 +139,12 @@ class DirectoryService < Puppet::Provider::NameService
         dscl_output.split("\n").each do |line|
             # JJM: Split the attribute name and the list of values.
             ds_attribute, ds_values_string = line.split(':')
+
+            # Split sets the values to nil if there's nothing after the :
+            ds_values_string ||= ""
             
             # JJM: skip this attribute line if the Puppet::Type doesn't care about it.
-            next unless (@@ds_to_ns_attribute_map.keys.include?(ds_attribute) \
-                and type_properties.include? @@ds_to_ns_attribute_map[ds_attribute])
+            next unless (@@ds_to_ns_attribute_map.keys.include?(ds_attribute) and type_properties.include? @@ds_to_ns_attribute_map[ds_attribute])
 
             # JJM: We asked dscl to output url encoded values so we're able
             #     to machine parse on whitespace.  We need to urldecode:
@@ -178,11 +180,8 @@ class DirectoryService < Puppet::Provider::NameService
         #     This method spits out proper DSCL commands for us.
         #     We EXPECT name to be @resource[:name] when called from an instance object.
 
-        # JJM: With dscl, the domain "/" is always the default local domain.
-        #      The domain /Search will search all domains, and you may
-        #      get at specific domains with /LDAPv3/server1.foobar.com,
-        #      /LDAPv3/server2.foobar.com, etc...
-        command_vector = [ command(:dscl), "-url", "/" ]
+        # There are two ways to specify paths in 10.5.  See man dscl.
+        command_vector = [ command(:dscl), "-url", "." ]
         # JJM: The actual action to perform.  See "man dscl"
         #      Common actiosn: -create, -delete, -merge, -append, -passwd
         command_vector << ds_action

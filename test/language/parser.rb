@@ -36,9 +36,9 @@ class TestParser < Test::Unit::TestCase
             assert_raise(Puppet::ParseError, "Did not fail while parsing %s" % file) {
                 parser.file = file
                 ast = parser.parse
-                config = mkcompile(parser)
+                config = mkcompiler(parser)
                 config.compile
-                #ast.classes[""].evaluate :scope => config.topscope
+                #ast.classes[""].evaluate config.topscope
             }
         }
     end
@@ -857,7 +857,7 @@ file { "/tmp/yayness":
 
     def test_newclass
         scope = mkscope
-        parser = scope.compile.parser
+        parser = scope.compiler.parser
 
         mkcode = proc do |ary|
             classes = ary.collect do |string|
@@ -880,7 +880,7 @@ file { "/tmp/yayness":
         assert(parser.classes["myclass"], "Could not find definition")
         assert_equal("myclass", parser.classes["myclass"].classname)
         assert_equal(%w{original code},
-             parser.classes["myclass"].code.evaluate(:scope => scope))
+             parser.classes["myclass"].code.evaluate(scope))
 
         # Newclass behaves differently than the others -- it just appends
         # the code to the existing class.
@@ -890,7 +890,7 @@ file { "/tmp/yayness":
         end
         assert(klass, "Did not return class when appending")
         assert_equal(%w{original code something new},
-            parser.classes["myclass"].code.evaluate(:scope => scope))
+            parser.classes["myclass"].code.evaluate(scope))
 
         # Now create the same class name in a different scope
         assert_nothing_raised {
@@ -903,7 +903,7 @@ file { "/tmp/yayness":
         assert_equal("other::myclass", other.classname)
         assert_equal("other::myclass", other.namespace)
         assert_equal(%w{something diff},
-             other.code.evaluate(:scope => scope))
+             other.code.evaluate(scope))
 
         # Make sure newclass deals correctly with nodes with no code
         klass = parser.newclass("nocode")
@@ -914,7 +914,7 @@ file { "/tmp/yayness":
         end
         assert(klass, "Did not return class with no code")
         assert_equal(%w{yay test},
-            parser.classes["nocode"].code.evaluate(:scope => scope))
+            parser.classes["nocode"].code.evaluate(scope))
 
         # Then try merging something into nothing
         parser.newclass("nocode2", :code => mkcode.call(%w{foo test}))
@@ -925,7 +925,7 @@ file { "/tmp/yayness":
         end
         assert(klass, "Did not return class with no code")
         assert_equal(%w{foo test},
-            parser.classes["nocode2"].code.evaluate(:scope => scope))
+            parser.classes["nocode2"].code.evaluate(scope))
 
         # And lastly, nothing and nothing
         klass = parser.newclass("nocode3")
@@ -1130,6 +1130,7 @@ file { "/tmp/yayness":
         name = "sub"
         mk_module(modname, :init => %w{separate}, :sub => %w{separate::sub})
 
+        Puppet.err :yay
         # First try it with a namespace
         klass = parser.findclass("separate", name)
         assert_instance_of(AST::HostClass, klass, "Did not autoload sub class from separate file with a namespace")
@@ -1176,6 +1177,18 @@ file { "/tmp/yayness":
         end
         assert_equal(result, parser.finddefine("", "fUntEst"),
             "%s was not matched" % "fUntEst")
+    end
+
+    def test_manifests_with_multiple_environments
+        parser = mkparser :environment => "something"
+
+        # We use an exception to cut short the processing to simplify our stubbing
+        #Puppet::Module.expects(:find_manifests).with("test", {:cwd => ".", :environment => "something"}).raises(Puppet::ParseError)
+        Puppet::Module.expects(:find_manifests).with("test", {:cwd => ".", :environment => "something"}).returns([])
+
+        assert_raise(Puppet::ImportError) do
+            parser.import("test") 
+        end
     end
 end
 

@@ -7,6 +7,8 @@ require 'puppet/util/subclass_loader'
 require 'puppet/util/methodhelper'
 require 'puppet/sslcertificates/support'
 
+require 'puppet/network/handler'
+
 require 'net/http'
 
 # Some versions of ruby don't have this method defined, which basically causes
@@ -94,10 +96,9 @@ class Puppet::Network::Client
             self.read_cert
 
             # We have to start the HTTP connection manually before we start
-            # sending it requests or keep-alive won't work.
-            if @driver.respond_to? :start
-                @driver.start
-            end
+            # sending it requests or keep-alive won't work.  Note that with #1010,
+            # we don't currently actually want keep-alive.
+            @driver.start if @driver.respond_to? :start and Puppet::Network::HttpPool.keep_alive?
 
             @local = false
         elsif hash.include?(driverparam)
@@ -107,8 +108,7 @@ class Puppet::Network::Client
             end
             @local = true
         else
-            raise Puppet::Network::ClientError, "%s must be passed a Server or %s" %
-                [self.class, driverparam]
+            raise Puppet::Network::ClientError, "%s must be passed a Server or %s" % [self.class, driverparam]
         end
     end
 

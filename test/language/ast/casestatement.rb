@@ -45,7 +45,7 @@ class TestCaseStatement < Test::Unit::TestCase
 
         result = nil
         assert_nothing_raised do
-            result = ast.evaluate :scope => scope
+            result = ast.evaluate scope
         end
         assert(result, "did not get valid result")
         assert_equal(["upper"], $evaluated, "Did not match case-sensitively")
@@ -56,7 +56,7 @@ class TestCaseStatement < Test::Unit::TestCase
         $evaluated.clear
         hash["MyParam"].reset
         assert_nothing_raised do
-            result = ast.evaluate :scope => scope
+            result = ast.evaluate scope
         end
         assert(result, "did not get valid result")
         assert_equal(["lower"], result, "Did not match case-insensitively")
@@ -92,7 +92,7 @@ class TestCaseStatement < Test::Unit::TestCase
                 scope = mkscope
                 scope.setvar("testparam", value)
                 assert_nothing_raised do
-                    result = ast.evaluate(:scope => scope)
+                    result = ast.evaluate(scope)
                 end
 
                 assert_equal(should, result, "Got incorrect result for %s" % value)

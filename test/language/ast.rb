@@ -35,14 +35,14 @@ class TestAST < Test::Unit::TestCase
         # We initialized it to true, so we should get that first
         ret = nil
         assert_nothing_raised {
-            ret = astif.evaluate(:scope => "yay")
+            ret = astif.evaluate("yay")
         }
         assert_equal(:if, ret)
 
         # Now set it to false and check that
         faketest.evaluate = false
         assert_nothing_raised {
-            ret = astif.evaluate(:scope => "yay")
+            ret = astif.evaluate("yay")
         }
         assert_equal(:else, ret)
     end
@@ -57,10 +57,10 @@ class TestAST < Test::Unit::TestCase
         end
 
         Puppet::Parser::Resource.expects(:new).with { |o| o.is_a?(Hash) }.returns(:override)
-        scope.compile.expects(:store_override).with(:override)
+        scope.compiler.expects(:add_override).with(:override)
         ret = nil
         assert_nothing_raised do
-            ret = ref.evaluate :scope => scope
+            ret = ref.evaluate scope
         end
 
         assert_equal(:override, ret, "Did not return override")
@@ -74,7 +74,7 @@ class TestAST < Test::Unit::TestCase
         args = {:source => "/yay/ness", :group => "yayness"}
         assert_nothing_raised do
             obj = defaultobj "file", args
-            obj.evaluate :scope => scope
+            obj.evaluate scope
         end
 
         hash = nil
@@ -93,56 +93,6 @@ class TestAST < Test::Unit::TestCase
         end
     end
 
-    def test_node
-        scope = mkscope
-        parser = scope.compile.parser
-
-        # Define a base node
-        basenode = parser.newnode "basenode", :code => AST::ASTArray.new(:children => [
-            resourcedef("file", "/tmp/base", "owner" => "root")
-        ])
-
-        # Now define a subnode
-        nodes = parser.newnode ["mynode", "othernode"],
-            :code => AST::ASTArray.new(:children => [
-                resourcedef("file", "/tmp/mynode", "owner" => "root"),
-                resourcedef("file", "/tmp/basenode", "owner" => "daemon")
-        ])
-
-        assert_instance_of(Array, nodes)
-
-        # Make sure we can find them all.
-        %w{mynode othernode}.each do |node|
-            assert(parser.nodes[node], "Could not find %s" % node)
-        end
-        mynode = parser.nodes["mynode"]
-
-        # Now try evaluating the node
-        assert_nothing_raised do
-            mynode.evaluate :scope => scope, :resource => scope.resource
-        end
-
-        # Make sure that we can find each of the files
-        myfile = scope.findresource "File[/tmp/mynode]"
-        assert(myfile, "Could not find file from node")
-        assert_equal("root", myfile[:owner])
-
-        basefile = scope.findresource "File[/tmp/basenode]"
-        assert(basefile, "Could not find file from base node")
-        assert_equal("daemon", basefile[:owner])
-
-        # Now make sure we can evaluate nodes with parents
-        child = parser.newnode(%w{child}, :parent => "basenode").shift
-
-        newscope = mkscope :parser => parser
-        assert_nothing_raised do
-            child.evaluate :scope => newscope, :resource => scope.resource
-        end
-
-        assert(newscope.findresource("File[/tmp/base]"),
-            "Could not find base resource")
-    end
-
     def test_collection
         scope = mkscope
 
@@ -155,13 +105,13 @@ class TestAST < Test::Unit::TestCase
 
         ret = nil
         assert_nothing_raised do
-            ret = coll.evaluate :scope => scope
+            ret = coll.evaluate scope
         end
 
         assert_instance_of(Puppet::Parser::Collector, ret)
 
         # Now make sure we get it back from the scope
-        colls = scope.compile.instance_variable_get("@collections")
+        colls = scope.compiler.instance_variable_get("@collections")
         assert_equal([ret], colls, "Did not store collector in config's collection list")
     end
 
@@ -175,7 +125,7 @@ class TestAST < Test::Unit::TestCase
         run_collection_queries(:virtual) do |string, result, query|
             code = nil
             assert_nothing_raised do
-                str, code = query.evaluate :scope => scope
+                str, code = query.evaluate scope
             end
 
             assert_instance_of(Proc, code)

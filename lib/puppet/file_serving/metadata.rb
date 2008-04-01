@@ -28,6 +28,25 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::FileBase
 
     attr_reader :path, :owner, :group, :mode, :checksum_type, :checksum, :ftype, :destination
 
+    PARAM_ORDER = [:mode, :ftype, :owner, :group]
+
+    def attributes_with_tabs
+        desc = []
+        PARAM_ORDER.each { |check|
+            check = :ftype if check == :type
+            desc << send(check)
+        }
+
+        case ftype
+        when "file", "directory": desc << checksum
+        when "link": desc << @destination
+        else
+            raise ArgumentError, "Cannot manage files of type %s" % ftype
+        end
+
+        return desc.join("\t")
+    end
+
     def checksum_type=(type)
         raise(ArgumentError, "Unsupported checksum type %s" % type) unless respond_to?("%s_file" % type)
 
@@ -45,25 +64,24 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::FileBase
         @ftype = stat.ftype
 
 
-        # Set the octal mode, but as a string.
-        @mode = "%o" % (stat.mode & 007777)
+        # We have to mask the mode, yay.
+        @mode = stat.mode & 007777
 
-        if stat.ftype == "symlink"
+        case stat.ftype
+        when "file":
+            @checksum = ("{%s}" % @checksum_type) + send("%s_file" % @checksum_type, real_path)
+        when "directory": # Always just timestamp the directory.
+            sumtype = @checksum_type.to_s =~ /time/ ? @checksum_type : "ctime"
+            @checksum = ("{%s}" % sumtype) + send("%s_file" % sumtype, path).to_s
+        when "link":
             @destination = File.readlink(real_path)
         else
-            @checksum = get_checksum(real_path)
+            raise ArgumentError, "Cannot manage files of type %s" % stat.ftype
         end
     end
 
     def initialize(*args)
         @checksum_type = "md5"
         super
-    end
-
-    private
-
-    # Retrieve our checksum.
-    def get_checksum(path)
-        ("{%s}" % @checksum_type) + send("%s_file" % @checksum_type, path)
     end
 end

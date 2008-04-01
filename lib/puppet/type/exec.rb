@@ -211,10 +211,7 @@ module Puppet
                 log the output when the command reports an error.  Values are
                 **true**, *false*, *on_failure*, and any legal log level."
 
-            values = [:true, :false, :on_failure]
-            # And all of the log levels
-            Puppet::Util::Log.eachlevel { |level| values << level }
-            newvalues(*values)
+            newvalues(:true, :false, :on_failure)
         end
 
         newparam(:refresh) do
@@ -229,6 +226,15 @@ module Puppet
         end
 
         newparam(:env) do
+            desc "This parameter is deprecated. Use 'environment' instead."
+
+            munge do |value|
+                warning "'env' is deprecated on exec; use 'environment' instead."
+                resource[:environment] = value
+            end
+        end
+
+        newparam(:environment) do
             desc "Any additional environment variables you want to set for a
                 command.  Note that if you use this to set PATH, it will override
                 the ``path`` attribute.  Multiple environment variables should be
@@ -279,7 +285,7 @@ module Puppet
                     # Rebuild the database, but only when the file changes
                     exec { newaliases:
                         path => [\"/usr/bin\", \"/usr/sbin\"],
-                        subscribe => file[\"/etc/aliases\"],
+                        subscribe => File[\"/etc/aliases\"],
                         refreshonly => true
                     }
                 
@@ -384,6 +390,11 @@ module Puppet
 
                 Note that this command follows the same rules as the main command,
                 which is to say that it must be fully qualified if the path is not set.
+
+                Also note that onlyif can take an array as its value, eg:
+                    onlyif => [\"test -f /tmp/file1\", \"test -f /tmp/file2\"]
+
+                This will only run the exec if /all/ conditions in the array return true.
                 "
 
             validate do |cmds|
@@ -554,32 +565,32 @@ module Puppet
             begin
                 # Do our chdir
                 Dir.chdir(dir) do
-                    env = {}
+                    environment = {}
 
                     if self[:path]
-                        env[:PATH] = self[:path].join(":")
+                        environment[:PATH] = self[:path].join(":")
                     end
 
-                    if envlist = self[:env]
+                    if envlist = self[:environment]
                         envlist = [envlist] unless envlist.is_a? Array
                         envlist.each do |setting|
                             if setting =~ /^(\w+)=((.|\n)+)$/
                                 name = $1
                                 value = $2
-                                if env.include? name
+                                if environment.include? name
                                     warning(
                                     "Overriding environment setting '%s' with '%s'" %
                                         [name, value]
                                     )
                                 end
-                                env[name] = value
+                                environment[name] = value
                             else
-                                warning "Cannot understand env setting %s" % setting.inspect
+                                warning "Cannot understand environment setting %s" % setting.inspect
                             end
                         end
                     end
 
-                    withenv env do
+                    withenv environment do
                         Timeout::timeout(self[:timeout]) do
                             output, status = Puppet::Util::SUIDManager.run_and_capture(
                                 [command], self[:user], self[:group]

@@ -23,14 +23,14 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
         end
 
         begin
-            list = execute(command).split("\n\n").collect do |set|
+            list = execute(command).split("\n").collect do |set|
                 if gemhash = gemsplit(set)
                     gemhash[:provider] = :gem
                     gemhash
                 else
                     nil
                 end
-            end.reject { |p| p.nil? }
+            end.compact
         rescue Puppet::ExecutionFailure => detail
             raise Puppet::Error, "Could not list gems: %s" % detail
         end
@@ -44,8 +44,8 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
 
     def self.gemsplit(desc)
         case desc
-        when /^\*\*\*/: return nil
-        when /^(\S+)\s+\((.+)\)\n/
+        when /^\*\*\*/, /^\s*$/, /^\s+/; return nil
+        when /^(\S+)\s+\((.+)\)/
             name = $1
             version = $2.split(/,\s*/)[0]
             return {
@@ -78,7 +78,11 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
             command << @resource[:name]
         end
 
-        gemcmd(*command)
+        output = gemcmd(*command)
+        # Apparently some stupid gem versions don't exit non-0 on failure
+        if output.include?("ERROR")
+            self.fail "Could not install: %s" % output.chomp
+        end
     end
 
     def latest

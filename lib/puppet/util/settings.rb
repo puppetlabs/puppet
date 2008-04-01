@@ -44,19 +44,6 @@ class Puppet::Util::Settings
         return value
     end
 
-    # A simplified equality operator.
-    # LAK: For some reason, this causes mocha to not be able to mock
-    # the 'value' method, and it's not used anywhere.
-#    def ==(other)
-#        self.each { |myname, myobj|
-#            unless other[myname] == value(myname)
-#                return false
-#            end
-#        }
-#
-#        return true
-#    end
-
     # Generate the list of valid arguments, in a format that GetoptLong can
     # understand, and add them to the passed option list.
     def addargs(options)
@@ -225,6 +212,9 @@ class Puppet::Util::Settings
 
         # A central concept of a name.
         @name = nil
+
+        # The list of sections we've used.
+        @used = []
     end
 
     # Return a given object's file metadata.
@@ -243,14 +233,7 @@ class Puppet::Util::Settings
 
     # Make a directory with the appropriate user, group, and mode
     def mkdir(default)
-        obj = nil
-        unless obj = @config[default]
-            raise ArgumentError, "Unknown default %s" % default
-        end
-
-        unless obj.is_a? CFile
-            raise ArgumentError, "Default %s is not a file" % default
-        end
+        obj = get_config_file_default(default)
 
         Puppet::Util::SUIDManager.asuser(obj.owner, obj.group) do
             mode = obj.mode || 0750
@@ -327,94 +310,6 @@ class Puppet::Util::Settings
                 set_metadata(meta)
             end
         end
-    end
-
-    # Parse the configuration file.  As of May 2007, this is a backward-compatibility method and
-    # will be deprecated soon.
-    def old_parse(file)
-        text = nil
-
-        if file.is_a? Puppet::Util::LoadedFile
-            @file = file
-        else
-            @file = Puppet::Util::LoadedFile.new(file)
-        end
-
-        # Don't create a timer for the old style parsing.
-        # settimer()
-
-        begin
-            text = File.read(@file.file)
-        rescue Errno::ENOENT
-            raise Puppet::Error, "No such file %s" % file
-        rescue Errno::EACCES
-            raise Puppet::Error, "Permission denied to file %s" % file
-        end
-
-        @values = Hash.new { |names, name|
-            names[name] = {}
-        }
-
-        # Get rid of the values set by the file, keeping cli values.
-        self.clear(true)
-
-        section = "puppet"
-        metas = %w{owner group mode}
-        values = Hash.new { |hash, key| hash[key] = {} }
-        text.split(/\n/).each { |line|
-            case line
-            when /^\[(\w+)\]$/: section = $1 # Section names
-            when /^\s*#/: next # Skip comments
-            when /^\s*$/: next # Skip blanks
-            when /^\s*(\w+)\s*=\s*(.+)$/: # settings
-                var = $1.intern
-                if var == :mode
-                    value = $2
-                else
-                    value = munge_value($2)
-                end
-
-                # Only warn if we don't know what this config var is.  This
-                # prevents exceptions later on.
-                unless @config.include?(var) or metas.include?(var.to_s)
-                    Puppet.warning "Discarded unknown configuration parameter %s" % var.inspect
-                    next # Skip this line.
-                end
-
-                # Mmm, "special" attributes
-                if metas.include?(var.to_s)
-                    unless values.include?(section)
-                        values[section] = {}
-                    end
-                    values[section][var.to_s] = value
-
-                    # If the parameter is valid, then set it.
-                    if section == Puppet[:name] and @config.include?(var)
-                        #@config[var].value = value
-                        @values[:main][var] = value
-                    end
-                    next
-                end
-
-                # Don't override set parameters, since the file is parsed
-                # after cli arguments are handled.
-                unless @config.include?(var) and @config[var].setbycli
-                    Puppet.debug "%s: Setting %s to '%s'" % [section, var, value]
-                    @values[:main][var] = value
-                end
-                @config[var].section = symbolize(section)
-
-                metas.each { |meta|
-                    if values[section][meta]
-                        if @config[var].respond_to?(meta + "=")
-                            @config[var].send(meta + "=", values[section][meta])
-                        end
-                    end
-                }
-            else
-                raise Puppet::Error, "Could not match line %s" % line
-            end
-        }
     end
 
     # Create a new element.  The value is passed in because it's used to determine
@@ -509,19 +404,19 @@ class Puppet::Util::Settings
                 objects += add_user_resources(section, obj, done)
             end
 
+            value = obj.value
+
             # Only files are convertable to transportable resources.
-            if obj.respond_to? :to_transportable
-                next if value(obj.name) =~ /^\/dev/
-                transobjects = obj.to_transportable
-                transobjects = [transobjects] unless transobjects.is_a? Array
-                transobjects.each do |trans|
-                    # transportable could return nil
-                    next unless trans
-                    unless done[:file].include? trans.name
-                        @created << trans.name
-                        objects << trans
-                        done[:file][trans.name] = trans
-                    end
+            next unless obj.respond_to? :to_transportable and transobjects = obj.to_transportable
+
+            transobjects = [transobjects] unless transobjects.is_a? Array
+            transobjects.each do |trans|
+                # transportable could return nil
+                next unless trans
+                unless done[:file].include? trans.name
+                    @created << trans.name
+                    objects << trans
+                    done[:file][trans.name] = trans
                 end
             end
         end
@@ -670,23 +565,36 @@ Generated on #{Time.now}.
     # you can 'use' a section as many times as you want.
     def use(*sections)
         @@sync.synchronize do # yay, thread-safe
-            unless defined? @used
-                @used = []
-            end
+            sections = sections.reject { |s| @used.include?(s.to_sym) }
+
+            return if sections.empty?
 
             bucket = to_transportable(*sections)
 
-            config = bucket.to_catalog
-            config.host_config = false
-            config.apply do |transaction|
-                if failures = transaction.any_failed?
-                    raise "Could not configure for running; got %s failure(s)" % failures
-                end
+            begin
+                catalog = bucket.to_catalog
+            rescue => detail
+                puts detail.backtrace if Puppet[:trace]
+                Puppet.err "Could not create resources for managing Puppet's files and directories: %s" % detail
+
+                # We need some way to get rid of any resources created during the catalog creation
+                # but not cleaned up.
+                return
             end
-            config.clear
+
+            begin
+                catalog.host_config = false
+                catalog.apply do |transaction|
+                    if failures = transaction.any_failed?
+                        raise "Could not configure for running; got %s failure(s)" % failures
+                    end
+                end
+            ensure
+                catalog.clear
+            end
 
             sections.each { |s| @used << s }
-            @used.uniq
+            @used.uniq!
         end
     end
 
@@ -737,49 +645,15 @@ Generated on #{Time.now}.
     end
 
     # Open a file with the appropriate user, group, and mode
-    def write(default, *args)
-        obj = nil
-        unless obj = @config[default]
-            raise ArgumentError, "Unknown default %s" % default
-        end
-
-        unless obj.is_a? CFile
-            raise ArgumentError, "Default %s is not a file" % default
-        end
-
-        chown = nil
-        if Puppet::Util::SUIDManager.uid == 0
-            chown = [obj.owner, obj.group]
-        else
-            chown = [nil, nil]
-        end
-        Puppet::Util::SUIDManager.asuser(*chown) do
-            mode = obj.mode || 0640
-
-            if args.empty?
-                args << "w"
-            end
-
-            args << mode
-
-            File.open(value(obj.name), *args) do |file|
-                yield file
-            end
-        end
+    def write(default, *args, &bloc)
+        obj = get_config_file_default(default)
+        writesub(default, value(obj.name), *args, &bloc)
     end
 
     # Open a non-default file under a default dir with the appropriate user,
     # group, and mode
-    def writesub(default, file, *args)
-        obj = nil
-        unless obj = @config[default]
-            raise ArgumentError, "Unknown default %s" % default
-        end
-
-        unless obj.is_a? CFile
-            raise ArgumentError, "Default %s is not a file" % default
-        end
-
+    def writesub(default, file, *args, &bloc)
+        obj = get_config_file_default(default)
         chown = nil
         if Puppet::Util::SUIDManager.uid == 0
             chown = [obj.owner, obj.group]
@@ -804,8 +678,51 @@ Generated on #{Time.now}.
         end
     end
 
+    def readwritelock(default, *args, &bloc)
+        file = value(get_config_file_default(default).name)
+        tmpfile = file + ".tmp"
+        sync = Sync.new
+        unless FileTest.directory?(File.dirname(tmpfile))
+            raise Puppet::DevError, "Cannot create %s; directory %s does not exist" %
+                [file, File.dirname(file)]
+        end
+
+        sync.synchronize(Sync::EX) do
+            File.open(file, "r+", 0600) do |rf|
+                rf.lock_exclusive do
+                    if File.exist?(tmpfile)
+                        raise Puppet::Error, ".tmp file already exists for %s; Aborting locked write. Check the .tmp file and delete if appropriate" %
+                            [file]
+                    end
+
+                    writesub(default, tmpfile, *args, &bloc)
+
+                    begin
+                        File.rename(tmpfile, file)
+                    rescue => detail
+                        Puppet.err "Could not rename %s to %s: %s" %
+                            [file, tmpfile, detail]
+                    end
+                end
+            end
+        end
+    end
+
     private
 
+    def get_config_file_default(default)
+        obj = nil
+        unless obj = @config[default]
+            raise ArgumentError, "Unknown default %s" % default
+        end
+
+        unless obj.is_a? CFile
+            raise ArgumentError, "Default %s is not a file" % default
+        end
+
+        return obj
+    end
+    
     # Create the transportable objects for users and groups.
     def add_user_resources(section, obj, done)
         resources = []
@@ -1124,7 +1041,7 @@ Generated on #{Time.now}.
         # the variable 'dir', or adding a slash at the end.
         def munge(value)
             # If it's not a fully qualified path...
-            if value.is_a?(String) and value !~ /^\$/ and value !~ /^\//
+            if value.is_a?(String) and value !~ /^\$/ and value !~ /^\// and value != 'false'
                 # Make it one
                 value = File.join(Dir.getwd, value)
             end
@@ -1153,11 +1070,14 @@ Generated on #{Time.now}.
         def to_transportable
             type = self.type
             return nil unless type
-            path = @parent.value(self.name).split(File::SEPARATOR)
-            path.shift # remove the leading nil
+
+            path = self.value
+
+            return nil unless path.is_a?(String)
+            return nil if path =~ /^\/dev/
+            return nil if Puppet::Type.type(:file)[path] # skip files that are in our global resource list.
 
             objects = []
-            path = self.value
 
             # Skip plain files that don't exist, since we won't be managing them anyway.
             return nil unless self.name.to_s =~ /dir$/ or File.exist?(path) or self.create

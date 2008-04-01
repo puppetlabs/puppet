@@ -8,10 +8,8 @@ class Puppet::Parser::AST
         @name = :class
         attr_accessor :type
 
-        def evaluate(hash)
-            scope = hash[:scope]
-
-            types = @type.safeevaluate(:scope => scope)
+        def evaluate(scope)
+            types = @type.safeevaluate(scope)
 
             types = [types] unless types.is_a? Array
 

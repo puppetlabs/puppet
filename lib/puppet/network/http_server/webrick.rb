@@ -8,6 +8,7 @@ require 'puppet/sslcertificates/support'
 require 'puppet/network/xmlrpc/webrick_servlet'
 require 'puppet/network/http_server'
 require 'puppet/network/client'
+require 'puppet/network/handler'
 
 module Puppet
     class ServerError < RuntimeError; end
@@ -22,12 +23,12 @@ module Puppet
             # with them, with flags appropriate for checking client 
             # certificates for revocation
             def x509store
-                if Puppet[:cacrl] == 'none'
+                if Puppet[:cacrl] == 'false'
                     # No CRL, no store needed
                     return nil
                 end
                 unless File.exist?(Puppet[:cacrl])
-                    raise Puppet::Error, "Could not find CRL; set 'cacrl' to 'none' to disable CRL usage"
+                    raise Puppet::Error, "Could not find CRL; set 'cacrl' to 'false' to disable CRL usage"
                 end
                 crl = OpenSSL::X509::CRL.new(File.read(Puppet[:cacrl]))
                 store = OpenSSL::X509::Store.new
@@ -133,7 +134,7 @@ module Puppet
 
                 handlers.collect { |handler, args|
                     hclass = nil
-                    unless hclass = Handler.handler(handler)
+                    unless hclass = Puppet::Network::Handler.handler(handler)
                         raise ServerError, "Invalid handler %s" % handler
                     end
                     hclass.new(args)

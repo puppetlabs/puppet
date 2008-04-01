@@ -6,6 +6,17 @@ mainlib = File.expand_path(File.join(File.dirname(__FILE__), '../../lib'))
 $LOAD_PATH.unshift(mainlib) unless $LOAD_PATH.include?(mainlib)
 
 require 'puppet'
+
+# include any gems in vendor/gems
+Dir["#{mainlib}/../vendor/gems/**"].each do |path| 
+    libpath = File.join(path, "lib")
+    if File.directory?(libpath)
+        $LOAD_PATH.unshift(libpath)
+    else
+        $LOAD_PATH.unshift(path)
+    end
+end
+
 require 'mocha'
 
 # Only load the test/unit class if we're not in the spec directory.
@@ -25,13 +36,17 @@ class Class
     def publicize_methods(*methods)
         saved_private_instance_methods = methods.empty? ? self.private_instance_methods : methods
 
-        self.class_eval { public *saved_private_instance_methods }
+        self.class_eval { public(*saved_private_instance_methods) }
         yield
-        self.class_eval { private *saved_private_instance_methods }
+        self.class_eval { private(*saved_private_instance_methods) }
     end
 end
 
 module PuppetTest
+    # These need to be here for when rspec tests use these
+    # support methods.
+    @@tmpfiles = []
+
     # Munge cli arguments, so we can enable debugging if we want
     # and so we can run just specific methods.
     def self.munge_argv
@@ -178,7 +193,7 @@ module PuppetTest
             Dir.mkdir(@configpath)
         end
 
-        @@tmpfiles = [@configpath, tmpdir()]
+        @@tmpfiles << @configpath << tmpdir()
         @@tmppids = []
 
         @@cleaners = []
@@ -187,7 +202,7 @@ module PuppetTest
 
         # If we're running under rake, then disable debugging and such.
         #if rake? or ! Puppet[:debug]
-        if defined?($puppet_debug) or ! rake?
+        #if defined?($puppet_debug) or ! rake?
             if textmate?
                 Puppet[:color] = false
             end
@@ -199,11 +214,11 @@ module PuppetTest
             end
             Puppet::Util::Log.level = :debug
             #$VERBOSE = 1
-        else    
-            Puppet::Util::Log.close
-            Puppet::Util::Log.newdestination(@logs)
-            Puppet[:httplog] = tempfile()
-        end
+        #else    
+        #    Puppet::Util::Log.close
+        #    Puppet::Util::Log.newdestination(@logs)
+        #    Puppet[:httplog] = tempfile()
+        #end
 
         Puppet[:ignoreschedules] = true
 
@@ -256,11 +271,7 @@ module PuppetTest
         @tmpdir
     end
 
-    def teardown
-        #@stop = Time.now
-        #File.open("/tmp/test_times.log", ::File::WRONLY|::File::CREAT|::File::APPEND) { |f| f.puts "%0.4f %s %s" % [@stop - @start, @method_name, self.class] }
-        @@cleaners.each { |cleaner| cleaner.call() }
-
+    def remove_tmp_files
         @@tmpfiles.each { |file|
             unless file =~ /tmp/
                 puts "Not deleting tmpfile %s" % file
@@ -272,12 +283,21 @@ module PuppetTest
             end
         }
         @@tmpfiles.clear
+    end
+
+    def teardown
+        #@stop = Time.now
+        #File.open("/tmp/test_times.log", ::File::WRONLY|::File::CREAT|::File::APPEND) { |f| f.puts "%0.4f %s %s" % [@stop - @start, @method_name, self.class] }
+        @@cleaners.each { |cleaner| cleaner.call() }
+
+        remove_tmp_files
 
         @@tmppids.each { |pid|
             %x{kill -INT #{pid} 2>/dev/null}
         }
 
         @@tmppids.clear
+
         Puppet::Util::Storage.clear
         Puppet.clear
         Puppet.settings.clear
@@ -305,7 +325,6 @@ module PuppetTest
         rescue Timeout::Error
             # just move on
         end
-        mocha_verify
     end
 
     def logstore

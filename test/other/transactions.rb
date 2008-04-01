@@ -350,12 +350,12 @@ class TestTransactions < Test::Unit::TestCase
         fcomp = Puppet::Type.type(:component).create(:name => "file")
         config.add_resource fcomp
         config.add_resource file
-        config.add_edge!(fcomp, file)
+        config.add_edge(fcomp, file)
 
         ecomp = Puppet::Type.type(:component).create(:name => "exec")
         config.add_resource ecomp
         config.add_resource exec
-        config.add_edge!(ecomp, exec)
+        config.add_edge(ecomp, exec)
 
         # 'subscribe' expects an array of arrays
         #component[:require] = [[file.class.name,file.name]]
@@ -826,10 +826,10 @@ class TestTransactions < Test::Unit::TestCase
         c = trigger.new(:c)
         nope = Puppet::Relationship.new(a, b)
         yep = Puppet::Relationship.new(a, c, {:callback => :refresh})
-        graph.add_edge!(nope)
+        graph.add_edge(nope)
 
         # And a triggering one.
-        graph.add_edge!(yep)
+        graph.add_edge(yep)
 
         # Create our transaction
         trans = Puppet::Transaction.new(graph)

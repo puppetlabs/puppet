@@ -4,6 +4,11 @@ class Puppet::Type
     # This returns any changes resulting from testing, thus 'collect' rather
     # than 'each'.
     def evaluate
+        if self.provider.is_a?(Puppet::Provider)
+            unless provider.class.suitable?
+                raise Puppet::Error, "Provider %s is not functional on this platform" % provider.class.name
+            end
+        end
         #Puppet.err "Evaluating %s" % self.path.join(":")
         unless defined? @evalcount
             self.err "No evalcount defined on '%s' of type '%s'" %
@@ -108,7 +113,11 @@ class Puppet::Type
 
     # Are we running in noop mode?
     def noop?
-        @noop || Puppet[:noop]
+        if defined?(@noop)
+            @noop
+        else
+            Puppet[:noop]
+        end
     end
 
     def noop
@@ -121,30 +130,23 @@ class Puppet::Type
         # the other properties matter.
         changes = []
         ensureparam = @parameters[:ensure]
-        if @parameters.include?(:ensure) && !currentvalues.include?(ensureparam)
+
+        # This allows resource types to have 'ensure' be a parameter, which allows them to
+        # just pass the parameter on to other generated resources.
+        ensureparam = nil unless ensureparam.is_a?(Puppet::Property)
+        if ensureparam && !currentvalues.include?(ensureparam)
             raise Puppet::DevError, "Parameter ensure defined but missing from current values"
         end
-        if @parameters.include?(:ensure) and ! ensureparam.insync?(currentvalues[ensureparam])
-#            self.info "ensuring %s from %s" %
-#                [@parameters[:ensure].should, @parameters[:ensure].is]
+
+        if ensureparam and ! ensureparam.insync?(currentvalues[ensureparam])
             changes << Puppet::PropertyChange.new(ensureparam, currentvalues[ensureparam])
         # Else, if the 'ensure' property is correctly absent, then do
         # nothing
-        elsif @parameters.include?(:ensure) and currentvalues[ensureparam] == :absent
-            #            self.info "Object is correctly absent"
+        elsif ensureparam and currentvalues[ensureparam] == :absent
             return []
         else
-#            if @parameters.include?(:ensure)
-#                self.info "ensure: Is: %s, Should: %s" %
-#                    [@parameters[:ensure].is, @parameters[:ensure].should]
-#            else
-#                self.info "no ensure property"
-#            end
             changes = properties().find_all { |property|
-                unless currentvalues.include?(property)
-                    raise Puppet::DevError, "Property %s does not have a current value", 
-                               [property.name]
-                end
+                currentvalues[property] ||= :absent
                 ! property.insync?(currentvalues[property])
             }.collect { |property|
                 Puppet::PropertyChange.new(property, currentvalues[property])
@@ -152,10 +154,7 @@ class Puppet::Type
         end
 
         if Puppet[:debug] and changes.length > 0
-            self.debug("Changing " + changes.collect { |ch|
-                    ch.property.name
-                }.join(",")
-            )
+            self.debug("Changing " + changes.collect { |ch| ch.property.name }.join(","))
         end
 
         changes

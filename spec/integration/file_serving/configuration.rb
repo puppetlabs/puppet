@@ -12,8 +12,6 @@ describe Puppet::FileServing::Configuration, " when finding files with Puppet::F
         # Just in case it already exists.
         Puppet::FileServing::Configuration.clear_cache
 
-        @config = Puppet::FileServing::Configuration.create
-
         @mount = Puppet::FileServing::Mount.new("mymount")
         FileTest.stubs(:exists?).with("/my/path").returns(true)
         FileTest.stubs(:readable?).with("/my/path").returns(true)
@@ -25,6 +23,8 @@ describe Puppet::FileServing::Configuration, " when finding files with Puppet::F
         @parser.stubs(:parse).returns("mymount" => @mount)
         @parser.stubs(:changed?).returns(true)
         Puppet::FileServing::Configuration::Parser.stubs(:new).returns(@parser)
+
+        @config = Puppet::FileServing::Configuration.create
     end
 
     it "should return nil if the file does not exist" do

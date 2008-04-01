@@ -106,8 +106,14 @@ class Puppet::Util::FileType
         # Overwrite the file.
         def write(text)
             backup()
+
             raise("Cannot create file %s in absent directory" % @path) unless FileTest.exist?(File.dirname(@path))
-            File.open(@path, "w") { |f| f.print text; f.flush }
+
+            require "tempfile"
+            tf = Tempfile.new("puppet") 
+            tf.print text; tf.flush 
+            FileUtils.cp(tf.path, @path) 
+            tf.close
         end
     end
 
@@ -168,7 +174,7 @@ class Puppet::Util::FileType
 
         # Remove a specific @path's cron tab.
         def remove
-            if Facter.value("operatingsystem") == "FreeBSD"
+            if %w{Darwin FreeBSD}.include?(Facter.value("operatingsystem"))
                 %x{/bin/echo yes | #{cmdbase()} -r 2>/dev/null}
             else
                 %x{#{cmdbase()} -r 2>/dev/null}

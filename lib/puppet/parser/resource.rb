@@ -3,17 +3,17 @@
 class Puppet::Parser::Resource
     require 'puppet/parser/resource/param'
     require 'puppet/parser/resource/reference'
+    require 'puppet/util/tagging'
     include Puppet::Util
     include Puppet::Util::MethodHelper
     include Puppet::Util::Errors
     include Puppet::Util::Logging
+    include Puppet::Util::Tagging
 
     attr_accessor :source, :line, :file, :scope, :rails_id
     attr_accessor :virtual, :override, :translated
 
     attr_reader :exported, :evaluated, :params
-
-    attr_writer :tags
 
     # Determine whether the provided parameter name is a relationship parameter.
     def self.relationship_parameter?(name)
@@ -58,8 +58,7 @@ class Puppet::Parser::Resource
     def evaluate
         if klass = @ref.definedtype
             finish()
-            scope.compile.delete_resource(self)
-            return klass.evaluate(:scope => scope, :resource => self)
+            return klass.evaluate_code(self)
         elsif builtin?
             devfail "Cannot evaluate a builtin type"
         else
@@ -83,10 +82,17 @@ class Puppet::Parser::Resource
     # Do any finishing work on this object, called before evaluation or
     # before storage/translation.
     def finish
-        add_overrides()
+        return if finished?
+        @finished = true
         add_defaults()
         add_metaparams()
+        add_scope_tags()
         validate()
+    end
+
+    # Has this resource already been finished?
+    def finished?
+        defined?(@finished) and @finished
     end
 
     def initialize(options)
@@ -130,12 +136,16 @@ class Puppet::Parser::Resource
             raise ArgumentError, "Resources do not accept %s" % options.keys.collect { |k| k.to_s }.join(", ")
         end
 
-        @tags = []
         tag(@ref.type)
-        tag(@ref.title) if @ref.title.to_s =~ /^[-\w]+$/
+        tag(@ref.title) if valid_tag?(@ref.title.to_s)
+    end
 
-        if scope.resource
-            @tags += scope.resource.tags
+    # Is this resource modeling an isomorphic resource type?
+    def isomorphic?
+        if builtin?
+            return @ref.builtintype.isomorphic?
+        else
+            return true
         end
     end
 
@@ -223,21 +233,18 @@ class Puppet::Parser::Resource
         @ref.to_s
     end
 
-    # Add a tag to our current list.  These tags will be added to all
-    # of the objects contained in this scope.
-    def tag(*ary)
-        ary.collect { |tag| tag.to_s.downcase }.collect { |tag| tag.split("::") }.flatten.each do |tag|
-            unless tag =~ /^\w[-\w]*$/
-                fail Puppet::ParseError, "Invalid tag %s" % tag.inspect
-            end
-            unless @tags.include?(tag)
-                @tags << tag
-            end
+    # Define a parameter in our resource.
+    def set_parameter(param, value = nil)
+        if value
+            param = Puppet::Parser::Resource::Param.new(
+                :name => param, :value => value, :source => self.source
+            )
+        elsif ! param.is_a?(Puppet::Parser::Resource::Param)
+            raise ArgumentError, "Must pass a parameter or all necessary values"
         end
-    end
 
-    def tags
-        @tags.dup
+        # And store it in our parameter hash.
+        @params[param.name] = param
     end
 
     def to_hash
@@ -259,6 +266,8 @@ class Puppet::Parser::Resource
 
         # Handle file specially
         db_resource.file = self.file
+
+        db_resource.save
 
         @params.each { |name, param|
             param.to_rails(db_resource)
@@ -336,7 +345,7 @@ class Puppet::Parser::Resource
             unless @params.include?(name)
                 self.debug "Adding default for %s" % name
 
-                @params[name] = param
+                @params[name] = param.dup
             end
         end
     end
@@ -361,16 +370,9 @@ class Puppet::Parser::Resource
         end
     end
 
-    # Add any overrides for this object.
-    def add_overrides
-        if overrides = scope.compile.resource_overrides(self)
-            overrides.each do |over|
-                self.merge(over)
-            end
-
-            # Remove the overrides, so that the configuration knows there
-            # are none left.
-            overrides.clear
+    def add_scope_tags
+        if scope_resource = scope.resource
+            tag(*scope_resource.tags)
         end
     end
 
@@ -382,11 +384,8 @@ class Puppet::Parser::Resource
 
         # The parameter is already set.  Fail if they're not allowed to override it.
         unless param.source.child_of?(current.source)
-            if Puppet[:trace]
-                puts caller
-            end
-            msg = "Parameter '%s' is already set on %s" % 
-                [param.name, self.to_s]
+            puts caller if Puppet[:trace]
+            msg = "Parameter '%s' is already set on %s" % [param.name, self.to_s]
             if current.source.to_s != ""
                 msg += " by %s" % current.source
             end
@@ -436,20 +435,6 @@ class Puppet::Parser::Resource
             end
             hash
         end
-    end
-
-    # Define a parameter in our resource.
-    def set_parameter(param, value = nil)
-        if value
-            param = Puppet::Parser::Resource::Param.new(
-                :name => param, :value => value, :source => self.source
-            )
-        elsif ! param.is_a?(Puppet::Parser::Resource::Param)
-            raise ArgumentError, "Must pass a parameter or all necessary values"
-        end
-
-        # And store it in our parameter hash.
-        @params[param.name] = param
     end
 
     # Make sure the resource's parameters are all valid for the type.

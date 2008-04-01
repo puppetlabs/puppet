@@ -29,7 +29,7 @@ class Puppet::ResourceReference
     # If the title has square brackets, treat it like a reference and
     # set things appropriately; else, just set it.
     def title=(value)
-        if value =~ /^(.+)\[(.+)\]$/
+        if value =~ /^([^\[\]]+)\[(.+)\]$/
             self.type = $1
             @title = $2
         else
@@ -42,7 +42,8 @@ class Puppet::ResourceReference
         if value.nil? or value.to_s.downcase == "component"
             @type = "Class"
         else
-            @type = value.to_s.split("::").collect { |s| s.capitalize }.join("::")
+            # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
+            x = @type = value.to_s.split("::").collect { |s| s.capitalize }.join("::")
         end
     end
 

@@ -1,4 +1,8 @@
 require 'puppet/indirector'
+require 'puppet/pgraph'
+require 'puppet/transaction'
+
+require 'puppet/util/tagging'
 
 # This class models a node catalog.  It is the thing
 # meant to be passed from server to client, and it contains all
@@ -7,6 +11,8 @@ require 'puppet/indirector'
 class Puppet::Node::Catalog < Puppet::PGraph
     extend Puppet::Indirector
     indirects :catalog, :terminus_class => :compiler
+
+    include Puppet::Util::Tagging
 
     # The host name this is a catalog for.
     attr_accessor :name
@@ -58,28 +64,32 @@ class Puppet::Node::Catalog < Puppet::PGraph
                 raise ArgumentError, "Can only add objects that respond to :ref"
             end
 
+            fail_unless_unique(resource)
+
             ref = resource.ref
-            if @resource_table.include?(ref)
-                raise ArgumentError, "Resource %s is already defined" % ref
-            else
-                @resource_table[ref] = resource
+
+            @resource_table[ref] = resource
+
+            # If the name and title differ, set up an alias
+            #self.alias(resource, resource.name) if resource.respond_to?(:name) and resource.respond_to?(:title) and resource.name != resource.title
+            if resource.respond_to?(:name) and resource.respond_to?(:title) and resource.name != resource.title
+                self.alias(resource, resource.name) if resource.isomorphic?
             end
 
-            if resource.is_a?(Puppet::Type) and resource.class.isomorphic? and resource.title != resource.ref and resource.title != resource[:name]
-                self.alias(resource, resource[:name])
-            end
-            resource.catalog = self unless is_relationship_graph
-            add_vertex!(resource)
+            resource.catalog = self if resource.respond_to?(:catalog=) and ! is_relationship_graph
+
+            add_vertex(resource)
         end
     end
 
     # Create an alias for a resource.
     def alias(resource, name)
+        #set $1 
         resource.ref =~ /^(.+)\[/
 
         newref = "%s[%s]" % [$1 || resource.class.name, name]
-        if res = @resource_table[newref]
-            return if res == resource
+        if existing = @resource_table[newref]
+            return if existing == resource
             raise(ArgumentError, "Cannot alias %s to %s; resource %s already exists" % [resource.ref, name, newref])
         end
         @resource_table[newref] = resource
@@ -275,7 +285,6 @@ class Puppet::Node::Catalog < Puppet::PGraph
         super()
         @name = name if name
         @extraction_format ||= :transportable
-        @tags = []
         @classes = []
         @resource_table = {}
         @transient_resources = []
@@ -320,9 +329,9 @@ class Puppet::Node::Catalog < Puppet::PGraph
             
             # First create the dependency graph
             self.vertices.each do |vertex|
-                @relationship_graph.add_vertex! vertex
+                @relationship_graph.add_vertex vertex
                 vertex.builddepends.each do |edge|
-                    @relationship_graph.add_edge!(edge)
+                    @relationship_graph.add_edge(edge)
                 end
             end
             
@@ -332,7 +341,7 @@ class Puppet::Node::Catalog < Puppet::PGraph
                     unless @relationship_graph.edge?(edge.source, edge.target) # don't let automatic relationships conflict with manual ones.
                         unless @relationship_graph.edge?(edge.target, edge.source)
                             vertex.debug "Autorequiring %s" % [edge.source]
-                            @relationship_graph.add_edge!(edge)
+                            @relationship_graph.add_edge(edge)
                         else
                             vertex.debug "Skipping automatic relationship with %s" % (edge.source == vertex ? edge.target : edge.source)
                         end
@@ -388,25 +397,6 @@ class Puppet::Node::Catalog < Puppet::PGraph
         @resource_table.keys
     end
 
-    # Add a tag.
-    def tag(*names)
-        names.each do |name|
-            name = name.to_s
-            @tags << name unless @tags.include?(name)
-            if name.include?("::")
-                name.split("::").each do |sub|
-                    @tags << sub unless @tags.include?(sub)
-                end
-            end
-        end
-        nil
-    end
-
-    # Return the list of tags.
-    def tags
-        @tags.dup
-    end
-
     # Convert our catalog into a RAL catalog.
     def to_ral
         to_catalog :to_type
@@ -454,6 +444,28 @@ class Puppet::Node::Catalog < Puppet::PGraph
         end
     end
 
+    # Verify that the given resource isn't defined elsewhere.
+    def fail_unless_unique(resource)
+        # Short-curcuit the common case, 
+        return unless existing_resource = @resource_table[resource.ref]
+
+        # Either it's a defined type, which are never
+        # isomorphic, or it's a non-isomorphic type, so
+        # we should throw an exception.
+        msg = "Duplicate definition: %s is already defined" % resource.ref
+
+        if existing_resource.file and existing_resource.line
+            msg << " in file %s at line %s" %
+                [existing_resource.file, existing_resource.line]
+        end
+
+        if resource.line or resource.file
+            msg << "; cannot redefine"
+        end
+
+        raise ArgumentError.new(msg)
+    end
+
     # An abstracted method for converting one catalog into another type of catalog.
     # This pretty much just converts all of the resources from one class to another, using
     # a conversion method.
@@ -463,6 +475,15 @@ class Puppet::Node::Catalog < Puppet::PGraph
         map = {}
         vertices.each do |resource|
             next if resource.respond_to?(:virtual?) and resource.virtual?
+
+            #This is hackity hack for 1094
+            #Aliases aren't working in the ral catalog because the current instance of the resource
+            #has a reference to the catalog being converted. . . So, give it a reference to the new one
+            #problem solved. . .
+            if resource.is_a?(Puppet::TransObject)
+                resource = resource.dup
+                resource.catalog = result
+            end
 
             newres = resource.send(convert)
 
@@ -488,12 +509,12 @@ class Puppet::Node::Catalog < Puppet::PGraph
                 raise Puppet::DevError, "Could not find resource %s when converting %s resources" % [edge.target.ref, message]
             end
 
-            result.add_edge!(source, target, edge.label)
+            result.add_edge(source, target, edge.label)
         end
 
         map.clear
 
-        result.add_class *self.classes
+        result.add_class(*self.classes)
         result.tag(*self.tags)
 
         return result

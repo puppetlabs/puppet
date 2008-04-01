@@ -7,7 +7,8 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
 
     # The attributes that Puppet class information is stored in.
     def class_attributes
-        Puppet[:ldapclassattrs].split(/\s*,\s*/)
+        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
+        x = Puppet[:ldapclassattrs].split(/\s*,\s*/)
     end
 
     # Look for our node in ldap.
@@ -36,11 +37,14 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
                 information[:parameters][param] = value unless information[:parameters].include?(param)
             end
 
+            information[:environment] ||= parent_info[:environment]
+
             parent = parent_info[:parent]
         end
 
         node.classes = information[:classes].uniq unless information[:classes].empty?
         node.parameters = information[:parameters] unless information[:parameters].empty?
+        node.environment = information[:environment] if information[:environment]
         node.fact_merge
 
         return node
@@ -87,6 +91,8 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
             hash
         end
 
+        result[:environment] = result[:parameters]["environment"] if result[:parameters]["environment"]
+
         return result
     end
 
@@ -116,5 +122,9 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
             filter = filter.gsub('%s', name)
         end
         filter
+    end
+
+    def version(name)
+        Puppet::Node::Facts.version(name)
     end
 end

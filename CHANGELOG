@@ -1,3 +1,199 @@
+    Pass source to pkg_add via the PKG_PATH environment variable if
+    it ends in a '/' indicating it is a directory. Allows pkg_add
+    to resolve dependancies, and make it possible to specify packages
+    without version numbers.
+
+    Fixing #571 -- provider suitability is now checked at resource
+    evaluation time, rather than resource instantiation time.  This
+    means that you don't catch your "errors" as early, but it also
+    means you should be able to realistically configure a whole host
+    in one run.
+
+    Moved the configuration of the Node cache to the puppetmasterd
+    executable, since it otherwise causes caches to be used in all
+    cases, which we don't want (e.g., bin/puppet was using them).
+
+    Ported #198 man page creation functionality to 0.24.x branch and
+    added man pages and man page creation logic to install.rb.  The
+    man pages are stored in man/man8 and will install to config::CONFIG
+    mandir/man8.
+
+    Fixing #1138 -- the yamldir is automatically created by the
+    server now that it's in the :puppetmasterd section rather than
+    a separate :yaml section.
+
+    Disabling http keep-alive as a means of preventing #1010.
+    There is now a constant in Puppet::Network::HttpPool that will
+    disable or enable this feature, but note that we determined
+    that it can cause corruption, especially in file serving (but
+    it's client-side corruption).
+
+    Applying patch by Ryan McBride to fix OpenBSD package 
+    matching.  The actual problem was caused by the fix to #1001.
+
+    Found all instances of methods where split() is used without
+    any local variables and added a local variable -- see
+    http://snurl.com/21zf8.  My own testing showed that this
+    caused memory growth to level off at a reasonable level.
+    Note that the link above says the problem is only with class
+    methods, but my own testing showed that it's any method that
+    meets these criteria.  This is not a functional change, but
+    should hopefully be the last nail in the coffin of #1131.
+
+    Found an array that leaked pretty quickly between reparsing
+    files, thanks to work by Adam Jacob and Arjuna Christenson
+    (the finding, not the leak).  I'm going to act like this
+    fixes #1131, at least for now, but I doubt it does,
+    since that shows general memory growth over time, whereas
+    the leak here should go away as soon as files are reparsed
+    (because the parser is holding the reference to the leaking
+    array).
+
+    Fixed #1147: Cached nodes are correctly considered out of
+    date if the node facts have been updated (thus causing
+    node facts to again be available in manifests, for those
+    cases where they were not).
+
+    Fixed #1137: The certificate name is correctly being added
+    to the facts hash.
+
+    Fixed #1136: Verbose and Debug no longer clobber each other.
+
+    Hopefully *finally* fixed the "already being managed" problem
+    (#1036).  The problem only cropped up if there was a failure
+    when trying to manage the system -- this would cause the
+    setting-based resources not to get cleaned up.
+
+0.24.3
+    Modified the ldap node terminus to also use the facts version
+    as the version for a node, which should similarly encourage the
+    use of the yaml cache.  (Related to #1130)
+
+    Caching node information in yaml (I figured caching in memory will
+    cause ever-larger memory growth), and changing the external node
+    terminus to use the version of the facts as their version.  This
+    will usually result in the cached node information being used,
+    instead of always hitting the external node app during file
+    serving. Note that if the facts aren't changed by the client,
+    then this will result in the cached node being used, but at this
+    point, the client always updates its facts.  (#1130)
+
+    Fixing #1132 -- host names can now have dashes anywhere.
+    (Patch by freiheit.)
+
+    Fixing #1118 -- downloading plugins and facts now ignores noop.
+    Note that this changes the behaviour a bit -- the resource's
+    noop setting always beats the global setting (previously,
+    whichever was true would win).
+
+    The change in checksums from 'timestamp' to 'mtime' no longer
+    result in updates on every run (#1116).
+
+    Aliases again work in relationships (#1094).
+
+    The CA serial file will no longer ever be owned by
+    root (#1041).
+
+    Fixing the rest of #1113: External node commands can specify
+    an environment and Puppet will now use it.
+
+    Partially fixing #1113: LDAP nodes now support environments,
+    and the schema has been updated accordingly.
+
+    Always duplicating resource defaults in the parser, so that
+    stacked metaparameter values do not result in all resources
+    that receive a given default also getting those stacked
+    values.
+
+0.24.2
+    Fixing #1062 by moving the yamldir setting to its own yaml
+    section.  This should keep the yamldir from being created
+    on clients.
+
+    Fixed #1047 -- Puppet's parser no longer changes the order
+    in which statements are evaluated, which means that case
+    statements can now set variables that are used by other
+    variables.
+
+    Fixed #1063 -- the master correctly logs syntax errors when
+    reparsing during a single run.
+
+    Removed the loglevels from the valid values for `logoutput`
+    in the Exec resource type -- the log levels are specified
+    using the `loglevel` parameter, not `logoutput`.  This never
+    worked, or at least hasn`t for ages, and now the docs are
+    just correct.
+
+    Somewhat refactored fileserving so that it no longer caches
+    any objects, nor does it use Puppet's RAL resources.  In the
+    process, I fixed #894 (you can now copy links) and refactored
+    other classes as necessary.  Mostly it was fixing tests.
+
+    Hopefully partially fixed #1010 -- clients should now fail
+    to install files whose checksums do not match the checksum
+    from the server.
+
+    Fixed #1018 -- resources now have their namevars added as
+    aliases in the resource catalog, just like they were added
+    in the resource classes.
+
+    Fixed #1037 -- remote unreadable files no longer have the
+    permission denied exceptions caught, thus forbidding them
+    from being replaced with 'nil'.
+
+    The environment is now available as a variable in the manifests.
+
+    Fixed #1043 -- autoloading now searches the plugins directory
+    in each module, in addition to the lib directory.  The 'lib'
+    directory is also deprecated, but supported for now to give
+    people a chance to convert.
+
+    Fixed #1003 -- Applying DavidS's patch to fix searching for
+    tags in sql.
+
+    Fixed #992 -- Puppet is now compatible with gems 1.0.1.
+
+    Fixed #968 again, this time with tests -- parseonly works,
+    including not compiling the configurations, and also storeconfigs
+    is no longer required during parse-testing.
+
+    Fixed #1021 -- the problem was that my method of determining
+    the in-degree sometimes resulted in a lower number than the
+    number of in-edges.
+
+    Fixed #997 -- virtual defined types are no longer evaluated.
+    NOTE: This introduces a behaviour change, in that you previously
+    could realize a resource within a virtual defined resource, and now
+    you must realize the entire defined resource, rather than just
+    the contained resource.
+
+    Fixed #1030 - class and definition evaluation has been significantly
+    refactored, fixing this problem and making the whole interplay
+    between the classes, definitions, and nodes, and the Compile class much
+    cleaner.
+
+    Exec resources must now have unique names, although the commands can still
+    be duplicated.  This is easily accomplished by just specifying a unique
+    name with whatever (unique or otherwise) command you need.
+
+    Fixed #989 -- missing CRL files are correctly ignored, and the
+    value should be set to 'false' to explicitly not look for these
+    files.
+
+    Fixed #1017 -- environment-specific modulepath is no longer ignored.
+
+    Fixing #794 -- consolidating the gentoo configuration files.
+
+    Fixing #976 -- both the full name of qualified classes and
+    the class parts are now added as tags.  I've also
+    created a Tagging module that we should push throughout
+    the rest of the system that uses tags.
+
+    Fixing #995 -- puppetd no longer dies at startup if the server
+    is not running.
+
+    Fixing #977 -- the rundir is again set to 1777.
+
     Fixed #971 -- classes can once again be included multiple
     times.
 

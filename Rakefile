@@ -27,7 +27,8 @@ project = Rake::RedLabProject.new("puppet") do |p|
         'bin/**/*',
         'ext/**/*',
         'examples/**/*',
-        'conf/**/*'
+        'conf/**/*',
+        'man/**/*'
     ]
     p.filelist.exclude("bin/pi")
 
@@ -83,10 +84,6 @@ rule(/_is_runnable$/) do |t|
     end
 end
 
-file "debian" => :bzr_is_runnable do
-    system("bzr get http://www.hezmatt.org/~mpalmer/bzr/puppet.debian.svn debian") || exit(1)
-end
-
 task :check_build_deps => 'dpkg-checkbuilddeps_is_runnable' do
     system("dpkg-checkbuilddeps") || exit(1)
 end
@@ -136,5 +133,13 @@ task :dailyclean do
     Dir.glob("#{downdir}/*/*daily*.tgz").each do |file|
         puts "Removing %s" % file
         File.unlink(file)
+    end
+end
+
+task :tracdocs do
+    require 'puppet'
+    require 'puppet/util/reference'
+    Puppet::Util::Reference.references.each do |ref| 
+        sh "puppetdoc -m trac -r #{ref.to_s}"
     end
 end

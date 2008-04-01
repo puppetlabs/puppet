@@ -212,7 +212,7 @@ describe Puppet::Network::Server, "when listening is on" do
         @server.listen
     end
   
-    it "should indicate that listening is turned off" do
+    it "should indicate that it is listening" do
         @server.should be_listening
     end
     
@@ -235,14 +235,14 @@ describe Puppet::Network::Server, "when listening is being turned on" do
         @mock_http_server.stubs(:listen)
     end
 
-    it "should fetch an instance of an HTTP server when listening is turned on" do
+    it "should fetch an instance of an HTTP server" do
         mock_http_server_class = mock('http server class')
         mock_http_server_class.expects(:new).returns(@mock_http_server)
         @server.expects(:http_server_class).returns(mock_http_server_class)
         @server.listen        
     end
 
-    it "should cause the HTTP server to listen when listening is turned on" do
+    it "should cause the HTTP server to listen" do
         @mock_http_server.expects(:listen)
         @server.expects(:http_server).returns(@mock_http_server)
         @server.listen
@@ -261,7 +261,7 @@ describe Puppet::Network::Server, "when listening is being turned off" do
         @server.listen
     end
 
-    it "should cause the HTTP server to stop listening when listening is turned off" do
+    it "should cause the HTTP server to stop listening" do
         @mock_http_server.expects(:unlisten)
         @server.unlisten
     end

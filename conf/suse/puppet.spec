@@ -5,7 +5,7 @@
 
 Summary: A network tool for managing many disparate systems
 Name: puppet
-Version: 0.18.4
+Version: 0.24.1
 Release: 3%{?dist}
 License: GPL
 Group: System Environment/Base
@@ -15,11 +15,11 @@ Source: http://reductivelabs.com/downloads/puppet/%{name}-%{version}.tgz
 Patch0: puppet.suse.patch
 Patch1: puppet.service.patch
 
-Requires: ruby >= 1.8.1
-Requires: facter >= 1.1.4
+Requires: ruby >= 1.8.6
+Requires: facter >= 1.3.7
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArchitectures: noarch
-BuildRequires: ruby >= 1.8.1
+BuildRequires: ruby >= 1.8.6
 
 %description
 Puppet lets you centrally manage every important aspect of your system using a 
@@ -67,9 +67,7 @@ find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -print0 | xargs -0 -r %
 %{__install} -Dp -m0644 %{confdir}/server.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppetmaster
 %{__install} -Dp -m0755 %{suseconfdir}/server.init %{buildroot}%{_initrddir}/puppetmaster
 %{__install} -Dp -m0644 %{confdir}/fileserver.conf %{buildroot}%{_sysconfdir}/puppet/fileserver.conf
-%{__install} -Dp -m0644 %{confdir}/puppetd.conf %{buildroot}%{_sysconfdir}/puppet/puppetd.conf
-%{__ln_s} puppetd.conf %{buildroot}%{_sysconfdir}/puppet/puppetmasterd.conf
-%{__ln_s} puppetd.conf %{buildroot}%{_sysconfdir}/puppet/puppetca.conf
+%{__install} -Dp -m0644 %{confdir}/puppet.conf %{buildroot}%{_sysconfdir}/puppet/puppet.conf
 %{__install} -Dp -m0644 %{confdir}/logrotate %{buildroot}%{_sysconfdir}/logrotate.d/puppet
 
 %files
@@ -79,7 +77,7 @@ find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -print0 | xargs -0 -r %
 %{ruby_sitelibdir}/*
 %{_initrddir}/puppet
 %config(noreplace) %{_sysconfdir}/sysconfig/puppet
-%config(noreplace) %{_sysconfdir}/puppet/puppetd.conf
+%config(noreplace) %{_sysconfdir}/puppet/puppet.conf
 %doc CHANGELOG COPYING LICENSE README TODO examples
 %exclude %{_sbindir}/puppetdoc
 %config(noreplace) %{_sysconfdir}/logrotate.d/puppet
@@ -131,6 +129,10 @@ fi
 %{__rm} -rf %{buildroot}
 
 %changelog
+* Sat Feb 16 2008 James Turnbull <james@lovedthanlost.net> - 0.24.1-1
+- Fixed puppet configuation file references to match single puppet.conf file
+- Update versions for 0.24.1 release
+ 
 * Tue Aug  3 2006 Martin Vuk <martin.vuk@fri.uni-lj.si> - 0.18.4-3
 - Replaced puppet-bin.patch with %build section from David's spec
 

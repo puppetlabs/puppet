@@ -81,13 +81,13 @@ end
 
 require 'getoptlong'
 require 'puppet'
+require 'puppet/network/handler'
 require 'puppet/sslcertificates'
 
 options = [
 	[ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
 	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
 	[ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--noca",         			GetoptLong::NO_ARGUMENT ],
 	[ "--nobucket",        			GetoptLong::NO_ARGUMENT ],
 	[ "--noreports",       			GetoptLong::NO_ARGUMENT ],
 	[ "--nonodes",         			GetoptLong::NO_ARGUMENT ],
@@ -187,6 +187,9 @@ Puppet.genmanifest
 
 # A temporary solution, to at least make the master work for now.
 Puppet::Node::Facts.terminus_class = :yaml
+
+# Cache our nodes in yaml.  Currently not configurable.
+Puppet::Node.cache_class = :yaml
 
 require 'etc'
 

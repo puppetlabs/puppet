@@ -53,6 +53,9 @@
 # list::
 #   List all available tests.
 #
+# pause::
+#  Pause before starting test (useful for testing with dtrace).
+#
 # repeat::
 #  How many times to perform the test.
 #
@@ -88,7 +91,7 @@
 # Do an initial trap, so that cancels don't get a stack trace.
 trap(:INT) do
     $stderr.puts "Cancelling startup"
-    exit(0)
+    exit(1)
 end
 
 require 'puppet'
@@ -140,10 +143,6 @@ class Suite
         instance_eval(&block)
     end
 
-    def prepare
-        raise "Test %s did not override 'prepare'" % @name
-    end
-
     # Define a new type of test on this suite.
     def newtest(name, doc, &block)
         @tests[name] = doc
@@ -163,7 +162,14 @@ class Suite
             raise "Suite %s only supports tests %s; not %s" % [@name, @tests.keys.collect { |k| k.to_s }.join(","), test]
         end
         puts "Running %s %s test" % [@name, test]
-        prepare()
+
+        prepare() if respond_to?(:prepare)
+
+        if $options[:pause]
+            puts "Hit any key to continue"
+            $stdin.readline
+            puts "Continuing with test"
+        end
 
         if $options[:fork] > 0
             @forking = true
@@ -200,7 +206,25 @@ class Suite
     end
 end
 
-Suite.new :catalog, "Catalog handling" do
+Suite.new :parser, "Manifest parsing" do
+    newtest :parse, "Parsed files" do
+        @parser = Puppet::Parser::Parser.new(:environment => Puppet[:environment])
+        @parser.file = Puppet[:manifest]
+        @parser.parse
+    end
+end
+
+Suite.new :local_catalog, "Local catalog handling" do
+    def prepare
+        @node = Puppet::Node.find(Puppet[:certname])
+    end
+
+    newtest :compile, "Compiled catalog" do
+        Puppet::Node::Catalog.find(@node)
+    end
+end
+
+Suite.new :remote_catalog, "Remote catalog handling" do
     def prepare
         $args[:cache] = false
         # Create a config client and pull the config down
@@ -212,10 +236,12 @@ Suite.new :catalog, "Catalog handling" do
         # Use the facts from the cache, to skip the time it takes
         # to load them.
         @client.dostorage
-        @facts = Puppet::Util::Storage.cache(:configuration)[:facts]
+        @facts = Puppet::Util::Storage.cache(:configuration)[:facts] || {}
 
         if @facts.empty?
-            @facts = @client.master.getfacts
+            if tmp = Puppet::Node::Facts.find("me")
+                @facts = tmp.values
+            end
         end
 
         if host = $options[:fqdn]
@@ -227,7 +253,7 @@ Suite.new :catalog, "Catalog handling" do
         @facts = YAML.dump(@facts)
     end
 
-    newtest :compile, "Compiled catalog" do
+    newtest :getconfig, "Compiled catalog" do
         @client.driver.getconfig(@facts, "yaml")
     end
 
@@ -254,6 +280,21 @@ Suite.new :file, "File interactions" do
 
     newtest :retrieve, "Retrieved file" do
         @client.retrieve($options[:file], :ignore)
+    end
+end
+
+Suite.new :filebucket, "Filebucket interactions" do
+    def prepare
+        require 'tempfile'
+        @client = Puppet::Network::Client.dipper.new($args)
+    end
+
+    newtest :backup, "Backed up file" do
+        Tempfile.open("bucket_testing") do |f|
+            f.print rand(1024)
+            f.close
+            @client.backup(f.path)
+        end
     end
 end
 
@@ -325,12 +366,13 @@ end
 
 $cmdargs = [
 	[ "--compile",    "-c",			GetoptLong::NO_ARGUMENT ],
-	[ "--describe",  "-D",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--describe",     			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--retrieve",  "-R",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--fork",          			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--fqdn",      "-F",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--suite",     "-s",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--test",      "-t",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--pause",	 "-p",			GetoptLong::NO_ARGUMENT ],
 	[ "--repeat",    "-r",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--debug",	 "-d",			GetoptLong::NO_ARGUMENT ],
 	[ "--help",		 "-h",			GetoptLong::NO_ARGUMENT ],
@@ -340,14 +382,14 @@ $cmdargs = [
 ]
 
 # Add all of the config parameters as valid $options.
-Puppet.config.addargs($cmdargs)
+Puppet.settings.addargs($cmdargs)
 Puppet::Util::Log.newdestination(:console)
 
 result = GetoptLong.new(*$cmdargs)
 
 $args = {}
 
-$options = {:repeat => 1, :fork => 0}
+$options = {:repeat => 1, :fork => 0, :pause => false}
 
 begin
     explicit_waitforcert = false
@@ -399,6 +441,8 @@ begin
                 $options[:test] = arg.intern
             when "--file"
                 $options[:file] = arg
+            when "--pause"
+                $options[:pause] = true
             when "--list"
                 Suite.suites.sort { |a,b| a.to_s <=> b.to_s }.each do |suite_name|
                     suite = Suite[suite_name]
@@ -407,7 +451,7 @@ begin
                 end
                 exit(0)
             else
-                Puppet.config.handlearg(opt, arg)
+                Puppet.settings.handlearg(opt, arg)
         end
     }
 rescue GetoptLong::InvalidOption => detail
@@ -422,8 +466,8 @@ Puppet.parse_config
 $args[:Server] = Puppet[:server]
 
 unless $options[:test]
-    $options[:suite] = :configuration
-    $options[:test] = :compile
+    $options[:suite] = :remote_catalog
+    $options[:test] = :getconfig
 end
 
 unless $options[:test]

@@ -24,13 +24,20 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
         return create_node(name, result)
     end
 
+    # Use the version of the facts, since we assume that's the main thing
+    # that changes.  If someone wants their own way of defining version,
+    # they can easily provide their own, um, version of this class.
+    def version(name)
+        Puppet::Node::Facts.version(name)
+    end
+
     private
 
     # Turn our outputted objects into a Puppet::Node instance.
     def create_node(name, result)
         node = Puppet::Node.new(name)
         set = false
-        [:parameters, :classes].each do |param|
+        [:parameters, :classes, :environment].each do |param|
             if value = result[param]
                 node.send(param.to_s + "=", value)
                 set = true

@@ -161,5 +161,7 @@ class Puppet::Node
         params.each do |name, value|
             @parameters[name] = value unless @parameters.include?(name)
         end
+
+        @parameters["environment"] ||= self.environment if self.environment
     end
 end

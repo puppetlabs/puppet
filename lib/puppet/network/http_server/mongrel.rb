@@ -33,6 +33,7 @@ require 'xmlrpc/server'
 require 'puppet/network/xmlrpc/server'
 require 'puppet/network/http_server'
 require 'puppet/network/client_request'
+require 'puppet/network/handler'
 require 'puppet/daemon'
 
 require 'resolv'
@@ -127,7 +128,12 @@ module Puppet::Network
                 client = dn_matchdata[1].to_str
                 valid = (params[Puppet[:ssl_client_verify_header]] == 'SUCCESS')
             else
-                client = Resolv.getname(ip)
+                begin
+                    client = Resolv.getname(ip)
+                rescue => detail
+                    Puppet.err "Could not resolve %s: %s" % [ip, detail]
+                    client = "unknown"
+                end
                 valid = false
             end
 
