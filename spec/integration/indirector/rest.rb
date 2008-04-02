@@ -86,15 +86,70 @@ describe Puppet::Indirector::REST do
       end
     end
 
-    describe "when saving a model instance over REST" do
-      it "needs more specs"
-    end
-
     describe "when searching for model instances over REST" do
-      it "needs more specs"
+      describe "when matching model instances can be found" do
+        before :each do
+          @model_instances = [ Puppet::TestIndirectedFoo.new(23), Puppet::TestIndirectedFoo.new(24) ]
+          @mock_model = stub('faked model', :search => @model_instances)
+          Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:model).returns(@mock_model)        
+        end
+      
+        it "should not fail" do
+          lambda { Puppet::TestIndirectedFoo.search('bar') }.should_not raise_error
+        end
+  
+        it 'should return all matching results' do
+          Puppet::TestIndirectedFoo.search('bar').length.should == @model_instances.length
+        end
+  
+        it 'should return model instances' do
+          Puppet::TestIndirectedFoo.search('bar').each do |result| 
+            result.class.should == Puppet::TestIndirectedFoo
+          end
+        end
+  
+        it 'should return the instance of the model class associated with the provided lookup key' do
+          Puppet::TestIndirectedFoo.search('bar').collect(&:value).should == @model_instances.collect(&:value)
+        end
+  
+        it 'should set a version timestamp on model instances' do
+          pending("Luke looking at why this version magic might not be working") do
+            Puppet::TestIndirectedFoo.search('bar').each do |result|
+              result.version.should_not be_nil
+            end
+          end
+        end
+      end
+    
+      describe "when no matching model instance can be found" do
+        before :each do
+          @mock_model = stub('faked model', :find => nil)
+          Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:model).returns(@mock_model)
+        end
+      
+        it "should return nil" do
+          Puppet::TestIndirectedFoo.find('bar').should be_nil
+        end
+      end
+    
+      describe "when an exception is encountered in looking up a model instance" do
+        before :each do
+          @mock_model = stub('faked model')
+          @mock_model.stubs(:find).raises(RuntimeError)
+          Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:model).returns(@mock_model)        
+        end
+      
+        it "should raise an exception" do
+          lambda { Puppet::TestIndirectedFoo.find('bar') }.should raise_error(RuntimeError) 
+        end
+      end
     end
 
     describe "when destroying a model instance over REST" do
+      it "needs more specs"
+    end
+
+    describe "when saving a model instance over REST" do
       it "needs more specs"
     end
 

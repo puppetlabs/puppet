@@ -103,15 +103,15 @@ describe Puppet::Indirector::REST do
         @searcher.stubs(:network_fetch).returns(RuntimeError.new("bogus").to_yaml)
         lambda { @searcher.search('foo') }.should raise_error(RuntimeError)        
       end     
-    end
+    end    
     
-    describe "when doing a save" do
+    describe "when doing a destroy" do
       it "should deserialize result data into a boolean"
       it "should generate an error when result data deserializes improperly"
       it "should generate an error when result data specifies an error"      
     end
-    
-    describe "when doing a destroy" do
+
+    describe "when doing a save" do
       it "should deserialize result data into a boolean"
       it "should generate an error when result data deserializes improperly"
       it "should generate an error when result data specifies an error"      
