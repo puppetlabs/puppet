@@ -33,6 +33,12 @@ class Puppet::SSL::Base
         content.to_pem
     end
 
+    # Provide the full text of the thing we're dealing with.
+    def to_text
+        return "" unless content
+        content.to_text
+    end
+
     private
 
     def wrapped_class

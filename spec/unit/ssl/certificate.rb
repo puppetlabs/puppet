@@ -71,6 +71,13 @@ describe Puppet::SSL::Certificate do
             @certificate.content = certificate
             @certificate.to_s.should == "pem"
         end
+
+        it "should have a :to_text method that it delegates to the actual key" do
+            real_certificate = mock 'certificate'
+            real_certificate.expects(:to_text).returns "certificatetext"
+            @certificate.content = real_certificate
+            @certificate.to_text.should == "certificatetext"
+        end
     end
 
     describe "when generating the certificate" do

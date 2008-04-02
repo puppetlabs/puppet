@@ -67,6 +67,13 @@ describe Puppet::SSL::Key do
             @key.content = key
             @key.to_s.should == "pem"
         end
+
+        it "should have a :to_text method that it delegates to the actual key" do
+            real_key = mock 'key'
+            real_key.expects(:to_text).returns "keytext"
+            @key.content = real_key
+            @key.to_text.should == "keytext"
+        end
     end
 
     describe "when generating the private key" do
