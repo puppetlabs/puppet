@@ -92,6 +92,8 @@ describe Puppet::Indirector::REST do
   end
 
   describe "when using mongrel" do
+    confine "Mongrel is not available" => Puppet.features.mongrel?
+    
     before :each do
       Puppet[:servertype] = 'mongrel'
       @params = { :address => "127.0.0.1", :port => 34343, :handlers => [ :test_indirected_foo ] }

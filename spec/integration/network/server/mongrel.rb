@@ -4,6 +4,8 @@ require 'socket'
 
 describe Puppet::Network::Server do
   describe "when using mongrel" do
+    confine "Mongrel is not available" => Puppet.features.mongrel?
+    
     before :each do
       Puppet[:servertype] = 'mongrel'
       @params = { :address => "127.0.0.1", :port => 34346, :handlers => [ :node ] }
