@@ -19,6 +19,28 @@ describe Puppet::Indirector::REST do
 
         @searcher = @rest_class.new
     end
+    
+    describe "when doing a network fetch" do
+      it "should escape the provided path"
+      it "should look up the appropriate remote server"
+      it "should look up the appropriate remote port"
+      it "should use the GET http method"
+      it "should use the appropriate remote server"
+      it "should use the appropriate remote port"
+      it "should use the escaped provided path"
+      it "should return the results of the GET request"
+    end
+
+    describe "when doing a network delete" do
+      it "should escape the provided path"
+      it "should look up the appropriate remote server"
+      it "should look up the appropriate remote port"
+      it "should use the delete http method"
+      it "should use the appropriate remote server"
+      it "should use the appropriate remote port"
+      it "should use the escaped provided path"
+      it "should return the results of the DELETE request"
+    end
 
     describe "when doing a find" do
       before :each do
@@ -106,9 +128,40 @@ describe Puppet::Indirector::REST do
     end    
     
     describe "when doing a destroy" do
-      it "should deserialize result data into a boolean"
-      it "should generate an error when result data deserializes improperly"
-      it "should generate an error when result data specifies an error"      
+      before :each do
+        @result = true.to_yaml
+        @searcher.stubs(:network_delete).returns(@result)  # neuter the network connection
+        @model.stubs(:from_yaml).returns(@instance)
+      end
+      
+      it "should look up the model instance over the network" do
+        @searcher.expects(:network_delete).returns(@result)
+        @searcher.destroy('foo')
+      end
+      
+      it "should look up the model instance using the named indirection" do
+        @searcher.expects(:network_delete).with {|path| path =~ %r{^#{@indirection.name.to_s}/} }.returns(@result)
+        @searcher.destroy('foo')
+      end
+      
+      it "should look up the model instance using the provided key" do
+        @searcher.expects(:network_delete).with {|path| path =~ %r{/foo$} }.returns(@result)
+        @searcher.destroy('foo')
+      end
+      
+      it "should deserialize result data" do
+        YAML.expects(:load).with(@result)
+        @searcher.destroy('foo')
+      end
+      
+      it "should return deserialized result data" do
+        @searcher.destroy('foo').should == true
+      end
+      
+      it "should generate an error when result data specifies an error" do
+        @searcher.stubs(:network_delete).returns(RuntimeError.new("bogus").to_yaml)
+        lambda { @searcher.destroy('foo') }.should raise_error(RuntimeError)        
+      end      
     end
 
     describe "when doing a save" do

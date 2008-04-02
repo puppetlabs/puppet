@@ -146,7 +146,43 @@ describe Puppet::Indirector::REST do
     end
 
     describe "when destroying a model instance over REST" do
-      it "needs more specs"
+      describe "when a matching model instance can be found" do
+        before :each do
+          @mock_model = stub('faked model', :destroy => true)
+          Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:model).returns(@mock_model)        
+        end
+      
+        it "should not fail" do
+          lambda { Puppet::TestIndirectedFoo.destroy('bar') }.should_not raise_error
+        end
+  
+        it 'should return success' do
+          Puppet::TestIndirectedFoo.destroy('bar').should == true
+        end
+      end
+    
+      describe "when no matching model instance can be found" do
+        before :each do
+          @mock_model = stub('faked model', :destroy => false)
+          Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:model).returns(@mock_model)
+        end
+      
+        it "should return failure" do
+          Puppet::TestIndirectedFoo.destroy('bar').should == false
+        end
+      end
+    
+      describe "when an exception is encountered in destroying a model instance" do
+        before :each do
+          @mock_model = stub('faked model')
+          @mock_model.stubs(:destroy).raises(RuntimeError)
+          Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:model).returns(@mock_model)        
+        end
+      
+        it "should raise an exception" do
+          lambda { Puppet::TestIndirectedFoo.destroy('bar') }.should raise_error(RuntimeError) 
+        end
+      end
     end
 
     describe "when saving a model instance over REST" do
@@ -281,7 +317,43 @@ describe Puppet::Indirector::REST do
     end
 
     describe "when destroying a model instance over REST" do
-      it "needs more specs"
+      describe "when a matching model instance can be found" do
+        before :each do
+          @mock_model = stub('faked model', :destroy => true)
+          Puppet::Network::HTTP::MongrelREST.any_instance.stubs(:model).returns(@mock_model)        
+        end
+      
+        it "should not fail" do
+          lambda { Puppet::TestIndirectedFoo.destroy('bar') }.should_not raise_error
+        end
+  
+        it 'should return success' do
+          Puppet::TestIndirectedFoo.destroy('bar').should == true
+        end
+      end
+    
+      describe "when no matching model instance can be found" do
+        before :each do
+          @mock_model = stub('faked model', :destroy => false)
+          Puppet::Network::HTTP::MongrelREST.any_instance.stubs(:model).returns(@mock_model)
+        end
+      
+        it "should return failure" do
+          Puppet::TestIndirectedFoo.destroy('bar').should == false
+        end
+      end
+    
+      describe "when an exception is encountered in destroying a model instance" do
+        before :each do
+          @mock_model = stub('faked model')
+          @mock_model.stubs(:destroy).raises(RuntimeError)
+          Puppet::Network::HTTP::MongrelREST.any_instance.stubs(:model).returns(@mock_model)        
+        end
+      
+        it "should raise an exception" do
+          lambda { Puppet::TestIndirectedFoo.destroy('bar') }.should raise_error(RuntimeError) 
+        end
+      end
     end
 
     describe "when saving a model instance over REST" do
