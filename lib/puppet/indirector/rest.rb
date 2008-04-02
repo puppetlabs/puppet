@@ -4,11 +4,20 @@ require 'uri'
 # Access objects via REST
 class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     def network_fetch(path)
-        Net::HTTP.get(URI.parse("http://127.0.0.1:34343/#{path}"))
+      network(path, 'get')
     end
     
     def network_delete(path)
-        Net::HTTP.start("127.0.0.1", 34343) {|x| x.delete("/#{path}").body }  # weird-ass net/http library
+      network(path, 'delete')
+    end
+    
+    def network_put(path, data)
+      network(path, 'put', data)
+    end
+    
+    def network(path, meth, data = nil)
+      # TODO:  include data here, for #save
+      Net::HTTP.start("127.0.0.1", 34343) {|x| x.send(meth.to_sym, "/#{path}").body }  # weird-ass net/http library      
     end
     
     def find(name, options = {})
