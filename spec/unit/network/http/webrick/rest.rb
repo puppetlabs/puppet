@@ -1,8 +1,3 @@
-#!/usr/bin/env ruby
-#
-#  Created by Rick Bradley on 2007-10-16.
-#  Copyright (c) 2007. All rights reserved.
-
 require File.dirname(__FILE__) + '/../../../../spec_helper'
 require 'puppet/network/http'
 
@@ -77,6 +72,7 @@ describe Puppet::Network::HTTP::WEBrickREST, "when receiving a request" do
         @mock_request.stubs(:path).returns('/foos')
     end
     
+    
     it "should call the model find method if the request represents a singular HTTP GET" do
         setup_find_request
         @mock_model_class.expects(:find).with('key', {})
@@ -109,12 +105,14 @@ describe Puppet::Network::HTTP::WEBrickREST, "when receiving a request" do
         @handler.process(@mock_request, @mock_response)            
     end
     
-    it "should fail if the request's pluralization is wrong" do
+    it "should fail if delete request's pluralization is wrong" do
         @mock_request.stubs(:request_method).returns('DELETE')
         @mock_request.stubs(:path).returns('/foos/key')
         @mock_response.expects(:status=).with(404)
         @handler.process(@mock_request, @mock_response)            
-        
+    end
+
+    it "should fail if put request's pluralization is wrong" do 
         @mock_request.stubs(:request_method).returns('PUT')
         @mock_request.stubs(:path).returns('/foos/key')
         @mock_response.expects(:status=).with(404)
@@ -128,145 +126,153 @@ describe Puppet::Network::HTTP::WEBrickREST, "when receiving a request" do
         @handler.process(@mock_request, @mock_response)            
     end
 
-    it "should fail to find model if key is not specified" do
-        @mock_request.stubs(:request_method).returns('GET')
-        @mock_request.stubs(:path).returns('/foo')
-        @mock_response.expects(:status=).with(404)
-        @handler.process(@mock_request, @mock_response)            
-    end
-    
-    it "should fail to destroy model if key is not specified" do
-        @mock_request.stubs(:request_method).returns('DELETE')
-        @mock_request.stubs(:path).returns('/foo')
-        @mock_response.expects(:status=).with(404)
-        @handler.process(@mock_request, @mock_response)            
-    end
-    
-    it "should fail to save model if data is not specified" do
-        @mock_request.stubs(:request_method).returns('PUT')
-        @mock_request.stubs(:path).returns('/foo')
-        @mock_request.stubs(:body).returns('')
-        @mock_response.expects(:status=).with(404)
-        @handler.process(@mock_request, @mock_response)            
-    end
-
-    it "should pass HTTP request parameters to model find" do
-        setup_find_request
-        @mock_request.stubs(:query).returns(:foo => :baz, :bar => :xyzzy)
-        @mock_model_class.expects(:find).with do |key, args|
-            key == 'key' and args[:foo] == :baz and args[:bar] == :xyzzy
+    describe "when finding a model instance" do |variable|
+        it "should fail to find model if key is not specified" do
+            @mock_request.stubs(:request_method).returns('GET')
+            @mock_request.stubs(:path).returns('/foo')
+            @mock_response.expects(:status=).with(404)
+            @handler.process(@mock_request, @mock_response)            
         end
-        @handler.service(@mock_request, @mock_response)
-    end
-    
-    it "should pass HTTP request parameters to model search" do
-        setup_search_request
-        @mock_request.stubs(:query).returns(:foo => :baz, :bar => :xyzzy)
-        @mock_model_class.expects(:search).with do |args|
-            args[:foo] == :baz and args[:bar] == :xyzzy
-        end.returns([])
-        @handler.service(@mock_request, @mock_response)
-    end
-    
-    it "should pass HTTP request parameters to model destroy" do
-        setup_destroy_request
-        @mock_request.stubs(:query).returns(:foo => :baz, :bar => :xyzzy)
-        @mock_model_class.expects(:destroy).with do |key, args|
-            key == 'key' and args[:foo] == :baz and args[:bar] == :xyzzy
+        
+        it "should pass HTTP request parameters to model find" do
+            setup_find_request
+            @mock_request.stubs(:query).returns(:foo => :baz, :bar => :xyzzy)
+            @mock_model_class.expects(:find).with do |key, args|
+                key == 'key' and args[:foo] == :baz and args[:bar] == :xyzzy
+            end
+            @handler.service(@mock_request, @mock_response)
         end
-        @handler.service(@mock_request, @mock_response)
-    end
-    
-    it "should pass HTTP request parameters to model save" do
-        setup_save_request
-        @mock_request.stubs(:query).returns(:foo => :baz, :bar => :xyzzy)
-        @mock_model_instance.expects(:save).with do |args|
-            args[:data] == 'This is a fake request body' and args[:foo] == :baz and args[:bar] == :xyzzy
+        
+        it "should generate a 200 response when a model find call succeeds" do
+            setup_find_request
+            @mock_response.expects(:status=).with(200)
+            @handler.process(@mock_request, @mock_response)      
         end
-        @handler.service(@mock_request, @mock_response)
+        
+        it "should return a serialized object when a model find call succeeds" do
+            setup_find_request
+            @mock_model_instance = stub('model instance')
+            @mock_model_instance.expects(:to_yaml)
+            @mock_model_class.stubs(:find).returns(@mock_model_instance)
+            @handler.process(@mock_request, @mock_response)                  
+        end
+        
+        it "should serialize a controller exception when an exception is thrown by find" do
+           setup_find_request
+           @mock_model_class.expects(:find).raises(ArgumentError) 
+           @mock_response.expects(:status=).with(404)
+           @handler.process(@mock_request, @mock_response)        
+        end
+    end
+    
+    describe "when destroying a model instance" do |variable|
+        it "should fail to destroy model if key is not specified" do
+            @mock_request.stubs(:request_method).returns('DELETE')
+            @mock_request.stubs(:path).returns('/foo')
+            @mock_response.expects(:status=).with(404)
+            @handler.process(@mock_request, @mock_response)            
+        end
+        
+        it "should pass HTTP request parameters to model destroy" do
+            setup_destroy_request
+            @mock_request.stubs(:query).returns(:foo => :baz, :bar => :xyzzy)
+            @mock_model_class.expects(:destroy).with do |key, args|
+                key == 'key' and args[:foo] == :baz and args[:bar] == :xyzzy
+            end
+            @handler.service(@mock_request, @mock_response)
+        end
+        
+        it "should generate a 200 response when a model destroy call succeeds" do
+            setup_destroy_request
+            @mock_response.expects(:status=).with(200)
+            @handler.process(@mock_request, @mock_response)      
+        end
+        
+        it "should return a serialized success result when a model destroy call succeeds" do
+            setup_destroy_request
+            @mock_model_class.stubs(:destroy).returns(true)
+            @mock_response.expects(:body=).with("--- true\n")
+            @handler.process(@mock_request, @mock_response)
+        end
+        
+        it "should serialize a controller exception when an exception is thrown by search" do
+            setup_search_request
+            @mock_model_class.expects(:search).raises(ArgumentError) 
+            @mock_response.expects(:status=).with(404)
+            @handler.process(@mock_request, @mock_response)                
+        end
+    end
+    
+    describe "when saving a model instance" do
+        it "should fail to save model if data is not specified" do
+            @mock_request.stubs(:request_method).returns('PUT')
+            @mock_request.stubs(:path).returns('/foo')
+            @mock_request.stubs(:body).returns('')
+            @mock_response.expects(:status=).with(404)
+            @handler.process(@mock_request, @mock_response)            
+        end
+        
+        it "should pass HTTP request parameters to model save" do
+            setup_save_request
+            @mock_request.stubs(:query).returns(:foo => :baz, :bar => :xyzzy)
+            @mock_model_instance.expects(:save).with do |args|
+                args[:data] == 'This is a fake request body' and args[:foo] == :baz and args[:bar] == :xyzzy
+            end
+            @handler.service(@mock_request, @mock_response)
+        end
+        
+        it "should generate a 200 response when a model save call succeeds" do
+            setup_save_request
+            @mock_response.expects(:status=).with(200)
+            @handler.process(@mock_request, @mock_response)            
+        end
+        
+        it "should return a serialized object when a model save call succeeds" do
+            setup_save_request
+            @mock_model_instance.stubs(:save).returns(@mock_model_instance)
+            @mock_model_instance.expects(:to_yaml).returns('foo')
+            @handler.process(@mock_request, @mock_response)        
+        end
+        
+        it "should serialize a controller exception when an exception is thrown by save" do
+            setup_save_request
+            @mock_model_instance.expects(:save).raises(ArgumentError) 
+            @mock_response.expects(:status=).with(404)
+            @handler.process(@mock_request, @mock_response)                         
+        end
+    end
+    
+    describe "when searching for model instances" do
+        it "should pass HTTP request parameters to model search" do
+            setup_search_request
+            @mock_request.stubs(:query).returns(:foo => :baz, :bar => :xyzzy)
+            @mock_model_class.expects(:search).with do |args|
+                args[:foo] == :baz and args[:bar] == :xyzzy
+            end.returns([])
+            @handler.service(@mock_request, @mock_response)
+        end
+
+        it "should generate a 200 response when a model search call succeeds" do
+            setup_search_request
+            @mock_response.expects(:status=).with(200)
+            @handler.process(@mock_request, @mock_response)      
+        end
+        
+        it "should return a list of serialized objects when a model search call succeeds" do
+            setup_search_request
+            mock_matches = [1..5].collect {|i| mock("model instance #{i}", :to_yaml => "model instance #{i}") }
+            @mock_model_class.stubs(:search).returns(mock_matches)
+            @handler.process(@mock_request, @mock_response)                          
+        end
+        
+        it "should serialize a controller exception when an exception is thrown by destroy" do
+            setup_destroy_request
+            @mock_model_class.expects(:destroy).raises(ArgumentError) 
+            @mock_response.expects(:status=).with(404)
+            @handler.process(@mock_request, @mock_response)                 
+        end       
     end
 
-    it "should generate a 200 response when a model find call succeeds" do
-        setup_find_request
-        @mock_response.expects(:status=).with(200)
-        @handler.process(@mock_request, @mock_response)      
-    end
-
-    it "should generate a 200 response when a model search call succeeds" do
-        setup_search_request
-        @mock_response.expects(:status=).with(200)
-        @handler.process(@mock_request, @mock_response)      
-    end
-
-    it "should generate a 200 response when a model destroy call succeeds" do
-        setup_destroy_request
-        @mock_response.expects(:status=).with(200)
-        @handler.process(@mock_request, @mock_response)      
-    end
-    
-    it "should generate a 200 response when a model save call succeeds" do
-        setup_save_request
-        @mock_response.expects(:status=).with(200)
-        @handler.process(@mock_request, @mock_response)            
-    end
-
-    it "should return a serialized object when a model find call succeeds" do
-        setup_find_request
-        @mock_model_instance = stub('model instance')
-        @mock_model_instance.expects(:to_yaml)
-        @mock_model_class.stubs(:find).returns(@mock_model_instance)
-        @handler.process(@mock_request, @mock_response)                  
-    end
-    
-    it "should return a list of serialized objects when a model search call succeeds" do
-        setup_search_request
-        mock_matches = [1..5].collect {|i| mock("model instance #{i}", :to_yaml => "model instance #{i}") }
-        @mock_model_class.stubs(:search).returns(mock_matches)
-        @handler.process(@mock_request, @mock_response)                          
-    end
-    
-    it "should return a serialized success result when a model destroy call succeeds" do
-        setup_destroy_request
-        @mock_model_class.stubs(:destroy).returns(true)
-        @mock_response.expects(:body=).with("--- true\n")
-        @handler.process(@mock_request, @mock_response)
-    end
-    
-    it "should return a serialized object when a model save call succeeds" do
-        setup_save_request
-        @mock_model_instance.stubs(:save).returns(@mock_model_instance)
-        @mock_model_instance.expects(:to_yaml).returns('foo')
-        @handler.process(@mock_request, @mock_response)        
-    end
-    
-    it "should serialize a controller exception when an exception is thrown by find" do
-       setup_find_request
-       @mock_model_class.expects(:find).raises(ArgumentError) 
-       @mock_response.expects(:status=).with(404)
-       @handler.process(@mock_request, @mock_response)        
-    end
-
-    it "should serialize a controller exception when an exception is thrown by search" do
-        setup_search_request
-        @mock_model_class.expects(:search).raises(ArgumentError) 
-        @mock_response.expects(:status=).with(404)
-        @handler.process(@mock_request, @mock_response)                
-    end
-    
-    it "should serialize a controller exception when an exception is thrown by destroy" do
-        setup_destroy_request
-        @mock_model_class.expects(:destroy).raises(ArgumentError) 
-        @mock_response.expects(:status=).with(404)
-        @handler.process(@mock_request, @mock_response)                 
-    end
-    
-    it "should serialize a controller exception when an exception is thrown by save" do
-        setup_save_request
-        @mock_model_instance.expects(:save).raises(ArgumentError) 
-        @mock_response.expects(:status=).with(404)
-        @handler.process(@mock_request, @mock_response)                         
-    end
-    
     it "should serialize a controller exception if the request fails" do
         setup_bad_request     
         @mock_response.expects(:status=).with(404)

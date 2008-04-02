@@ -5,17 +5,12 @@ class Puppet::Network::HTTP::MongrelREST < Mongrel::HttpHandler
   include Puppet::Network::HTTP::Handler
   
   def initialize(args={})
+    super()
     initialize_for_puppet(args)
   end
 
   private
  
-    # have this mongrel @server listen for /foo and /foos REST endpoints
-    def register_handler
-        @server.register('/' + @handler.to_s, self)
-        @server.register('/' + @handler.to_s + 's', self)
-    end
-    
     # which HTTP verb was used in this request
     def http_method(request)
         request.params[Mongrel::Const::REQUEST_METHOD]
