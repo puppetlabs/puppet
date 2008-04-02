@@ -86,6 +86,18 @@ describe Puppet::Indirector::REST do
       end
     end
 
+    describe "when saving a model instance over REST" do
+      it "needs more specs"
+    end
+
+    describe "when searching for model instances over REST" do
+      it "needs more specs"
+    end
+
+    describe "when destroying a model instance over REST" do
+      it "needs more specs"
+    end
+
     after :each do
       @server.unlisten
     end
@@ -152,6 +164,18 @@ describe Puppet::Indirector::REST do
           lambda { Puppet::TestIndirectedFoo.find('bar') }.should raise_error(RuntimeError) 
         end
       end
+    end
+
+    describe "when saving a model instance over REST" do
+      it "needs more specs"
+    end
+
+    describe "when searching for model instances over REST" do
+      it "needs more specs"
+    end
+
+    describe "when destroying a model instance over REST" do
+      it "needs more specs"
     end
 
     after :each do
