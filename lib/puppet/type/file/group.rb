@@ -11,12 +11,8 @@ module Puppet
         end
 
         def id2name(id)
-            if id > 70000
-                return nil
-            end
-            if id.is_a?(Symbol)
-                return id.to_s
-            end
+            return id.to_s if id.is_a?(Symbol)
+            return nil if id > Puppet[:maximum_uid].to_i
             begin
                 group = Etc.getgrgid(id)
             rescue ArgumentError
@@ -73,7 +69,17 @@ module Puppet
                 @method = :chown
             end
 
-            return stat.gid
+            currentvalue = stat.gid
+
+            # On OS X, files that are owned by -2 get returned as really
+            # large GIDs instead of negative ones.  This isn't a Ruby bug,
+            # it's an OS X bug, since it shows up in perl, too.
+            if currentvalue > Puppet[:maximum_uid].to_i
+                self.warning "Apparently using negative GID (%s) on a platform that does not consistently handle them" % currentvalue
+                currentvalue = :silly
+            end
+
+            return currentvalue
         end
 
         # Determine if the group is valid, and if so, return the GID
