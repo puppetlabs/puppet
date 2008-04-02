@@ -141,7 +141,8 @@ describe Puppet::SSL::CertificateAuthority do
             
             # Stub out the factory
             @name = "myhost"
-            @cert = stub 'certificate', :content => "mycert"
+            @real_cert = stub 'realcert', :sign => nil
+            @cert = stub 'certificate', :content => @real_cert
             Puppet::SSL::Certificate.stubs(:new).returns @cert
 
             @cert.stubs(:content=)
@@ -281,6 +282,17 @@ describe Puppet::SSL::CertificateAuthority do
                 @ca.sign(@name)
             end
 
+            it "should sign the resulting certificate using its key and a digest" do
+                digest = mock 'digest'
+                OpenSSL::Digest::SHA1.expects(:new).returns digest
+
+                key = mock 'key'
+                @ca.stubs(:key).returns key
+
+                @cert.content.expects(:sign).with(key, digest)
+                @ca.sign(@name)
+            end
+
             it "should save the resulting certificate in the :ca_file terminus" do
                 @cert.expects(:save).with(:in => :ca_file)
                 @ca.sign(@name)
@@ -305,6 +317,32 @@ describe Puppet::SSL::CertificateAuthority do
             Puppet::SSL::CertificateRequest.stubs(:find).with(@name, :in => :ca_file).returns @request
             @cert.stubs :save
             @ca.sign(@name).should equal(@cert)
+        end
+    end
+
+    describe "when managing certificate clients" do
+        before do
+            Puppet.settings.stubs(:value).with(:certname).returns "whatever"
+            Puppet.settings.stubs(:use)
+
+            Puppet::SSL::CertificateAuthority.any_instance.stubs(:password?).returns true
+
+            # Set up the CA
+            @key = mock 'key'
+            @key.stubs(:content).returns "cakey"
+            Puppet::SSL::CertificateAuthority.any_instance.stubs(:key).returns @key
+            @cacert = mock 'certificate'
+            @cacert.stubs(:content).returns "cacertificate"
+            Puppet::SSL::CertificateAuthority.any_instance.stubs(:certificate).returns @cacert
+            @ca = Puppet::SSL::CertificateAuthority.new
+        end
+
+        describe "when revoking certificates" do
+            it "should fail if the certificate revocation list is disabled"
+
+            it "should default to OpenSSL::OCSP::REVOKED_STATUS_KEYCOMPROMISE as the reason"
+
+            it "should require a serial number"
         end
     end
 end
