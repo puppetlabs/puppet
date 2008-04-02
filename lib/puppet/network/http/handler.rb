@@ -32,7 +32,7 @@ module Puppet::Network::HTTP::Handler
 
     def do_search(request, response)
         args = params(request)
-        result = model.search(args).collect {|obj| obj.to_yaml }
+        result = model.search(args).collect {|result| result.to_yaml }.to_yaml
         encode_result(request, response, result) 
     end
 

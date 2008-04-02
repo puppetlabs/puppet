@@ -69,7 +69,7 @@ describe Puppet::Indirector::REST do
 
     describe "when doing a search" do
       before :each do
-        @result = [1, 2]
+        @result = [1, 2].to_yaml
         @searcher.stubs(:network_fetch).returns(@result)
         @model.stubs(:from_yaml).returns(@instance)
       end

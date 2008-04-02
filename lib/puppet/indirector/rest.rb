@@ -17,8 +17,6 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     def search(key, options = {})
       network_results = network_fetch("#{indirection.name}s/#{key}")
       raise YAML.load(network_results) if network_results =~ %r{--- !ruby/exception}
-      decoded_results = network_results.collect do |result|
-        indirection.model.from_yaml(result)
-      end
+      decoded_results = YAML.load(network_results.to_s).collect {|result| indirection.model.from_yaml(result) }
     end
 end
