@@ -73,7 +73,7 @@ describe Puppet::Network::HTTP::MongrelREST, "when receiving a request" do
                                                 'QUERY_STRING' => '' }.merge(params))
         @mock_request.stubs(:body).returns('this is a fake request body')
         @mock_model_instance = stub('indirected model instance', :save => true)
-        @mock_model_class.stubs(:new).returns(@mock_model_instance)
+        @mock_model_class.stubs(:from_yaml).returns(@mock_model_instance)
     end
     
     def setup_bad_request
@@ -100,7 +100,7 @@ describe Puppet::Network::HTTP::MongrelREST, "when receiving a request" do
 
     it "should call the model save method if the request represents an HTTP PUT" do
         setup_save_request
-        @mock_model_instance.expects(:save).with(:data => 'this is a fake request body')
+        @mock_model_instance.expects(:save)
         @handler.process(@mock_request, @mock_response)
     end
     
@@ -207,14 +207,6 @@ describe Puppet::Network::HTTP::MongrelREST, "when receiving a request" do
             @mock_request.stubs(:params).returns({ Mongrel::Const::REQUEST_METHOD => 'PUT', Mongrel::Const::REQUEST_PATH => '/foo'})
             @mock_request.stubs(:body).returns('')
             @mock_response.expects(:start).with(404)
-            @handler.process(@mock_request, @mock_response)
-        end
-        
-        it "should pass HTTP request parameters to model save" do
-            setup_save_request('QUERY_STRING' => 'foo=baz&bar=xyzzy')
-            @mock_model_instance.expects(:save).with do |args|
-                args[:data] == 'this is a fake request body' and args['foo'] == 'baz' and args['bar'] == 'xyzzy'
-            end
             @handler.process(@mock_request, @mock_response)
         end
         
