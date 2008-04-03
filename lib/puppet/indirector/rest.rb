@@ -5,19 +5,19 @@ require 'uri'
 class Puppet::Indirector::REST < Puppet::Indirector::Terminus
 
     def rest_connection_details
-      { :host => '127.0.0.1', :port => 34343 }
+        { :host => '127.0.0.1', :port => 34343 }
     end
 
     def network_fetch(path)
-        Net::HTTP.start("127.0.0.1", 34343) {|x| x.get("/#{path}").body }
+        network {|conn| conn.get("/#{path}").body }
     end
     
     def network_delete(path)
-        Net::HTTP.start("127.0.0.1", 34343) {|x| x.delete("/#{path}").body }
+        network {|conn| conn.delete("/#{path}").body }
     end
     
     def network_put(path, data)
-        Net::HTTP.start("127.0.0.1", 34343) {|x| x.put("/#{path}", data).body }
+        network {|conn| conn.put("/#{path}", data).body }
     end
     
     def find(name, options = {})
@@ -45,6 +45,10 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     end
     
   private
+  
+    def network(&block)
+      Net::HTTP.start(rest_connection_details[:host], rest_connection_details[:port]) {|conn| yield(conn) }
+    end
   
     def exception?(yaml_string)
         yaml_string =~ %r{--- !ruby/exception}

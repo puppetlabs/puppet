@@ -20,8 +20,10 @@ describe Puppet::Indirector::REST do
         @searcher = @rest_class.new
     end
     
-    describe "when locating the rest connection" do
-      it 'should look somewhere meaningful for connection details'
+    describe "when locating the REST connection" do
+      it 'should look somewhere meaningful for connection details' do
+        pending("Luke enlightening us on where to find the appropriate connection details")
+      end
       
       it "should return a host" do
         @searcher.rest_connection_details[:host].should == '127.0.0.1'
@@ -33,36 +35,162 @@ describe Puppet::Indirector::REST do
     end
     
     describe "when doing a network fetch" do
-      it "should escape the provided path"
-      it "should look up the appropriate remote server"
-      it "should look up the appropriate remote port"
-      it "should use the GET http method"
-      it "should use the appropriate remote server"
-      it "should use the appropriate remote port"
-      it "should use the escaped provided path"
-      it "should return the results of the GET request"
+      before :each do
+        Net::HTTP.stubs(:start).returns('result')
+        @details = { :host => '127.0.0.1', :port => 34343 }
+        @searcher.stubs(:rest_connection_details).returns(@details)
+      end
+      
+      it "should accept a path" do
+        lambda { @search.network_fetch('foo') }.should_not raise_error(ArgumentError)
+      end
+      
+      it "should require a path" do
+        lambda { @searcher.network_fetch }.should raise_error(ArgumentError)
+      end
+            
+      it "should look up connection details" do
+        @searcher.expects(:rest_connection_details).returns(@details)
+        @searcher.network_fetch('foo')
+      end
+      
+      it "should use the GET http method" do
+        @mock_result = stub('mock result', :body => 'result')
+        @mock_connection = mock('mock http connection', :get => @mock_result)
+        @searcher.stubs(:network).yields(@mock_connection)
+        @searcher.network_fetch('foo')
+      end
+      
+      it "should use the appropriate remote server" do
+        Net::HTTP.expects(:start).with {|host, port| host == @details[:host] }
+        @searcher.network_fetch('foo')
+      end
+      
+      it "should use the appropriate remote port" do
+        Net::HTTP.expects(:start).with {|host, port| port == @details[:port] }
+        @searcher.network_fetch('foo')
+      end
+      
+      it "should use the provided path" do
+        @mock_result = stub('mock result', :body => 'result')
+        @mock_connection = stub('mock http connection')
+        @mock_connection.expects(:get).with('/foo').returns(@mock_result)
+        @searcher.stubs(:network).yields(@mock_connection)
+        @searcher.network_fetch('foo')
+      end
+                
+      it "should return the results of the GET request" do
+        @searcher.network_fetch('foo').should == 'result'        
+      end
     end
 
     describe "when doing a network delete" do
-      it "should escape the provided path"
-      it "should look up the appropriate remote server"
-      it "should look up the appropriate remote port"
-      it "should use the delete http method"
-      it "should use the appropriate remote server"
-      it "should use the appropriate remote port"
-      it "should use the escaped provided path"
-      it "should return the results of the DELETE request"
+      before :each do
+        Net::HTTP.stubs(:start).returns('result')
+        @details = { :host => '127.0.0.1', :port => 34343 }
+        @searcher.stubs(:rest_connection_details).returns(@details)
+      end
+      
+      it "should accept a path" do
+        lambda { @search.network_delete('foo') }.should_not raise_error(ArgumentError)
+      end
+      
+      it "should require a path" do
+        lambda { @searcher.network_delete }.should raise_error(ArgumentError)
+      end
+            
+      it "should look up connection details" do
+        @searcher.expects(:rest_connection_details).returns(@details)
+        @searcher.network_delete('foo')
+      end
+      
+      it "should use the DELETE http method" do
+        @mock_result = stub('mock result', :body => 'result')
+        @mock_connection = mock('mock http connection', :delete => @mock_result)
+        @searcher.stubs(:network).yields(@mock_connection)
+        @searcher.network_delete('foo')
+      end
+      
+      it "should use the appropriate remote server" do
+        Net::HTTP.expects(:start).with {|host, port| host == @details[:host] }
+        @searcher.network_delete('foo')
+      end
+      
+      it "should use the appropriate remote port" do
+        Net::HTTP.expects(:start).with {|host, port| port == @details[:port] }
+        @searcher.network_delete('foo')
+      end
+      
+      it "should use the provided path" do
+        @mock_result = stub('mock result', :body => 'result')
+        @mock_connection = stub('mock http connection')
+        @mock_connection.expects(:delete).with('/foo').returns(@mock_result)
+        @searcher.stubs(:network).yields(@mock_connection)
+        @searcher.network_delete('foo')
+      end
+            
+      it "should return the results of the DELETE request" do
+        @searcher.network_delete('foo').should == 'result'        
+      end    
     end
     
     describe "when doing a network put" do
-      it "should escape the provided path"
-      it "should look up the appropriate remote server"
-      it "should look up the appropriate remote port"
-      it "should use the delete http method"
-      it "should use the appropriate remote server"
-      it "should use the appropriate remote port"
-      it "should use the escaped provided path"
-      it "should return the results of the DELETE request"      
+      before :each do
+        Net::HTTP.stubs(:start).returns('result')
+        @details = { :host => '127.0.0.1', :port => 34343 }
+        @data = { :foo => 'bar' }
+        @searcher.stubs(:rest_connection_details).returns(@details)
+      end
+      
+      it "should accept a path and data" do
+        lambda { @search.network_put('foo', @data) }.should_not raise_error(ArgumentError)
+      end
+      
+      it "should require a path and data" do
+        lambda { @searcher.network_put('foo') }.should raise_error(ArgumentError)
+      end
+      
+      it "should look up connection details" do
+        @searcher.expects(:rest_connection_details).returns(@details)
+        @searcher.network_put('foo', @data)
+      end
+      
+      it "should use the appropriate remote server" do
+        Net::HTTP.expects(:start).with {|host, port| host == @details[:host] }
+        @searcher.network_put('foo', @data)
+      end
+      
+      it "should use the appropriate remote port" do
+        Net::HTTP.expects(:start).with {|host, port| port == @details[:port] }
+        @searcher.network_put('foo', @data)
+      end
+      
+      it "should use the PUT http method" do
+        @mock_result = stub('mock result', :body => 'result')
+        @mock_connection = mock('mock http connection', :put => @mock_result)
+        @searcher.stubs(:network).yields(@mock_connection)
+        @searcher.network_put('foo', @data)
+      end
+      
+      it "should use the provided path" do
+        @mock_result = stub('mock result', :body => 'result')
+        @mock_connection = stub('mock http connection')
+        @mock_connection.expects(:put).with {|path, data| path == '/foo' }.returns(@mock_result)
+        @searcher.stubs(:network).yields(@mock_connection)
+        @searcher.network_put('foo', @data)        
+      end
+      
+      it "should use the provided data" do
+        @mock_result = stub('mock result', :body => 'result')
+        @mock_connection = stub('mock http connection')
+        @mock_connection.expects(:put).with {|path, data| data == @data }.returns(@mock_result)
+        @searcher.stubs(:network).yields(@mock_connection)
+        @searcher.network_put('foo', @data)                
+      end
+      
+      it "should return the results of the PUT request" do
+        @searcher.network_put('foo', @data).should == 'result'        
+      end    
     end
 
     describe "when doing a find" do
@@ -192,6 +320,10 @@ describe Puppet::Indirector::REST do
         @result = { :foo => 'bar'}.to_yaml
         @searcher.stubs(:network_put).returns(@result)  # neuter the network connection
         @model.stubs(:from_yaml).returns(@instance)
+      end
+      
+      it "should re-enable caching in the terminus" do
+        pending("Luke taking a look at (a) why that doesn't seem to work with this save, or (b) rewriting it, like he seems to indicate in his blog is going to happen")
       end
       
       it "should save the model instance over the network" do
