@@ -35,9 +35,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     
     def save(obj, options = {})
         network_result = network_put("#{indirection.name}/", obj.to_yaml)
-        # TODO:  swap these two lines out:
-        raise network_result.inspect if exception?(network_result)
-  #      raise YAML.load(network_result) if exception?(network_result)
+        raise YAML.load(network_result) if exception?(network_result)
         indirection.model.from_yaml(network_result)
     end
     
