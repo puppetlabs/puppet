@@ -9,6 +9,7 @@ class Puppet::TestIndirectedFoo
   indirects :test_indirected_foo, :terminus_setting => :test_indirected_foo_terminus
   
   attr_reader :value
+  attr_accessor :version
   
   def initialize(value = 0)
     @value = value
@@ -16,6 +17,10 @@ class Puppet::TestIndirectedFoo
   
   def self.from_yaml(yaml)
     YAML.load(yaml)
+  end
+  
+  def name
+    "bob"
   end
 end
 
@@ -186,7 +191,49 @@ describe Puppet::Indirector::REST do
     end
 
     describe "when saving a model instance over REST" do
-      it "needs more specs"
+      before :each do
+        @instance = Puppet::TestIndirectedFoo.new(42)
+        @mock_model = stub('faked model', :from_yaml => @instance)
+        Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:model).returns(@mock_model)        
+        Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:save_object).returns(@instance)        
+      end
+      
+      describe "when a successful save can be performed" do
+        before :each do
+        end
+      
+        it "should not fail" do
+          lambda { @instance.save }.should_not raise_error
+        end
+  
+        it 'should return an instance of the model class' do
+          @instance.save.class.should == Puppet::TestIndirectedFoo
+        end
+         
+        it 'should return a matching instance of the model class' do
+          @instance.save.value.should == @instance.value
+        end
+      end
+          
+      describe "when a save cannot be completed" do
+        before :each do
+          Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:save_object).returns(false)
+        end
+              
+        it "should return failure" do
+          @instance.save.should == false
+        end
+      end
+          
+      describe "when an exception is encountered in performing a save" do
+        before :each do
+          Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:save_object).raises(RuntimeError)       
+        end
+      
+        it "should raise an exception" do
+          lambda { @instance.save }.should raise_error(RuntimeError) 
+        end
+      end
     end
 
     after :each do
@@ -357,7 +404,49 @@ describe Puppet::Indirector::REST do
     end
 
     describe "when saving a model instance over REST" do
-      it "needs more specs"
+      before :each do
+        @instance = Puppet::TestIndirectedFoo.new(42)
+        @mock_model = stub('faked model', :from_yaml => @instance)
+        Puppet::Network::HTTP::MongrelREST.any_instance.stubs(:model).returns(@mock_model)        
+        Puppet::Network::HTTP::MongrelREST.any_instance.stubs(:save_object).returns(@instance)        
+      end
+      
+      describe "when a successful save can be performed" do
+        before :each do
+        end
+      
+        it "should not fail" do
+          lambda { @instance.save }.should_not raise_error
+        end
+  
+        it 'should return an instance of the model class' do
+          @instance.save.class.should == Puppet::TestIndirectedFoo
+        end
+         
+        it 'should return a matching instance of the model class' do
+          @instance.save.value.should == @instance.value
+        end
+      end
+          
+      describe "when a save cannot be completed" do
+        before :each do
+          Puppet::Network::HTTP::MongrelREST.any_instance.stubs(:save_object).returns(false)
+        end
+              
+        it "should return failure" do
+          @instance.save.should == false
+        end
+      end
+          
+      describe "when an exception is encountered in performing a save" do
+        before :each do
+          Puppet::Network::HTTP::MongrelREST.any_instance.stubs(:save_object).raises(RuntimeError)       
+        end
+      
+        it "should raise an exception" do
+          lambda { @instance.save }.should raise_error(RuntimeError) 
+        end
+      end
     end
 
     after :each do

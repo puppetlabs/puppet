@@ -44,12 +44,16 @@ module Puppet::Network::HTTP::Handler
     end
 
     def do_save(request, response)
-        data = body(request)
+        data = body(request).to_s
         raise ArgumentError, "No data to save" if !data or data.empty?
-        args = params(request)
-        obj = model.new
-        result = obj.save(args.merge(:data => data)).to_yaml
+        # args = params(request)
+        obj = model.from_yaml(data)
+        result = save_object(obj).to_yaml
         encode_result(request, response, result)
+    end
+    
+    def save_object(obj)
+      obj.save
     end
   
     def do_exception(request, response, exception, status=404)
