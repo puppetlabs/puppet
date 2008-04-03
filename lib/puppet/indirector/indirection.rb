@@ -242,7 +242,6 @@ class Puppet::Indirector::Indirection
 
         if result = terminus.search(request)
             raise Puppet::DevError, "Search results from terminus %s are not an array" % terminus.name unless result.is_a?(Array)
-
             result.each do |instance|
                 instance.expiration ||= self.expiration
             end
