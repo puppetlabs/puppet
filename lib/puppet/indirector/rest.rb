@@ -3,6 +3,11 @@ require 'uri'
 
 # Access objects via REST
 class Puppet::Indirector::REST < Puppet::Indirector::Terminus
+
+    def rest_connection_details
+      { :host => '127.0.0.1', :port => 34343 }
+    end
+
     def network_fetch(path)
         Net::HTTP.start("127.0.0.1", 34343) {|x| x.get("/#{path}").body }
     end

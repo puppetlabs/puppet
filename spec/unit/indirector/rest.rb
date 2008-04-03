@@ -20,6 +20,18 @@ describe Puppet::Indirector::REST do
         @searcher = @rest_class.new
     end
     
+    describe "when locating the rest connection" do
+      it 'should look somewhere meaningful for connection details'
+      
+      it "should return a host" do
+        @searcher.rest_connection_details[:host].should == '127.0.0.1'
+      end
+      
+      it "should return a port" do
+        @searcher.rest_connection_details[:port].should == 34343
+      end
+    end
+    
     describe "when doing a network fetch" do
       it "should escape the provided path"
       it "should look up the appropriate remote server"
