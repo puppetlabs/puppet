@@ -41,6 +41,17 @@ describe Puppet::Indirector::REST do
       it "should use the escaped provided path"
       it "should return the results of the DELETE request"
     end
+    
+    describe "when doing a network put" do
+      it "should escape the provided path"
+      it "should look up the appropriate remote server"
+      it "should look up the appropriate remote port"
+      it "should use the delete http method"
+      it "should use the appropriate remote server"
+      it "should use the appropriate remote port"
+      it "should use the escaped provided path"
+      it "should return the results of the DELETE request"      
+    end
 
     describe "when doing a find" do
       before :each do
@@ -165,8 +176,47 @@ describe Puppet::Indirector::REST do
     end
 
     describe "when doing a save" do
-      it "should deserialize result data into a boolean"
-      it "should generate an error when result data deserializes improperly"
-      it "should generate an error when result data specifies an error"      
+      before :each do
+        @result = { :foo => 'bar'}.to_yaml
+        @searcher.stubs(:network_put).returns(@result)  # neuter the network connection
+        @model.stubs(:from_yaml).returns(@instance)
+      end
+      
+      it "should save the model instance over the network" do
+        @searcher.expects(:network_put).returns(@result)
+        @searcher.save(@instance)
+      end
+      
+      it "should save the model instance using the named indirection" do
+        @searcher.expects(:network_put).with do |path, data| 
+          path =~ %r{^#{@indirection.name.to_s}/} and 
+          data == @instance.to_yaml 
+        end.returns(@result)
+        @searcher.save(@instance)
+      end
+      
+      it "should deserialize result data to a Model instance" do
+        @model.expects(:from_yaml)
+        @searcher.save(@instance)
+      end
+      
+      it "should return the resulting deserialized Model instance" do
+        @searcher.save(@instance).should == @instance     
+      end
+      
+      it "should return nil when deserialized model instance is nil" do
+        @model.stubs(:from_yaml).returns(nil)
+        @searcher.save(@instance).should be_nil
+      end
+      
+      it "should generate an error when result data deserializes improperly" do
+        @model.stubs(:from_yaml).raises(ArgumentError)
+        lambda { @searcher.save(@instance) }.should raise_error(ArgumentError)
+      end
+      
+      it "should generate an error when result data specifies an error" do
+        @searcher.stubs(:network_put).returns(RuntimeError.new("bogus").to_yaml)
+        lambda { @searcher.save(@instance) }.should raise_error(RuntimeError)        
+      end      
     end
 end
