@@ -177,7 +177,7 @@ end
 
 def setupldap
     begin
-        @ldap = Puppet::Parser::Interpreter.ldap()
+        @ldap = Puppet::Parser::Interpreter.new
     rescue => detail
         $stderr.puts "Could not connect to LDAP: %s" % detail
         exit(34)
