@@ -6,42 +6,51 @@ require 'tempfile'
 require 'puppet/util/loadedfile'
 
 describe Puppet::Util::LoadedFile do
-    before(:all) do
-        # First, save and adjust the timeout so tests don't take forever.
-        @saved_filetimeout = Puppet[:filetimeout]
-        Puppet[:filetimeout] = 5
-    end
-
     before(:each) do
         @f = Tempfile.new('loadedfile_test')
         @f.puts "yayness"
         @f.flush
+
         @loaded = Puppet::Util::LoadedFile.new(@f.path)
+
+        fake_ctime = Time.now - (2 * Puppet[:filetimeout])
+        @stat = stub('stat', :ctime => fake_ctime)
+        @fake_now = Time.now + (2 * Puppet[:filetimeout])
     end
 
     it "should recognize when the file has not changed" do
-        sleep(Puppet[:filetimeout])
+        # Use fake "now" so that we can be sure changed? actually checks, without sleeping
+        # for Puppet[:filetimeout] seconds.
+        Time.stubs(:now).returns(@fake_now)
         @loaded.changed?.should == false
     end
 
     it "should recognize when the file has changed" do
-        @f.puts "booness"
-        @f.flush
-        sleep(Puppet[:filetimeout])
+        # Fake File.stat so we don't have to depend on the filesystem granularity. Doing a flush()
+        # just didn't do the job.
+        File.stubs(:stat).returns(@stat)
+        # Use fake "now" so that we can be sure changed? actually checks, without sleeping
+        # for Puppet[:filetimeout] seconds.
+        Time.stubs(:now).returns(@fake_now)
         @loaded.changed?.should be_an_instance_of(Time)
     end
 
     it "should not catch a change until the timeout has elapsed" do
-        @f.puts "yay"
-        @f.flush
+        # Fake File.stat so we don't have to depend on the filesystem granularity. Doing a flush()
+        # just didn't do the job.
+        File.stubs(:stat).returns(@stat)
         @loaded.changed?.should be(false)
-        sleep(Puppet[:filetimeout])
+        # Use fake "now" so that we can be sure changed? actually checks, without sleeping
+        # for Puppet[:filetimeout] seconds.
+        Time.stubs(:now).returns(@fake_now)
         @loaded.changed?.should_not be(false)
     end
 
     it "should consider a file changed when that file is missing" do
         @f.close!
-        sleep(Puppet[:filetimeout])
+        # Use fake "now" so that we can be sure changed? actually checks, without sleeping
+        # for Puppet[:filetimeout] seconds.
+        Time.stubs(:now).returns(@fake_now)
         @loaded.changed?.should_not be(false)
     end
 
@@ -52,10 +61,5 @@ describe Puppet::Util::LoadedFile do
 
     after(:each) do
         @f.close
-    end
-
-    after(:all) do
-        # Restore the saved timeout.
-        Puppet[:filetimeout] = @saved_filetimeout
     end
 end
