@@ -128,13 +128,11 @@ describe Puppet::Checksum::File do
     end
 
     describe Puppet::Checksum::File, " when deleting files" do
-
         it "should remove the file at the calculated path" do
             File.expects(:exist?).with(@path).returns(true)
             File.expects(:unlink).with(@path)
 
-            file = stub 'file', :name => @value
-            @store.destroy(file)
+            @store.destroy(@value)
         end
     end
 end
