@@ -1,5 +1,6 @@
 require 'puppet/util/docs'
 require 'puppet/indirector/envelope'
+require 'puppet/indirector/request'
 
 # The class that connects functional classes with their different collection
 # back-ends.  Each indirection has a set of associated terminus classes,
@@ -125,12 +126,6 @@ class Puppet::Indirector::Indirection
         end
     end
 
-    # Set the options that can be passed on to the terminus instances.
-    attr_reader :option_struct
-    def options=(options)
-        @option_struct = Struct.new(*options)
-    end
-
     # Return the singleton terminus for this indirection.
     def terminus(terminus_name = nil)
         # Get the name of the terminus.
@@ -173,17 +168,8 @@ class Puppet::Indirector::Indirection
     end
 
     def find(key, *args)
-        # Select the appropriate terminus if there's a hook
-        # for doing so.  This allows the caller to pass in some kind
-        # of URI that the indirection can use for routing to the appropriate
-        # terminus.
-        if respond_to?(:select_terminus)
-            terminus_name = select_terminus(key, *args)
-        else
-            terminus_name = terminus_class
-        end
-
-        check_authorization(:find, terminus_name, ([key] + args))
+        request = request(key, :find, *args)
+        terminus = prepare(request)
 
         # See if our instance is in the cache and up to date.
         if cache? and cached = cache.find(key, *args)
@@ -196,7 +182,7 @@ class Puppet::Indirector::Indirection
         end
 
         # Otherwise, return the result from the terminus, caching if appropriate.
-        if result = terminus(terminus_name).find(key, *args)
+        if result = terminus.find(key, *args)
             # Include the envelope module, so we can set the expiration.
             result.extend(Puppet::Indirector::Envelope)
             result.expiration ||= self.expiration
@@ -213,7 +199,8 @@ class Puppet::Indirector::Indirection
 
     # Remove something via the terminus.
     def destroy(key, *args)
-        check_authorization(:destroy, terminus_class, ([key] + args))
+        request = request(key, :destroy, *args)
+        terminus = prepare(request)
 
         terminus.destroy(key, *args)
 
@@ -225,59 +212,52 @@ class Puppet::Indirector::Indirection
     end
 
     # Search for more than one instance.  Should always return an array.
-    def search(*args)
-        check_authorization(:search, terminus_class, args)
+    def search(key, *args)
+        request = request(key, :search, *args)
+        terminus = prepare(request)
 
-        result = terminus.search(*args)
+        result = terminus.search(key, *args)
 
         result
     end
 
-    # these become instance methods 
+    # Save the instance in the appropriate terminus.  This method is
+    # normally an instance method on the indirected class.
     def save(instance, *args)
-        if respond_to?(:select_terminus)
-            terminus_name = select_terminus(instance.name, *args)
-        else
-            terminus_name = terminus_class
-        end
-
-        check_authorization(:save, terminus_name, ([instance] + args))
+        request = request(instance.name, :save, *args)
+        terminus = prepare(request)
 
         # If caching is enabled, save our document there, do
         cache.save(instance, *args) if cache?
-        terminus(terminus_class).save(instance, *args)
-    end
-
-    def version(*args)
-        terminus.version(*args)
+        terminus.save(instance, *args)
     end
 
     private
 
     # Check authorization if there's a hook available; fail if there is one
     # and it returns false.
-    def check_authorization(method, terminus_name, arguments)
-        # Don't check authorization if there's no node.
-        # LAK:FIXME This is a hack and is quite possibly not the design we want.
-        return unless arguments[-1].is_a?(Hash) and arguments[-1][:node]
+    def check_authorization(request, terminus)
+        return unless request.options[:node]
 
-        if terminus(terminus_name).respond_to?(:authorized?) and ! terminus(terminus_name).authorized?(method, *arguments)
-            raise ArgumentError, "Not authorized to call %s with %s" % [method, arguments[0]]
+        return unless terminus.respond_to?(:authorized?)
+
+        unless terminus.authorized?(request)
+            raise ArgumentError, "Not authorized to call %s with %s" % [request.method, request.options.inspect]
         end
     end
 
-    # Handle a given indirected call.
-    def prepare_call(method, arguments)
-        raise ArgumentError, "Options must be a hash" unless arguments.is_a?(Hash)
+    # Setup a request, pick the appropriate terminus, check the request's authorization, and return it.
+    def prepare(request)
+        # Pick our terminus.
+        if respond_to?(:select_terminus)
+            terminus_name = select_terminus(request)
+        else
+            terminus_name = terminus_class
+        end
 
-        # Set any terminus options.
-        options = option_struct ? set_options(option_struct, arguments) : nil
+        check_authorization(request, terminus(terminus_name))
 
-        tclass = choose_terminus(options)
-
-        check_authorization(method, tclass, options)
-
-        return terminus(tclass), options
+        return terminus(terminus_name)
     end
 
     # Create a new terminus instance.
@@ -289,9 +269,8 @@ class Puppet::Indirector::Indirection
         return klass.new
     end
 
-    # Create a struct instance with all of the appropriate options set
-    # from the provided hash.
-    def set_options(struct, arguments)
-        struct.new(struct.members.inject([]) { |array, param| arguments[param.to_sym]; array } )
+    # Set up our request object.
+    def request(key, method, arguments = nil)
+        Puppet::Indirector::Request.new(self.name, key, method, arguments)
     end
 end
