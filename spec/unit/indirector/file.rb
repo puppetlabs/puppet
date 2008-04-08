@@ -121,38 +121,34 @@ describe Puppet::Indirector::File do
     describe Puppet::Indirector::File, " when removing files" do
 
         it "should provide a method to remove files at a specified path" do
-            file = stub 'file', :path => @path, :name => @path
             File.expects(:exist?).with(@path).returns(true)
             File.expects(:unlink).with(@path)
 
-            @searcher.destroy(file)
+            @searcher.destroy(@path)
         end
 
         it "should throw an exception if the file is not found" do
-            file = stub 'file', :path => @path, :name => @path
             File.expects(:exist?).with(@path).returns(false)
 
-            proc { @searcher.destroy(file) }.should raise_error(Puppet::Error)
+            proc { @searcher.destroy(@path) }.should raise_error(Puppet::Error)
         end
 
         it "should fail intelligently if the file cannot be removed" do
-            file = stub 'file', :path => @path, :name => @path
             File.expects(:exist?).with(@path).returns(true)
             File.expects(:unlink).with(@path).raises(ArgumentError)
 
-            proc { @searcher.destroy(file) }.should raise_error(Puppet::Error)
+            proc { @searcher.destroy(@path) }.should raise_error(Puppet::Error)
         end
 
         it "should use the path() method to calculate the path if it exists" do
-            @searcher.meta_def(:path) do |name|
-                name.upcase
+            @searcher.meta_def(:path) do |thing|
+                thing.to_s.upcase
             end
 
-            file = stub 'file', :name => "/yay"
-            File.expects(:exist?).with("/YAY").returns(true)
-            File.expects(:unlink).with("/YAY")
+            File.expects(:exist?).with("/MY/FILE").returns(true)
+            File.expects(:unlink).with("/MY/FILE")
 
-            @searcher.destroy(file)
+            @searcher.destroy(@path)
         end
     end
 end

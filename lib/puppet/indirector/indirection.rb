@@ -211,6 +211,7 @@ class Puppet::Indirector::Indirection
         return nil
     end
 
+    # Remove something via the terminus.
     def destroy(key, *args)
         check_authorization(:destroy, terminus_class, ([key] + args))
 
@@ -223,6 +224,7 @@ class Puppet::Indirector::Indirection
         nil
     end
 
+    # Search for more than one instance.  Should always return an array.
     def search(*args)
         check_authorization(:search, terminus_class, args)
 

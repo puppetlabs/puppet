@@ -2,21 +2,23 @@ require 'puppet/indirector/terminus'
 
 # An empty terminus type, meant to just return empty objects.
 class Puppet::Indirector::File < Puppet::Indirector::Terminus
-    def destroy(file)
+    # Remove files on disk.
+    def destroy(name)
         if respond_to?(:path)
-            path = path(file.name)
+            path = path(name)
         else
-            path = file.path
+            path = name
         end
-        raise Puppet::Error.new("File %s does not exist; cannot destroy" % [file]) unless File.exist?(path)
+        raise Puppet::Error.new("File %s does not exist; cannot destroy" % [name]) unless File.exist?(path)
 
         begin
             File.unlink(path)
         rescue => detail
-            raise Puppet::Error, "Could not remove %s: %s" % [file, detail]
+            raise Puppet::Error, "Could not remove %s: %s" % [name, detail]
         end
     end
 
+    # Return a model instance for a given file on disk.
     def find(name)
         if respond_to?(:path)
             path = path(name)
@@ -35,6 +37,7 @@ class Puppet::Indirector::File < Puppet::Indirector::Terminus
         return model.new(content)
     end
 
+    # Save a new file to disk.
     def save(file)
         if respond_to?(:path)
             path = path(file.name)

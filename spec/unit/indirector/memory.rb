@@ -22,7 +22,7 @@ describe "A Memory Terminus", :shared => true do
 
     it "should be able to remove previously saved instances" do
         @searcher.save(@instance)
-        @searcher.destroy(@instance)
+        @searcher.destroy(@instance.name)
         @searcher.find(@name).should be_nil
     end
 

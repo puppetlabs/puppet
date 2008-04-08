@@ -6,9 +6,9 @@ class Puppet::Indirector::Memory < Puppet::Indirector::Terminus
         @instances = {}
     end
 
-    def destroy(instance)
-        raise ArgumentError.new("Could not find %s to destroy" % instance) unless @instances.include?(instance.name)
-        @instances.delete(instance.name)
+    def destroy(name)
+        raise ArgumentError.new("Could not find %s to destroy" % name) unless @instances.include?(name)
+        @instances.delete(name)
     end
 
     def find(name)
