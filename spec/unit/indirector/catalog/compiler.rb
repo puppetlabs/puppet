@@ -75,7 +75,9 @@ describe Puppet::Node::Catalog::Compiler, " when finding nodes" do
     it "should fail if it cannot find the node" do
         @node.stubs :merge 
         Puppet::Node.expects(:find_by_any_name).with(@name).returns(nil)
-        proc { @compiler.find(@name) }.should raise_error(Puppet::Error)
+        request = stub 'request', :key => @name
+        @compiler.find(request) 
+        proc { @compiler.find(request) }.should raise_error(Puppet::Error)
     end
 end
 

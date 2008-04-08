@@ -6,16 +6,16 @@ class Puppet::Indirector::Memory < Puppet::Indirector::Terminus
         @instances = {}
     end
 
-    def destroy(name)
-        raise ArgumentError.new("Could not find %s to destroy" % name) unless @instances.include?(name)
-        @instances.delete(name)
+    def destroy(request)
+        raise ArgumentError.new("Could not find %s to destroy" % request.key) unless @instances.include?(request.key)
+        @instances.delete(request.key)
     end
 
-    def find(name)
-        @instances[name]
+    def find(request)
+        @instances[request.key]
     end
 
-    def save(instance)
-        @instances[instance.name] = instance
+    def save(request)
+        @instances[request.key] = request.instance
     end
 end

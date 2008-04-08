@@ -5,7 +5,7 @@ require 'puppet/indirector'
 class Puppet::Indirector::Request
     attr_accessor :indirection_name, :key, :method, :options, :instance
 
-    def initialize(indirection_name, key, method, options = {})
+    def initialize(indirection_name, method, key, options = {})
         @indirection_name, @method, @options = indirection_name, method, (options || {})
 
         if key.is_a?(String) or key.is_a?(Symbol)

@@ -23,19 +23,21 @@ describe Puppet::Indirector::DirectFileServer do
         @server = @direct_file_class.new
 
         @uri = "file:///my/local"
+
+        @request = stub 'request', :key => @uri, :options => {}
     end
 
     describe Puppet::Indirector::DirectFileServer, "when finding a single file" do
 
         it "should return nil if the file does not exist" do
             FileTest.expects(:exists?).with("/my/local").returns false
-            @server.find(@uri).should be_nil
+            @server.find(@request).should be_nil
         end
 
         it "should return a Content instance created with the full path to the file if the file exists" do
             FileTest.expects(:exists?).with("/my/local").returns true
             @model.expects(:new).returns(:mycontent)
-            @server.find(@uri).should == :mycontent
+            @server.find(@request).should == :mycontent
         end
     end
 
@@ -49,18 +51,20 @@ describe Puppet::Indirector::DirectFileServer do
 
         it "should create the Content instance with the original key as the key" do
             @model.expects(:new).with { |key, options| key == @uri }.returns(@data)
-            @server.find(@uri)
+            @server.find(@request)
         end
 
         it "should pass the full path to the instance" do
             @model.expects(:new).with { |key, options| options[:path] == "/my/local" }.returns(@data)
-            @server.find(@uri)
+            @server.find(@request)
         end
 
         it "should pass the :links setting on to the created Content instance if the file exists and there is a value for :links" do
             @model.expects(:new).returns(@data)
             @data.expects(:links=).with(:manage)
-            @server.find(@uri, :links => :manage)
+
+            @request.stubs(:options).returns(:links => :manage)
+            @server.find(@request)
         end
     end
 
@@ -68,25 +72,27 @@ describe Puppet::Indirector::DirectFileServer do
 
         it "should return nil if the file does not exist" do
             FileTest.expects(:exists?).with("/my/local").returns false
-            @server.find(@uri).should be_nil
+            @server.find(@request).should be_nil
         end
 
         it "should pass the original key to :path2instances" do
             FileTest.expects(:exists?).with("/my/local").returns true
             @server.expects(:path2instances).with { |uri, path, options| uri == @uri }
-            @server.search(@uri)
+            @server.search(@request)
         end
 
         it "should use :path2instances from the terminus_helper to return instances if the file exists" do
             FileTest.expects(:exists?).with("/my/local").returns true
             @server.expects(:path2instances)
-            @server.search(@uri)
+            @server.search(@request)
         end
 
         it "should pass any options on to :path2instances" do
             FileTest.expects(:exists?).with("/my/local").returns true
             @server.expects(:path2instances).with { |uri, path, options| options == {:testing => :one, :other => :two}}
-            @server.search(@uri, :testing => :one, :other => :two)
+
+            @request.stubs(:options).returns(:testing => :one, :other => :two)
+            @server.search(@request)
         end
     end
 end

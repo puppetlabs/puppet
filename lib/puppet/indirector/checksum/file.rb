@@ -18,8 +18,8 @@ class Puppet::Checksum::File < Puppet::Indirector::File
         path.join(File::SEPARATOR)
     end
 
-    def save(file)
-        path = File.dirname(path(file.name))
+    def save(request)
+        path = File.dirname(path(request.key))
 
         # Make the directories if necessary.
         unless FileTest.directory?(path)

@@ -55,6 +55,8 @@ describe Puppet::Indirector::Indirection do
 
             @instance = stub 'instance', :expiration => nil, :expiration= => nil, :name => "whatever"
             @name = :mything
+
+            @request = stub 'instance', :key => "/my/key", :instance => @instance, :options => {}
         end
 
         it "should allow setting the ttl" do
@@ -73,57 +75,67 @@ describe Puppet::Indirector::Indirection do
             Time.stubs(:now).returns now
             @indirection.expiration.should == (Time.now + 100)
         end
-      
-        describe "and looking for a model instance" do
-            it "should create a request with the indirection name, the sought-after name, the :find method, and any passed arguments" do
-                request = mock 'request'
-                Puppet::Indirector::Request.expects(:new).with(@indirection.name, @name, :find, {:one => :two}).returns request
 
-                @indirection.stubs(:check_authorization)
-                @terminus.stubs(:find)
+        it "should have a method for creating an indirection request instance" do
+            @indirection.should respond_to(:request)
+        end
 
-                @indirection.find(@name, :one => :two)
+        describe "creates a request" do
+            it "should create it with its name as the request's indirection name" do
+                Puppet::Indirector::Request.expects(:new).with { |name, *other| @indirection.name == name }
+                @indirection.request(:funtest, "yayness")
             end
 
-            it "should let the :select_terminus method choose the terminus if the method is defined" do
+            it "should require a method and key" do
+                Puppet::Indirector::Request.expects(:new).with { |name, method, key, *other| method == :funtest and key == "yayness" }
+                @indirection.request(:funtest, "yayness")
+            end
+
+            it "should support optional arguments" do
+                Puppet::Indirector::Request.expects(:new).with { |name, method, key, other| other == {:one => :two} }
+                @indirection.request(:funtest, "yayness", :one => :two)
+            end
+
+            it "should default to the arguments being nil" do
+                Puppet::Indirector::Request.expects(:new).with { |name, method, key, args| args.nil? }
+                @indirection.request(:funtest, "yayness")
+            end
+
+            it "should return the request" do
                 request = mock 'request'
                 Puppet::Indirector::Request.expects(:new).returns request
-
+                @indirection.request(:funtest, "yayness").should equal(request)
+            end
+        end
+      
+        describe "and looking for a model instance" do
+            it "should let the :select_terminus method choose the terminus if the method is defined" do
                 # Define the method, so our respond_to? hook matches.
                 class << @indirection
                     def select_terminus(request)
                     end
                 end
 
-                @indirection.expects(:select_terminus).with(request).returns :test_terminus
+                @indirection.expects(:select_terminus).with(@request).returns :test_terminus
 
                 @indirection.stubs(:check_authorization)
                 @terminus.expects(:find)
 
-                @indirection.find(@name)
+                @indirection.find(@request)
 
             end
 
             it "should let the appropriate terminus perform the lookup" do
-                @terminus.expects(:find).with(@name).returns(@instance)
-                @indirection.find(@name).should == @instance
+                @terminus.expects(:find).with(@request).returns(@instance)
+                @indirection.find(@request).should == @instance
             end
 
             it "should return nil if nothing is returned by the terminus" do
-                @terminus.expects(:find).with(@name).returns(nil)
-                @indirection.find(@name).should be_nil
-            end
-
-            it "should extend any found instance with the Envelope module" do
-                @terminus.stubs(:find).returns(@instance)
-
-                @instance.expects(:extend).with(Puppet::Indirector::Envelope)
-                @indirection.find(@name)
+                @terminus.expects(:find).with(@request).returns(nil)
+                @indirection.find(@request).should be_nil
             end
 
             it "should set the expiration date on any instances without one set" do
-                # Otherwise, our stub method doesn't get used, so the tests fail.
-                @instance.stubs(:extend)
                 @terminus.stubs(:find).returns(@instance)
 
                 @indirection.expects(:expiration).returns :yay
@@ -131,12 +143,10 @@ describe Puppet::Indirector::Indirection do
                 @instance.expects(:expiration).returns(nil)
                 @instance.expects(:expiration=).with(:yay)
 
-                @indirection.find(@name)
+                @indirection.find(@request)
             end
 
             it "should not override an already-set expiration date on returned instances" do
-                # Otherwise, our stub method doesn't get used, so the tests fail.
-                @instance.stubs(:extend)
                 @terminus.stubs(:find).returns(@instance)
 
                 @indirection.expects(:expiration).never
@@ -144,7 +154,7 @@ describe Puppet::Indirector::Indirection do
                 @instance.expects(:expiration).returns(:yay)
                 @instance.expects(:expiration=).never
 
-                @indirection.find(@name)
+                @indirection.find(@request)
             end
 
             describe "when caching is enabled" do
@@ -157,23 +167,23 @@ describe Puppet::Indirector::Indirection do
 
                 it "should first look in the cache for an instance" do
                     @terminus.expects(:find).never
-                    @cache.expects(:find).with(@name).returns @instance
+                    @cache.expects(:find).with(@request).returns @instance
 
-                    @indirection.find(@name)
+                    @indirection.find(@request)
                 end
 
                 it "should return the cached object if it is not expired" do
                     @instance.stubs(:expired?).returns false
 
                     @cache.stubs(:find).returns @instance
-                    @indirection.find(@name).should equal(@instance)
+                    @indirection.find(@request).should equal(@instance)
                 end
 
                 it "should send a debug log if it is using the cached object" do
                     Puppet.expects(:debug)
                     @cache.stubs(:find).returns @instance
 
-                    @indirection.find(@name)
+                    @indirection.find(@request)
                 end
 
                 it "should not return the cached object if it is expired" do
@@ -181,7 +191,7 @@ describe Puppet::Indirector::Indirection do
 
                     @cache.stubs(:find).returns @instance
                     @terminus.stubs(:find).returns nil
-                    @indirection.find(@name).should be_nil
+                    @indirection.find(@request).should be_nil
                 end
 
                 it "should send an info log if it is using the cached object" do
@@ -190,63 +200,67 @@ describe Puppet::Indirector::Indirection do
 
                     @cache.stubs(:find).returns @instance
                     @terminus.stubs(:find).returns nil
-                    @indirection.find(@name)
+                    @indirection.find(@request)
                 end
 
                 it "should cache any objects not retrieved from the cache" do
-                    @cache.expects(:find).with(@name).returns nil
+                    @cache.expects(:find).with(@request).returns nil
 
-                    @terminus.expects(:find).with(@name).returns(@instance)
-                    @cache.expects(:save).with(@instance)
+                    @terminus.expects(:find).with(@request).returns(@instance)
+                    @cache.expects(:save)
 
-                    @indirection.find(@name)
+                    @request.expects(:clone).returns(stub('newreq', :instance= => nil))
+
+                    @indirection.find(@request)
+                end
+
+                it "should cache a clone of the request with the instance set to the cached object" do
+                    @cache.expects(:find).with(@request).returns nil
+
+                    newreq = mock 'request'
+                    @request.expects(:clone).returns newreq
+                    newreq.expects(:instance=).with(@instance)
+
+                    @terminus.expects(:find).with(@request).returns(@instance)
+                    @cache.expects(:save).with(newreq)
+
+                    @indirection.find(@request)
                 end
 
                 it "should send an info log that the object is being cached" do
                     @cache.stubs(:find).returns nil
+
+                    @request.expects(:clone).returns(stub('newreq', :instance= => nil))
 
                     @terminus.stubs(:find).returns(@instance)
                     @cache.stubs(:save)
 
                     Puppet.expects(:info)
 
-                    @indirection.find(@name)
+                    @indirection.find(@request)
                 end
             end
         end
 
         describe "and storing a model instance" do
-            it "should create a request with the indirection name, the instance's name, the :save method, and any passed arguments" do
-                request = mock 'request'
-                Puppet::Indirector::Request.expects(:new).with(@indirection.name, @instance.name, :save, {:one => :two}).returns request
-
-                @indirection.stubs(:check_authorization)
-                @terminus.stubs(:save)
-
-                @indirection.save(@instance, :one => :two)
-            end
-
             it "should let the :select_terminus method choose the terminus if the method is defined" do
-                request = mock 'request'
-                Puppet::Indirector::Request.expects(:new).returns request
-
                 # Define the method, so our respond_to? hook matches.
                 class << @indirection
-                    def select_terminus(request)
+                    def select_terminus(req)
                     end
                 end
 
-                @indirection.expects(:select_terminus).with(request).returns :test_terminus
+                @indirection.expects(:select_terminus).with(@request).returns :test_terminus
 
                 @indirection.stubs(:check_authorization)
                 @terminus.expects(:save)
 
-                @indirection.save(@instance)
+                @indirection.save(@request)
             end
 
             it "should let the appropriate terminus store the instance" do
-                @terminus.expects(:save).with(@instance).returns(@instance)
-                @indirection.save(@instance).should == @instance
+                @terminus.expects(:save).with(@request).returns(@instance)
+                @indirection.save(@request).should == @instance
             end
 
             describe "when caching is enabled" do
@@ -258,50 +272,37 @@ describe Puppet::Indirector::Indirection do
                 end
 
                 it "should save the object to the cache" do
-                    @cache.expects(:save).with(@instance)
+                    @cache.expects(:save).with(@request)
                     @terminus.stubs(:save)
-                    @indirection.save(@instance)
+                    @indirection.save(@request)
                 end
             end
         end
         
         describe "and removing a model instance" do
-            it "should create a request with the indirection name, the name of the instance being destroyed, the :destroy method, and any passed arguments" do
-                request = mock 'request'
-                Puppet::Indirector::Request.expects(:new).with(@indirection.name, "me", :destroy, {:one => :two}).returns request
-
-                @indirection.stubs(:check_authorization)
-                @terminus.stubs(:destroy)
-
-                @indirection.destroy("me", :one => :two)
-            end
-
             it "should let the :select_terminus method choose the terminus if the method is defined" do
-                request = mock 'request'
-                Puppet::Indirector::Request.expects(:new).returns request
-
                 # Define the method, so our respond_to? hook matches.
                 class << @indirection
                     def select_terminus(request)
                     end
                 end
 
-                @indirection.expects(:select_terminus).with(request).returns :test_terminus
+                @indirection.expects(:select_terminus).with(@request).returns :test_terminus
 
                 @indirection.stubs(:check_authorization)
                 @terminus.expects(:destroy)
 
-                @indirection.destroy(@name)
+                @indirection.destroy(@request)
             end
 
             it "should delegate the instance removal to the appropriate terminus" do
-                @terminus.expects(:destroy).with(@name)
-                @indirection.destroy(@name)
+                @terminus.expects(:destroy).with(@request)
+                @indirection.destroy(@request)
             end
 
             it "should return nil" do
                 @terminus.stubs(:destroy)
-                @indirection.destroy(@name).should be_nil
+                @indirection.destroy(@request).should be_nil
             end
 
             describe "when caching is enabled" do
@@ -314,47 +315,34 @@ describe Puppet::Indirector::Indirection do
 
                 it "should destroy any found object in the cache" do
                     cached = mock 'cache'
-                    @cache.expects(:find).with(@name).returns cached
-                    @cache.expects(:destroy).with(@name)
+                    @cache.expects(:find).with(@request).returns cached
+                    @cache.expects(:destroy).with(@request)
                     @terminus.stubs(:destroy)
 
-                    @indirection.destroy(@name)
+                    @indirection.destroy(@request)
                 end
             end
         end
 
         describe "and searching for multiple model instances" do
-            it "should create a request with the indirection name, the search key, the :search method, and any passed arguments" do
-                request = mock 'request'
-                Puppet::Indirector::Request.expects(:new).with(@indirection.name, "me", :search, {:one => :two}).returns request
-
-                @indirection.stubs(:check_authorization)
-                @terminus.stubs(:search)
-
-                @indirection.search("me", :one => :two)
-            end
-
             it "should let the :select_terminus method choose the terminus if the method is defined" do
-                request = mock 'request'
-                Puppet::Indirector::Request.expects(:new).returns request
-
                 # Define the method, so our respond_to? hook matches.
                 class << @indirection
-                    def select_terminus(request)
+                    def select_terminus(req)
                     end
                 end
 
-                @indirection.expects(:select_terminus).with(request).returns :test_terminus
+                @indirection.expects(:select_terminus).with(@request).returns :test_terminus
 
                 @indirection.stubs(:check_authorization)
                 @terminus.expects(:search)
 
-                @indirection.search("me")
+                @indirection.search(@request)
             end
 
             it "should let the appropriate terminus find the matching instances" do
-                @terminus.expects(:search).with(@name).returns(@instance)
-                @indirection.search(@name).should == @instance
+                @terminus.expects(:search).with(@request).returns(@instance)
+                @indirection.search(@request).should == @instance
             end
         end
 
@@ -365,69 +353,72 @@ describe Puppet::Indirector::Indirection do
                     def authorized?
                     end
                 end
+                
+                @request = stub 'instance', :key => "/my/key", :instance => @instance, :options => {:node => "mynode"}
             end
 
             it "should not check authorization if a node name is not provided" do
                 @terminus.expects(:authorized?).never
                 @terminus.stubs(:find)
-                @indirection.find("/my/key")
+
+                # The quotes are necessary here, else it looks like a block.
+                @request.stubs(:options).returns({})
+                @indirection.find(@request)
             end
 
             it "should pass the request to the terminus's authorization method" do
-                request = stub 'request', :options => {:node => "yayhost"}
-                Puppet::Indirector::Request.expects(:new).returns(request)
-                @terminus.expects(:authorized?).with(request).returns(true)
+                @terminus.expects(:authorized?).with(@request).returns(true)
                 @terminus.stubs(:find)
 
-                @indirection.find("/my/key", :node => "mynode")
+                @indirection.find(@request)
             end
 
             it "should fail while finding instances if authorization returns false" do
                 @terminus.expects(:authorized?).returns(false)
                 @terminus.stubs(:find)
-                proc { @indirection.find("/my/key", :node => "mynode") }.should raise_error(ArgumentError)
+                proc { @indirection.find(@request) }.should raise_error(ArgumentError)
             end
 
             it "should continue finding instances if authorization returns true" do
                 @terminus.expects(:authorized?).returns(true)
                 @terminus.stubs(:find)
-                @indirection.find("/my/key", :node => "mynode")
+                @indirection.find(@request)
             end
 
             it "should fail while saving instances if authorization returns false" do
                 @terminus.expects(:authorized?).returns(false)
                 @terminus.stubs(:save)
-                proc { @indirection.save(@instance, :node => "mynode") }.should raise_error(ArgumentError)
+                proc { @indirection.save(@request) }.should raise_error(ArgumentError)
             end
 
             it "should continue saving instances if authorization returns true" do
                 @terminus.expects(:authorized?).returns(true)
                 @terminus.stubs(:save)
-                @indirection.save(@instance, :node => "mynode")
+                @indirection.save(@request)
             end
 
             it "should fail while destroying instances if authorization returns false" do
                 @terminus.expects(:authorized?).returns(false)
                 @terminus.stubs(:destroy)
-                proc { @indirection.destroy("/my/key", :node => "mynode") }.should raise_error(ArgumentError)
+                proc { @indirection.destroy(@request) }.should raise_error(ArgumentError)
             end
 
             it "should continue destroying instances if authorization returns true" do
                 @terminus.expects(:authorized?).returns(true)
                 @terminus.stubs(:destroy)
-                @indirection.destroy(@instance, :node => "mynode")
+                @indirection.destroy(@request)
             end
 
             it "should fail while searching for instances if authorization returns false" do
                 @terminus.expects(:authorized?).returns(false)
                 @terminus.stubs(:search)
-                proc { @indirection.search("/my/key", :node => "mynode") }.should raise_error(ArgumentError)
+                proc { @indirection.search(@request) }.should raise_error(ArgumentError)
             end
 
             it "should continue searching for instances if authorization returns true" do
                 @terminus.expects(:authorized?).returns(true)
                 @terminus.stubs(:search)
-                @indirection.search("/my/key", :node => "mynode")
+                @indirection.search(@request)
             end
         end
 

@@ -17,11 +17,13 @@ describe Puppet::Indirector::Plain do
         end
 
         @searcher = @plain_class.new
+
+        @request = stub 'request', :key => "yay"
     end
 
     it "should return return an instance of the indirected model" do
         object = mock 'object'
-        @model.expects(:new).with("yay").returns object
-        @searcher.find("yay").should equal(object)
+        @model.expects(:new).with(@request.key).returns object
+        @searcher.find(@request).should equal(object)
     end
 end

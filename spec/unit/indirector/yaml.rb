@@ -21,37 +21,28 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
 
         @dir = "/what/ever"
         Puppet.settings.stubs(:value).with(:yamldir).returns(@dir)
-    end
 
-    it "should use the mtime of the written file as the version" do
-        stat = mock 'stat'
-        FileTest.stubs(:exist?).returns true
-        File.expects(:stat).returns stat
-        time = Time.now
-        stat.expects(:mtime).returns time
-
-        @store.version(:me).should equal(time)
+        @request = stub 'request', :key => :me, :instance => @subject
     end
 
     describe Puppet::Indirector::Yaml, " when choosing file location" do
-
         it "should store all files in a single file root set in the Puppet defaults" do
-            @store.send(:path, :me).should =~ %r{^#{@dir}}
+            @store.path(:me).should =~ %r{^#{@dir}}
         end
 
         it "should use the terminus name for choosing the subdirectory" do
-            @store.send(:path, :me).should =~ %r{^#{@dir}/my_yaml}
+            @store.path(:me).should =~ %r{^#{@dir}/my_yaml}
         end
 
         it "should use the object's name to determine the file name" do
-            @store.send(:path, :me).should =~ %r{me.yaml$}
+            @store.path(:me).should =~ %r{me.yaml$}
         end
     end
 
     describe Puppet::Indirector::Yaml, " when storing objects as YAML" do
-
         it "should only store objects that respond to :name" do
-            proc { @store.save(Object.new) }.should raise_error(ArgumentError)
+            @request.stubs(:instance).returns Object.new
+            proc { @store.save(@request) }.should raise_error(ArgumentError)
         end
 
         it "should convert Ruby objects to YAML and write them to disk" do
@@ -62,7 +53,7 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
             File.expects(:open).with(path, "w", 0660).yields(file)
             file.expects(:print).with(yaml)
 
-            @store.save(@subject)
+            @store.save(@request)
         end
 
         it "should create the indirection subdirectory if it does not exist" do
@@ -75,16 +66,11 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
             File.expects(:open).with(path, "w", 0660).yields(file)
             file.expects(:print).with(yaml)
 
-            @store.save(@subject)
+            @store.save(@request)
         end
     end
 
     describe Puppet::Indirector::Yaml, " when retrieving YAML" do
-
-        it "should require the name of the object to retrieve" do
-            proc { @store.find(nil) }.should raise_error(ArgumentError)
-        end
-
         it "should read YAML in from disk and convert it to Ruby objects" do
             path = @store.send(:path, @subject.name)
 
@@ -92,7 +78,7 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
             FileTest.expects(:exist?).with(path).returns(true)
             File.expects(:read).with(path).returns(yaml)
 
-            @store.find(@subject.name).instance_variable_get("@name").should == :me
+            @store.find(@request).instance_variable_get("@name").should == :me
         end
 
         it "should fail coherently when the stored YAML is invalid" do
@@ -104,7 +90,7 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
             FileTest.expects(:exist?).with(path).returns(true)
             File.expects(:read).with(path).returns(yaml)
 
-            proc { @store.find(@subject.name) }.should raise_error(Puppet::Error)
+            proc { @store.find(@request) }.should raise_error(Puppet::Error)
         end
     end
 end
