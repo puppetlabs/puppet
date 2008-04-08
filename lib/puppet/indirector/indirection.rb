@@ -227,7 +227,7 @@ class Puppet::Indirector::Indirection
         request = request(instance.name, :save, *args)
         terminus = prepare(request)
 
-        # If caching is enabled, save our document there, do
+        # If caching is enabled, save our document there
         cache.save(instance, *args) if cache?
         terminus.save(instance, *args)
     end
