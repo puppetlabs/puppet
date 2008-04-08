@@ -9,6 +9,21 @@ describe Puppet::Indirector::Request do
             lambda { Puppet::Indirector::Request.new }.should raise_error(ArgumentError)
         end
 
+        it "should use provided value as the key if it is a string" do
+            Puppet::Indirector::Request.new(:ind, "mykey", :method).key.should == "mykey"
+        end
+
+        it "should use provided value as the key if it is a symbol" do
+            Puppet::Indirector::Request.new(:ind, :mykey, :method).key.should == :mykey
+        end
+
+        it "should use the name of the provided instance as its key if an instance is provided as the key instead of a string" do
+            instance = mock 'instance', :name => "mykey"
+            request = Puppet::Indirector::Request.new(:ind, instance, :method)
+            request.key.should == "mykey"
+            request.instance.should equal(instance)
+        end
+
         it "should support options specified as a hash" do
             lambda { Puppet::Indirector::Request.new(:ind, :key, :method, :one => :two) }.should_not raise_error(ArgumentError)
         end
