@@ -38,7 +38,7 @@ describe Puppet::Checksum, " when using the file terminus" do
         File.stubs(:exist?).returns(true)
         File.expects(:unlink).with(@file)
 
-        Puppet::Checksum.destroy(@sum)
+        Puppet::Checksum.destroy(@sum.name)
     end
 
     after do

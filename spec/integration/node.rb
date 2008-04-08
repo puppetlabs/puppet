@@ -34,7 +34,7 @@ describe Puppet::Node, " when using the memory terminus" do
 
     it "should be able to remove previously saved nodes" do
         @node.save
-        Puppet::Node.destroy(@node)
+        Puppet::Node.destroy(@node.name)
         Puppet::Node.find(@name).should be_nil
     end
 
