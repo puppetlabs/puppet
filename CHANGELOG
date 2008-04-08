@@ -1,3 +1,5 @@
+    Changing the default environment to production.
+
 0.24.4
     Pass source to pkg_add via the PKG_PATH environment variable if
     it ends in a '/' indicating it is a directory. Allows pkg_add
