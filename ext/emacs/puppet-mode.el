@@ -21,14 +21,13 @@
   :type 'integer :group 'puppet)
 
 (defvar puppet-mode-map
-  "Key map used in puppet-mode buffers."
   (let ((map (make-sparse-keymap)))
     (define-key map "\C-j" 'newline-and-indent)
     (define-key map "\C-m" 'newline-and-indent)
-    map))
+    map)
+  "Key map used in puppet-mode buffers.")
 
-(defvar puppet-mode-syntax-table nil
-  "Syntax table in use in puppet-mode buffers."
+(defvar puppet-mode-syntax-table
   (let ((table (make-syntax-table)))
     (modify-syntax-entry ?\' "\"" table)
     (modify-syntax-entry ?\" "\"" table)
@@ -46,7 +45,8 @@
     (modify-syntax-entry ?\} "){" table)
     (modify-syntax-entry ?\[ "(]" table)
     (modify-syntax-entry ?\] ")[" table)
-    table))
+    table)
+  "Syntax table in use in puppet-mode buffers.")
 
 (defcustom puppet-indent-tabs-mode nil
   "*Indentation can insert tabs in puppet mode if this is non-nil."
