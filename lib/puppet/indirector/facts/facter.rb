@@ -56,8 +56,8 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
     end
 
     # Look a host's facts up in Facter.
-    def find(key)
-        Puppet::Node::Facts.new(key, Facter.to_hash)
+    def find(request)
+        Puppet::Node::Facts.new(request.key, Facter.to_hash)
     end
 
     def save(facts)

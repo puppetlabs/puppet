@@ -13,11 +13,9 @@ class Puppet::Node::Catalog::Compiler < Puppet::Indirector::Code
     attr_accessor :code
 
     # Compile a node's catalog.
-    def find(key, client = nil, clientip = nil)
-        if key.is_a?(Puppet::Node)
-            node = key
-        else
-            node = find_node(key)
+    def find(request)
+        unless node = request.options[:node] || find_node(request.key)
+            raise ArgumentError, "Could not find node '%s'; cannot compile" % request.key
         end
 
         if catalog = compile(node)
@@ -102,16 +100,12 @@ class Puppet::Node::Catalog::Compiler < Puppet::Indirector::Code
     def find_node(key)
         # If we want to use the cert name as our key
         # LAK:FIXME This needs to be figured out somehow, but it requires the routing.
+        # This should be able to use the request, yay.
         #if Puppet[:node_name] == 'cert' and client
         #    key = client
         #end
 
-        # Note that this is reasonable, because either their node source should actually
-        # know about the node, or they should be using the ``null`` node source, which
-        # will always return data.
-        unless node = Puppet::Node.find_by_any_name(key)
-            raise Puppet::Error, "Could not find node '%s'" % key
-        end
+        return nil unless node = Puppet::Node.find_by_any_name(key)
 
         # Add any external data to the node.
         add_node_data(node)

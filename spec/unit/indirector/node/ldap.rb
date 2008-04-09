@@ -5,13 +5,6 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 require 'puppet/indirector/node/ldap'
 
 describe Puppet::Node::Ldap do
-    it "should use the version of the facts as its version" do
-        @searcher = Puppet::Node::Ldap.new
-        version = mock 'version'
-        Puppet::Node::Facts.expects(:version).with("me").returns version
-        @searcher.version("me").should equal(version)
-    end
-
     describe "when searching for nodes" do
         before :each do
             @searcher = Puppet::Node::Ldap.new
@@ -31,16 +24,18 @@ describe Puppet::Node::Ldap do
             @node.stubs(:fact_merge)
             @name = "mynode"
             Puppet::Node.stubs(:new).with(@name).returns(@node)
+
+            @request = stub 'request', :key => @name
         end
 
         it "should return nil if no results are found in ldap" do
             @connection.stubs(:search)
-            @searcher.find("mynode").should be_nil
+            @searcher.find(@request).should be_nil
         end
 
         it "should return a node object if results are found in ldap" do
             @entry.stubs(:to_hash).returns({})
-            @searcher.find("mynode").should equal(@node)
+            @searcher.find(@request).should equal(@node)
         end
 
         it "should deduplicate class values" do
@@ -49,7 +44,7 @@ describe Puppet::Node::Ldap do
             @entry.stubs(:vals).with("one").returns(%w{a b})
             @entry.stubs(:vals).with("two").returns(%w{b c})
             @node.expects(:classes=).with(%w{a b c})
-            @searcher.find("mynode")
+            @searcher.find(@request)
         end
 
         it "should add any values stored in the class_attributes attributes to the node classes" do
@@ -58,38 +53,38 @@ describe Puppet::Node::Ldap do
             @entry.stubs(:vals).with("one").returns(%w{a b})
             @entry.stubs(:vals).with("two").returns(%w{c d})
             @node.expects(:classes=).with(%w{a b c d})
-            @searcher.find("mynode")
+            @searcher.find(@request)
         end
 
         it "should add all entry attributes as node parameters" do
             @entry.stubs(:to_hash).returns("one" => ["two"], "three" => ["four"])
             @node.expects(:parameters=).with("one" => "two", "three" => "four")
-            @searcher.find("mynode")
+            @searcher.find(@request)
         end
 
         it "should set the node's environment to the environment of the results" do
             @entry.stubs(:to_hash).returns("environment" => ["test"])
             @node.stubs(:parameters=)
             @node.expects(:environment=).with("test")
-            @searcher.find("mynode")
+            @searcher.find(@request)
         end
 
         it "should retain false parameter values" do
             @entry.stubs(:to_hash).returns("one" => [false])
             @node.expects(:parameters=).with("one" => false)
-            @searcher.find("mynode")
+            @searcher.find(@request)
         end
 
         it "should turn single-value parameter value arrays into single non-arrays" do
             @entry.stubs(:to_hash).returns("one" => ["a"])
             @node.expects(:parameters=).with("one" => "a")
-            @searcher.find("mynode")
+            @searcher.find(@request)
         end
 
         it "should keep multi-valued parametes as arrays" do
             @entry.stubs(:to_hash).returns("one" => ["a", "b"])
             @node.expects(:parameters=).with("one" => ["a", "b"])
-            @searcher.find("mynode")
+            @searcher.find(@request)
         end
 
         describe "and a parent node is specified" do
@@ -113,7 +108,7 @@ describe Puppet::Node::Ldap do
                 @entry.stubs(:to_hash).returns({})
                 @entry.stubs(:vals).with(:parent).returns(%w{parent})
 
-                proc { @searcher.find("mynode") }.should raise_error(Puppet::Error)
+                proc { @searcher.find(@request) }.should raise_error(Puppet::Error)
             end
 
             it "should add any parent classes to the node's classes" do
@@ -127,7 +122,7 @@ describe Puppet::Node::Ldap do
 
                 @searcher.stubs(:class_attributes).returns(%w{classes})
                 @node.expects(:classes=).with(%w{a b c d})
-                @searcher.find("mynode")
+                @searcher.find(@request)
             end
 
             it "should add any parent parameters to the node's parameters" do
@@ -138,7 +133,7 @@ describe Puppet::Node::Ldap do
                 @parent.stubs(:vals).with(:parent).returns(nil)
 
                 @node.expects(:parameters=).with("one" => "two", "three" => "four")
-                @searcher.find("mynode")
+                @searcher.find(@request)
             end
 
             it "should prefer node parameters over parent parameters" do
@@ -149,7 +144,7 @@ describe Puppet::Node::Ldap do
                 @parent.stubs(:vals).with(:parent).returns(nil)
 
                 @node.expects(:parameters=).with("one" => "two")
-                @searcher.find("mynode")
+                @searcher.find(@request)
             end
 
             it "should use the parent's environment if the node has none" do
@@ -161,7 +156,7 @@ describe Puppet::Node::Ldap do
 
                 @node.stubs(:parameters=)
                 @node.expects(:environment=).with("parent")
-                @searcher.find("mynode")
+                @searcher.find(@request)
             end
 
             it "should prefer the node's environment to the parent's" do
@@ -173,7 +168,7 @@ describe Puppet::Node::Ldap do
 
                 @node.stubs(:parameters=)
                 @node.expects(:environment=).with("child")
-                @searcher.find("mynode")
+                @searcher.find(@request)
             end
 
             it "should recursively look up parent information" do
@@ -188,7 +183,7 @@ describe Puppet::Node::Ldap do
                 @parent_parent.stubs(:vals).with(:parent).returns(nil)
 
                 @node.expects(:parameters=).with("one" => "two", "three" => "four", "five" => "six")
-                @searcher.find("mynode")
+                @searcher.find(@request)
             end
 
             it "should not allow loops in parent declarations" do
@@ -197,7 +192,7 @@ describe Puppet::Node::Ldap do
 
                 @parent.stubs(:to_hash).returns("three" => "four")
                 @parent.stubs(:vals).with(:parent).returns([@name])
-                proc { @searcher.find("mynode") }.should raise_error(ArgumentError)
+                proc { @searcher.find(@request) }.should raise_error(ArgumentError)
             end
         end
     end

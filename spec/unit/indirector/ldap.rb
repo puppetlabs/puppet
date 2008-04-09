@@ -24,11 +24,13 @@ describe Puppet::Indirector::Ldap, " when searching ldap" do
         @searcher.stubs(:search_filter).returns(:filter)
         @searcher.stubs(:search_base).returns(:base)
         @searcher.stubs(:process)
+
+        @request = stub 'request', :key => "yay"
     end
 
     it "should call the ldapsearch method with the name being searched for" do
         @searcher.expects(:ldapsearch).with("yay")
-        @searcher.find "yay"
+        @searcher.find @request
     end
 
     it "should fail if no block is passed to the ldapsearch method" do
@@ -41,7 +43,7 @@ describe Puppet::Indirector::Ldap, " when searching ldap" do
             args[0].should == "mybase"
             true
         end
-        @searcher.find "yay"
+        @searcher.find @request
     end
 
     it "should default to the value of the :search_base setting as the result of the ldapbase method" do
@@ -56,7 +58,7 @@ describe Puppet::Indirector::Ldap, " when searching ldap" do
             args[3].should == :myattrs
             true
         end
-        @searcher.find "yay"
+        @searcher.find @request
     end
 
     it "should use the results of the :search_filter method as the search filter" do
@@ -65,7 +67,7 @@ describe Puppet::Indirector::Ldap, " when searching ldap" do
             args[2].should == "yay's filter"
             true
         end
-        @searcher.find "yay"
+        @searcher.find @request
     end
 
     it "should use depth 2 when searching" do
@@ -73,13 +75,13 @@ describe Puppet::Indirector::Ldap, " when searching ldap" do
             args[1].should == 2
             true
         end
-        @searcher.find "yay"
+        @searcher.find @request
     end
 
     it "should call process() on the first found entry" do
         @connection.expects(:search).yields("myresult")
         @searcher.expects(:process).with("yay", "myresult")
-        @searcher.find "yay"
+        @searcher.find @request
     end
 
     it "should reconnect and retry the search if there is a failure" do
@@ -94,7 +96,7 @@ describe Puppet::Indirector::Ldap, " when searching ldap" do
         end.yields("myresult")
         @searcher.expects(:process).with("yay", "myresult")
 
-        @searcher.find "yay"
+        @searcher.find @request
     end
 
     it "should not reconnect on failure more than once" do
@@ -103,7 +105,7 @@ describe Puppet::Indirector::Ldap, " when searching ldap" do
             count += 1
             raise ArgumentError, "yay"
         end
-        proc { @searcher.find("whatever") }.should raise_error(Puppet::Error)
+        proc { @searcher.find(@request) }.should raise_error(Puppet::Error)
         count.should == 2
     end
 

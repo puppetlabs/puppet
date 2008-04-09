@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 #
-#  Created by Luke Kanies on 2007-10-18.
-#  Copyright (c) 2007. All rights reserved.
+#  Created by Luke Kanies on 2007-4-8.
+#  Copyright (c) 2008. All rights reserved.
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
@@ -26,7 +26,11 @@ describe Puppet::Node::Catalog do
             # Load now, before we stub the exists? method.
             compiler = Puppet::Node::Catalog.indirection.terminus(:compiler)
 
-            compiler.expects(:compile).with("me").returns nil
+            node = mock 'node'
+            node.stub_everything
+
+            Puppet::Node.expects(:find).returns(node)
+            compiler.expects(:compile).with(node).returns nil
 
             Puppet::Node::Catalog.find("me").should be_nil
         end
