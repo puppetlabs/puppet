@@ -171,6 +171,15 @@ describe Puppet::Module, " when searching for manifests in a found module" do
         Puppet::Module.find_manifests("mymod/yay/*.pp").should == %w{/one /two}
     end
 
+    it "should not return directories" do
+        Puppet.settings.expects(:value).with(:modulepath, nil).returns("/my/modules")
+        File.stubs(:directory?).returns(true)
+        Dir.expects(:glob).with("/my/modules/mymod/manifests/yay/*.pp").returns(%w{/one /two})
+        FileTest.expects(:directory?).with("/one").returns false
+        FileTest.expects(:directory?).with("/two").returns true
+        Puppet::Module.find_manifests("mymod/yay/*.pp").should == %w{/one}
+    end
+
     it "should default to the 'init.pp' file in the manifests directory" do
         Puppet.settings.expects(:value).with(:modulepath, nil).returns("/my/modules")
         File.stubs(:directory?).returns(true)
