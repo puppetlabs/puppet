@@ -1,3 +1,13 @@
+    Fixing #1173 -- classes and definitions can now have the same
+    name as a directory with no failures.
+
+    Saving new facts now expires any cached node information.
+
+    Switching how caching is handled, so that objects now all
+    have an expiration date associated with them.  This makes it
+    much easier to know whether a given cached object should be used
+    or if it should be regenerated.
+
     Changing the default environment to production.
 
 0.24.4

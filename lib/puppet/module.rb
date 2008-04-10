@@ -132,7 +132,7 @@ class Puppet::Module
     def manifests(rest)
         rest ||= "init.pp"
         p = File::join(path, MANIFESTS, rest)
-        files = Dir.glob(p)
+        files = Dir.glob(p).reject { |f| FileTest.directory?(f) }
         if files.size == 0
             files = Dir.glob(p + ".pp")
         end
