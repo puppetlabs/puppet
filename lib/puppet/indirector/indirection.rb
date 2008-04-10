@@ -180,12 +180,14 @@ class Puppet::Indirector::Indirection
 
         return nil unless cache?
 
-        return nil unless instance = cache.find(key, *args)
+        return nil unless instance = cache.find(request(:find, key, *args))
+
+        Puppet.info "Expiring the %s cache of %s" % [self.name, instance.name]
 
         # Set an expiration date in the past
         instance.expiration = Time.now - 60
 
-        cache.save(instance, *args)
+        cache.save(request(:save, instance, *args))
     end
 
     # Search for an instance in the appropriate terminus, caching the

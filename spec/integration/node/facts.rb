@@ -10,7 +10,14 @@ describe Puppet::Node::Facts do
         after { Puppet::Node::Facts.indirection.clear_cache }
 
         it "should expire any cached node instances when it is saved" do
-            raise "This test fails"
+            Puppet::Node::Facts.indirection.stubs(:terminus_class).returns :yaml
+            terminus = Puppet::Node::Facts.indirection.terminus(:yaml)
+
+            terminus.expects(:save)
+            Puppet::Node.expects(:expire).with("me")
+
+            facts = Puppet::Node::Facts.new("me")
+            facts.save
         end
 
         it "should be able to delegate to the :yaml terminus" do
