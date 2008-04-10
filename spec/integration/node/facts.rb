@@ -9,6 +9,10 @@ describe Puppet::Node::Facts do
     describe "when using the indirector" do
         after { Puppet::Node::Facts.indirection.clear_cache }
 
+        it "should expire any cached node instances when it is saved" do
+            raise "This test fails"
+        end
+
         it "should be able to delegate to the :yaml terminus" do
             Puppet::Node::Facts.indirection.stubs(:terminus_class).returns :yaml
 

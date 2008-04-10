@@ -40,22 +40,27 @@ module Puppet::Indirector
             indirection.terminus_class = klass
         end
          
+        # Expire any cached instance.
+        def expire(*args)
+            indirection.expire *args
+        end
+         
         def find(*args)
-            indirection.find Puppet::Indirector::Request.new(indirection.name, :find, *args)
+            indirection.find *args
         end
 
         def destroy(*args)
-            indirection.destroy Puppet::Indirector::Request.new(indirection.name, :destroy, *args)
+            indirection.destroy *args
         end
 
         def search(*args)
-            indirection.search Puppet::Indirector::Request.new(indirection.name, :search, *args)
+            indirection.search *args
         end
     end
 
     module InstanceMethods
         def save(*args)
-            self.class.indirection.save Puppet::Indirector::Request.new(self.class.indirection.name, :save, self, *args)
+            self.class.indirection.save self, *args
         end
     end
 end

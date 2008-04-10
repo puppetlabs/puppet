@@ -127,8 +127,8 @@ class Puppet::Indirector::Indirection
     end
 
     # Set up our request object.
-    def request(key, method, arguments = nil)
-        Puppet::Indirector::Request.new(self.name, key, method, arguments)
+    def request(method, key, arguments = nil)
+        Puppet::Indirector::Request.new(self.name, method, key, arguments)
     end
 
     # Return the singleton terminus for this indirection.
@@ -172,7 +172,26 @@ class Puppet::Indirector::Indirection
         end
     end
 
-    def find(request)
+    # Expire a cached object, if one is cached.  Note that we don't actually
+    # remove it, we expire it and write it back out to disk.  This way people
+    # can still use the expired object if they want.
+    def expire(key, *args)
+        request = request(:expire, key, *args)
+
+        return nil unless cache?
+
+        return nil unless instance = cache.find(key, *args)
+
+        # Set an expiration date in the past
+        instance.expiration = Time.now - 60
+
+        cache.save(instance, *args)
+    end
+
+    # Search for an instance in the appropriate terminus, caching the
+    # results if caching is configured..
+    def find(key, *args)
+        request = request(:find, key, *args)
         terminus = prepare(request)
 
         # See if our instance is in the cache and up to date.
@@ -190,9 +209,7 @@ class Puppet::Indirector::Indirection
             result.expiration ||= self.expiration
             if cache?
                 Puppet.info "Caching %s for %s" % [self.name, request.key]
-                cached_request = request.clone
-                cached_request.instance = result
-                cache.save(cached_request)
+                cache.save request(:save, result, *args)
             end
 
             return result
@@ -202,12 +219,14 @@ class Puppet::Indirector::Indirection
     end
 
     # Remove something via the terminus.
-    def destroy(request)
+    def destroy(key, *args)
+        request = request(:destroy, key, *args)
         terminus = prepare(request)
 
         terminus.destroy(request)
 
-        if cache? and cached = cache.find(request)
+        if cache? and cached = cache.find(request(:find, key, *args))
+            # Reuse the existing request, since it's equivalent.
             cache.destroy(request)
         end
 
@@ -215,17 +234,24 @@ class Puppet::Indirector::Indirection
     end
 
     # Search for more than one instance.  Should always return an array.
-    def search(request)
+    def search(key, *args)
+        request = request(:search, key, *args)
         terminus = prepare(request)
 
-        result = terminus.search(request)
+        if result = terminus.search(request)
+            raise Puppet::DevError, "Search results from terminus %s are not an array" % terminus.name unless result.is_a?(Array)
 
-        result
+            result.each do |instance|
+                instance.expiration ||= self.expiration
+            end
+            return result
+        end
     end
 
     # Save the instance in the appropriate terminus.  This method is
     # normally an instance method on the indirected class.
-    def save(request)
+    def save(instance, *args)
+        request = request(:save, instance, *args)
         terminus = prepare(request)
 
         # If caching is enabled, save our document there
@@ -238,12 +264,15 @@ class Puppet::Indirector::Indirection
     # Check authorization if there's a hook available; fail if there is one
     # and it returns false.
     def check_authorization(request, terminus)
+        # At this point, we're assuming authorization makes no sense without
+        # client information.
         return unless request.options[:node]
 
+        # This is only to authorize via a terminus-specific authorization hook.
         return unless terminus.respond_to?(:authorized?)
 
         unless terminus.authorized?(request)
-            raise ArgumentError, "Not authorized to call %s with %s" % [request.method, request.options.inspect]
+            raise ArgumentError, "Not authorized to call %s on %s with %s" % [request.method, request.key, request.options.inspect]
         end
     end
 

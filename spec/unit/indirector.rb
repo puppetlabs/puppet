@@ -60,22 +60,14 @@ describe Puppet::Indirector, "when registering an indirection" do
 end
 
 describe "Delegated Indirection Method", :shared => true do
-    it "should create an indirection request with the indirection name, the method being delegated, and all of the arguments to the method call" do
-        Puppet::Indirector::Request.expects(:new).with(@indirection.name, @method, "me", :one => :two)
-        @indirection.stubs(@method)
-        @thingie.send(@method, "me", :one => :two)
-    end
-
     it "should delegate to the indirection" do
         @indirection.expects(@method)
         @thingie.send(@method, "me")
     end
 
-    it "should pass the indirection's request instance to the indirection's method" do
-        request = mock 'request'
-        Puppet::Indirector::Request.expects(:new).returns request
-        @indirection.expects(@method).with(request)
-        @thingie.send(@method, "me")
+    it "should pass all of the passed arguments directly to the indirection instance" do
+        @indirection.expects(@method).with("me", :one => :two)
+        @thingie.send(@method, "me", :one => :two)
     end
 
     it "should return the results of the delegation as its result" do
@@ -116,16 +108,15 @@ describe Puppet::Indirector, "when redirecting a model" do
         it_should_behave_like "Delegated Indirection Method"
     end
 
+    describe "when expiring instances via the model" do
+        before { @method = :expire }
+        it_should_behave_like "Delegated Indirection Method"
+    end
+
     # This is an instance method, so it behaves a bit differently.
     describe "when saving instances via the model" do
         before do
             @instance = @thingie.new("me")
-        end
-
-        it "should pass the method name, the instance, plus all passed arguments to the indirection's request method" do
-            Puppet::Indirector::Request.expects(:new).with(@indirection.name, :save, @instance, :one => :two)
-            @indirection.stubs(:save)
-            @instance.save(:one => :two)
         end
 
         it "should delegate to the indirection" do
@@ -133,11 +124,9 @@ describe Puppet::Indirector, "when redirecting a model" do
             @instance.save
         end
 
-        it "should pass the indirection's request instance to the indirection's method" do
-            request = mock 'request'
-            Puppet::Indirector::Request.expects(:new).returns request
-            @indirection.expects(:save).with(request)
-            @instance.save
+        it "should pass the instance and all arguments to the indirection's :save method" do
+            @indirection.expects(:save).with(@instance, :one => :two)
+            @instance.save :one => :two
         end
 
         it "should return the results of the delegation as its result" do
