@@ -179,7 +179,7 @@ node.classes = classes
 
 begin
     # Compile our configuration
-    catalog = Puppet::Node::Catalog.find(node)
+    catalog = Puppet::Node::Catalog.find(node.name, :node => node)
 rescue => detail
     if Puppet[:trace]
         puts detail.backtrace

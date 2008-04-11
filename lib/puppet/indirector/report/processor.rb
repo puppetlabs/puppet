@@ -10,8 +10,8 @@ class Puppet::Transaction::Report::Processor < Puppet::Indirector::Code
         Puppet.settings.use(:main, :reporting, :metrics)
     end
 
-    def save(report)
-        process(report)
+    def save(request)
+        process(request.instance)
     end
 
     private

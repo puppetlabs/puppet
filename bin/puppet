@@ -206,7 +206,7 @@ end
 
 begin
     # Compile our catalog
-    catalog = Puppet::Node::Catalog.find(node)
+    catalog = Puppet::Node::Catalog.find(node.name, :node => node)
 
     # Translate it to a RAL catalog
     catalog = catalog.to_ral

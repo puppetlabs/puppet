@@ -106,60 +106,6 @@ describe Puppet::Indirector::Terminus do
             @terminus.model.should == :yay
         end
     end
-
-    describe Puppet::Indirector::Terminus, " when managing indirected instances" do
-
-        it "should support comparing an instance's version with the terminus's version using just the instance's key" do
-            @terminus.should respond_to(:has_most_recent?)
-        end
-
-        it "should fail if the :version method has not been overridden and no :find method is available" do
-            proc { @terminus.version('yay') }.should raise_error(Puppet::DevError)
-        end
-
-        it "should use a found instance's version by default" do
-            name = 'instance'
-            instance = stub name, :version => 2
-            @terminus.expects(:find).with(name).returns(instance)
-            @terminus.version(name).should == 2
-        end
-
-        it "should return nil as the version if no instance can be found" do
-            name = 'instance'
-            @terminus.expects(:find).with(name).returns(nil)
-            @terminus.version(name).should be_nil
-        end
-
-        it "should consider an instance fresh if its version is more recent than the version provided" do
-            name = "yay"
-            @terminus.expects(:version).with(name).returns(5)
-            @terminus.has_most_recent?(name, 4).should be_true
-        end
-
-        it "should consider an instance fresh if its version is equal to the version provided" do
-            name = "yay"
-            @terminus.expects(:version).with(name).returns(5)
-            @terminus.has_most_recent?(name, 5).should be_true
-        end
-
-        it "should consider an instance not fresh if the provided version is more recent than its version" do
-            name = "yay"
-            @terminus.expects(:version).with(name).returns(4)
-            @terminus.has_most_recent?(name, 5).should be_false
-        end
-
-        # Times annoyingly can't be compared directly to numbers, and our
-        # default version is 0.
-        it "should convert versions to floats when checking for freshness" do
-            existing = mock 'existing version'
-            new = mock 'new version'
-            existing.expects(:to_f).returns(1.0)
-            new.expects(:to_f).returns(1.0)
-            name = "yay"
-            @terminus.expects(:version).with(name).returns(existing)
-            @terminus.has_most_recent?(name, new)
-        end
-    end
 end
 
 # LAK: This could reasonably be in the Indirection instances, too.  It doesn't make

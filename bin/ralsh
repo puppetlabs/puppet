@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 # vim: softtabstop=4 shiftwidth=4 expandtab
 #
 # = Synopsis

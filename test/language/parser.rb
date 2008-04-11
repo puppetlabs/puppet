@@ -1130,7 +1130,6 @@ file { "/tmp/yayness":
         name = "sub"
         mk_module(modname, :init => %w{separate}, :sub => %w{separate::sub})
 
-        Puppet.err :yay
         # First try it with a namespace
         klass = parser.findclass("separate", name)
         assert_instance_of(AST::HostClass, klass, "Did not autoload sub class from separate file with a namespace")
@@ -1160,6 +1159,14 @@ file { "/tmp/yayness":
         klass = parser.findclass("", "alone::sub")
         assert_instance_of(AST::HostClass, klass, "Did not autoload sub class from alone file with no namespace")
         assert_equal("alone::sub", klass.classname, "Incorrect class was returned")
+
+        # and with the definition in its own file
+        name = "mymod"
+        mk_module(name, :define => true, :mydefine => ["mymod::mydefine"])
+
+        klass = parser.finddefine("", "mymod::mydefine")
+        assert_instance_of(AST::Definition, klass, "Did not autoload definition from its own file")
+        assert_equal("mymod::mydefine", klass.classname, "Incorrect definition was returned")
     end
     
     # Make sure class, node, and define methods are case-insensitive

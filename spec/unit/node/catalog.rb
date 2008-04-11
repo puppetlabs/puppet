@@ -794,14 +794,14 @@ end
 
 describe Puppet::Node::Catalog, " when indirecting" do
     before do
-        @indirection = mock 'indirection'
+        @indirection = stub 'indirection', :name => :catalog
 
         Puppet::Indirector::Indirection.clear_cache
     end
 
     it "should redirect to the indirection for retrieval" do
         Puppet::Node::Catalog.stubs(:indirection).returns(@indirection)
-        @indirection.expects(:find).with(:myconfig)
+        @indirection.expects(:find)
         Puppet::Node::Catalog.find(:myconfig)
     end
 

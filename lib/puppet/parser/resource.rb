@@ -303,6 +303,12 @@ class Puppet::Parser::Resource
         return bucket
     end
 
+    # Convert this resource to a RAL resource.  We hackishly go via the
+    # transportable stuff.
+    def to_type
+        to_trans.to_type
+    end
+
     def to_transobject
         # Now convert to a transobject
         obj = Puppet::TransObject.new(@ref.title, @ref.type)

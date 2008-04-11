@@ -11,17 +11,17 @@ class Puppet::Indirector::DirectFileServer < Puppet::Indirector::Terminus
     include Puppet::Util::URIHelper
     include Puppet::FileServing::TerminusHelper
 
-    def find(key, options = {})
-        uri = key2uri(key)
+    def find(request)
+        uri = key2uri(request.key)
         return nil unless FileTest.exists?(uri.path)
-        instance = model.new(key, :path => uri.path)
-        instance.links = options[:links] if options[:links]
+        instance = model.new(request.key, :path => uri.path)
+        instance.links = request.options[:links] if request.options[:links]
         return instance
     end
 
-    def search(key, options = {})
-        uri = key2uri(key)
+    def search(request)
+        uri = key2uri(request.key)
         return nil unless FileTest.exists?(uri.path)
-        path2instances(key, uri.path, options)
+        path2instances(request.key, uri.path, request.options)
     end
 end

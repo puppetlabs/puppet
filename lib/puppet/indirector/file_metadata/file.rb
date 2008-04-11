@@ -9,14 +9,14 @@ require 'puppet/indirector/direct_file_server'
 class Puppet::Indirector::FileMetadata::File < Puppet::Indirector::DirectFileServer
     desc "Retrieve file metadata directly from the local filesystem."
 
-    def find(key, options = {})
+    def find(request)
         return unless data = super
         data.collect_attributes
 
         return data
     end
 
-    def search(key, options = {})
+    def search(request)
         return unless result = super
 
         result.each { |instance| instance.collect_attributes }

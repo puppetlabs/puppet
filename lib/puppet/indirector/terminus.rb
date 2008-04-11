@@ -128,20 +128,6 @@ class Puppet::Indirector::Terminus
         end
     end
 
-    # Do we have an update for this object?  This compares the provided version
-    # to our version, and returns true if our version is at least as high
-    # as the asked-about version.
-    def has_most_recent?(key, vers)
-        raise Puppet::DevError.new("Cannot check update status when no 'version' method is defined") unless respond_to?(:version)
-
-        if existing_version = version(key)
-            #puts "%s fresh: %s (%s vs %s)" % [self.name, (existing_version.to_f >= vers.to_f).inspect, existing_version.to_f, vers.to_f]
-            existing_version.to_f >= vers.to_f
-        else
-            false
-        end
-    end
-
     def indirection
         self.class.indirection
     end
@@ -162,18 +148,5 @@ class Puppet::Indirector::Terminus
     
     def terminus_type
         self.class.terminus_type
-    end
-
-    # Provide a default method for retrieving an instance's version.
-    # By default, just find the resource and get its version.  Individual
-    # terminus types can override this method to provide custom definitions of
-    # 'versions'.
-    def version(name)
-        raise Puppet::DevError.new("Cannot retrieve an instance's version without a :find method") unless respond_to?(:find)
-        if instance = find(name)
-            instance.version
-        else
-            nil
-        end
     end
 end

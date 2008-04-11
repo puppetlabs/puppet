@@ -8,8 +8,16 @@ class Puppet::Node::Facts
     # the node sources.
     extend Puppet::Indirector
 
+    # We want to expire any cached nodes if the facts are saved.
+    module NodeExpirer
+        def save(instance, *args)
+            Puppet::Node.expire(instance.name)
+            super
+        end
+    end
+
     # Use the node source as the indirection terminus.
-    indirects :facts, :terminus_class => :facter
+    indirects :facts, :terminus_class => :facter, :extend => NodeExpirer
 
     attr_accessor :name, :values
 

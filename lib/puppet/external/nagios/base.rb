@@ -228,7 +228,9 @@ class Nagios::Base
 
     # This is probably a bad idea.
     def name=(value)
-        send(self.class.namevar.to_s + "=", value)
+        unless self.class.namevar.to_s == "name" 
+            send(self.class.namevar.to_s + "=", value) 
+        end    
     end
 
     def namevar
@@ -318,59 +320,64 @@ class Nagios::Base
         self.class.name
     end
 
-	# object types
-	newtype :command do
-		setparameters :command_name, :command_line
-	end
+    # object types
+    newtype :command do
+        setparameters :command_name, :command_line
+    end
 
-	newtype :contact do
+    newtype :contact do
         setparameters :contact_name, :alias, :host_notification_period,
-			:host_notification_commands, :service_notification_period,
-			:service_notification_commands,
-			:email, :pager, :service_notification_options, :host_notification_options
+            :host_notification_commands, :service_notification_period,
+            :service_notification_commands, :register, :email, :pager, 
+            :service_notification_options, :host_notification_options
 
         setsuperior "person"
-	end
+    end
 
-	newtype :contactgroup do
-		setparameters :contactgroup_name, :alias, :members
-	end
+    newtype :contactgroup do
+        setparameters :contactgroup_name, :alias, :members
+    end
 
-	newtype :host do
+    newtype :host do
         setparameters :host_name, :notifications_enabled, :event_handler_enabled,
-			:flap_detection_enabled, :process_perf_data, :retain_status_information,
-			:retain_nonstatus_information, :register, :use, :alias,
-			:address, :check_command, :max_check_attempts, :notification_interval,
-			:notification_period, :notification_options, :checks_enabled,
-            :failure_prediction_enabled, :parents
+            :flap_detection_enabled, :process_perf_data, :retain_status_information,
+            :retain_nonstatus_information, :register, :use, :alias,
+            :address, :check_command, :max_check_attempts, :notification_interval,
+            :notification_period, :notification_options, :checks_enabled,
+            :failure_prediction_enabled, :parents, :contact_groups
 
         setsuperior "person"
-
         map :address => "ipHostNumber"
-	end
+    end
 
-	newtype :hostextinfo do
-		auxiliary = true
-
+    newtype :hostextinfo do
+        auxiliary = true
         setparameters :host_name, :notes_url, :icon_image, :icon_image_alt, :vrml_image,
-			"2d_coords".intern, "3d_coords".intern
+            "2d_coords".intern, "3d_coords".intern
 
         setnamevar :host_name
-	end
+    end
 
-	newtype :hostgroup do
+    newtype :hostgroup do
         setparameters :hostgroup_name, :alias, :contact_groups, :members
-	end
+    end
 
-	newtype :hostgroupescalation do
-		auxiliary = true
+    newtype :hostescalation do
+        setparameters :name, :first_notification, :last_notification,
+            :notification_interval, :contact_groups,
+            :escalation_options, :register, :hostgroup_name
+        setnamevar :name
+    end              
+
+    newtype :hostgroupescalation do
+        auxiliary = true
         setparameters :hostgroup_name, :first_notification, :last_notification,
-			:contact_groups, :notification_interval
+            :contact_groups, :notification_interval
 
         setnamevar :hostgroup_name
-	end
+    end
 
-	newtype :service do
+    newtype :service do
         attach :host => :host_name
         setparameters :name, :active_checks_enabled, :passive_checks_enabled,
             :parallelize_check, :obsess_over_service, :check_freshness,
@@ -381,41 +388,48 @@ class Nagios::Base
             :normal_check_interval, :retry_check_interval, :contact_groups,
             :notification_interval, :notification_period, :notification_options,
             :service_description, :host_name, :freshness_threshold,
-            :check_command
+            :check_command, :hostgroup_name, :event_handler, :servicegroups, :host
 
         suppress :host_name
 
         setnamevar :service_description
-	end
+    end
 
-	newtype :servicedependency do
+    newtype :servicedependency do
         auxiliary = true
         setparameters :host_name, :service_description, :dependent_host_name,
-			:dependent_service_description, :execution_failure_criteria,
-			:notification_failure_criteria
-
-        setnamevar :host_name
-	end
-
-    newtype :serviceescalation do
-        setparameters :host_name, :service_description, :first_notification,
-            :last_notification, :contact_groups, :notification_interval
+            :dependent_service_description, :execution_failure_criteria,
+            :notification_failure_criteria, :hostgroup_name, 
+            :dependent_hostgroup_name
 
         setnamevar :host_name
     end
 
-	newtype :serviceextinfo do
+    newtype :serviceescalation do
+        setparameters :host_name, :service_description, :first_notification,
+            :last_notification, :contact_groups, :notification_interval, :hostgroup_name
+
+        setnamevar :host_name
+    end
+
+    newtype :servicegroup do
+        setparameters :servicegroup_name, :alias
+
+        setnamevar :servicegroup_name
+    end
+
+    newtype :serviceextinfo do
         auxiliary = true
 
         setparameters :host_name, :service_description, :icon_image, :icon_image_alt
 
         setnamevar :host_name
-	end
+    end
 
-	newtype :timeperiod do
-        setparameters :timeperiod_name, :alias, :sunday, :monday, :tuesday, :wednesday,
-			:thursday, :friday, :saturday
-	end
+    newtype :timeperiod do
+        setparameters :timeperiod_name, :alias, :sunday, :monday, :tuesday,
+            :wednesday, :thursday, :friday, :saturday
+    end
 end
 
 # $Id$

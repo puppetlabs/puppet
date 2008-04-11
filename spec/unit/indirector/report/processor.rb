@@ -13,7 +13,6 @@ describe Puppet::Transaction::Report::Processor do
     end
 end
 
-
 describe Puppet::Transaction::Report::Processor, " when saving a report" do
     before do
         Puppet.settings.stubs(:use)
@@ -24,7 +23,9 @@ describe Puppet::Transaction::Report::Processor, " when saving a report" do
         Puppet::Reports.expects(:report).never
         Puppet.settings.expects(:value).with(:reports).returns("none")
 
-        @reporter.save(:whatever)
+        request = stub 'request', :instance => mock("report")
+
+        @reporter.save(request)
     end
 
     it "should process the report with each configured report type" do
@@ -44,6 +45,9 @@ describe Puppet::Transaction::Report::Processor, " when processing a report" do
         @dup_report.stubs(:process)
         @report = mock 'report'
         @report.expects(:dup).returns(@dup_report)
+
+        @request = stub 'request', :instance => @report
+
         Puppet::Reports.expects(:report).with("one").returns(@report_type)
 
         @dup_report.expects(:extend).with(@report_type)
@@ -53,21 +57,21 @@ describe Puppet::Transaction::Report::Processor, " when processing a report" do
     # make sense to split it out, which means I just do the same test
     # three times so the spec looks right.
     it "should process a duplicate of the report, not the original" do
-        @reporter.save(@report)
+        @reporter.save(@request)
     end
 
     it "should extend the report with the report type's module" do
-        @reporter.save(@report)
+        @reporter.save(@request)
     end
 
     it "should call the report type's :process method" do
         @dup_report.expects(:process)
-        @reporter.save(@report)
+        @reporter.save(@request)
     end
 
     it "should not raise exceptions" do
         Puppet.settings.stubs(:value).with(:trace).returns(false)
         @dup_report.expects(:process).raises(ArgumentError)
-        proc { @reporter.save(@report) }.should_not raise_error
+        proc { @reporter.save(@request) }.should_not raise_error
     end
 end

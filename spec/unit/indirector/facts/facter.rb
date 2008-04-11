@@ -36,22 +36,22 @@ describe Puppet::Node::Facts::Facter do
         @facter = Puppet::Node::Facts::Facter.new
         Facter.stubs(:to_hash).returns({})
         @name = "me"
-        @facts = @facter.find(@name)
+        @request = stub 'request', :key => @name
     end
 
     describe Puppet::Node::Facts::Facter, " when finding facts" do
 
         it "should return a Facts instance" do
-            @facts.should be_instance_of(Puppet::Node::Facts)
+            @facter.find(@request).should be_instance_of(Puppet::Node::Facts)
         end
 
         it "should return a Facts instance with the provided key as the name" do
-            @facts.name.should == @name
+            @facter.find(@request).name.should == @name
         end
 
         it "should return the Facter facts as the values in the Facts instance" do
             Facter.expects(:to_hash).returns("one" => "two")
-            facts = @facter.find(@name)
+            facts = @facter.find(@request)
             facts.values["one"].should == "two"
         end
     end

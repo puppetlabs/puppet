@@ -1,3 +1,38 @@
+    Resources now return the 'should' value for properties from
+    the [] accessor method (they previously threw an exception when
+    this method was used with properties).  This shouldn't have any
+    affect functionally; it just makes the method equivalent to 'should'
+    for properties, but it works for all attribute types now.
+
+    Modified the 'master' handler to use the Catalog class to
+    compile node configurations, rather than using the Configuration
+    handler, which was never used directly.  I removed the Configuration
+    handler as a result.
+
+    Modified the 'master' handler (responsible for sending configurations
+    to clients) to always return Time.now as its compile date, so
+    configurations will always get recompiled.
+
+    Fixed #1184 -- definitions now autoload correctly all of the time.
+
+    Removed the code from the client that tries to avoid recompiling
+    the catalog. The client will now always recompile, assuming it
+    can reach the server.  It will still use the cached config if
+    there's a failure.
+
+    Fixing #1173 -- classes and definitions can now have the same
+    name as a directory with no failures.
+
+    Saving new facts now expires any cached node information.
+
+    Switching how caching is handled, so that objects now all
+    have an expiration date associated with them.  This makes it
+    much easier to know whether a given cached object should be used
+    or if it should be regenerated.
+
+    Changing the default environment to production.
+
+0.24.4
     Pass source to pkg_add via the PKG_PATH environment variable if
     it ends in a '/' indicating it is a directory. Allows pkg_add
     to resolve dependancies, and make it possible to specify packages

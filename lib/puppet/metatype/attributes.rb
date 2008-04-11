@@ -477,13 +477,9 @@ class Puppet::Type
         end
 
         if obj = @parameters[name]
-            # We throw a failure here, because this method is too
-            # ambiguous when used with properties.
-            if obj.is_a?(Puppet::Property)
-                fail "[] called on a property"
-            else
-                return obj.value
-            end
+            # Note that if this is a property, then the value is the "should" value,
+            # not the current value.
+            obj.value
         else
             return nil
         end

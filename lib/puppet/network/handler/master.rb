@@ -23,8 +23,8 @@ class Puppet::Network::Handler
 
         # Tell a client whether there's a fresh config for it
         def freshness(client = nil, clientip = nil)
-            client ||= Facter.value("hostname")
-            config_handler.version(client, clientip)
+            # Always force a recompile.  Newer clients shouldn't do this (as of April 2008).
+            Time.now
         end
 
         def initialize(hash = {})
@@ -51,8 +51,6 @@ class Puppet::Network::Handler
             if hash.include?(:Classes)
                 args[:Classes] = hash[:Classes]
             end
-
-            @config_handler = Puppet::Network::Handler.handler(:configuration).new(args)
         end
 
         # Call our various handlers; this handler is getting deprecated.
@@ -63,13 +61,9 @@ class Puppet::Network::Handler
             # Pass the facts to the fact handler
             Puppet::Node::Facts.new(client, facts).save unless local?
 
-            # And get the configuration from the config handler
-            config = nil
-            benchmark(:notice, "Compiled configuration for %s" % client) do
-                config = config_handler.configuration(client)
-            end
+            catalog = Puppet::Node::Catalog.find(client)
 
-            return translate(config.extract)
+            return translate(catalog.extract)
         end
 
         private
@@ -91,13 +85,6 @@ class Puppet::Network::Handler
             end
 
             return client, clientip
-        end
-
-        def config_handler
-            unless defined? @config_handler
-                @config_handler = Puppet::Network::Handler.handler(:config).new :local => local?
-            end
-            @config_handler
         end
 
         # 

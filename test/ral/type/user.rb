@@ -362,6 +362,12 @@ class TestUser < Test::Unit::TestCase
         user.delete(:groups)
     end
 
+    def test_groups_list_must_not_contain_commas
+        assert_raise(Puppet::Error) do
+            Puppet::Type.type(:user).create :name => "luke", :groups => "root,adm"
+        end
+    end
+
     def test_autorequire
         file = tempfile()
         comp = nil

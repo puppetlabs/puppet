@@ -5,56 +5,48 @@
 ;;; Description: A simple mode for editing puppet manifests
 ;;;
 
-(defconst puppet-mode-version "0.0.1")
+(defconst puppet-mode-version "0.1")
 
 (defvar puppet-mode-abbrev-table nil
   "Abbrev table in use in puppet-mode buffers.")
 
 (define-abbrev-table 'puppet-mode-abbrev-table ())
 
-(defvar puppet-mode-map nil "Keymap used in puppet mode.")
+(defcustom puppet-indent-level 2
+  "*Indentation of Puppet statements."
+  :type 'integer :group 'puppet)
 
-(if puppet-mode-map
-    nil
-   (setq puppet-mode-map (make-sparse-keymap))
-;;   (define-key puppet-mode-map "{" 'puppet-electric-brace)
-;;   (define-key puppet-mode-map "}" 'puppet-electric-brace)
-;;   (define-key puppet-mode-map "\e\C-a" 'puppet-beginning-of-defun)
-;;   (define-key puppet-mode-map "\e\C-e" 'puppet-end-of-defun)
-;;   (define-key puppet-mode-map "\e\C-b" 'puppet-backward-sexp)
-;;   (define-key puppet-mode-map "\e\C-f" 'puppet-forward-sexp)
-;;   (define-key puppet-mode-map "\e\C-p" 'puppet-beginning-of-block)
-;;   (define-key puppet-mode-map "\e\C-n" 'puppet-end-of-block)
-;;   (define-key puppet-mode-map "\e\C-h" 'puppet-mark-defun)
-;;   (define-key puppet-mode-map "\e\C-q" 'puppet-indent-exp)
-;;   (define-key puppet-mode-map "\t" 'puppet-indent-command)
-;;   (define-key puppet-mode-map "\C-c\C-e" 'puppet-insert-end)
-;;   (define-key puppet-mode-map "\C-j" 'puppet-reindent-then-newline-and-indent)
-  (define-key puppet-mode-map "\C-m" 'newline))
+(defcustom puppet-include-indent 2
+  "*Indentation of continued Puppet include statements."
+  :type 'integer :group 'puppet)
 
-(defvar puppet-mode-syntax-table nil
+(defvar puppet-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map "\C-j" 'newline-and-indent)
+    (define-key map "\C-m" 'newline-and-indent)
+    map)
+  "Key map used in puppet-mode buffers.")
+
+(defvar puppet-mode-syntax-table
+  (let ((table (make-syntax-table)))
+    (modify-syntax-entry ?\' "\"" table)
+    (modify-syntax-entry ?\" "\"" table)
+    (modify-syntax-entry ?#  "<"  table)
+    (modify-syntax-entry ?\n ">"  table)
+    (modify-syntax-entry ?\\ "\\" table)
+    (modify-syntax-entry ?$  "."  table)
+    (modify-syntax-entry ?-  "_"  table)
+    (modify-syntax-entry ?>  "."  table)
+    (modify-syntax-entry ?=  "."  table)
+    (modify-syntax-entry ?\; "."  table)
+    (modify-syntax-entry ?\( "()" table)
+    (modify-syntax-entry ?\) ")(" table)
+    (modify-syntax-entry ?\{ "(}" table)
+    (modify-syntax-entry ?\} "){" table)
+    (modify-syntax-entry ?\[ "(]" table)
+    (modify-syntax-entry ?\] ")[" table)
+    table)
   "Syntax table in use in puppet-mode buffers.")
-
-(if puppet-mode-syntax-table
-    ()
-  (setq puppet-mode-syntax-table (make-syntax-table))
-  (modify-syntax-entry ?\' "\"" puppet-mode-syntax-table)
-  (modify-syntax-entry ?\" "\"" puppet-mode-syntax-table)
-  (modify-syntax-entry ?# "<" puppet-mode-syntax-table)
-  (modify-syntax-entry ?\n ">" puppet-mode-syntax-table)
-  (modify-syntax-entry ?\\ "\\" puppet-mode-syntax-table)
-  (modify-syntax-entry ?$ "." puppet-mode-syntax-table)
-  (modify-syntax-entry ?- "_" puppet-mode-syntax-table)
-  (modify-syntax-entry ?> "." puppet-mode-syntax-table)
-  (modify-syntax-entry ?= "." puppet-mode-syntax-table)
-  (modify-syntax-entry ?\; "." puppet-mode-syntax-table)
-  (modify-syntax-entry ?\( "()" puppet-mode-syntax-table)
-  (modify-syntax-entry ?\) ")(" puppet-mode-syntax-table)
-  (modify-syntax-entry ?\{ "(}" puppet-mode-syntax-table)
-  (modify-syntax-entry ?\} "){" puppet-mode-syntax-table)
-  (modify-syntax-entry ?\[ "(]" puppet-mode-syntax-table)
-  (modify-syntax-entry ?\] ")[" puppet-mode-syntax-table)
-  )
 
 (defcustom puppet-indent-tabs-mode nil
   "*Indentation can insert tabs in puppet mode if this is non-nil."
@@ -63,31 +55,6 @@
 (defcustom puppet-comment-column 32
   "*Indentation column of comments."
   :type 'integer :group 'puppet)
-
-(defun puppet-mode-variables ()
-  (set-syntax-table puppet-mode-syntax-table)
-  (setq local-abbrev-table puppet-mode-abbrev-table)
-  ;(make-local-variable 'indent-line-function)
-  ;(setq indent-line-function 'ruby-indent-line)
-  (make-local-variable 'require-final-newline)
-  (setq require-final-newline t)
-  (make-variable-buffer-local 'comment-start)
-  (setq comment-start "# ")
-  (make-variable-buffer-local 'comment-end)
-  (setq comment-end "")
-  (make-variable-buffer-local 'comment-column)
-  (setq comment-column puppet-comment-column)
-  (make-variable-buffer-local 'comment-start-skip)
-  (setq comment-start-skip "#+ *")
-  (setq indent-tabs-mode puppet-indent-tabs-mode)
-  (make-local-variable 'parse-sexp-ignore-comments)
-  (setq parse-sexp-ignore-comments t)
-  (make-local-variable 'paragraph-start)
-  (setq paragraph-start (concat "$\\|" page-delimiter))
-  (make-local-variable 'paragraph-separate)
-  (setq paragraph-separate paragraph-start)
-  (make-local-variable 'paragraph-ignore-fill-prefix)
-  (setq paragraph-ignore-fill-prefix t))
 
 (defun puppet-comment-line-p ()
   "Return non-nil iff this line is a comment."
@@ -113,6 +80,27 @@ that array, else return nil."
           (if (= (count-matches "\\]" apoint opoint) 0)
               apoint))))))
 
+(defun puppet-in-include ()
+  "If point is in a continued list of include statements, return the position
+of the initial include plus puppet-include-indent."
+  (save-excursion
+    (save-match-data
+      (let ((include-column nil)
+            (not-found t))
+        (while not-found
+          (forward-line -1)
+          (cond
+             ((puppet-comment-line-p)
+              (if (bobp)
+                  (setq not-found nil)))
+             ((looking-at "^\\s-*include\\s-+.*,\\s-*$")
+              (setq include-column
+                    (+ (current-indentation) puppet-include-indent))
+              (setq not-found nil))
+             ((not (looking-at ".*,\\s-*$"))
+              (setq not-found nil))))
+        include-column))))
+
 (defun puppet-indent-line ()
   "Indent current line as puppet code."
   (interactive)
@@ -121,6 +109,7 @@ that array, else return nil."
       (indent-line-to 0)                ; First line is always non-indented
     (let ((not-indented t)
           (array-start (puppet-in-array))
+          (include-start (puppet-in-include))
           cur-indent)
       (cond
        (array-start
@@ -155,6 +144,8 @@ that array, else return nil."
           (re-search-forward "\\S-")
           (forward-char -1)
           (setq cur-indent (current-column))))
+       (include-start
+        (setq cur-indent include-start))
        ((looking-at "^[^{\n]*}")
         ;; This line contains the end of a block, but the block does
         ;; not also begin on this line, so decrease the indentation.
@@ -162,9 +153,9 @@ that array, else return nil."
           (forward-line -1)
           (if (looking-at "^.*}")
               (progn
-                (setq cur-indent (- (current-indentation) 2))
+                (setq cur-indent (- (current-indentation) puppet-indent-level))
                 (setq not-indented nil))
-            (setq cur-indent (- (current-indentation) 2))))
+            (setq cur-indent (- (current-indentation) puppet-indent-level))))
         (if (< cur-indent 0)     ; We can't indent past the left margin
             (setq cur-indent 0)))
        (t
@@ -183,7 +174,13 @@ that array, else return nil."
               (setq cur-indent (current-indentation))
               (setq not-indented nil))
              ((looking-at "^.*{") ; indent an extra level
-              (setq cur-indent (+ (current-indentation) 2)) 
+              (setq cur-indent (+ (current-indentation) puppet-indent-level)) 
+              (setq not-indented nil))
+             ((looking-at "^.*;\\s-*$") ; Semicolon ends a nested resource
+              (setq cur-indent (- (current-indentation) puppet-indent-level))
+              (setq not-indented nil))
+             ((looking-at "^.*:\\s-*$") ; indent an extra level after :
+              (setq cur-indent (+ (current-indentation) puppet-indent-level))
               (setq not-indented nil))
              ((bobp)
               (setq not-indented nil))
@@ -204,12 +201,19 @@ The variable puppet-indent-level controls the amount of indentation.
   (use-local-map puppet-mode-map)
   (setq mode-name "Puppet")
   (setq major-mode 'puppet-mode)
-  (puppet-mode-variables)
- ;; Register our indentation function
-  (set (make-local-variable 'indent-line-function) 'puppet-indent-line)  
+  (set-syntax-table puppet-mode-syntax-table)
+  (set (make-local-variable 'local-abbrev-table) puppet-mode-abbrev-table)
+  (set (make-local-variable 'comment-start) "# ")
+  (set (make-local-variable 'comment-start-skip) "#+ *")
+  (set (make-local-variable 'comment-end) "")
+  (set (make-local-variable 'comment-column) puppet-comment-column)
+  (set (make-local-variable 'indent-line-function) 'puppet-indent-line)
+  (set (make-local-variable 'indent-tabs-mode) puppet-indent-tabs-mode)
+  (set (make-local-variable 'require-final-newline) t)
+  (set (make-local-variable 'paragraph-ignore-fill-prefix) t)
+  (set (make-local-variable 'paragraph-start) "\f\\|[ 	]*$")
+  (set (make-local-variable 'paragraph-separate) "[ 	\f]*$")
   (run-hooks 'puppet-mode-hook))
-
-
 
 (cond
  ((featurep 'font-lock)
@@ -253,8 +257,13 @@ The variable puppet-indent-level controls the amount of indentation.
      ;; defines
      '("^\\s *\\(define\\|node\\|class\\)\\s +\\([^( \t\n]+\\)"
        2 font-lock-function-name-face)
+     '("\\s +inherits\\s +\\([^( \t\n]+\\)"
+       1 font-lock-function-name-face)
      ;; include
-     '("^\\s *include\\s +\\([^( \t\n]+\\)"
+     '("^\\s *include\\s +\\([^( \t\n,]+\\)"
+       1 font-lock-reference-face)
+     ;; hack to catch continued includes
+     '("^\\s *\\([a-zA-Z0-9:_-]+\\),?\\s *$"
        1 font-lock-reference-face)
      ;; keywords
      (cons (concat
@@ -270,6 +279,7 @@ The variable puppet-indent-level controls the amount of indentation.
                "include"
                "inherits"
                "node"
+               "realize"
                "true"
                )
              "\\|")
@@ -284,7 +294,10 @@ The variable puppet-indent-level controls the amount of indentation.
      '("\\(\\$\\|@\\|@@\\)\\(\\w\\|_\\)+"
        0 font-lock-variable-name-face)
      ;; usage of types
-     '("^\\s +\\([a-zA-Z-]+\\)\\s +{" 
+     '("^\\s +\\([a-zA-Z_-]+\\)\\s +{" 
+       1 font-lock-type-face)
+     ;; overrides
+     '("^\\s +\\([a-zA-Z_-]+\\)\\["
        1 font-lock-type-face)
      ;; general delimited string
      '("\\(^\\|[[ \t\n<+(,=]\\)\\(%[xrqQwW]?\\([^<[{(a-zA-Z0-9 \n]\\)[^\n\\\\]*\\(\\\\.[^\n\\\\]*\\)*\\(\\3\\)\\)"

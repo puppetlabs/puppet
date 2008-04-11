@@ -12,7 +12,8 @@ module Puppet::FileServing::IndirectionHooks
     PROTOCOL_MAP = {"puppet" => :rest, "file" => :file, "puppetmounts" => :file_server}
 
     # Pick an appropriate terminus based on the protocol.
-    def select_terminus(full_uri, options = {})
+    def select_terminus(request)
+        full_uri = request.key
         # Short-circuit to :file if it's a fully-qualified path.
         return PROTOCOL_MAP["file"] if full_uri =~ /^#{::File::SEPARATOR}/
         begin
@@ -29,11 +30,12 @@ module Puppet::FileServing::IndirectionHooks
             terminus = :file_server
         end
 
+        # This is the backward-compatible module terminus.
         if terminus == :file_server and uri.path =~ %r{^/([^/]+)\b}
             modname = $1
             if modname == "modules"
                 terminus = :modules
-            elsif terminus(:modules).find_module(modname, options[:node])
+            elsif terminus(:modules).find_module(modname, request.options[:node])
                 Puppet.warning "DEPRECATION NOTICE: Found file '%s' in module without using the 'modules' mount; please prefix path with '/modules'" % uri.path
                 terminus = :modules
             end

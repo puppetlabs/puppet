@@ -21,6 +21,10 @@ describe Puppet::Indirector, "when registering an indirection" do
     before do
         @thingie = Class.new do
             extend Puppet::Indirector
+            attr_reader :name
+            def initialize(name)
+                @name = name
+            end
         end
     end
 
@@ -55,48 +59,81 @@ describe Puppet::Indirector, "when registering an indirection" do
     end
 end
 
-describe Puppet::Indirector, " when redirecting a model" do
+describe "Delegated Indirection Method", :shared => true do
+    it "should delegate to the indirection" do
+        @indirection.expects(@method)
+        @thingie.send(@method, "me")
+    end
+
+    it "should pass all of the passed arguments directly to the indirection instance" do
+        @indirection.expects(@method).with("me", :one => :two)
+        @thingie.send(@method, "me", :one => :two)
+    end
+
+    it "should return the results of the delegation as its result" do
+        request = mock 'request'
+        @indirection.expects(@method).returns "yay"
+        @thingie.send(@method, "me").should == "yay"
+    end
+end
+
+describe Puppet::Indirector, "when redirecting a model" do
     before do
         @thingie = Class.new do
             extend Puppet::Indirector
+            attr_reader :name
+            def initialize(name)
+                @name = name
+            end
         end
         @indirection = @thingie.send(:indirects, :test)
     end
 
-    it "should give the model the ability set a version" do
-        thing = @thingie.new
-        thing.should respond_to(:version=)
+    it "should include the Envelope module in the model" do
+        @thingie.ancestors.should be_include(Puppet::Indirector::Envelope)
     end
 
-    it "should give the model the ability retrieve a version" do
-        thing = @thingie.new
-        thing.should respond_to(:version)
+    describe "when finding instances via the model" do
+        before { @method = :find }
+        it_should_behave_like "Delegated Indirection Method"
     end
 
-    it "should give the model the ability to lookup a model instance by letting the indirection perform the lookup" do
-        @indirection.expects(:find)
-        @thingie.find
+    describe "when destroying instances via the model" do
+        before { @method = :destroy }
+        it_should_behave_like "Delegated Indirection Method"
     end
 
-    it "should give the model the ability to remove model instances from a terminus by letting the indirection remove the instance" do
-        @indirection.expects(:destroy)
-        @thingie.destroy  
+    describe "when searching for instances via the model" do
+        before { @method = :search }
+        it_should_behave_like "Delegated Indirection Method"
     end
 
-    it "should give the model the ability to search for model instances by letting the indirection find the matching instances" do
-        @indirection.expects(:search)
-        @thingie.search    
+    describe "when expiring instances via the model" do
+        before { @method = :expire }
+        it_should_behave_like "Delegated Indirection Method"
     end
 
-    it "should give the model the ability to store a model instance by letting the indirection store the instance" do
-        thing = @thingie.new
-        @indirection.expects(:save).with(thing)
-        thing.save        
-    end
+    # This is an instance method, so it behaves a bit differently.
+    describe "when saving instances via the model" do
+        before do
+            @instance = @thingie.new("me")
+        end
 
-    it "should give the model the ability to look up an instance's version by letting the indirection perform the lookup" do
-        @indirection.expects(:version).with(:thing)
-        @thingie.version(:thing)        
+        it "should delegate to the indirection" do
+            @indirection.expects(:save)
+            @instance.save
+        end
+
+        it "should pass the instance and all arguments to the indirection's :save method" do
+            @indirection.expects(:save).with(@instance, :one => :two)
+            @instance.save :one => :two
+        end
+
+        it "should return the results of the delegation as its result" do
+            request = mock 'request'
+            @indirection.expects(:save).returns "yay"
+            @instance.save.should == "yay"
+        end
     end
 
     it "should give the model the ability to set the indirection terminus class" do

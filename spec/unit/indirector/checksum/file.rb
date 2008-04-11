@@ -38,6 +38,8 @@ describe Puppet::Checksum::File do
         Puppet.stubs(:[]).with(:bucketdir).returns(@dir)
 
         @path = @store.path(@value)
+
+        @request = stub 'request', :key => @value
     end
 
 
@@ -76,7 +78,7 @@ describe Puppet::Checksum::File do
         # The smallest test that will use the calculated path
         it "should look for the calculated path" do
             File.expects(:exist?).with(@path).returns(false)
-            @store.find(@value)
+            @store.find(@request)
         end
 
         it "should return an instance of Puppet::Checksum created with the content if the file exists" do
@@ -87,18 +89,18 @@ describe Puppet::Checksum::File do
             File.expects(:exist?).with(@path).returns(true)
             File.expects(:read).with(@path).returns(content)
 
-            @store.find(@value).should equal(sum)
+            @store.find(@request).should equal(sum)
         end
 
         it "should return nil if no file is found" do
             File.expects(:exist?).with(@path).returns(false)
-            @store.find(@value).should be_nil
+            @store.find(@request).should be_nil
         end
 
         it "should fail intelligently if a found file cannot be read" do
             File.expects(:exist?).with(@path).returns(true)
             File.expects(:read).with(@path).raises(RuntimeError)
-            proc { @store.find(@value) }.should raise_error(Puppet::Error)
+            proc { @store.find(@request) }.should raise_error(Puppet::Error)
         end
     end
 
@@ -112,7 +114,7 @@ describe Puppet::Checksum::File do
             File.expects(:open).with(@path, "w")
 
             file = stub 'file', :name => @value
-            @store.save(file)
+            @store.save(@request)
         end
 
         it "should make any directories necessary for storage" do
@@ -122,19 +124,16 @@ describe Puppet::Checksum::File do
             File.expects(:directory?).with(File.dirname(@path)).returns(true)
             File.expects(:open).with(@path, "w")
 
-            file = stub 'file', :name => @value
-            @store.save(file)
+            @store.save(@request)
         end
     end
 
     describe Puppet::Checksum::File, " when deleting files" do
-
         it "should remove the file at the calculated path" do
             File.expects(:exist?).with(@path).returns(true)
             File.expects(:unlink).with(@path)
 
-            file = stub 'file', :name => @value
-            @store.destroy(file)
+            @store.destroy(@request)
         end
     end
 end

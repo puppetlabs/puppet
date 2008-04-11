@@ -6,7 +6,7 @@ require 'puppet/node/facts'
 
 describe Puppet::Node::Facts, " when indirecting" do
     before do
-        @indirection = mock 'indirection'
+        @indirection = stub 'indirection', :request => mock('request'), :name => :facts
 
         # We have to clear the cache so that the facts ask for our indirection stub,
         # instead of anything that might be cached.
@@ -16,13 +16,13 @@ describe Puppet::Node::Facts, " when indirecting" do
 
     it "should redirect to the specified fact store for retrieval" do
         Puppet::Node::Facts.stubs(:indirection).returns(@indirection)
-        @indirection.expects(:find).with(:my_facts)
+        @indirection.expects(:find)
         Puppet::Node::Facts.find(:my_facts)
     end
 
     it "should redirect to the specified fact store for storage" do
         Puppet::Node::Facts.stubs(:indirection).returns(@indirection)
-        @indirection.expects(:save).with(@facts)
+        @indirection.expects(:save)
         @facts.save
     end
 

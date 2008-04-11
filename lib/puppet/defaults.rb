@@ -128,7 +128,7 @@ module Puppet
             This is more useful as a server-side setting than client, but any
             environment chosen must be in this list.  Values should be
             separated by a comma."],
-        :environment => {:default => "development", :desc => "The environment Puppet is running in.  For clients
+        :environment => {:default => "production", :desc => "The environment Puppet is running in.  For clients
             (e.g., ``puppetd``) this determines the environment itself, which
             is used to find modules and much more.  For servers (i.e.,
             ``puppetmasterd``) this provides the default environment for nodes

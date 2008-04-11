@@ -49,6 +49,8 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     end
 
     # Return the list of dynamic facts as an array of symbols
+    # NOTE:LAK(2008/04/10): This code is currently unused, since we now always
+    # recompile.
     def self.dynamic_facts
         # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
         x = Puppet.settings[:dynamicfacts].split(/\s*,\s*/).collect { |fact| fact.downcase }
@@ -96,31 +98,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         end
     end
 
-    # Check whether our catalog is up to date
-    def fresh?(facts)
-        if Puppet[:ignorecache]
-            Puppet.notice "Ignoring cache"
-            return false
-        end
-        unless self.compile_time
-            Puppet.debug "No cached compile time"
-            return false
-        end
-        if facts_changed?(facts)
-            Puppet.info "Facts have changed; recompiling" unless local?
-            return false
-        end
-
-        newcompile = @driver.freshness
-        # We're willing to give a 2 second drift
-        if newcompile - @compile_time.to_i < 1
-            return true
-        else
-            Puppet.debug "Server compile time is %s vs %s" % [newcompile, @compile_time.to_i]
-            return false
-        end
-    end
-
     # Let the daemon run again, freely in the filesystem.  Frolick, little
     # daemon!
     def enable
@@ -146,11 +123,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
 
         # Retrieve the plugins.
         getplugins() if Puppet[:pluginsync]
-
-        if (self.catalog or FileTest.exist?(self.cachefile)) and self.fresh?(facts)
-            Puppet.info "Configuration is up to date"
-            return if use_cached_config
-        end
 
         Puppet.debug("Retrieving catalog")
 
@@ -450,32 +422,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
 
     loadfacts()
 
-    # Have the facts changed since we last compiled?
-    def facts_changed?(facts)
-        oldfacts = (Puppet::Util::Storage.cache(:configuration)[:facts] || {}).dup
-        newfacts = facts.dup
-        self.class.dynamic_facts.each do |fact|
-            [oldfacts, newfacts].each do |facthash|
-                facthash.delete(fact) if facthash.include?(fact)
-            end
-        end
-
-        if oldfacts == newfacts
-            return false
-        else
-#            unless oldfacts
-#                puts "no old facts"
-#                return true
-#            end
-#            newfacts.keys.each do |k|
-#                unless newfacts[k] == oldfacts[k]
-#                    puts "%s: %s vs %s" % [k, newfacts[k], oldfacts[k]]
-#                end
-#            end
-            return true
-        end
-    end
-    
     # Actually retrieve the catalog, either from the server or from a
     # local master.
     def get_actual_config(facts)

@@ -220,6 +220,9 @@ module Puppet
                 if value =~ /^\d+$/
                     raise ArgumentError, "Group names must be provided, not numbers"
                 end
+                if value.include?(",")
+                    raise ArgumentError, "Group names must be provided as an array, not a comma-separated list"
+                end
             end
         end
 

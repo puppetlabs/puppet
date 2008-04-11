@@ -3,9 +3,9 @@ require 'puppet/util'
 
 class Puppet::Indirector::Exec < Puppet::Indirector::Terminus
     # Look for external node definitions.
-    def find(name)
+    def find(request)
         # Run the command.
-        unless output = query(name)
+        unless output = query(request.key)
             return nil
         end
 

@@ -15,20 +15,13 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
     end
 
     # Look for external node definitions.
-    def find(name)
+    def find(request)
         output = super or return nil
 
         # Translate the output to ruby.
-        result = translate(name, output)
+        result = translate(request.key, output)
 
-        return create_node(name, result)
-    end
-
-    # Use the version of the facts, since we assume that's the main thing
-    # that changes.  If someone wants their own way of defining version,
-    # they can easily provide their own, um, version of this class.
-    def version(name)
-        Puppet::Node::Facts.version(name)
+        return create_node(request.key, result)
     end
 
     private

@@ -13,15 +13,13 @@ class Puppet::Node::Catalog::Compiler < Puppet::Indirector::Code
     attr_accessor :code
 
     # Compile a node's catalog.
-    def find(key, client = nil, clientip = nil)
-        if key.is_a?(Puppet::Node)
-            node = key
-        else
-            node = find_node(key)
+    def find(request)
+        unless node = request.options[:node] || find_node(request.key)
+            raise ArgumentError, "Could not find node '%s'; cannot compile" % request.key
         end
 
         if catalog = compile(node)
-            return catalog.to_transportable
+            return catalog
         else
             # This shouldn't actually happen; we should either return
             # a config or raise an exception.
@@ -44,22 +42,6 @@ class Puppet::Node::Catalog::Compiler < Puppet::Indirector::Code
     # Is our compiler part of a network, or are we just local?
     def networked?
         $0 =~ /puppetmasterd/
-    end
-
-    # Return the catalog version.  Here we're returning the
-    # latest of the node, fact, or parse date.  These are the
-    # three things that go into compiling a client catalog,
-    # so changes in any of them result in changes.
-    # LAK:FIXME Note that this only works when all three sources
-    # use timestamps; once one of them moves to using real versions,
-    # the comparison stops working.
-    def version(key)
-        if node = Puppet::Node.find_by_any_name(key)
-            return [Puppet::Node.version(key).to_f, Puppet::Node::Facts.version(key).to_f, interpreter.catalog_version(node).to_f].sort[-1]
-        else
-            # This is the standard for "got nothing for ya".
-            0
-        end
     end
 
     private
@@ -102,16 +84,12 @@ class Puppet::Node::Catalog::Compiler < Puppet::Indirector::Code
     def find_node(key)
         # If we want to use the cert name as our key
         # LAK:FIXME This needs to be figured out somehow, but it requires the routing.
+        # This should be able to use the request, yay.
         #if Puppet[:node_name] == 'cert' and client
         #    key = client
         #end
 
-        # Note that this is reasonable, because either their node source should actually
-        # know about the node, or they should be using the ``null`` node source, which
-        # will always return data.
-        unless node = Puppet::Node.find_by_any_name(key)
-            raise Puppet::Error, "Could not find node '%s'" % key
-        end
+        return nil unless node = Puppet::Node.find_by_any_name(key)
 
         # Add any external data to the node.
         add_node_data(node)

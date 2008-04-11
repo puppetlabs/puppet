@@ -34,6 +34,10 @@ class Puppet::Transaction::Report
         end
     end
 
+    def name
+        host
+    end
+
     # Create a new metric.
     def newmetric(name, hash)
         metric = Puppet::Util::Metric.new(name)

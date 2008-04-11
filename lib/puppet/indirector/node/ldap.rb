@@ -12,8 +12,11 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
     end
 
     # Look for our node in ldap.
-    def find(name)
+    def find(request)
         return nil unless information = super
+
+        name = request.key
+
         node = Puppet::Node.new(name)
 
         parent_info = nil
@@ -122,9 +125,5 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
             filter = filter.gsub('%s', name)
         end
         filter
-    end
-
-    def version(name)
-        Puppet::Node::Facts.version(name)
     end
 end

@@ -13,7 +13,7 @@ module Puppet::Util::POSIX
         end
         prefix = "get" + space.to_s
         if id.is_a?(Integer)
-            if id > 1000000
+            if id > Puppet[:maximum_uid].to_i
                 Puppet.err "Tried to get %s field for silly id %s" % [field, id]
                 return nil
             end
@@ -40,7 +40,7 @@ module Puppet::Util::POSIX
         end
         if id.is_a?(Integer)
             integer = true
-            if id > 1000000
+            if id > Puppet[:maximum_uid].to_i
                 Puppet.err "Tried to get %s field for silly id %s" % [field, id]
                 return nil
             end

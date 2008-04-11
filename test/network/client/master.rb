@@ -305,44 +305,6 @@ end
         assert_equal(RUBY_VERSION, facts["rubyversion"], "ruby version did not get added")
     end
     
-    # #424
-    def test_caching_of_compile_time
-        file = tempfile()
-        manifest = tempfile()
-        File.open(manifest, "w") { |f| f.puts "file { '#{file}': content => yay }" }
-        
-        Puppet::Node::Facts.indirection.stubs(:save)
-        
-        driver = mkmaster(:Manifest => manifest)
-        driver.local = false
-        master = mkclient(driver)
-        
-        # We have to make everything thinks it's remote, because there's no local caching info
-        master.local = false
-        
-        assert(! master.fresh?(master.class.facts),
-            "Considered fresh with no compile at all")
-
-        assert_nothing_raised { master.run }
-        assert(master.fresh?(master.class.facts),
-            "not considered fresh after compile")
-        
-        # Now make sure the config time is cached
-        assert(master.compile_time, "No stored config time")
-        assert_equal(master.compile_time, Puppet::Util::Storage.cache(:configuration)[:compile_time], "times did not match")
-        time = master.compile_time
-        master.clear
-        File.unlink(file)
-        Puppet::Util::Storage.store
-        
-        # Now make a new master
-        Puppet::Util::Storage.clear
-        master = mkclient(driver)
-        master.run
-        assert_equal(time, master.compile_time, "time was not retrieved from cache")
-        assert(FileTest.exists?(file), "file was not created on second run")
-    end
-
     # #540 - make sure downloads aren't affected by noop
     def test_download_in_noop
         source = tempfile
@@ -384,44 +346,6 @@ end
             "Tried to load cache when it is non-existent")
     end
 
-    # #519 - cache the facts so that we notice if they change.
-    def test_factchanges_cause_recompile
-        $value = "one"
-        Facter.add(:testfact) do
-            setcode { $value }
-        end
-        assert_equal("one", Facter.value(:testfact), "fact was not set correctly")
-        master = mkclient
-        master.local = false
-        driver = master.send(:instance_variable_get, "@driver")
-        driver.local = false
-
-        Puppet::Node::Facts.indirection.stubs(:save)
-
-        assert_nothing_raised("Could not compile config") do
-            master.getconfig
-        end
-
-        $value = "two"
-        Facter.clear
-        Facter.loadfacts
-        Facter.add(:testfact) do
-            setcode { $value }
-        end
-        facts = master.class.facts
-        assert_equal("two", Facter.value(:testfact), "fact did not change")
-
-        assert(master.send(:facts_changed?, facts),
-            "master does not think facts changed")
-        assert(! master.fresh?(facts),
-            "master is considered fresh after facts changed")
-
-        assert_nothing_raised("Could not recompile when facts changed") do
-            master.getconfig
-        end
-
-    end
-
     def test_locking
         master = mkclient
 
@@ -453,40 +377,6 @@ end
         Puppet[:configtimeout] = 100
         assert_equal(100, master.timeout, "Did not get changed integer default value for timeout")
         assert_equal(100, master.timeout, "Did not get changed integer default value for timeout on second run")
-    end
-
-    # #569 -- Make sure we can ignore dynamic facts.
-    def test_dynamic_facts
-        client = mkclient 
-
-        assert_equal(%w{memorysize memoryfree swapsize swapfree}, client.class.dynamic_facts,
-            "Did not get correct defaults for dynamic facts")
-
-        # Cache some values for comparison
-        cached = {"one" => "yep", "two" => "nope"}
-        Puppet::Util::Storage.cache(:configuration)[:facts] = cached
-
-        assert(! client.send(:facts_changed?, cached), "Facts incorrectly considered to be changed")
-
-        # Now add some values to the passed result and make sure we get a positive
-        newfacts = cached.dup
-        newfacts["changed"] = "something"
-
-        assert(client.send(:facts_changed?, newfacts), "Did not catch changed fact")
-
-        # Now add a dynamic fact and make sure it's ignored
-        newfacts = cached.dup
-        newfacts["memorysize"] = "something"
-
-        assert(! client.send(:facts_changed?, newfacts), "Dynamic facts resulted in a false positive")
-
-        # And try it with both
-        cached["memorysize"] = "something else"
-        assert(! client.send(:facts_changed?, newfacts), "Dynamic facts resulted in a false positive")
-
-        # And finally, with only in the cache
-        newfacts.delete("memorysize")
-        assert(! client.send(:facts_changed?, newfacts), "Dynamic facts resulted in a false positive")
     end
 
     def test_splay

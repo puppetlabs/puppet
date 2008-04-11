@@ -1,7 +1,7 @@
 # Just quick mess-around to see what a DSL would look like.
 # 
 # This is what the executable could look like:
-##!/usr/bin/ruby
+##!/usr/bin/env ruby
 #
 #require 'puppet'
 #require 'puppet/dsl'
@@ -23,7 +23,7 @@
 # And here's what an example config could look like:
 #
 
-##!/usr/bin/ruby
+##!/usr/bin/env ruby
 #
 #
 # require 'puppet'

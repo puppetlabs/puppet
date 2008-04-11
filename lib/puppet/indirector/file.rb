@@ -2,26 +2,28 @@ require 'puppet/indirector/terminus'
 
 # An empty terminus type, meant to just return empty objects.
 class Puppet::Indirector::File < Puppet::Indirector::Terminus
-    def destroy(file)
+    # Remove files on disk.
+    def destroy(request)
         if respond_to?(:path)
-            path = path(file.name)
+            path = path(request.key)
         else
-            path = file.path
+            path = request.key
         end
-        raise Puppet::Error.new("File %s does not exist; cannot destroy" % [file]) unless File.exist?(path)
+        raise Puppet::Error.new("File %s does not exist; cannot destroy" % [request.key]) unless File.exist?(path)
 
         begin
             File.unlink(path)
         rescue => detail
-            raise Puppet::Error, "Could not remove %s: %s" % [file, detail]
+            raise Puppet::Error, "Could not remove %s: %s" % [request.key, detail]
         end
     end
 
-    def find(name)
+    # Return a model instance for a given file on disk.
+    def find(request)
         if respond_to?(:path)
-            path = path(name)
+            path = path(request.key)
         else
-            path = name
+            path = request.key
         end
 
         return nil unless File.exist?(path)
@@ -35,20 +37,21 @@ class Puppet::Indirector::File < Puppet::Indirector::Terminus
         return model.new(content)
     end
 
-    def save(file)
+    # Save a new file to disk.
+    def save(request)
         if respond_to?(:path)
-            path = path(file.name)
+            path = path(request.key)
         else
-            path = file.path
+            path = request.key
         end
         dir = File.dirname(path)
 
-        raise Puppet::Error.new("Cannot save %s; parent directory %s does not exist" % [file, dir]) unless File.directory?(dir)
+        raise Puppet::Error.new("Cannot save %s; parent directory %s does not exist" % [request.key, dir]) unless File.directory?(dir)
 
         begin
-            File.open(path, "w") { |f| f.print file.content }
+            File.open(path, "w") { |f| f.print request.instance.content }
         rescue => detail
-            raise Puppet::Error, "Could not write %s: %s" % [file, detail]
+            raise Puppet::Error, "Could not write %s: %s" % [request.key, detail]
         end
     end
 end

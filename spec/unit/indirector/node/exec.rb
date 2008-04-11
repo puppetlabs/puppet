@@ -11,12 +11,6 @@ describe Puppet::Node::Exec do
         @searcher = Puppet::Node::Exec.new
     end
 
-    it "should use the version of the facts as its version" do
-        version = mock 'version'
-        Puppet::Node::Facts.expects(:version).with("me").returns version
-        @searcher.version("me").should equal(version)
-    end
-
     describe "when constructing the command to run" do
         it "should use the external_node script as the command" do
             Puppet.expects(:[]).with(:external_nodes).returns("/bin/echo")
@@ -25,7 +19,7 @@ describe Puppet::Node::Exec do
 
         it "should throw an exception if no external node command is set" do
             Puppet.expects(:[]).with(:external_nodes).returns("none")
-            proc { @searcher.find("foo") }.should raise_error(ArgumentError)
+            proc { @searcher.find(stub('request', :key => "foo")) }.should raise_error(ArgumentError)
         end
     end
 
@@ -40,34 +34,36 @@ describe Puppet::Node::Exec do
             @searcher.meta_def(:execute) do |command|
                 return YAML.dump(result)
             end
+
+            @request = stub 'request', :key => @name
         end
 
         it "should translate the YAML into a Node instance" do
             # Use an empty hash
-            @searcher.find(@name).should equal(@node)
+            @searcher.find(@request).should equal(@node)
         end
 
         it "should set the resulting parameters as the node parameters" do
             @result[:parameters] = {"a" => "b", "c" => "d"}
             @node.expects(:parameters=).with "a" => "b", "c" => "d"
-            @searcher.find(@name)
+            @searcher.find(@request)
         end
 
         it "should set the resulting classes as the node classes" do
             @result[:classes] = %w{one two}
             @node.expects(:classes=).with %w{one two}
-            @searcher.find(@name)
+            @searcher.find(@request)
         end
 
         it "should merge the node's facts with its parameters" do
             @node.expects(:fact_merge)
-            @searcher.find(@name)
+            @searcher.find(@request)
         end
 
         it "should set the node's environment if one is provided" do
             @result[:environment] = "yay"
             @node.expects(:environment=).with "yay"
-            @searcher.find(@name)
+            @searcher.find(@request)
         end
     end
 end

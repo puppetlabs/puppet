@@ -9,6 +9,7 @@ module Puppet::Indirector
 
     require 'puppet/indirector/indirection'
     require 'puppet/indirector/terminus'
+    require 'puppet/indirector/envelope'
 
     # Declare that the including class indirects its methods to
     # this terminus.  The terminus name must be the name of a Puppet
@@ -20,6 +21,7 @@ module Puppet::Indirector
         # populate this class with the various new methods
         extend ClassMethods
         include InstanceMethods
+        include Puppet::Indirector::Envelope
 
         # instantiate the actual Terminus for that type and this name (:ldap, w/ args :node)
         # & hook the instantiated Terminus into this class (Node: @indirection = terminus)
@@ -28,41 +30,37 @@ module Puppet::Indirector
     end
 
     module ClassMethods   
-      attr_reader :indirection
+        attr_reader :indirection
 
-      def cache_class=(klass)
-          indirection.cache_class = klass
-      end
+        def cache_class=(klass)
+            indirection.cache_class = klass
+        end
 
-      def terminus_class=(klass)
-          indirection.terminus_class = klass
-      end
+        def terminus_class=(klass)
+            indirection.terminus_class = klass
+        end
          
-      def find(*args)
-        indirection.find(*args)
-      end
+        # Expire any cached instance.
+        def expire(*args)
+            indirection.expire *args
+        end
+         
+        def find(*args)
+            indirection.find *args
+        end
 
-      def destroy(*args)
-        indirection.destroy(*args)
-      end
+        def destroy(*args)
+            indirection.destroy *args
+        end
 
-      def search(*args)
-        indirection.search(*args)
-      end
-
-      def version(*args)
-        indirection.version(*args)
-      end
+        def search(*args)
+            indirection.search *args
+        end
     end
 
     module InstanceMethods
-      # Make it easy for the model to set versions,
-      # which are used for caching and such.
-      attr_accessor :version
-
-      # these become instance methods 
-      def save(*args)
-        self.class.indirection.save(self, *args)
-      end
+        def save(*args)
+            self.class.indirection.save self, *args
+        end
     end
 end

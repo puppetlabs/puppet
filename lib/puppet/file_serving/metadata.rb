@@ -11,15 +11,6 @@ require 'puppet/file_serving/indirection_hooks'
 
 # A class that handles retrieving file metadata.
 class Puppet::FileServing::Metadata < Puppet::FileServing::FileBase
-    module MetadataHelper
-        include Puppet::FileServing::IndirectionHooks
-
-        def post_find(instance)
-        end
-
-        def post_search(key, options = {})
-        end
-    end
 
     include Puppet::Util::Checksums
 

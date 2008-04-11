@@ -133,9 +133,9 @@ end
 
 describe Puppet::Node, " when indirecting" do
     it "should redirect to the indirection" do
-        @indirection = mock 'indirection'
+        @indirection = stub 'indirection', :name => :node
         Puppet::Node.stubs(:indirection).returns(@indirection)
-        @indirection.expects(:find).with(:my_node.to_s)
+        @indirection.expects(:find)
         Puppet::Node.find(:my_node.to_s)
     end
 
