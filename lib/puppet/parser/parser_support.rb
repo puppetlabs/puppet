@@ -237,7 +237,9 @@ class Puppet::Parser::Parser
             end
         end
 
-        return true if classes.include?(classname)
+        # We don't know whether we're looking for a class or definition, so we have
+        # to test for both.
+        return true if classes.include?(classname) || definitions.include?(classname)
 
         unless @loaded.include?(filename)
             @loaded << filename
@@ -249,7 +251,9 @@ class Puppet::Parser::Parser
                 # We couldn't load the file
             end
         end
-        return classes.include?(classname)
+        # We don't know whether we're looking for a class or definition, so we have
+        # to test for both.
+        return classes.include?(classname) || definitions.include?(classname)
     end
 
     # Split an fq name into a namespace and name
