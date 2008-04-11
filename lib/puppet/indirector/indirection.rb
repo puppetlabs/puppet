@@ -225,14 +225,14 @@ class Puppet::Indirector::Indirection
         request = request(:destroy, key, *args)
         terminus = prepare(request)
 
-        terminus.destroy(request)
+        result = terminus.destroy(request)
 
         if cache? and cached = cache.find(request(:find, key, *args))
             # Reuse the existing request, since it's equivalent.
             cache.destroy(request)
         end
 
-        nil
+        result
     end
 
     # Search for more than one instance.  Should always return an array.
