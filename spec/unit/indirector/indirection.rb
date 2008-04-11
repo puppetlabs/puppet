@@ -356,9 +356,9 @@ describe Puppet::Indirector::Indirection do
             it_should_behave_like "Indirection Delegator"
             it_should_behave_like "Delegation Authorizer"
 
-            it "should return nil" do
-                @terminus.stubs(:destroy)
-                @indirection.destroy("/my/key").should be_nil
+            it "should return the result of removing the instance" do
+                @terminus.stubs(:destroy).returns "yayness"
+                @indirection.destroy("/my/key").should == "yayness"
             end
 
             describe "when caching is enabled" do

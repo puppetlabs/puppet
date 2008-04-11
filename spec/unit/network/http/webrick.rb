@@ -14,11 +14,11 @@ end
 
 describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
     before do
-        @mock_webrick = mock('webrick')
+        @mock_webrick = stub('webrick', :[] => {})
         [:mount, :start, :shutdown].each {|meth| @mock_webrick.stubs(meth)}        
         WEBrick::HTTPServer.stubs(:new).returns(@mock_webrick)
         @server = Puppet::Network::HTTP::WEBrick.new
-        @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => [ :node, :catalog ], :protocols => [ :rest, :xmlrpc ] }
+        @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => [ :node, :catalog ], :protocols => [ :rest ] }
     end
     
     it "should fail if already listening" do
@@ -64,37 +64,48 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
             mock_handler = mock("handler instance for [#{protocol}]")
             mock_handler_class = mock("handler class for [#{protocol}]")
             @listen_params[:handlers].each do |handler|
-                mock_handler_class.expects(:new).with {|args| 
-                    args[:server] == @mock_webrick and args[:handler] == handler
-                }.returns(mock_handler)
+                @mock_webrick.expects(:mount)
             end
-            @server.expects(:class_for_protocol).with(protocol).at_least_once.returns(mock_handler_class)
         end
         @server.listen(@listen_params)        
     end
 
     it "should use a WEBrick + REST class to configure WEBrick when REST services are requested" do
-        Puppet::Network::HTTP::WEBrickREST.expects(:new).at_least_once
+        Puppet::Network::HTTP::WEBrick.expects(:class_for_protocol).with(:rest).at_least_once
         @server.listen(@listen_params.merge(:protocols => [:rest]))
     end
     
-    it "should use a WEBrick + XMLRPC class to configure WEBrick when XMLRPC services are requested" do
-        Puppet::Network::HTTP::WEBrickXMLRPC.expects(:new).at_least_once
-        @server.listen(@listen_params.merge(:protocols => [:xmlrpc]))        
-    end
-    
     it "should fail if services from an unknown protocol are requested" do
-        Proc.new { @server.listen(@listen_params.merge(:protocols => [ :foo ]))}.should raise_error(ArgumentError)
+        Proc.new { @server.listen(@listen_params.merge(:protocols => [ :foo ]))}.should raise_error
     end
+end
+
+
+describe Puppet::Network::HTTP::WEBrick, "when looking up the class to handle a protocol" do
+  it "should require a protocol" do
+    lambda { Puppet::Network::HTTP::WEBrick.class_for_protocol }.should raise_error(ArgumentError)
+  end
+  
+  it "should accept a protocol" do
+    lambda { Puppet::Network::HTTP::WEBrick.class_for_protocol("bob") }.should_not raise_error(ArgumentError)    
+  end
+  
+  it "should use a WEBrick + REST class when a REST protocol is specified" do
+    Puppet::Network::HTTP::WEBrick.class_for_protocol("rest").should == Puppet::Network::HTTP::WEBrickREST
+  end
+  
+  it "should fail when an unknown protocol is specified" do
+    lambda { Puppet::Network::HTTP::WEBrick.class_for_protocol("abcdefg") }.should raise_error
+  end
 end
 
 describe Puppet::Network::HTTP::WEBrick, "when turning off listening" do
     before do
-        @mock_webrick = mock('webrick')
+        @mock_webrick = stub('webrick', :[] => {})
         [:mount, :start, :shutdown].each {|meth| @mock_webrick.stubs(meth)}
         WEBrick::HTTPServer.stubs(:new).returns(@mock_webrick)
         @server = Puppet::Network::HTTP::WEBrick.new        
-        @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => [ :node, :catalog ], :protocols => [ :rest, :xmlrpc ] }
+        @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => [ :node, :catalog ], :protocols => [ :rest ] }
     end
     
     it "should fail unless listening" do

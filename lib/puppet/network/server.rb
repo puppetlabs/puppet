@@ -10,44 +10,44 @@ class Puppet::Network::Server
             raise(ArgumentError, "Must specify :address or configure Puppet :bindaddress.")
         @port = args[:port] || Puppet[:masterport] ||
             raise(ArgumentError, "Must specify :port or configure Puppet :masterport")
-	    @protocols = []
-	    @listening = false
-	    @routes = {}
-	    self.register(args[:handlers]) if args[:handlers]
+        @protocols = [ :rest ]
+        @listening = false
+        @routes = {}
+        self.register(args[:handlers]) if args[:handlers]
     end
 
     def register(*indirections)
-	    raise ArgumentError, "Indirection names are required." if indirections.empty?
-	    indirections.flatten.each { |i| @routes[i.to_sym] = true }
+  	    raise ArgumentError, "Indirection names are required." if indirections.empty?
+  	    indirections.flatten.each { |i| @routes[i.to_sym] = true }
     end
   
     def unregister(*indirections)
-        raise "Cannot unregister indirections while server is listening." if listening?
-	    indirections = @routes.keys if indirections.empty?
-	    
-	    indirections.flatten.each do |i|
-	        raise(ArgumentError, "Indirection [%s] is unknown." % i) unless @routes[i.to_sym]
-        end
+          raise "Cannot unregister indirections while server is listening." if listening?
+          indirections = @routes.keys if indirections.empty?
+
+          indirections.flatten.each do |i|
+    	        raise(ArgumentError, "Indirection [%s] is unknown." % i) unless @routes[i.to_sym]
+          end
         
-        indirections.flatten.each do |i|
-	        @routes.delete(i.to_sym)
-	    end
+          indirections.flatten.each do |i|
+    	        @routes.delete(i.to_sym)
+    	    end
     end
 
     def listening?
-	    @listening
+  	    @listening
     end
   
     def listen
-	    raise "Cannot listen -- already listening." if listening?
-	    http_server.listen(@routes.dup)
-	    @listening = true
+  	    raise "Cannot listen -- already listening." if listening?
+  	    @listening = true
+  	    http_server.listen(:address => address, :port => port, :handlers => @routes.keys, :protocols => protocols)
     end
   
     def unlisten
-	    raise "Cannot unlisten -- not currently listening." unless listening?
-	    http_server.unlisten   
-	    @listening = false
+  	    raise "Cannot unlisten -- not currently listening." unless listening?
+  	    http_server.unlisten   
+  	    @listening = false
     end
     
     def http_server_class

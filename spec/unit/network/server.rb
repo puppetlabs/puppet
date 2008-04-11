@@ -161,8 +161,12 @@ describe Puppet::Network::Server, "in general" do
         Proc.new { @server2.unregister(:bar) }.should raise_error(ArgumentError)
     end  
 
-    it "should provide a means of determining which style of service is being offered to clients" do
-        @server.protocols.should == []
+    it "should provide a means of determining which protocols are in use" do
+        @server.should respond_to(:protocols)
+    end
+    
+    it "should only support the REST protocol at this time" do
+        @server.protocols.should == [ :rest ]
     end
     
     it "should provide a means of determining the listening address" do
@@ -230,22 +234,53 @@ describe Puppet::Network::Server, "when listening is being turned on" do
         @mock_http_server_class = mock('http server class')
         Puppet::Network::HTTP.stubs(:server_class_by_type).returns(@mock_http_server_class)
         Puppet.stubs(:[]).with(:servertype).returns(:suparserver)
-        @server = Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337)
+        @server = Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337, :handlers => [:node])
         @mock_http_server = mock('http server')
         @mock_http_server.stubs(:listen)
     end
 
     it "should fetch an instance of an HTTP server" do
-        mock_http_server_class = mock('http server class')
-        mock_http_server_class.expects(:new).returns(@mock_http_server)
-        @server.expects(:http_server_class).returns(mock_http_server_class)
+        @server.stubs(:http_server_class).returns(@mock_http_server_class)
+        @mock_http_server_class.expects(:new).returns(@mock_http_server)
         @server.listen        
     end
 
     it "should cause the HTTP server to listen" do
+        @server.stubs(:http_server).returns(@mock_http_server)
         @mock_http_server.expects(:listen)
-        @server.expects(:http_server).returns(@mock_http_server)
         @server.listen
+    end
+    
+    it "should pass the listening address to the HTTP server" do
+       @server.stubs(:http_server).returns(@mock_http_server)
+       @mock_http_server.expects(:listen).with do |args|
+            args[:address] == '127.0.0.1'
+       end
+       @server.listen
+    end
+    
+    it "should pass the listening port to the HTTP server" do
+      @server.stubs(:http_server).returns(@mock_http_server)
+      @mock_http_server.expects(:listen).with do |args|
+           args[:port] == 31337
+      end
+      @server.listen
+    end
+    
+    it "should pass a list of handlers to the HTTP server" do
+      @server.stubs(:http_server).returns(@mock_http_server)
+      @mock_http_server.expects(:listen).with do |args|
+           args[:handlers] == [ :node ]
+      end
+      @server.listen
+    end
+    
+    it "should pass a list of protocols to the HTTP server" do
+      @server.stubs(:http_server).returns(@mock_http_server)
+      @mock_http_server.expects(:listen).with do |args|
+           args[:protocols] == [ :rest ]
+      end
+      @server.listen      
     end
 end
 
@@ -274,16 +309,8 @@ end
 
                 
 describe Class.new, "put these somewhere" do
-    it "should allow indirections to deny access to services based upon which client is connecting, or whether the client is authorized"
-    it "should deny access to clients based upon rules"   
     it "should have the ability to use a class-level from_ hook (from_yaml, from_text, etc.) that can be called, based on content-type header, to allow for different deserializations of an object" 
     it "should allow from_* on the inbound :data packet (look at its content_type) when doing a PUT/.new.save"
     it "should prepend a rest version number on the path (w00t)"
     it "should ... on server side, .save should from_yaml, then foo.save(args) instead of just Foo.new.save(args)"
-    it "should have a from_yaml class_method in the indirector (... default:  yaml.load(data) => instance, but can be overridden)"
-end
-
-describe Puppet::Indirector, "stuff required by HTTP servers" do
-    it "should provide the model with the ability to serialize to XML"
-    it "should provide the model with the ability to deserialize from XML"
 end

@@ -1,9 +1,9 @@
-class Puppet::Network::HTTP::Handler
-    def initialize(args = {})
+module Puppet::Network::HTTP::Handler
+    
+    def initialize_for_puppet(args = {})
         raise ArgumentError unless @server = args[:server]
         raise ArgumentError unless @handler = args[:handler]
         @model = find_model_for_handler(@handler)
-        register_handler
     end
     
     # handle an HTTP request
@@ -18,38 +18,46 @@ class Puppet::Network::HTTP::Handler
     end
     
   private
+
+    def model
+      @model
+    end
     
     def do_find(request, response)
         key = request_key(request) || raise(ArgumentError, "Could not locate lookup key in request path [#{path}]")
         args = params(request)
-        result = @model.find(key, args).to_yaml
+        result = model.find(key, args).to_yaml
         encode_result(request, response, result)
     end
 
     def do_search(request, response)
         args = params(request)
-        result = @model.search(args).collect {|obj| obj.to_yaml }
+        result = model.search(args).collect {|result| result.to_yaml }.to_yaml
         encode_result(request, response, result) 
     end
 
     def do_destroy(request, response)
         key = request_key(request) || raise(ArgumentError, "Could not locate lookup key in request path [#{path}]")
         args = params(request)
-        result = @model.destroy(key, args)
+        result = model.destroy(key, args)
         encode_result(request, response, YAML.dump(result))
     end
 
     def do_save(request, response)
-        data = body(request)
+        data = body(request).to_s
         raise ArgumentError, "No data to save" if !data or data.empty?
-        args = params(request)
-        obj = @model.new
-        result = obj.save(args.merge(:data => data)).to_yaml
+        # args = params(request)
+        obj = model.from_yaml(data)
+        result = save_object(obj).to_yaml
         encode_result(request, response, result)
+    end
+    
+    def save_object(obj)
+      obj.save
     end
   
     def do_exception(request, response, exception, status=404)
-        encode_result(request, response, exception.to_s, status)
+        encode_result(request, response, exception.to_yaml, status)
     end
   
     def find_model_for_handler(handler)
@@ -77,7 +85,7 @@ class Puppet::Network::HTTP::Handler
         %r{/#{@handler.to_s}s$}.match(path(request))
     end
     
-  # methods specific to a given web server
+  # methods to be overridden by the including web server class
     
     def register_handler
         raise NotImplementedError
