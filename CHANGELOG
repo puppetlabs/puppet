@@ -1,3 +1,9 @@
+    Resources now return the 'should' value for properties from
+    the [] accessor method (they previously threw an exception when
+    this method was used with properties).  This shouldn't have any
+    affect functionally; it just makes the method equivalent to 'should'
+    for properties, but it works for all attribute types now.
+
     Modified the 'master' handler to use the Catalog class to
     compile node configurations, rather than using the Configuration
     handler, which was never used directly.  I removed the Configuration
