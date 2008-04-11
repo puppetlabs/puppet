@@ -1,3 +1,8 @@
+    Removed the code from the client that tries to avoid recompiling
+    the catalog. The client will now always recompile, assuming it
+    can reach the server.  It will still use the cached config if
+    there's a failure.
+
     Fixing #1173 -- classes and definitions can now have the same
     name as a directory with no failures.
 
