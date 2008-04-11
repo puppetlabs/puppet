@@ -9,7 +9,6 @@ class Puppet::TestIndirectedFoo
   indirects :test_indirected_foo, :terminus_setting => :test_indirected_foo_terminus
   
   attr_reader :value
-  attr_accessor :version
   
   def initialize(value = 0)
     @value = value
@@ -51,6 +50,7 @@ describe Puppet::Indirector::REST do
         end
       
         it "should not fail" do
+          Puppet::TestIndirectedFoo.find('bar')
           lambda { Puppet::TestIndirectedFoo.find('bar') }.should_not raise_error
         end
   
@@ -62,8 +62,8 @@ describe Puppet::Indirector::REST do
           Puppet::TestIndirectedFoo.find('bar').value.should == @model_instance.value
         end
   
-        it 'should set a version timestamp on model instance' do
-          Puppet::TestIndirectedFoo.find('bar').version.should_not be_nil
+        it 'should set an expiration on model instance' do
+          Puppet::TestIndirectedFoo.find('bar').expiration.should_not be_nil
         end
       end
     
@@ -275,8 +275,8 @@ describe Puppet::Indirector::REST do
           Puppet::TestIndirectedFoo.find('bar').value.should == @model_instance.value
         end
   
-        it 'should set a version timestamp on model instance' do
-          Puppet::TestIndirectedFoo.find('bar').version.should_not be_nil
+        it 'should set an expiration on model instance' do
+          Puppet::TestIndirectedFoo.find('bar').expiration.should_not be_nil
         end
       end
     
@@ -330,11 +330,9 @@ describe Puppet::Indirector::REST do
           Puppet::TestIndirectedFoo.search('bar').collect(&:value).should == @model_instances.collect(&:value)
         end
   
-        it 'should set a version timestamp on model instances' do
-          pending("Luke looking at why this version magic might not be working") do
-            Puppet::TestIndirectedFoo.search('bar').each do |result|
-              result.version.should_not be_nil
-            end
+        it 'should set an expiration on model instances' do
+          Puppet::TestIndirectedFoo.search('bar').each do |result|
+            result.expiration.should_not be_nil
           end
         end
       end

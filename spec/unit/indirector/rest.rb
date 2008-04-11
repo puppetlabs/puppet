@@ -198,45 +198,47 @@ describe Puppet::Indirector::REST do
         @result = { :foo => 'bar'}.to_yaml
         @searcher.stubs(:network_fetch).returns(@result)  # neuter the network connection
         @model.stubs(:from_yaml).returns(@instance)
+
+        @request = stub 'request', :key => 'foo'
       end
       
       it "should look up the model instance over the network" do
         @searcher.expects(:network_fetch).returns(@result)
-        @searcher.find('foo')
+        @searcher.find(@request)
       end
       
       it "should look up the model instance using the named indirection" do
         @searcher.expects(:network_fetch).with {|path| path =~ %r{^#{@indirection.name.to_s}/} }.returns(@result)
-        @searcher.find('foo')
+        @searcher.find(@request)
       end
       
       it "should look up the model instance using the provided key" do
         @searcher.expects(:network_fetch).with {|path| path =~ %r{/foo$} }.returns(@result)
-        @searcher.find('foo')
+        @searcher.find(@request)
       end
       
       it "should deserialize result data to a Model instance" do
         @model.expects(:from_yaml)
-        @searcher.find('foo')
+        @searcher.find(@request)
       end
       
       it "should return the deserialized Model instance" do
-        @searcher.find('foo').should == @instance     
+        @searcher.find(@request).should == @instance     
       end
       
       it "should return nil when deserialized model instance is nil" do
         @model.stubs(:from_yaml).returns(nil)
-        @searcher.find('foo').should be_nil
+        @searcher.find(@request).should be_nil
       end
       
       it "should generate an error when result data deserializes improperly" do
         @model.stubs(:from_yaml).raises(ArgumentError)
-        lambda { @searcher.find('foo') }.should raise_error(ArgumentError)
+        lambda { @searcher.find(@request) }.should raise_error(ArgumentError)
       end
       
       it "should generate an error when result data specifies an error" do
         @searcher.stubs(:network_fetch).returns(RuntimeError.new("bogus").to_yaml)
-        lambda { @searcher.find('foo') }.should raise_error(RuntimeError)        
+        lambda { @searcher.find(@request) }.should raise_error(RuntimeError)        
       end      
     end
 
@@ -245,36 +247,38 @@ describe Puppet::Indirector::REST do
         @result = [1, 2].to_yaml
         @searcher.stubs(:network_fetch).returns(@result)
         @model.stubs(:from_yaml).returns(@instance)
+
+        @request = stub 'request', :key => 'foo'
       end
       
       it "should look up the model data over the network" do
         @searcher.expects(:network_fetch).returns(@result)
-        @searcher.search('foo')
+        @searcher.search(@request)
       end
       
       it "should look up the model instance using the named indirection" do
         @searcher.expects(:network_fetch).with {|path| path =~ %r{^#{@indirection.name.to_s}s/} }.returns(@result)
-        @searcher.search('foo')
+        @searcher.search(@request)
       end
       
       it "should look up the model instance using the provided key" do
         @searcher.expects(:network_fetch).with {|path| path =~ %r{/foo$} }.returns(@result)
-        @searcher.search('foo')
+        @searcher.search(@request)
       end
       
       it "should deserialize result data into a list of Model instances" do
         @model.expects(:from_yaml).at_least(2)
-        @searcher.search('foo')
+        @searcher.search(@request)
       end
       
       it "should generate an error when result data deserializes improperly" do
         @model.stubs(:from_yaml).raises(ArgumentError)
-        lambda { @searcher.search('foo') }.should raise_error(ArgumentError)        
+        lambda { @searcher.search(@request) }.should raise_error(ArgumentError)        
       end
       
       it "should generate an error when result data specifies an error" do
         @searcher.stubs(:network_fetch).returns(RuntimeError.new("bogus").to_yaml)
-        lambda { @searcher.search('foo') }.should raise_error(RuntimeError)        
+        lambda { @searcher.search(@request) }.should raise_error(RuntimeError)        
       end     
     end    
     
@@ -283,35 +287,37 @@ describe Puppet::Indirector::REST do
         @result = true.to_yaml
         @searcher.stubs(:network_delete).returns(@result)  # neuter the network connection
         @model.stubs(:from_yaml).returns(@instance)
+
+        @request = stub 'request', :key => 'foo'
       end
       
       it "should look up the model instance over the network" do
         @searcher.expects(:network_delete).returns(@result)
-        @searcher.destroy('foo')
+        @searcher.destroy(@request)
       end
       
       it "should look up the model instance using the named indirection" do
         @searcher.expects(:network_delete).with {|path| path =~ %r{^#{@indirection.name.to_s}/} }.returns(@result)
-        @searcher.destroy('foo')
+        @searcher.destroy(@request)
       end
       
       it "should look up the model instance using the provided key" do
         @searcher.expects(:network_delete).with {|path| path =~ %r{/foo$} }.returns(@result)
-        @searcher.destroy('foo')
+        @searcher.destroy(@request)
       end
       
       it "should deserialize result data" do
         YAML.expects(:load).with(@result)
-        @searcher.destroy('foo')
+        @searcher.destroy(@request)
       end
       
       it "should return deserialized result data" do
-        @searcher.destroy('foo').should == true
+        @searcher.destroy(@request).should == true
       end
       
       it "should generate an error when result data specifies an error" do
         @searcher.stubs(:network_delete).returns(RuntimeError.new("bogus").to_yaml)
-        lambda { @searcher.destroy('foo') }.should raise_error(RuntimeError)        
+        lambda { @searcher.destroy(@request) }.should raise_error(RuntimeError)        
       end      
     end
 
@@ -320,6 +326,8 @@ describe Puppet::Indirector::REST do
         @result = { :foo => 'bar'}.to_yaml
         @searcher.stubs(:network_put).returns(@result)  # neuter the network connection
         @model.stubs(:from_yaml).returns(@instance)
+
+        @request = stub 'request', :instance => @instance
       end
       
       it "should re-enable caching in the terminus" do
@@ -328,7 +336,7 @@ describe Puppet::Indirector::REST do
       
       it "should save the model instance over the network" do
         @searcher.expects(:network_put).returns(@result)
-        @searcher.save(@instance)
+        @searcher.save(@request)
       end
       
       it "should save the model instance using the named indirection" do
@@ -336,31 +344,31 @@ describe Puppet::Indirector::REST do
           path =~ %r{^#{@indirection.name.to_s}/} and 
           data == @instance.to_yaml 
         end.returns(@result)
-        @searcher.save(@instance)
+        @searcher.save(@request)
       end
       
       it "should deserialize result data to a Model instance" do
         @model.expects(:from_yaml)
-        @searcher.save(@instance)
+        @searcher.save(@request)
       end
       
       it "should return the resulting deserialized Model instance" do
-        @searcher.save(@instance).should == @instance     
+        @searcher.save(@request).should == @instance     
       end
       
       it "should return nil when deserialized model instance is nil" do
         @model.stubs(:from_yaml).returns(nil)
-        @searcher.save(@instance).should be_nil
+        @searcher.save(@request).should be_nil
       end
       
       it "should generate an error when result data deserializes improperly" do
         @model.stubs(:from_yaml).raises(ArgumentError)
-        lambda { @searcher.save(@instance) }.should raise_error(ArgumentError)
+        lambda { @searcher.save(@request) }.should raise_error(ArgumentError)
       end
       
       it "should generate an error when result data specifies an error" do
         @searcher.stubs(:network_put).returns(RuntimeError.new("bogus").to_yaml)
-        lambda { @searcher.save(@instance) }.should raise_error(RuntimeError)        
+        lambda { @searcher.save(@request) }.should raise_error(RuntimeError)        
       end      
     end
 end

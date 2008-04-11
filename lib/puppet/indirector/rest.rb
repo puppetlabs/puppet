@@ -20,26 +20,26 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
         network {|conn| conn.put("/#{path}", data).body }
     end
     
-    def find(name, options = {})
-        network_result = network_fetch("#{indirection.name}/#{name}")
+    def find(request)
+        network_result = network_fetch("#{indirection.name}/#{request.key}")
         raise YAML.load(network_result) if exception?(network_result)
         indirection.model.from_yaml(network_result)
     end
     
-    def search(name, options = {})
-        network_results = network_fetch("#{indirection.name}s/#{name}")
+    def search(request)
+        network_results = network_fetch("#{indirection.name}s/#{request.key}")
         raise YAML.load(network_results) if exception?(network_results)
         YAML.load(network_results.to_s).collect {|result| indirection.model.from_yaml(result) }
     end
     
-    def destroy(name, options = {})
-        network_result = network_delete("#{indirection.name}/#{name}")
+    def destroy(request)
+        network_result = network_delete("#{indirection.name}/#{request.key}")
         raise YAML.load(network_result) if exception?(network_result)
         YAML.load(network_result.to_s)      
     end
     
-    def save(obj, options = {})
-        network_result = network_put("#{indirection.name}/", obj.to_yaml)
+    def save(request)
+        network_result = network_put("#{indirection.name}/", request.instance.to_yaml)
         raise YAML.load(network_result) if exception?(network_result)
         indirection.model.from_yaml(network_result)
     end
