@@ -1,3 +1,12 @@
+    Modified the 'master' handler to use the Catalog class to
+    compile node configurations, rather than using the Configuration
+    handler, which was never used directly.  I removed the Configuration
+    handler as a result.
+
+    Modified the 'master' handler (responsible for sending configurations
+    to clients) to always return Time.now as its compile date, so
+    configurations will always get recompiled.
+
     Fixed #1184 -- definitions now autoload correctly all of the time.
 
     Removed the code from the client that tries to avoid recompiling

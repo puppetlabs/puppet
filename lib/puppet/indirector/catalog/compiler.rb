@@ -19,7 +19,7 @@ class Puppet::Node::Catalog::Compiler < Puppet::Indirector::Code
         end
 
         if catalog = compile(node)
-            return catalog.to_transportable
+            return catalog
         else
             # This shouldn't actually happen; we should either return
             # a config or raise an exception.
@@ -42,22 +42,6 @@ class Puppet::Node::Catalog::Compiler < Puppet::Indirector::Code
     # Is our compiler part of a network, or are we just local?
     def networked?
         $0 =~ /puppetmasterd/
-    end
-
-    # Return the catalog version.  Here we're returning the
-    # latest of the node, fact, or parse date.  These are the
-    # three things that go into compiling a client catalog,
-    # so changes in any of them result in changes.
-    # LAK:FIXME Note that this only works when all three sources
-    # use timestamps; once one of them moves to using real versions,
-    # the comparison stops working.
-    def version(key)
-        if node = Puppet::Node.find_by_any_name(key)
-            return [Puppet::Node.version(key).to_f, Puppet::Node::Facts.version(key).to_f, interpreter.catalog_version(node).to_f].sort[-1]
-        else
-            # This is the standard for "got nothing for ya".
-            0
-        end
     end
 
     private

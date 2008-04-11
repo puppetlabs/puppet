@@ -145,10 +145,10 @@ describe Puppet::Node::Catalog::Compiler, " when creating catalogs" do
 
     it "should return the results of compiling as the catalog" do
         config = mock 'config'
-        result = mock 'result', :to_transportable => :catalog
+        result = mock 'result'
 
         @compiler.interpreter.expects(:compile).with(@node).returns(result)
-        @compiler.find(@request).should == :catalog
+        @compiler.find(@request).should equal(result)
     end
 
     it "should benchmark the compile process" do
@@ -158,55 +158,5 @@ describe Puppet::Node::Catalog::Compiler, " when creating catalogs" do
         end
         @compiler.interpreter.stubs(:compile).with(@node)
         @compiler.find(@request)
-    end
-end
-
-describe Puppet::Node::Catalog::Compiler, " when determining a client's available catalog version" do
-    before do
-        Puppet::Node::Facts.stubs(:find).returns(nil)
-        Facter.stubs(:value).returns("whatever")
-        @catalog = Puppet::Node::Catalog::Compiler.new
-        @name = "johnny"
-    end
-
-    it "should provide a mechanism for providing the version of a given client's catalog" do
-        @catalog.should respond_to(:version)
-    end
-
-    it "should use the client's Facts version as the available catalog version if it is the most recent" do
-        Puppet::Node::Facts.stubs(:version).with(@name).returns(5)
-        Puppet::Node.expects(:version).with(@name).returns(3)
-        @catalog.interpreter.stubs(:catalog_version).returns(4)
-
-        @catalog.version(@name).should == 5
-    end
-
-    it "should use the client's Node version as the available catalog version if it is the most recent" do
-        Puppet::Node::Facts.stubs(:version).with(@name).returns(3)
-        Puppet::Node.expects(:version).with(@name).returns(5)
-        @catalog.interpreter.stubs(:catalog_version).returns(4)
-
-        @catalog.version(@name).should == 5
-    end
-
-    it "should use the last parse date as the available catalog version if it is the most recent" do
-        Puppet::Node::Facts.stubs(:version).with(@name).returns(3)
-        Puppet::Node.expects(:version).with(@name).returns(4)
-        @catalog.interpreter.stubs(:catalog_version).returns(5)
-
-        @catalog.version(@name).should == 5
-    end
-
-    it "should return a version of 0 if no information on the node can be found" do
-        Puppet::Node.stubs(:find_by_any_name).returns(nil)
-        @catalog.version(@name).should == 0
-    end
-
-    it "should indicate when an update is available even if an input has clock skew" do
-        pending "Unclear how to implement this"
-    end
-
-    it "should not indicate an available update when apparent updates are a result of clock skew" do
-        pending "Unclear how to implement this"
     end
 end
