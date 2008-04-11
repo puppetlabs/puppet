@@ -38,7 +38,10 @@ describe Puppet::Indirector::REST do
 
       # the autoloader was clearly not written test-first.  We subvert the integration test to get around its bullshit.
       Puppet::Indirector::Terminus.stubs(:terminus_class).returns(Puppet::TestIndirectedFoo::Rest)
-      Puppet::TestIndirectedFoo.terminus_class = :rest
+      Puppet::TestIndirectedFoo.indirection.stubs(:terminus_class).returns :rest
+
+      # Stub the connection information.
+      Puppet::TestIndirectedFoo.indirection.terminus(:rest).stubs(:rest_connection_details).returns(:host => "localhost", :port => 34343)
     end
   
     describe "when finding a model instance over REST" do
@@ -252,7 +255,10 @@ describe Puppet::Indirector::REST do
 
       # the autoloader was clearly not written test-first.  We subvert the integration test to get around its bullshit.
       Puppet::Indirector::Terminus.stubs(:terminus_class).returns(Puppet::TestIndirectedFoo::Rest)
-      Puppet::TestIndirectedFoo.terminus_class = :rest
+      Puppet::TestIndirectedFoo.indirection.stubs(:terminus_class).returns :rest
+
+      # Stub the connection information.
+      Puppet::TestIndirectedFoo.indirection.terminus(:rest).stubs(:rest_connection_details).returns(:host => "localhost", :port => 34343)
     end
   
     describe "when finding a model instance over REST" do

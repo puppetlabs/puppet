@@ -21,16 +21,18 @@ describe Puppet::Indirector::REST do
     end
     
     describe "when locating the REST connection" do
-      it 'should look somewhere meaningful for connection details' do
-        pending("Luke enlightening us on where to find the appropriate connection details")
+      before do
+        Puppet.settings.stubs(:value).returns("whatever")
+      end
+
+      it "should return the :server setting as the host" do
+        Puppet.settings.expects(:value).with(:server).returns "myserver"
+        @searcher.rest_connection_details[:host].should == "myserver"
       end
       
-      it "should return a host" do
-        @searcher.rest_connection_details[:host].should == '127.0.0.1'
-      end
-      
-      it "should return a port" do
-        @searcher.rest_connection_details[:port].should == 34343
+      it "should return the :masterport (as an Integer) as the port" do
+        Puppet.settings.expects(:value).with(:masterport).returns "1234"
+        @searcher.rest_connection_details[:port].should == 1234
       end
     end
     
@@ -328,10 +330,6 @@ describe Puppet::Indirector::REST do
         @model.stubs(:from_yaml).returns(@instance)
 
         @request = stub 'request', :instance => @instance
-      end
-      
-      it "should re-enable caching in the terminus" do
-        pending("Luke taking a look at (a) why that doesn't seem to work with this save, or (b) rewriting it, like he seems to indicate in his blog is going to happen")
       end
       
       it "should save the model instance over the network" do

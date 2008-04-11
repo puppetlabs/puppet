@@ -5,7 +5,7 @@ require 'uri'
 class Puppet::Indirector::REST < Puppet::Indirector::Terminus
 
     def rest_connection_details
-        { :host => '127.0.0.1', :port => 34343 }
+        { :host => Puppet[:server], :port => Puppet[:masterport].to_i }
     end
 
     def network_fetch(path)
@@ -47,7 +47,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   private
   
     def network(&block)
-      Net::HTTP.start(rest_connection_details[:host], rest_connection_details[:port]) {|conn| yield(conn) }
+        Net::HTTP.start(rest_connection_details[:host], rest_connection_details[:port]) {|conn| yield(conn) }
     end
   
     def exception?(yaml_string)
