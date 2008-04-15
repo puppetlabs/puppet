@@ -1,3 +1,7 @@
+    Added support for the --all option to puppetca --clean.  If
+    puppetca --clean --all is issued then all client certificates
+    are removed.
+ 
     Resources now return the 'should' value for properties from
     the [] accessor method (they previously threw an exception when
     this method was used with properties).  This shouldn't have any

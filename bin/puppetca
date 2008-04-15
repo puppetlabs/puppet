@@ -32,14 +32,16 @@
 # '--genconfig'.
 #
 # all::
-#   Operate on all outstanding requests.  Only makes sense with '--sign',
-#   or '--list'.
+#   Operate on all items.  Currently only makes sense with '--sign',
+#   '--clean', or '--list'.
 #
 # clean::
 #    Remove all files related to a host from puppetca's storage. This is 
 #    useful when rebuilding hosts, since new certificate signing requests
 #    will only be honored if puppetca does not have a copy of a signed
 #    certificate for that host. The certificate of the host remains valid.
+#    If '--all' is specified then all host certificates, both signed and
+#    unsigned, will be removed.
 #
 # debug::
 #   Enable full debugging.
@@ -213,20 +215,35 @@ when :list
         puts ca.list_signed.collect { |cert | cert.sub(/^/,"+ ") }.join("\n")
     end
 when :clean
-    if hosts.empty?
-        $stderr.puts "You must specify one or more hosts to clean"
+    if hosts.empty? and all == false
+        $stderr.puts "You must specify one or more hosts to clean or --all to clean all host certificates"
         exit(24)
     end
+
     cleaned = false
-    hosts.each do |host|
-        cert = ca.getclientcert(host)[0]
-        if cert.nil?
-            $stderr.puts "Could not find client certificate for %s" % host
-            next
-        end
-        ca.clean(host)
+
+    if all
+        certs = ca.list
+            if certs.empty?
+                $stderr.puts "No certificates to clean"
+                exit(24)
+            end
+            certs.each do |c|
+                ca.clean(c)
+            end
         cleaned = true
+    else
+        hosts.each do |host|
+            cert = ca.getclientcert(host)[0]
+                if cert.nil?
+                    $stderr.puts "Could not find client certificate for %s" % host
+                    next
+                end
+            ca.clean(host)
+            cleaned = true
+        end
     end
+ 
     unless cleaned
         exit(27)
     end
@@ -234,7 +251,7 @@ when :sign
     to_sign = ARGV.collect { |h| h.downcase }
     unless to_sign.length > 0 or all
         $stderr.puts(
-            "You must specify to sign all certificates or you must specify hostnames"
+            "You must specify one or more hosts to sign certificates for or --all to sign all certificates"
         )
         exit(24)
     end
