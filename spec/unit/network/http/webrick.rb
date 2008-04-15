@@ -18,6 +18,7 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
         [:mount, :start, :shutdown].each {|meth| @mock_webrick.stubs(meth)}        
         WEBrick::HTTPServer.stubs(:new).returns(@mock_webrick)
         @server = Puppet::Network::HTTP::WEBrick.new
+        [:setup_logger, :setup_ssl].each {|meth| @server.stubs(meth).returns({})} # the empty hash is required because of how we're merging
         @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => [ :node, :catalog ], :protocols => [ :rest ] }
     end
     
@@ -51,6 +52,26 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
         WEBrick::HTTPServer.expects(:new).with {|args|
             args[:Port] == 31337 and args[:BindAddress] == "127.0.0.1"
         }.returns(@mock_webrick)
+        @server.listen(@listen_params)
+    end
+
+    it "should configure a logger for webrick" do
+        @server.expects(:setup_logger).returns(:Logger => :mylogger)
+
+        WEBrick::HTTPServer.expects(:new).with {|args|
+            args[:Logger] == :mylogger
+        }.returns(@mock_webrick)
+
+        @server.listen(@listen_params)
+    end
+
+    it "should configure SSL for webrick" do
+        @server.expects(:setup_ssl).returns(:Ssl => :testing, :Other => :yay)
+
+        WEBrick::HTTPServer.expects(:new).with {|args|
+            args[:Ssl] == :testing and args[:Other] == :yay
+        }.returns(@mock_webrick)
+
         @server.listen(@listen_params)
     end
     
@@ -105,6 +126,7 @@ describe Puppet::Network::HTTP::WEBrick, "when turning off listening" do
         [:mount, :start, :shutdown].each {|meth| @mock_webrick.stubs(meth)}
         WEBrick::HTTPServer.stubs(:new).returns(@mock_webrick)
         @server = Puppet::Network::HTTP::WEBrick.new        
+        [:setup_logger, :setup_ssl].each {|meth| @server.stubs(meth).returns({})} # the empty hash is required because of how we're merging
         @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => [ :node, :catalog ], :protocols => [ :rest ] }
     end
     
@@ -122,5 +144,128 @@ describe Puppet::Network::HTTP::WEBrick, "when turning off listening" do
         @server.listen(@listen_params)
         @server.unlisten
         @server.should_not be_listening
+    end
+end
+
+describe Puppet::Network::HTTP::WEBrick do
+    before do
+        @mock_webrick = stub('webrick', :[] => {})
+        [:mount, :start, :shutdown].each {|meth| @mock_webrick.stubs(meth)}        
+        WEBrick::HTTPServer.stubs(:new).returns(@mock_webrick)
+        @server = Puppet::Network::HTTP::WEBrick.new
+    end
+    
+    describe "when configuring an x509 store" do
+        it "should add the CRL to the store"
+
+        it "should create a new x509 store"
+
+        it "should add the CA certificate to the store"
+
+        it "should set the store's flags to 'OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK'"
+
+        it "should set the store's purpose to 'OpenSSL::X509::PURPOSE_ANY'"
+
+        it "should return the store"
+    end
+
+    describe "when configuring an http logger" do
+        before do
+            Puppet.settings.stubs(:value).returns "something"
+            Puppet.settings.stubs(:use)
+            @filehandle = stub 'handle', :fcntl => nil, :sync => nil
+
+            File.stubs(:open).returns @filehandle
+        end
+
+        it "should use the settings for :main, :ssl, and the process name" do
+            Puppet.settings.stubs(:value).with(:name).returns "myname"
+            Puppet.settings.expects(:use).with(:main, :ssl, "myname")
+
+            @server.setup_logger
+        end
+
+        it "should use the masterlog if the process name is 'puppetmasterd'" do
+            Puppet.settings.stubs(:value).with(:name).returns "puppetmasterd"
+            Puppet.settings.expects(:value).with(:masterhttplog).returns "/master/log"
+
+            File.expects(:open).with("/master/log", "a+").returns @filehandle
+
+            @server.setup_logger
+        end
+
+        it "should use the httplog if the process name is not 'puppetmasterd'" do
+            Puppet.settings.stubs(:value).with(:name).returns "other"
+            Puppet.settings.expects(:value).with(:httplog).returns "/other/log"
+
+            File.expects(:open).with("/other/log", "a+").returns @filehandle
+
+            @server.setup_logger
+        end
+
+        describe "and creating the logging filehandle" do
+            it "should set fcntl to 'Fcntl::F_SETFD, Fcntl::FD_CLOEXEC'" do
+                @filehandle.expects(:fcntl).with(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
+
+                @server.setup_logger
+            end
+
+            it "should sync the filehandle" do
+                @filehandle.expects(:sync)
+
+                @server.setup_logger
+            end
+        end
+
+        it "should create a new WEBrick::Log instance with the open filehandle" do
+            WEBrick::Log.expects(:new).with(@filehandle)
+
+            @server.setup_logger
+        end
+
+        it "should set debugging if the current loglevel is :debug" do
+            Puppet::Util::Log.expects(:level).returns :debug
+
+            WEBrick::Log.expects(:new).with { |handle, debug| debug == WEBrick::Log::DEBUG }
+
+            @server.setup_logger
+        end
+
+        it "should return the logger as the main log" do
+            logger = mock 'logger'
+            WEBrick::Log.expects(:new).returns logger
+
+            @server.setup_logger[:Logger].should == logger
+        end
+
+        it "should return the logger as the access log using both the Common and Referer log format" do
+            logger = mock 'logger'
+            WEBrick::Log.expects(:new).returns logger
+
+            @server.setup_logger[:AccessLog].should == [
+                [logger, WEBrick::AccessLog::COMMON_LOG_FORMAT],
+                [logger, WEBrick::AccessLog::REFERER_LOG_FORMAT]
+            ]
+        end
+    end
+
+    describe "when configuring ssl" do
+        it "should add an x509 store if the CRL is enabled"
+
+        it "should not add an x509 store if the CRL is disabled"
+
+        it "should configure the certificate"
+
+        it "should configure the private key"
+
+        it "should start ssl immediately"
+
+        it "should enable ssl"
+
+        it "should specify the path to the CA certificate"
+
+        it "should configure the verification method as 'OpenSSL::SSL::VERIFY_PEER'"
+
+        it "should set the certificate name to 'nil'"
     end
 end
