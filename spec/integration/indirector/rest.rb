@@ -34,9 +34,13 @@ describe Puppet::Indirector::REST do
       Puppet[:servertype] = 'webrick'
       @params = { :address => "127.0.0.1", :port => 34343, :handlers => [ :test_indirected_foo ] }
       @server = Puppet::Network::Server.new(@params)
+      
+      # LAK:NOTE For now, stub out the certificate setup.  This will need to be undone when the client side expects
+      # to speak ssl, also.
+      Puppet::Network::HTTP::WEBrick.any_instance.stubs(:setup_ssl).returns({})
+
       @server.listen
 
-      # the autoloader was clearly not written test-first.  We subvert the integration test to get around its bullshit.
       Puppet::Indirector::Terminus.stubs(:terminus_class).returns(Puppet::TestIndirectedFoo::Rest)
       Puppet::TestIndirectedFoo.indirection.stubs(:terminus_class).returns :rest
 
