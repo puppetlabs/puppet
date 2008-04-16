@@ -27,7 +27,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
     # Remove our file.
     def destroy(request)
         path = path(request.key)
-        raise Puppet::Error.new("File %s does not exist; cannot destroy" % [request.key]) unless FileTest.exist?(path)
+        return false unless FileTest.exist?(path)
 
         begin
             File.unlink(path)

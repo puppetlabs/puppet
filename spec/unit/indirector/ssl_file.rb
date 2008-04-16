@@ -111,8 +111,8 @@ describe Puppet::Indirector::SslFile do
                     FileTest.expects(:exist?).with(@certpath).returns false
                 end
 
-                it "should fail" do
-                    lambda { @searcher.destroy(@request) }.should raise_error(Puppet::Error)
+                it "should return nil" do
+                    @searcher.destroy(@request).should be_false
                 end
             end
 
