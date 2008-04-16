@@ -7,6 +7,10 @@ describe Puppet::Network::Server do
     before :each do
       Puppet[:servertype] = 'webrick'
       @params = { :address => "127.0.0.1", :port => 34343, :handlers => [ :node ] }
+
+      # LAK:NOTE (4/08) Stub the ssl support for now; we'll remove it once it's actually 
+      # functional.
+      Puppet::Network::HTTP::WEBrick.any_instance.stubs(:setup_ssl).returns({})
     end
     
     describe "before listening" do
