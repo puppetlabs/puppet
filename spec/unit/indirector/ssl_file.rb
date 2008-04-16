@@ -40,6 +40,8 @@ describe Puppet::Indirector::SslFile do
 
             @cert = stub 'certificate', :name => "myname"
             @certpath = File.join(@path, "myname" + ".pem")
+
+            @request = stub 'request', :key => @cert.name, :instance => @cert
         end
         
         describe "when choosing the location for certificates" do
@@ -55,7 +57,7 @@ describe Puppet::Indirector::SslFile do
                 end
 
                 it "should return nil" do
-                    @searcher.find(@cert.name).should be_nil
+                    @searcher.find(@request).should be_nil
                 end
             end
 
@@ -71,7 +73,7 @@ describe Puppet::Indirector::SslFile do
 
                     model.expects(:new).with("myname").returns cert
                     cert.expects(:read).with(@certpath)
-                    @searcher.find("myname").should equal(cert)
+                    @searcher.find(@request).should equal(cert)
                 end
             end
         end
@@ -79,13 +81,13 @@ describe Puppet::Indirector::SslFile do
         describe "when saving certificates to disk" do
             it "should fail if the directory is absent" do
                 FileTest.expects(:directory?).with(File.dirname(@certpath)).returns false
-                lambda { @searcher.save(@cert) }.should raise_error(Puppet::Error)
+                lambda { @searcher.save(@request) }.should raise_error(Puppet::Error)
             end
 
             it "should fail if the directory is not writeable" do
                 FileTest.stubs(:directory?).returns true
                 FileTest.expects(:writable?).with(File.dirname(@certpath)).returns false
-                lambda { @searcher.save(@cert) }.should raise_error(Puppet::Error)
+                lambda { @searcher.save(@request) }.should raise_error(Puppet::Error)
             end
 
             it "should save to the path the output of converting the certificate to a string" do
@@ -99,8 +101,7 @@ describe Puppet::Indirector::SslFile do
 
                 fh.expects(:print).with("mycert")
 
-                @searcher.save(@cert)
-
+                @searcher.save(@request)
             end
         end
 
@@ -111,7 +112,7 @@ describe Puppet::Indirector::SslFile do
                 end
 
                 it "should fail" do
-                    lambda { @searcher.destroy(@cert) }.should raise_error(Puppet::Error)
+                    lambda { @searcher.destroy(@request) }.should raise_error(Puppet::Error)
                 end
             end
 
@@ -122,7 +123,7 @@ describe Puppet::Indirector::SslFile do
 
                 it "should unlink the certificate file" do
                     File.expects(:unlink).with(@certpath)
-                    @searcher.destroy(@cert)
+                    @searcher.destroy(@request)
                 end
             end
         end
@@ -141,7 +142,7 @@ describe Puppet::Indirector::SslFile do
                 @model.expects(:new).with("one").returns one
                 @model.expects(:new).with("two").returns two
 
-                @searcher.search.should == [one, two]
+                @searcher.search(@request).should == [one, two]
             end
 
             it "should read each certificate in using the model's :read method" do
@@ -152,7 +153,7 @@ describe Puppet::Indirector::SslFile do
 
                 @model.expects(:new).with("one").returns one
 
-                @searcher.search
+                @searcher.search(@request)
             end
 
             it "should skip any files that do not match /\.pem$/" do
@@ -162,7 +163,7 @@ describe Puppet::Indirector::SslFile do
 
                 @model.expects(:new).with("one").returns one
 
-                @searcher.search
+                @searcher.search(@request)
             end
         end
     end

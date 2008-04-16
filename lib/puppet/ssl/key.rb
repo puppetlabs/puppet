@@ -6,7 +6,7 @@ class Puppet::SSL::Key < Puppet::SSL::Base
     wraps OpenSSL::PKey::RSA
 
     extend Puppet::Indirector
-    indirects :key, :terminus_class => :file
+    indirects :key
 
     attr_reader :password_file
 

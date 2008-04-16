@@ -1,12 +1,16 @@
 require 'puppet/ssl/base'
 
-# Manage certificates themselves.
+# Manage certificates themselves.  This class has no
+# 'generate' method because the CA is responsible
+# for turning CSRs into certificates; we can only
+# retrieve them from the CA (or not, as is often
+# the case).
 class Puppet::SSL::Certificate < Puppet::SSL::Base
     # This is defined from the base class
     wraps OpenSSL::X509::Certificate
 
     extend Puppet::Indirector
-    indirects :certificate, :extend => Puppet::SSL::IndirectionHooks
+    indirects :certificate
 
     # Indicate where we should get our signed certs from.
     def self.ca_is(dest)
@@ -20,26 +24,6 @@ class Puppet::SSL::Certificate < Puppet::SSL::Base
             @ca_location
         else
             :local
-        end
-    end
-
-    # Request a certificate from our CA.
-    def generate(request)
-        if self.class.ca_location == :local
-            terminus = :ca_file
-        else
-            terminus = :rest
-        end
-
-        # Save our certificate request.
-        request.save :in => terminus
-
-        # And see if we can retrieve the certificate.
-        if cert = self.class.find(name, :in => terminus)
-            @content = cert.content
-            return true
-        else
-            return false
         end
     end
 end

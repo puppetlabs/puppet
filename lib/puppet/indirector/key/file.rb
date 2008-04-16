@@ -11,24 +11,24 @@ class Puppet::SSL::Key::File < Puppet::Indirector::SslFile
     end
 
     # Remove the public key, in addition to the private key
-    def destroy(key, options = {})
+    def destroy(request)
         super
 
-        return unless FileTest.exist?(public_key_path(key.name))
+        return unless FileTest.exist?(public_key_path(request.key))
 
         begin
-            File.unlink(public_key_path(key.name))
+            File.unlink(public_key_path(request.key))
         rescue => detail
-            raise Puppet::Error, "Could not remove %s public key: %s" % [key.name, detail]
+            raise Puppet::Error, "Could not remove %s public key: %s" % [request.key, detail]
         end
     end
 
     # Save the public key, in addition to the private key.
-    def save(key, options = {})
+    def save(request)
         super
 
         begin
-            File.open(public_key_path(key.name), "w") { |f| f.print key.content.public_key.to_pem }
+            File.open(public_key_path(request.key), "w") { |f| f.print request.instance.content.public_key.to_pem }
         rescue => detail
             raise Puppet::Error, "Could not write %s: %s" % [key, detail]
         end

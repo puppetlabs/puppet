@@ -22,16 +22,6 @@ describe Puppet::SSL::CertificateRequest do
         @class.new("myname").name.should == "myname"
     end
 
-    it "should default to the :file terminus class" do
-        @class.indirection.terminus(:file).expects(:find).with "myname"
-        @class.find("myname")
-    end
-
-    it "should allow specification of a different terminus class" do
-        @class.indirection.terminus(:ca_file).expects(:find).with { |*args| args[0] == "myname" }
-        @class.find("myname", :in => :ca_file)
-    end
-
     describe "when managing instances" do
         before do
             @request = @class.new("myname")

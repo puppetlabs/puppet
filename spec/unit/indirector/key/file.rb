@@ -34,6 +34,8 @@ describe Puppet::SSL::Key::File do
             @real_key = stub 'sslkey', :public_key => @public_key
 
             @key = stub 'key', :name => "myname", :content => @real_key
+
+            @request = stub 'request', :key => "myname", :instance => @key
         end
 
         it "should save the public key when saving the private key" do
@@ -49,7 +51,7 @@ describe Puppet::SSL::Key::File do
 
             fh.expects(:print).with "my pem"
 
-            @searcher.save(@key)
+            @searcher.save(@request)
         end
 
         it "should destroy the public key when destroying the private key" do
@@ -58,7 +60,7 @@ describe Puppet::SSL::Key::File do
             FileTest.expects(:exist?).with(@publickey).returns true
             File.expects(:unlink).with(@publickey)
 
-            @searcher.destroy(@key)
+            @searcher.destroy(@request)
         end
 
         it "should not fail if the public key does not exist when deleting the private key" do
@@ -68,7 +70,7 @@ describe Puppet::SSL::Key::File do
             FileTest.expects(:exist?).with(@publickey).returns false
             File.expects(:unlink).with(@publickey).never
 
-            @searcher.destroy(@key)
+            @searcher.destroy(@request)
         end
     end
 end

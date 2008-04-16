@@ -25,46 +25,46 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
     end
 
     # Remove our file.
-    def destroy(file, options = {})
-        path = path(file.name)
-        raise Puppet::Error.new("File %s does not exist; cannot destroy" % [file]) unless FileTest.exist?(path)
+    def destroy(request)
+        path = path(request.key)
+        raise Puppet::Error.new("File %s does not exist; cannot destroy" % [request.key]) unless FileTest.exist?(path)
 
         begin
             File.unlink(path)
         rescue => detail
-            raise Puppet::Error, "Could not remove %s: %s" % [file, detail]
+            raise Puppet::Error, "Could not remove %s: %s" % [request.key, detail]
         end
     end
 
     # Find the file on disk, returning an instance of the model.
-    def find(name, options = {})
-        path = path(name)
+    def find(request)
+        path = path(request.key)
 
         return nil unless FileTest.exist?(path)
 
-        result = model.new(name)
+        result = model.new(request.key)
         result.read(path)
         result
     end
 
     # Save our file to disk.
-    def save(file, options = {})
-        path = path(file.name)
+    def save(request)
+        path = path(request.key)
         dir = File.dirname(path)
 
-        raise Puppet::Error.new("Cannot save %s; parent directory %s does not exist" % [file, dir]) unless FileTest.directory?(dir)
-        raise Puppet::Error.new("Cannot save %s; parent directory %s does not exist" % [file, dir]) unless FileTest.writable?(dir)
+        raise Puppet::Error.new("Cannot save %s; parent directory %s does not exist" % [request.key, dir]) unless FileTest.directory?(dir)
+        raise Puppet::Error.new("Cannot save %s; parent directory %s does not exist" % [request.key, dir]) unless FileTest.writable?(dir)
 
         begin
-            File.open(path, "w") { |f| f.print file.to_s }
+            File.open(path, "w") { |f| f.print request.instance.to_s }
         rescue => detail
-            raise Puppet::Error, "Could not write %s: %s" % [file, detail]
+            raise Puppet::Error, "Could not write %s: %s" % [request.key, detail]
         end
     end
 
     # Search for more than one file.  At this point, it just returns
     # an instance for every file in the directory.
-    def search(options = {})
+    def search(request)
         dir = collection_directory
         Dir.entries(dir).reject { |file| file !~ /\.pem$/ }.collect do |file|
             name = file.sub(/\.pem$/, '')
