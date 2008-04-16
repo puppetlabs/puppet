@@ -146,22 +146,22 @@ describe Puppet::SSL::CertificateRevocationList do
 
     describe "when saving the CRL" do
         before do
-            @real_crl = mock 'crl'
-            @real_crl.stub_everything
-
             @class.any_instance.stubs(:read_or_generate)
+            @class.wrapped_class.any_instance.stubs(:issuer=)
 
             @crl = @class.new("myname", @cert, @key)
             @crl.generate(@cert, @key)
         end
 
         it "should use the Settings#write method to write the file" do
-            fh = mock 'filehandle'
-            Puppet.settings.expects(:write).with(:cacrl).yields fh
+            pending("Not fully ported") do
+                fh = mock 'filehandle'
+                Puppet.settings.expects(:write).with(:cacrl).yields fh
 
-            fh.expects :print
+                fh.expects :print
 
-            @crl.save(@key)
+                @crl.save(@key)
+            end
         end
     end
 end
