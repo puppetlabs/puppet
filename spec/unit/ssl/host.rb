@@ -53,7 +53,7 @@ describe Puppet::SSL::Host do
             Puppet::SSL::Key.expects(:new).with("myname").returns(@key)
 
             @key.expects(:generate)
-            @key.expects(:save).with(:in => :file)
+            @key.expects(:save)
 
             @host.generate_key.should be_true
             @host.key.should equal(@realkey)
@@ -87,10 +87,12 @@ describe Puppet::SSL::Host do
             Puppet::SSL::CertificateRequest.expects(:new).with("myname").returns @request
 
             key = stub 'key', :public_key => mock("public_key")
+
+            @host.expects(:key).times(2).returns(nil).then.returns(key)
             @host.expects(:generate_key).returns(key)
 
             @request.stubs(:generate)
-            @request.stubs(:save).with(:in => :file)
+            @request.stubs(:save)
 
             @host.generate_certificate_request
         end
@@ -101,7 +103,7 @@ describe Puppet::SSL::Host do
             key = stub 'key', :public_key => mock("public_key")
             @host.stubs(:key).returns(key)
             @request.expects(:generate).with(key)
-            @request.expects(:save).with(:in => :file)
+            @request.expects(:save)
 
             @host.generate_certificate_request.should be_true
             @host.certificate_request.should equal(@realrequest)
@@ -120,44 +122,11 @@ describe Puppet::SSL::Host do
             @realcert = mock 'certificate'
             @cert = stub 'cert', :content => @realcert
         end
+
         it "should find the certificate in the Certificate class and return the SSL certificate, not the wrapper" do
             Puppet::SSL::Certificate.expects(:find).with("myname").returns @cert
 
             @host.certificate.should equal(@realcert)
-        end
-
-        it "should generate a new certificate request when generating the cert if no request exists" do
-            Puppet::SSL::Certificate.expects(:new).with("myname").returns @cert
-
-            request = stub 'request'
-            @host.expects(:generate_certificate_request)
-
-            @cert.stubs(:generate)
-            @cert.stubs(:save).with(:in => :file)
-
-            @host.generate_certificate
-        end
-
-        it "should be able to generate and save a new certificate using the certificate request" do
-            Puppet::SSL::Certificate.expects(:new).with("myname").returns @cert
-
-            request = stub 'request'
-            @host.stubs(:certificate_request).returns(request)
-            @cert.expects(:generate).with(request).returns(true)
-            @cert.expects(:save).with(:in => :file)
-
-            @host.generate_certificate.should be_true
-            @host.certificate.should equal(@realcert)
-        end
-
-        it "should return false if no certificate could be generated" do
-            Puppet::SSL::Certificate.expects(:new).with("myname").returns @cert
-
-            request = stub 'request'
-            @host.stubs(:certificate_request).returns(request)
-            @cert.expects(:generate).with(request).returns(false)
-
-            @host.generate_certificate.should be_false
         end
 
         it "should return any previously found certificate" do
@@ -181,83 +150,6 @@ describe Puppet::SSL::Host do
             Puppet::SSL::CertificateRequest.expects(:destroy).with(@host.certificate_request)
 
             @host.destroy
-        end
-    end
-
-    describe "when sending its CSR to the CA" do
-        before do
-            @realrequest = "real request"
-            @request = stub 'request', :content => @realrequest
-
-            @host.instance_variable_set("@certificate_request", @request)
-        end
-
-        it "should be able to send its CSR" do
-            @request.expects(:save)
-
-            @host.send_certificate_request
-        end
-
-        it "should default to sending its CSR to the :ca_file" do
-            @request.expects(:save).with(:in => :ca_file)
-
-            @host.send_certificate_request
-        end
-
-        it "should allow specification of another CA terminus" do
-            @request.expects(:save).with(:in => :rest)
-
-            @host.send_certificate_request :rest
-        end
-    end
-
-    describe "when retrieving its signed certificate from the CA" do
-        before do
-            @realcert = "real cert"
-            @cert = stub 'cert', :content => @realcert
-        end
-
-        it "should be able to send its CSR" do
-            Puppet::SSL::Certificate.expects(:find).with { |*args| args[0] == @host.name }
-
-            @host.retrieve_signed_certificate
-        end
-
-        it "should default to searching for its certificate in the :ca_file" do
-            Puppet::SSL::Certificate.expects(:find).with { |*args| args[1] == {:in => :ca_file} }
-
-            @host.retrieve_signed_certificate
-        end
-
-        it "should allow specification of another CA terminus" do
-            Puppet::SSL::Certificate.expects(:find).with { |*args| args[1] == {:in => :rest} }
-
-            @host.retrieve_signed_certificate :rest
-        end
-
-        it "should return true and set its certificate if retrieval was successful" do
-            cert = stub 'cert', :content => "mycert", :save => nil
-            Puppet::SSL::Certificate.stubs(:find).returns cert
-
-            @host.retrieve_signed_certificate.should be_true
-            @host.certificate.should == "mycert"
-        end
-
-        it "should save the retrieved certificate to the local disk" do
-            cert = stub 'cert', :content => "mycert"
-            Puppet::SSL::Certificate.stubs(:find).returns cert
-
-            cert.expects(:save).with :in => :file
-
-            @host.retrieve_signed_certificate
-            @host.certificate
-        end
-
-        it "should return false and not set its certificate if retrieval was unsuccessful" do
-            Puppet::SSL::Certificate.stubs(:find).returns nil
-
-            @host.retrieve_signed_certificate.should be_false
-            @host.certificate.should be_nil
         end
     end
 
@@ -292,20 +184,6 @@ describe Puppet::SSL::Host do
             Puppet::SSL::Certificate.expects(:search).never
             Puppet::SSL::CertificateRequest.expects(:search).returns []
             Puppet::SSL::Host.search :for => Puppet::SSL::CertificateRequest
-        end
-
-        it "should default to not specifying a search terminus" do
-            Puppet::SSL::Key.expects(:search).with({}).returns []
-            Puppet::SSL::Certificate.expects(:search).with({}).returns []
-            Puppet::SSL::CertificateRequest.expects(:search).with({}).returns []
-            Puppet::SSL::Host.search
-        end
-
-        it "should use any specified search terminus" do
-            Puppet::SSL::Key.expects(:search).with(:in => :ca_file).returns []
-            Puppet::SSL::Certificate.expects(:search).with(:in => :ca_file).returns []
-            Puppet::SSL::CertificateRequest.expects(:search).with(:in => :ca_file).returns []
-            Puppet::SSL::Host.search :in => :ca_file
         end
 
         it "should return a Host instance created with the name of each found instance" do
