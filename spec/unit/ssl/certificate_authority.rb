@@ -6,126 +6,91 @@ require 'puppet/ssl/certificate_authority'
 
 describe Puppet::SSL::CertificateAuthority do
     describe "when initializing" do
-        it "should always set its name to the value of :certname" do
+        before do
             Puppet.settings.stubs(:use)
-            Puppet.settings.expects(:value).with(:certname).returns "whatever"
+            Puppet.settings.stubs(:value).returns "whatever"
 
-            Puppet::SSL::CertificateAuthority.any_instance.stubs(:setup_ca)
+            Puppet::SSL::CertificateAuthority.any_instance.stubs(:generate_ca_certificate)
+        end
+
+        it "should always set its name to the value of :certname" do
+            Puppet.settings.expects(:value).with(:certname).returns "whatever"
 
             Puppet::SSL::CertificateAuthority.new.name.should == "whatever"
         end
 
-        it "should use the :main, :ca, and :ssl settings sections" do
-            Puppet.settings.expects(:use).with(:main, :ssl, :ca)
-            Puppet::SSL::CertificateAuthority.any_instance.stubs(:setup_ca)
+        it "should create an SSL::Host instance whose name is the 'ca_name'" do
+            Puppet::SSL::Host.expects(:ca_name).returns "caname"
+
+            host = stub 'host', :password_file= => nil
+            Puppet::SSL::Host.expects(:new).with("caname").returns host
+
             Puppet::SSL::CertificateAuthority.new
         end
 
-        describe "a new certificate authority" do
-            before do
-                Puppet.settings.stubs(:use)
-                Puppet.settings.stubs(:value).with(:certname).returns "whatever"
-            end
+        it "should set the Host instance's password file to the :capass setting" do
+            Puppet.settings.stubs(:value).with(:capass).returns "/ca/pass"
 
-            it "should create and store a password at :capass" do
-                Puppet.settings.expects(:value).with(:capass).returns "/path/to/pass"
+            host = mock 'host'
+            Puppet::SSL::Host.expects(:new).returns host
 
-                FileTest.expects(:exist?).with("/path/to/pass").returns false
+            host.expects(:password_file=).with "/ca/pass"
 
-                fh = mock 'filehandle'
-                Puppet.settings.expects(:write).with(:capass).yields fh
-
-                fh.expects(:print).with { |s| s.length > 18 }
-
-                [:read_key, :generate_key, :read_certificate, :generate_certificate].each do |method|
-                    Puppet::SSL::CertificateAuthority.any_instance.stubs(method)
-                end
-
-                Puppet::SSL::CertificateAuthority.new
-            end
-
-            it "should create and store a key encrypted with the password at :cakey" do
-                Puppet.settings.stubs(:value).with(:capass).returns "/path/to/pass"
-                Puppet.settings.stubs(:value).with(:cakey).returns "/path/to/key"
-
-                FileTest.expects(:exist?).with("/path/to/key").returns false
-
-                key = mock 'key'
-
-                Puppet::SSL::Key.expects(:new).with("whatever").returns key
-                key.expects(:password_file=).with("/path/to/pass")
-                key.expects(:generate)
-
-                key.expects(:to_s).returns "my key"
-
-                fh = mock 'filehandle'
-                Puppet.settings.expects(:write).with(:cakey).yields fh
-                fh.expects(:print).with("my key")
-
-                [:generate_password, :read_certificate, :generate_certificate].each do |method|
-                    Puppet::SSL::CertificateAuthority.any_instance.stubs(method)
-                end
-                Puppet::SSL::CertificateAuthority.any_instance.stubs(:password?).returns true
-
-                Puppet::SSL::CertificateAuthority.new
-            end
-
-            it "should create, sign, and store a self-signed cert at :cacert" do
-                Puppet.settings.stubs(:value).with(:cacert).returns "/path/to/cert"
-
-                FileTest.expects(:exist?).with("/path/to/cert").returns false
-
-                request = mock 'request'
-                Puppet::SSL::CertificateRequest.expects(:new).with("whatever").returns request
-                request.expects(:generate)
-
-                cert = mock 'cert'
-                cert.expects(:to_s).returns "my cert"
-                Puppet::SSL::CertificateAuthority.any_instance.expects(:sign).with("whatever", :ca, request).returns cert
-
-                fh = mock 'filehandle'
-                Puppet.settings.expects(:write).with(:cacert).yields fh
-                fh.expects(:print).with("my cert")
-
-                [:password?, :generate_password, :read_key, :generate_key].each do |method|
-                    Puppet::SSL::CertificateAuthority.any_instance.stubs(method)
-                end
-
-                Puppet::SSL::CertificateAuthority.new
-            end
+            Puppet::SSL::CertificateAuthority.new
         end
 
-        describe "an existing certificate authority" do
-            it "should read and decrypt the key at :cakey using the password at :capass and it should read the cert at :cacert" do
-                Puppet.settings.stubs(:value).with(:certname).returns "whatever"
-                Puppet.settings.stubs(:use)
+        it "should use the :main, :ca, and :ssl settings sections" do
+            Puppet.settings.expects(:use).with(:main, :ssl, :ca)
+            Puppet::SSL::CertificateAuthority.new
+        end
+    end
 
-                paths = {}
-                [:capass, :cakey, :cacert].each do |value|
-                    paths[value] = "/path/to/#{value.to_s}"
-                    Puppet.settings.stubs(:value).with(value).returns paths[value]
-                    FileTest.stubs(:exist?).with(paths[value]).returns true
-                end
+    it "should generate a self-signed certificate if its Host instance has no certificate"
 
-                key = mock 'key'
-                Puppet::SSL::Key.expects(:new).with("whatever").returns key
-                key.expects(:password_file=).returns paths[:capass]
-                key.expects(:read).returns paths[:cakey]
-                key.stubs(:content).returns "mykey"
+    describe "when generating a self-signed CA certificate" do
+        before do
+            Puppet.settings.stubs(:use)
+            Puppet.settings.stubs(:value).returns "whatever"
 
-                cert = mock 'cert'
-                Puppet::SSL::Certificate.expects(:new).with("whatever").returns cert
-                cert.expects(:read).returns paths[:cacert]
-                cert.stubs(:content).returns "mycert"
+            @ca = Puppet::SSL::CertificateAuthority.new
 
-                Puppet::SSL::CertificateAuthority.new
-            end
+            @host = stub 'host', :key => mock("key"), :name => "hostname"
+
+            Puppet::SSL::CertificateRequest.any_instance.stubs(:generate)
+
+            @ca.stubs(:host).returns @host
+        end
+
+        it "should create and store a password at :capass" do
+            Puppet.settings.expects(:value).with(:capass).returns "/path/to/pass"
+
+            FileTest.expects(:exist?).with("/path/to/pass").returns false
+
+            fh = mock 'filehandle'
+            Puppet.settings.expects(:write).with(:capass).yields fh
+
+            fh.expects(:print).with { |s| s.length > 18 }
+
+            @ca.stubs(:sign)
+
+            @ca.generate_ca_certificate
+        end
+
+        it "should create and sign a self-signed cert" do
+            request = mock 'request'
+            Puppet::SSL::CertificateRequest.expects(:new).with(@ca.host.name).returns request
+            request.expects(:generate).with(@ca.host.key)
+
+            @ca.expects(:sign).with(@ca.name, :ca, request)
+
+            @ca.stubs :generate_password
+
+            @ca.generate_ca_certificate
         end
     end
 
     describe "when signing" do
         before do
-            Puppet.settings.stubs(:value).with(:certname).returns "whatever"
             Puppet.settings.stubs(:use)
 
             Puppet::SSL::CertificateAuthority.any_instance.stubs(:password?).returns true
@@ -146,6 +111,7 @@ describe Puppet::SSL::CertificateAuthority do
             Puppet::SSL::Certificate.stubs(:new).returns @cert
 
             @cert.stubs(:content=)
+            @cert.stubs(:save)
 
             @factory = stub 'factory', :result => "my real cert"
             Puppet::SSL::CertificateFactory.stubs(:new).returns @factory
@@ -226,8 +192,10 @@ describe Puppet::SSL::CertificateAuthority do
                 @ca.sign(@name, :ca, @request)
             end
 
-            it "should not save the resulting certificate" do
-                @cert.expects(:save).never
+            it "should save the resulting certificate" do
+                @cert.expects(:save)
+
+                @ca.sign(@name, :ca, @request)
             end
         end
 
@@ -293,8 +261,8 @@ describe Puppet::SSL::CertificateAuthority do
                 @ca.sign(@name)
             end
 
-            it "should save the resulting certificate in the :ca_file terminus" do
-                @cert.expects(:save).with(:in => :ca_file)
+            it "should save the resulting certificate" do
+                @cert.expects(:save)
                 @ca.sign(@name)
             end
         end
@@ -322,7 +290,6 @@ describe Puppet::SSL::CertificateAuthority do
 
     describe "when managing certificate clients" do
         before do
-            Puppet.settings.stubs(:value).with(:certname).returns "whatever"
             Puppet.settings.stubs(:use)
 
             Puppet::SSL::CertificateAuthority.any_instance.stubs(:password?).returns true

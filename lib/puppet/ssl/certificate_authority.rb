@@ -1,65 +1,40 @@
 require 'puppet/ssl/host'
+require 'puppet/ssl/certificate_request'
 
-# The class that knows how to sign certificates.  It's just a
-# special case of the SSL::Host -- it's got a sign method,
-# and it reads its info from a different location.
-class Puppet::SSL::CertificateAuthority < Puppet::SSL::Host
+# The class that knows how to sign certificates.  It creates
+# a 'special' SSL::Host whose name is 'ca', thus indicating
+# that, well, it's the CA.  There's some magic in the
+# indirector/ssl_file terminus base class that does that
+# for us.
+#   This class mostly just signs certs for us, but
+# it can also be seen as a general interface into all of the
+# SSL stuff.
+class Puppet::SSL::CertificateAuthority
     require 'puppet/ssl/certificate_factory'
 
-    # Provide the path to our password, and read our special ca key.
-    def read_key
-        return nil unless FileTest.exist?(Puppet[:cakey])
+    attr_reader :name, :host
 
-        key = Puppet::SSL::Key.new(name)
-        key.password_file = Puppet[:capass]
-        key.read(Puppet[:cakey])
+    # Generate our CA certificate.
+    def generate_ca_certificate
+        generate_password unless password?
 
-        return key
-    end
-
-    # Generate and write the key out.
-    def generate_key
-        @key = Key.new(name)
-        @key.password_file = Puppet[:capass]
-        @key.generate
-        Puppet.settings.write(:cakey) do |f|
-            f.print @key.to_s
-        end
-        true
-    end
-
-    # Read the special path to our key.
-    def read_certificate
-        return nil unless FileTest.exist?(Puppet[:cacert])
-        cert = Puppet::SSL::Certificate.new(name)
-        cert.read(Puppet[:cacert])
-
-        return cert
-    end
-
-    # The CA creates a self-signed certificate, rather than relying
-    # on someone else to do the work.
-    def generate_certificate
-        request = CertificateRequest.new(name)
-        request.generate(key)
+        # Create a new cert request.  We do this
+        # specially, because we don't want to actually
+        # save the request anywhere.
+        request = Puppet::SSL::CertificateRequest.new(host.name)
+        request.generate(host.key)
 
         # Create a self-signed certificate.
         @certificate = sign(name, :ca, request)
-
-        Puppet.settings.write(:cacert) do |f|
-            f.print @certificate.to_s
-        end
-
-        return true
     end
 
     def initialize
         Puppet.settings.use :main, :ssl, :ca
 
-        # Always name the ca after the host we're running on.
-        super(Puppet[:certname])
+        @name = Puppet[:certname]
 
-        setup_ca()
+        @host = Puppet::SSL::Host.new(Puppet::SSL::Host.ca_name)
+        @host.password_file = Puppet[:capass]
     end
 
     # Sign a given certificate request.
@@ -83,25 +58,11 @@ class Puppet::SSL::CertificateAuthority < Puppet::SSL::Host
 
         Puppet.notice "Signed certificate request for %s" % host
 
-        # Save the now-signed cert, unless it's a self-signed cert, since we
-        # assume it goes somewhere else.
-        cert.save(:in => :ca_file) unless self_signing_csr
+        # Save the now-signed cert.  This should get routed correctly depending
+        # on the certificate type.
+        cert.save
 
         return cert
-    end
-
-    # Do all of the initialization necessary to set up our
-    # ca.
-    def setup_ca
-        # Make sure we've got a password protecting our private key.
-        generate_password unless password?
-
-        generate_key unless key
-
-        # And then make sure we've got the whole kaboodle.  This will
-        # create a self-signed CA certificate if we don't already have one,
-        # and it will just read it in if we do.
-        generate_certificate unless certificate
     end
 
     # Generate a new password for the CA.
