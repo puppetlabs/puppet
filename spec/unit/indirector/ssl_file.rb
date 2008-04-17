@@ -20,7 +20,9 @@ describe Puppet::Indirector::SslFile do
         @setting = :mydir
         @file_class.store_in @setting
         @path = "/my/directory"
-        Puppet.settings.stubs(:[]).with(@setting).returns(@path)
+        Puppet.settings.stubs(:value).returns "stubbed_setting"
+        Puppet.settings.stubs(:value).with(@setting).returns(@path)
+        Puppet.settings.stubs(:value).with(:trace).returns(false)
     end
 
     it "should use ssl upon initialization" do
@@ -28,9 +30,20 @@ describe Puppet::Indirector::SslFile do
         @file_class.new
     end
 
-    it "should fail if no store directory has been set" do
+    it "should return a nil collection directory if no directory setting has been provided" do
         @file_class.store_in nil
-        lambda { @file_class.collection_directory }.should raise_error(Puppet::DevError)
+        @file_class.collection_directory.should be_nil
+    end
+
+    it "should return a nil file location if no location has been provided" do
+        @file_class.store_at nil
+        @file_class.file_location.should be_nil
+    end
+
+    it "should fail if no store directory or file location has been set" do
+        @file_class.store_in nil
+        @file_class.store_at nil
+        lambda { @file_class.new }.should raise_error(Puppet::DevError)
     end
 
     describe "when managing ssl files" do
@@ -43,9 +56,34 @@ describe Puppet::Indirector::SslFile do
 
             @request = stub 'request', :key => @cert.name, :instance => @cert
         end
+
+        it "should consider the file a ca file if the name is equal to what the SSL::Host class says is the CA name" do
+            Puppet::SSL::Host.expects(:ca_name).returns "amaca"
+            @searcher.should be_ca("amaca")
+        end
         
         describe "when choosing the location for certificates" do
-            it "should set them in the setting directory, with the certificate name plus '.pem'" do
+            it "should set them at the ca setting's path if a ca setting is available and the name resolves to the CA name" do
+                @file_class.store_in nil
+                @file_class.store_at :mysetting
+                @file_class.store_ca_at :casetting
+
+                Puppet.settings.stubs(:value).with(:casetting).returns "/ca/file"
+
+                @searcher.expects(:ca?).with(@cert.name).returns true
+                @searcher.path(@cert.name).should == "/ca/file"
+            end
+
+            it "should set them at the file location if a file setting is available" do
+                @file_class.store_in nil
+                @file_class.store_at :mysetting
+
+                Puppet.settings.stubs(:value).with(:mysetting).returns "/some/file"
+
+                @searcher.path(@cert.name).should == "/some/file"
+            end
+
+            it "should set them in the setting directory, with the certificate name plus '.pem', if a directory setting is available" do
                 @searcher.path(@cert.name).should == @certpath
             end
         end
@@ -79,6 +117,11 @@ describe Puppet::Indirector::SslFile do
         end
 
         describe "when saving certificates to disk" do
+            before do
+                FileTest.stubs(:directory?).returns true
+                FileTest.stubs(:writable?).returns true
+            end
+
             it "should fail if the directory is absent" do
                 FileTest.expects(:directory?).with(File.dirname(@certpath)).returns false
                 lambda { @searcher.save(@request) }.should raise_error(Puppet::Error)
@@ -91,17 +134,48 @@ describe Puppet::Indirector::SslFile do
             end
 
             it "should save to the path the output of converting the certificate to a string" do
-                FileTest.stubs(:directory?).returns true
-                FileTest.stubs(:writable?).returns true
-
                 fh = mock 'filehandle'
-                File.expects(:open).with(@certpath, "w").yields(fh)
-
-                @cert.expects(:to_s).returns "mycert"
-
                 fh.expects(:print).with("mycert")
 
+                @searcher.stubs(:write).yields fh
+                @cert.expects(:to_s).returns "mycert"
+
                 @searcher.save(@request)
+            end
+
+            describe "and a directory setting is set" do
+                it "should open the file in write mode" do
+                    @searcher.class.store_in @setting
+                    fh = mock 'filehandle'
+                    fh.stubs :print
+                    File.expects(:open).with(@certpath, "w").yields(fh)
+
+                    @searcher.save(@request)
+                end
+            end
+
+            describe "and a file location is set" do
+                it "should use the filehandle provided by the Settings" do
+                    @searcher.class.store_at @setting
+
+                    fh = mock 'filehandle'
+                    fh.stubs :print
+                    Puppet.settings.expects(:write).with(@setting).yields fh
+                    @searcher.save(@request)
+                end
+            end
+
+            describe "and the name is the CA name and a ca setting is set" do
+                it "should use the filehandle provided by the Settings" do
+                    @searcher.class.store_at @setting
+                    @searcher.class.store_ca_at :castuff
+
+                    fh = mock 'filehandle'
+                    fh.stubs :print
+                    Puppet.settings.expects(:write).with(:castuff).yields fh
+                    @searcher.stubs(:ca?).returns true
+                    @searcher.save(@request)
+                end
             end
         end
 
@@ -111,7 +185,7 @@ describe Puppet::Indirector::SslFile do
                     FileTest.expects(:exist?).with(@certpath).returns false
                 end
 
-                it "should return nil" do
+                it "should return false" do
                     @searcher.destroy(@request).should be_false
                 end
             end

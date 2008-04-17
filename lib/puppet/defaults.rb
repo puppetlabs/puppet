@@ -183,7 +183,7 @@ module Puppet
         },
         :hostcsr => { :default => "$ssldir/csr_$certname.pem",
             :mode => 0644,
-            :desc => "Where individual hosts store and look for their certificates."
+            :desc => "Where individual hosts store and look for their certificate requests."
         },
         :hostcert => { :default => "$certdir/$certname.pem",
             :mode => 0644,
@@ -200,6 +200,11 @@ module Puppet
         :localcacert => { :default => "$certdir/ca.pem",
             :mode => 0644,
             :desc => "Where each client stores the CA certificate."
+        },
+        :hostcrl => { :default => "$ssldir/crl.pem",
+            :mode => 0644,
+            :desc => "Where the host's certificate revocation list can be found.
+                This is distinct from the certificate authority's CRL."
         }
     )
 

@@ -15,7 +15,15 @@ class Puppet::SSL::Host
     extend Puppet::Util::ConstantInflector
 
     attr_reader :name
-    attr_accessor :ca
+    attr_accessor :ca, :password_file
+
+    CA_NAME = "ca"
+
+    # This is the constant that people will use to mark that a given host is
+    # a certificate authority.
+    def self.ca_name
+        CA_NAME
+    end
 
     # Search for more than one host, optionally only specifying
     # an interest in hosts with a given file type.
@@ -36,6 +44,11 @@ class Puppet::SSL::Host
         end
     end
 
+    # Is this a ca host, meaning that all of its files go in the CA location?
+    def ca?
+        ca
+    end
+
     def key
         return nil unless (defined?(@key) and @key) or @key = Key.find(name)
         @key.content
@@ -45,8 +58,12 @@ class Puppet::SSL::Host
     # with no inputs.
     def generate_key
         @key = Key.new(name)
+
+        # If a password file is set, then the key will be stored
+        # encrypted by the password.
+        @key.password_file = password_file if password_file
         @key.generate
-        @key.save :in => :file
+        @key.save
         true
     end
 
@@ -60,7 +77,7 @@ class Puppet::SSL::Host
         generate_key unless key
         @certificate_request = CertificateRequest.new(name)
         @certificate_request.generate(key)
-        @certificate_request.save :in => :file
+        @certificate_request.save
         return true
     end
 
@@ -69,11 +86,6 @@ class Puppet::SSL::Host
     def certificate
         return nil unless (defined?(@certificate) and @certificate) or @certificate = Certificate.find(name)
         @certificate.content
-    end
-
-    # Is this a ca host, meaning that all of its files go in the CA collections?
-    def ca?
-        ca
     end
 
     # Remove all traces of this ssl host

@@ -30,7 +30,11 @@ describe Puppet::SSL::Host do
 
     it "should be able to be a ca host" do
         @host.ca = true
-        @host.ca.should be_true
+        @host.ca?.should be_true
+    end
+
+    it "should support having a password file set" do
+        lambda { @host.password_file = "/my/file" }.should_not raise_error
     end
 
     describe "when managing its private key" do
@@ -57,6 +61,17 @@ describe Puppet::SSL::Host do
 
             @host.generate_key.should be_true
             @host.key.should equal(@realkey)
+        end
+
+        it "should pass its password file on to the key if one is set" do
+            @host.password_file = "/my/password"
+            Puppet::SSL::Key.expects(:new).with("myname").returns(@key)
+
+            @key.stub_everything
+
+            @key.expects(:password_file=).with("/my/password")
+
+            @host.generate_key
         end
 
         it "should return any previously found key without requerying" do

@@ -8,8 +8,6 @@ describe Puppet::SSL::CertificateRevocationList do
     before do
         @cert = stub 'cert', :subject => "mysubject"
 
-        @key = stub 'key'
-
         @class = Puppet::SSL::CertificateRevocationList
     end
 
@@ -17,84 +15,27 @@ describe Puppet::SSL::CertificateRevocationList do
         before do
             @class.any_instance.stubs(:read_or_generate)
 
-            @crl = @class.new("myname", @cert, @key)
+            @crl = @class.new
         end
 
-        it "should have a name attribute" do
-            @crl.name.should == "myname"
+        it "should always use 'crl' for its name" do
+            @crl.name.should == "crl"
         end
 
         it "should have a content attribute" do
             @crl.should respond_to(:content)
         end
-
-        it "should be able to read the crl from disk" do
-            path = "/my/path"
-            File.expects(:read).with(path).returns("my crl")
-            crl = mock 'crl'
-            OpenSSL::X509::CRL.expects(:new).with("my crl").returns(crl)
-            @crl.read(path).should equal(crl)
-            @crl.content.should equal(crl)
-        end
-
-        it "should return an empty string when converted to a string with no crl" do
-            @crl.to_s.should == ""
-        end
-
-        it "should convert the crl to pem format when converted to a string" do
-            crl = mock 'crl', :to_pem => "pem"
-            @crl.content = crl
-            @crl.to_s.should == "pem"
-        end
-
-        it "should have a :to_text method that it delegates to the actual crl" do
-            real_crl = mock 'crl'
-            real_crl.expects(:to_text).returns "crltext"
-            @crl.content = real_crl
-            @crl.to_text.should == "crltext"
-        end
     end
 
     describe "when initializing" do
-        it "should require the CA cert and key" do
-            lambda { @class.new("myname") }.should raise_error(ArgumentError)
-        end
-
         it "should fail if :cacrl is set to false" do
             Puppet.settings.expects(:value).with(:cacrl).returns false
-            lambda { @class.new("myname", @cert, @key) }.should raise_error(Puppet::Error)
+            lambda { @class.new }.should raise_error(Puppet::Error)
         end
 
         it "should fail if :cacrl is set to the string 'false'" do
             Puppet.settings.expects(:value).with(:cacrl).returns "false"
-            lambda { @class.new("myname", @cert, @key) }.should raise_error(Puppet::Error)
-        end
-
-        it "should read the CRL from disk" do
-            Puppet.settings.stubs(:value).with(:cacrl).returns "/path/to/crl"
-            @class.any_instance.expects(:read).with("/path/to/crl").returns("my key")
-
-            @class.new("myname", @cert, @key)
-        end
-
-        describe "and no CRL exists on disk" do
-            before do
-                @class.any_instance.stubs(:read).returns(false)
-                @class.any_instance.stubs(:generate)
-                @class.any_instance.stubs(:save)
-            end
-
-            it "should generate a new CRL" do
-                @class.any_instance.expects(:generate).with(@cert, @key)
-
-                @class.new("myname", @cert, @key)
-            end
-
-            it "should save the CRL" do
-                @class.any_instance.expects(:save).with(@key)
-
-                @class.new("myname", @cert, @key)
-            end
+            lambda { @class.new }.should raise_error(Puppet::Error)
         end
     end
 
@@ -107,61 +48,91 @@ describe Puppet::SSL::CertificateRevocationList do
 
             @class.any_instance.stubs(:read_or_generate)
 
-            @crl = @class.new("myname", @cert, @key)
+            @crl = @class.new
         end
 
         it "should set its issuer to the subject of the passed certificate" do
             @real_crl.expects(:issuer=).with(@cert.subject)
 
-            @crl.generate(@cert, @key)
+            @crl.generate(@cert)
         end
 
         it "should set its version to 1" do
             @real_crl.expects(:version=).with(1)
 
-            @crl.generate(@cert, @key)
+            @crl.generate(@cert)
         end
 
         it "should create an instance of OpenSSL::X509::CRL" do
             OpenSSL::X509::CRL.expects(:new).returns(@real_crl)
 
-            @crl.generate(@cert, @key)
+            @crl.generate(@cert)
         end
 
         it "should set the content to the generated crl" do
-            @crl.generate(@cert, @key)
+            @crl.generate(@cert)
             @crl.content.should equal(@real_crl)
         end
 
         it "should return the generated crl" do
-            @crl.generate(@cert, @key).should equal(@real_crl)
-        end
-
-        it "should return the crl in pem format" do
-            @crl.generate(@cert, @key)
-            @crl.content.expects(:to_pem).returns "my normal crl"
-            @crl.to_s.should == "my normal crl"
+            @crl.generate(@cert).should equal(@real_crl)
         end
     end
 
-    describe "when saving the CRL" do
+    # This test suite isn't exactly complete, because the
+    # SSL stuff is very complicated.  It just hits the high points.
+    describe "when revoking a certificate" do
         before do
-            @class.any_instance.stubs(:read_or_generate)
             @class.wrapped_class.any_instance.stubs(:issuer=)
 
-            @crl = @class.new("myname", @cert, @key)
-            @crl.generate(@cert, @key)
+            @crl = @class.new
+            @crl.generate(@cert)
+            @crl.content.stubs(:sign)
+
+            @crl.stubs :save
+
+            @key = mock 'key'
         end
 
-        it "should use the Settings#write method to write the file" do
-            pending("Not fully ported") do
-                fh = mock 'filehandle'
-                Puppet.settings.expects(:write).with(:cacrl).yields fh
+        it "should require a serial number and the CA's private key" do
+            lambda { @crl.revoke }.should raise_error(ArgumentError)
+        end
 
-                fh.expects :print
+        it "should default to OpenSSL::OCSP::REVOKED_STATUS_KEYCOMPROMISE as the revocation reason" do
+            # This makes it a bit more of an integration test than we'd normally like, but that's life
+            # with openssl.
+            reason = OpenSSL::ASN1::Enumerated(OpenSSL::OCSP::REVOKED_STATUS_KEYCOMPROMISE)
+            OpenSSL::ASN1.expects(:Enumerated).with(OpenSSL::OCSP::REVOKED_STATUS_KEYCOMPROMISE).returns reason
 
-                @crl.save(@key)
-            end
+            @crl.revoke(1, @key)
+        end
+
+        it "should mark the CRL as updated" do
+            time = Time.now
+            Time.expects(:now).returns time
+
+            @crl.content.expects(:last_update=).with(time)
+
+            @crl.revoke(1, @key)
+        end
+
+        it "should mark the CRL valid for five years" do
+            time = Time.now
+            Time.expects(:now).returns time
+
+            @crl.content.expects(:next_update=).with(time + (5 * 365*24*60*60))
+
+            @crl.revoke(1, @key)
+        end
+
+        it "should sign the CRL with the CA's private key and a digest instance" do
+            @crl.content.expects(:sign).with { |key, digest| key == @key and digest.is_a?(OpenSSL::Digest::SHA1) }
+            @crl.revoke(1, @key)
+        end
+
+        it "should save the CRL" do
+            @crl.expects :save
+            @crl.revoke(1, @key)
         end
     end
 end
