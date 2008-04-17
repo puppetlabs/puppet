@@ -22,6 +22,10 @@ describe Puppet::SSL::CertificateRequest do
         @class.new("myname").name.should == "myname"
     end
 
+    it "should default to the :file terminus" do
+        @class.indirection.terminus_class.should == :file
+    end
+
     describe "when managing instances" do
         before do
             @request = @class.new("myname")

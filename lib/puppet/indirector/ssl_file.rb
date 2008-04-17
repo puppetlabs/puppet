@@ -1,5 +1,4 @@
-require 'puppet/indirector/file'
-require 'puppet/ssl/host'
+require 'puppet/ssl'
 
 class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
     # Specify the directory in which multiple files are stored.
@@ -141,3 +140,8 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
         end
     end
 end
+
+# LAK:NOTE This has to be at the end, because classes like SSL::Key use this
+# class, and this require statement loads those, which results in a load loop
+# and lots of failures.
+require 'puppet/ssl/host'

@@ -21,13 +21,8 @@ describe Puppet::SSL::Certificate do
         @class.indirection.name.should == :certificate
     end
 
-    it "should default to a local certificate authority" do
-        @class.ca_location.should == :local
-    end
-
-    it "should allow overriding the ca location" do
-        @class.ca_is :remote
-        @class.ca_location.should == :remote
+    it "should default to the :file terminus" do
+        @class.indirection.terminus_class.should == :file
     end
 
     describe "when managing instances" do

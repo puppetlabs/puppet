@@ -25,6 +25,62 @@ class Puppet::SSL::Host
         CA_NAME
     end
 
+    class << self
+        attr_reader :ca_location
+    end
+
+    # Configure how our various classes interact with their various terminuses.
+    def self.configure_indirection(terminus, cache = nil)
+        Certificate.terminus_class = terminus
+        CertificateRequest.terminus_class = terminus
+
+        if cache
+            # This is weird; we don't actually cache our keys, we
+            # use what would otherwise be the cache as our normal
+            # terminus.
+            Key.terminus_class = cache
+        else
+            Key.terminus_class = terminus
+        end
+
+        if cache
+            Certificate.cache_class = cache
+            CertificateRequest.cache_class = cache
+        end
+    end
+
+    # Specify how we expect to interact with our certificate authority.
+    def self.ca_location=(mode)
+        raise ArgumentError, "CA Mode can only be :local, :remote, or :none" unless [:local, :remote, :only, :none].include?(mode)
+
+        @ca_mode = mode
+
+        case @ca_mode
+        when :local:
+            # Our ca is local, so we use it as the ultimate source of information
+            # And we cache files locally.
+            configure_indirection :ca_file, :file
+        when :remote:
+            configure_indirection :rest, :file
+        when :only:
+            # We are the CA, so we just interact with CA stuff.
+            configure_indirection :ca_file
+        when :none:
+            # We have no CA, so we just look in the local file store.
+            configure_indirection :file
+        end
+    end
+
+    # Set the cache class for the files we manage.
+    def self.cache_class=(value)
+        [Key, CertificateRequest, Certificate].each { |klass| klass.terminus_class = value }
+    end
+
+    # Set the terminus class for the files we manage.
+    def self.terminus_class=(value)
+        [Key, CertificateRequest, Certificate].each { |klass| klass.terminus_class = value }
+    end
+
     # Search for more than one host, optionally only specifying
     # an interest in hosts with a given file type.
     # This just allows our non-indirected class to have one of

@@ -6,7 +6,7 @@ class Puppet::SSL::CertificateRevocationList < Puppet::SSL::Base
     wraps OpenSSL::X509::CRL
 
     extend Puppet::Indirector
-    indirects :certificate_revocation_list
+    indirects :certificate_revocation_list, :terminus_class => :file
 
     # Knows how to create a CRL with our system defaults.
     def generate(cert)

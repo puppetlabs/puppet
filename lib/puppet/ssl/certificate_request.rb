@@ -5,7 +5,7 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
     wraps OpenSSL::X509::Request
 
     extend Puppet::Indirector
-    indirects :certificate_request
+    indirects :certificate_request, :terminus_class => :file
 
     # How to create a certificate request with our system defaults.
     def generate(key)

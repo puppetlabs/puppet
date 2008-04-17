@@ -37,6 +37,103 @@ describe Puppet::SSL::Host do
         lambda { @host.password_file = "/my/file" }.should_not raise_error
     end
 
+    it "should have a method for determining the CA location" do
+        Puppet::SSL::Host.should respond_to(:ca_location)
+    end
+
+    it "should have a method for specifying the CA location" do
+        Puppet::SSL::Host.should respond_to(:ca_location=)
+    end
+
+    describe "when specifying the CA location" do
+        before do
+            [Puppet::SSL::Key, Puppet::SSL::Certificate, Puppet::SSL::CertificateRequest].each do |klass|
+                klass.stubs(:terminus_class=)
+                klass.stubs(:cache_class=)
+            end
+        end
+
+        it "should support the location ':local'" do
+            lambda { Puppet::SSL::Host.ca_location = :local }.should_not raise_error
+        end
+
+        it "should support the location ':remote'" do
+            lambda { Puppet::SSL::Host.ca_location = :remote }.should_not raise_error
+        end
+
+        it "should support the location ':none'" do
+            lambda { Puppet::SSL::Host.ca_location = :none }.should_not raise_error
+        end
+
+        it "should not support other modes" do
+            lambda { Puppet::SSL::Host.ca_location = :whatever }.should raise_error(ArgumentError)
+        end
+
+        describe "as 'local'" do
+            it "should set the cache class for Certificate and CertificateRequest as :file" do
+                Puppet::SSL::Certificate.expects(:cache_class=).with :file
+                Puppet::SSL::CertificateRequest.expects(:cache_class=).with :file
+
+                Puppet::SSL::Host.ca_location = :local
+            end
+
+            it "should set the terminus class for Key as :file" do
+                Puppet::SSL::Key.expects(:terminus_class=).with :file
+
+                Puppet::SSL::Host.ca_location = :local
+            end
+
+            it "should set the terminus class for Certificate and CertificateRequest as :ca_file" do
+                Puppet::SSL::Certificate.expects(:terminus_class=).with :ca_file
+                Puppet::SSL::CertificateRequest.expects(:terminus_class=).with :ca_file
+
+                Puppet::SSL::Host.ca_location = :local
+            end
+        end
+
+        describe "as 'remote'" do
+            it "should set the cache class for Certificate and CertificateRequest as :file" do
+                Puppet::SSL::Certificate.expects(:cache_class=).with :file
+                Puppet::SSL::CertificateRequest.expects(:cache_class=).with :file
+
+                Puppet::SSL::Host.ca_location = :remote
+            end
+
+            it "should set the terminus class for Key as :file" do
+                Puppet::SSL::Key.expects(:terminus_class=).with :file
+
+                Puppet::SSL::Host.ca_location = :remote
+            end
+
+            it "should set the terminus class for Certificate and CertificateRequest as :rest" do
+                Puppet::SSL::Certificate.expects(:terminus_class=).with :rest
+                Puppet::SSL::CertificateRequest.expects(:terminus_class=).with :rest
+
+                Puppet::SSL::Host.ca_location = :remote
+            end
+        end
+
+        describe "as 'only'" do
+            it "should set the terminus class for Key, Certificate, and CertificateRequest as :ca_file" do
+                Puppet::SSL::Key.expects(:terminus_class=).with :ca_file
+                Puppet::SSL::Certificate.expects(:terminus_class=).with :ca_file
+                Puppet::SSL::CertificateRequest.expects(:terminus_class=).with :ca_file
+
+                Puppet::SSL::Host.ca_location = :only
+            end
+        end
+
+        describe "as 'none'" do
+            it "should set the terminus class for Key, Certificate, and CertificateRequest as :file" do
+                Puppet::SSL::Key.expects(:terminus_class=).with :file
+                Puppet::SSL::Certificate.expects(:terminus_class=).with :file
+                Puppet::SSL::CertificateRequest.expects(:terminus_class=).with :file
+
+                Puppet::SSL::Host.ca_location = :none
+            end
+        end
+    end
+
     describe "when managing its private key" do
         before do
             @realkey = "mykey"

@@ -11,6 +11,10 @@ describe Puppet::SSL::CertificateRevocationList do
         @class = Puppet::SSL::CertificateRevocationList
     end
 
+    it "should default to the :file terminus" do
+        @class.indirection.terminus_class.should == :file
+    end
+
     describe "when an instance" do
         before do
             @class.any_instance.stubs(:read_or_generate)
