@@ -34,7 +34,8 @@ start() {
         [[ -n "${PUPPETMASTER_EXTRA_OPTS}" ]] && options="${options} ${PUPPETMASTER_EXTRA_OPTS}"
 
         ebegin "Starting puppetmaster"
-        start-stop-daemon --start --quiet --exec /usr/bin/puppetmasterd \
+        start-stop-daemon --start --quiet \
+                --pidfile ${PUPPETMASTER_PID_DIR}/puppetmasterd.pid --exec /usr/bin/puppetmasterd \
                 -- ${options}
         eend $? "Failed to start puppetmaster"
 }
