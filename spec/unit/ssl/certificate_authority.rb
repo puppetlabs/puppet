@@ -45,8 +45,6 @@ describe Puppet::SSL::CertificateAuthority do
         end
     end
 
-    it "should generate a self-signed certificate if its Host instance has no certificate"
-
     describe "when generating a self-signed CA certificate" do
         before do
             Puppet.settings.stubs(:use)
@@ -103,6 +101,8 @@ describe Puppet::SSL::CertificateAuthority do
             @cacert.stubs(:content).returns "cacertificate"
             Puppet::SSL::CertificateAuthority.any_instance.stubs(:certificate).returns @cacert
             @ca = Puppet::SSL::CertificateAuthority.new
+
+            @ca.host.stubs(:certificate).returns @cacert
             
             # Stub out the factory
             @name = "myhost"
@@ -204,16 +204,15 @@ describe Puppet::SSL::CertificateAuthority do
                 @serial = 10
                 @ca.stubs(:next_serial).returns @serial
 
-                Puppet::SSL::CertificateRequest.stubs(:find).with(@name, :in => :ca_file).returns @request
+                Puppet::SSL::CertificateRequest.stubs(:find).with(@name).returns @request
                 @cert.stubs :save
             end
 
-            it "should fail if the CA certificate cannot be found" do
-                @ca.expects(:certificate).returns nil
+            it "should generate a self-signed certificate if its Host instance has no certificate" do
+                @ca.host.expects(:certificate).times(2).returns(nil).then.returns mock("ca_certificate")
+                @ca.expects(:generate_ca_certificate)
 
-                Puppet::SSL::CertificateRequest.stubs(:find).returns "csr"
-
-                lambda { @ca.sign("myhost") }.should raise_error(ArgumentError)
+                @ca.sign(@name)
             end
 
             it "should use a certificate type of :server" do
@@ -225,13 +224,13 @@ describe Puppet::SSL::CertificateAuthority do
             end
 
             it "should use look up a CSR for the host in the :ca_file terminus" do
-                Puppet::SSL::CertificateRequest.expects(:find).with(@name, :in => :ca_file).returns @request
+                Puppet::SSL::CertificateRequest.expects(:find).with(@name).returns @request
 
                 @ca.sign(@name)
             end
 
             it "should fail if no CSR can be found for the host" do
-                Puppet::SSL::CertificateRequest.expects(:find).with(@name, :in => :ca_file).returns nil
+                Puppet::SSL::CertificateRequest.expects(:find).with(@name).returns nil
 
                 lambda { @ca.sign(@name) }.should raise_error(ArgumentError)
             end
@@ -271,7 +270,7 @@ describe Puppet::SSL::CertificateAuthority do
             @serial = 10
             @ca.stubs(:next_serial).returns @serial
 
-            Puppet::SSL::CertificateRequest.stubs(:find).with(@name, :in => :ca_file).returns @request
+            Puppet::SSL::CertificateRequest.stubs(:find).with(@name).returns @request
             @cert.stubs :save
             Puppet::SSL::Certificate.expects(:new).with(@name).returns @cert
 
@@ -282,7 +281,7 @@ describe Puppet::SSL::CertificateAuthority do
             @serial = 10
             @ca.stubs(:next_serial).returns @serial
 
-            Puppet::SSL::CertificateRequest.stubs(:find).with(@name, :in => :ca_file).returns @request
+            Puppet::SSL::CertificateRequest.stubs(:find).with(@name).returns @request
             @cert.stubs :save
             @ca.sign(@name).should equal(@cert)
         end

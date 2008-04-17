@@ -38,25 +38,26 @@ class Puppet::SSL::CertificateAuthority
     end
 
     # Sign a given certificate request.
-    def sign(host, cert_type = :server, self_signing_csr = nil)
+    def sign(hostname, cert_type = :server, self_signing_csr = nil)
 
         # This is a self-signed certificate
         if self_signing_csr
             csr = self_signing_csr
             issuer = csr.content
         else
-            raise ArgumentError, "Cannot find CA certificate; cannot sign certificate for %s" % host unless certificate
-            unless csr = Puppet::SSL::CertificateRequest.find(host, :in => :ca_file)
-                raise ArgumentError, "Could not find certificate request for %s" % host
+            generate_ca_certificate unless host.certificate
+
+            unless csr = Puppet::SSL::CertificateRequest.find(hostname)
+                raise ArgumentError, "Could not find certificate request for %s" % hostname
             end
-            issuer = certificate
+            issuer = host.certificate
         end
 
-        cert = Puppet::SSL::Certificate.new(host)
+        cert = Puppet::SSL::Certificate.new(hostname)
         cert.content = Puppet::SSL::CertificateFactory.new(cert_type, csr.content, issuer, next_serial).result
         cert.content.sign(key, OpenSSL::Digest::SHA1.new)
 
-        Puppet.notice "Signed certificate request for %s" % host
+        Puppet.notice "Signed certificate request for %s" % hostname
 
         # Save the now-signed cert.  This should get routed correctly depending
         # on the certificate type.
