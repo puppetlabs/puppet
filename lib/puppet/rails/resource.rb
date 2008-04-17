@@ -98,6 +98,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
         hash.delete("host_id")
         hash.delete("updated_at")
         hash.delete("source_file_id")
+        hash.delete("created_at")
         hash.delete("id")
         hash.each do |p, v|
             hash.delete(p) if v.nil?

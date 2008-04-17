@@ -14,6 +14,7 @@ class Puppet::Rails::Schema
                     t.column :exported, :boolean
                     t.column :line, :integer
                     t.column :updated_at, :datetime
+                    t.column :created_at, :datetime
                 end
                 add_index :resources, :id, :integer => true
                 add_index :resources, :host_id, :integer => true
@@ -31,6 +32,7 @@ class Puppet::Rails::Schema
                     t.column :filename, :string
                     t.column :path, :string
                     t.column :updated_at, :datetime
+                    t.column :created_at, :datetime
                 end
                 add_index :source_files, :id, :integer => true
                 add_index :source_files, :filename
@@ -39,6 +41,7 @@ class Puppet::Rails::Schema
                     t.column :resource_id, :integer
                     t.column :puppet_tag_id, :integer
                     t.column :updated_at, :datetime
+                    t.column :created_at, :datetime
                 end
                 add_index :resource_tags, :id, :integer => true
                 add_index :resource_tags, :resource_id, :integer => true
@@ -47,6 +50,7 @@ class Puppet::Rails::Schema
                 create_table :puppet_tags do |t| 
                     t.column :name, :string
                     t.column :updated_at, :datetime
+                    t.column :created_at, :datetime
                 end
                 add_index :puppet_tags, :id, :integer => true
 
@@ -59,6 +63,7 @@ class Puppet::Rails::Schema
                     #Use updated_at to automatically add timestamp on save.
                     t.column :updated_at, :datetime
                     t.column :source_file_id, :integer
+                    t.column :created_at, :datetime
                 end
                 add_index :hosts, :id, :integer => true
                 add_index :hosts, :source_file_id, :integer => true
@@ -67,6 +72,7 @@ class Puppet::Rails::Schema
                 create_table :fact_names do |t| 
                     t.column :name, :string, :null => false
                     t.column :updated_at, :datetime
+                    t.column :created_at, :datetime
                 end
                 add_index :fact_names, :id, :integer => true
                 add_index :fact_names, :name
@@ -76,6 +82,7 @@ class Puppet::Rails::Schema
                     t.column :fact_name_id, :integer, :null => false
                     t.column :host_id, :integer, :null => false
                     t.column :updated_at, :datetime
+                    t.column :created_at, :datetime
                 end 
                 add_index :fact_values, :id, :integer => true
                 add_index :fact_values, :fact_name_id, :integer => true
@@ -87,6 +94,7 @@ class Puppet::Rails::Schema
                     t.column :line, :integer
                     t.column :resource_id, :integer
                     t.column :updated_at, :datetime
+                    t.column :created_at, :datetime
                 end
                 add_index :param_values, :id, :integer => true
                 add_index :param_values, :param_name_id, :integer => true
@@ -95,6 +103,7 @@ class Puppet::Rails::Schema
                 create_table :param_names do |t| 
                     t.column :name, :string, :null => false
                     t.column :updated_at, :datetime
+                    t.column :created_at, :datetime
                 end
                 add_index :param_names, :id, :integer => true
                 add_index :param_names, :name
