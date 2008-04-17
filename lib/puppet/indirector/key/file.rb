@@ -5,7 +5,6 @@ class Puppet::SSL::Key::File < Puppet::Indirector::SslFile
     desc "Manage SSL private and public keys on disk."
 
     store_in :privatekeydir
-    store_ca_at :cakey
 
     # Where should we store the public key?
     def public_key_path(name)

@@ -17,15 +17,6 @@ describe Puppet::SSL::Key::File do
         Puppet::SSL::Key::File.collection_directory.should == "/key/dir"
     end
 
-    it "should store the ca key at the :cakey location" do
-        Puppet.settings.stubs(:use)
-        Puppet.settings.stubs(:value).returns "whatever"
-        Puppet.settings.stubs(:value).with(:cakey).returns "/ca/key"
-        file = Puppet::SSL::Key::File.new
-        file.stubs(:ca?).returns true
-        file.path("whatever").should == "/ca/key"
-    end
-
     describe "when choosing the path for the public key" do
         it "should use the :capub setting location if the key is for the certificate authority" do
             Puppet.settings.stubs(:value).returns "/fake/dir"
