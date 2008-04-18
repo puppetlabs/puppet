@@ -21,6 +21,32 @@ describe Puppet::SSL::Key do
         @class.indirection.terminus_class.should == :file
     end
 
+    it "should have a method for determining whether it's a CA key" do
+        @class.new("test").should respond_to(:ca?)
+    end
+
+    it "should consider itself a ca key if its name matches the CA_NAME" do
+        @class.new(Puppet::SSL::Host.ca_name).should be_ca
+    end
+
+    describe "when initializing" do
+        it "should set its password file to the :capass if it's a CA key" do
+            Puppet.settings.stubs(:value).returns "whatever"
+            Puppet.settings.stubs(:value).with(:capass).returns "/ca/pass"
+
+            key = Puppet::SSL::Key.new(Puppet::SSL::Host.ca_name)
+            key.password_file.should == "/ca/pass"
+        end
+
+        it "should set its password file to the default password file if it is not the CA key" do
+            Puppet.settings.stubs(:value).returns "whatever"
+            Puppet.settings.stubs(:value).with(:passfile).returns "/normal/pass"
+
+            key = Puppet::SSL::Key.new("notca")
+            key.password_file.should == "/normal/pass"
+        end
+    end
+
     describe "when managing instances" do
         before do
             @key = @class.new("myname")
@@ -38,9 +64,22 @@ describe Puppet::SSL::Key do
             path = "/my/path"
             File.expects(:read).with(path).returns("my key")
             key = mock 'key'
-            OpenSSL::PKey::RSA.expects(:new).with("my key").returns(key)
+            OpenSSL::PKey::RSA.expects(:new).returns(key)
             @key.read(path).should equal(key)
             @key.content.should equal(key)
+        end
+
+        it "should not try to use the provided password file if the file does not exist" do
+            FileTest.stubs(:exist?).returns false
+            @key.password_file = "/path/to/password"
+
+            path = "/my/path"
+
+            File.stubs(:read).with(path).returns("my key")
+            OpenSSL::PKey::RSA.expects(:new).with("my key", nil).returns(mock('key'))
+            File.expects(:read).with("/path/to/password").never
+
+            @key.read(path)
         end
 
         it "should read the key with the password retrieved from the password file if one is provided" do
@@ -113,10 +152,13 @@ describe Puppet::SSL::Key do
         end
 
         describe "with a password file set" do
-            it "should fail if the password file does not exist" do
+            it "should return a nil password if the password file does not exist" do
                 FileTest.expects(:exist?).with("/path/to/pass").returns false
+                File.expects(:read).with("/path/to/pass").never
 
-                lambda { @instance.password_file = "/path/to/pass" }.should raise_error(ArgumentError)
+                @instance.password_file = "/path/to/pass"
+
+                @instance.password.should be_nil
             end
 
             it "should return the contents of the password file as its password" do
@@ -131,7 +173,6 @@ describe Puppet::SSL::Key do
             it "should export the private key to text using the password" do
                 Puppet.settings.stubs(:value).with(:keylength).returns("50")
 
-                FileTest.expects(:exist?).with("/path/to/pass").returns true
                 @instance.password_file = "/path/to/pass"
                 @instance.stubs(:password).returns "my password"
 

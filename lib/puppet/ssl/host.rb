@@ -15,7 +15,7 @@ class Puppet::SSL::Host
     extend Puppet::Util::ConstantInflector
 
     attr_reader :name
-    attr_accessor :ca, :password_file
+    attr_accessor :ca
 
     CA_NAME = "ca"
 
@@ -114,10 +114,6 @@ class Puppet::SSL::Host
     # with no inputs.
     def generate_key
         @key = Key.new(name)
-
-        # If a password file is set, then the key will be stored
-        # encrypted by the password.
-        @key.password_file = password_file if password_file
         @key.generate
         @key.save
         true

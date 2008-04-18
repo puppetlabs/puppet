@@ -18,6 +18,8 @@ class Puppet::SSL::CertificateAuthority
     def generate_ca_certificate
         generate_password unless password?
 
+        host.generate_key unless host.key
+
         # Create a new cert request.  We do this
         # specially, because we don't want to actually
         # save the request anywhere.
@@ -34,7 +36,6 @@ class Puppet::SSL::CertificateAuthority
         @name = Puppet[:certname]
 
         @host = Puppet::SSL::Host.new(Puppet::SSL::Host.ca_name)
-        @host.password_file = Puppet[:capass]
     end
 
     # Sign a given certificate request.
@@ -55,7 +56,7 @@ class Puppet::SSL::CertificateAuthority
 
         cert = Puppet::SSL::Certificate.new(hostname)
         cert.content = Puppet::SSL::CertificateFactory.new(cert_type, csr.content, issuer, next_serial).result
-        cert.content.sign(key, OpenSSL::Digest::SHA1.new)
+        cert.content.sign(host.key, OpenSSL::Digest::SHA1.new)
 
         Puppet.notice "Signed certificate request for %s" % hostname
 

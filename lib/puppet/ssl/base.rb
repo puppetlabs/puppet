@@ -13,6 +13,11 @@ class Puppet::SSL::Base
 
     attr_accessor :name, :content
 
+    # Is this file for the CA?
+    def ca?
+        name == Puppet::SSL::Host.ca_name
+    end
+
     def generate
         raise Puppet::DevError, "%s did not override 'generate'" % self.class
     end

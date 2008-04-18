@@ -22,19 +22,8 @@ describe Puppet::SSL::CertificateAuthority do
         it "should create an SSL::Host instance whose name is the 'ca_name'" do
             Puppet::SSL::Host.expects(:ca_name).returns "caname"
 
-            host = stub 'host', :password_file= => nil
+            host = stub 'host'
             Puppet::SSL::Host.expects(:new).with("caname").returns host
-
-            Puppet::SSL::CertificateAuthority.new
-        end
-
-        it "should set the Host instance's password file to the :capass setting" do
-            Puppet.settings.stubs(:value).with(:capass).returns "/ca/pass"
-
-            host = mock 'host'
-            Puppet::SSL::Host.expects(:new).returns host
-
-            host.expects(:password_file=).with "/ca/pass"
 
             Puppet::SSL::CertificateAuthority.new
         end
@@ -70,6 +59,16 @@ describe Puppet::SSL::CertificateAuthority do
             fh.expects(:print).with { |s| s.length > 18 }
 
             @ca.stubs(:sign)
+
+            @ca.generate_ca_certificate
+        end
+
+        it "should generate a key if one does not exist" do
+            @ca.stubs :generate_password
+            @ca.stubs :sign
+
+            @ca.host.expects(:key).returns nil
+            @ca.host.expects(:generate_key)
 
             @ca.generate_ca_certificate
         end
@@ -254,7 +253,7 @@ describe Puppet::SSL::CertificateAuthority do
                 OpenSSL::Digest::SHA1.expects(:new).returns digest
 
                 key = mock 'key'
-                @ca.stubs(:key).returns key
+                @ca.host.stubs(:key).returns key
 
                 @cert.content.expects(:sign).with(key, digest)
                 @ca.sign(@name)

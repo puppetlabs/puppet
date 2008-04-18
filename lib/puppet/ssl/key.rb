@@ -8,7 +8,7 @@ class Puppet::SSL::Key < Puppet::SSL::Base
     extend Puppet::Indirector
     indirects :key, :terminus_class => :file
 
-    attr_reader :password_file
+    attr_accessor :password_file
 
     # Knows how to create keys with our system defaults.
     def generate
@@ -16,23 +16,27 @@ class Puppet::SSL::Key < Puppet::SSL::Base
         @content = OpenSSL::PKey::RSA.new(Puppet[:keylength].to_i)
     end
 
-    def password
-        return nil unless password_file
+    def initialize(name)
+        super
 
-        ::File.read(password_file)
+        if ca?
+            @password_file = Puppet[:capass]
+        else
+            @password_file = Puppet[:passfile]
+        end
     end
 
-    # Set our password file.
-    def password_file=(file)
-        raise ArgumentError, "Password file %s does not exist" % file unless FileTest.exist?(file)
+    def password
+        return nil unless password_file and FileTest.exist?(password_file)
 
-        @password_file = file
+        ::File.read(password_file)
     end
 
     # Optionally support specifying a password file.
     def read(path)
         return super unless password_file
 
+        #@content = wrapped_class.new(::File.read(path), password)
         @content = wrapped_class.new(::File.read(path), password)
     end
 
