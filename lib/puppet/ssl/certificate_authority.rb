@@ -11,8 +11,9 @@ require 'puppet/ssl/certificate_request'
 # SSL stuff.
 class Puppet::SSL::CertificateAuthority
     require 'puppet/ssl/certificate_factory'
+    require 'puppet/ssl/inventory'
 
-    attr_reader :name, :host
+    attr_reader :name, :host, :inventory
 
     # Generate our CA certificate.
     def generate_ca_certificate
@@ -36,6 +37,8 @@ class Puppet::SSL::CertificateAuthority
         @name = Puppet[:certname]
 
         @host = Puppet::SSL::Host.new(Puppet::SSL::Host.ca_name)
+
+        @inventory = Puppet::SSL::Inventory.new
     end
 
     # Sign a given certificate request.
@@ -58,6 +61,11 @@ class Puppet::SSL::CertificateAuthority
         cert.content.sign(host.key.content, OpenSSL::Digest::SHA1.new)
 
         Puppet.notice "Signed certificate request for %s" % hostname
+
+        # Add the cert to the inventory before we save it, since
+        # otherwise we could end up with it being duplicated, if
+        # this is the first time we build the inventory file.
+        inventory.add(cert)
 
         # Save the now-signed cert.  This should get routed correctly depending
         # on the certificate type.

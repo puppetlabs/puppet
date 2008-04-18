@@ -32,6 +32,12 @@ describe Puppet::SSL::CertificateAuthority do
             Puppet.settings.expects(:use).with(:main, :ssl, :ca)
             Puppet::SSL::CertificateAuthority.new
         end
+
+        it "should create an inventory instance" do
+            Puppet::SSL::Inventory.expects(:new).returns "inventory"
+
+            Puppet::SSL::CertificateAuthority.new.inventory.should == "inventory"
+        end
     end
 
     describe "when generating a self-signed CA certificate" do
@@ -116,6 +122,10 @@ describe Puppet::SSL::CertificateAuthority do
             Puppet::SSL::CertificateFactory.stubs(:new).returns @factory
 
             @request = stub 'request', :content => "myrequest"
+
+            # And the inventory
+            @inventory = stub 'inventory', :add => nil
+            @ca.stubs(:inventory).returns @inventory
         end
 
         describe "and calculating the next certificate serial number" do
@@ -279,12 +289,17 @@ describe Puppet::SSL::CertificateAuthority do
         end
 
         it "should return the certificate instance" do
-            @serial = 10
-            @ca.stubs(:next_serial).returns @serial
-
             Puppet::SSL::CertificateRequest.stubs(:find).with(@name).returns @request
             @cert.stubs :save
             @ca.sign(@name).should equal(@cert)
+        end
+
+        it "should add the certificate to its inventory" do
+            @inventory.expects(:add).with(@cert)
+
+            Puppet::SSL::CertificateRequest.stubs(:find).with(@name).returns @request
+            @cert.stubs :save
+            @ca.sign(@name)
         end
     end
 

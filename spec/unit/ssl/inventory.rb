@@ -144,6 +144,10 @@ describe Puppet::SSL::Inventory do
                 @inventory.format(@cert).split[3].should == "mycert"
             end
 
+            it "should add a carriage return" do
+                @inventory.format(@cert).should =~ /\n$/
+            end
+
             it "should produce a line consisting of the serial number, start date, expiration date, and subject" do
                 # Just make sure our serial and subject bracket the lines.
                 @inventory.format(@cert).should =~ /^0x.+mycert$/
