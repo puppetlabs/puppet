@@ -67,4 +67,14 @@ describe Puppet::SSL::Host do
             File.read(File.join(Puppet.settings[:requestdir], "luke.madstop.com.pem")).should == @host.certificate_request.to_s
         end
     end
+
+    describe "when the CA host" do
+        it "should never store its key in the :privatekeydir" do
+            Puppet.settings.use(:main, :ssl, :ca)
+            @ca = Puppet::SSL::Host.new(Puppet::SSL::Host.ca_name)
+            @ca.generate_key
+
+            FileTest.should_not be_exist(File.join(Puppet[:privatekeydir], "ca.pem"))
+        end
+    end
 end
