@@ -11,6 +11,9 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
     def generate(key)
         Puppet.info "Creating a new SSL certificate request for %s" % name
 
+        # Support either an actual SSL key, or a Puppet key.
+        key = key.content if key.is_a?(Puppet::SSL::Key)
+
         csr = OpenSSL::X509::Request.new
         csr.version = 0
         csr.subject = OpenSSL::X509::Name.new([["CN", name]])

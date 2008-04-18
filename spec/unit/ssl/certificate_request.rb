@@ -79,6 +79,14 @@ describe Puppet::SSL::CertificateRequest do
             @request.stubs(:verify).returns(true)
         end
 
+        it "should use the content of the provided key if the key is a Puppet::SSL::Key instance" do
+            key = Puppet::SSL::Key.new("test")
+            key.expects(:content).returns @key
+
+            @request.expects(:sign).with{ |key, digest| key == @key }
+            @instance.generate(key)
+        end
+
         it "should log that it is creating a new certificate request" do
             Puppet.expects(:info)
             @instance.generate(@key)

@@ -108,8 +108,8 @@ class Puppet::SSL::Host
     end
 
     def key
-        return nil unless (defined?(@key) and @key) or @key = Key.find(name)
-        @key.content
+        return nil unless @key ||= Key.find(name)
+        @key
     end
 
     # This is the private key; we can create it from scratch
@@ -122,30 +122,28 @@ class Puppet::SSL::Host
     end
 
     def certificate_request
-        return nil unless (defined?(@certificate_request) and @certificate_request) or @certificate_request = CertificateRequest.find(name)
-        @certificate_request.content
+        return nil unless @certificate_request ||= CertificateRequest.find(name)
+        @certificate_request
     end
 
     # Our certificate request requires the key but that's all.
     def generate_certificate_request
         generate_key unless key
         @certificate_request = CertificateRequest.new(name)
-        @certificate_request.generate(key)
+        @certificate_request.generate(key.content)
         @certificate_request.save
         return true
     end
 
-    # There's no ability to generate a certificate -- if we don't have it, then we should be
-    # automatically looking in the ca, and if the ca doesn't have it, we don't have one.
     def certificate
-        return nil unless (defined?(@certificate) and @certificate) or @certificate = Certificate.find(name)
-        @certificate.content
+        return nil unless @certificate ||= Certificate.find(name)
+        @certificate
     end
 
     # Remove all traces of this ssl host
     def destroy
         [key, certificate, certificate_request].each do |instance|
-            instance.class.destroy(instance) if instance
+            instance.class.destroy(name) if instance
         end
     end
 
@@ -157,6 +155,6 @@ class Puppet::SSL::Host
 
     # Extract the public key from the private key.
     def public_key
-        key.public_key
+        key.content.public_key
     end
 end

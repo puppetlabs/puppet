@@ -50,12 +50,12 @@ class Puppet::SSL::CertificateAuthority
             unless csr = Puppet::SSL::CertificateRequest.find(hostname)
                 raise ArgumentError, "Could not find certificate request for %s" % hostname
             end
-            issuer = host.certificate
+            issuer = host.certificate.content
         end
 
         cert = Puppet::SSL::Certificate.new(hostname)
         cert.content = Puppet::SSL::CertificateFactory.new(cert_type, csr.content, issuer, next_serial).result
-        cert.content.sign(host.key, OpenSSL::Digest::SHA1.new)
+        cert.content.sign(host.key.content, OpenSSL::Digest::SHA1.new)
 
         Puppet.notice "Signed certificate request for %s" % hostname
 

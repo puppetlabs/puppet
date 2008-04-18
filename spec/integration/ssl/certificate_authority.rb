@@ -41,7 +41,7 @@ describe Puppet::SSL::CertificateAuthority do
     it "should be able to generate a certificate" do
         @ca.generate_ca_certificate
 
-        @ca.host.certificate.should be_instance_of(Puppet::SSL::Certificate.wrapped_class)
+        @ca.host.certificate.should be_instance_of(Puppet::SSL::Certificate)
     end
 
     describe "when signing certificates" do

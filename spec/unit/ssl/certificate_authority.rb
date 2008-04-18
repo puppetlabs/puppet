@@ -98,12 +98,11 @@ describe Puppet::SSL::CertificateAuthority do
             Puppet::SSL::CertificateAuthority.any_instance.stubs(:key).returns @key
             @cacert = mock 'certificate'
             @cacert.stubs(:content).returns "cacertificate"
-            Puppet::SSL::CertificateAuthority.any_instance.stubs(:certificate).returns @cacert
             @ca = Puppet::SSL::CertificateAuthority.new
 
             @ca.host.stubs(:certificate).returns @cacert
+            @ca.host.stubs(:key).returns @key
             
-            # Stub out the factory
             @name = "myhost"
             @real_cert = stub 'realcert', :sign => nil
             @cert = stub 'certificate', :content => @real_cert
@@ -112,6 +111,7 @@ describe Puppet::SSL::CertificateAuthority do
             @cert.stubs(:content=)
             @cert.stubs(:save)
 
+            # Stub out the factory
             @factory = stub 'factory', :result => "my real cert"
             Puppet::SSL::CertificateFactory.stubs(:new).returns @factory
 
@@ -208,7 +208,9 @@ describe Puppet::SSL::CertificateAuthority do
             end
 
             it "should generate a self-signed certificate if its Host instance has no certificate" do
-                @ca.host.expects(:certificate).times(2).returns(nil).then.returns mock("ca_certificate")
+                cert = stub 'ca_certificate', :content => "mock_cert"
+
+                @ca.host.expects(:certificate).times(2).returns(nil).then.returns cert
                 @ca.expects(:generate_ca_certificate)
 
                 @ca.sign(@name)
@@ -236,7 +238,7 @@ describe Puppet::SSL::CertificateAuthority do
 
             it "should use the CA certificate as the issuer" do
                 Puppet::SSL::CertificateFactory.expects(:new).with do |*args|
-                    args[2] == @cacert
+                    args[2] == @cacert.content
                 end.returns @factory
                 @ca.sign(@name)
             end
@@ -248,14 +250,14 @@ describe Puppet::SSL::CertificateAuthority do
                 @ca.sign(@name)
             end
 
-            it "should sign the resulting certificate using its key and a digest" do
+            it "should sign the resulting certificate using its real key and a digest" do
                 digest = mock 'digest'
                 OpenSSL::Digest::SHA1.expects(:new).returns digest
 
-                key = mock 'key'
+                key = stub 'key', :content => "real_key"
                 @ca.host.stubs(:key).returns key
 
-                @cert.content.expects(:sign).with(key, digest)
+                @cert.content.expects(:sign).with("real_key", digest)
                 @ca.sign(@name)
             end
 

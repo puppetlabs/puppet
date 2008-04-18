@@ -141,9 +141,9 @@ describe Puppet::SSL::Host do
             @host.key.should be_nil
         end
 
-        it "should find the key in the Key class and return the SSL key, not the wrapper" do
+        it "should find the key in the Key class and return the Puppet instance" do
             Puppet::SSL::Key.expects(:find).with("myname").returns(@key)
-            @host.key.should equal(@realkey)
+            @host.key.should equal(@key)
         end
 
         it "should be able to generate and save a new key" do
@@ -153,13 +153,13 @@ describe Puppet::SSL::Host do
             @key.expects(:save)
 
             @host.generate_key.should be_true
-            @host.key.should equal(@realkey)
+            @host.key.should equal(@key)
         end
 
         it "should return any previously found key without requerying" do
             Puppet::SSL::Key.expects(:find).with("myname").returns(@key).once
-            @host.key.should equal(@realkey)
-            @host.key.should equal(@realkey)
+            @host.key.should equal(@key)
+            @host.key.should equal(@key)
         end
     end
 
@@ -174,16 +174,16 @@ describe Puppet::SSL::Host do
             @host.certificate_request.should be_nil
         end
 
-        it "should find the request in the Key class and return it and return the SSL request, not the wrapper" do
+        it "should find the request in the Key class and return it and return the Puppet SSL request" do
             Puppet::SSL::CertificateRequest.expects(:find).with("myname").returns @request
 
-            @host.certificate_request.should equal(@realrequest)
+            @host.certificate_request.should equal(@request)
         end
 
         it "should generate a new key when generating the cert request if no key exists" do
             Puppet::SSL::CertificateRequest.expects(:new).with("myname").returns @request
 
-            key = stub 'key', :public_key => mock("public_key")
+            key = stub 'key', :public_key => mock("public_key"), :content => "mycontent"
 
             @host.expects(:key).times(2).returns(nil).then.returns(key)
             @host.expects(:generate_key).returns(key)
@@ -197,20 +197,20 @@ describe Puppet::SSL::Host do
         it "should be able to generate and save a new request using the private key" do
             Puppet::SSL::CertificateRequest.expects(:new).with("myname").returns @request
 
-            key = stub 'key', :public_key => mock("public_key")
+            key = stub 'key', :public_key => mock("public_key"), :content => "mycontent"
             @host.stubs(:key).returns(key)
-            @request.expects(:generate).with(key)
+            @request.expects(:generate).with("mycontent")
             @request.expects(:save)
 
             @host.generate_certificate_request.should be_true
-            @host.certificate_request.should equal(@realrequest)
+            @host.certificate_request.should equal(@request)
         end
 
         it "should return any previously found request without requerying" do
             Puppet::SSL::CertificateRequest.expects(:find).with("myname").returns(@request).once
 
-            @host.certificate_request.should equal(@realrequest)
-            @host.certificate_request.should equal(@realrequest)
+            @host.certificate_request.should equal(@request)
+            @host.certificate_request.should equal(@request)
         end
     end
 
@@ -220,17 +220,17 @@ describe Puppet::SSL::Host do
             @cert = stub 'cert', :content => @realcert
         end
 
-        it "should find the certificate in the Certificate class and return the SSL certificate, not the wrapper" do
+        it "should find the certificate in the Certificate class and return the Puppet certificate instance" do
             Puppet::SSL::Certificate.expects(:find).with("myname").returns @cert
 
-            @host.certificate.should equal(@realcert)
+            @host.certificate.should equal(@cert)
         end
 
         it "should return any previously found certificate" do
             Puppet::SSL::Certificate.expects(:find).with("myname").returns(@cert).once
 
-            @host.certificate.should equal(@realcert)
-            @host.certificate.should equal(@realcert)
+            @host.certificate.should equal(@cert)
+            @host.certificate.should equal(@cert)
         end
     end
 
@@ -242,9 +242,9 @@ describe Puppet::SSL::Host do
         end
 
         it "should destroy its certificate, certificate request, and key" do
-            Puppet::SSL::Key.expects(:destroy).with(@host.key)
-            Puppet::SSL::Certificate.expects(:destroy).with(@host.certificate)
-            Puppet::SSL::CertificateRequest.expects(:destroy).with(@host.certificate_request)
+            Puppet::SSL::Key.expects(:destroy).with(@host.name)
+            Puppet::SSL::Certificate.expects(:destroy).with(@host.name)
+            Puppet::SSL::CertificateRequest.expects(:destroy).with(@host.name)
 
             @host.destroy
         end
