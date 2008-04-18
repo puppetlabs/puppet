@@ -1,0 +1,136 @@
+#!/usr/bin/env ruby
+
+require File.dirname(__FILE__) + '/../../spec_helper'
+
+require 'puppet/ssl/inventory'
+
+describe Puppet::SSL::Inventory do
+    before do
+        @class = Puppet::SSL::Inventory
+    end
+
+    it "should use the :certinventory setting for the path to the inventory file" do
+        Puppet.settings.expects(:value).with(:cert_inventory).returns "/inven/tory"
+
+        @class.any_instance.stubs(:rebuild)
+
+        @class.new.path.should == "/inven/tory"
+    end
+
+    describe "when initializing" do
+        it "should build the inventory file if one does not exist" do
+            Puppet.settings.stubs(:value).with(:cert_inventory).returns "/inven/tory"
+
+            FileTest.expects(:exist?).with("/inven/tory").returns false
+
+            @class.any_instance.expects(:rebuild)
+
+            @class.new
+        end
+    end
+
+    describe "when creating the inventory file" do
+        before do
+            Puppet.settings.stubs(:value).with(:cert_inventory).returns "/inven/tory"
+            Puppet.settings.stubs(:write)
+            FileTest.stubs(:exist?).with("/inven/tory").returns false
+
+            Puppet::SSL::Certificate.stubs(:search).returns []
+        end
+
+        it "should log that it is building a new inventory file" do
+            Puppet.expects(:notice)
+
+            @class.new
+        end
+
+        it "should use the Settings to write to the file" do
+            Puppet.settings.expects(:write).with(:cert_inventory)
+
+            @class.new
+        end
+
+        it "should add a header to the file" do
+            fh = mock 'filehandle'
+            Puppet.settings.stubs(:write).yields fh
+            fh.expects(:print).with { |str| str =~ /^#/ }
+
+            @class.new
+        end
+
+        it "should add formatted information on all existing certificates" do
+            cert1 = mock 'cert1'
+            cert2 = mock 'cert2'
+
+            Puppet::SSL::Certificate.expects(:search).with("*").returns [cert1, cert2]
+
+            @class.any_instance.expects(:add).with(cert1)
+            @class.any_instance.expects(:add).with(cert2)
+
+            @class.new
+        end
+    end
+
+    describe "when managing an inventory" do
+        before do
+            Puppet.settings.stubs(:value).with(:cert_inventory).returns "/inven/tory"
+
+            FileTest.stubs(:exist?).with("/inven/tory").returns true
+
+            @inventory = @class.new
+
+            @cert = mock 'cert'
+        end
+
+        describe "and adding a certificate" do
+            it "should use the Settings to write to the file" do
+                Puppet.settings.expects(:write).with(:cert_inventory, "a")
+
+                @inventory.add(@cert)
+            end
+
+            it "should add formatted certificate information to the end of the file" do
+                fh = mock 'filehandle'
+
+                Puppet.settings.stubs(:write).yields fh
+
+                @inventory.expects(:format).with(@cert).returns "myformat"
+
+                fh.expects(:print).with("myformat")
+
+                @inventory.add(@cert)
+            end
+        end
+
+        describe "and formatting a certificate" do
+            before do
+                @cert = stub 'cert', :not_before => Time.now, :not_after => Time.now, :subject => "mycert", :serial => 15
+            end
+
+            it "should print the serial number as a 4 digit hex number in the first field" do
+                @inventory.format(@cert).split[0].should == "0x000f" # 15 in hex
+            end
+
+            it "should print the not_before date in '%Y-%m-%dT%H:%M:%S%Z' format in the second field" do
+                @cert.not_before.expects(:strftime).with('%Y-%m-%dT%H:%M:%S%Z').returns "before_time"
+
+                @inventory.format(@cert).split[1].should == "before_time"
+            end
+
+            it "should print the not_after date in '%Y-%m-%dT%H:%M:%S%Z' format in the third field" do
+                @cert.not_after.expects(:strftime).with('%Y-%m-%dT%H:%M:%S%Z').returns "after_time"
+
+                @inventory.format(@cert).split[2].should == "after_time"
+            end
+
+            it "should print the subject in the fourth field" do
+                @inventory.format(@cert).split[3].should == "mycert"
+            end
+
+            it "should produce a line consisting of the serial number, start date, expiration date, and subject" do
+                # Just make sure our serial and subject bracket the lines.
+                @inventory.format(@cert).should =~ /^0x.+mycert$/
+            end
+        end
+    end
+end
