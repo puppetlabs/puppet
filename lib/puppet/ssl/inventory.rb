@@ -7,6 +7,9 @@ class Puppet::SSL::Inventory
 
     # Add a certificate to our inventory.
     def add(cert)
+        # Create our file, if one does not already exist.
+        rebuild unless FileTest.exist?(@path)
+
         Puppet.settings.write(:cert_inventory, "a") do |f|
             f.print format(cert)
         end
@@ -20,8 +23,6 @@ class Puppet::SSL::Inventory
 
     def initialize
         @path = Puppet[:cert_inventory]
-
-        rebuild unless FileTest.exist?(@path)
     end
 
     # Rebuild the inventory from scratch.  This should happen if

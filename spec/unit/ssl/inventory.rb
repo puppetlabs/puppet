@@ -18,56 +18,9 @@ describe Puppet::SSL::Inventory do
     end
 
     describe "when initializing" do
-        it "should build the inventory file if one does not exist" do
+        it "should set its path to the inventory file" do
             Puppet.settings.stubs(:value).with(:cert_inventory).returns "/inven/tory"
-
-            FileTest.expects(:exist?).with("/inven/tory").returns false
-
-            @class.any_instance.expects(:rebuild)
-
-            @class.new
-        end
-    end
-
-    describe "when creating the inventory file" do
-        before do
-            Puppet.settings.stubs(:value).with(:cert_inventory).returns "/inven/tory"
-            Puppet.settings.stubs(:write)
-            FileTest.stubs(:exist?).with("/inven/tory").returns false
-
-            Puppet::SSL::Certificate.stubs(:search).returns []
-        end
-
-        it "should log that it is building a new inventory file" do
-            Puppet.expects(:notice)
-
-            @class.new
-        end
-
-        it "should use the Settings to write to the file" do
-            Puppet.settings.expects(:write).with(:cert_inventory)
-
-            @class.new
-        end
-
-        it "should add a header to the file" do
-            fh = mock 'filehandle'
-            Puppet.settings.stubs(:write).yields fh
-            fh.expects(:print).with { |str| str =~ /^#/ }
-
-            @class.new
-        end
-
-        it "should add formatted information on all existing certificates" do
-            cert1 = mock 'cert1'
-            cert2 = mock 'cert2'
-
-            Puppet::SSL::Certificate.expects(:search).with("*").returns [cert1, cert2]
-
-            @class.any_instance.expects(:add).with(cert1)
-            @class.any_instance.expects(:add).with(cert2)
-
-            @class.new
+            @class.new.path.should == "/inven/tory"
         end
     end
 
@@ -82,7 +35,59 @@ describe Puppet::SSL::Inventory do
             @cert = mock 'cert'
         end
 
+        describe "and creating the inventory file" do
+            before do
+                Puppet.settings.stubs(:write)
+                FileTest.stubs(:exist?).with("/inven/tory").returns false
+
+                Puppet::SSL::Certificate.stubs(:search).returns []
+            end
+
+            it "should log that it is building a new inventory file" do
+                Puppet.expects(:notice)
+
+                @inventory.rebuild
+            end
+
+            it "should use the Settings to write to the file" do
+                Puppet.settings.expects(:write).with(:cert_inventory)
+
+                @inventory.rebuild
+            end
+
+            it "should add a header to the file" do
+                fh = mock 'filehandle'
+                Puppet.settings.stubs(:write).yields fh
+                fh.expects(:print).with { |str| str =~ /^#/ }
+
+                @inventory.rebuild
+            end
+
+            it "should add formatted information on all existing certificates" do
+                cert1 = mock 'cert1'
+                cert2 = mock 'cert2'
+
+                Puppet::SSL::Certificate.expects(:search).with("*").returns [cert1, cert2]
+
+                @class.any_instance.expects(:add).with(cert1)
+                @class.any_instance.expects(:add).with(cert2)
+
+                @inventory.rebuild
+            end
+        end
+
         describe "and adding a certificate" do
+            it "should build the inventory file if one does not exist" do
+                Puppet.settings.stubs(:value).with(:cert_inventory).returns "/inven/tory"
+                Puppet.settings.stubs(:write)
+
+                FileTest.expects(:exist?).with("/inven/tory").returns false
+
+                @inventory.expects(:rebuild)
+
+                @inventory.add(@cert)
+            end
+
             it "should use the Settings to write to the file" do
                 Puppet.settings.expects(:write).with(:cert_inventory, "a")
 
