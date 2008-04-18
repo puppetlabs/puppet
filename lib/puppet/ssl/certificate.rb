@@ -11,4 +11,9 @@ class Puppet::SSL::Certificate < Puppet::SSL::Base
 
     extend Puppet::Indirector
     indirects :certificate, :terminus_class => :file
+
+    def expiration
+        return nil unless content
+        return content.not_after
+    end
 end

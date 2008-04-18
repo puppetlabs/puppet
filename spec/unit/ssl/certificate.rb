@@ -38,6 +38,21 @@ describe Puppet::SSL::Certificate do
             @certificate.should respond_to(:content)
         end
 
+        it "should return a nil expiration if there is no actual certificate" do
+            @certificate.stubs(:content).returns nil
+
+            @certificate.expiration.should be_nil
+        end
+
+        it "should use the expiration of the certificate as its expiration date" do
+            cert = stub 'cert'
+            @certificate.stubs(:content).returns cert
+
+            cert.expects(:not_after).returns "sometime"
+
+            @certificate.expiration.should == "sometime"
+        end
+
         it "should be able to read certificates from disk" do
             path = "/my/path"
             File.expects(:read).with(path).returns("my certificate")
