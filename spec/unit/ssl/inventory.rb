@@ -94,6 +94,18 @@ describe Puppet::SSL::Inventory do
                 @inventory.add(@cert)
             end
 
+            it "should use the actual certificate if it was passed a Puppet certificate" do
+                cert = Puppet::SSL::Certificate.new("mycert")
+                cert.content = @cert
+
+                fh = stub 'filehandle', :print => nil
+                Puppet.settings.stubs(:write).yields fh
+
+                @inventory.expects(:format).with(@cert)
+
+                @inventory.add(@cert)
+            end
+
             it "should add formatted certificate information to the end of the file" do
                 fh = mock 'filehandle'
 

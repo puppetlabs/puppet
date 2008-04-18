@@ -7,6 +7,8 @@ class Puppet::SSL::Inventory
 
     # Add a certificate to our inventory.
     def add(cert)
+        cert = cert.content if cert.is_a?(Puppet::SSL::Certificate)
+
         # Create our file, if one does not already exist.
         rebuild unless FileTest.exist?(@path)
 
