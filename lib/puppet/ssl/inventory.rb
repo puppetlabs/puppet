@@ -1,7 +1,7 @@
 require 'puppet/ssl'
 require 'puppet/ssl/certificate'
 
-# Manage private and public keys as a pair.
+# Keep track of all of our known certificates.
 class Puppet::SSL::Inventory
     attr_reader :path
 
