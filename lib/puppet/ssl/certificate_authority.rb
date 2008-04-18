@@ -27,7 +27,7 @@ class Puppet::SSL::CertificateAuthority
         request.generate(host.key)
 
         # Create a self-signed certificate.
-        @certificate = sign(name, :ca, request)
+        @certificate = sign(host.name, :ca, request)
     end
 
     def initialize
@@ -40,7 +40,6 @@ class Puppet::SSL::CertificateAuthority
 
     # Sign a given certificate request.
     def sign(hostname, cert_type = :server, self_signing_csr = nil)
-
         # This is a self-signed certificate
         if self_signing_csr
             csr = self_signing_csr

@@ -25,8 +25,8 @@ describe Puppet::Indirector::SslFile do
         Puppet.settings.stubs(:value).with(:trace).returns(false)
     end
 
-    it "should use ssl upon initialization" do
-        Puppet.settings.expects(:use).with(:ssl)
+    it "should use :main and :ssl upon initialization" do
+        Puppet.settings.expects(:use).with(:main, :ssl)
         @file_class.new
     end
 

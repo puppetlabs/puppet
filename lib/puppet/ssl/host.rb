@@ -17,6 +17,8 @@ class Puppet::SSL::Host
     attr_reader :name
     attr_accessor :ca
 
+    attr_writer :key, :certificate, :certificate_request
+
     CA_NAME = "ca"
 
     # This is the constant that people will use to mark that a given host is
@@ -150,7 +152,7 @@ class Puppet::SSL::Host
     def initialize(name)
         @name = name
         @key = @certificate = @certificate_request = nil
-        @ca = false
+        @ca = (name == self.class.ca_name)
     end
 
     # Extract the public key from the private key.

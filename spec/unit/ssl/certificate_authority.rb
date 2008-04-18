@@ -73,12 +73,12 @@ describe Puppet::SSL::CertificateAuthority do
             @ca.generate_ca_certificate
         end
 
-        it "should create and sign a self-signed cert" do
+        it "should create and sign a self-signed cert using the CA name" do
             request = mock 'request'
             Puppet::SSL::CertificateRequest.expects(:new).with(@ca.host.name).returns request
             request.expects(:generate).with(@ca.host.key)
 
-            @ca.expects(:sign).with(@ca.name, :ca, request)
+            @ca.expects(:sign).with(@host.name, :ca, request)
 
             @ca.stubs :generate_password
 

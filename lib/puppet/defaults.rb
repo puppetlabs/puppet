@@ -167,7 +167,7 @@ module Puppet
             certificate.  By default, only the server gets an alias set up, and only for 'puppet'."],
         :certdir => ["$ssldir/certs", "The certificate directory."],
         :publickeydir => ["$ssldir/public_keys", "The public key directory."],
-        :requestdir => ["$ssldir/public_keys", "The public key directory."],
+        :requestdir => ["$ssldir/certificate_requests", "Where host certificate requests are stored."],
         :privatekeydir => { :default => "$ssldir/private_keys",
             :mode => 0750,
             :desc => "The private key directory."

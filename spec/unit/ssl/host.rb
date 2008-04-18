@@ -28,9 +28,9 @@ describe Puppet::SSL::Host do
         @host.ca?.should be_false
     end
 
-    it "should be able to be a ca host" do
-        @host.ca = true
-        @host.ca?.should be_true
+    it "should be a ca host if its name matches the CA_NAME" do
+        Puppet::SSL::Host.stubs(:ca_name).returns "yayca"
+        Puppet::SSL::Host.new("yayca").should be_ca
     end
 
     it "should have a method for determining the CA location" do
