@@ -38,4 +38,15 @@ class Puppet::SSL::Inventory
 
         Puppet::SSL::Certificate.search("*").each { |cert| add(cert) }
     end
+
+    # Find the serial number for a given certificate.
+    def serial(name)
+        return nil unless FileTest.exist?(@path)
+
+        File.readlines(@path).each do |line|
+            next unless line =~ /^(\S+).+\/CN=#{name}$/
+
+            return Integer($1)
+        end
+    end
 end

@@ -18,7 +18,7 @@ describe Puppet::SSL::CertificateAuthority do
         Puppet.settings[:confdir] = @dir
         Puppet.settings[:vardir] = @dir
 
-        Puppet::SSL::Host.ca_location = :only
+        Puppet::SSL::Host.ca_location = :local
         @ca = Puppet::SSL::CertificateAuthority.new
     end
 
@@ -42,6 +42,20 @@ describe Puppet::SSL::CertificateAuthority do
         @ca.generate_ca_certificate
 
         @ca.host.certificate.should be_instance_of(Puppet::SSL::Certificate)
+    end
+
+    it "should be able to generate a new host certificate" do
+        @ca.generate("newhost")
+
+        Puppet::SSL::Certificate.find("newhost").should be_instance_of(Puppet::SSL::Certificate)
+    end
+
+    it "should be able to revoke a host certificate" do
+        @ca.generate("newhost")
+
+        @ca.revoke("newhost")
+
+        lambda { @ca.verify("newhost") }.should raise_error
     end
 
     describe "when signing certificates" do

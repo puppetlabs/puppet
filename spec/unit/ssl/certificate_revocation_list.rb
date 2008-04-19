@@ -19,7 +19,7 @@ describe Puppet::SSL::CertificateRevocationList do
         before do
             @class.any_instance.stubs(:read_or_generate)
 
-            @crl = @class.new
+            @crl = @class.new("whatever")
         end
 
         it "should always use 'crl' for its name" do
@@ -34,12 +34,12 @@ describe Puppet::SSL::CertificateRevocationList do
     describe "when initializing" do
         it "should fail if :cacrl is set to false" do
             Puppet.settings.expects(:value).with(:cacrl).returns false
-            lambda { @class.new }.should raise_error(Puppet::Error)
+            lambda { @class.new("crl") }.should raise_error(Puppet::Error)
         end
 
         it "should fail if :cacrl is set to the string 'false'" do
             Puppet.settings.expects(:value).with(:cacrl).returns "false"
-            lambda { @class.new }.should raise_error(Puppet::Error)
+            lambda { @class.new("crl") }.should raise_error(Puppet::Error)
         end
     end
 
@@ -52,7 +52,7 @@ describe Puppet::SSL::CertificateRevocationList do
 
             @class.any_instance.stubs(:read_or_generate)
 
-            @crl = @class.new
+            @crl = @class.new("crl")
         end
 
         it "should set its issuer to the subject of the passed certificate" do
@@ -89,7 +89,7 @@ describe Puppet::SSL::CertificateRevocationList do
         before do
             @class.wrapped_class.any_instance.stubs(:issuer=)
 
-            @crl = @class.new
+            @crl = @class.new("crl")
             @crl.generate(@cert)
             @crl.content.stubs(:sign)
 

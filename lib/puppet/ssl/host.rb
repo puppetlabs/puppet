@@ -2,6 +2,7 @@ require 'puppet/ssl'
 require 'puppet/ssl/key'
 require 'puppet/ssl/certificate'
 require 'puppet/ssl/certificate_request'
+require 'puppet/ssl/certificate_revocation_list'
 require 'puppet/util/constant_inflector'
 
 # The class that manages all aspects of our SSL certificates --
@@ -9,8 +10,9 @@ require 'puppet/util/constant_inflector'
 class Puppet::SSL::Host
     # Yay, ruby's strange constant lookups.
     Key = Puppet::SSL::Key
-    CertificateRequest = Puppet::SSL::CertificateRequest
     Certificate = Puppet::SSL::Certificate
+    CertificateRequest = Puppet::SSL::CertificateRequest
+    CertificateRevocationList = Puppet::SSL::CertificateRevocationList
 
     extend Puppet::Util::ConstantInflector
 
@@ -35,9 +37,10 @@ class Puppet::SSL::Host
     def self.configure_indirection(terminus, cache = nil)
         Certificate.terminus_class = terminus
         CertificateRequest.terminus_class = terminus
+        CertificateRevocationList.terminus_class = terminus
 
         if cache
-            # This is weird; we don't actually cache our keys, we
+            # This is weird; we don't actually cache our keys or CRL, we
             # use what would otherwise be the cache as our normal
             # terminus.
             Key.terminus_class = cache
@@ -48,12 +51,13 @@ class Puppet::SSL::Host
         if cache
             Certificate.cache_class = cache
             CertificateRequest.cache_class = cache
+            CertificateRevocationList.cache_class = cache
         end
     end
 
     # Specify how we expect to interact with our certificate authority.
     def self.ca_location=(mode)
-        raise ArgumentError, "CA Mode can only be :local, :remote, or :none" unless [:local, :remote, :only, :none].include?(mode)
+        raise ArgumentError, "CA Mode can only be :local, :remote, or :none" unless [:local, :remote, :none].include?(mode)
 
         @ca_mode = mode
 
@@ -64,23 +68,10 @@ class Puppet::SSL::Host
             configure_indirection :ca_file, :file
         when :remote:
             configure_indirection :rest, :file
-        when :only:
-            # We are the CA, so we just interact with CA stuff.
-            configure_indirection :ca_file
         when :none:
             # We have no CA, so we just look in the local file store.
             configure_indirection :file
         end
-    end
-
-    # Set the cache class for the files we manage.
-    def self.cache_class=(value)
-        [Key, CertificateRequest, Certificate].each { |klass| klass.terminus_class = value }
-    end
-
-    # Set the terminus class for the files we manage.
-    def self.terminus_class=(value)
-        [Key, CertificateRequest, Certificate].each { |klass| klass.terminus_class = value }
     end
 
     # Search for more than one host, optionally only specifying

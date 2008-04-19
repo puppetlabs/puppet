@@ -40,6 +40,62 @@ describe Puppet::SSL::CertificateAuthority do
         end
     end
 
+    describe "when retrieving the certificate revocation list" do
+        before do
+            Puppet.settings.stubs(:use)
+            Puppet.settings.stubs(:value).returns "whatever"
+
+            Puppet::SSL::CertificateAuthority.any_instance.stubs(:generate_ca_certificate)
+            @ca = Puppet::SSL::CertificateAuthority.new
+        end
+
+        describe "and the CRL is disabled" do
+            it "should return nil when the :cacrl is false" do
+                Puppet.settings.stubs(:value).with(:cacrl).returns false
+
+                Puppet::SSL::CertificateRevocationList.expects(:new).never
+
+                @ca.crl.should be_nil
+            end
+
+            it "should return nil when the :cacrl is 'false'" do
+                Puppet.settings.stubs(:value).with(:cacrl).returns 'false'
+
+                Puppet::SSL::CertificateRevocationList.expects(:new).never
+
+                @ca.crl.should be_nil
+            end
+        end
+
+        describe "and the CRL is enabled" do
+            before do
+                Puppet.settings.stubs(:value).with(:cacrl).returns "/my/crl"
+
+                cert = stub("certificate", :content => "real_cert")
+                @host = stub 'host', :certificate => cert, :name => "hostname"
+
+                @ca.stubs(:host).returns @host
+            end
+
+            it "should return any found CRL instance" do
+                crl = mock 'crl'
+                Puppet::SSL::CertificateRevocationList.expects(:find).returns crl
+                @ca.crl.should equal(crl)
+            end
+
+            it "should create and generate a new CRL instance of no CRL can be found" do
+                crl = mock 'crl'
+                Puppet::SSL::CertificateRevocationList.expects(:find).returns nil
+
+                Puppet::SSL::CertificateRevocationList.expects(:new).returns crl
+
+                crl.expects(:generate).with(@ca.host.certificate.content)
+
+                @ca.crl.should equal(crl)
+            end
+        end
+    end
+
     describe "when generating a self-signed CA certificate" do
         before do
             Puppet.settings.stubs(:use)
@@ -121,11 +177,13 @@ describe Puppet::SSL::CertificateAuthority do
             @factory = stub 'factory', :result => "my real cert"
             Puppet::SSL::CertificateFactory.stubs(:new).returns @factory
 
-            @request = stub 'request', :content => "myrequest"
+            @request = stub 'request', :content => "myrequest", :name => @name
 
             # And the inventory
             @inventory = stub 'inventory', :add => nil
             @ca.stubs(:inventory).returns @inventory
+
+            Puppet::SSL::CertificateRequest.stubs(:destroy)
         end
 
         describe "and calculating the next certificate serial number" do
@@ -275,6 +333,12 @@ describe Puppet::SSL::CertificateAuthority do
                 @cert.expects(:save)
                 @ca.sign(@name)
             end
+
+            it "should remove the host's certificate request" do
+                Puppet::SSL::CertificateRequest.expects(:destroy).with(@name)
+
+                @ca.sign(@name)
+            end
         end
 
         it "should create a certificate instance with the content set to the newly signed x509 certificate" do
@@ -315,16 +379,169 @@ describe Puppet::SSL::CertificateAuthority do
             Puppet::SSL::CertificateAuthority.any_instance.stubs(:key).returns @key
             @cacert = mock 'certificate'
             @cacert.stubs(:content).returns "cacertificate"
-            Puppet::SSL::CertificateAuthority.any_instance.stubs(:certificate).returns @cacert
             @ca = Puppet::SSL::CertificateAuthority.new
         end
+        
+        it "should be able to list waiting certificate requests" do
+            req1 = stub 'req1', :name => "one"
+            req2 = stub 'req2', :name => "two"
+            Puppet::SSL::CertificateRequest.expects(:search).with("*").returns [req1, req2]
 
-        describe "when revoking certificates" do
-            it "should fail if the certificate revocation list is disabled"
+            @ca.waiting?.should == %w{one two}
+        end
+        
+        it "should delegate removing hosts to the Host class" do
+            Puppet::SSL::Host.expects(:destroy).with("myhost")
 
-            it "should default to OpenSSL::OCSP::REVOKED_STATUS_KEYCOMPROMISE as the reason"
+            @ca.destroy("myhost")
+        end
 
-            it "should require a serial number"
+        it "should be able to verify certificates" do
+            @ca.should respond_to(:verify)
+        end
+
+        describe "and verifying certificates" do
+            before do
+                @store = stub 'store', :verify => true, :add_file => nil, :purpose= => nil, :add_crl => true
+
+                OpenSSL::X509::Store.stubs(:new).returns @store
+
+                Puppet.settings.stubs(:value).returns "crtstuff"
+
+                @cert = stub 'cert', :content => "mycert"
+                Puppet::SSL::Certificate.stubs(:find).returns @cert
+
+                @crl = mock('crl')
+
+                @ca.stubs(:crl).returns @crl
+            end
+
+            it "should fail if the host's certificate cannot be found" do
+                Puppet::SSL::Certificate.expects(:find).with("me").returns(nil)
+
+                lambda { @ca.verify("me") }.should raise_error(ArgumentError)
+            end
+
+            it "should create an SSL Store to verify" do
+                OpenSSL::X509::Store.expects(:new).returns @store
+
+                @ca.verify("me")
+            end
+
+            it "should add the CA Certificate to the store" do
+                Puppet.settings.stubs(:value).with(:cacert).returns "/ca/cert"
+                @store.expects(:add_file).with "/ca/cert"
+
+                @ca.verify("me")
+            end
+
+            it "should add the CRL to the store if the crl is enabled" do
+                @store.expects(:add_crl).with @crl
+
+                @ca.verify("me")
+            end
+
+            it "should set the store purpose to OpenSSL::X509::PURPOSE_SSL_CLIENT" do
+                Puppet.settings.stubs(:value).with(:cacert).returns "/ca/cert"
+                @store.expects(:add_file).with "/ca/cert"
+
+                @ca.verify("me")
+            end
+
+            it "should use the store to verify the certificate" do
+                @cert.expects(:content).returns "mycert"
+
+                @store.expects(:verify).with("mycert").returns true
+
+                @ca.verify("me")
+            end
+
+            it "should fail if the verification returns false" do
+                @cert.expects(:content).returns "mycert"
+
+                @store.expects(:verify).with("mycert").returns false
+
+                lambda { @ca.verify("me") }.should raise_error
+            end
+        end
+
+        describe "and revoking certificates" do
+            before do
+                @crl = mock 'crl'
+                @ca.stubs(:crl).returns @crl
+            end
+
+            it "should fail if the certificate revocation list is disabled" do
+                @ca.stubs(:crl).returns false
+
+                lambda { @ca.revoke('whatever') }.should raise_error(ArgumentError)
+
+            end
+
+            it "should delegate the revocation to its CRL" do
+                @ca.crl.expects(:revoke)
+
+                @ca.revoke('host')
+            end
+
+            it "should get the serial number from the local certificate if it exists" do
+                real_cert = stub 'real_cert', :serial => 15
+                cert = stub 'cert', :content => real_cert
+                Puppet::SSL::Certificate.expects(:find).with("host").returns cert
+
+                @ca.crl.expects(:revoke).with { |serial, key| serial == 15 }
+
+                @ca.revoke('host')
+            end
+
+            it "should get the serial number from inventory if no local certificate exists" do
+                real_cert = stub 'real_cert', :serial => 15
+                cert = stub 'cert', :content => real_cert
+                Puppet::SSL::Certificate.expects(:find).with("host").returns nil
+
+                @ca.inventory.expects(:serial).with("host").returns 16
+
+                @ca.crl.expects(:revoke).with { |serial, key| serial == 16 }
+                @ca.revoke('host')
+            end
+        end
+
+        it "should be able to generate a complete new SSL host" do
+            @ca.should respond_to(:generate)
+        end
+
+        describe "and generating certificates" do
+            before do
+                @host = stub 'host', :generate_certificate_request => nil
+                Puppet::SSL::Host.stubs(:new).returns @host
+                Puppet::SSL::Certificate.stubs(:find).returns nil
+
+                @ca.stubs(:sign)
+            end
+
+            it "should fail if a certificate already exists for the host" do
+                Puppet::SSL::Certificate.expects(:find).with("him").returns "something"
+
+                lambda { @ca.generate("him") }.should raise_error(ArgumentError)
+            end
+
+            it "should create a new Host instance with the correct name" do
+                Puppet::SSL::Host.expects(:new).with("him").returns @host
+
+                @ca.generate("him")
+            end
+
+            it "should use the Host to generate the certificate request" do
+                @host.expects :generate_certificate_request
+
+                @ca.generate("him")
+            end
+
+            it "should sign the generated request" do
+                @ca.expects(:sign).with("him")
+
+                @ca.generate("him")
+            end
         end
     end
 end

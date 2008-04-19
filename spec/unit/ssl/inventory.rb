@@ -153,5 +153,28 @@ describe Puppet::SSL::Inventory do
                 @inventory.format(@cert).should =~ /^0x.+mycert$/
             end
         end
+
+        it "should be able to find a given host's serial number" do
+            @inventory.should respond_to(:serial)
+        end
+
+        describe "and finding a serial number" do
+            it "should return nil if the inventory file is missing" do
+                FileTest.expects(:exist?).with("/inven/tory").returns false
+                @inventory.serial(:whatever).should be_nil
+            end
+
+            it "should return the serial number from the line matching the provided name" do
+                File.expects(:readlines).with("/inven/tory").returns ["0x00f blah blah /CN=me\n", "0x001 blah blah /CN=you\n"]
+
+                @inventory.serial("me").should == 15
+            end
+
+            it "should return the number as an integer" do
+                File.expects(:readlines).with("/inven/tory").returns ["0x00f blah blah /CN=me\n", "0x001 blah blah /CN=you\n"]
+
+                @inventory.serial("me").should == 15
+            end
+        end
     end
 end

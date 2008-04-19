@@ -18,7 +18,9 @@ class Puppet::SSL::CertificateRevocationList < Puppet::SSL::Base
         @content
     end
 
-    def initialize
+    # The name doesn't actually matter; there's only one CRL.
+    # We just need the name so our Indirector stuff all works more easily.
+    def initialize(fakename)
         raise Puppet::Error, "Cannot manage the CRL when :cacrl is set to false" if [false, "false"].include?(Puppet[:cacrl])
 
         @name = "crl"
