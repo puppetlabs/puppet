@@ -96,6 +96,11 @@ class Puppet::SSL::CertificateAuthority
         return pass
     end
 
+    # List all signed certificates.
+    def list
+        Puppet::SSL::Certificate.search("*").collect { |c| c.name }
+    end
+
     # Read the next serial from the serial file, and increment the
     # file so this one is considered used.
     def next_serial
@@ -117,6 +122,15 @@ class Puppet::SSL::CertificateAuthority
     # Does the password file exist?
     def password?
         FileTest.exist? Puppet[:capass]
+    end
+
+    # Print a given host's certificate as text.
+    def print(name)
+        if cert = Puppet::SSL::Certificate.find(name)
+            return cert.to_text
+        else
+            return nil
+        end
     end
 
     # Revoke a given certificate.

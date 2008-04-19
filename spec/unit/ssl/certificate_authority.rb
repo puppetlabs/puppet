@@ -400,6 +400,26 @@ describe Puppet::SSL::CertificateAuthority do
             @ca.should respond_to(:verify)
         end
 
+        it "should list certificates as the sorted list of all existing signed certificates" do
+            cert1 = stub 'cert1', :name => "cert1"
+            cert2 = stub 'cert2', :name => "cert2"
+            Puppet::SSL::Certificate.expects(:search).with("*").returns [cert1, cert2]
+            @ca.list.should == %w{cert1 cert2}
+        end
+
+        describe "and printing certificates" do
+            it "should return nil if the certificate cannot be found" do
+                Puppet::SSL::Certificate.expects(:find).with("myhost").returns nil
+                @ca.print("myhost").should be_nil
+            end
+
+            it "should print certificates by calling :to_text on the host's certificate" do
+                cert1 = stub 'cert1', :name => "cert1", :to_text => "mytext"
+                Puppet::SSL::Certificate.expects(:find).with("myhost").returns cert1
+                @ca.print("myhost").should == "mytext"
+            end
+        end
+
         describe "and verifying certificates" do
             before do
                 @store = stub 'store', :verify => true, :add_file => nil, :purpose= => nil, :add_crl => true
