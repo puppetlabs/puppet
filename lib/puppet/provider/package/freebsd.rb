@@ -18,11 +18,22 @@ Puppet::Type.type(:package).provide :freebsd, :parent => :openbsd do
     def install
         should = @resource.should(:ensure)
 
-        if @resource[:source]
-            return super
+        if @resource[:source] =~ /\/$/
+            if @resource[:source] =~ /^(ftp|https?):/
+                withenv :PACKAGESITE => @resource[:source] do
+                    pkgadd "-r", @resource[:name]
+                end
+            else
+                withenv :PKG_PATH => @resource[:source] do
+                    pkgadd @resource[:name]
+                end
+            end
+        else
+            if @resource[:source]
+                Puppet.warning "source is defined but does not have trailing slash, ignoring %s" % @resource[:source]
+            end
+            pkgadd "-r", @resource[:name]
         end
-
-        pkgadd "-r", @resource[:name]
     end
 
     def query
