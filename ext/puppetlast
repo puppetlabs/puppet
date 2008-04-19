@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+#
+# Script to print out when puppet ran successfully last
+# AJ Christensen <aj@junglist.gen.nz>
+#
+
+require 'puppet'
+require 'puppet/defaults'
+require 'yaml'
+
+Puppet[:config] = "/etc/puppet/puppet.conf"
+Puppet.parse_config
+
+print "puppetlast\n"
+
+nodes = {}
+
+yfdir = Puppet.settings.value(:vardir) + "/yaml/facts"
+
+if yfdir
+   begin
+      Dir.chdir(yfdir) do
+         Dir.glob("*.yaml").each do |yaml|
+            data = YAML.load_file(yaml)
+            t = Time.now
+            age = t - data.version
+            nodes[data.name] = age.to_i
+         end
+      end
+
+      nodes.sort.each do |node,age|
+         minutes = age / 60 + 0.5
+         print minutes.floor.to_s + ' minutes ago: ' + node + "\n"
+      end
+
+   rescue
+      print 'error: ' + $! + "\n"
+   end
+
+end
