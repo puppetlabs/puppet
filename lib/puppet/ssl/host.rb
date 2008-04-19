@@ -74,6 +74,16 @@ class Puppet::SSL::Host
         end
     end
 
+    # Remove all traces of a given host
+    def self.destroy(name)
+        [Key, Certificate, CertificateRequest].inject(false) do |result, klass|
+            if klass.destroy(name)
+                result = true
+            end
+            result
+        end
+    end
+
     # Search for more than one host, optionally only specifying
     # an interest in hosts with a given file type.
     # This just allows our non-indirected class to have one of
@@ -129,13 +139,6 @@ class Puppet::SSL::Host
     def certificate
         return nil unless @certificate ||= Certificate.find(name)
         @certificate
-    end
-
-    # Remove all traces of this ssl host
-    def destroy
-        [key, certificate, certificate_request].each do |instance|
-            instance.class.destroy(name) if instance
-        end
     end
 
     def initialize(name)

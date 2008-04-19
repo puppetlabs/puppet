@@ -125,6 +125,36 @@ describe Puppet::SSL::Host do
         end
     end
 
+    it "should have a class method for destroying all files related to a given host" do
+        Puppet::SSL::Host.should respond_to(:destroy)
+    end
+
+    describe "when destroying a host's SSL files" do
+        before do
+            Puppet::SSL::Key.stubs(:destroy).returns false
+            Puppet::SSL::Certificate.stubs(:destroy).returns false
+            Puppet::SSL::CertificateRequest.stubs(:destroy).returns false
+        end
+
+        it "should destroy its certificate, certificate request, and key" do
+            Puppet::SSL::Key.expects(:destroy).with("myhost")
+            Puppet::SSL::Certificate.expects(:destroy).with("myhost")
+            Puppet::SSL::CertificateRequest.expects(:destroy).with("myhost")
+
+            Puppet::SSL::Host.destroy("myhost")
+        end
+
+        it "should return true if any of the classes returned true" do
+            Puppet::SSL::Certificate.expects(:destroy).with("myhost").returns true
+
+            Puppet::SSL::Host.destroy("myhost").should be_true
+        end
+
+        it "should return false if none of the classes returned true" do
+            Puppet::SSL::Host.destroy("myhost").should be_false
+        end
+    end
+
     describe "when managing its private key" do
         before do
             @realkey = "mykey"
@@ -226,22 +256,6 @@ describe Puppet::SSL::Host do
 
             @host.certificate.should equal(@cert)
             @host.certificate.should equal(@cert)
-        end
-    end
-
-    describe "when being destroyed" do
-        before do
-            @host.stubs(:key).returns Puppet::SSL::Key.new("myname")
-            @host.stubs(:certificate).returns Puppet::SSL::Certificate.new("myname")
-            @host.stubs(:certificate_request).returns Puppet::SSL::CertificateRequest.new("myname")
-        end
-
-        it "should destroy its certificate, certificate request, and key" do
-            Puppet::SSL::Key.expects(:destroy).with(@host.name)
-            Puppet::SSL::Certificate.expects(:destroy).with(@host.name)
-            Puppet::SSL::CertificateRequest.expects(:destroy).with(@host.name)
-
-            @host.destroy
         end
     end
 
