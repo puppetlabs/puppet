@@ -72,8 +72,13 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd, :source => :fre
     end
 
     def query
+        # support portorigin_glob such as "mail/postfix"
+        name = self.name
+        if name =~ /\//
+            name = self.name.split(/\//).slice(1)
+        end
         self.class.instances.each do |instance|
-            if instance.name == self.name
+            if instance.name == name
                 return instance.properties
             end
         end
