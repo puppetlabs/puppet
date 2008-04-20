@@ -309,7 +309,7 @@ class Puppet::SSL::CertificateAuthority
         end
         store = OpenSSL::X509::Store.new
         store.add_file Puppet[:cacert]
-        store.add_crl Puppet[:cacrl] if self.crl
+        store.add_crl crl.content if self.crl
         store.purpose = OpenSSL::X509::PURPOSE_SSL_CLIENT
 
         unless store.verify(cert.content)

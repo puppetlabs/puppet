@@ -475,7 +475,7 @@ describe Puppet::SSL::CertificateAuthority do
                 @cert = stub 'cert', :content => "mycert"
                 Puppet::SSL::Certificate.stubs(:find).returns @cert
 
-                @crl = mock('crl')
+                @crl = stub('crl', :content => "mycrl")
 
                 @ca.stubs(:crl).returns @crl
             end
@@ -500,7 +500,7 @@ describe Puppet::SSL::CertificateAuthority do
             end
 
             it "should add the CRL to the store if the crl is enabled" do
-                @store.expects(:add_crl).with @crl
+                @store.expects(:add_crl).with "mycrl"
 
                 @ca.verify("me")
             end
