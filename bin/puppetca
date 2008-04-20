@@ -166,6 +166,8 @@ Puppet.genmanifest
 
 Puppet::Util::Log.newdestination :console
 
+Puppet::SSL::Host.ca_location = :local
+
 begin
     ca = Puppet::SSL::CertificateAuthority.new
 rescue => detail
