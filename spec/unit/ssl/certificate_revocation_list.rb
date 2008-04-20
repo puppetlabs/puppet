@@ -113,7 +113,7 @@ describe Puppet::SSL::CertificateRevocationList do
 
         it "should mark the CRL as updated" do
             time = Time.now
-            Time.expects(:now).returns time
+            Time.stubs(:now).returns time
 
             @crl.content.expects(:last_update=).with(time)
 
@@ -122,7 +122,7 @@ describe Puppet::SSL::CertificateRevocationList do
 
         it "should mark the CRL valid for five years" do
             time = Time.now
-            Time.expects(:now).returns time
+            Time.stubs(:now).returns time
 
             @crl.content.expects(:next_update=).with(time + (5 * 365*24*60*60))
 

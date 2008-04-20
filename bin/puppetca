@@ -95,7 +95,7 @@
 # Licensed under the GNU Public License
 
 require 'puppet'
-require 'puppet/sslcertificates'
+require 'puppet/ssl/certificate_authority'
 require 'getoptlong'
 
 options = [
@@ -118,22 +118,20 @@ Puppet.settings.addargs(options)
 
 result = GetoptLong.new(*options)
 
-mode = nil
-all = false
-generate = nil
+modes = Puppet::SSL::CertificateAuthority::Interface::INTERFACE_METHODS
 
-modes = [:clean, :list, :revoke, :generate, :sign, :print, :verify]
+all = false
+mode = nil
 
 begin
     result.each { |opt,arg|
         case opt
+            when "--clean"
+                mode = :destroy
             when "--all"
                 all = true
             when "--debug"
                 Puppet::Util::Log.level = :debug
-            when "--generate"
-                generate = arg
-                mode = :generate
             when "--help"
                 if Puppet.features.usage?
                     RDoc::usage && exit
@@ -141,12 +139,6 @@ begin
                     puts "No help available unless you have RDoc::usage installed"
                     exit
                 end
-            when "--list"
-                mode = :list
-            when "--revoke"
-                mode = :revoke
-            when "--sign"
-                mode = :sign
             when "--version"
                 puts "%s" % Puppet.version
                 exit
@@ -172,12 +164,12 @@ Puppet.parse_config
 Puppet.genconfig
 Puppet.genmanifest
 
+Puppet::Util::Log.newdestination :console
+
 begin
-    ca = Puppet::SSLCertificates::CA.new()
+    ca = Puppet::SSL::CertificateAuthority.new
 rescue => detail
-    if Puppet[:debug]
-        puts detail.backtrace
-    end
+    puts detail.backtrace if Puppet[:trace]
     puts detail.to_s
     exit(23)
 end
@@ -187,157 +179,16 @@ unless mode
     exit(12)
 end
 
-if [:verify, :print, :generate, :clean, :revoke, :list].include?(mode)
+if all
+    hosts = :all
+else
     hosts = ARGV.collect { |h| h.downcase }
 end
 
-if [:sign, :list].include?(mode)
-    waiting = ca.list
-    unless waiting.length > 0 or (mode == :list and all)
-        puts "No certificates to sign"
-        if ARGV.length > 0
-            exit(17)
-        else
-            exit(0)
-        end
-    end
+begin
+    ca.apply(mode, :to => hosts)
+rescue => detail
+    puts detail.backtrace if Puppet[:trace]
+    puts detail.to_s
+    exit(24)
 end
-
-case mode
-when :list
-    waiting = ca.list
-    if waiting.length > 0
-        puts waiting.join("\n")
-    end
-    if all
-        puts ca.list_signed.collect { |cert | cert.sub(/^/,"+ ") }.join("\n")
-    end
-when :clean
-    if hosts.empty?
-        $stderr.puts "You must specify one or more hosts to clean"
-        exit(24)
-    end
-    cleaned = false
-    hosts.each do |host|
-        cert = ca.getclientcert(host)[0]
-        if cert.nil?
-            $stderr.puts "Could not find client certificate for %s" % host
-            next
-        end
-        ca.clean(host)
-        cleaned = true
-    end
-    unless cleaned
-        exit(27)
-    end
-when :sign
-    to_sign = ARGV.collect { |h| h.downcase }
-    unless to_sign.length > 0 or all
-        $stderr.puts(
-            "You must specify to sign all certificates or you must specify hostnames"
-        )
-        exit(24)
-    end
-
-    unless all
-        to_sign.each { |host|
-            unless waiting.include?(host)
-                $stderr.puts "No waiting request for %s" % host
-            end
-        }
-        waiting = waiting.find_all { |host|
-            to_sign.include?(host)
-        }
-    end
-
-    waiting.each { |host|
-        begin
-            csr = ca.getclientcsr(host)
-        rescue => detail
-            $stderr.puts "Could not retrieve request for %s: %s" % [host, detail]
-        end
-
-        begin
-            ca.sign(csr)
-            $stderr.puts "Signed %s" % host
-        rescue => detail
-            $stderr.puts "Could not sign request for %s: %s" % [host, detail]
-        end
-
-        begin
-            ca.removeclientcsr(host)
-        rescue => detail
-            $stderr.puts "Could not remove request for %s: %s" % [host, detail]
-        end
-    }
-when :generate
-    # we need to generate a certificate for a host
-    hosts.each { |host|
-        puts "Generating certificate for %s" % host
-        cert = Puppet::SSLCertificates::Certificate.new(
-            :name => host
-        )
-        cert.mkcsr
-        signedcert, cacert = ca.sign(cert.csr)
-
-        cert.cert = signedcert
-        cert.cacert = cacert
-        cert.write
-    }
-when :print
-    hosts.each { |h|
-        cert = ca.getclientcert(h)[0]
-        puts cert.to_text
-    }
-when :revoke
-    hosts.each { |h|
-        serial = nil
-        if h =~ /^0x[0-9a-f]+$/
-            serial = h.to_i(16)
-        elsif h =~ /^[0-9]+$/
-            serial = h.to_i
-        else
-            cert = ca.getclientcert(h)[0]
-            if cert.nil?
-                $stderr.puts "Could not find client certificate for %s" % h
-            else
-                serial = cert.serial
-            end
-        end
-        unless serial.nil?
-            ca.revoke(serial)
-            puts "Revoked certificate with serial #{serial}"
-        end
-    }
-when :verify
-    unless ssl = %x{which openssl}.chomp
-        raise "Can't verify certificates without the openssl binary and could not find one"
-    end
-    success = true
-
-    cacert = Puppet[:localcacert]
-
-    hosts.each do |host|
-        print "%s: " % host
-        file = ca.host2certfile(host)
-        unless FileTest.exist?(file)
-            puts "no certificate found"
-            success = false
-            next
-        end
-
-
-        command = %{#{ssl} verify -CAfile #{cacert} #{file}}
-        output = %x{#{command}}
-        if $? == 0
-            puts "valid"
-        else
-            puts output
-            success = false
-        end
-    end
-else
-    $stderr.puts "Invalid mode %s" % mode
-    exit(42)
-end
-
