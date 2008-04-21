@@ -80,10 +80,10 @@ describe Puppet::SSL::Host do
                 Puppet::SSL::Host.ca_location = :local
             end
 
-            it "should set the terminus class for Certificate, CertificateRevocationList, and CertificateRequest as :ca_file" do
-                Puppet::SSL::Certificate.expects(:terminus_class=).with :ca_file
-                Puppet::SSL::CertificateRequest.expects(:terminus_class=).with :ca_file
-                Puppet::SSL::CertificateRevocationList.expects(:terminus_class=).with :ca_file
+            it "should set the terminus class for Certificate, CertificateRevocationList, and CertificateRequest as :ca" do
+                Puppet::SSL::Certificate.expects(:terminus_class=).with :ca
+                Puppet::SSL::CertificateRequest.expects(:terminus_class=).with :ca
+                Puppet::SSL::CertificateRevocationList.expects(:terminus_class=).with :ca
 
                 Puppet::SSL::Host.ca_location = :local
             end

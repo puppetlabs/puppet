@@ -5,18 +5,18 @@
 
 require File.dirname(__FILE__) + '/../../../spec_helper'
 
-require 'puppet/indirector/key/ca_file'
+require 'puppet/indirector/key/ca'
 
-describe Puppet::SSL::Key::CaFile do
+describe Puppet::SSL::Key::Ca do
     it "should have documentation" do
-        Puppet::SSL::Key::CaFile.doc.should be_instance_of(String)
+        Puppet::SSL::Key::Ca.doc.should be_instance_of(String)
     end
 
     it "should store the ca key at the :cakey location" do
         Puppet.settings.stubs(:use)
         Puppet.settings.stubs(:value).returns "whatever"
         Puppet.settings.stubs(:value).with(:cakey).returns "/ca/key"
-        file = Puppet::SSL::Key::CaFile.new
+        file = Puppet::SSL::Key::Ca.new
         file.stubs(:ca?).returns true
         file.path("whatever").should == "/ca/key"
     end
@@ -26,7 +26,7 @@ describe Puppet::SSL::Key::CaFile do
             Puppet.settings.stubs(:use)
             Puppet.settings.stubs(:value).returns "whatever"
             Puppet.settings.stubs(:value).with(:cakey).returns "/ca/key"
-            file = Puppet::SSL::Key::CaFile.new
+            file = Puppet::SSL::Key::Ca.new
             file.stubs(:ca?).returns false
             lambda { file.path("whatever") }.should raise_error(ArgumentError)
         end

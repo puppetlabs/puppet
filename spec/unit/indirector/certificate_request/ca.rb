@@ -5,15 +5,15 @@
 
 require File.dirname(__FILE__) + '/../../../spec_helper'
 
-require 'puppet/indirector/certificate_request/ca_file'
+require 'puppet/indirector/certificate_request/ca'
 
-describe Puppet::SSL::CertificateRequest::CaFile do
+describe Puppet::SSL::CertificateRequest::Ca do
     it "should have documentation" do
-        Puppet::SSL::CertificateRequest::CaFile.doc.should be_instance_of(String)
+        Puppet::SSL::CertificateRequest::Ca.doc.should be_instance_of(String)
     end
 
     it "should use the :csrdir as the collection directory" do
         Puppet.settings.expects(:value).with(:csrdir).returns "/request/dir"
-        Puppet::SSL::CertificateRequest::CaFile.collection_directory.should == "/request/dir"
+        Puppet::SSL::CertificateRequest::Ca.collection_directory.should == "/request/dir"
     end
 end

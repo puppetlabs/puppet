@@ -65,7 +65,7 @@ class Puppet::SSL::Host
         when :local:
             # Our ca is local, so we use it as the ultimate source of information
             # And we cache files locally.
-            configure_indirection :ca_file, :file
+            configure_indirection :ca, :file
         when :remote:
             configure_indirection :rest, :file
         when :none:
