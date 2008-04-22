@@ -17,10 +17,10 @@ describe Puppet::SSL::Certificate::File do
         Puppet::SSL::Certificate::File.collection_directory.should == "/cert/dir"
     end
 
-    it "should store the ca certificate at the :cacert location" do
+    it "should store the ca certificate at the :localcacert location" do
         Puppet.settings.stubs(:use)
         Puppet.settings.stubs(:value).returns "whatever"
-        Puppet.settings.stubs(:value).with(:cacert).returns "/ca/cert"
+        Puppet.settings.stubs(:value).with(:localcacert).returns "/ca/cert"
         file = Puppet::SSL::Certificate::File.new
         file.stubs(:ca?).returns true
         file.path("whatever").should == "/ca/cert"
