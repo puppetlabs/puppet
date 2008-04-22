@@ -123,7 +123,7 @@ module Puppet::Network
                 nil, # user
                 nil, # password
                 true, # use_ssl
-                120 # a two minute timeout, instead of 30 seconds
+                Puppet[:configtimeout] # use configured timeout (#1176)
             )
             @http = Puppet::Network::HttpPool.http_instance(@host, @port)
         end

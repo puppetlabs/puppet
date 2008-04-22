@@ -88,8 +88,9 @@ module Puppet::Network::HttpPool
         class << http; attr_accessor :ca_file; end
 
         http.use_ssl = true
-        http.read_timeout = 120
-        http.open_timeout = 120
+        # Use configured timeout (#1176)
+        http.read_timeout = Puppet[:configtimeout]
+        http.open_timeout = Puppet[:configtimeout]
         # JJM Configurable fix for #896.
         if Puppet[:http_enable_post_connection_check]
             http.enable_post_connection_check = true
