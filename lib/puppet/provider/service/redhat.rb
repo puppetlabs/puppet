@@ -1,11 +1,11 @@
-# Manage debian services.  Start/stop is the same as InitSvc, but enable/disable
-# is special.
+# Manage Red Hat services.  Start/stop uses /sbin/service and enable/disable uses chkconfig
+
 Puppet::Type.type(:service).provide :redhat, :parent => :init do
     desc "Red Hat's (and probably many others) form of ``init``-style service
         management; uses ``chkconfig`` for service enabling and disabling."
 
-    commands :chkconfig => "/sbin/chkconfig"
-
+    commands :chkconfig => "/sbin/chkconfig", :service => "/sbin/service"
+ 
     defaultfor :operatingsystem => [:redhat, :fedora, :suse, :centos]
 
     def self.defpath
@@ -50,5 +50,22 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init do
                 [self.name, detail]
         end
     end
+ 
+    def restart
+        if @resource[:hasrestart] == true
+              service(@resource[:name], "restart")
+        else
+           return false
+        end
+    end
+
+    def start
+        service(@resource[:name], "start")
+    end
+
+    def stop
+        service(@resource[:name], "stop")
+    end
+
 end
 
