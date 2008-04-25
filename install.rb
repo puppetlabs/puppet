@@ -200,6 +200,15 @@ def prepare_installation
     end
   end
 
+  # Mac OS X 10.5 declares bindir and sbindir as
+  # /System/Library/Frameworks/Ruby.framework/Versions/1.8/usr/bin
+  # /System/Library/Frameworks/Ruby.framework/Versions/1.8/usr/sbin
+  # which is not generally where people expect executables to be installed
+  if RUBY_PLATFORM == "universal-darwin9.0"
+    Config::CONFIG['bindir'] = "/usr/bin"
+    Config::CONFIG['sbindir'] = "/usr/sbin"
+  end
+
   if (destdir = ENV['DESTDIR'])
     bindir = "#{destdir}#{Config::CONFIG['bindir']}"
     sbindir = "#{destdir}#{Config::CONFIG['sbindir']}"
