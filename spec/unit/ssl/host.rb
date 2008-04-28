@@ -155,6 +155,19 @@ describe Puppet::SSL::Host do
         end
     end
 
+    describe "when initializing" do
+        it "should default its name to the :certname setting" do
+            Puppet.settings.expects(:value).with(:certname).returns "myname"
+
+            Puppet::SSL::Host.new.name.should == "myname"
+        end
+
+        it "should indicate that it is a CA host if its name matches the ca_name constant" do
+            Puppet::SSL::Host.stubs(:ca_name).returns "myca"
+            Puppet::SSL::Host.new("myca").should be_ca
+        end
+    end
+
     describe "when managing its private key" do
         before do
             @realkey = "mykey"
@@ -312,6 +325,38 @@ describe Puppet::SSL::Host do
             returned.each do |r|
                 result.should be_include(r)
             end
+        end
+    end
+
+    it "should have a method for generating all necessary files" do
+        Puppet::SSL::Host.new("me").should respond_to(:generate)
+    end
+
+    describe "when generating files" do
+        before do
+            @host = Puppet::SSL::Host.new("me")
+            @host.stubs(:generate_key)
+            @host.stubs(:generate_certificate_request)
+        end
+
+        it "should generate a key if one is not present" do
+            @host.expects(:key).returns nil
+            @host.expects(:generate_key)
+
+            @host.generate
+        end
+
+        it "should generate a certificate request if one is not present" do
+            @host.expects(:certificate_request).returns nil
+            @host.expects(:generate_certificate_request)
+
+            @host.generate
+        end
+
+        it "should seek its certificate" do
+            @host.expects(:certificate)
+
+            @host.generate
         end
     end
 end

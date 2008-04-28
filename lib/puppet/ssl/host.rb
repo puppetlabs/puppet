@@ -141,8 +141,18 @@ class Puppet::SSL::Host
         @certificate
     end
 
-    def initialize(name)
-        @name = name
+    # Generate all necessary parts of our ssl host.
+    def generate
+        generate_key unless key
+        generate_certificate_request unless certificate_request
+
+        # Now try to find our actual certificate; this should hopefully get
+        # the cert from the server and then cache it locally.
+        certificate()
+    end
+
+    def initialize(name = nil)
+        @name = name || Puppet[:certname]
         @key = @certificate = @certificate_request = nil
         @ca = (name == self.class.ca_name)
     end

@@ -156,17 +156,59 @@ describe Puppet::Network::HTTP::WEBrick do
     end
     
     describe "when configuring an x509 store" do
-        it "should add the CRL to the store"
+        before do
+            @store = stub 'store'
+            @store.stub_everything
 
-        it "should create a new x509 store"
+            @crl = stub 'crl', :content => 'real_crl'
+            Puppet::SSL::CertificateRevocationList.stubs(:find).returns @crl
 
-        it "should add the CA certificate to the store"
+            @cacert = mock 'cacert'
+            Puppet::SSL::Certificate.stubs(:find).with('ca').returns @crl
 
-        it "should set the store's flags to 'OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK'"
+            OpenSSL::X509::Store.stubs(:new).returns @store
+        end
 
-        it "should set the store's purpose to 'OpenSSL::X509::PURPOSE_ANY'"
+        it "should create a new x509 store" do
+            OpenSSL::X509::Store.expects(:new).returns @store
 
-        it "should return the store"
+            @server.setup_ssl_store
+        end
+
+        it "should fail if no CRL can be found" do
+            Puppet::SSL::CertificateRevocationList.stubs(:find).returns nil
+
+            lambda { @server.setup_ssl_store }.should raise_error(Puppet::Error)
+        end
+
+        it "should add the CRL to the store" do
+            @store.expects(:add_crl).with "real_crl"
+
+            @server.setup_ssl_store
+        end
+
+        it "should add the CA certificate file to the store" do
+            Puppet.settings.stubs(:value).with(:localcacert).returns "/ca/cert"
+            @store.expects(:add_file).with "/ca/cert"
+
+            @server.setup_ssl_store
+        end
+
+        it "should set the store's flags to 'OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK'" do
+            @store.expects(:flags=).with(OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK)
+
+            @server.setup_ssl_store
+        end
+
+        it "should set the store's purpose to 'OpenSSL::X509::PURPOSE_ANY'" do
+            @store.expects(:purpose=).with OpenSSL::X509::PURPOSE_ANY
+
+            @server.setup_ssl_store
+        end
+
+        it "should return the store" do
+            @server.setup_ssl_store.should equal(@store)
+        end
     end
 
     describe "when configuring an http logger" do
@@ -250,22 +292,89 @@ describe Puppet::Network::HTTP::WEBrick do
     end
 
     describe "when configuring ssl" do
-        it "should add an x509 store if the CRL is enabled"
+        before do
+            @server.stubs(:setup_ssl_store)
 
-        it "should not add an x509 store if the CRL is disabled"
+            @key = stub 'key', :content => "mykey"
+            @cert = stub 'cert', :content => "mycert"
+            @host = stub 'host', :key => @key, :certificate => @cert, :name => "yay"
 
-        it "should configure the certificate"
+            Puppet::SSL::Certificate.stubs(:find).with('ca').returns @cert
 
-        it "should configure the private key"
+            Puppet::SSL::Host.stubs(:new).returns @host
+        end
 
-        it "should start ssl immediately"
+        it "should use the key from an SSL::Host instance created with the default name" do
+            Puppet::SSL::Host.expects(:new).returns @host
+            @host.expects(:key).returns "mykey"
 
-        it "should enable ssl"
+            @server.setup_ssl[:SSLPrivateKey].should == "mykey"
+        end
 
-        it "should specify the path to the CA certificate"
+        it "should generate a key if no key can be found" do
+            @host.expects(:key).times(2).returns(nil).then.returns(@key)
 
-        it "should configure the verification method as 'OpenSSL::SSL::VERIFY_PEER'"
+            @host.expects(:generate)
 
-        it "should set the certificate name to 'nil'"
+            @server.setup_ssl
+        end
+
+        it "should fail if no certificate can be found" do
+            @host.expects(:certificate).returns nil
+
+            lambda { @server.setup_ssl }.should raise_error(Puppet::Error)
+        end
+
+        it "should configure the certificate" do
+            @server.setup_ssl[:SSLCertificate].should == "mycert"
+        end
+
+        it "should fail if no CA certificate can be found" do
+            Puppet::SSL::Certificate.stubs(:find).with('ca').returns nil
+
+            lambda { @server.setup_ssl }.should raise_error(Puppet::Error)
+        end
+
+        it "should specify the path to the CA certificate" do
+            Puppet.settings.stubs(:value).returns "whatever"
+            Puppet.settings.stubs(:value).with(:cacrl).returns 'false'
+            Puppet.settings.stubs(:value).with(:localcacert).returns '/ca/crt'
+
+            @server.setup_ssl[:SSLCACertificateFile].should == "/ca/crt"
+        end
+
+        it "should start ssl immediately" do
+            @server.setup_ssl[:SSLStartImmediately].should be_true
+        end
+
+        it "should enable ssl" do
+            @server.setup_ssl[:SSLEnable].should be_true
+        end
+
+        it "should configure the verification method as 'OpenSSL::SSL::VERIFY_PEER'" do
+            @server.setup_ssl[:SSLVerifyClient].should == OpenSSL::SSL::VERIFY_PEER
+        end
+
+        it "should add an x509 store if the CRL is enabled" do
+            Puppet.settings.stubs(:value).returns "whatever"
+            Puppet.settings.stubs(:value).with(:cacrl).returns '/my/crl'
+
+            @server.expects(:setup_ssl_store).returns("mystore")
+
+            @server.setup_ssl[:SSLCertificateStore].should == "mystore"
+        end
+
+        it "should not add an x509 store if the CRL is disabled" do
+            Puppet.settings.stubs(:value).returns "whatever"
+            Puppet.settings.stubs(:value).with(:cacrl).returns 'false'
+
+            @server.expects(:setup_ssl_store).never
+
+            @server.setup_ssl[:SSLCertificateStore].should be_nil
+        end
+
+        it "should set the certificate name to 'nil'" do
+            @server.setup_ssl[:SSLCertName].should be_nil
+        end
     end
 end

@@ -3,6 +3,9 @@ require 'webrick/https'
 require 'puppet/network/http/webrick/rest'
 require 'thread'
 
+require 'puppet/ssl/certificate'
+require 'puppet/ssl/certificate_revocation_list'
+
 class Puppet::Network::HTTP::WEBrick
     def initialize(args = {})
         @listening = false
@@ -54,7 +57,7 @@ class Puppet::Network::HTTP::WEBrick
         end
     end
 
-    # Configure out http log file.
+    # Configure our http log file.
     def setup_logger
         # Make sure the settings are all ready for us.
         Puppet.settings.use(:main, :ssl, Puppet[:name])
@@ -84,39 +87,43 @@ class Puppet::Network::HTTP::WEBrick
     def setup_ssl
         results = {}
 
-        results[:SSLCertificateStore] = setup_crl if Puppet[:cacrl] != 'false'
+        host = Puppet::SSL::Host.new
 
-        results[:SSLCertificate] = self.cert
-        results[:SSLPrivateKey] = self.key
+        host.generate unless host.key
+
+        raise Puppet::Error, "Could not retrieve certificate for %s" % host.name unless host.certificate
+
+        results[:SSLPrivateKey] = host.key.content
+        results[:SSLCertificate] = host.certificate.content
         results[:SSLStartImmediately] = true
         results[:SSLEnable] = true
+
+        unless Puppet::SSL::Certificate.find("ca")
+            raise Puppet::Error, "Could not find CA certificate"
+        end
+
         results[:SSLCACertificateFile] = Puppet[:localcacert]
         results[:SSLVerifyClient] = OpenSSL::SSL::VERIFY_PEER
+
+        # LAK:NOTE I'm not sure why this is this way, actually.
         results[:SSLCertName] = nil
+
+        results[:SSLCertificateStore] = setup_ssl_store if Puppet[:cacrl] != 'false'
 
         results
     end
 
     # Create our Certificate revocation list
-    def setup_crl
-        nil
-        if Puppet[:cacrl] == 'false'
-            # No CRL, no store needed
-            return nil
-        end
-        unless File.exist?(Puppet[:cacrl])
+    def setup_ssl_store
+        unless crl = Puppet::SSL::CertificateRevocationList.find("ca")
             raise Puppet::Error, "Could not find CRL; set 'cacrl' to 'false' to disable CRL usage"
         end
-        crl = OpenSSL::X509::CRL.new(File.read(Puppet[:cacrl]))
         store = OpenSSL::X509::Store.new
         store.purpose = OpenSSL::X509::PURPOSE_ANY
         store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
-        unless self.ca_cert
-            raise Puppet::Error, "Could not find CA certificate"
-        end
 
         store.add_file(Puppet[:localcacert])
-        store.add_crl(crl)
+        store.add_crl(crl.content)
         return store
     end
 
