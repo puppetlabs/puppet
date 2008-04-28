@@ -11,7 +11,7 @@ require 'tempfile'
 describe Puppet::SSL::CertificateAuthority do
     before do
         # Get a safe temporary file
-        file = Tempfile.new("host_integration_testing")
+        file = Tempfile.new("ca_integration_testing")
         @dir = file.path
         file.delete
 
@@ -58,6 +58,17 @@ describe Puppet::SSL::CertificateAuthority do
 
             lambda { @ca.verify("newhost") }.should raise_error
         end
+    end
+
+    it "should not have a CRL when :crl is set to false" do
+        Puppet.settings[:crl] = false
+        @ca.crl.should be_nil
+    end
+
+    it "should have a CRL when :crl is set to true" do
+        Puppet.settings[:crl] = true
+        @ca.generate_ca_certificate
+        @ca.crl.should_not be_nil
     end
 
     describe "when signing certificates" do

@@ -1,3 +1,8 @@
+    Added a boolean 'crl' default value.  Now we have a location for
+    the CA CRL and the host CRL, and then a setting for configuring
+    whether we should even use a CRL.  This way we aren't trying to
+    set file paths to 'false' to disable the CRL.
+
     Added support for the --all option to puppetca --clean.  If
     puppetca --clean --all is issued then all client certificates
     are removed.

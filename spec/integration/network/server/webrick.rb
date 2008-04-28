@@ -7,6 +7,7 @@ describe Puppet::Network::Server do
     describe "when using webrick" do
         before :each do
             Puppet[:servertype] = 'webrick'
+            Puppet[:hostcrl] = 'false'
             @params = { :address => "127.0.0.1", :port => 34343, :handlers => [ :node ] }
 
             # Get a safe temporary file

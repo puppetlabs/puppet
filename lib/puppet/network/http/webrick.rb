@@ -108,7 +108,7 @@ class Puppet::Network::HTTP::WEBrick
         # LAK:NOTE I'm not sure why this is this way, actually.
         results[:SSLCertName] = nil
 
-        results[:SSLCertificateStore] = setup_ssl_store if Puppet[:cacrl] != 'false'
+        results[:SSLCertificateStore] = setup_ssl_store if Puppet[:hostcrl] != 'false'
 
         results
     end
@@ -116,7 +116,7 @@ class Puppet::Network::HTTP::WEBrick
     # Create our Certificate revocation list
     def setup_ssl_store
         unless crl = Puppet::SSL::CertificateRevocationList.find("ca")
-            raise Puppet::Error, "Could not find CRL; set 'cacrl' to 'false' to disable CRL usage"
+            raise Puppet::Error, "Could not find CRL; set 'hostcrl' to 'false' to disable CRL usage"
         end
         store = OpenSSL::X509::Store.new
         store.purpose = OpenSSL::X509::PURPOSE_ANY

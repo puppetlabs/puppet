@@ -141,7 +141,7 @@ class Puppet::SSL::CertificateAuthority
     def crl
         unless defined?(@crl)
             # The crl is disabled.
-            if ["false", false].include?(Puppet[:cacrl])
+            unless Puppet[:crl]
                 @crl = nil
                 return @crl
             end
@@ -149,6 +149,7 @@ class Puppet::SSL::CertificateAuthority
             unless @crl = Puppet::SSL::CertificateRevocationList.find("whatever")
                 @crl = Puppet::SSL::CertificateRevocationList.new("whatever")
                 @crl.generate(host.certificate.content)
+                @crl.save
             end
         end
         @crl

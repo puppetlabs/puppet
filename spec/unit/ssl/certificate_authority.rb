@@ -72,16 +72,16 @@ describe Puppet::SSL::CertificateAuthority do
         end
 
         describe "and the CRL is disabled" do
-            it "should return nil when the :cacrl is false" do
-                Puppet.settings.stubs(:value).with(:cacrl).returns false
+            it "should return nil when the :crl is false" do
+                Puppet.settings.stubs(:value).with(:crl).returns false
 
                 Puppet::SSL::CertificateRevocationList.expects(:new).never
 
                 @ca.crl.should be_nil
             end
 
-            it "should return nil when the :cacrl is 'false'" do
-                Puppet.settings.stubs(:value).with(:cacrl).returns 'false'
+            it "should return nil when the :crl is 'false'" do
+                Puppet.settings.stubs(:value).with(:crl).returns false
 
                 Puppet::SSL::CertificateRevocationList.expects(:new).never
 
@@ -105,13 +105,14 @@ describe Puppet::SSL::CertificateAuthority do
                 @ca.crl.should equal(crl)
             end
 
-            it "should create and generate a new CRL instance of no CRL can be found" do
+            it "should create, generate, and save a new CRL instance of no CRL can be found" do
                 crl = mock 'crl'
                 Puppet::SSL::CertificateRevocationList.expects(:find).returns nil
 
                 Puppet::SSL::CertificateRevocationList.expects(:new).returns crl
 
                 crl.expects(:generate).with(@ca.host.certificate.content)
+                crl.expects(:save)
 
                 @ca.crl.should equal(crl)
             end
