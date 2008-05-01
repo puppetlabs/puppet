@@ -332,7 +332,7 @@ class Puppet::Parser::Compiler
 
         unless remaining.empty?
             fail Puppet::ParseError,
-                "Could not find object(s) %s" % remaining.collect { |o|
+                "Could not find resource(s) %s for overriding" % remaining.collect { |o|
                     o.ref
                 }.join(", ")
         end
