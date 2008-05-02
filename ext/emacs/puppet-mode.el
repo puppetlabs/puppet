@@ -56,6 +56,15 @@
   "*Indentation column of comments."
   :type 'integer :group 'puppet)
 
+(defun puppet-count-matches (re start end)
+  "The same as Emacs 22 count-matches, for portability to other versions
+of Emacs."
+  (save-excursion
+    (let ((n 0))
+      (goto-char start)
+      (while (re-search-forward re end t) (setq n (1+ n)))
+      n)))
+
 (defun puppet-comment-line-p ()
   "Return non-nil iff this line is a comment."
   (save-excursion
@@ -77,7 +86,7 @@ that array, else return nil."
           ;; ### steps, baby steps.  A more robust strategy might be
           ;; ### to walk backwards by sexps, until hit a wall, then
           ;; ### inspect the nature of that wall.
-          (if (= (count-matches "\\]" apoint opoint) 0)
+          (if (= (puppet-count-matches "\\]" apoint opoint) 0)
               apoint))))))
 
 (defun puppet-in-include ()
