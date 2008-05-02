@@ -8,7 +8,7 @@ describe Puppet::Network::Server do
     
     before :each do
       Puppet[:servertype] = 'mongrel'
-      @params = { :address => "127.0.0.1", :port => 34346, :handlers => [ :node ] }
+      @params = { :address => "127.0.0.1", :port => 34346, :handlers => [ :node ], :xmlrpc_handlers => [ :status ] }
       @server = Puppet::Network::Server.new(@params)      
     end
 
