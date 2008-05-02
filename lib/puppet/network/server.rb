@@ -84,6 +84,14 @@ class Puppet::Network::Server
         http_server_class_by_type(@server_type)
     end
 
+    def start
+        listen
+    end
+
+    def stop
+        unlisten
+    end
+
   private
   
     def http_server

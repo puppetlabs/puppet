@@ -98,6 +98,16 @@ describe Puppet::Network::Server do
         @server = Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337)
     end
 
+    it "should listen when started" do
+        @server.expects(:listen)
+        @server.start
+    end
+
+    it "should unlisten when stopped" do
+        @server.expects(:unlisten)
+        @server.stop
+    end
+
     describe "when managing indirection registrations" do
         before do
             Puppet::Indirector::Indirection.stubs(:model).returns mock('indirection')

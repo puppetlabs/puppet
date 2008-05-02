@@ -411,6 +411,7 @@ describe Puppet::Network::HTTP::WEBrick do
 
         it "should add an x509 store if the CRL is enabled" do
             Puppet.settings.stubs(:value).returns "whatever"
+            Puppet.settings.stubs(:value).with(:crl).returns true
             Puppet.settings.stubs(:value).with(:hostcrl).returns '/my/crl'
 
             @server.expects(:setup_ssl_store).returns("mystore")
@@ -420,7 +421,7 @@ describe Puppet::Network::HTTP::WEBrick do
 
         it "should not add an x509 store if the CRL is disabled" do
             Puppet.settings.stubs(:value).returns "whatever"
-            Puppet.settings.stubs(:value).with(:hostcrl).returns 'false'
+            Puppet.settings.stubs(:value).with(:crl).returns false
 
             @server.expects(:setup_ssl_store).never
 

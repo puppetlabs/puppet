@@ -1,6 +1,7 @@
 require 'webrick'
 require 'webrick/https'
 require 'puppet/network/http/webrick/rest'
+require 'puppet/network/xmlrpc/webrick_servlet'
 require 'thread'
 
 require 'puppet/ssl/certificate'
@@ -106,7 +107,7 @@ class Puppet::Network::HTTP::WEBrick
         results[:SSLCACertificateFile] = Puppet[:localcacert]
         results[:SSLVerifyClient] = OpenSSL::SSL::VERIFY_PEER
 
-        results[:SSLCertificateStore] = setup_ssl_store if Puppet[:hostcrl] != 'false'
+        results[:SSLCertificateStore] = setup_ssl_store if Puppet[:crl]
 
         results
     end
@@ -114,7 +115,7 @@ class Puppet::Network::HTTP::WEBrick
     # Create our Certificate revocation list
     def setup_ssl_store
         unless crl = Puppet::SSL::CertificateRevocationList.find("ca")
-            raise Puppet::Error, "Could not find CRL; set 'hostcrl' to 'false' to disable CRL usage"
+            raise Puppet::Error, "Could not find CRL; set 'crl' to 'false' to disable CRL usage"
         end
         store = OpenSSL::X509::Store.new
         store.purpose = OpenSSL::X509::PURPOSE_ANY
