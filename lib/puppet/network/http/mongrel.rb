@@ -38,6 +38,7 @@ class Puppet::Network::HTTP::Mongrel
   
     def setup_handlers
         @protocols.each do |protocol|
+            next if protocol == :xmlrpc
             klass = class_for_protocol(protocol)
             @handlers.each do |handler|
                 @server.register('/' + handler.to_s, klass.new(:server => @server, :handler => handler))

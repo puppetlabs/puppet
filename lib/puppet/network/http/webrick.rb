@@ -25,6 +25,7 @@ class Puppet::Network::HTTP::WEBrick
         
         @protocols = args[:protocols]
         @handlers = args[:handlers]        
+        @xmlrpc_handlers = args[:xmlrpc_handlers]        
 
         arguments = {:BindAddress => args[:address], :Port => args[:port]}
         arguments.merge!(setup_logger)
@@ -105,9 +106,6 @@ class Puppet::Network::HTTP::WEBrick
         results[:SSLCACertificateFile] = Puppet[:localcacert]
         results[:SSLVerifyClient] = OpenSSL::SSL::VERIFY_PEER
 
-        # LAK:NOTE I'm not sure why this is this way, actually.
-        results[:SSLCertName] = nil
-
         results[:SSLCertificateStore] = setup_ssl_store if Puppet[:hostcrl] != 'false'
 
         results
@@ -130,12 +128,30 @@ class Puppet::Network::HTTP::WEBrick
   private
     
     def setup_handlers
+        # Set up the new-style protocols.
         @protocols.each do |protocol|
+            next if protocol == :xmlrpc
             klass = self.class.class_for_protocol(protocol)
             @handlers.each do |handler|
                 @server.mount('/' + handler.to_s, klass, handler)
                 @server.mount('/' + handler.to_s + 's', klass, handler)
             end
         end
+
+        # And then set up xmlrpc, if configured.
+        if @protocols.include?(:xmlrpc) and ! @xmlrpc_handlers.empty?
+            @server.mount("/RPC2", xmlrpc_servlet)
+        end
+    end
+
+    # Create our xmlrpc servlet, which provides backward compatibility.
+    def xmlrpc_servlet
+        handlers = @xmlrpc_handlers.collect { |handler|
+            unless hclass = Puppet::Network::Handler.handler(handler)
+                raise "Invalid xmlrpc handler %s" % handler
+            end
+            hclass.new({})
+        }
+        Puppet::Network::XMLRPC::WEBrickServlet.new handlers
     end
 end

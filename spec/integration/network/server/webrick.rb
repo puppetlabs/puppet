@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 require File.dirname(__FILE__) + '/../../../spec_helper'
 require 'puppet/network/server'
 require 'puppet/ssl/certificate_authority'
@@ -8,7 +10,7 @@ describe Puppet::Network::Server do
         before :each do
             Puppet[:servertype] = 'webrick'
             Puppet[:hostcrl] = 'false'
-            @params = { :address => "127.0.0.1", :port => 34343, :handlers => [ :node ] }
+            @params = { :address => "127.0.0.1", :port => 34343, :handlers => [ :node ], :xmlrpc_handlers => [ :status ] }
 
             # Get a safe temporary file
             @tmpfile = Tempfile.new("webrick_integration_testing")
