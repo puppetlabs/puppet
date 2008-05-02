@@ -20,7 +20,7 @@ module Puppet::Network::HTTP::Handler
   private
 
     def model
-      @model
+        @model
     end
     
     def do_find(request, response)
@@ -53,7 +53,7 @@ module Puppet::Network::HTTP::Handler
     end
     
     def save_object(obj)
-      obj.save
+        obj.save
     end
   
     def do_exception(request, response, exception, status=404)
@@ -85,8 +85,7 @@ module Puppet::Network::HTTP::Handler
         %r{/#{@handler.to_s}s$}.match(path(request))
     end
     
-  # methods to be overridden by the including web server class
-    
+    # methods to be overridden by the including web server class
     def register_handler
         raise NotImplementedError
     end
