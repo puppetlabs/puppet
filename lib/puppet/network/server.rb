@@ -6,21 +6,28 @@ class Puppet::Network::Server
     def initialize(args = {})
         @server_type = Puppet[:servertype] or raise "No servertype configuration found."  # e.g.,  WEBrick, Mongrel, etc.
         http_server_class || raise(ArgumentError, "Could not determine HTTP Server class for server type [#{@server_type}]")
-        @address = args[:address] || Puppet[:bindaddress] || 
-            raise(ArgumentError, "Must specify :address or configure Puppet :bindaddress.")
-        @port = args[:port] || Puppet[:masterport] ||
-            raise(ArgumentError, "Must specify :port or configure Puppet :masterport")
-        @protocols = [ :rest ]
+
+        @address = args[:address] || Puppet[:bindaddress] || raise(ArgumentError, "Must specify :address or configure Puppet :bindaddress.")
+        @port = args[:port] || Puppet[:masterport] || raise(ArgumentError, "Must specify :port or configure Puppet :masterport")
+
+        @protocols = [ :rest, :xmlrpc ]
         @listening = false
         @routes = {}
+        @xmlrpc_routes = {}
         self.register(args[:handlers]) if args[:handlers]
+        self.register_xmlrpc(args[:xmlrpc_handlers]) if args[:xmlrpc_handlers]
     end
 
+    # Register handlers for REST networking, based on the Indirector.
     def register(*indirections)
         raise ArgumentError, "Indirection names are required." if indirections.empty?
-        indirections.flatten.each { |i| @routes[i.to_sym] = true }
+        indirections.flatten.each do |name|
+            Puppet::Indirector::Indirection.model(name) || raise(ArgumentError, "Cannot locate indirection '#{name}'.")
+            @routes[name.to_sym] = true
+        end
     end
   
+    # Unregister Indirector handlers.
     def unregister(*indirections)
         raise "Cannot unregister indirections while server is listening." if listening?
         indirections = @routes.keys if indirections.empty?
@@ -34,6 +41,29 @@ class Puppet::Network::Server
         end
     end
 
+    # Register xmlrpc handlers for backward compatibility.
+    def register_xmlrpc(*namespaces)
+        raise ArgumentError, "XMLRPC namespaces are required." if namespaces.empty?
+        namespaces.flatten.each do |name|
+            Puppet::Network::Handler.handler(name) || raise(ArgumentError, "Cannot locate XMLRPC handler for namespace '#{name}'.")
+            @xmlrpc_routes[name.to_sym] = true
+        end
+    end
+  
+    # Unregister xmlrpc handlers.
+    def unregister_xmlrpc(*namespaces)
+        raise "Cannot unregister xmlrpc handlers while server is listening." if listening?
+        namespaces = @xmlrpc_routes.keys if namespaces.empty?
+
+        namespaces.flatten.each do |i|
+            raise(ArgumentError, "XMLRPC handler '%s' is unknown." % i) unless @xmlrpc_routes[i.to_sym]
+        end
+        
+        namespaces.flatten.each do |i|
+            @xmlrpc_routes.delete(i.to_sym)
+        end
+    end
+
     def listening?
         @listening
     end
@@ -41,7 +71,7 @@ class Puppet::Network::Server
     def listen
         raise "Cannot listen -- already listening." if listening?
         @listening = true
-        http_server.listen(:address => address, :port => port, :handlers => @routes.keys, :protocols => protocols)
+        http_server.listen(:address => address, :port => port, :handlers => @routes.keys, :xmlrpc_handlers => @xmlrpc_routes.keys, :protocols => protocols)
     end
   
     def unlisten
