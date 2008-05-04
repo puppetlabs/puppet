@@ -65,7 +65,7 @@
 #
 # This example uses ``ralsh`` to return Puppet configuration for the user ``luke``::
 #   
-# $ ralsh user luke
+#    $ ralsh user luke
 #    user { 'luke':
 #      home => '/home/luke',
 #      uid => '100',

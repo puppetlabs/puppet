@@ -106,7 +106,7 @@ def do_man(man, strip = 'man/')
     File.install(mf, omf, 0644, true)
     gzip = %x{which gzip}
     gzip.chomp!
-    %x{#{gzip} #{omf}}
+    %x{#{gzip} -f #{omf}}
   end
 end
 
