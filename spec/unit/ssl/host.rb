@@ -353,10 +353,31 @@ describe Puppet::SSL::Host do
             @host.generate
         end
 
-        it "should seek its certificate" do
-            @host.expects(:certificate)
+        describe "and it can create a certificate authority" do
+            before do
+                @ca = mock 'ca'
+                Puppet::SSL::CertificateAuthority.stubs(:instance).returns @ca
+            end
 
-            @host.generate
+            it "should use the CA to sign its certificate request if it does not have a certificate" do
+                @host.expects(:certificate).returns nil
+
+                @ca.expects(:sign).with(@host.name)
+
+                @host.generate
+            end
+        end
+
+        describe "and it cannot create a certificate authority" do
+            before do
+                Puppet::SSL::CertificateAuthority.stubs(:instance).returns nil
+            end
+
+            it "should seek its certificate" do
+                @host.expects(:certificate)
+
+                @host.generate
+            end
         end
     end
 end

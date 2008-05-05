@@ -146,9 +146,12 @@ class Puppet::SSL::Host
         generate_key unless key
         generate_certificate_request unless certificate_request
 
-        # Now try to find our actual certificate; this should hopefully get
-        # the cert from the server and then cache it locally.
-        certificate()
+        # If we can get a CA instance, then we're a valid CA, and we
+        # should use it to sign our request; else, just try to read
+        # the cert.
+        if ! certificate() and ca = Puppet::SSL::CertificateAuthority.instance
+            ca.sign(self.name)
+        end
     end
 
     def initialize(name = nil)
@@ -162,3 +165,5 @@ class Puppet::SSL::Host
         key.content.public_key
     end
 end
+
+require 'puppet/ssl/certificate_authority'
