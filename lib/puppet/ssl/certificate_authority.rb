@@ -124,6 +124,19 @@ class Puppet::SSL::CertificateAuthority
         end
     end
 
+    # If this process can function as a CA, then return a singleton
+    # instance.
+    def self.instance
+        return nil unless Puppet[:ca]
+        return nil unless Puppet[:name] == "puppetmasterd"
+
+        unless defined?(@instance) and @instance
+            @instance = new
+        end
+
+        @instance
+    end
+
     attr_reader :name, :host
 
     # Create and run an applicator.  I wanted to build an interface where you could do
@@ -192,6 +205,8 @@ class Puppet::SSL::CertificateAuthority
         @name = Puppet[:certname]
 
         @host = Puppet::SSL::Host.new(Puppet::SSL::Host.ca_name)
+
+        setup()
     end
 
     # Retrieve (or create, if necessary) our inventory manager.
@@ -267,6 +282,14 @@ class Puppet::SSL::CertificateAuthority
         crl.revoke(serial, host.key.content)
     end
 
+    # This initializes our CA so it actually works.  This should be a private
+    # method, except that you can't any-instance stub private methods, which is
+    # *awesome*.  This method only really exists to provide a stub-point during
+    # testing.
+    def setup
+        generate_ca_certificate unless @host.certificate
+    end
+
     # Sign a given certificate request.
     def sign(hostname, cert_type = :server, self_signing_csr = nil)
         # This is a self-signed certificate
@@ -274,8 +297,6 @@ class Puppet::SSL::CertificateAuthority
             csr = self_signing_csr
             issuer = csr.content
         else
-            generate_ca_certificate unless host.certificate
-
             unless csr = Puppet::SSL::CertificateRequest.find(hostname)
                 raise ArgumentError, "Could not find certificate request for %s" % hostname
             end

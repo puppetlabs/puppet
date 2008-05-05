@@ -27,12 +27,69 @@ describe "a normal interface method", :shared => true do
 end
 
 describe Puppet::SSL::CertificateAuthority do
+    after do
+        # Clear out the var, yay unit tests.
+        Puppet::SSL::CertificateAuthority.instance_variable_set("@instance", nil)
+        Puppet.settings.clearused
+    end
+
+    it "should have a class method for returning a singleton instance" do
+        Puppet::SSL::CertificateAuthority.should respond_to(:instance)
+    end
+
+    describe "when finding an existing instance" do
+        describe "and the host is a CA host and the proces name is 'puppetmasterd'" do
+            before do
+                Puppet.settings.stubs(:value).with(:ca).returns true
+                Puppet.settings.stubs(:value).with(:name).returns "puppetmasterd"
+
+                @ca = mock('ca')
+                Puppet::SSL::CertificateAuthority.stubs(:new).returns @ca
+            end
+
+            after do
+                # Clear out the var, yay unit tests.
+                Puppet::SSL::CertificateAuthority.instance_variable_set("@instance", nil)
+            end
+
+            it "should return an instance" do
+                Puppet::SSL::CertificateAuthority.instance.should equal(@ca)
+            end
+
+            it "should always return the same instance" do
+                Puppet::SSL::CertificateAuthority.instance.should equal(Puppet::SSL::CertificateAuthority.instance)
+            end
+        end
+
+        describe "and the host is not a CA host" do
+            it "should return nil" do
+                Puppet.settings.stubs(:value).with(:ca).returns false
+                Puppet.settings.stubs(:value).with(:name).returns "puppetmasterd"
+
+                ca = mock('ca')
+                Puppet::SSL::CertificateAuthority.expects(:new).never
+                Puppet::SSL::CertificateAuthority.instance.should be_nil
+            end
+        end
+
+        describe "and the process name is not 'puppetmasterd'" do
+            it "should return nil" do
+                Puppet.settings.stubs(:value).with(:ca).returns true
+                Puppet.settings.stubs(:value).with(:name).returns "puppetd"
+
+                ca = mock('ca')
+                Puppet::SSL::CertificateAuthority.expects(:new).never
+                Puppet::SSL::CertificateAuthority.instance.should be_nil
+            end
+        end
+    end
+
     describe "when initializing" do
         before do
             Puppet.settings.stubs(:use)
             Puppet.settings.stubs(:value).returns "whatever"
 
-            Puppet::SSL::CertificateAuthority.any_instance.stubs(:generate_ca_certificate)
+            Puppet::SSL::CertificateAuthority.any_instance.stubs(:setup)
         end
 
         it "should always set its name to the value of :certname" do
@@ -60,6 +117,24 @@ describe Puppet::SSL::CertificateAuthority do
 
             Puppet::SSL::CertificateAuthority.new.inventory.should == "inventory"
         end
+
+        it "should make sure the CA is set up" do
+            Puppet::SSL::CertificateAuthority.any_instance.expects(:setup)
+
+            Puppet::SSL::CertificateAuthority.new
+        end
+    end
+
+    describe "when setting itself up" do
+        it "should generate the CA certificate if it does not have one" do
+            host = stub 'host'
+            Puppet::SSL::Host.stubs(:new).returns host
+
+            host.expects(:certificate).returns nil
+
+            Puppet::SSL::CertificateAuthority.any_instance.expects(:generate_ca_certificate)
+            Puppet::SSL::CertificateAuthority.new
+        end
     end
 
     describe "when retrieving the certificate revocation list" do
@@ -67,7 +142,7 @@ describe Puppet::SSL::CertificateAuthority do
             Puppet.settings.stubs(:use)
             Puppet.settings.stubs(:value).returns "whatever"
 
-            Puppet::SSL::CertificateAuthority.any_instance.stubs(:generate_ca_certificate)
+            Puppet::SSL::CertificateAuthority.any_instance.stubs(:setup)
             @ca = Puppet::SSL::CertificateAuthority.new
         end
 
@@ -124,6 +199,7 @@ describe Puppet::SSL::CertificateAuthority do
             Puppet.settings.stubs(:use)
             Puppet.settings.stubs(:value).returns "whatever"
 
+            Puppet::SSL::CertificateAuthority.any_instance.stubs(:setup)
             @ca = Puppet::SSL::CertificateAuthority.new
 
             @host = stub 'host', :key => mock("key"), :name => "hostname"
@@ -296,15 +372,6 @@ describe Puppet::SSL::CertificateAuthority do
 
                 Puppet::SSL::CertificateRequest.stubs(:find).with(@name).returns @request
                 @cert.stubs :save
-            end
-
-            it "should generate a self-signed certificate if its Host instance has no certificate" do
-                cert = stub 'ca_certificate', :content => "mock_cert"
-
-                @ca.host.expects(:certificate).times(2).returns(nil).then.returns cert
-                @ca.expects(:generate_ca_certificate)
-
-                @ca.sign(@name)
             end
 
             it "should use a certificate type of :server" do

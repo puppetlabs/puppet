@@ -32,6 +32,8 @@ describe Puppet::SSL::CertificateAuthority do
         Puppet::SSL::Key.indirection.clear_cache
         Puppet::SSL::Certificate.indirection.clear_cache
         Puppet::SSL::CertificateRequest.indirection.clear_cache
+
+        Puppet::SSL::CertificateAuthority.instance_variable_set("@instance", nil)
     }
 
     it "should create a CA host" do
