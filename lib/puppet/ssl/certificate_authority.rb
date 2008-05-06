@@ -159,9 +159,9 @@ class Puppet::SSL::CertificateAuthority
                 return @crl
             end
 
-            unless @crl = Puppet::SSL::CertificateRevocationList.find("whatever")
-                @crl = Puppet::SSL::CertificateRevocationList.new("whatever")
-                @crl.generate(host.certificate.content)
+            unless @crl = Puppet::SSL::CertificateRevocationList.find("ca")
+                @crl = Puppet::SSL::CertificateRevocationList.new("ca")
+                @crl.generate(host.certificate.content, host.key.content)
                 @crl.save
             end
         end
@@ -197,6 +197,9 @@ class Puppet::SSL::CertificateAuthority
 
         # Create a self-signed certificate.
         @certificate = sign(host.name, :ca, request)
+
+        # And make sure we initialize our CRL.
+        crl()
     end
 
     def initialize

@@ -87,15 +87,15 @@ describe Puppet::SSL::CertificateAuthority do
     describe "when initializing" do
         before do
             Puppet.settings.stubs(:use)
-            Puppet.settings.stubs(:value).returns "whatever"
+            Puppet.settings.stubs(:value).returns "ca_testing"
 
             Puppet::SSL::CertificateAuthority.any_instance.stubs(:setup)
         end
 
         it "should always set its name to the value of :certname" do
-            Puppet.settings.expects(:value).with(:certname).returns "whatever"
+            Puppet.settings.expects(:value).with(:certname).returns "ca_testing"
 
-            Puppet::SSL::CertificateAuthority.new.name.should == "whatever"
+            Puppet::SSL::CertificateAuthority.new.name.should == "ca_testing"
         end
 
         it "should create an SSL::Host instance whose name is the 'ca_name'" do
@@ -127,6 +127,8 @@ describe Puppet::SSL::CertificateAuthority do
 
     describe "when setting itself up" do
         it "should generate the CA certificate if it does not have one" do
+            Puppet.settings.stubs :use
+
             host = stub 'host'
             Puppet::SSL::Host.stubs(:new).returns host
 
@@ -140,7 +142,7 @@ describe Puppet::SSL::CertificateAuthority do
     describe "when retrieving the certificate revocation list" do
         before do
             Puppet.settings.stubs(:use)
-            Puppet.settings.stubs(:value).returns "whatever"
+            Puppet.settings.stubs(:value).returns "ca_testing"
 
             Puppet::SSL::CertificateAuthority.any_instance.stubs(:setup)
             @ca = Puppet::SSL::CertificateAuthority.new
@@ -169,7 +171,8 @@ describe Puppet::SSL::CertificateAuthority do
                 Puppet.settings.stubs(:value).with(:cacrl).returns "/my/crl"
 
                 cert = stub("certificate", :content => "real_cert")
-                @host = stub 'host', :certificate => cert, :name => "hostname"
+                key = stub("key", :content => "real_key")
+                @host = stub 'host', :certificate => cert, :name => "hostname", :key => key
 
                 @ca.stubs(:host).returns @host
             end
@@ -186,7 +189,7 @@ describe Puppet::SSL::CertificateAuthority do
 
                 Puppet::SSL::CertificateRevocationList.expects(:new).returns crl
 
-                crl.expects(:generate).with(@ca.host.certificate.content)
+                crl.expects(:generate).with(@ca.host.certificate.content, @ca.host.key.content)
                 crl.expects(:save)
 
                 @ca.crl.should equal(crl)
@@ -197,12 +200,13 @@ describe Puppet::SSL::CertificateAuthority do
     describe "when generating a self-signed CA certificate" do
         before do
             Puppet.settings.stubs(:use)
-            Puppet.settings.stubs(:value).returns "whatever"
+            Puppet.settings.stubs(:value).returns "ca_testing"
 
             Puppet::SSL::CertificateAuthority.any_instance.stubs(:setup)
+            Puppet::SSL::CertificateAuthority.any_instance.stubs(:crl)
             @ca = Puppet::SSL::CertificateAuthority.new
 
-            @host = stub 'host', :key => mock("key"), :name => "hostname"
+            @host = stub 'host', :key => mock("key"), :name => "hostname", :certificate => mock('certificate')
 
             Puppet::SSL::CertificateRequest.any_instance.stubs(:generate)
 
@@ -242,6 +246,18 @@ describe Puppet::SSL::CertificateAuthority do
             @ca.expects(:sign).with(@host.name, :ca, request)
 
             @ca.stubs :generate_password
+
+            @ca.generate_ca_certificate
+        end
+
+        it "should generate its CRL" do
+            @ca.stubs :generate_password
+            @ca.stubs :sign
+
+            @ca.host.expects(:key).returns nil
+            @ca.host.expects(:generate_key)
+
+            @ca.expects(:crl)
 
             @ca.generate_ca_certificate
         end
@@ -443,12 +459,14 @@ describe Puppet::SSL::CertificateAuthority do
         end
 
         it "should return the certificate instance" do
+            @ca.stubs(:next_serial).returns @serial
             Puppet::SSL::CertificateRequest.stubs(:find).with(@name).returns @request
             @cert.stubs :save
             @ca.sign(@name).should equal(@cert)
         end
 
         it "should add the certificate to its inventory" do
+            @ca.stubs(:next_serial).returns @serial
             @inventory.expects(:add).with(@cert)
 
             Puppet::SSL::CertificateRequest.stubs(:find).with(@name).returns @request
@@ -466,7 +484,9 @@ describe Puppet::SSL::CertificateAuthority do
             # Set up the CA
             @key = mock 'key'
             @key.stubs(:content).returns "cakey"
-            Puppet::SSL::CertificateAuthority.any_instance.stubs(:key).returns @key
+            @host = stub 'host', :key => @key
+            Puppet::SSL::CertificateAuthority.any_instance.stubs(:host).returns @host
+
             @cacert = mock 'certificate'
             @cacert.stubs(:content).returns "cacertificate"
             @ca = Puppet::SSL::CertificateAuthority.new
@@ -490,7 +510,7 @@ describe Puppet::SSL::CertificateAuthority do
                 applier = stub('applier')
                 applier.expects(:apply).with(@ca)
                 Puppet::SSL::CertificateAuthority::Interface.expects(:new).returns applier
-                @ca.apply(:generate, :to => :whatever)
+                @ca.apply(:generate, :to => :ca_testing)
             end
         end
 
@@ -601,12 +621,19 @@ describe Puppet::SSL::CertificateAuthority do
             before do
                 @crl = mock 'crl'
                 @ca.stubs(:crl).returns @crl
+
+                @ca.stubs(:next_serial).returns 10
+
+                @real_cert = stub 'real_cert', :serial => 15
+                @cert = stub 'cert', :content => @real_cert
+                Puppet::SSL::Certificate.stubs(:find).returns @cert
+
             end
 
             it "should fail if the certificate revocation list is disabled" do
                 @ca.stubs(:crl).returns false
 
-                lambda { @ca.revoke('whatever') }.should raise_error(ArgumentError)
+                lambda { @ca.revoke('ca_testing') }.should raise_error(ArgumentError)
 
             end
 
@@ -617,11 +644,9 @@ describe Puppet::SSL::CertificateAuthority do
             end
 
             it "should get the serial number from the local certificate if it exists" do
-                real_cert = stub 'real_cert', :serial => 15
-                cert = stub 'cert', :content => real_cert
-                Puppet::SSL::Certificate.expects(:find).with("host").returns cert
-
                 @ca.crl.expects(:revoke).with { |serial, key| serial == 15 }
+
+                Puppet::SSL::Certificate.expects(:find).with("host").returns @cert
 
                 @ca.revoke('host')
             end
