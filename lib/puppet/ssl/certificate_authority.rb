@@ -42,37 +42,44 @@ class Puppet::SSL::CertificateAuthority
         applier.apply(self)
     end
 
-    # FIXME autosign? should probably accept both hostnames and IP addresses
-    def autosign?(hostname)
-        # simple values are easy
-        if autosign == true or autosign == false
-            return autosign
+    # If autosign is configured, then autosign all CSRs that match our configuration.
+    def autosign
+        return unless auto = autosign?
+
+        store = nil
+        if auto != true
+            store = autosign_store(auto)
         end
 
-        # we only otherwise know how to handle files
-        unless autosign =~ /^\//
-            raise Puppet::Error, "Invalid autosign value %s" %
-                autosign.inspect
+        Puppet::SSL::CertificateRequest.search("*").each do |csr|
+            sign(csr.name) if auto == true or store.allowed?(csr.name, "127.1.1.1")
         end
+    end
 
-        unless FileTest.exists?(autosign)
-            unless defined? @@warnedonautosign
-                @@warnedonautosign = true
-                Puppet.info "Autosign is enabled but %s is missing" % autosign
-            end
+    # Do we autosign?  This returns true, false, or a filename.
+    def autosign?
+        auto = Puppet[:autosign]
+        return false if ['false', false].include?(auto)
+        return true if ['true', true].include?(auto)
+
+        raise ArgumentError, "The autosign configuration '%s' must be a fully qualified file" % auto unless auto =~ /^\//
+        if FileTest.exist?(auto)
+            return auto
+        else
             return false
         end
-        auth = Puppet::Network::AuthStore.new
-        File.open(autosign) { |f|
-            f.each { |line|
-                next if line =~ /^\s*#/
-                next if line =~ /^\s*$/
-                auth.allow(line.chomp)
-            }
-        }
+    end
 
-        # for now, just cheat and pass a fake IP address to allowed?
-        return auth.allowed?(hostname, "127.1.1.1")
+    # Create an AuthStore for autosigning.
+    def autosign_store(file)
+        auth = Puppet::Network::AuthStore.new
+        File.readlines(file).each do |line|
+            next if line =~ /^\s*#/
+            next if line =~ /^\s*$/
+            auth.allow(line.chomp)
+        end
+
+        auth
     end
 
     # Retrieve (or create, if necessary) the certificate revocation list.

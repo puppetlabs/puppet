@@ -24,4 +24,13 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
 
         @content = csr
     end
+
+    def save
+        super()
+
+        # Try to autosign the CSR.
+        if ca = Puppet::SSL::CertificateAuthority.instance
+            ca.autosign
+        end
+    end
 end

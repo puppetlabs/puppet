@@ -139,4 +139,29 @@ describe Puppet::SSL::CertificateRequest do
             @instance.content.should equal(@request)
         end
     end
+
+    describe "when a CSR is saved" do
+        describe "and a CA is available" do
+            it "should save the CSR and trigger autosigning" do
+                ca = mock 'ca', :autosign
+                Puppet::SSL::CertificateAuthority.expects(:instance).returns ca
+
+                csr = Puppet::SSL::CertificateRequest.new("me")
+                Puppet::SSL::CertificateRequest.indirection.expects(:save).with(csr)
+
+                csr.save
+            end
+        end
+
+        describe "and a CA is not available" do
+            it "should save the CSR" do
+                Puppet::SSL::CertificateAuthority.expects(:instance).returns nil
+
+                csr = Puppet::SSL::CertificateRequest.new("me")
+                Puppet::SSL::CertificateRequest.indirection.expects(:save).with(csr)
+
+                csr.save
+            end
+        end
+    end
 end
