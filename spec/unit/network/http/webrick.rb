@@ -303,23 +303,17 @@ describe Puppet::Network::HTTP::WEBrick do
 
         it "should use the key from an SSL::Host instance created with the default name" do
             Puppet::SSL::Host.expects(:new).returns @host
-            @host.expects(:key).returns "mykey"
+            @host.expects(:key).returns @key
 
             @server.setup_ssl[:SSLPrivateKey].should == "mykey"
         end
 
-        it "should generate a key if no key can be found" do
-            @host.expects(:key).times(2).returns(nil).then.returns(@key)
+        it "should generate its files if no certificate can be found" do
+            @host.expects(:certificate).times(2).returns(nil).then.returns(@cert)
 
             @host.expects(:generate)
 
             @server.setup_ssl
-        end
-
-        it "should fail if no certificate can be found" do
-            @host.expects(:certificate).returns nil
-
-            lambda { @server.setup_ssl }.should raise_error(Puppet::Error)
         end
 
         it "should configure the certificate" do

@@ -91,7 +91,7 @@ class Puppet::Network::HTTP::WEBrick
 
         host = Puppet::SSL::Host.new
 
-        host.generate unless host.key
+        host.generate unless host.certificate
 
         raise Puppet::Error, "Could not retrieve certificate for %s and not running on a valid certificate authority" % host.name unless host.certificate
 
