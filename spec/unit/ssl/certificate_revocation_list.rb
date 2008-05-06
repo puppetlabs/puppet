@@ -7,6 +7,7 @@ require 'puppet/ssl/certificate_revocation_list'
 describe Puppet::SSL::CertificateRevocationList do
     before do
         @cert = stub 'cert', :subject => "mysubject"
+        @key = stub 'key', :private? => true
 
         @class = Puppet::SSL::CertificateRevocationList
     end
@@ -58,28 +59,50 @@ describe Puppet::SSL::CertificateRevocationList do
         it "should set its issuer to the subject of the passed certificate" do
             @real_crl.expects(:issuer=).with(@cert.subject)
 
-            @crl.generate(@cert)
+            @crl.generate(@cert, @key)
         end
 
         it "should set its version to 1" do
             @real_crl.expects(:version=).with(1)
 
-            @crl.generate(@cert)
+            @crl.generate(@cert, @key)
         end
 
         it "should create an instance of OpenSSL::X509::CRL" do
             OpenSSL::X509::CRL.expects(:new).returns(@real_crl)
 
-            @crl.generate(@cert)
+            @crl.generate(@cert, @key)
+        end
+
+        # The next three tests aren't good, but at least they
+        # specify the behaviour.
+        it "should add an extension for the CRL number" do
+            @real_crl.expects(:extensions=)
+            @crl.generate(@cert, @key)
+        end
+
+        it "should set the last update time" do
+            @real_crl.expects(:last_update=)
+            @crl.generate(@cert, @key)
+        end
+
+        it "should set the next update time" do
+            @real_crl.expects(:next_update=)
+            @crl.generate(@cert, @key)
+        end
+
+        it "should sign the CRL" do
+            @real_crl.expects(:sign).with { |key, digest| key == @key }
+            @crl.generate(@cert, @key)
         end
 
         it "should set the content to the generated crl" do
-            @crl.generate(@cert)
+            @crl.generate(@cert, @key)
             @crl.content.should equal(@real_crl)
         end
 
         it "should return the generated crl" do
-            @crl.generate(@cert).should equal(@real_crl)
+            @crl.generate(@cert, @key).should equal(@real_crl)
         end
     end
 
@@ -88,9 +111,10 @@ describe Puppet::SSL::CertificateRevocationList do
     describe "when revoking a certificate" do
         before do
             @class.wrapped_class.any_instance.stubs(:issuer=)
+            @class.wrapped_class.any_instance.stubs(:sign)
 
             @crl = @class.new("crl")
-            @crl.generate(@cert)
+            @crl.generate(@cert, @key)
             @crl.content.stubs(:sign)
 
             @crl.stubs :save

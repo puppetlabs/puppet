@@ -61,6 +61,7 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
         @server.expects(:setup_logger).returns(:Logger => :mylogger)
 
         WEBrick::HTTPServer.expects(:new).with {|args|
+            p args
             args[:Logger] == :mylogger
         }.returns(@mock_webrick)
 
@@ -209,62 +210,6 @@ describe Puppet::Network::HTTP::WEBrick do
         @server = Puppet::Network::HTTP::WEBrick.new
     end
 
-    describe "when configuring an x509 store" do
-        before do
-            @store = stub 'store'
-            @store.stub_everything
-
-            @crl = stub 'crl', :content => 'real_crl'
-            Puppet::SSL::CertificateRevocationList.stubs(:find).returns @crl
-
-            @cacert = mock 'cacert'
-            Puppet::SSL::Certificate.stubs(:find).with('ca').returns @crl
-
-            OpenSSL::X509::Store.stubs(:new).returns @store
-        end
-
-        it "should create a new x509 store" do
-            OpenSSL::X509::Store.expects(:new).returns @store
-
-            @server.setup_ssl_store
-        end
-
-        it "should fail if no CRL can be found" do
-            Puppet::SSL::CertificateRevocationList.stubs(:find).returns nil
-
-            lambda { @server.setup_ssl_store }.should raise_error(Puppet::Error)
-        end
-
-        it "should add the CRL to the store" do
-            @store.expects(:add_crl).with "real_crl"
-
-            @server.setup_ssl_store
-        end
-
-        it "should add the CA certificate file to the store" do
-            Puppet.settings.stubs(:value).with(:localcacert).returns "/ca/cert"
-            @store.expects(:add_file).with "/ca/cert"
-
-            @server.setup_ssl_store
-        end
-
-        it "should set the store's flags to 'OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK'" do
-            @store.expects(:flags=).with(OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK)
-
-            @server.setup_ssl_store
-        end
-
-        it "should set the store's purpose to 'OpenSSL::X509::PURPOSE_ANY'" do
-            @store.expects(:purpose=).with OpenSSL::X509::PURPOSE_ANY
-
-            @server.setup_ssl_store
-        end
-
-        it "should return the store" do
-            @server.setup_ssl_store.should equal(@store)
-        end
-    end
-
     describe "when configuring an http logger" do
         before do
             Puppet.settings.stubs(:value).returns "something"
@@ -347,11 +292,9 @@ describe Puppet::Network::HTTP::WEBrick do
 
     describe "when configuring ssl" do
         before do
-            @server.stubs(:setup_ssl_store)
-
             @key = stub 'key', :content => "mykey"
             @cert = stub 'cert', :content => "mycert"
-            @host = stub 'host', :key => @key, :certificate => @cert, :name => "yay"
+            @host = stub 'host', :key => @key, :certificate => @cert, :name => "yay", :ssl_store => "mystore"
 
             Puppet::SSL::Certificate.stubs(:find).with('ca').returns @cert
 
@@ -414,7 +357,7 @@ describe Puppet::Network::HTTP::WEBrick do
             Puppet.settings.stubs(:value).with(:crl).returns true
             Puppet.settings.stubs(:value).with(:hostcrl).returns '/my/crl'
 
-            @server.expects(:setup_ssl_store).returns("mystore")
+            @host.expects(:ssl_store).returns "mystore"
 
             @server.setup_ssl[:SSLCertificateStore].should == "mystore"
         end
@@ -423,7 +366,7 @@ describe Puppet::Network::HTTP::WEBrick do
             Puppet.settings.stubs(:value).returns "whatever"
             Puppet.settings.stubs(:value).with(:crl).returns false
 
-            @server.expects(:setup_ssl_store).never
+            @host.expects(:ssl_store).never
 
             @server.setup_ssl[:SSLCertificateStore].should be_nil
         end

@@ -93,7 +93,7 @@ class Puppet::Network::HTTP::WEBrick
 
         host.generate unless host.key
 
-        raise Puppet::Error, "Could not retrieve certificate for %s" % host.name unless host.certificate
+        raise Puppet::Error, "Could not retrieve certificate for %s and not running on a valid certificate authority" % host.name unless host.certificate
 
         results[:SSLPrivateKey] = host.key.content
         results[:SSLCertificate] = host.certificate.content
@@ -107,23 +107,9 @@ class Puppet::Network::HTTP::WEBrick
         results[:SSLCACertificateFile] = Puppet[:localcacert]
         results[:SSLVerifyClient] = OpenSSL::SSL::VERIFY_PEER
 
-        results[:SSLCertificateStore] = setup_ssl_store if Puppet[:crl]
+        results[:SSLCertificateStore] = host.ssl_store if Puppet[:crl]
 
         results
-    end
-
-    # Create our Certificate revocation list
-    def setup_ssl_store
-        unless crl = Puppet::SSL::CertificateRevocationList.find("ca")
-            raise Puppet::Error, "Could not find CRL; set 'crl' to 'false' to disable CRL usage"
-        end
-        store = OpenSSL::X509::Store.new
-        store.purpose = OpenSSL::X509::PURPOSE_ANY
-        store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
-
-        store.add_file(Puppet[:localcacert])
-        store.add_crl(crl.content)
-        return store
     end
 
   private

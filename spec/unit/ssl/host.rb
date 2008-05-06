@@ -380,4 +380,59 @@ describe Puppet::SSL::Host do
             end
         end
     end
+
+    it "should have a method for creating an SSL store" do
+        Puppet::SSL::Host.new("me").should respond_to(:ssl_store)
+    end
+
+    describe "when creating an SSL store" do
+        before do
+            @host = Puppet::SSL::Host.new("me")
+            @store = mock 'store'
+            @store.stub_everything
+            OpenSSL::X509::Store.stubs(:new).returns @store
+
+            Puppet.settings.stubs(:value).returns "ssl_host_testing"
+            Puppet.settings.stubs(:value).with(:crl).returns false
+        end
+
+        it "should accept a purpose" do
+            @store.expects(:purpose=).with "my special purpose"
+            @host.ssl_store("my special purpose")
+        end
+
+        it "should default to OpenSSL::X509::PURPOSE_ANY as the purpose" do
+            @store.expects(:purpose=).with OpenSSL::X509::PURPOSE_ANY
+            @host.ssl_store
+        end
+
+        it "should add the local CA cert file" do
+            Puppet.settings.stubs(:value).with(:localcacert).returns "/ca/cert/file"
+            @store.expects(:add_file).with "/ca/cert/file"
+            @host.ssl_store
+        end
+
+        describe "and the CRL is enabled" do
+            before do
+                Puppet.settings.stubs(:value).with(:crl).returns true
+                @crl = stub 'crl', :content => "real_crl"
+                Puppet::SSL::CertificateRevocationList.stubs(:find).returns @crl
+            end
+
+            it "should fail if no CRL can be found" do
+                Puppet::SSL::CertificateRevocationList.expects(:find).returns nil
+                lambda { @host.ssl_store }.should raise_error(ArgumentError)
+            end
+
+            it "should add the CRL" do
+                @store.expects(:add_crl).with "real_crl"
+                @host.ssl_store
+            end
+
+            it "should set the flags to OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK" do
+                @store.expects(:flags=).with OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
+                @host.ssl_store
+            end
+        end
+    end
 end

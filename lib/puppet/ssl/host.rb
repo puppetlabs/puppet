@@ -164,6 +164,24 @@ class Puppet::SSL::Host
     def public_key
         key.content.public_key
     end
+
+    # Create/return a store that uses our SSL info to validate
+    # connections.
+    def ssl_store(purpose = OpenSSL::X509::PURPOSE_ANY)
+        store = OpenSSL::X509::Store.new
+        store.purpose = purpose
+
+        store.add_file(Puppet[:localcacert])
+
+        if Puppet[:crl]
+            unless crl = Puppet::SSL::CertificateRevocationList.find("ca")
+                raise ArgumentError, "Could not find CRL; set 'crl' to 'false' to disable CRL usage"
+            end
+            store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
+            store.add_crl(crl.content)
+        end
+        return store
+    end
 end
 
 require 'puppet/ssl/certificate_authority'

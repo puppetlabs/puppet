@@ -9,11 +9,22 @@ class Puppet::SSL::CertificateRevocationList < Puppet::SSL::Base
     indirects :certificate_revocation_list, :terminus_class => :file
 
     # Knows how to create a CRL with our system defaults.
-    def generate(cert)
+    def generate(cert, cakey)
         Puppet.info "Creating a new certificate revocation list"
         @content = wrapped_class.new
         @content.issuer = cert.subject
         @content.version = 1
+
+        # Init the CRL number.
+        crlNum = OpenSSL::ASN1::Integer(0)
+        @content.extensions = [OpenSSL::X509::Extension.new("crlNumber", crlNum)]
+
+        # Set last/next update
+        @content.last_update = Time.now
+        # Keep CRL valid for 5 years
+        @content.next_update = Time.now + 5 * 365*24*60*60
+
+        @content.sign(cakey, OpenSSL::Digest::SHA1.new)
 
         @content
     end
