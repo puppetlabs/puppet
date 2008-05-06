@@ -1,8 +1,7 @@
-require 'puppet/sslcertificates/support'
+require 'puppet/ssl/host'
 require 'net/https'
 
-module Puppet::Network
-end
+module Puppet::Network; end
 
 # Manage Net::HTTP instances for keep-alive.
 module Puppet::Network::HttpPool
@@ -13,6 +12,15 @@ module Puppet::Network::HttpPool
 
     def self.keep_alive?
         HTTP_KEEP_ALIVE
+    end
+
+    # Create an ssl host instance for getting certificate
+    # information.
+    def self.ssl_host
+        unless defined?(@ssl_host) and @ssl_host
+            @ssl_host = Puppet::SSL::Host.new
+        end
+        @ssl_host
     end
 
     # This handles reading in the key and such-like.
@@ -44,17 +52,13 @@ module Puppet::Network::HttpPool
     # Use cert information from a Puppet client to set up the http object.
     def self.cert_setup(http)
         # Just no-op if we don't have certs.
-        return false unless (defined?(@cert) and @cert) or self.read_cert
+        return false unless ssl_host.certificate
 
-        store = OpenSSL::X509::Store.new
-        store.add_file Puppet[:localcacert]
-        store.purpose = OpenSSL::X509::PURPOSE_SSL_CLIENT
-
-        http.cert_store = store
+        http.cert_store = ssl_host.ssl_store
         http.ca_file = Puppet[:localcacert]
-        http.cert = self.cert
+        http.cert = ssl_host.certificate.content
         http.verify_mode = OpenSSL::SSL::VERIFY_PEER
-        http.key = self.key
+        http.key = ssl_host.key.content
     end
 
     # Retrieve a cached http instance of caching is enabled, else return

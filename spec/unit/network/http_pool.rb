@@ -6,105 +6,27 @@
 require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/network/http_pool'
 
-describe Puppet::Network::HttpPool, " when adding certificate information to http instances" do
-    before do
-        @http = mock 'http'
-        [:cert_store=, :verify_mode=, :ca_file=, :cert=, :key=].each { |m| @http.stubs(m) }
-        @store = stub 'store'
-        [:add_file,:purpose=].each { |m| @store.stubs(m) }
+describe Puppet::Network::HttpPool do
+    after do
+        Puppet::Network::HttpPool.clear_http_instances
+        Puppet::Network::HttpPool.instance_variable_set("@ssl_host", nil)
     end
 
     it "should have keep-alive disabled" do
         Puppet::Network::HttpPool::HTTP_KEEP_ALIVE.should be_false
     end
 
-    it "should do nothing if no certificate is available" do
-        Puppet::Network::HttpPool.expects(:read_cert).returns(false)
-        @http.expects(:cert=).never
-        Puppet::Network::HttpPool.cert_setup(@http)
+    it "should use an SSL::Host instance to get its certificate information" do
+        host = mock 'host'
+        Puppet::SSL::Host.expects(:new).with().returns host
+        Puppet::Network::HttpPool.ssl_host.should equal(host)
     end
 
-    it "should add a certificate store" do
-        Puppet::Network::HttpPool.stubs(:read_cert).returns(true)
-        Puppet::Network::HttpPool.stubs(:key).returns(:mykey)
-        OpenSSL::X509::Store.expects(:new).returns(@store)
-        @http.expects(:cert_store=).with(@store)
-
-        Puppet::Network::HttpPool.cert_setup(@http)
-    end
-
-    it "should add the local CA cert to the certificate store" do
-        Puppet::Network::HttpPool.stubs(:read_cert).returns(true)
-        OpenSSL::X509::Store.expects(:new).returns(@store)
-        Puppet.settings.stubs(:value).with(:localcacert).returns("/some/file")
-        Puppet.settings.stubs(:value).with(:localcacert).returns("/some/file")
-        @store.expects(:add_file).with("/some/file")
-
-        Puppet::Network::HttpPool.stubs(:key).returns(:whatever)
-
-        Puppet::Network::HttpPool.cert_setup(@http)
-    end
-
-    it "should set the purpose of the cert store to OpenSSL::X509::PURPOSE_SSL_CLIENT" do
-        Puppet::Network::HttpPool.stubs(:read_cert).returns(true)
-        Puppet::Network::HttpPool.stubs(:key).returns(:mykey)
-        OpenSSL::X509::Store.expects(:new).returns(@store)
-
-        @store.expects(:purpose=).with(OpenSSL::X509::PURPOSE_SSL_CLIENT)
-
-        Puppet::Network::HttpPool.cert_setup(@http)
-    end
-
-    it "should add the client certificate" do
-        Puppet::Network::HttpPool.stubs(:read_cert).returns(true)
-        Puppet::Network::HttpPool.stubs(:cert).returns(:mycert)
-        Puppet::Network::HttpPool.stubs(:key).returns(:mykey)
-        OpenSSL::X509::Store.expects(:new).returns(@store)
-
-        @http.expects(:cert=).with(:mycert)
-
-        Puppet::Network::HttpPool.cert_setup(@http)
-    end
-
-    it "should add the client key" do
-        Puppet::Network::HttpPool.stubs(:read_cert).returns(true)
-        Puppet::Network::HttpPool.stubs(:key).returns(:mykey)
-        OpenSSL::X509::Store.expects(:new).returns(@store)
-
-        @http.expects(:key=).with(:mykey)
-
-        Puppet::Network::HttpPool.cert_setup(@http)
-    end
-
-    it "should set the verify mode to OpenSSL::SSL::VERIFY_PEER" do
-        Puppet::Network::HttpPool.stubs(:read_cert).returns(true)
-        Puppet::Network::HttpPool.stubs(:key).returns(:mykey)
-        OpenSSL::X509::Store.expects(:new).returns(@store)
-
-        @http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
-
-        Puppet::Network::HttpPool.cert_setup(@http)
-    end
-
-    it "should set the ca file" do
-        Puppet::Network::HttpPool.stubs(:read_cert).returns(true)
-        Puppet.settings.stubs(:value).with(:localcacert).returns("/some/file")
-        OpenSSL::X509::Store.expects(:new).returns(@store)
-
-        @http.expects(:ca_file=).with("/some/file")
-
-        Puppet::Network::HttpPool.stubs(:key).returns(:whatever)
-
-        Puppet::Network::HttpPool.cert_setup(@http)
-    end
-
-    it "should set up certificate information when creating http instances" do
-        Puppet::Network::HttpPool.expects(:cert_setup).with { |i| i.is_a?(Net::HTTP) }
-        Puppet::Network::HttpPool.http_instance("one", "two")
-    end
-
-    after do
-        Puppet::Network::HttpPool.clear_http_instances
+    it "should reuse the same host instance" do
+        host = mock 'host'
+        Puppet::SSL::Host.expects(:new).with().once.returns host
+        Puppet::Network::HttpPool.ssl_host.should equal(host)
+        Puppet::Network::HttpPool.ssl_host.should equal(host)
     end
 
     describe "when managing http instances" do
@@ -115,7 +37,7 @@ describe Puppet::Network::HttpPool, " when adding certificate information to htt
         end
 
         before do
-            # All of hte cert stuff is tested elsewhere
+            # All of the cert stuff is tested elsewhere
             Puppet::Network::HttpPool.stubs(:cert_setup)
         end
 
@@ -152,7 +74,7 @@ describe Puppet::Network::HttpPool, " when adding certificate information to htt
             Puppet::Network::HttpPool.http_instance("me", 54321).open_timeout.should == 120
         end
 
-        describe "when http keep-alive is enabled" do
+        describe "and http keep-alive is enabled" do
             before do
                 Puppet::Network::HttpPool.stubs(:keep_alive?).returns true
             end
@@ -203,7 +125,7 @@ describe Puppet::Network::HttpPool, " when adding certificate information to htt
             end
         end
 
-        describe "when http keep-alive is disabled" do
+        describe "and http keep-alive is disabled" do
             before do
                 Puppet::Network::HttpPool.stubs(:keep_alive?).returns false
             end
@@ -235,6 +157,62 @@ describe Puppet::Network::HttpPool, " when adding certificate information to htt
 
         after do
             Puppet::Network::HttpPool.clear_http_instances
+        end
+    end
+
+    describe "when adding certificate information to http instances" do
+        before do
+            @http = mock 'http'
+            [:cert_store=, :verify_mode=, :ca_file=, :cert=, :key=].each { |m| @http.stubs(m) }
+            @store = stub 'store'
+
+            @cert = stub 'cert', :content => "real_cert"
+            @key = stub 'key', :content => "real_key"
+            @host = stub 'host', :certificate => @cert, :key => @key, :ssl_store => @store
+
+            Puppet::Network::HttpPool.stubs(:ssl_host).returns @host
+        end
+
+        it "should do nothing if no certificate is available" do
+            @host.expects(:certificate).returns nil
+            @http.expects(:cert=).never
+            Puppet::Network::HttpPool.cert_setup(@http)
+        end
+
+        it "should add a certificate store from the ssl host" do
+            @http.expects(:cert_store=).with(@store)
+
+            Puppet::Network::HttpPool.cert_setup(@http)
+        end
+
+        it "should add the client certificate" do
+            @http.expects(:cert=).with("real_cert")
+
+            Puppet::Network::HttpPool.cert_setup(@http)
+        end
+
+        it "should add the client key" do
+            @http.expects(:key=).with("real_key")
+
+            Puppet::Network::HttpPool.cert_setup(@http)
+        end
+
+        it "should set the verify mode to OpenSSL::SSL::VERIFY_PEER" do
+            @http.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
+
+            Puppet::Network::HttpPool.cert_setup(@http)
+        end
+
+        it "should set the ca file" do
+            Puppet.settings.stubs(:value).with(:localcacert).returns "/ca/cert/file"
+            @http.expects(:ca_file=).with("/ca/cert/file")
+
+            Puppet::Network::HttpPool.cert_setup(@http)
+        end
+
+        it "should set up certificate information when creating http instances" do
+            Puppet::Network::HttpPool.expects(:cert_setup).with { |i| i.is_a?(Net::HTTP) }
+            Puppet::Network::HttpPool.http_instance("one", "two")
         end
     end
 end
