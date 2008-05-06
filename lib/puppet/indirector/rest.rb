@@ -3,21 +3,20 @@ require 'uri'
 
 # Access objects via REST
 class Puppet::Indirector::REST < Puppet::Indirector::Terminus
-
     def rest_connection_details
         { :host => Puppet[:server], :port => Puppet[:masterport].to_i }
     end
 
     def network_fetch(path)
-        network {|conn| conn.get("/#{path}").body }
+        network.get("/#{path}").body
     end
     
     def network_delete(path)
-        network {|conn| conn.delete("/#{path}").body }
+        network.delete("/#{path}").body
     end
     
     def network_put(path, data)
-        network {|conn| conn.put("/#{path}", data).body }
+        network.put("/#{path}", data).body
     end
     
     def find(request)
@@ -46,8 +45,8 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     
   private
   
-    def network(&block)
-        Net::HTTP.start(rest_connection_details[:host], rest_connection_details[:port]) {|conn| yield(conn) }
+    def network
+        Puppet::Network::HttpPool.http_instance(rest_connection_details[:host], rest_connection_details[:port])
     end
   
     def exception?(yaml_string)

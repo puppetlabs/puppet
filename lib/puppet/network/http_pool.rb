@@ -23,8 +23,6 @@ module Puppet::Network::HttpPool
         @ssl_host
     end
 
-    # This handles reading in the key and such-like.
-    extend Puppet::SSLCertificates::Support
     @http_cache = {}
 
     # Clear our http cache, closing all connections.

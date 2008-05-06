@@ -2,12 +2,12 @@ require 'puppet/network/http/handler'
 
 class Puppet::Network::HTTP::MongrelREST < Mongrel::HttpHandler
 
-  include Puppet::Network::HTTP::Handler
+    include Puppet::Network::HTTP::Handler
   
-  def initialize(args={})
-    super()
-    initialize_for_puppet(args)
-  end
+    def initialize(args={})
+        super()
+        initialize_for_puppet(args)
+    end
 
   private
  
