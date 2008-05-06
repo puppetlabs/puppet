@@ -578,6 +578,7 @@ describe Puppet::Node::Catalog do
         # super() doesn't work in the setup method for some reason
         before do
             @catalog.host_config = true
+            Puppet::Util::Storage.stubs(:store)
         end
 
         it "should send a report if reporting is enabled" do
