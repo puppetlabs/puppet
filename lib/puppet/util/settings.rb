@@ -39,6 +39,8 @@ class Puppet::Util::Settings
             end
             @values[:memory][param] = value
             @cache.clear
+
+            clearused
         end
 
         return value
@@ -574,7 +576,7 @@ Generated on #{Time.now}.
                 catalog = bucket.to_catalog
             rescue => detail
                 puts detail.backtrace if Puppet[:trace]
-                Puppet.err "Could not create resources for managing Puppet's files and directories: %s" % detail
+                Puppet.err "Could not create resources for managing Puppet's files and directories in sections %s: %s" % [sections.inspect, detail]
 
                 # We need some way to get rid of any resources created during the catalog creation
                 # but not cleaned up.

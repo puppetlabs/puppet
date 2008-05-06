@@ -93,6 +93,11 @@ describe Puppet::Util::Settings, " when setting values" do
         @settings[:myval].should == "yay"
     end
 
+    it "should clear the list of used sections" do
+        @settings.expects(:clearused)
+        @settings[:myval] = "yay"
+    end
+
     it "should call passed blocks when values are set" do
         values = []
         @settings.setdefaults(:section, :hooker => {:default => "yay", :desc => "boo", :hook => lambda { |v| values << v }})
