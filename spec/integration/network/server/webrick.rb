@@ -9,7 +9,6 @@ describe Puppet::Network::Server do
     describe "when using webrick" do
         before :each do
             Puppet[:servertype] = 'webrick'
-            Puppet[:hostcrl] = 'false'
             @params = { :address => "127.0.0.1", :port => 34343, :handlers => [ :node ], :xmlrpc_handlers => [ :status ] }
 
             # Get a safe temporary file
@@ -19,6 +18,8 @@ describe Puppet::Network::Server do
             Puppet.settings[:confdir] = @dir
             Puppet.settings[:vardir] = @dir
 
+            Puppet::SSL::Host.ca_location = :local
+
             ca = Puppet::SSL::CertificateAuthority.new
             ca.generate(Puppet[:certname]) unless Puppet::SSL::Certificate.find(Puppet[:certname])
         end
@@ -26,6 +27,11 @@ describe Puppet::Network::Server do
         after do
             @tmpfile.delete
             Puppet.settings.clear
+
+            # This is necessary so the terminus instances don't lie around.
+            Puppet::SSL::Key.indirection.clear_cache
+            Puppet::SSL::Certificate.indirection.clear_cache
+            Puppet::SSL::CertificateRequest.indirection.clear_cache
         end
 
         describe "before listening" do
