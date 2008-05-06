@@ -148,7 +148,20 @@ module Puppet
             but then ship with tools that do not know how to handle signed ints, so the UIDs show up as
             huge numbers that can then not be fed back into the system.  This is a hackish way to fail in a
             slightly more useful way when that happens."],
-        :node_terminus => ["plain", "Where to find information about nodes."]
+        :node_terminus => ["plain", "Where to find information about nodes."],
+        :httplog => { :default => "$logdir/http.log",
+            :owner => "root",
+            :mode => 0640,
+            :desc => "Where the puppetd web server logs."
+        },
+        :http_proxy_host => ["none",
+            "The HTTP proxy host to use for outgoing connections.  Note: You
+            may need to use a FQDN for the server hostname when using a proxy."],
+        :http_proxy_port => [3128,
+            "The HTTP proxy port to use for outgoing connections"],
+        :http_enable_post_connection_check => [true,
+            "Boolean; wheter or not puppetd should validate the server
+            SSL certificate against the request hostname."]
     )
 
     hostname = Facter["hostname"].value
@@ -397,19 +410,6 @@ module Puppet
             :mode => 0640,
             :desc => "The log file for puppetd.  This is generally not used."
         },
-        :httplog => { :default => "$logdir/http.log",
-            :owner => "root",
-            :mode => 0640,
-            :desc => "Where the puppetd web server logs."
-        },
-        :http_proxy_host => ["none",
-            "The HTTP proxy host to use for outgoing connections.  Note: You
-            may need to use a FQDN for the server hostname when using a proxy."],
-        :http_proxy_port => [3128,
-            "The HTTP proxy port to use for outgoing connections"],
-        :http_enable_post_connection_check => [true,
-            "Boolean; wheter or not puppetd should validate the server
-            SSL certificate against the request hostname."],
         :server => ["puppet",
             "The server to which server puppetd should connect"],
         :ignoreschedules => [false,
