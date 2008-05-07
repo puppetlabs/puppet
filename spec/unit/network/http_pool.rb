@@ -170,11 +170,17 @@ describe Puppet::Network::HttpPool do
             @key = stub 'key', :content => "real_key"
             @host = stub 'host', :certificate => @cert, :key => @key, :ssl_store => @store
 
+            Puppet[:confdir] = "/sometthing/else"
+            Puppet.settings.stubs(:value).returns "/some/file"
+            Puppet.settings.stubs(:value).with(:hostcert).returns "/host/cert"
+
+            FileTest.stubs(:exist?).with("/host/cert").returns true
+
             Puppet::Network::HttpPool.stubs(:ssl_host).returns @host
         end
 
-        it "should do nothing if no certificate is available" do
-            @host.expects(:certificate).returns nil
+        it "should do nothing if no certificate is on disk" do
+            FileTest.expects(:exist?).with("/host/cert").returns false
             @http.expects(:cert=).never
             Puppet::Network::HttpPool.cert_setup(@http)
         end
@@ -204,6 +210,9 @@ describe Puppet::Network::HttpPool do
         end
 
         it "should set the ca file" do
+            Puppet.settings.stubs(:value).returns "/some/file"
+            FileTest.stubs(:exist?).with(Puppet[:hostcert]).returns true
+
             Puppet.settings.stubs(:value).with(:localcacert).returns "/ca/cert/file"
             @http.expects(:ca_file=).with("/ca/cert/file")
 

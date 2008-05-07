@@ -51,7 +51,8 @@ module Puppet::Network
                         end
                         ["certificate verify failed", "hostname was not match", "hostname not match"].each do |str|
                             if detail.message.include?(str)
-                                Puppet.warning "Certificate validation failed; considering using the certname configuration option"
+                                Puppet.warning "Certificate validation failed; consider using the certname configuration option"
+                                break
                             end
                         end 
                         raise XMLRPCClientError,

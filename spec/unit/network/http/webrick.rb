@@ -61,7 +61,6 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
         @server.expects(:setup_logger).returns(:Logger => :mylogger)
 
         WEBrick::HTTPServer.expects(:new).with {|args|
-            p args
             args[:Logger] == :mylogger
         }.returns(@mock_webrick)
 

@@ -45,7 +45,7 @@ class Puppet::Network::Client::CA < Puppet::Network::Client
         end
 
         unless @cert.check_private_key(key)
-            raise InvalidCertificate, "Certificate does not match private key.  Try 'puppetca --clean %s' on the server." % Facter.value(:fqdn)
+            raise InvalidCertificate, "Certificate does not match private key.  Try 'puppetca --clean %s' on the server." % Puppet[:certname]
         end
 
         # Only write the cert out if it passes validating.

@@ -8,12 +8,16 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/ssl/certificate_request'
 require 'tempfile'
 
-describe Puppet::SSL::Host do
+describe Puppet::SSL::CertificateRequest do
     before do
         # Get a safe temporary file
         file = Tempfile.new("csr_integration_testing")
         @dir = file.path
         file.delete
+
+        Puppet.settings.clear
+        # This is necessary so the terminus instances don't lie around.
+        Puppet::SSL::CertificateRequest.indirection.clear_cache
 
         Puppet.settings[:confdir] = @dir
         Puppet.settings[:vardir] = @dir
@@ -23,13 +27,13 @@ describe Puppet::SSL::Host do
         @key = OpenSSL::PKey::RSA.new(512)
     end
 
-    after {
+    after do
         system("rm -rf %s" % @dir)
         Puppet.settings.clear
 
         # This is necessary so the terminus instances don't lie around.
         Puppet::SSL::CertificateRequest.indirection.clear_cache
-    }
+    end
 
     it "should be able to generate CSRs" do
         @csr.generate(@key)

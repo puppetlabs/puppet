@@ -50,7 +50,7 @@ module Puppet::Network::HttpPool
     # Use cert information from a Puppet client to set up the http object.
     def self.cert_setup(http)
         # Just no-op if we don't have certs.
-        return false unless ssl_host.certificate
+        return false unless FileTest.exist?(Puppet[:hostcert]) # ssl_host.certificate
 
         http.cert_store = ssl_host.ssl_store
         http.ca_file = Puppet[:localcacert]
