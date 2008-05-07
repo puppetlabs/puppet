@@ -35,6 +35,7 @@ class TestClientCA < Test::Unit::TestCase
         Puppet.settings.stubs(:value).with(:http_proxy_host).returns(nil)
         Puppet.settings.stubs(:value).with(:http_proxy_port).returns(nil)
         Puppet.settings.stubs(:value).with(:http_keepalive).returns(false)
+        Puppet.settings.stubs(:value).with(:configtimeout).returns(180)
 
         # Just throw an error; the important thing is the values, not what happens next.
         Net::HTTP.stubs(:new).with("myca", 321, nil, nil).raises(ArgumentError)

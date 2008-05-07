@@ -67,7 +67,7 @@ class TestWebrickServer < Test::Unit::TestCase
     end
 
     # Test that a client whose cert has been revoked really can't connect
-    def test_certificate_revocation
+    def test_xcertificate_revocation
         Puppet[:autosign] = true
 
         serverpid, server = mk_status_server

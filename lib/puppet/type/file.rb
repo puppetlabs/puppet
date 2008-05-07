@@ -796,7 +796,6 @@ module Puppet
         # a wrapper method to make sure the file exists before doing anything
         def retrieve
             unless stat = self.stat(true)
-                self.debug "File does not exist"
                 # If the file doesn't exist but we have a source, then call
                 # retrieve on that property
 

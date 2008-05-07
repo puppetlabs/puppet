@@ -123,6 +123,16 @@ describe Puppet::Network::HttpPool do
                 one.expects(:finish).never
                 Puppet::Network::HttpPool.clear_http_instances
             end
+
+            it "should reset its ssl host when clearing the cache" do
+                stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :configtimeout => 120, :http_enable_post_connection_check => true, :certname => "a"
+                one = Puppet::Network::HttpPool.http_instance("me", 54321)
+                one.expects(:started?).returns(false)
+                one.expects(:finish).never
+                id = Puppet::Network::HttpPool.ssl_host.object_id
+                Puppet::Network::HttpPool.clear_http_instances
+                Puppet::Network::HttpPool.ssl_host.object_id.should_not == id
+            end
         end
 
         describe "and http keep-alive is disabled" do

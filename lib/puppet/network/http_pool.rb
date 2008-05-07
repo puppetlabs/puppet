@@ -33,6 +33,7 @@ module Puppet::Network::HttpPool
         @http_cache.clear
         @cert = nil
         @key = nil
+        @ssl_host = nil
     end
 
     # Make sure we set the driver up when we read the cert in.
