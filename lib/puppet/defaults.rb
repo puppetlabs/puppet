@@ -173,8 +173,6 @@ module Puppet
             If it's anything other than an empty string, it will be used as an alias in the created
             certificate.  By default, only the server gets an alias set up, and only for 'puppet'."],
         :certdir => ["$ssldir/certs", "The certificate directory."],
-        :crl => [true, "Whether to use a certificate revocation list.  If this is set to true and the CRL does not exist,
-            you will get a failure."],
         :ssldir => {
             :default => "$confdir/ssl",
             :mode => 0771,
@@ -251,12 +249,10 @@ module Puppet
             :owner => "$user",
             :group => "$group",
             :mode => 0664,
-            :desc => "The certificate revocation list (CRL) for the CA. You should now set 'crl' to false if you do not want to use a CRL.
-                Only set this to file path.",
+            :desc => "The certificate revocation list (CRL) for the CA. Will be used if present but otherwise ignored.",
             :hook => proc do |value|
                 if value == 'false'
-                    Puppet.warning "Setting the :cacrl to 'false' is deprecated; set :crl to false instead."
-                    Puppet.settings[:crl] = false
+                    Puppet.warning "Setting the :cacrl to 'false' is deprecated; Puppet will just ignore the crl if yours is missing"
                 end
             end
         },

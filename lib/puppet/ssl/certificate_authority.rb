@@ -90,12 +90,6 @@ class Puppet::SSL::CertificateAuthority
     # Retrieve (or create, if necessary) the certificate revocation list.
     def crl
         unless defined?(@crl)
-            # The crl is disabled.
-            unless Puppet[:crl]
-                @crl = nil
-                return @crl
-            end
-
             unless @crl = Puppet::SSL::CertificateRevocationList.find("ca")
                 @crl = Puppet::SSL::CertificateRevocationList.new("ca")
                 @crl.generate(host.certificate.content, host.key.content)

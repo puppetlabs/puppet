@@ -345,23 +345,13 @@ describe Puppet::Network::HTTP::WEBrick do
             @server.setup_ssl[:SSLVerifyClient].should == OpenSSL::SSL::VERIFY_PEER
         end
 
-        it "should add an x509 store if the CRL is enabled" do
+        it "should add an x509 store" do
             Puppet.settings.stubs(:value).returns "whatever"
-            Puppet.settings.stubs(:value).with(:crl).returns true
             Puppet.settings.stubs(:value).with(:hostcrl).returns '/my/crl'
 
             @host.expects(:ssl_store).returns "mystore"
 
             @server.setup_ssl[:SSLCertificateStore].should == "mystore"
-        end
-
-        it "should not add an x509 store if the CRL is disabled" do
-            Puppet.settings.stubs(:value).returns "whatever"
-            Puppet.settings.stubs(:value).with(:crl).returns false
-
-            @host.expects(:ssl_store).never
-
-            @server.setup_ssl[:SSLCertificateStore].should be_nil
         end
 
         it "should set the certificate name to 'nil'" do

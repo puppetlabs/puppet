@@ -121,57 +121,34 @@ describe Puppet::SSL::CertificateAuthority do
         before do
             Puppet.settings.stubs(:use)
             Puppet.settings.stubs(:value).returns "ca_testing"
+            Puppet.settings.stubs(:value).with(:cacrl).returns "/my/crl"
+
+            cert = stub("certificate", :content => "real_cert")
+            key = stub("key", :content => "real_key")
+            @host = stub 'host', :certificate => cert, :name => "hostname", :key => key
 
             Puppet::SSL::CertificateAuthority.any_instance.stubs(:setup)
             @ca = Puppet::SSL::CertificateAuthority.new
+
+            @ca.stubs(:host).returns @host
         end
 
-        describe "and the CRL is disabled" do
-            it "should return nil when the :crl is false" do
-                Puppet.settings.stubs(:value).with(:crl).returns false
-
-                Puppet::SSL::CertificateRevocationList.expects(:new).never
-
-                @ca.crl.should be_nil
-            end
-
-            it "should return nil when the :crl is 'false'" do
-                Puppet.settings.stubs(:value).with(:crl).returns false
-
-                Puppet::SSL::CertificateRevocationList.expects(:new).never
-
-                @ca.crl.should be_nil
-            end
+        it "should return any found CRL instance" do
+            crl = mock 'crl'
+            Puppet::SSL::CertificateRevocationList.expects(:find).returns crl
+            @ca.crl.should equal(crl)
         end
 
-        describe "and the CRL is enabled" do
-            before do
-                Puppet.settings.stubs(:value).with(:cacrl).returns "/my/crl"
+        it "should create, generate, and save a new CRL instance of no CRL can be found" do
+            crl = mock 'crl'
+            Puppet::SSL::CertificateRevocationList.expects(:find).returns nil
 
-                cert = stub("certificate", :content => "real_cert")
-                key = stub("key", :content => "real_key")
-                @host = stub 'host', :certificate => cert, :name => "hostname", :key => key
+            Puppet::SSL::CertificateRevocationList.expects(:new).returns crl
 
-                @ca.stubs(:host).returns @host
-            end
+            crl.expects(:generate).with(@ca.host.certificate.content, @ca.host.key.content)
+            crl.expects(:save)
 
-            it "should return any found CRL instance" do
-                crl = mock 'crl'
-                Puppet::SSL::CertificateRevocationList.expects(:find).returns crl
-                @ca.crl.should equal(crl)
-            end
-
-            it "should create, generate, and save a new CRL instance of no CRL can be found" do
-                crl = mock 'crl'
-                Puppet::SSL::CertificateRevocationList.expects(:find).returns nil
-
-                Puppet::SSL::CertificateRevocationList.expects(:new).returns crl
-
-                crl.expects(:generate).with(@ca.host.certificate.content, @ca.host.key.content)
-                crl.expects(:save)
-
-                @ca.crl.should equal(crl)
-            end
+            @ca.crl.should equal(crl)
         end
     end
 

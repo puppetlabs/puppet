@@ -107,7 +107,7 @@ class Puppet::Network::HTTP::WEBrick
         results[:SSLCACertificateFile] = Puppet[:localcacert]
         results[:SSLVerifyClient] = OpenSSL::SSL::VERIFY_PEER
 
-        results[:SSLCertificateStore] = host.ssl_store if Puppet[:crl]
+        results[:SSLCertificateStore] = host.ssl_store
 
         results
     end

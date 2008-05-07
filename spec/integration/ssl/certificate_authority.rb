@@ -62,19 +62,12 @@ describe Puppet::SSL::CertificateAuthority do
         end
     end
 
-    it "should not have a CRL when :crl is set to false" do
-        Puppet.settings[:crl] = false
-        Puppet::SSL::CertificateAuthority.new.crl.should be_nil
-    end
-
-    it "should have a CRL when :crl is set to true" do
-        Puppet.settings[:crl] = true
+    it "should have a CRL" do
         @ca.generate_ca_certificate
         @ca.crl.should_not be_nil
     end
 
     it "should be able to read in a previously created CRL" do
-        Puppet.settings[:crl] = true
         @ca.generate_ca_certificate
 
         # Create it to start with.

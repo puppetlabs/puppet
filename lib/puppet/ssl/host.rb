@@ -173,10 +173,8 @@ class Puppet::SSL::Host
 
         store.add_file(Puppet[:localcacert])
 
-        if Puppet[:crl]
-            unless crl = Puppet::SSL::CertificateRevocationList.find("ca")
-                raise ArgumentError, "Could not find CRL; set 'crl' to 'false' to disable CRL usage"
-            end
+        # If there's a CRL, add it to our store.
+        if crl = Puppet::SSL::CertificateRevocationList.find("ca")
             store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
             store.add_crl(crl.content)
         end

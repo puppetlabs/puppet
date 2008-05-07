@@ -393,7 +393,6 @@ describe Puppet::SSL::Host do
             OpenSSL::X509::Store.stubs(:new).returns @store
 
             Puppet.settings.stubs(:value).returns "ssl_host_testing"
-            Puppet.settings.stubs(:value).with(:crl).returns false
         end
 
         it "should accept a purpose" do
@@ -412,16 +411,10 @@ describe Puppet::SSL::Host do
             @host.ssl_store
         end
 
-        describe "and the CRL is enabled" do
+        describe "and a CRL is available" do
             before do
-                Puppet.settings.stubs(:value).with(:crl).returns true
                 @crl = stub 'crl', :content => "real_crl"
                 Puppet::SSL::CertificateRevocationList.stubs(:find).returns @crl
-            end
-
-            it "should fail if no CRL can be found" do
-                Puppet::SSL::CertificateRevocationList.expects(:find).returns nil
-                lambda { @host.ssl_store }.should raise_error(ArgumentError)
             end
 
             it "should add the CRL" do
