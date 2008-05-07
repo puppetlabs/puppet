@@ -32,6 +32,8 @@ describe Puppet::SSL::Host do
 
         # This is necessary so the terminus instances don't lie around.
         Puppet::SSL::Key.indirection.clear_cache
+        Puppet::SSL::Certificate.indirection.clear_cache
+        Puppet::SSL::CertificateRevocationList.indirection.clear_cache
         Puppet::SSL::CertificateRequest.indirection.clear_cache
     }
 

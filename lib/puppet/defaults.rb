@@ -60,12 +60,6 @@ module Puppet
                 this directory can be removed without causing harm (although it
                 might result in spurious service restarts)."
         },
-        :ssldir => {
-            :default => "$confdir/ssl",
-            :mode => 0771,
-            :owner => "root",
-            :desc => "Where SSL certificates are kept."
-        },
         :rundir => { 
             :default => rundir,
             :mode => 01777,
@@ -172,7 +166,7 @@ module Puppet
         fqdn = hostname
     end
 
-    Puppet.setdefaults(:ssl,
+    Puppet.setdefaults(:main,
         :certname => [fqdn, "The name to use when handling certificates.  Defaults
             to the fully qualified domain name."],
         :certdnsnames => ['', "The DNS names on the Server certificate as a colon-separated list.
@@ -181,6 +175,12 @@ module Puppet
         :certdir => ["$ssldir/certs", "The certificate directory."],
         :crl => [true, "Whether to use a certificate revocation list.  If this is set to true and the CRL does not exist,
             you will get a failure."],
+        :ssldir => {
+            :default => "$confdir/ssl",
+            :mode => 0771,
+            :owner => "root",
+            :desc => "Where SSL certificates are kept."
+        },
         :publickeydir => ["$ssldir/public_keys", "The public key directory."],
         :requestdir => ["$ssldir/certificate_requests", "Where host certificate requests are stored."],
         :privatekeydir => { :default => "$ssldir/private_keys",
@@ -286,7 +286,7 @@ module Puppet
         :serial => { :default => "$cadir/serial",
             :owner => "$user",
             :group => "$group",
-            :mode => 0600,
+            :mode => 0644,
             :desc => "Where the serial number for certificates is stored."
         },
         :autosign => { :default => "$confdir/autosign.conf",
@@ -319,7 +319,7 @@ module Puppet
     self.setdefaults(self.settings[:name],
         :config => ["$confdir/puppet.conf",
             "The configuration file for #{Puppet[:name]}."],
-        :pidfile => ["", "The pid file"],
+        :pidfile => ["$rundir/$name.pid", "The pid file"],
         :bindaddress => ["", "The address to bind to.  Mongrel servers
             default to 127.0.0.1 and WEBrick defaults to 0.0.0.0."],
         :servertype => ["webrick", "The type of server to use.  Currently supported

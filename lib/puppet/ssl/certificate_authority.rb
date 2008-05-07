@@ -16,11 +16,16 @@ class Puppet::SSL::CertificateAuthority
 
     require 'puppet/ssl/certificate_authority/interface'
 
+    def self.ca?
+        return false unless Puppet[:ca]
+        return false unless Puppet[:name] == "puppetmasterd"
+        return true
+    end
+
     # If this process can function as a CA, then return a singleton
     # instance.
     def self.instance
-        return nil unless Puppet[:ca]
-        return nil unless Puppet[:name] == "puppetmasterd"
+        return nil unless ca?
 
         unless defined?(@instance) and @instance
             @instance = new
@@ -177,11 +182,17 @@ class Puppet::SSL::CertificateAuthority
     # file so this one is considered used.
     def next_serial
         serial = nil
+
+        # This is slightly odd.  If the file doesn't exist, our readwritelock creates
+        # it, but with a mode we can't actually read in some cases.  So, use
+        # a default before the lock.
+        unless FileTest.exist?(Puppet[:serial])
+            serial = 0x0
+        end
+
         Puppet.settings.readwritelock(:serial) { |f|
             if FileTest.exist?(Puppet[:serial])
-                serial = File.read(Puppet.settings[:serial]).chomp.hex
-            else
-                serial = 0x0
+                serial ||= File.read(Puppet.settings[:serial]).chomp.hex
             end
 
             # We store the next valid serial, not the one we just used.

@@ -699,13 +699,19 @@ Generated on #{Time.now}.
                             [file]
                     end
 
-                    writesub(default, tmpfile, *args, &bloc)
+                    # If there's a failure, remove our tmpfile
+                    begin
+                        writesub(default, tmpfile, *args, &bloc)
+                    rescue
+                        File.unlink(tmpfile) if FileTest.exist?(tmpfile)
+                        raise
+                    end
 
                     begin
                         File.rename(tmpfile, file)
                     rescue => detail
-                        Puppet.err "Could not rename %s to %s: %s" %
-                            [file, tmpfile, detail]
+                        Puppet.err "Could not rename %s to %s: %s" % [file, tmpfile, detail]
+                        File.unlink(tmpfile) if FileTest.exist?(tmpfile)
                     end
                 end
             end

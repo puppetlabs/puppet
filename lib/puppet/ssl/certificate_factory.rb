@@ -115,7 +115,7 @@ class Puppet::SSL::CertificateFactory
         dnsnames = Puppet[:certdnsnames]
         name = @name.to_s.sub(%r{/CN=},'')
         if dnsnames != ""
-            dnsnames.split(':').each { |d| subject_alt_name << 'DNS:' + d }
+            dnsnames.split(':').each { |d| @subject_alt_name << 'DNS:' + d }
             @subject_alt_name << 'DNS:' + name # Add the fqdn as an alias
         elsif name == Facter.value(:fqdn) # we're a CA server, and thus probably the server
             @subject_alt_name << 'DNS:' + "puppet" # Add 'puppet' as an alias

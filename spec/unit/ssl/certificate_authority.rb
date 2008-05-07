@@ -293,7 +293,7 @@ describe Puppet::SSL::CertificateAuthority do
             end
 
             it "should return the current content of the serial file" do
-                FileTest.expects(:exist?).with(@path).returns true
+                FileTest.stubs(:exist?).with(@path).returns true
                 File.expects(:read).with(@path).returns "0002"
 
                 @ca.next_serial.should == 2

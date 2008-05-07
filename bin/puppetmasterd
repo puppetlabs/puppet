@@ -160,6 +160,15 @@ Puppet::Node::Facts.terminus_class = :yaml
 # Cache our nodes in yaml.  Currently not configurable.
 Puppet::Node.cache_class = :yaml
 
+# Configure all of the SSL stuff.
+if Puppet::SSL::CertificateAuthority.ca?
+    Puppet::SSL::Host.ca_location = :local
+    Puppet.settings.use :main, :ssl, :ca
+    Puppet::SSL::CertificateAuthority.instance
+else
+    Puppet::SSL::Host.ca_location = :none
+end
+
 require 'etc'
 
 if Puppet[:parseonly]

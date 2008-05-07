@@ -58,7 +58,6 @@ module PuppetTest::ExeTest
         args += " --masterport %s" % @@port
         args += " --user %s" % Puppet::Util::SUIDManager.uid
         args += " --group %s" % Puppet::Util::SUIDManager.gid
-        args += " --nonodes"
         args += " --autosign true"
 
         #if Puppet[:debug]

@@ -28,6 +28,8 @@ describe Puppet::Network::Server do
             @tmpfile.delete
             Puppet.settings.clear
 
+            system("rm -rf %s" % @dir)
+
             # This is necessary so the terminus instances don't lie around.
             Puppet::SSL::Key.indirection.clear_cache
             Puppet::SSL::Certificate.indirection.clear_cache

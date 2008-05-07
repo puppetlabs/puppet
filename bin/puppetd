@@ -317,6 +317,11 @@ if options[:centrallogs]
     Puppet::Util::Log.newdestination(logdest)
 end
 
+# We need to specify a ca location for things to work, but
+# until the REST cert transfers are working, it needs to
+# be local.
+Puppet::SSL::Host.ca_location = :local
+
 # We need tomake the client either way, we just don't start it
 # if --no-client is set.
 client = Puppet::Network::Client.master.new(args)
@@ -338,10 +343,9 @@ if Puppet[:daemonize]
     client.daemonize
 end
 
-unless Puppet::Network::HttpPool.read_cert
-    # If we don't already have the certificate, then create a client to
-    # request one.  Use the special ca stuff, don't use the normal server and port.
-    caclient = Puppet::Network::Client.ca.new()
+caclient = Puppet::Network::Client.ca.new()
+
+unless caclient.read_cert
     if options[:waitforcert] > 0
         begin
             while ! caclient.request_cert do
@@ -360,7 +364,7 @@ unless Puppet::Network::HttpPool.read_cert
     end
 
     # Now read the new cert in.
-    if Puppet::Network::HttpPool.read_cert
+    if caclient.read_cert
         # If we read it in, then get rid of our existing http connection.
         client.recycle_connection
         Puppet.notice "Got signed certificate"
