@@ -84,7 +84,14 @@ of the closing brace of a block."
         (when apoint
           ;; This is a bit of a hack and doesn't allow for strings.  We really
           ;; want to parse by sexps at some point.
-          (if (= (puppet-count-matches "}" apoint opoint) 0)
+          (let ((close-braces (puppet-count-matches "}" apoint opoint))
+                (open-braces 0))
+            (while (and apoint (> close-braces open-braces))
+              (setq apoint (search-backward "{" nil t))
+              (when apoint
+                (setq close-braces (puppet-count-matches "}" apoint opoint))
+                (setq open-braces (1+ open-braces)))))
+          (if apoint
               (current-indentation)
             nil))))))
 
@@ -172,12 +179,11 @@ of the initial include plus puppet-include-indent."
           (setq cur-indent (current-column))))
        (include-start
         (setq cur-indent include-start))
-       ((looking-at "^\\s-*}\\s-*$")
-        ;; This line contains only a closing brace, so we should indent it
-        ;; matching the indentation of the opening brace of the block.
-        (if block-indent
-            (setq cur-indent block-indent)
-          (setq cur-indent 0)))
+       ((and (looking-at "^\\s-*}\\s-*$") block-indent)
+        ;; This line contains only a closing brace and we're at the inner
+        ;; block, so we should indent it matching the indentation of the
+        ;; opening brace of the block.
+        (setq cur-indent block-indent))
        (t
         ;; Otherwise, we did not start on a block-ending-only line.
         (save-excursion
