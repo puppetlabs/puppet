@@ -3,8 +3,7 @@ require 'puppet/provider/parsedfile'
 Puppet::Type.type(:ssh_authorized_key).provide(:parsed,
     :parent => Puppet::Provider::ParsedFile,
     :filetype => :flat,
-    # Ugly but the parameter is required
-    :default_target => '/proc/NONEXISTANT'
+    :default_target => ''
 ) do
     desc "Parse and generate authorized_keys files for SSH."
 
