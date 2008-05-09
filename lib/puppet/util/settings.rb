@@ -122,7 +122,7 @@ class Puppet::Util::Settings
             if pval = self.value(varname)
                 pval
             else
-                raise Puppet::DevError, "Could not find value for %s" % parent
+                raise Puppet::DevError, "Could not find value for %s" % value
             end
         end
 
