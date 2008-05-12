@@ -1,6 +1,6 @@
 Puppet::Type.type(:package).provide :urpmi, :parent => :rpm, :source => :rpm do
     desc "Support via ``urpmi``."
-    commands :urpmi => "urpmi", :rpm => "rpm"
+    commands :urpmi => "urpmi", :urpmq => "urpmq", :rpm => "rpm"
 
     if command('rpm')
         confine :true => begin
@@ -41,9 +41,9 @@ Puppet::Type.type(:package).provide :urpmi, :parent => :rpm, :source => :rpm do
 
     # What's the latest package version available?
     def latest
-        output = urpmi "-S",  :available, @resource[:name]
+        output = urpmq "-S", @resource[:name]
 
-        if output =~ /^#{@resource[:name]}\S+\s+(\S+)\s/
+        if output =~ /^#{@resource[:name]}\s+:\s+.*\(\s+(\S+)\s+\)/
             return $1
         else
             # urpmi didn't find updates, pretend the current
