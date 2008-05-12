@@ -1,3 +1,5 @@
+    Added ldap providers for users and groups.
+
     Added support for the --all option to puppetca --clean.  If
     puppetca --clean --all is issued then all client certificates
     are removed.
