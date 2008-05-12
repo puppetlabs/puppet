@@ -6,6 +6,14 @@ require 'puppet/rails'
 describe Puppet::Rails, "when initializing any connection" do
     confine Puppet.features.rails? => "Cannot test without ActiveRecord" 
 
+    before do
+        @logger = mock 'logger'
+        @logger.stub_everything
+        Logger.stubs(:new).returns(@logger)
+
+        ActiveRecord::Base.stubs(:logger).returns(@logger)
+    end
+
     it "should use settings" do
         Puppet.settings.expects(:use).with(:main, :rails, :puppetmasterd)
         
