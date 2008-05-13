@@ -19,14 +19,14 @@ class Puppet::Parser::TemplateWrapper
             @scope.parser.watch_file(@file)
         end
     end
-    
+
     # Should return true if a variable is defined, false if it is not
     def has_variable?(name)
-      if @scope.lookupvar(name.to_s, false) != :undefined
-        true
-      else
-        false
-      end
+        if @scope.lookupvar(name.to_s, false) != :undefined
+            true
+        else
+            false
+        end
     end
 
     # Ruby treats variables like methods, so we can cheat here and
