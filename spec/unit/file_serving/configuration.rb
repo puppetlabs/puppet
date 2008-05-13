@@ -15,12 +15,12 @@ describe Puppet::FileServing::Configuration do
 
     it "should have a method for removing the current configuration instance" do
         old = Puppet::FileServing::Configuration.create
-        Puppet::FileServing::Configuration.clear_cache
+        Puppet::Util::Cacher.invalidate
         Puppet::FileServing::Configuration.create.should_not equal(old)
     end
 
     after do
-        Puppet::FileServing::Configuration.clear_cache
+        Puppet::Util::Cacher.invalidate
     end
 end
 
@@ -32,7 +32,7 @@ describe Puppet::FileServing::Configuration do
     end
 
     after :each do
-        Puppet::FileServing::Configuration.clear_cache
+        Puppet::Util::Cacher.invalidate
     end
 
     describe Puppet::FileServing::Configuration, " when initializing" do

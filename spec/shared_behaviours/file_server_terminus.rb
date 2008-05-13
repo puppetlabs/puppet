@@ -7,7 +7,7 @@ describe "Puppet::Indirector::FileServerTerminus", :shared => true do
     # This only works if the shared behaviour is included before
     # the 'before' block in the including context.
     before do
-        Puppet::FileServing::Configuration.clear_cache
+        Puppet::Util::Cacher.invalidate
         FileTest.stubs(:exists?).with(Puppet[:fileserverconfig]).returns(true)
         FileTest.stubs(:exists?).with("/my/mount/path").returns(true)
         FileTest.stubs(:directory?).with("/my/mount/path").returns(true)

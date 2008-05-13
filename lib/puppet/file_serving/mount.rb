@@ -4,6 +4,7 @@
 
 require 'puppet/network/authstore'
 require 'puppet/util/logging'
+require 'puppet/util/cacher'
 require 'puppet/file_serving'
 require 'puppet/file_serving/metadata'
 require 'puppet/file_serving/content'
@@ -12,12 +13,16 @@ require 'puppet/file_serving/content'
 # or content objects.
 class Puppet::FileServing::Mount < Puppet::Network::AuthStore
     include Puppet::Util::Logging
+    extend Puppet::Util::Cacher
 
-    @@localmap = nil
-
-    # Clear the cache.  This is only ever used for testing.
-    def self.clear_cache
-        @@localmap = nil
+    def self.localmap
+        attr_cache(:localmap) { 
+            {   "h" =>  Facter.value("hostname"),
+                "H" => [Facter.value("hostname"),
+                        Facter.value("domain")].join("."),
+                "d" =>  Facter.value("domain")
+            }
+        }
     end
 
     attr_reader :name
@@ -173,14 +178,6 @@ class Puppet::FileServing::Mount < Puppet::Network::AuthStore
     # Cache this manufactured map, since if it's used it's likely
     # to get used a lot.
     def localmap
-        unless @@localmap
-            @@localmap = {
-                "h" =>  Facter.value("hostname"),
-                "H" => [Facter.value("hostname"),
-                        Facter.value("domain")].join("."),
-                "d" =>  Facter.value("domain")
-            }
-        end
-        @@localmap
+        self.class.localmap
     end
 end

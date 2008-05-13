@@ -12,9 +12,9 @@ end
 
 describe Puppet::FileServing::Mount do
     it "should provide a method for clearing its cached host information" do
-        Puppet::FileServing::Mount.new("whatever").send(:localmap)
-        Puppet::FileServing::Mount.clear_cache
-        Puppet::FileServing::Mount.send(:class_variable_get, "@@localmap").should be_nil
+        old = Puppet::FileServing::Mount.localmap
+        Puppet::Util::Cacher.invalidate
+        Puppet::FileServing::Mount.localmap.should_not equal(old)
     end
 end
 
@@ -106,7 +106,7 @@ describe Puppet::FileServing::Mount, " when finding files" do
     end
 
     after do
-        Puppet::FileServing::Mount.clear_cache
+        Puppet::Util::Cacher.invalidate
     end
 end
 

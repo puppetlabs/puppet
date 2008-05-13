@@ -10,7 +10,7 @@ require 'puppet/file_serving/configuration'
 describe Puppet::FileServing::Configuration, " when finding files with Puppet::FileServing::Mount" do
     before do
         # Just in case it already exists.
-        Puppet::FileServing::Configuration.clear_cache
+        Puppet::Util::Cacher.invalidate
 
         @mount = Puppet::FileServing::Mount.new("mymount")
         FileTest.stubs(:exists?).with("/my/path").returns(true)
@@ -38,6 +38,6 @@ describe Puppet::FileServing::Configuration, " when finding files with Puppet::F
     end
 
     after do
-        Puppet::FileServing::Configuration.clear_cache
+        Puppet::Util::Cacher.invalidate
     end
 end

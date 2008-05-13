@@ -10,7 +10,8 @@ describe Puppet::Node::Facts, " when indirecting" do
 
         # We have to clear the cache so that the facts ask for our indirection stub,
         # instead of anything that might be cached.
-        Puppet::Indirector::Indirection.clear_cache
+        Puppet::Util::Cacher.invalidate
+
         @facts = Puppet::Node::Facts.new("me", "one" => "two")
     end
 
@@ -28,11 +29,6 @@ describe Puppet::Node::Facts, " when indirecting" do
 
     it "should default to the 'facter' terminus" do
         Puppet::Node::Facts.indirection.terminus_class.should == :facter
-    end
-
-    after do
-        mocha_verify
-        Puppet::Indirector::Indirection.clear_cache
     end
 end
 

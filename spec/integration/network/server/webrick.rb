@@ -30,10 +30,7 @@ describe Puppet::Network::Server do
 
             system("rm -rf %s" % @dir)
 
-            # This is necessary so the terminus instances don't lie around.
-            Puppet::SSL::Key.indirection.clear_cache
-            Puppet::SSL::Certificate.indirection.clear_cache
-            Puppet::SSL::CertificateRequest.indirection.clear_cache
+            Puppet::Util::Cacher.invalidate
         end
 
         describe "before listening" do

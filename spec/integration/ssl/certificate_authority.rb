@@ -28,10 +28,7 @@ describe Puppet::SSL::CertificateAuthority do
         system("rm -rf %s" % @dir)
         Puppet.settings.clear
 
-        # This is necessary so the terminus instances don't lie around.
-        Puppet::SSL::Key.indirection.clear_cache
-        Puppet::SSL::Certificate.indirection.clear_cache
-        Puppet::SSL::CertificateRequest.indirection.clear_cache
+        Puppet::Util::Cacher.invalidate
 
         Puppet::SSL::CertificateAuthority.instance_variable_set("@instance", nil)
     }

@@ -148,7 +148,7 @@ describe Puppet::Node, " when indirecting" do
     end
 
     after do
-        Puppet::Indirector::Indirection.clear_cache
+        Puppet::Util::Cacher.invalidate
     end
 end
 

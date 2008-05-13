@@ -87,6 +87,9 @@ describe "Delegation Authorizer", :shared => true do
 end
 
 describe Puppet::Indirector::Indirection do
+    after do
+        Puppet::Util::Cacher.invalidate
+    end
     describe "when initializing" do
         # (LAK) I've no idea how to test this, really.
         it "should store a reference to itself before it consumes its options" do
@@ -494,7 +497,7 @@ describe Puppet::Indirector::Indirection do
 
         after :each do
             @indirection.delete
-            Puppet::Indirector::Indirection.clear_cache
+            Puppet::Util::Cacher.invalidate
         end
     end
 
@@ -615,15 +618,6 @@ describe Puppet::Indirector::Indirection do
             @indirection.terminus(:foo).should equal(@terminus)
         end
 
-        it "should allow the clearance of cached terminus instances" do
-            terminus1 = mock 'terminus1'
-            terminus2 = mock 'terminus2'
-            @terminus_class.stubs(:new).returns(terminus1, terminus2, ArgumentError)
-            @indirection.terminus(:foo).should equal(terminus1)
-            @indirection.class.clear_cache
-            @indirection.terminus(:foo).should equal(terminus2)
-        end
-
         # Make sure it caches the terminus.
         it "should return the same terminus instance each time for a given name" do
             @terminus_class.stubs(:new).returns(@terminus)
@@ -638,7 +632,6 @@ describe Puppet::Indirector::Indirection do
 
         after do
             @indirection.delete
-            Puppet::Indirector::Indirection.clear_cache
         end
     end
 
@@ -675,7 +668,6 @@ describe Puppet::Indirector::Indirection do
 
         after do
             @indirection.delete
-            Puppet::Indirector::Indirection.clear_cache
         end
     end
 
@@ -706,15 +698,6 @@ describe Puppet::Indirector::Indirection do
                 @indirection.cache.should equal(@cache)
                 @indirection.cache.should equal(@cache)
             end
-
-            it "should remove the cache terminus when all other terminus instances are cleared" do
-                cache2 = mock 'cache2'
-                @cache_class.stubs(:new).returns(@cache, cache2)
-                @indirection.cache_class = :cache_terminus
-                @indirection.cache.should equal(@cache)
-                @indirection.clear_cache
-                @indirection.cache.should equal(cache2)
-            end
         end
 
         describe "and saving" do
@@ -725,7 +708,6 @@ describe Puppet::Indirector::Indirection do
         
         after :each do
             @indirection.delete
-            Puppet::Indirector::Indirection.clear_cache
         end
     end
 end

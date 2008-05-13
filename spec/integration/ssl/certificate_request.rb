@@ -16,8 +16,6 @@ describe Puppet::SSL::CertificateRequest do
         file.delete
 
         Puppet.settings.clear
-        # This is necessary so the terminus instances don't lie around.
-        Puppet::SSL::CertificateRequest.indirection.clear_cache
 
         Puppet.settings[:confdir] = @dir
         Puppet.settings[:vardir] = @dir
@@ -32,7 +30,7 @@ describe Puppet::SSL::CertificateRequest do
         Puppet.settings.clear
 
         # This is necessary so the terminus instances don't lie around.
-        Puppet::SSL::CertificateRequest.indirection.clear_cache
+        Puppet::Util::Cacher.invalidate
     end
 
     it "should be able to generate CSRs" do

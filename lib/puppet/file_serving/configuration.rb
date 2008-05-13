@@ -5,25 +5,20 @@
 require 'puppet'
 require 'puppet/file_serving'
 require 'puppet/file_serving/mount'
+require 'puppet/util/cacher'
 
 class Puppet::FileServing::Configuration
     require 'puppet/file_serving/configuration/parser'
+
+    extend Puppet::Util::Cacher
 
     @config_fileuration = nil
 
     Mount = Puppet::FileServing::Mount
 
-    # Remove our singleton instance.
-    def self.clear_cache
-        @config_fileuration = nil
-    end
-
     # Create our singleton configuration.
     def self.create
-        unless @config_fileuration
-            @config_fileuration = new()
-        end
-        @config_fileuration
+        attr_cache(:configuration) { new() }
     end
 
     private_class_method  :new

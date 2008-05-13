@@ -57,6 +57,8 @@ describe Puppet::Indirector::REST do
 
     describe "when using webrick" do
         before :each do
+            Puppet::Util::Cacher.invalidate
+
             Puppet[:servertype] = 'webrick'
             Puppet[:server] = '127.0.0.1'
             Puppet[:certname] = '127.0.0.1'
@@ -73,11 +75,7 @@ describe Puppet::Indirector::REST do
             @server.unlisten
             @tmpfile.delete
             Puppet.settings.clear
-
-            # This is necessary so the terminus instances don't lie around.
-            Puppet::SSL::Key.indirection.clear_cache
-            Puppet::SSL::Certificate.indirection.clear_cache
-            Puppet::SSL::CertificateRequest.indirection.clear_cache
+            Puppet::Util::Cacher.invalidate
         end
     
         describe "when finding a model instance over REST" do

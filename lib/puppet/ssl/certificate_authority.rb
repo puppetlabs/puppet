@@ -1,5 +1,6 @@
 require 'puppet/ssl/host'
 require 'puppet/ssl/certificate_request'
+require 'puppet/util/cacher'
 
 # The class that knows how to sign certificates.  It creates
 # a 'special' SSL::Host whose name is 'ca', thus indicating
@@ -16,6 +17,8 @@ class Puppet::SSL::CertificateAuthority
 
     require 'puppet/ssl/certificate_authority/interface'
 
+    extend Puppet::Util::Cacher
+
     def self.ca?
         return false unless Puppet[:ca]
         return false unless Puppet[:name] == "puppetmasterd"
@@ -27,11 +30,7 @@ class Puppet::SSL::CertificateAuthority
     def self.instance
         return nil unless ca?
 
-        unless defined?(@instance) and @instance
-            @instance = new
-        end
-
-        @instance
+        attr_cache(:instance) { new }
     end
 
     attr_reader :name, :host

@@ -8,6 +8,7 @@ require 'puppet/network/http_pool'
 
 describe Puppet::Network::HttpPool do
     after do
+        Puppet::Util::Cacher.invalidate
         Puppet::Network::HttpPool.clear_http_instances
         Puppet::Network::HttpPool.instance_variable_set("@ssl_host", nil)
     end
@@ -145,24 +146,6 @@ describe Puppet::Network::HttpPool do
                 old = Puppet::Network::HttpPool.http_instance("me", 54321)
                 Puppet::Network::HttpPool.http_instance("me", 54321).should_not equal(old)
             end
-        end
-
-        # We mostly have to do this for testing, since in real life people
-        # won't change certs within a single process.
-        it "should remove its loaded certificate when clearing the cache" do
-            Puppet::Network::HttpPool.instance_variable_set("@cert", :yay)
-            Puppet::Network::HttpPool.clear_http_instances
-            # Can't use the accessor, because it will read the cert in
-            Puppet::Network::HttpPool.instance_variable_get("@cert").should be_nil
-        end
-
-        # We mostly have to do this for testing, since in real life people
-        # won't change certs within a single process.
-        it "should remove its loaded key when clearing the cache" do
-            Puppet::Network::HttpPool.instance_variable_set("@key", :yay)
-            Puppet::Network::HttpPool.clear_http_instances
-            # Can't use the accessor, because it will read the cert in
-            Puppet::Network::HttpPool.instance_variable_get("@key").should be_nil
         end
 
         after do

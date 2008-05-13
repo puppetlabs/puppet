@@ -7,13 +7,15 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 describe Puppet::Node::Facts do
     describe "when using the indirector" do
-        after { Puppet::Node::Facts.indirection.clear_cache }
+        after { Puppet::Util::Cacher.invalidate }
 
         it "should expire any cached node instances when it is saved" do
             Puppet::Node::Facts.indirection.stubs(:terminus_class).returns :yaml
-            terminus = Puppet::Node::Facts.indirection.terminus(:yaml)
 
-            terminus.expects(:save)
+            Puppet::Node::Facts.indirection.terminus(:yaml).should equal(Puppet::Node::Facts.indirection.terminus(:yaml))
+            terminus = Puppet::Node::Facts.indirection.terminus(:yaml)
+            terminus.stubs :save
+
             Puppet::Node.expects(:expire).with("me")
 
             facts = Puppet::Node::Facts.new("me")

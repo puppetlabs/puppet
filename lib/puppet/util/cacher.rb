@@ -26,7 +26,7 @@ module Puppet::Util::Cacher
 
         def cached_attr(name, &block)
             define_method(name) do
-                cache(name, &block)
+                attr_cache(name, &block)
             end
         end
     end
@@ -34,7 +34,7 @@ module Puppet::Util::Cacher
     module InstanceMethods
         private
 
-        def cache(name, &block)
+        def attr_cache(name, &block)
             unless defined?(@cacher_caches) and @cacher_caches
                 @cacher_caches = Cache.new
             end
@@ -44,24 +44,26 @@ module Puppet::Util::Cacher
     end
 
     class Cache
-        attr_reader :timestamp, :caches
+        attr_accessor :caches, :timestamp
 
         def initialize
-            @timestamp = Time.now
             @caches = {}
         end
 
         def value(name)
             raise ArgumentError, "You must provide a block when using the cache" unless block_given?
 
-            @caches.clear unless Puppet::Util::Cacher.valid?(@timestamp)
+            if timestamp.nil? or ! Puppet::Util::Cacher.valid?(timestamp)
+                caches.clear
+                self.timestamp = Time.now
+            end
 
             # Use 'include?' here rather than testing for truth, so we
             # can cache false values.
-            unless @caches.include?(name)
-                @caches[name] = yield
+            unless caches.include?(name)
+                caches[name] = yield
             end
-            @caches[name]
+            caches[name]
         end
     end
 end

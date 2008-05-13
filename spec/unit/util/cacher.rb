@@ -10,7 +10,7 @@ class CacheClassTest
     cached_attr(:testing) { Time.now }
 
     def sa_cache
-        cache(:ca_cache) { Time.now }
+        attr_cache(:ca_cache) { Time.now }
     end
 end
 
@@ -18,7 +18,7 @@ class CacheInstanceTest
     extend Puppet::Util::Cacher
 
     def self.sa_cache
-        cache(:ca_cache) { Time.now }
+        attr_cache(:ca_cache) { Time.now }
     end
 end
 
@@ -27,6 +27,14 @@ describe "a cacher user using cached values", :shared => true do
         now = Time.now
         Time.stubs(:now).returns now
         @object.sa_cache.should equal(now)
+    end
+
+    it "should not test for validity if it is creating the value" do
+        # This is only necessary in the class, since it has this value kicking
+        # around.
+        @object.instance_variable_set("@cacher_caches", nil)
+        Puppet::Util::Cacher.expects(:valid?).never
+        @object.sa_cache
     end
 
     it "should not consider cached false values to be missing values" do
@@ -50,6 +58,14 @@ describe "a cacher user using cached values", :shared => true do
         Puppet::Util::Cacher.stubs(:valid?).returns false
 
         @object.sa_cache.should_not equal(@object.sa_cache)
+    end
+
+    it "should still cache values after an invalidation" do
+        # Load the cache
+        @object.sa_cache
+
+        Puppet::Util::Cacher.invalidate
+        @object.sa_cache.should equal(@object.sa_cache)
     end
 end
 
@@ -123,7 +139,7 @@ describe Puppet::Util::Cacher do
         end
 
         it "should provide a private instance method for caching values" do
-            @object.private_methods.should be_include("cache")
+            @object.private_methods.should be_include("attr_cache")
         end
 
     end
@@ -134,7 +150,7 @@ describe Puppet::Util::Cacher do
         end
 
         it "should provide a private instance method for caching values" do
-            CacheInstanceTest.private_methods.should be_include("cache")
+            CacheInstanceTest.private_methods.should be_include("attr_cache")
         end
 
         it_should_behave_like "a cacher user using cached values"

@@ -1,19 +1,16 @@
 require 'puppet/util/docs'
 require 'puppet/indirector/envelope'
 require 'puppet/indirector/request'
+require 'puppet/util/cacher'
 
 # The class that connects functional classes with their different collection
 # back-ends.  Each indirection has a set of associated terminus classes,
 # each of which is a subclass of Puppet::Indirector::Terminus.
 class Puppet::Indirector::Indirection
+    include Puppet::Util::Cacher
     include Puppet::Util::Docs
 
     @@indirections = []
-
-    # Clear all cached termini from all indirections.
-    def self.clear_cache
-        @@indirections.each { |ind| ind.clear_cache }
-    end
 
     # Find an indirection by name.  This is provided so that Terminus classes
     # can specifically hook up with the indirections they are associated with.
@@ -52,13 +49,6 @@ class Puppet::Indirector::Indirection
     def cache_class=(class_name)
         validate_terminus_class(class_name)
         @cache_class = class_name
-    end
-
-    # Clear our cached list of termini, and reset the cache name
-    # so it's looked up again.
-    # This is only used for testing.
-    def clear_cache
-        @termini.clear
     end
 
     # This is only used for testing.
@@ -104,7 +94,6 @@ class Puppet::Indirector::Indirection
         @model = model
         @name = name
 
-        @termini = {}
         @cache_class = nil
         @terminus_class = nil
 
@@ -138,7 +127,7 @@ class Puppet::Indirector::Indirection
             raise Puppet::DevError, "No terminus specified for %s; cannot redirect" % self.name
         end
         
-        return @termini[terminus_name] ||= make_terminus(terminus_name)
+        return termini[terminus_name] ||= make_terminus(terminus_name)
     end
 
     # This can be used to select the terminus class.
@@ -298,5 +287,10 @@ class Puppet::Indirector::Indirection
             raise ArgumentError, "Could not find terminus %s for indirection %s" % [terminus_class, self.name]
         end
         return klass.new
+    end
+
+    # Use cached termini.
+    def termini
+        attr_cache(:termini) { Hash.new }
     end
 end
