@@ -16,12 +16,9 @@ module Puppet
 
             newvalue("ssh-dss")
             newvalue("ssh-rsa")
-            newvalue("none")
 
             aliasvalue(:dsa, "ssh-dss")
             aliasvalue(:rsa, "ssh-rsa")
-
-            defaultto "none"
         end
 
         newproperty(:key) do
