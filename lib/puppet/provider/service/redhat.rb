@@ -16,7 +16,6 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init do
     def disable
         begin
             output = chkconfig(@resource[:name], :off)
-            output += chkconfig("--del", @resource[:name])
         rescue Puppet::ExecutionFailure
             raise Puppet::Error, "Could not disable %s: %s" %
                 [self.name, output]
@@ -43,8 +42,7 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init do
     # in the init scripts.
     def enable
         begin
-            output = chkconfig("--add", @resource[:name])
-            output += chkconfig(@resource[:name], :on)
+            output = chkconfig(@resource[:name], :on)
         rescue Puppet::ExecutionFailure => detail
             raise Puppet::Error, "Could not enable %s: %s" %
                 [self.name, detail]

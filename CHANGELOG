@@ -1,3 +1,7 @@
+    Instead of deleting the init scripts (with --del) we should simply disable
+    it with chkconfig service off, and respectfully do the same for enable
+    => true;
+ 
     Added ldap providers for users and groups.
 
     Added support for the --all option to puppetca --clean.  If
