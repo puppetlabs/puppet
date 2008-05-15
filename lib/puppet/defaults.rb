@@ -622,6 +622,10 @@ module Puppet
         :ldapclassattrs => ["puppetclass",
             "The LDAP attributes to use to define Puppet classes.  Values
             should be comma-separated."],
+        :ldapstackedattrs => ["puppetvar",
+            "The LDAP attributes that should be stacked to arrays by adding
+            the values in all hierarchy elements of the tree.  Values
+            should be comma-separated."],
         :ldapattrs => ["all",
             "The LDAP attributes to include when querying LDAP for nodes.  All
             returned attributes are set as variables in the top-level scope.
