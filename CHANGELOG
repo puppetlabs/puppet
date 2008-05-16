@@ -1,6 +1,14 @@
-    Instead of deleting the init scripts (with --del) we should simply disable
-    it with chkconfig service off, and respectfully do the same for enable
-    => true;
+    Moving all confine code out of the Provider class, and fixing #1197. 
+    Created a Confiner module for the Provider class methods, enhanced 
+    the interface between it and the Confine class to make sure binary 
+    paths are searched for fresh each time.
+
+    Crontab provider: fix a parse error when a line begins with a space 
+    character (fixes #1216)
+
+    Instead of deleting the init scripts (with --del) we should simply 
+    disable it with chkconfig service off, and respectfully do the same 
+    for enable => true;
  
     Added ldap providers for users and groups.
 

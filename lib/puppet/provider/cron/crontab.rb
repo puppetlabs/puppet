@@ -30,7 +30,7 @@ Puppet::Type.type(:cron).provide(:crontab,
         }
 
     crontab = record_line :crontab, :fields => %w{minute hour monthday month weekday command},
-        :match => %r{^(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(.+)$},
+        :match => %r{^\s*(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(.+)$},
         :optional => %w{minute hour weekday month monthday}, :absent => "*"
 
     class << crontab
