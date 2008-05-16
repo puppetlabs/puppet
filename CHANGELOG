@@ -1,3 +1,7 @@
+    Modified the 'factpath' setting to automatically configure
+    Facter to load facts there if a new enough version of
+    Facter is used.
+
     Added ldap providers for users and groups.
 
     Added support for the --all option to puppetca --clean.  If
