@@ -1,9 +1,22 @@
 # The class that handles testing whether our providers
 # actually work or not.
+require 'puppet/util'
+
 class Puppet::Provider::Confine
+    include Puppet::Util
+
     attr_reader :test, :values, :fact
 
+    # Mark that this confine is used for testing binary existence.
+    attr_accessor :for_binary
+    def for_binary?
+        for_binary
+    end
+
     def exists?(value)
+        if for_binary?
+            return false unless value = binary(value)
+        end
         value and FileTest.exist?(value)
     end
 
@@ -57,11 +70,11 @@ class Puppet::Provider::Confine
         values.each do |value|
             unless send(@method, value)
                 msg = case test
-                when :false:  "false value"
-                when :true:  "true value"
-                when :exists:  "file %s does not exist" % value
-                when :facter:  "facter value '%s' for '%s' not in required list '%s'" % [value, @fact, values.join(",")]
-                end
+                      when :false:  "false value when expecting true"
+                      when :true:  "true value when expecting false"
+                      when :exists:  "file %s does not exist" % value
+                      when :facter:  "facter value '%s' for '%s' not in required list '%s'" % [value, @fact, values.join(",")]
+                      end
                 Puppet.debug msg
                 return false
             end

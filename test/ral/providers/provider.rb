@@ -97,7 +97,7 @@ class TestProvider < Test::Unit::TestCase
 
         provider.commands :testing => "/no/such/path"
 
-        provider.expects(:binary).returns "/no/such/path"
+        provider.stubs(:binary).returns "/no/such/path"
 
         provider.command(:testing)
         assert_equal("/no/such/path", provider.command(:testing), "Did not return correct binary path")

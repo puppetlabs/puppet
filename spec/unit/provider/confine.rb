@@ -25,6 +25,24 @@ describe Puppet::Provider::Confine do
         Puppet::Provider::Confine.new(:foo, :bar).should respond_to(:fact)
     end
 
+    it "should be possible to mark the confine as a binary test" do
+        Puppet::Provider::Confine.new(:foo, :bar).should respond_to(:for_binary=)
+    end
+
+    it "should have a boolean method to indicate it's a binary confine" do
+        Puppet::Provider::Confine.new(:foo, :bar).should respond_to(:for_binary?)
+    end
+
+    it "should indicate it's a boolean confine if it has been marked that way" do
+        confine = Puppet::Provider::Confine.new(:foo, :bar)
+        confine.for_binary = true
+        confine.should be_for_binary
+    end
+
+    it "should have a method for returning a binary's path" do
+        Puppet::Provider::Confine.new(:foo, :bar).private_methods.should be_include("binary")
+    end
+
     describe "when testing values" do
         before { @confine = Puppet::Provider::Confine.new("eh", "foo") }
 
@@ -91,6 +109,31 @@ describe Puppet::Provider::Confine do
                 @confine = Puppet::Provider::Confine.new(:true, nil)
                 Puppet.expects(:debug).with { |l| l.include?("true") }
                 @confine.valid?
+            end
+
+            describe "and the confine is for binaries" do
+                before { @confine.stubs(:for_binary).returns true }
+                it "should use its 'binary' method to look up the full path of the file" do
+                    @confine.expects(:binary).returns nil
+                    @confine.exists?("/my/file")
+                end
+
+                it "should return false if no binary can be found" do
+                    @confine.expects(:binary).with("/my/file").returns nil
+                    @confine.exists?("/my/file").should be_false
+                end
+
+                it "should return true if the binary can be found and the file exists" do
+                    @confine.expects(:binary).with("/my/file").returns "/my/file"
+                    FileTest.expects(:exist?).with("/my/file").returns true
+                    @confine.exists?("/my/file").should be_true
+                end
+
+                it "should return false if the binary can be found but the file does not exist" do
+                    @confine.expects(:binary).with("/my/file").returns "/my/file"
+                    FileTest.expects(:exist?).with("/my/file").returns true
+                    @confine.exists?("/my/file").should be_true
+                end
             end
         end
 

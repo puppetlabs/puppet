@@ -7,6 +7,8 @@ class Puppet::Provider
 
     require 'puppet/provider/confiner'
 
+    extend Puppet::Provider::Confiner
+
     Puppet::Util.logmethods(self, true)
 
     class << self
@@ -42,29 +44,14 @@ class Puppet::Provider
                 [name, self.name]
         end
 
-        if command == :missing
-            return nil
-        end
-
-        command
+        return binary(command)
     end
 
     # Define commands that are not optional.
     def self.commands(hash)
         optional_commands(hash) do |name, path|
-            confine :exists => path
+            confine :exists => path, :for_binary => true
         end
-    end
-
-    def self.confine(hash)
-        confiner.confine(hash)
-    end
-
-    def self.confiner
-        unless defined?(@confiner)
-            @confiner = Puppet::Provider::Confiner.new
-        end
-        @confiner
     end
 
     # Is the provided feature a declared feature?
@@ -111,7 +98,6 @@ class Puppet::Provider
     def self.initvars
         @defaults = {}
         @commands = {}
-        @origcommands = {}
     end
 
     # The method for returning a list of provider instances.  Note that it returns providers, preferably with values already
@@ -180,16 +166,7 @@ class Puppet::Provider
     def self.optional_commands(hash)
         hash.each do |name, path|
             name = symbolize(name)
-            @origcommands[name] = path
-
-            # Try to find the full path (or verify already-full paths); otherwise
-            # store that the command is missing so we know it's defined but absent.
-            if tmp = binary(path)
-                path = tmp
-                @commands[name] = path
-            else
-                @commands[name] = :missing
-            end
+            @commands[name] = path
 
             if block_given?
                 yield(name, path)
@@ -206,12 +183,6 @@ class Puppet::Provider
             @source = self.name
         end
         @source
-    end
-
-    # Check whether this implementation is suitable for our platform.
-    def self.suitable?(short = true)
-        return confiner.valid?  if short
-        return confiner.result
     end
 
     # Does this provider support the specified parameter?
@@ -252,8 +223,8 @@ class Puppet::Provider
     end
 
     dochook(:commands) do
-        if @origcommands.length > 0
-            return "  Required binaries: " + @origcommands.collect do |n, c|
+        if @commands.length > 0
+            return "  Required binaries: " + @commands.collect do |n, c|
                 "``#{c}``"
             end.join(", ") + "."
         end

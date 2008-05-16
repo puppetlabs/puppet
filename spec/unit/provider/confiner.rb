@@ -5,102 +5,58 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/provider/confiner'
 
 describe Puppet::Provider::Confiner do
-    it "should be able to add confines" do
-        Puppet::Provider::Confiner.new.should respond_to(:confine)
+    before do
+        @object = Object.new
+        @object.extend(Puppet::Provider::Confiner)
     end
 
-    it "should create a Confine instance for every confine call" do
-        Puppet::Provider::Confine.expects(:new).with(:foo, :bar).returns "eh"
-        Puppet::Provider::Confine.expects(:new).with(:baz, :bee).returns "eh"
-        Puppet::Provider::Confiner.new.confine :foo => :bar, :baz => :bee
+    it "should have a method for defining confines" do
+        @object.should respond_to(:confine)
     end
 
-    it "should be valid if no confines are present" do
-        Puppet::Provider::Confiner.new.should be_valid
+    it "should have a method for returning its confine collection" do
+        @object.should respond_to(:confine_collection)
     end
 
-    it "should be valid if all confines are valid" do
-        c1 = mock 'c1', :valid? => true
-        c2 = mock 'c2', :valid? => true
-
-        Puppet::Provider::Confine.expects(:new).times(2).returns(c1).then.returns(c2)
-
-        confiner = Puppet::Provider::Confiner.new
-        confiner.confine :foo => :bar, :baz => :bee
-
-        confiner.should be_valid
+    it "should have a method for testing suitability" do
+        @object.should respond_to(:suitable?)
     end
 
-    it "should not be valid if any confines are valid" do
-        c1 = mock 'c1', :valid? => true
-        c2 = mock 'c2', :valid? => false
-
-        Puppet::Provider::Confine.expects(:new).times(2).returns(c1).then.returns(c2)
-
-        confiner = Puppet::Provider::Confiner.new
-        confiner.confine :foo => :bar, :baz => :bee
-
-        confiner.should_not be_valid
+    it "should delegate its confine method to its confine collection" do
+        coll = mock 'collection'
+        @object.stubs(:confine_collection).returns coll
+        coll.expects(:confine).with(:foo => :bar, :bee => :baz)
+        @object.confine(:foo => :bar, :bee => :baz)
     end
 
-    describe "when providing a complete result" do
+    it "should create a new confine collection if one does not exist" do
+        Puppet::Provider::ConfineCollection.expects(:new).returns "mycoll"
+        @object.confine_collection.should == "mycoll"
+    end
+
+    it "should reuse the confine collection" do
+        @object.confine_collection.should equal(@object.confine_collection)
+    end
+
+    describe "when testing suitability" do
         before do
-            @confiner = Puppet::Provider::Confiner.new
+            @coll = mock 'collection'
+            @object.stubs(:confine_collection).returns @coll
         end
 
-        it "should return a hash" do
-            @confiner.result.should be_instance_of(Hash)
+        it "should return true if the confine collection is valid" do
+            @coll.expects(:valid?).returns true
+            @object.should be_suitable
         end
 
-        it "should return an empty hash if the confiner is valid" do
-            @confiner.result.should == {}
+        it "should return false if the confine collection is invalid" do
+            @coll.expects(:valid?).returns false
+            @object.should_not be_suitable
         end
 
-        it "should contain the number of incorrectly false values" do
-            c1 = stub 'c1', :result => [true, false, true], :test => :true
-            c2 = stub 'c2', :result => [false, true, false], :test => :true
-
-            Puppet::Provider::Confine.expects(:new).times(2).returns(c1).then.returns(c2)
-
-            confiner = Puppet::Provider::Confiner.new
-            confiner.confine :foo => :bar, :baz => :bee
-
-            confiner.result[:true].should == 3
-        end
-
-        it "should contain the number of incorrectly true values" do
-            c1 = stub 'c1', :result => [true, false, true], :test => :false
-            c2 = stub 'c2', :result => [false, true, false], :test => :false
-
-            Puppet::Provider::Confine.expects(:new).times(2).returns(c1).then.returns(c2)
-
-            confiner = Puppet::Provider::Confiner.new
-            confiner.confine :foo => :bar, :baz => :bee
-
-            confiner.result[:false].should == 3
-        end
-
-        it "should contain the missing files" do
-            FileTest.stubs(:exist?).returns true
-            FileTest.expects(:exist?).with("/two").returns false
-            FileTest.expects(:exist?).with("/four").returns false
-
-            confiner = Puppet::Provider::Confiner.new
-            confiner.confine :exists => %w{/one /two}
-            confiner.confine :exists => %w{/three /four}
-
-            confiner.result[:exists].should == %w{/two /four}
-        end
-
-        it "should contain a hash of facts and the allowed values" do
-            Facter.expects(:value).with(:foo).returns "yay"
-            Facter.expects(:value).with(:bar).returns "boo"
-            confiner = Puppet::Provider::Confiner.new
-            confiner.confine :foo => "yes", :bar => "boo"
-
-            result = confiner.result
-            result[:facter][:foo].should == %w{yes}
-            result[:facter][:bar].should be_nil
+        it "should return the result of the confine collection if a long result is asked for" do
+            @coll.expects(:result).returns "myresult"
+            @object.suitable?(false).should == "myresult"
         end
     end
 end
