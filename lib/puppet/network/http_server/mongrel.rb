@@ -64,11 +64,11 @@ module Puppet::Network
             # behaviour and we have to subclass Mongrel::HttpHandler so our handler
             # works for Mongrel.
             @xmlrpc_server = Puppet::Network::XMLRPCServer.new
-            handlers.each do |name, args|
+            handlers.each do |name|
                 unless handler = Puppet::Network::Handler.handler(name)
                     raise ArgumentError, "Invalid handler %s" % name
                 end
-                @xmlrpc_server.add_handler(handler.interface, handler.new(args))
+                @xmlrpc_server.add_handler(handler.interface, handler.new({}))
             end
         end
 
