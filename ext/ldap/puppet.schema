@@ -17,6 +17,11 @@ attributetype ( 1.1.3.11 NAME 'environment'
 	EQUALITY caseIgnoreIA5Match
 	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
 
+attributetype ( 1.1.3.12 NAME 'puppetvar'
+	DESC 'A variable setting for puppet'
+	EQUALITY caseIgnoreIA5Match
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
+
 objectclass ( 1.1.1.2 NAME 'puppetClient' SUP top AUXILIARY
 	DESC 'Puppet Client objectclass'
-	MAY ( puppetclass $ parentnode $ environment ))
+	MAY ( puppetclass $ parentnode $ environment $ puppetvar ))

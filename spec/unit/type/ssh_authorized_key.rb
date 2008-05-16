@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../../spec_helper'
+require File.dirname(__FILE__) + '/../../spec_helper'
 
 ssh_authorized_key = Puppet::Type.type(:ssh_authorized_key)
 

@@ -1,14 +1,12 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../../spec_helper'
-
-require 'puppet/type/user'
+require File.dirname(__FILE__) + '/../../spec_helper'
 
 module UserTestFunctions
     def mkuser(name)
         user = nil;
         lambda {
-            user = Puppet::Type::User.create(
+            user = Puppet::Type.type(:user).create(
                 :name => name,
                 :comment => "Puppet Testing User",
                 :gid => Puppet::Util::SUIDManager.gid,
@@ -30,12 +28,12 @@ module UserTestFunctions
     end
 end
 
-describe Puppet::Type::User do
+describe Puppet::Type.type(:user) do
 
     include UserTestFunctions
 
     it "should have a default provider inheriting from Puppet::Provider" do
-        test_provider_class Puppet::Type::User.defaultprovider
+        test_provider_class Puppet::Type.type(:user).defaultprovider
     end
 
     it "should be able to create a instance" do
@@ -43,7 +41,7 @@ describe Puppet::Type::User do
     end
 end
 
-describe Puppet::Type::User, "instances" do
+describe Puppet::Type.type(:user), "instances" do
 
     include UserTestFunctions
 
