@@ -82,6 +82,18 @@ class TestProvider < Test::Unit::TestCase
         assert(! provider.suitable?)
     end
 
+    # #1197 - the binary should not be
+    def test_command_checks_for_binaries_each_time
+        provider = newprovider
+
+        provider.commands :testing => "/no/such/path"
+
+        provider.expects(:binary).returns "/no/such/path"
+
+        provider.command(:testing)
+        assert_equal("/no/such/path", provider.command(:testing), "Did not return correct binary path")
+    end
+
     def test_command
         {:echo => "echo", :echo_with_path => echo, :missing => "nosuchcommand", :missing_qualified => "/path/to/nosuchcommand"}.each do |name, command|
             provider = newprovider

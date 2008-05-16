@@ -3,7 +3,7 @@
 #  Created by Luke Kanies on 2007-11-20.
 #  Copyright (c) 2006. All rights reserved.
 
-require File.dirname(__FILE__) + '/../../../../spec_helper'
+require File.dirname(__FILE__) + '/../../../spec_helper'
 
 provider_class = Puppet::Type.type(:interface).provider(:redhat)
 
