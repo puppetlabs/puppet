@@ -67,7 +67,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
         end
         
         cmd = [command(:rpm), "-q", "--qf", "#{NEVRAFORMAT}\n", "-p", "#{@resource[:source]}"]
-        h = nevra_to_hash(execfail(cmd, Puppet::Error))
+        h = self.class.nevra_to_hash(execfail(cmd, Puppet::Error))
         return h[:ensure]
     end
 
