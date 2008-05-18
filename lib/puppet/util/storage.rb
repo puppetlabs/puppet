@@ -6,6 +6,10 @@ class Puppet::Util::Storage
     include Singleton
     include Puppet::Util
 
+    def self.state
+        return @@state
+    end
+
     def initialize
         self.class.load
     end

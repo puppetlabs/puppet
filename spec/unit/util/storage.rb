@@ -22,11 +22,15 @@ describe Puppet::Util::Storage do
         end
 
         it "it should add the symbol to its internal state" do
-            Puppet::Util::Storage.stateinspect().should == {}.inspect()
             Puppet::Util::Storage.cache(:yayness)
-            Puppet::Util::Storage.stateinspect().should == {:yayness=>{}}.inspect()
+            Puppet::Util::Storage.state().should == {:yayness=>{}}
+        end
+
+        it "it should not clobber existing state when caching additional objects" do
+            Puppet::Util::Storage.cache(:yayness)
+            Puppet::Util::Storage.state().should == {:yayness=>{}}
             Puppet::Util::Storage.cache(:bubblyness)
-            Puppet::Util::Storage.stateinspect().should == {:yayness=>{},:bubblyness=>{}}.inspect()
+            Puppet::Util::Storage.state().should == {:yayness=>{},:bubblyness=>{}}
         end
     end
 
@@ -42,11 +46,11 @@ describe Puppet::Util::Storage do
         end
 
         it "it should add the resource ref to its internal state" do
-            Puppet::Util::Storage.stateinspect().should == {}.inspect()
+            Puppet::Util::Storage.state().should == {}
             Puppet::Util::Storage.cache(@file_test)
-            Puppet::Util::Storage.stateinspect().should == {"File[/yayness]"=>{}}.inspect()
+            Puppet::Util::Storage.state().should == {"File[/yayness]"=>{}}
             Puppet::Util::Storage.cache(@exec_test)
-            Puppet::Util::Storage.stateinspect().should == {"File[/yayness]"=>{}, "Exec[/bin/ls /yayness]"=>{}}.inspect()
+            Puppet::Util::Storage.state().should == {"File[/yayness]"=>{}, "Exec[/bin/ls /yayness]"=>{}}
         end
     end
 
@@ -66,7 +70,7 @@ describe Puppet::Util::Storage do
                 begin
                     Puppet::Util::Storage.cache(object)
                 rescue
-                    Puppet::Util::Storage.stateinspect().should == {}.inspect()
+                    Puppet::Util::Storage.state().should == {}
                 end
             end
         end
@@ -74,9 +78,9 @@ describe Puppet::Util::Storage do
 
     it "it should clear its internal state when clear() is called" do
         Puppet::Util::Storage.cache(:yayness)
-        Puppet::Util::Storage.stateinspect().should == {:yayness=>{}}.inspect()
+        Puppet::Util::Storage.state().should == {:yayness=>{}}
         Puppet::Util::Storage.clear()
-        Puppet::Util::Storage.stateinspect().should == {}.inspect()
+        Puppet::Util::Storage.state().should == {}
     end
 
     describe "when loading from the state file" do
@@ -99,12 +103,12 @@ describe Puppet::Util::Storage do
                 FileTest.exists?(@path).should be_false()
 
                 Puppet::Util::Storage.cache(:yayness)
-                Puppet::Util::Storage.stateinspect().should == {:yayness=>{}}.inspect()
+                Puppet::Util::Storage.state().should == {:yayness=>{}}
                 
                 Puppet[:statefile] = @path
                 proc { Puppet::Util::Storage.load() }.should_not raise_error()
                 
-                Puppet::Util::Storage.stateinspect().should == {:yayness=>{}}.inspect()
+                Puppet::Util::Storage.state().should == {:yayness=>{}}
             end
         end
 
@@ -118,10 +122,10 @@ describe Puppet::Util::Storage do
             it "it should overwrite its internal state if load() is called" do
                 # Should the state be overwritten even if Puppet[:statefile] is not valid YAML?
                 Puppet::Util::Storage.cache(:yayness)
-                Puppet::Util::Storage.stateinspect().should == {:yayness=>{}}.inspect()
+                Puppet::Util::Storage.state().should == {:yayness=>{}}
 
                 proc { Puppet::Util::Storage.load() }.should_not raise_error()
-                Puppet::Util::Storage.stateinspect().should == {}.inspect()
+                Puppet::Util::Storage.state().should == {}
             end
 
             it "it should restore its internal state if the state file contains valid YAML" do
@@ -129,14 +133,14 @@ describe Puppet::Util::Storage do
                 YAML.expects(:load).returns(test_yaml)
 
                 proc { Puppet::Util::Storage.load() }.should_not raise_error()
-                Puppet::Util::Storage.stateinspect().should == test_yaml.inspect()
+                Puppet::Util::Storage.state().should == test_yaml
             end
             
             it "it should initialize with a clear internal state if the state file does not contain valid YAML" do
                 @state_file.write(:booness)
 
                 proc { Puppet::Util::Storage.load() }.should_not raise_error()
-                Puppet::Util::Storage.stateinspect().should == {}.inspect()
+                Puppet::Util::Storage.state().should == {}
             end
 
             it "it should raise an error if the state file does not contain valid YAML and cannot be renamed" do
@@ -170,7 +174,7 @@ describe Puppet::Util::Storage do
                 YAML.expects(:load).returns(test_yaml)
 
                 proc { Puppet::Util::Storage.load() }.should_not raise_error()
-                Puppet::Util::Storage.stateinspect().should == test_yaml.inspect()
+                Puppet::Util::Storage.state().should == test_yaml
             end
             
             after(:each) do
@@ -216,12 +220,12 @@ describe Puppet::Util::Storage do
         it "it should load() the same information that it store()s" do
             Puppet::Util::Storage.cache(:yayness)
 
-            Puppet::Util::Storage.stateinspect().should == {:yayness=>{}}.inspect()
+            Puppet::Util::Storage.state().should == {:yayness=>{}}
             proc { Puppet::Util::Storage.store() }.should_not raise_error()
             Puppet::Util::Storage.clear()
-            Puppet::Util::Storage.stateinspect().should == {}.inspect()
+            Puppet::Util::Storage.state().should == {}
             proc { Puppet::Util::Storage.load() }.should_not raise_error()
-            Puppet::Util::Storage.stateinspect().should == {:yayness=>{}}.inspect()
+            Puppet::Util::Storage.state().should == {:yayness=>{}}
         end
 
         after(:each) do
