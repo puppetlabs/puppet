@@ -71,6 +71,8 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
                         details += "  - Got %s true tests that should have been false\n" % values
                     when :false:
                         details += "  - Got %s false tests that should have been true\n" % values
+                    when :feature:
+                        details += "  - Missing features %s\n" % values.collect { |f| f.to_s }.join(",")
                     end
                 end
                 notes << details

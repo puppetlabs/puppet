@@ -54,8 +54,8 @@ describe Puppet::Provider::Confiner do
             @object.should_not be_suitable
         end
 
-        it "should return the result of the confine collection if a long result is asked for" do
-            @coll.expects(:result).returns "myresult"
+        it "should return the summary of the confine collection if a long result is asked for" do
+            @coll.expects(:summary).returns "myresult"
             @object.suitable?(false).should == "myresult"
         end
     end
