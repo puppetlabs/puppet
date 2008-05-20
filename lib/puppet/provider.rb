@@ -5,6 +5,10 @@ class Puppet::Provider
     include Puppet::Util::Warnings
     extend Puppet::Util::Warnings
 
+    require 'puppet/provider/confiner'
+
+    extend Puppet::Provider::Confiner
+
     Puppet::Util.logmethods(self, true)
 
     class << self
@@ -40,27 +44,13 @@ class Puppet::Provider
                 [name, self.name]
         end
 
-        if command == :missing
-            return nil
-        end
-
-        command
+        return binary(command)
     end
 
     # Define commands that are not optional.
     def self.commands(hash)
         optional_commands(hash) do |name, path|
-            confine :exists => path
-        end
-    end
-
-    def self.confine(hash)
-        hash.each do |p,v|
-            if v.is_a? Array
-                @confines[p] += v
-            else
-                @confines[p] << v
-            end
+            confine :exists => path, :for_binary => true
         end
     end
 
@@ -108,10 +98,6 @@ class Puppet::Provider
     def self.initvars
         @defaults = {}
         @commands = {}
-        @origcommands = {}
-        @confines = Hash.new do |hash, key|
-            hash[key] = []
-        end
     end
 
     # The method for returning a list of provider instances.  Note that it returns providers, preferably with values already
@@ -180,16 +166,7 @@ class Puppet::Provider
     def self.optional_commands(hash)
         hash.each do |name, path|
             name = symbolize(name)
-            @origcommands[name] = path
-
-            # Try to find the full path (or verify already-full paths); otherwise
-            # store that the command is missing so we know it's defined but absent.
-            if tmp = binary(path)
-                path = tmp
-                @commands[name] = path
-            else
-                @commands[name] = :missing
-            end
+            @commands[name] = path
 
             if block_given?
                 yield(name, path)
@@ -206,69 +183,6 @@ class Puppet::Provider
             @source = self.name
         end
         @source
-    end
-
-    # Check whether this implementation is suitable for our platform.
-    def self.suitable?(short = true)
-        # A single false result is sufficient to turn the whole thing down.
-        # We don't return 'true' until the very end, though, so that every
-        # confine is tested.
-        missing = {}
-        @confines.each do |check, values|
-            case check
-            when :exists:
-                values.each do |value|
-                    unless value and FileTest.exists? value
-                        debug "Not suitable: missing %s" % value
-                        return false if short
-                        missing[:exists] ||= []
-                        missing[:exists] << value
-                    end
-                end
-            when :true:
-                values.each do |v|
-                    debug "Not suitable: false value"
-                    unless v
-                        return false if short
-                        missing[:true] ||= 0
-                        missing[:true] += 1
-                    end
-                end
-            when :false:
-                values.each do |v|
-                    debug "Not suitable: true value"
-                    if v and short
-                        return false if short
-                        missing[:false] ||= 0
-                        missing[:false] += 1
-                    end
-                end
-            else # Just delegate everything else to facter
-                if result = Facter.value(check)
-                    result = result.to_s.downcase.intern
-
-                    found = values.find do |v|
-                        result == v.to_s.downcase.intern
-                    end
-                    unless found
-                        debug "Not suitable: %s not in %s" % [check, values]
-                        return false if short
-                        missing[:facter] ||= {}
-                        missing[:facter][check] = values
-                    end
-                else
-                    return false if short
-                    missing[:facter] ||= {}
-                    missing[:facter][check] = values
-                end
-            end
-        end
-
-        if short
-            return true
-        else
-            return missing
-        end
     end
 
     # Does this provider support the specified parameter?
@@ -309,8 +223,8 @@ class Puppet::Provider
     end
 
     dochook(:commands) do
-        if @origcommands.length > 0
-            return "  Required binaries: " + @origcommands.collect do |n, c|
+        if @commands.length > 0
+            return "  Required binaries: " + @commands.collect do |n, c|
                 "``#{c}``"
             end.join(", ") + "."
         end

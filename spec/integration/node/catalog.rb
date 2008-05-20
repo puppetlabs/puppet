@@ -8,6 +8,12 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 describe Puppet::Node::Catalog do
     describe "when using the indirector" do
         after { Puppet::Util::Cacher.invalidate }
+        before do
+            # This is so the tests work w/out networking.
+            Facter.stubs(:to_hash).returns({"hostname" => "foo.domain.com"})
+            Facter.stubs(:value).returns("eh")
+        end
+
 
         it "should be able to delegate to the :yaml terminus" do
             Puppet::Node::Catalog.indirection.stubs(:terminus_class).returns :yaml

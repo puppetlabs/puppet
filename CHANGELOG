@@ -3,6 +3,24 @@
     whether we should even use a CRL.  This way we aren't trying to
     set file paths to 'false' to disable the CRL.
 
+    Moving all confine code out of the Provider class, and fixing #1197. 
+    Created a Confiner module for the Provider class methods, enhanced 
+    the interface between it and the Confine class to make sure binary 
+    paths are searched for fresh each time.
+    
+    Modified the 'factpath' setting to automatically configure
+    Facter to load facts there if a new enough version of
+    Facter is used.
+
+    Crontab provider: fix a parse error when a line begins with a space 
+    character (fixes #1216)
+
+    Instead of deleting the init scripts (with --del) we should simply 
+    disable it with chkconfig service off, and respectfully do the same 
+    for enable => true;
+ 
+    Added ldap providers for users and groups.
+
     Added support for the --all option to puppetca --clean.  If
     puppetca --clean --all is issued then all client certificates
     are removed.

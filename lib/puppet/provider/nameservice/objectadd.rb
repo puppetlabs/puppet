@@ -25,7 +25,7 @@ class ObjectAdd < Puppet::Provider::NameService
         cmd = [command(:modify),
             flag(param),
             value]
-        if @resource[:allowdupe]  == :true
+        if @resource[:allowdupe] == :true && param == :uid
             cmd << "-o"
         end
         cmd << @resource[:name]

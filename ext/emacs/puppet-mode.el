@@ -2,10 +2,11 @@
 ;;; puppet-mode.el
 ;;; 
 ;;; Author: lutter
-;;; Description: A simple mode for editing puppet manifests
+;;; Author: Russ Allbery <rra@stanford.edu>
 ;;;
+;;; Description: A simple mode for editing puppet manifests
 
-(defconst puppet-mode-version "0.1")
+(defconst puppet-mode-version "0.2")
 
 (defvar puppet-mode-abbrev-table nil
   "Abbrev table in use in puppet-mode buffers.")
@@ -56,11 +57,43 @@
   "*Indentation column of comments."
   :type 'integer :group 'puppet)
 
+(defun puppet-count-matches (re start end)
+  "The same as Emacs 22 count-matches, for portability to other versions
+of Emacs."
+  (save-excursion
+    (let ((n 0))
+      (goto-char start)
+      (while (re-search-forward re end t) (setq n (1+ n)))
+      n)))
+
 (defun puppet-comment-line-p ()
   "Return non-nil iff this line is a comment."
   (save-excursion
-    (beginning-of-line)
-    (looking-at (format "\\s-*%s" comment-start))))
+    (save-match-data
+      (beginning-of-line)
+      (looking-at (format "\\s-*%s" comment-start)))))
+
+(defun puppet-block-indent ()
+  "If point is in a block, return the indentation of the first line of that
+block (the line containing the opening brace).  Used to set the indentation
+of the closing brace of a block."
+  (save-excursion
+    (save-match-data
+      (let ((opoint (point))
+            (apoint (search-backward "{" nil t)))
+        (when apoint
+          ;; This is a bit of a hack and doesn't allow for strings.  We really
+          ;; want to parse by sexps at some point.
+          (let ((close-braces (puppet-count-matches "}" apoint opoint))
+                (open-braces 0))
+            (while (and apoint (> close-braces open-braces))
+              (setq apoint (search-backward "{" nil t))
+              (when apoint
+                (setq close-braces (puppet-count-matches "}" apoint opoint))
+                (setq open-braces (1+ open-braces)))))
+          (if apoint
+              (current-indentation)
+            nil))))))
 
 (defun puppet-in-array ()
   "If point is in an array, return the position of the opening '[' of
@@ -77,7 +110,7 @@ that array, else return nil."
           ;; ### steps, baby steps.  A more robust strategy might be
           ;; ### to walk backwards by sexps, until hit a wall, then
           ;; ### inspect the nature of that wall.
-          (if (= (count-matches "\\]" apoint opoint) 0)
+          (if (= (puppet-count-matches "\\]" apoint opoint) 0)
               apoint))))))
 
 (defun puppet-in-include ()
@@ -90,15 +123,14 @@ of the initial include plus puppet-include-indent."
         (while not-found
           (forward-line -1)
           (cond
-             ((puppet-comment-line-p)
-              (if (bobp)
-                  (setq not-found nil)))
-             ((looking-at "^\\s-*include\\s-+.*,\\s-*$")
-              (setq include-column
-                    (+ (current-indentation) puppet-include-indent))
-              (setq not-found nil))
-             ((not (looking-at ".*,\\s-*$"))
-              (setq not-found nil))))
+           ((bobp)
+            (setq not-found nil))
+           ((looking-at "^\\s-*include\\s-+.*,\\s-*$")
+            (setq include-column
+                  (+ (current-indentation) puppet-include-indent))
+            (setq not-found nil))
+           ((not (looking-at ".*,\\s-*$"))
+            (setq not-found nil))))
         include-column))))
 
 (defun puppet-indent-line ()
@@ -110,6 +142,7 @@ of the initial include plus puppet-include-indent."
     (let ((not-indented t)
           (array-start (puppet-in-array))
           (include-start (puppet-in-include))
+          (block-indent (puppet-block-indent))
           cur-indent)
       (cond
        (array-start
@@ -146,18 +179,11 @@ of the initial include plus puppet-include-indent."
           (setq cur-indent (current-column))))
        (include-start
         (setq cur-indent include-start))
-       ((looking-at "^[^{\n]*}")
-        ;; This line contains the end of a block, but the block does
-        ;; not also begin on this line, so decrease the indentation.
-        (save-excursion
-          (forward-line -1)
-          (if (looking-at "^.*}")
-              (progn
-                (setq cur-indent (- (current-indentation) puppet-indent-level))
-                (setq not-indented nil))
-            (setq cur-indent (- (current-indentation) puppet-indent-level))))
-        (if (< cur-indent 0)     ; We can't indent past the left margin
-            (setq cur-indent 0)))
+       ((and (looking-at "^\\s-*}\\s-*$") block-indent)
+        ;; This line contains only a closing brace and we're at the inner
+        ;; block, so we should indent it matching the indentation of the
+        ;; opening brace of the block.
+        (setq cur-indent block-indent))
        (t
         ;; Otherwise, we did not start on a block-ending-only line.
         (save-excursion
@@ -165,30 +191,136 @@ of the initial include plus puppet-include-indent."
           (while not-indented
             (forward-line -1)
             (cond
+             ;; Comment lines are ignored unless we're at the start of the
+             ;; buffer.
              ((puppet-comment-line-p)
               (if (bobp)
-                  (setq not-indented nil)
-                ;; else ignore the line and continue iterating backwards
-                ))
-             ((looking-at "^.*}") ; indent at the level of the END_ token
+                  (setq not-indented nil)))
+
+             ;; Brace or paren on a line by itself will already be indented to
+             ;; the right level, so we can cheat and stop there.
+             ((looking-at "^\\s-*[\)}]\\s-*")
               (setq cur-indent (current-indentation))
               (setq not-indented nil))
-             ((looking-at "^.*{") ; indent an extra level
-              (setq cur-indent (+ (current-indentation) puppet-indent-level)) 
-              (setq not-indented nil))
-             ((looking-at "^.*;\\s-*$") ; Semicolon ends a nested resource
+
+             ;; Brace or paren not on a line by itself will be indented one
+             ;; level too much, but don't catch cases where the block is
+             ;; started and closed on the same line.
+             ((looking-at "^[^\({]*[\)}]\\s-*$")
               (setq cur-indent (- (current-indentation) puppet-indent-level))
               (setq not-indented nil))
-             ((looking-at "^.*:\\s-*$") ; indent an extra level after :
+
+             ;; Indent by one level more than the start of our block.  We lose
+             ;; if there is more than one block opened and closed on the same
+             ;; line but it's still unbalanced; hopefully people don't do that.
+             ((looking-at "^.*{[^}]*$")
+              (setq cur-indent (+ (current-indentation) puppet-indent-level)) 
+              (setq not-indented nil))
+
+             ;; Indent by one level if the line ends with an open paren.
+             ((looking-at "^.*\(\\s-*$")
+              (setq cur-indent (+ (current-indentation) puppet-indent-level)) 
+              (setq not-indented nil))
+
+             ;; Semicolon ends a block for a resource when multiple resources
+             ;; are defined in the same block, but try not to get the case of
+             ;; a complete resource on a single line wrong.
+             ((looking-at "^\\([^'\":\n]\\|\"[^\"]*\"\\|'[^']'\\)**;\\s-*$")
+              (setq cur-indent (- (current-indentation) puppet-indent-level))
+              (setq not-indented nil))
+
+             ;; Indent an extra level after : since it introduces a resource.
+             ((looking-at "^.*:\\s-*$")
               (setq cur-indent (+ (current-indentation) puppet-indent-level))
               (setq not-indented nil))
+
+             ;; Start of buffer.
              ((bobp)
-              (setq not-indented nil))
-             )))))
-      (if cur-indent
+              (setq not-indented nil)))))
+
+        ;; If this line contains only a closing paren, we should lose one
+        ;; level of indentation.
+        (if (looking-at "^\\s-*\)\\s-*$")
+            (setq cur-indent (- cur-indent puppet-indent-level)))))
+
+      ;; We've figured out the indentation, so do it.
+      (if (and cur-indent (> cur-indent 0))
           (indent-line-to cur-indent)
         (indent-line-to 0)))))
 
+(defvar puppet-font-lock-syntax-table
+  (let* ((tbl (copy-syntax-table puppet-mode-syntax-table)))
+    (modify-syntax-entry ?_ "w" tbl)
+    tbl))
+
+(defvar puppet-font-lock-keywords
+  (list
+   ;; defines, classes, and nodes
+   '("^\\s *\\(class\\|define\\|node\\)\\s +\\([^( \t\n]+\\)"
+     2 font-lock-function-name-face)
+   ;; inheritence
+   '("\\s +inherits\\s +\\([^( \t\n]+\\)"
+     1 font-lock-function-name-face)
+   ;; include
+   '("\\(^\\|\\s +\\)include\\s +\\(\\([a-zA-Z0-9:_-]+\\(,[ \t\n]*\\)?\\)+\\)"
+     2 font-lock-reference-face)
+   ;; keywords
+   (cons (concat
+          "\\b\\(\\("
+          (mapconcat
+           'identity
+           '("alert"
+             "case"
+             "class"
+             "crit"
+             "debug"
+             "default"
+             "define"
+             "defined"
+             "else"
+             "emerg"
+             "err"
+             "fail"
+             "false"
+             "file"
+             "filebucket"
+             "generate"
+             "if"
+             "import"
+             "include"
+             "info"
+             "inherits"
+             "node"
+             "notice"
+             "realize"
+             "search"
+             "tag"
+             "tagged"
+             "template"
+             "true"
+             "warning"
+             )
+           "\\|")
+          "\\)\\>\\)")
+         1)
+     ;; variables
+     '("\\(^\\|[^_:.@$]\\)\\b\\(true\\|false\\)\\>"
+       2 font-lock-variable-name-face)
+     ;; variables
+     '("\\(\\$\\([^a-zA-Z0-9 \n]\\|[0-9]\\)\\)\\W"
+       1 font-lock-variable-name-face)
+     '("\\(\\$\\|@\\|@@\\)\\(\\w\\|_\\|:\\)+"
+       0 font-lock-variable-name-face)
+     ;; usage of types
+     '("^\\s *\\([a-zA-Z_-]+\\)\\s +{"
+       1 font-lock-type-face)
+     ;; overrides
+     '("^\\s +\\([a-zA-Z_-]+\\)\\["
+       1 font-lock-type-face)
+     ;; general delimited string
+     '("\\(^\\|[[ \t\n<+(,=]\\)\\(%[xrqQwW]?\\([^<[{(a-zA-Z0-9 \n]\\)[^\n\\\\]*\\(\\\\.[^\n\\\\]*\\)*\\(\\3\\)\\)"
+       (2 font-lock-string-face)))
+  "*Additional expressions to highlight in puppet mode.")
 
 ;;;###autoload
 (defun puppet-mode ()
@@ -213,97 +345,14 @@ The variable puppet-indent-level controls the amount of indentation.
   (set (make-local-variable 'paragraph-ignore-fill-prefix) t)
   (set (make-local-variable 'paragraph-start) "\f\\|[ 	]*$")
   (set (make-local-variable 'paragraph-separate) "[ 	\f]*$")
-  (run-hooks 'puppet-mode-hook))
-
-(cond
- ((featurep 'font-lock)
   (or (boundp 'font-lock-variable-name-face)
       (setq font-lock-variable-name-face font-lock-type-face))
-
-  (setq puppet-font-lock-syntactic-keywords
-        '(
-          ("\\(^\\|[=(,~?:;]\\|\\(^\\|\\s \\)\\(if\\|elsif\\|unless\\|while\\|until\\|when\\|and\\|or\\|&&\\|||\\)\\|g?sub!?\\|scan\\|split!?\\)\\s *\\(/\\)[^/\n\\\\]*\\(\\\\.[^/\n\\\\]*\\)*\\(/\\)"
-           (4 (7 . ?/))
-           (6 (7 . ?/)))
-          ("^\\(=\\)begin\\(\\s \\|$\\)" 1 (7 . nil))
-          ("^\\(=\\)end\\(\\s \\|$\\)" 1 (7 . nil))))
-
-  (cond ((featurep 'xemacs)
-         (put 'puppet-mode 'font-lock-defaults
-              '((puppet-font-lock-keywords)
-                nil nil nil
-                beginning-of-line
-                (font-lock-syntactic-keywords
-                 . puppet-font-lock-syntactic-keywords))))
-        (t
-         (add-hook 'puppet-mode-hook
-            '(lambda ()
-               (make-local-variable 'font-lock-defaults)
-               (make-local-variable 'font-lock-keywords)
-               (make-local-variable 'font-lock-syntax-table)
-               (make-local-variable 'font-lock-syntactic-keywords)
-               (setq font-lock-defaults '((puppet-font-lock-keywords) nil nil))
-               (setq font-lock-keywords puppet-font-lock-keywords)
-               (setq font-lock-syntax-table puppet-font-lock-syntax-table)
-               (setq font-lock-syntactic-keywords puppet-font-lock-syntactic-keywords)))))
-
-  (defvar puppet-font-lock-syntax-table
-    (let* ((tbl (copy-syntax-table puppet-mode-syntax-table)))
-      (modify-syntax-entry ?_ "w" tbl)
-      tbl))
-
-  (defvar puppet-font-lock-keywords
-    (list
-     ;; defines
-     '("^\\s *\\(define\\|node\\|class\\)\\s +\\([^( \t\n]+\\)"
-       2 font-lock-function-name-face)
-     '("\\s +inherits\\s +\\([^( \t\n]+\\)"
-       1 font-lock-function-name-face)
-     ;; include
-     '("^\\s *include\\s +\\([^( \t\n,]+\\)"
-       1 font-lock-reference-face)
-     ;; hack to catch continued includes
-     '("^\\s *\\([a-zA-Z0-9:_-]+\\),?\\s *$"
-       1 font-lock-reference-face)
-     ;; keywords
-     (cons (concat
-            "\\b\\(\\("
-            (mapconcat
-             'identity
-             '("case"
-               "class"
-               "default"
-               "define"
-               "false"
-               "import"
-               "include"
-               "inherits"
-               "node"
-               "realize"
-               "true"
-               )
-             "\\|")
-            "\\)\\>\\)")
-           1)
-     ;; variables
-     '("\\(^\\|[^_:.@$]\\|\\.\\.\\)\\b\\(nil\\|self\\|true\\|false\\)\\>"
-       2 font-lock-variable-name-face)
-     ;; variables
-     '("\\(\\$\\([^a-zA-Z0-9 \n]\\|[0-9]\\)\\)\\W"
-       1 font-lock-variable-name-face)
-     '("\\(\\$\\|@\\|@@\\)\\(\\w\\|_\\)+"
-       0 font-lock-variable-name-face)
-     ;; usage of types
-     '("^\\s +\\([a-zA-Z_-]+\\)\\s +{" 
-       1 font-lock-type-face)
-     ;; overrides
-     '("^\\s +\\([a-zA-Z_-]+\\)\\["
-       1 font-lock-type-face)
-     ;; general delimited string
-     '("\\(^\\|[[ \t\n<+(,=]\\)\\(%[xrqQwW]?\\([^<[{(a-zA-Z0-9 \n]\\)[^\n\\\\]*\\(\\\\.[^\n\\\\]*\\)*\\(\\3\\)\\)"
-       (2 font-lock-string-face))
-     )
-    "*Additional expressions to highlight in puppet mode."))
- )
+  (set (make-local-variable 'font-lock-keywords) puppet-font-lock-keywords)
+  (set (make-local-variable 'font-lock-multiline) t)
+  (set (make-local-variable 'font-lock-defaults)
+       '((puppet-font-lock-keywords) nil nil))
+  (set (make-local-variable 'font-lock-syntax-table)
+       puppet-font-lock-syntax-table)
+  (run-hooks 'puppet-mode-hook))
 
 (provide 'puppet-mode)

@@ -599,5 +599,33 @@ class TestCronParsedProvider < Test::Unit::TestCase
         result = target.read
         assert_equal("# Puppet Name: test\n* 4 * * * /bin/echo yay\n", result, "Did not write out environment setting")
     end
+
+    # Testing #1216
+    def test_strange_lines
+        @provider.stubs(:filetype).returns(Puppet::Util::FileType.filetype(:ram))
+        text = " 5 \t\t 1,2 * 1 0 /bin/echo funtest"
+
+        records = nil
+        assert_nothing_raised {
+            records = @provider.parse(text)
+        }
+
+        should = {
+            :minute => %w{5},
+            :hour => %w{1 2},
+            :monthday => :absent,
+            :month => %w{1},
+            :weekday => %w{0},
+            :command => "/bin/echo funtest"
+        }
+
+        is = records.shift
+        assert(is, "Did not get record")
+
+        should.each do |p, v|
+            assert_equal(v, is[p], "did not parse %s correctly" % p)
+        end
+    end
+
 end
 

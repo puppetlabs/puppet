@@ -106,7 +106,7 @@ def do_man(man, strip = 'man/')
     File.install(mf, omf, 0644, true)
     gzip = %x{which gzip}
     gzip.chomp!
-    %x{#{gzip} #{omf}}
+    %x{#{gzip} -f #{omf}}
   end
 end
 
@@ -208,6 +208,15 @@ def prepare_installation
     elsif sitelibdir !~ Regexp.quote(version)
       sitelibdir = File.join(sitelibdir, version)
     end
+  end
+
+  # Mac OS X 10.5 declares bindir and sbindir as
+  # /System/Library/Frameworks/Ruby.framework/Versions/1.8/usr/bin
+  # /System/Library/Frameworks/Ruby.framework/Versions/1.8/usr/sbin
+  # which is not generally where people expect executables to be installed
+  if RUBY_PLATFORM == "universal-darwin9.0"
+    Config::CONFIG['bindir'] = "/usr/bin"
+    Config::CONFIG['sbindir'] = "/usr/sbin"
   end
 
   if (destdir = ENV['DESTDIR'])

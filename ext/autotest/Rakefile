@@ -1,0 +1,8 @@
+dest = File.expand_path("~/.autotest")
+file dest => ["config", "Rakefile"] do
+    sh "cp config #{dest}"
+end
+
+task :install => dest
+
+task :default => :install

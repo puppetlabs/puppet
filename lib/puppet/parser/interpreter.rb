@@ -62,7 +62,7 @@ class Puppet::Parser::Interpreter
                 # exception elsewhere and reuse the parser.  If one doesn't
                 # exist, then reraise.
                 if @parsers[environment]
-                    Puppet.err detail
+                    Puppet.err(detail.to_s + "; using previously parsed manifests")
                 else
                     raise detail
                 end

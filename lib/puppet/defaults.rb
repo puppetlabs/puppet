@@ -516,9 +516,11 @@ module Puppet
 
     # Central fact information.
     self.setdefaults(:main,
-        :factpath => ["$vardir/facts",
-            "Where Puppet should look for facts.  Multiple directories should
-            be colon-separated, like normal PATH variables."],
+        :factpath => {:default => "$vardir/facts",
+            :desc => "Where Puppet should look for facts.  Multiple directories should
+                be colon-separated, like normal PATH variables.",
+            :call_on_define => true, # Call our hook with the default value, so we always get the value added to facter.
+            :hook => proc { |value| Facter.search(value) if Facter.respond_to?(:search) }},
         :factdest => ["$vardir/facts",
             "Where Puppet should store facts that it pulls down from the central
             server."],
@@ -632,6 +634,10 @@ module Puppet
             "The search string used to find an LDAP node."],
         :ldapclassattrs => ["puppetclass",
             "The LDAP attributes to use to define Puppet classes.  Values
+            should be comma-separated."],
+        :ldapstackedattrs => ["puppetvar",
+            "The LDAP attributes that should be stacked to arrays by adding
+            the values in all hierarchy elements of the tree.  Values
             should be comma-separated."],
         :ldapattrs => ["all",
             "The LDAP attributes to include when querying LDAP for nodes.  All

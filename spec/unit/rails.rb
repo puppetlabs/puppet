@@ -9,8 +9,9 @@ describe Puppet::Rails, "when initializing any connection" do
     before do
         @logger = stub 'logger', :level= => nil
         @logger.stub_everything
+        Logger.stubs(:new).returns(@logger)
 
-        Logger.stubs(:new).returns @logger
+        ActiveRecord::Base.stubs(:logger).returns(@logger)
     end
 
     it "should use settings" do

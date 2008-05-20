@@ -37,12 +37,13 @@ class TestProvider < Test::Unit::TestCase
         cleanup { Puppet::Type.rmtype(:provider_test) }
     end
 
-    def test_confine
+    def test_confine_defaults_to_suitable
+
         provider = newprovider
+        assert(provider.suitable?, "Marked unsuitable with no confines")
+    end
 
-        assert(provider.suitable?,
-            "Marked unsuitable with no confines")
-
+    def test_confine_results
         {
             {:true => true} => true,
             {:true => false} => false,
@@ -54,6 +55,8 @@ class TestProvider < Test::Unit::TestCase
             {:exists => echo} => true,
             {:exists => "/this/file/does/not/exist"} => false,
         }.each do |hash, result|
+            provider = newprovider
+
             # First test :true
             hash.each do |test, val|
                 assert_nothing_raised do
@@ -61,25 +64,43 @@ class TestProvider < Test::Unit::TestCase
                 end
             end
 
-            assert_equal(result, provider.suitable?,
-                "Failed for %s" % [hash.inspect])
+            assert_equal(result, provider.suitable?, "Failed for %s" % [hash.inspect])
 
             provider.initvars
         end
+    end
+
+    def test_multiple_confines_do_not_override
+        provider = newprovider
 
         # Make sure multiple confines don't overwrite each other
         provider.confine :true => false
         assert(! provider.suitable?)
         provider.confine :true => true
         assert(! provider.suitable?)
+    end
 
-        provider.initvars
+    def test_one_failed_confine_is_sufficient
+
+        provider = newprovider
 
         # Make sure we test multiple of them, and that a single false wins
         provider.confine :true => true, :false => false
         assert(provider.suitable?)
         provider.confine :true => false
         assert(! provider.suitable?)
+    end
+
+    # #1197 - the binary should not be
+    def test_command_checks_for_binaries_each_time
+        provider = newprovider
+
+        provider.commands :testing => "/no/such/path"
+
+        provider.stubs(:binary).returns "/no/such/path"
+
+        provider.command(:testing)
+        assert_equal("/no/such/path", provider.command(:testing), "Did not return correct binary path")
     end
 
     def test_command

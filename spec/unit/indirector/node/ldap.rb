@@ -17,6 +17,7 @@ describe Puppet::Node::Ldap do
             @searcher.stubs(:connection).returns(@connection)
             @searcher.stubs(:class_attributes).returns([])
             @searcher.stubs(:parent_attribute).returns(nil)
+            @searcher.stubs(:stacked_attributes).returns([])
             @searcher.stubs(:search_base).returns(:yay)
             @searcher.stubs(:search_filter).returns(:filter)
 
@@ -194,6 +195,96 @@ describe Puppet::Node::Ldap do
                 @parent.stubs(:vals).with(:parent).returns([@name])
                 proc { @searcher.find(@request) }.should raise_error(ArgumentError)
             end
+        end
+
+        describe "and a puppet variable is specified" do
+            before do
+                @searcher.stubs(:stacked_attributes).returns(['puppetvar'])
+            end
+
+            it "should add the variable to the node parameters" do
+                @entry.stubs(:vals).with("puppetvar").returns(%w{one=two})
+                @entry.stubs(:to_hash).returns({})
+                @node.expects(:parameters=).with("one" => "two")
+                @searcher.find(@request)
+            end
+
+            it "should not overwrite node parameters specified as ldap object attribute" do
+                @entry.stubs(:vals).with("puppetvar").returns(%w{one=two})
+                @entry.stubs(:to_hash).returns("one" => "three")
+                @node.expects(:parameters=).with("one" => "three")
+                @searcher.find(@request)
+            end
+
+            it "should set entries without an equal sign to nil" do
+                @entry.stubs(:vals).with("puppetvar").returns(%w{one})
+                @entry.stubs(:to_hash).returns({})
+                @node.expects(:parameters=).with("one" => nil)
+                @searcher.find(@request)
+            end
+
+            it "should ignore empty entries" do
+                @entry.stubs(:vals).with("puppetvar").returns(%w{})
+                @entry.stubs(:to_hash).returns({})
+                @searcher.find(@request)
+            end
+        end
+        describe "and a puppet variable as well as a parent node are specified" do
+            before do
+                @parent = mock 'parent'
+
+                @searcher.meta_def(:search_filter) do |name|
+                    return name
+                end
+                @connection.stubs(:search).with { |*args| args[2] == @name              }.yields(@entry)
+                @connection.stubs(:search).with { |*args| args[2] == 'parent'           }.yields(@parent)
+
+                @searcher.stubs(:stacked_attributes).returns(['puppetvar'])
+                @searcher.stubs(:parent_attribute).returns(:parent)
+            end
+
+            it "should add parent node variables to the child node parameters" do
+                @parent.stubs(:to_hash).returns({})
+                @parent.stubs(:vals).with("puppetvar").returns(%w{one=two})
+                @parent.stubs(:vals).with(:parent).returns(nil)
+
+                @entry.stubs(:to_hash).returns({})
+                @entry.stubs(:vals).with("puppetvar").returns(%w{})
+                @entry.stubs(:vals).with(:parent).returns(%w{parent})
+
+                @node.expects(:parameters=).with("one" => "two")
+
+                @searcher.find(@request)
+            end
+
+            it "should overwrite parent node variables with child node parameters" do
+                @parent.stubs(:to_hash).returns({})
+                @parent.stubs(:vals).with("puppetvar").returns(%w{one=two})
+                @parent.stubs(:vals).with(:parent).returns(nil)
+
+                @entry.stubs(:to_hash).returns({})
+                @entry.stubs(:vals).with("puppetvar").returns(%w{one=three})
+                @entry.stubs(:vals).with(:parent).returns(%w{parent})
+
+                @node.expects(:parameters=).with("one" => "three")
+
+                @searcher.find(@request)
+            end
+
+            it "should not overwrite parent node parameters specified as ldap object attribute" do
+                @parent.stubs(:to_hash).returns("one" => "three")
+                @parent.stubs(:vals).with("puppetvar").returns(%w{})
+                @parent.stubs(:vals).with(:parent).returns(nil)
+
+                @entry.stubs(:vals).with("puppetvar").returns(%w{one=two})
+                @entry.stubs(:to_hash).returns({})
+                @entry.stubs(:vals).with(:parent).returns(%w{parent})
+
+                @node.expects(:parameters=).with("one" => "three")
+
+                @searcher.find(@request)
+            end
+
         end
     end
 end
