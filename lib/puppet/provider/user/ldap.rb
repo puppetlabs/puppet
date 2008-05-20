@@ -12,7 +12,7 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
         as it iterates across all existing users to pick the appropriate next
         one."
 
-    confine :true => Puppet.features.ldap?
+    confine :feature => :ldap, :false => (Puppet[:ldapuser] == "")
 
     manages(:posixAccount, :person).at("ou=People").named_by(:uid).and.maps :name => :uid,
         :password => :userPassword,

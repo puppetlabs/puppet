@@ -24,6 +24,16 @@ describe provider_class do
         provider_class.manager.rdn.should == :uid
     end
 
+    it "should be unsuitable if ldap is unavailable" do
+        Puppet.features.expects(:ldap?).returns false
+        provider_class.should_not be_suitable
+    end
+
+    it "should be suitable if ldap is available" do
+        Puppet.features.expects(:ldap?).returns true
+        provider_class.should be_suitable
+    end
+
     {:name => "uid",
         :password => "userPassword",
         :comment => "cn",
