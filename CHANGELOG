@@ -2,6 +2,10 @@
     Created a Confiner module for the Provider class methods, enhanced 
     the interface between it and the Confine class to make sure binary 
     paths are searched for fresh each time.
+    
+    Modified the 'factpath' setting to automatically configure
+    Facter to load facts there if a new enough version of
+    Facter is used.
 
     Crontab provider: fix a parse error when a line begins with a space 
     character (fixes #1216)

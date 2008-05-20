@@ -9,12 +9,12 @@ provider_class = Puppet::Type.type(:interface).provider(:redhat)
 
 describe provider_class do
     it "should not be functional on systems without a network-scripts directory" do
-        FileTest.expects(:exists?).with("/etc/sysconfig/network-scripts").returns(false)
+        FileTest.expects(:exist?).with("/etc/sysconfig/network-scripts").returns(false)
         provider_class.should_not be_suitable
     end
 
     it "should be functional on systems with a network-scripts directory" do
-        FileTest.expects(:exists?).with("/etc/sysconfig/network-scripts").returns(true)
+        FileTest.expects(:exist?).with("/etc/sysconfig/network-scripts").returns(true)
         provider_class.should be_suitable
     end
 end

@@ -11,8 +11,14 @@ class Puppet::Provider::ConfineCollection
             for_binary = false
         end
         hash.each do |test, values|
-            @confines << Puppet::Provider::Confine.new(test, values)
-            @confines[-1].for_binary = true if for_binary
+            if klass = Puppet::Provider::Confine.test(test)
+                @confines << klass.new(values)
+                @confines[-1].for_binary = true if for_binary
+            else
+                confine = Puppet::Provider::Confine.test(:facter).new(values)
+                confine.fact = test
+                @confines << confine
+            end
         end
     end
 
@@ -22,24 +28,17 @@ class Puppet::Provider::ConfineCollection
 
     # Return a hash of the whole confine set, used for the Provider
     # reference.
-    def result
-        defaults = {
-            :false => 0,
-            :true => 0,
-            :exists => [],
-            :facter => {}
-        }
-        missing = Hash.new { |hash, key| hash[key] = defaults[key] }
-        @confines.each do |confine|
-            case confine.test
-            when :false: missing[confine.test] += confine.result.find_all { |v| v == false }.length
-            when :true: missing[confine.test] += confine.result.find_all { |v| v == true }.length
-            when :exists: confine.result.zip(confine.values).each { |val, f| missing[:exists] << f unless val }
-            when :facter: missing[:facter][confine.fact] = confine.values if confine.result.include?(false)
-            end
-        end
+    def summary
+        confines = Hash.new { |hash, key| hash[key] = [] }
+        @confines.each { |confine| confines[confine.class] << confine }
+        result = {}
+        confines.each do |klass, list|
+            value = klass.summarize(list)
+            next if (value.respond_to?(:length) and value.length == 0) or (value == 0)
+            result[klass.name] = value
 
-        missing
+        end
+        result
     end
 
     def valid?

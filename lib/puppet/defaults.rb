@@ -505,9 +505,11 @@ module Puppet
 
     # Central fact information.
     self.setdefaults(:main,
-        :factpath => ["$vardir/facts",
-            "Where Puppet should look for facts.  Multiple directories should
-            be colon-separated, like normal PATH variables."],
+        :factpath => {:default => "$vardir/facts",
+            :desc => "Where Puppet should look for facts.  Multiple directories should
+                be colon-separated, like normal PATH variables.",
+            :call_on_define => true, # Call our hook with the default value, so we always get the value added to facter.
+            :hook => proc { |value| Facter.search(value) if Facter.respond_to?(:search) }},
         :factdest => ["$vardir/facts",
             "Where Puppet should store facts that it pulls down from the central
             server."],

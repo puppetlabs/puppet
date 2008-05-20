@@ -15,6 +15,6 @@ module Puppet::Provider::Confiner
     # Check whether this implementation is suitable for our platform.
     def suitable?(short = true)
         return confine_collection.valid? if short
-        return confine_collection.result
+        return confine_collection.summary
     end
 end
