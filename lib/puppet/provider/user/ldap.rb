@@ -32,12 +32,14 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
     # Find the next uid after the current largest uid.
     provider = self
     manager.generates(:uidNumber).with do 
-        largest = 0
-        provider.manager.search.each do |hash|
-            next unless value = hash[:uid]
-            num = value[0].to_i
-            if num > largest
-                largest = num
+        largest = 500
+        if existing = provider.manager.search
+            existing.each do |hash|
+                next unless value = hash[:uid]
+                num = value[0].to_i
+                if num > largest
+                    largest = num
+                end
             end
         end
         largest + 1

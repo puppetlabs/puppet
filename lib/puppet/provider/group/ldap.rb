@@ -23,12 +23,14 @@ Puppet::Type.type(:group).provide :ldap, :parent => Puppet::Provider::Ldap do
     # Find the next gid after the current largest gid.
     provider = self
     manager.generates(:gidNumber).with do 
-        largest = 0
-        provider.manager.search.each do |hash|
-            next unless value = hash[:gid]
-            num = value[0].to_i
-            if num > largest
-                largest = num
+        largest = 500
+        if existing = provider.manager.search
+                existing.each do |hash|
+                next unless value = hash[:gid]
+                num = value[0].to_i
+                if num > largest
+                    largest = num
+                end
             end
         end
         largest + 1

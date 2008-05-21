@@ -45,8 +45,8 @@ describe provider_class do
 
         describe "with no gid specified" do
             it "should pick the first available GID after the largest existing GID" do
-                low = {:name=>["luke"], :gid=>["100"]}
-                high = {:name=>["testing"], :gid=>["140"]}
+                low = {:name=>["luke"], :gid=>["600"]}
+                high = {:name=>["testing"], :gid=>["640"]}
                 provider_class.manager.expects(:search).returns([low, high])
 
                 resource = stub 'resource', :should => %w{whatever}
@@ -55,12 +55,26 @@ describe provider_class do
                 instance = provider_class.new(:name => "luke", :ensure => :absent)
                 instance.stubs(:resource).returns resource
 
-                @connection.expects(:add).with { |dn, attrs| attrs["gidNumber"] == ["141"] }
+                @connection.expects(:add).with { |dn, attrs| attrs["gidNumber"] == ["641"] }
+
+                instance.create
+                instance.flush
+            end
+
+            it "should pick '501' as its GID if no groups are found" do
+                provider_class.manager.expects(:search).returns nil
+
+                resource = stub 'resource', :should => %w{whatever}
+                resource.stubs(:should).with(:gid).returns nil
+                resource.stubs(:should).with(:ensure).returns :present
+                instance = provider_class.new(:name => "luke", :ensure => :absent)
+                instance.stubs(:resource).returns resource
+
+                @connection.expects(:add).with { |dn, attrs| attrs["gidNumber"] == ["501"] }
 
                 instance.create
                 instance.flush
             end
         end
     end
-
 end
