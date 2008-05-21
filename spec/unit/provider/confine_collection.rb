@@ -20,16 +20,16 @@ describe Puppet::Provider::ConfineCollection do
 
         describe "and the test cannot be found" do
             before do
-                @facter = mock 'facter_test'
+                @variable = mock 'variable_test'
 
                 Puppet::Provider::Confine.expects(:test).with(:foo).returns nil
-                Puppet::Provider::Confine.expects(:test).with(:facter).returns @facter
+                Puppet::Provider::Confine.expects(:test).with(:variable).returns @variable
             end
 
-            it "should create a Facter test with the provided values and set the fact to the test name" do
+            it "should create a Facter test with the provided values and set the name to the test name" do
                 confine = mock 'confine'
-                confine.expects(:fact=).with(:foo)
-                @facter.expects(:new).with(%w{my values}).returns confine
+                confine.expects(:name=).with(:foo)
+                @variable.expects(:new).with(%w{my values}).returns confine
                 Puppet::Provider::ConfineCollection.new.confine :foo => %w{my values}
             end
         end
