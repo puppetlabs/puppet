@@ -85,6 +85,10 @@ describe Puppet::Util::Storage do
     end
 
     describe "when loading from the state file" do
+        before(:each) do
+            Puppet.settings.stubs(:use).returns(true)
+        end
+
         describe "when the state file/directory does not exist" do
             before(:each) do
                 transient = Tempfile.new('storage_test')
