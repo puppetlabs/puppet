@@ -1,3 +1,5 @@
+    Fixing transaction support for prefetching generated resources.
+
     Adding support for settings within the existing Facter provider confines.
 
     Moving all confine code out of the Provider class, and fixing #1197. 
