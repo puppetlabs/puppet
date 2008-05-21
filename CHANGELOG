@@ -1,3 +1,5 @@
+    Adding support for settings within the existing Facter provider confines.
+
     Modified the 'factpath' setting to automatically configure
     Facter to load facts there if a new enough version of
     Facter is used.
