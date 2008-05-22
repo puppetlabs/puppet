@@ -9,6 +9,13 @@ module Puppet::Util::Warnings
             Puppet.warning msg
             $stampwarnings[self.class] << msg
         end
+
+        return nil
+    end
+
+    def clear_warnings()
+        $stampwarnings = {}
+        return nil
     end
 end
 
