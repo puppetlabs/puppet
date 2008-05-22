@@ -85,7 +85,7 @@ describe Puppet::Util::Storage do
     end
 
     describe "when loading from the state file" do
-        before(:each) do
+        before do
             Puppet.settings.stubs(:use).returns(true)
         end
 
@@ -143,6 +143,7 @@ describe Puppet::Util::Storage do
             
             it "should initialize with a clear internal state if the state file does not contain valid YAML" do
                 @state_file.write(:booness)
+                @state_file.flush()
 
                 proc { Puppet::Util::Storage.load() }.should_not raise_error()
                 Puppet::Util::Storage.state().should == {}
@@ -150,7 +151,9 @@ describe Puppet::Util::Storage do
 
             it "should raise an error if the state file does not contain valid YAML and cannot be renamed" do
                 @state_file.write(:booness)
-                File.chmod(0000, @state_file.path())
+                @state_file.flush()
+                YAML.expects(:load).raises(Puppet::Error)
+                File.expects(:rename).raises(SystemCallError)
 
                 proc { Puppet::Util::Storage.load() }.should raise_error()
             end

@@ -8,6 +8,7 @@ require 'puppet/network/client/master'
 
 describe Puppet::Network::Client::Master, " when retrieving the catalog" do
     before do
+        Puppet.settings.stubs(:use).returns(true)
         @master = mock 'master'
         @client = Puppet::Network::Client.master.new(
             :Master => @master
@@ -218,6 +219,7 @@ end
 
 describe Puppet::Network::Client::Master, " when using the cached catalog" do
     before do
+        Puppet.settings.stubs(:use).returns(true)
         @master = mock 'master'
         @client = Puppet::Network::Client.master.new(
             :Master => @master
