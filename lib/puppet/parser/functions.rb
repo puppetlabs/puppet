@@ -188,6 +188,22 @@ module Functions
         result
     end
 
+    newfunction(:fqdn_rand, :type => :rvalue, :doc => "Generates random 
+    numbers based on the node's fqdn. The first argument sets the range.
+    The second argument specifies a number to add to the seed and is
+    optional.") do |args|
+	require 'md5'
+	max = args[0] 
+	if args[1] then
+	     seed = args[1]
+	else
+	     seed = 1
+	end
+	fqdn_seed = MD5.new(lookupvar('fqdn')).to_s.hex
+	srand(seed+fqdn_seed)
+	rand(max).to_s
+    end 
+
     newfunction(:fail, :doc => "Fail with a parse error.") do |vals|
         vals = vals.collect { |s| s.to_s }.join(" ") if vals.is_a? Array
         raise Puppet::ParseError, vals.to_s
