@@ -485,7 +485,6 @@ class Puppet::Node::Catalog < Puppet::PGraph
                 resource.catalog = result
             elsif resource.is_a?(Puppet::Parser::Resource)
                 resource = resource.to_transobject
-                p resource
                 resource.catalog = result
             end
 
