@@ -27,7 +27,8 @@ describe Puppet::SSL::CertificateAuthority do
 
             after do
                 # Clear out the var, yay unit tests.
-                Puppet::SSL::CertificateAuthority.instance_variable_set("@instance", nil)
+                #Puppet::SSL::CertificateAuthority.instance_variable_set("@instance", nil)
+                Puppet::Util::Cacher.invalidate
             end
 
             it "should return an instance" do
