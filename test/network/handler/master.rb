@@ -10,7 +10,7 @@ class TestMaster < Test::Unit::TestCase
 
     def teardown
         super
-        Puppet::Indirector::Indirection.clear_cache
+        Puppet::Util::Cacher.invalidate
     end
 
     def test_freshness_is_always_now
