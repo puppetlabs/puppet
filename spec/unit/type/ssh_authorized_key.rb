@@ -75,6 +75,4 @@ describe ssh_authorized_key do
     it "should have a target property" do
         @class.attrtype(:target).should == :property
     end
-
-    after { @class.clear }
 end
