@@ -8,6 +8,10 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 require 'puppet/indirector/report/processor'
 
 describe Puppet::Transaction::Report::Processor do
+    before do
+        Puppet.settings.stubs(:use).returns(true)
+    end
+
     it "should provide a method for saving reports" do
         Puppet::Transaction::Report::Processor.new.should respond_to(:save)
     end

@@ -29,8 +29,8 @@ describe Puppet::Provider::Confine do
         Puppet::Provider::Confine.test(:exists).should be_instance_of(Class)
     end
 
-    it "should have a 'facter' test" do
-        Puppet::Provider::Confine.test(:facter).should be_instance_of(Class)
+    it "should have a 'variable' test" do
+        Puppet::Provider::Confine.test(:variable).should be_instance_of(Class)
     end
 
     describe "when testing all values" do

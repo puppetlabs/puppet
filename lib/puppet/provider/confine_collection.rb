@@ -15,8 +15,8 @@ class Puppet::Provider::ConfineCollection
                 @confines << klass.new(values)
                 @confines[-1].for_binary = true if for_binary
             else
-                confine = Puppet::Provider::Confine.test(:facter).new(values)
-                confine.fact = test
+                confine = Puppet::Provider::Confine.test(:variable).new(values)
+                confine.name = test
                 @confines << confine
             end
         end

@@ -9,8 +9,10 @@ require 'puppet/network/client'
 
 describe Puppet::Network::Client do
     before do
+        Puppet.settings.stubs(:use).returns(true)
         Puppet::Network::HttpPool.stubs(:cert_setup)
     end
+
     describe "when keep-alive is enabled" do
         before do
             Puppet::Network::HttpPool.stubs(:keep_alive?).returns true

@@ -64,10 +64,8 @@ describe Puppet::Network::HttpPool do
             Puppet.settings[:http_enable_post_connection_check].should be_true
         end
 
-        # JJM: I'm not sure if this is correct, as this really follows the
-        # configuration option.
         it "should set enable_post_connection_check true " do
-            Puppet::Network::HttpPool.http_instance("me", 54321).instance_variable_get("@enable_post_connection_check").should be_true
+            Puppet::Network::HttpPool.http_instance("me", 54321).instance_variable_get("@enable_post_connection_check").should be(Puppet.settings[:http_enable_post_connection_check])
         end
 
         it "should create the http instance with the proxy host and port set if the http_proxy is not set to 'none'" do

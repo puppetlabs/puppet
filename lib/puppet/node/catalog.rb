@@ -483,6 +483,9 @@ class Puppet::Node::Catalog < Puppet::PGraph
             if resource.is_a?(Puppet::TransObject)
                 resource = resource.dup
                 resource.catalog = result
+            elsif resource.is_a?(Puppet::Parser::Resource)
+                resource = resource.to_transobject
+                resource.catalog = result
             end
 
             newres = resource.send(convert)

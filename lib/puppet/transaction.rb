@@ -499,11 +499,13 @@ class Transaction
     
     # Prepare to evaluate the resources in a transaction.
     def prepare
-        prefetch()
-    
         # Now add any dynamically generated resources
         generate()
 
+        # Then prefetch.  It's important that we generate and then prefetch,
+        # so that any generated resources also get prefetched.
+        prefetch()
+        
         # This will throw an error if there are cycles in the graph.
         @sorted_resources = relationship_graph.topsort
     end

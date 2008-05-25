@@ -72,11 +72,11 @@ class TestTransactions < Test::Unit::TestCase
         path1 = tempfile()
         path2 = tempfile()
         objects = []
-        objects << Puppet::Type.newfile(
+        objects << Puppet::Type.type(:file).create(
             :path => path1,
             :content => "yayness"
         )
-        objects << Puppet::Type.newfile(
+        objects << Puppet::Type.type(:file).create(
             :path => path2,
             :content => "booness"
         )
@@ -155,7 +155,7 @@ class TestTransactions < Test::Unit::TestCase
         path = tempfile()
         firstpath = tempfile()
         secondpath = tempfile()
-        file = Puppet::Type.newfile(:title => "file", :path => path, :content => "yayness")
+        file = Puppet::Type.type(:file).create(:title => "file", :path => path, :content => "yayness")
         first = Puppet::Type.newexec(:title => "first",
                                      :command => "/bin/echo first > #{firstpath}",
                                      :subscribe => [:file, path],
@@ -712,6 +712,45 @@ class TestTransactions < Test::Unit::TestCase
             "Not all resources were evaluated or not in the right order")
     end
 
+    # We need to generate resources before we prefetch them, else generated
+    # resources that require prefetching don't work.
+    def test_generate_before_prefetch
+        config = mk_catalog()
+        trans = Puppet::Transaction.new(config)
+
+        generate = nil
+        prefetch = nil
+        trans.expects(:generate).with { |*args| generate = Time.now; true }
+        trans.expects(:prefetch).with { |*args| ! generate.nil? }
+        trans.prepare
+        return
+
+        resource = Puppet::Type.type(:file).create :ensure => :present, :path => tempfile()
+        other_resource = mock 'generated'
+        def resource.generate
+            [other_resource]
+        end
+
+
+        config = mk_catalog(yay, rah)
+        trans = Puppet::Transaction.new(config)
+        
+        assert_nothing_raised do
+            trans.generate
+        end
+        
+        %w{ya ra y r}.each do |name|
+            assert(trans.catalog.vertex?(Puppet::Type.type(:generator)[name]),
+                "Generated %s was not a vertex" % name)
+            assert($finished.include?(name), "%s was not finished" % name)
+        end
+        
+        # Now make sure that cleanup gets rid of those generated types.
+        assert_nothing_raised do
+            trans.cleanup
+        end
+    end
+
     def test_ignore_tags?
         config = Puppet::Node::Catalog.new
         config.host_config = true
@@ -872,7 +911,7 @@ class TestTransactions < Test::Unit::TestCase
     end
     
     def test_set_target
-        file = Puppet::Type.newfile(:path => tempfile(), :content => "yay")
+        file = Puppet::Type.type(:file).create(:path => tempfile(), :content => "yay")
         exec1 = Puppet::Type.type(:exec).create :command => "/bin/echo exec1"
         exec2 = Puppet::Type.type(:exec).create :command => "/bin/echo exec2"
         trans = Puppet::Transaction.new(mk_catalog(file, exec1, exec2))
@@ -907,7 +946,7 @@ class TestTransactions < Test::Unit::TestCase
             Puppet::Type.rmtype(:norefresh)
         end
 
-        file = Puppet::Type.newfile :path => tempfile(), :content => "yay"
+        file = Puppet::Type.type(:file).create :path => tempfile(), :content => "yay"
         one = klass.create :name => "one", :subscribe => file
         
         assert_apply(file, one)
@@ -985,8 +1024,8 @@ class TestTransactions < Test::Unit::TestCase
         # Now files
         d = tempfile()
         f = File.join(d, "file")
-        file = Puppet::Type.newfile(:path => f, :content => "yay")
-        dir = Puppet::Type.newfile(:path => d, :ensure => :directory, :require => file)
+        file = Puppet::Type.type(:file).create(:path => f, :content => "yay")
+        dir = Puppet::Type.type(:file).create(:path => d, :ensure => :directory, :require => file)
         
         rels[dir] = file
         rels.each do |after, before|
@@ -1010,7 +1049,7 @@ class TestTransactions < Test::Unit::TestCase
         path = tempfile
         epath = tempfile
         spath = tempfile
-        file = Puppet::Type.newfile(:path => path, :ensure => :file,
+        file = Puppet::Type.type(:file).create(:path => path, :ensure => :file,
             :title => "file")
         exec = Puppet::Type.type(:exec).create(:command => "touch %s" % epath,
             :path => ENV["PATH"], :subscribe => file, :refreshonly => true,
@@ -1048,7 +1087,7 @@ class TestTransactions < Test::Unit::TestCase
         3.times do |i|
             path = tempfile
             paths << path
-            file = Puppet::Type.newfile(:path => path, :ensure => :absent,
+            file = Puppet::Type.type(:file).create(:path => path, :ensure => :absent,
                 :backup => false, :title => "file%s" % i)
             File.open(path, "w") { |f| f.puts "" }
             files << file

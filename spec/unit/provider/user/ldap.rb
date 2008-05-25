@@ -59,8 +59,8 @@ describe provider_class do
 
         describe "with no uid specified" do
             it "should pick the first available UID after the largest existing UID" do
-                low = {:name=>["luke"], :shell=>:absent, :uid=>["100"], :home=>["/h"], :gid=>["1000"], :password=>["blah"], :comment=>["l k"]}
-                high = {:name=>["testing"], :shell=>:absent, :uid=>["140"], :home=>["/h"], :gid=>["1000"], :password=>["blah"], :comment=>["t u"]}
+                low = {:name=>["luke"], :shell=>:absent, :uid=>["600"], :home=>["/h"], :gid=>["1000"], :password=>["blah"], :comment=>["l k"]}
+                high = {:name=>["testing"], :shell=>:absent, :uid=>["640"], :home=>["/h"], :gid=>["1000"], :password=>["blah"], :comment=>["t u"]}
                 provider_class.manager.expects(:search).returns([low, high])
 
                 resource = stub 'resource', :should => %w{whatever}
@@ -69,7 +69,22 @@ describe provider_class do
                 instance = provider_class.new(:name => "luke", :ensure => :absent)
                 instance.stubs(:resource).returns resource
 
-                @connection.expects(:add).with { |dn, attrs| attrs["uidNumber"] == ["141"] }
+                @connection.expects(:add).with { |dn, attrs| attrs["uidNumber"] == ["641"] }
+
+                instance.create
+                instance.flush
+            end
+
+            it "should pick 501 of no users exist" do
+                provider_class.manager.expects(:search).returns nil
+
+                resource = stub 'resource', :should => %w{whatever}
+                resource.stubs(:should).with(:uid).returns nil
+                resource.stubs(:should).with(:ensure).returns :present
+                instance = provider_class.new(:name => "luke", :ensure => :absent)
+                instance.stubs(:resource).returns resource
+
+                @connection.expects(:add).with { |dn, attrs| attrs["uidNumber"] == ["501"] }
 
                 instance.create
                 instance.flush
