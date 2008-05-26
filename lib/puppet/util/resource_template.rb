@@ -12,6 +12,29 @@ require 'erb'
 # a chunk of text.
 #  The resource's parameters are available as instance variables
 # (as opposed to the language, where we use a method_missing trick).
+#  For example, say you have a resource that generates a file.  You would
+# need to implement the following style of `generate` method:
+#
+#   def generate
+#       template = Puppet::Util::ResourceTemplate.new(self, "/path/to/template")
+#
+#       return Puppet::Type.type(:file).create :path => "/my/file",
+#           :content => template.evaluate
+#   end
+#
+# This generated file gets added to the catalog (which is what `generate` does),
+# and its content is the result of the template.  You need to use instance
+# variables in your template, so if your template just needs to have the name
+# of the generating resource, it would just have:
+#
+#   <%= @name %>
+#
+# Since the ResourceTemplate class sets as instance variables all of the resource's
+# parameters.
+#
+# Note that it sets the generating resource's parameters, which is generally most
+# useful, since it allows you to configure the generated resource via the
+# generating resource.
 class Puppet::Util::ResourceTemplate
     include Puppet::Util::Logging
 
