@@ -6,9 +6,17 @@ require 'puppet/ssl/certificate_authority'
 
 describe Puppet::SSL::CertificateAuthority do
     after do
-        # Clear out the var, yay unit tests.
-        Puppet::SSL::CertificateAuthority.instance_variable_set("@instance", nil)
+        Puppet::Util::Cacher.invalidate
         Puppet.settings.clearused
+    end
+
+    def stub_ca_host
+        @key = mock 'key'
+        @key.stubs(:content).returns "cakey"
+        @cacert = mock 'certificate'
+        @cacert.stubs(:content).returns "cacertificate"
+
+        @host = stub 'ssl_host', :key => @key, :certificate => @cacert, :name => Puppet::SSL::Host.ca_name
     end
 
     it "should have a class method for returning a singleton instance" do
@@ -23,12 +31,6 @@ describe Puppet::SSL::CertificateAuthority do
 
                 @ca = mock('ca')
                 Puppet::SSL::CertificateAuthority.stubs(:new).returns @ca
-            end
-
-            after do
-                # Clear out the var, yay unit tests.
-                #Puppet::SSL::CertificateAuthority.instance_variable_set("@instance", nil)
-                Puppet::Util::Cacher.invalidate
             end
 
             it "should return an instance" do
@@ -225,20 +227,16 @@ describe Puppet::SSL::CertificateAuthority do
 
             Puppet::SSL::CertificateAuthority.any_instance.stubs(:password?).returns true
 
-            # Set up the CA
-            @key = mock 'key'
-            @key.stubs(:content).returns "cakey"
-            Puppet::SSL::CertificateAuthority.any_instance.stubs(:key).returns @key
-            @cacert = mock 'certificate'
-            @cacert.stubs(:content).returns "cacertificate"
+            stub_ca_host
+
+            Puppet::SSL::Host.expects(:new).with(Puppet::SSL::Host.ca_name).returns @host
+
             @ca = Puppet::SSL::CertificateAuthority.new
 
-            @ca.host.stubs(:certificate).returns @cacert
-            @ca.host.stubs(:key).returns @key
-            
             @name = "myhost"
             @real_cert = stub 'realcert', :sign => nil
             @cert = stub 'certificate', :content => @real_cert
+
             Puppet::SSL::Certificate.stubs(:new).returns @cert
 
             @cert.stubs(:content=)
@@ -515,10 +513,9 @@ describe Puppet::SSL::CertificateAuthority do
 
             Puppet::SSL::CertificateAuthority.any_instance.stubs(:password?).returns true
 
-            # Set up the CA
-            @key = mock 'key'
-            @key.stubs(:content).returns "cakey"
-            @host = stub 'host', :key => @key
+            stub_ca_host
+
+            Puppet::SSL::Host.expects(:new).returns @host
             Puppet::SSL::CertificateAuthority.any_instance.stubs(:host).returns @host
 
             @cacert = mock 'certificate'

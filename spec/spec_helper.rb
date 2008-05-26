@@ -34,3 +34,8 @@ Spec::Runner.configure do |config|
 #      teardown() if respond_to? :teardown
 #  end
 end
+
+# Set the confdir and vardir to gibberish so that tests
+# have to be correctly mocked.
+Puppet[:confdir] = "/dev/null"
+Puppet[:vardir] = "/dev/null"
