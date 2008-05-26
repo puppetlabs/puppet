@@ -1,3 +1,13 @@
+    Always using the cert name to store yaml files, which fixes #1178.
+    The Master handler previously provided the support for the :node_name
+    setting, and that functionality has now been moved into the Node
+    class.  At the same time, the names to search through have been
+    changed somewhat:  Previously, the certificate name and the 
+    hostname were both used for searching, but now, the cert name
+    is always searched first (unless node_name == facter), but only
+    the Facter hostname, domain, and fqdn are used otherwise.  We no
+    longer split the cert name, only the hostname/domain/fqdn.
+
     Fixing transaction support for prefetching generated resources.
 
     Adding support for settings within the existing Facter provider confines.

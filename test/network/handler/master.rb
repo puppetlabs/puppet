@@ -8,69 +8,51 @@ require 'puppet/network/handler/master'
 class TestMaster < Test::Unit::TestCase
     include PuppetTest::ServerTest
 
+    def setup
+        super
+        @master = Puppet::Network::Handler.master.new(:Manifest => tempfile)
+
+        @catalog = stub 'catalog', :extract => ""
+        Puppet::Node::Catalog.stubs(:find).returns(@catalog)
+    end
+
     def teardown
         super
         Puppet::Indirector::Indirection.clear_cache
     end
 
     def test_freshness_is_always_now
-        master = Puppet::Network::Handler.master.new(
-            :Manifest => tempfile,
-            :UseNodes => true,
-            :Local => true
-        )
-
         now1 = mock 'now1'
         Time.expects(:now).returns(now1)
 
-        assert_equal(master.freshness, now1, "Did not return current time as freshness")
+        assert_equal(@master.freshness, now1, "Did not return current time as freshness")
     end
 
-    # Make sure we're correctly doing clientname manipulations.
-    # Testing to make sure we always get a hostname and IP address.
-    def test_clientname
-        # create our master
-        master = Puppet::Network::Handler.master.new(
-            :Manifest => tempfile,
-            :UseNodes => true,
-            :Local => true
-        )
+    def test_hostname_is_used_if_client_is_missing
+        @master.expects(:decode_facts).returns("hostname" => "yay")
+        Puppet::Node::Facts.expects(:new).with { |name, facts| name == "yay" }.returns(stub('facts', :save => nil))
 
+        @master.getconfig("facts")
+    end
 
-        # First check that 'cert' works
-        Puppet[:node_name] = "cert"
+    def test_facts_are_saved
+        facts = mock('facts')
+        Puppet::Node::Facts.expects(:new).returns(facts)
+        facts.expects(:save)
 
-        # Make sure we get the fact data back when nothing is set
-        facts = {
-            "hostname" => "fact_hostname",
-            "domain" => "fact_domain",
-            "fqdn" => "fact_hostname.fact_domain",
-            "ipaddress" => "fact_ip"
-        }
-        certhostname = "cert_hostname"
-        certdomain = "cert_domain"
-        certname = certhostname + "." + certdomain
-        certip = "cert_ip"
+        @master.stubs(:decode_facts)
 
-        resname, resip = master.send(:clientname, nil, nil, facts)
-        assert_equal(facts["hostname"], resname, "Did not use fact hostname when no certname was present")
-        assert_equal(facts["ipaddress"], resip, "Did not use fact ip when no certname was present")
-        assert_equal(facts["domain"], "fact_domain", "Did not use fact domain when no certname was present")
-        assert_equal(facts["fqdn"], "fact_hostname.fact_domain", "Did not use fact fqdn when no certname was present")
+        @master.getconfig("facts", "yaml", "foo.com")
+    end
 
-        # Now try it with the cert stuff present
-        resname, resip = master.send(:clientname, certname, certip, facts)
-        assert_equal(certname, resname, "Did not use cert hostname when certname was present")
-        assert_equal(certip, resip, "Did not use cert ip when certname was present")
-        assert_equal(facts["domain"], certdomain, "Did not use cert domain when certname was present")
-        assert_equal(facts["fqdn"], certname, "Did not use cert fqdn when certname was present")
+    def test_catalog_is_used_for_compiling
+        facts = stub('facts', :save => nil)
+        Puppet::Node::Facts.stubs(:new).returns(facts)
 
-        # And reset the node_name stuff and make sure we use it.
-        Puppet[:node_name] = :facter
-        resname, resip = master.send(:clientname, certname, certip, facts)
-        assert_equal(facts["hostname"], resname, "Did not use fact hostname when nodename was set to facter")
-        assert_equal(facts["ipaddress"], resip, "Did not use fact ip when nodename was set to facter")
+        @master.stubs(:decode_facts)
+
+        Puppet::Node::Catalog.expects(:find).with("foo.com").returns(@catalog)
+
+        @master.getconfig("facts", "yaml", "foo.com")
     end
 end
-
-

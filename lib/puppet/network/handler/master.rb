@@ -56,7 +56,8 @@ class Puppet::Network::Handler
         # Call our various handlers; this handler is getting deprecated.
         def getconfig(facts, format = "marshal", client = nil, clientip = nil)
             facts = decode_facts(facts)
-            client, clientip = clientname(client, clientip, facts)
+
+            client ||= facts["hostname"]
 
             # Pass the facts to the fact handler
             Puppet::Node::Facts.new(client, facts).save unless local?
@@ -64,27 +65,6 @@ class Puppet::Network::Handler
             catalog = Puppet::Node::Catalog.find(client)
 
             return translate(catalog.extract)
-        end
-
-        private
-
-        # Manipulate the client name as appropriate.
-        def clientname(name, ip, facts)
-            # Always use the hostname from Facter.
-            client = facts["hostname"]
-            clientip = facts["ipaddress"]
-            if Puppet[:node_name] == 'cert'
-                if name
-                    client = name
-                    facts["fqdn"] = client
-                    facts["hostname"], facts["domain"] = client.split('.', 2)
-                end
-                if ip
-                    clientip = ip
-                end
-            end
-
-            return client, clientip
         end
 
         # 
