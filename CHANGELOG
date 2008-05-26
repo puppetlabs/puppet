@@ -1,3 +1,8 @@
+    Adding a ResourceTemplate class for using templates directly
+    within resources (i.e., client-side templates).  This would really
+    only be used for composite resources that pass the results of the
+    template on to generated resources.
+
     Exporting or collecting resources no longer raises an exception
     when no storeconfigs is enabled, it just produces a warning.
 
