@@ -152,7 +152,7 @@ virtualresource:  at resource {
     type = val[0]
 
     if (type == :exported and ! Puppet[:storeconfigs]) and ! Puppet[:parseonly]
-        error "You cannot collect without storeconfigs being set"
+        Puppet.warning addcontext("You cannot collect without storeconfigs being set")
     end
 
     if val[1].is_a? AST::ResourceDefaults
@@ -193,7 +193,7 @@ collection:     classref collectrhand {
         args[:form] = val[1]
     end
     if args[:form] == :exported and ! Puppet[:storeconfigs] and ! Puppet[:parseonly]
-        error "You cannot collect exported resources without storeconfigs being set"
+        Puppet.warning addcontext("You cannot collect exported resources without storeconfigs being set; the collection will be ignored")
     end
     result = ast AST::Collection, args
 }

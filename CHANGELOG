@@ -1,3 +1,6 @@
+    Exporting or collecting resources no longer raises an exception
+    when no storeconfigs is enabled, it just produces a warning.
+
     Always using the cert name to store yaml files, which fixes #1178.
     The Master handler previously provided the support for the :node_name
     setting, and that functionality has now been moved into the Node

@@ -204,6 +204,8 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
         @equery = "test = true"
         @vquery = proc { |r| true }
 
+        Puppet.settings.stubs(:value).with(:storeconfigs).returns true
+
         @collector = Puppet::Parser::Collector.new(@scope, @resource_type, @equery, @vquery, :exported)
     end
 
@@ -215,6 +217,11 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
             Puppet::Rails::Host.stubs(:find_by_name).returns(nil)
             Puppet::Rails::Resource.stubs(:find).returns([])
         end
+    end
+
+    it "should just return false if :storeconfigs is not enabled" do
+        Puppet.settings.expects(:value).with(:storeconfigs).returns false
+        @collector.evaluate.should be_false
     end
 
     it "should use initialize the Rails support if ActiveRecord is not connected" do
@@ -375,6 +382,8 @@ describe Puppet::Parser::Collector, "when building its ActiveRecord query for co
         Puppet::Rails.stubs(:init)
         Puppet::Rails::Host.stubs(:find_by_name).returns(nil)
         Puppet::Rails::Resource.stubs(:find).returns([])
+
+        Puppet.settings.stubs(:value).with(:storeconfigs).returns true
     end
 
     it "should exclude all resources from the host if ActiveRecord contains information for this host" do

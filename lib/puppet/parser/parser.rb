@@ -29,7 +29,7 @@ module Puppet
 
     class Parser < Racc::Parser
 
-module_eval <<'..end grammar.ra modeval..idfef5d70c9f', 'grammar.ra', 638
+module_eval <<'..end grammar.ra modeval..id9145566289', 'grammar.ra', 638
 
 # It got too annoying having code in a file that needs to be compiled.
 require 'puppet/parser/parser_support'
@@ -41,7 +41,7 @@ require 'puppet/parser/parser_support'
 
 # $Id$
 
-..end grammar.ra modeval..idfef5d70c9f
+..end grammar.ra modeval..id9145566289
 
 ##### racc 1.4.5 generates ###
 
@@ -958,7 +958,7 @@ module_eval <<'.,.,', 'grammar.ra', 174
     type = val[0]
 
     if (type == :exported and ! Puppet[:storeconfigs]) and ! Puppet[:parseonly]
-        error "You cannot collect without storeconfigs being set"
+        Puppet.warning addcontext("You cannot collect without storeconfigs being set")
     end
 
     if val[1].is_a? AST::ResourceDefaults
@@ -1011,7 +1011,7 @@ module_eval <<'.,.,', 'grammar.ra', 199
         args[:form] = val[1]
     end
     if args[:form] == :exported and ! Puppet[:storeconfigs] and ! Puppet[:parseonly]
-        error "You cannot collect exported resources without storeconfigs being set"
+        Puppet.warning addcontext("You cannot collect exported resources without storeconfigs being set; the collection will be ignored")
     end
     result = ast AST::Collection, args
    result
