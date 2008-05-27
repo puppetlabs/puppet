@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 
+require 'rake'
+require 'rake/testtask'
+
 module Rake
     class PuppetTestTask < Rake::TestTask
         def rake_loader
