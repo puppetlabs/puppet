@@ -379,9 +379,14 @@ class Puppet::SSLCertificates::CA
     def sign_with_key(signable, digest = OpenSSL::Digest::SHA1.new)
         cakey = nil
         if @config[:password]
-            cakey = OpenSSL::PKey::RSA.new(
-                File.read(@config[:cakey]), @config[:password]
-            )
+            begin
+                cakey = OpenSSL::PKey::RSA.new(
+                    File.read(@config[:cakey]), @config[:password]
+                )
+            rescue
+                raise Puppet::Error,
+                    "Decrypt of CA private key with password stored in @config[:capass] not possible"
+            end
         else
             cakey = OpenSSL::PKey::RSA.new(
                 File.read(@config[:cakey])
