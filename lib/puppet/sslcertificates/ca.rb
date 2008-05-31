@@ -97,7 +97,7 @@ class Puppet::SSLCertificates::CA
         if @config[:capass] and File.readable?(@config[:capass])
             return File.read(@config[:capass])
         else
-            raise Puppet::Error, "Could not read CA passfile %s" % @config[:capass]
+            raise Puppet::Error, "Could not decrypt CA key with password: %s" % detail
         end
     end
 
