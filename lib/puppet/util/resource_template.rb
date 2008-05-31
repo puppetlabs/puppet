@@ -16,7 +16,7 @@ require 'erb'
 # need to implement the following style of `generate` method:
 #
 #   def generate
-#       template = Puppet::Util::ResourceTemplate.new(self, "/path/to/template")
+#       template = Puppet::Util::ResourceTemplate.new("/path/to/template", self)
 #
 #       return Puppet::Type.type(:file).create :path => "/my/file",
 #           :content => template.evaluate
@@ -32,9 +32,9 @@ require 'erb'
 # Since the ResourceTemplate class sets as instance variables all of the resource's
 # parameters.
 #
-# Note that it sets the generating resource's parameters, which is generally most
-# useful, since it allows you to configure the generated resource via the
-# generating resource.
+# Note that this example uses the generating resource as its source of
+# parameters, which is generally most useful, since it allows you to configure
+# the generated resource via the generating resource.
 class Puppet::Util::ResourceTemplate
     include Puppet::Util::Logging
 
