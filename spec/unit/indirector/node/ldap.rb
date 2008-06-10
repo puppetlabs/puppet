@@ -21,9 +21,9 @@ describe Puppet::Node::Ldap do
             @searcher.stubs(:search_base).returns(:yay)
             @searcher.stubs(:search_filter).returns(:filter)
 
-            @node = mock 'node'
-            @node.stubs(:fact_merge)
             @name = "mynode"
+            @node = stub 'node', :name => @name
+            @node.stubs(:fact_merge)
             Puppet::Node.stubs(:new).with(@name).returns(@node)
 
             @request = stub 'request', :key => @name

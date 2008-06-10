@@ -19,51 +19,7 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
 
         node = Puppet::Node.new(name)
 
-        information[:stacked_parameters] = {}
-
-        parent_info = nil
-        parent = information[:parent]
-        parents = [name]
-        while parent
-            if parents.include?(parent)
-                raise ArgumentError, "Found loop in LDAP node parents; %s appears twice" % parent
-            end
-            parents << parent
-
-            ldapsearch(parent) { |entry| parent_info = process(parent, entry) }
-
-            unless parent_info
-                raise Puppet::Error.new("Could not find parent node '%s'" % parent)
-            end
-            information[:classes] += parent_info[:classes]
-            parent_info[:stacked].each do |value|
-                param = value.split('=', 2)
-                information[:stacked_parameters][param[0]] = param[1]
-            end
-            parent_info[:parameters].each do |param, value|
-                # Specifically test for whether it's set, so false values are handled
-                # correctly.
-                information[:parameters][param] = value unless information[:parameters].include?(param)
-            end
-
-            information[:environment] ||= parent_info[:environment]
-
-            parent = parent_info[:parent]
-        end
-
-        information[:stacked].each do |value|
-            param = value.split('=', 2)
-            information[:stacked_parameters][param[0]] = param[1]
-        end
-
-        information[:stacked_parameters].each do |param, value|
-            information[:parameters][param] = value unless information[:parameters].include?(param)
-        end
-
-        node.classes = information[:classes].uniq unless information[:classes].empty?
-        node.parameters = information[:parameters] unless information[:parameters].empty?
-        node.environment = information[:environment] if information[:environment]
-        node.fact_merge
+        add_to_node(node, information)
 
         return node
     end
@@ -154,5 +110,61 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
             filter = filter.gsub('%s', name)
         end
         filter
+    end
+
+    private
+
+    # Add our hash of ldap information to the node instance.
+    def add_to_node(node, information)
+        information[:stacked_parameters] = {}
+
+        parent_info = nil
+        parent = information[:parent]
+        parents = [node.name]
+        while parent
+            if parents.include?(parent)
+                raise ArgumentError, "Found loop in LDAP node parents; %s appears twice" % parent
+            end
+            parents << parent
+            parent = find_and_merge_parent(parent, information)
+        end
+
+        information[:stacked].each do |value|
+            param = value.split('=', 2)
+            information[:stacked_parameters][param[0]] = param[1]
+        end
+
+        information[:stacked_parameters].each do |param, value|
+            information[:parameters][param] = value unless information[:parameters].include?(param)
+        end
+
+        node.classes = information[:classes].uniq unless information[:classes].empty?
+        node.parameters = information[:parameters] unless information[:parameters].empty?
+        node.environment = information[:environment] if information[:environment]
+        node.fact_merge
+    end
+
+    # Find information for our parent and merge it into the current info.
+    def find_and_merge_parent(parent, information)
+        parent_info = nil
+        ldapsearch(parent) { |entry| parent_info = process(parent, entry) }
+
+        unless parent_info
+            raise Puppet::Error.new("Could not find parent node '%s'" % parent)
+        end
+        information[:classes] += parent_info[:classes]
+        parent_info[:stacked].each do |value|
+            param = value.split('=', 2)
+            information[:stacked_parameters][param[0]] = param[1]
+        end
+        parent_info[:parameters].each do |param, value|
+            # Specifically test for whether it's set, so false values are handled
+            # correctly.
+            information[:parameters][param] = value unless information[:parameters].include?(param)
+        end
+
+        information[:environment] ||= parent_info[:environment]
+
+        parent_info[:parent]
     end
 end
