@@ -20,19 +20,6 @@ class Puppet::Node
         find(key)
     end
 
-    private
-
-    # Look up the node facts so we can generate the node names to use.
-    def self.node_facts(key)
-        if facts = Puppet::Node::Facts.find(key)
-            facts.values
-        else
-            {}
-        end
-    end
-
-    public
-
     attr_accessor :name, :classes, :parameters, :source, :ipaddress
     attr_reader :time
 
