@@ -17,32 +17,7 @@ class Puppet::Node
     # thrown in for kicks.
     def self.find_by_any_name(key)
         return nil unless key
-
-        node = nil
-        names = node_names(key)
-        names.each do |name|
-            name = name.to_s if name.is_a?(Symbol)
-            break if node = find(name)
-        end
-
-        # If they made it this far, we haven't found anything, so look for a
-        # default node.
-        unless node or names.include?("default")
-            if node = find("default")
-                Puppet.notice "Using default node for %s" % key
-            end
-        end
-
-        return nil unless node
-
-        node.names = names
-
-        # This is critical, because it forces our node's name to always
-        # be the key, which is nearly always the node's certificate.
-        # This is how the node instance is linked to the Facts instance,
-        # so it quite matters.
-        node.name = key
-        return node
+        find(key)
     end
 
     private
@@ -56,45 +31,9 @@ class Puppet::Node
         end
     end
 
-    # Calculate the list of node names we should use for looking
-    # up our node.
-    def self.node_names(key, facts = nil)
-        facts ||= node_facts(key)
-        names = []
-
-        # First, get the fqdn
-        unless fqdn = facts["fqdn"]
-            if domain = facts["domain"]
-                fqdn = facts["hostname"] + "." + facts["domain"]
-            end
-        end
-
-        # Now that we (might) have the fqdn, add each piece to the name
-        # list to search, in order of longest to shortest.
-        if fqdn
-            list = fqdn.split(".")
-            tmp = []
-            list.each_with_index do |short, i|
-                tmp << list[0..i].join(".")
-            end
-            names += tmp.reverse
-        end
-
-        # And make sure the key is first, since that's the most
-        # likely usage.
-        #   The key is usually the Certificate CN, but it can be
-        # set to the 'facter' hostname instead.
-        if Puppet[:node_name] == 'cert'
-            names.unshift key
-        else
-            names.unshift facts["hostname"]
-        end
-        names.uniq
-    end
-
     public
 
-    attr_accessor :name, :classes, :parameters, :source, :ipaddress, :names
+    attr_accessor :name, :classes, :parameters, :source, :ipaddress
     attr_reader :time
 
     # Set the environment, making sure that it's valid.
@@ -164,5 +103,40 @@ class Puppet::Node
         params.each do |name, value|
             @parameters[name] = value unless @parameters.include?(name)
         end
+    end
+
+    # Calculate the list of names we might use for looking
+    # up our node.  This is only used for AST nodes.
+    def names
+        names = []
+
+        # First, get the fqdn
+        unless fqdn = parameters["fqdn"]
+            if domain = parameters["domain"]
+                fqdn = parameters["hostname"] + "." + parameters["domain"]
+            end
+        end
+
+        # Now that we (might) have the fqdn, add each piece to the name
+        # list to search, in order of longest to shortest.
+        if fqdn
+            list = fqdn.split(".")
+            tmp = []
+            list.each_with_index do |short, i|
+                tmp << list[0..i].join(".")
+            end
+            names += tmp.reverse
+        end
+
+        # And make sure the node name is first, since that's the most
+        # likely usage.
+        #   The name is usually the Certificate CN, but it can be
+        # set to the 'facter' hostname instead.
+        if Puppet[:node_name] == 'cert'
+            names.unshift name
+        else
+            names.unshift parameters["hostname"]
+        end
+        names.uniq
     end
 end
