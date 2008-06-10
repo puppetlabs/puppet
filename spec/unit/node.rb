@@ -136,13 +136,6 @@ describe Puppet::Node, "when indirecting" do
     end
 end
 
-describe Puppet::Node do
-    # LAK:NOTE This is used to keep track of when a given node has connected,
-    # so we can report on nodes that do not appear to connecting to the
-    # central server.
-    it "should provide a method for noting that the node has connected"
-end
-
 describe Puppet::Node, "when generating the list of names to search through" do
     before do
         @facts = Puppet::Node::Facts.new("foo", "hostname" => "yay", "domain" => "domain.com")
