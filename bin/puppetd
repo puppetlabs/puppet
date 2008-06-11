@@ -162,6 +162,7 @@ trap(:INT) do
 end
 
 require 'puppet'
+require 'puppet/executables/client/certhandler'
 require 'puppet/network/client'
 require 'getoptlong'
 
@@ -342,36 +343,8 @@ if Puppet[:daemonize]
     client.daemonize
 end
 
-unless Puppet::Network::HttpPool.read_cert
-    # If we don't already have the certificate, then create a client to
-    # request one.  Use the special ca stuff, don't use the normal server and port.
-    caclient = Puppet::Network::Client.ca.new()
-    if options[:waitforcert] > 0
-        begin
-            while ! caclient.request_cert do
-                Puppet.notice "Did not receive certificate"
-                sleep options[:waitforcert]
-            end
-        rescue => detail
-            Puppet.err "Could not request certificate: %s" % detail.to_s
-            exit(23)
-        end
-    else
-        unless caclient.request_cert
-            Puppet.notice "No certificates; exiting"
-            exit(1)
-        end
-    end
-
-    # Now read the new cert in.
-    if Puppet::Network::HttpPool.read_cert
-        # If we read it in, then get rid of our existing http connection.
-        client.recycle_connection
-        Puppet.notice "Got signed certificate"
-    else
-        Puppet.err "Could not read certificates after retrieving them"
-        exit(34)
-    end
+unless Puppet::Executables::Client::CertHandler.new(options[:waitforcert], options[:onetime]).read_retrieve
+    client.recycle_connection
 end
 
 objects = []
