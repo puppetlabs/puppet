@@ -28,7 +28,7 @@ describe cert_handler, "when handling certificates" do
     end
 
     describe "when waiting for cert" do
-        it "should loop when the cert request fails" do
+        it "should loop when the cert request does not return a certificate" do
             @caclient.stubs(:request_cert).times(2).returns(false).then.returns(true)
             ch = cert_handler.new(1,false)
             ch.expects(:sleep)
@@ -54,7 +54,7 @@ describe cert_handler, "when handling certificates" do
     end
 
     describe "when in one time mode" do
-        it "should exit if the cert request fails" do
+        it "should exit if the cert request does not return a certificate" do
             @caclient.stubs(:request_cert).returns(false)
             ch = cert_handler.new(1,true)
             ch.expects(:exit).with(1).raises(SystemExit)
