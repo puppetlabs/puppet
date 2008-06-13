@@ -82,21 +82,21 @@ end
 
 
 describe Puppet::Network::HTTP::WEBrick, "when looking up the class to handle a protocol" do
-  it "should require a protocol" do
-    lambda { Puppet::Network::HTTP::WEBrick.class_for_protocol }.should raise_error(ArgumentError)
-  end
-  
-  it "should accept a protocol" do
-    lambda { Puppet::Network::HTTP::WEBrick.class_for_protocol("bob") }.should_not raise_error(ArgumentError)    
-  end
-  
-  it "should use a WEBrick + REST class when a REST protocol is specified" do
-    Puppet::Network::HTTP::WEBrick.class_for_protocol("rest").should == Puppet::Network::HTTP::WEBrickREST
-  end
-  
-  it "should fail when an unknown protocol is specified" do
-    lambda { Puppet::Network::HTTP::WEBrick.class_for_protocol("abcdefg") }.should raise_error
-  end
+    it "should require a protocol" do
+        lambda { Puppet::Network::HTTP::WEBrick.class_for_protocol }.should raise_error(ArgumentError)
+    end
+    
+    it "should accept a protocol" do
+        lambda { Puppet::Network::HTTP::WEBrick.class_for_protocol("bob") }.should_not raise_error(ArgumentError)        
+    end
+    
+    it "should use a WEBrick + REST class when a REST protocol is specified" do
+        Puppet::Network::HTTP::WEBrick.class_for_protocol("rest").should == Puppet::Network::HTTP::WEBrickREST
+    end
+    
+    it "should fail when an unknown protocol is specified" do
+        lambda { Puppet::Network::HTTP::WEBrick.class_for_protocol("abcdefg") }.should raise_error
+    end
 end
 
 describe Puppet::Network::HTTP::WEBrick, "when turning off listening" do

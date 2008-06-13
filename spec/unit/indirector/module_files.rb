@@ -10,24 +10,24 @@ require 'puppet/indirector/module_files'
 
 describe Puppet::Indirector::ModuleFiles do
 
-  before :each do
-      Puppet::Node::Environment.stubs(:new).returns(stub('env', :name => "myenv"))
-      Puppet::Indirector::Terminus.stubs(:register_terminus_class)
-      @model = mock 'model'
-      @indirection = stub 'indirection', :name => :mystuff, :register_terminus_type => nil, :model => @model
-      Puppet::Indirector::Indirection.stubs(:instance).returns(@indirection)
-
-      @module_files_class = Class.new(Puppet::Indirector::ModuleFiles) do
-          def self.to_s
-              "Testing::Mytype"
-          end
-      end
-
-      @module_files = @module_files_class.new
-
-      @uri = "puppetmounts://host/modules/my/local/file"
-      @module = Puppet::Module.new("mymod", "/module/path")
-  end
+    before :each do
+        Puppet::Node::Environment.stubs(:new).returns(stub('env', :name => "myenv"))
+        Puppet::Indirector::Terminus.stubs(:register_terminus_class)
+        @model = mock 'model'
+        @indirection = stub 'indirection', :name => :mystuff, :register_terminus_type => nil, :model => @model
+        Puppet::Indirector::Indirection.stubs(:instance).returns(@indirection)
+  
+        @module_files_class = Class.new(Puppet::Indirector::ModuleFiles) do
+            def self.to_s
+                "Testing::Mytype"
+            end
+        end
+  
+        @module_files = @module_files_class.new
+  
+        @uri = "puppetmounts://host/modules/my/local/file"
+        @module = Puppet::Module.new("mymod", "/module/path")
+    end
 
     describe Puppet::Indirector::ModuleFiles, " when finding files" do
 

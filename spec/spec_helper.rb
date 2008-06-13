@@ -23,7 +23,7 @@ require 'spec'
 Dir["#{dir}/monkey_patches/*.rb"].map { |file| require file }
 
 Spec::Runner.configure do |config|
-  config.mock_with :mocha
+    config.mock_with :mocha
 
 #  config.prepend_before :all do
 #      setup_mocks_for_rspec
