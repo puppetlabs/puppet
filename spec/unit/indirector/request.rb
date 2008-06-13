@@ -67,6 +67,14 @@ describe Puppet::Indirector::Request do
         it "should set be marked authenticated if configured in the options" do
             Puppet::Indirector::Request.new(:ind, :method, :key, :authenticated => "eh").should be_authenticated
         end
+
+        it "should keep its options as a hash even if a node is specified" do
+            Puppet::Indirector::Request.new(:ind, :method, :key, :node => "eh").options.should be_instance_of(Hash)
+        end
+
+        it "should keep its options as a hash even if another option is specified" do
+            Puppet::Indirector::Request.new(:ind, :method, :key, :foo => "bar").options.should be_instance_of(Hash)
+        end
     end
 
     it "should look use the Indirection class to return the appropriate indirection" do

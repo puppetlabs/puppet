@@ -24,6 +24,7 @@ class Puppet::Indirector::Request
             else
                 result[param] = value
             end
+            result
         end
 
         if key.is_a?(String) or key.is_a?(Symbol)
