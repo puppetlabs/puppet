@@ -48,8 +48,14 @@ module Puppet::Network::HTTP::Handler
         raise ArgumentError, "No data to save" if !data or data.empty?
         args = params(request)
         obj = model.from_yaml(data)
-        result = obj.save(args).to_yaml
+        result = save_object(obj, args).to_yaml
         encode_result(request, response, result)
+    end
+
+    # LAK:NOTE This has to be here for testing; it's a stub-point so
+    # we keep infinite recursion from happening.
+    def save_object(object, args)
+        object.save(args)
     end
 
     def do_exception(request, response, exception, status=404)
