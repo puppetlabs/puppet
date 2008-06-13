@@ -55,7 +55,6 @@ describe Puppet::Indirector::REST do
                 end
             
                 it "should not fail" do
-                    Puppet::TestIndirectedFoo.find('bar')
                     lambda { Puppet::TestIndirectedFoo.find('bar') }.should_not raise_error
                 end
     
