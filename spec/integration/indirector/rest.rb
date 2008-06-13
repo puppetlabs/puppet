@@ -413,6 +413,9 @@ describe Puppet::Indirector::REST do
                 @instance = Puppet::TestIndirectedFoo.new(42)
                 @mock_model = stub('faked model', :from_yaml => @instance)
                 Puppet::Network::HTTP::MongrelREST.any_instance.stubs(:model).returns(@mock_model)                
+
+                # LAK:NOTE This stub is necessary to prevent the REST call from calling
+                # REST.save again, thus producing painful infinite recursion.
                 Puppet::Network::HTTP::MongrelREST.any_instance.stubs(:save_object).returns(@instance)                
             end
             
