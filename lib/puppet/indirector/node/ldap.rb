@@ -3,7 +3,9 @@ require 'puppet/indirector/ldap'
 
 class Puppet::Node::Ldap < Puppet::Indirector::Ldap
     desc "Search in LDAP for node configuration information.  See
-    the `LdapNodes`:trac: page for more information."
+    the `LdapNodes`:trac: page for more information.  This will first
+    search for whatever the certificate name is, then (if that name
+    contains a '.') for the short name, then 'default'."
 
     # The attributes that Puppet class information is stored in.
     def class_attributes
@@ -13,7 +15,17 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
 
     # Look for our node in ldap.
     def find(request)
-        return nil unless information = super
+        names = [request.key]
+        if request.key.include?(".") # we assume it's an fqdn
+            names << request.key.sub(/\..+/, '')
+        end
+        names << "default"
+
+        information = nil
+        names.each do |name|
+            break if information = entry2hash(name)
+        end
+        return nil unless information
 
         name = request.key
 
@@ -129,17 +141,21 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
             parent = find_and_merge_parent(parent, information)
         end
 
-        information[:stacked].each do |value|
-            param = value.split('=', 2)
-            information[:stacked_parameters][param[0]] = param[1]
+        if information[:stacked]
+            information[:stacked].each do |value|
+                param = value.split('=', 2)
+                information[:stacked_parameters][param[0]] = param[1]
+            end
         end
 
-        information[:stacked_parameters].each do |param, value|
-            information[:parameters][param] = value unless information[:parameters].include?(param)
+        if information[:stacked_parameters]
+            information[:stacked_parameters].each do |param, value|
+                information[:parameters][param] = value unless information[:parameters].include?(param)
+            end
         end
 
-        node.classes = information[:classes].uniq unless information[:classes].empty?
-        node.parameters = information[:parameters] unless information[:parameters].empty?
+        node.classes = information[:classes].uniq unless information[:classes].nil? or information[:classes].empty?
+        node.parameters = information[:parameters] unless information[:parameters].nil? or information[:parameters].empty?
         node.environment = information[:environment] if information[:environment]
         node.fact_merge
     end
