@@ -4,13 +4,21 @@ module Puppet
         module Client
             class CertHandler
                 attr_writer :wait_for_cert, :one_time
+                attr_reader :new_cert
                 
                 def initialize(wait_time, is_one_time)
                     @wait_for_cert = wait_time
                     @one_time = is_one_time
                     @new_cert = false
                 end
+
+                # Did we just read a cert?
+                def new_cert?
+                    new_cert
+                end
                 
+                # Read, or retrieve if necessary, our certificate.  Returns true if we retrieved
+                # a new cert, false if the cert already exists.
                 def read_retrieve 
                     #NOTE: ACS this is checking that a file exists, maybe next time just do that?
                     unless read_cert 
@@ -19,7 +27,7 @@ module Puppet
                         retrieve_cert
                     end
 
-                    !@new_cert
+                    ! new_cert?
                 end
 
                 def retrieve_cert
@@ -46,13 +54,14 @@ module Puppet
                 end
 
                 def read_cert
-                     Puppet::Network::HttpPool.read_cert
+                    Puppet::Network::HttpPool.read_cert
                 end
 
                 def read_new_cert
                     if Puppet::Network::HttpPool.read_cert
                         # If we read it in, then we need to get rid of our existing http connection.
-                        # The @new_cert flag will help us do that
+                        # The @new_cert flag will help us do that, in that it provides a way
+                        # to notify that the cert status has changed.
                         @new_cert = true
                         Puppet.notice "Got signed certificate"
                     else
