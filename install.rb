@@ -78,7 +78,7 @@ rdoc  = glob(%w{bin/* sbin/* lib/**/*.rb README README-library CHANGELOG TODO In
 ri    = glob(%w(bin/*.rb sbin/* lib/**/*.rb)).reject { |e| e=~ /\.(bat|cmd)$/ }
 man   = glob(%w{man/man8/*})
 libs  = glob(%w{lib/**/*.rb lib/**/*.py})
-tests = glob(%w{tests/**/*.rb})
+tests = glob(%w{test/**/*.rb})
 
 def do_bins(bins, target, strip = 's?bin/')
   bins.each do |bf|
@@ -393,7 +393,7 @@ EOS
 check_prereqs
 prepare_installation
 
-run_tests(tests) if InstallOptions.tests
+#run_tests(tests) if InstallOptions.tests
 #build_rdoc(rdoc) if InstallOptions.rdoc
 #build_ri(ri) if InstallOptions.ri
 #build_man(bins) if InstallOptions.man

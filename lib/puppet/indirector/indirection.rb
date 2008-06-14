@@ -256,7 +256,7 @@ class Puppet::Indirector::Indirection
     def check_authorization(request, terminus)
         # At this point, we're assuming authorization makes no sense without
         # client information.
-        return unless request.options[:node]
+        return unless request.node
 
         # This is only to authorize via a terminus-specific authorization hook.
         return unless terminus.respond_to?(:authorized?)

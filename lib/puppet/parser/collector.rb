@@ -6,6 +6,12 @@ class Puppet::Parser::Collector
     # Call the collection method, mark all of the returned objects as non-virtual,
     # and then delete this object from the list of collections to evaluate.
     def evaluate
+        # Shortcut if we're not using storeconfigs and they're trying to collect
+        # exported resources.
+        if form == :exported and Puppet[:storeconfigs] != true
+            Puppet.warning "Not collecting exported resources without storeconfigs"
+            return false
+        end
         if self.resources
             if objects = collect_resources and ! objects.empty?
                 return objects

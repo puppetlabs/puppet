@@ -29,8 +29,6 @@ end
 class Puppet::TestIndirectedFoo::Rest < Puppet::Indirector::REST
 end
 
-# This way the retrieval of the class by name works.
-Puppet::Indirector::Terminus.register_terminus_class(Puppet::TestIndirectedFoo::Rest)
 
 describe Puppet::Indirector::REST do
     before do
@@ -65,17 +63,10 @@ describe Puppet::Indirector::REST do
 
             ca = Puppet::SSL::CertificateAuthority.new
             ca.generate(Puppet[:certname]) unless Puppet::SSL::Certificate.find(Puppet[:certname])
-            
+
             @params = { :address => "127.0.0.1", :port => 34343, :handlers => [ :test_indirected_foo ], :xmlrpc_handlers => [ :status ] }
             @server = Puppet::Network::Server.new(@params)
             @server.listen
-        end
-
-        after do
-            @server.unlisten
-            @tmpfile.delete
-            Puppet.settings.clear
-            Puppet::Util::Cacher.invalidate
         end
     
         describe "when finding a model instance over REST" do
@@ -87,7 +78,6 @@ describe Puppet::Indirector::REST do
                 end
             
                 it "should not fail" do
-                    Puppet::TestIndirectedFoo.find('bar')
                     lambda { Puppet::TestIndirectedFoo.find('bar') }.should_not raise_error
                 end
     
@@ -151,7 +141,15 @@ describe Puppet::Indirector::REST do
                 end
     
                 it 'should return the instance of the model class associated with the provided lookup key' do
-                    Puppet::TestIndirectedFoo.search('bar').collect{ |x| x.value }.should == @model_instances.collect{ |x| x.value }
+                    Puppet::TestIndirectedFoo.search('bar').collect { |i| i.value }.should == @model_instances.collect { |i| i.value }
+                end
+    
+                it 'should set a version timestamp on model instances' do
+                    pending("Luke looking at why this version magic might not be working") do
+                        Puppet::TestIndirectedFoo.search('bar').each do |result|
+                            result.version.should_not be_nil
+                        end
+                    end
                 end
             end
         
@@ -264,6 +262,10 @@ describe Puppet::Indirector::REST do
                 end
             end
         end
+
+        after :each do
+            @server.unlisten
+        end
     end
 
     describe "when using mongrel" do
@@ -283,7 +285,7 @@ describe Puppet::Indirector::REST do
             @server.listen
         end
 
-        after :each do
+        after do
             @server.unlisten
         end
     
@@ -359,7 +361,7 @@ describe Puppet::Indirector::REST do
                 end
     
                 it 'should return the instance of the model class associated with the provided lookup key' do
-                    Puppet::TestIndirectedFoo.search('bar').collect{ |x| x.value }.should == @model_instances.collect{ |x| x.value }
+                    Puppet::TestIndirectedFoo.search('bar').collect { |i| i.value }.should == @model_instances.collect { |i| i.value }
                 end
     
                 it 'should set an expiration on model instances' do
@@ -438,6 +440,9 @@ describe Puppet::Indirector::REST do
                 @instance = Puppet::TestIndirectedFoo.new(42)
                 @mock_model = stub('faked model', :from_yaml => @instance)
                 Puppet::Network::HTTP::MongrelREST.any_instance.stubs(:model).returns(@mock_model)                
+
+                # LAK:NOTE This stub is necessary to prevent the REST call from calling
+                # REST.save again, thus producing painful infinite recursion.
                 Puppet::Network::HTTP::MongrelREST.any_instance.stubs(:save_object).returns(@instance)                
             end
             

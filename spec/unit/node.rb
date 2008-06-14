@@ -2,7 +2,7 @@
 
 require File.dirname(__FILE__) + '/../spec_helper'
 
-describe Puppet::Node, " when initializing" do
+describe Puppet::Node, "when initializing" do
     before do
         @node = Puppet::Node.new("testnode")
     end
@@ -61,7 +61,7 @@ describe Puppet::Node, " when initializing" do
     end
 end
 
-describe Puppet::Node, " when returning the environment" do
+describe Puppet::Node, "when returning the environment" do
     before do
         Puppet.settings.stubs(:value).with(:environments).returns("one,two")
         Puppet.settings.stubs(:value).with(:environment).returns("one")
@@ -90,7 +90,7 @@ describe Puppet::Node, " when returning the environment" do
     end
 end
 
-describe Puppet::Node, " when merging facts" do
+describe Puppet::Node, "when merging facts" do
     before do
         @node = Puppet::Node.new("testnode")
         Puppet::Node::Facts.stubs(:find).with(@node.name).returns(Puppet::Node::Facts.new(@node.name, "one" => "c", "two" => "b"))
@@ -131,7 +131,7 @@ describe Puppet::Node, " when merging facts" do
     end
 end
 
-describe Puppet::Node, " when indirecting" do
+describe Puppet::Node, "when indirecting" do
     it "should redirect to the indirection" do
         @indirection = stub 'indirection', :name => :node
         Puppet::Node.stubs(:indirection).returns(@indirection)
@@ -159,68 +159,92 @@ describe Puppet::Node do
     it "should provide a method for noting that the node has connected"
 end
 
-describe Puppet::Node, " when searching for nodes" do
+describe Puppet::Node, "when generating the list of names to search through" do
     before do
-        @searcher = Puppet::Node
+        @facts = Puppet::Node::Facts.new("foo", "hostname" => "yay", "domain" => "domain.com")
+        @node = Puppet::Node.new("foo")
+
+        Puppet::Node.stubs(:node_facts).returns @facts.values
+    end
+
+    it "should return an array of names" do
+        Puppet::Node.node_names("foo").should be_instance_of(Array)
+    end
+
+    it "should have the node's fqdn as the second name" do
+        Puppet::Node.node_names("foo.domain.com")[1].should == "yay.domain.com"
+    end
+
+    it "should set the fqdn to the node's 'fqdn' fact if it is available" do
+        @facts.values["fqdn"] = "boo.domain.com"
+        Puppet::Node.node_names("foo")[1].should == "boo.domain.com"
+    end
+
+    it "should set the fqdn to the node's hostname and domain if no fqdn is available" do
+        Puppet::Node.node_names("foo")[1].should == "yay.domain.com"
+    end
+
+    it "should contain an entry for each name available by stripping a segment of the fqdn" do
+        @facts.values["fqdn"] = "foo.deep.sub.domain.com"
+        Puppet::Node.node_names("foo")[2].should == "foo.deep.sub.domain"
+        Puppet::Node.node_names("foo")[3].should == "foo.deep.sub"
+    end
+
+    describe "and :node_name is set to 'cert'" do
+        before do
+            Puppet.settings.stubs(:value).with(:node_name).returns "cert"
+        end
+
+        it "should use the passed-in key as the first value" do
+            Puppet::Node.node_names("foo")[0].should == "foo"
+        end
+    end
+
+    describe "and :node_name is set to 'facter'" do
+        before do
+            Puppet.settings.stubs(:value).with(:node_name).returns "facter"
+        end
+
+        it "should use the node's 'hostname' fact as the first value" do
+            Puppet::Node.node_names("foo")[0].should == "yay"
+        end
+    end
+end
+
+describe Puppet::Node, "when searching for nodes" do
+    before do
         @facts = Puppet::Node::Facts.new("foo", "hostname" => "yay", "domain" => "domain.com")
         @node = Puppet::Node.new("foo")
         Puppet::Node::Facts.stubs(:find).with("foo").returns(@facts)
     end
 
+    it "should use the 'node_names' method to get its list of names to search" do
+        Puppet::Node.expects(:node_names).with{ |*args| args[0] == "foo" }.returns %w{a b}
+        Puppet::Node.stubs(:find)
+        Puppet::Node.find_by_any_name("foo")
+    end
+
     it "should return the first node found using the generated list of names" do
-        @searcher.expects(:find).with("foo").returns(nil)
-        @searcher.expects(:find).with("yay.domain.com").returns(@node)
-        @searcher.find_by_any_name("foo").should equal(@node)
-    end
-
-    it "should search for the node by its key first" do
-        names = []
-        @searcher.expects(:find).with do |name|
-            names << name
-            names == %w{foo}
-        end.returns(@node)
-        @searcher.find_by_any_name("foo").should equal(@node)
-    end
-
-    it "should search for the rest of the names inversely by length" do
-        names = []
-        @facts.values["fqdn"] = "longer.than.the.normal.fqdn.com"
-        @searcher.stubs(:find).with do |name|
-            names << name
-        end
-        @searcher.find_by_any_name("foo")
-        # Strip off the key
-        names.shift
-
-        # And the 'default'
-        names.pop
-
-        length = 100
-        names.each do |name|
-            (name.length < length).should be_true
-            length = name.length
-        end
+        Puppet::Node.expects(:node_names).returns %w{a b}
+        Puppet::Node.expects(:find).with("a").returns(nil)
+        Puppet::Node.expects(:find).with("b").returns(@node)
+        Puppet::Node.find_by_any_name("foo").should equal(@node)
     end
 
     it "should attempt to find a default node if no names are found" do
         names = []
-        @searcher.stubs(:find).with do |name|
+        Puppet::Node.stubs(:find).with do |name|
             names << name
         end.returns(nil)
-        @searcher.find_by_any_name("foo")
+        Puppet::Node.find_by_any_name("foo")
         names[-1].should == "default"
     end
 
-    it "should flush the node cache using the :filetimeout parameter" do
-        node2 = Puppet::Node.new("foo2")
-        Puppet[:filetimeout] = -1
-        # I couldn't get this to work with :expects
-        @searcher.stubs(:find).returns(@node, node2).then.raises(ArgumentError)
-        @searcher.find_by_any_name("foo").should equal(@node)
-        @searcher.find_by_any_name("foo").should equal(node2)
-    end
+    it "should set the node name to the provided key" do
+        Puppet::Node.stubs(:node_names).returns %w{a b}
+        Puppet::Node.stubs(:find).returns @node
 
-    after do
-        Puppet.settings.clear
+        @node.expects(:name=).with("foo")
+        Puppet::Node.find_by_any_name("foo")
     end
 end

@@ -41,13 +41,13 @@ describe Puppet::Network::Server do
 
         describe "when listening" do
             it "should be reachable on the specified address and port" do
-                @server = Puppet::Network::Server.new(@params.merge(:port => 34343))      
+                @server = Puppet::Network::Server.new(@params.merge(:port => 34343))            
                 @server.listen
-                lambda { TCPSocket.new('127.0.0.1', 34343) }.should_not raise_error      
+                lambda { TCPSocket.new('127.0.0.1', 34343) }.should_not raise_error            
             end
 
             it "should not allow multiple servers to listen on the same address and port" do
-                @server = Puppet::Network::Server.new(@params.merge(:port => 34343))      
+                @server = Puppet::Network::Server.new(@params.merge(:port => 34343))            
                 @server.listen
                 @server2 = Puppet::Network::Server.new(@params.merge(:port => 34343))
                 lambda { @server2.listen }.should raise_error

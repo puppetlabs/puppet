@@ -30,6 +30,7 @@ class TestClientCA < Test::Unit::TestCase
 
     # Make sure the ca defaults to specific ports and names
     def test_ca_server
+        Puppet.settings.stubs(:value).returns "eh"
         Puppet.settings.expects(:value).with(:ca_server).returns("myca")
         Puppet.settings.expects(:value).with(:ca_port).returns(321)
         Puppet.settings.stubs(:value).with(:http_proxy_host).returns(nil)

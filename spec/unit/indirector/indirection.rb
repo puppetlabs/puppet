@@ -6,7 +6,7 @@ require 'puppet/indirector/indirection'
 
 describe "Indirection Delegator", :shared => true do
     it "should create a request object with the appropriate method name and all of the passed arguments" do
-        request = stub 'request', :options => {}
+        request = stub 'request', :node => nil
 
         @indirection.expects(:request).with(@method, "mystuff", :one => :two).returns request
 
@@ -342,7 +342,7 @@ describe Puppet::Indirector::Indirection do
                 end
 
                 it "should use a request to save the object to the cache" do
-                    request = stub 'request', :instance => @instance, :options => {}
+                    request = stub 'request', :instance => @instance, :node => nil
 
                     @indirection.expects(:request).returns request
 
@@ -373,8 +373,8 @@ describe Puppet::Indirector::Indirection do
                 end
 
                 it "should use a request instance to search in and remove objects from the cache" do
-                    destroy = stub 'destroy_request', :key => "/my/key", :options => {}
-                    find = stub 'destroy_request', :key => "/my/key", :options => {}
+                    destroy = stub 'destroy_request', :key => "/my/key", :node => nil
+                    find = stub 'destroy_request', :key => "/my/key", :node => nil
 
                     @indirection.expects(:request).with(:destroy, "/my/key").returns destroy
                     @indirection.expects(:request).with(:find, "/my/key").returns find

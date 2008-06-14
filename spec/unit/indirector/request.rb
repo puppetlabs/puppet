@@ -43,6 +43,38 @@ describe Puppet::Indirector::Request do
         it "should use an empty options hash if nil was provided" do
             Puppet::Indirector::Request.new(:ind, :method, :key, nil).options.should == {}
         end
+
+        it "should default to a nil node" do
+            Puppet::Indirector::Request.new(:ind, :method, :key, nil).node.should be_nil
+        end
+
+        it "should set its node attribute if provided in the options" do
+            Puppet::Indirector::Request.new(:ind, :method, :key, :node => "foo.com").node.should == "foo.com"
+        end
+
+        it "should default to a nil ip" do
+            Puppet::Indirector::Request.new(:ind, :method, :key, nil).ip.should be_nil
+        end
+
+        it "should set its ip attribute if provided in the options" do
+            Puppet::Indirector::Request.new(:ind, :method, :key, :ip => "192.168.0.1").ip.should == "192.168.0.1"
+        end
+
+        it "should default to being unauthenticated" do
+            Puppet::Indirector::Request.new(:ind, :method, :key, nil).should_not be_authenticated
+        end
+
+        it "should set be marked authenticated if configured in the options" do
+            Puppet::Indirector::Request.new(:ind, :method, :key, :authenticated => "eh").should be_authenticated
+        end
+
+        it "should keep its options as a hash even if a node is specified" do
+            Puppet::Indirector::Request.new(:ind, :method, :key, :node => "eh").options.should be_instance_of(Hash)
+        end
+
+        it "should keep its options as a hash even if another option is specified" do
+            Puppet::Indirector::Request.new(:ind, :method, :key, :foo => "bar").options.should be_instance_of(Hash)
+        end
     end
 
     it "should look use the Indirection class to return the appropriate indirection" do

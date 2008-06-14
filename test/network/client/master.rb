@@ -454,17 +454,8 @@ end
 
         Puppet::Node::Facts.indirection.stubs(:save)
 
-        master = client = nil
-        assert_nothing_raised() {
-            master = Puppet::Network::Handler.master.new(
-                :Local => false
-            )
-        }
-        assert_nothing_raised() {
-            client = Puppet::Network::Client.master.new(
-                :Master => master
-            )
-        }
+        master = Puppet::Network::Handler.master.new( :Local => false)
+        client = Puppet::Network::Client.master.new( :Master => master)
 
         # Fake that it's local, so it creates the class file
         client.local = false
@@ -473,6 +464,7 @@ end
         client.expects(:setclasses).with do |array|
             array.length == 2 and array.include?("yaytest") and array.include?("bootest")
         end
+
         assert_nothing_raised {
             client.getconfig
         }

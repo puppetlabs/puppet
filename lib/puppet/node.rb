@@ -18,9 +18,8 @@ class Puppet::Node
     def self.find_by_any_name(key)
         return nil unless key
 
-        facts = node_facts(key)
         node = nil
-        names = node_names(key, facts)
+        names = node_names(key)
         names.each do |name|
             name = name.to_s if name.is_a?(Symbol)
             break if node = find(name)
@@ -34,13 +33,16 @@ class Puppet::Node
             end
         end
 
-        if node
-            node.names = names
+        return nil unless node
 
-            return node
-        else
-            return nil
-        end
+        node.names = names
+
+        # This is critical, because it forces our node's name to always
+        # be the key, which is nearly always the node's certificate.
+        # This is how the node instance is linked to the Facts instance,
+        # so it quite matters.
+        node.name = key
+        return node
     end
 
     private
@@ -60,33 +62,34 @@ class Puppet::Node
         facts ||= node_facts(key)
         names = []
 
-        if hostname = facts["hostname"]
-            unless hostname == key
-                names << hostname
+        # First, get the fqdn
+        unless fqdn = facts["fqdn"]
+            if domain = facts["domain"]
+                fqdn = facts["hostname"] + "." + facts["domain"]
             end
-        else
-            hostname = key
         end
 
-        if fqdn = facts["fqdn"]
-            hostname = fqdn
-            names << fqdn
+        # Now that we (might) have the fqdn, add each piece to the name
+        # list to search, in order of longest to shortest.
+        if fqdn
+            list = fqdn.split(".")
+            tmp = []
+            list.each_with_index do |short, i|
+                tmp << list[0..i].join(".")
+            end
+            names += tmp.reverse
         end
-
-        # Make sure both the fqdn and the short name of the
-        # host can be used in the manifest
-        if hostname =~ /\./
-            names << hostname.sub(/\..+/,'')
-        elsif domain = facts['domain']
-            names << hostname + "." + domain
-        end
-
-        # Sort the names inversely by name length.
-        names.sort! { |a,b| b.length <=> a.length }
 
         # And make sure the key is first, since that's the most
         # likely usage.
-        ([key] + names).uniq
+        #   The key is usually the Certificate CN, but it can be
+        # set to the 'facter' hostname instead.
+        if Puppet[:node_name] == 'cert'
+            names.unshift key
+        else
+            names.unshift facts["hostname"]
+        end
+        names.uniq
     end
 
     public

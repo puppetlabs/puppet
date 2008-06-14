@@ -28,66 +28,7 @@
 require 'puppet/provider/package'
 
 Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Package do
-    desc "Package management based on Apple's Installer.app and DiskUtility.app
-    
-Author: Jeff McCune <jeff@northstarlabs.net>
-
-Please direct questions about this provider to the puppet-users mailing list.
-
-This package works by checking the contents of a DMG image for Apple pkg or
-mpkg files. Any number of pkg or mpkg files may exist in the root directory of
-the DMG file system. Sub directories are not checked for packages.
-
-This provider always assumes the label (formerly called 'name') attribute
-declared in the manifest will always exactly match the file name (without
-path) of the DMG file itself. Therefore, if you want to install packages in
-'Foobar.pkg.dmg' you must explicitly specify the label::
-
-    package { Foobar.pkg.dmg: ensure => installed, provider => pkgdmg }
-
-Only the dmg file name itself is used when puppet determines if the packages
-contained within are currently installed. For example, if a package resource
-named 'Foobar.pkg.dmg' is named for installation and contains multiple
-packages, this provider will install all packages in the root directory of
-this file system, then create a small cookie for the whole bundle, located at
-/var/db/.puppet_pkgdmg_installed_Foobar.pkg.dmg
-
-As a result, if you change the contents of the DMG file in any way, Puppet
-will not update or re-install the packages contained within unless you change
-the file name of the DMG wrapper itself. Therefore, if you use this provider,
-I recommend you name the DMG wrapper files in a manner that lends itself to
-incremental version changes. I include some version or date string in the DMG
-name, like so::
-
-    Firefox-2.0.0.3-1.pkg.dmg
-
-If I realize I've mis-packaged this DMG, then I have the option to increment
-the package version, yielding Firefox-2.0.0.3-2.pkg.dmg.
-
-This provider allows you to host DMG files within an FTP or HTTP server. This
-is primarily how the author provider distributes software. Any URL mechanism
-curl or Ruby's open-uri module supports is supported by this provider. Curl
-supported URL's yield much faster data throughput than open-uri, so I
-recommend HTTP, HTTPS, or FTP for source package repositories.
-
-Because the provider assumes packages will be transfered via CURL, a two stage
-process occurs. First, if a URL is detected, curl is invoked to transfer the
-file into a temporary directory. If no URL is present, the provider skips
-straight to step 2. In step two, the source file is mounted, then packages
-installed, and finally the DMG file is removed.
-
-If this is a problem for you, please patch the code, or bug Jeff to fix this.
-
-Example usage::
-
-    package { Thunderbird-2.0.0.4-1.pkg.dmg:
-      provider => pkgdmg, ensure => present
-      source => 'http://0.0.0.0:8000/packages/Thunderbird-2.0.0.4-1.pkg.dmg',
-    }
-
-**WARNING**: Because I assume files will be downloaded to /tmp, the current
-implementation attempts to delete DMG files if you install directly from the
-file system and not via a URL method."
+    desc "Package management based on Apple's Installer.app and DiskUtility.app.  This package works by checking the contents of a DMG image for Apple pkg or mpkg files. Any number of pkg or mpkg files may exist in the root directory of the DMG file system. Sub directories are not checked for packages.  See `the wiki docs </trac/puppet/wiki/DmgPackages>` for more detail."
   
     confine :exists => "/Library/Receipts"
     commands :installer => "/usr/sbin/installer"

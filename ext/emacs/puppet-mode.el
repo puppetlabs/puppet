@@ -103,15 +103,16 @@ that array, else return nil."
       (let ((opoint (point))
             (apoint (search-backward "[" nil t)))
         (when apoint
-          ;; An array opens before point.  If it doesn't close before
-          ;; point, then point must be in it.
-          ;; ### TODO: of course, the '[' could be in a string literal,
-          ;; ### in which case this whole idea is bogus.  But baby
-          ;; ### steps, baby steps.  A more robust strategy might be
-          ;; ### to walk backwards by sexps, until hit a wall, then
-          ;; ### inspect the nature of that wall.
-          (if (= (puppet-count-matches "\\]" apoint opoint) 0)
-              apoint))))))
+          ;; This is a bit of a hack and doesn't allow for strings.  We really
+          ;; want to parse by sexps at some point.
+          (let ((close-brackets (puppet-count-matches "]" apoint opoint))
+                (open-brackets 0))
+            (while (and apoint (> close-brackets open-brackets))
+              (setq apoint (search-backward "[" nil t))
+              (when apoint
+                (setq close-brackets (puppet-count-matches "]" apoint opoint))
+                (setq open-brackets (1+ open-brackets)))))
+          apoint)))))
 
 (defun puppet-in-include ()
   "If point is in a continued list of include statements, return the position
@@ -206,14 +207,14 @@ of the initial include plus puppet-include-indent."
              ;; Brace or paren not on a line by itself will be indented one
              ;; level too much, but don't catch cases where the block is
              ;; started and closed on the same line.
-             ((looking-at "^[^\({]*[\)}]\\s-*$")
+             ((looking-at "^[^\n\({]*[\)}]\\s-*$")
               (setq cur-indent (- (current-indentation) puppet-indent-level))
               (setq not-indented nil))
 
              ;; Indent by one level more than the start of our block.  We lose
              ;; if there is more than one block opened and closed on the same
              ;; line but it's still unbalanced; hopefully people don't do that.
-             ((looking-at "^.*{[^}]*$")
+             ((looking-at "^.*{[^\n}]*$")
               (setq cur-indent (+ (current-indentation) puppet-indent-level)) 
               (setq not-indented nil))
 
@@ -225,7 +226,7 @@ of the initial include plus puppet-include-indent."
              ;; Semicolon ends a block for a resource when multiple resources
              ;; are defined in the same block, but try not to get the case of
              ;; a complete resource on a single line wrong.
-             ((looking-at "^\\([^'\":\n]\\|\"[^\"]*\"\\|'[^']'\\)**;\\s-*$")
+             ((looking-at "^\\([^'\":\n]\\|\"[^\n\"]*\"\\|'[^\n']'\\)**;\\s-*$")
               (setq cur-indent (- (current-indentation) puppet-indent-level))
               (setq not-indented nil))
 
@@ -306,7 +307,6 @@ of the initial include plus puppet-include-indent."
      ;; variables
      '("\\(^\\|[^_:.@$]\\)\\b\\(true\\|false\\)\\>"
        2 font-lock-variable-name-face)
-     ;; variables
      '("\\(\\$\\([^a-zA-Z0-9 \n]\\|[0-9]\\)\\)\\W"
        1 font-lock-variable-name-face)
      '("\\(\\$\\|@\\|@@\\)\\(\\w\\|_\\|:\\)+"
@@ -314,8 +314,8 @@ of the initial include plus puppet-include-indent."
      ;; usage of types
      '("^\\s *\\([a-zA-Z_-]+\\)\\s +{"
        1 font-lock-type-face)
-     ;; overrides
-     '("^\\s +\\([a-zA-Z_-]+\\)\\["
+     ;; overrides and type references
+     '("\\s +\\([A-Z][a-zA-Z_:-]*\\)\\["
        1 font-lock-type-face)
      ;; general delimited string
      '("\\(^\\|[[ \t\n<+(,=]\\)\\(%[xrqQwW]?\\([^<[{(a-zA-Z0-9 \n]\\)[^\n\\\\]*\\(\\\\.[^\n\\\\]*\\)*\\(\\3\\)\\)"

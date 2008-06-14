@@ -3,10 +3,29 @@ require 'puppet/indirector'
 # Provide any attributes or functionality needed for indirected
 # instances.
 class Puppet::Indirector::Request
-    attr_accessor :indirection_name, :key, :method, :options, :instance
+    attr_accessor :indirection_name, :key, :method, :options, :instance, :node, :ip, :authenticated
+
+    # Is this an authenticated request?
+    def authenticated?
+        # Double negative, so we just get true or false
+        ! ! authenticated
+    end
 
     def initialize(indirection_name, method, key, options = {})
-        @indirection_name, @method, @options = indirection_name, method, (options || {})
+        options ||= {}
+        raise ArgumentError, "Request options must be a hash, not %s" % options.class unless options.is_a?(Hash)
+
+        @indirection_name, @method = indirection_name, method
+
+        @options = options.inject({}) do |result, ary|
+            param, value = ary
+            if respond_to?(param.to_s + "=")
+                send(param.to_s + "=", value)
+            else
+                result[param] = value
+            end
+            result
+        end
 
         if key.is_a?(String) or key.is_a?(Symbol)
             @key = key
@@ -14,8 +33,6 @@ class Puppet::Indirector::Request
             @instance = key
             @key = @instance.name
         end
-
-        raise ArgumentError, "Request options must be a hash, not %s" % @options.class unless @options.is_a?(Hash)
     end
 
     # Look up the indirection based on the name provided.
