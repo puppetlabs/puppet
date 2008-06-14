@@ -50,23 +50,8 @@ class Puppet::Parser::Interpreter
     # Return the parser for a specific environment.
     def parser(environment)
         if ! @parsers[environment] or @parsers[environment].reparse?
-            # This will throw an exception if it does not succeed.  We only
-            # want to get rid of the old parser if we successfully create a new
-            # one.
-            begin
-                tmp = create_parser(environment)
-                @parsers[environment].clear if @parsers[environment]
-                @parsers[environment] = tmp
-            rescue => detail
-                # If a parser already exists, than assume that we logged the
-                # exception elsewhere and reuse the parser.  If one doesn't
-                # exist, then reraise.
-                if @parsers[environment]
-                    Puppet.err(detail.to_s + "; using previously parsed manifests")
-                else
-                    raise detail
-                end
-            end
+            # This will throw an exception if it does not succeed.
+            @parsers[environment] = create_parser(environment)
         end
         @parsers[environment]
     end

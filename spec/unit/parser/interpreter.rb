@@ -84,7 +84,6 @@ describe Puppet::Parser::Interpreter do
                 oldparser = mock('oldparser')
                 newparser = mock('newparser')
                 oldparser.expects(:reparse?).returns(true)
-                oldparser.expects(:clear)
 
                 @interp.expects(:create_parser).with(:myenv).returns(oldparser)
                 @interp.send(:parser, :myenv).should equal(oldparser)
@@ -92,36 +91,16 @@ describe Puppet::Parser::Interpreter do
                 @interp.send(:parser, :myenv).should equal(newparser)
             end
 
-            it "should keep the old parser if a new parser cannot be created" do
+            it "should raise an exception if a new parser cannot be created" do
                 # Get the first parser in the hash.
                 @interp.expects(:create_parser).with(:myenv).returns(@parser)
                 @interp.send(:parser, :myenv).should equal(@parser)
 
-                # Have it indicate something has changed
                 @parser.expects(:reparse?).returns(true)
 
-                # But fail to create a new parser
-                @interp.expects(:create_parser).with(:myenv).raises(ArgumentError)
+                @interp.expects(:create_parser).with(:myenv).raises(Puppet::Error, "Could not parse")
 
-                # And make sure we still get the old valid parser
-                @interp.send(:parser, :myenv).should equal(@parser)
-            end
-
-            it "should log syntax errors when using the old parser" do
-                # Get the first parser in the hash.
-                @interp.stubs(:create_parser).with(:myenv).returns(@parser)
-                @interp.send(:parser, :myenv)
-
-                # Have it indicate something has changed
-                @parser.stubs(:reparse?).returns(true)
-
-                # But fail to create a new parser
-                @interp.stubs(:create_parser).with(:myenv).raises(ArgumentError)
-
-                Puppet.expects(:err)
-
-                # And make sure we still get the old valid parser
-                @interp.send(:parser, :myenv)
+                lambda { @interp.parser(:myenv) }.should raise_error(Puppet::Error) 
             end
         end
     end
