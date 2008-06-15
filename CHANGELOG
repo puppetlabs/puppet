@@ -3,6 +3,8 @@
     LDAP nodes now use the certificate name, the short name, and 'default',
     but external nodes just use the certificate name and any custom terminus
     types will use just the certificate name.
+    
+    Fixed #1201 - all external node attributes are converted to strings.
 
     Adding a ResourceTemplate class for using templates directly
     within resources (i.e., client-side templates).  This would really

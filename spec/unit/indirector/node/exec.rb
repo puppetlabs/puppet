@@ -49,6 +49,12 @@ describe Puppet::Node::Exec do
             @searcher.find(@request)
         end
 
+        it "should convert all parameters into strings" do
+            @result[:parameters] = {"a" => true, "c" => 100}
+            @node.expects(:parameters=).with "a" => "true", "c" => "100"
+            @searcher.find(@request)
+        end
+
         it "should set the resulting classes as the node classes" do
             @result[:classes] = %w{one two}
             @node.expects(:classes=).with %w{one two}
