@@ -35,6 +35,10 @@ describe Puppet::SSL::CertificateRequest do
             @request.name.should == "myname"
         end
 
+        it "should downcase its name" do
+            @class.new("MyName").name.should == "myname"
+        end
+
         it "should have a content attribute" do
             @request.should respond_to(:content)
         end

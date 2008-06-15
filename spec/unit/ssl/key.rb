@@ -38,6 +38,10 @@ describe Puppet::SSL::Key do
             key.password_file.should == "/ca/pass"
         end
 
+        it "should downcase its name" do
+            @class.new("MyName").name.should == "myname"
+        end
+
         it "should set its password file to the default password file if it is not the CA key" do
             Puppet.settings.stubs(:value).returns "whatever"
             Puppet.settings.stubs(:value).with(:passfile).returns "/normal/pass"

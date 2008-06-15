@@ -1,3 +1,6 @@
+    Fixing #1168 for REST -- all ssl classes downcase their names.
+    This is a much cleaner fix than the xmlrpc version, thankfully. :)
+
     Added a boolean 'crl' default value.  Now we have a location for
     the CA CRL and the host CRL, and then a setting for configuring
     whether we should even use a CRL.  This way we aren't trying to

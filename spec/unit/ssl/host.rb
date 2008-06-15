@@ -162,6 +162,15 @@ describe Puppet::SSL::Host do
             Puppet::SSL::Host.new.name.should == "myname"
         end
 
+        it "should downcase a passed in name" do
+            Puppet::SSL::Host.new("Host.Domain.Com").name.should == "host.domain.com"
+        end
+
+        it "should downcase the certname if it's used" do
+            Puppet.settings.expects(:value).with(:certname).returns "Host.Domain.Com"
+            Puppet::SSL::Host.new().name.should == "host.domain.com"
+        end
+
         it "should indicate that it is a CA host if its name matches the ca_name constant" do
             Puppet::SSL::Host.stubs(:ca_name).returns "myca"
             Puppet::SSL::Host.new("myca").should be_ca
