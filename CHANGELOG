@@ -1,3 +1,9 @@
+    Removed support for the 'node_name' setting in LDAP and external node lookups.
+    Also removed support for 'default' nodes in external nodes.
+    LDAP nodes now use the certificate name, the short name, and 'default',
+    but external nodes just use the certificate name and any custom terminus
+    types will use just the certificate name.
+
     Adding a ResourceTemplate class for using templates directly
     within resources (i.e., client-side templates).  This would really
     only be used for composite resources that pass the results of the
