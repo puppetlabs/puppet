@@ -1,14 +1,16 @@
 require 'puppet/indirector/terminus'
 
 class Puppet::Indirector::Ldap < Puppet::Indirector::Terminus
-    # Perform our ldap search and process the result.
-    def find(request)
+    # We split this apart so it's easy to call multiple times with different names.
+    def entry2hash(name)
         # We have to use 'yield' here because the LDAP::Entry objects
         # get destroyed outside the scope of the search, strangely.
-        ldapsearch(request.key) { |entry| return process(request.key, entry) }
+        ldapsearch(name) { |entry| return process(name, entry) }
+    end
 
-        # Return nil if we haven't found something.
-        return nil
+    # Perform our ldap search and process the result.
+    def find(request)
+        return entry2hash(request.key) || nil
     end
 
     # Process the found entry.  We assume that we don't just want the
