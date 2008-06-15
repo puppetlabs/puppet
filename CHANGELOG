@@ -1,3 +1,8 @@
+    Fixing #1168 (for 0.24.x) -- automatically downcasing the fqdn.
+    Also requiring that passed in certnames be downcased; the setting
+    system isn't currently flexible enough to automatically downcase
+    it for the user.
+
     Adding a ResourceTemplate class for using templates directly
     within resources (i.e., client-side templates).  This would really
     only be used for composite resources that pass the results of the
