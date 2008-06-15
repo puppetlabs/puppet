@@ -1,3 +1,5 @@
+    Fixed #1201 - all external node attributes are converted to strings.
+
     Adding a ResourceTemplate class for using templates directly
     within resources (i.e., client-side templates).  This would really
     only be used for composite resources that pass the results of the
