@@ -89,7 +89,7 @@ class Puppet::Node::Catalog::Compiler < Puppet::Indirector::Code
         #    key = client
         #end
 
-        return nil unless node = Puppet::Node.find_by_any_name(key)
+        return nil unless node = Puppet::Node.find(key)
 
         # Add any external data to the node.
         add_node_data(node)

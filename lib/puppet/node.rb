@@ -13,13 +13,6 @@ class Puppet::Node
     indirects :node, :terminus_setting => :node_terminus, :doc => "Where to find node information.
         A node is composed of its name, its facts, and its environment."
 
-    # Retrieve a node from the node source, with some additional munging
-    # thrown in for kicks.
-    def self.find_by_any_name(key)
-        return nil unless key
-        find(key)
-    end
-
     attr_accessor :name, :classes, :parameters, :source, :ipaddress
     attr_reader :time
 

@@ -23,8 +23,8 @@ describe Puppet::Node::Catalog::Compiler do
         node1 = stub 'node1', :merge => nil
         node2 = stub 'node2', :merge => nil
         compiler.stubs(:compile)
-        Puppet::Node.stubs(:find_by_any_name).with('node1').returns(node1)
-        Puppet::Node.stubs(:find_by_any_name).with('node2').returns(node2)
+        Puppet::Node.stubs(:find).with('node1').returns(node1)
+        Puppet::Node.stubs(:find).with('node2').returns(node2)
 
         compiler.find(stub('request', :key => 'node1', :options => {}))
         compiler.find(stub('node2request', :key => 'node2', :options => {}))
@@ -69,7 +69,7 @@ describe Puppet::Node::Catalog::Compiler, " when finding nodes" do
 
     it "should look node information up via the Node class with the provided key" do
         @node.stubs :merge 
-        Puppet::Node.expects(:find_by_any_name).with(@name).returns(@node)
+        Puppet::Node.expects(:find).with(@name).returns(@node)
         @compiler.find(@request)
     end
 end
@@ -77,7 +77,6 @@ end
 describe Puppet::Node::Catalog::Compiler, " after finding nodes" do
     before do
         Puppet.expects(:version).returns(1)
-        Puppet.settings.stubs(:value).with(:node_name).returns("cert")
         Facter.expects(:value).with('fqdn').returns("my.server.com")
         Facter.expects(:value).with('ipaddress').returns("my.ip.address")
         @compiler = Puppet::Node::Catalog::Compiler.new
@@ -85,7 +84,7 @@ describe Puppet::Node::Catalog::Compiler, " after finding nodes" do
         @node = mock 'node'
         @request = stub 'request', :key => @name, :options => {}
         @compiler.stubs(:compile)
-        Puppet::Node.stubs(:find_by_any_name).with(@name).returns(@node)
+        Puppet::Node.stubs(:find).with(@name).returns(@node)
     end
 
     it "should add the server's Puppet version to the node's parameters as 'serverversion'" do
@@ -102,13 +101,6 @@ describe Puppet::Node::Catalog::Compiler, " after finding nodes" do
         @node.expects(:merge).with { |args| args["serverip"] == "my.ip.address" }
         @compiler.find(@request)
     end
-
-    # LAK:TODO This is going to be difficult, because this whole process is so
-    # far removed from the actual connection that the certificate information
-    # will be quite hard to come by, dum by, gum by.
-    it "should search for the name using the client certificate's DN if the :node_name setting is set to 'cert'" do
-        pending "Probably will end up in the REST work"
-    end
 end
 
 describe Puppet::Node::Catalog::Compiler, " when creating catalogs" do
@@ -122,18 +114,18 @@ describe Puppet::Node::Catalog::Compiler, " when creating catalogs" do
         @node = Puppet::Node.new @name
         @node.stubs(:merge)
         @request = stub 'request', :key => @name, :options => {}
-        Puppet::Node.stubs(:find_by_any_name).with(@name).returns(@node)
+        Puppet::Node.stubs(:find).with(@name).returns(@node)
     end
 
     it "should directly use provided nodes" do
-        Puppet::Node.expects(:find_by_any_name).never
+        Puppet::Node.expects(:find).never
         @compiler.interpreter.expects(:compile).with(@node)
         @request.stubs(:options).returns(:node => @node)
         @compiler.find(@request)
     end
 
     it "should fail if no node is passed and none can be found" do
-        Puppet::Node.stubs(:find_by_any_name).with(@name).returns(nil)
+        Puppet::Node.stubs(:find).with(@name).returns(nil)
         proc { @compiler.find(@request) }.should raise_error(ArgumentError)
     end
 
