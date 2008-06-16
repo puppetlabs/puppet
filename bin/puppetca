@@ -171,8 +171,9 @@ end
 # Now parse the config
 Puppet.parse_config
 
-Puppet.genconfig
-Puppet.genmanifest
+if Puppet.settings.print_configs?
+    exit(Puppet.settings.print_configs ? 0 : 1)
+end
 
 begin
     ca = Puppet::SSLCertificates::CA.new()

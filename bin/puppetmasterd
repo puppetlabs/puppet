@@ -182,8 +182,9 @@ unless options[:setdest]
     Puppet::Util::Log.newdestination(:syslog)
 end
 
-Puppet.genconfig
-Puppet.genmanifest
+if Puppet.settings.print_configs?
+    exit(Puppet.settings.print_configs ? 0 : 1)
+end
 
 # A temporary solution, to at least make the master work for now.
 Puppet::Node::Facts.terminus_class = :yaml
