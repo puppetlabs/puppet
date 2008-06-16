@@ -53,7 +53,22 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
         unless file = @resource[:source]
             raise ArgumentError, "You cannot install dpkg packages without a source"
         end
-        dpkg "-i", file
+        
+        args = []
+
+        if config = @resource[:configfiles]
+            case config
+            when :keep
+                args << '--force-confold'
+            when :replace
+                args << '--force-confnew'
+            else
+                raise Puppet::Error, "Invalid 'configfiles' value %s" % config
+            end
+        end
+        args << '-i' << file
+
+        dpkg(*args)
     end
 
     def update

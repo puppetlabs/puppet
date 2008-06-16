@@ -43,19 +43,20 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     # a hash with entries :instance => fully versioned package name, and 
     # :ensure => version-release
     def query
-        unless @property_hash[:epoch]
-            cmd = ["-q", @resource[:name], "--nosignature", "--nodigest", "--qf", "#{NEVRAFORMAT}\n"]
+        #NOTE: Prior to a fix for issue 1243, this method potentially returned a cached value
+        #IF YOU CALL THIS METHOD, IT WILL CALL RPM
+        #Use get(:property) to check if cached values are available 
+        cmd = ["-q", @resource[:name], "--nosignature", "--nodigest", "--qf", "#{NEVRAFORMAT}\n"]
 
-            begin
-                output = rpm(*cmd)
-            rescue Puppet::ExecutionFailure
-                return nil
-            end
-            
-            # FIXME: We could actually be getting back multiple packages
-            # for multilib
-            @property_hash.update(self.class.nevra_to_hash(output))
+        begin
+            output = rpm(*cmd)
+        rescue Puppet::ExecutionFailure
+            return nil
         end
+        
+        # FIXME: We could actually be getting back multiple packages
+        # for multilib
+        @property_hash.update(self.class.nevra_to_hash(output))
 
         return @property_hash.dup
     end

@@ -1,3 +1,4 @@
+0.25.?
     Fixing #1168 for REST -- all ssl classes downcase their names.
     This is a much cleaner fix than the xmlrpc version, thankfully. :)
 
@@ -5,6 +6,15 @@
     the CA CRL and the host CRL, and then a setting for configuring
     whether we should even use a CRL.  This way we aren't trying to
     set file paths to 'false' to disable the CRL.
+
+0.24.?
+    Removed support for the 'node_name' setting in LDAP and external node lookups.
+    Also removed support for 'default' nodes in external nodes.
+    LDAP nodes now use the certificate name, the short name, and 'default',
+    but external nodes just use the certificate name and any custom terminus
+    types will use just the certificate name.
+    
+    Fixed #1201 - all external node attributes are converted to strings.
 
     Adding a ResourceTemplate class for using templates directly
     within resources (i.e., client-side templates).  This would really

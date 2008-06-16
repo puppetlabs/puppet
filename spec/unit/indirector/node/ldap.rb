@@ -21,12 +21,30 @@ describe Puppet::Node::Ldap do
             @searcher.stubs(:search_base).returns(:yay)
             @searcher.stubs(:search_filter).returns(:filter)
 
-            @node = mock 'node'
+            @name = "mynode.domain.com"
+            @node = stub 'node', :name => @name
             @node.stubs(:fact_merge)
-            @name = "mynode"
             Puppet::Node.stubs(:new).with(@name).returns(@node)
 
             @request = stub 'request', :key => @name
+        end
+
+        it "should search first for the provided key" do
+            @searcher.expects(:entry2hash).with("mynode.domain.com").returns({})
+            @searcher.find(@request)
+        end
+
+        it "should search for the short version of the provided key if the key looks like a hostname and no results are found for the key itself" do
+            @searcher.expects(:entry2hash).with("mynode.domain.com").returns(nil)
+            @searcher.expects(:entry2hash).with("mynode").returns({})
+            @searcher.find(@request)
+        end
+
+        it "should search for default information if no information can be found for the key" do
+            @searcher.expects(:entry2hash).with("mynode.domain.com").returns(nil)
+            @searcher.expects(:entry2hash).with("mynode").returns(nil)
+            @searcher.expects(:entry2hash).with("default").returns({})
+            @searcher.find(@request)
         end
 
         it "should return nil if no results are found in ldap" do

@@ -30,6 +30,13 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
     def create_node(name, result)
         node = Puppet::Node.new(name)
         set = false
+        if current = result[:parameters]
+            result[:parameters] = current.inject({}) do |strings, ary|
+                param, value = ary
+                strings[param] = value.to_s
+                strings
+            end
+        end
         [:parameters, :classes, :environment].each do |param|
             if value = result[param]
                 node.send(param.to_s + "=", value)
