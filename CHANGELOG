@@ -1,10 +1,17 @@
-    Removed support for the 'node_name' setting in LDAP and external node lookups.
+    Removed support for the 'node_name' setting in LDAP and external node 
+    lookups.
+
     Also removed support for 'default' nodes in external nodes.
     LDAP nodes now use the certificate name, the short name, and 'default',
     but external nodes just use the certificate name and any custom terminus
     types will use just the certificate name.
     
     Fixed #1201 - all external node attributes are converted to strings.
+
+    Fixing #1168 (for 0.24.x) -- automatically downcasing the fqdn.
+    Also requiring that passed in certnames be downcased; the setting
+    system isn't currently flexible enough to automatically downcase
+    it for the user.
 
     Adding a ResourceTemplate class for using templates directly
     within resources (i.e., client-side templates).  This would really
