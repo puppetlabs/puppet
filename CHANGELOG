@@ -1,4 +1,6 @@
 0.24.?
+    Fixed #1195 - Updated Gentoo init scripts
+
     Fixed #1367 - Updated Rakefile for new daily builds
 
     Fixed #1370 - removed test/util/loadedfile.rb tests
