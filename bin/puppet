@@ -187,7 +187,7 @@ facts = Puppet::Node::Facts.find("me")
 facts.name = facts.values["hostname"]
 
 # Find our Node
-node = Puppet::Node.find_by_any_name(facts.name)
+node = Puppet::Node.find(facts.name)
 
 # Merge in the facts.
 node.merge(facts.values)
