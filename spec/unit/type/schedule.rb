@@ -2,8 +2,6 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-require 'puppet/type/schedule'
-
 module ScheduleTesting
 
     def format(time)
@@ -41,20 +39,20 @@ module ScheduleTesting
 
 end
 
-describe Puppet::Type::Schedule do
+describe Puppet::Type.type(:schedule) do
 
     before :each do
       Puppet.settings.stubs(:value).with(:ignoreschedules).returns(false)
 
-      @schedule = Puppet::Type::Schedule.create(:name => "testing")
+      @schedule = Puppet::Type.type(:schedule).create(:name => "testing")
     end
 
     after :each do
-        Puppet::Type::Schedule.clear
+        Puppet::Type.type(:schedule).clear
     end
 
 
-    describe Puppet::Type::Schedule do
+    describe Puppet::Type.type(:schedule) do
         include ScheduleTesting
 
         it "should default to :distance for period-matching" do
@@ -71,26 +69,26 @@ describe Puppet::Type::Schedule do
         end
     end
 
-    describe Puppet::Type::Schedule, "when producing default schedules" do
+    describe Puppet::Type.type(:schedule), "when producing default schedules" do
         include ScheduleTesting
 
         %w{hourly daily weekly monthly never}.each do |period|
             period = period.to_sym
             it "should produce a #{period} schedule with the period set appropriately" do
-                schedules = Puppet::Type::Schedule.mkdefaultschedules
-                schedules.find { |s| s[:name] == period.to_s and s[:period] == period }.should be_instance_of(Puppet::Type::Schedule)
+                schedules = Puppet::Type.type(:schedule).mkdefaultschedules
+                schedules.find { |s| s[:name] == period.to_s and s[:period] == period }.should be_instance_of(Puppet::Type.type(:schedule))
             end
         end
 
         it "should produce a schedule named puppet with a period of hourly and a repeat of 2" do
-            schedules = Puppet::Type::Schedule.mkdefaultschedules
+            schedules = Puppet::Type.type(:schedule).mkdefaultschedules
             schedules.find { |s|
                 s[:name] == "puppet" and s[:period] == :hourly and s[:repeat] == 2
-            }.should be_instance_of(Puppet::Type::Schedule)
+            }.should be_instance_of(Puppet::Type.type(:schedule))
         end
     end
 
-    describe Puppet::Type::Schedule, "when matching ranges" do
+    describe Puppet::Type.type(:schedule), "when matching ranges" do
         include ScheduleTesting
 
         it "should match when the start time is before the current time and the end time is after the current time" do
@@ -109,7 +107,7 @@ describe Puppet::Type::Schedule do
         end
     end
 
-    describe Puppet::Type::Schedule, "when matching hourly by distance" do
+    describe Puppet::Type.type(:schedule), "when matching hourly by distance" do
         include ScheduleTesting
 
         before do
@@ -130,7 +128,7 @@ describe Puppet::Type::Schedule do
         end
     end
 
-    describe Puppet::Type::Schedule, "when matching daily by distance" do
+    describe Puppet::Type.type(:schedule), "when matching daily by distance" do
         include ScheduleTesting
 
         before do
@@ -151,7 +149,7 @@ describe Puppet::Type::Schedule do
         end
     end
 
-    describe Puppet::Type::Schedule, "when matching weekly by distance" do
+    describe Puppet::Type.type(:schedule), "when matching weekly by distance" do
         include ScheduleTesting
 
         before do
@@ -172,7 +170,7 @@ describe Puppet::Type::Schedule do
         end
     end
 
-    describe Puppet::Type::Schedule, "when matching monthly by distance" do
+    describe Puppet::Type.type(:schedule), "when matching monthly by distance" do
         include ScheduleTesting
 
         before do
@@ -193,7 +191,7 @@ describe Puppet::Type::Schedule do
         end
     end
 
-    describe Puppet::Type::Schedule, "when matching hourly by number" do
+    describe Puppet::Type.type(:schedule), "when matching hourly by number" do
         include ScheduleTesting
 
         before do
@@ -226,7 +224,7 @@ describe Puppet::Type::Schedule do
         end
     end
 
-    describe Puppet::Type::Schedule, "when matching daily by number" do
+    describe Puppet::Type.type(:schedule), "when matching daily by number" do
         include ScheduleTesting
 
         before do
@@ -261,7 +259,7 @@ describe Puppet::Type::Schedule do
         end
     end
 
-    describe Puppet::Type::Schedule, "when matching weekly by number" do
+    describe Puppet::Type.type(:schedule), "when matching weekly by number" do
         include ScheduleTesting
 
         before do
@@ -288,7 +286,7 @@ describe Puppet::Type::Schedule do
         end
     end
 
-    describe Puppet::Type::Schedule, "when matching monthly by number" do
+    describe Puppet::Type.type(:schedule), "when matching monthly by number" do
         include ScheduleTesting
 
         before do
@@ -315,7 +313,7 @@ describe Puppet::Type::Schedule do
         end
     end
 
-    describe Puppet::Type::Schedule, "when matching with a repeat greater than one" do
+    describe Puppet::Type.type(:schedule), "when matching with a repeat greater than one" do
         include ScheduleTesting
 
         before do

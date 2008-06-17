@@ -2,8 +2,6 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-require 'puppet/type/exec'
-
 module ExecModuleTesting
     def create_resource(command, output, exitstatus)
         @user_name = 'some_user_name'
@@ -30,7 +28,7 @@ module ExecModuleTesting
     end
 end
 
-describe Puppet::Type::Exec, " when execing" do
+describe Puppet::Type.type(:exec), " when execing" do
     include ExecModuleTesting
 
     it "should use the 'run_and_capture' method to exec" do
@@ -69,7 +67,7 @@ describe Puppet::Type::Exec, " when execing" do
 end
 
 
-describe Puppet::Type::Exec, " when logoutput=>on_failure is set," do
+describe Puppet::Type.type(:exec), " when logoutput=>on_failure is set," do
     include ExecModuleTesting
 
     it "should log the output on failure" do
