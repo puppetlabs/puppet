@@ -63,6 +63,10 @@ class Puppet::Module
             return template
         end
 
+        # If we can find the template in :templatedir, we return that.
+        td_file = File.join(Puppet.settings.value(:templatedir, environment), template)
+        return td_file if File.exists?(td_file)
+          
         path, file = split_path(template)
 
         # Because templates don't have an assumed template name, like manifests do,
@@ -76,7 +80,7 @@ class Puppet::Module
         if mod
             return mod.template(file)
         else
-            return File.join(Puppet.settings.value(:templatedir, environment), template)
+            return td_file # Return this anyway, since we're going to fail.
         end
     end
 
