@@ -1,4 +1,8 @@
 0.24.?
+    Fixed #1367 - Updated Rakefile for new daily builds
+
+    Fixed #1370 - removed test/util/loadedfile.rb tests
+
     Fixed #1360 - allowdupe works on groups again.
 
     Fixed #1369 - the init service provider now supports HP-UX.
