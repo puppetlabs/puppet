@@ -2,103 +2,101 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-require 'puppet/type/package'
-
-describe Puppet::Type::Package do
+describe Puppet::Type.type(:package) do
     it "should have an :installable feature that requires the :install method" do
-        Puppet::Type::Package.provider_feature(:installable).methods.should == [:install]
+        Puppet::Type.type(:package).provider_feature(:installable).methods.should == [:install]
     end
 
     it "should have an :uninstallable feature that requires the :uninstall method" do
-        Puppet::Type::Package.provider_feature(:uninstallable).methods.should == [:uninstall]
+        Puppet::Type.type(:package).provider_feature(:uninstallable).methods.should == [:uninstall]
     end
 
     it "should have an :upgradeable feature that requires :update and :latest methods" do
-        Puppet::Type::Package.provider_feature(:upgradeable).methods.should == [:update, :latest]
+        Puppet::Type.type(:package).provider_feature(:upgradeable).methods.should == [:update, :latest]
     end
 
     it "should have a :purgeable feature that requires the :purge latest method" do
-        Puppet::Type::Package.provider_feature(:purgeable).methods.should == [:purge]
+        Puppet::Type.type(:package).provider_feature(:purgeable).methods.should == [:purge]
     end
 
     it "should have a :versionable feature" do
-        Puppet::Type::Package.provider_feature(:versionable).should_not be_nil
+        Puppet::Type.type(:package).provider_feature(:versionable).should_not be_nil
     end
 
     it "should default to being installed" do
-        pkg = Puppet::Type::Package.create(:name => "yay")
+        pkg = Puppet::Type.type(:package).create(:name => "yay")
         pkg.should(:ensure).should == :present
     end
 
-    after { Puppet::Type::Package.clear }
+    after { Puppet::Type.type(:package).clear }
 end
 
-describe Puppet::Type::Package, "when validating attributes" do
+describe Puppet::Type.type(:package), "when validating attributes" do
     [:name, :source, :instance, :status, :adminfile, :responsefile, :configfiles, :category, :platform, :root, :vendor, :description, :allowcdrom].each do |param|
         it "should have a #{param} parameter" do
-            Puppet::Type::Package.attrtype(param).should == :param
+            Puppet::Type.type(:package).attrtype(param).should == :param
         end
     end
 
     it "should have an ensure property" do
-        Puppet::Type::Package.attrtype(:ensure).should == :property
+        Puppet::Type.type(:package).attrtype(:ensure).should == :property
     end
 end
 
-describe Puppet::Type::Package, "when validating attribute values" do
+describe Puppet::Type.type(:package), "when validating attribute values" do
     before do
-        @provider = stub 'provider', :class => Puppet::Type::Package.defaultprovider, :clear => nil
-        Puppet::Type::Package.defaultprovider.expects(:new).returns(@provider)
+        @provider = stub 'provider', :class => Puppet::Type.type(:package).defaultprovider, :clear => nil
+        Puppet::Type.type(:package).defaultprovider.expects(:new).returns(@provider)
     end
 
     it "should support :present as a value to :ensure" do
-        Puppet::Type::Package.create(:name => "yay", :ensure => :present)
+        Puppet::Type.type(:package).create(:name => "yay", :ensure => :present)
     end
 
     it "should alias :installed to :present as a value to :ensure" do
-        pkg = Puppet::Type::Package.create(:name => "yay", :ensure => :installed)
+        pkg = Puppet::Type.type(:package).create(:name => "yay", :ensure => :installed)
         pkg.should(:ensure).should == :present
     end
 
     it "should support :absent as a value to :ensure" do
-        Puppet::Type::Package.create(:name => "yay", :ensure => :absent)
+        Puppet::Type.type(:package).create(:name => "yay", :ensure => :absent)
     end
 
     it "should support :purged as a value to :ensure if the provider has the :purgeable feature" do
         @provider.expects(:satisfies?).with(:purgeable).returns(true)
-        Puppet::Type::Package.create(:name => "yay", :ensure => :purged)
+        Puppet::Type.type(:package).create(:name => "yay", :ensure => :purged)
     end
 
     it "should not support :purged as a value to :ensure if the provider does not have the :purgeable feature" do
         @provider.expects(:satisfies?).with(:purgeable).returns(false)
-        proc { Puppet::Type::Package.create(:name => "yay", :ensure => :purged) }.should raise_error(Puppet::Error)
+        proc { Puppet::Type.type(:package).create(:name => "yay", :ensure => :purged) }.should raise_error(Puppet::Error)
     end
 
     it "should support :latest as a value to :ensure if the provider has the :upgradeable feature" do
         @provider.expects(:satisfies?).with(:upgradeable).returns(true)
-        Puppet::Type::Package.create(:name => "yay", :ensure => :latest)
+        Puppet::Type.type(:package).create(:name => "yay", :ensure => :latest)
     end
 
     it "should not support :latest as a value to :ensure if the provider does not have the :upgradeable feature" do
         @provider.expects(:satisfies?).with(:upgradeable).returns(false)
-        proc { Puppet::Type::Package.create(:name => "yay", :ensure => :latest) }.should raise_error(Puppet::Error)
+        proc { Puppet::Type.type(:package).create(:name => "yay", :ensure => :latest) }.should raise_error(Puppet::Error)
     end
 
     it "should support version numbers as a value to :ensure if the provider has the :versionable feature" do
         @provider.expects(:satisfies?).with(:versionable).returns(true)
-        Puppet::Type::Package.create(:name => "yay", :ensure => "1.0")
+        Puppet::Type.type(:package).create(:name => "yay", :ensure => "1.0")
     end
 
     it "should not support version numbers as a value to :ensure if the provider does not have the :versionable feature" do
         @provider.expects(:satisfies?).with(:versionable).returns(false)
-        proc { Puppet::Type::Package.create(:name => "yay", :ensure => "1.0") }.should raise_error(Puppet::Error)
+        proc { Puppet::Type.type(:package).create(:name => "yay", :ensure => "1.0") }.should raise_error(Puppet::Error)
     end
 
     it "should accept any string as an argument to :source" do
-        proc { Puppet::Type::Package.create(:name => "yay", :source => "stuff") }.should_not raise_error(Puppet::Error)
+        proc { Puppet::Type.type(:package).create(:name => "yay", :source => "stuff") }.should_not raise_error(Puppet::Error)
     end
 
-    after { Puppet::Type::Package.clear }
+    after { Puppet::Type.type(:package).clear }
 end
 
 module PackageEvaluationTesting
@@ -107,11 +105,11 @@ module PackageEvaluationTesting
     end
 end
 
-describe Puppet::Type::Package do
+describe Puppet::Type.type(:package) do
     before :each do
-        @provider = stub 'provider', :class => Puppet::Type::Package.defaultprovider, :clear => nil, :satisfies? => true, :name => :mock
-        Puppet::Type::Package.defaultprovider.stubs(:new).returns(@provider)
-        @package = Puppet::Type::Package.create(:name => "yay")
+        @provider = stub 'provider', :class => Puppet::Type.type(:package).defaultprovider, :clear => nil, :satisfies? => true, :name => :mock
+        Puppet::Type.type(:package).defaultprovider.stubs(:new).returns(@provider)
+        @package = Puppet::Type.type(:package).create(:name => "yay")
 
         @catalog = Puppet::Node::Catalog.new
         @catalog.add_resource(@package)
@@ -119,11 +117,11 @@ describe Puppet::Type::Package do
     
     after :each do
         @catalog.clear(true)
-        Puppet::Type::Package.clear
+        Puppet::Type.type(:package).clear
     end
 
 
-    describe Puppet::Type::Package, "when it should be purged" do
+    describe Puppet::Type.type(:package), "when it should be purged" do
         include PackageEvaluationTesting
 
         before { @package[:ensure] = :purged }
@@ -142,7 +140,7 @@ describe Puppet::Type::Package do
         end
     end
 
-    describe Puppet::Type::Package, "when it should be absent" do
+    describe Puppet::Type.type(:package), "when it should be absent" do
         include PackageEvaluationTesting
 
         before { @package[:ensure] = :absent }
@@ -163,7 +161,7 @@ describe Puppet::Type::Package do
         end
     end
 
-    describe Puppet::Type::Package, "when it should be present" do
+    describe Puppet::Type.type(:package), "when it should be present" do
         include PackageEvaluationTesting
 
         before { @package[:ensure] = :present }
@@ -184,7 +182,7 @@ describe Puppet::Type::Package do
         end
     end
 
-    describe Puppet::Type::Package, "when it should be latest" do
+    describe Puppet::Type.type(:package), "when it should be latest" do
         include PackageEvaluationTesting
 
         before { @package[:ensure] = :latest }
@@ -219,7 +217,7 @@ describe Puppet::Type::Package do
         end
     end
 
-    describe Puppet::Type::Package, "when it should be a specific version" do
+    describe Puppet::Type.type(:package), "when it should be a specific version" do
         include PackageEvaluationTesting
 
         before { @package[:ensure] = "1.0" }
