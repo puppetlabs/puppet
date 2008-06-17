@@ -3,7 +3,9 @@
 
     Fixed #1370 - removed test/util/loadedfile.rb tests
     
-   Fixed #1221 - aliases to titles now work for resources.
+    Fixed #1221 - aliases to titles now work for resources.
+    
+    Fixed #1012 - templates in the templatedir are preferred to module templates.
 
     Fixed #1360 - allowdupe works on groups again.
 
