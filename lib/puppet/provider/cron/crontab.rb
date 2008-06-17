@@ -69,7 +69,11 @@ Puppet::Type.type(:cron).provide(:crontab,
                 end
             end
 
-            str += join(record)
+            if record[:special]
+                str += "@%s %s" % [record[:special], record[:command]]
+            else
+                str += join(record)
+            end
             str
         end
     end

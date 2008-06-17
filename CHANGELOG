@@ -7,6 +7,8 @@
     
     Fixed #1012 - templates in the templatedir are preferred to module templates.
 
+    Fixed #707 - special '@reboot'-style cron jobs work again.
+
     Fixed #1360 - allowdupe works on groups again.
 
     Fixed #1369 - the init service provider now supports HP-UX.
