@@ -345,9 +345,9 @@ end
 describe Puppet::Node::Catalog, " when functioning as a resource container" do
     before do
         @catalog = Puppet::Node::Catalog.new("host")
-        @one = stub 'resource1', :ref => "Me[one]", :catalog= => nil
-        @two = stub 'resource2', :ref => "Me[two]", :catalog= => nil
-        @dupe = stub 'resource3', :ref => "Me[one]", :catalog= => nil
+        @one = stub 'resource1', :ref => "Me[one]", :catalog= => nil, :title => "one"
+        @two = stub 'resource2', :ref => "Me[two]", :catalog= => nil, :title => "two"
+        @dupe = stub 'resource3', :ref => "Me[one]", :catalog= => nil, :title => "one"
     end
 
     it "should provide a method to add one or more resources" do
@@ -480,6 +480,11 @@ describe Puppet::Node::Catalog, " when functioning as a resource container" do
     it "should not fail when a resource has duplicate aliases created" do
         @catalog.add_resource @one
         proc { @catalog.alias @one, "one" }.should_not raise_error
+    end
+
+    it "should not create aliases that point back to the resource" do
+        @catalog.alias(@one, "one")
+        @catalog.resource(:me, "one").should be_nil
     end
 
     it "should be able to look resources up by their aliases" do

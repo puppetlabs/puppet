@@ -2,6 +2,8 @@
     Fixed #1367 - Updated Rakefile for new daily builds
 
     Fixed #1370 - removed test/util/loadedfile.rb tests
+    
+   Fixed #1221 - aliases to titles now work for resources.
 
     Fixed #1360 - allowdupe works on groups again.
 
