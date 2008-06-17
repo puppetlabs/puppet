@@ -25,7 +25,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
     def addcmd
         cmd = [command(:add)]
-        @resource.class.validproperties.each do |property|
+        Puppet::Type.type(:user).validproperties.each do |property|
             next if property == :ensure
             # the value needs to be quoted, mostly because -c might
             # have spaces in it

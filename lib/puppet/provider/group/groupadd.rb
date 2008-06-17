@@ -17,7 +17,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
                 cmd << flag(:gid) << gid
             end
         end
-        if @resource[:allowdupe] == :true
+        if @resource.allowdupe?
             cmd << "-o"
         end
         cmd << @resource[:name]

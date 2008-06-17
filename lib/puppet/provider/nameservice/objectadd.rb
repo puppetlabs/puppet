@@ -22,10 +22,8 @@ class ObjectAdd < Puppet::Provider::NameService
     end
 
     def modifycmd(param, value)
-        cmd = [command(:modify),
-            flag(param),
-            value]
-        if @resource[:allowdupe] == :true && param == :uid
+        cmd = [command(:modify), flag(param), value]
+        if @resource.allowdupe? && ((param == :uid and self.class.name == :useradd) || (param == :gid and self.class.name == :groupadd))
             cmd << "-o"
         end
         cmd << @resource[:name]
@@ -41,4 +39,3 @@ class ObjectAdd < Puppet::Provider::NameService
     end
 end
 end
-

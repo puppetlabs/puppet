@@ -323,8 +323,7 @@ class Puppet::Provider::NameService < Puppet::Provider
         begin
             execute(cmd)
         rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error, "Could not set %s on %s[%s]: %s" %
-                [param, @resource.class.name, @resource.name, detail]
+            raise Puppet::Error, "Could not set %s on %s[%s]: %s" % [param, @resource.class.name, @resource.name, detail]
         end
     end
 end

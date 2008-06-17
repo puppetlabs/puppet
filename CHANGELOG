@@ -1,4 +1,6 @@
 0.24.?
+    Fixed #1360 - allowdupe works on groups again.
+
     Fixed #1369 - the init service provider now supports HP-UX.
 
     Removed support for the 'node_name' setting in LDAP and external node 
