@@ -33,27 +33,27 @@ describe ssh_authorized_key do
     end
 
     it "should support :present as a value for :ensure" do
-        proc { @class.create(:name => "whev", :ensure => :present) }.should_not raise_error
+        proc { @class.create(:name => "whev", :ensure => :present, :user => "nobody") }.should_not raise_error
     end
 
     it "should support :absent as a value for :ensure" do
-        proc { @class.create(:name => "whev", :ensure => :absent) }.should_not raise_error
+        proc { @class.create(:name => "whev", :ensure => :absent, :user => "nobody") }.should_not raise_error
     end
 
     it "should have an type property" do
         @class.attrtype(:type).should == :property
     end
     it "should support ssh-dss as an type value" do
-        proc { @class.create(:name => "whev", :type => "ssh-dss") }.should_not raise_error
+        proc { @class.create(:name => "whev", :type => "ssh-dss", :user => "nobody") }.should_not raise_error
     end
     it "should support ssh-rsa as an type value" do
-        proc { @class.create(:name => "whev", :type => "ssh-rsa") }.should_not raise_error
+        proc { @class.create(:name => "whev", :type => "ssh-rsa", :user => "nobody") }.should_not raise_error
     end
     it "should support :dsa as an type value" do
-        proc { @class.create(:name => "whev", :type => :dsa) }.should_not raise_error
+        proc { @class.create(:name => "whev", :type => :dsa, :user => "nobody") }.should_not raise_error
     end
     it "should support :rsa as an type value" do
-        proc { @class.create(:name => "whev", :type => :rsa) }.should_not raise_error
+        proc { @class.create(:name => "whev", :type => :rsa, :user => "nobody") }.should_not raise_error
     end
 
     it "should not support values other than ssh-dss, ssh-rsa, dsa, rsa in the ssh_authorized_key_type" do
@@ -74,6 +74,40 @@ describe ssh_authorized_key do
 
     it "should have a target property" do
         @class.attrtype(:target).should == :property
+    end
+
+    it "should autorequire parent directories when user is given" do
+        key = @class.create(
+          :name   => "Test",
+          :key    => "AAA",
+          :type   => "ssh-rsa",
+          :ensure => :present,
+          :user   => "root")
+
+        key.autorequire.should_not == []
+    end
+
+    it "should set target when user is given" do
+        key = @class.create(
+          :name   => "Test",
+          :key    => "AAA",
+          :type   => "ssh-rsa",
+          :ensure => :present,
+          :user   => "root")
+
+        key.should(:target).should == File.expand_path("~root/.ssh/authorized_keys")
+    end
+
+
+    it "should autorequire parent directories when target is given" do
+        key = @class.create(
+          :name   => "Test",
+          :key    => "AAA",
+          :type   => "ssh-rsa",
+          :ensure => :present,
+          :target => "/tmp/home/foo/bar/.ssh/authorized_keys")
+
+        key.autorequire.should_not == []
     end
 
     after { @class.clear }

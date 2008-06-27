@@ -29,21 +29,5 @@ Puppet::Type.type(:ssh_authorized_key).provide(:parsed,
                 record[:options] = record[:options].join(',')
             end
         }
-
-    def prefetch
-        if not @resource.should(:target)
-            #
-            # Set default target when user is given
-            if val = @resource.should(:user)
-                target =  File.expand_path("~%s/.ssh/authorized_keys" % val)
-                Puppet::debug("Setting target to %s" % target)
-                @resource[:target] = target
-            else
-                raise Puppet::Error, "Missing attribute 'user' or 'target'"
-            end
-        end
-
-        super
-    end
 end
 
