@@ -26,6 +26,20 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         
         down = Puppet[:downcasefacts]
 
+        Facter.clear
+
+        # Reload everything.
+        if Facter.respond_to? :loadfacts
+            Facter.loadfacts
+        elsif Facter.respond_to? :load
+            Facter.load
+        else
+            Puppet.warning "You should upgrade your version of Facter to at least 1.3.8"
+        end
+
+        # This loads all existing facts and any new ones.  We have to remove and
+        # reload because there's no way to unload specific facts.
+        loadfacts()
         facts = Facter.to_hash.inject({}) do |newhash, array|
             name, fact = array
             if down
@@ -115,15 +129,15 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     def getconfig
         dostorage()
 
+        # Retrieve the plugins.
+        getplugins() if Puppet[:pluginsync]
+
         facts = nil
         Puppet::Util.benchmark(:debug, "Retrieved facts") do
             facts = self.class.facts
         end
 
         raise Puppet::Network::ClientError.new("Could not retrieve any facts") unless facts.length > 0
-
-        # Retrieve the plugins.
-        getplugins() if Puppet[:pluginsync]
 
         Puppet.debug("Retrieving catalog")
 
@@ -340,23 +354,6 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
 
             files << resource[:path]
         end
-    ensure
-        # Clear all existing definitions.
-        Facter.clear
-
-        # Reload everything.
-        if Facter.respond_to? :loadfacts
-            Facter.loadfacts
-        elsif Facter.respond_to? :load
-            Facter.load
-        else
-            raise Puppet::Error,
-                "You must upgrade your version of Facter to use centralized facts"
-        end
-
-        # This loads all existing facts and any new ones.  We have to remove and
-        # reload because there's no way to unload specific facts.
-        loadfacts()
     end
 
     # Retrieve the plugins from the central server.  We only have to load the

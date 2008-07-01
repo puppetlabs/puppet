@@ -177,10 +177,12 @@ end
 
         assert(File.exists?(destfile), "Did not get fact")
 
-        assert_equal(hostname, Facter.value(:hostname),
+        facts = Puppet::Network::Client.master.facts
+
+        assert_equal(hostname, facts["hostname"],
             "Lost value to hostname")
 
-        assert_equal("yayness", Facter.value(:myfact),
+        assert_equal("yayness", facts["myfact"],
             "Did not get correct fact value")
 
         # Now modify the file and make sure the type is replaced
@@ -194,20 +196,22 @@ end
         assert_nothing_raised {
             Puppet::Network::Client.master.getfacts
         }
+        facts = Puppet::Network::Client.master.facts
 
-        assert_equal("funtest", Facter.value(:myfact),
+        assert_equal("funtest", facts["myfact"],
             "Did not reload fact")
-        assert_equal(hostname, Facter.value(:hostname),
+        assert_equal(hostname, facts["hostname"],
             "Lost value to hostname")
 
         # Now run it again and make sure the fact still loads
         assert_nothing_raised {
             Puppet::Network::Client.master.getfacts
         }
+        facts = Puppet::Network::Client.master.facts
 
-        assert_equal("funtest", Facter.value(:myfact),
+        assert_equal("funtest", facts["myfact"],
             "Did not reload fact")
-        assert_equal(hostname, Facter.value(:hostname),
+        assert_equal(hostname, facts["hostname"],
             "Lost value to hostname")
     end
 

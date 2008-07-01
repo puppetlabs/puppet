@@ -1,4 +1,7 @@
 0.24.?
+    Fixed #1114 - Facts in plugin directories should now be autoloaded,
+    as long as you're using Facter 1.5.
+
     Fixed #1195 - Updated Gentoo init scripts
 
     Fixed #1367 - Updated Rakefile for new daily builds
