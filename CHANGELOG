@@ -1,4 +1,8 @@
 0.24.?
+    Fixed #1006 - puppetrun --class works again.  I added the class
+    membership testing to the Ldap node terminus, and added tests,
+    so it shouldn't break again.
+
     Fixed #1114 - Facts in plugin directories should now be autoloaded,
     as long as you're using Facter 1.5.
 
