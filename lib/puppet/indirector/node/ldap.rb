@@ -53,8 +53,8 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
     # Find more than one node.  LAK:NOTE This is a bit of a clumsy API, because the 'search'
     # method currently *requires* a key.  It seems appropriate in some cases but not others,
     # and I don't really know how to get rid of it as a requirement but allow it when desired.
-    def search(key, options = {})
-        if classes = options[:class]
+    def search(request)
+        if classes = request.options[:class]
             classes = [classes] unless classes.is_a?(Array)
             filter = "(&(objectclass=puppetClient)(puppetclass=" + classes.join(")(puppetclass=") + "))"
         else

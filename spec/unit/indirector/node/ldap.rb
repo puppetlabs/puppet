@@ -267,7 +267,8 @@ describe Puppet::Node::Ldap do
     describe "when searching for multiple nodes" do
         before :each do
             @searcher = Puppet::Node::Ldap.new
-            @request = stub 'request', :key => @name
+            @options = {}
+            @request = stub 'request', :key => "foo", :options => @options
 
             Puppet::Node::Facts.stubs(:terminus_class).returns :yaml
         end
@@ -276,20 +277,23 @@ describe Puppet::Node::Ldap do
             @searcher.expects(:ldapsearch).with("(objectclass=puppetClient)")
             # LAK:NOTE The search method requires an essentially bogus key.  It's
             # an API problem that I don't really know how to fix.
-            @searcher.search "foo"
+            @searcher.search @request
         end
 
         describe "and a class is specified" do
             it "should find all nodes that are members of that class" do
                 @searcher.expects(:ldapsearch).with("(&(objectclass=puppetClient)(puppetclass=one))")
-                @searcher.search "foo", :class => "one"
+
+                @options[:class] = "one"
+                @searcher.search @request
             end
         end
 
         describe "multiple classes are specified" do
             it "should find all nodes that are members of all classes" do
                 @searcher.expects(:ldapsearch).with("(&(objectclass=puppetClient)(puppetclass=one)(puppetclass=two))")
-                @searcher.search "foo", :class => ["one", "two"]
+                @options[:class] = %w{one two}
+                @searcher.search @request
             end
         end
 
@@ -297,13 +301,13 @@ describe Puppet::Node::Ldap do
             # .yields can't be used to yield multiple values :/
             @searcher.expects(:ldapsearch).yields("one")
             @searcher.expects(:entry2hash).with("one").returns(:name => "foo")
-            @searcher.search "foo"
+            @searcher.search @request
         end
 
         it "should return a node for each processed entry" do
             @searcher.expects(:ldapsearch).yields("one")
             @searcher.expects(:entry2hash).with("one").returns(:name => "foo")
-            result = @searcher.search("foo")
+            result = @searcher.search(@request)
             result[0].should be_instance_of(Puppet::Node)
             result[0].name.should == "foo"
         end
