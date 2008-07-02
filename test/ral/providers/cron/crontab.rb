@@ -530,8 +530,6 @@ class TestCronParsedProvider < Test::Unit::TestCase
             @provider.initvars
             str += "\n"
             target.write(str)
-            assert_equal(str, target.read,
-                "Did not write correctly")
             assert_nothing_raised("Could not prefetch with %s" % str.inspect) do
                 @provider.prefetch
             end
@@ -549,6 +547,11 @@ class TestCronParsedProvider < Test::Unit::TestCase
 
             @provider.clear
         end
+    end
+
+    # #707
+    def test_write_freebsd_special
+        assert_equal(@provider.to_line(:record_type => :crontab, :ensure => :present, :special => "reboot", :command => "/bin/echo something"), "@reboot /bin/echo something")
     end
 
     def test_prefetch
@@ -626,6 +629,4 @@ class TestCronParsedProvider < Test::Unit::TestCase
             assert_equal(v, is[p], "did not parse %s correctly" % p)
         end
     end
-
 end
-

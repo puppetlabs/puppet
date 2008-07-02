@@ -8,6 +8,18 @@ class Puppet::Util::Ldap::Connection
 
     attr_reader :connection
 
+    # Return a default connection, using our default settings.
+    def self.instance
+        ssl = if Puppet[:ldaptls]
+                  :tls
+              elsif Puppet[:ldapssl]
+                  true
+              else
+                  false
+              end
+        new(Puppet[:ldapserver], Puppet[:ldapport], :ssl => ssl)
+    end
+
     def close
         connection.unbind if connection.bound?
     end
@@ -51,6 +63,7 @@ class Puppet::Util::Ldap::Connection
             @connection.set_option(LDAP::LDAP_OPT_REFERRALS, LDAP::LDAP_OPT_ON)
             @connection.simple_bind(user, password)
         rescue => detail
+            puts detail.class
             raise Puppet::Error, "Could not connect to LDAP: %s" % detail
         end
     end

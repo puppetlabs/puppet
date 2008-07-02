@@ -502,6 +502,11 @@ describe Puppet::Node::Catalog, " when functioning as a resource container" do
         proc { @catalog.alias @one, "one" }.should_not raise_error
     end
 
+    it "should not create aliases that point back to the resource" do
+        @catalog.alias(@one, "one")
+        @catalog.resource(:me, "one").should be_nil
+    end
+
     it "should be able to look resources up by their aliases" do
         @catalog.add_resource @one
         @catalog.alias @one, "two"

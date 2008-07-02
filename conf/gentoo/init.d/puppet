@@ -24,7 +24,7 @@ start() {
         [[ -n "${PUPPET_EXTRA_OPTS}" ]] && options="${options} ${PUPPET_EXTRA_OPTS}"
 
         ebegin "Starting puppet"
-        start-stop-daemon --start --quiet --exec /usr/bin/puppetd -- ${options}
+        start-stop-daemon --start --quiet --exec /usr/bin/ruby /usr/bin/puppetd -- ${options}
         eend $? "Failed to start puppet"
 }
 

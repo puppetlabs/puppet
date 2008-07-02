@@ -139,50 +139,11 @@ begin
 rescue LoadError
     $stderr.puts "Failed to load ruby LDAP library. LDAP functionality will not be available"
 end
+
 require 'puppet'
 require 'puppet/network/client'
+require 'puppet/util/ldap/connection'
 require 'getoptlong'
-
-
-# Look up all nodes matching a given class in LDAP.
-def ldapnodes(klass, fqdn = true)
-    unless defined? @ldap
-        setupldap()
-    end
-
-    hosts = []
-
-    filter = nil
-    if klass == :all
-        filter = "objectclass=puppetclient"
-    else
-        filter = "puppetclass=#{klass}"
-    end
-    @ldap.search(Puppet[:ldapbase], 2, filter, "cn") do |entry|
-        # Skip the default host entry
-        if entry.dn =~ /cn=default,/
-            $stderr.puts "Skipping default host entry"
-            next
-        end
-
-        if fqdn
-            hosts << entry.dn.sub("cn=",'').sub(/ou=hosts,/i, '').gsub(",dc=",".")
-        else
-            hosts << entry.get_values("cn")[0]
-        end
-    end
-
-    return hosts
-end
-
-def setupldap
-    begin
-        @ldap = Puppet::Parser::Interpreter.ldap()
-    rescue => detail
-        $stderr.puts "Could not connect to LDAP: %s" % detail
-        exit(34)
-    end
-end
 
 flags = [
     [ "--all",      "-a",	        GetoptLong::NO_ARGUMENT ],
@@ -278,11 +239,12 @@ Puppet.parse_config
 
 if Puppet[:node_terminus] = "ldap"
     if options[:all]
-        hosts = ldapnodes(:all, options[:fqdn])
+        hosts = Puppet::Node.search("whatever").collect { |node| node.name }
         puts "all: %s" % hosts.join(", ")
     else
+        hosts = []
         classes.each do |klass|
-            list = ldapnodes(klass, options[:fqdn])
+            list = Puppet::Node.search("whatever", :class => klass).collect { |node| node.name }
             puts "%s: %s" % [klass, list.join(", ")]
 
             hosts += list

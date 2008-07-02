@@ -8,7 +8,29 @@
     set file paths to 'false' to disable the CRL.
 
 0.24.?
+    Fixed #1006 - puppetrun --class works again.  I added the class
+    membership testing to the Ldap node terminus, and added tests,
+    so it shouldn't break again.
+
+    Fixed #1114 - Facts in plugin directories should now be autoloaded,
+    as long as you're using Facter 1.5.
+
     Removed support for the 'node_name' setting in LDAP and external node lookups.
+    Fixed #1195 - Updated Gentoo init scripts
+
+    Fixed #1367 - Updated Rakefile for new daily builds
+
+    Fixed #1370 - removed test/util/loadedfile.rb tests
+    
+    Fixed #1221 - aliases to titles now work for resources.
+    
+    Fixed #1012 - templates in the templatedir are preferred to module templates.
+
+    Fixed #707 - special '@reboot'-style cron jobs work again.
+
+    Fixed #1360 - allowdupe works on groups again.
+
+    Fixed #1369 - the init service provider now supports HP-UX.
 
     Removed support for the 'node_name' setting in LDAP and external node 
     lookups.

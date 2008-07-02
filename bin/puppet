@@ -141,8 +141,9 @@ if Puppet[:config] and File.exists? Puppet[:config]
     Puppet.settings.parse(Puppet[:config])
 end
 
-Puppet.genconfig
-Puppet.genmanifest
+if Puppet.settings.print_configs?
+    exit(Puppet.settings.print_configs ? 0 : 1)
+end
 
 # If noop is set, then also enable diffs
 if Puppet[:noop]
@@ -186,7 +187,7 @@ facts = Puppet::Node::Facts.find("me")
 facts.name = facts.values["hostname"]
 
 # Find our Node
-node = Puppet::Node.find_by_any_name(facts.name)
+node = Puppet::Node.find(facts.name)
 
 # Merge in the facts.
 node.merge(facts.values)

@@ -88,8 +88,13 @@ class Puppet::Node::Catalog < Puppet::PGraph
         resource.ref =~ /^(.+)\[/
 
         newref = "%s[%s]" % [$1 || resource.class.name, name]
+
+        # LAK:NOTE It's important that we directly compare the references,
+        # because sometimes an alias is created before the resource is
+        # added to the catalog, so comparing inside the below if block
+        # isn't sufficient.
+        return if newref == resource.ref
         if existing = @resource_table[newref]
-            return if existing == resource
             raise(ArgumentError, "Cannot alias %s to %s; resource %s already exists" % [resource.ref, name, newref])
         end
         @resource_table[newref] = resource

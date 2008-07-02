@@ -80,6 +80,14 @@ describe Puppet::Module, " when searching for templates" do
         File.stubs(:directory?).returns(true)
         Puppet::Module.find_template("mymod/mytemplate").should == "/one/mymod/templates/mytemplate"
     end
+    
+    it "should return the file in the templatedir if it exists" do
+        Puppet.settings.expects(:value).with(:templatedir, nil).returns("/my/templates")
+        Puppet[:modulepath] = "/one:/two"
+        File.stubs(:directory?).returns(true)
+        File.stubs(:exists?).returns(true)
+        Puppet::Module.find_template("mymod/mytemplate").should == "/my/templates/mymod/mytemplate"
+    end
 
     it "should use the main templatedir if no module is found" do
         Puppet.settings.expects(:value).with(:templatedir, nil).returns("/my/templates")
@@ -100,9 +108,10 @@ describe Puppet::Module, " when searching for templates" do
     end
 
     it "should use the node environment if specified" do
-        Puppet.settings.expects(:value).with(:modulepath, "myenv").returns("/my/templates")
+        Puppet.settings.stubs(:value).returns.returns("/my/directory")
+        Puppet.settings.expects(:value).with(:modulepath, "myenv").returns("/my/modules")
         File.stubs(:directory?).returns(true)
-        Puppet::Module.find_template("mymod/envtemplate", "myenv").should == "/my/templates/mymod/templates/envtemplate"
+        Puppet::Module.find_template("mymod/envtemplate", "myenv").should == "/my/modules/mymod/templates/envtemplate"
     end
 
     after { Puppet.settings.clear }

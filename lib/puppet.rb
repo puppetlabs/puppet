@@ -117,49 +117,6 @@ module Puppet
     # Load all of the configuration parameters.
     require 'puppet/defaults'
 
-    # Prints the contents of a config file with the available config elements, or it
-    # prints a single value of a config element.
-    def self.genconfig
-        if Puppet[:configprint] != ""
-            val = Puppet[:configprint]
-            if val == "all"
-                hash = {}
-                Puppet.settings.each do |name, obj|
-                    val = obj.value
-                    case val
-                    when true, false, "": val = val.inspect
-                    end
-                    hash[name] = val
-                end
-                hash.sort { |a,b| a[0].to_s <=> b[0].to_s }.each do |name, val|
-                    puts "%s = %s" % [name, val]
-                end
-            elsif val =~ /,/
-                val.split(/\s*,\s*/).sort.each do |v|
-                    if Puppet.settings.include?(v)
-                        puts "%s = %s" % [v, Puppet[v]]
-                    else
-                        puts "invalid parameter: %s" % v
-                        exit(1)
-                    end
-                end
-            else
-                val.split(/\s*,\s*/).sort.each do |v|
-                    if Puppet.settings.include?(v)
-                        puts Puppet[val]
-                    else
-                        puts "invalid parameter: %s" % v
-                        exit(1)
-                    end
-                end
-            end
-            exit(0)
-        end
-        if Puppet[:genconfig]
-            puts Puppet.settings.to_config
-            exit(0)
-        end
-    end
 
     def self.genmanifest
         if Puppet[:genmanifest]
