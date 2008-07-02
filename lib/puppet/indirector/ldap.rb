@@ -1,21 +1,14 @@
 require 'puppet/indirector/terminus'
 
 class Puppet::Indirector::Ldap < Puppet::Indirector::Terminus
-    # We split this apart so it's easy to call multiple times with different names.
-    def entry2hash(name)
-        # We have to use 'yield' here because the LDAP::Entry objects
-        # get destroyed outside the scope of the search, strangely.
-        ldapsearch(name) { |entry| return process(name, entry) }
-    end
-
     # Perform our ldap search and process the result.
     def find(request)
-        return entry2hash(request.key) || nil
+        return ldapsearch(search_filter(request.key)) { |entry| return process(entry) } || nil
     end
 
     # Process the found entry.  We assume that we don't just want the
     # ldap object.
-    def process(name, entry)
+    def process(entry)
         raise Puppet::DevError, "The 'process' method has not been overridden for the LDAP terminus for %s" % self.name
     end
 
@@ -35,14 +28,14 @@ class Puppet::Indirector::Ldap < Puppet::Indirector::Terminus
 
     # Find the ldap node, return the class list and parent node specially,
     # and everything else in a parameter hash.
-    def ldapsearch(node)
+    def ldapsearch(filter)
         raise ArgumentError.new("You must pass a block to ldapsearch") unless block_given?
 
         found = false
         count = 0
 
         begin
-            connection.search(search_base, 2, search_filter(node), search_attributes) do |entry|
+            connection.search(search_base, 2, filter, search_attributes) do |entry|
                 found = true
                 yield entry
             end
@@ -54,7 +47,9 @@ class Puppet::Indirector::Ldap < Puppet::Indirector::Terminus
                 Puppet.warning "Retrying LDAP connection"
                 retry
             else
-                raise Puppet::Error, "LDAP Search failed: %s" % detail
+                error = Puppet::Error.new("LDAP Search failed")
+                error.set_backtrace(detail.backtrace)
+                raise error
             end
         end
 

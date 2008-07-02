@@ -5,304 +5,307 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 require 'puppet/indirector/node/ldap'
 
 describe Puppet::Node::Ldap do
-    describe "when searching for nodes" do
+    before do
+        Puppet::Node::Facts.stubs(:terminus_class).returns :yaml
+    end
+
+    describe "when searching for a single node" do
         before :each do
             @searcher = Puppet::Node::Ldap.new
-            @entries = {}
-            entries = @entries
             
-            @connection = mock 'connection'
-            @entry = mock 'entry'
-            @connection.stubs(:search).yields(@entry)
-            @searcher.stubs(:connection).returns(@connection)
-            @searcher.stubs(:class_attributes).returns([])
-            @searcher.stubs(:parent_attribute).returns(nil)
-            @searcher.stubs(:stacked_attributes).returns([])
-            @searcher.stubs(:search_base).returns(:yay)
-            @searcher.stubs(:search_filter).returns(:filter)
-
             @name = "mynode.domain.com"
-            @node = stub 'node', :name => @name
-            @node.stubs(:fact_merge)
-            Puppet::Node.stubs(:new).with(@name).returns(@node)
+            @node = stub 'node', :name => @name, :name= => nil
+            @node.stub_everything
+
+            Puppet::Node.stubs(:new).returns(@node)
 
             @request = stub 'request', :key => @name
         end
 
+        it "should convert the hostname into a search filter" do
+            entry = stub 'entry', :dn => 'cn=mynode.domain.com,ou=hosts,dc=madstop,dc=com', :vals => %w{}, :to_hash => {}
+            @searcher.expects(:ldapsearch).with("(&(objectclass=puppetClient)(cn=#{@name}))").yields entry
+            @searcher.name2hash(@name)
+        end
+
+        it "should convert any found entry into a hash" do
+            entry = stub 'entry', :dn => 'cn=mynode.domain.com,ou=hosts,dc=madstop,dc=com', :vals => %w{}, :to_hash => {}
+            @searcher.expects(:ldapsearch).with("(&(objectclass=puppetClient)(cn=#{@name}))").yields entry
+            @searcher.expects(:entry2hash).with(entry).returns "myhash"
+            @searcher.name2hash(@name).should == "myhash"
+        end
+
+        # This heavily tests our entry2hash method, so we don't have to stub out the stupid entry information any more.
+        describe "when an ldap entry is found" do
+            before do
+                @entry = stub 'entry', :dn => 'cn=mynode.domain.com,ou=hosts,dc=madstop,dc=com', :vals => %w{}, :to_hash => {}
+                @searcher.stubs(:ldapsearch).yields @entry
+            end
+
+            it "should convert the entry to a hash" do
+                @searcher.entry2hash(@entry).should be_instance_of(Hash)
+            end
+
+            it "should add the entry's common name to the hash" do
+                @searcher.entry2hash(@entry)[:name].should == "mynode.domain.com"
+            end
+
+            it "should add all of the entry's classes to the hash" do
+                @entry.stubs(:vals).with("puppetclass").returns %w{one two}
+                @searcher.entry2hash(@entry)[:classes].should == %w{one two}
+            end
+
+            it "should deduplicate class values" do
+                @entry.stubs(:to_hash).returns({})
+                @searcher.stubs(:class_attributes).returns(%w{one two})
+                @entry.stubs(:vals).with("one").returns(%w{a b})
+                @entry.stubs(:vals).with("two").returns(%w{b c})
+                @searcher.entry2hash(@entry)[:classes].should == %w{a b c}
+            end
+
+            it "should add the entry's environment to the hash" do
+                @entry.stubs(:to_hash).returns("environment" => %w{production})
+                @searcher.entry2hash(@entry)[:environment].should == "production"
+            end
+
+            it "should add all stacked parameters as parameters in the hash" do
+                @entry.stubs(:vals).with("puppetvar").returns(%w{one=two three=four})
+                result = @searcher.entry2hash(@entry)
+                result[:parameters]["one"].should == "two"
+                result[:parameters]["three"].should == "four"
+            end
+
+            it "should not add the stacked parameter as a normal parameter" do
+                @entry.stubs(:vals).with("puppetvar").returns(%w{one=two three=four})
+                @entry.stubs(:to_hash).returns("puppetvar" => %w{one=two three=four})
+                @searcher.entry2hash(@entry)[:parameters]["puppetvar"].should be_nil
+            end
+
+            it "should add all other attributes as parameters in the hash" do
+                @entry.stubs(:to_hash).returns("foo" => %w{one two})
+                @searcher.entry2hash(@entry)[:parameters]["foo"].should == %w{one two}
+            end
+
+            it "should return single-value parameters as strings, not arrays" do
+                @entry.stubs(:to_hash).returns("foo" => %w{one})
+                @searcher.entry2hash(@entry)[:parameters]["foo"].should == "one"
+            end
+
+            it "should add the parent's name if present" do
+                @entry.stubs(:vals).with("parentnode").returns(%w{foo})
+                @searcher.entry2hash(@entry)[:parent].should == "foo"
+            end
+
+            it "should fail if more than one parent is specified" do
+                @entry.stubs(:vals).with("parentnode").returns(%w{foo})
+                @searcher.entry2hash(@entry)[:parent].should == "foo"
+            end
+        end
+
         it "should search first for the provided key" do
-            @searcher.expects(:entry2hash).with("mynode.domain.com").returns({})
+            @searcher.expects(:name2hash).with("mynode.domain.com").returns({})
             @searcher.find(@request)
         end
 
         it "should search for the short version of the provided key if the key looks like a hostname and no results are found for the key itself" do
-            @searcher.expects(:entry2hash).with("mynode.domain.com").returns(nil)
-            @searcher.expects(:entry2hash).with("mynode").returns({})
+            @searcher.expects(:name2hash).with("mynode.domain.com").returns(nil)
+            @searcher.expects(:name2hash).with("mynode").returns({})
             @searcher.find(@request)
         end
 
         it "should search for default information if no information can be found for the key" do
-            @searcher.expects(:entry2hash).with("mynode.domain.com").returns(nil)
-            @searcher.expects(:entry2hash).with("mynode").returns(nil)
-            @searcher.expects(:entry2hash).with("default").returns({})
+            @searcher.expects(:name2hash).with("mynode.domain.com").returns(nil)
+            @searcher.expects(:name2hash).with("mynode").returns(nil)
+            @searcher.expects(:name2hash).with("default").returns({})
             @searcher.find(@request)
         end
 
         it "should return nil if no results are found in ldap" do
-            @connection.stubs(:search)
+            @searcher.stubs(:name2hash).returns nil
             @searcher.find(@request).should be_nil
         end
 
         it "should return a node object if results are found in ldap" do
-            @entry.stubs(:to_hash).returns({})
+            @searcher.stubs(:name2hash).returns({})
             @searcher.find(@request).should equal(@node)
         end
 
-        it "should deduplicate class values" do
-            @entry.stubs(:to_hash).returns({})
-            @searcher.stubs(:class_attributes).returns(%w{one two})
-            @entry.stubs(:vals).with("one").returns(%w{a b})
-            @entry.stubs(:vals).with("two").returns(%w{b c})
-            @node.expects(:classes=).with(%w{a b c})
-            @searcher.find(@request)
-        end
-
-        it "should add any values stored in the class_attributes attributes to the node classes" do
-            @entry.stubs(:to_hash).returns({})
-            @searcher.stubs(:class_attributes).returns(%w{one two})
-            @entry.stubs(:vals).with("one").returns(%w{a b})
-            @entry.stubs(:vals).with("two").returns(%w{c d})
-            @node.expects(:classes=).with(%w{a b c d})
-            @searcher.find(@request)
-        end
-
-        it "should add all entry attributes as node parameters" do
-            @entry.stubs(:to_hash).returns("one" => ["two"], "three" => ["four"])
-            @node.expects(:parameters=).with("one" => "two", "three" => "four")
-            @searcher.find(@request)
-        end
-
-        it "should set the node's environment to the environment of the results" do
-            @entry.stubs(:to_hash).returns("environment" => ["test"])
-            @node.stubs(:parameters=)
-            @node.expects(:environment=).with("test")
-            @searcher.find(@request)
-        end
-
-        it "should retain false parameter values" do
-            @entry.stubs(:to_hash).returns("one" => [false])
-            @node.expects(:parameters=).with("one" => false)
-            @searcher.find(@request)
-        end
-
-        it "should turn single-value parameter value arrays into single non-arrays" do
-            @entry.stubs(:to_hash).returns("one" => ["a"])
-            @node.expects(:parameters=).with("one" => "a")
-            @searcher.find(@request)
-        end
-
-        it "should keep multi-valued parametes as arrays" do
-            @entry.stubs(:to_hash).returns("one" => ["a", "b"])
-            @node.expects(:parameters=).with("one" => ["a", "b"])
-            @searcher.find(@request)
-        end
-
-        describe "and a parent node is specified" do
+        describe "and node information is found in LDAP" do
             before do
-                @parent = mock 'parent'
-                @parent_parent = mock 'parent_parent'
-
-                @searcher.meta_def(:search_filter) do |name|
-                    return name
-                end
-                @connection.stubs(:search).with { |*args| args[2] == @name              }.yields(@entry)
-                @connection.stubs(:search).with { |*args| args[2] == 'parent'           }.yields(@parent)
-                @connection.stubs(:search).with { |*args| args[2] == 'parent_parent'    }.yields(@parent_parent)
-
-                @searcher.stubs(:parent_attribute).returns(:parent)
+                @result = {}
+                @searcher.stubs(:name2hash).returns @result
             end
 
-            it "should fail if the parent cannot be found" do
-                @connection.stubs(:search).with { |*args| args[2] == 'parent' }.returns("whatever")
-
-                @entry.stubs(:to_hash).returns({})
-                @entry.stubs(:vals).with(:parent).returns(%w{parent})
-
-                proc { @searcher.find(@request) }.should raise_error(Puppet::Error)
-            end
-
-            it "should add any parent classes to the node's classes" do
-                @entry.stubs(:to_hash).returns({})
-                @entry.stubs(:vals).with(:parent).returns(%w{parent})
-                @entry.stubs(:vals).with("classes").returns(%w{a b})
-
-                @parent.stubs(:to_hash).returns({})
-                @parent.stubs(:vals).with("classes").returns(%w{c d})
-                @parent.stubs(:vals).with(:parent).returns(nil)
-
-                @searcher.stubs(:class_attributes).returns(%w{classes})
+            it "should add any classes from ldap" do
+                @result[:classes] = %w[a b c d]
                 @node.expects(:classes=).with(%w{a b c d})
                 @searcher.find(@request)
             end
 
-            it "should add any parent parameters to the node's parameters" do
-                @entry.stubs(:to_hash).returns("one" => "two")
-                @entry.stubs(:vals).with(:parent).returns(%w{parent})
-
-                @parent.stubs(:to_hash).returns("three" => "four")
-                @parent.stubs(:vals).with(:parent).returns(nil)
-
+            it "should add all entry attributes as node parameters" do
+                @result[:parameters] = {"one" => "two", "three" => "four"}
                 @node.expects(:parameters=).with("one" => "two", "three" => "four")
                 @searcher.find(@request)
             end
 
-            it "should prefer node parameters over parent parameters" do
-                @entry.stubs(:to_hash).returns("one" => "two")
-                @entry.stubs(:vals).with(:parent).returns(%w{parent})
-
-                @parent.stubs(:to_hash).returns("one" => "three")
-                @parent.stubs(:vals).with(:parent).returns(nil)
-
-                @node.expects(:parameters=).with("one" => "two")
+            it "should set the node's environment to the environment of the results" do
+                @result[:environment] = "test"
+                @node.expects(:environment=).with("test")
                 @searcher.find(@request)
             end
 
-            it "should use the parent's environment if the node has none" do
-                @entry.stubs(:to_hash).returns({})
-                @entry.stubs(:vals).with(:parent).returns(%w{parent})
-
-                @parent.stubs(:to_hash).returns("environment" => ["parent"])
-                @parent.stubs(:vals).with(:parent).returns(nil)
-
-                @node.stubs(:parameters=)
-                @node.expects(:environment=).with("parent")
+            it "should retain false parameter values" do
+                @result[:parameters] = {}
+                @result[:parameters]["one"] = false
+                @node.expects(:parameters=).with("one" => false)
                 @searcher.find(@request)
             end
 
-            it "should prefer the node's environment to the parent's" do
-                @entry.stubs(:to_hash).returns("environment" => %w{child})
-                @entry.stubs(:vals).with(:parent).returns(%w{parent})
+            describe "and a parent node is specified" do
+                before do
+                    @entry = {:classes => [], :parameters => {}}
+                    @parent = {:classes => [], :parameters => {}}
+                    @parent_parent = {:classes => [], :parameters => {}}
 
-                @parent.stubs(:to_hash).returns("environment" => ["parent"])
-                @parent.stubs(:vals).with(:parent).returns(nil)
+                    @searcher.stubs(:name2hash).with(@name).returns(@entry)
+                    @searcher.stubs(:name2hash).with('parent').returns(@parent)
+                    @searcher.stubs(:name2hash).with('parent_parent').returns(@parent_parent)
 
-                @node.stubs(:parameters=)
-                @node.expects(:environment=).with("child")
-                @searcher.find(@request)
-            end
-
-            it "should recursively look up parent information" do
-                @entry.stubs(:to_hash).returns("one" => "two")
-                @entry.stubs(:vals).with(:parent).returns(%w{parent})
-
-                @parent.stubs(:to_hash).returns("three" => "four")
-                @parent.stubs(:vals).with(:parent).returns(['parent_parent'])
-
-                @parent_parent.stubs(:to_hash).returns("five" => "six")
-                @parent_parent.stubs(:vals).with(:parent).returns(nil)
-                @parent_parent.stubs(:vals).with(:parent).returns(nil)
-
-                @node.expects(:parameters=).with("one" => "two", "three" => "four", "five" => "six")
-                @searcher.find(@request)
-            end
-
-            it "should not allow loops in parent declarations" do
-                @entry.stubs(:to_hash).returns("one" => "two")
-                @entry.stubs(:vals).with(:parent).returns(%w{parent})
-
-                @parent.stubs(:to_hash).returns("three" => "four")
-                @parent.stubs(:vals).with(:parent).returns([@name])
-                proc { @searcher.find(@request) }.should raise_error(ArgumentError)
-            end
-        end
-
-        describe "and a puppet variable is specified" do
-            before do
-                @searcher.stubs(:stacked_attributes).returns(['puppetvar'])
-            end
-
-            it "should add the variable to the node parameters" do
-                @entry.stubs(:vals).with("puppetvar").returns(%w{one=two})
-                @entry.stubs(:to_hash).returns({})
-                @node.expects(:parameters=).with("one" => "two")
-                @searcher.find(@request)
-            end
-
-            it "should not overwrite node parameters specified as ldap object attribute" do
-                @entry.stubs(:vals).with("puppetvar").returns(%w{one=two})
-                @entry.stubs(:to_hash).returns("one" => "three")
-                @node.expects(:parameters=).with("one" => "three")
-                @searcher.find(@request)
-            end
-
-            it "should set entries without an equal sign to nil" do
-                @entry.stubs(:vals).with("puppetvar").returns(%w{one})
-                @entry.stubs(:to_hash).returns({})
-                @node.expects(:parameters=).with("one" => nil)
-                @searcher.find(@request)
-            end
-
-            it "should ignore empty entries" do
-                @entry.stubs(:vals).with("puppetvar").returns(%w{})
-                @entry.stubs(:to_hash).returns({})
-                @searcher.find(@request)
-            end
-        end
-        describe "and a puppet variable as well as a parent node are specified" do
-            before do
-                @parent = mock 'parent'
-
-                @searcher.meta_def(:search_filter) do |name|
-                    return name
+                    @searcher.stubs(:parent_attribute).returns(:parent)
                 end
-                @connection.stubs(:search).with { |*args| args[2] == @name              }.yields(@entry)
-                @connection.stubs(:search).with { |*args| args[2] == 'parent'           }.yields(@parent)
 
-                @searcher.stubs(:stacked_attributes).returns(['puppetvar'])
-                @searcher.stubs(:parent_attribute).returns(:parent)
+                it "should search for the parent node" do
+                    @entry[:parent] = "parent"
+
+                    @searcher.expects(:name2hash).with(@name).returns @entry
+                    @searcher.expects(:name2hash).with('parent').returns @parent
+
+                    @searcher.find(@request)
+                end
+
+                it "should fail if the parent cannot be found" do
+                    @entry[:parent] = "parent"
+
+                    @searcher.expects(:name2hash).with('parent').returns nil
+
+                    proc { @searcher.find(@request) }.should raise_error(Puppet::Error)
+                end
+
+                it "should add any parent classes to the node's classes" do
+                    @entry[:parent] = "parent"
+                    @entry[:classes] = %w{a b}
+
+                    @parent[:classes] = %w{c d}
+
+                    @node.expects(:classes=).with(%w{a b c d})
+                    @searcher.find(@request)
+                end
+
+                it "should add any parent parameters to the node's parameters" do
+                    @entry[:parent] = "parent"
+                    @entry[:parameters]["one"] = "two"
+
+                    @parent[:parameters]["three"] = "four"
+
+                    @node.expects(:parameters=).with("one" => "two", "three" => "four")
+                    @searcher.find(@request)
+                end
+
+                it "should prefer node parameters over parent parameters" do
+                    @entry[:parent] = "parent"
+                    @entry[:parameters]["one"] = "two"
+
+                    @parent[:parameters]["one"] = "three"
+
+                    @node.expects(:parameters=).with("one" => "two")
+                    @searcher.find(@request)
+                end
+
+                it "should use the parent's environment if the node has none" do
+                    @entry[:parent] = "parent"
+
+                    @parent[:environment] = "parent"
+
+                    @node.stubs(:parameters=)
+                    @node.expects(:environment=).with("parent")
+                    @searcher.find(@request)
+                end
+
+                it "should prefer the node's environment to the parent's" do
+                    @entry[:parent] = "parent"
+                    @entry[:environment] = "child"
+
+                    @parent[:environment] = "parent"
+
+                    @node.stubs(:parameters=)
+                    @node.expects(:environment=).with("child")
+                    @searcher.find(@request)
+                end
+
+                it "should recursively look up parent information" do
+                    @entry[:parent] = "parent"
+                    @entry[:parameters]["one"] = "two"
+
+                    @parent[:parent] = "parent_parent"
+                    @parent[:parameters]["three"] = "four"
+
+                    @parent_parent[:parameters]["five"] = "six"
+
+                    @node.expects(:parameters=).with("one" => "two", "three" => "four", "five" => "six")
+                    @searcher.find(@request)
+                end
+
+                it "should not allow loops in parent declarations" do
+                    @entry[:parent] = "parent"
+                    @parent[:parent] = @name
+                    proc { @searcher.find(@request) }.should raise_error(ArgumentError)
+                end
             end
+        end
+    end
 
-            it "should add parent node variables to the child node parameters" do
-                @parent.stubs(:to_hash).returns({})
-                @parent.stubs(:vals).with("puppetvar").returns(%w{one=two})
-                @parent.stubs(:vals).with(:parent).returns(nil)
+    describe "when searching for multiple nodes" do
+        before :each do
+            @searcher = Puppet::Node::Ldap.new
+            @request = stub 'request', :key => @name
 
-                @entry.stubs(:to_hash).returns({})
-                @entry.stubs(:vals).with("puppetvar").returns(%w{})
-                @entry.stubs(:vals).with(:parent).returns(%w{parent})
+            Puppet::Node::Facts.stubs(:terminus_class).returns :yaml
+        end
 
-                @node.expects(:parameters=).with("one" => "two")
+        it "should find all nodes if no arguments are provided" do
+            @searcher.expects(:ldapsearch).with("(objectclass=puppetClient)")
+            # LAK:NOTE The search method requires an essentially bogus key.  It's
+            # an API problem that I don't really know how to fix.
+            @searcher.search "foo"
+        end
 
-                @searcher.find(@request)
+        describe "and a class is specified" do
+            it "should find all nodes that are members of that class" do
+                @searcher.expects(:ldapsearch).with("(&(objectclass=puppetClient)(puppetclass=one))")
+                @searcher.search "foo", :class => "one"
             end
+        end
 
-            it "should overwrite parent node variables with child node parameters" do
-                @parent.stubs(:to_hash).returns({})
-                @parent.stubs(:vals).with("puppetvar").returns(%w{one=two})
-                @parent.stubs(:vals).with(:parent).returns(nil)
-
-                @entry.stubs(:to_hash).returns({})
-                @entry.stubs(:vals).with("puppetvar").returns(%w{one=three})
-                @entry.stubs(:vals).with(:parent).returns(%w{parent})
-
-                @node.expects(:parameters=).with("one" => "three")
-
-                @searcher.find(@request)
+        describe "multiple classes are specified" do
+            it "should find all nodes that are members of all classes" do
+                @searcher.expects(:ldapsearch).with("(&(objectclass=puppetClient)(puppetclass=one)(puppetclass=two))")
+                @searcher.search "foo", :class => ["one", "two"]
             end
+        end
 
-            it "should not overwrite parent node parameters specified as ldap object attribute" do
-                @parent.stubs(:to_hash).returns("one" => "three")
-                @parent.stubs(:vals).with("puppetvar").returns(%w{})
-                @parent.stubs(:vals).with(:parent).returns(nil)
+        it "should process each found entry" do
+            # .yields can't be used to yield multiple values :/
+            @searcher.expects(:ldapsearch).yields("one")
+            @searcher.expects(:entry2hash).with("one").returns(:name => "foo")
+            @searcher.search "foo"
+        end
 
-                @entry.stubs(:vals).with("puppetvar").returns(%w{one=two})
-                @entry.stubs(:to_hash).returns({})
-                @entry.stubs(:vals).with(:parent).returns(%w{parent})
-
-                @node.expects(:parameters=).with("one" => "three")
-
-                @searcher.find(@request)
-            end
-
+        it "should return a node for each processed entry" do
+            @searcher.expects(:ldapsearch).yields("one")
+            @searcher.expects(:entry2hash).with("one").returns(:name => "foo")
+            result = @searcher.search("foo")
+            result[0].should be_instance_of(Puppet::Node)
+            result[0].name.should == "foo"
         end
     end
 end

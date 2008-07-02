@@ -28,8 +28,9 @@ describe Puppet::Indirector::Ldap, " when searching ldap" do
         @request = stub 'request', :key => "yay"
     end
 
-    it "should call the ldapsearch method with the name being searched for" do
-        @searcher.expects(:ldapsearch).with("yay")
+    it "should call the ldapsearch method with the search filter" do
+        @searcher.expects(:search_filter).with("yay").returns("yay's filter")
+        @searcher.expects(:ldapsearch).with("yay's filter")
         @searcher.find @request
     end
 
@@ -61,15 +62,6 @@ describe Puppet::Indirector::Ldap, " when searching ldap" do
         @searcher.find @request
     end
 
-    it "should use the results of the :search_filter method as the search filter" do
-        @searcher.stubs(:search_filter).with("yay").returns("yay's filter")
-        @connection.expects(:search).with do |*args|
-            args[2].should == "yay's filter"
-            true
-        end
-        @searcher.find @request
-    end
-
     it "should use depth 2 when searching" do
         @connection.expects(:search).with do |*args|
             args[1].should == 2
@@ -80,7 +72,7 @@ describe Puppet::Indirector::Ldap, " when searching ldap" do
 
     it "should call process() on the first found entry" do
         @connection.expects(:search).yields("myresult")
-        @searcher.expects(:process).with("yay", "myresult")
+        @searcher.expects(:process).with("myresult")
         @searcher.find @request
     end
 
@@ -94,7 +86,7 @@ describe Puppet::Indirector::Ldap, " when searching ldap" do
                 raise "failed"
             end
         end.yields("myresult")
-        @searcher.expects(:process).with("yay", "myresult")
+        @searcher.expects(:process).with("myresult")
 
         @searcher.find @request
     end
