@@ -28,7 +28,8 @@ module Puppet::SSLCertificates::Support
 
         # Define the reading method.
         define_method(reader) do
-            return nil unless FileTest.exists?(Puppet[param])
+            return nil unless FileTest.exists?(Puppet[param]) or rename_files_with_uppercase(Puppet[param])
+
             begin
                 instance_variable_set(var, klass.new(File.read(Puppet[param])))
             rescue => detail
@@ -121,5 +122,24 @@ module Puppet::SSLCertificates::Support
         end
         return retrieved
     end
-end
 
+    # A hack method to deal with files that exist with a different case.
+    # Just renames it; doesn't read it in or anything.
+    def rename_files_with_uppercase(file)
+        dir = File.dirname(file)
+        short = File.basename(file)
+        raise ArgumentError, "Tried to fix SSL files to a file containing uppercase" unless short.downcase == short
+        real_file = Dir.entries(dir).reject { |f| f =~ /^\./ }.find do |other|
+            other.downcase == short
+        end
+
+        return nil unless real_file
+
+        full_file = File.join(dir, real_file)
+
+        Puppet.notice "Fixing case in %s; renaming to %s" % [full_file, file]
+        File.rename(full_file, file)
+
+        return true
+    end
+end
