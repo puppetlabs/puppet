@@ -1,4 +1,5 @@
 require 'puppet/indirector/terminus'
+require 'puppet/util/ldap/connection'
 
 class Puppet::Indirector::Ldap < Puppet::Indirector::Terminus
     # Perform our ldap search and process the result.
@@ -56,8 +57,6 @@ class Puppet::Indirector::Ldap < Puppet::Indirector::Terminus
         return found
     end
 
-    private
-
     # Create an ldap connection.
     def connection
         unless defined? @connection and @connection
@@ -65,19 +64,11 @@ class Puppet::Indirector::Ldap < Puppet::Indirector::Terminus
                 raise Puppet::Error, "Could not set up LDAP Connection: Missing ruby/ldap libraries"
             end
             begin
-                if Puppet[:ldapssl]
-                    @connection = LDAP::SSLConn.new(Puppet[:ldapserver], Puppet[:ldapport])
-                elsif Puppet[:ldaptls]
-                    @connection = LDAP::SSLConn.new(
-                        Puppet[:ldapserver], Puppet[:ldapport], true
-                    )
-                else
-                    @connection = LDAP::Conn.new(Puppet[:ldapserver], Puppet[:ldapport])
-                end
-                @connection.set_option(LDAP::LDAP_OPT_PROTOCOL_VERSION, 3)
-                @connection.set_option(LDAP::LDAP_OPT_REFERRALS, LDAP::LDAP_OPT_ON)
-                @connection.simple_bind(Puppet[:ldapuser], Puppet[:ldappassword])
+                conn = Puppet::Util::Ldap::Connection.instance
+                conn.start
+                @connection = conn.connection
             rescue => detail
+                puts detail.backtrace if Puppet[:trace]
                 raise Puppet::Error, "Could not connect to LDAP: %s" % detail
             end
         end
