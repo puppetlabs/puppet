@@ -111,4 +111,46 @@ describe Puppet::Util::Ldap::Connection do
             @connection.close
         end
     end
+
+    it "should have a class-level method for creating a default connection" do
+        Puppet::Util::Ldap::Connection.should respond_to(:instance)
+    end
+
+    describe "when creating a default connection" do
+        before do
+            Puppet.settings.stubs(:value).returns "whatever"
+        end
+
+        it "should use the :ldapserver setting to determine the host" do
+            Puppet.settings.expects(:value).with(:ldapserver).returns "myserv"
+            Puppet::Util::Ldap::Connection.expects(:new).with { |host, port, options| host == "myserv" }
+            Puppet::Util::Ldap::Connection.instance
+        end
+
+        it "should use the :ldapport setting to determine the port" do
+            Puppet.settings.expects(:value).with(:ldapport).returns "456"
+            Puppet::Util::Ldap::Connection.expects(:new).with { |host, port, options| port == "456" }
+            Puppet::Util::Ldap::Connection.instance
+        end
+
+        it "should set ssl to :tls if tls is enabled" do
+            Puppet.settings.expects(:value).with(:ldaptls).returns true
+            Puppet::Util::Ldap::Connection.expects(:new).with { |host, port, options| options[:ssl] == :tls }
+            Puppet::Util::Ldap::Connection.instance
+        end
+
+        it "should set ssl to 'true' if ssl is enabled and tls is not" do
+            Puppet.settings.expects(:value).with(:ldaptls).returns false
+            Puppet.settings.expects(:value).with(:ldapssl).returns true
+            Puppet::Util::Ldap::Connection.expects(:new).with { |host, port, options| options[:ssl] == true }
+            Puppet::Util::Ldap::Connection.instance
+        end
+
+        it "should set ssl to false if neither ssl nor tls are enabled" do
+            Puppet.settings.expects(:value).with(:ldaptls).returns false
+            Puppet.settings.expects(:value).with(:ldapssl).returns false
+            Puppet::Util::Ldap::Connection.expects(:new).with { |host, port, options| options[:ssl] == false }
+            Puppet::Util::Ldap::Connection.instance
+        end
+    end
 end
