@@ -45,7 +45,7 @@ module Puppet
             defaultto do :absent end
         end
 
-        autorequire(:file) do
+        def generate
             atype = Puppet::Type.type(:file)
             target = self.should(:target)
             dir =  File.dirname(target)
@@ -53,11 +53,11 @@ module Puppet
 
             rels = []
 
-            unless atype[dir]
+            unless catalog.resource(:file, dir)
                 rels << atype.create(:name => dir, :ensure => :directory, :mode => 0700, :owner => user)
             end
 
-            unless atype[target]
+            unless catalog.resource(:file, target)
                 rels << atype.create(:name => target, :ensure => :present, :mode => 0600, :owner => user)
             end
 

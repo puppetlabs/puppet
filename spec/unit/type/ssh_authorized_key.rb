@@ -14,6 +14,7 @@ describe ssh_authorized_key do
 
         @provider = stub 'provider', :class => @provider_class, :file_path => "/tmp/whatever", :clear => nil
         @provider_class.stubs(:new).returns(@provider)
+        @catalog = Puppet::Node::Catalog.new
     end
 
     it "should have a name parameter" do
@@ -77,38 +78,48 @@ describe ssh_authorized_key do
     end
 
     it "should autorequire parent directories when user is given" do
-        key = @class.create(
+        @catalog.add_resource @class.create(
           :name   => "Test",
           :key    => "AAA",
           :type   => "ssh-rsa",
           :ensure => :present,
           :user   => "root")
+        @catalog.apply
 
-        key.autorequire.should_not == []
+        target = File.expand_path("~root/.ssh")
+        @catalog.resource(:file, target).should be_an_instance_of(Puppet::Type.type(:file))
     end
 
     it "should set target when user is given" do
-        key = @class.create(
+        @catalog.add_resource @class.create(
           :name   => "Test",
           :key    => "AAA",
           :type   => "ssh-rsa",
           :ensure => :present,
           :user   => "root")
+        @catalog.apply
 
-        key.should(:target).should == File.expand_path("~root/.ssh/authorized_keys")
+        target = File.expand_path("~root/.ssh/authorized_keys")
+        @catalog.resource(:file, target).should be_an_instance_of(Puppet::Type.type(:file))
     end
 
 
     it "should autorequire parent directories when target is given" do
-        key = @class.create(
+        target = "/tmp/home/foo/bar/.ssh/authorized_keys"
+
+        @catalog.add_resource @class.create(
           :name   => "Test",
           :key    => "AAA",
           :type   => "ssh-rsa",
           :ensure => :present,
-          :target => "/tmp/home/foo/bar/.ssh/authorized_keys")
+          :target => target)
+        @catalog.apply
 
-        key.autorequire.should_not == []
+        @catalog.resource(:file, target).should be_an_instance_of(Puppet::Type.type(:file))
     end
 
-    after { @class.clear }
+    after do
+      @class.clear
+      @catalog.clear
+    end
 end
