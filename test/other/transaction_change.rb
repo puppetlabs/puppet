@@ -7,7 +7,7 @@ require File.dirname(__FILE__) + '/../lib/puppettest'
 
 require 'puppettest'
 
-class TestPropertyChange < Test::Unit::TestCase
+class TestTransactionChange < Test::Unit::TestCase
 	include PuppetTest
 	class FakeProperty < Puppet::Property
 	    attr_accessor :is, :should, :resource
@@ -58,7 +58,7 @@ class TestPropertyChange < Test::Unit::TestCase
         property.resource = :parent
         change = nil
         assert_nothing_raised do
-            change = Puppet::PropertyChange.new(property, :start)
+            change = Puppet::Transaction::Change.new(property, :start)
         end
         change.transaction = :trans
         

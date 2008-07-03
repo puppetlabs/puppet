@@ -415,7 +415,6 @@ class Type
 end # Puppet::Type
 end
 
-require 'puppet/propertychange'
 require 'puppet/provider'
 
 # Always load these types.

@@ -2,10 +2,10 @@
 # and performs them
 
 require 'puppet'
-require 'puppet/propertychange'
 
 module Puppet
 class Transaction
+    require 'puppet/transaction/change'
     attr_accessor :component, :catalog, :ignoreschedules
     attr_accessor :sorted_resources, :configurator
 
