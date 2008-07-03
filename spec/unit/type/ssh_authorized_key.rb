@@ -118,6 +118,16 @@ describe ssh_authorized_key do
         @catalog.resource(:file, target).should be_an_instance_of(Puppet::Type.type(:file))
     end
 
+    it "should raise an error when neither user nor target is given" do
+        proc do
+            @class.create(
+              :name   => "Test",
+              :key    => "AAA",
+              :type   => "ssh-rsa",
+              :ensure => :present)
+        end.should raise_error(Puppet::Error)
+    end
+
     after do
       @class.clear
       @catalog.clear
