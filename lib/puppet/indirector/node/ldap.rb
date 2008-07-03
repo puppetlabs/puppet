@@ -14,7 +14,7 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
     end
 
     # Separate this out so it's relatively atomic.  It's tempting to call
-    # process() instead of entry2hash() here, but it ends up being
+    # process() instead of name2hash() here, but it ends up being
     # difficult to test because all exceptions get caught by ldapsearch.
     # LAK:NOTE Unfortunately, the ldap support is too stupid to throw anything
     # but LDAP::ResultError, even on bad connections, so we are rough handed
@@ -35,19 +35,12 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
 
         node = nil
         names.each do |name|
-            break if node = process(name)
-        end
-        return nil unless node
+            next unless info = name2hash(name)
 
-        node.name = request.key
+            break if node = info2node(request.key, info)
+        end
 
         return node
-    end
-
-    def process(name)
-        return nil unless info = name2hash(name)
-
-        info2node(name, info)
     end
 
     # Find more than one node.  LAK:NOTE This is a bit of a clumsy API, because the 'search'
