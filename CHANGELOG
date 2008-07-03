@@ -1,4 +1,7 @@
 0.24.?
+    Fixed #1232 - the rundir no longer specifies a user/group,
+    and there are now client- and server-specific yaml directories.
+
     Fixed #1006 - puppetrun --class works again.  I added the class
     membership testing to the Ldap node terminus, and added tests,
     so it shouldn't break again.

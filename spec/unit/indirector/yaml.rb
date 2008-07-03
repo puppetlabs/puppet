@@ -20,12 +20,25 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
         @subject.name = :me
 
         @dir = "/what/ever"
-        Puppet.settings.stubs(:value).with(:yamldir).returns(@dir)
+        Puppet.settings.stubs(:value).returns("fakesettingdata")
+        Puppet.settings.stubs(:value).with(:clientyamldir).returns(@dir)
 
         @request = stub 'request', :key => :me, :instance => @subject
     end
 
     describe Puppet::Indirector::Yaml, " when choosing file location" do
+        it "should use the yamldir if the process name is 'puppetmasterd'" do
+            Puppet.settings.expects(:value).with(:name).returns "puppetmasterd"
+            Puppet.settings.expects(:value).with(:yamldir).returns "/main/yaml/dir"
+            @store.path(:me).should =~ %r{^/main/yaml/dir}
+        end
+
+        it "should use the client yamldir if the process name is not 'puppetmasterd'" do
+            Puppet.settings.expects(:value).with(:name).returns "cient"
+            Puppet.settings.expects(:value).with(:clientyamldir).returns "/client/yaml/dir"
+            @store.path(:me).should =~ %r{^/client/yaml/dir}
+        end
+
         it "should store all files in a single file root set in the Puppet defaults" do
             @store.path(:me).should =~ %r{^#{@dir}}
         end
