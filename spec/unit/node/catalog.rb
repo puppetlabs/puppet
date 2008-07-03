@@ -472,6 +472,11 @@ describe Puppet::Node::Catalog, " when functioning as a resource container" do
         @catalog.resource("me", "other").should equal(@one)
     end
 
+    it "should ignore conflicting aliases that point to the aliased resource" do
+        @catalog.alias(@one, "other")
+        lambda { @catalog.alias(@one, "other") }.should_not raise_error
+    end
+
     it "should fail to add an alias if the aliased name already exists" do
         @catalog.add_resource @one
         proc { @catalog.alias @two, "one" }.should raise_error(ArgumentError)

@@ -95,6 +95,7 @@ class Puppet::Node::Catalog < Puppet::PGraph
         # isn't sufficient.
         return if newref == resource.ref
         if existing = @resource_table[newref]
+            return if existing == resource
             raise(ArgumentError, "Cannot alias %s to %s; resource %s already exists" % [resource.ref, name, newref])
         end
         @resource_table[newref] = resource
