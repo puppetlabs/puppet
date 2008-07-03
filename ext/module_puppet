@@ -138,8 +138,9 @@ server = nil
     end
 end
 
-Puppet.genconfig
-Puppet.genmanifest
+if Puppet.settings.print_configs?
+        exit(Puppet.settings.print_configs ? 0 : 1)
+end
 
 unless ARGV.length > 0
     $stderr.puts "You must pass a script to parse"
