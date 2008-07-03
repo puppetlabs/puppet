@@ -57,14 +57,14 @@ LOOPBACKDUMMY
     def self.instances
         # parse all of the config files at once
         Dir.glob("%s/ifcfg-*" % INTERFACE_DIR).collect do |file|
-            record = parse(file)
+            instance = parse(file)
 
             # store the existing dummy interfaces
-            @@dummies << record[:ifnum] if (record[:interface_type] == :dummy and ! @@dummies.include?(record[:ifnum]))
+            @@dummies << instance.ifnum if (instance.interface_type == :dummy and ! @@dummies.include?(instance.ifnum))
 
-            @@aliases[record[:interface]] << record[:ifnum] if record[:interface_type] == :alias
+            @@aliases[instance.interface] << instance.ifnum if instance.interface_type == :alias
 
-            new(record)
+            instance
         end
     end
 
@@ -95,12 +95,18 @@ LOOPBACKDUMMY
 
     # Parse the existing file.
     def self.parse(file)
-        instance = new()
+        unless file =~ /-([^-]+)$/
+            Puppet.warning "Could not extract interface name from %s; skipping" % file
+            return nil
+        end
+        name = $1
+        instance = new(:name => name)
         return instance unless FileTest.exist?(file)
 
         File.readlines(file).each do |line|
             if line =~ /^(\w+)=(.+)$/
-                instance.send($1.downcase + "=", $2)
+                method = $1.downcase + "="
+                instance.send(method, $2) if instance.respond_to?(method)
             end
         end
 
@@ -197,10 +203,15 @@ LOOPBACKDUMMY
         end
     end
 
+    # LAK:NOTE This method is why this resource type has been disabled.
+    # The model is ridiculous -- the device name should be the interface
+    # name.  We're 90% of the way toward making this possible, but I'm not
+    # taking the time to fix it.
     # Set the name to our ip address.
     def ipaddr=(value)
         @property_hash[:name] = value
     end
+
 
     # whether the device is to be brought up on boot or not. converts
     # the true / false of the type, into yes / no values respectively

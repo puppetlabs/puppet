@@ -64,35 +64,38 @@ describe provider_class, "when determining the file path" do
     end
 end
 
-describe provider_class, "when returning instances" do
-    it "should consider each file in the network-scripts directory an interface instance" do
-        Dir.expects(:glob).with("/etc/sysconfig/network-scripts/ifcfg-*").returns(%w{one two})
-        one = {:name => "one"}
-        two = {:name => "two"}
-        Puppet::Type::Interface::ProviderRedhat.expects(:parse).with("one").returns(one)
-        Puppet::Type::Interface::ProviderRedhat.expects(:parse).with("two").returns(two)
-        Puppet::Type::Interface::ProviderRedhat.expects(:new).with(one).returns(:one)
-        Puppet::Type::Interface::ProviderRedhat.expects(:new).with(two).returns(:two)
-        Puppet::Type::Interface::ProviderRedhat.instances.should == [:one, :two]
-    end
-end
-
 describe provider_class, "when parsing" do
+    before do
+        @provider = Puppet::Type::Interface::ProviderRedhat.new
+    end
+
+    it "should return nil if the file name does not include an interface" do
+        Puppet::Type::Interface::ProviderRedhat.parse("/my/file").should be_nil
+    end
+
     it "should return an unmodified provider if the file does not exist" do
-        FileTest.expects(:exist?).with("/my/file").returns(false)
+        FileTest.expects(:exist?).with("/my/ifcfg-eth0").returns(false)
         provider = mock 'provider'
         Puppet::Type::Interface::ProviderRedhat.expects(:new).returns(provider)
-        Puppet::Type::Interface::ProviderRedhat.parse("/my/file").should equal(provider)
+        Puppet::Type::Interface::ProviderRedhat.parse("/my/ifcfg-eth0").should equal(provider)
     end
 
     it "should set each attribute in the file on the provider" do
-        FileTest.expects(:exist?).with("/my/file").returns(true)
-        File.expects(:readlines).with("/my/file").returns(%w{one=two three=four})
-        provider = mock 'provider'
-        Puppet::Type::Interface::ProviderRedhat.expects(:new).returns(provider)
-        provider.expects(:one=).with('two')
-        provider.expects(:three=).with('four')
-        Puppet::Type::Interface::ProviderRedhat.parse("/my/file").should equal(provider)
+        FileTest.expects(:exist?).with("/my/ifcfg-eth0").returns(true)
+        File.expects(:readlines).with("/my/ifcfg-eth0").returns(%w{DEVICE=foo ONBOOT=yes})
+        Puppet::Type::Interface::ProviderRedhat.expects(:new).returns(@provider)
+        @provider.expects(:device=).with('foo')
+        @provider.expects(:onboot=).with('yes')
+        Puppet::Type::Interface::ProviderRedhat.parse("/my/ifcfg-eth0").should equal(@provider)
+    end
+
+    it "should not try to assign parameters that the provider does not support" do
+        Puppet::Type::Interface::ProviderRedhat.expects(:new).returns @provider
+
+        file = "/my/file/ifcfg-eth0"
+        FileTest.stubs(:exist?).returns true
+        File.expects(:readlines).with(file).returns %w{BOOTPROTO=foo\n DEVICE=eth0\n}
+        lambda { Puppet::Type::Interface::ProviderRedhat.parse(file) }.should_not raise_error
     end
 end
 
