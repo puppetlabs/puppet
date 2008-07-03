@@ -796,7 +796,7 @@ class TestTransactions < Test::Unit::TestCase
     def test_proxy_resources
         type = mkreducer do
             def evaluate
-                return Puppet::PropertyChange.new(Fakeprop.new(
+                return Puppet::Transaction::Change.new(Fakeprop.new(
                     :path => :path, :is => :is, :should => :should, :name => self.name, :resource => "a parent"), :is)
             end
         end
@@ -905,7 +905,7 @@ class TestTransactions < Test::Unit::TestCase
         assert(result, "c did not trigger anything")
         assert_instance_of(Array, result)
         event = result.shift
-        assert_instance_of(Puppet::Event, event)
+        assert_instance_of(Puppet::Transaction::Event, event)
         assert_equal(:triggered, event.event, "event was not set correctly")
         assert_equal(c, event.source, "source was not set correctly")
         assert_equal(trans, event.transaction, "transaction was not set correctly")
@@ -995,7 +995,7 @@ class TestTransactions < Test::Unit::TestCase
             newparam(:name) {}
             newproperty(:testing) do
                 def sync
-                    self.is = self.should
+                    # noop
                     :ran_testing
                 end
             end

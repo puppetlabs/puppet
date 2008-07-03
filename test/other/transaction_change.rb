@@ -82,7 +82,7 @@ class TestTransactionChange < Test::Unit::TestCase
     	    events = change.go
 	    end
 	    assert_instance_of(Array, events, "events were not returned in an array")
-	    assert_instance_of(Puppet::Event, events[0], "event array did not contain events")
+	    assert_instance_of(Puppet::Transaction::Event, events[0], "event array did not contain events")
 
 	    event = events.shift
 	    {:event => :fake_change, :transaction => :trans, :source => :parent}.each do |method, val|
@@ -105,7 +105,7 @@ class TestTransactionChange < Test::Unit::TestCase
         end
         
 	    assert_instance_of(Array, events, "events were not returned in an array")
-	    assert_instance_of(Puppet::Event, events[0], "event array did not contain events")
+	    assert_instance_of(Puppet::Transaction::Event, events[0], "event array did not contain events")
 
 	    event = events.shift
 	    {:event => :fake_change, :transaction => :trans, :source => :other}.each do |method, val|

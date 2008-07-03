@@ -6,6 +6,8 @@ require 'puppet'
 module Puppet
 class Transaction
     require 'puppet/transaction/change'
+    require 'puppet/transaction/event'
+
     attr_accessor :component, :catalog, :ignoreschedules
     attr_accessor :sorted_resources, :configurator
 
@@ -680,7 +682,7 @@ class Transaction
                     [callback, subs.length]
 
                 # And then add an event for it.
-                return [Puppet::Event.new(
+                return [Puppet::Transaction::Event.new(
                     :event => :noop,
                     :transaction => self,
                     :source => resource
@@ -712,7 +714,7 @@ class Transaction
             end
 
             # And then add an event for it.
-            trigged << Puppet::Event.new(
+            trigged << Puppet::Transaction::Event.new(
                 :event => :triggered,
                 :transaction => self,
                 :source => resource

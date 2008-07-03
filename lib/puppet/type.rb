@@ -1,6 +1,5 @@
 require 'puppet'
 require 'puppet/util/log'
-require 'puppet/event'
 require 'puppet/util/metric'
 require 'puppet/property'
 require 'puppet/parameter'
