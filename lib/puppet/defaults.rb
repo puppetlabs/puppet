@@ -69,8 +69,6 @@ module Puppet
         :rundir => { 
             :default => rundir,
             :mode => 01777,
-            :owner => "$user",
-            :group => "$group",
             :desc => "Where Puppet PID files are kept."
         },
         :genconfig => [false,
@@ -358,7 +356,9 @@ module Puppet
         # To make sure this directory is created before we try to use it on the server, we need
         # it to be in the server section (#1138).
         :yamldir => {:default => "$vardir/yaml", :owner => "$user", :group => "$user", :mode => "750",
-            :desc => "The directory in which YAML data is stored, usually in a subdirectory."}
+            :desc => "The directory in which YAML data is stored, usually in a subdirectory."},
+        :clientyamldir => {:default => "$vardir/client_yaml", :mode => "750",
+            :desc => "The directory in which client-side YAML data is stored."}
     )
 
     self.setdefaults(:puppetd,
