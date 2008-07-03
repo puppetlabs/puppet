@@ -19,7 +19,7 @@ describe provider_class do
     end
 end
 
-describe provider_class, " when determining the file path" do
+describe provider_class, "when determining the file path" do
     it "should always contain '/etc/sysconfig/network-scripts/ifcfg-'" do
         provider = provider_class.new(:name => "192.168.0.1")
         provider.file_path.should =~ %r{^/etc/sysconfig/network-scripts/ifcfg-}
@@ -64,7 +64,7 @@ describe provider_class, " when determining the file path" do
     end
 end
 
-describe provider_class, " when returning instances" do
+describe provider_class, "when returning instances" do
     it "should consider each file in the network-scripts directory an interface instance" do
         Dir.expects(:glob).with("/etc/sysconfig/network-scripts/ifcfg-*").returns(%w{one two})
         one = {:name => "one"}
@@ -77,7 +77,7 @@ describe provider_class, " when returning instances" do
     end
 end
 
-describe provider_class, " when parsing" do
+describe provider_class, "when parsing" do
     it "should return an unmodified provider if the file does not exist" do
         FileTest.expects(:exist?).with("/my/file").returns(false)
         provider = mock 'provider'
@@ -96,7 +96,7 @@ describe provider_class, " when parsing" do
     end
 end
 
-describe provider_class, " when setting the device to a value containing ':'" do
+describe provider_class, "when setting the device to a value containing ':'" do
     before do
         @provider = Puppet::Type::Interface::ProviderRedhat.new
         @provider.device = "one:two"
@@ -112,7 +112,7 @@ describe provider_class, " when setting the device to a value containing ':'" do
     end
 end
 
-describe provider_class, " when setting the device to a value starting with 'dummy-'" do
+describe provider_class, "when setting the device to a value starting with 'dummy-'" do
     before do
         @provider = Puppet::Type::Interface::ProviderRedhat.new
         @provider.device = "dummy5"
@@ -128,7 +128,7 @@ describe provider_class, " when setting the device to a value starting with 'dum
     end
 end
 
-describe provider_class, " when setting the device to a value containing neither 'dummy-' nor ':'" do
+describe provider_class, "when setting the device to a value containing neither 'dummy-' nor ':'" do
     before do
         @provider = Puppet::Type::Interface::ProviderRedhat.new
         @provider.device = "whatever"
@@ -141,7 +141,7 @@ describe provider_class, " when setting the device to a value containing neither
     end
 end
 
-describe provider_class, " when setting the on_boot value" do
+describe provider_class, "when setting the on_boot value" do
     before do
         @provider = Puppet::Type::Interface::ProviderRedhat.new
     end
@@ -155,7 +155,7 @@ describe provider_class, " when setting the on_boot value" do
     end
 end
 
-describe provider_class, " when setting the ipaddr value" do
+describe provider_class, "when setting the ipaddr value" do
     before do
         @provider = Puppet::Type::Interface::ProviderRedhat.new
     end
@@ -166,7 +166,7 @@ describe provider_class, " when setting the ipaddr value" do
     end
 end
 
-describe provider_class, " when generating" do
+describe provider_class, "when generating" do
     before do
         @provider = Puppet::Type::Interface::ProviderRedhat.new
         @provider.interface_type = :alias
@@ -210,7 +210,7 @@ describe provider_class, " when generating" do
     end
 end
 
-describe provider_class, " when creating and destroying" do
+describe provider_class, "when creating and destroying" do
     before do
         @provider = provider_class.new(:interface => "eth0", :name => "testing")
         @path = "/etc/sysconfig/network-scripts/ifcfg-testing"
