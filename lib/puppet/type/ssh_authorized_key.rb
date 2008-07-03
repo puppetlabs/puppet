@@ -5,14 +5,14 @@ module Puppet
         ensurable
 
         newparam(:name) do
-            desc "The ssh key comment."
+            desc "The SSH key comment."
 
             isnamevar
         end
 
         newproperty(:type) do
-            desc "The encryption type used.  Probably ssh-dss or ssh-rsa for
-                  ssh version 2. Not used for ssh version 1."
+            desc "The encryption type used.  Usually ssh-dss or ssh-rsa for
+                  SSH version 2. Not used for SSH version 1."
 
             newvalue("ssh-dss")
             newvalue("ssh-rsa")
@@ -26,7 +26,7 @@ module Puppet
         end
 
         newproperty(:user) do
-            desc "The user account in which the ssh key should be installed."
+            desc "The user account in which the SSH key should be installed."
 
             def value=(value)
                 @resource[:target] = File.expand_path("~%s/.ssh/authorized_keys" % value)
@@ -35,12 +35,12 @@ module Puppet
         end
 
         newproperty(:target) do
-            desc "The file in which to store the ssh key."
+            desc "The file in which to store the SSH key."
         end
 
         newproperty(:options, :array_matching => :all) do
-            desc "Key options, see sshd(8) for possible values. Multiple values
-              should be specified as an array."
+            desc "Key options, see sshd(8) for possible values. Multiple values 
+                  should be specified as an array."
 
             defaultto do :absent end
         end
