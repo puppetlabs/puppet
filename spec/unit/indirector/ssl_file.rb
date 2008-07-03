@@ -91,6 +91,8 @@ describe Puppet::Indirector::SslFile do
         describe "when finding certificates on disk" do
             describe "and no certificate is present" do
                 before do
+                    # Stub things so the case management bits work.
+                    FileTest.stubs(:exist?).with(File.dirname(@certpath)).returns false
                     FileTest.expects(:exist?).with(@certpath).returns false
                 end
 
@@ -112,6 +114,32 @@ describe Puppet::Indirector::SslFile do
                     model.expects(:new).with("myname").returns cert
                     cert.expects(:read).with(@certpath)
                     @searcher.find(@request).should equal(cert)
+                end
+            end
+
+            describe "and a certificate is present but has uppercase letters" do
+                before do
+                    @request = stub 'request', :key => "myhost"
+                end
+
+                # This is kind of more an integration test; it's for #1382, until
+                # the support for upper-case certs can be removed around mid-2009.
+                it "should rename the existing file to the lower-case path" do
+                    @path = @searcher.path("myhost")
+                    FileTest.expects(:exist?).with(@path).returns(false)
+                    dir, file = File.split(@path)
+                    FileTest.expects(:exist?).with(dir).returns true
+                    Dir.expects(:entries).with(dir).returns [".", "..", "something.pem", file.upcase]
+
+                    File.expects(:rename).with(File.join(dir, file.upcase), @path)
+
+                    cert = mock 'cert'
+                    model = mock 'model'
+                    @searcher.stubs(:model).returns model
+                    @searcher.model.expects(:new).with("myhost").returns cert
+                    cert.expects(:read).with(@path)
+
+                    @searcher.find(@request)
                 end
             end
         end

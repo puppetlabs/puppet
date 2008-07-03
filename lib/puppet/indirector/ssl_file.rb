@@ -79,7 +79,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
     def find(request)
         path = path(request.key)
 
-        return nil unless FileTest.exist?(path)
+        return nil unless FileTest.exist?(path) or rename_files_with_uppercase(path)
 
         result = model.new(request.key)
         result.read(path)
@@ -122,6 +122,30 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
 
     def ca_location
         self.class.ca_location
+    end
+
+    # A hack method to deal with files that exist with a different case.
+    # Just renames it; doesn't read it in or anything.
+    # LAK:NOTE This is a copy of the method in sslcertificates/support.rb,
+    # which we'll be EOL'ing at some point.  This method was added at 20080702
+    # and should be removed at some point.
+    def rename_files_with_uppercase(file)
+        dir, short = File.split(file)
+        return nil unless FileTest.exist?(dir)
+
+        raise ArgumentError, "Tried to fix SSL files to a file containing uppercase" unless short.downcase == short
+        real_file = Dir.entries(dir).reject { |f| f =~ /^\./ }.find do |other|
+            other.downcase == short
+        end
+
+        return nil unless real_file
+
+        full_file = File.join(dir, real_file)
+
+        Puppet.notice "Fixing case in %s; renaming to %s" % [full_file, file]
+        File.rename(full_file, file)
+
+        return true
     end
 
     # Yield a filehandle set up appropriately, either with our settings doing
