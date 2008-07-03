@@ -3,7 +3,6 @@
 require File.dirname(__FILE__) + '/../../lib/puppettest'
 
 require 'puppettest'
-require 'puppet/type/sshkey'
 require 'facter'
 
 class TestSSHKey < Test::Unit::TestCase
