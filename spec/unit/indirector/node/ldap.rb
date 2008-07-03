@@ -136,6 +136,14 @@ describe Puppet::Node::Ldap do
                 @searcher.stubs(:name2hash).returns @result
             end
 
+            it "should create the node with the correct name, even if it was found by a different name" do
+                @searcher.expects(:name2hash).with("mynode.domain.com").returns nil
+                @searcher.expects(:name2hash).with("mynode").returns @result
+
+                Puppet::Node.expects(:new).with("mynode.domain.com").returns @node
+                @searcher.find(@request)
+            end
+
             it "should add any classes from ldap" do
                 @result[:classes] = %w[a b c d]
                 @node.expects(:classes=).with(%w{a b c d})
@@ -158,6 +166,19 @@ describe Puppet::Node::Ldap do
                 @result[:parameters] = {}
                 @result[:parameters]["one"] = false
                 @node.expects(:parameters=).with("one" => false)
+                @searcher.find(@request)
+            end
+
+            it "should merge the node's facts after the parameters from ldap are assigned" do
+                # Make sure we've got data to start with, so the parameters are actually set.
+                @result[:parameters] = {}
+                @result[:parameters]["one"] = "yay"
+
+                # A hackish way to enforce order.
+                set = false
+                @node.expects(:parameters=).with { |*args| set = true }
+                @node.expects(:fact_merge).with { |*args| raise "Facts were merged before parameters were set" unless set; true }
+
                 @searcher.find(@request)
             end
 
@@ -304,12 +325,21 @@ describe Puppet::Node::Ldap do
             @searcher.search @request
         end
 
-        it "should return a node for each processed entry" do
-            @searcher.expects(:ldapsearch).yields("one")
-            @searcher.expects(:entry2hash).with("one").returns(:name => "foo")
+        it "should return a node for each processed entry with the name from the entry" do
+            @searcher.expects(:ldapsearch).yields("whatever")
+            @searcher.expects(:entry2hash).with("whatever").returns(:name => "foo")
             result = @searcher.search(@request)
             result[0].should be_instance_of(Puppet::Node)
             result[0].name.should == "foo"
+        end
+
+        it "should merge each node's facts" do
+            node = mock 'node'
+            Puppet::Node.expects(:new).with("foo").returns node
+            node.expects(:fact_merge)
+            @searcher.stubs(:ldapsearch).yields("one")
+            @searcher.stubs(:entry2hash).with("one").returns(:name => "foo")
+            @searcher.search(@request)
         end
     end
 end
