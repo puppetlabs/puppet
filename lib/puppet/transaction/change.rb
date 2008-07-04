@@ -4,7 +4,7 @@ require 'puppet/transaction/event'
 # Handle all of the work around performing an actual change,
 # including calling 'sync' on the properties and producing events.
 class Puppet::Transaction::Change
-    attr_accessor :is, :should, :type, :path, :property, :transaction, :changed, :proxy
+    attr_accessor :is, :should, :type, :path, :property, :changed, :proxy
     
     # The log file generated when this object was changed.
     attr_reader :report
@@ -14,11 +14,6 @@ class Puppet::Transaction::Change
         @property.should = @is
         @is = @property.retrieve
 
-        unless transaction
-            raise Puppet::Error,
-                "PropertyChange '%s' tried to be executed outside of transaction" %
-                self
-        end
         unless @property.insync?(@is)
             @property.info "Backing %s" % self
             return self.go
@@ -85,12 +80,6 @@ class Puppet::Transaction::Change
     end
 
     def forward
-        unless transaction
-            raise Puppet::Error,
-                "PropertyChange '%s' tried to be executed outside of transaction" %
-                self
-        end
-
         return self.go
     end
     
@@ -109,6 +98,6 @@ class Puppet::Transaction::Change
     end
 
     def to_s
-        return "change %s.%s(%s)" % [transaction.object_id, self.object_id, @property.change_to_s(@is, @should)]
+        return "change %s" % @property.change_to_s(@is, @should)
     end
 end

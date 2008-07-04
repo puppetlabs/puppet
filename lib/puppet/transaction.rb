@@ -111,7 +111,6 @@ class Transaction
         changes.collect { |change|
             @changes << change
             @count += 1
-            change.transaction = self
             events = nil
             begin
                 # use an array, so that changes can return more than one

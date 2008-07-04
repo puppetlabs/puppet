@@ -82,11 +82,6 @@ describe Puppet::Transaction::Change do
         end
 
         describe "and executing" do
-            before do
-                @transaction = mock 'transaction'
-                @change.stubs(:transaction).returns @transaction
-            end
-
             describe "in noop mode" do
                 before { @change.stubs(:noop?).returns true }
 
