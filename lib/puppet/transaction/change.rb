@@ -1,4 +1,5 @@
 require 'puppet/transaction'
+require 'puppet/transaction/event'
 
 # Handle all of the work around performing an actual change,
 # including calling 'sync' on the properties and producing events.
@@ -13,7 +14,7 @@ class Puppet::Transaction::Change
         @property.should = @is
         @is = @property.retrieve
 
-        unless defined? @transaction
+        unless transaction
             raise Puppet::Error,
                 "PropertyChange '%s' tried to be executed outside of transaction" %
                 self
@@ -39,21 +40,17 @@ class Puppet::Transaction::Change
             @property.warning("Property '%s' returned invalid event '%s'; resetting to default" %
                 [@property.class, name])
 
-            event = @property.resource.class.name.id2name + "_changed"
+            name = @property.event(should)
         end
         
-        Puppet::Event.new(
+        Puppet::Transaction::Event.new(
             :event => name,
-            :transaction => @transaction,
-            :source => self.source
+            :transaction => transaction,
+            :source => self.resource
         )
     end
 
     def initialize(property, currentvalue)
-        unless property.is_a?(Puppet::Property)
-            raise Puppet::DevError, "Got a %s instead of a property" %
-                property.class
-        end
         @property = property
         @path = [property.path,"change"].flatten
         @is = currentvalue
@@ -66,12 +63,9 @@ class Puppet::Transaction::Change
     # Perform the actual change.  This method can go either forward or
     # backward, and produces an event.
     def go
-        if skip?
-            if self.noop
-                return [event(:noop)]
-            else
-                return nil
-            end
+        if self.noop?
+            @property.log "is %s, should be %s (noop)" % [property.is_to_s(@is), property.should_to_s(@should)]
+            return [event(:noop)]
         end
 
         # The transaction catches any exceptions here.
@@ -95,7 +89,7 @@ class Puppet::Transaction::Change
     end
 
     def forward
-        unless defined? @transaction
+        unless transaction
             raise Puppet::Error,
                 "PropertyChange '%s' tried to be executed outside of transaction" %
                 self
@@ -104,31 +98,21 @@ class Puppet::Transaction::Change
         return self.go
     end
     
-    def noop
+    # Is our property noop?  This is used for generating special events.
+    def noop?
         return @property.noop
     end
     
-    def skip?
-        if @property.insync?(@is)
-            @property.info "Already in sync"
-            return true
-        end
-
-        if @property.noop
-            @property.log "is %s, should be %s (noop)" %
-                [property.is_to_s(@is), property.should_to_s(@should)]
-            #@property.debug "%s is noop" % @property
-            return true
-        end
-        return false
-    end
-    
-    def source
+    # The resource that generated this change.  This is used for handling events,
+    # and the proxy resource is used for generated resources, since we can't
+    # send an event to a resource we don't have a direct relationship.  If we
+    # have a proxy resource, then the events will be considered to be from
+    # that resource, rather than us, so the graph resolution will still work.
+    def resource
         self.proxy || @property.resource
     end
 
     def to_s
-        return "change %s.%s(%s)" %
-            [@transaction.object_id, self.object_id, @property.change_to_s(@is, @should)]
+        return "change %s.%s(%s)" % [transaction.object_id, self.object_id, @property.change_to_s(@is, @should)]
     end
 end
