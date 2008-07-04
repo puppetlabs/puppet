@@ -43,11 +43,7 @@ class Puppet::Transaction::Change
             name = @property.event(should)
         end
         
-        Puppet::Transaction::Event.new(
-            :event => name,
-            :transaction => transaction,
-            :source => self.resource
-        )
+        Puppet::Transaction::Event.new(name, self.resource)
     end
 
     def initialize(property, currentvalue)

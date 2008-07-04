@@ -9,14 +9,13 @@ class Puppet::Transaction::Event
     include Puppet::Util::MethodHelper
     include Puppet::Util::Errors
     
-    attr_accessor :event, :source, :transaction
+    attr_reader :name, :source
 
-    def initialize(args)
-        set_options symbolize_options(args)
-        requiredopts(:event, :source)
+    def initialize(name, source)
+        @name, @source = name, source
     end
 
     def to_s
-        @source.to_s + " -> " + self.event.to_s
+        source.to_s + " -> " + name.to_s
     end
 end

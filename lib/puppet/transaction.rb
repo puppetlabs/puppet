@@ -98,7 +98,7 @@ class Transaction
                 # Create an edge with this resource as both the source and
                 # target.  The triggering method treats these specially for
                 # logging.
-                events = resourceevents.collect { |e| e.event }
+                events = resourceevents.collect { |e| e.name }
                 set_trigger(Puppet::Relationship.new(resource, resource, :callback => :refresh, :event => events))
             end
         end
@@ -280,7 +280,7 @@ class Transaction
             # of course, bad.
             edge = orig_edge.class.new(orig_edge.source, orig_edge.target)
             label = orig_edge.label.dup
-            label[:event] = events.collect { |e| e.event }
+            label[:event] = events.collect { |e| e.name }
             edge.label = label
             set_trigger(edge)
         end
@@ -682,11 +682,7 @@ class Transaction
                     [callback, subs.length]
 
                 # And then add an event for it.
-                return [Puppet::Transaction::Event.new(
-                    :event => :noop,
-                    :transaction => self,
-                    :source => resource
-                )]
+                return [Puppet::Transaction::Event.new(:noop, resource)]
             end
 
             if subs.length == 1 and subs[0].source == resource
@@ -714,11 +710,7 @@ class Transaction
             end
 
             # And then add an event for it.
-            trigged << Puppet::Transaction::Event.new(
-                :event => :triggered,
-                :transaction => self,
-                :source => resource
-            )
+            trigged << Puppet::Transaction::Event.new(:triggered, resource)
 
             triggered(resource, callback)
         end

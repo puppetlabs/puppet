@@ -75,7 +75,7 @@ describe Puppet::Transaction::Change do
                 @property.stubs(:warning)
                 @property.expects(:event).with(@change.should).returns :myevent
 
-                Puppet::Transaction::Event.expects(:new).with { |args| args[:event] == :myevent }
+                Puppet::Transaction::Event.expects(:new).with { |name, source| name == :myevent }
 
                 @change.event("a string")
             end

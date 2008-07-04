@@ -58,7 +58,7 @@ class Puppet::PGraph < Puppet::SimpleGraph
             # to, which is the same thing as saying all edges directly below
             # This vertex in the graph.
             adjacent(source, :direction => :out, :type => :edges).find_all do |edge|
-                edge.match?(event.event)
+                edge.match?(event.name)
             end
         end.compact.flatten
     end

@@ -88,7 +88,7 @@ module PuppetTest::Support::Utils
         newevents = nil
         assert_nothing_raised("Transaction %s %s failed" % [type, msg]) {
             newevents = trans.send(method).reject { |e| e.nil? }.collect { |e|
-                e.event
+                e.name
             }
         }
 

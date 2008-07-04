@@ -815,7 +815,7 @@ class TestTransactions < Test::Unit::TestCase
         assert(changes.length > 0, "did not get any changes")
         
         changes.each do |change|
-            assert_equal(resource, change.source, "change did not get proxy set correctly")
+            assert_equal(resource, change.resource, "change did not get proxy set correctly")
         end
     end
     
@@ -906,9 +906,8 @@ class TestTransactions < Test::Unit::TestCase
         assert_instance_of(Array, result)
         event = result.shift
         assert_instance_of(Puppet::Transaction::Event, event)
-        assert_equal(:triggered, event.event, "event was not set correctly")
+        assert_equal(:triggered, event.name, "event was not set correctly")
         assert_equal(c, event.source, "source was not set correctly")
-        assert_equal(trans, event.transaction, "transaction was not set correctly")
 
         assert(trans.triggered?(c, :refresh),
             "Transaction did not store the trigger")
