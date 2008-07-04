@@ -146,6 +146,37 @@ describe Puppet::Transaction::Change do
                     @change.forward.should == [:uno, :dos]
                 end
             end
+
+            describe "backward" do
+                before do
+                    @property = stub 'property'
+                    @property.stub_everything
+                    @property.stubs(:should).returns "shouldval"
+                    @change = Change.new(@property, "value")
+                    @change.stubs :go
+                end
+
+                it "should swap the 'is' and 'should' values" do
+                    @change.backward
+                    @change.is.should == "shouldval"
+                    @change.should.should == "value"
+                end
+
+                it "should set the 'should' value on the property to the previous 'is' value" do
+                    @property.expects(:should=).with "value"
+                    @change.backward
+                end
+
+                it "should log that it's reversing the change" do
+                    @property.expects(:info)
+                    @change.backward
+                end
+
+                it "should execute" do
+                    @change.expects(:go)
+                    @change.backward
+                end
+            end
         end
     end
 end

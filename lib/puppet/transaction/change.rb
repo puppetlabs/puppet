@@ -4,24 +4,15 @@ require 'puppet/transaction/event'
 # Handle all of the work around performing an actual change,
 # including calling 'sync' on the properties and producing events.
 class Puppet::Transaction::Change
-    attr_accessor :is, :should, :type, :path, :property, :changed, :proxy
-    
-    # The log file generated when this object was changed.
-    attr_reader :report
+    attr_accessor :is, :should, :path, :property, :changed, :proxy
     
     # Switch the goals of the property, thus running the change in reverse.
     def backward
-        @property.should = @is
-        @is = @property.retrieve
+        @is, @should = @should, @is
+        @property.should = @should
 
-        unless @property.insync?(@is)
-            @property.info "Backing %s" % self
-            return self.go
-        else
-            @property.debug "rollback is already in sync: %s vs. %s" %
-                [@is, @property.should.inspect]
-            return nil
-        end
+        @property.info "Reversing %s" % self
+        return self.go
     end
     
     def changed?
