@@ -1,4 +1,6 @@
 0.24.?
+    Fixed #1231 - Exceptions during initialization should now be clearer.
+
     Fixed #1006 - puppetrun --class works again.  I added the class
     membership testing to the Ldap node terminus, and added tests,
     so it shouldn't break again.
