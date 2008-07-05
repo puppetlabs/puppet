@@ -2,7 +2,6 @@
 # blocks for actually doing work on the system.
 
 require 'puppet'
-require 'puppet/propertychange'
 require 'puppet/parameter'
 
 module Puppet

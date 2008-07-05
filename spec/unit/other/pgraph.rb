@@ -47,8 +47,8 @@ end
 describe Puppet::PGraph, " when matching edges" do
     before do
         @graph = Puppet::PGraph.new
-	    @event = Puppet::Event.new(:source => "a", :event => :yay)
-	    @none = Puppet::Event.new(:source => "a", :event => :NONE)
+	    @event = Puppet::Transaction::Event.new(:yay, "a")
+	    @none = Puppet::Transaction::Event.new(:NONE, "a")
 
 	    @edges = {}
 	    @edges["a/b"] = Puppet::Relationship.new("a", "b", {:event => :yay, :callback => :refresh})
