@@ -31,6 +31,18 @@ describe Puppet::Type.type(:file) do
         end
     end
 
+    describe "when specifying a source" do
+        before do
+            @file[:source] = "/bar"
+        end
+
+        it "should raise if source doesn't exist" do
+            @file.property(:source).expects(:found?).returns(false)
+            lambda { @file.retrieve }.should raise_error(Puppet::Error)
+        end
+
+    end
+
     describe "when retrieving remote files" do
         before do
             @filesource = Puppet::Type::File::FileSource.new
