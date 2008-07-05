@@ -212,6 +212,8 @@ begin
     # Translate it to a RAL catalog
     catalog = catalog.to_ral
 
+    catalog.host_config = true if Puppet[:graph] or Puppet[:report]
+
     catalog.finalize
 
     # And apply it

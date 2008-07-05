@@ -139,7 +139,7 @@ class Puppet::Type
         end
 
         if ensureparam and ! ensureparam.insync?(currentvalues[ensureparam])
-            changes << Puppet::PropertyChange.new(ensureparam, currentvalues[ensureparam])
+            changes << Puppet::Transaction::Change.new(ensureparam, currentvalues[ensureparam])
         # Else, if the 'ensure' property is correctly absent, then do
         # nothing
         elsif ensureparam and currentvalues[ensureparam] == :absent
@@ -149,7 +149,7 @@ class Puppet::Type
                 currentvalues[property] ||= :absent
                 ! property.insync?(currentvalues[property])
             }.collect { |property|
-                Puppet::PropertyChange.new(property, currentvalues[property])
+                Puppet::Transaction::Change.new(property, currentvalues[property])
             }
         end
 

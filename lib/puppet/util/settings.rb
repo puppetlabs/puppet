@@ -644,13 +644,10 @@ Generated on #{Time.now}.
             begin
                 catalog.host_config = false
                 catalog.apply do |transaction|
-                    if failures = transaction.any_failed?
-                        # LAK:NOTE We should do something like this for some cases,
-                        # since it can otherwise be hard to know what failed.
-                        #transaction.report.logs.find_all { |log| log.level == :err }.each do |log|
-                        #    puts log.message
-                        #end
-                        raise "Could not configure myself; got %s failure(s)" % failures
+                    if transaction.any_failed?
+                        report = transaction.report
+                        failures = report.logs.find_all { |log| log.level == :err }
+                        raise "Got %s failure(s) while initializing: %s" % [failures.length, failures.collect { |l| l.to_s }.join("; ")] 
                     end
                 end
             end

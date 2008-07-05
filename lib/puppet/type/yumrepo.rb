@@ -1,6 +1,5 @@
 # Description of yum repositories
 
-require 'puppet/propertychange'
 require 'puppet/util/inifile'
 
 module Puppet

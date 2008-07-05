@@ -668,11 +668,17 @@ describe Puppet::Util::Settings do
             @settings.reuse
         end
 
-        it "should fail if any resources fail" do
+        it "should fail with an appropriate message if any resources fail" do
             stub_transaction
             @trans.expects(:any_failed?).returns(true)
+            report = mock 'report'
+            @trans.expects(:report).returns report
 
-            proc { @settings.use(:whatever) }.should raise_error(RuntimeError)
+            log = mock 'log', :to_s => "My failure", :level => :err
+            report.expects(:logs).returns [log]
+
+            @settings.expects(:raise).with { |msg| msg.include?("My failure") }
+            @settings.use(:whatever)
         end
     end
 

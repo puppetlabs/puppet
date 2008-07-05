@@ -63,7 +63,6 @@ class Puppet::Util::Ldap::Connection
             @connection.set_option(LDAP::LDAP_OPT_REFERRALS, LDAP::LDAP_OPT_ON)
             @connection.simple_bind(user, password)
         rescue => detail
-            puts detail.class
             raise Puppet::Error, "Could not connect to LDAP: %s" % detail
         end
     end
