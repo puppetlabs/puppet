@@ -731,8 +731,10 @@ Generated on #{Time.now}.
             begin
                 catalog.host_config = false
                 catalog.apply do |transaction|
-                    if failures = transaction.any_failed?
-                        raise "Could not configure for running; got %s failure(s)" % failures
+                    if transaction.any_failed?
+                        report = transaction.report
+                        failures = report.logs.find_all { |log| log.level == :err }
+                        raise "Got %s failure(s) while initializing: %s" % [failures.length, failures.collect { |l| l.to_s }.join("; ")] 
                     end
                 end
             ensure

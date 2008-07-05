@@ -4,6 +4,8 @@
 
     Fixed 1240 - puppet will function more like puppetd if graphing
     or reporting are enabled.
+    
+    Fixed #1231 - Exceptions during initialization should now be clearer.
 
     Fixed #1006 - puppetrun --class works again.  I added the class
     membership testing to the Ldap node terminus, and added tests,
