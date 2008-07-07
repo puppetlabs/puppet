@@ -36,4 +36,13 @@ Puppet::Type.type(:group).provide :ldap, :parent => Puppet::Provider::Ldap do
         largest + 1
     end
 
+    # Convert a group name to an id.
+    def self.name2id(group)
+        return nil unless result = manager.search("cn=%s" % group) and result.length > 0
+
+        # Only use the first result.
+        group = result[0]
+        gid = group[:gid][0]
+        return gid
+    end
 end

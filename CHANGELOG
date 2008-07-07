@@ -1,4 +1,9 @@
 0.24.?
+    Fixed #1272 - if you provide a group name as the gid to an ldap
+    user, the name will be converted to a gid.  Note that this only
+    looks up ldap groups, at this point; if you want to set an ldap
+    user's primary group to a local group, you have to specify the GID.
+
     Fixed #1232 - the rundir no longer specifies a user/group,
     and there are now client- and server-specific yaml directories.
 

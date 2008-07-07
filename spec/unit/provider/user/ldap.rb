@@ -24,6 +24,14 @@ describe provider_class do
         provider_class.manager.rdn.should == :uid
     end
 
+    it "should use the ldap group provider to convert group names to numbers" do
+        provider = provider_class.new(:name => "foo")
+        Puppet::Type.type(:group).provider(:ldap).expects(:name2id).with("bar").returns 10
+
+        provider.gid = 'bar'
+        provider.gid.should == 10
+    end
+
     {:name => "uid",
         :password => "userPassword",
         :comment => "cn",

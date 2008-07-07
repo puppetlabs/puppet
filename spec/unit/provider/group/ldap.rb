@@ -77,4 +77,29 @@ describe provider_class do
             end
         end
     end
+
+    it "should have a method for converting group names to GIDs" do
+        provider_class.should respond_to(:name2id)
+    end
+
+    describe "when converting from a group name to GID" do
+        it "should use the ldap manager to look up the GID" do
+            provider_class.manager.expects(:search).with("cn=foo")
+            provider_class.name2id("foo")
+        end
+
+        it "should return nil if no group is found" do
+            provider_class.manager.expects(:search).with("cn=foo").returns nil
+            provider_class.name2id("foo").should be_nil
+            provider_class.manager.expects(:search).with("cn=bar").returns []
+            provider_class.name2id("bar").should be_nil
+        end
+
+        # We shouldn't ever actually have more than one gid, but it doesn't hurt
+        # to test for the possibility.
+        it "should return the first gid from the first returned group" do
+            provider_class.manager.expects(:search).with("cn=foo").returns [{:name => "foo", :gid => [10, 11]}, {:name => :bar, :gid => [20, 21]}]
+            provider_class.name2id("foo").should == 10
+        end
+    end
 end
