@@ -7,6 +7,8 @@
     looks up ldap groups, at this point; if you want to set an ldap
     user's primary group to a local group, you have to specify the GID.
 
+    Fixed #1226 - gems can now specify source repositories.
+
     Fixed #1232 - the rundir no longer specifies a user/group,
     and there are now client- and server-specific yaml directories.
 
