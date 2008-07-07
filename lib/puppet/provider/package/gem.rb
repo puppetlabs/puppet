@@ -1,9 +1,12 @@
 require 'puppet/provider/package'
+require 'uri'
 
 # Ruby gems support.
 Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package do
-    desc "Ruby Gem support.  By default uses remote gems, but you can specify
-        the path to a local gem via ``source``."
+    desc "Ruby Gem support.  If a URL is passed via ``source``, then that URL is used as the
+         remote gem repository; if a source is present but is not a valid URL, it will be
+         interpreted as the path to a local gem file.  If source is not present at all,
+         the gem will be installed from the default gem repositories."
 
     has_feature :versionable
 
@@ -65,7 +68,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     end
 
     def install(useversion = true)
-        command = ["install"]
+        command = [command(:gemcmd), "install"]
         if (! @resource.should(:ensure).is_a? Symbol) and useversion
             command << "-v" << @resource.should(:ensure)
         end
@@ -73,12 +76,25 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
         command << "--include-dependencies"
 
         if source = @resource[:source]
-            command << source
+            scheme = URI.parse(blah).scheme rescue nil # the URI scheme if there is one, nil otherwise
+            
+            if scheme.nil?
+              # no URI scheme => interpret the source as a local file
+              command << source
+            elsif scheme.downcase == "file"
+              command << source.path
+            elsif scheme.downcase == "puppet"
+              # we don't support puppet:// URLs (yet)
+              raise Puppet::Error.new("puppet:// URLs are not supported as gem sources")              
+            else 
+              # interpret it as a gem repository
+              command << "--source" << "#{source}" << @resource[:name]
+            end
         else
             command << @resource[:name]
         end
 
-        output = gemcmd(*command)
+        output = execute(command)
         # Apparently some stupid gem versions don't exit non-0 on failure
         if output.include?("ERROR")
             self.fail "Could not install: %s" % output.chomp
