@@ -26,6 +26,13 @@ describe provider_class do
 
     it "should be able to manage passwords" do
         provider_class.should be_manages_passwords
+    
+    it "should use the ldap group provider to convert group names to numbers" do
+        provider = provider_class.new(:name => "foo")
+        Puppet::Type.type(:group).provider(:ldap).expects(:name2id).with("bar").returns 10
+
+        provider.gid = 'bar'
+        provider.gid.should == 10
     end
 
     {:name => "uid",
