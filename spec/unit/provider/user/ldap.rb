@@ -24,6 +24,10 @@ describe provider_class do
         provider_class.manager.rdn.should == :uid
     end
 
+    it "should be able to manage passwords" do
+        provider_class.should be_manages_passwords
+    end
+
     {:name => "uid",
         :password => "userPassword",
         :comment => "cn",

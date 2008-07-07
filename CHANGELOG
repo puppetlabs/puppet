@@ -1,4 +1,7 @@
 0.24.?
+    Fixed #1399 - the ldap user provider now knows it can manage
+    passwords.
+
     Fixed #1232 - the rundir no longer specifies a user/group,
     and there are now client- and server-specific yaml directories.
 
