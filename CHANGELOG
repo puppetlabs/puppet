@@ -1,4 +1,6 @@
 0.24.?
+    Fixed #1226 - gems can now specify source repositories.
+
     Fixed #1232 - the rundir no longer specifies a user/group,
     and there are now client- and server-specific yaml directories.
 

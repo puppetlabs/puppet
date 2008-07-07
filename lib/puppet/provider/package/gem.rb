@@ -69,29 +69,34 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
 
     def install(useversion = true)
         command = [command(:gemcmd), "install"]
-        if (! @resource.should(:ensure).is_a? Symbol) and useversion
-            command << "-v" << @resource.should(:ensure)
+        if (! resource[:ensure].is_a? Symbol) and useversion
+            command << "-v" << resource[:ensure]
         end
         # Always include dependencies
         command << "--include-dependencies"
 
-        if source = @resource[:source]
-            scheme = URI.parse(blah).scheme rescue nil # the URI scheme if there is one, nil otherwise
-            
-            if scheme.nil?
+        if source = resource[:source]
+            begin
+                uri = URI.parse(source)
+            rescue => detail
+                fail "Invalid source '%s': %s" % [uri, detail]
+            end
+
+            case uri.scheme
+            when nil: 
                 # no URI scheme => interpret the source as a local file
                 command << source
-            elsif scheme.downcase == "file"
-                command << source.path
-            elsif scheme.downcase == "puppet"
+            when /file/i
+                command << uri.path
+            when 'puppet'
                 # we don't support puppet:// URLs (yet)
                 raise Puppet::Error.new("puppet:// URLs are not supported as gem sources")              
-            else 
+            else
                 # interpret it as a gem repository
-                command << "--source" << "#{source}" << @resource[:name]
+                command << "--source" << "#{source}" << resource[:name]
             end
         else
-            command << @resource[:name]
+            command << resource[:name]
         end
 
         output = execute(command)
@@ -103,17 +108,17 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
 
     def latest
         # This always gets the latest version available.
-        hash = self.class.gemlist(:justme => @resource[:name])
+        hash = self.class.gemlist(:justme => resource[:name])
 
         return hash[:ensure]
     end
 
     def query
-        self.class.gemlist(:justme => @resource[:name], :local => true)
+        self.class.gemlist(:justme => resource[:name], :local => true)
     end
 
     def uninstall
-        gemcmd "uninstall", "-x", "-a", @resource[:name]
+        gemcmd "uninstall", "-x", "-a", resource[:name]
     end
 
     def update

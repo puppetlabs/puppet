@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 
 require File.dirname(__FILE__) + '/../../../spec_helper'
-require 'puppet/provider/package/gem'
 
 provider_class = Puppet::Type.type(:package).provider(:gem)
 
@@ -14,26 +13,75 @@ describe provider_class do
     describe "when installing" do
         before do
             # Create a mock resource
-            @resource = mock 'resource'
+            @resource = stub 'resource'
 
             # A catch all; no parameters set
             @resource.stubs(:[]).returns nil
 
             # We have to set a name, though
             @resource.stubs(:[]).with(:name).returns "myresource"
-
-            # BTW, you get odd error messages from rspec if you forget to mock "should" here...
-            @resource.stubs(:should).with(:ensure).returns :installed
+            @resource.stubs(:[]).with(:ensure).returns :installed
 
             @provider = provider_class.new
             @provider.stubs(:resource).returns @resource
-            # Create a provider that uses the mock
-#            @provider = provider_class.new(@resource)
         end
 
-        it "should execute the gem command with 'install', dependencies, and the package name" do
-            @provider.expects(:execute).with(provider_class.command(:gemcmd), 'install', "--include-dependences", "myresource")
+        it "should use the path to the gem" do
+            provider_class.stubs(:command).with(:gemcmd).returns "/my/gem"
+            @provider.expects(:execute).with { |args| args[0] == "/my/gem" }.returns ""
             @provider.install
+        end
+
+        it "should specify that the gem is being installed" do
+            @provider.expects(:execute).with { |args| args[1] == "install" }.returns ""
+            @provider.install
+        end
+
+        it "should specify that dependencies should be included" do
+            @provider.expects(:execute).with { |args| args[2] == "--include-dependencies" }.returns ""
+            @provider.install
+        end
+
+        it "should specify the package name" do
+            @provider.expects(:execute).with { |args| args[3] == "myresource" }.returns ""
+            @provider.install
+        end
+
+        describe "when a source is specified" do
+            describe "as a normal file" do
+                it "should use the file name instead of the gem name" do
+                    @resource.stubs(:[]).with(:source).returns "/my/file"
+                    @provider.expects(:execute).with { |args| args[3] == "/my/file" }.returns ""
+                    @provider.install
+                end
+            end
+            describe "as a file url" do
+                it "should use the file name instead of the gem name" do
+                    @resource.stubs(:[]).with(:source).returns "file:///my/file"
+                    @provider.expects(:execute).with { |args| args[3] == "/my/file" }.returns ""
+                    @provider.install
+                end
+            end
+            describe "as a puppet url" do
+                it "should fail" do
+                    @resource.stubs(:[]).with(:source).returns "puppet://my/file"
+                    lambda { @provider.install }.should raise_error(Puppet::Error)
+                end
+            end
+            describe "as a non-file and non-puppet url" do
+                it "should treat the source as a gem repository" do
+                    @resource.stubs(:[]).with(:source).returns "http://host/my/file"
+                    @provider.expects(:execute).with { |args| args[3..5] == ["--source", "http://host/my/file", "myresource"] }.returns ""
+                    @provider.install
+                end
+            end
+            describe "with an invalid uri" do
+                it "should fail" do
+                    URI.expects(:parse).raises(ArgumentError)
+                    @resource.stubs(:[]).with(:source).returns "http:::::uppet:/:/my/file"
+                    lambda { @provider.install }.should raise_error(Puppet::Error)
+                end
+            end
         end
     end
 end
