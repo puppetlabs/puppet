@@ -1,4 +1,6 @@
-0.24.?
+0.24.5
+    Fixed #1396 - Added sha1 function from DavidS to core
+    
     Fixed #1399 - the ldap user provider now knows it can manage
     passwords.
     
