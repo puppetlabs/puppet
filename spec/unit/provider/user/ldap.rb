@@ -26,6 +26,7 @@ describe provider_class do
 
     it "should be able to manage passwords" do
         provider_class.should be_manages_passwords
+    end
     
     it "should use the ldap group provider to convert group names to numbers" do
         provider = provider_class.new(:name => "foo")
