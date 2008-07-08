@@ -5,7 +5,7 @@ $: << File.expand_path(File.join(File.dirname(__FILE__), 'lib'))
 begin
     require 'rake/reductive'
 rescue LoadError
-    $stderr.puts "You must have the Reductive build library in your RUBYLIB."
+    $stderr.puts "You must have the Reductive build library in your RUBYLIB; see http://github.com/lak/reductive-build/tree/master."
     exit(14)
 end
 
