@@ -14,6 +14,8 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
 
     confine :feature => :ldap, :false => (Puppet[:ldapuser] == "")
 
+    has_feature :manages_passwords
+
     manages(:posixAccount, :person).at("ou=People").named_by(:uid).and.maps :name => :uid,
         :password => :userPassword,
         :comment => :cn,
@@ -43,6 +45,15 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
             end
         end
         largest + 1
+    end
+
+    # Convert our gid to a group name, if necessary.
+    def gid=(value)
+        unless [Fixnum, Bignum].include?(value.class)
+            value = group2id(value)
+        end
+
+        @property_hash[:gid] = value
     end
 
     # Find all groups this user is a member of in ldap.
@@ -99,6 +110,11 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
 
             group_manager.update(group, {:ensure => :present, :members => current}, {:ensure => :present, :members => new})
         end
+    end
+
+    # Convert a gropu name to an id.
+    def group2id(group)
+        Puppet::Type.type(:group).provider(:ldap).name2id(group)
     end
 
     private

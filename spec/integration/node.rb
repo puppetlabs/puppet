@@ -31,10 +31,11 @@ describe Puppet::Node do
             Puppet::Node.indirection.stubs(:terminus_class).returns :yaml
 
             # Load now, before we stub the exists? method.
-            Puppet::Node.indirection.terminus(:yaml)
+            terminus = Puppet::Node.indirection.terminus(:yaml)
 
-            file = File.join(Puppet[:yamldir], "node", "me.yaml")
-            FileTest.expects(:exist?).with(file).returns false
+            terminus.expects(:path).with(@name).returns "/my/yaml/file"
+
+            FileTest.expects(:exist?).with("/my/yaml/file").returns false
             Puppet::Node.find(@name).should be_nil
         end
 

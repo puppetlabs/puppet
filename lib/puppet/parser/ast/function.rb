@@ -42,7 +42,7 @@ class Puppet::Parser::AST
                 raise Puppet::DevError, "Invalid function type %s" % @ftype.inspect
             end
 
-            # Lastly, check the arity
+            # Lastly, check the parity
         end
     end
 end
