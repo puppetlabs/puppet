@@ -62,6 +62,11 @@ restart() {
   start
 }
 
+genconfig() {
+  echo -n $"Generate configuration puppetmaster: "
+  $PUPPETMASTER $PUPPETMASTER_OPTS --genconfig
+}
+
 case "$1" in
   start)
 	start
@@ -79,8 +84,11 @@ case "$1" in
 	status $PUPPETMASTER
         RETVAL=$?
 	;;
+  genconfig)
+	genconfig
+	;;
   *)
-	echo $"Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart}"
+	echo $"Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart|genconfig}"
 	exit 1
 esac
 

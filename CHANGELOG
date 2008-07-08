@@ -1,5 +1,7 @@
 0.24.5
-    Added message referencing ReductveLabs build library
+    Fixed #1368 - updated Red Hat init scripts
+ 
+    Added message referencing ReductiveLabs build library
 
     Fixed #1396 - Added sha1 function from DavidS to core
     
