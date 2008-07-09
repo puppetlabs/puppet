@@ -110,7 +110,7 @@ module Puppet
             isnamevar
         end
 
-        newparam(:allowdupe) do
+        newparam(:allowdupe, :boolean => true) do
             desc "Whether to allow duplicate GIDs.  This option does not work on
                 FreeBSD (contract to the ``pw`` man page)."
                 
