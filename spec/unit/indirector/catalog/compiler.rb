@@ -114,13 +114,12 @@ describe Puppet::Node::Catalog::Compiler, " when creating catalogs" do
         @node = Puppet::Node.new @name
         @node.stubs(:merge)
         @request = stub 'request', :key => @name, :options => {}
-        Puppet::Node.stubs(:find).with(@name).returns(@node)
     end
 
     it "should directly use provided nodes" do
         Puppet::Node.expects(:find).never
-        @compiler.interpreter.expects(:compile).with(@node)
-        @request.stubs(:options).returns(:node => @node)
+        @compiler.expects(:compile).with(@node)
+        @request.stubs(:options).returns(:use_node => @node)
         @compiler.find(@request)
     end
 
@@ -130,12 +129,14 @@ describe Puppet::Node::Catalog::Compiler, " when creating catalogs" do
     end
 
     it "should pass the found node to the interpreter for compiling" do
+        Puppet::Node.expects(:find).with(@name).returns(@node)
         config = mock 'config'
         @compiler.interpreter.expects(:compile).with(@node)
         @compiler.find(@request)
     end
 
     it "should return the results of compiling as the catalog" do
+        Puppet::Node.stubs(:find).returns(@node)
         config = mock 'config'
         result = mock 'result'
 
@@ -144,6 +145,7 @@ describe Puppet::Node::Catalog::Compiler, " when creating catalogs" do
     end
 
     it "should benchmark the compile process" do
+        Puppet::Node.stubs(:find).returns(@node)
         @compiler.stubs(:networked?).returns(true)
         @compiler.expects(:benchmark).with do |level, message|
             level == :notice and message =~ /^Compiled catalog/

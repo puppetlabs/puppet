@@ -14,7 +14,7 @@ class Puppet::Node::Catalog::Compiler < Puppet::Indirector::Code
 
     # Compile a node's catalog.
     def find(request)
-        unless node = request.options[:node] || find_node(request.key)
+        unless node = request.options[:use_node] || find_node(request.key)
             raise ArgumentError, "Could not find node '%s'; cannot compile" % request.key
         end
 
