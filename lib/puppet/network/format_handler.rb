@@ -18,10 +18,18 @@ module Puppet::Network::FormatHandler
         def support_format?(name)
             respond_to?("from_%s" % name) and instance_methods.include?("to_%s" % name)
         end
+
+        def supported_formats
+            instance = instance_methods.collect { |m| m =~ /^to_(.+)$/ and $1 }.compact
+            klass = methods.collect { |m| m =~ /^from_(.+)$/ and $1 }.compact
+
+            # Return the intersection of the two lists.
+            return instance & klass
+        end
     end
 
     module InstanceMethods
-        def render(format)
+        def render_to(format)
             raise ArgumentError, "Format %s not supported" % format unless support_format?(format)
             send("to_%s" % format)
         end

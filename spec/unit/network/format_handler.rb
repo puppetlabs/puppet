@@ -7,6 +7,14 @@ require 'puppet/network/format_handler'
 class FormatTester
     extend Puppet::Network::FormatHandler
 
+    # Not a supported format; missing the 'to'
+    def self.from_nothing
+    end
+
+    # Not a supported format; missing the 'from'
+    def to_nowhere
+    end
+
     def self.from_good
     end
 
@@ -23,8 +31,12 @@ describe Puppet::Network::FormatHandler do
         FormatTester.should be_support_format(:good)
     end
 
-    it "should not consider the format supported unless it can convert from an instance to the format and from the format to an instance" do
-        FormatTester.should_not be_support_format(:nope)
+    it "should not consider the format supported unless it can convert the instance to the specified format" do
+        FormatTester.should_not be_support_format(:nothing)
+    end
+
+    it "should not consider the format supported unless it can convert from the format to an instance" do
+        FormatTester.should_not be_support_format(:nowhere)
     end
 
     it "should be able to convert from a given format" do
@@ -41,6 +53,14 @@ describe Puppet::Network::FormatHandler do
         FormatTester.convert_from(:good, "mydata")
     end
 
+    it "should be able to list supported formats" do
+        FormatTester.should respond_to(:supported_formats)
+    end
+
+    it "should include all formats that include both the to_ and from_ methods in the list of supported formats" do
+        FormatTester.supported_formats.should == %w{good}
+    end
+
     describe "when an instance" do
         it "should be able to test whether a format is supported" do
             FormatTester.new.should respond_to(:support_format?)
@@ -55,19 +75,19 @@ describe Puppet::Network::FormatHandler do
         end
 
         it "should be able to convert to a given format" do
-            FormatTester.new.should respond_to(:render)
+            FormatTester.new.should respond_to(:render_to)
         end
 
         it "should fail if asked to convert to an unsupported format" do
             tester = FormatTester.new
             tester.expects(:support_format?).with(:nope).returns false
-            lambda { tester.render(:nope) }.should raise_error(ArgumentError)
+            lambda { tester.render_to(:nope) }.should raise_error(ArgumentError)
         end
 
         it "should call the format-specific converter when asked to convert to a given format" do
             tester = FormatTester.new
             tester.expects(:to_good)
-            tester.render(:good)
+            tester.render_to(:good)
         end
     end
 end

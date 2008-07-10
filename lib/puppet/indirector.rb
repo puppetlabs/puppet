@@ -10,6 +10,7 @@ module Puppet::Indirector
     require 'puppet/indirector/indirection'
     require 'puppet/indirector/terminus'
     require 'puppet/indirector/envelope'
+    require 'puppet/network/format_handler'
 
     # Declare that the including class indirects its methods to
     # this terminus.  The terminus name must be the name of a Puppet
@@ -22,6 +23,7 @@ module Puppet::Indirector
         extend ClassMethods
         include InstanceMethods
         include Puppet::Indirector::Envelope
+        extend Puppet::Network::FormatHandler
 
         # instantiate the actual Terminus for that type and this name (:ldap, w/ args :node)
         # & hook the instantiated Terminus into this class (Node: @indirection = terminus)
