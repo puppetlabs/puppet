@@ -1,4 +1,6 @@
 0.24.5
+    Moved debian to conf and updated examples directory
+
     Fixed #1368 - updated Red Hat init scripts
  
     Added message referencing ReductiveLabs build library
