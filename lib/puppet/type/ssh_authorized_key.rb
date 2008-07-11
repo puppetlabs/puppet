@@ -27,11 +27,6 @@ module Puppet
 
         newproperty(:user) do
             desc "The user account in which the SSH key should be installed."
-
-            def value=(value)
-                @resource[:target] = File.expand_path("~%s/.ssh/authorized_keys" % value)
-                super
-            end
         end
 
         newproperty(:target) do
@@ -45,25 +40,6 @@ module Puppet
             defaultto do :absent end
         end
 
-        def generate
-            atype = Puppet::Type.type(:file)
-            target = self.should(:target)
-            dir =  File.dirname(target)
-            user = should(:user) ? should(:user) : "root"
-
-            rels = []
-
-            unless catalog.resource(:file, dir)
-                rels << atype.create(:name => dir, :ensure => :directory, :mode => 0700, :owner => user)
-            end
-
-            unless catalog.resource(:file, target)
-                rels << atype.create(:name => target, :ensure => :present, :mode => 0600, :owner => user)
-            end
-
-            rels
-        end
-
         autorequire(:user) do
             if should(:user)
                 should(:user)
@@ -71,7 +47,7 @@ module Puppet
         end
 
         validate do
-            unless should(:target)
+            unless should(:target) or should(:user)
                 raise Puppet::Error, "Attribute 'user' or 'target' is mandatory"
             end
         end

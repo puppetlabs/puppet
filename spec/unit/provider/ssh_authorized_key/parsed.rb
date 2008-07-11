@@ -71,4 +71,25 @@ describe provider_class do
 
         genkey(key).should == "from=\"192.168.1.1\",no-pty,no-X11-forwarding ssh-rsa AAAAfsfddsjldjgksdflgkjsfdlgkj root@localhost\n"
     end
+
+    it "should prefetch ~user/.ssh/authorized_keys when user is given" do
+        key = Puppet::Type.type(:ssh_authorized_key).create(
+            :name => "Test",
+            :key => "AA",
+            :type => "rsa",
+            :ensure => :present,
+            :user => "root")
+        prov = @provider.new key
+
+        prov.prefetch
+        prov.target.should == File.expand_path("~root/.ssh/authorized_keys")
+    end
+
+    it "should create destination dir" do
+        # No idea how to test the flush method
+    end
+
+    it "should set correct default permissions" do
+        # No idea how to test the flush method
+    end
 end
