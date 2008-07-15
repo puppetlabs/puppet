@@ -1,4 +1,6 @@
 0.24.5
+    Fixed #1397 One line fix, fail instead of log
+
     Moved debian to conf and updated examples directory
 
     Fixed #1368 - updated Red Hat init scripts

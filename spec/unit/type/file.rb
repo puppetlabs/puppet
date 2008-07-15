@@ -64,6 +64,11 @@ describe Puppet::Type.type(:file) do
             @file.property(:source).retrieve
             lambda { @file.property(:source).sync }.should raise_error(Puppet::Error)
         end
+
+        it "should fail if it cannot describe remote contents" do
+            @filesource.server.stubs(:describe).raises(Puppet::Network::XMLRPCClientError.new("Testing"))
+            lambda { @file.retrieve }.should raise_error(Puppet::Error)
+        end
     end
 
     describe "when managing links" do
