@@ -1,4 +1,6 @@
 0.24.5
+    Further moves from the examples directory and ext directory
+
     Fixed #1397 One line fix, fail instead of log
 
     Moved debian to conf and updated examples directory
