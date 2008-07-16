@@ -4,7 +4,7 @@ require 'puppet/indirector'
 # Indirection call, and as a a result also handles REST calls.  It's somewhat
 # analogous to an HTTP Request object, except tuned for our Indirector.
 class Puppet::Indirector::Request
-    attr_accessor :indirection_name, :key, :method, :options, :instance, :node, :ip, :authenticated
+    attr_accessor :indirection_name, :key, :method, :options, :instance, :node, :ip, :authenticated, :use_cache
 
     attr_accessor :server, :port, :uri, :protocol
 
@@ -48,7 +48,16 @@ class Puppet::Indirector::Request
 
     # Look up the indirection based on the name provided.
     def indirection
-        Puppet::Indirector::Indirection.instance(@indirection_name)
+        Puppet::Indirector::Indirection.instance(indirection_name)
+    end
+
+    # Should we allow use of the cached object?
+    def use_cache?
+        if defined?(@use_cache)
+            ! ! use_cache
+        else
+            true
+        end
     end
 
     # Are we trying to interact with multiple resources, or just one?

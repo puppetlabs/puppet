@@ -186,7 +186,7 @@ class Puppet::Indirector::Indirection
         terminus = prepare(request)
 
         # See if our instance is in the cache and up to date.
-        if cache? and cached = cache.find(request)
+        if cache? and request.use_cache? and cached = cache.find(request)
             if cached.expired?
                 Puppet.info "Not using expired %s for %s from cache; expired at %s" % [self.name, request.key, cached.expiration]
             else
@@ -198,7 +198,7 @@ class Puppet::Indirector::Indirection
         # Otherwise, return the result from the terminus, caching if appropriate.
         if result = terminus.find(request)
             result.expiration ||= self.expiration
-            if cache?
+            if cache? and request.use_cache?
                 Puppet.info "Caching %s for %s" % [self.name, request.key]
                 cache.save request(:save, result, *args)
             end

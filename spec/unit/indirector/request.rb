@@ -126,6 +126,14 @@ describe Puppet::Indirector::Request do
                 Puppet::Indirector::Request.new(:ind, :method, "http:///stuff").uri.should == "http:///stuff"
             end
         end
+
+        it "should allow indication that it should not use a cached instance" do
+            Puppet::Indirector::Request.new(:ind, :method, :key, :use_cache => false).should_not be_use_cache
+        end
+
+        it "should default to using cached instances" do
+            Puppet::Indirector::Request.new(:ind, :method, :key).should be_use_cache
+        end
     end
 
     it "should look use the Indirection class to return the appropriate indirection" do

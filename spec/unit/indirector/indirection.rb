@@ -246,7 +246,7 @@ describe Puppet::Indirector::Indirection do
             describe "when caching is enabled" do
                 before do
                     @indirection.cache_class = :cache_terminus
-                    @cache_class.expects(:new).returns(@cache)
+                    @cache_class.stubs(:new).returns(@cache)
 
                     @instance.stubs(:expired?).returns false
                 end
@@ -256,6 +256,13 @@ describe Puppet::Indirector::Indirection do
                     @cache.expects(:find).returns @instance
 
                     @indirection.find("/my/key")
+                end
+
+                it "should not look in the cache if the request specifies not to use the cache" do
+                    @terminus.expects(:find).returns @instance
+                    @cache.expects(:find).never
+
+                    @indirection.find("/my/key", :use_cache => false)
                 end
 
                 it "should use a request to look in the cache for cached objects" do
