@@ -1,4 +1,11 @@
 0.24.5
+    Fixed #1431 - Provider confines must now specify similar tests in one call.
+    I.e., you can't do confine :operatingsystem => %w{a b} and then
+    confine :operatingsystem => %w{b c}; you'd need to do them in one command.
+    This now-obsolete behaviour does not seem to be used anywhere.
+    The fix for #1431 is actually just removing the tests that exposed
+    this change; the change happened when I refactored how confines work.
+
     Updated /spec/unit/rails.rb test
 
     Fix #1426 - services on redhat are restarted again and status is 
