@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + '/../spec_helper'
 require 'puppet/rails'
 
 describe Puppet::Rails, "when initializing any connection" do
-    confine Puppet.features.rails? => "Cannot test without ActiveRecord" 
+    confine "Cannot test without ActiveRecord" => Puppet.features.rails?
 
     before do
         @logger = mock 'logger'

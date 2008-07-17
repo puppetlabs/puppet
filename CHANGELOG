@@ -1,4 +1,6 @@
 0.24.5
+    Updated /spec/unit/rails.rb test
+
     Fix #1426 - services on redhat are restarted again and status is 
     called from the Red Hat provider
 
