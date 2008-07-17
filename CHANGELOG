@@ -1,4 +1,6 @@
 0.24.5
+    Fixed #1414 - Return code from waitpid now right shifted 8 bits
+
     Fixed #174 - a native type type for managing ssh authorized_keys 
     files is available.
 
