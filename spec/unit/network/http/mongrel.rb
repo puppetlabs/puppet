@@ -6,7 +6,7 @@
 require File.dirname(__FILE__) + '/../../../spec_helper'
 require 'puppet/network/http'
 
-describe Puppet::Network::HTTP::Mongrel, "after initializing" do
+describe "Puppet::Network::HTTP::Mongrel", "after initializing" do
     confine "Mongrel is not available" => Puppet.features.mongrel?
     
     it "should not be listening" do
@@ -14,7 +14,7 @@ describe Puppet::Network::HTTP::Mongrel, "after initializing" do
     end
 end
 
-describe Puppet::Network::HTTP::Mongrel, "when turning on listening" do
+describe "Puppet::Network::HTTP::Mongrel", "when turning on listening" do
     confine "Mongrel is not available" => Puppet.features.mongrel?
 
     before do
@@ -82,7 +82,7 @@ describe Puppet::Network::HTTP::Mongrel, "when turning on listening" do
     end
 end
 
-describe Puppet::Network::HTTP::Mongrel, "when turning off listening" do
+describe "Puppet::Network::HTTP::Mongrel", "when turning off listening" do
     confine "Mongrel is not available" => Puppet.features.mongrel?
     
     before do

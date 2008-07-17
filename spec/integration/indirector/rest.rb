@@ -118,7 +118,7 @@ describe Puppet::Indirector::REST do
                 end
     
                 it 'should return the instance of the model class associated with the provided lookup key' do
-                    Puppet::TestIndirectedFoo.search('bar').collect(&:value).should == @model_instances.collect(&:value)
+                    Puppet::TestIndirectedFoo.search('bar').collect { |i| i.value }.should == @model_instances.collect { |i| i.value }
                 end
     
                 it 'should set a version timestamp on model instances' do
@@ -334,7 +334,7 @@ describe Puppet::Indirector::REST do
                 end
     
                 it 'should return the instance of the model class associated with the provided lookup key' do
-                    Puppet::TestIndirectedFoo.search('bar').collect(&:value).should == @model_instances.collect(&:value)
+                    Puppet::TestIndirectedFoo.search('bar').collect { |i| i.value }.should == @model_instances.collect { |i| i.value }
                 end
     
                 it 'should set an expiration on model instances' do
