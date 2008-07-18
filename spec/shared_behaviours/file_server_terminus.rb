@@ -24,6 +24,8 @@ describe "Puppet::Indirector::FileServerTerminus", :shared => true do
 
         # Stub out the modules terminus
         @modules = mock 'modules terminus'
+
+        @request = Puppet::Indirector::Request.new(:indirection, :method, "puppetmounts://myhost/one/my/file")
     end
 
     it "should use the file server configuration to find files" do
@@ -35,6 +37,6 @@ describe "Puppet::Indirector::FileServerTerminus", :shared => true do
         FileTest.stubs(:exists?).with("/my/mount/path").returns(true)
         @mount1.expects(:file).with("my/file", :node => nil).returns(path)
 
-        @terminus.find("puppetmounts://myhost/one/my/file").should be_instance_of(@test_class)
+        @terminus.find(@request).should be_instance_of(@test_class)
     end
 end

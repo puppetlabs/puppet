@@ -69,16 +69,9 @@ describe Puppet::Indirector::DirectFileServer do
     end
 
     describe Puppet::Indirector::DirectFileServer, "when searching for multiple files" do
-
         it "should return nil if the file does not exist" do
             FileTest.expects(:exists?).with("/my/local").returns false
             @server.find(@request).should be_nil
-        end
-
-        it "should pass the original key to :path2instances" do
-            FileTest.expects(:exists?).with("/my/local").returns true
-            @server.expects(:path2instances).with { |uri, path, options| uri == @uri }
-            @server.search(@request)
         end
 
         it "should use :path2instances from the terminus_helper to return instances if the file exists" do
@@ -87,11 +80,9 @@ describe Puppet::Indirector::DirectFileServer do
             @server.search(@request)
         end
 
-        it "should pass any options on to :path2instances" do
+        it "should pass the original request to :path2instances" do
             FileTest.expects(:exists?).with("/my/local").returns true
-            @server.expects(:path2instances).with { |uri, path, options| options == {:testing => :one, :other => :two}}
-
-            @request.stubs(:options).returns(:testing => :one, :other => :two)
+            @server.expects(:path2instances).with(@request, "/my/local")
             @server.search(@request)
         end
     end

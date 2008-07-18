@@ -14,28 +14,28 @@ class Puppet::Indirector::FileServer < Puppet::Indirector::Terminus
     include Puppet::FileServing::TerminusHelper
 
     # Is the client authorized to perform this action?
-    def authorized?(method, key, options = {})
-        return false unless [:find, :search].include?(method)
+    def authorized?(request)
+        return false unless [:find, :search].include?(request.method)
 
-        uri = key2uri(key)
+        uri = key2uri(request.key)
 
-        configuration.authorized?(uri.path, :node => options[:node], :ipaddress => options[:ipaddress])
+        configuration.authorized?(uri.path, :node => request.node, :ipaddress => request.ip)
     end
 
     # Find our key using the fileserver.
-    def find(key, options = {})
-        return nil unless path = find_path(key, options)
-        result =  model.new(key, :path => path)
-        result.links = options[:links] if options[:links]
+    def find(request)
+        return nil unless path = find_path(request)
+        result =  model.new(request.key, :path => path)
+        result.links = request.options[:links] if request.options[:links]
         return result
     end
 
     # Search for files.  This returns an array rather than a single
     # file.
-    def search(key, options = {})
-        return nil unless path = find_path(key, options)
+    def search(request)
+        return nil unless path = find_path(request)
 
-        path2instances(key, path, options)
+        path2instances(request, path)
     end
 
     private
@@ -46,10 +46,10 @@ class Puppet::Indirector::FileServer < Puppet::Indirector::Terminus
     end
 
     # Find our path; used by :find and :search.
-    def find_path(key, options)
-        uri = key2uri(key)
+    def find_path(request)
+        uri = key2uri(request.key)
 
-        return nil unless path = configuration.file_path(uri.path, :node => options[:node])
+        return nil unless path = configuration.file_path(uri.path, :node => request.node)
 
         return path
     end
