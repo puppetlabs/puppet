@@ -145,16 +145,7 @@ class TestFileSources < Test::Unit::TestCase
         # Make sure the munge didn't actually change the source
         assert_equal([source], property.should, "munging changed the source")
         
-        # First try it with a missing source
         currentvalue = nil
-        assert_nothing_raised do
-            currentvalue = property.retrieve
-        end
-        
-        # And make sure the property considers itself in sync, since there's nothing
-        # to do
-        assert(property.insync?(currentvalue), "source thinks there's work to do with no file or dest")
-        
         # Now make the dest a directory, and make sure the object sets :ensure
         # up to create a directory
         Dir.mkdir(source)
@@ -170,9 +161,6 @@ class TestFileSources < Test::Unit::TestCase
         
         # Now remove the source, and make sure :ensure was not modified
         Dir.rmdir(source)
-        assert_nothing_raised do
-            property.retrieve
-        end
         assert_equal(:directory, file.should(:ensure),
             "Did not keep :ensure setting")
         
@@ -208,10 +196,6 @@ class TestFileSources < Test::Unit::TestCase
         property = file.property(:source)
         assert(property, "did not get source property")
         
-        # Try it with no source at all
-        currentvalues = file.retrieve
-        assert(property.insync?(currentvalues[property]), "source property not in sync with missing source")
-
         # with a directory
         Dir.mkdir(source)
         currentvalues = file.retrieve
@@ -623,9 +607,9 @@ class TestFileSources < Test::Unit::TestCase
             :name => name
         )
 
-        assert_nothing_raised {
+        assert_raise Puppet::Error do 
             file.retrieve
-        }
+        end 
 
         comp = mk_catalog(file)
         comp.apply
