@@ -10,6 +10,8 @@ describe "Puppet::Network::HTTP::Mongrel", "after initializing" do
     confine "Mongrel is not available" => Puppet.features.mongrel?
     
     it "should not be listening" do
+        require 'puppet/network/http/mongrel'
+
         Puppet::Network::HTTP::Mongrel.new.should_not be_listening
     end
 end
@@ -18,6 +20,8 @@ describe "Puppet::Network::HTTP::Mongrel", "when turning on listening" do
     confine "Mongrel is not available" => Puppet.features.mongrel?
 
     before do
+        require 'puppet/network/http/mongrel'
+
         @server = Puppet::Network::HTTP::Mongrel.new
         @mock_mongrel = mock('mongrel')
         @mock_mongrel.stubs(:run)
