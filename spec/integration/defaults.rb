@@ -40,4 +40,8 @@ describe "Puppet defaults" do
         Puppet.settings.element(:rundir).owner.should be_nil
         Puppet.settings.element(:rundir).group.should be_nil
     end
+
+    it "should default to yaml as the catalog format" do
+        Puppet.settings[:catalog_format].should == "yaml"
+    end
 end

@@ -64,7 +64,14 @@ class Puppet::Network::Handler
 
             catalog = Puppet::Node::Catalog.find(client)
 
-            return translate(catalog.extract)
+            case format
+            when "yaml":
+                return CGI.escape(catalog.extract.to_yaml(:UseBlock => true))
+            when "marshal":
+                return CGI.escape(Marshal.dump(catalog.extract))
+            else
+                raise "Invalid markup format '%s'" % format
+            end
         end
 
         # 
@@ -90,11 +97,6 @@ class Puppet::Network::Handler
 
         # Translate our configuration appropriately for sending back to a client.
         def translate(config)
-            if local?
-                config
-            else
-                CGI.escape(config.to_yaml(:UseBlock => true))
-            end
         end
     end
 end

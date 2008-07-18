@@ -416,7 +416,10 @@ module Puppet
         :ca_server => ["$server", "The server to use for certificate
             authority requests.  It's a separate server because it cannot
             and does not need to horizontally scale."],
-        :ca_port => ["$masterport", "The port to use for the certificate authority."]
+        :ca_port => ["$masterport", "The port to use for the certificate authority."],
+        :catalog_format => ["yaml", "What format to use to dump the catalog.  Only supports
+            'marshal' and 'yaml'.  Only matters on the client, since it asks the server
+            for a specific format."]
     )
         
     self.setdefaults(:filebucket,

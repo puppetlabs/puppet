@@ -59,34 +59,92 @@ describe Puppet::Network::Client::Master, " when retrieving the catalog" do
         @client.getconfig
     end
 
-    it "should load the retrieved catalog using YAML" do
-        @client.stubs(:dostorage)
-        @client.class.stubs(:facts).returns(@facts)
-        @master.stubs(:getconfig).returns("myconfig")
+    describe "when the catalog format is set to yaml" do
+        before do
+            Puppet.settings.stubs(:value).returns "foo"
+            Puppet.settings.stubs(:value).with(:pluginsync).returns false
+            Puppet.settings.stubs(:value).with(:configtimeout).returns 10
+            Puppet.settings.stubs(:value).with(:factsync).returns false
+            Puppet.settings.stubs(:value).with(:catalog_format).returns "yaml"
+        end
 
-        config = mock 'config'
-        YAML.expects(:load).with("myconfig").returns(config)
+        it "should request a yaml-encoded catalog" do
+            @client.stubs(:dostorage)
+            @client.class.stubs(:facts).returns(@facts)
+            @master.expects(:getconfig).with { |*args| args[1] == "yaml" }
 
-        @client.stubs(:setclasses)
+            @client.getconfig
+        end
 
-        config.stubs(:classes)
-        config.stubs(:to_catalog).returns(config)
-        config.stubs(:host_config=)
-        config.stubs(:from_cache).returns(true)
+        it "should load the retrieved catalog using YAML" do
+            @client.stubs(:dostorage)
+            @client.class.stubs(:facts).returns(@facts)
+            @master.stubs(:getconfig).returns("myconfig")
 
-        @client.getconfig
+            config = mock 'config'
+            YAML.expects(:load).with("myconfig").returns(config)
+
+            @client.stubs(:setclasses)
+
+            config.stubs(:classes)
+            config.stubs(:to_catalog).returns(config)
+            config.stubs(:host_config=)
+            config.stubs(:from_cache).returns(true)
+
+            @client.getconfig
+        end
+
+        it "should use the cached catalog if the retrieved catalog cannot be converted from YAML" do
+            @client.stubs(:dostorage)
+            @client.class.stubs(:facts).returns(@facts)
+            @master.stubs(:getconfig).returns("myconfig")
+
+            YAML.expects(:load).with("myconfig").raises(ArgumentError)
+
+            @client.expects(:use_cached_config).with(true)
+
+            @client.getconfig
+        end
     end
 
-    it "should use the cached catalog if the retrieved catalog cannot be converted from YAML" do
-        @client.stubs(:dostorage)
-        @client.class.stubs(:facts).returns(@facts)
-        @master.stubs(:getconfig).returns("myconfig")
+    describe "from Marshal" do
+        before do
+            Puppet.settings.stubs(:value).returns "foo"
+            Puppet.settings.stubs(:value).with(:pluginsync).returns false
+            Puppet.settings.stubs(:value).with(:configtimeout).returns 10
+            Puppet.settings.stubs(:value).with(:factsync).returns false
+            Puppet.settings.stubs(:value).with(:catalog_format).returns "marshal"
+        end
 
-        YAML.expects(:load).with("myconfig").raises(ArgumentError)
+        it "should load the retrieved catalog using Marshal" do
+            @client.stubs(:dostorage)
+            @client.class.stubs(:facts).returns(@facts)
+            @master.stubs(:getconfig).returns("myconfig")
 
-        @client.expects(:use_cached_config).with(true)
+            config = mock 'config'
+            Marshal.expects(:load).with("myconfig").returns(config)
 
-        @client.getconfig
+            @client.stubs(:setclasses)
+
+            config.stubs(:classes)
+            config.stubs(:to_catalog).returns(config)
+            config.stubs(:host_config=)
+            config.stubs(:from_cache).returns(true)
+
+            @client.getconfig
+        end
+
+        it "should use the cached catalog if the retrieved catalog cannot be converted from Marshal" do
+            @client.stubs(:dostorage)
+            @client.class.stubs(:facts).returns(@facts)
+            @master.stubs(:getconfig).returns("myconfig")
+
+            Marshal.expects(:load).with("myconfig").raises(ArgumentError)
+
+            @client.expects(:use_cached_config).with(true)
+
+            @client.getconfig
+        end
     end
 
     it "should set the classes.txt file with the classes listed in the retrieved catalog" do

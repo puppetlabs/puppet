@@ -1,4 +1,11 @@
 0.24.5
+    You can now select the encoding format when transferring the catalog,
+    with 'yaml' still being the default but 'marshal' being an option.
+    This is because testing has shown drastic performance differences
+    between the two, with up to 70% of compile time being spent
+    in YAML code.  Use the 'catalog_format' setting to choose your format,
+    and the setting must be set on the client.
+
     Fixed #1431 - Provider confines must now specify similar tests in one call.
     I.e., you can't do confine :operatingsystem => %w{a b} and then
     confine :operatingsystem => %w{b c}; you'd need to do them in one command.

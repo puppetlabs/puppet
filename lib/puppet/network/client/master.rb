@@ -143,15 +143,20 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
 
         # If we can't retrieve the catalog, just return, which will either
         # fail, or use the in-memory catalog.
-        unless yaml_objects = get_actual_config(facts)
+        unless marshalled_objects = get_actual_config(facts)
             use_cached_config(true)
             return
         end
 
         begin
-            objects = YAML.load(yaml_objects)
+            case Puppet[:catalog_format]
+            when "marshal": objects = Marshal.load(marshalled_objects)
+            when "yaml": objects = YAML.load(marshalled_objects)
+            else
+                raise "Invalid catalog format '%s'" % Puppet[:catalog_format]
+            end
         rescue => detail
-            msg = "Configuration could not be translated from yaml"
+            msg = "Configuration could not be translated from %s" % Puppet[:catalog_format]
             msg += "; using cached catalog" if use_cached_config(true)
             Puppet.warning msg
             return
@@ -175,7 +180,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         end
 
         if ! @catalog.from_cache
-            self.cache(yaml_objects)
+            self.cache(marshalled_objects)
         end
 
         # Keep the state database up to date.
@@ -442,7 +447,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         benchmark(:debug, "Retrieved catalog") do
             # error handling for this is done in the network client
             begin
-                textobjects = @driver.getconfig(textfacts, "yaml")
+                textobjects = @driver.getconfig(textfacts, Puppet[:catalog_format])
                 begin
                     textobjects = CGI.unescape(textobjects)
                 rescue => detail
