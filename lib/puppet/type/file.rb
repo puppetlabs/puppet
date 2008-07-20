@@ -1148,5 +1148,4 @@ module Puppet
     require 'puppet/type/file/group'
     require 'puppet/type/file/mode'
     require 'puppet/type/file/type'
-    require 'puppet/type/file/selcontext'  # SELinux file context
 end
