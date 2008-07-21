@@ -28,6 +28,7 @@ module Puppet::SSLCertificates::Support
 
         # Define the reading method.
         define_method(reader) do
+            p Puppet[param]
             return nil unless FileTest.exists?(Puppet[param]) or rename_files_with_uppercase(Puppet[param])
 
             begin
