@@ -39,7 +39,7 @@ end
 describe Puppet::Indirector::REST do
     before do
         Puppet::Indirector::Terminus.stubs(:register_terminus_class)
-        @model = stub('model')
+        @model = stub('model', :supported_formats => %w{})
         @instance = stub('model instance')
         @indirection = stub('indirection', :name => :mystuff, :register_terminus_type => nil, :model => @model)
         Puppet::Indirector::Indirection.stubs(:instance).returns(@indirection)
@@ -91,7 +91,17 @@ describe Puppet::Indirector::REST do
         it "should use the provided path" do
             @mock_result = stub('mock result', :body => 'result')
             @mock_connection = stub('mock http connection')
-            @mock_connection.expects(:get).with('/foo').returns(@mock_result)
+            @mock_connection.expects(:get).with { |path, args| path == '/foo' }.returns(@mock_result)
+            @searcher.stubs(:network).returns(@mock_connection)
+            @searcher.network_fetch('foo')
+        end
+
+        it "should provide an Accept header containing the list of supported formats joined with commas" do
+            @mock_result = stub('mock result', :body => 'result')
+            @mock_connection = stub('mock http connection')
+            @mock_connection.expects(:get).with { |path, args| args["Accept"] == "supported, formats" }.returns(@mock_result)
+
+            @searcher.model.expects(:supported_formats).returns %w{supported formats}
             @searcher.stubs(:network).returns(@mock_connection)
             @searcher.network_fetch('foo')
         end
@@ -111,8 +121,18 @@ describe Puppet::Indirector::REST do
 
         it "should use the DELETE http method" do
             @mock_result = stub('mock result', :body => 'result')
-            @mock_connection = mock('mock http connection', :delete => @mock_result)
+            @mock_connection = mock('mock http connection')
+            @mock_connection.expects(:delete).with { |path, args| path == '/foo' }.returns @mock_result
             @searcher.stubs(:network).returns(@mock_connection)
+            @searcher.network_delete('foo')
+        end
+
+        it "should provide an Accept header containing the list of supported formats joined with commas" do
+            @mock_result = stub('mock result', :body => 'result')
+            @mock_connection = mock('mock http connection')
+            @mock_connection.expects(:delete).with { |path, args| args['Accept'] == "supported, formats" }.returns @mock_result
+            @searcher.stubs(:network).returns(@mock_connection)
+            @searcher.model.expects(:supported_formats).returns %w{supported formats}
             @searcher.network_delete('foo')
         end
     end
@@ -140,7 +160,7 @@ describe Puppet::Indirector::REST do
         it "should use the provided path" do
             @mock_result = stub('mock result', :body => 'result')
             @mock_connection = stub('mock http connection')
-            @mock_connection.expects(:put).with {|path, data| path == '/foo' }.returns(@mock_result)
+            @mock_connection.expects(:put).with {|path, data, args| path == '/foo' }.returns(@mock_result)
             @searcher.stubs(:network).returns(@mock_connection)
             @searcher.network_put('foo', @data)                
         end
@@ -148,9 +168,18 @@ describe Puppet::Indirector::REST do
         it "should use the provided data" do
             @mock_result = stub('mock result', :body => 'result')
             @mock_connection = stub('mock http connection')
-            @mock_connection.expects(:put).with {|path, data| data == @data }.returns(@mock_result)
+            @mock_connection.expects(:put).with {|path, data, args| data == @data }.returns(@mock_result)
             @searcher.stubs(:network).returns(@mock_connection)
             @searcher.network_put('foo', @data)                                
+        end
+
+        it "should provide an Accept header containing the list of supported formats joined with commas" do
+            @mock_result = stub('mock result', :body => 'result')
+            @mock_connection = mock('mock http connection')
+            @mock_connection.expects(:put).with { |path, data, args| args['Accept'] == "supported, formats" }.returns @mock_result
+            @searcher.stubs(:network).returns(@mock_connection)
+            @searcher.model.expects(:supported_formats).returns %w{supported formats}
+            @searcher.network_put('foo', @data)
         end
     end
 

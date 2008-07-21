@@ -3,20 +3,25 @@ require 'uri'
 
 # Access objects via REST
 class Puppet::Indirector::REST < Puppet::Indirector::Terminus
+    # Provide appropriate headers.
+    def headers
+        {"Accept" => model.supported_formats.join(", ")}
+    end
+
     def rest_connection_details
         { :host => Puppet[:server], :port => Puppet[:masterport].to_i }
     end
 
     def network_fetch(path)
-        network.get("/#{path}").body
+        network.get("/#{path}", headers).body
     end
     
     def network_delete(path)
-        network.delete("/#{path}").body
+        network.delete("/#{path}", headers).body
     end
     
     def network_put(path, data)
-        network.put("/#{path}", data).body
+        network.put("/#{path}", data, headers).body
     end
     
     def find(request)
