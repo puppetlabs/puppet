@@ -143,14 +143,6 @@ describe Puppet::Indirector::REST do
                 it 'should return the instance of the model class associated with the provided lookup key' do
                     Puppet::TestIndirectedFoo.search('bar').collect { |i| i.value }.should == @model_instances.collect { |i| i.value }
                 end
-    
-                it 'should set a version timestamp on model instances' do
-                    pending("Luke looking at why this version magic might not be working") do
-                        Puppet::TestIndirectedFoo.search('bar').each do |result|
-                            result.version.should_not be_nil
-                        end
-                    end
-                end
             end
         
             describe "when no matching model instance can be found" do
