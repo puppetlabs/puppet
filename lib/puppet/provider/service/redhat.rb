@@ -59,7 +59,11 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init do
 
     def status
         if @resource[:hasstatus] == :true
-              service(@resource[:name], "status")
+              begin 
+                  service(@resource[:name], "status")
+              rescue 
+                  return :stopped
+              end 
         else
            super
         end
