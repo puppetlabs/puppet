@@ -107,29 +107,37 @@ describe Puppet::Network::HTTP::WEBrickREST, "when receiving a request" do
     it "should fail if the HTTP method isn't supported" do
         @mock_request.stubs(:request_method).returns('POST')
         @mock_request.stubs(:path).returns('/foo')
-        @mock_response.expects(:status=).with(404)
+        @mock_response.expects(:status=).with(400)
         @handler.process(@mock_request, @mock_response)            
     end
 
     it "should fail if delete request's pluralization is wrong" do
         @mock_request.stubs(:request_method).returns('DELETE')
         @mock_request.stubs(:path).returns('/foos/key')
-        @mock_response.expects(:status=).with(404)
+        @mock_response.expects(:status=).with(400)
         @handler.process(@mock_request, @mock_response)            
     end
 
     it "should fail if put request's pluralization is wrong" do 
         @mock_request.stubs(:request_method).returns('PUT')
         @mock_request.stubs(:path).returns('/foos/key')
-        @mock_response.expects(:status=).with(404)
+        @mock_response.expects(:status=).with(400)
         @handler.process(@mock_request, @mock_response)            
     end
 
     it "should fail if the request is for an unknown path" do
         @mock_request.stubs(:request_method).returns('GET')
         @mock_request.stubs(:path).returns('/bar/key')
-        @mock_response.expects(:status=).with(404)
+        @mock_response.expects(:status=).with(400)
         @handler.process(@mock_request, @mock_response)            
+    end
+
+    it "should set the response status to 400 and the body to the exception message if the request fails" do
+        @mock_request.stubs(:request_method).raises(ArgumentError, "This is a failure")
+        @mock_request.stubs(:path).returns('/foos')
+        @mock_response.expects(:status=).with(400)
+        @mock_response.expects(:body=).with("This is a failure")
+        @handler.process(@mock_request, @mock_response)        
     end
 
     describe "and determining the request parameters" do
@@ -172,7 +180,7 @@ describe Puppet::Network::HTTP::WEBrickREST, "when receiving a request" do
         it "should fail to find model if key is not specified" do
             @mock_request.stubs(:request_method).returns('GET')
             @mock_request.stubs(:path).returns('/foo')
-            @mock_response.expects(:status=).with(404)
+            @mock_response.expects(:status=).with(400)
             @handler.process(@mock_request, @mock_response)            
         end
 
@@ -202,7 +210,7 @@ describe Puppet::Network::HTTP::WEBrickREST, "when receiving a request" do
         it "should serialize a controller exception when an exception is thrown by find" do
            setup_find_request
            @mock_model_class.expects(:find).raises(ArgumentError) 
-           @mock_response.expects(:status=).with(404)
+           @mock_response.expects(:status=).with(400)
            @handler.process(@mock_request, @mock_response)        
         end
     end
@@ -211,7 +219,7 @@ describe Puppet::Network::HTTP::WEBrickREST, "when receiving a request" do
         it "should fail to destroy model if key is not specified" do
             @mock_request.stubs(:request_method).returns('DELETE')
             @mock_request.stubs(:path).returns('/foo')
-            @mock_response.expects(:status=).with(404)
+            @mock_response.expects(:status=).with(400)
             @handler.process(@mock_request, @mock_response)            
         end
 
@@ -240,7 +248,7 @@ describe Puppet::Network::HTTP::WEBrickREST, "when receiving a request" do
         it "should serialize a controller exception when an exception is thrown by destroy" do
             setup_destroy_request
             @mock_model_class.expects(:destroy).raises(ArgumentError) 
-            @mock_response.expects(:status=).with(404)
+            @mock_response.expects(:status=).with(400)
             @handler.process(@mock_request, @mock_response)                 
         end       
     end
@@ -250,7 +258,7 @@ describe Puppet::Network::HTTP::WEBrickREST, "when receiving a request" do
             @mock_request.stubs(:request_method).returns('PUT')
             @mock_request.stubs(:path).returns('/foo')
             @mock_request.stubs(:body).returns('')
-            @mock_response.expects(:status=).with(404)
+            @mock_response.expects(:status=).with(400)
             @handler.process(@mock_request, @mock_response)            
         end
 
@@ -279,7 +287,7 @@ describe Puppet::Network::HTTP::WEBrickREST, "when receiving a request" do
         it "should serialize a controller exception when an exception is thrown by save" do
             setup_save_request
             @mock_model_instance.expects(:save).raises(ArgumentError) 
-            @mock_response.expects(:status=).with(404)
+            @mock_response.expects(:status=).with(400)
             @handler.process(@mock_request, @mock_response)                         
         end
     end
@@ -310,14 +318,8 @@ describe Puppet::Network::HTTP::WEBrickREST, "when receiving a request" do
         it "should serialize a controller exception when an exception is thrown by search" do
             setup_search_request
             @mock_model_class.expects(:search).raises(ArgumentError) 
-            @mock_response.expects(:status=).with(404)
+            @mock_response.expects(:status=).with(400)
             @handler.process(@mock_request, @mock_response)                
         end
-    end
-
-    it "should serialize a controller exception if the request fails" do
-        setup_bad_request     
-        @mock_response.expects(:status=).with(404)
-        @handler.process(@mock_request, @mock_response)        
     end
 end

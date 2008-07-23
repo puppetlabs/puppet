@@ -61,6 +61,11 @@ describe Puppet::Network::FormatHandler do
         FormatTester.supported_formats.should == %w{good}
     end
 
+    it "should return the first format as the default format" do
+        FormatTester.expects(:supported_formats).returns %w{one two}
+        FormatTester.default_format.should == "one"
+    end
+
     describe "when an instance" do
         it "should be able to test whether a format is supported" do
             FormatTester.new.should respond_to(:support_format?)
@@ -75,19 +80,26 @@ describe Puppet::Network::FormatHandler do
         end
 
         it "should be able to convert to a given format" do
-            FormatTester.new.should respond_to(:render_to)
+            FormatTester.new.should respond_to(:render)
         end
 
         it "should fail if asked to convert to an unsupported format" do
             tester = FormatTester.new
             tester.expects(:support_format?).with(:nope).returns false
-            lambda { tester.render_to(:nope) }.should raise_error(ArgumentError)
+            lambda { tester.render(:nope) }.should raise_error(ArgumentError)
         end
 
         it "should call the format-specific converter when asked to convert to a given format" do
             tester = FormatTester.new
             tester.expects(:to_good)
-            tester.render_to(:good)
+            tester.render(:good)
+        end
+
+        it "should render to the default format if no format is provided when rendering" do
+            FormatTester.expects(:default_format).returns "foo"
+            tester = FormatTester.new
+            tester.expects(:to_foo)
+            tester.render
         end
     end
 end

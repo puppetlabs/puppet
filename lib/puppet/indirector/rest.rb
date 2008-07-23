@@ -3,58 +3,47 @@ require 'uri'
 
 # Access objects via REST
 class Puppet::Indirector::REST < Puppet::Indirector::Terminus
+    # Figure out the content type, turn that into a format, and use the format
+    # to extract the body of the response.
+    def deserialize(response)
+        # Raise the http error if we didn't get a 'success' of some kind.
+        response.error! unless response.code =~ /^2/
+
+        # Convert the response to a deserialized object.
+        model.convert_from(response['content-type'], response.body)
+    end
+
     # Provide appropriate headers.
     def headers
         {"Accept" => model.supported_formats.join(", ")}
+    end
+  
+    def network
+        Puppet::Network::HttpPool.http_instance(Puppet[:server], Puppet[:masterport].to_i)
     end
 
     def rest_connection_details
         { :host => Puppet[:server], :port => Puppet[:masterport].to_i }
     end
-
-    def network_fetch(path)
-        network.get("/#{path}", headers).body
-    end
-    
-    def network_delete(path)
-        network.delete("/#{path}", headers).body
-    end
-    
-    def network_put(path, data)
-        network.put("/#{path}", data, headers).body
-    end
     
     def find(request)
-        network_result = network_fetch("#{indirection.name}/#{request.key}")
-        raise YAML.load(network_result) if exception?(network_result)
-        indirection.model.from_yaml(network_result)
+        deserialize network.get("/#{indirection.name}/#{request.key}", headers)
     end
     
     def search(request)
-        network_results = network_fetch("#{indirection.name}s/#{request.key}")
-        raise YAML.load(network_results) if exception?(network_results)
-        YAML.load(network_results.to_s).collect {|result| indirection.model.from_yaml(result) }
+        if request.key
+            path = "/#{indirection.name}/#{request.key}"
+        else
+            path = "/#{indirection.name}"
+        end
+        deserialize network.get(path, headers)
     end
     
     def destroy(request)
-        network_result = network_delete("#{indirection.name}/#{request.key}")
-        raise YAML.load(network_result) if exception?(network_result)
-        YAML.load(network_result.to_s)      
+        deserialize network.delete("/#{indirection.name}/#{request.key}", headers)
     end
     
     def save(request)
-        network_result = network_put("#{indirection.name}/", request.instance.to_yaml)
-        raise YAML.load(network_result) if exception?(network_result)
-        indirection.model.from_yaml(network_result)
-    end
-    
-  private
-  
-    def network
-        Puppet::Network::HttpPool.http_instance(rest_connection_details[:host], rest_connection_details[:port])
-    end
-  
-    def exception?(yaml_string)
-        yaml_string =~ %r{--- !ruby/exception}
+        deserialize network.put("/#{indirection.name}/", request.instance.render, headers)
     end
 end

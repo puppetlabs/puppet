@@ -58,8 +58,8 @@ module Puppet::Network::HTTP::Handler
         object.save(args)
     end
 
-    def do_exception(request, response, exception, status=404)
-        encode_result(request, response, exception.to_yaml, status)
+    def do_exception(request, response, exception, status=400)
+        encode_result(request, response, exception.to_s, status)
     end
 
     def find_model_for_handler(handler)

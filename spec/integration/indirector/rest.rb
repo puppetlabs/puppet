@@ -144,7 +144,7 @@ describe Puppet::Indirector::REST do
                     Puppet::TestIndirectedFoo.search('bar').collect { |i| i.value }.should == @model_instances.collect { |i| i.value }
                 end
             end
-        
+
             describe "when no matching model instance can be found" do
                 before :each do
                     @mock_model = stub('faked model', :find => nil)
@@ -155,7 +155,7 @@ describe Puppet::Indirector::REST do
                     Puppet::TestIndirectedFoo.find('bar').should be_nil
                 end
             end
-        
+
             describe "when an exception is encountered in looking up a model instance" do
                 before :each do
                     @mock_model = stub('faked model')

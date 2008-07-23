@@ -15,6 +15,10 @@ module Puppet::Network::FormatHandler
             send("from_%s" % format, data)
         end
 
+        def default_format
+            supported_formats[0]
+        end
+
         def support_format?(name)
             respond_to?("from_%s" % name) and instance_methods.include?("to_%s" % name)
         end
@@ -29,8 +33,13 @@ module Puppet::Network::FormatHandler
     end
 
     module InstanceMethods
-        def render_to(format)
-            raise ArgumentError, "Format %s not supported" % format unless support_format?(format)
+        def render(format = nil)
+            if format
+                raise ArgumentError, "Format %s not supported" % format unless support_format?(format)
+            else
+                format = self.class.default_format
+            end
+
             send("to_%s" % format)
         end
 
