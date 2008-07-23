@@ -60,6 +60,7 @@ if project.has?(:gem)
             '--main' << 'README' <<
             '--line-numbers'
         task.test_file = "test/Rakefile"
+        task.author = "Luke Kanies"
     end
 end
 
