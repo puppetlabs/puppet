@@ -7,8 +7,9 @@ module Puppet::SSLCertificates
         # If no inventory exists yet, build an inventory and list all the 
         # certificates that have been signed so far
         def self.add(cert)
-            unless FileTest.exists?(Puppet[:cert_inventory])
-                inited = false
+            inited = false
+            if FileTest.exists?(Puppet[:cert_inventory])
+                inited = true
             end
 
             Puppet.settings.write(:cert_inventory, "a") do |f|
