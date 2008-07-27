@@ -1,4 +1,19 @@
+module Puppet::Network::HTTP
+end
+
 module Puppet::Network::HTTP::Handler
+    attr_reader :model, :server, :handler
+
+    # Retrieve the accept header from the http request.
+    def accept_header(request)
+        raise NotImplementedError
+    end
+
+    # Which format to use when serializing our response.  Just picks
+    # the first value in the accept header, at this point.
+    def format_to_use(request)
+        accept_header(request).split(/,\s*/)[0]
+    end
 
     def initialize_for_puppet(args = {})
         raise ArgumentError unless @server = args[:server]
@@ -17,40 +32,81 @@ module Puppet::Network::HTTP::Handler
         return do_exception(request, response, e)
     end
 
-  private
-
-    def model
-        @model
+    # Are we interacting with a singular instance?
+    def singular?(request)
+        %r{/#{handler.to_s}$}.match(path(request))
     end
 
+    # Are we interacting with multiple instances?
+    def plural?(request)
+        %r{/#{handler.to_s}s$}.match(path(request))
+    end
+
+    # Set the response up, with the body and status.
+    def set_response(response, body, status = 200)
+        raise NotImplementedError
+    end
+
+    # Set the specified format as the content type of the response.
+    def set_content_type(response, format)
+        raise NotImplementedError
+    end
+
+    # Execute our find.
     def do_find(request, response)
         key = request_key(request) || raise(ArgumentError, "Could not locate lookup key in request path [#{path(request)}]")
         args = params(request)
-        result = model.find(key, args).to_yaml
-        encode_result(request, response, result)
+        result = model.find(key, args)
+
+        # The encoding of the result must include the format to use,
+        # and it needs to be used for both the rendering and as
+        # the content type.
+        format = format_to_use(request)
+        set_content_type(response, format)
+
+        set_response(response, result.render(format))
     end
 
+    # Execute our search.
     def do_search(request, response)
         args = params(request)
         result = model.search(args).collect {|result| result.to_yaml }.to_yaml
-        encode_result(request, response, result) 
+
+        # LAK:FAIL This doesn't work.
+        format = format_to_use(request)
+        set_content_type(response, format)
+
+        set_response(response, result) 
     end
 
+    # Execute our destroy.
     def do_destroy(request, response)
         key = request_key(request) || raise(ArgumentError, "Could not locate lookup key in request path [#{path(request)}]")
         args = params(request)
         result = model.destroy(key, args)
-        encode_result(request, response, YAML.dump(result))
+
+        set_content_type(response, "yaml")
+
+        set_response(response, result.to_yaml)
     end
 
+    # Execute our save.
     def do_save(request, response)
         data = body(request).to_s
         raise ArgumentError, "No data to save" if !data or data.empty?
         args = params(request)
-        obj = model.from_yaml(data)
-        result = save_object(obj, args).to_yaml
-        encode_result(request, response, result)
+
+        format = format_to_use(request)
+
+        obj = model.convert_from(format_to_use(request), data)
+        result = save_object(obj, args)
+
+        set_content_type(response, "yaml")
+
+        set_response(response, result.to_yaml)
     end
+
+  private
 
     # LAK:NOTE This has to be here for testing; it's a stub-point so
     # we keep infinite recursion from happening.
@@ -59,7 +115,7 @@ module Puppet::Network::HTTP::Handler
     end
 
     def do_exception(request, response, exception, status=400)
-        encode_result(request, response, exception.to_s, status)
+        set_response(response, exception.to_s, status)
     end
 
     def find_model_for_handler(handler)
@@ -77,14 +133,6 @@ module Puppet::Network::HTTP::Handler
 
     def delete?(request)
         http_method(request) == 'DELETE'
-    end
-
-    def singular?(request)
-        %r{/#{@handler.to_s}$}.match(path(request))
-    end
-
-    def plural?(request)
-        %r{/#{@handler.to_s}s$}.match(path(request))
     end
 
     # methods to be overridden by the including web server class
@@ -110,10 +158,6 @@ module Puppet::Network::HTTP::Handler
     end
 
     def params(request)
-        raise NotImplementedError
-    end
-
-    def encode_result(request, response, result, status = 200)
         raise NotImplementedError
     end
 end
