@@ -137,10 +137,6 @@ module Puppet::Network::HTTP::Handler
 
     # methods to be overridden by the including web server class
 
-    def register_handler
-        raise NotImplementedError
-    end
-
     def http_method(request)
         raise NotImplementedError
     end
