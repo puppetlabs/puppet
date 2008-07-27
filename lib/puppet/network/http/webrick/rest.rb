@@ -10,7 +10,7 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
         initialize_for_puppet(:server => server, :handler => handler)
     end
 
-    # We had to expose this method for testing purposes.
+    # Retrieve the request parameters, including authentication information.
     def params(request)
         result = request.query
         result.merge(client_information(request))
@@ -21,7 +21,9 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
         process(request, response)
     end
 
-  private
+    def accept_header(request)
+        request[:accept]
+    end
 
     def http_method(request)
         request.request_method
@@ -41,7 +43,12 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
         request.body
     end
 
-    def encode_result(request, response, result, status = 200)
+    # Set the specified format as the content type of the response.
+    def set_content_type(response, format)
+        response[:content_type] = format
+    end
+
+    def set_response(response, result, status = 200)
         response.status = status
         response.body = result
     end

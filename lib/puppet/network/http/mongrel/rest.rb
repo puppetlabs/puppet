@@ -4,22 +4,26 @@ class Puppet::Network::HTTP::MongrelREST < Mongrel::HttpHandler
 
     include Puppet::Network::HTTP::Handler
 
+    ACCEPT_HEADER = "HTTP_ACCEPT".freeze # yay, zed's a crazy-man
+
     def initialize(args={})
         super()
         initialize_for_puppet(args)
+    end
+
+    def accept_header(request)
+        request.params[ACCEPT_HEADER]
+    end
+
+    # which HTTP verb was used in this request
+    def http_method(request)
+        request.params[Mongrel::Const::REQUEST_METHOD]
     end
 
     # Return the query params for this request.  We had to expose this method for
     # testing purposes.
     def params(request)
         Mongrel::HttpRequest.query_parse(request.params["QUERY_STRING"]).merge(client_info(request))
-    end
-
-  private
-
-    # which HTTP verb was used in this request
-    def http_method(request)
-        request.params[Mongrel::Const::REQUEST_METHOD]
     end
 
     # what path was requested?
@@ -39,8 +43,12 @@ class Puppet::Network::HTTP::MongrelREST < Mongrel::HttpHandler
         request.body
     end
 
+    def set_content_type(response, format)
+        response.header['Content-Type'] = format
+    end
+
     # produce the body of the response
-    def encode_result(request, response, result, status = 200)
+    def set_response(response, result, status = 200)
         response.start(status) do |head, body|
             body.write(result)
         end
