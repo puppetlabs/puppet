@@ -15,6 +15,22 @@ module Puppet::Network::FormatHandler
             send("from_%s" % format, data)
         end
 
+        def convert_from_multiple(format, data)
+            if respond_to?("from_multiple_%s" % format)
+                send("from_multiple_%s" % format, data)
+            else
+                convert_from(format, data)
+            end
+        end
+
+        def render_multiple(format, instances)
+            if respond_to?("to_multiple_%s" % format)
+                send("to_multiple_%s" % format, instances)
+            else
+                instances.send("to_%s" % format)
+            end
+        end
+
         def default_format
             supported_formats[0]
         end

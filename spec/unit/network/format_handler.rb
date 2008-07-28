@@ -8,18 +8,24 @@ class FormatTester
     extend Puppet::Network::FormatHandler
 
     # Not a supported format; missing the 'to'
-    def self.from_nothing
-    end
+    def self.from_nothing; end
 
     # Not a supported format; missing the 'from'
-    def to_nowhere
-    end
+    def to_nowhere; end
 
-    def self.from_good
-    end
+    # A largely functional format.
+    def self.from_good; end
 
-    def to_good
-    end
+    def to_good; end
+
+    # A format that knows how to handle multiple instances specially.
+    def self.from_mults; end
+
+    def self.from_multiple_mults; end
+
+    def self.to_multiple_mults; end
+
+    def to_mults; end
 end
 
 describe Puppet::Network::FormatHandler do
@@ -53,12 +59,33 @@ describe Puppet::Network::FormatHandler do
         FormatTester.convert_from(:good, "mydata")
     end
 
+    it "should be able to use a specific hook for converting into multiple instances" do
+        FormatTester.expects(:from_multiple_mults).with("mydata")
+        FormatTester.convert_from_multiple(:mults, "mydata")
+    end
+
+    it "should default to the normal conversion method when no special method is available" do
+        FormatTester.expects(:from_good).with("mydata")
+        FormatTester.convert_from_multiple(:good, "mydata")
+    end
+
+    it "should be able to use a specific hook for rendering multiple instances" do
+        FormatTester.expects(:to_multiple_mults).with("mydata")
+        FormatTester.render_multiple(:mults, "mydata")
+    end
+
+    it "should use the instance method if no multiple-render hook is available" do
+        instances = mock 'instances'
+        instances.expects(:to_good)
+        FormatTester.render_multiple(:good, instances)
+    end
+
     it "should be able to list supported formats" do
         FormatTester.should respond_to(:supported_formats)
     end
 
     it "should include all formats that include both the to_ and from_ methods in the list of supported formats" do
-        FormatTester.supported_formats.should == %w{good}
+        FormatTester.supported_formats.should == %w{good mults}
     end
 
     it "should return the first format as the default format" do
