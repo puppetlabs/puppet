@@ -1,4 +1,4 @@
-class Puppet::Network::HTTP
+module Puppet::Network::HTTP
     def self.server_class_by_type(kind)
         case kind.to_sym
         when :webrick:

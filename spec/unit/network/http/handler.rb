@@ -212,6 +212,11 @@ describe Puppet::Network::HTTP::Handler do
             @handler.process(@request, @response)
         end
 
+        it "should set the format to text/plain when serializing an exception" do
+            @handler.expects(:set_content_type).with(@response, "text/plain")
+            @handler.do_exception(@response, "A test", 404)
+        end
+
         describe "when finding a model instance" do
             before do
                 @handler.stubs(:http_method).returns('GET')
@@ -259,6 +264,13 @@ describe Puppet::Network::HTTP::Handler do
 
                 @handler.expects(:set_response).with { |response, body, status| body == "my_rendered_object" }
                 @model_class.stubs(:find).returns(@model_instance)
+                @handler.do_find(@request, @response)
+            end
+
+            it "should return a 404 when no model instance can be found" do
+                @model_class.stubs(:name).returns "my name"
+                @handler.expects(:set_response).with { |response, body, status| status == 404 }
+                @model_class.stubs(:find).returns(nil)
                 @handler.do_find(@request, @response)
             end
 

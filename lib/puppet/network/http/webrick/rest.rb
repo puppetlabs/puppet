@@ -22,7 +22,7 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
     end
 
     def accept_header(request)
-        request[:accept]
+        request["accept"]
     end
 
     def http_method(request)
@@ -45,12 +45,16 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
 
     # Set the specified format as the content type of the response.
     def set_content_type(response, format)
-        response[:content_type] = format
+        response["content-type"] = format
     end
 
     def set_response(response, result, status = 200)
         response.status = status
-        response.body = result
+        if status >= 200 and status < 300
+            response.body = result
+        else
+            response.reason_phrase = result
+        end
     end
 
     # Retrieve node/cert/ip information from the request object.

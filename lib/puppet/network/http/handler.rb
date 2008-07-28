@@ -29,7 +29,7 @@ module Puppet::Network::HTTP::Handler
         return do_save(request, response)       if put?(request)    and singular?(request)
         raise ArgumentError, "Did not understand HTTP #{http_method(request)} request for '#{path(request)}'"
     rescue Exception => e
-        return do_exception(request, response, e)
+        return do_exception(response, e)
     end
 
     # Are we interacting with a singular instance?
@@ -52,11 +52,22 @@ module Puppet::Network::HTTP::Handler
         raise NotImplementedError
     end
 
+    def do_exception(response, exception, status=400)
+        if exception.is_a?(Exception)
+            puts exception.backtrace if Puppet[:trace]
+            puts exception if Puppet[:trace]
+        end
+        set_content_type(response, "text/plain")
+        set_response(response, exception.to_s, status)
+    end
+
     # Execute our find.
     def do_find(request, response)
         key = request_key(request) || raise(ArgumentError, "Could not locate lookup key in request path [#{path(request)}]")
         args = params(request)
-        result = model.find(key, args)
+        unless result = model.find(key, args)
+            return do_exception(response, "Could not find %s %s" % [model.name, key], 404)
+        end
 
         # The encoding of the result must include the format to use,
         # and it needs to be used for both the rendering and as
@@ -112,10 +123,6 @@ module Puppet::Network::HTTP::Handler
     # we keep infinite recursion from happening.
     def save_object(object, args)
         object.save(args)
-    end
-
-    def do_exception(request, response, exception, status=400)
-        set_response(response, exception.to_s, status)
     end
 
     def find_model_for_handler(handler)

@@ -6,11 +6,21 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     # Figure out the content type, turn that into a format, and use the format
     # to extract the body of the response.
     def deserialize(response)
-        # Raise the http error if we didn't get a 'success' of some kind.
-        response.error! unless response.code =~ /^2/
+        case response.code
+        when "404"
+            return nil
+        when /^2/
+            unless response['content-type']
+                raise "No content type in http response; cannot parse"
+            end
 
-        # Convert the response to a deserialized object.
-        model.convert_from(response['content-type'], response.body)
+            # Convert the response to a deserialized object.
+            model.convert_from(response['content-type'], response.body)
+        else
+            # Raise the http error if we didn't get a 'success' of some kind.
+            message = "Server returned %s: %s" % [response.code, response.message]
+            raise Net::HTTPError.new(message, response)
+        end
     end
 
     # Provide appropriate headers.
@@ -32,9 +42,9 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     
     def search(request)
         if request.key
-            path = "/#{indirection.name}/#{request.key}"
+            path = "/#{indirection.name}s/#{request.key}"
         else
-            path = "/#{indirection.name}"
+            path = "/#{indirection.name}s"
         end
         deserialize network.get(path, headers)
     end

@@ -46,25 +46,32 @@ describe Puppet::Indirector::REST do
     end
 
     describe "when deserializing responses" do
-        it "should return the results of converting from the format specified by the content-type header" do
-            @model.expects(:convert_from).with("myformat", "mydata").returns "myobject"
-
+        it "should return nil if the response code is 404" do
             response = mock 'response'
-            response.expects(:[]).with("content-type").returns "myformat"
-            response.expects(:body).returns "mydata"
-            response.stubs(:code).returns "200"
+            response.expects(:code).returns "404"
 
-            @searcher.deserialize(response)
+            @searcher.deserialize(response).should be_nil
         end
 
-        it "should fail if the response is not a success" do
+        it "should fail if the response code is not in the 200s" do
             @model.expects(:convert_from).never
 
             response = mock 'response'
-            response.expects(:code).returns "300"
-            response.expects(:error!).raises ArgumentError
+            response.stubs(:code).returns "300"
+            response.stubs(:message).returns "There was a problem"
 
-            lambda { @searcher.deserialize(response) }.should raise_error(ArgumentError)
+            lambda { @searcher.deserialize(response) }.should raise_error(Net::HTTPError)
+        end
+
+        it "should return the results of converting from the format specified by the content-type header if the response code is in the 200s" do
+            @model.expects(:convert_from).with("myformat", "mydata").returns "myobject"
+
+            response = mock 'response'
+            response.stubs(:[]).with("content-type").returns "myformat"
+            response.stubs(:body).returns "mydata"
+            response.stubs(:code).returns "200"
+
+            @searcher.deserialize(response)
         end
     end
 
@@ -147,15 +154,15 @@ describe Puppet::Indirector::REST do
             @searcher.search(@request).should == 'myobject'
         end        
 
-        it "should use the indirection name as the path if there is no request key" do
-            should_path = "/%s" % [@indirection.name.to_s]
+        it "should use the plural indirection name as the path if there is no request key" do
+            should_path = "/%ss" % [@indirection.name.to_s]
             @request.stubs(:key).returns nil
             @connection.expects(:get).with { |path, args| path == should_path }.returns(@response)
             @searcher.search(@request)
         end
 
-        it "should use the indirection name and request key to create the path if the request key is set" do
-            should_path = "/%s/%s" % [@indirection.name.to_s, "foo"]
+        it "should use the plural indirection name and request key to create the path if the request key is set" do
+            should_path = "/%ss/%s" % [@indirection.name.to_s, "foo"]
             @connection.expects(:get).with { |path, args| path == should_path }.returns(@response)
             @searcher.search(@request)
         end

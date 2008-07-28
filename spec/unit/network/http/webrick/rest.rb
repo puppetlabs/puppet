@@ -33,7 +33,7 @@ describe Puppet::Network::HTTP::WEBrickREST do
 
         describe "when using the Handler interface" do
             it "should use the 'accept' request parameter as the Accept header" do
-                @request.expects(:[]).with(:accept).returns "foobar"
+                @request.expects(:[]).with("accept").returns "foobar"
                 @handler.accept_header(@request).should == "foobar"
             end
 
@@ -57,16 +57,23 @@ describe Puppet::Network::HTTP::WEBrickREST do
                 @handler.body(@request).should == "my body"
             end
 
-            it "should set the response's :content_type header when setting the content type" do
-                @response.expects(:[]=).with(:content_type, "text/html")
+            it "should set the response's 'content-type' header when setting the content type" do
+                @response.expects(:[]=).with("content-type", "text/html")
                 @handler.set_content_type(@response, "text/html")
             end
 
-            it "should set the status and body on the response when setting the response" do
+            it "should set the status and body on the response when setting the response for a successful query" do
                 @response.expects(:status=).with 200
                 @response.expects(:body=).with "mybody"
 
                 @handler.set_response(@response, "mybody", 200)
+            end
+
+            it "should set the status and message on the response when setting the response for a failed query" do
+                @response.expects(:status=).with 400
+                @response.expects(:reason_phrase=).with "mybody"
+
+                @handler.set_response(@response, "mybody", 400)
             end
         end
 
