@@ -85,7 +85,7 @@ describe Puppet::Network::FormatHandler do
     end
 
     it "should include all formats that include both the to_ and from_ methods in the list of supported formats" do
-        FormatTester.supported_formats.should == %w{good mults}
+        FormatTester.supported_formats.sort.should == %w{good mults}.sort
     end
 
     it "should return the first format as the default format" do
