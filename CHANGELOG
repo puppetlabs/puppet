@@ -1,3 +1,10 @@
+0.24.x
+    Added feature #1241 : Improve performance of group lookups
+
+    Fixed bug #1448: Puppet CA incorrectly writes out all certs to inventory .txt on each certificate signing
+
+    Fixing puppetlast to make it work with 0.24.5 / 0.25
+    
 0.24.5
     You can now select the encoding format when transferring the catalog,
     with 'yaml' still being the default but 'marshal' being an option.
