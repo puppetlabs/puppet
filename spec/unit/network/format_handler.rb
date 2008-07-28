@@ -93,6 +93,37 @@ describe Puppet::Network::FormatHandler do
         FormatTester.default_format.should == "one"
     end
 
+    describe "when managing formats" do
+        it "should have a method for defining a new format" do
+            Puppet::Network::FormatHandler.should respond_to(:create)
+        end
+
+        it "should create a format instance when asked" do
+            format = stub 'format', :name => "foo"
+            Puppet::Network::Format.expects(:new).with(:foo).returns format
+            Puppet::Network::FormatHandler.create(:foo)
+        end
+
+        it "should instance_eval any block provided when creating a format" do
+            format = stub 'format', :name => :instance_eval
+            format.expects(:yayness)
+            Puppet::Network::Format.expects(:new).returns format
+            Puppet::Network::FormatHandler.create(:instance_eval) do
+                yayness
+            end
+        end
+
+        it "should be able to retrieve a format by name" do
+            format = Puppet::Network::FormatHandler.create(:by_name)
+            Puppet::Network::FormatHandler.format(:by_name).should equal(format)
+        end
+
+        it "should be able to retrieve a format by mime type" do
+            format = Puppet::Network::FormatHandler.create(:by_name, :mime => "foo/bar")
+            Puppet::Network::FormatHandler.mime("foo/bar").should equal(format)
+        end
+    end
+
     describe "when an instance" do
         it "should be able to test whether a format is supported" do
             FormatTester.new.should respond_to(:support_format?)

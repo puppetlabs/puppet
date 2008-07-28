@@ -1,12 +1,31 @@
 require 'puppet/network'
+require 'puppet/network/format'
 
 module Puppet::Network::FormatHandler
+    @formats = {}
+    def self.create(*args, &block)
+        instance = Puppet::Network::Format.new(*args)
+        instance.instance_eval(&block) if block_given?
+
+        @formats[instance.name] = instance
+        instance
+    end
+
     def self.extended(klass)
         klass.extend(ClassMethods)
 
         # LAK:NOTE This won't work in 1.9 ('send' won't be able to send
         # private methods, but I don't know how else to do it.
         klass.send(:include, InstanceMethods)
+    end
+
+    def self.format(name)
+        @formats[name]
+    end
+
+    # Return a format capable of handling the provided mime type.
+    def self.mime(mimetype)
+        @formats.values.find { |format| format.mime == mimetype }
     end
 
     module ClassMethods
@@ -64,3 +83,5 @@ module Puppet::Network::FormatHandler
         end
     end
 end
+
+require 'puppet/network/formats'
