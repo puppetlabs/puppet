@@ -1,10 +1,15 @@
 #!/usr/bin/env ruby
 
 require File.dirname(__FILE__) + '/../../../../spec_helper'
+
 require 'puppet/network/http'
 
 describe "Puppet::Network::HTTP::MongrelREST" do
     confine "Mongrel is not available" => Puppet.features.mongrel?
+    before do
+        require 'puppet/network/http/mongrel/rest'
+    end
+
 
     it "should include the Puppet::Network::HTTP::Handler module" do
         Puppet::Network::HTTP::MongrelREST.ancestors.should be_include(Puppet::Network::HTTP::Handler)
