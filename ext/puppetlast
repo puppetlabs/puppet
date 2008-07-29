@@ -1,15 +1,14 @@
 #!/usr/bin/env ruby
+# Puppetlast, a script to output the last check-in time of nodes. Also outputs the cached configuration state, if expired or not.
 #
-# Script to print out when puppet ran successfully last
-# AJ Christensen <aj@junglist.gen.nz>
+# AJ "Fujin" Christensen <aj@junglist.gen.nz>
 #
-
 require 'puppet'
-require 'puppet/defaults'
-require 'yaml'
 
 Puppet[:config] = "/etc/puppet/puppet.conf"
 Puppet.parse_config
+Puppet[:name] = "puppetmasterd"
+Puppet::Node::Facts.terminus_class = :yaml
 
 print "puppetlast\n"
 
@@ -37,4 +36,7 @@ if yfdir
       print 'error: ' + $! + "\n"
    end
 
+Puppet::Node::Facts.search("*").sort.each do |node|
+  puts "#{node.name} #{node.expired? ? 'cached expired, ' : ''}checked in #{((Time.now - node.values[:_timestamp]) / 60).floor} minutes ago"
 end
+
