@@ -5,6 +5,7 @@
 
 require File.dirname(__FILE__) + '/../../../spec_helper'
 require 'puppet/network/http'
+require 'puppet/network/http/webrick'
 
 describe Puppet::Network::HTTP::WEBrick, "after initializing" do
     it "should not be listening" do

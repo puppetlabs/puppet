@@ -79,22 +79,31 @@ class TestCertSupport < Test::Unit::TestCase
         end
     end
 
-    # Fixing #1382.
-    def test_uppercase_files_are_renamed_and_read
-        # Write a key out to disk in a file containing upper-case.
-        key = OpenSSL::PKey::RSA.new(32)
-        should_path = Puppet[:hostprivkey]
+    # Fixing #1382.  This test will always fail on Darwin, because its
+    # FS is case-insensitive.
+    unless Facter.value(:operatingsystem) == "Darwin"
+        def test_uppercase_files_are_renamed_and_read
+            # Write a key out to disk in a file containing upper-case.
+            key = OpenSSL::PKey::RSA.new(32)
+            should_path = Puppet[:hostprivkey]
+            puts "%s: %s" % [should_path, FileTest.exist?(should_path).inspect]
 
-        dir, file = File.split(should_path)
-        newfile = file.sub(/^([a-z.]+)\./) { $1.upcase + "."}
-        upper_path = File.join(dir, newfile)
-        File.open(upper_path, "w") { |f| f.print key.to_s }
+            dir, file = File.split(should_path)
+            newfile = file.sub(/^([a-z.]+)\./) { $1.upcase + "."}
+            puts "%s: %s" % [should_path, FileTest.exist?(should_path).inspect]
+            upper_path = File.join(dir, newfile)
+            puts "%s: %s" % [should_path, FileTest.exist?(should_path).inspect]
+            puts "%s: %s" % [upper_path, FileTest.exist?(upper_path).inspect]
+            File.open(upper_path, "w") { |f| f.print key.to_s }
+            puts "%s: %s" % [should_path, FileTest.exist?(should_path).inspect]
+            puts "%s: %s" % [upper_path, FileTest.exist?(upper_path).inspect]
 
-        user = CertUser.new
+            user = CertUser.new
 
-        assert_equal(key.to_s, user.read_key.to_s, "Did not read key in from disk")
-        assert(! FileTest.exist?(upper_path), "Upper case file was not removed")
-        assert(FileTest.exist?(should_path), "File was not renamed to lower-case file")
-        assert_equal(key.to_s, user.read_key.to_s, "Did not read key in from disk")
+            assert_equal(key.to_s, user.read_key.to_s, "Did not read key in from disk")
+            assert(! FileTest.exist?(upper_path), "Upper case file was not removed")
+            assert(FileTest.exist?(should_path), "File was not renamed to lower-case file")
+            assert_equal(key.to_s, user.read_key.to_s, "Did not read key in from disk")
+        end
     end
 end

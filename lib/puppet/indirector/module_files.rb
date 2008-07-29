@@ -14,24 +14,24 @@ class Puppet::Indirector::ModuleFiles < Puppet::Indirector::Terminus
     include Puppet::FileServing::TerminusHelper
 
     # Is the client allowed access to this key with this method?
-    def authorized?(method, key, options = {})
-        return false unless [:find, :search].include?(method)
+    def authorized?(request)
+        return false unless [:find, :search].include?(request.method)
 
-        uri = key2uri(key)
+        uri = key2uri(request.key)
 
         # Make sure our file path starts with /modules, so that we authorize
         # against the 'modules' mount.
         path = uri.path =~ /^\/modules/ ? uri.path : "/modules" + uri.path
 
-        configuration.authorized?(path, :node => options[:node], :ipaddress => options[:ipaddress])
+        configuration.authorized?(path, :node => request.node, :ipaddress => request.ip)
     end
 
     # Find our key in a module.
-    def find(key, options = {})
-        return nil unless path = find_path(key, options)
+    def find(request)
+        return nil unless path = find_path(request)
 
-        result = model.new(key, :path => path)
-        result.links = options[:links] if options[:links]
+        result = model.new(request.key, :path => path)
+        result.links = request.options[:links] if request.options[:links]
         return result
     end
 
@@ -41,9 +41,9 @@ class Puppet::Indirector::ModuleFiles < Puppet::Indirector::Terminus
     end
 
     # Search for a list of files.
-    def search(key, options = {})
-        return nil unless path = find_path(key, options)
-        path2instances(key, path, options)
+    def search(request)
+        return nil unless path = find_path(request)
+        path2instances(request, path)
     end
 
     private
@@ -63,15 +63,15 @@ class Puppet::Indirector::ModuleFiles < Puppet::Indirector::Terminus
     end
 
     # The abstracted method for turning a key into a path; used by both :find and :search.
-    def find_path(key, options)
-        uri = key2uri(key)
+    def find_path(request)
+        uri = key2uri(request.key)
 
         # Strip off /modules if it's there -- that's how requests get routed to this terminus.
         # Also, strip off the leading slash if present.
         module_name, relative_path = uri.path.sub(/^\/modules\b/, '').sub(%r{^/}, '').split(File::Separator, 2)
 
         # And use the environment to look up the module.
-        return nil unless mod = find_module(module_name, options[:node])
+        return nil unless mod = find_module(module_name, request.node)
 
         path = File.join(mod.files, relative_path)
 

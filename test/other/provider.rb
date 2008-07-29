@@ -48,51 +48,6 @@ class TestImpl < Test::Unit::TestCase
 
     end
 
-    def test_provider_false_confine
-        assert_nothing_raised do
-            @provider.confine :false => false
-        end
-
-        assert(@provider.suitable?, "False did not check correctly")
-    end
-
-    def test_provider_true_confine
-        assert_nothing_raised do
-            @provider.confine :true => true
-        end
-
-        assert(@provider.suitable?, "True did not check correctly")
-
-        # Now check whether we multiple true things work
-        assert_nothing_raised do
-            @provider.confine :true => false
-            @provider.confine :true => true
-        end
-        assert(! @provider.suitable?, "One truth overrode another")
-    end
-
-    def test_provider_exists_confine
-        file = tempfile()
-
-        assert_nothing_raised do
-            @provider.confine :exists => file
-        end
-
-        assert(! @provider.suitable?, "Exists did not check correctly")
-        File.open(file, "w") { |f| f.puts "" }
-        assert(@provider.suitable?, "Exists did not find file correctly")
-    end
-
-    def test_provider_facts_confine
-        # Now check for multiple platforms
-        assert_nothing_raised do
-            @provider.confine :operatingsystem => [Facter["operatingsystem"].value, :yayos]
-            @provider.confine :operatingsystem => [:fakeos, :otheros]
-        end
-
-        assert(@provider.suitable?, "Implementation not considered suitable")
-    end
-
     def test_provider_default
         nondef = nil
         assert_nothing_raised {

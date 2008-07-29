@@ -77,47 +77,6 @@ describe ssh_authorized_key do
         @class.attrtype(:target).should == :property
     end
 
-    it "should autorequire parent directories when user is given" do
-        @catalog.add_resource @class.create(
-          :name   => "Test",
-          :key    => "AAA",
-          :type   => "ssh-rsa",
-          :ensure => :present,
-          :user   => "root")
-        @catalog.apply
-
-        target = File.expand_path("~root/.ssh")
-        @catalog.resource(:file, target).should be_an_instance_of(Puppet::Type.type(:file))
-    end
-
-    it "should set target when user is given" do
-        @catalog.add_resource @class.create(
-          :name   => "Test",
-          :key    => "AAA",
-          :type   => "ssh-rsa",
-          :ensure => :present,
-          :user   => "root")
-        @catalog.apply
-
-        target = File.expand_path("~root/.ssh/authorized_keys")
-        @catalog.resource(:file, target).should be_an_instance_of(Puppet::Type.type(:file))
-    end
-
-
-    it "should autorequire parent directories when target is given" do
-        target = "/tmp/home/foo/bar/.ssh/authorized_keys"
-
-        @catalog.add_resource @class.create(
-          :name   => "Test",
-          :key    => "AAA",
-          :type   => "ssh-rsa",
-          :ensure => :present,
-          :target => target)
-        @catalog.apply
-
-        @catalog.resource(:file, target).should be_an_instance_of(Puppet::Type.type(:file))
-    end
-
     it "should raise an error when neither user nor target is given" do
         proc do
             @class.create(

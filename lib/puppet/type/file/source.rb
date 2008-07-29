@@ -101,8 +101,7 @@ module Puppet
             begin
                 desc = server.describe(path, @resource[:links])
             rescue Puppet::Network::XMLRPCClientError => detail
-                self.err "Could not describe %s: %s" % [path, detail]
-                return nil
+                fail detail, "Could not describe %s: %s" % [path, detail]
             end
 
             return nil if desc == ""

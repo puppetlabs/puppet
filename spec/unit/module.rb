@@ -143,8 +143,8 @@ describe Puppet::Module, " when searching for manifests when no module is found"
 
     it "should look for files relative to the current directory" do
         cwd = Dir.getwd
-        Dir.expects(:glob).with("#{cwd}/mymod/init.pp").returns(["#{cwd}/mymod/init.pp"])
-        Puppet::Module.find_manifests("mymod/init.pp").should == ["#{cwd}/mymod/init.pp"]
+        Dir.expects(:glob).with("#{cwd}/foobar/init.pp").returns(["#{cwd}/foobar/init.pp"])
+        Puppet::Module.find_manifests("foobar/init.pp").should == ["#{cwd}/foobar/init.pp"]
     end
 
     it "should only return files, not directories" do

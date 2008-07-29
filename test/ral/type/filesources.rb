@@ -144,16 +144,7 @@ class TestFileSources < Test::Unit::TestCase
         # Make sure the munge didn't actually change the source
         assert_equal([source], property.should, "munging changed the source")
         
-        # First try it with a missing source
         currentvalue = nil
-        assert_nothing_raised do
-            currentvalue = property.retrieve
-        end
-        
-        # And make sure the property considers itself in sync, since there's nothing
-        # to do
-        assert(property.insync?(currentvalue), "source thinks there's work to do with no file or dest")
-        
         # Now make the dest a directory, and make sure the object sets :ensure
         # up to create a directory
         Dir.mkdir(source)
@@ -169,9 +160,6 @@ class TestFileSources < Test::Unit::TestCase
         
         # Now remove the source, and make sure :ensure was not modified
         Dir.rmdir(source)
-        assert_nothing_raised do
-            property.retrieve
-        end
         assert_equal(:directory, file.should(:ensure),
             "Did not keep :ensure setting")
         
@@ -207,10 +195,6 @@ class TestFileSources < Test::Unit::TestCase
         property = file.property(:source)
         assert(property, "did not get source property")
         
-        # Try it with no source at all
-        currentvalues = file.retrieve
-        assert(property.insync?(currentvalues[property]), "source property not in sync with missing source")
-
         # with a directory
         Dir.mkdir(source)
         currentvalues = file.retrieve
@@ -523,6 +507,107 @@ class TestFileSources < Test::Unit::TestCase
 
         @@tmpfiles << file
         return file
+    end
+
+    def test_NetworkSources
+        server = nil
+        mounts = {
+            "/" => "root"
+        }
+
+        fileserverconf = mkfileserverconf(mounts)
+
+        Puppet[:autosign] = true
+
+        Puppet[:masterport] = 8762
+        Puppet[:name] = "puppetmasterd"
+        Puppet[:certdnsnames] = "localhost"
+
+        serverpid = nil
+        assert_nothing_raised() {
+            server = Puppet::Network::HTTPServer::WEBrick.new(
+                :Handlers => {
+                    :CA => {}, # so that certs autogenerate
+                    :FileServer => {
+                        :Config => fileserverconf
+                    }
+                }
+            )
+
+        }
+        serverpid = fork {
+            assert_nothing_raised() {
+                #trap(:INT) { server.shutdown; Kernel.exit! }
+                trap(:INT) { server.shutdown }
+                server.start
+            }
+        }
+        @@tmppids << serverpid
+
+        sleep(1)
+
+        fromdir, todir = run_complex_sources("root")
+        assert_trees_equal(fromdir,todir)
+        recursive_source_test(fromdir, todir)
+        assert_trees_equal(fromdir,todir)
+
+        assert_nothing_raised {
+            system("kill -INT %s" % serverpid)
+        }
+    end
+
+    def test_unmountedNetworkSources
+        server = nil
+        mounts = {
+            "/" => "root",
+            "/noexistokay" => "noexist"
+        }
+
+        fileserverconf = mkfileserverconf(mounts)
+
+        Puppet[:autosign] = true
+        Puppet[:masterport] = @port
+        Puppet[:certdnsnames] = "localhost"
+
+        serverpid = nil
+        assert_nothing_raised("Could not start on port %s" % @port) {
+            server = Puppet::Network::HTTPServer::WEBrick.new(
+                :Port => @port,
+                :Handlers => {
+                    :CA => {}, # so that certs autogenerate
+                    :FileServer => {
+                        :Config => fileserverconf
+                    }
+                }
+            )
+
+        }
+
+        serverpid = fork {
+            assert_nothing_raised() {
+                #trap(:INT) { server.shutdown; Kernel.exit! }
+                trap(:INT) { server.shutdown }
+                server.start
+            }
+        }
+        @@tmppids << serverpid
+
+        sleep(1)
+
+        name = File.join(tmpdir(), "nosourcefile")
+        file = Puppet.type(:file).create(
+            :source => "puppet://localhost/noexist/file",
+            :name => name
+        )
+
+        assert_raise Puppet::Error do 
+            file.retrieve
+        end 
+
+        comp = mk_catalog(file)
+        comp.apply
+
+        assert(!FileTest.exists?(name), "File with no source exists anyway")
     end
 
     def test_alwayschecksum

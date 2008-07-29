@@ -40,5 +40,15 @@ describe Puppet::Node::Catalog do
 
             Puppet::Node::Catalog.find("me").should be_nil
         end
+
+        it "should pass provided node information directly to the terminus" do
+            terminus = mock 'terminus'
+
+            Puppet::Node::Catalog.indirection.stubs(:terminus).returns terminus
+
+            node = mock 'node'
+            terminus.expects(:find).with { |request| request.options[:use_node] == node }
+            Puppet::Node::Catalog.find("me", :use_node => node)
+        end
     end
 end

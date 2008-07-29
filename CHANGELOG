@@ -8,7 +8,39 @@
     set file paths to 'false' to disable the CRL.
 
 0.24.5
-    Added message referencing ReductveLabs build library
+    You can now select the encoding format when transferring the catalog,
+    with 'yaml' still being the default but 'marshal' being an option.
+    This is because testing has shown drastic performance differences
+    between the two, with up to 70% of compile time being spent
+    in YAML code.  Use the 'catalog_format' setting to choose your format,
+    and the setting must be set on the client.
+
+    Fixed #1431 - Provider confines must now specify similar tests in one call.
+    I.e., you can't do confine :operatingsystem => %w{a b} and then
+    confine :operatingsystem => %w{b c}; you'd need to do them in one command.
+    This now-obsolete behaviour does not seem to be used anywhere.
+    The fix for #1431 is actually just removing the tests that exposed
+    this change; the change happened when I refactored how confines work.
+
+    Updated /spec/unit/rails.rb test
+
+    Fix #1426 - services on redhat are restarted again and status is 
+    called from the Red Hat provider
+
+    Fixed #1414 - Return code from waitpid now right shifted 8 bits
+
+    Fixed #174 - a native type type for managing ssh authorized_keys 
+    files is available.
+
+    Further moves from the examples directory and ext directory
+
+    Fixed #1397 One line fix, fail instead of log
+
+    Moved debian to conf and updated examples directory
+
+    Fixed #1368 - updated Red Hat init scripts
+ 
+    Added message referencing ReductiveLabs build library
 
     Fixed #1396 - Added sha1 function from DavidS to core
     
@@ -62,8 +94,6 @@
     but external nodes just use the certificate name and any custom terminus
     types will use just the certificate name.
     
-    Fixed #1201 - all external node attributes are converted to strings.
-
     Fixing #1168 (for 0.24.x) -- automatically downcasing the fqdn.
     Also requiring that passed in certnames be downcased; the setting
     system isn't currently flexible enough to automatically downcase

@@ -3,10 +3,12 @@
 require File.dirname(__FILE__) + '/../../../../spec_helper'
 require 'puppet/network/http'
 
-describe Puppet::Network::HTTP::MongrelREST, "when initializing" do
+describe "Puppet::Network::HTTP::MongrelREST", "when initializing" do
     confine "Mongrel is not available" => Puppet.features.mongrel?
 
     before do
+        require 'puppet/network/http/mongrel/rest'
+
         @mock_mongrel = mock('Mongrel server')
         @mock_mongrel.stubs(:register)
         @mock_model = mock('indirected model')
@@ -33,7 +35,7 @@ describe Puppet::Network::HTTP::MongrelREST, "when initializing" do
     end
 end
 
-describe Puppet::Network::HTTP::MongrelREST, "when receiving a request" do
+describe "Puppet::Network::HTTP::MongrelREST", "when receiving a request" do
     confine "Mongrel is not available" => Puppet.features.mongrel?
 
     before do
@@ -131,6 +133,8 @@ describe Puppet::Network::HTTP::MongrelREST, "when receiving a request" do
     end
 
     describe "and determining the request parameters", :shared => true do
+        confine "Mongrel is not available" => Puppet.features.mongrel?
+
         before do
             @mock_request.stubs(:params).returns({})
         end
@@ -198,6 +202,8 @@ describe Puppet::Network::HTTP::MongrelREST, "when receiving a request" do
     end
 
     describe "when finding a model instance" do |variable|
+        confine "Mongrel is not available" => Puppet.features.mongrel?
+
         it "should fail to find model if key is not specified" do
             @mock_request.stubs(:params).returns({ Mongrel::Const::REQUEST_METHOD => 'GET', Mongrel::Const::REQUEST_PATH => '/foo'})
             @mock_response.expects(:start).with(404)
@@ -236,6 +242,8 @@ describe Puppet::Network::HTTP::MongrelREST, "when receiving a request" do
     end
 
     describe "when destroying a model instance" do |variable|
+        confine "Mongrel is not available" => Puppet.features.mongrel?
+
         it "should fail to destroy model if key is not specified" do
             @mock_request.stubs(:params).returns({ Mongrel::Const::REQUEST_METHOD => 'DELETE', Mongrel::Const::REQUEST_PATH => '/foo'})
             @mock_response.expects(:start).with(404)
@@ -281,6 +289,8 @@ describe Puppet::Network::HTTP::MongrelREST, "when receiving a request" do
     end
 
     describe "when saving a model instance" do |variable|    
+        confine "Mongrel is not available" => Puppet.features.mongrel?
+
         it "should fail to save model if data is not specified" do
             @mock_request.stubs(:params).returns({ Mongrel::Const::REQUEST_METHOD => 'PUT', Mongrel::Const::REQUEST_PATH => '/foo'})
             @mock_request.stubs(:body).returns('')
@@ -319,6 +329,8 @@ describe Puppet::Network::HTTP::MongrelREST, "when receiving a request" do
     end
 
     describe "when searching for model instances" do |variable|
+        confine "Mongrel is not available" => Puppet.features.mongrel?
+
         it "should use a common method for determining the request parameters" do
             setup_search_request('QUERY_STRING' => 'foo=baz&bar=xyzzy')
             @handler.expects(:params).returns(:foo => :baz, :bar => :xyzzy)

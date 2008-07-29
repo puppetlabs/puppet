@@ -22,6 +22,6 @@ class Puppet::Indirector::DirectFileServer < Puppet::Indirector::Terminus
     def search(request)
         uri = key2uri(request.key)
         return nil unless FileTest.exists?(uri.path)
-        path2instances(request.key, uri.path, request.options)
+        path2instances(request, uri.path)
     end
 end

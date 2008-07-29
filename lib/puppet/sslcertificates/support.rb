@@ -128,6 +128,10 @@ module Puppet::SSLCertificates::Support
     def rename_files_with_uppercase(file)
         dir = File.dirname(file)
         short = File.basename(file)
+
+        # If the dir isn't present, we clearly don't have the file.
+        #return nil unless FileTest.directory?(dir)
+
         raise ArgumentError, "Tried to fix SSL files to a file containing uppercase" unless short.downcase == short
         real_file = Dir.entries(dir).reject { |f| f =~ /^\./ }.find do |other|
             other.downcase == short

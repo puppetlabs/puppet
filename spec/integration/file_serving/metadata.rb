@@ -16,4 +16,3 @@ describe Puppet::FileServing::Metadata, " when finding files" do
         @indirection = Puppet::FileServing::Metadata.indirection
     end
 end
-

@@ -56,3 +56,37 @@ class TestMaster < Test::Unit::TestCase
         @master.getconfig("facts", "yaml", "foo.com")
     end
 end
+
+class TestMasterFormats < Test::Unit::TestCase
+    def setup
+        @facts = stub('facts', :save => nil)
+        Puppet::Node::Facts.stubs(:new).returns(@facts)
+
+        @master = Puppet::Network::Handler.master.new(:Code => "")
+        @master.stubs(:decode_facts)
+
+        @catalog = stub 'catalog', :extract => ""
+        Puppet::Node::Catalog.stubs(:find).returns(@catalog)
+    end
+
+    def test_marshal_can_be_used
+        @catalog.expects(:extract).returns "myextract"
+
+        Marshal.expects(:dump).with("myextract").returns "eh"
+
+        @master.getconfig("facts", "marshal", "foo.com")
+    end
+
+    def test_yaml_can_be_used
+        extract = mock 'extract'
+        @catalog.expects(:extract).returns extract
+
+        extract.expects(:to_yaml).returns "myaml"
+
+        @master.getconfig("facts", "yaml", "foo.com")
+    end
+
+    def test_failure_when_non_yaml_or_marshal_is_used
+        assert_raise(RuntimeError) { @master.getconfig("facts", "blah", "foo.com") }
+    end
+end
