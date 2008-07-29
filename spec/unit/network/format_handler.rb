@@ -29,6 +29,13 @@ class FormatTester
 end
 
 describe Puppet::Network::FormatHandler do
+    after do
+        formats = Puppet::Network::FormatHandler.instance_variable_get("@formats")
+        formats.each do |name, format|
+            formats.delete(name) unless format.is_a?(Puppet::Network::Format)
+        end
+    end
+
     it "should be able to test whether a format is supported" do
         FormatTester.should respond_to(:support_format?)
     end
