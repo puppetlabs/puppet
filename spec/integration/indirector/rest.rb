@@ -69,15 +69,19 @@ describe Puppet::Indirector::REST do
             @params = { :address => "127.0.0.1", :port => 34343, :handlers => [ :test_indirected_foo ], :xmlrpc_handlers => [ :status ] }
             @server = Puppet::Network::Server.new(@params)
             @server.listen
+
+            # LAK:NOTE We need to have a fake model here so that our indirected methods get
+            # passed through REST; otherwise we'd be stubbing 'find', which would cause an immediate
+            # return.
+            @mock_model = stub('faked model', :name => "foo")
+            Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:model).returns(@mock_model)                
         end
     
         describe "when finding a model instance over REST" do
             describe "when a matching model instance can be found" do
                 before :each do
                     @model_instance = Puppet::TestIndirectedFoo.new(23)
-                    @mock_model = stub('faked model', :name => "foo", :find => @model_instance, :supported_formats => %w{one two})
                     @mock_model.stubs(:find).returns @model_instance
-                    Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:model).returns(@mock_model)                
                 end
             
                 it "should not fail" do
@@ -94,6 +98,13 @@ describe Puppet::Indirector::REST do
     
                 it 'should set an expiration on model instance' do
                     Puppet::TestIndirectedFoo.find('bar').expiration.should_not be_nil
+                end
+
+                it "should use a supported format" do
+                    Puppet::TestIndirectedFoo.expects(:supported_formats).returns ["marshal"]
+                    text = Marshal.dump(@model_instance)
+                    @model_instance.expects(:render).with("marshal").returns text
+                    Puppet::TestIndirectedFoo.find('bar')
                 end
             end
         
@@ -125,8 +136,9 @@ describe Puppet::Indirector::REST do
             describe "when matching model instances can be found" do
                 before :each do
                     @model_instances = [ Puppet::TestIndirectedFoo.new(23), Puppet::TestIndirectedFoo.new(24) ]
-                    @mock_model = stub('faked model', :name => "foo", :search => @model_instances)
-                    Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:model).returns(@mock_model)                
+                    @mock_model.stubs(:search).returns @model_instances
+
+                    @mock_model.stubs(:render_multiple).returns @model_instances.to_yaml
                 end
             
                 it "should not fail" do
@@ -175,8 +187,7 @@ describe Puppet::Indirector::REST do
         describe "when destroying a model instance over REST" do
             describe "when a matching model instance can be found" do
                 before :each do
-                    @mock_model = stub('faked model', :name => "foo", :destroy => true)
-                    Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:model).returns(@mock_model)                
+                    @mock_model.stubs(:destroy).returns true
                 end
             
                 it "should not fail" do
@@ -190,8 +201,7 @@ describe Puppet::Indirector::REST do
         
             describe "when no matching model instance can be found" do
                 before :each do
-                    @mock_model = stub('faked model', :name => "foo", :destroy => false)
-                    Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:model).returns(@mock_model)
+                    @mock_model.stubs(:destroy).returns false
                 end
             
                 it "should return failure" do
@@ -201,9 +211,7 @@ describe Puppet::Indirector::REST do
         
             describe "when an exception is encountered in destroying a model instance" do
                 before :each do
-                    @mock_model = stub('faked model', :name => "foo")
                     @mock_model.stubs(:destroy).raises(RuntimeError)
-                    Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:model).returns(@mock_model)                
                 end
             
                 it "should raise an exception" do
@@ -215,8 +223,8 @@ describe Puppet::Indirector::REST do
         describe "when saving a model instance over REST" do
             before :each do
                 @instance = Puppet::TestIndirectedFoo.new(42)
-                @mock_model = stub('faked model', :name => "foo", :convert_from => @instance)
-                Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:model).returns(@mock_model)                
+                @mock_model.stubs(:save_object).returns @instance
+                @mock_model.stubs(:convert_from).returns @instance
                 Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:save_object).returns(@instance)                
             end
             
@@ -278,6 +286,12 @@ describe Puppet::Indirector::REST do
 
             @server = Puppet::Network::Server.new(@params)
             @server.listen
+
+            # LAK:NOTE We need to have a fake model here so that our indirected methods get
+            # passed through REST; otherwise we'd be stubbing 'find', which would cause an immediate
+            # return.
+            @mock_model = stub('faked model', :name => "foo")
+            Puppet::Network::HTTP::MongrelREST.any_instance.stubs(:model).returns(@mock_model)                
         end
 
         after do
@@ -288,8 +302,7 @@ describe Puppet::Indirector::REST do
             describe "when a matching model instance can be found" do
                 before :each do
                     @model_instance = Puppet::TestIndirectedFoo.new(23)
-                    @mock_model = stub('faked model', :name => "foo", :find => @model_instance)
-                    Puppet::Network::HTTP::MongrelREST.any_instance.stubs(:model).returns(@mock_model)                
+                    @mock_model.stubs(:find).returns @model_instance
                 end
             
                 it "should not fail" do
@@ -307,12 +320,18 @@ describe Puppet::Indirector::REST do
                 it 'should set an expiration on model instance' do
                     Puppet::TestIndirectedFoo.find('bar').expiration.should_not be_nil
                 end
+
+                it "should use a supported format" do
+                    Puppet::TestIndirectedFoo.expects(:supported_formats).returns ["marshal"]
+                    text = Marshal.dump(@model_instance)
+                    @model_instance.expects(:render).with("marshal").returns text
+                    Puppet::TestIndirectedFoo.find('bar')
+                end
             end
         
             describe "when no matching model instance can be found" do
                 before :each do
-                    @mock_model = stub('faked model', :name => "foo", :find => nil)
-                    Puppet::Network::HTTP::MongrelREST.any_instance.stubs(:model).returns(@mock_model)
+                    @mock_model.stubs(:find).returns nil
                 end
             
                 it "should return nil" do
@@ -322,9 +341,7 @@ describe Puppet::Indirector::REST do
         
             describe "when an exception is encountered in looking up a model instance" do
                 before :each do
-                    @mock_model = stub('faked model', :name => "foo")
                     @mock_model.stubs(:find).raises(RuntimeError)
-                    Puppet::Network::HTTP::MongrelREST.any_instance.stubs(:model).returns(@mock_model)                
                 end
             
                 it "should raise an exception" do
@@ -337,8 +354,8 @@ describe Puppet::Indirector::REST do
             describe "when matching model instances can be found" do
                 before :each do
                     @model_instances = [ Puppet::TestIndirectedFoo.new(23), Puppet::TestIndirectedFoo.new(24) ]
-                    @mock_model = stub('faked model', :name => "foo", :search => @model_instances)
-                    Puppet::Network::HTTP::MongrelREST.any_instance.stubs(:model).returns(@mock_model)                
+                    @mock_model.stubs(:search).returns @model_instances
+                    @mock_model.stubs(:render_multiple).returns @model_instances.to_yaml
                 end
             
                 it "should not fail" do
@@ -368,20 +385,18 @@ describe Puppet::Indirector::REST do
         
             describe "when no matching model instance can be found" do
                 before :each do
-                    @mock_model = stub('faked model', :name => "foo", :find => nil)
-                    Puppet::Network::HTTP::MongrelREST.any_instance.stubs(:model).returns(@mock_model)
+                    @mock_model.stubs(:search).returns nil
+                    @mock_model.stubs(:render_multiple).returns nil.to_yaml
                 end
             
                 it "should return nil" do
-                    Puppet::TestIndirectedFoo.find('bar').should be_nil
+                    Puppet::TestIndirectedFoo.search('bar').should be_nil
                 end
             end
         
             describe "when an exception is encountered in looking up a model instance" do
                 before :each do
-                    @mock_model = stub('faked model', :name => "foo")
                     @mock_model.stubs(:find).raises(RuntimeError)
-                    Puppet::Network::HTTP::MongrelREST.any_instance.stubs(:model).returns(@mock_model)                
                 end
             
                 it "should raise an exception" do
@@ -393,8 +408,7 @@ describe Puppet::Indirector::REST do
         describe "when destroying a model instance over REST" do
             describe "when a matching model instance can be found" do
                 before :each do
-                    @mock_model = stub('faked model', :name => "foo", :destroy => true)
-                    Puppet::Network::HTTP::MongrelREST.any_instance.stubs(:model).returns(@mock_model)                
+                    @mock_model.stubs(:destroy).returns true
                 end
             
                 it "should not fail" do
@@ -408,8 +422,7 @@ describe Puppet::Indirector::REST do
         
             describe "when no matching model instance can be found" do
                 before :each do
-                    @mock_model = stub('faked model', :name => "foo", :destroy => false)
-                    Puppet::Network::HTTP::MongrelREST.any_instance.stubs(:model).returns(@mock_model)
+                    @mock_model.stubs(:destroy).returns false
                 end
             
                 it "should return failure" do
@@ -419,9 +432,7 @@ describe Puppet::Indirector::REST do
         
             describe "when an exception is encountered in destroying a model instance" do
                 before :each do
-                    @mock_model = stub('faked model', :name => "foo")
                     @mock_model.stubs(:destroy).raises(RuntimeError)
-                    Puppet::Network::HTTP::MongrelREST.any_instance.stubs(:model).returns(@mock_model)                
                 end
             
                 it "should raise an exception" do
@@ -433,8 +444,7 @@ describe Puppet::Indirector::REST do
         describe "when saving a model instance over REST" do
             before :each do
                 @instance = Puppet::TestIndirectedFoo.new(42)
-                @mock_model = stub('faked model', :name => "foo", :convert_from => @instance)
-                Puppet::Network::HTTP::MongrelREST.any_instance.stubs(:model).returns(@mock_model)                
+                @mock_model.stubs(:convert_from).returns @instance
 
                 # LAK:NOTE This stub is necessary to prevent the REST call from calling
                 # REST.save again, thus producing painful infinite recursion.

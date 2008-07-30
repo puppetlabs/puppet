@@ -81,13 +81,13 @@ module Puppet::Network::HTTP::Handler
     # Execute our search.
     def do_search(request, response)
         args = params(request)
-        result = model.search(args).collect {|result| result.to_yaml }.to_yaml
+        result = model.search(args)
 
         # LAK:FAIL This doesn't work.
         format = format_to_use(request)
         set_content_type(response, format)
 
-        set_response(response, result) 
+        set_response(response, model.render_multiple(format, result))
     end
 
     # Execute our destroy.

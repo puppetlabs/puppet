@@ -5,7 +5,7 @@ require 'uri'
 class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     # Figure out the content type, turn that into a format, and use the format
     # to extract the body of the response.
-    def deserialize(response)
+    def deserialize(response, multiple = false)
         case response.code
         when "404"
             return nil
@@ -15,7 +15,11 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
             end
 
             # Convert the response to a deserialized object.
-            model.convert_from(response['content-type'], response.body)
+            if multiple
+                model.convert_from_multiple(response['content-type'], response.body)
+            else
+                model.convert_from(response['content-type'], response.body)
+            end
         else
             # Raise the http error if we didn't get a 'success' of some kind.
             message = "Server returned %s: %s" % [response.code, response.message]
@@ -46,7 +50,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
         else
             path = "/#{indirection.name}s"
         end
-        deserialize network.get(path, headers)
+        deserialize(network.get(path, headers), true)
     end
     
     def destroy(request)

@@ -296,6 +296,7 @@ describe Puppet::Network::HTTP::Handler do
                 @result2 = mock 'results'
 
                 @result = [@result1, @result2]
+                @model_class.stubs(:render_multiple).returns "my rendered instances"
                 @model_class.stubs(:search).returns(@result)
             end
 
@@ -320,11 +321,13 @@ describe Puppet::Network::HTTP::Handler do
             end
 
             it "should return a list of serialized objects when a model search call succeeds" do
-                pending "I have not figured out how to do this yet"
-                @result1.expects(:render).returns "result1"
-                @result2.expects(:render).returns "result2"
+                @handler.expects(:accept_header).with(@request).returns "one,two"
 
                 @model_class.stubs(:search).returns(@result)
+
+                @model_class.expects(:render_multiple).with("one", @result).returns "my rendered instances"
+
+                @handler.expects(:set_response).with { |response, data| data == "my rendered instances" }
                 @handler.do_search(@request, @response)
             end
         end

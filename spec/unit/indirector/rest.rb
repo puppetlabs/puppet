@@ -71,7 +71,18 @@ describe Puppet::Indirector::REST do
             response.stubs(:body).returns "mydata"
             response.stubs(:code).returns "200"
 
-            @searcher.deserialize(response)
+            @searcher.deserialize(response).should == "myobject"
+        end
+
+        it "should convert and return multiple instances if the return code is in the 200s and 'multiple' is specified" do
+            @model.expects(:convert_from_multiple).with("myformat", "mydata").returns "myobjects"
+
+            response = mock 'response'
+            response.stubs(:[]).with("content-type").returns "myformat"
+            response.stubs(:body).returns "mydata"
+            response.stubs(:code).returns "200"
+
+            @searcher.deserialize(response, true).should == "myobjects"
         end
     end
 
@@ -138,6 +149,8 @@ describe Puppet::Indirector::REST do
             @connection = stub('mock http connection', :get => @response)
             @searcher.stubs(:network).returns(@connection)    # neuter the network connection
 
+            @model.stubs(:convert_from_multiple)
+
             @request = stub 'request', :key => 'foo'
         end
 
@@ -147,9 +160,9 @@ describe Puppet::Indirector::REST do
             @searcher.search(@request)
         end
 
-        it "should deserialize and return the http response" do
+        it "should deserialize as multiple instances and return the http response" do
             @connection.expects(:get).returns @response
-            @searcher.expects(:deserialize).with(@response).returns "myobject"
+            @searcher.expects(:deserialize).with(@response, true).returns "myobject"
 
             @searcher.search(@request).should == 'myobject'
         end        
@@ -172,11 +185,6 @@ describe Puppet::Indirector::REST do
 
             @searcher.model.expects(:supported_formats).returns %w{supported formats}
             @searcher.search(@request)
-        end
-
-        it "should deserialize and return the network response" do
-            @searcher.expects(:deserialize).with(@response).returns @instance
-            @searcher.search(@request).should equal(@instance)
         end
 
         it "should generate an error when result data deserializes fails" do
