@@ -58,11 +58,6 @@ describe Puppet::Network::FormatHandler do
             FormatTester.should respond_to(:convert_from)
         end
 
-        it "should fail if asked to convert from an unsupported format" do
-            @format.expects(:supported?).with(FormatTester).returns false
-            lambda { FormatTester.convert_from(:my_format, "mydata") }.should raise_error(ArgumentError)
-        end
-
         it "should call the format-specific converter when asked to convert from a given format" do
             @format.expects(:intern).with(FormatTester, "mydata")
             FormatTester.convert_from(:my_format, "mydata")
@@ -133,12 +128,6 @@ describe Puppet::Network::FormatHandler do
 
         it "should be able to convert to a given format" do
             FormatTester.new.should respond_to(:render)
-        end
-
-        it "should fail if asked to convert to an unsupported format" do
-            tester = FormatTester.new
-            tester.expects(:support_format?).with(:nope).returns false
-            lambda { tester.render(:nope) }.should raise_error(ArgumentError)
         end
 
         it "should call the format-specific converter when asked to convert to a given format" do

@@ -9,7 +9,7 @@ class Puppet::Network::Format
     attr_accessor :mime
 
     def initialize(name, options = {}, &block)
-        @name = name
+        @name = name.to_s.downcase.intern
 
         if mime = options[:mime]
             @mime = mime

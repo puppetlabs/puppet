@@ -40,17 +40,14 @@ module Puppet::Network::FormatHandler
         end
 
         def convert_from(format, data)
-            raise ArgumentError, "Format %s not supported" % format unless support_format?(format)
             format_handler.format(format).intern(self, data)
         end
 
         def convert_from_multiple(format, data)
-            raise ArgumentError, "Format %s not supported" % format unless support_format?(format)
             format_handler.format(format).intern_multiple(self, data)
         end
 
         def render_multiple(format, instances)
-            raise ArgumentError, "Format %s not supported" % format unless support_format?(format)
             format_handler.format(format).render_multiple(instances)
         end
 
@@ -77,11 +74,7 @@ module Puppet::Network::FormatHandler
 
     module InstanceMethods
         def render(format = nil)
-            if format
-                raise ArgumentError, "Format %s not supported" % format unless support_format?(format)
-            else
-                format = self.class.default_format
-            end
+            format ||= self.class.default_format
 
             Puppet::Network::FormatHandler.format(format).render(self)
         end

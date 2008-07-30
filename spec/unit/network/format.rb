@@ -30,6 +30,10 @@ describe Puppet::Network::Format do
             Puppet::Network::Format.new(:my_format).name.should == :my_format
         end
 
+        it "should always convert its name to a downcased symbol" do
+            Puppet::Network::Format.new(:My_Format).name.should == :my_format
+        end
+
         it "should be able to set its mime type at initialization" do
             format = Puppet::Network::Format.new(:my_format, :mime => "foo/bar")
             format.mime.should == "foo/bar"
