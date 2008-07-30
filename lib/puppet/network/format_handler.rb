@@ -1,3 +1,4 @@
+require 'yaml'
 require 'puppet/network'
 require 'puppet/network/format'
 
@@ -23,31 +24,34 @@ module Puppet::Network::FormatHandler
         @formats[name]
     end
 
+    # Provide a list of all formats.
+    def self.formats
+        @formats.keys
+    end
+
     # Return a format capable of handling the provided mime type.
     def self.mime(mimetype)
         @formats.values.find { |format| format.mime == mimetype }
     end
 
     module ClassMethods
+        def format_handler
+            Puppet::Network::FormatHandler
+        end
+
         def convert_from(format, data)
             raise ArgumentError, "Format %s not supported" % format unless support_format?(format)
-            send("from_%s" % format, data)
+            format_handler.format(format).intern(self, data)
         end
 
         def convert_from_multiple(format, data)
-            if respond_to?("from_multiple_%s" % format)
-                send("from_multiple_%s" % format, data)
-            else
-                convert_from(format, data)
-            end
+            raise ArgumentError, "Format %s not supported" % format unless support_format?(format)
+            format_handler.format(format).intern_multiple(self, data)
         end
 
         def render_multiple(format, instances)
-            if respond_to?("to_multiple_%s" % format)
-                send("to_multiple_%s" % format, instances)
-            else
-                instances.send("to_%s" % format)
-            end
+            raise ArgumentError, "Format %s not supported" % format unless support_format?(format)
+            format_handler.format(format).render_multiple(instances)
         end
 
         def default_format
@@ -55,15 +59,19 @@ module Puppet::Network::FormatHandler
         end
 
         def support_format?(name)
-            respond_to?("from_%s" % name) and instance_methods.include?("to_%s" % name)
+            Puppet::Network::FormatHandler.format(name).supported?(self)
         end
 
         def supported_formats
-            instance = instance_methods.collect { |m| m =~ /^to_(.+)$/ and $1 }.compact
-            klass = methods.collect { |m| m =~ /^from_(.+)$/ and $1 }.compact
+            format_handler.formats.collect { |f| format_handler.format(f) }.find_all { |f| f.supported?(self) }.collect { |f| f.name }
+        end
 
-            # Return the intersection of the two lists.
-            return instance & klass
+        def from_marshal(text)
+            Marshal.load(text)
+        end
+
+        def from_yaml(text)
+            YAML.load(text)
         end
     end
 
@@ -75,11 +83,15 @@ module Puppet::Network::FormatHandler
                 format = self.class.default_format
             end
 
-            send("to_%s" % format)
+            Puppet::Network::FormatHandler.format(format).render(self)
         end
 
         def support_format?(name)
             self.class.support_format?(name)
+        end
+
+        def to_marshal(instance)
+            Marshal.dump(instance)
         end
     end
 end

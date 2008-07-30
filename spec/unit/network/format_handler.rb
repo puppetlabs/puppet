@@ -6,26 +6,6 @@ require 'puppet/network/format_handler'
 
 class FormatTester
     extend Puppet::Network::FormatHandler
-
-    # Not a supported format; missing the 'to'
-    def self.from_nothing; end
-
-    # Not a supported format; missing the 'from'
-    def to_nowhere; end
-
-    # A largely functional format.
-    def self.from_good; end
-
-    def to_good; end
-
-    # A format that knows how to handle multiple instances specially.
-    def self.from_mults; end
-
-    def self.from_multiple_mults; end
-
-    def self.to_multiple_mults; end
-
-    def to_mults; end
 end
 
 describe Puppet::Network::FormatHandler do
@@ -36,68 +16,69 @@ describe Puppet::Network::FormatHandler do
         end
     end
 
-    it "should be able to test whether a format is supported" do
-        FormatTester.should respond_to(:support_format?)
-    end
-
-    it "should consider the format supported if it can convert from an instance to the format and from the format to an instance" do
-        FormatTester.should be_support_format(:good)
-    end
-
-    it "should not consider the format supported unless it can convert the instance to the specified format" do
-        FormatTester.should_not be_support_format(:nothing)
-    end
-
-    it "should not consider the format supported unless it can convert from the format to an instance" do
-        FormatTester.should_not be_support_format(:nowhere)
-    end
-
-    it "should be able to convert from a given format" do
-        FormatTester.should respond_to(:convert_from)
-    end
-
-    it "should fail if asked to convert from an unsupported format" do
-        FormatTester.expects(:support_format?).with(:nope).returns false
-        lambda { FormatTester.convert_from(:nope, "mydata") }.should raise_error(ArgumentError)
-    end
-
-    it "should call the format-specific converter when asked to convert from a given format" do
-        FormatTester.expects(:from_good).with("mydata")
-        FormatTester.convert_from(:good, "mydata")
-    end
-
-    it "should be able to use a specific hook for converting into multiple instances" do
-        FormatTester.expects(:from_multiple_mults).with("mydata")
-        FormatTester.convert_from_multiple(:mults, "mydata")
-    end
-
-    it "should default to the normal conversion method when no special method is available" do
-        FormatTester.expects(:from_good).with("mydata")
-        FormatTester.convert_from_multiple(:good, "mydata")
-    end
-
-    it "should be able to use a specific hook for rendering multiple instances" do
-        FormatTester.expects(:to_multiple_mults).with("mydata")
-        FormatTester.render_multiple(:mults, "mydata")
-    end
-
-    it "should use the instance method if no multiple-render hook is available" do
-        instances = mock 'instances'
-        instances.expects(:to_good)
-        FormatTester.render_multiple(:good, instances)
-    end
-
     it "should be able to list supported formats" do
         FormatTester.should respond_to(:supported_formats)
     end
 
-    it "should include all formats that include both the to_ and from_ methods in the list of supported formats" do
-        FormatTester.supported_formats.sort.should == %w{good mults}.sort
+    it "should include all supported formats" do
+        one = stub 'supported', :supported? => true, :name => "one"
+        two = stub 'supported', :supported? => false, :name => "two"
+        three = stub 'supported', :supported? => true, :name => "three"
+        four = stub 'supported', :supported? => false, :name => "four"
+        Puppet::Network::FormatHandler.expects(:formats).returns %w{one two three four}
+        Puppet::Network::FormatHandler.expects(:format).with("one").returns one
+        Puppet::Network::FormatHandler.expects(:format).with("two").returns two
+        Puppet::Network::FormatHandler.expects(:format).with("three").returns three
+        Puppet::Network::FormatHandler.expects(:format).with("four").returns four
+        FormatTester.supported_formats.sort.should == %w{one three}.sort
     end
 
     it "should return the first format as the default format" do
         FormatTester.expects(:supported_formats).returns %w{one two}
         FormatTester.default_format.should == "one"
+    end
+
+    describe "when using formats" do
+        before do
+            @format = mock 'format'
+            Puppet::Network::FormatHandler.stubs(:format).with(:my_format).returns @format
+            @format.stubs(:supported?).returns true
+        end
+
+        it "should be able to test whether a format is supported" do
+            FormatTester.should respond_to(:support_format?)
+        end
+
+        it "should use the Format to determine whether a given format is supported" do
+            @format.expects(:supported?).with(FormatTester)
+            FormatTester.support_format?(:my_format)
+        end
+
+        it "should be able to convert from a given format" do
+            FormatTester.should respond_to(:convert_from)
+        end
+
+        it "should fail if asked to convert from an unsupported format" do
+            @format.expects(:supported?).with(FormatTester).returns false
+            lambda { FormatTester.convert_from(:my_format, "mydata") }.should raise_error(ArgumentError)
+        end
+
+        it "should call the format-specific converter when asked to convert from a given format" do
+            @format.expects(:intern).with(FormatTester, "mydata")
+            FormatTester.convert_from(:my_format, "mydata")
+        end
+
+        it "should be able to use a specific hook for converting into multiple instances" do
+            @format.expects(:intern_multiple).with(FormatTester, "mydata")
+
+            FormatTester.convert_from_multiple(:my_format, "mydata")
+        end
+
+        it "should be able to use a specific hook for rendering multiple instances" do
+            @format.expects(:render_multiple).with("mydata")
+
+            FormatTester.render_multiple(:my_format, "mydata")
+        end
     end
 
     describe "when managing formats" do
@@ -129,19 +110,25 @@ describe Puppet::Network::FormatHandler do
             format = Puppet::Network::FormatHandler.create(:by_name, :mime => "foo/bar")
             Puppet::Network::FormatHandler.mime("foo/bar").should equal(format)
         end
+
+        it "should be able to return all formats" do
+            one = stub 'one', :name => :one
+            two = stub 'two', :name => :two
+            Puppet::Network::Format.expects(:new).with(:one).returns(one)
+            Puppet::Network::Format.expects(:new).with(:two).returns(two)
+
+            Puppet::Network::FormatHandler.create(:one)
+            Puppet::Network::FormatHandler.create(:two)
+
+            list = Puppet::Network::FormatHandler.formats
+            list.should be_include(:one)
+            list.should be_include(:two)
+        end
     end
 
     describe "when an instance" do
         it "should be able to test whether a format is supported" do
             FormatTester.new.should respond_to(:support_format?)
-        end
-
-        it "should consider the format supported if it can convert from an instance to the format and from the format to an instance" do
-            FormatTester.new.should be_support_format(:good)
-        end
-
-        it "should not consider the format supported unless it can convert from an instance to the format and from the format to an instance" do
-            FormatTester.new.should_not be_support_format(:nope)
         end
 
         it "should be able to convert to a given format" do
@@ -155,15 +142,24 @@ describe Puppet::Network::FormatHandler do
         end
 
         it "should call the format-specific converter when asked to convert to a given format" do
+            format = stub 'rendering format', :supported? => true
+
+            Puppet::Network::FormatHandler.stubs(:format).with(:foo).returns format
+
             tester = FormatTester.new
-            tester.expects(:to_good)
-            tester.render(:good)
+            format.expects(:render).with(tester).returns "foo"
+
+            tester.render(:foo).should == "foo"
         end
 
         it "should render to the default format if no format is provided when rendering" do
+            format = stub 'rendering format', :supported? => true
+            Puppet::Network::FormatHandler.stubs(:format).with("foo").returns format
+
             FormatTester.expects(:default_format).returns "foo"
             tester = FormatTester.new
-            tester.expects(:to_foo)
+
+            format.expects(:render).with(tester)
             tester.render
         end
     end
