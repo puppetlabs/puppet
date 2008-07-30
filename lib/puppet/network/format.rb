@@ -5,17 +5,16 @@ require 'puppet/provider/confiner'
 class Puppet::Network::Format
     include Puppet::Provider::Confiner
 
-    attr_reader :name
-    attr_accessor :mime
+    attr_reader :name, :mime
 
     def initialize(name, options = {}, &block)
         @name = name.to_s.downcase.intern
 
         if mime = options[:mime]
-            @mime = mime
+            self.mime = mime
             options.delete(:mime)
         else
-            @mime = "text/%s" % name
+            self.mime = "text/%s" % name
         end
 
         unless options.empty?
@@ -38,6 +37,10 @@ class Puppet::Network::Format
     def intern_multiple(klass, text)
         return klass.send(intern_multiple_method, text) if klass.respond_to?(intern_multiple_method)
         raise NotImplementedError
+    end
+
+    def mime=(mime)
+        @mime = mime.to_s.downcase
     end
 
     def render(instance)

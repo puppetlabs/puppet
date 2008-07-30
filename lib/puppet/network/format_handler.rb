@@ -21,7 +21,7 @@ module Puppet::Network::FormatHandler
     end
 
     def self.format(name)
-        @formats[name]
+        @formats[name.to_s.downcase.intern]
     end
 
     # Provide a list of all formats.
@@ -31,6 +31,7 @@ module Puppet::Network::FormatHandler
 
     # Return a format capable of handling the provided mime type.
     def self.mime(mimetype)
+        mimetype = mimetype.to_s.downcase
         @formats.values.find { |format| format.mime == mimetype }
     end
 

@@ -101,9 +101,19 @@ describe Puppet::Network::FormatHandler do
             Puppet::Network::FormatHandler.format(:by_name).should equal(format)
         end
 
+        it "should be able to retrieve formats by name irrespective of case and class" do
+            format = Puppet::Network::FormatHandler.create(:by_name)
+            Puppet::Network::FormatHandler.format(:By_Name).should equal(format)
+        end
+
         it "should be able to retrieve a format by mime type" do
             format = Puppet::Network::FormatHandler.create(:by_name, :mime => "foo/bar")
             Puppet::Network::FormatHandler.mime("foo/bar").should equal(format)
+        end
+
+        it "should be able to retrieve a format by mime type irrespective of case" do
+            format = Puppet::Network::FormatHandler.create(:by_name, :mime => "foo/bar")
+            Puppet::Network::FormatHandler.mime("Foo/Bar").should equal(format)
         end
 
         it "should be able to return all formats" do

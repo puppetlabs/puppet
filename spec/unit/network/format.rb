@@ -34,8 +34,8 @@ describe Puppet::Network::Format do
             Puppet::Network::Format.new(:My_Format).name.should == :my_format
         end
 
-        it "should be able to set its mime type at initialization" do
-            format = Puppet::Network::Format.new(:my_format, :mime => "foo/bar")
+        it "should be able to set its downcased mime type at initialization" do
+            format = Puppet::Network::Format.new(:my_format, :mime => "Foo/Bar")
             format.mime.should == "foo/bar"
         end
 
@@ -72,6 +72,11 @@ describe Puppet::Network::Format do
 
         it "should not consider a class to be supported unless it has the individual and multiple methods for rendering and interning" do
             Puppet::Network::Format.new(:yaml).should_not be_supported(String)
+        end
+
+        it "should always downcase mimetypes" do
+            @format.mime = "Foo/Bar"
+            @format.mime.should == "foo/bar"
         end
     end
 
