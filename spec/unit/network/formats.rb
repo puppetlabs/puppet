@@ -10,8 +10,40 @@ describe "Puppet Network Format" do
     end
 
     describe "yaml" do
+        before do
+            @yaml = Puppet::Network::FormatHandler.format(:yaml)
+        end
+
         it "should have its mime type set to text/yaml" do
-            Puppet::Network::FormatHandler.format(:yaml).mime.should == "text/yaml"
+            @yaml.mime.should == "text/yaml"
+        end
+
+        it "should be supported on Strings" do
+            @yaml.should be_supported(String)
+        end
+
+        it "should render by calling 'to_yaml' on the instance" do
+            instance = mock 'instance'
+            instance.expects(:to_yaml).returns "foo"
+            @yaml.render(instance).should == "foo"
+        end
+
+        it "should render multiple instances by calling 'to_yaml' on the array" do
+            instances = [mock('instance')]
+            instances.expects(:to_yaml).returns "foo"
+            @yaml.render_multiple(instances).should == "foo"
+        end
+
+        it "should intern by calling 'YAML.load'" do
+            text = "foo"
+            YAML.expects(:load).with("foo").returns "bar"
+            @yaml.intern(String, text).should == "bar"
+        end
+
+        it "should intern multiples by calling 'YAML.load'" do
+            text = "foo"
+            YAML.expects(:load).with("foo").returns "bar"
+            @yaml.intern_multiple(String, text).should == "bar"
         end
     end
 
@@ -20,8 +52,41 @@ describe "Puppet Network Format" do
     end
 
     describe "marshal" do
+        before do
+            @marshal = Puppet::Network::FormatHandler.format(:marshal)
+        end
+
         it "should have its mime type set to text/marshal" do
             Puppet::Network::FormatHandler.format(:marshal).mime.should == "text/marshal"
+        end
+
+        it "should be supported on Strings" do
+            @marshal.should be_supported(String)
+        end
+
+        it "should render by calling 'Marshal.dump' on the instance" do
+            instance = mock 'instance'
+            Marshal.expects(:dump).with(instance).returns "foo"
+            @marshal.render(instance).should == "foo"
+        end
+
+        it "should render multiple instances by calling 'to_marshal' on the array" do
+            instances = [mock('instance')]
+
+            Marshal.expects(:dump).with(instances).returns "foo"
+            @marshal.render_multiple(instances).should == "foo"
+        end
+
+        it "should intern by calling 'Marshal.load'" do
+            text = "foo"
+            Marshal.expects(:load).with("foo").returns "bar"
+            @marshal.intern(String, text).should == "bar"
+        end
+
+        it "should intern multiples by calling 'Marshal.load'" do
+            text = "foo"
+            Marshal.expects(:load).with("foo").returns "bar"
+            @marshal.intern_multiple(String, text).should == "bar"
         end
     end
 end

@@ -63,14 +63,6 @@ module Puppet::Network::FormatHandler
         def supported_formats
             format_handler.formats.collect { |f| format_handler.format(f) }.find_all { |f| f.supported?(self) }.collect { |f| f.name }
         end
-
-        def from_marshal(text)
-            Marshal.load(text)
-        end
-
-        def from_yaml(text)
-            YAML.load(text)
-        end
     end
 
     module InstanceMethods
@@ -82,10 +74,6 @@ module Puppet::Network::FormatHandler
 
         def support_format?(name)
             self.class.support_format?(name)
-        end
-
-        def to_marshal(instance)
-            Marshal.dump(instance)
         end
     end
 end
