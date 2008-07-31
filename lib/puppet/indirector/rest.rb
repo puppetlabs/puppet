@@ -36,10 +36,6 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
         Puppet::Network::HttpPool.http_instance(Puppet[:server], Puppet[:masterport].to_i)
     end
 
-    def rest_connection_details
-        { :host => Puppet[:server], :port => Puppet[:masterport].to_i }
-    end
-    
     def find(request)
         deserialize network.get("/#{indirection.name}/#{request.key}", headers)
     end
