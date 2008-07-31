@@ -15,21 +15,26 @@ print "puppetlast\n"
 
 nodes = {}
 
-factsdir = Puppet.settings.value(:vardir) + "/yaml/facts"
+yfdir = Puppet.settings.value(:vardir) + "/yaml/facts"
 
-begin
-  Dir.chdir(factsdir) if File.exists?(factsdir)
-  Dir.glob("*.yaml").each do |yaml|
-    data = YAML.load_file(yaml)
-    age = Time.now - data.values[:_timestamp]
-    nodes[data.name] = age.to_i
-  end
+if yfdir
+   begin
+      Dir.chdir(yfdir) do
+         Dir.glob("*.yaml").each do |yaml|
+            data = YAML.load_file(yaml)
+            t = Time.now
+            age = t - data.version
+            nodes[data.name] = age.to_i
+         end
+      end
 
-  nodes.sort.each do |node,age|
-    minutes = age / 60
-    puts minutes.floor.to_s + ' minutes ago: ' + node 
-  end
+      nodes.sort.each do |node,age|
+         minutes = age / 60 + 0.5
+         print minutes.floor.to_s + ' minutes ago: ' + node + "\n"
+      end
 
-rescue
-  puts 'error: ' + $!
+   rescue
+      print 'error: ' + $! + "\n"
+   end
+
 end
