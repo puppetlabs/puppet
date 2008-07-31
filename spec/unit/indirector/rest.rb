@@ -187,6 +187,12 @@ describe Puppet::Indirector::REST do
             @searcher.search(@request)
         end
 
+        it "should return an empty array if serialization returns nil" do
+            @model.stubs(:convert_from_multiple).returns nil
+
+            @searcher.search(@request).should == []
+        end
+
         it "should generate an error when result data deserializes fails" do
             @searcher.expects(:deserialize).raises(ArgumentError)
             lambda { @searcher.search(@request) }.should raise_error(ArgumentError)

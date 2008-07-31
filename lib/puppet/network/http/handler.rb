@@ -82,8 +82,10 @@ module Puppet::Network::HTTP::Handler
     def do_search(request, response)
         args = params(request)
         result = model.search(args)
+        if result.nil? or (result.is_a?(Array) and result.empty?)
+            return do_exception(response, "Could not find instances in %s with '%s'" % [model.name, args.inspect], 404)
+        end
 
-        # LAK:FAIL This doesn't work.
         format = format_to_use(request)
         set_content_type(response, format)
 

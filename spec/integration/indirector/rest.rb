@@ -138,6 +138,9 @@ describe Puppet::Indirector::REST do
                     @model_instances = [ Puppet::TestIndirectedFoo.new(23), Puppet::TestIndirectedFoo.new(24) ]
                     @mock_model.stubs(:search).returns @model_instances
 
+                    # Force yaml, because otherwise our mocks can't work correctly
+                    Puppet::TestIndirectedFoo.stubs(:supported_formats).returns %w{yaml}
+
                     @mock_model.stubs(:render_multiple).returns @model_instances.to_yaml
                 end
             
@@ -354,6 +357,10 @@ describe Puppet::Indirector::REST do
             describe "when matching model instances can be found" do
                 before :each do
                     @model_instances = [ Puppet::TestIndirectedFoo.new(23), Puppet::TestIndirectedFoo.new(24) ]
+
+                    # Force yaml, because otherwise our mocks can't work correctly
+                    Puppet::TestIndirectedFoo.stubs(:supported_formats).returns %w{yaml}
+
                     @mock_model.stubs(:search).returns @model_instances
                     @mock_model.stubs(:render_multiple).returns @model_instances.to_yaml
                 end
@@ -390,7 +397,7 @@ describe Puppet::Indirector::REST do
                 end
             
                 it "should return nil" do
-                    Puppet::TestIndirectedFoo.search('bar').should be_nil
+                    Puppet::TestIndirectedFoo.search('bar').should == []
                 end
             end
         

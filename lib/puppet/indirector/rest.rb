@@ -46,7 +46,10 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
         else
             path = "/#{indirection.name}s"
         end
-        deserialize(network.get(path, headers), true)
+        unless result = deserialize(network.get(path, headers), true)
+            return []
+        end
+        return result
     end
     
     def destroy(request)

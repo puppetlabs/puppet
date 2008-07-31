@@ -330,6 +330,20 @@ describe Puppet::Network::HTTP::Handler do
                 @handler.expects(:set_response).with { |response, data| data == "my rendered instances" }
                 @handler.do_search(@request, @response)
             end
+
+            it "should return a 404 when searching returns an empty array" do
+                @model_class.stubs(:name).returns "my name"
+                @handler.expects(:set_response).with { |response, body, status| status == 404 }
+                @model_class.stubs(:search).returns([])
+                @handler.do_search(@request, @response)
+            end
+
+            it "should return a 404 when searching returns nil" do
+                @model_class.stubs(:name).returns "my name"
+                @handler.expects(:set_response).with { |response, body, status| status == 404 }
+                @model_class.stubs(:search).returns([])
+                @handler.do_search(@request, @response)
+            end
         end
 
         describe "when destroying a model instance" do
