@@ -166,6 +166,21 @@ def prepare_installation
     opts.on('--[no-]tests', 'Prevents the execution of unit tests.', 'Default on.') do |ontest|
       InstallOptions.tests = ontest
     end
+    opts.on('--destdir[=OPTIONAL]', 'Installation prefix for all targets', 'Default essentially /') do |destdir|
+      InstallOptions.destdir = destdir
+    end
+    opts.on('--bindir[=OPTIONAL]', 'Installation directory for binaries', 'overrides Config::CONFIG["bindir"]') do |bindir|
+      InstallOptions.bindir = bindir
+    end
+    opts.on('--sbindir[=OPTIONAL]', 'Installation directory for system binaries', 'overrides Config::CONFIG["sbindir"]') do |sbindir|
+      InstallOptions.sbindir = sbindir
+    end
+    opts.on('--sitelibdir[=OPTIONAL]', 'Installation directory for libraries', 'overrides Config::CONFIG["sitelibdir"]') do |sitelibdir|
+      InstallOptions.sitelibdir = sitelibdir
+    end
+    opts.on('--mandir[=OPTIONAL]', 'Installation directory for man pages', 'overrides Config::CONFIG["mandir"]') do |mandir|
+      InstallOptions.mandir = mandir
+    end
     opts.on('--quick', 'Performs a quick installation. Only the', 'installation is done.') do |quick|
       InstallOptions.rdoc   = false
       InstallOptions.ri     = false
@@ -190,16 +205,6 @@ def prepare_installation
   version = [Config::CONFIG["MAJOR"], Config::CONFIG["MINOR"]].join(".")
   libdir = File.join(Config::CONFIG["libdir"], "ruby", version)
 
-  sitelibdir = Config::CONFIG["sitelibdir"]
-  if sitelibdir.nil?
-    sitelibdir = $:.find { |x| x =~ /site_ruby/ }
-    if sitelibdir.nil?
-      sitelibdir = File.join(libdir, "site_ruby")
-    elsif sitelibdir !~ Regexp.quote(version)
-      sitelibdir = File.join(sitelibdir, version)
-    end
-  end
-
   # Mac OS X 10.5 declares bindir and sbindir as
   # /System/Library/Frameworks/Ruby.framework/Versions/1.8/usr/bin
   # /System/Library/Frameworks/Ruby.framework/Versions/1.8/usr/sbin
@@ -208,24 +213,64 @@ def prepare_installation
     Config::CONFIG['bindir'] = "/usr/bin"
     Config::CONFIG['sbindir'] = "/usr/sbin"
   end
+  
+  if not InstallOptions.bindir.nil?
+    bindir = InstallOptions.bindir
+  else
+    bindir = Config::CONFIG['bindir']
+  end
+  
+  if not InstallOptions.sbindir.nil?
+    sbindir = InstallOptions.sbindir
+  else
+    sbindir = Config::CONFIG['sbindir']
+  end
+  
+  if not InstallOptions.sitelibdir.nil?
+    sitelibdir = InstallOptions.sitelibdir
+  else
+    sitelibdir = Config::CONFIG["sitelibdir"]
+    if sitelibdir.nil?
+      sitelibdir = $:.find { |x| x =~ /site_ruby/ }
+      if sitelibdir.nil?
+        sitelibdir = File.join(libdir, "site_ruby")
+      elsif sitelibdir !~ Regexp.quote(version)
+        sitelibdir = File.join(sitelibdir, version)
+      end
+    end
+  end
+  
+  if not InstallOptions.mandir.nil?
+    mandir = InstallOptions.mandir
+  else
+    mandir = Config::CONFIG['mandir'] 
+  end
 
+  # To be deprecated once people move over to using --destdir option
   if (destdir = ENV['DESTDIR'])
-    bindir = "#{destdir}#{Config::CONFIG['bindir']}"
-    sbindir = "#{destdir}#{Config::CONFIG['sbindir']}"
-    mandir = "#{destdir}#{Config::CONFIG['mandir']}"
+    bindir = "#{destdir}#{bindir}"
+    sbindir = "#{destdir}#{sbindir}"
+    mandir = "#{destdir}#{mandir}"
     sitelibdir = "#{destdir}#{sitelibdir}"
-    tmpdirs << bindir
 
     FileUtils.makedirs(bindir)
     FileUtils.makedirs(sbindir)
     FileUtils.makedirs(mandir)
     FileUtils.makedirs(sitelibdir)
-  else
-    bindir = Config::CONFIG['bindir']
-    sbindir = Config::CONFIG['sbindir']
-    mandir = Config::CONFIG['mandir']
-    tmpdirs << Config::CONFIG['bindir']
+  # This is the new way forward
+  elsif (destdir = InstallOptions.destdir)
+    bindir = "#{destdir}#{bindir}"
+    sbindir = "#{destdir}#{sbindir}"
+    mandir = "#{destdir}#{mandir}"
+    sitelibdir = "#{destdir}#{sitelibdir}"
+
+    FileUtils.makedirs(bindir)
+    FileUtils.makedirs(sbindir)
+    FileUtils.makedirs(mandir)
+    FileUtils.makedirs(sitelibdir)
   end
+
+  tmpdirs << bindir
 
   InstallOptions.tmp_dirs = tmpdirs.compact
   InstallOptions.site_dir = sitelibdir
