@@ -7,10 +7,6 @@ describe Puppet::Type.type(:group) do
         @class = Puppet::Type.type(:group)
     end
 
-    after do
-        @class.clear
-    end
-
     it "should have a default provider" do
         @class.defaultprovider.should_not be_nil
     end
