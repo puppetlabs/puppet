@@ -16,6 +16,10 @@ describe Puppet::SSL::CertificateRevocationList do
         @class.indirection.terminus_class.should == :file
     end
 
+    it "should only support the text format" do
+        @class.supported_formats.should == [:str]
+    end
+
     describe "when an instance" do
         before do
             @class.any_instance.stubs(:read_or_generate)

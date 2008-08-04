@@ -12,6 +12,12 @@ class Puppet::SSL::Certificate < Puppet::SSL::Base
     extend Puppet::Indirector
     indirects :certificate, :terminus_class => :file
 
+    # Because of how the format handler class is included, this
+    # can't be in the base class.
+    def self.supported_formats
+        [:str]
+    end
+
     def expiration
         return nil unless content
         return content.not_after

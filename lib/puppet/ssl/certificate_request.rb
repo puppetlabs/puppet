@@ -7,6 +7,12 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
     extend Puppet::Indirector
     indirects :certificate_request, :terminus_class => :file
 
+    # Because of how the format handler class is included, this
+    # can't be in the base class.
+    def self.supported_formats
+        [:str]
+    end
+
     # How to create a certificate request with our system defaults.
     def generate(key)
         Puppet.info "Creating a new SSL certificate request for %s" % name

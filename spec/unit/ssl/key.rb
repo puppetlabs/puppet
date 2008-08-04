@@ -21,6 +21,10 @@ describe Puppet::SSL::Key do
         @class.indirection.terminus_class.should == :file
     end
 
+    it "should only support the text format" do
+        @class.supported_formats.should == [:str]
+    end
+
     it "should have a method for determining whether it's a CA key" do
         @class.new("test").should respond_to(:ca?)
     end

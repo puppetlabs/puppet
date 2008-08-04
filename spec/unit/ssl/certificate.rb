@@ -25,6 +25,10 @@ describe Puppet::SSL::Certificate do
         @class.indirection.terminus_class.should == :file
     end
 
+    it "should only support the text format" do
+        @class.supported_formats.should == [:str]
+    end
+
     describe "when managing instances" do
         before do
             @certificate = @class.new("myname")

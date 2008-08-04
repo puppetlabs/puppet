@@ -8,6 +8,12 @@ class Puppet::SSL::Key < Puppet::SSL::Base
     extend Puppet::Indirector
     indirects :key, :terminus_class => :file
 
+    # Because of how the format handler class is included, this
+    # can't be in the base class.
+    def self.supported_formats
+        [:str]
+    end
+
     attr_accessor :password_file
 
     # Knows how to create keys with our system defaults.

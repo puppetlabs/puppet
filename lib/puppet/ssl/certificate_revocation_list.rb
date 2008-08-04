@@ -8,6 +8,12 @@ class Puppet::SSL::CertificateRevocationList < Puppet::SSL::Base
     extend Puppet::Indirector
     indirects :certificate_revocation_list, :terminus_class => :file
 
+    # Because of how the format handler class is included, this
+    # can't be in the base class.
+    def self.supported_formats
+        [:str]
+    end
+
     # Knows how to create a CRL with our system defaults.
     def generate(cert, cakey)
         Puppet.info "Creating a new certificate revocation list"
