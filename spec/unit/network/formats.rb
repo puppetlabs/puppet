@@ -89,4 +89,46 @@ describe "Puppet Network Format" do
             @marshal.intern_multiple(String, text).should == "bar"
         end
     end
+
+    describe "plaintext" do
+        before do
+            @text = Puppet::Network::FormatHandler.format(:str)
+        end
+
+        it "should have its mimetype set to text/plain" do
+            @text.mime.should == "text/plain"
+        end
+
+        it "should fail if the instance does not respond to 'to_str'" do
+            instance = mock 'nope'
+            instance.expects(:to_str).never
+            lambda { @text.render(instance) }.should raise_error(NotImplementedError)
+        end
+
+        it "should render by calling 'to_str' on the instance" do
+            # Use an instance that responds to 'to_str'
+            instance = "foo"
+            instance.expects(:to_str).returns "string"
+            @text.render(instance).should == "string"
+        end
+
+        it "should render multiple instances by calling 'to_str' on each instance and joining the results with '\\n---\\n'" do
+            instances = ["string1", 'string2']
+
+            @text.render_multiple(instances).should == "string1\n---\nstring2"
+        end
+
+        it "should intern by calling 'from_str' on the class" do
+            text = "foo"
+            String.expects(:from_str).with(text).returns "bar"
+            @text.intern(String, text).should == "bar"
+        end
+
+        it "should intern multiples by splitting on '\\n---\\n' and converting each string to an instance" do
+            text = "foo\n---\nbar"
+            String.expects(:from_str).with("foo").returns "FOO"
+            String.expects(:from_str).with("bar").returns "BAR"
+            @text.intern_multiple(String, text).should == ["FOO", "BAR"]
+        end
+    end
 end

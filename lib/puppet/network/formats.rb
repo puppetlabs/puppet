@@ -28,12 +28,12 @@ end
 
 
 Puppet::Network::FormatHandler.create(:marshal, :mime => "text/marshal") do
-    # Yaml doesn't need the class name; it's serialized.
+    # Marshal doesn't need the class name; it's serialized.
     def intern(klass, text)
         Marshal.load(text)
     end
 
-    # Yaml doesn't need the class name; it's serialized.
+    # Marshal doesn't need the class name; it's serialized.
     def intern_multiple(klass, text)
         Marshal.load(text)
     end
@@ -45,6 +45,26 @@ Puppet::Network::FormatHandler.create(:marshal, :mime => "text/marshal") do
     # Yaml monkey-patches Array, so this works.
     def render_multiple(instances)
         Marshal.dump(instances)
+    end
+
+    # Everything's supported
+    def supported?(klass)
+        true
+    end
+end
+
+Puppet::Network::FormatHandler.create(:str, :mime => "text/plain") do
+    # For now, use the YAML separator.
+    SEPARATOR = "\n---\n"
+
+    # Yaml doesn't need the class name; it's serialized.
+    def intern_multiple(klass, text)
+        text.split(SEPARATOR).collect { |inst| intern(klass, inst) }
+    end
+
+    # Yaml monkey-patches Array, so this works.
+    def render_multiple(instances)
+        instances.collect { |inst| render(inst) }.join(SEPARATOR)
     end
 
     # Everything's supported
