@@ -437,4 +437,46 @@ describe Puppet::SSL::Host do
             end
         end
     end
+
+    describe "when waiting for a cert" do
+        before do
+            @host = Puppet::SSL::Host.new("me")
+        end
+
+        it "should return :existing if it already has a certificate" do
+            @host.expects(:certificate).returns "foo"
+            @host.wait_for_cert(0).should == :existing
+        end
+        
+        it "should exit if it has no certificate and the wait time is 0" do
+            @host.expects(:certificate).returns nil
+            @host.expects(:exit).with(1).raises(SystemExit)
+            lambda { @host.wait_for_cert(0) }.should raise_error(SystemExit)
+        end
+
+        it "should generate its certificate request and attempt to read the certificate again if no certificate is found" do
+            @host.expects(:certificate).times(2).returns(nil).then.returns "foo"
+            @host.expects(:generate_certificate_request)
+            @host.wait_for_cert(10).should == :new
+        end
+
+        it "should sleep for the specified amount of time if no certificate is found after generating its certificate request" do
+            @host.expects(:certificate).times(3).returns(nil).then.returns(nil).then.returns "foo"
+            @host.expects(:generate_certificate_request)
+
+            @host.expects(:sleep).with(10)
+
+            @host.wait_for_cert(10).should == :new
+        end
+
+        it "should catch and log exceptions during certificate retrieval" do
+            @host.expects(:certificate).times(3).returns(nil).then.raises(RuntimeError).then.returns("foo")
+            @host.stubs(:generate_certificate_request)
+            @host.stubs(:sleep)
+
+            Puppet.expects(:err)
+
+            @host.wait_for_cert(10)
+        end
+    end
 end

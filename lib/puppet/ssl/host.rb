@@ -180,6 +180,25 @@ class Puppet::SSL::Host
         end
         return store
     end
+
+    # Attempt to retrieve a cert, if we don't already have one.
+    def wait_for_cert(time)
+        return :existing if certificate
+        exit(1) if time < 1
+        generate_certificate_request
+
+        while true do
+           begin
+               break if certificate
+               Puppet.notice "Did not receive certificate"
+           rescue StandardError => detail
+               Puppet.err "Could not request certificate: %s" % detail.to_s
+           end
+
+           sleep time
+        end
+        return :new
+    end
 end
 
 require 'puppet/ssl/certificate_authority'
