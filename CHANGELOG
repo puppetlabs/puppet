@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1457 - removed confine warning
+
     A working script to create an OS X pkg out of the Puppet repository
 
     Fixed #1441 - Updated console colours
