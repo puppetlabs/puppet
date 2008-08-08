@@ -18,15 +18,6 @@ class Puppet::Parser::TemplateWrapper
         if scope.parser
             scope.parser.watch_file(file)
         end
-
-        # Expose all the variables in our scope as instance variables of the
-        # current object, making it possible to access them without conflict
-        # to the regular methods.
-        benchmark(:debug, "Bound template variables for #{file}") do
-            scope.to_hash.each { |name, value| 
-                instance_variable_set("@#{name}", value) 
-            }
-        end
     end
 
     def scope
@@ -67,12 +58,20 @@ class Puppet::Parser::TemplateWrapper
         else
             # Just throw an error immediately, instead of searching for
             # other missingmethod things or whatever.
-            raise Puppet::ParseError,
-                "Could not find value for '%s'" % name
+            raise Puppet::ParseError, "Could not find value for '%s'" % name
         end
     end
 
     def result
+        # Expose all the variables in our scope as instance variables of the
+        # current object, making it possible to access them without conflict
+        # to the regular methods.
+        benchmark(:debug, "Bound template variables for #{file}") do
+            scope.to_hash.each { |name, value| 
+                instance_variable_set("@#{name}", value) 
+            }
+        end
+
         result = nil
         benchmark(:debug, "Interpolated template #{file}") do
             template = ERB.new(File.read(file), 0, "-")

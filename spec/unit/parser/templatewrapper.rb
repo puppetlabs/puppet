@@ -6,7 +6,7 @@ describe Puppet::Parser::TemplateWrapper do
     before(:each) do
         compiler = stub('compiler', :environment => "foo")
         parser = stub('parser', :watch_file => true)
-        @scope = stub('scope', :compiler => compiler, :parser => parser)
+        @scope = stub('scope', :compiler => compiler, :parser => parser, :to_hash => {})
         @file = "fake_template"
         Puppet::Module.stubs(:find_template).returns("/tmp/fake_template")
         FileTest.stubs(:exists?).returns("true")
@@ -53,5 +53,16 @@ describe Puppet::Parser::TemplateWrapper do
         @scope.expects(:lookupvar).with("chicken", false).returns(:undefined)
         tw = Puppet::Parser::TemplateWrapper.new(@scope, @file)
         tw.has_variable?("chicken").should eql(false)
+    end
+
+    it "should set all of the scope's variables as instance variables" do
+        template_mock = mock("template", :result => "woot!")
+        File.expects(:read).with("/tmp/fake_template").returns("template contents")
+        ERB.expects(:new).with("template contents", 0, "-").returns(template_mock)
+
+        @scope.expects(:to_hash).returns("one" => "foo")
+        @tw.result
+
+        @tw.instance_variable_get("@one").should == "foo"
     end
 end
