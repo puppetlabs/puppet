@@ -46,6 +46,8 @@
     The fix for #1431 is actually just removing the tests that exposed
     this change; the change happened when I refactored how confines work.
 
+    Removed faulty interface type
+
     Updated /spec/unit/rails.rb test
 
     Fix #1426 - services on redhat are restarted again and status is 
