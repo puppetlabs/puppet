@@ -9,7 +9,8 @@ require 'puppet/indirector/ssl_file'
 
 describe Puppet::Indirector::SslFile do
     before do
-        @indirection = stub 'indirection', :name => :testing
+        @model = mock 'model'
+        @indirection = stub 'indirection', :name => :testing, :model => @model
         Puppet::Indirector::Indirection.expects(:instance).with(:testing).returns(@indirection)
         @file_class = Class.new(Puppet::Indirector::SslFile) do
             def self.to_s
@@ -225,6 +226,13 @@ describe Puppet::Indirector::SslFile do
 
                 it "should unlink the certificate file" do
                     File.expects(:unlink).with(@certpath)
+                    @searcher.destroy(@request)
+                end
+
+                it "should log that is removing the file" do
+                    File.stubs(:exist?).returns true
+                    File.stubs(:unlink)
+                    Puppet.expects(:notice)
                     @searcher.destroy(@request)
                 end
             end

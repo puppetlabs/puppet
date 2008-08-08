@@ -11,6 +11,7 @@ class Puppet::Indirector::File < Puppet::Indirector::Terminus
         end
         raise Puppet::Error.new("File %s does not exist; cannot destroy" % [request.key]) unless File.exist?(path)
 
+        Puppet.notice "Removing file %s %s at '%s'" % [model, request.key, path]
         begin
             File.unlink(path)
         rescue => detail

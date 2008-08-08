@@ -68,6 +68,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
         path = path(request.key)
         return false unless FileTest.exist?(path)
 
+        Puppet.notice "Removing file %s %s at '%s'" % [model, request.key, path]
         begin
             File.unlink(path)
         rescue => detail

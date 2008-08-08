@@ -140,6 +140,13 @@ describe Puppet::Indirector::File do
             proc { @searcher.destroy(@request) }.should raise_error(Puppet::Error)
         end
 
+        it "should log that is removing the file" do
+            File.expects(:exist?).returns(true)
+            File.expects(:unlink)
+            Puppet.expects(:notice)
+            @searcher.destroy(@request)
+        end
+
         it "should use the path() method to calculate the path if it exists" do
             @searcher.meta_def(:path) do |thing|
                 thing.to_s.upcase
