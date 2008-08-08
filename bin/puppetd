@@ -326,7 +326,7 @@ end
 # We need to specify a ca location for things to work, but
 # until the REST cert transfers are working, it needs to
 # be local.
-Puppet::SSL::Host.ca_location = :local
+Puppet::SSL::Host.ca_location = :remote
 
 # We need tomake the client either way, we just don't start it
 # if --no-client is set.
@@ -349,9 +349,9 @@ if Puppet[:daemonize]
     client.daemonize
 end
 
-unless Puppet::Executables::Client::CertHandler.new(options[:waitforcert], options[:onetime]).read_retrieve
-    client.recycle_connection
-end
+host = Puppet::SSL::Host.new
+cert = host.wait_for_cert(options[:waitforcert])
+client.recycle_connection if cert == :new
 
 objects = []
 
