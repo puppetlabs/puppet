@@ -22,7 +22,7 @@ describe Puppet::SSL::Key do
     end
 
     it "should only support the text format" do
-        @class.supported_formats.should == [:str]
+        @class.supported_formats.should == [:s]
     end
 
     it "should have a method for determining whether it's a CA key" do

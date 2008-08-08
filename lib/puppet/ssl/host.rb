@@ -168,17 +168,20 @@ class Puppet::SSL::Host
     # Create/return a store that uses our SSL info to validate
     # connections.
     def ssl_store(purpose = OpenSSL::X509::PURPOSE_ANY)
-        store = OpenSSL::X509::Store.new
-        store.purpose = purpose
+        unless defined?(@ssl_store) and @ssl_store
+            @ssl_store = OpenSSL::X509::Store.new
+            @ssl_store.purpose = purpose
 
-        store.add_file(Puppet[:localcacert])
+            @ssl_store.add_file(Puppet[:localcacert])
 
-        # If there's a CRL, add it to our store.
-        if crl = Puppet::SSL::CertificateRevocationList.find("ca")
-            store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
-            store.add_crl(crl.content)
+            # If there's a CRL, add it to our store.
+            if crl = Puppet::SSL::CertificateRevocationList.find("ca")
+                @ssl_store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
+                @ssl_store.add_crl(crl.content)
+            end
+            return @ssl_store
         end
-        return store
+        @ssl_store
     end
 
     # Attempt to retrieve a cert, if we don't already have one.
