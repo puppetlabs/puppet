@@ -1,4 +1,6 @@
 0.24.x
+    Add the -P/--ping option to puppetrun, fixes #1501
+
     Fixed #1394 - Added stored configuration clearing script to /ext
     
     Fixed #1442 - replaced use of Facter for report titling with certname
