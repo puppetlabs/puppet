@@ -3,4 +3,5 @@ require 'puppet'
 require 'openssl'
 
 module Puppet::SSL # :nodoc:
+    require 'puppet/ssl/host'
 end

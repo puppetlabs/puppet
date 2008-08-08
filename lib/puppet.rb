@@ -372,9 +372,11 @@ end
 
 require 'puppet/type'
 require 'puppet/network'
+require 'puppet/ssl'
 require 'puppet/module'
 require 'puppet/util/storage'
 require 'puppet/parser/interpreter'
+
 if Puppet[:storeconfigs]
     require 'puppet/rails'
 end
