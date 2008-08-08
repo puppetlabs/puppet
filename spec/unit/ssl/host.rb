@@ -455,36 +455,60 @@ describe Puppet::SSL::Host do
             @host.expects(:certificate).returns "foo"
             @host.wait_for_cert(0).should == :existing
         end
+
+        it "should generate its certificate request and attempt to read the certificate again if no certificate is found" do
+            @host.expects(:certificate).times(2).returns(nil).then.returns "foo"
+            @host.expects(:generate)
+            @host.wait_for_cert(1).should == :new
+        end
+
+        it "should catch and log errors during CSR saving" do
+            @host.expects(:certificate).times(2).returns(nil).then.returns "foo"
+            @host.expects(:generate).times(2).raises(RuntimeError).then.returns nil
+            @host.stubs(:sleep)
+            @host.wait_for_cert(1).should == :new
+        end
+
+        it "should sleep and retry after failures saving the CSR if waitforcert is enabled" do
+            @host.expects(:certificate).times(2).returns(nil).then.returns "foo"
+            @host.expects(:generate).times(2).raises(RuntimeError).then.returns nil
+            @host.expects(:sleep).with(1)
+            @host.wait_for_cert(1)
+        end
+
+        it "should exit after failures saving the CSR of waitforcert is disabled" do
+            @host.expects(:certificate).returns(nil)
+            @host.expects(:generate).raises(RuntimeError)
+            @host.expects(:puts)
+            @host.expects(:exit).with(1).raises(SystemExit)
+            lambda { @host.wait_for_cert(0) }.should raise_error(SystemExit)
+        end
         
-        it "should exit if it has no certificate and the wait time is 0" do
-            @host.expects(:certificate).returns nil
+        it "should exit if the wait time is 0 and it can neither find nor retrieve a certificate" do
+            @host.stubs(:certificate).returns nil
+            @host.expects(:generate)
+            @host.expects(:puts)
             @host.expects(:exit).with(1).raises(SystemExit)
             lambda { @host.wait_for_cert(0) }.should raise_error(SystemExit)
         end
 
-        it "should generate its certificate request and attempt to read the certificate again if no certificate is found" do
-            @host.expects(:certificate).times(2).returns(nil).then.returns "foo"
-            @host.expects(:generate_certificate_request)
-            @host.wait_for_cert(10).should == :new
-        end
-
         it "should sleep for the specified amount of time if no certificate is found after generating its certificate request" do
             @host.expects(:certificate).times(3).returns(nil).then.returns(nil).then.returns "foo"
-            @host.expects(:generate_certificate_request)
+            @host.expects(:generate)
 
-            @host.expects(:sleep).with(10)
+            @host.expects(:sleep).with(1)
 
-            @host.wait_for_cert(10).should == :new
+            @host.wait_for_cert(1).should == :new
         end
 
         it "should catch and log exceptions during certificate retrieval" do
             @host.expects(:certificate).times(3).returns(nil).then.raises(RuntimeError).then.returns("foo")
-            @host.stubs(:generate_certificate_request)
+            @host.stubs(:generate)
             @host.stubs(:sleep)
 
             Puppet.expects(:err)
 
-            @host.wait_for_cert(10)
+            @host.wait_for_cert(1)
         end
     end
 end
