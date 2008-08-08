@@ -394,6 +394,14 @@ describe Puppet::SSL::Host do
         Puppet::SSL::Host.new("me").should respond_to(:ssl_store)
     end
 
+    it "should always return the same store" do
+        host = Puppet::SSL::Host.new("foo")
+        store = mock 'store'
+        store.stub_everything
+        OpenSSL::X509::Store.expects(:new).returns store
+        host.ssl_store.should equal(host.ssl_store)
+    end
+
     describe "when creating an SSL store" do
         before do
             @host = Puppet::SSL::Host.new("me")

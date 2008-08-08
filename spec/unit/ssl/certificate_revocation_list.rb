@@ -17,7 +17,21 @@ describe Puppet::SSL::CertificateRevocationList do
     end
 
     it "should only support the text format" do
-        @class.supported_formats.should == [:str]
+        @class.supported_formats.should == [:s]
+    end
+
+    describe "when converting from a string" do
+        it "should create a CRL instance with its name set to 'foo' and its content set to the extracted CRL" do
+            crl = stub 'crl'
+            OpenSSL::X509::CRL.expects(:new).returns(crl)
+
+            mycrl = stub 'sslcrl'
+            mycrl.expects(:content=).with(crl)
+
+            @class.expects(:new).with("foo").returns mycrl
+
+            @class.from_s("my crl").should == mycrl
+        end
     end
 
     describe "when an instance" do

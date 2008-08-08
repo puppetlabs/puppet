@@ -11,7 +11,7 @@ class Puppet::SSL::Key < Puppet::SSL::Base
     # Because of how the format handler class is included, this
     # can't be in the base class.
     def self.supported_formats
-        [:str]
+        [:s]
     end
 
     attr_accessor :password_file

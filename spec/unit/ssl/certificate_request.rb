@@ -27,7 +27,21 @@ describe Puppet::SSL::CertificateRequest do
     end
 
     it "should only support the text format" do
-        @class.supported_formats.should == [:str]
+        @class.supported_formats.should == [:s]
+    end
+
+    describe "when converting from a string" do
+        it "should create a CSR instance with its name set to the CSR subject and its content set to the extracted CSR" do
+            csr = stub 'csr', :subject => "/CN=Foo.madstop.com"
+            OpenSSL::X509::Request.expects(:new).with("my csr").returns(csr)
+
+            mycsr = stub 'sslcsr'
+            mycsr.expects(:content=).with(csr)
+
+            @class.expects(:new).with("foo.madstop.com").returns mycsr
+
+            @class.from_s("my csr")
+        end
     end
 
     describe "when managing instances" do

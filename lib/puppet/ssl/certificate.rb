@@ -12,10 +12,19 @@ class Puppet::SSL::Certificate < Puppet::SSL::Base
     extend Puppet::Indirector
     indirects :certificate, :terminus_class => :file
 
+    # Convert a string into an instance.
+    def self.from_s(string)
+        instance = wrapped_class.new(string)
+        name = instance.subject.to_s.sub(/\/CN=/i, '').downcase
+        result = new(name)
+        result.content = instance
+        result
+    end
+
     # Because of how the format handler class is included, this
     # can't be in the base class.
     def self.supported_formats
-        [:str]
+        [:s]
     end
 
     def expiration

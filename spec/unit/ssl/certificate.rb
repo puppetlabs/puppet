@@ -26,7 +26,21 @@ describe Puppet::SSL::Certificate do
     end
 
     it "should only support the text format" do
-        @class.supported_formats.should == [:str]
+        @class.supported_formats.should == [:s]
+    end
+
+    describe "when converting from a string" do
+        it "should create a certificate instance with its name set to the certificate subject and its content set to the extracted certificate" do
+            cert = stub 'certificate', :subject => "/CN=Foo.madstop.com"
+            OpenSSL::X509::Certificate.expects(:new).with("my certificate").returns(cert)
+
+            mycert = stub 'sslcert'
+            mycert.expects(:content=).with(cert)
+
+            @class.expects(:new).with("foo.madstop.com").returns mycert
+
+            @class.from_s("my certificate")
+        end
     end
 
     describe "when managing instances" do
