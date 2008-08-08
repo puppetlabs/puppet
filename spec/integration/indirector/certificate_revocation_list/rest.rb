@@ -43,7 +43,10 @@ describe "Certificate REST Terminus" do
         Puppet::SSL::Host.ca_location = :none
         Puppet::SSL::CertificateRevocationList.destroy("ca")
 
-        puts Puppet::Network::HttpPool.ssl_host.ssl_store
+        # This is necessary so that we create the SSL store before we start
+        # using REST.  This is necessary to prevent an infinite loop,
+        # which only occurs during testing.
+        Puppet::Network::HttpPool.ssl_host.ssl_store
 
         # Then switch to a remote CA, so that we go through REST.
         Puppet::SSL::Host.ca_location = :remote
