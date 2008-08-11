@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1502 - Fixed poor stored configuration performance
+
     Fixed #1510 - Storeconfiguration fixed for Rails 2.1
 
     Add the -P/--ping option to puppetrun, fixes #1501
