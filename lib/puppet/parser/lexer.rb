@@ -131,7 +131,7 @@ class Puppet::Parser::Lexer
 
     TOKENS.add_tokens "Whatever" => :DQTEXT, "Nomatter" => :SQTEXT, "alsonomatter" => :BOOLEAN
 
-    TOKENS.add_token :NAME, %r{[a-z][-\w]*} do |lexer, value|
+    TOKENS.add_token :NAME, %r{[a-z0-9][-\w]*} do |lexer, value|
         string_token = self
         # we're looking for keywords here
         if tmp = KEYWORDS.lookup(value)
