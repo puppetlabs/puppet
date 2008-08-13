@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1510 - Storeconfiguration fixed for Rails 2.1
+
     Add the -P/--ping option to puppetrun, fixes #1501
 
     Fixed #1394 - Added stored configuration clearing script to /ext
