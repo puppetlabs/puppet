@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1442 - replaced use of Facter for report titling with certname
+
     Fixed $1456 - add proxy configuration capability to yum repo
 
     Fixed #1457 - removed confine warning
