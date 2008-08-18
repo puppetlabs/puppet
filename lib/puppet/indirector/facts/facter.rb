@@ -12,12 +12,13 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
         Dir.entries(dir).find_all { |e| e =~ /\.rb$/ }.each do |file|
             fqfile = ::File.join(dir, file)
             begin
-                Puppet.info "Loading #{type} %s" % ::File.basename(file.sub(".rb",''))
+                Puppet.info "Loading %s %s" % 
+                    [type, ::File.basename(file.sub(".rb",''))]
                 Timeout::timeout(self.timeout) do
                     load fqfile
                 end
             rescue => detail
-                Puppet.warning "Could not load #{type} %s: %s" % [fqfile, detail]
+                Puppet.warning "Could not load %s %s: %s" % [type, fqfile, detail]
             end
         end
     end

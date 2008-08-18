@@ -61,6 +61,7 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init do
         if @resource[:hasstatus] == :true
               begin 
                   service(@resource[:name], "status")
+                  return :running
               rescue 
                   return :stopped
               end 

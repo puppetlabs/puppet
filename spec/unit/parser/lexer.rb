@@ -378,6 +378,15 @@ describe "Puppet::Parser::Lexer in the old tests" do
         }
     end
 
+    it "should correctly parse names with numerals" do
+       string = %w{1name name1 11names names11}
+    
+       string.each { |t|
+            @lexer.string = t
+            @lexer.fullscan.should == [[:NAME,t],[false,false]]
+       }
+    end
+
     it "should correctly parse empty strings" do
         bit = '$var = ""'
 

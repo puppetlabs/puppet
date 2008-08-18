@@ -65,13 +65,16 @@ module Puppet
         end
 
         def to_manifest
-            "#{self.type.to_s} { \'#{self.name}\':\n%s\n}" % @params.collect { |p, v|
-                if v.is_a? Array
-                    "    #{p} => [\'#{v.join("','")}\']"
-                else
-                    "    #{p} => \'#{v}\'"
-                end
-            }.join(",\n")
+            "%s { '%s':\n%s\n}" % 
+                [self.type.to_s, self.name,
+                 @params.collect { |p, v|
+                     if v.is_a? Array
+                         "    #{p} => [\'#{v.join("','")}\']"
+                     else
+                         "    #{p} => \'#{v}\'"
+                     end
+                 }.join(",\n")
+                ]
         end
 
         def to_yaml_properties

@@ -53,6 +53,34 @@ class TestScope < Test::Unit::TestCase
             assert_equal(:undefined, scopes[name].lookupvar("third", false), "Found child var in top scope")
         end
         assert_equal("botval", scopes[:bot].lookupvar("third", false), "Could not find var in bottom scope")
+
+
+        # Test that the scopes convert to hash structures correctly.
+        # For topscope recursive vs non-recursive should be identical
+        assert_equal(topscope.to_hash(false), topscope.to_hash(true),
+                     "Recursive and non-recursive hash is identical for topscope")
+
+        # Check the variable we expect is present.
+        assert_equal({"first" => "topval"}, topscope.to_hash(),
+                     "topscope returns the expected hash of variables")
+
+        # Now, check that midscope does the right thing in all cases.
+        assert_equal({"second" => "midval"},
+                     midscope.to_hash(false),
+                     "midscope non-recursive hash contains only midscope variable")
+        assert_equal({"first" => "topval", "second" => "midval"},
+                     midscope.to_hash(true),
+                     "midscope recursive hash contains topscope variable also")
+
+        # Finally, check the ability to shadow symbols by adding a shadow to
+        # bottomscope, then checking that we see the right stuff.
+        botscope.setvar("first", "shadowval")
+        assert_equal({"third" => "botval", "first" => "shadowval"},
+                     botscope.to_hash(false),
+                     "botscope has the right non-recursive hash")
+        assert_equal({"third" => "botval", "first" => "shadowval", "second" => "midval"},
+                     botscope.to_hash(true),
+                     "botscope values shadow parent scope values")
     end
 
     def test_lookupvar

@@ -66,6 +66,14 @@ class Puppet::Parser::Resource::Param
     def to_s
         "%s => %s" % [self.name, self.value]
     end
+
+    def compare(v,db_value)
+      if (v.is_a?(Puppet::Parser::Resource::Reference))
+        return v.to_s == db_value.to_s
+      else
+        return v == db_value
+      end
+    end
     
     def values_to_remove(db_values)
         values = munge_for_rails(value)
@@ -73,7 +81,7 @@ class Puppet::Parser::Resource::Param
         db_values.collect do |db|
             db unless (db.line == line_number && 
                        values.find { |v| 
-                         v == db.value 
+                         compare(v,db.value)
                        } )
         end.compact
     end
@@ -82,7 +90,7 @@ class Puppet::Parser::Resource::Param
         values = munge_for_rails(value)
         line_number = line_to_i()
         values.collect do |v|
-            v unless db_values.find { |db| (v == db.value && 
+            v unless db_values.find { |db| (compare(v,db.value) && 
                                          line_number == db.line) }
         end.compact
     end

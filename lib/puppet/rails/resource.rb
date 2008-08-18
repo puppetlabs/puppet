@@ -6,12 +6,12 @@ require 'puppet/util/rails/collection_merger'
 class Puppet::Rails::Resource < ActiveRecord::Base
     include Puppet::Util::CollectionMerger
 
-    has_many :param_values, :dependent => :destroy
-    has_many :param_names, :through => :param_values
+    has_many :param_values, :dependent => :destroy, :class_name => "Puppet::Rails::ParamValue"
+    has_many :param_names, :through => :param_values, :class_name => "Puppet::Rails::ParamName"
 
-    has_many :resource_tags, :dependent => :destroy
-    has_many :puppet_tags, :through => :resource_tags
-    
+    has_many :resource_tags, :dependent => :destroy, :class_name => "Puppet::Rails::ResourceTag"
+    has_many :puppet_tags, :through => :resource_tags, :class_name => "Puppet::Rails::PuppetTag"
+
     belongs_to :source_file
     belongs_to :host
 
@@ -82,7 +82,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     end
 
     def ref
-        "%s[%s]" % [self[:restype].capitalize, self[:title]]
+        "%s[%s]" % [self[:restype].split("::").collect { |s| s.capitalize }.join("::"), self[:title]]
     end
 
     # Convert our object to a resource.  Do not retain whether the object

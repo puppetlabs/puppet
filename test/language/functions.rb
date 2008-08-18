@@ -96,11 +96,12 @@ class TestLangFunctions < Test::Unit::TestCase
         twop = File.join(Puppet[:templatedir], "two")
 
         File.open(onep, "w") do |f|
-            f.puts "template <%= one %>"
+            f.puts "<%- if @one.nil? then raise '@one undefined' end -%>" +
+                "template <%= @one %>"
         end
 
         File.open(twop, "w") do |f|
-            f.puts "template <%= two %>"
+            f.puts "template <%= @two %>"
         end
         func = nil
         assert_nothing_raised do
@@ -116,15 +117,27 @@ class TestLangFunctions < Test::Unit::TestCase
         ast = varobj("output", func)
 
         scope = mkscope
+
+        # Test that our manual exception throw fails the parse
         assert_raise(Puppet::ParseError) do
             ast.evaluate(scope)
         end
 
+        # Test that our use of an undefined instance variable does not throw
+        # an exception, but only safely continues.
         scope.setvar("one", "One")
-        assert_raise(Puppet::ParseError) do
+        assert_nothing_raised do
             ast.evaluate(scope)
         end
+
+        # Ensure that we got the output we expected from that evaluation.
+        assert_equal("template One\ntemplate \n", scope.lookupvar("output"),
+                     "Undefined template variables do not raise exceptions")
+
+        # Now, fill in the last variable and make sure the whole thing
+        # evaluates correctly.
         scope.setvar("two", "Two")
+        scope.unsetvar("output")
         assert_nothing_raised do
             ast.evaluate(scope)
         end
@@ -138,7 +151,7 @@ class TestLangFunctions < Test::Unit::TestCase
         template = tempfile()
 
         File.open(template, "w") do |f|
-            f.puts "template <%= yayness %>"
+            f.puts "template <%= @yay.nil?() ? raise('yay undefined') : @yay %>"
         end
 
         func = nil
@@ -158,15 +171,75 @@ class TestLangFunctions < Test::Unit::TestCase
             ast.evaluate(scope)
         end
 
-        scope.setvar("yayness", "this is yayness")
+        scope.setvar("yay", "this is yay")
 
         assert_nothing_raised do
             ast.evaluate(scope)
         end
 
-        assert_equal("template this is yayness\n", scope.lookupvar("output"),
+        assert_equal("template this is yay\n", scope.lookupvar("output"),
             "Templates were not handled correctly")
 
+    end
+
+    # Make sure that legacy template variable access works as expected.
+    def test_legacyvariables
+        template = tempfile()
+
+        File.open(template, "w") do |f|
+            f.puts "template <%= deprecated %>"
+        end
+
+        func = nil
+        assert_nothing_raised do
+            func = Puppet::Parser::AST::Function.new(
+                :name => "template",
+                :ftype => :rvalue,
+                :arguments => AST::ASTArray.new(
+                    :children => [stringobj(template)]
+                )
+            )
+        end
+        ast = varobj("output", func)
+
+        # Verify that we get an exception using old-style accessors.
+        scope = mkscope
+        assert_raise(Puppet::ParseError) do
+            ast.evaluate(scope)
+        end
+
+        # Verify that we evaluate and return their value correctly.
+        scope.setvar("deprecated", "deprecated value")
+        assert_nothing_raised do
+            ast.evaluate(scope)
+        end
+
+        assert_equal("template deprecated value\n", scope.lookupvar("output"),
+                     "Deprecated template variables were not handled correctly")
+    end
+
+    # Make sure that problems with kernel method visibility still exist.
+    def test_kernel_module_shadows_deprecated_var_lookup
+        template = tempfile()
+        File.open(template, "w").puts("<%= binding %>")
+
+        func = nil
+        assert_nothing_raised do
+            func = Puppet::Parser::AST::Function.new(
+                :name => "template",
+                :ftype => :rvalue,
+                :arguments => AST::ASTArray.new(
+                    :children => [stringobj(template)]
+                )
+            )
+        end
+        ast = varobj("output", func)
+
+        # Verify that Kernel methods still shadow deprecated variable lookups.
+        scope = mkscope
+        assert_nothing_raised("No exception for Kernel shadowed variable names") do
+            ast.evaluate(scope)
+        end
     end
 
     def test_tempatefunction_cannot_see_scopes
@@ -243,7 +316,7 @@ class TestLangFunctions < Test::Unit::TestCase
         template = tempfile()
 
         File.open(template, "w") do |f|
-            f.puts "template <%= yayness %>"
+            f.puts "template <%= @yayness %>"
         end
 
         func = nil
@@ -263,10 +336,6 @@ class TestLangFunctions < Test::Unit::TestCase
             false => "false",
         }.each do |string, value|
             scope = mkscope
-            assert_raise(Puppet::ParseError) do
-                ast.evaluate(scope)
-            end
-
             scope.setvar("yayness", string)
             assert_equal(string, scope.lookupvar("yayness", false))
 

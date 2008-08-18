@@ -183,6 +183,25 @@ class Puppet::Parser::Scope
         end
     end
 
+    # Return a hash containing our variables and their values, optionally (and
+    # by default) including the values defined in our parent.  Local values
+    # shadow parent values.
+    def to_hash(recursive = true)
+        if recursive and parent then
+            target = parent.to_hash(recursive)
+        end
+        target ||= Hash.new
+        @symtable.keys.each { |name| 
+            value = @symtable[name]
+            if value == :undef then
+                target.delete(name)
+            else
+                target[name] = value 
+            end
+        }
+        return target
+    end
+
     def namespaces
         @namespaces.dup
     end

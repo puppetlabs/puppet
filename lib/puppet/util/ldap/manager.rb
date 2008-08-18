@@ -80,7 +80,7 @@ class Puppet::Util::Ldap::Manager
 
     # Calculate the dn for a given resource.
     def dn(name)
-        ["#{rdn.to_s}=%s" % name, base].join(",")
+        ["%s=%s" % [rdn, name], base].join(",")
     end
 
     # Convert an ldap-style entry hash to a provider-style hash.
