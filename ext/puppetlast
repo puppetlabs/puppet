@@ -10,6 +10,6 @@ Puppet.parse_config
 Puppet[:name] = "puppetmasterd"
 Puppet::Node::Facts.terminus_class = :yaml
 
-Puppet::Node::Facts.search("*").sort.each do |node|
+Puppet::Node::Facts.search("*").sort { |a,b| a.name <=> b.name }.each do |node|
   puts "#{node.name} #{node.expired? ? 'cached expired, ' : ''}checked in #{((Time.now - node.values[:_timestamp]) / 60).floor} minutes ago"
 end
