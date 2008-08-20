@@ -8,6 +8,9 @@
     Fixed #1506 - Removed storeconfig duplicate indexes
     
     Fixed #1457 - case insensitive match for error
+    
+    Fixed #1488 - Moved individual functions out of functions.rb into 
+    lib/puppet/parser/functions directory.  New functions should be create     in this directory.
 
     Fixed #1508 - Added HP-UX package provider
 
