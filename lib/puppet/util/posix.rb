@@ -3,13 +3,12 @@ module Puppet::Util::POSIX
 
     # Retrieve a field from a POSIX Etc object.  The id can be either an integer
     # or a name.  This only works for users and groups.  It's also broken on
-    # some platforms, unfortunately.
-    def old_get_posix_field(space, field, id)
+    # some platforms, unfortunately, which is why we fall back to the other
+    # method search_posix_field in the gid and uid methods if a sanity check
+    # fails
+    def get_posix_field(space, field, id)
         unless id
             raise ArgumentError, "Did not get id"
-        end
-        if id =~ /^\d+$/
-            id = Integer(id)
         end
         prefix = "get" + space.to_s
         if id.is_a?(Integer)
@@ -17,9 +16,9 @@ module Puppet::Util::POSIX
                 Puppet.err "Tried to get %s field for silly id %s" % [field, id]
                 return nil
             end
-            method = (prefix + idfield(space).to_s).intern
+            method = methodbyid(space)
         else
-            method = (prefix + "nam").intern
+            method = methodbyname(space)
         end
 
         begin
@@ -31,13 +30,11 @@ module Puppet::Util::POSIX
     end
 
     # A degenerate method of retrieving name/id mappings.  The job of this method is
-    # to find a specific entry and then return a given field from that entry.
-    def get_posix_field(type, field, id)
+    # to retrieve all objects of a certain type, search for a specific entry 
+    # and then return a given field from that entry.
+    def search_posix_field(type, field, id)
         idmethod = idfield(type)
         integer = false
-        if id =~ /^\d+$/
-            id = Integer(id)
-        end
         if id.is_a?(Integer)
             integer = true
             if id > Puppet[:maximum_uid].to_i
@@ -112,14 +109,70 @@ module Puppet::Util::POSIX
         end
     end
     
+    # Determine what the method is to get users and groups by id
+    def methodbyid(space)
+        case Puppet::Util.symbolize(space)
+        when :gr, :group: return :getgrgid
+        when :pw, :user, :passwd: return :getpwuid
+        else
+            raise ArgumentError.new("Can only handle users and groups")
+        end
+    end
+    
+    # Determine what the method is to get users and groups by name
+    def methodbyname(space)
+        case Puppet::Util.symbolize(space)
+        when :gr, :group: return :getgrnam
+        when :pw, :user, :passwd: return :getpwnam
+        else
+            raise ArgumentError.new("Can only handle users and groups")
+        end
+    end
+    
     # Get the GID of a given group, provided either a GID or a name
     def gid(group)
-        get_posix_field(:group, :gid, group)
+        begin
+          group = Integer(group)
+        rescue ArgumentError
+          # pass
+        end
+        if group.is_a?(Integer)
+            name = get_posix_field(:group, :name, group)
+            gid = get_posix_field(:group, :gid, name)
+            check_value = gid
+        else
+            gid = get_posix_field(:group, :gid, group)
+            name = get_posix_field(:group, :name, gid)
+            check_value = name
+        end
+        if check_value != group
+            return search_posix_field(:group, :gid, group)
+        else
+            return gid
+        end
     end
 
     # Get the UID of a given user, whether a UID or name is provided
     def uid(user)
-        get_posix_field(:passwd, :uid, user)
+        begin
+          user = Integer(user)
+        rescue ArgumentError
+          # pass
+        end
+        if user.is_a?(Integer)
+            name = get_posix_field(:passwd, :name, user)
+            uid = get_posix_field(:passwd, :uid, name)
+            check_value = uid
+        else
+            uid = get_posix_field(:passwd, :uid, user)
+            name = get_posix_field(:passwd, :name, uid)
+            check_value = name
+        end
+        if check_value != user
+            return search_posix_field(:passwd, :uid, user)
+        else
+            return uid
+        end
     end
 end
 

@@ -1,3 +1,50 @@
+0.24.x
+    Fixed #1508 - Added HP-UX package provider
+
+    Fixed #1502 - Fixed poor stored configuration performance
+
+    Fixed #1510 - Storeconfiguration fixed for Rails 2.1
+
+    Add the -P/--ping option to puppetrun, fixes #1501
+
+    Fixed #1394 - Added stored configuration clearing script to /ext
+    
+    Fixed #1442 - replaced use of Facter for report titling with certname
+
+    Fixed $1456 - add proxy configuration capability to yum repo
+
+    Fixed #1457 - removed confine warning
+
+    A working script to create an OS X pkg out of the Puppet repository
+
+    Fixed #1441 - Updated console colours
+
+    Expose all puppet variables as instance member variables of the template wrapper.
+    This helps resolve redmine #1427, by providing a safe mechanism to access variables.
+    
+     * Implement Puppet::Parser::Scope#to_hash, which returns a hash containing all the
+       variable bindings in the current and, optionally, parent scope.
+     * Use that to set instance member variables into Puppet::Parser::Templatewrapper
+     * Report the time taken for variable binding at debug level, to help identify any
+       performance regression that is encountered in the real world.
+     * Rename the @scope and @file members of the template wrapper, to avoid clashing
+       with a scope variable exposed within puppet.
+
+    Ensure that we consistently use either string #{} interpolation or String.%
+    interpolation, not both, to avoid issues where a #{} interpolated value
+    contains a % character.
+
+    Feature #1476: Allow specification of --bindir --sbindir --sitelibdir --mandir --destdir 
+    in installation
+    
+    Added feature #1241 : Improve performance of group lookups
+
+    Fixed bug #1448: Puppet CA incorrectly writes out all certs to inventory .txt on each 
+    certificate signing
+
+    Fixing puppetlast to make it work with 0.24.5 / 0.25.  Made puppetlast work on 0.24.5 
+    by using the YAML indirector
+ 
 0.24.5
     You can now select the encoding format when transferring the catalog,
     with 'yaml' still being the default but 'marshal' being an option.
@@ -12,6 +59,8 @@
     This now-obsolete behaviour does not seem to be used anywhere.
     The fix for #1431 is actually just removing the tests that exposed
     this change; the change happened when I refactored how confines work.
+
+    Removed faulty interface type
 
     Updated /spec/unit/rails.rb test
 

@@ -25,15 +25,28 @@ class TestPosixUtil < Test::Unit::TestCase
 	def test_get_posix_field
 	    {:group => nonrootgroup, :passwd => nonrootuser}.each do |space, obj|
             id = Puppet::Util.idfield(space)
-	        [obj.name, obj.send(id), obj.send(id).to_s].each do |test|
+	        [obj.name, obj.send(id)].each do |test|
         	    value = nil
         	    assert_nothing_raised do
         	        value = get_posix_field(space, :name, test)
         	    end
-        	    assert_equal(obj.name, value, "did not get correct value from get_posix_field")
+        	    assert_equal(obj.name, value, "did not get correct value from get_posix_field (known to be broken on some platforms)")
     	    end
 	    end
     end
+    
+    def test_search_posix_field
+        {:group => nonrootgroup, :passwd => nonrootuser}.each do |space, obj|
+              id = Puppet::Util.idfield(space)
+            [obj.name, obj.send(id)].each do |test|
+                value = nil
+                assert_nothing_raised do
+                    value = search_posix_field(space, :name, test)
+                end
+                assert_equal(obj.name, value, "did not get correct value from search_posix_field")
+            end
+        end
+      end
     
     def test_get_provider_value
         user = nonrootuser

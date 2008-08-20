@@ -47,7 +47,10 @@ class TestYumRepo < Test::Unit::TestCase
             :enabled => "1",
             :gpgcheck => "1",
             :includepkgs => "absent",
-            :gpgkey => "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora"
+            :gpgkey => "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora",
+            :proxy => "http://proxy.example.com:80/",
+            :proxy_username => "username",
+            :proxy_password => "password"
         }
         repo = make_repo("base", values)
 
@@ -101,6 +104,9 @@ baseurl=http://example.com/yum/$releasever/$basearch/os/
 enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora
+proxy=http://proxy.example.com:80/
+proxy_username=username
+proxy_password=password
 EOF
 
 end        

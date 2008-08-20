@@ -90,8 +90,9 @@ Puppet::Reports.register_report(:rrdgraph) do
             of.puts "<html><head><title>Report graphs for %s</title></head><body>" %
                 host
             files.each do |file|
-                of.puts "<a href='#{File.basename(file)}'>%s</a><br/>" %
-                    File.basename(file).sub(".html",'').capitalize
+                of.puts "<a href='%s'>%s</a><br/>" %
+                    [File.basename(file),
+                     File.basename(file).sub(".html",'').capitalize]
             end
             of.puts "</body></html>"
         end

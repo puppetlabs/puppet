@@ -73,6 +73,7 @@ mv %{buildroot}%{_sbindir}/puppet %{buildroot}%{_bindir}/puppet
 mv %{buildroot}%{_sbindir}/ralsh %{buildroot}%{_bindir}/ralsh
 mv %{buildroot}%{_sbindir}/filebucket %{buildroot}%{_bindir}/filebucket
 mv %{buildroot}%{_sbindir}/puppetrun %{buildroot}%{_bindir}/puppetrun
+mv %{buildroot}%{_sbindir}/puppetdoc %{buildroot}%{_bindir}/puppetdoc
 install -Dp -m0644 %{pbuild}/lib/puppet.rb %{buildroot}%{ruby_sitelibdir}/puppet.rb
 cp -a %{pbuild}/lib/puppet %{buildroot}%{ruby_sitelibdir}
 find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -print0 | xargs -0 -r chmod a-x
@@ -94,6 +95,8 @@ touch %{buildroot}%{_sysconfdir}/puppet/puppetd.conf
 %{_bindir}/puppet
 %{_bindir}/ralsh
 %{_bindir}/filebucket
+%{_bindir}/puppetdoc
+%exclude %{_mandir}/man8/pi.8.gz
 %{_sbindir}/puppetd
 %{ruby_sitelibdir}/*
 %{_initrddir}/puppet
@@ -102,13 +105,17 @@ touch %{buildroot}%{_sysconfdir}/puppet/puppetd.conf
 %config(noreplace) %{_sysconfdir}/puppet/puppet.conf
 %ghost %config(noreplace,missingok) %{_sysconfdir}/puppet/puppetd.conf
 %doc CHANGELOG COPYING LICENSE README examples
-%exclude %{_sbindir}/puppetdoc
 %config(noreplace) %{_sysconfdir}/logrotate.d/puppet
 # These need to be owned by puppet so the server can
 # write to them
 %attr(-, puppet, puppet) %{_localstatedir}/run/puppet
 %attr(-, puppet, puppet) %{_localstatedir}/log/puppet
 %attr(-, puppet, puppet) %{_localstatedir}/lib/puppet
+%doc %{_mandir}/man8/puppet.8.gz
+%doc %{_mandir}/man8/puppet.conf.8.gz
+%doc %{_mandir}/man8/puppetd.8.gz
+%doc %{_mandir}/man8/ralsh.8.gz
+%doc %{_mandir}/man8/puppetdoc.8.gz
 
 %files server
 %defattr(-, root, root, 0755)
@@ -157,7 +164,22 @@ fi
 rm -rf %{buildroot}
 
 %changelog
-* Mon Jul 22 2008 James Turnbull <james@lovedthanlost.net> - 0.24.5-1
+* Mon Jul 28 2008 David Lutterkort <dlutter@redhat.com> - 0.24.5-1
+- Add /usr/bin/puppetdoc
+
+* Thu Jul 24 2008 Brenton Leanhardt <bleanhar@redhat.com>
+- New version
+- man pages now ship with tarball
+- examples/code moved to root examples dir in upstream tarball
+
+* Tue Mar 25 2008 David Lutterkort <dlutter@redhat.com> - 0.24.4-1
+- Add man pages (from separate tarball, upstream will fix to
+  include in main tarball)
+
+* Mon Mar 24 2008 David Lutterkort <dlutter@redhat.com> - 0.24.3-1
+- New version
+
+* Wed Mar  5 2008 David Lutterkort <dlutter@redhat.com> - 0.24.2-1
 - New version
 
 * Sat Dec 22 2007 David Lutterkort <dlutter@redhat.com> - 0.24.1-1

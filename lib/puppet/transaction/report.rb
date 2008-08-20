@@ -25,13 +25,7 @@ class Puppet::Transaction::Report
             hash[key] = []
         end
 
-        domain = Facter.value("domain")
-        hostname = Facter.value("hostname")
-        if !domain || domain.empty? then
-            @host = hostname
-        else
-            @host = [hostname, domain].join(".")
-        end
+        @host = Puppet[:certname]
     end
 
     def name

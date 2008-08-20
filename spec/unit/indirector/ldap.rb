@@ -113,15 +113,25 @@ describe Puppet::Indirector::Ldap do
     describe "when connecting to ldap" do
         confine "LDAP is not available" => Puppet.features.ldap?
 
-        it "should only create the ldap connection when asked for it the first time" do
-            @searcher.connection.should equal(@searcher.connection)
-        end
-
         it "should create and start a Util::Ldap::Connection instance" do
             conn = mock 'connection', :connection => "myconn", :start => nil
             Puppet::Util::Ldap::Connection.expects(:instance).returns conn
 
             @searcher.connection.should == "myconn"
+        end
+
+        it "should only create the ldap connection when asked for it the first time" do
+            conn = mock 'connection', :connection => "myconn", :start => nil
+            Puppet::Util::Ldap::Connection.expects(:instance).returns conn
+
+            @searcher.connection
+        end
+
+        it "should cache the connection" do
+            conn = mock 'connection', :connection => "myconn", :start => nil
+            Puppet::Util::Ldap::Connection.expects(:instance).returns conn
+
+            @searcher.connection.should equal(@searcher.connection)
         end
     end
 

@@ -9,7 +9,7 @@
 #
 #   puppetrun [-a|--all] [-c|--class <class>] [-d|--debug] [-f|--foreground]
 #       [-h|--help] [--host <host>] [--no-fqdn] [--ignoreschedules]
-#       [-t|--tag <tag>] [--test]
+#       [-t|--tag <tag>] [--test] [-p|--ping]
 #
 # = Description
 #
@@ -108,6 +108,10 @@
 #   Print the hosts you would connect to but do not actually connect. This
 #   option requires LDAP support at this point.
 #
+# ping::
+#   
+#   Do a ICMP echo against the target host. Skip hosts that don't respond to ping.
+#
 # = Example
 #
 #   sudo puppetrun -p 10 --host host1 --host host2 -t remotefile -t webserver
@@ -154,6 +158,7 @@ flags = [
     [ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
     [ "--host",         			GetoptLong::REQUIRED_ARGUMENT ],
     [ "--parallel", "-p",			GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--ping", "-P",			GetoptLong::NO_ARGUMENT ],
     [ "--no-fqdn",  "-n",			GetoptLong::NO_ARGUMENT ],
     [ "--test",                     GetoptLong::NO_ARGUMENT ],
     [ "--version",  "-V",           GetoptLong::NO_ARGUMENT ]
@@ -168,6 +173,7 @@ options = {
     :ignoreschedules => false,
     :foreground => false,
     :parallel => 1,
+    :ping => false,
     :debug => false,
     :test => false,
     :all => false,
@@ -215,6 +221,8 @@ begin
                     $stderr.puts "Could not convert %s to an integer" % arg.inspect
                     exit(23)
                 end
+            when "--ping"
+                 options[:ping] = true 
             when "--foreground"
                 options[:foreground] = true
             when "--debug"
@@ -294,12 +302,12 @@ while go
     if children.length < options[:parallel] and ! todo.empty?
         host = todo.shift
         pid = fork do
-            # First make sure the client is up
-            out = %x{ping -c 1 #{host}}
-
-            unless $? == 0
-                $stderr.print "Could not contact %s\n" % host
-                next
+            if options[:ping]
+              out = %x{ping -c 1 #{host}}
+              unless $? == 0
+                  $stderr.print "Could not contact %s\n" % host
+                  next
+              end
             end
             client = Puppet::Network::Client.runner.new(
                 :Server => host,

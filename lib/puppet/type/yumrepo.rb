@@ -346,7 +346,23 @@ module Puppet
             newvalue(%r{[1-9][0-9]?}) { }
         end
 
-        
-        
+        newproperty(:proxy, :parent => Puppet::IniProperty) do
+            desc "URL to the proxy server for this repository.\n#{ABSENT_DOC}"
+            newvalue(:absent) { self.should = :absent }
+            # Should really check that it's a valid URL
+            newvalue(/.*/) { }
+        end
+
+        newproperty(:proxy_username, :parent => Puppet::IniProperty) do
+            desc "Username for this proxy.\n#{ABSENT_DOC}"
+            newvalue(:absent) { self.should = :absent }
+            newvalue(/.*/) { }
+        end
+
+        newproperty(:proxy_password, :parent => Puppet::IniProperty) do
+            desc "Password for this proxy.\n#{ABSENT_DOC}"
+            newvalue(:absent) { self.should = :absent }
+            newvalue(/.*/) { }
+        end
     end
 end

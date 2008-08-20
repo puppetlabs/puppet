@@ -338,7 +338,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
             if Puppet[:debug]
                 puts detail.backtrace
             end
-            Puppet.err "Could not retrieve #{args[:name]}s: %s" % detail
+            Puppet.err "Could not retrieve %ss: %s" % [args[:name], detail]
         end
 
         # Now clean up after ourselves
@@ -389,12 +389,13 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         Dir.entries(dir).find_all { |e| e =~ /\.rb$/ }.each do |file|
             fqfile = ::File.join(dir, file)
             begin
-                Puppet.info "Loading #{type} %s" % ::File.basename(file.sub(".rb",''))
+                Puppet.info "Loading %s %s" % 
+                    [type, ::File.basename(file.sub(".rb",''))]
                 Timeout::timeout(self.timeout) do
                     load fqfile
                 end
             rescue => detail
-                Puppet.warning "Could not load #{type} %s: %s" % [fqfile, detail]
+                Puppet.warning "Could not load %s %s: %s" % [type, fqfile, detail]
             end
         end
     end
