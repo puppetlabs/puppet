@@ -2,6 +2,17 @@ require 'puppet/ssl'
 
 # The base class for wrapping SSL instances.
 class Puppet::SSL::Base
+    # For now, use the YAML separator.
+    SEPARATOR = "\n---\n"
+
+    def self.from_multiple_s(text)
+        text.split(SEPARATOR).collect { |inst| from_s(inst) }
+    end
+
+    def self.to_multiple_s(instances)
+        instances.collect { |inst| inst.to_s }.join(SEPARATOR)
+    end
+
     def self.wraps(klass)
         @wrapped_class = klass
     end

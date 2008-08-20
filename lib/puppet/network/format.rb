@@ -61,6 +61,10 @@ class Puppet::Network::Format
             klass.instance_methods.include?(render_method)
     end
 
+    def to_s
+        "Puppet::Network::Format[%s]" % name
+    end
+
     private
 
     attr_reader :intern_method, :render_method, :intern_multiple_method, :render_multiple_method

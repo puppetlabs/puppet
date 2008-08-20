@@ -41,6 +41,40 @@ describe Puppet::SSL::Certificate do
 
             @class.from_s("my certificate")
         end
+
+        it "should create multiple certificate instances when asked" do
+            cert1 = stub 'cert1'
+            @class.expects(:from_s).with("cert1").returns cert1
+            cert2 = stub 'cert2'
+            @class.expects(:from_s).with("cert2").returns cert2
+
+            @class.from_multiple_s("cert1\n---\ncert2").should == [cert1, cert2]
+        end
+    end
+
+    describe "when converting to a string" do
+        before do
+            @certificate = @class.new("myname")
+        end
+
+        it "should return an empty string when it has no certificate" do
+            @certificate.to_s.should == ""
+        end
+
+        it "should convert the certificate to pem format" do
+            certificate = mock 'certificate', :to_pem => "pem"
+            @certificate.content = certificate
+            @certificate.to_s.should == "pem"
+        end
+
+        it "should be able to convert multiple instances to a string" do
+            cert2 = @class.new("foo")
+            @certificate.expects(:to_s).returns "cert1"
+            cert2.expects(:to_s).returns "cert2"
+
+            @class.to_multiple_s([@certificate, cert2]).should == "cert1\n---\ncert2"
+
+        end
     end
 
     describe "when managing instances" do
@@ -82,16 +116,6 @@ describe Puppet::SSL::Certificate do
             OpenSSL::X509::Certificate.expects(:new).with("my certificate").returns(certificate)
             @certificate.read(path).should equal(certificate)
             @certificate.content.should equal(certificate)
-        end
-
-        it "should return an empty string when converted to a string with no certificate" do
-            @certificate.to_s.should == ""
-        end
-
-        it "should convert the certificate to pem format when converted to a string" do
-            certificate = mock 'certificate', :to_pem => "pem"
-            @certificate.content = certificate
-            @certificate.to_s.should == "pem"
         end
 
         it "should have a :to_text method that it delegates to the actual key" do

@@ -53,20 +53,4 @@ Puppet::Network::FormatHandler.create(:marshal, :mime => "text/marshal") do
     end
 end
 
-Puppet::Network::FormatHandler.create(:s, :mime => "text/plain") do
-    # For now, use the YAML separator.
-    SEPARATOR = "\n---\n"
-
-    def intern_multiple(klass, text)
-        text.split(SEPARATOR).collect { |inst| intern(klass, inst) }
-    end
-
-    def render_multiple(instances)
-        instances.collect { |inst| render(inst) }.join(SEPARATOR)
-    end
-
-    # Everything's supported
-    def supported?(klass)
-        true
-    end
-end
+Puppet::Network::FormatHandler.create(:s, :mime => "text/plain")
