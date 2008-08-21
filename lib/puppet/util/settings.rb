@@ -645,10 +645,6 @@ These parameters affect the required permissions of any files specified after
 their specification.  Puppet will sometimes use these parameters to check its
 own configured state, so they can be used to make Puppet a bit more self-managing.
 
-Note also that the section names are entirely for human-level organizational
-purposes; they don't provide separate namespaces.  All parameters are in a
-single namespace.
-
 Generated on #{Time.now}.
 
 }.gsub(/^/, "# ")
