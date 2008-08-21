@@ -6,6 +6,8 @@
     Fixed #1526 - Fixed leak in template
 
     Fixed #1506 - Removed storeconfig duplicate indexes
+    
+    Fixed #1457 - case insensitive match for error
 
     Fixed #1508 - Added HP-UX package provider
 
