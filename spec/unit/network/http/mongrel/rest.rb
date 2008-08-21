@@ -58,6 +58,11 @@ describe "Puppet::Network::HTTP::MongrelREST" do
                 @handler.request_key(@request).should == "bar"
             end
 
+            it "should return nil as the request key if no second field is present" do
+                @params.expects(:[]).with(Mongrel::Const::REQUEST_PATH).returns "/foo"
+                @handler.request_key(@request).should be_nil
+            end
+
             it "should return the request body as the body" do
                 @request.expects(:body).returns "mybody"
                 @handler.body(@request).should == "mybody"

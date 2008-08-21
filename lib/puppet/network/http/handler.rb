@@ -81,7 +81,11 @@ module Puppet::Network::HTTP::Handler
     # Execute our search.
     def do_search(request, response)
         args = params(request)
-        result = model.search(args)
+        if key = request_key(request)
+            result = model.search(key, args)
+        else
+            result = model.search(args)
+        end
         if result.nil? or (result.is_a?(Array) and result.empty?)
             return do_exception(response, "Could not find instances in %s with '%s'" % [model.name, args.inspect], 404)
         end

@@ -91,6 +91,11 @@ describe Puppet::Indirector::REST do
                 it 'should return an instance of the model class' do
                     Puppet::TestIndirectedFoo.find('bar').class.should == Puppet::TestIndirectedFoo
                 end
+
+                it "should pass options all the way through" do
+                    @mock_model.expects(:find).with { |key, args| args["one"] == "two" and args["three"] == "four" }.returns @model_instance
+                    Puppet::TestIndirectedFoo.find('bar', :one => "two", :three => "four")
+                end
     
                 it 'should return the instance of the model class associated with the provided lookup key' do
                     Puppet::TestIndirectedFoo.find('bar').value.should == @model_instance.value
@@ -150,6 +155,11 @@ describe Puppet::Indirector::REST do
     
                 it 'should return all matching results' do
                     Puppet::TestIndirectedFoo.search('bar').length.should == @model_instances.length
+                end
+
+                it "should pass options all the way through" do
+                    @mock_model.expects(:search).with { |key, args| args["one"] == "two" and args["three"] == "four" }.returns @model_instances
+                    Puppet::TestIndirectedFoo.search("foo", :one => "two", :three => "four")
                 end
     
                 it 'should return model instances' do
@@ -315,6 +325,11 @@ describe Puppet::Indirector::REST do
                 it 'should return an instance of the model class' do
                     Puppet::TestIndirectedFoo.find('bar').class.should == Puppet::TestIndirectedFoo
                 end
+
+                it "should pass options all the way through" do
+                    @mock_model.expects(:find).with { |key, args| args["one"] == "two" and args["three"] == "four" }.returns @model_instance
+                    Puppet::TestIndirectedFoo.find('bar', :one => "two", :three => "four")
+                end
     
                 it 'should return the instance of the model class associated with the provided lookup key' do
                     Puppet::TestIndirectedFoo.find('bar').value.should == @model_instance.value
@@ -371,6 +386,11 @@ describe Puppet::Indirector::REST do
     
                 it 'should return all matching results' do
                     Puppet::TestIndirectedFoo.search('bar').length.should == @model_instances.length
+                end
+
+                it "should pass options all the way through" do
+                    @mock_model.expects(:search).with { |key, args| args["one"] == "two" and args["three"] == "four" }.returns @model_instances
+                    Puppet::TestIndirectedFoo.search('bar', :one => "two", :three => "four")
                 end
     
                 it 'should return model instances' do
@@ -465,7 +485,7 @@ describe Puppet::Indirector::REST do
                 it "should not fail" do
                     lambda { @instance.save }.should_not raise_error
                 end
-    
+
                 it 'should return an instance of the model class' do
                     @instance.save.class.should == Puppet::TestIndirectedFoo
                 end

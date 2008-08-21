@@ -32,31 +32,54 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
         {"Accept" => model.supported_formats.join(", ")}
     end
   
-    def network
-        Puppet::Network::HttpPool.http_instance(Puppet[:server], Puppet[:masterport].to_i)
+    def network(request)
+        if request.key =~ /^\w+:\/\// # it looks like a URI
+            begin
+                uri = URI.parse(URI.escape(request.key))
+            rescue => detail
+                raise ArgumentError, "Could not understand URL %s: %s" % [source, detail.to_s]
+            end
+            server = uri.host || Puppet[:server]
+            port = uri.port.to_i == 0 ? Puppet[:masterport].to_i : uri.port.to_i
+        else
+            server = Puppet[:server]
+            port = Puppet[:masterport].to_i
+        end
+
+        Puppet::Network::HttpPool.http_instance(server, port)
     end
 
     def find(request)
-        deserialize network.get("/#{indirection.name}/#{request.key}", headers)
+        deserialize network(request).get("/#{indirection.name}/#{request.key}#{query_string(request)}", headers)
     end
     
     def search(request)
         if request.key
-            path = "/#{indirection.name}s/#{request.key}"
+            path = "/#{indirection.name}s/#{request.key}#{query_string(request)}"
         else
-            path = "/#{indirection.name}s"
+            path = "/#{indirection.name}s#{query_string(request)}"
         end
-        unless result = deserialize(network.get(path, headers), true)
+        unless result = deserialize(network(request).get(path, headers), true)
             return []
         end
         return result
     end
     
     def destroy(request)
-        deserialize network.delete("/#{indirection.name}/#{request.key}", headers)
+        raise ArgumentError, "DELETE does not accept options" unless request.options.empty?
+        deserialize network(request).delete("/#{indirection.name}/#{request.key}", headers)
     end
     
     def save(request)
-        deserialize network.put("/#{indirection.name}/", request.instance.render, headers)
+        raise ArgumentError, "PUT does not accept options" unless request.options.empty?
+        deserialize network(request).put("/#{indirection.name}/", request.instance.render, headers)
+    end
+
+    private
+
+    # Create the qurey string, if options are present.
+    def query_string(request)
+        return "" unless request.options and ! request.options.empty?
+        "?" + request.options.collect { |key, value| "%s=%s" % [key, value] }.join("&")
     end
 end

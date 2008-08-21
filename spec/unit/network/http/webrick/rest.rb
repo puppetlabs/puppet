@@ -52,6 +52,11 @@ describe Puppet::Network::HTTP::WEBrickREST do
                 @handler.request_key(@request).should == "bar"
             end
 
+            it "should return nil as the request key if there is no second field" do
+                @request.expects(:path).returns "/foo"
+                @handler.request_key(@request).should be_nil
+            end
+
             it "should return the request body as the body" do
                 @request.expects(:body).returns "my body"
                 @handler.body(@request).should == "my body"

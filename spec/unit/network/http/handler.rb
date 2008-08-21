@@ -302,9 +302,21 @@ describe Puppet::Network::HTTP::Handler do
 
             it "should use a common method for determining the request parameters" do
                 @handler.stubs(:params).returns(:foo => :baz, :bar => :xyzzy)
-                @model_class.expects(:search).with do |args|
+                @model_class.expects(:search).with do |key, args|
                     args[:foo] == :baz and args[:bar] == :xyzzy
                 end.returns @result
+                @handler.do_search(@request, @response)
+            end
+
+            it "should use a request key if one is provided" do
+                @handler.expects(:request_key).with(@request).returns "foo"
+                @model_class.expects(:search).with { |key, args| key == "foo" }.returns @result
+                @handler.do_search(@request, @response)
+            end
+
+            it "should work with no request key if none is provided" do
+                @handler.expects(:request_key).with(@request).returns nil
+                @model_class.expects(:search).with { |args| args.is_a?(Hash) }.returns @result
                 @handler.do_search(@request, @response)
             end
 

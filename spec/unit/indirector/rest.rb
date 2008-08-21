@@ -91,11 +91,40 @@ describe Puppet::Indirector::REST do
             Puppet.settings.stubs(:value).returns("rest_testing")
         end
 
-        it "should use the :server setting as the host and the :masterport setting (as an Integer) as the port" do
-            Puppet.settings.expects(:value).with(:server).returns "myserver"
-            Puppet.settings.expects(:value).with(:masterport).returns "1234"
-            Puppet::Network::HttpPool.expects(:http_instance).with("myserver", 1234).returns "myconn"
-            @searcher.network.should == "myconn"
+        describe "and the request key is not a URL" do
+            it "should use the :server setting as the host and the :masterport setting (as an Integer) as the port" do
+                @request = stub 'request', :key => "foo"
+                Puppet.settings.expects(:value).with(:server).returns "myserver"
+                Puppet.settings.expects(:value).with(:masterport).returns "1234"
+                Puppet::Network::HttpPool.expects(:http_instance).with("myserver", 1234).returns "myconn"
+                @searcher.network(@request).should == "myconn"
+            end
+        end
+
+        describe "and the request key is a URL" do
+            it "should use the :server setting and masterport setting, as an Integer, as the host if no values are provided" do
+                @request = stub 'request', :key => "puppet:///key"
+
+                Puppet.settings.expects(:value).with(:server).returns "myserver"
+                Puppet.settings.expects(:value).with(:masterport).returns "1234"
+                Puppet::Network::HttpPool.expects(:http_instance).with("myserver", 1234).returns "myconn"
+                @searcher.network(@request).should == "myconn"
+            end
+
+            it "should use the server if one is provided" do
+                @request.stubs(:key).returns "puppet://host/key"
+
+                Puppet.settings.expects(:value).with(:masterport).returns "1234"
+                Puppet::Network::HttpPool.expects(:http_instance).with("host", 1234).returns "myconn"
+                @searcher.network(@request).should == "myconn"
+            end
+
+            it "should use the server and port if they are provided" do
+                @request.stubs(:key).returns "puppet://host:123/key"
+
+                Puppet::Network::HttpPool.expects(:http_instance).with("host", 123).returns "myconn"
+                @searcher.network(@request).should == "myconn"
+            end
         end
     end
 
@@ -104,7 +133,7 @@ describe Puppet::Indirector::REST do
             @connection = stub('mock http connection', :get => @response)
             @searcher.stubs(:network).returns(@connection)    # neuter the network connection
 
-            @request = stub 'request', :key => 'foo'
+            @request = stub 'request', :key => 'foo', :options => {}
         end
 
         it "should call the GET http method on a network connection" do
@@ -123,6 +152,13 @@ describe Puppet::Indirector::REST do
         it "should use the indirection name and request key to create the path" do
             should_path = "/%s/%s" % [@indirection.name.to_s, "foo"]
             @connection.expects(:get).with { |path, args| path == should_path }.returns(@response)
+            @searcher.find(@request)
+        end
+
+        it "should include all options in the query string" do
+            @request.stubs(:options).returns(:one => "two", :three => "four")
+            should_path = "/%s/%s" % [@indirection.name.to_s, "foo"]
+            @connection.expects(:get).with { |path, args| path =~ /\?one=two&three=four$/ }.returns(@response)
             @searcher.find(@request)
         end
 
@@ -151,7 +187,7 @@ describe Puppet::Indirector::REST do
 
             @model.stubs(:convert_from_multiple)
 
-            @request = stub 'request', :key => 'foo'
+            @request = stub 'request', :key => 'foo', :options => {}
         end
 
         it "should call the GET http method on a network connection" do
@@ -180,6 +216,14 @@ describe Puppet::Indirector::REST do
             @searcher.search(@request)
         end
 
+        it "should include all options in the query string" do
+            @request.stubs(:options).returns(:one => "two", :three => "four")
+
+            should_path = "/%s/%s" % [@indirection.name.to_s, "foo"]
+            @connection.expects(:get).with { |path, args| path =~ /\?one=two&three=four$/ }.returns(@response)
+            @searcher.search(@request)
+        end
+
         it "should provide an Accept header containing the list of supported formats joined with commas" do
             @connection.expects(:get).with { |path, args| args["Accept"] == "supported, formats" }.returns(@response)
 
@@ -204,13 +248,19 @@ describe Puppet::Indirector::REST do
             @connection = stub('mock http connection', :delete => @response)
             @searcher.stubs(:network).returns(@connection)    # neuter the network connection
 
-            @request = stub 'request', :key => 'foo'
+            @request = stub 'request', :key => 'foo', :options => {}
         end
 
         it "should call the DELETE http method on a network connection" do
             @searcher.expects(:network).returns @connection
             @connection.expects(:delete).returns @response
             @searcher.destroy(@request)
+        end
+
+        it "should fail if any options are provided, since DELETE apparently does not support query options" do
+            @request.stubs(:options).returns(:one => "two", :three => "four")
+
+            lambda { @searcher.destroy(@request) }.should raise_error(ArgumentError)
         end
 
         it "should deserialize and return the http response" do
@@ -250,13 +300,19 @@ describe Puppet::Indirector::REST do
             @searcher.stubs(:network).returns(@connection)    # neuter the network connection
 
             @instance = stub 'instance', :render => "mydata"
-            @request = stub 'request', :instance => @instance
+            @request = stub 'request', :instance => @instance, :options => {}
         end
 
         it "should call the PUT http method on a network connection" do
             @searcher.expects(:network).returns @connection
             @connection.expects(:put).returns @response
             @searcher.save(@request)
+        end
+
+        it "should fail if any options are provided, since DELETE apparently does not support query options" do
+            @request.stubs(:options).returns(:one => "two", :three => "four")
+
+            lambda { @searcher.save(@request) }.should raise_error(ArgumentError)
         end
 
         it "should use the indirection name as the path for the request" do
