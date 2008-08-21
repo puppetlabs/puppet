@@ -8,6 +8,8 @@
     set file paths to 'false' to disable the CRL.
 
 0.24.x
+    Fixed #1508 - Added HP-UX package provider
+
     Fixed #1502 - Fixed poor stored configuration performance
 
     Fixed #1510 - Storeconfiguration fixed for Rails 2.1
