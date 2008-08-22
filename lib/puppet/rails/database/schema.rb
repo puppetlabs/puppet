@@ -16,7 +16,6 @@ class Puppet::Rails::Schema
                     t.column :updated_at, :datetime
                     t.column :created_at, :datetime
                 end
-                add_index :resources, :id, :integer => true
                 add_index :resources, :host_id, :integer => true
                 add_index :resources, :source_file_id, :integer => true
 
@@ -34,7 +33,6 @@ class Puppet::Rails::Schema
                     t.column :updated_at, :datetime
                     t.column :created_at, :datetime
                 end
-                add_index :source_files, :id, :integer => true
                 add_index :source_files, :filename
 
                 create_table :resource_tags do |t|
@@ -43,7 +41,6 @@ class Puppet::Rails::Schema
                     t.column :updated_at, :datetime
                     t.column :created_at, :datetime
                 end
-                add_index :resource_tags, :id, :integer => true
                 add_index :resource_tags, :resource_id, :integer => true
                 add_index :resource_tags, :puppet_tag_id, :integer => true
 
@@ -65,7 +62,6 @@ class Puppet::Rails::Schema
                     t.column :source_file_id, :integer
                     t.column :created_at, :datetime
                 end
-                add_index :hosts, :id, :integer => true
                 add_index :hosts, :source_file_id, :integer => true
                 add_index :hosts, :name
 
@@ -74,7 +70,6 @@ class Puppet::Rails::Schema
                     t.column :updated_at, :datetime
                     t.column :created_at, :datetime
                 end
-                add_index :fact_names, :id, :integer => true
                 add_index :fact_names, :name
 
                 create_table :fact_values do |t| 
@@ -84,7 +79,6 @@ class Puppet::Rails::Schema
                     t.column :updated_at, :datetime
                     t.column :created_at, :datetime
                 end 
-                add_index :fact_values, :id, :integer => true
                 add_index :fact_values, :fact_name_id, :integer => true
                 add_index :fact_values, :host_id, :integer => true
 
@@ -96,7 +90,6 @@ class Puppet::Rails::Schema
                     t.column :updated_at, :datetime
                     t.column :created_at, :datetime
                 end
-                add_index :param_values, :id, :integer => true
                 add_index :param_values, :param_name_id, :integer => true
                 add_index :param_values, :resource_id, :integer => true
          
@@ -105,7 +98,6 @@ class Puppet::Rails::Schema
                     t.column :updated_at, :datetime
                     t.column :created_at, :datetime
                 end
-                add_index :param_names, :id, :integer => true
                 add_index :param_names, :name
             end 
         end
