@@ -158,7 +158,7 @@ describe Puppet::Indirector::REST do
         it "should include all options in the query string" do
             @request.stubs(:options).returns(:one => "two", :three => "four")
             should_path = "/%s/%s" % [@indirection.name.to_s, "foo"]
-            @connection.expects(:get).with { |path, args| path =~ /\?one=two&three=four$/ }.returns(@response)
+            @connection.expects(:get).with { |path, args| path =~ /\?one=two&three=four$/ or path =~ /\?three=four&one=two$/ }.returns(@response)
             @searcher.find(@request)
         end
 
@@ -220,7 +220,7 @@ describe Puppet::Indirector::REST do
             @request.stubs(:options).returns(:one => "two", :three => "four")
 
             should_path = "/%s/%s" % [@indirection.name.to_s, "foo"]
-            @connection.expects(:get).with { |path, args| path =~ /\?one=two&three=four$/ }.returns(@response)
+            @connection.expects(:get).with { |path, args| path =~ /\?one=two&three=four$/ or path =~ /\?three=four&one=two$/ }.returns(@response)
             @searcher.search(@request)
         end
 
