@@ -1,8 +1,33 @@
 require 'net/http'
 require 'uri'
 
+require 'puppet/network/http_pool'
+
 # Access objects via REST
 class Puppet::Indirector::REST < Puppet::Indirector::Terminus
+
+    class << self
+        attr_reader :server_setting, :port_setting
+    end
+
+    # Specify the setting that we should use to get the server name.
+    def self.use_server_setting(setting)
+        @server_setting = setting
+    end
+
+    def self.server
+        return Puppet.settings[server_setting || :server]
+    end
+
+    # Specify the setting that we should use to get the port.
+    def self.use_port_setting(setting)
+        @port_setting = setting
+    end
+
+    def self.port
+        return Puppet.settings[port_setting || :masterport].to_i
+    end
+
     # Figure out the content type, turn that into a format, and use the format
     # to extract the body of the response.
     def deserialize(response, multiple = false)
@@ -33,20 +58,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     end
   
     def network(request)
-        if request.key =~ /^\w+:\/\// # it looks like a URI
-            begin
-                uri = URI.parse(URI.escape(request.key))
-            rescue => detail
-                raise ArgumentError, "Could not understand URL %s: %s" % [source, detail.to_s]
-            end
-            server = uri.host || Puppet[:server]
-            port = uri.port.to_i == 0 ? Puppet[:masterport].to_i : uri.port.to_i
-        else
-            server = Puppet[:server]
-            port = Puppet[:masterport].to_i
-        end
-
-        Puppet::Network::HttpPool.http_instance(server, port)
+        Puppet::Network::HttpPool.http_instance(request.server || self.class.server, request.port || self.class.port)
     end
 
     def find(request)

@@ -75,6 +75,37 @@ describe Puppet::Indirector::Request do
         it "should keep its options as a hash even if another option is specified" do
             Puppet::Indirector::Request.new(:ind, :method, :key, :foo => "bar").options.should be_instance_of(Hash)
         end
+
+        describe "and the request key is a URI" do
+            it "should set the protocol to the URI scheme" do
+                Puppet::Indirector::Request.new(:ind, :method, "http://host/stuff").protocol.should == "http"
+            end
+
+            it "should set the server if a server is provided" do
+                Puppet::Indirector::Request.new(:ind, :method, "http://host/stuff").server.should == "host"
+            end
+
+            it "should set the server and port if both are provided" do
+                Puppet::Indirector::Request.new(:ind, :method, "http://host:543/stuff").port.should == 543
+            end
+
+            it "should default to the masterport if the URI scheme is 'puppet'" do
+                Puppet.settings.expects(:value).with(:masterport).returns "321"
+                Puppet::Indirector::Request.new(:ind, :method, "puppet://host/stuff").port.should == 321
+            end
+
+            it "should use the provided port if the URI scheme is not 'puppet'" do
+                Puppet::Indirector::Request.new(:ind, :method, "http://host/stuff").port.should == 80
+            end
+
+            it "should set the request key to the path from the URI" do
+                Puppet::Indirector::Request.new(:ind, :method, "http:///stuff").key.should == "stuff"
+            end
+
+            it "should set the :uri attribute to the full URI" do
+                Puppet::Indirector::Request.new(:ind, :method, "http:///stuff").uri.should == "http:///stuff"
+            end
+        end
     end
 
     it "should look use the Indirection class to return the appropriate indirection" do

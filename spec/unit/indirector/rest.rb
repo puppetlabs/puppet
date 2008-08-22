@@ -45,6 +45,38 @@ describe Puppet::Indirector::REST do
         @searcher = @rest_class.new
     end
 
+    it "should have a method for specifying what setting a subclass should use to retrieve its server" do
+        @rest_class.should respond_to(:use_server_setting)
+    end
+
+    it "should use any specified setting to pick the server" do
+        @rest_class.expects(:server_setting).returns :servset
+        Puppet.settings.expects(:value).with(:servset).returns "myserver"
+        @rest_class.server.should == "myserver"
+    end
+
+    it "should default to :server for the server setting" do
+        @rest_class.expects(:server_setting).returns nil
+        Puppet.settings.expects(:value).with(:server).returns "myserver"
+        @rest_class.server.should == "myserver"
+    end
+
+    it "should have a method for specifying what setting a subclass should use to retrieve its port" do
+        @rest_class.should respond_to(:use_port_setting)
+    end
+
+    it "should use any specified setting to pick the port" do
+        @rest_class.expects(:port_setting).returns :servset
+        Puppet.settings.expects(:value).with(:servset).returns "321"
+        @rest_class.port.should == 321
+    end
+
+    it "should default to :port for the port setting" do
+        @rest_class.expects(:port_setting).returns nil
+        Puppet.settings.expects(:value).with(:masterport).returns "543"
+        @rest_class.port.should == 543
+    end
+
     describe "when deserializing responses" do
         it "should return nil if the response code is 404" do
             response = mock 'response'
@@ -91,40 +123,26 @@ describe Puppet::Indirector::REST do
             Puppet.settings.stubs(:value).returns("rest_testing")
         end
 
-        describe "and the request key is not a URL" do
-            it "should use the :server setting as the host and the :masterport setting (as an Integer) as the port" do
-                @request = stub 'request', :key => "foo"
-                Puppet.settings.expects(:value).with(:server).returns "myserver"
-                Puppet.settings.expects(:value).with(:masterport).returns "1234"
-                Puppet::Network::HttpPool.expects(:http_instance).with("myserver", 1234).returns "myconn"
-                @searcher.network(@request).should == "myconn"
-            end
+        it "should use the class's server and port if the indirection request provides neither" do
+            @request = stub 'request', :key => "foo", :server => nil, :port => nil
+            @searcher.class.expects(:port).returns 321
+            @searcher.class.expects(:server).returns "myserver"
+            Puppet::Network::HttpPool.expects(:http_instance).with("myserver", 321).returns "myconn"
+            @searcher.network(@request).should == "myconn"
         end
 
-        describe "and the request key is a URL" do
-            it "should use the :server setting and masterport setting, as an Integer, as the host if no values are provided" do
-                @request = stub 'request', :key => "puppet:///key"
+        it "should use the server from the indirection request if one is present" do
+            @request = stub 'request', :key => "foo", :server => "myserver", :port => nil
+            @searcher.class.stubs(:port).returns 321
+            Puppet::Network::HttpPool.expects(:http_instance).with("myserver", 321).returns "myconn"
+            @searcher.network(@request).should == "myconn"
+        end
 
-                Puppet.settings.expects(:value).with(:server).returns "myserver"
-                Puppet.settings.expects(:value).with(:masterport).returns "1234"
-                Puppet::Network::HttpPool.expects(:http_instance).with("myserver", 1234).returns "myconn"
-                @searcher.network(@request).should == "myconn"
-            end
-
-            it "should use the server if one is provided" do
-                @request.stubs(:key).returns "puppet://host/key"
-
-                Puppet.settings.expects(:value).with(:masterport).returns "1234"
-                Puppet::Network::HttpPool.expects(:http_instance).with("host", 1234).returns "myconn"
-                @searcher.network(@request).should == "myconn"
-            end
-
-            it "should use the server and port if they are provided" do
-                @request.stubs(:key).returns "puppet://host:123/key"
-
-                Puppet::Network::HttpPool.expects(:http_instance).with("host", 123).returns "myconn"
-                @searcher.network(@request).should == "myconn"
-            end
+        it "should use the port from the indirection request if one is present" do
+            @request = stub 'request', :key => "foo", :server => nil, :port => 321
+            @searcher.class.stubs(:server).returns "myserver"
+            Puppet::Network::HttpPool.expects(:http_instance).with("myserver", 321).returns "myconn"
+            @searcher.network(@request).should == "myconn"
         end
     end
 
