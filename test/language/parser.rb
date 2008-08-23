@@ -1208,5 +1208,13 @@ file { "/tmp/yayness":
             parser.import("test") 
         end
     end
+
+    def test_watch_file_only_once
+        FileTest.stubs(:exists?).returns(true)
+        parser = mkparser
+        parser.watch_file("doh")
+        parser.watch_file("doh")
+        assert_equal(1, parser.files.select { |name, file| file.file == "doh" }.length, "Length of watched 'doh' files was not 1")
+    end
 end
 
