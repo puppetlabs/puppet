@@ -98,13 +98,14 @@ class Puppet::FileServing::Configuration
         # Reparse the configuration if necessary.
         readconfig
 
-        raise(ArgumentError, "Cannot find file: Invalid path '%s'" % uri) unless uri =~ %r{/([-\w]+)/?}
+        raise(ArgumentError, "Cannot find file: Invalid path '%s'" % uri) unless uri =~ %r{^([-\w]+)(/|$)}
 
         # the dir is based on one of the mounts
         # so first retrieve the mount path
         mount = path = nil
+
         # Strip off the mount name.
-        mount_name, path = uri.sub(%r{^/}, '').split(File::Separator, 2)
+        mount_name, path = uri.split(File::Separator, 2)
 
         return nil unless mount = @mounts[mount_name]
 

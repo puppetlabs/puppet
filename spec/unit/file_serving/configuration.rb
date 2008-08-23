@@ -111,55 +111,60 @@ describe Puppet::FileServing::Configuration do
             @config = Puppet::FileServing::Configuration.create
         end
 
-        it "should fail if the uri does not match a leading slash followed by a valid mount name" do
+        it "should fail if the uri has a leading slash" do
             @parser.expects(:parse).returns(@mounts)
-            proc { @config.file_path("something") }.should raise_error(ArgumentError)
+            proc { @config.file_path("/something") }.should raise_error(ArgumentError)
+        end
+
+        it "should fail if the uri does not start with a valid mount name" do
+            @parser.expects(:parse).returns(@mounts)
+            proc { @config.file_path("some.thing") }.should raise_error(ArgumentError)
         end
 
         it "should use the first term after the first slash for the mount name" do
             @parser.expects(:parse).returns(@mounts)
             FileTest.stubs(:exists?).returns(true)
             @mount1.expects(:file)
-            @config.file_path("/one")
+            @config.file_path("one")
         end
 
         it "should use the remainder of the URI after the mount name as the file name" do
             @parser.expects(:parse).returns(@mounts)
             @mount1.expects(:file).with("something/else", {})
             FileTest.stubs(:exists?).returns(true)
-            @config.file_path("/one/something/else")
+            @config.file_path("one/something/else")
         end
 
         it "should treat a bare name as a mount and no relative file" do
             @parser.expects(:parse).returns(@mounts)
             @mount1.expects(:file).with(nil, {})
             FileTest.stubs(:exists?).returns(true)
-            @config.file_path("/one")
+            @config.file_path("one")
         end
 
         it "should treat a name with a trailing slash equivalently to a name with no trailing slash" do
             @parser.expects(:parse).returns(@mounts)
             @mount1.expects(:file).with(nil, {})
             FileTest.stubs(:exists?).returns(true)
-            @config.file_path("/one/")
+            @config.file_path("one/")
         end
 
         it "should return nil if the mount cannot be found" do
             @parser.expects(:changed?).returns(true)
             @parser.expects(:parse).returns({})
-            @config.file_path("/one/something").should be_nil
+            @config.file_path("one/something").should be_nil
         end
 
         it "should return nil if the mount does not contain the file" do
             @parser.expects(:parse).returns(@mounts)
             @mount1.expects(:file).with("something/else", {}).returns(nil)
-            @config.file_path("/one/something/else").should be_nil
+            @config.file_path("one/something/else").should be_nil
         end
 
         it "should return the fully qualified path if the mount exists" do
             @parser.expects(:parse).returns(@mounts)
             @mount1.expects(:file).with("something/else", {}).returns("/full/path")
-            @config.file_path("/one/something/else").should == "/full/path"
+            @config.file_path("one/something/else").should == "/full/path"
         end
 
         it "should reparse the configuration file when it has changed" do
@@ -167,11 +172,11 @@ describe Puppet::FileServing::Configuration do
             @parser.expects(:changed?).returns(true)
             @parser.expects(:parse).returns(@mounts)
             FileTest.stubs(:exists?).returns(true)
-            @config.file_path("/one/something")
+            @config.file_path("one/something")
 
             @parser.expects(:changed?).returns(true)
             @parser.expects(:parse).returns({})
-            @config.file_path("/one/something").should be_nil
+            @config.file_path("one/something").should be_nil
         end
     end
 
@@ -193,32 +198,32 @@ describe Puppet::FileServing::Configuration do
         end
 
         it "should return false if the mount cannot be found" do
-            @config.authorized?("/nope/my/file").should be_false
+            @config.authorized?("nope/my/file").should be_false
         end
 
         it "should use the mount to determine authorization" do
             @mount1.expects(:allowed?)
-            @config.authorized?("/one/my/file")
+            @config.authorized?("one/my/file")
         end
 
         it "should pass the client's name to the mount if provided" do
             @mount1.expects(:allowed?).with("myhost", nil)
-            @config.authorized?("/one/my/file", :node => "myhost")
+            @config.authorized?("one/my/file", :node => "myhost")
         end
 
         it "should pass the client's IP to the mount if provided" do
             @mount1.expects(:allowed?).with("myhost", "myip")
-            @config.authorized?("/one/my/file", :node => "myhost", :ipaddress => "myip")
+            @config.authorized?("one/my/file", :node => "myhost", :ipaddress => "myip")
         end
 
         it "should return true if the mount allows the client" do
             @mount1.expects(:allowed?).returns(true)
-            @config.authorized?("/one/my/file").should be_true
+            @config.authorized?("one/my/file").should be_true
         end
 
         it "should return false if the mount denies the client"  do
             @mount1.expects(:allowed?).returns(false)
-            @config.authorized?("/one/my/file").should be_false
+            @config.authorized?("one/my/file").should be_false
         end
     end
 end

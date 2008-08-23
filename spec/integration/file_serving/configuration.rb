@@ -29,12 +29,12 @@ describe Puppet::FileServing::Configuration, " when finding files with Puppet::F
 
     it "should return nil if the file does not exist" do
         FileTest.expects(:exists?).with("/my/path/my/file").returns(false)
-        @config.file_path("/mymount/my/file").should be_nil
+        @config.file_path("mymount/my/file").should be_nil
     end
 
     it "should return the full file path if the file exists" do
         FileTest.expects(:exists?).with("/my/path/my/file").returns(true)
-        @config.file_path("/mymount/my/file").should == "/my/path/my/file"
+        @config.file_path("mymount/my/file").should == "/my/path/my/file"
     end
 
     after do
