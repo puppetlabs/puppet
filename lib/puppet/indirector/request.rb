@@ -60,6 +60,13 @@ class Puppet::Indirector::Request
         rescue => detail
             raise ArgumentError, "Could not understand URL %s: %s" % [source, detail.to_s]
         end
+
+        # Just short-circuit these to full paths
+        if uri.scheme == "file"
+            @key = uri.path
+            return
+        end
+
         @server = uri.host if uri.host
 
         # If the URI class can look up the scheme, it will provide a port,

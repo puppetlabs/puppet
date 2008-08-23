@@ -77,6 +77,26 @@ describe Puppet::Indirector::Request do
         end
 
         describe "and the request key is a URI" do
+            describe "and the URI is a 'file' URI" do
+                before do
+                    @request = Puppet::Indirector::Request.new(:ind, :method, "file:///my/file")
+                end
+
+                it "should set the request key to the full file path" do @request.key.should == "/my/file" end
+
+                it "should not set the protocol" do
+                    @request.protocol.should be_nil
+                end
+
+                it "should not set the port" do
+                    @request.port.should be_nil
+                end
+
+                it "should not set the server" do
+                    @request.server.should be_nil
+                end
+            end
+
             it "should set the protocol to the URI scheme" do
                 Puppet::Indirector::Request.new(:ind, :method, "http://host/stuff").protocol.should == "http"
             end
@@ -98,7 +118,7 @@ describe Puppet::Indirector::Request do
                 Puppet::Indirector::Request.new(:ind, :method, "http://host/stuff").port.should == 80
             end
 
-            it "should set the request key to the path from the URI" do
+            it "should set the request key to the unqualified path from the URI" do
                 Puppet::Indirector::Request.new(:ind, :method, "http:///stuff").key.should == "stuff"
             end
 
