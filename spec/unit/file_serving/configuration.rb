@@ -35,7 +35,7 @@ describe Puppet::FileServing::Configuration do
         Puppet::Util::Cacher.invalidate
     end
 
-    describe Puppet::FileServing::Configuration, " when initializing" do
+    describe Puppet::FileServing::Configuration, "when initializing" do
 
         it "should work without a configuration file" do
             FileTest.stubs(:exists?).with(@path).returns(false)
@@ -55,7 +55,7 @@ describe Puppet::FileServing::Configuration do
         end
     end
 
-    describe Puppet::FileServing::Configuration, " when parsing the configuration file" do
+    describe Puppet::FileServing::Configuration, "when parsing the configuration file" do
 
         before do
             FileTest.stubs(:exists?).with(@path).returns(true)
@@ -95,7 +95,7 @@ describe Puppet::FileServing::Configuration do
         end
     end
 
-    describe Puppet::FileServing::Configuration, " when finding files" do
+    describe Puppet::FileServing::Configuration, "when finding files" do
 
         before do
             @parser = mock 'parser'
@@ -175,7 +175,7 @@ describe Puppet::FileServing::Configuration do
         end
     end
 
-    describe Puppet::FileServing::Configuration, " when checking authorization" do
+    describe Puppet::FileServing::Configuration, "when checking authorization" do
 
         before do
             @parser = mock 'parser'
