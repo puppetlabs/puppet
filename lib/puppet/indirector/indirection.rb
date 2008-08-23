@@ -262,7 +262,11 @@ class Puppet::Indirector::Indirection
         return unless terminus.respond_to?(:authorized?)
 
         unless terminus.authorized?(request)
-            raise ArgumentError, "Not authorized to call %s on %s with %s" % [request.method, request.key, request.options.inspect]
+            msg = "Not authorized to call %s on %s" % [request.method, request.key]
+            unless request.options.empty?
+                msg += " with %s" % request.options.inspect
+            end
+            raise ArgumentError, msg
         end
     end
 
