@@ -1,4 +1,8 @@
 0.24.x
+    Added spec Rake task
+
+    Fixed #1526 - Fixed leak in template
+
     Fixed #1506 - Removed storeconfig duplicate indexes
 
     Fixed #1508 - Added HP-UX package provider
