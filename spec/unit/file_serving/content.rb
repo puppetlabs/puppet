@@ -16,6 +16,20 @@ describe Puppet::FileServing::Content do
     it "should should include the IndirectionHooks module in its indirection" do
         Puppet::FileServing::Content.indirection.metaclass.included_modules.should include(Puppet::FileServing::IndirectionHooks)
     end
+
+    it "should have a method for collecting its attributes" do
+        Puppet::FileServing::Content.new("sub/path", :path => "/base").should respond_to(:collect)
+    end
+
+    it "should retrieve and store its contents when its attributes are collected" do
+        content = Puppet::FileServing::Content.new("sub/path", :path => "/base")
+
+        result = "foo"
+        File.stubs(:lstat).returns(stub("stat", :ftype => "file"))
+        File.expects(:read).with("/base/sub/path").returns result
+        content.collect
+        content.content.should equal(result)
+    end
 end
 
 describe Puppet::FileServing::Content, "when returning the contents" do

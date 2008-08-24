@@ -5,8 +5,8 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/file_serving/metadata'
 
 describe Puppet::FileServing::Metadata do
-    it "should should be a subclass of FileBase" do
-        Puppet::FileServing::Metadata.superclass.should equal(Puppet::FileServing::FileBase)
+    it "should should be a subclass of Base" do
+        Puppet::FileServing::Metadata.superclass.should equal(Puppet::FileServing::Base)
     end
 
     it "should indirect file_metadata" do
