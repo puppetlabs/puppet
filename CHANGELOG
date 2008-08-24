@@ -1,4 +1,6 @@
 0.24.x
+    Added simple rake task for running unit tests
+
     Added spec Rake task
 
     Fixed #1526 - Fixed leak in template

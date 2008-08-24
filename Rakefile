@@ -156,3 +156,8 @@ task :spec do
          t.spec_files = FileList['spec/**/*.rb']
     end
 end
+
+desc "Run the unit tests"
+task :unit do
+    sh "cd test; rake"
+end
