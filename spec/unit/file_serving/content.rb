@@ -45,27 +45,3 @@ describe Puppet::FileServing::Content, "when returning the contents" do
         @content.content.should == :mycontent
     end
 end
-
-describe Puppet::FileServing::Content, "when converting to yaml" do
-    it "should fail if no path has been set" do
-        @content = Puppet::FileServing::Content.new("some/key")
-        proc { @content.to_yaml }.should raise_error(ArgumentError)
-    end
-
-    it "should return the file contents" do
-        @content = Puppet::FileServing::Content.new("some/path")
-        @content.path = "/base/path"
-        @content.expects(:content).returns(:content)
-        @content.to_yaml.should == :content
-    end
-end
-
-describe Puppet::FileServing::Content, "when converting from yaml" do
-    # LAK:FIXME This isn't in the right place, but we need some kind of
-    # control somewhere that requires that all REST connections only pull
-    # from the file-server, thus guaranteeing they go through our authorization
-    # hook.
-    it "should set the URI scheme to 'puppetmounts'" do
-        pending "We need to figure out where this should be"
-    end
-end

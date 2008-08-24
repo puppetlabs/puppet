@@ -23,12 +23,4 @@ class Puppet::FileServing::Content < Puppet::FileServing::FileBase
 
         ::File.read(full_path())
     end
-
-    # Just return the file contents as the yaml.  This allows us to
-    # avoid escaping or any such thing.  LAK:NOTE Not really sure how
-    # this will behave if the file contains yaml...  I think the far
-    # side needs to understand that it's a plain string.
-    def to_yaml
-        content
-    end
 end
