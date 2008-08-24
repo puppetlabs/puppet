@@ -21,7 +21,7 @@ class Puppet::Indirector::ModuleFiles < Puppet::Indirector::Terminus
 
         # Make sure our file path starts with /modules, so that we authorize
         # against the 'modules' mount.
-        path = uri.path =~ /^\/modules/ ? uri.path : "/modules" + uri.path
+        path = uri.path =~ /^modules\// ? uri.path : "modules/" + uri.path
 
         configuration.authorized?(path, :node => request.node, :ipaddress => request.ip)
     end
@@ -66,9 +66,8 @@ class Puppet::Indirector::ModuleFiles < Puppet::Indirector::Terminus
     def find_path(request)
         uri = key2uri(request.key)
 
-        # Strip off /modules if it's there -- that's how requests get routed to this terminus.
-        # Also, strip off the leading slash if present.
-        module_name, relative_path = uri.path.sub(/^\/modules\b/, '').sub(%r{^/}, '').split(File::Separator, 2)
+        # Strip off modules/ if it's there -- that's how requests get routed to this terminus.
+        module_name, relative_path = uri.path.sub(/^modules\//, '').sub(%r{^/}, '').split(File::Separator, 2)
 
         # And use the environment to look up the module.
         return nil unless mod = find_module(module_name, request.node)

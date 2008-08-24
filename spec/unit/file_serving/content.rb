@@ -5,8 +5,8 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/file_serving/content'
 
 describe Puppet::FileServing::Content do
-    it "should should be a subclass of FileBase" do
-        Puppet::FileServing::Content.superclass.should equal(Puppet::FileServing::FileBase)
+    it "should should be a subclass of Base" do
+        Puppet::FileServing::Content.superclass.should equal(Puppet::FileServing::Base)
     end
 
     it "should indirect file_content" do
