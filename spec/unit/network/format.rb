@@ -74,6 +74,11 @@ describe Puppet::Network::Format do
             Puppet::Network::Format.new(:yaml).should_not be_supported(String)
         end
 
+        it "should not consider a class supported unless the format is suitable" do
+            @format.expects(:suitable?).returns false
+            @format.should_not be_supported(FormatRenderer)
+        end
+
         it "should always downcase mimetypes" do
             @format.mime = "Foo/Bar"
             @format.mime.should == "foo/bar"

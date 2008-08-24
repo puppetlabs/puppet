@@ -55,7 +55,8 @@ class Puppet::Network::Format
     end
 
     def supported?(klass)
-        klass.respond_to?(intern_method) and
+        suitable? and
+            klass.respond_to?(intern_method) and
             klass.respond_to?(intern_multiple_method) and
             klass.respond_to?(render_multiple_method) and
             klass.instance_methods.include?(render_method)
