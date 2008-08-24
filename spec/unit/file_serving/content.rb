@@ -18,7 +18,7 @@ describe Puppet::FileServing::Content do
     end
 end
 
-describe Puppet::FileServing::Content, " when returning the contents" do
+describe Puppet::FileServing::Content, "when returning the contents" do
     before do
         @path = "/my/base"
         @content = Puppet::FileServing::Content.new("sub/path", :links => :follow, :path => @path)
@@ -46,7 +46,7 @@ describe Puppet::FileServing::Content, " when returning the contents" do
     end
 end
 
-describe Puppet::FileServing::Content, " when converting to yaml" do
+describe Puppet::FileServing::Content, "when converting to yaml" do
     it "should fail if no path has been set" do
         @content = Puppet::FileServing::Content.new("some/key")
         proc { @content.to_yaml }.should raise_error(ArgumentError)
@@ -60,7 +60,7 @@ describe Puppet::FileServing::Content, " when converting to yaml" do
     end
 end
 
-describe Puppet::FileServing::Content, " when converting from yaml" do
+describe Puppet::FileServing::Content, "when converting from yaml" do
     # LAK:FIXME This isn't in the right place, but we need some kind of
     # control somewhere that requires that all REST connections only pull
     # from the file-server, thus guaranteeing they go through our authorization
