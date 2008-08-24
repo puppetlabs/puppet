@@ -274,7 +274,9 @@ class Puppet::Indirector::Indirection
     def prepare(request)
         # Pick our terminus.
         if respond_to?(:select_terminus)
-            terminus_name = select_terminus(request)
+            unless terminus_name = select_terminus(request)
+                raise ArgumentError, "Could not determine appropriate terminus for %s" % request
+            end
         else
             terminus_name = terminus_class
         end

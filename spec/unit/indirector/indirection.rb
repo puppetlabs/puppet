@@ -34,6 +34,22 @@ describe "Indirection Delegator", :shared => true do
         @indirection.send(@method, "me")
     end
 
+    it "should fail if the :select_terminus hook does not return a terminus name" do
+        # Define the method, so our respond_to? hook matches.
+        class << @indirection
+            def select_terminus(request)
+            end
+        end
+
+        request = stub 'request', :key => "me", :options => {}
+
+        @indirection.stubs(:request).returns request
+
+        @indirection.expects(:select_terminus).with(request).returns nil
+
+        lambda { @indirection.send(@method, "me") }.should raise_error(ArgumentError)
+    end
+
     it "should choose the terminus returned by the :terminus_class method if no :select_terminus method is available" do
         @indirection.expects(:terminus_class).returns :test_terminus
 
