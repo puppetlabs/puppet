@@ -152,7 +152,7 @@ task :spec do
     require 'rcov'
     Spec::Rake::SpecTask.new do |t|
          #   t.rcov = true
-         t.spec_opts = ['--options', "spec/spec.opts"]
+         t.spec_opts = ['--format','s', '--loadby','mtime']
          t.spec_files = FileList['spec/**/*.rb']
     end
 end
