@@ -99,4 +99,30 @@ describe "Puppet Network Format" do
             @text.mime.should == "text/plain"
         end
     end
+
+    describe Puppet::Network::FormatHandler.format(:raw) do
+        before do
+            @format = Puppet::Network::FormatHandler.format(:raw)
+        end
+
+        it "should exist" do
+            @format.should_not be_nil
+        end
+
+        it "should have its mimetype set to application/x-raw" do
+            @format.mime.should == "application/x-raw"
+        end
+
+        it "should always be supported" do
+            @format.should be_supported(String)
+        end
+
+        it "should fail if its multiple_render method is used" do
+            lambda { @format.render_multiple("foo") }.should raise_error(NotImplementedError)
+        end
+
+        it "should fail if its multiple_intern method is used" do
+            lambda { @format.intern_multiple(String, "foo") }.should raise_error(NotImplementedError)
+        end
+    end
 end
