@@ -61,7 +61,10 @@ module Puppet::Network::FormatHandler
         end
 
         def supported_formats
-            format_handler.formats.collect { |f| format_handler.format(f) }.find_all { |f| f.supported?(self) }.collect { |f| f.name }
+            format_handler.formats.collect { |f| format_handler.format(f) }.find_all { |f| f.supported?(self) }.collect { |f| f.name }.sort do |a, b| 
+                # It's an inverse sort -- higher weight formats go first.
+                format_handler.format(b).weight <=> format_handler.format(a).weight
+            end
         end
     end
 

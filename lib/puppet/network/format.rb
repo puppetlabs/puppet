@@ -5,7 +5,7 @@ require 'puppet/provider/confiner'
 class Puppet::Network::Format
     include Puppet::Provider::Confiner
 
-    attr_reader :name, :mime
+    attr_reader :name, :mime, :weight
 
     def initialize(name, options = {}, &block)
         @name = name.to_s.downcase.intern
@@ -15,6 +15,13 @@ class Puppet::Network::Format
             options.delete(:mime)
         else
             self.mime = "text/%s" % name
+        end
+
+        if weight = options[:weight]
+            @weight = weight
+            options.delete(:weight)
+        else
+            @weight = 5
         end
 
         unless options.empty?

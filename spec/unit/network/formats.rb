@@ -124,5 +124,9 @@ describe "Puppet Network Format" do
         it "should fail if its multiple_intern method is used" do
             lambda { @format.intern_multiple(String, "foo") }.should raise_error(NotImplementedError)
         end
+
+        it "should have a weight of 1" do
+            @format.weight.should == 1
+        end
     end
 end

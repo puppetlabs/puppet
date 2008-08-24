@@ -55,7 +55,8 @@ end
 
 Puppet::Network::FormatHandler.create(:s, :mime => "text/plain")
 
-Puppet::Network::FormatHandler.create(:raw, :mime => "application/x-raw") do
+# A very low-weight format so it'll never get chosen automatically.
+Puppet::Network::FormatHandler.create(:raw, :mime => "application/x-raw", :weight => 1) do
     def intern_multiple(klass, text)
         raise NotImplementedError
     end
