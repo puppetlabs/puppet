@@ -89,7 +89,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
 
     private
 
-    # Create the qurey string, if options are present.
+    # Create the query string, if options are present.
     def query_string(request)
         return "" unless request.options and ! request.options.empty?
         "?" + request.options.collect { |key, value| "%s=%s" % [key, value] }.join("&")
