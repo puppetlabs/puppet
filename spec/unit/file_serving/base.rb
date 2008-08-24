@@ -5,64 +5,57 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/file_serving/base'
 
 describe Puppet::FileServing::Base do
-    it "should accept a key in the form of a URI" do
-        Puppet::FileServing::Base.new("puppet://host/module/dir/file").key.should == "puppet://host/module/dir/file"
+    it "should accept a path" do
+        Puppet::FileServing::Base.new("/module/dir/file").path.should == "/module/dir/file"
+    end
+
+    it "should require that paths be fully qualified" do
+        lambda { Puppet::FileServing::Base.new("module/dir/file") }.should raise_error(ArgumentError)
     end
 
     it "should allow specification of whether links should be managed" do
-        Puppet::FileServing::Base.new("puppet://host/module/dir/file", :links => :manage).links.should == :manage
+        Puppet::FileServing::Base.new("/module/dir/file", :links => :manage).links.should == :manage
     end
 
     it "should consider :ignore links equivalent to :manage links" do
-        Puppet::FileServing::Base.new("puppet://host/module/dir/file", :links => :ignore).links.should == :manage
+        Puppet::FileServing::Base.new("/module/dir/file", :links => :ignore).links.should == :manage
     end
 
     it "should fail if :links is set to anything other than :manage, :follow, or :ignore" do
-        proc { Puppet::FileServing::Base.new("puppet://host/module/dir/file", :links => :else) }.should raise_error(ArgumentError)
+        proc { Puppet::FileServing::Base.new("/module/dir/file", :links => :else) }.should raise_error(ArgumentError)
     end
 
     it "should default to :manage for :links" do
-        Puppet::FileServing::Base.new("puppet://host/module/dir/file").links.should == :manage
+        Puppet::FileServing::Base.new("/module/dir/file").links.should == :manage
     end
 
     it "should allow specification of a path" do
         FileTest.stubs(:exists?).returns(true)
-        Puppet::FileServing::Base.new("puppet://host/module/dir/file", :path => "/my/file").path.should == "/my/file"
+        Puppet::FileServing::Base.new("/module/dir/file", :path => "/my/file").path.should == "/my/file"
     end
 
     it "should allow specification of a relative path" do
         FileTest.stubs(:exists?).returns(true)
-        Puppet::FileServing::Base.new("puppet://host/module/dir/file", :relative_path => "my/file").relative_path.should == "my/file"
+        Puppet::FileServing::Base.new("/module/dir/file", :relative_path => "my/file").relative_path.should == "my/file"
     end
 
     it "should have a means of determining if the file exists" do
-        Puppet::FileServing::Base.new("blah").should respond_to(:exist?)
+        Puppet::FileServing::Base.new("/blah").should respond_to(:exist?)
     end
 
     it "should correctly indicate if the file is present" do
         File.expects(:lstat).with("/my/file").returns(mock("stat"))
-        Puppet::FileServing::Base.new("blah", :path => "/my/file").exist?.should be_true
+        Puppet::FileServing::Base.new("/my/file").exist?.should be_true
     end
 
-    it "should correctly indicate if the file is asbsent" do
+    it "should correctly indicate if the file is absent" do
         File.expects(:lstat).with("/my/file").raises RuntimeError
-        Puppet::FileServing::Base.new("blah", :path => "/my/file").exist?.should be_false
-    end
-
-    describe "when setting the base path" do
-        before do
-            @file = Puppet::FileServing::Base.new("puppet://host/module/dir/file")
-        end
-
-        it "should require that the base path be fully qualified" do
-            FileTest.stubs(:exists?).returns(true)
-            proc { @file.path = "unqualified/file" }.should raise_error(ArgumentError)
-        end
+        Puppet::FileServing::Base.new("/my/file").exist?.should be_false
     end
 
     describe "when setting the relative path" do
         it "should require that the relative path be unqualified" do
-            @file = Puppet::FileServing::Base.new("puppet://host/module/dir/file")
+            @file = Puppet::FileServing::Base.new("/module/dir/file")
             FileTest.stubs(:exists?).returns(true)
             proc { @file.relative_path = "/qualified/file" }.should raise_error(ArgumentError)
         end
@@ -70,7 +63,7 @@ describe Puppet::FileServing::Base do
 
     describe "when determining the full file path" do
         before do
-            @file = Puppet::FileServing::Base.new("mykey", :path => "/this/file")
+            @file = Puppet::FileServing::Base.new("/this/file")
         end
 
         it "should return the path if there is no relative path" do
@@ -86,16 +79,11 @@ describe Puppet::FileServing::Base do
             @file.relative_path = "not/qualified"
             @file.full_path.should == "/this/file/not/qualified"
         end
-
-        it "should should fail if there is no path set" do
-            @file = Puppet::FileServing::Base.new("not/qualified")
-            proc { @file.full_path }.should raise_error(ArgumentError)
-        end
     end
 
     describe "when stat'ing files" do
         before do
-            @file = Puppet::FileServing::Base.new("mykey", :path => "/this/file")
+            @file = Puppet::FileServing::Base.new("/this/file")
         end
 
         it "should stat the file's full path" do

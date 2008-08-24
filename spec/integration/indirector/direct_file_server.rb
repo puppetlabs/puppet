@@ -68,12 +68,12 @@ describe Puppet::Indirector::DirectFileServer, " when interacting with FileServi
         end
 
         @terminus.search(@request).each do |instance|
-            case instance.key
+            case instance.full_path
             when /one/: instance.content.should == "one content"
             when /two/: instance.content.should == "two content"
             when /\.$/: 
             else
-                raise "No valid key for %s" % instance.key.inspect
+                raise "No valid key for %s" % instance.path.inspect
             end
         end
     end

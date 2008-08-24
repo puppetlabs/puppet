@@ -30,7 +30,7 @@ class Puppet::Indirector::ModuleFiles < Puppet::Indirector::Terminus
     def find(request)
         return nil unless path = find_path(request)
 
-        result = model.new(request.key, :path => path)
+        result = model.new(path)
         result.links = request.options[:links] if request.options[:links]
         return result
     end

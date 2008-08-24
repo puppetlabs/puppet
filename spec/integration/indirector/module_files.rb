@@ -20,7 +20,7 @@ describe Puppet::Indirector::ModuleFiles, " when interacting with Puppet::Module
 
         FileTest.expects(:exists?).with(filepath).returns(true)
 
-        @request = Puppet::Indirector::Request.new(:content, :find, "puppetmounts://host/modules/mymod/myfile")
+        @request = Puppet::Indirector::Request.new(:content, :find, "puppet://host/modules/mymod/myfile")
 
         @terminus.find(@request).should be_instance_of(Puppet::FileServing::Content)
     end
@@ -47,7 +47,7 @@ describe Puppet::Indirector::ModuleFiles, " when interacting with FileServing::F
 
         Dir.expects(:entries).with(filepath).returns(%w{one two})
 
-        @request = Puppet::Indirector::Request.new(:content, :search, "puppetmounts://host/modules/mymod/myfile", :recurse => true)
+        @request = Puppet::Indirector::Request.new(:content, :search, "puppet://host/modules/mymod/myfile", :recurse => true)
 
         result = @terminus.search(@request)
         result.should be_instance_of(Array)

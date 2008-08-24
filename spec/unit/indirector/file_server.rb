@@ -67,13 +67,8 @@ describe Puppet::Indirector::FileServer do
             @instance = mock 'instance'
         end
 
-        it "should create the instance with the key used to find the instance" do
-            @model.expects(:new).with { |key, *options| key == "my/local/file" }
-            @file_server.find(@request)
-        end
-
         it "should create the instance with the path at which the instance was found" do
-            @model.expects(:new).with { |key, options| options[:path] == "/some/file" }
+            @model.expects(:new).with { |key, options| key == "/some/file" }
             @file_server.find(@request)
         end
 

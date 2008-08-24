@@ -24,7 +24,7 @@ describe Puppet::Indirector::FileMetadata::File do
             @data.stubs(:collect_attributes)
             FileTest.expects(:exists?).with("/my/local").returns true
 
-            @request = stub 'request', :key => @uri, :options => {}
+            @request = Puppet::Indirector::Request.new(:file_metadata, :find, @uri)
         end
 
         it "should collect its attributes when a file is found" do
@@ -40,7 +40,7 @@ describe Puppet::Indirector::FileMetadata::File do
             @metadata = Puppet::Indirector::FileMetadata::File.new
             @uri = "file:///my/local"
 
-            @request = stub 'request', :key => @uri, :options => {}
+            @request = Puppet::Indirector::Request.new(:file_metadata, :find, @uri)
         end
 
         it "should collect the attributes of the instances returned" do

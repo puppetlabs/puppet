@@ -45,15 +45,9 @@ describe Puppet::FileServing::TerminusHelper do
             @helper.path2instances(@request, "/my/file").length.should == 2
         end
 
-        it "should set each instance's key to be the original key plus the file-specific path" do
-            @model.expects(:new).with { |key, options| key == @request.key + "/one" }.returns(:one)
-            @model.expects(:new).with { |key, options| key == @request.key + "/two" }.returns(:two)
-            @helper.path2instances(@request, "/my/file")
-        end
-
         it "should set each returned instance's path to the original path" do
-            @model.expects(:new).with { |key, options| options[:path] == "/my/file" }.returns(:one)
-            @model.expects(:new).with { |key, options| options[:path] == "/my/file" }.returns(:two)
+            @model.expects(:new).with { |key, options| key == "/my/file" }.returns(:one)
+            @model.expects(:new).with { |key, options| key == "/my/file" }.returns(:two)
             @helper.path2instances(@request, "/my/file")
         end
 

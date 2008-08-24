@@ -18,15 +18,15 @@ describe Puppet::FileServing::Content do
     end
 
     it "should have a method for collecting its attributes" do
-        Puppet::FileServing::Content.new("sub/path", :path => "/base").should respond_to(:collect)
+        Puppet::FileServing::Content.new("/path").should respond_to(:collect)
     end
 
     it "should retrieve and store its contents when its attributes are collected" do
-        content = Puppet::FileServing::Content.new("sub/path", :path => "/base")
+        content = Puppet::FileServing::Content.new("/path")
 
         result = "foo"
         File.stubs(:lstat).returns(stub("stat", :ftype => "file"))
-        File.expects(:read).with("/base/sub/path").returns result
+        File.expects(:read).with("/path").returns result
         content.collect
         content.content.should equal(result)
     end
@@ -34,8 +34,8 @@ end
 
 describe Puppet::FileServing::Content, "when returning the contents" do
     before do
-        @path = "/my/base"
-        @content = Puppet::FileServing::Content.new("sub/path", :links => :follow, :path => @path)
+        @path = "/my/path"
+        @content = Puppet::FileServing::Content.new(@path, :links => :follow)
     end
 
     it "should fail if the file is a symlink and links are set to :manage" do

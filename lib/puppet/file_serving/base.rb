@@ -7,8 +7,6 @@ require 'puppet/file_serving'
 # The base class for Content and Metadata; provides common
 # functionality like the behaviour around links.
 class Puppet::FileServing::Base
-    attr_accessor :key
-
     # Does our file exist?
     def exist?
         begin
@@ -21,8 +19,6 @@ class Puppet::FileServing::Base
 
     # Return the full path to our file.  Fails if there's no path set.
     def full_path
-        raise(ArgumentError, "You must set a path to get a file's path") unless self.path
-
         if relative_path.nil? or relative_path == ""
             path
         else
@@ -30,8 +26,8 @@ class Puppet::FileServing::Base
         end
     end
 
-    def initialize(key, options = {})
-        @key = key
+    def initialize(path, options = {})
+        self.path = path
         @links = :manage
 
         options.each do |param, value|

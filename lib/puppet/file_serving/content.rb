@@ -25,7 +25,6 @@ class Puppet::FileServing::Content < Puppet::FileServing::Base
             # This stat can raise an exception, too.
             raise(ArgumentError, "Cannot read the contents of links unless following links") if stat().ftype == "symlink" 
 
-            p full_path
             @content = ::File.read(full_path())
         end
         @content
