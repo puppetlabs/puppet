@@ -103,7 +103,6 @@ describe Puppet::Indirector::FileServer do
         
         describe "and finding file information" do
             before do
-                @request.key =  "puppetmounts://host/my/file"
                 @request.method = :find 
             end
 
@@ -113,7 +112,7 @@ describe Puppet::Indirector::FileServer do
             end
 
             it "should pass the file path from the URI to the file server configuration" do
-                @configuration.expects(:authorized?).with { |uri, *args| uri == "/my/file" }
+                @configuration.expects(:authorized?).with { |uri, *args| uri == "my/local/file" }
                 @file_server.authorized?(@request)
             end
 

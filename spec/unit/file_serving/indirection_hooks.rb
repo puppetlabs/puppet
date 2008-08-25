@@ -90,7 +90,7 @@ describe Puppet::FileServing::IndirectionHooks do
                 @object.stubs(:terminus).with(:modules).returns(modules)
                 modules.stubs(:find_module).returns(nil)
 
-                @request.stubs(:key).returns "puppetmounts://host/notmodules/file"
+                @request.stubs(:key).returns "notmodules/file"
 
                 @object.select_terminus(@request).should == :file_server
             end

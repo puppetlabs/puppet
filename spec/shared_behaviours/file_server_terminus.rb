@@ -25,7 +25,7 @@ describe "Puppet::Indirector::FileServerTerminus", :shared => true do
         # Stub out the modules terminus
         @modules = mock 'modules terminus'
 
-        @request = Puppet::Indirector::Request.new(:indirection, :method, "puppetmounts://myhost/one/my/file")
+        @request = Puppet::Indirector::Request.new(:indirection, :method, "puppet://myhost/one/my/file")
     end
 
     it "should use the file server configuration to find files" do
