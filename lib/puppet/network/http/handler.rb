@@ -12,7 +12,18 @@ module Puppet::Network::HTTP::Handler
     # Which format to use when serializing our response.  Just picks
     # the first value in the accept header, at this point.
     def format_to_use(request)
-        accept_header(request).split(/,\s*/)[0]
+        unless header = accept_header(request)
+            raise ArgumentError, "An Accept header must be provided to pick the right format"
+        end
+
+        format = nil
+        header.split(/,\s*/).each do |name|
+            next unless format = Puppet::Network::FormatHandler.format(name)
+            next unless format.suitable?
+            return name
+        end
+
+        raise "No specified acceptable formats (%s) are functional on this machine" % header
     end
 
     def initialize_for_puppet(args = {})
