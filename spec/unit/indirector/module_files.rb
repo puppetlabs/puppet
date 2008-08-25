@@ -96,13 +96,8 @@ describe Puppet::Indirector::ModuleFiles do
             @instance = mock 'instance'
         end
 
-        it "should create the instance with the key used to find the instance" do
-            @model.expects(:new).with { |key, *options| key == @request.key }
-            @module_files.find(@request)
-        end
-
         it "should create the instance with the path at which the instance was found" do
-            @model.expects(:new).with { |key, options| options[:path] == "/module/path/files/local/file" }
+            @model.expects(:new).with { |key, options| key == "/module/path/files/local/file" }
             @module_files.find(@request)
         end
 
