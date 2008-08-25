@@ -28,7 +28,8 @@ describe Puppet::FileServing::Content do
         File.stubs(:lstat).returns(stub("stat", :ftype => "file"))
         File.expects(:read).with("/path").returns result
         content.collect
-        content.content.should equal(result)
+
+        content.instance_variable_get("@content").should_not be_nil
     end
 end
 
@@ -57,5 +58,14 @@ describe Puppet::FileServing::Content, "when returning the contents" do
         File.expects(:stat).with(@path).returns stub("stat", :ftype => "file")
         File.expects(:read).with(@path).returns(:mycontent)
         @content.content.should == :mycontent
+    end
+
+    it "should cache the returned contents" do
+        File.expects(:stat).with(@path).returns stub("stat", :ftype => "file")
+        File.expects(:read).with(@path).returns(:mycontent)
+        @content.content
+
+        # The second run would throw a failure if the content weren't being cached.
+        @content.content
     end
 end

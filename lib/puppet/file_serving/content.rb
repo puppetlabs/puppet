@@ -14,9 +14,19 @@ class Puppet::FileServing::Content < Puppet::FileServing::Base
     extend Puppet::Indirector
     indirects :file_content, :extend => Puppet::FileServing::IndirectionHooks
 
-    attr_reader :path
+    def self.supported_formats
+        [:raw]
+    end
 
+    def self.from_raw(content)
+        instance = new("eh")
+        instance.content = content
+        instance
+    end
+
+    # Collect our data.
     def collect
+        content
     end
 
     # Read the content of our file in.
@@ -28,5 +38,9 @@ class Puppet::FileServing::Content < Puppet::FileServing::Base
             @content = ::File.read(full_path())
         end
         @content
+    end
+
+    def to_raw
+        content
     end
 end

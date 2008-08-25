@@ -36,7 +36,7 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
 
     def request_key(request)
         # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
-        x = request.path.split('/')[2]
+        x = request.path.split('/', 3)[2]
     end
 
     def body(request)

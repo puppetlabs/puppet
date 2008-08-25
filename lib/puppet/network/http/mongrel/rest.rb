@@ -35,7 +35,7 @@ class Puppet::Network::HTTP::MongrelREST < Mongrel::HttpHandler
     # return the key included in the request path
     def request_key(request)
         # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
-        x = request.params[Mongrel::Const::REQUEST_PATH].split('/')[2]        
+        x = request.params[Mongrel::Const::REQUEST_PATH].split('/', 3)[2]
     end
 
     # return the request body
