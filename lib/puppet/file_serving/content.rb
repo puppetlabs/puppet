@@ -14,12 +14,14 @@ class Puppet::FileServing::Content < Puppet::FileServing::Base
     extend Puppet::Indirector
     indirects :file_content, :extend => Puppet::FileServing::IndirectionHooks
 
+    attr_writer :content
+
     def self.supported_formats
         [:raw]
     end
 
     def self.from_raw(content)
-        instance = new("eh")
+        instance = new("/this/is/a/fake/path")
         instance.content = content
         instance
     end

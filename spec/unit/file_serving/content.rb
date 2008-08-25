@@ -17,6 +17,10 @@ describe Puppet::FileServing::Content do
         Puppet::FileServing::Content.indirection.metaclass.included_modules.should include(Puppet::FileServing::IndirectionHooks)
     end
 
+    it "should only support the raw format" do
+        Puppet::FileServing::Content.supported_formats.should == [:raw]
+    end
+
     it "should have a method for collecting its attributes" do
         Puppet::FileServing::Content.new("/path").should respond_to(:collect)
     end
@@ -30,6 +34,30 @@ describe Puppet::FileServing::Content do
         content.collect
 
         content.instance_variable_get("@content").should_not be_nil
+    end
+
+    it "should have a method for setting its content" do
+        content = Puppet::FileServing::Content.new("/path")
+        content.should respond_to(:content=)
+    end
+
+    it "should make content available when set externally" do
+        content = Puppet::FileServing::Content.new("/path")
+        content.content = "foo/bar"
+        content.content.should == "foo/bar"
+    end
+
+    it "should be able to create a content instance from raw file contents" do
+        Puppet::FileServing::Content.should respond_to(:from_raw)
+    end
+
+    it "should create an instance with a fake file name and correct content when converting from raw" do
+        instance = mock 'instance'
+        Puppet::FileServing::Content.expects(:new).with("/this/is/a/fake/path").returns instance
+
+        instance.expects(:content=).with "foo/bar"
+
+        Puppet::FileServing::Content.from_raw("foo/bar").should equal(instance)
     end
 end
 
