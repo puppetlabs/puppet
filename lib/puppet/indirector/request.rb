@@ -1,7 +1,8 @@
 require 'puppet/indirector'
 
-# Provide any attributes or functionality needed for indirected
-# instances.
+# This class encapsulates all of the information you need to make an
+# Indirection call, and as a a result also handles REST calls.  It's somewhat
+# analogous to an HTTP Request object, except tuned for our Indirector.
 class Puppet::Indirector::Request
     attr_accessor :indirection_name, :key, :method, :options, :instance, :node, :ip, :authenticated
 
@@ -48,6 +49,11 @@ class Puppet::Indirector::Request
     # Look up the indirection based on the name provided.
     def indirection
         Puppet::Indirector::Indirection.instance(@indirection_name)
+    end
+
+    # Are we trying to interact with multiple resources, or just one?
+    def plural?
+        method == :search
     end
 
     private

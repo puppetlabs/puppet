@@ -135,4 +135,16 @@ describe Puppet::Indirector::Request do
 
         request.indirection.should equal(ind)
     end
+
+    it "should have a method for determining if the request is plural or singular" do
+        Puppet::Indirector::Request.new(:myind, :method, :key).should respond_to(:plural?)
+    end
+
+    it "should be considered plural if the method is 'search'" do
+        Puppet::Indirector::Request.new(:myind, :search, :key).should be_plural
+    end
+
+    it "should not be considered plural if the method is not 'search'" do
+        Puppet::Indirector::Request.new(:myind, :find, :key).should_not be_plural
+    end
 end
