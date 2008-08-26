@@ -7,6 +7,10 @@ require 'puppet/file_serving'
 # The base class for Content and Metadata; provides common
 # functionality like the behaviour around links.
 class Puppet::FileServing::Base
+    # This is for external consumers to store the source that was used
+    # to retrieve the metadata.
+    attr_accessor :source
+
     # Does our file exist?
     def exist?
         begin

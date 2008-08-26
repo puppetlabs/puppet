@@ -17,6 +17,12 @@ describe Puppet::FileServing::Base do
         Puppet::FileServing::Base.new("/module/dir/file", :links => :manage).links.should == :manage
     end
 
+    it "should have a :source attribute" do
+        file = Puppet::FileServing::Base.new("/module/dir/file")
+        file.should respond_to(:source)
+        file.should respond_to(:source=)
+    end
+
     it "should consider :ignore links equivalent to :manage links" do
         Puppet::FileServing::Base.new("/module/dir/file", :links => :ignore).links.should == :manage
     end
