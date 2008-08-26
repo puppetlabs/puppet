@@ -30,22 +30,22 @@ describe Puppet::Indirector::ModuleFiles, " when interacting with FileServing::F
     it "should return an instance for every file in the fileset" do
         Puppet::Node::Environment.stubs(:new).returns(stub('env', :name => "myenv"))
         @terminus = Puppet::Indirector::FileContent::Modules.new
-        @module = Puppet::Module.new("mymod", "/some/path/mymod")
+
+        @path = Tempfile.new("module_file_testing")
+        @path.close!
+        @path = @path.path
+
+        Dir.mkdir(@path)
+        Dir.mkdir(File.join(@path, "files"))
+
+        basedir = File.join(@path, "files", "myfile")
+        Dir.mkdir(basedir)
+
+        File.open(File.join(basedir, "one"), "w") { |f| f.print "one content" }
+        File.open(File.join(basedir, "two"), "w") { |f| f.print "two content" }
+
+        @module = Puppet::Module.new("mymod", @path)
         Puppet::Module.expects(:find).with("mymod", "myenv").returns(@module)
-
-        filepath = "/some/path/mymod/files/myfile"
-        FileTest.stubs(:exists?).with(filepath).returns(true)
-
-        stat = stub 'stat', :directory? => true
-        File.stubs(:lstat).with(filepath).returns(stat)
-
-        subfiles = %w{one two}
-        subfiles.each do |f|
-            path = File.join(filepath, f)
-            FileTest.stubs(:exists?).with(path).returns(true)
-        end
-
-        Dir.expects(:entries).with(filepath).returns(%w{one two})
 
         @request = Puppet::Indirector::Request.new(:content, :search, "puppet://host/modules/mymod/myfile", :recurse => true)
 

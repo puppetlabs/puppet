@@ -8,14 +8,19 @@ describe "Puppet::Indirector::FileServerTerminus", :shared => true do
     # the 'before' block in the including context.
     before do
         Puppet::Util::Cacher.invalidate
+        FileTest.stubs(:exists?).returns true
         FileTest.stubs(:exists?).with(Puppet[:fileserverconfig]).returns(true)
-        FileTest.stubs(:exists?).with("/my/mount/path").returns(true)
-        FileTest.stubs(:directory?).with("/my/mount/path").returns(true)
-        FileTest.stubs(:readable?).with("/my/mount/path").returns(true)
+
+        @path = Tempfile.new("file_server_testing")
+        @path.close!
+        @path = @path.path
+
+        Dir.mkdir(@path)
+        File.open(File.join(@path, "myfile"), "w") { |f| f.print "my content" }
 
         # Use a real mount, so the integration is a bit deeper.
         @mount1 = Puppet::FileServing::Configuration::Mount.new("one")
-        @mount1.path = "/my/mount/path"
+        @mount1.path = @path
 
         @parser = stub 'parser', :changed? => false
         @parser.stubs(:parse).returns("one" => @mount1)
@@ -25,17 +30,14 @@ describe "Puppet::Indirector::FileServerTerminus", :shared => true do
         # Stub out the modules terminus
         @modules = mock 'modules terminus'
 
-        @request = Puppet::Indirector::Request.new(:indirection, :method, "puppet://myhost/one/my/file")
+        @request = Puppet::Indirector::Request.new(:indirection, :method, "puppet://myhost/one/myfile")
     end
 
     it "should use the file server configuration to find files" do
         @modules.stubs(:find).returns(nil)
         @terminus.indirection.stubs(:terminus).with(:modules).returns(@modules)
 
-        path = "/my/mount/path/my/file"
-        FileTest.stubs(:exists?).with(path).returns(true)
-        FileTest.stubs(:exists?).with("/my/mount/path").returns(true)
-        @mount1.expects(:file).with("my/file", :node => nil).returns(path)
+        path = File.join(@path, "myfile")
 
         @terminus.find(@request).should be_instance_of(@test_class)
     end

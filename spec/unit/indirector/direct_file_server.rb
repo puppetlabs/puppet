@@ -45,7 +45,7 @@ describe Puppet::Indirector::DirectFileServer do
 
         before do
             @data = mock 'content'
-            @data.stubs(:collect_attributes)
+            @data.stubs(:collect)
             FileTest.expects(:exists?).with("/my/local").returns true
         end
 

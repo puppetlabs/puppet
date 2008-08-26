@@ -35,35 +35,47 @@ describe Puppet::FileServing::TerminusHelper do
         before do
             @request.stubs(:key).returns "puppet://host/mount/dir"
 
+            @one = stub 'one', :links= => nil, :collect => nil
+            @two = stub 'two', :links= => nil, :collect => nil
+
             @fileset = mock 'fileset', :files => %w{one two}
             Puppet::FileServing::Fileset.expects(:new).returns(@fileset)
         end
 
         it "should create an instance of the model for each path returned by the fileset" do
-            @model.expects(:new).returns(:one)
-            @model.expects(:new).returns(:two)
+            @model.expects(:new).returns(@one)
+            @model.expects(:new).returns(@two)
             @helper.path2instances(@request, "/my/file").length.should == 2
         end
 
         it "should set each returned instance's path to the original path" do
-            @model.expects(:new).with { |key, options| key == "/my/file" }.returns(:one)
-            @model.expects(:new).with { |key, options| key == "/my/file" }.returns(:two)
+            @model.expects(:new).with { |key, options| key == "/my/file" }.returns(@one)
+            @model.expects(:new).with { |key, options| key == "/my/file" }.returns(@two)
             @helper.path2instances(@request, "/my/file")
         end
 
         it "should set each returned instance's relative path to the file-specific path" do
-            @model.expects(:new).with { |key, options| options[:relative_path] == "one" }.returns(:one)
-            @model.expects(:new).with { |key, options| options[:relative_path] == "two" }.returns(:two)
+            @model.expects(:new).with { |key, options| options[:relative_path] == "one" }.returns(@one)
+            @model.expects(:new).with { |key, options| options[:relative_path] == "two" }.returns(@two)
             @helper.path2instances(@request, "/my/file")
         end
 
         it "should set the links value on each instance if one is provided" do
-            one = mock 'one', :links= => :manage
-            two = mock 'two', :links= => :manage
-            @model.expects(:new).returns(one)
-            @model.expects(:new).returns(two)
+            @one.expects(:links=).with :manage
+            @two.expects(:links=).with :manage
+            @model.expects(:new).returns(@one)
+            @model.expects(:new).returns(@two)
 
             @request.options[:links] = :manage
+            @helper.path2instances(@request, "/my/file")
+        end
+
+        it "should collect the instance's attributes" do
+            @one.expects(:collect)
+            @two.expects(:collect)
+            @model.expects(:new).returns(@one)
+            @model.expects(:new).returns(@two)
+
             @helper.path2instances(@request, "/my/file")
         end
     end

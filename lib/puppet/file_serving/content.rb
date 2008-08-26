@@ -28,6 +28,7 @@ class Puppet::FileServing::Content < Puppet::FileServing::Base
 
     # Collect our data.
     def collect
+        return if stat.ftype == "directory"
         content
     end
 

@@ -25,7 +25,7 @@ describe Puppet::FileServing::Content do
         Puppet::FileServing::Content.new("/path").should respond_to(:collect)
     end
 
-    it "should retrieve and store its contents when its attributes are collected" do
+    it "should retrieve and store its contents when its attributes are collected if the file is a normal file" do
         content = Puppet::FileServing::Content.new("/path")
 
         result = "foo"
@@ -34,6 +34,17 @@ describe Puppet::FileServing::Content do
         content.collect
 
         content.instance_variable_get("@content").should_not be_nil
+    end
+
+    it "should not attempt to retrieve its contents if the file is a directory" do
+        content = Puppet::FileServing::Content.new("/path")
+
+        result = "foo"
+        File.stubs(:lstat).returns(stub("stat", :ftype => "directory"))
+        File.expects(:read).with("/path").never
+        content.collect
+
+        content.instance_variable_get("@content").should be_nil
     end
 
     it "should have a method for setting its content" do

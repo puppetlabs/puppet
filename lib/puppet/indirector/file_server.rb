@@ -27,6 +27,7 @@ class Puppet::Indirector::FileServer < Puppet::Indirector::Terminus
         return nil unless path = find_path(request)
         result =  model.new(path)
         result.links = request.options[:links] if request.options[:links]
+        result.collect
         return result
     end
 

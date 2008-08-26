@@ -56,19 +56,20 @@ describe Puppet::Indirector::FileServer do
 
         it "should return an instance of the model created with the full path if a file is found" do
             @configuration.expects(:file_path).with("my/local/file", :node => nil).returns("/some/file")
-            @model.expects(:new).returns(:myinstance)
-            @file_server.find(@request).should == :myinstance
+            instance = stub("instance", :collect => nil)
+            @model.expects(:new).returns instance
+            @file_server.find(@request).should equal(instance)
         end
     end
 
     describe Puppet::Indirector::FileServer, " when returning instances" do
         before :each do
             @configuration.expects(:file_path).with("my/local/file", :node => nil).returns("/some/file")
-            @instance = mock 'instance'
+            @instance = stub 'instance', :collect => nil
         end
 
         it "should create the instance with the path at which the instance was found" do
-            @model.expects(:new).with { |key, options| key == "/some/file" }
+            @model.expects(:new).with { |key, options| key == "/some/file" }.returns @instance
             @file_server.find(@request)
         end
 
@@ -81,6 +82,12 @@ describe Puppet::Indirector::FileServer do
 
         it "should not set a :links value if no :links parameter is provided" do
             @model.expects(:new).returns(@instance)
+            @file_server.find(@request)
+        end
+
+        it "should collect each instance's attributes before returning" do
+            @instance.expects(:collect)
+            @model.expects(:new).returns @instance
             @file_server.find(@request)
         end
     end
@@ -171,8 +178,14 @@ describe Puppet::Indirector::FileServer do
 
         it "should pass the request on to :path2instances" do
             @configuration.expects(:file_path).with("my/local/file", :node => nil).returns("my/file")
-            @file_server.expects(:path2instances).with(@request, "my/file")
+            @file_server.expects(:path2instances).with(@request, "my/file").returns []
             @file_server.search(@request)
+        end
+
+        it "should return the result of :path2instances" do
+            @configuration.expects(:file_path).with("my/local/file", :node => nil).returns("my/file")
+            @file_server.expects(:path2instances).with(@request, "my/file").returns :footest
+            @file_server.search(@request).should == :footest
         end
     end
 end

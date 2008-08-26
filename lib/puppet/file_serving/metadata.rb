@@ -47,7 +47,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
     # Retrieve the attributes for this file, relative to a base directory.
     # Note that File.stat raises Errno::ENOENT if the file is absent and this
     # method does not catch that exception.
-    def collect_attributes
+    def collect
         real_path = full_path()
         stat = stat()
         @owner = stat.uid
