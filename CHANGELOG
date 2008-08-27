@@ -8,6 +8,19 @@
     set file paths to 'false' to disable the CRL.
 
 0.24.x
+    Added simple rake task for running unit tests
+
+    Added spec Rake task
+
+    Fixed #1526 - Fixed leak in template
+
+    Fixed #1506 - Removed storeconfig duplicate indexes
+    
+    Fixed #1457 - case insensitive match for error
+    
+    Fixed #1488 - Moved individual functions out of functions.rb into 
+    lib/puppet/parser/functions directory.  New functions should be create     in this directory.
+
     Fixed #1508 - Added HP-UX package provider
 
     Fixed #1502 - Fixed poor stored configuration performance

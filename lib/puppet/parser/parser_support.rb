@@ -95,11 +95,10 @@ class Puppet::Parser::Parser
                 raise Puppet::Error, "Could not find file %s" % file
             end
         end
-        if @files.detect { |f| f.file == file }
-            raise Puppet::AlreadyImportedError.new("Import loop detected")
-        else
-            @files << Puppet::Util::LoadedFile.new(file)
+        if check_and_add_to_watched_files(file)
             @lexer.file = file
+        else
+            raise Puppet::AlreadyImportedError.new("Import loop detected")
         end
     end
 
@@ -216,7 +215,7 @@ class Puppet::Parser::Parser
     # Initialize or reset all of our variables.
     def initvars
         @lexer = Puppet::Parser::Lexer.new()
-        @files = []
+        @files = {}
         @loaded = []
     end
 
@@ -435,8 +434,8 @@ class Puppet::Parser::Parser
 
     # See if any of the files have changed.
     def reparse?
-        if file = @files.detect { |file| file.changed?  }
-            return file.stamp
+        if file = @files.detect { |name, file| file.changed?  }
+            return file[1].stamp
         else
             return false
         end
@@ -449,12 +448,18 @@ class Puppet::Parser::Parser
     # Add a new file to be checked when we're checking to see if we should be
     # reparsed.  This is basically only used by the TemplateWrapper to let the
     # parser know about templates that should be parsed.
-    def watch_file(*files)
-        files.each do |file|
-            unless file.is_a? Puppet::Util::LoadedFile
-                file = Puppet::Util::LoadedFile.new(file)
-            end
-            @files << file
+    def watch_file(filename)
+            check_and_add_to_watched_files(filename)
+    end
+
+    private
+
+    def check_and_add_to_watched_files(filename)
+        unless @files.include?(filename)    
+            @files[filename] = Puppet::Util::LoadedFile.new(filename)
+            return true
+        else
+            return false
         end
     end
 end
