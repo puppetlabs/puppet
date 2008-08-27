@@ -1,4 +1,6 @@
 0.24.x
+    Added daemontools and runit providers for service type
+
     Added simple rake task for running unit tests
 
     Added spec Rake task
