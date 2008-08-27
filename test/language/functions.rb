@@ -379,6 +379,8 @@ class TestLangFunctions < Test::Unit::TestCase
         scope = mkscope
         parser = scope.compiler.parser
     
+        realize = Puppet::Parser::Functions.function(:realize)
+
         # Make a definition
         parser.newdefine("mytype")
         
@@ -434,6 +436,8 @@ class TestLangFunctions < Test::Unit::TestCase
     def test_defined
         scope = mkscope
         parser = scope.compiler.parser
+
+        defined = Puppet::Parser::Functions.function(:defined)
         
         parser.newclass("yayness")
         parser.newdefine("rahness")
@@ -491,6 +495,8 @@ class TestLangFunctions < Test::Unit::TestCase
         scope = mkscope
         parser = scope.compiler.parser
 
+        include = Puppet::Parser::Functions.function(:include)
+
         assert_raise(Puppet::ParseError, "did not throw error on missing class") do
             scope.function_include("nosuchclass")
         end
@@ -507,6 +513,8 @@ class TestLangFunctions < Test::Unit::TestCase
     def test_file
         parser = mkparser
         scope = mkscope(:parser => parser)
+
+        file = Puppet::Parser::Functions.function(:file)
 
         file1 = tempfile
         file2 = tempfile
@@ -547,6 +555,8 @@ class TestLangFunctions < Test::Unit::TestCase
         File.chmod(0755, command)
         assert_equal("yay\n", %x{#{command}}, "command did not work")
         assert_equal("yay-foo\n", %x{#{command} foo}, "command did not work")
+
+        generate = Puppet::Parser::Functions.function(:generate)
 
         scope = mkscope
         parser = scope.compiler.parser
