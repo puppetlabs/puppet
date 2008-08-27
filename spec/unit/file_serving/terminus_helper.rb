@@ -31,6 +31,27 @@ describe Puppet::FileServing::TerminusHelper do
         @helper.path2instances(@request, "/my/file")
     end
 
+    it "should pass :recurse, :ignore, and :links settings on to the fileset if present with the keys stored as strings" do
+        fileset = mock 'fileset', :files => []
+        Puppet::FileServing::Fileset.expects(:new).with("/my/file", :links => :a, :ignore => :b, :recurse => :c).returns(fileset)
+        @request.stubs(:options).returns("links" => :a, "ignore" => :b, "recurse" => :c)
+        @helper.path2instances(@request, "/my/file")
+    end
+
+    it "should convert the string 'true' to the boolean true when setting options" do
+        fileset = mock 'fileset', :files => []
+        Puppet::FileServing::Fileset.expects(:new).with("/my/file", :recurse => true).returns(fileset)
+        @request.stubs(:options).returns(:recurse => "true")
+        @helper.path2instances(@request, "/my/file")
+    end
+
+    it "should convert the string 'false' to the boolean false when setting options" do
+        fileset = mock 'fileset', :files => []
+        Puppet::FileServing::Fileset.expects(:new).with("/my/file", :recurse => false).returns(fileset)
+        @request.stubs(:options).returns(:recurse => "false")
+        @helper.path2instances(@request, "/my/file")
+    end
+
     describe "when creating instances" do
         before do
             @request.stubs(:key).returns "puppet://host/mount/dir"
