@@ -332,6 +332,13 @@ module Puppet
             recurse()
         end
 
+        def flush
+            # We want to make sure we retrieve metadata anew on each transaction.
+            @parameters.each do |name, param|
+                param.flush if param.respond_to?(:flush)
+            end
+        end
+
         # Deal with backups.
         def handlebackup(file = nil)
             # let the path be specified

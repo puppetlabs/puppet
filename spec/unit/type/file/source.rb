@@ -173,4 +173,85 @@ describe Puppet::Type.type(:file).attrclass(:source) do
             @source.retrieve
         end
     end
+
+    describe "when flushing" do
+        it "should set its metadata to nil" do
+            @source = source.new(:resource => @resource)
+            @source.metadata = "foo"
+            @source.flush
+            @source.instance_variable_get("@metadata").should be_nil
+        end
+
+        it "should reset its content" do
+            @source = source.new(:resource => @resource)
+            @source.instance_variable_set("@content", "foo")
+            @source.flush
+            @source.instance_variable_get("@content").should be_nil
+        end
+    end
+
+    it "should have a method for returning the content" do
+        source.new(:resource => @resource).must respond_to(:content)
+    end
+
+    describe "when looking up the content" do
+        before do
+            @source = source.new(:resource => @resource)
+            @metadata = stub 'metadata', :source => "/my/source"
+            @source.metadata = @metadata
+
+            @content = stub 'content', :content => "foobar"
+        end
+
+        it "should fail if the metadata does not have a source set" do
+            @metadata.stubs(:source).returns nil
+            lambda { @source.content }.should raise_error(Puppet::DevError)
+        end
+
+        it "should look the content up from the Content class using the metadata source if no content is set" do
+            Puppet::FileServing::Content.expects(:find).with("/my/source").returns @content
+            @source.content.should == "foobar"
+        end
+
+        it "should return previously found content" do
+            Puppet::FileServing::Content.expects(:find).with("/my/source").returns @content
+            @source.content.should == "foobar"
+            @source.content.should == "foobar"
+        end
+
+        it "should fail if no content can be retrieved" do
+            Puppet::FileServing::Content.expects(:find).with("/my/source").returns nil
+            @source.expects(:fail).raises RuntimeError
+            lambda { @source.content }.should raise_error(RuntimeError)
+        end
+    end
+
+    describe "when changing the content" do
+        before do
+            @source = source.new(:resource => @resource)
+            @source.stubs(:content).returns "foobar"
+
+            @metadata = stub 'metadata', :checksum => 123
+            @source.metadata = @metadata
+            @resource.stubs(:[]).with(:path).returns "/boo"
+        end
+
+        it "should use the file's :write method to write the content" do
+            @resource.expects(:write).with("foobar", :source, 123)
+
+            @source.sync
+        end
+
+        it "should return :file_changed if the file already existed" do
+            @resource.stubs(:write)
+            FileTest.expects(:exist?).with("/boo").returns true
+            @source.sync.should == :file_changed
+        end
+
+        it "should return :file_created if the file already existed" do
+            @resource.stubs(:write)
+            FileTest.expects(:exist?).with("/boo").returns false
+            @source.sync.should == :file_created
+        end
+    end
 end

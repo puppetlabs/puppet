@@ -31,46 +31,6 @@ describe Puppet::Type.type(:file) do
         end
     end
 
-    describe "when specifying a source" do
-        before do
-            @file[:source] = "/bar"
-        end
-
-        it "should raise if source doesn't exist" do
-            @file.property(:source).expects(:found?).returns(false)
-            lambda { @file.retrieve }.should raise_error(Puppet::Error)
-        end
-
-    end
-
-    describe "when retrieving remote files" do
-        before do
-            @filesource = Puppet::Type::File::FileSource.new
-            @filesource.server = mock 'fileserver'
-
-            @file.stubs(:uri2obj).returns(@filesource)
-
-            @file[:source] = "puppet:///test"
-        end
-
-        it "should fail without writing if it cannot retrieve remote contents" do
-            # create the file, because we only get the problem when it starts
-            # out absent.
-            File.open(@file[:path], "w") { |f| f.puts "a" }
-            @file.expects(:write).never
-
-            @filesource.server.stubs(:describe).returns("493\tfile\t100\t0\t{md5}3f5fef3bddbc4398c46a7bd7ba7b3af7")
-            @filesource.server.stubs(:retrieve).raises(RuntimeError)
-            @file.property(:source).retrieve
-            lambda { @file.property(:source).sync }.should raise_error(Puppet::Error)
-        end
-
-        it "should fail if it cannot describe remote contents" do
-            @filesource.server.stubs(:describe).raises(Puppet::Network::XMLRPCClientError.new("Testing"))
-            lambda { @file.retrieve }.should raise_error(Puppet::Error)
-        end
-    end
-
     describe "when managing links" do
         require 'puppettest/support/assertions'
         include PuppetTest
@@ -108,6 +68,14 @@ describe Puppet::Type.type(:file) do
             @catalog.apply
 
             ("%o" % (File.stat(@file).mode & 007777)).should == "%o" % 0755
+        end
+    end
+
+    describe "when flushing" do
+        it "should flush all properties that respond to :flush" do
+            @resource = Puppet.type(:file).create(:path => "/foo/bar", :source => "/bar/foo")
+            @resource.property(:source).expects(:flush)
+            @resource.flush
         end
     end
 end

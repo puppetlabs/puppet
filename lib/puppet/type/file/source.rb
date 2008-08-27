@@ -83,9 +83,9 @@ module Puppet
         def change_to_s(currentvalue, newvalue)
             # newvalue = "{md5}" + @metadata.checksum
             if @resource.property(:ensure).retrieve == :absent
-                return "creating from source %s with contents %s" % [@source, @metadata.checksum]
+                return "creating from source %s with contents %s" % [metadata.source, @metadata.checksum]
             else
-                return "replacing from source %s with contents %s" % [@source, @metadata.checksum]
+                return "replacing from source %s with contents %s" % [metadata.source, @metadata.checksum]
             end
         end
         
@@ -95,6 +95,19 @@ module Puppet
             else
                 nil
             end
+        end
+
+        # Look up (if necessary) and return remote content.
+        def content
+            raise Puppet::DevError, "No source for content was stored with the metadata" unless metadata.source
+
+            unless defined?(@content) and @content
+                unless tmp = Puppet::FileServing::Content.find(@metadata.source)
+                    fail "Could not find any content at %s" % @metadata.source
+                end
+                @content = tmp.content
+            end
+            @content
         end
 
         # Copy the values from the source to the resource.  Yay.
@@ -116,21 +129,15 @@ module Puppet
             end
         end
 
-        # Ask the file server to describe our file.
-        def describe(source)
-            begin
-                Puppet::FileServing::Metadata.find source
-            rescue => detail
-                fail detail, "Could not retrieve file metadata for %s: %s" % [path, detail]
-            end
+        # Remove any temporary attributes we manage.
+        def flush
+            @metadata = nil
+            @content = nil
         end
-        
-        # Use the info we get from describe() to check if we're in sync.
+
+        # Use the remote metadata to see if we're in sync.
+        # LAK:NOTE This method should still get refactored.
         def insync?(currentvalue)
-            if currentvalue == :nocopy
-                return true
-            end
-            
             # the only thing this actual state can do is copy files around.  Therefore,
             # only pay attention if the remote is a file.
             unless @metadata.ftype == "file" 
@@ -149,10 +156,8 @@ module Puppet
             # Diff the contents if they ask it.  This is quite annoying -- we need to do this in
             # 'insync?' because they might be in noop mode, but we don't want to do the file
             # retrieval twice, so we cache the value.
-            if ! result and Puppet[:show_diff] and File.exists?(@resource[:path]) and ! @metadata._diffed
-                @metadata._remote_content = get_remote_content
-                string_file_diff(@resource[:path], @metadata._remote_content)
-                @metadata._diffed = true
+            if ! result and Puppet[:show_diff] and File.exists?(@resource[:path])
+                string_file_diff(@resource[:path], content)
             end
             return result
         end
@@ -188,10 +193,13 @@ module Puppet
             return @metadata
         end
 
+        # Just call out to our copy method.  Hopefully we'll refactor 'source' to
+        # be a parameter soon, in which case 'retrieve' is unnecessary.
         def retrieve
             copy_source_values
         end
         
+        # Return the whole array, rather than the first item.
         def should
             @should
         end
@@ -208,13 +216,9 @@ module Puppet
         end
 
         def sync
-            exists = File.exists?(@resource[:path])
+            exists = FileTest.exist?(@resource[:path])
 
-            if content = Puppet::FileServing::Content.find(@metadata.source)
-                @resource.write(content.content, :source, @metadata.checksum)
-            else
-                raise "Could not retrieve content"
-            end
+            @resource.write(content, :source, @metadata.checksum)
 
             if exists
                 return :file_changed
