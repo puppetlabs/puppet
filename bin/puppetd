@@ -162,7 +162,6 @@ trap(:INT) do
 end
 
 require 'puppet'
-require 'puppet/executables/client/certhandler'
 require 'puppet/network/client'
 require 'getoptlong'
 
