@@ -81,6 +81,11 @@ describe Puppet::FileServing::Base do
             @file.full_path.should == "/this/file"
         end
 
+        it "should return the path if the relative_path is set to '.'" do
+            @file.relative_path = "."
+            @file.full_path.should == "/this/file"
+        end
+
         it "should return the path joined with the relative path if there is a relative path and it is not set to '/' or ''" do
             @file.relative_path = "not/qualified"
             @file.full_path.should == "/this/file/not/qualified"
