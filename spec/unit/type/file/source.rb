@@ -15,9 +15,16 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
     describe "when initializing" do
         it "should fail if the 'should' values are not URLs" do
-            @resource.expects(:uri2obj).with("foo").returns false
+            s = source.new(:resource => @resource)
+            URI.expects(:parse).with('foo').raises RuntimeError
 
-            lambda { source.new(:resource => @resource, :should => %w{foo}) }.must raise_error(Puppet::Error)
+            lambda { s.should = %w{foo} }.must raise_error(Puppet::Error)
+        end
+
+        it "should fail if the URI is not a local file, file URI, or puppet URI" do
+            s = source.new(:resource => @resource)
+
+            lambda { s.should = %w{http://foo/bar} }.must raise_error(Puppet::Error)
         end
     end
 

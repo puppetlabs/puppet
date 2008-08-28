@@ -66,8 +66,14 @@ module Puppet
         uncheckable
         
         validate do |source|
-            unless @resource.uri2obj(source)
-                raise Puppet::Error, "Invalid source %s" % source
+            begin
+                uri = URI.parse(URI.escape(source))
+            rescue => detail
+                self.fail "Could not understand source %s: %s" % [source, detail.to_s]
+            end
+
+            unless uri.scheme.nil? or %w{file puppet}.include?(uri.scheme)
+                self.fail "Cannot use URLs of type '%s' as source for fileserving" % [uri.scheme]
             end
         end
             

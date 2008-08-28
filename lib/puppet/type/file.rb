@@ -329,7 +329,7 @@ module Puppet
         
         # Create any children via recursion or whatever.
         def eval_generate
-            recurse()
+            recurse() if self.recurse?
         end
 
         def flush
@@ -679,27 +679,54 @@ module Puppet
             @parameters.include?(:purge) and (self[:purge] == :true or self[:purge] == "true")
         end
 
+        # Recurse the target of the link.
+        def recurse_link
+            perform_recursion(self[:target])
+        end
+
+        # Recurse the file itself, returning a Metadata instance for every found file.
+        def recurse_local
+            perform_recursion(self[:path])
+        end
+
+        # Recurse against our remote file.
+        def recurse_remote
+            total = self[:source].collect do |source|
+                next unless result = perform_recursion(source)
+                result.each { |data| data.source = "%s/%s" % [source, data.relative_path] }
+                return result if result and ! result.empty? and self[:sourceselect] == :first
+                result
+            end.flatten
+
+            # This only happens if we have sourceselect == :all
+            found = []
+            total.find_all do |data|
+                result = ! found.include?(data.relative_path)
+                found << data.relative_path unless found.include?(data.relative_path)
+                result
+            end
+        end
+
+        def perform_recursion(path)
+            Puppet::FileServing::Metadata.search(self[:path], :links => self[:links], :recurse => self[:recurse], :ignore => self[:ignore])
+        end
+
         # Recurse into the directory.  This basically just calls 'localrecurse'
         # and maybe 'sourcerecurse', returning the collection of generated
         # files.
         def recurse
-            # are we at the end of the recursion?
-            return unless self.recurse?
+            children = recurse_local
 
-            recurse = self[:recurse]
-            # we might have a string, rather than a number
-            if recurse.is_a?(String)
-                if recurse =~ /^[0-9]+$/
-                    recurse = Integer(recurse)
-                else # anything else is infinite recursion
-                    recurse = true
-                end
+            if self[:target]
+                children += recurse_link 
             end
 
-            if recurse.is_a?(Integer)
-                recurse -= 1
+            if self[:source]
+                recurse_remote 
             end
-            
+
+            return children.collect { |child| newchild(child.relative_path) }.reject { |child| child.nil? }
+
             children = []
             
             # We want to do link-recursing before normal recursion so that all
