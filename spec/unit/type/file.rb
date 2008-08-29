@@ -143,6 +143,14 @@ describe Puppet::Type.type(:file) do
             @file.recurse_local
         end
 
+        it "should not create a new child resource for the '.' directory" do
+            @metadata.stubs(:relative_path).returns "."
+
+            @file.expects(:perform_recursion).returns [@metadata]
+            @file.expects(:newchild).never
+            @file.recurse_local
+        end
+
         it "should return a hash of the created resources with the relative paths as the hash keys" do
             @file.expects(:perform_recursion).returns [@metadata]
             @file.expects(:newchild).with("my/file").returns "fiebar"
@@ -366,6 +374,19 @@ describe Puppet::Type.type(:file) do
             @file.eval_generate.should == [foo]
         end
 
+        it "should add each resource to the catalog" do
+            foo = stub 'foo', :[] => "/foo"
+            bar = stub 'bar', :[] => "/bar"
+            bar2 = stub 'bar2', :[] => "/bar"
+
+            @catalog.expects(:add_resource).with(foo)
+            @catalog.expects(:add_resource).with(bar)
+
+            @file.expects(:recurse).returns [foo, bar]
+
+            @file.eval_generate
+        end
+
         it "should add a relationshp edge for each returned resource" do
             foo = stub 'foo', :[] => "/foo"
 
@@ -422,25 +443,25 @@ describe Puppet::Type.type(:file) do
         describe "and making a new child resource" do
             it "should create an implicit resource using the provided relative path joined with the file's path" do
                 path = File.join(@file[:path], "my/path")
-                @catalog.expects(:create_implicit_resource).with { |klass, options| options[:path] == path }
+                Puppet::Type.type(:file).expects(:create).with { |options| options[:implicit] == true and options[:path] == path }
                 @file.newchild("my/path")
             end
 
             it "should copy most of the parent resource's 'should' values to the new resource" do
                 @file.expects(:to_hash).returns :foo => "bar", :fee => "fum"
-                @catalog.expects(:create_implicit_resource).with { |klass, options| options[:foo] == "bar" and options[:fee] == "fum" }
+                Puppet::Type.type(:file).expects(:create).with { |options| options[:foo] == "bar" and options[:fee] == "fum" }
                 @file.newchild("my/path")
             end
 
             it "should not copy the parent resource's parent" do
                 @file.expects(:to_hash).returns :parent => "foo"
-                @catalog.expects(:create_implicit_resource).with { |klass, options| ! options.include?(:parent) }
+                Puppet::Type.type(:file).expects(:create).with { |options| ! options.include?(:parent) }
                 @file.newchild("my/path")
             end
 
             it "should not copy the parent resource's recurse value" do
                 @file.expects(:to_hash).returns :recurse => true
-                @catalog.expects(:create_implicit_resource).with { |klass, options| ! options.include?(:recurse) }
+                Puppet::Type.type(:file).expects(:create).with { |options| ! options.include?(:recurse) }
                 @file.newchild("my/path")
             end
         end

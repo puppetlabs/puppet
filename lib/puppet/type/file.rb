@@ -322,10 +322,14 @@ module Puppet
         
         # Create any children via recursion or whatever.
         def eval_generate
-            raise(Puppet::DevError, "File recursion cannot happen without a catalog") unless catalog
-
             return nil unless self.recurse?
-            recurse.reject { |resource| catalog.resource(:file, resource[:path]) }.each do |child|
+
+            raise(Puppet::DevError, "Cannot generate resources for recursion without a catalog") unless catalog
+
+            recurse.reject do |resource|
+                catalog.resource(:file, resource[:path])
+            end.each do |child|
+                catalog.add_resource child
                 catalog.relationship_graph.add_edge self, child
             end
         end
@@ -559,11 +563,11 @@ module Puppet
             full_path = File.join(self[:path], path)
 
             # the right-side hash wins in the merge.
-            options = to_hash.merge(:path => full_path)
+            options = to_hash.merge(:path => full_path, :implicit => true)
             options.delete(:parent) if options.include?(:parent)
             options.delete(:recurse) if options.include?(:recurse)
 
-            return catalog.create_implicit_resource(self.class.name, options)
+            return self.class.create(options)
         end
 
         # Files handle paths specially, because they just lengthen their
@@ -641,7 +645,12 @@ module Puppet
 
         # Recurse the file itself, returning a Metadata instance for every found file.
         def recurse_local
-            perform_recursion(self[:path]).inject({}) { |hash, meta| hash[meta.relative_path] = newchild(meta.relative_path); hash }
+            perform_recursion(self[:path]).inject({}) do |hash, meta|
+                next hash if meta.relative_path == "."
+
+                hash[meta.relative_path] = newchild(meta.relative_path)
+                hash
+            end
         end
 
         # Recurse against our remote file.
