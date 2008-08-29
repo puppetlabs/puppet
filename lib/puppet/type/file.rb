@@ -563,7 +563,7 @@ module Puppet
             full_path = File.join(self[:path], path)
 
             # the right-side hash wins in the merge.
-            options = to_hash.merge(:path => full_path, :implicit => true)
+            options = to_hash.merge(:path => full_path, :implicit => true).reject { |param, value| value.nil? }
             [:parent, :recurse, :target].each do |param|
                 options.delete(param) if options.include?(param)
             end

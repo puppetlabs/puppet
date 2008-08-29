@@ -513,6 +513,12 @@ describe Puppet::Type.type(:file) do
                 Puppet::Type.type(:file).expects(:create).with { |options| ! options.include?(:target) }
                 @file.newchild("my/path")
             end
+
+            it "should not copy any nil values from the parent" do
+                @file.expects(:to_hash).returns :ensure => nil
+                Puppet::Type.type(:file).expects(:create).with { |options| ! options.include?(:ensure) }
+                @file.newchild("my/path")
+            end
         end
     end
 end
