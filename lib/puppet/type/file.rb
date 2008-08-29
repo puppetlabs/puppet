@@ -155,8 +155,6 @@ module Puppet
                 engine, so shell metacharacters are fully supported, e.g. ``[a-z]*``.
                 Matches that would descend into the directory structure are ignored,
                 e.g., ``*/*``."
-       
-            defaultto false
 
             validate do |value|
                 unless value.is_a?(Array) or value.is_a?(String) or value == false
@@ -277,11 +275,6 @@ module Puppet
 
         @depthfirst = false
 
-
-        def argument?(arg)
-            @arghash.include?(arg)
-        end
-
         # Determine the user to write files as.
         def asuser
             if self.should(:owner) and ! self.should(:owner).is_a?(Symbol)
@@ -329,7 +322,12 @@ module Puppet
         
         # Create any children via recursion or whatever.
         def eval_generate
-            recurse() if self.recurse?
+            raise(Puppet::DevError, "File recursion cannot happen without a catalog") unless catalog
+
+            return nil unless self.recurse?
+            recurse.reject { |resource| catalog.resource(:file, resource[:path]) }.each do |child|
+                catalog.relationship_graph.add_edge self, child
+            end
         end
 
         def flush
@@ -462,17 +460,6 @@ module Puppet
             
             @title.sub!(/\/$/, "") unless @title == "/"
 
-            # Clean out as many references to any file paths as possible.
-            # This was the source of many, many bugs.
-            @arghash = tmphash
-            @arghash.delete(self.class.namevar)
-
-            [:source, :parent].each do |param|
-                if @arghash.include?(param)
-                    @arghash.delete(param)
-                end
-            end
-
             @stat = nil
         end
 
@@ -568,88 +555,15 @@ module Puppet
         
         # Create a new file or directory object as a child to the current
         # object.
-        def newchild(path, local, hash = {})
-            raise(Puppet::DevError, "File recursion cannot happen without a catalog") unless catalog
+        def newchild(path)
+            full_path = File.join(self[:path], path)
 
-            # make local copy of arguments
-            args = symbolize_options(@arghash)
+            # the right-side hash wins in the merge.
+            options = to_hash.merge(:path => full_path)
+            options.delete(:parent) if options.include?(:parent)
+            options.delete(:recurse) if options.include?(:recurse)
 
-            # There's probably a better way to do this, but we don't want
-            # to pass this info on.
-            if v = args[:ensure]
-                v = symbolize(v)
-                args.delete(:ensure)
-            end
-
-            if path =~ %r{^#{File::SEPARATOR}}
-                self.devfail(
-                    "Must pass relative paths to PFile#newchild()"
-                )
-            else
-                path = File.join(self[:path], path)
-            end
-
-            args[:path] = path
-
-            unless hash.include?(:recurse)
-                if args.include?(:recurse)
-                    if args[:recurse].is_a?(Integer)
-                        args[:recurse] -= 1 # reduce the level of recursion
-                    end
-                end
-
-            end
-
-            hash.each { |key,value|
-                args[key] = value
-            }
-
-            child = nil
-
-            # The child might already exist because 'localrecurse' runs
-            # before 'sourcerecurse'.  I could push the override stuff into
-            # a separate method or something, but the work is the same other
-            # than this last bit, so it doesn't really make sense.
-            if child = catalog.resource(:file, path)
-                unless child.parent.object_id == self.object_id
-                    self.debug "Not managing more explicit file %s" %
-                        path
-                    return nil
-                end
-
-                # This is only necessary for sourcerecurse, because we might have
-                # created the object with different 'should' values than are
-                # set remotely.
-                unless local
-                    args.each { |var,value|
-                        next if var == :path
-                        next if var == :name
-
-                        # behave idempotently
-                        unless child.should(var) == value
-                            child[var] = value
-                        end
-                    }
-                end
-                return nil
-            else # create it anew
-                #notice "Creating new file with args %s" % args.inspect
-                args[:parent] = self
-                begin
-                    # This method is used by subclasses of :file, so use the class name rather than hard-coding
-                    # :file.
-                    return nil unless child = catalog.create_implicit_resource(self.class.name, args)
-                rescue => detail
-                    self.notice "Cannot manage: %s" % [detail]
-                    return nil
-                end
-            end
-
-            # LAK:FIXME This shouldn't be necessary, but as long as we're
-            # modeling the relationship graph specifically, it is.
-            catalog.relationship_graph.add_edge self, child
-
-            return child
+            return catalog.create_implicit_resource(self.class.name, options)
         end
 
         # Files handle paths specially, because they just lengthen their
@@ -679,84 +593,23 @@ module Puppet
             @parameters.include?(:purge) and (self[:purge] == :true or self[:purge] == "true")
         end
 
-        # Recurse the target of the link.
-        def recurse_link
-            perform_recursion(self[:target])
+        def make_children(metadata)
+            metadata.collect { |meta| newchild(meta.relative_path) }
         end
 
-        # Recurse the file itself, returning a Metadata instance for every found file.
-        def recurse_local
-            perform_recursion(self[:path])
-        end
-
-        # Recurse against our remote file.
-        def recurse_remote
-            total = self[:source].collect do |source|
-                next unless result = perform_recursion(source)
-                result.each { |data| data.source = "%s/%s" % [source, data.relative_path] }
-                return result if result and ! result.empty? and self[:sourceselect] == :first
-                result
-            end.flatten
-
-            # This only happens if we have sourceselect == :all
-            found = []
-            total.find_all do |data|
-                result = ! found.include?(data.relative_path)
-                found << data.relative_path unless found.include?(data.relative_path)
-                result
-            end
-        end
-
-        def perform_recursion(path)
-            Puppet::FileServing::Metadata.search(self[:path], :links => self[:links], :recurse => self[:recurse], :ignore => self[:ignore])
-        end
-
-        # Recurse into the directory.  This basically just calls 'localrecurse'
-        # and maybe 'sourcerecurse', returning the collection of generated
-        # files.
+        # Recursively generate a list of file resources, which will
+        # be used to copy remote files, manage local files, and/or make links
+        # to map to another directory.
         def recurse
             children = recurse_local
 
             if self[:target]
-                children += recurse_link 
+                recurse_link(children)
+            elsif self[:source]
+                recurse_remote(children)
             end
 
-            if self[:source]
-                recurse_remote 
-            end
-
-            return children.collect { |child| newchild(child.relative_path) }.reject { |child| child.nil? }
-
-            children = []
-            
-            # We want to do link-recursing before normal recursion so that all
-            # of the target stuff gets copied over correctly.
-            if @parameters.include? :target and ret = self.linkrecurse(recurse)
-                children += ret
-            end
-            if ret = self.localrecurse(recurse)
-                children += ret
-            end
-
-            # These will be files pulled in by the file source
-            sourced = false
-            if @parameters.include?(:source)
-                ret, sourced = self.sourcerecurse(recurse)
-                if ret
-                    children += ret
-                end
-            end
-
-            # The purge check needs to happen after all of the other recursion.
-            if self.purge?
-                children.each do |child|
-                    if (sourced and ! sourced.include?(child[:path])) or ! child.managed?
-                        child[:ensure] = :absent
-                    end
-                end
-            end
-            
-            children
+            return children.values.sort { |a, b| a[:path] <=> b[:path] }
         end
 
         # A simple method for determining whether we should be recursing.
@@ -770,6 +623,73 @@ module Puppet
             else
                 return false
             end
+        end
+
+        # Recurse the target of the link.
+        def recurse_link(children)
+            perform_recursion(self[:target]).each do |meta|
+                children[meta.relative_path] ||= newchild(meta.relative_path)
+                if meta.ftype == "directory"
+                    children[meta.relative_path][:ensure] = :directory
+                else
+                    children[meta.relative_path][:ensure] = :link
+                    children[meta.relative_path][:target] = meta.full_path
+                end
+            end
+            children
+        end
+
+        # Recurse the file itself, returning a Metadata instance for every found file.
+        def recurse_local
+            perform_recursion(self[:path]).inject({}) { |hash, meta| hash[meta.relative_path] = newchild(meta.relative_path); hash }
+        end
+
+        # Recurse against our remote file.
+        def recurse_remote(children)
+            sourceselect = self[:sourceselect]
+
+            total = self[:source].collect do |source|
+                next unless result = perform_recursion(source)
+                result.each { |data| data.source = "%s/%s" % [source, data.relative_path] }
+                break result if result and ! result.empty? and sourceselect == :first
+                result
+            end.flatten
+
+            # This only happens if we have sourceselect == :all
+            unless sourceselect == :first
+                found = []
+                total.reject! do |data|
+                    result = found.include?(data.relative_path)
+                    found << data.relative_path unless found.include?(data.relative_path)
+                    result
+                end
+            end
+
+            total.each do |meta|
+                children[meta.relative_path] ||= newchild(meta.relative_path)
+                children[meta.relative_path][:source] = meta.source
+                children[meta.relative_path].property(:source).metadata = meta
+            end
+
+            # If we're purging resources, then delete any resource that isn't on the
+            # remote system.
+            if self.purge?
+                # Make a hash of all of the resources we found remotely -- all we need is the
+                # fast lookup, the values don't matter.
+                remotes = total.inject({}) { |hash, meta| hash[meta.relative_path] = true; hash }
+
+                children.each do |name, child|
+                    unless remotes.include?(name)
+                        child[:ensure] = :absent
+                    end
+                end
+            end
+
+            children
+        end
+
+        def perform_recursion(path)
+            Puppet::FileServing::Metadata.search(path, :links => self[:links], :recurse => self[:recurse], :ignore => self[:ignore])
         end
 
         # Remove the old backup.
