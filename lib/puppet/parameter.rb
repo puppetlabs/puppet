@@ -417,17 +417,7 @@ class Puppet::Parameter
     # it possible to call for properties, too.
     def value
         if self.is_a?(Puppet::Property)
-            # We should return the 'is' value if there's not 'should'
-            # value.  This might be bad, though, because the 'should'
-            # method knows whether to return an array or not and that info
-            # is not exposed, and the 'is' value could be a symbol.  I
-            # can't seem to create a test in which this is a problem, but
-            # that doesn't mean it's not one.
-            if self.should
-                return self.should
-            else
-                return self.retrieve
-            end
+            self.should
         else
             if defined? @value
                 return @value
