@@ -28,6 +28,19 @@ describe Puppet::Type.type(:file), "when recursing" do
         end
     end
 
+    it "should be able to recurse over a nonexistent file" do
+        @path = Tempfile.new("file_integration_tests")
+        @path.close!()
+        @path = @path.path
+
+        @file = Puppet::Type::File.create(:name => @path, :mode => 0644, :recurse => true)
+
+        @catalog = Puppet::Node::Catalog.new
+        @catalog.add_resource @file
+
+        lambda { @file.eval_generate }.should_not raise_error
+    end
+
     it "should be able to recursively set properties on existing files" do
         @path = Tempfile.new("file_integration_tests")
         @path.close!()
@@ -48,6 +61,68 @@ describe Puppet::Type.type(:file), "when recursing" do
 
         @files.each do |path|
             (File.stat(path).mode & 007777).should == 0644
+        end
+    end
+
+    it "should be able to recursively make links to other files" do
+        source = Tempfile.new("file_link_integration_source")
+        source.close!()
+        source = source.path
+
+        build_path(source)
+
+        dest = Tempfile.new("file_link_integration_dest")
+        dest.close!()
+        dest = dest.path
+
+        @file = Puppet::Type::File.create(:name => dest, :target => source, :recurse => true, :ensure => :link)
+
+        @catalog = Puppet::Node::Catalog.new
+        @catalog.add_resource @file
+
+        @catalog.apply
+
+        @dirs.each do |path|
+            link_path = path.sub(source, dest)
+
+            File.lstat(link_path).should be_directory
+        end
+
+        @files.each do |path|
+            link_path = path.sub(source, dest)
+
+            File.lstat(link_path).ftype.should == "link"
+        end
+    end
+
+    it "should be able to recursively copy files" do
+        source = Tempfile.new("file_source_integration_source")
+        source.close!()
+        source = source.path
+
+        build_path(source)
+
+        dest = Tempfile.new("file_source_integration_dest")
+        dest.close!()
+        dest = dest.path
+
+        @file = Puppet::Type::File.create(:name => dest, :source => source, :recurse => true)
+
+        @catalog = Puppet::Node::Catalog.new
+        @catalog.add_resource @file
+
+        @catalog.apply
+
+        @dirs.each do |path|
+            newpath = path.sub(source, dest)
+
+            File.lstat(newpath).should be_directory
+        end
+
+        @files.each do |path|
+            newpath = path.sub(source, dest)
+
+            File.lstat(newpath).ftype.should == "file"
         end
     end
 end

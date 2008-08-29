@@ -99,7 +99,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
     describe "when copying the source values" do
         before do
-            @metadata = stub 'metadata', :owner => 100, :group => 200, :mode => 123
+            @metadata = stub 'metadata', :owner => 100, :group => 200, :mode => 123, :checksum => "{md5}asdfasdf"
 
             @source = source.new(:resource => @resource)
             @source.metadata = @metadata
@@ -113,23 +113,12 @@ describe Puppet::Type.type(:file).attrclass(:source) do
             lambda { @source.copy_source_values }.should raise_error(ArgumentError)
         end
 
-        it "should set :ensure to the file type if the resource is not being deleted" do
-            @resource.expects(:deleting?).returns false
+        it "should set :ensure to the file type" do
             @resource.stubs(:[])
             @resource.stubs(:[]=)
             @metadata.stubs(:ftype).returns "foobar"
 
             @resource.expects(:[]=).with(:ensure, "foobar")
-            @source.copy_source_values
-        end
-
-        it "should not set :ensure to the file type if the resource is being deleted" do
-            @resource.expects(:deleting?).returns true
-            @resource.stubs(:[])
-            @resource.stubs(:[]).returns "foo"
-            @metadata.expects(:ftype).returns "foobar"
-
-            @resource.expects(:[]=).with(:ensure, "foobar").never
             @source.copy_source_values
         end
 
@@ -141,9 +130,25 @@ describe Puppet::Type.type(:file).attrclass(:source) do
             it "should copy the metadata's owner, group, and mode to the resource if they are not set on the resource" do
                 @resource.stubs(:[]).returns nil
 
+                Puppet::Util::SUIDManager.expects(:uid).returns 0
+
                 @resource.expects(:[]=).with(:owner, 100)
                 @resource.expects(:[]=).with(:group, 200)
                 @resource.expects(:[]=).with(:mode, 123)
+                @resource.expects(:[]=).with(:checksum, "{md5}asdfasdf")
+
+                @source.copy_source_values
+            end
+
+            it "should copy the metadata's owner, group, and mode to the resource if they are set to :absent on the resource" do
+                @resource.stubs(:[]).returns :absent
+
+                Puppet::Util::SUIDManager.expects(:uid).returns 0
+
+                @resource.expects(:[]=).with(:owner, 100)
+                @resource.expects(:[]=).with(:group, 200)
+                @resource.expects(:[]=).with(:mode, 123)
+                @resource.expects(:[]=).with(:checksum, "{md5}asdfasdf")
 
                 @source.copy_source_values
             end
@@ -155,6 +160,19 @@ describe Puppet::Type.type(:file).attrclass(:source) do
                 @resource.expects(:[]=).never
 
                 @source.copy_source_values
+            end
+
+            describe "and puppet is not running as root" do
+                it "should not try to set the owner" do
+                    @resource.stubs(:[]).returns nil
+                    @resource.stubs(:[]=)
+
+                    @resource.expects(:[]=).with(:owner, 100).never
+
+                    Puppet::Util::SUIDManager.expects(:uid).returns 100
+
+                    @source.copy_source_values
+                end
             end
         end
 

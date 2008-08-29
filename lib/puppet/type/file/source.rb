@@ -122,13 +122,14 @@ module Puppet
 
             # Take each of the stats and set them as states on the local file
             # if a value has not already been provided.
-            [:owner, :mode, :group].each do |param|
-                @resource[param] ||= metadata.send(param)
+            [:owner, :mode, :group, :checksum].each do |param|
+                next if param == :owner and Puppet::Util::SUIDManager.uid != 0
+                unless value = @resource[param] and value != :absent
+                    @resource[param] = metadata.send(param)
+                end
             end
 
-            unless @resource.deleting?
-                @resource[:ensure] = metadata.ftype
-            end
+            @resource[:ensure] = metadata.ftype
 
             if metadata.ftype == "link"
                 @resource[:target] = metadata.destination

@@ -137,6 +137,11 @@ describe Puppet::Type.type(:file) do
             @file.recurse_local
         end
 
+        it "should return an empty hash if the recursion returns nothing" do
+            @file.expects(:perform_recursion).returns nil
+            @file.recurse_local.should == {}
+        end
+
         it "should create a new child resource with each generated metadata instance's relative path" do
             @file.expects(:perform_recursion).returns [@metadata]
             @file.expects(:newchild).with(@metadata.relative_path).returns "fiebar"
@@ -174,6 +179,15 @@ describe Puppet::Type.type(:file) do
             @file[:target] = "mylinks"
             @file.expects(:perform_recursion).with("mylinks").returns [@first]
             @file.stubs(:newchild).returns @resource
+            @file.recurse_link({})
+        end
+
+        it "should ignore the recursively-found '.' file and configure the top-level file to create a directory" do
+            @first.stubs(:relative_path).returns "."
+            @file[:target] = "mylinks"
+            @file.expects(:perform_recursion).with("mylinks").returns [@first]
+            @file.stubs(:newchild).never
+            @file.expects(:[]=).with(:ensure, :directory)
             @file.recurse_link({})
         end
 
@@ -258,7 +272,18 @@ describe Puppet::Type.type(:file) do
 
         it "should set the source of each resource to the source of the metadata" do
             @file.stubs(:perform_recursion).returns [@first]
+            @resource.stubs(:[]=)
             @resource.expects(:[]=).with(:source, File.join("puppet://foo/bar", @first.relative_path))
+            @file.recurse_remote("first" => @resource)
+        end
+
+        # LAK:FIXME This is a bug, but I can't think of a fix for it.  Fortunately it's already
+        # filed, and when it's fixed, we'll just fix the whole flow.
+        it "should set the checksum type to :md5 if the remote file is a file" do
+            @first.stubs(:ftype).returns "file"
+            @file.stubs(:perform_recursion).returns [@first]
+            @resource.stubs(:[]=)
+            @resource.expects(:[]=).with(:checksum, :md5)
             @file.recurse_remote("first" => @resource)
         end
 
@@ -268,6 +293,24 @@ describe Puppet::Type.type(:file) do
             
             @property.expects(:metadata=).with(@first)
 
+            @file.recurse_remote("first" => @resource)
+        end
+
+        it "should not create a new resource for the '.' file" do
+            @first.stubs(:relative_path).returns "."
+            @file.stubs(:perform_recursion).returns [@first]
+
+            @file.expects(:newchild).never
+
+            @file.recurse_remote({})
+        end
+
+        it "should store the metadata in the main file's source property if the relative path is '.'" do
+            @first.stubs(:relative_path).returns "."
+            @file.stubs(:perform_recursion).returns [@first]
+
+            @file.property(:source).expects(:metadata=).with @first
+            
             @file.recurse_remote("first" => @resource)
         end
 
@@ -462,6 +505,12 @@ describe Puppet::Type.type(:file) do
             it "should not copy the parent resource's recurse value" do
                 @file.expects(:to_hash).returns :recurse => true
                 Puppet::Type.type(:file).expects(:create).with { |options| ! options.include?(:recurse) }
+                @file.newchild("my/path")
+            end
+
+            it "should not copy the parent resource's target value" do
+                @file.expects(:to_hash).returns :target => "foo"
+                Puppet::Type.type(:file).expects(:create).with { |options| ! options.include?(:target) }
                 @file.newchild("my/path")
             end
         end

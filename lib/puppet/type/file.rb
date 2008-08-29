@@ -564,8 +564,9 @@ module Puppet
 
             # the right-side hash wins in the merge.
             options = to_hash.merge(:path => full_path, :implicit => true)
-            options.delete(:parent) if options.include?(:parent)
-            options.delete(:recurse) if options.include?(:recurse)
+            [:parent, :recurse, :target].each do |param|
+                options.delete(param) if options.include?(param)
+            end
 
             return self.class.create(options)
         end
@@ -632,6 +633,11 @@ module Puppet
         # Recurse the target of the link.
         def recurse_link(children)
             perform_recursion(self[:target]).each do |meta|
+                if meta.relative_path == "."
+                    self[:ensure] = :directory
+                    next
+                end
+
                 children[meta.relative_path] ||= newchild(meta.relative_path)
                 if meta.ftype == "directory"
                     children[meta.relative_path][:ensure] = :directory
@@ -645,7 +651,9 @@ module Puppet
 
         # Recurse the file itself, returning a Metadata instance for every found file.
         def recurse_local
-            perform_recursion(self[:path]).inject({}) do |hash, meta|
+            result = perform_recursion(self[:path])
+            return {} unless result
+            result.inject({}) do |hash, meta|
                 next hash if meta.relative_path == "."
 
                 hash[meta.relative_path] = newchild(meta.relative_path)
@@ -675,8 +683,14 @@ module Puppet
             end
 
             total.each do |meta|
+                if meta.relative_path == "."
+                    property(:source).metadata = meta
+                    next
+                end
                 children[meta.relative_path] ||= newchild(meta.relative_path)
                 children[meta.relative_path][:source] = meta.source
+                children[meta.relative_path][:checksum] = :md5 if meta.ftype == "file"
+
                 children[meta.relative_path].property(:source).metadata = meta
             end
 
@@ -759,21 +773,22 @@ module Puppet
         # a wrapper method to make sure the file exists before doing anything
         def retrieve
             unless stat = self.stat(true)
-                # If the file doesn't exist but we have a source, then call
-                # retrieve on that property
 
                 propertyvalues = properties().inject({}) { |hash, property|
                                      hash[property] = :absent
                                      hash
                                   }
 
+                # If the file doesn't exist but we have a source, then call
+                # retrieve on the source property so it will set the 'should'
+                # values all around.
                 if @parameters.include?(:source)
-                    propertyvalues[:source] = @parameters[:source].retrieve
+                    @parameters[:source].copy_source_values
                 end
                 return propertyvalues
             end
 
-            return currentpropvalues()
+            currentpropvalues()
         end
 
         # This recurses against the remote source and makes sure the local
