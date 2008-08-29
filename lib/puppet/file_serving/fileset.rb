@@ -30,6 +30,8 @@ class Puppet::FileServing::Fileset
 
     # Should we ignore this path?
     def ignore?(path)
+        return false if @ignore == [nil]
+
         # 'detect' normally returns the found result, whereas we just want true/false.
         ! @ignore.detect { |pattern| File.fnmatch?(pattern, path) }.nil?
     end
