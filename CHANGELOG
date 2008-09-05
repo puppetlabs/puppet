@@ -1,4 +1,6 @@
 0.24.x
+    Fixes #1455 - Adds HP-UX support for user type
+
     Fixes #1551 puppetmaster.freshness xmlrpc call returns incorrect type
 
     Fixes #1554 - Fix exception for undefined hostname
