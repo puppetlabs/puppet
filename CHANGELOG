@@ -1,4 +1,6 @@
 0.24.x
+    Updated Red Hat spec file
+
     Fixes #1455 - Adds HP-UX support for user type
 
     Fixes #1551 puppetmaster.freshness xmlrpc call returns incorrect type
