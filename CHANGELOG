@@ -1,4 +1,6 @@
 0.24.x
+    Fixed debug messages in package type - thanks to Todd Zullinger for this fix
+
     Updated Red Hat spec file
 
     Fixes #1455 - Adds HP-UX support for user type
