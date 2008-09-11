@@ -1,9 +1,10 @@
 Puppet::Type.type(:user).provide :hpuxuseradd, :parent => :useradd do
     desc "User management for hp-ux! Undocumented switch to special usermod because HP-UX regular usermod is TOO STUPID to change stuff while the user is logged in."
 
-    defaultfor :operatingsystem => :"hp-ux"
-
-    commands :modify => "/usr/sbin/usermod", :delete => "/usr/sbin/userdel", :add => "/usr/sbin/useradd"
+    defaultfor :operatingsystem => "hp-ux"
+    confine :operatingsystem => "hp-ux"
+    
+    commands :modify => "/usr/sam/lbin/usermod.sam", :delete => "/usr/sam/lbin/userdel.sam", :add => "/usr/sbin/useradd"
     options :comment, :method => :gecos
     options :groups, :flag => "-G"
     options :home, :flag => "-d", :method => :dir
