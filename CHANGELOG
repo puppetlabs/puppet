@@ -1,5 +1,9 @@
 0.24.x
     Fixed debug messages in package type - thanks to Todd Zullinger for this fix
+    
+    Fixed #1566 - changed password property of the user type
+
+    Fixed debug messages in package type
 
     Updated Red Hat spec file
 
