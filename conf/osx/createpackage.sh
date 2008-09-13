@@ -49,7 +49,7 @@ function find_puppet_root() {
 
 function install_puppet() {
   echo "Installing Puppet to ${pkgroot}"
-  "${installer}" --destdir="${pkgroot}" --bindir="${BINDIR}" --sitelibdir="${SITELIBDIR}" &> /dev/null
+  "${installer}" --destdir="${pkgroot}" --bindir="${BINDIR}" --sitelibdir="${SITELIBDIR}"
   chown -R root:admin "${pkgroot}"
 }
 
