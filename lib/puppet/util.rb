@@ -316,6 +316,7 @@ module Util
                 $stdin.reopen("/dev/null")
                 $stdout.reopen(output_file)
                 $stderr.reopen(output_file)
+                3.upto(256){|fd| IO::new(fd).close rescue nil} 
                 if arguments[:gid]
                     Process.egid = arguments[:gid]
                     Process.gid = arguments[:gid] unless @@os == "Darwin"

@@ -1,8 +1,16 @@
 0.24.x
+    Fixed issues with file descriptors leaking into subprocesses
+
+    Fixed #1568 - createpackage.sh
+
+    Fixed #1571 - Puppet::Util::binary returns incorrect results
+
+    Fixed #1553 - Puppet and Facter cannot both install the plist module into two different locations
+
+    Adjusted hpuxuseradd user provider to confine to HP-UX and fixed HP-UX user provider path regression
+
     Fixed debug messages in package type - thanks to Todd Zullinger for this fix
     
-    Adjusted hpuxuseradd user provider to confine to HP-UX
-
     Fixed #1566 - changed password property of the user type
 
     Fixed debug messages in package type
