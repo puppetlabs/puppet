@@ -220,19 +220,14 @@ module Util
 
     def binary(bin)
         if bin =~ /^\//
-            if FileTest.exists? bin
+            if FileTest.file? bin and FileTest.executable? bin
                 return bin
             else
                 return nil
             end
         else
-            # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
-            x = ENV['PATH'].split(":").each do |dir|
-                if FileTest.exists? File.join(dir, bin)
-                    return File.join(dir, bin)
-                end
-            end
-            return nil
+            x = %x{which #{bin} 2>/dev/null}.chomp
+            return x
         end
     end
     module_function :binary
