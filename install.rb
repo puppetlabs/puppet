@@ -60,6 +60,7 @@ rescue
 end
 
 PREREQS = %w{openssl facter xmlrpc/client xmlrpc/server cgi}
+MIN_FACTER_VERSION = 1.5
 
 InstallOptions = OpenStruct.new
 
@@ -115,6 +116,15 @@ def check_prereqs
     PREREQS.each { |pre|
         begin
             require pre
+            if pre == "facter"
+              # to_f isn't quite exact for strings like "1.5.1" but is good
+              # enough for this purpose.
+              facter_version = Facter.version.to_f
+              if facter_version < MIN_FACTER_VERSION
+                puts "Facter version: %s; minimum required: %s; cannot install" % [facter_version, MIN_FACTER_VERSION]
+                exit -1
+              end
+            end
         rescue LoadError
             puts "Could not load %s; cannot install" % pre
             exit -1
