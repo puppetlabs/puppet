@@ -105,6 +105,7 @@ class Puppet::Parser::Lexer
         '(' => :LPAREN,
         ')' => :RPAREN,
         '=' => :EQUALS,
+        '+=' => :APPENDS,
         '==' => :ISEQUAL,
         '>=' => :GREATEREQUAL,
         '>' => :GREATERTHAN,

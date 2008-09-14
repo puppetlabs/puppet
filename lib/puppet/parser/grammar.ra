@@ -5,7 +5,7 @@
 class Puppet::Parser::Parser
 
 token LBRACK DQTEXT SQTEXT RBRACK LBRACE RBRACE SYMBOL FARROW COMMA TRUE
-token FALSE EQUALS LESSEQUAL NOTEQUAL DOT COLON LLCOLLECT RRCOLLECT
+token FALSE EQUALS APPENDS LESSEQUAL NOTEQUAL DOT COLON LLCOLLECT RRCOLLECT
 token QMARK LPAREN RPAREN ISEQUAL GREATEREQUAL GREATERTHAN LESSTHAN
 token IF ELSE IMPORT DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN
 token NAME SEMIC CASE DEFAULT AT LCOLLECT RCOLLECT CLASSNAME CLASSREF
@@ -58,6 +58,7 @@ statement:    resource
             | hostclass
             | nodedef
             | resourceoverride
+            | append
 
 fstatement:   NAME LPAREN funcvalues RPAREN {
     args = aryfy(val[2])
@@ -289,6 +290,11 @@ assignment:     VARIABLE EQUALS rvalue {
     # this is distinct from referencing a variable
     variable = ast AST::Name, :value => val[0]
     result = ast AST::VarDef, :name => variable, :value => val[2]
+}
+
+append:     VARIABLE APPENDS rvalue {
+    variable = ast AST::Name, :value => val[0]
+    result = ast AST::VarDef, :name => variable, :value => val[2], :append => true
 }
 
 params:   # nothing
