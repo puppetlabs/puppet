@@ -664,7 +664,8 @@ module Puppet
     setdefaults(:parser,
         :lexical => [false, "Whether to use lexical scoping (vs. dynamic)."],
         :templatedir => ["$vardir/templates",
-            "Where Puppet looks for template files."
+            "Where Puppet looks for template files.  Can be a list of colon-seperated
+             directories."
         ]
     )
 

@@ -72,28 +72,33 @@ class Puppet::Module
             return template
         end
 
+        template_paths = templatepath(environment)
+        default_template_path = File::join(template_paths.first, template)
+
         # If we can find the template in :templatedir, we return that.
-        td_file = templatepath(environment).collect { |path|
+        td_file = template_paths.collect { |path|
             File::join(path, template)
         }.find { |f| File.exists?(f) }
 
         return td_file unless td_file == nil
 
+        td_file = find_template_for_module(template, environment)
+        td_file ||= default_template_path
+    end
+
+    def self.find_template_for_module(template, environment = nil)
         path, file = split_path(template)
 
         # Because templates don't have an assumed template name, like manifests do,
         # we treat templates with no name as being templates in the main template
         # directory.
-        if file.nil?
-            mod = nil
-        else
+        if not file.nil?
             mod = find(path, environment)
+            if mod
+                return mod.template(file)
+            end
         end
-        if mod
-            return mod.template(file)
-        else
-            return td_file # Return this anyway, since we're going to fail.
-        end
+        nil
     end
 
     # Return a list of manifests (as absolute filenames) that match +pat+
@@ -156,4 +161,5 @@ class Puppet::Module
     end
 
     private :initialize
+    private_class_method :find_template_for_module
 end

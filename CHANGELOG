@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1554 - Added support for multiple template directories
+
     Fixed #1500 - puppetrun not working
 
     Fixed #1579 and #1580 - errors in the Puppet RPM spec file
