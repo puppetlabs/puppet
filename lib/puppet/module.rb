@@ -19,6 +19,15 @@ class Puppet::Module
         end
     end
 
+    # Return an array of paths by splitting the +templatedir+ config
+    # parameter.
+    def self.templatepath(environment = nil)
+        dirs = Puppet.settings.value(:templatedir, environment).split(":")
+        dirs.select do |p|
+            p =~ /^#{File::SEPARATOR}/ && File::directory?(p)
+        end
+    end
+
     # Find and return the +module+ that +path+ belongs to. If +path+ is
     # absolute, or if there is no module whose name is the first component
     # of +path+, return +nil+
@@ -64,9 +73,12 @@ class Puppet::Module
         end
 
         # If we can find the template in :templatedir, we return that.
-        td_file = File.join(Puppet.settings.value(:templatedir, environment), template)
-        return td_file if File.exists?(td_file)
-          
+        td_file = templatepath(environment).collect { |path|
+            File::join(path, template)
+        }.find { |f| File.exists?(f) }
+
+        return td_file unless td_file == nil
+
         path, file = split_path(template)
 
         # Because templates don't have an assumed template name, like manifests do,
