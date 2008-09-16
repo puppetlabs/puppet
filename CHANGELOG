@@ -1,5 +1,7 @@
 0.24.x
     Fixed #1572 -- file purging now fails if remote sources do not exist.
+    
+    Fixed #1521 -- ldap user and password are now used with the default connection.
 
     Fixed issues with file descriptors leaking into subprocesses
 

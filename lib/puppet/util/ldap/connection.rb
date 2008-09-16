@@ -17,7 +17,17 @@ class Puppet::Util::Ldap::Connection
               else
                   false
               end
-        new(Puppet[:ldapserver], Puppet[:ldapport], :ssl => ssl)
+
+        options = {}
+        options[:ssl] = ssl
+        if user = Puppet.settings[:ldapuser] and user != ""
+            options[:user] = user
+            if pass = Puppet.settings[:ldappassword] and pass != ""
+                options[:password] = pass
+            end
+        end
+
+        new(Puppet[:ldapserver], Puppet[:ldapport], options)
     end
 
     def close
