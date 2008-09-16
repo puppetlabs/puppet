@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1572 -- file purging now fails if remote sources do not exist.
+
     Fixed issues with file descriptors leaking into subprocesses
 
     Fixed #1568 - createpackage.sh
