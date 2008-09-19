@@ -397,4 +397,46 @@ describe Puppet::Network::Client::Master, " when using the cached catalog" do
 
         @client.catalog.should equal(ral_config)
     end
+
+    describe "when calling splay" do
+        it "should do nothing if splay is not enabled" do
+            Puppet.stubs(:[]).with(:splay).returns(false)
+            @client.expects(:rand).never
+            @client.send(:splay)
+        end
+
+        describe "when splay is enabled" do
+            before do
+                Puppet.stubs(:[]).with(:splay).returns(true)
+                Puppet.stubs(:[]).with(:splaylimit).returns(42)
+            end
+
+            it "should sleep for a random time" do
+                @client.expects(:rand).with(42).returns(42)
+                @client.expects(:sleep).with(42)
+                @client.send(:splay)
+            end
+
+            it "should inform that it is splayed" do
+                @client.stubs(:rand).with(42).returns(42)
+                @client.stubs(:sleep).with(42)
+                Puppet.expects(:info)
+                @client.send(:splay)
+            end
+
+            it "should set splay = true" do
+                @client.stubs(:rand).with(42).returns(42)
+                @client.stubs(:sleep).with(42)
+                @client.send(:splay)
+                @client.send(:splayed?).should == true
+            end
+
+            it "should do nothing if already splayed" do
+                @client.stubs(:rand).with(42).returns(42).at_most_once
+                @client.stubs(:sleep).with(42).at_most_once
+                @client.send(:splay)
+                @client.send(:splay)
+            end
+        end 
+    end
 end
