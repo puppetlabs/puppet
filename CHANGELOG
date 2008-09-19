@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1500 - puppetrun not working
+
     Fixed #1579 and #1580 - errors in the Puppet RPM spec file
 
     Fixed #1572 -- file purging now fails if remote sources do not exist.
