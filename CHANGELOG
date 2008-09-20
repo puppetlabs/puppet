@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1584 - Added support for appended variables
+
     Fixed #1554 - Added support for multiple template directories
 
     Fixed #1500 - puppetrun not working
