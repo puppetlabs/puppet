@@ -225,6 +225,7 @@ when :clean
 
     if all
         certs = ca.list
+        certs |= ca.list_signed
             if certs.empty?
                 $stderr.puts "No certificates to clean"
                 exit(24)

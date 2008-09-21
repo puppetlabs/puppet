@@ -1,11 +1,13 @@
 0.24.x
     Fixed #1045 - Multiple metaparams all get added to resources.
     
-    Fixed #1472 -- defined, exported resources in the current compile now get expanded
-    correctly.
+    Fixed #1472 -- defined, exported resources in the current compile 
+    now get expanded correctly.
 
     Fixed #1595 - Internally, Property#retrieve is no longer called
     when no 'should' value is available for a resource.
+
+    Fixed #1588 - Fixed puppetca --clean --all 
 
     Fixed #1584 - Added support for appended variables
 
