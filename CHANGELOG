@@ -1,4 +1,7 @@
 0.24.x
+    Fixed #1595 - Internally, Property#retrieve is no longer called
+    when no 'should' value is available for a resource.
+
     Fixed #1584 - Added support for appended variables
 
     Fixed #1554 - Added support for multiple template directories
