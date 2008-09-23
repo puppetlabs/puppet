@@ -5,6 +5,17 @@ require File.dirname(__FILE__) + '/../spec_helper'
 require 'puppet/property'
 
 describe Puppet::Property do
+    describe "when setting the value" do
+        it "should just set the 'should' value" do
+            @class = Class.new(Puppet::Property)
+            @class.initvars
+            @property = @class.new :resource => mock('resource')
+
+            @property.expects(:should=).with("foo")
+            @property.value = "foo"
+        end
+    end
+
     describe "when returning the value" do
         before do
             @class = Class.new(Puppet::Property)

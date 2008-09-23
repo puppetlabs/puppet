@@ -419,11 +419,6 @@ class Puppet::Parameter
     # late-binding (e.g., users might not exist when the value is assigned
     # but might when it is asked for).
     def value=(value)
-        # If we're a parameter, just hand the processing off to the should
-        # method.
-        if self.is_a?(Puppet::Property)
-            return self.should = value
-        end
         if respond_to?(:validate)
             validate(value)
         end
