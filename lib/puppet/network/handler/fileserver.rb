@@ -651,55 +651,38 @@ class Puppet::Network::Handler
             # and "bad batch".
             #
             def list(relpath, recurse, ignore, client = nil)
-                reclist(file_path(relpath, client), nil, recurse, ignore)
+                require 'puppet/file_serving'
+                require 'puppet/file_serving/fileset'
+                abspath = file_path(relpath, client)
+                if FileTest.exists?(abspath)
+                    if FileTest.directory?(abspath) and recurse
+                        return reclist(abspath, recurse, ignore)
+                    else
+                        return [["/", File.stat(abspath).ftype]]
+                    end
+                end
+                return nil
             end
 
-            # Recursively list the files in this tree.
-            def reclist(basepath, abspath, recurse, ignore)
-                abspath = basepath if abspath.nil?
-                relpath = abspath.sub(%r{^#{basepath}}, '')
-                relpath = "/#{relpath}" if relpath[0] != ?/  #/
-                
-                return unless FileTest.exists?(abspath)
-                
-                desc = [relpath]
-                
-                ftype = File.stat(abspath).ftype
-
-                desc << ftype
-                if recurse.is_a?(Integer)
-                    recurse -= 1
-                end
-
-                ary = [desc]
-                if recurse == true or (recurse.is_a?(Integer) and recurse > -1)
-                    if ftype == "directory"
-                        children = Dir.entries(abspath)
-                        if ignore
-                            children = handleignore(children, abspath, ignore)
-                        end  
-                        children.each { |child|
-                            next if child =~ /^\.\.?$/
-                            reclist(basepath, File.join(abspath, child), recurse, ignore).each { |cobj|
-                                ary << cobj
-                            }
-                        }
+            def reclist(abspath, recurse, ignore)
+                args = { :recurse => recurse, :links => :follow }
+                args[:ignore] = ignore if ignore
+                fs = Puppet::FileServing::Fileset.new(abspath, args)
+                ary = fs.files.collect do |file|
+                    if file == "."
+                        file = "/"
+                    else
+                        file = File.join("/", file )
                     end
+                    stat = fs.stat(File.join(abspath, file))
+                    next if stat.nil?
+                    [ file, stat.ftype ]
                 end
 
                 return ary.compact
             end
 
-            # Deal with ignore parameters.
-            def handleignore(files, path, ignore_patterns)
-                ignore_patterns.each do |ignore|
-                    files.delete_if do |entry|
-                        File.fnmatch(ignore, entry, File::FNM_DOTMATCH)
-                    end
-                end
-                return files
-            end
-        end  
+        end
 
         # A special mount class specifically for the plugins mount -- just
         # has some magic to effectively do a union mount of the 'plugins'

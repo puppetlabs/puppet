@@ -120,7 +120,7 @@ class Puppet::FileServing::Fileset
 
         return result
     end
-
+    public
     # Stat a given file, using the links-appropriate method.
     def stat(path)
         unless defined?(@stat_method)
