@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1045 - Multiple metaparams all get added to resources.
+
     Fixed #1595 - Internally, Property#retrieve is no longer called
     when no 'should' value is available for a resource.
 
