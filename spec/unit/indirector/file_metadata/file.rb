@@ -21,14 +21,14 @@ describe Puppet::Indirector::FileMetadata::File do
             @metadata = Puppet::Indirector::FileMetadata::File.new
             @uri = "file:///my/local"
             @data = mock 'metadata'
-            @data.stubs(:collect_attributes)
+            @data.stubs(:collect)
             FileTest.expects(:exists?).with("/my/local").returns true
 
-            @request = stub 'request', :key => @uri, :options => {}
+            @request = Puppet::Indirector::Request.new(:file_metadata, :find, @uri)
         end
 
         it "should collect its attributes when a file is found" do
-            @data.expects(:collect_attributes)
+            @data.expects(:collect)
 
             Puppet::FileServing::Metadata.expects(:new).returns(@data)
             @metadata.find(@request).should == @data
@@ -40,12 +40,12 @@ describe Puppet::Indirector::FileMetadata::File do
             @metadata = Puppet::Indirector::FileMetadata::File.new
             @uri = "file:///my/local"
 
-            @request = stub 'request', :key => @uri, :options => {}
+            @request = Puppet::Indirector::Request.new(:file_metadata, :find, @uri)
         end
 
         it "should collect the attributes of the instances returned" do
             FileTest.expects(:exists?).with("/my/local").returns true
-            @metadata.expects(:path2instances).returns( [mock("one", :collect_attributes => nil), mock("two", :collect_attributes => nil)] )
+            @metadata.expects(:path2instances).returns( [mock("one", :collect => nil), mock("two", :collect => nil)] )
             @metadata.search(@request)
         end
     end

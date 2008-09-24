@@ -39,3 +39,9 @@ end
 # have to be correctly mocked.
 Puppet[:confdir] = "/dev/null"
 Puppet[:vardir] = "/dev/null"
+
+# We need this because the RAL uses 'should' as a method.  This
+# allows us the same behaviour but with a different method name.
+class Object
+    alias :must :should
+end

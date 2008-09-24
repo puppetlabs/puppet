@@ -24,7 +24,7 @@ describe Puppet::Indirector::FileMetadata::Modules, " when finding metadata" do
         @module = Puppet::Module.new("mymod", "/path/to")
         @finder.stubs(:find_module).returns(@module)
 
-        @request = Puppet::Indirector::Request.new(:metadata, :find, "puppetmounts://hostname/modules/mymod/my/file")
+        @request = Puppet::Indirector::Request.new(:metadata, :find, "puppet://hostname/modules/mymod/my/file")
     end
 
     it "should return nil if the file is not found" do
@@ -36,7 +36,7 @@ describe Puppet::Indirector::FileMetadata::Modules, " when finding metadata" do
         FileTest.expects(:exists?).with("/path/to/files/my/file").returns true
         instance = mock 'metadta'
         Puppet::FileServing::Metadata.expects(:new).returns instance
-        instance.expects :collect_attributes
+        instance.expects :collect
         @finder.find(@request)
     end
 end

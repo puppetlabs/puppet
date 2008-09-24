@@ -224,6 +224,9 @@ describe Puppet::Network::HTTP::Handler do
                 @handler.stubs(:singular?).returns(true)
                 @handler.stubs(:request_key).returns('key')
                 @model_class.stubs(:find).returns @result
+
+                @format = stub 'format', :suitable? => true
+                Puppet::Network::FormatHandler.stubs(:format).returns @format
             end
 
             it "should fail to find model if key is not specified" do
@@ -243,6 +246,28 @@ describe Puppet::Network::HTTP::Handler do
             it "should set the content type to the first format specified in the accept header" do
                 @handler.expects(:accept_header).with(@request).returns "one,two"
                 @handler.expects(:set_content_type).with(@response, "one")
+                @handler.do_find(@request, @response)
+            end
+
+            it "should fail if no accept header is provided" do
+                @handler.expects(:accept_header).with(@request).returns nil
+                lambda { @handler.do_find(@request, @response) }.should raise_error(ArgumentError)
+            end
+
+            it "should fail if the accept header does not contain a valid format" do
+                @handler.expects(:accept_header).with(@request).returns ""
+                lambda { @handler.do_find(@request, @response) }.should raise_error(RuntimeError)
+            end
+
+            it "should not use an unsuitable format" do
+                @handler.expects(:accept_header).with(@request).returns "foo,bar"
+                foo = mock 'foo', :suitable? => false
+                bar = mock 'bar', :suitable? => true
+                Puppet::Network::FormatHandler.expects(:format).with("foo").returns foo
+                Puppet::Network::FormatHandler.expects(:format).with("bar").returns bar
+
+                @handler.expects(:set_content_type).with(@response, "bar") # the suitable one
+
                 @handler.do_find(@request, @response)
             end
 
@@ -298,6 +323,9 @@ describe Puppet::Network::HTTP::Handler do
                 @result = [@result1, @result2]
                 @model_class.stubs(:render_multiple).returns "my rendered instances"
                 @model_class.stubs(:search).returns(@result)
+
+                @format = stub 'format', :suitable? => true
+                Puppet::Network::FormatHandler.stubs(:format).returns @format
             end
 
             it "should use a common method for determining the request parameters" do
@@ -409,6 +437,9 @@ describe Puppet::Network::HTTP::Handler do
 
                 @model_instance = stub('indirected model instance', :save => true)
                 @model_class.stubs(:convert_from).returns(@model_instance)
+
+                @format = stub 'format', :suitable? => true
+                Puppet::Network::FormatHandler.stubs(:format).returns @format
             end
 
             it "should use the 'body' hook to retrieve the body of the request" do

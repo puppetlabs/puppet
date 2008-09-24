@@ -1,3 +1,7 @@
+
+require 'puppet/file_serving/content'
+require 'puppet/file_serving/metadata'
+
 module Puppet
     # Copy files from a local or remote source.  This state *only* does any work
     # when the remote file is an actual file; in that case, this state copies
@@ -62,8 +66,14 @@ module Puppet
         uncheckable
         
         validate do |source|
-            unless @resource.uri2obj(source)
-                raise Puppet::Error, "Invalid source %s" % source
+            begin
+                uri = URI.parse(URI.escape(source))
+            rescue => detail
+                self.fail "Could not understand source %s: %s" % [source, detail.to_s]
+            end
+
+            unless uri.scheme.nil? or %w{file puppet}.include?(uri.scheme)
+                self.fail "Cannot use URLs of type '%s' as source for fileserving" % [uri.scheme]
             end
         end
             
@@ -77,72 +87,67 @@ module Puppet
         end
         
         def change_to_s(currentvalue, newvalue)
-            # newvalue = "{md5}" + @stats[:checksum]
+            # newvalue = "{md5}" + @metadata.checksum
             if @resource.property(:ensure).retrieve == :absent
-                return "creating from source %s with contents %s" % [@source, @stats[:checksum]]
+                return "creating from source %s with contents %s" % [metadata.source, @metadata.checksum]
             else
-                return "replacing from source %s with contents %s" % [@source, @stats[:checksum]]
+                return "replacing from source %s with contents %s" % [metadata.source, @metadata.checksum]
             end
         end
         
         def checksum
-            if defined?(@stats)
-                @stats[:checksum]
+            if defined?(@metadata)
+                @metadata.checksum
             else
                 nil
             end
         end
 
-        # Ask the file server to describe our file.
-        def describe(source)
-            sourceobj, path = @resource.uri2obj(source)
-            server = sourceobj.server
+        # Look up (if necessary) and return remote content.
+        def content
+            raise Puppet::DevError, "No source for content was stored with the metadata" unless metadata.source
 
-            begin
-                desc = server.describe(path, @resource[:links])
-            rescue Puppet::Network::XMLRPCClientError => detail
-                fail detail, "Could not describe %s: %s" % [path, detail]
-            end
-
-            return nil if desc == ""
-
-            # Collect everything except the checksum
-            values = desc.split("\t")
-            other = values.pop
-            args = {}
-            pinparams.zip(values).each { |param, value|
-                if value =~ /^[0-9]+$/
-                    value = value.to_i
+            unless defined?(@content) and @content
+                unless tmp = Puppet::FileServing::Content.find(@metadata.source)
+                    fail "Could not find any content at %s" % @metadata.source
                 end
-                unless value.nil?
-                    args[param] = value
-                end
-            }
-
-            # Now decide whether we're doing checksums or symlinks
-            if args[:type] == "link"
-                args[:target] = other
-            else
-                args[:checksum] = other
+                @content = tmp.content
             end
-
-            # we can't manage ownership unless we're root, so don't even try
-            unless Puppet::Util::SUIDManager.uid == 0
-                args.delete(:owner)
-            end
-            
-            return args
+            @content
         end
-        
-        # Use the info we get from describe() to check if we're in sync.
-        def insync?(currentvalue)
-            if currentvalue == :nocopy
-                return true
+
+        # Copy the values from the source to the resource.  Yay.
+        def copy_source_values
+            devfail "Somehow got asked to copy source values without any metadata" unless metadata
+
+            # Take each of the stats and set them as states on the local file
+            # if a value has not already been provided.
+            [:owner, :mode, :group, :checksum].each do |param|
+                next if param == :owner and Puppet::Util::SUIDManager.uid != 0
+                unless value = @resource[param] and value != :absent
+                    @resource[param] = metadata.send(param)
+                end
             end
-            
+
+            @resource[:ensure] = metadata.ftype
+
+            if metadata.ftype == "link"
+                @resource[:target] = metadata.destination
+            end
+        end
+
+        # Remove any temporary attributes we manage.
+        def flush
+            @metadata = nil
+            @content = nil
+        end
+
+        # Use the remote metadata to see if we're in sync.
+        # LAK:NOTE This method should still get refactored.
+        def insync?(currentvalue)
             # the only thing this actual state can do is copy files around.  Therefore,
             # only pay attention if the remote is a file.
-            unless @stats[:type] == "file" 
+            unless @metadata.ftype == "file" 
                 return true
             end
             
@@ -153,15 +158,13 @@ module Puppet
             end
             # Now, we just check to see if the checksums are the same
             parentchecksum = @resource.property(:checksum).retrieve
-            result = (!parentchecksum.nil? and (parentchecksum == @stats[:checksum]))
+            result = (!parentchecksum.nil? and (parentchecksum == @metadata.checksum))
 
             # Diff the contents if they ask it.  This is quite annoying -- we need to do this in
             # 'insync?' because they might be in noop mode, but we don't want to do the file
             # retrieval twice, so we cache the value.
-            if ! result and Puppet[:show_diff] and File.exists?(@resource[:path]) and ! @stats[:_diffed]
-                @stats[:_remote_content] = get_remote_content
-                string_file_diff(@resource[:path], @stats[:_remote_content])
-                @stats[:_diffed] = true
+            if ! result and Puppet[:show_diff] and File.exists?(@resource[:path])
+                string_file_diff(@resource[:path], content)
             end
             return result
         end
@@ -171,57 +174,39 @@ module Puppet
         end
 
         def found?
-            ! (@stats.nil? or @stats[:type].nil?)
+            ! (@metadata.nil? or @metadata.ftype.nil?)
         end
 
-        # This basically calls describe() on our file, and then sets all
-        # of the local states appropriately.  If the remote file is a normal
-        # file then we set it to copy; if it's a directory, then we just mark
-        # that the local directory should be created.
-        def retrieve(remote = true)
-            sum = nil
-            @source = nil
-
-            # This is set to false by the File#retrieve function on the second
-            # retrieve, so that we do not do two describes.
-            if remote
-                # Find the first source that exists.  @shouldorig contains
-                # the sources as specified by the user.
-                @should.each { |source|
-                    if @stats = self.describe(source)
-                        @source = source
-                        break
+        # Provide, and retrieve if necessary, the metadata for this file.  Fail
+        # if we can't find data about this host, and fail if there are any
+        # problems in our query.
+        attr_writer :metadata
+        def metadata
+            unless defined?(@metadata) and @metadata
+                return @metadata = nil unless should
+                should.each do |source|
+                    begin
+                        if data = Puppet::FileServing::Metadata.find(source)
+                            @metadata = data
+                            @metadata.source = source
+                            break
+                        end
+                    rescue => detail
+                        fail detail, "Could not retrieve file metadata for %s: %s" % [source, detail]
                     end
-                }
+                end
+                fail "Could not retrieve information from source(s) %s" % @should.join(", ") unless @metadata
             end
+            return @metadata
+        end
 
-            if !found?
-                raise Puppet::Error, "No specified source was found from" + @should.inject("") { |s, source| s + " #{source},"}.gsub(/,$/,"")
-            end
-            
-            case @stats[:type]
-            when "directory", "file", "link":
-                @resource[:ensure] = @stats[:type] unless @resource.deleting?
-            else
-                self.info @stats.inspect
-                self.err "Cannot use files of type %s as sources" % @stats[:type]
-                return :nocopy
-            end
-
-            # Take each of the stats and set them as states on the local file
-            # if a value has not already been provided.
-            @stats.each { |stat, value|
-                next if stat == :checksum
-                next if stat == :type
-
-                # was the stat already specified, or should the value
-                # be inherited from the source?
-                @resource[stat] = value unless @resource.argument?(stat)
-            }
-
-            return @stats[:checksum]
+        # Just call out to our copy method.  Hopefully we'll refactor 'source' to
+        # be a parameter soon, in which case 'retrieve' is unnecessary.
+        def retrieve
+            copy_source_values
         end
         
+        # Return the whole array, rather than the first item.
         def should
             @should
         end
@@ -238,39 +223,15 @@ module Puppet
         end
 
         def sync
-            contents = @stats[:_remote_content] || get_remote_content()
+            exists = FileTest.exist?(@resource[:path])
 
-            exists = File.exists?(@resource[:path])
-
-            @resource.write(contents, :source, @stats[:checksum])
+            @resource.write(content, :source, @metadata.checksum)
 
             if exists
                 return :file_changed
             else
                 return :file_created
             end
-        end
-
-        private
-
-        def get_remote_content
-            raise Puppet::DevError, "Got told to copy non-file %s" % @resource[:path] unless @stats[:type] == "file"
-
-            sourceobj, path = @resource.uri2obj(@source)
-
-            begin
-                contents = sourceobj.server.retrieve(path, @resource[:links])
-            rescue => detail
-                self.fail "Could not retrieve %s: %s" % [path, detail]
-            end
-
-            contents = CGI.unescape(contents) unless sourceobj.server.local
-
-            if contents == ""
-                self.notice "Could not retrieve contents for %s" % @source
-            end
-
-            return contents
         end
     end
 end

@@ -793,7 +793,6 @@ class Type
             obj.remove
         end
         @parameters.clear
-        self.class.delete(self)
 
         @parent = nil
 
@@ -1519,6 +1518,7 @@ class Type
                 # to an object...
                 tname, name = value
                 reference = Puppet::ResourceReference.new(tname, name)
+                reference.catalog = resource.catalog
                 
                 # Either of the two retrieval attempts could have returned
                 # nil.
@@ -1932,7 +1932,10 @@ class Type
 
     # Figure out of there are any objects we can automatically add as
     # dependencies.
-    def autorequire
+    def autorequire(rel_catalog = nil)
+        rel_catalog ||= catalog
+        raise(Puppet::DevError, "You cannot add relationships without a catalog") unless rel_catalog
+
         reqs = []
         self.class.eachautorequire { |type, block|
             # Ignore any types we can't find, although that would be a bit odd.
@@ -1954,11 +1957,11 @@ class Type
                         next
                     end
                 end
-                
+
                 reqs << Puppet::Relationship.new(dep, self)
             }
         }
-        
+
         return reqs
     end
 

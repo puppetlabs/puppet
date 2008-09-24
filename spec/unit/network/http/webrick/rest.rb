@@ -47,9 +47,9 @@ describe Puppet::Network::HTTP::WEBrickREST do
                 @handler.path(@request).should == "/foo"
             end
 
-            it "should return the second field in the path as the request key" do
-                @request.expects(:path).returns "/foo/bar"
-                @handler.request_key(@request).should == "bar"
+            it "should return the remainder of the path as the request key" do
+                @request.expects(:path).returns "/foo/bar/baz"
+                @handler.request_key(@request).should == "bar/baz"
             end
 
             it "should return nil as the request key if there is no second field" do

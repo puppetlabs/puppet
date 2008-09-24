@@ -20,7 +20,7 @@ class Puppet::FileServing::Fileset
 
         # Now strip off the leading path, so each file becomes relative, and remove
         # any slashes that might end up at the beginning of the path.
-        result = files.collect { |file| file.sub(%r{^#{@path}/*}, '') }
+        result = files.collect { |file| file.sub(@path, '').sub(%r{^/},'') }
 
         # And add the path itself.
         result.unshift(".")
@@ -30,6 +30,8 @@ class Puppet::FileServing::Fileset
 
     # Should we ignore this path?
     def ignore?(path)
+        return false if @ignore == [nil]
+
         # 'detect' normally returns the found result, whereas we just want true/false.
         ! @ignore.detect { |pattern| File.fnmatch?(pattern, path) }.nil?
     end

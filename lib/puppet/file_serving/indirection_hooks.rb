@@ -9,36 +9,37 @@ require 'puppet/file_serving'
 # in file-serving indirections.  This is necessary because
 # the terminus varies based on the URI asked for.
 module Puppet::FileServing::IndirectionHooks
-    PROTOCOL_MAP = {"puppet" => :rest, "file" => :file, "puppetmounts" => :file_server}
+    PROTOCOL_MAP = {"puppet" => :rest, "file" => :file}
 
     # Pick an appropriate terminus based on the protocol.
     def select_terminus(request)
-        full_uri = request.key
-        # Short-circuit to :file if it's a fully-qualified path.
-        return PROTOCOL_MAP["file"] if full_uri =~ /^#{::File::SEPARATOR}/
-        begin
-            uri = URI.parse(URI.escape(full_uri))
-        rescue => detail
-            raise ArgumentError, "Could not understand URI %s: %s" % [full_uri, detail.to_s]
+        # We rely on the request's parsing of the URI.
+
+        # Short-circuit to :file if it's a fully-qualified path or specifies a 'file' protocol.
+        return PROTOCOL_MAP["file"] if request.key =~ /^#{::File::SEPARATOR}/
+        return PROTOCOL_MAP["file"] if request.protocol == "file"
+
+        # We're heading over the wire the protocol is 'puppet' and we've got a server name or we're not named 'puppet'
+        if request.protocol == "puppet" and (request.server or Puppet.settings[:name] != "puppet")
+            return PROTOCOL_MAP["puppet"]
         end
 
-        terminus = PROTOCOL_MAP[uri.scheme] || raise(ArgumentError, "URI protocol '%s' is not supported for file serving" % uri.scheme)
-
-        # This provides a convenient mechanism for people to write configurations work
-        # well in both a networked and local setting.
-        if uri.host.nil? and uri.scheme == "puppet" and Puppet.settings[:name] == "puppet"
-            terminus = :file_server
+        if request.protocol and PROTOCOL_MAP[request.protocol].nil?
+            raise(ArgumentError, "URI protocol '%s' is not currently supported for file serving" % request.protocol)
         end
+
+        # If we're still here, we're using the file_server or modules.
 
         # This is the backward-compatible module terminus.
-        if terminus == :file_server and uri.path =~ %r{^/([^/]+)\b}
-            modname = $1
-            if modname == "modules"
-                terminus = :modules
-            elsif terminus(:modules).find_module(modname, request.options[:node])
-                Puppet.warning "DEPRECATION NOTICE: Found file '%s' in module without using the 'modules' mount; please prefix path with '/modules'" % uri.path
-                terminus = :modules
-            end
+        modname = request.key.split("/")[0]
+
+        if modname == "modules"
+            terminus = :modules
+        elsif terminus(:modules).find_module(modname, request.options[:node])
+            Puppet.warning "DEPRECATION NOTICE: Found file '%s' in module without using the 'modules' mount; please prefix path with 'modules/'" % request.key
+            terminus = :modules
+        else
+            terminus = :file_server
         end
 
         return terminus

@@ -75,7 +75,7 @@ class Puppet::Network::Handler
             return "" unless metadata.exist?
 
             begin
-                metadata.collect_attributes
+                metadata.collect
             rescue => detail
                 puts detail.backtrace if Puppet[:trace]
                 Puppet.err detail

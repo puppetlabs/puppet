@@ -24,7 +24,7 @@ describe Puppet::Indirector::FileServer do
 
         @file_server = @file_server_class.new
 
-        @uri = "puppetmounts://host/my/local/file"
+        @uri = "puppet://host/my/local/file"
         @configuration = mock 'configuration'
         Puppet::FileServing::Configuration.stubs(:create).returns(@configuration)
 
@@ -34,46 +34,42 @@ describe Puppet::Indirector::FileServer do
     describe Puppet::Indirector::FileServer, " when finding files" do
 
         it "should use the path portion of the URI as the file name" do
-            @configuration.expects(:file_path).with("/my/local/file", :node => nil)
+            @configuration.expects(:file_path).with("my/local/file", :node => nil)
             @file_server.find(@request)
         end
 
         it "should use the FileServing configuration to convert the file name to a fully qualified path" do
-            @configuration.expects(:file_path).with("/my/local/file", :node => nil)
+            @configuration.expects(:file_path).with("my/local/file", :node => nil)
             @file_server.find(@request)
         end
 
         it "should pass the node name to the FileServing configuration if one is provided" do
-            @configuration.expects(:file_path).with("/my/local/file", :node => "testing")
+            @configuration.expects(:file_path).with("my/local/file", :node => "testing")
             @request.node = "testing"
             @file_server.find(@request)
         end
 
         it "should return nil if no fully qualified path is found" do
-            @configuration.expects(:file_path).with("/my/local/file", :node => nil).returns(nil)
+            @configuration.expects(:file_path).with("my/local/file", :node => nil).returns(nil)
             @file_server.find(@request).should be_nil
         end
 
         it "should return an instance of the model created with the full path if a file is found" do
-            @configuration.expects(:file_path).with("/my/local/file", :node => nil).returns("/some/file")
-            @model.expects(:new).returns(:myinstance)
-            @file_server.find(@request).should == :myinstance
+            @configuration.expects(:file_path).with("my/local/file", :node => nil).returns("/some/file")
+            instance = stub("instance", :collect => nil)
+            @model.expects(:new).returns instance
+            @file_server.find(@request).should equal(instance)
         end
     end
 
     describe Puppet::Indirector::FileServer, " when returning instances" do
         before :each do
-            @configuration.expects(:file_path).with("/my/local/file", :node => nil).returns("/some/file")
-            @instance = mock 'instance'
-        end
-
-        it "should create the instance with the key used to find the instance" do
-            @model.expects(:new).with { |key, *options| key == @uri }
-            @file_server.find(@request)
+            @configuration.expects(:file_path).with("my/local/file", :node => nil).returns("/some/file")
+            @instance = stub 'instance', :collect => nil
         end
 
         it "should create the instance with the path at which the instance was found" do
-            @model.expects(:new).with { |key, options| options[:path] == "/some/file" }
+            @model.expects(:new).with { |key, options| key == "/some/file" }.returns @instance
             @file_server.find(@request)
         end
 
@@ -86,6 +82,12 @@ describe Puppet::Indirector::FileServer do
 
         it "should not set a :links value if no :links parameter is provided" do
             @model.expects(:new).returns(@instance)
+            @file_server.find(@request)
+        end
+
+        it "should collect each instance's attributes before returning" do
+            @instance.expects(:collect)
+            @model.expects(:new).returns @instance
             @file_server.find(@request)
         end
     end
@@ -108,7 +110,6 @@ describe Puppet::Indirector::FileServer do
         
         describe "and finding file information" do
             before do
-                @request.key =  "puppetmounts://host/my/file"
                 @request.method = :find 
             end
 
@@ -118,7 +119,7 @@ describe Puppet::Indirector::FileServer do
             end
 
             it "should pass the file path from the URI to the file server configuration" do
-                @configuration.expects(:authorized?).with { |uri, *args| uri == "/my/file" }
+                @configuration.expects(:authorized?).with { |uri, *args| uri == "my/local/file" }
                 @file_server.authorized?(@request)
             end
 
@@ -149,36 +150,42 @@ describe Puppet::Indirector::FileServer do
     describe Puppet::Indirector::FileServer, " when searching for files" do
 
         it "should use the path portion of the URI as the file name" do
-            @configuration.expects(:file_path).with("/my/local/file", :node => nil)
+            @configuration.expects(:file_path).with("my/local/file", :node => nil)
             @file_server.search(@request)
         end
 
         it "should use the FileServing configuration to convert the file name to a fully qualified path" do
-            @configuration.expects(:file_path).with("/my/local/file", :node => nil)
+            @configuration.expects(:file_path).with("my/local/file", :node => nil)
             @file_server.search(@request)
         end
 
         it "should pass the node name to the FileServing configuration if one is provided" do
-            @configuration.expects(:file_path).with("/my/local/file", :node => "testing")
+            @configuration.expects(:file_path).with("my/local/file", :node => "testing")
             @request.node = "testing"
             @file_server.search(@request)
         end
 
         it "should return nil if no fully qualified path is found" do
-            @configuration.expects(:file_path).with("/my/local/file", :node => nil).returns(nil)
+            @configuration.expects(:file_path).with("my/local/file", :node => nil).returns(nil)
             @file_server.search(@request).should be_nil
         end
 
         it "should use :path2instances from the terminus_helper to return instances if a module is found and the file exists" do
-            @configuration.expects(:file_path).with("/my/local/file", :node => nil).returns("/my/file")
+            @configuration.expects(:file_path).with("my/local/file", :node => nil).returns("my/file")
             @file_server.expects(:path2instances)
             @file_server.search(@request)
         end
 
         it "should pass the request on to :path2instances" do
-            @configuration.expects(:file_path).with("/my/local/file", :node => nil).returns("/my/file")
-            @file_server.expects(:path2instances).with(@request, "/my/file")
+            @configuration.expects(:file_path).with("my/local/file", :node => nil).returns("my/file")
+            @file_server.expects(:path2instances).with(@request, "my/file").returns []
             @file_server.search(@request)
+        end
+
+        it "should return the result of :path2instances" do
+            @configuration.expects(:file_path).with("my/local/file", :node => nil).returns("my/file")
+            @file_server.expects(:path2instances).with(@request, "my/file").returns :footest
+            @file_server.search(@request).should == :footest
         end
     end
 end

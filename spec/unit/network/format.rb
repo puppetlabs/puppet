@@ -74,9 +74,26 @@ describe Puppet::Network::Format do
             Puppet::Network::Format.new(:yaml).should_not be_supported(String)
         end
 
+        it "should not consider a class supported unless the format is suitable" do
+            @format.expects(:suitable?).returns false
+            @format.should_not be_supported(FormatRenderer)
+        end
+
         it "should always downcase mimetypes" do
             @format.mime = "Foo/Bar"
             @format.mime.should == "foo/bar"
+        end
+
+        it "should support having a weight" do
+            @format.should respond_to(:weight)
+        end
+
+        it "should default to a weight of of 5" do
+            @format.weight.should == 5
+        end
+
+        it "should be able to override its weight at initialization" do
+            Puppet::Network::Format.new(:foo, :weight => 1).weight.should == 1
         end
     end
 

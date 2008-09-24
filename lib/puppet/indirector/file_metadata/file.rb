@@ -11,7 +11,7 @@ class Puppet::Indirector::FileMetadata::File < Puppet::Indirector::DirectFileSer
 
     def find(request)
         return unless data = super
-        data.collect_attributes
+        data.collect
 
         return data
     end
@@ -19,7 +19,7 @@ class Puppet::Indirector::FileMetadata::File < Puppet::Indirector::DirectFileSer
     def search(request)
         return unless result = super
 
-        result.each { |instance| instance.collect_attributes }
+        result.each { |instance| instance.collect }
 
         return result
     end

@@ -24,7 +24,7 @@ describe Puppet::Indirector::DirectFileServer do
 
         @uri = "file:///my/local"
 
-        @request = stub 'request', :key => @uri, :options => {}
+        @request = Puppet::Indirector::Request.new(:mytype, :find, @uri)
     end
 
     describe Puppet::Indirector::DirectFileServer, "when finding a single file" do
@@ -45,17 +45,12 @@ describe Puppet::Indirector::DirectFileServer do
 
         before do
             @data = mock 'content'
-            @data.stubs(:collect_attributes)
+            @data.stubs(:collect)
             FileTest.expects(:exists?).with("/my/local").returns true
         end
 
-        it "should create the Content instance with the original key as the key" do
-            @model.expects(:new).with { |key, options| key == @uri }.returns(@data)
-            @server.find(@request)
-        end
-
         it "should pass the full path to the instance" do
-            @model.expects(:new).with { |key, options| options[:path] == "/my/local" }.returns(@data)
+            @model.expects(:new).with { |key, options| key == "/my/local" }.returns(@data)
             @server.find(@request)
         end
 

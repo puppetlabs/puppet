@@ -5,12 +5,12 @@
 require 'puppet'
 require 'puppet/indirector'
 require 'puppet/file_serving'
-require 'puppet/file_serving/file_base'
+require 'puppet/file_serving/base'
 require 'puppet/util/checksums'
 require 'puppet/file_serving/indirection_hooks'
 
 # A class that handles retrieving file metadata.
-class Puppet::FileServing::Metadata < Puppet::FileServing::FileBase
+class Puppet::FileServing::Metadata < Puppet::FileServing::Base
 
     include Puppet::Util::Checksums
 
@@ -47,7 +47,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::FileBase
     # Retrieve the attributes for this file, relative to a base directory.
     # Note that File.stat raises Errno::ENOENT if the file is absent and this
     # method does not catch that exception.
-    def collect_attributes
+    def collect
         real_path = full_path()
         stat = stat()
         @owner = stat.uid

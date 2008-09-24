@@ -5,8 +5,8 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/file_serving/metadata'
 
 describe Puppet::FileServing::Metadata do
-    it "should should be a subclass of FileBase" do
-        Puppet::FileServing::Metadata.superclass.should equal(Puppet::FileServing::FileBase)
+    it "should should be a subclass of Base" do
+        Puppet::FileServing::Metadata.superclass.should equal(Puppet::FileServing::Base)
     end
 
     it "should indirect file_metadata" do
@@ -16,39 +16,40 @@ describe Puppet::FileServing::Metadata do
     it "should should include the IndirectionHooks module in its indirection" do
         Puppet::FileServing::Metadata.indirection.metaclass.included_modules.should include(Puppet::FileServing::IndirectionHooks)
     end
+
+    it "should have a method that triggers attribute collection" do
+        Puppet::FileServing::Metadata.new("/foo/bar").should respond_to(:collect)
+    end
 end
 
 describe Puppet::FileServing::Metadata, " when finding the file to use for setting attributes" do
     before do
-        @metadata = Puppet::FileServing::Metadata.new("my/path")
-
-        @full = "/base/path/my/path"
-
-        @metadata.path = @full
+        @path = "/my/path"
+        @metadata = Puppet::FileServing::Metadata.new(@path)
 
         # Use a link because it's easier to test -- no checksumming
         @stat = stub "stat", :uid => 10, :gid => 20, :mode => 0755, :ftype => "link"
     end
 
     it "should accept a base path path to which the file should be relative" do
-        File.expects(:lstat).with(@full).returns @stat
-        File.expects(:readlink).with(@full).returns "/what/ever"
-        @metadata.collect_attributes
+        File.expects(:lstat).with(@path).returns @stat
+        File.expects(:readlink).with(@path).returns "/what/ever"
+        @metadata.collect
     end
 
     it "should use the set base path if one is not provided" do
-        File.expects(:lstat).with(@full).returns @stat
-        File.expects(:readlink).with(@full).returns "/what/ever"
-        @metadata.collect_attributes()
+        File.expects(:lstat).with(@path).returns @stat
+        File.expects(:readlink).with(@path).returns "/what/ever"
+        @metadata.collect()
     end
 
     it "should fail if a base path is neither set nor provided" do
-        proc { @metadata.collect_attributes() }.should raise_error(Errno::ENOENT)
+        proc { @metadata.collect() }.should raise_error(Errno::ENOENT)
     end
 
     it "should raise an exception if the file does not exist" do
-        File.expects(:lstat).with(@full).raises(Errno::ENOENT)
-        proc { @metadata.collect_attributes()}.should raise_error(Errno::ENOENT)
+        File.expects(:lstat).with(@path).raises(Errno::ENOENT)
+        proc { @metadata.collect()}.should raise_error(Errno::ENOENT)
     end
 end
 
@@ -59,9 +60,9 @@ describe Puppet::FileServing::Metadata, " when collecting attributes" do
         @stat = stub 'stat', :uid => 10, :gid => 20, :mode => 33261, :ftype => "file"
         File.stubs(:lstat).returns(@stat)
         @checksum = Digest::MD5.hexdigest("some content\n")
-        @metadata = Puppet::FileServing::Metadata.new("file", :path => "/my/file")
+        @metadata = Puppet::FileServing::Metadata.new("/my/file")
         @metadata.stubs(:md5_file).returns(@checksum)
-        @metadata.collect_attributes
+        @metadata.collect
     end
 
     it "should be able to produce xmlrpc-style attribute information" do
@@ -109,7 +110,7 @@ describe Puppet::FileServing::Metadata, " when collecting attributes" do
             @stat.stubs(:ftype).returns("directory")
             @time = Time.now
             @metadata.expects(:ctime_file).returns(@time)
-            @metadata.collect_attributes
+            @metadata.collect
         end
 
         it "should only use checksums of type 'ctime' for directories" do
@@ -125,7 +126,7 @@ describe Puppet::FileServing::Metadata, " when collecting attributes" do
         before do
             @stat.stubs(:ftype).returns("link")
             File.expects(:readlink).with("/my/file").returns("/path/to/link")
-            @metadata.collect_attributes
+            @metadata.collect
         end
 
         it "should read links instead of returning their checksums" do
@@ -140,32 +141,22 @@ end
 
 describe Puppet::FileServing::Metadata, " when pointing to a link" do
     it "should store the destination of the link in :destination if links are :manage" do
-        file = Puppet::FileServing::Metadata.new("mykey", :links => :manage, :path => "/base/path/my/file")
+        file = Puppet::FileServing::Metadata.new("/base/path/my/file", :links => :manage)
 
         File.expects(:lstat).with("/base/path/my/file").returns stub("stat", :uid => 1, :gid => 2, :ftype => "link", :mode => 0755)
         File.expects(:readlink).with("/base/path/my/file").returns "/some/other/path"
 
-        file.collect_attributes
+        file.collect
         file.destination.should == "/some/other/path"
     end
 
     it "should not collect the checksum" do
-        file = Puppet::FileServing::Metadata.new("my/file", :links => :manage, :path => "/base/path/my/file")
+        file = Puppet::FileServing::Metadata.new("/base/path/my/file", :links => :manage)
 
         File.expects(:lstat).with("/base/path/my/file").returns stub("stat", :uid => 1, :gid => 2, :ftype => "link", :mode => 0755)
         File.expects(:readlink).with("/base/path/my/file").returns "/some/other/path"
 
-        file.collect_attributes
+        file.collect
         file.checksum.should be_nil
-    end
-end
-
-describe Puppet::FileServing::Metadata, " when converting from yaml" do
-    # LAK:FIXME This isn't in the right place, but we need some kind of
-    # control somewhere that requires that all REST connections only pull
-    # from the file-server, thus guaranteeing they go through our authorization
-    # hook.
-    it "should set the URI scheme to 'puppetmounts'" do
-        pending "We need to figure out where this should be"
     end
 end

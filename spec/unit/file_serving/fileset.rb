@@ -149,6 +149,13 @@ describe Puppet::FileServing::Fileset, " when recursing" do
         @fileset.files.sort.should == @files.sort
     end
 
+    it "should function if the :ignore value provided is nil" do
+        mock_dir_structure(@path)
+        @fileset.recurse = true
+        @fileset.ignore = nil
+        lambda { @fileset.files }.should_not raise_error
+    end
+
     it "should ignore files that match a single pattern in the ignore list" do
         mock_dir_structure(@path)
         @fileset.recurse = true

@@ -75,6 +75,57 @@ describe Puppet::Indirector::Request do
         it "should keep its options as a hash even if another option is specified" do
             Puppet::Indirector::Request.new(:ind, :method, :key, :foo => "bar").options.should be_instance_of(Hash)
         end
+
+        describe "and the request key is a URI" do
+            describe "and the URI is a 'file' URI" do
+                before do
+                    @request = Puppet::Indirector::Request.new(:ind, :method, "file:///my/file")
+                end
+
+                it "should set the request key to the full file path" do @request.key.should == "/my/file" end
+
+                it "should not set the protocol" do
+                    @request.protocol.should be_nil
+                end
+
+                it "should not set the port" do
+                    @request.port.should be_nil
+                end
+
+                it "should not set the server" do
+                    @request.server.should be_nil
+                end
+            end
+
+            it "should set the protocol to the URI scheme" do
+                Puppet::Indirector::Request.new(:ind, :method, "http://host/stuff").protocol.should == "http"
+            end
+
+            it "should set the server if a server is provided" do
+                Puppet::Indirector::Request.new(:ind, :method, "http://host/stuff").server.should == "host"
+            end
+
+            it "should set the server and port if both are provided" do
+                Puppet::Indirector::Request.new(:ind, :method, "http://host:543/stuff").port.should == 543
+            end
+
+            it "should default to the masterport if the URI scheme is 'puppet'" do
+                Puppet.settings.expects(:value).with(:masterport).returns "321"
+                Puppet::Indirector::Request.new(:ind, :method, "puppet://host/stuff").port.should == 321
+            end
+
+            it "should use the provided port if the URI scheme is not 'puppet'" do
+                Puppet::Indirector::Request.new(:ind, :method, "http://host/stuff").port.should == 80
+            end
+
+            it "should set the request key to the unqualified path from the URI" do
+                Puppet::Indirector::Request.new(:ind, :method, "http:///stuff").key.should == "stuff"
+            end
+
+            it "should set the :uri attribute to the full URI" do
+                Puppet::Indirector::Request.new(:ind, :method, "http:///stuff").uri.should == "http:///stuff"
+            end
+        end
     end
 
     it "should look use the Indirection class to return the appropriate indirection" do
@@ -83,5 +134,17 @@ describe Puppet::Indirector::Request do
         request = Puppet::Indirector::Request.new(:myind, :method, :key)
 
         request.indirection.should equal(ind)
+    end
+
+    it "should have a method for determining if the request is plural or singular" do
+        Puppet::Indirector::Request.new(:myind, :method, :key).should respond_to(:plural?)
+    end
+
+    it "should be considered plural if the method is 'search'" do
+        Puppet::Indirector::Request.new(:myind, :search, :key).should be_plural
+    end
+
+    it "should not be considered plural if the method is not 'search'" do
+        Puppet::Indirector::Request.new(:myind, :find, :key).should_not be_plural
     end
 end

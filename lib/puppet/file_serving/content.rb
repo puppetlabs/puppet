@@ -4,31 +4,46 @@
 
 require 'puppet/indirector'
 require 'puppet/file_serving'
-require 'puppet/file_serving/file_base'
+require 'puppet/file_serving/base'
 require 'puppet/file_serving/indirection_hooks'
 
 # A class that handles retrieving file contents.
 # It only reads the file when its content is specifically
 # asked for.
-class Puppet::FileServing::Content < Puppet::FileServing::FileBase
+class Puppet::FileServing::Content < Puppet::FileServing::Base
     extend Puppet::Indirector
     indirects :file_content, :extend => Puppet::FileServing::IndirectionHooks
 
-    attr_reader :path
+    attr_writer :content
+
+    def self.supported_formats
+        [:raw]
+    end
+
+    def self.from_raw(content)
+        instance = new("/this/is/a/fake/path")
+        instance.content = content
+        instance
+    end
+
+    # Collect our data.
+    def collect
+        return if stat.ftype == "directory"
+        content
+    end
 
     # Read the content of our file in.
     def content
-        # This stat can raise an exception, too.
-        raise(ArgumentError, "Cannot read the contents of links unless following links") if stat().ftype == "symlink" 
+        unless defined?(@content) and @content
+            # This stat can raise an exception, too.
+            raise(ArgumentError, "Cannot read the contents of links unless following links") if stat().ftype == "symlink" 
 
-        ::File.read(full_path())
+            @content = ::File.read(full_path())
+        end
+        @content
     end
 
-    # Just return the file contents as the yaml.  This allows us to
-    # avoid escaping or any such thing.  LAK:NOTE Not really sure how
-    # this will behave if the file contains yaml...  I think the far
-    # side needs to understand that it's a plain string.
-    def to_yaml
+    def to_raw
         content
     end
 end

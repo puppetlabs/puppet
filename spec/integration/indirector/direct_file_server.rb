@@ -37,21 +37,19 @@ describe Puppet::Indirector::DirectFileServer, " when interacting with FileServi
     before do
         @terminus = Puppet::Indirector::FileContent::File.new
 
-        @filepath = "/my/file"
-        FileTest.stubs(:exists?).with(@filepath).returns(true)
+        @path = Tempfile.new("direct_file_server_testing")
+        @path.close!
+        @path = @path.path
 
-        stat = stub 'stat', :directory? => true
-        File.stubs(:lstat).with(@filepath).returns(stat)
+        Dir.mkdir(@path)
+        File.open(File.join(@path, "one"), "w") { |f| f.print "one content" }
+        File.open(File.join(@path, "two"), "w") { |f| f.print "two content" }
 
-        @subfiles = %w{one two}
-        @subfiles.each do |f|
-            path = File.join(@filepath, f)
-            FileTest.stubs(:exists?).with(@path).returns(true)
-        end
+        @request = @terminus.indirection.request(:search, "file:///%s" % @path, :recurse => true)
+    end
 
-        Dir.expects(:entries).with(@filepath).returns @subfiles
-
-        @request = @terminus.indirection.request(:search, "file:///my/file", :recurse => true)
+    after do
+        system("rm -rf %s" % @path)
     end
 
     it "should return an instance for every file in the fileset" do
@@ -62,18 +60,13 @@ describe Puppet::Indirector::DirectFileServer, " when interacting with FileServi
     end
 
     it "should return instances capable of returning their content" do
-        @subfiles.each do |name|
-            File.stubs(:lstat).with(File.join(@filepath, name)).returns stub("#{name} stat", :ftype => "file", :directory? => false)
-            File.expects(:read).with(File.join(@filepath, name)).returns("#{name} content")
-        end
-
         @terminus.search(@request).each do |instance|
-            case instance.key
+            case instance.full_path
             when /one/: instance.content.should == "one content"
             when /two/: instance.content.should == "two content"
             when /\.$/: 
             else
-                raise "No valid key for %s" % instance.key.inspect
+                raise "No valid key for %s" % instance.path.inspect
             end
         end
     end
