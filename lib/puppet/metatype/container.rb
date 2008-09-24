@@ -1,7 +1,5 @@
 class Puppet::Type
 
-    # this is a retarded hack method to get around the difference between
-    # component children and file children
     def self.depthfirst?
         if defined? @depthfirst
             return @depthfirst

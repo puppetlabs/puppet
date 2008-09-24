@@ -69,6 +69,12 @@ describe Puppet::Type.type(:file) do
             @filesource.server.stubs(:describe).raises(Puppet::Network::XMLRPCClientError.new("Testing"))
             lambda { @file.retrieve }.should raise_error(Puppet::Error)
         end
+
+        it "should fail during eval_generate if no remote sources exist" do
+            file = Puppet::Type.type(:file).create :path => "/foobar", :source => "/this/file/does/not/exist", :recurse => true
+
+            lambda { file.eval_generate }.should raise_error(Puppet::Error)
+        end
     end
 
     describe "when managing links" do

@@ -158,6 +158,14 @@ module Puppet
 
         newproperty(:password, :required_features => :manages_passwords) do
             desc "The user's password, in whatever encrypted format the local machine requires. Be sure to enclose any value that includes a dollar sign ($) in single quotes (\')."
+
+            def change_to_s(currentvalue, newvalue)
+                if currentvalue == :absent
+                  return "created password"
+                else
+                  return "changed password"
+                end
+            end
         end
 
         newproperty(:groups) do

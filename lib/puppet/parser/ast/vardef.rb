@@ -3,7 +3,7 @@ require 'puppet/parser/ast/branch'
 class Puppet::Parser::AST
     # Define a variable.  Stores the value in the current scope.
     class VarDef < AST::Branch
-        attr_accessor :name, :value
+        attr_accessor :name, :value, :append
 
         @settor = true
 
@@ -14,7 +14,7 @@ class Puppet::Parser::AST
             value = @value.safeevaluate(scope)
 
             parsewrap do
-                scope.setvar(name,value, @file, @line)
+                scope.setvar(name,value, @file, @line, @append)
             end
         end
 
