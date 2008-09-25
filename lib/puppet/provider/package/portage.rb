@@ -7,6 +7,8 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
     commands :emerge => "/usr/bin/emerge", :eix => "/usr/bin/eix", :update_eix => "/usr/bin/update-eix"
 
+    confine :operatingsystem => :gentoo
+
     defaultfor :operatingsystem => :gentoo
 
     def self.instances

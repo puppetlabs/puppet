@@ -4,7 +4,7 @@ Puppet::Type.type(:package).provide :fink, :parent => :dpkg, :source => :dpkg do
 
     desc "Package management via ``fink``."
     
-	commands :fink => "/sw/bin/fink"
+    commands :fink => "/sw/bin/fink"
     commands :aptget => "/sw/bin/apt-get"
     commands :aptcache => "/sw/bin/apt-cache"
     commands :dpkgquery => "/sw/bin/dpkg-query"

@@ -1,4 +1,6 @@
 0.24.x
+    Added a number of confines to package providers
+
     Fixed #1609 - Added confines for the Gentoo, FreeBSD and 
     SMF (Solaris) service providers 
 
