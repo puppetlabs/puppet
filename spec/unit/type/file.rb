@@ -41,6 +41,14 @@ describe Puppet::Type.type(:file) do
             lambda { @file.retrieve }.should raise_error(Puppet::Error)
         end
 
+        it "should always have a checksum type of md5" do
+            File.open(@path, "w") do |f| f.puts "foo" end
+            @file[:checksum] = :mtime
+            @file.property(:checksum).checktype.should == :md5
+            @file.property(:checksum).retrieve.should == "{md5}d3b07384d113edec49eaa6238ad5ff00"
+            @file.property(:checksum).getsum(:mtime).should == "{md5}d3b07384d113edec49eaa6238ad5ff00"
+        end
+
     end
 
     describe "when retrieving remote files" do

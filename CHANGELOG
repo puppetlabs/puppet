@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1564 - Saving File#checksum to state.yaml broken
+
     Fixed #1603 - Added support for running Puppet inside a Rack application
     (mod_rails) with Passenger and Apache
 
