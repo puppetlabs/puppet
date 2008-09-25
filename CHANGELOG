@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1608 - Added ubuntu to defaultfor for apt provider
+
     Fixed #1607 - Added ubuntu to defaultfor for Debian service
     provider
 
