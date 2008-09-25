@@ -1,4 +1,7 @@
 0.24.x
+    Fixed #1607 - Added ubuntu to defaultfor for Debian service
+    provider
+
     Fixed #1045 - Multiple metaparams all get added to resources.
     
     Fixed #1472 -- defined, exported resources in the current compile 
