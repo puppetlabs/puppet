@@ -126,11 +126,21 @@ class Puppet::Parser::Lexer
         '\\' => :BACKSLASH,
         '=>' => :FARROW,
         '+>' => :PARROW,
+        '+' => :PLUS,
+        '-' => :MINUS,
+        '/' => :DIV,
+        '*' => :TIMES,
+        '<<' => :LSHIFT,
+        '>>' => :RSHIFT,
         %r{([a-z][-\w]*::)+[a-z][-\w]*} => :CLASSNAME,
         %r{((::){0,1}[A-Z][-\w]*)+} => :CLASSREF
     )
 
     TOKENS.add_tokens "Whatever" => :DQTEXT, "Nomatter" => :SQTEXT, "alsonomatter" => :BOOLEAN
+
+    TOKENS.add_token :NUMBER, %r{\b(?:0[xX][0-9A-Fa-f]+|0?\d+(?:\.\d+)?(?:[eE]-?\d+)?)\b} do |lexer, value|
+        [TOKENS[:NAME], value]
+    end
 
     TOKENS.add_token :NAME, %r{[a-z0-9][-\w]*} do |lexer, value|
         string_token = self
@@ -143,10 +153,6 @@ class Puppet::Parser::Lexer
             end
         end
         [string_token, value]
-    end
-
-    TOKENS.add_token :NUMBER, %r{[0-9]+} do |lexer, value|
-        [TOKENS[:NAME], value]
     end
 
     TOKENS.add_token :COMMENT, %r{#.*}, :skip => true

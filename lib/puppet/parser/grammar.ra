@@ -9,7 +9,19 @@ token FALSE EQUALS APPENDS LESSEQUAL NOTEQUAL DOT COLON LLCOLLECT RRCOLLECT
 token QMARK LPAREN RPAREN ISEQUAL GREATEREQUAL GREATERTHAN LESSTHAN
 token IF ELSE IMPORT DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN
 token NAME SEMIC CASE DEFAULT AT LCOLLECT RCOLLECT CLASSNAME CLASSREF
-token NOT OR AND UNDEF PARROW
+token NOT OR AND UNDEF PARROW PLUS MINUS TIMES DIV LSHIFT RSHIFT UMINUS
+
+prechigh
+    right NOT
+    nonassoc UMINUS
+    left  TIMES DIV
+    left  MINUS PLUS
+    left  LSHIFT RSHIFT
+    left  NOTEQUAL ISEQUAL
+    left  GREATEREQUAL GREATERTHAN LESSTHAN LESSEQUAL
+    left  AND
+    left  OR
+preclow
 
 rule
 program:    statements {
@@ -283,7 +295,7 @@ resourcename:   quotedtext
             | variable
             | array
 
-assignment:     VARIABLE EQUALS rvalue {
+assignment:     VARIABLE EQUALS expression {
     if val[0] =~ /::/
         raise Puppet::ParseError, "Cannot assign to variables in other namespaces"
     end
@@ -292,7 +304,7 @@ assignment:     VARIABLE EQUALS rvalue {
     result = ast AST::VarDef, :name => variable, :value => val[2]
 }
 
-append:     VARIABLE APPENDS rvalue {
+append:     VARIABLE APPENDS expression {
     variable = ast AST::Name, :value => val[0]
     result = ast AST::VarDef, :name => variable, :value => val[2], :append => true
 }
@@ -395,7 +407,7 @@ resourceref: NAME LBRACK rvalue RBRACK {
     result = ast AST::ResourceReference, :type => val[0], :title => val[2]
 }
 
-ifstatement:      IF iftest LBRACE statements RBRACE else {
+ifstatement:      IF expression LBRACE statements RBRACE else {
     args = {
         :test => val[1],
         :statements => val[3]
@@ -413,9 +425,70 @@ else:             # nothing
     result = ast AST::Else, :statements => val[2]
 }
 
-# Currently we only support a single value, but eventually one assumes
-# we'll support operators and such.
-iftest:         rvalue
+# Unlike yacc/bison, it seems racc
+# gives tons of shift/reduce warnings
+# with the following syntax:
+# 
+# expression: ...
+#            | expression arithop expressio { ... }
+#            
+# arithop: PLUS | MINUS | DIVIDE | TIMES ...
+#
+# So I had to develop the expression by adding one rule
+# per operator :-(
+
+expression:   rvalue
+            | expression PLUS expression {
+    result = ast AST::ArithmeticOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+}
+            | expression MINUS expression {
+    result = ast AST::ArithmeticOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+}
+            | expression DIV expression {
+    result = ast AST::ArithmeticOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+}
+            | expression TIMES expression {
+    result = ast AST::ArithmeticOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+}
+            | expression LSHIFT expression {
+    result = ast AST::ArithmeticOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+}
+            | expression RSHIFT expression {
+    result = ast AST::ArithmeticOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+}
+            | MINUS expression =UMINUS {
+    result = ast AST::Minus, :value => val[1]
+}
+            | expression NOTEQUAL expression {
+    result = ast AST::ComparisonOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+}
+            | expression ISEQUAL expression {
+    result = ast AST::ComparisonOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+}
+            | expression GREATERTHAN expression {
+    result = ast AST::ComparisonOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+}
+            | expression GREATEREQUAL expression {
+    result = ast AST::ComparisonOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+}
+            | expression LESSTHAN expression {
+    result = ast AST::ComparisonOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+}
+            | expression LESSEQUAL expression {
+    result = ast AST::ComparisonOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+}
+            | NOT expression {
+    result = ast AST::Not, :value => val[1]
+}
+            | expression AND expression {
+    result = ast AST::BooleanOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+}            
+            | expression OR expression {
+    result = ast AST::BooleanOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+}            
+            | LPAREN expression RPAREN {
+    result = val[1]
+}
 
 casestatement:  CASE rvalue LBRACE caseopts RBRACE {
     options = val[3]
