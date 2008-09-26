@@ -43,6 +43,29 @@ class Puppet::Parser::Scope
         end
     end
 
+    # Is the value a number?, return the correct object or nil if not a number
+    def self.number?(value)
+        unless value.is_a?(Fixnum) or value.is_a?(Bignum) or value.is_a?(Float) or value.is_a?(String)
+            return nil
+        end
+        
+        if value.is_a?(String)
+            if value =~ /^-?\d+(:?\.\d+|(:?\.\d+)?e\d+)$/
+                return value.to_f
+            elsif value =~ /^0x\d+/i
+                return value.to_i(16)
+            elsif value =~ /^0\d+/i
+                return value.to_i(8)
+            elsif value =~ /^-?\d+/
+                return value.to_i
+            else
+                return nil
+            end
+        end
+        # it is one of Fixnum,Bignum or Float
+        return value
+    end
+
     # Add to our list of namespaces.
     def add_namespace(ns)
         return false if @namespaces.include?(ns)

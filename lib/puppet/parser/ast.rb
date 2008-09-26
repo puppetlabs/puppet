@@ -74,6 +74,7 @@ class Puppet::Parser::AST
 end
 
 # And include all of the AST subclasses.
+require 'puppet/parser/ast/arithmetic_operator'
 require 'puppet/parser/ast/astarray'
 require 'puppet/parser/ast/branch'
 require 'puppet/parser/ast/boolean_operator'
@@ -88,6 +89,7 @@ require 'puppet/parser/ast/function'
 require 'puppet/parser/ast/hostclass'
 require 'puppet/parser/ast/ifstatement'
 require 'puppet/parser/ast/leaf'
+require 'puppet/parser/ast/minus'
 require 'puppet/parser/ast/node'
 require 'puppet/parser/ast/not'
 require 'puppet/parser/ast/resource'
