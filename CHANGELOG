@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1610 - Raise "Filebucketed" messages to Notice priority
+
     Added a number of confines to package providers
 
     Fixed #1609 - Added confines for the Gentoo, FreeBSD and 
