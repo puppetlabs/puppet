@@ -76,6 +76,7 @@ end
 # And include all of the AST subclasses.
 require 'puppet/parser/ast/astarray'
 require 'puppet/parser/ast/branch'
+require 'puppet/parser/ast/boolean_operator'
 require 'puppet/parser/ast/caseopt'
 require 'puppet/parser/ast/casestatement'
 require 'puppet/parser/ast/collection'
