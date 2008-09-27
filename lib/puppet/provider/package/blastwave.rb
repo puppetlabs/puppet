@@ -6,6 +6,8 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
         pkgget = "/opt/csw/bin/pkg-get"
     end
 
+    confine :operatingsystem => :solaris
+
     commands :pkgget => pkgget
 
     # This is so stupid, but then, so is blastwave.

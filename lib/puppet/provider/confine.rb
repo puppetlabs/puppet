@@ -25,7 +25,7 @@ class Puppet::Provider::Confine
             begin
                 require "puppet/provider/confine/%s" % name
             rescue LoadError => detail
-                unless detail.to_s.include?("No such file")
+                unless detail.to_s =~ /No such file/i
                     warn "Could not load confine test '%s': %s" % [name, detail]
                 end
                 # Could not find file

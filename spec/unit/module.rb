@@ -90,21 +90,42 @@ describe Puppet::Module, " when searching for templates" do
     end
 
     it "should use the main templatedir if no module is found" do
-        Puppet.settings.expects(:value).with(:templatedir, nil).returns("/my/templates")
+        Puppet::Module.stubs(:templatepath).with(nil).returns(["/my/templates"])
         Puppet::Module.expects(:find).with("mymod", nil).returns(nil)
         Puppet::Module.find_template("mymod/mytemplate").should == "/my/templates/mymod/mytemplate"
     end
 
     it "should return unqualified templates directly in the template dir" do
-        Puppet.settings.expects(:value).with(:templatedir, nil).returns("/my/templates")
+        Puppet::Module.stubs(:templatepath).with(nil).returns(["/my/templates"])
         Puppet::Module.expects(:find).never
         Puppet::Module.find_template("mytemplate").should == "/my/templates/mytemplate"
     end
 
     it "should use the environment templatedir if no module is found and an environment is specified" do
-        Puppet.settings.expects(:value).with(:templatedir, "myenv").returns("/myenv/templates")
+        Puppet::Module.stubs(:templatepath).with("myenv").returns(["/myenv/templates"])
         Puppet::Module.expects(:find).with("mymod", "myenv").returns(nil)
         Puppet::Module.find_template("mymod/mytemplate", "myenv").should == "/myenv/templates/mymod/mytemplate"
+    end
+
+    it "should use first dir from environment templatedir if no module is found and an environment is specified" do
+        Puppet::Module.stubs(:templatepath).with("myenv").returns(["/myenv/templates", "/two/templates"])
+        Puppet::Module.expects(:find).with("mymod", "myenv").returns(nil)
+        Puppet::Module.find_template("mymod/mytemplate", "myenv").should == "/myenv/templates/mymod/mytemplate"
+    end
+
+    it "should use a valid dir when templatedir is a path for unqualified templates and the first dir contains template" do
+        Puppet::Module.stubs(:templatepath).returns(["/one/templates", "/two/templates"])
+        File.expects(:exists?).with("/one/templates/mytemplate").returns(true)
+        Puppet::Module.expects(:find).never
+        Puppet::Module.find_template("mytemplate").should == "/one/templates/mytemplate"
+    end
+
+    it "should use a valid dir when templatedir is a path for unqualified templates and only second dir contains template" do
+        Puppet::Module.stubs(:templatepath).returns(["/one/templates", "/two/templates"])
+        File.expects(:exists?).with("/one/templates/mytemplate").returns(false)
+        File.expects(:exists?).with("/two/templates/mytemplate").returns(true)
+        Puppet::Module.expects(:find).never
+        Puppet::Module.find_template("mytemplate").should == "/two/templates/mytemplate"
     end
 
     it "should use the node environment if specified" do

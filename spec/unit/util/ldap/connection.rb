@@ -152,5 +152,18 @@ describe Puppet::Util::Ldap::Connection do
             Puppet::Util::Ldap::Connection.expects(:new).with { |host, port, options| options[:ssl] == false }
             Puppet::Util::Ldap::Connection.instance
         end
+
+        it "should set the ldapuser if one is set" do
+            Puppet.settings.expects(:value).with(:ldapuser).returns "foo"
+            Puppet::Util::Ldap::Connection.expects(:new).with { |host, port, options| options[:user] == "foo" }
+            Puppet::Util::Ldap::Connection.instance
+        end
+
+        it "should set the ldapuser and ldappassword if both is set" do
+            Puppet.settings.expects(:value).with(:ldapuser).returns "foo"
+            Puppet.settings.expects(:value).with(:ldappassword).returns "bar"
+            Puppet::Util::Ldap::Connection.expects(:new).with { |host, port, options| options[:user] == "foo" and options[:password] == "bar" }
+            Puppet::Util::Ldap::Connection.instance
+        end
     end
 end

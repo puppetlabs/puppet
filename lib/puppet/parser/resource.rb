@@ -369,7 +369,7 @@ class Puppet::Parser::Resource
             next unless val = scope.lookupvar(name.to_s, false) and val != :undefined
 
             # The default case: just set the value
-            return set_parameter(name, val) unless @params[name]
+            set_parameter(name, val) and next unless @params[name]
 
             # For relationship params, though, join the values (a la #446).
             @params[name].value = [@params[name].value, val].flatten

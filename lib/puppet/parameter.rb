@@ -413,39 +413,12 @@ class Puppet::Parameter
         @shadow = nil
     end
 
-    # This should only be called for parameters, but go ahead and make
-    # it possible to call for properties, too.
-    def value
-        if self.is_a?(Puppet::Property)
-            # We should return the 'is' value if there's not 'should'
-            # value.  This might be bad, though, because the 'should'
-            # method knows whether to return an array or not and that info
-            # is not exposed, and the 'is' value could be a symbol.  I
-            # can't seem to create a test in which this is a problem, but
-            # that doesn't mean it's not one.
-            if self.should
-                return self.should
-            else
-                return self.retrieve
-            end
-        else
-            if defined? @value
-                return @value
-            else
-                return nil
-            end
-        end
-    end
+    attr_reader :value
 
     # Store the value provided.  All of the checking should possibly be
     # late-binding (e.g., users might not exist when the value is assigned
     # but might when it is asked for).
     def value=(value)
-        # If we're a parameter, just hand the processing off to the should
-        # method.
-        if self.is_a?(Puppet::Property)
-            return self.should = value
-        end
         if respond_to?(:validate)
             validate(value)
         end

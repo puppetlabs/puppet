@@ -1,4 +1,79 @@
 0.24.x
+    Fixed #1610 - Raise "Filebucketed" messages to Notice priority
+
+    Added a number of confines to package providers
+
+    Fixed #1609 - Added confines for the Gentoo, FreeBSD and 
+    SMF (Solaris) service providers 
+
+    Fixed #1608 - Added ubuntu to defaultfor for apt provider
+
+    Fixed #1607 - Added ubuntu to defaultfor for Debian service
+    provider
+
+    Fixed #1045 - Multiple metaparams all get added to resources.
+    
+    Fixed #1472 -- defined, exported resources in the current compile 
+    now get expanded correctly.
+
+    Fixed #1595 - Internally, Property#retrieve is no longer called
+    when no 'should' value is available for a resource.
+
+    Fixed #1588 - Fixed puppetca --clean --all 
+
+    Fixed #1584 - Added support for appended variables
+
+    Fixed #1554 - Added support for multiple template directories
+
+    Fixed #1500 - puppetrun not working
+
+    Fixed #1579 and #1580 - errors in the Puppet RPM spec file
+
+    Fixed #1572 -- file purging now fails if remote sources do not exist.
+    
+    Fixed #1521 -- ldap user and password are now used with the default connection.
+
+    Fixed issues with file descriptors leaking into subprocesses
+
+    Fixed #1568 - createpackage.sh
+
+    Fixed #1571 - Puppet::Util::binary returns incorrect results
+
+    Fixed #1553 - Puppet and Facter cannot both install the plist module into two different locations
+
+    Adjusted hpuxuseradd user provider to confine to HP-UX and fixed HP-UX user provider path regression
+
+    Fixed debug messages in package type - thanks to Todd Zullinger for this fix
+    
+    Fixed #1566 - changed password property of the user type
+
+    Fixed debug messages in package type
+
+    Updated Red Hat spec file
+
+    Fixes #1455 - Adds HP-UX support for user type
+
+    Fixes #1551 puppetmaster.freshness xmlrpc call returns incorrect type
+
+    Fixes #1554 - Fix exception for undefined hostname
+
+    Fixed #1533 - changed permissions for man directory
+
+    Added daemontools and runit providers for service type
+
+    Added simple rake task for running unit tests
+
+    Added spec Rake task
+
+    Fixed #1526 - Fixed leak in template
+
+    Fixed #1506 - Removed storeconfig duplicate indexes
+    
+    Fixed #1457 - case insensitive match for error
+    
+    Fixed #1488 - Moved individual functions out of functions.rb into 
+    lib/puppet/parser/functions directory.  New functions should be create     in this directory.
+
     Fixed #1508 - Added HP-UX package provider
 
     Fixed #1502 - Fixed poor stored configuration performance

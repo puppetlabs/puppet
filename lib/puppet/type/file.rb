@@ -368,7 +368,7 @@ module Puppet
                         Find.find(self[:path]) do |f|
                             if File.file?(f)
                                 sum = backup.backup(f)
-                                self.info "Filebucketed %s to %s with sum %s" %
+                                self.notice "Filebucketed %s to %s with sum %s" %
                                     [f, backup.name, sum]
                             end
                         end
@@ -403,7 +403,7 @@ module Puppet
                 case backup
                 when Puppet::Network::Client.client(:Dipper):
                     sum = backup.backup(file)
-                    self.info "Filebucketed to %s with sum %s" %
+                    self.notice "Filebucketed to %s with sum %s" %
                         [backup.name, sum]
                     return true
                 when String:
@@ -849,6 +849,8 @@ module Puppet
             # Keep track of all the files we found in the source, so we can purge
             # appropriately.
             sourced = []
+
+            success = false
             
             @parameters[:source].should.each do |source|
                 sourceobj, path = uri2obj(source)
@@ -863,6 +865,8 @@ module Puppet
                 if desc == "" 
                     next
                 end
+
+                success = true
             
                 # Now create a new child for every file returned in the list.
                 result += desc.split("\n").collect { |line|
@@ -898,6 +902,11 @@ module Puppet
                     return [result, sourced]
                 end
             end
+
+            unless success
+                raise Puppet::Error, "None of the provided sources exist"
+            end
+
             return [result, sourced]
         end
 

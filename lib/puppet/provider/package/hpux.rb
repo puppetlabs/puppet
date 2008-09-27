@@ -3,11 +3,16 @@
 require 'puppet/provider/package'
 
 Puppet::Type.type(:package).provide :hpux, :parent => Puppet::Provider::Package do
+
     desc "HP-UX's packaging system."
+
     commands :swinstall => "/usr/sbin/swinstall",
              :swlist => "/usr/sbin/swlist",
              :swremove => "/usr/sbin/swremove"
-    defaultfor :operatingsystem => 'hp-ux'
+
+    confine :operatingsystem => "hp-ux"
+
+    defaultfor :operatingsystem => "hp-ux"
     
     def self.instances
         # TODO:  This is very hard on HP-UX!

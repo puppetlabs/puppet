@@ -441,7 +441,13 @@ class Property < Puppet::Parameter
         return "%s(%s)" % [@resource.name,self.name]
     end
 
-    # Provide a common hook for setting @should, just like params.
+    # Just return any should value we might have.
+    def value
+        self.should
+    end
+
+    # Match the Parameter interface, but we really just use 'should' internally.
+    # Note that the should= method does all of the validation and such.
     def value=(value)
         self.should = value
     end

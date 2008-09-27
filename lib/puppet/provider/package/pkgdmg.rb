@@ -70,7 +70,7 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
             self.fail "Mac OS X PKG DMG's must specificy a source string ending in .dmg"
         end
         require 'open-uri'
-        require 'puppet/util/plist'
+        require 'facter/util/plist'
         cached_source = source
         if %r{\A[A-Za-z][A-Za-z0-9+\-\.]*://} =~ cached_source
             cached_source = "/tmp/#{name}"

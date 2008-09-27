@@ -260,11 +260,15 @@ class Puppet::Parser::Scope
     # Set a variable in the current scope.  This will override settings
     # in scopes above, but will not allow variables in the current scope
     # to be reassigned.
-    def setvar(name,value, file = nil, line = nil)
-        #Puppet.debug "Setting %s to '%s' at level %s" %
-        #    [name.inspect,value,self.level]
+    def setvar(name,value, file = nil, line = nil, append = false)
+        #Puppet.debug "Setting %s to '%s' at level %s mode append %s" %
+        #    [name.inspect,value,self.level, append]
         if @symtable.include?(name)
-            error = Puppet::ParseError.new("Cannot reassign variable %s" % name)
+            unless append
+                error = Puppet::ParseError.new("Cannot reassign variable %s" % name)
+            else
+                error = Puppet::ParseError.new("Cannot append, variable %s is defined in this scope" % name)
+            end
             if file
                 error.file = file
             end
@@ -273,7 +277,19 @@ class Puppet::Parser::Scope
             end
             raise error
         end
-        @symtable[name] = value
+        
+        unless append
+            @symtable[name] = value
+        else # append case
+            # lookup the value in the scope if it exists and insert the var
+            @symtable[name] = lookupvar(name)
+            # concatenate if string, append if array, nothing for other types
+            if value.is_a?(Array)
+                @symtable[name] += value
+            else
+                @symtable[name] << value
+            end
+        end
     end
 
     # Return an interpolated string.

@@ -7,6 +7,8 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
 
     defaultfor :operatingsystem => :solaris
 
+    confine :operatingsystem => :solaris
+
     commands :adm => "/usr/sbin/svcadm", :svcs => "/usr/bin/svcs"
 
     def enable

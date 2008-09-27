@@ -199,6 +199,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
 
         self.class.instance = self
         @running = false
+        @splayed = false
     end
 
     # Mark that we should restart.  The Puppet module checks whether we're running,
@@ -478,20 +479,19 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         @lockfile
     end
 
+    def splayed?
+        @splayed
+    end
+
     # Sleep when splay is enabled; else just return.
     def splay
         return unless Puppet[:splay]
+        return if splayed?
 
-        limit = Integer(Puppet[:splaylimit])
-
-        # Pick a splay time and then cache it.
-        unless time = Puppet::Util::Storage.cache(:configuration)[:splay_time]
-            time = rand(limit)
-            Puppet::Util::Storage.cache(:configuration)[:splay_time] = time
-        end
-
+        time = rand(Integer(Puppet[:splaylimit]))
         Puppet.info "Sleeping for %s seconds (splay is enabled)" % time
         sleep(time)
+        @splayed = true
     end
 
     private

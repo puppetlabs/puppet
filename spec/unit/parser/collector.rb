@@ -234,16 +234,16 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
         @collector.evaluate
     end
 
-    it "should return all matching resources from the current compile" do
+    it "should return all matching resources from the current compile and mark them non-virtual and non-exported" do
         stub_rails(true)
 
         one = stub 'one', :type => "Mytype", :virtual? => true, :exported? => true
         two = stub 'two', :type => "Mytype", :virtual? => true, :exported? => true
 
-        one.stubs(:exported=)
-        one.stubs(:virtual=)
-        two.stubs(:exported=)
-        two.stubs(:virtual=)
+        one.expects(:exported=).with(false)
+        one.expects(:virtual=).with(false)
+        two.expects(:exported=).with(false)
+        two.expects(:virtual=).with(false)
 
         @compiler.expects(:resources).returns([one, two])
 

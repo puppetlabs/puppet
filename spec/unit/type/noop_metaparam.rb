@@ -2,7 +2,7 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-require 'puppet/metatype/metaparams'
+require 'puppet/type'
 
 describe Puppet::Type.type(:file).attrclass(:noop) do
     before do

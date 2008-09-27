@@ -176,6 +176,16 @@ describe Puppet::Parser::Resource do
             @resource["noop"].should == "false"
         end
 
+        it "should copy all metaparams that it finds" do
+            @scope.setvar("require", "container")
+            @scope.setvar("notify", "container")
+
+            @resource.class.publicize_methods(:add_metaparams)  { @resource.add_metaparams }
+
+            @resource["require"].should == "container"
+            @resource["notify"].should == "container"
+        end
+
         it "should stack relationship metaparams from its container if it already has them" do
             @resource.set_parameter("require", "resource")
             @scope.setvar("require", "container")

@@ -138,8 +138,8 @@ module Puppet
                             # that can't query versions.
                             return true
                         else
-                            self.debug "is is %s, latest %s is %s" %
-                                [is.inspect, @resource.name, @latest.inspect]
+                            self.debug "%s %s is installed, latest is %s" %
+                                [@resource.name, is.inspect, @latest.inspect]
                         end
                     when :absent
                         return true if is == :absent or is == :purged

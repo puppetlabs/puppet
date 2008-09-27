@@ -144,3 +144,20 @@ task :tracdocs do
         sh "puppetdoc -m trac -r #{ref.to_s}"
     end
 end
+
+desc "Run the specs under spec/"
+task :spec do
+    require 'spec'
+    require 'spec/rake/spectask'
+    require 'rcov'
+    Spec::Rake::SpecTask.new do |t|
+         #   t.rcov = true
+         t.spec_opts = ['--format','s', '--loadby','mtime']
+         t.spec_files = FileList['spec/**/*.rb']
+    end
+end
+
+desc "Run the unit tests"
+task :unit do
+    sh "cd test; rake"
+end
