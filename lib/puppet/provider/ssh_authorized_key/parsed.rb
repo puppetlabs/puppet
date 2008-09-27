@@ -30,6 +30,12 @@ Puppet::Type.type(:ssh_authorized_key).provide(:parsed,
             end
         }
 
+    record_line :key_v1,
+        :fields   => %w{options bits exponent modulus name},
+        :optional => %w{options},
+        :rts      => /^\s+/,
+        :match    => /^(?:(.+) )?(\d+) (\d+) (\d+)(?: (.+))?$/
+
     def prefetch
         # This was done in the type class but path expansion was failing for
         # not yet existing users, the only workaround I found was to move that
