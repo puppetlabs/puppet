@@ -1,6 +1,7 @@
 module Puppet
     newtype(:ssh_authorized_key) do
-        @doc = "Manages ssh authorized keys."
+        @doc = "Manages SSH authorized keys. Currently only type 2 keys are
+        supported."
 
         ensurable
 
@@ -11,8 +12,7 @@ module Puppet
         end
 
         newproperty(:type) do
-            desc "The encryption type used.  Usually ssh-dss or ssh-rsa for
-                  SSH version 2. Not used for SSH version 1."
+            desc "The encryption type used: ssh-dss or ssh-rsa."
 
             newvalue("ssh-dss")
             newvalue("ssh-rsa")

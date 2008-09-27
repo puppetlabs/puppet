@@ -45,6 +45,8 @@
     Fixed #791 - You should now be able to create and find a user/group in one transaction.
 
     Fixed #1610 - Raise "Filebucketed" messages to Notice priority
+    
+    FIxed #1530 - ssh_authorized_keys provider does not crash anymore on SSH type 1 keys
 
     Added a number of confines to package providers
 
