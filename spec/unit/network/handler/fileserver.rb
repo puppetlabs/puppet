@@ -20,7 +20,7 @@ describe Puppet::Network::Handler do
     end
 
     before do
-        @basedir = File.join("/tmp", "test_network_handler")
+        @basedir = File.join(Dir.tmpdir(), "test_network_handler")
         Dir.mkdir(@basedir)
         @file = File.join(@basedir, "aFile")
         @link = File.join(@basedir, "aLink")

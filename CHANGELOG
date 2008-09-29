@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1596 - Deploying file resources with ++ generates error
+
     Fixed #1610 - Raise "Filebucketed" messages to Notice priority
 
     Added a number of confines to package providers
