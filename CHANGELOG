@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1622 - Users and their groups should again add in one transaction
+
     Fixed #1610 - Raise "Filebucketed" messages to Notice priority
 
     Added a number of confines to package providers
