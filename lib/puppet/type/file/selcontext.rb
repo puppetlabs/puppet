@@ -59,18 +59,21 @@ module Puppet
         desc "What the SELinux User context of the file should be."
 
         @event = :file_changed
+        defaultto { self.retrieve_default_context(:seluser) }
     end
 
     Puppet.type(:file).newproperty(:selrole, :parent => Puppet::SELFileContext) do
         desc "What the SELinux Role context of the file should be."
 
         @event = :file_changed
+        defaultto { self.retrieve_default_context(:selrole) }
     end
 
     Puppet.type(:file).newproperty(:seltype, :parent => Puppet::SELFileContext) do
         desc "What the SELinux Type context of the file should be."
 
         @event = :file_changed
+        defaultto { self.retrieve_default_context(:seltype) }
     end
 
 end
