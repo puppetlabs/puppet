@@ -48,6 +48,30 @@ describe user do
         end
     end
 
+    describe "when retrieving all current values" do
+        before do
+            @user = user.create(:name => "foo", :uid => 10, :gid => 10)
+            @properties = {}
+        end
+
+        it "should return a hash containing values for all set properties" do
+            values = @user.retrieve
+            [@user.property(:uid), @user.property(:gid)].each { |property| values.should be_include(property) }
+        end
+
+        it "should set all values to :absent if the user is absent" do
+            @user.property(:ensure).expects(:retrieve).returns :absent
+            @user.property(:uid).expects(:retrieve).never
+            @user.retrieve[@user.property(:uid)].should == :absent
+        end
+
+        it "should include the result of retrieving each property's current value if the user is present" do
+            @user.property(:ensure).expects(:retrieve).returns :present
+            @user.property(:uid).expects(:retrieve).returns 15
+            @user.retrieve[@user.property(:uid)].should == 15
+        end
+    end
+
     describe "when managing the ensure property" do
         before do
             @ensure = user.attrclass(:ensure).new(:resource => @resource)
