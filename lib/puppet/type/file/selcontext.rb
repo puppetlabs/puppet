@@ -76,5 +76,12 @@ module Puppet
         defaultto { self.retrieve_default_context(:seltype) }
     end
 
+    Puppet.type(:file).newproperty(:selrange, :parent => Puppet::SELFileContext) do
+        desc "What the SELinux Range context of the file should be."
+
+        @event = :file_changed
+        defaultto { self.retrieve_default_context(:selrange) }
+    end
+
 end
 

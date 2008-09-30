@@ -12,7 +12,8 @@ describe Puppet.type(:file), " when manipulating file contexts" do
 			:ensure => "file",
 			:seluser => "user_u",
 			:selrole => "role_r",
-			:seltype => "type_t" )
+			:seltype => "type_t",
+			:selrange => "s0" )
 	end
 	it "should use :seluser to get/set an SELinux user file context attribute" do
 		@file.property(:seluser).should == "user_u"
@@ -22,6 +23,9 @@ describe Puppet.type(:file), " when manipulating file contexts" do
 	end
 	it "should use :seltype to get/set an SELinux user file context attribute" do
 		@file.property(:seltype).should == "type_t"
+	end
+	it "should use :selrange to get/set an SELinux range file context attribute" do
+		@file.property(:seltype).should == "s0"
 	end
 	after :each do
 		Puppet::Type::File.clear()
