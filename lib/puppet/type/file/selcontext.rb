@@ -20,27 +20,26 @@
 # See http://www.nsa.gov/selinux/ for complete docs on SELinux.
 
 module Puppet
+    require 'puppet/util/selinux'
+
     class SELFileContext < Puppet::Property
+        include Puppet::Util::SELinux
 
         def retrieve
             unless @resource.stat(false)
                 return :absent
             end
-            context = `stat -c %C #{@resource[:path]}`
-            context.chomp!
-            if context == "unlabeled"
+            context = self.get_selinux_current_context(@resource[:path])
+            return parse_selinux_context(name, context)
+        end
+
+        def retrieve_default_context(property)
+            unless context = self.get_selinux_default_context(@resource[:path])
                 return nil
             end
-            unless context =~ /^[a-z0-9_]+:[a-z0-9_]+:[a-z0-9_]+/
-                raise Puppet::Error, "Invalid output from stat: #{context}"
-            end
-            bits = context.split(':')
-            ret = {
-                :seluser => bits[0],
-                :selrole => bits[1],
-                :seltype => bits[2]
-            }
-            return ret[name]
+            property_default = self.parse_selinux_context(property, context)
+            self.debug "Found #{property} default '#{property_default}' for #{@resource[:path]}"
+            return property_default
         end
 
         def sync
@@ -51,25 +50,7 @@ module Puppet
                 end
             end
 
-            flag = ''
-
-            case name
-            when :seluser
-                flag = "-u"
-            when :selrole
-                flag = "-r"
-            when :seltype
-                flag = "-t"
-            else
-                raise Puppet::Error, "Invalid SELinux file context component: #{name}"
-            end
-
-            self.debug "Running chcon #{flag} #{@should} #{@resource[:path]}"
-            retval = system("chcon #{flag} #{@should} #{@resource[:path]}")
-            unless retval
-                error = Puppet::Error.new("failed to chcon %s" % [@resource[:path]])
-                raise error
-            end
+            self.set_selinux_context(@resource[:path], @should, name)
             return :file_changed
         end
     end
