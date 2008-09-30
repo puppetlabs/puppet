@@ -49,25 +49,6 @@ module Puppet
                     return :absent
                 end
             end
-
-            # The default 'sync' method only selects among a list of registered
-            # values.
-            def sync
-#                if self.insync?
-#                    self.info "already in sync"
-#                    return nil
-                #else
-                    #self.info "%s vs %s" % [self.is.inspect, self.should.inspect]
-#               end
-                unless self.class.values
-                    self.devfail "No values defined for %s" %
-                        self.class.name
-                end
-
-                # Set ourselves to whatever our should value is.
-                self.set(self.should)
-            end
-
         end
 
         newproperty(:uid) do
@@ -95,50 +76,26 @@ module Puppet
         newproperty(:gid) do
             desc "The user's primary group.  Can be specified numerically or
                 by name."
-            
-            def found?
-                defined? @found and @found
-            end
 
-            munge do |gid|
-                method = :getgrgid
-                case gid
-                when String
-                    if gid =~ /^[-0-9]+$/
-                        gid = Integer(gid)
-                    else
-                        method = :getgrnam
-                    end
-                when Symbol
-                    unless gid == :auto or gid == :absent
-                        self.devfail "Invalid GID %s" % gid
-                    end
-                    # these are treated specially by sync()
-                    return gid
-                end
-
-                if group = Puppet::Util.gid(gid)
-                    @found = true
-                    return group
+            munge do |value|
+                if value.is_a?(String) and value =~ /^[-0-9]+$/
+                    Integer(value)
                 else
-                    @found = false
-                    return gid
+                    value
                 end
             end
 
-            # *shudder*  Make sure that we've looked up the group and gotten
-            # an ID for it.  Yuck-o.
-            def should
-                unless defined? @should
-                    return super
+            def sync
+                found = false
+                @should.each do |value|
+                    if number = Puppet::Util.gid(value)
+                        provider.gid = number
+                        found = true
+                        break
+                    end
                 end
-                unless found?
-                    @should = @should.each { |val|
-                        next unless val
-                        Puppet::Util.gid(val)
-                    }
-                end
-                super
+
+                fail "Could not find group(s) %s" % @should.join(",") unless found
             end
         end
 
