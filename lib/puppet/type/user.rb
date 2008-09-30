@@ -191,29 +191,6 @@ module Puppet
             end
         end
 
-        # these three properties are all implemented differently on each platform,
-        # so i'm disabling them for now
-
-        # FIXME Puppet::Property::UserLocked is currently non-functional
-        #newproperty(:locked) do
-        #    desc "The expected return code.  An error will be returned if the
-        #        executed command returns something else."
-        #end
-
-        # FIXME Puppet::Property::UserExpire is currently non-functional
-        #newproperty(:expire) do
-        #    desc "The expected return code.  An error will be returned if the
-        #        executed command returns something else."
-        #    @objectaddflag = "-e"
-        #end
-
-        # FIXME Puppet::Property::UserInactive is currently non-functional
-        #newproperty(:inactive) do
-        #    desc "The expected return code.  An error will be returned if the
-        #        executed command returns something else."
-        #    @objectaddflag = "-f"
-        #end
-
         newparam(:name) do
             desc "User name.  While limitations are determined for
                 each operating system, it is generally a good idea to keep to
