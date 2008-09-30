@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1620 - Add 'sles' to Puppet confines when 'suse' is used
+
     Fixed #1585 - Allow complex 'if' and variable expressions
 
     Fixed #1564 - Saving File#checksum to state.yaml broken
