@@ -1,4 +1,7 @@
 0.24.x
+    Fixed #1603 - Added support for running Puppet inside a Rack application
+    (mod_rails) with Passenger and Apache
+
     Fixed #1596 - Deploying file resources with ++ generates error
 
     Fixed #1610 - Raise "Filebucketed" messages to Notice priority
