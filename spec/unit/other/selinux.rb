@@ -23,6 +23,9 @@ describe Puppet.type(:file), " when manipulating file contexts" do
 	it "should use :seltype to get/set an SELinux user file context attribute" do
 		@file.property(:seltype).should == "type_t"
 	end
+	after :each do
+		Puppet::Type::File.clear()
+	end
 end
 
 describe Puppet.type(:selboolean), " when manipulating booleans" do
@@ -49,6 +52,9 @@ describe Puppet.type(:selboolean), " when manipulating booleans" do
 		@bool[:persistent] = false
 		@bool[:persistent].should == :false
 	end
+	after :each do
+		Puppet::Type::Selboolean.clear()
+	end
 end
 
 describe Puppet.type(:selmodule), " when checking policy modules" do
@@ -74,6 +80,9 @@ describe Puppet.type(:selmodule), " when checking policy modules" do
 	it "should set the syncversion value to false" do
 		@module[:syncversion] = :false
 		@module.property(:syncversion).should == :false
+	end
+	after :each do
+		Puppet::Type::Selmodule.clear()
 	end
 end
 
