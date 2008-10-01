@@ -1,4 +1,7 @@
 0.24.x
+    Modified the behaviour of resource-level 'retrieve' -- it only
+    calls 'retrieve' on each property if the resource exists.
+
     Fixed #1622 - Users and their groups should again add in one transaction
 
     Fixed #1610 - Raise "Filebucketed" messages to Notice priority
