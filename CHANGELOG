@@ -19,6 +19,8 @@
 
     Fixed #1622 - Users and their groups should again add in one transaction
 
+    Fixed #791 - You should now be able to create and find a user/group in one transaction.
+
     Fixed #1610 - Raise "Filebucketed" messages to Notice priority
 
     Added a number of confines to package providers
