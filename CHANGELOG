@@ -1,4 +1,8 @@
 0.24.x
+    Modified the group and zone resource types to no longer call
+    'currentpropvalues' as a means of setting all values to absent.
+    There should be no behaviour change from this change.
+
     Modified the behaviour of resource-level 'retrieve' -- it only
     calls 'retrieve' on each property if the resource exists.
 

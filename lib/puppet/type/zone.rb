@@ -377,7 +377,11 @@ end
             result = setstatus(hash)
             result
         else
-            return currentpropvalues(:absent)
+            # Return all properties as absent.
+            return properties().inject({}) do | prophash, property|
+                prophash[property] = :absent
+                prophash
+            end
         end
     end
 

@@ -35,6 +35,7 @@ describe Puppet::Type do
         end
     end
 
+
     describe "when in a catalog" do
         before do
             @catalog = Puppet::Node::Catalog.new
