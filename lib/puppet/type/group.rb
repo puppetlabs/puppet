@@ -118,14 +118,6 @@ module Puppet
 
             defaultto false
         end
-
-        def retrieve
-            if self.provider and @provider.exists?
-                return super
-            else
-               return currentpropvalues(:absent) 
-            end
-        end
     end
 end
 

@@ -901,19 +901,31 @@ class Type
         
     # retrieve the current value of all contained properties
     def retrieve
-         return currentpropvalues
+        return currentpropvalues
     end
     
-    # get a hash of the current properties.  
-    def currentpropvalues(override_value = nil)
-        # it's important to use the method here, as it follows the order
-        # in which they're defined in the object
-        return properties().inject({}) { | prophash, property|
-                   prophash[property] = override_value.nil? ? 
-                                          property.retrieve : 
-                                             override_value
-                   prophash
-               }
+    # Get a hash of the current properties.  Returns a hash with
+    # the actual property instance as the key and the current value
+    # as the, um, value.
+    def currentpropvalues
+        # It's important to use the 'properties' method here, as it follows the order
+        # in which they're defined in the class.  It also guarantees that 'ensure'
+        # is the first property, which is important for skipping 'retrieve' on
+        # all the properties if the resource is absent.
+        ensure_state = false
+        return properties().inject({}) do | prophash, property|
+            if property.name == :ensure
+                ensure_state = property.retrieve
+                prophash[property] = ensure_state
+            else
+                if ensure_state == :absent
+                    prophash[property] = :absent
+                else
+                    prophash[property] = property.retrieve
+                end
+            end
+            prophash
+        end
     end
 
     # Are we running in noop mode?

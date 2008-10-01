@@ -49,25 +49,6 @@ module Puppet
                     return :absent
                 end
             end
-
-            # The default 'sync' method only selects among a list of registered
-            # values.
-            def sync
-#                if self.insync?
-#                    self.info "already in sync"
-#                    return nil
-                #else
-                    #self.info "%s vs %s" % [self.is.inspect, self.should.inspect]
-#               end
-                unless self.class.values
-                    self.devfail "No values defined for %s" %
-                        self.class.name
-                end
-
-                # Set ourselves to whatever our should value is.
-                self.set(self.should)
-            end
-
         end
 
         newproperty(:uid) do
@@ -95,50 +76,26 @@ module Puppet
         newproperty(:gid) do
             desc "The user's primary group.  Can be specified numerically or
                 by name."
-            
-            def found?
-                defined? @found and @found
-            end
 
-            munge do |gid|
-                method = :getgrgid
-                case gid
-                when String
-                    if gid =~ /^[-0-9]+$/
-                        gid = Integer(gid)
-                    else
-                        method = :getgrnam
-                    end
-                when Symbol
-                    unless gid == :auto or gid == :absent
-                        self.devfail "Invalid GID %s" % gid
-                    end
-                    # these are treated specially by sync()
-                    return gid
-                end
-
-                if group = Puppet::Util.gid(gid)
-                    @found = true
-                    return group
+            munge do |value|
+                if value.is_a?(String) and value =~ /^[-0-9]+$/
+                    Integer(value)
                 else
-                    @found = false
-                    return gid
+                    value
                 end
             end
 
-            # *shudder*  Make sure that we've looked up the group and gotten
-            # an ID for it.  Yuck-o.
-            def should
-                unless defined? @should
-                    return super
+            def sync
+                found = false
+                @should.each do |value|
+                    if number = Puppet::Util.gid(value)
+                        provider.gid = number
+                        found = true
+                        break
+                    end
                 end
-                unless found?
-                    @should = @should.each { |val|
-                        next unless val
-                        Puppet::Util.gid(val)
-                    }
-                end
-                super
+
+                fail "Could not find group(s) %s" % @should.join(",") unless found
             end
         end
 
@@ -234,29 +191,6 @@ module Puppet
             end
         end
 
-        # these three properties are all implemented differently on each platform,
-        # so i'm disabling them for now
-
-        # FIXME Puppet::Property::UserLocked is currently non-functional
-        #newproperty(:locked) do
-        #    desc "The expected return code.  An error will be returned if the
-        #        executed command returns something else."
-        #end
-
-        # FIXME Puppet::Property::UserExpire is currently non-functional
-        #newproperty(:expire) do
-        #    desc "The expected return code.  An error will be returned if the
-        #        executed command returns something else."
-        #    @objectaddflag = "-e"
-        #end
-
-        # FIXME Puppet::Property::UserInactive is currently non-functional
-        #newproperty(:inactive) do
-        #    desc "The expected return code.  An error will be returned if the
-        #        executed command returns something else."
-        #    @objectaddflag = "-f"
-        #end
-
         newparam(:name) do
             desc "User name.  While limitations are determined for
                 each operating system, it is generally a good idea to keep to
@@ -338,7 +272,7 @@ module Puppet
                 current_value = :absent
 
                 if absent
-                   prophash[property] = :absent
+                    prophash[property] = :absent
                 else
                     current_value = property.retrieve
                     prophash[property] = current_value
@@ -346,7 +280,6 @@ module Puppet
 
                 if property.name == :ensure and current_value == :absent
                     absent = true
-#                    next
                 end
                 prophash
             }
