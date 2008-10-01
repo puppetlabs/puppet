@@ -1,6 +1,10 @@
+require 'puppet/util/posix'
+
 # Manage file group ownership.
 module Puppet
     Puppet.type(:file).newproperty(:group) do
+        include Puppet::Util::POSIX
+
         require 'etc'
         desc "Which group should own the file.  Argument can be either group
             name or group ID."
@@ -43,31 +47,7 @@ module Puppet
         end
 
         def retrieve
-            if self.should
-                @should = @should.collect do |val|
-                    unless val.is_a?(Integer)
-                        if tmp = validgroup?(val)
-                            val = tmp
-                        else
-                            raise "Could not find group %s" % val
-                        end
-                    else
-                        val
-                    end
-                end
-            end
-            stat = @resource.stat(false)
-
-            unless stat
-                return :absent
-            end
-
-            # Set our method appropriately, depending on links.
-            if stat.ftype == "link" and @resource[:links] != :follow
-                @method = :lchown
-            else
-                @method = :chown
-            end
+            return :absent unless stat = resource.stat(false)
 
             currentvalue = stat.gid
 
@@ -84,12 +64,8 @@ module Puppet
 
         # Determine if the group is valid, and if so, return the GID
         def validgroup?(value)
-            if value =~ /^\d+$/
-                value = value.to_i
-            end
-        
-            if gid = Puppet::Util.gid(value)
-                return gid
+            if number = gid(value)
+                return number
             else
                 return false
             end
@@ -99,32 +75,28 @@ module Puppet
         # we'll just let it fail, but we should probably set things up so
         # that users get warned if they try to change to an unacceptable group.
         def sync
-            unless @resource.stat(false)
-                stat = @resource.stat(true)
-                currentvalue = self.retrieve
-
-                unless stat
-                    self.debug "File '%s' does not exist; cannot chgrp" %
-                        @resource[:path]
-                    return nil
-                end
+            # Set our method appropriately, depending on links.
+            if resource[:links] == :manage
+                method = :lchown
+            else
+                method = :chown
             end
 
             gid = nil
-            unless gid = Puppet::Util.gid(self.should)
-                raise Puppet::Error, "Could not find group %s" % self.should
+            @should.each do |group|
+                break if gid = validgroup?(group)
             end
+
+            raise Puppet::Error, "Could not find group(s) %s" % @should.join(",") unless gid
 
             begin
                 # set owner to nil so it's ignored
-                File.send(@method,nil,gid,@resource[:path])
+                File.send(method, nil, gid, resource[:path])
             rescue => detail
-                error = Puppet::Error.new( "failed to chgrp %s to %s: %s" %
-                    [@resource[:path], self.should, detail.message])
+                error = Puppet::Error.new( "failed to chgrp %s to %s: %s" % [resource[:path], gid, detail.message])
                 raise error
             end
             return :file_changed
         end
     end
 end
-
