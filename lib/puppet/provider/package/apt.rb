@@ -45,9 +45,19 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
         if @resource[:responsefile]
             self.run_preseed
         end
-        should = @resource.should(:ensure)
+        should = @resource[:ensure]
 
         checkforcdrom()
+        cmd = %w{-q -y}
+
+        keep = ""
+        if config = @resource[:configfiles]
+            if config == :keep
+                cmd << "-o" << 'DPkg::Options::=--force-confold'
+            else
+                cmd << "-o" << 'DPkg::Options::=--force-confnew'
+            end
+        end
 
         str = @resource[:name]
         case should
@@ -56,19 +66,6 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
         else
             # Add the package version
             str += "=%s" % should
-        end
-        cmd = %w{-q -y}
-
-        keep = ""
-        if config = @resource[:configfiles]
-            case config
-            when :keep
-                cmd << "-o" << 'DPkg::Options::=--force-confold'
-            when :replace
-                cmd << "-o" << 'DPkg::Options::=--force-confnew'
-            else
-                raise Puppet::Error, "Invalid 'configfiles' value %s" % config
-            end
         end
 
         cmd << :install << str
@@ -92,7 +89,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
 	# preseeds answers to dpkg-set-selection from the "responsefile"
 	#
     def run_preseed
-        if response = @resource[:responsefile] and FileTest.exists?(response)
+        if response = @resource[:responsefile] and FileTest.exist?(response)
             self.info("Preseeding %s to debconf-set-selections" % response)
 
             preseed response
@@ -101,16 +98,12 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
         end
     end
 
-    def update
-        self.install
-    end
-
     def uninstall
         aptget "-y", "-q", :remove, @resource[:name]
     end
 
     def purge
-        aptget '-y', '-q', 'remove', '--purge', @resource[:name]
+        aptget '-y', '-q', :remove, '--purge', @resource[:name]
         # workaround a "bug" in apt, that already removed packages are not purged
         super
     end
