@@ -41,7 +41,6 @@ class AptitudePackageProviderTest < PuppetTest::TestCase
 					  ).returns(0)
 		
 		pkg.evaluate.each { |state| 
-                    state.transaction = self 
                     state.forward 
           }
 	end
@@ -67,6 +66,6 @@ class AptitudePackageProviderTest < PuppetTest::TestCase
 					        'faff'
 					  ).returns(0)
 		
-		pkg.evaluate.each { |state| state.transaction = self; state.forward }
+		pkg.evaluate.each { |state| state.forward }
 	end
 end
