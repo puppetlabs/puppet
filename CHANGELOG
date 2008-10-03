@@ -1,4 +1,6 @@
 0.24.x
+    Updated puppet binary documentation 
+
     Feature #1624 - Added RBAC roles to solaris user provider
 
     Fixed #1586 - Specifying "fully qualified" package names in Gentoo

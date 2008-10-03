@@ -3,7 +3,7 @@
 #
 # = Synopsis
 #
-# Run a stand-alone +puppet+ script.
+# Run a stand-alone +puppet+ manifest.
 #
 # = Usage
 #
@@ -12,9 +12,9 @@
 #
 # = Description
 #
-# This is the standalone puppet execution script; use it to execute
-# individual scripts that you write.  If you need to execute site-wide
-# scripts, use +puppetd+ and +puppetmasterd+.
+# This is the standalone puppet execution tool; use it to execute
+# individual manifests that you write.  If you need to execute site-wide
+# manifests, use +puppetd+ and +puppetmasterd+.
 #
 # = Options
 #
@@ -48,7 +48,7 @@
 #
 # = Example
 #
-#   puppet -l /tmp/script.log script.pp
+#   puppet -l /tmp/manifest.log manifest.pp
 #
 # = Author
 #
