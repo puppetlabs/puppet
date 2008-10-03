@@ -1472,8 +1472,6 @@ class Type
 
             raise(ArgumentError, "Cannot add aliases without a catalog") unless @resource.catalog
 
-            @resource.info "Adding aliases %s" % aliases.collect { |a| a.inspect }.join(", ")
-
             aliases.each do |other|
                 if obj = @resource.catalog.resource(@resource.class.name, other)
                     unless obj.object_id == @resource.object_id
