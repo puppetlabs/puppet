@@ -183,11 +183,12 @@ if Puppet[:parseonly]
 end
 
 # Collect our facts.
-facts = Puppet::Node::Facts.find("me")
-facts.name = facts.values["hostname"]
+facts = Puppet::Node::Facts.find(Puppet[:certname])
 
 # Find our Node
-node = Puppet::Node.find(facts.name)
+unless node = Puppet::Node.find(Puppet[:certname])
+    raise "Could not find node %s" % Puppet[:certname]
+end
 
 # Merge in the facts.
 node.merge(facts.values)

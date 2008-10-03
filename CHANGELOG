@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1628 - Changed node search to use certname rather than Facter hostname
+
     Updated puppet binary documentation 
 
     Feature #1624 - Added RBAC roles to solaris user provider
