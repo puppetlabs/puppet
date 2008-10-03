@@ -488,26 +488,16 @@ class Puppet::Util::Log
             raise ArgumentError, "Level is not a string or symbol: #{args[:level].class}"
         end
 
-        # Just return unless we're actually at a level we should send
-        #return unless self.class.sendlevel?(@level)
-
         @message = args[:message].to_s
         @time = Time.now
-        # this should include the host name, and probly lots of other
-        # stuff, at some point
-        unless self.class.validlevel?(level)
-            raise ArgumentError, "Invalid message level #{level}"
-        end
+
+        raise ArgumentError, "Invalid log level %s" % level unless self.class.validlevel?(level)
 
         if tags = args[:tags]
             tags.each { |t| self.tag(t) }
         end
 
-        if args.include?(:source)
-            self.source = args[:source]
-        else
-            @source = "Puppet"
-        end
+        self.source = args[:source] || "Puppet"
 
         # Tag myself with my log level
         tag(level)
@@ -550,5 +540,8 @@ class Puppet::Util::Log
         return @message
     end
 end
-Puppet::Log = Puppet::Util::Log
 
+# This is for backward compatibility from when we changed the constant to Puppet::Util::Log
+# because the reports include the constant name.  Apparently the alias was created in
+# March 2007, should could probably be removed soon.
+Puppet::Log = Puppet::Util::Log
