@@ -76,5 +76,44 @@ describe Puppet::Parser do
              lambda { @parser.parse("if (1 > 2 > ) or (1 == 2) { $var = 1 }") }.should raise_error
         end
 
-     end
+    end
+
+    describe Puppet::Parser, "when parsing resource references" do
+        
+        it "should not raise syntax errors" do
+            lambda { @parser.parse('exec { test: param => File["a"] }') }.should_not raise_error
+        end
+
+        it "should not raise syntax errors with multiple references" do
+            lambda { @parser.parse('exec { test: param => File["a","b"] }') }.should_not raise_error
+        end
+        
+        it "should create an AST::ResourceReference" do
+            AST::Resource.stubs(:new)
+            AST::ResourceReference.expects(:new).with { |arg| 
+                arg[:line]==1 and arg[:type]=="File" and arg[:title].is_a?(AST::ASTArray)
+            }
+            @parser.parse('exec { test: command => File["a","b"] }')
+        end
+    end
+     
+    describe Puppet::Parser, "when parsing resource overrides" do
+        
+        it "should not raise syntax errors" do
+            lambda { @parser.parse('Resource["title"] { param => value }') }.should_not raise_error
+        end
+
+        it "should not raise syntax errors with multiple overrides" do
+            lambda { @parser.parse('Resource["title1","title2"] { param => value }') }.should_not raise_error
+        end
+
+        it "should create an AST::ResourceOverride" do
+            AST::ResourceOverride.expects(:new).with { |arg| 
+                arg[:line]==1 and arg[:object].is_a?(AST::ResourceReference) and arg[:params].is_a?(AST::ResourceParam)
+            }
+            @parser.parse('Resource["title1","title2"] { param => value }')
+        end
+        
+    end
+     
  end
