@@ -2,6 +2,8 @@
     Fixing #1614 - Environments no longer have to be listed out
 
     Fixed #1628 - Changed node search to use certname rather than Facter hostname
+    
+    Fixed #1613 - The client environment will be substituted when looking up settings.
 
     Updated puppet binary documentation 
 

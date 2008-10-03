@@ -249,6 +249,12 @@ describe Puppet::Util::Settings do
             @settings.value(:one, "env").should == "envval"
         end
 
+        it "should interpolate found values using the current environment" do
+            @settings.setdefaults :main, :myval => ["$environment/foo", "mydocs"]
+
+            @settings.value(:myval, "myenv").should == "myenv/foo"
+        end
+
         it "should return values in a specified environment before values in the main or name sections" do
             text = "[env]\none = envval\n[main]\none = mainval\n[myname]\none = nameval\n"
             file = "/some/file"
@@ -790,6 +796,7 @@ describe Puppet::Util::Settings do
                 end
 
                 it "should return false if a config param is not found" do
+                    @settings.stubs :puts
                     @settings.stubs(:value).with(:configprint).returns("something")
                     @settings.stubs(:include?).with("something").returns(false)
                     @settings.print_configs.should be_false
@@ -797,6 +804,10 @@ describe Puppet::Util::Settings do
             end
 
             describe "when genconfig is true" do
+                before do
+                    @settings.stubs :puts
+                end
+
                 it "should call to_config" do
                     @settings.stubs(:value).with(:genconfig).returns(true)
                     @settings.expects(:to_config)
@@ -811,6 +822,10 @@ describe Puppet::Util::Settings do
             end
 
             describe "when genmanifest is true" do
+                before do
+                    @settings.stubs :puts
+                end
+
                 it "should call to_config" do
                     @settings.stubs(:value).with(:genmanifest).returns(true)
                     @settings.expects(:to_manifest)
