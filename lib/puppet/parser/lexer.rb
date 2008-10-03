@@ -438,6 +438,9 @@ class Puppet::Parser::Lexer
             str.gsub!(/\\#{quote}/,quote)
         end
 
+        # Add to our line count for every carriage return in multi-line strings.
+        @line += str.count("\n")
+
         return str
     end
 

@@ -5,6 +5,8 @@
     
     Fixing #1089 - Log messages are now tagged with the log level,
     making it easier to match messages in the 'tagmail' report.
+    
+    Fixing #1098 - Multiline strings now correctly increment the line count
 
     Fixing #1614 - Environments no longer have to be listed out
 

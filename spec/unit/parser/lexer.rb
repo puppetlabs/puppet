@@ -4,6 +4,27 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/parser/lexer'
 
+describe Puppet::Parser::Lexer do
+    describe "when reading strings" do
+        before { @lexer = Puppet::Parser::Lexer.new }
+        it "should increment the line count for every carriage return in the string" do
+            @lexer.line = 10
+            @lexer.string = "this\nis\natest'"
+            @lexer.slurpstring("'")
+
+            @lexer.line.should == 12
+        end
+
+        it "should not increment the line count for escapes in the string" do
+            @lexer.line = 10
+            @lexer.string = "this\\nis\\natest'"
+            @lexer.slurpstring("'")
+
+            @lexer.line.should == 10
+        end
+    end
+end
+
 describe Puppet::Parser::Lexer::Token do
     before do
         @token = Puppet::Parser::Lexer::Token.new(%r{something}, :NAME)
