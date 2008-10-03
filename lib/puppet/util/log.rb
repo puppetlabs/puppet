@@ -509,6 +509,9 @@ class Puppet::Util::Log
             @source = "Puppet"
         end
 
+        # Tag myself with my log level
+        tag(level)
+
         Log.newmessage(self)
     end
 

@@ -60,7 +60,9 @@ describe Puppet::Util::Log do
         end
 
         it "should make available any passed-in tags" do
-            Puppet::Util::Log.new(:level => "notice", :message => :foo, :tags => %w{foo bar}).tags.should == %w{foo bar}
+            log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :tags => %w{foo bar})
+            log.tags.should be_include("foo")
+            log.tags.should be_include("bar")
         end
 
         it "should use an passed-in source" do
@@ -86,8 +88,7 @@ describe Puppet::Util::Log do
         end
 
         it "should tag itself with its log level" do
-            pending "not yet"
-            Puppet::Util::Log.new(:level => "notice", :message => :foo, :tags => %w{one two}).should be_tagged(:one)
+            Puppet::Util::Log.new(:level => "notice", :message => :foo).should be_tagged(:notice)
         end
 
         it "should return its message when converted to a string" do
