@@ -1,4 +1,6 @@
 0.24.x
+    Fixing #947 - pluginsync no longer fails poorly when no plugins exist
+
     Fixing #1614 - Environments no longer have to be listed out
 
     Fixed #1628 - Changed node search to use certname rather than Facter hostname

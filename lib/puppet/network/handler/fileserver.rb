@@ -70,7 +70,9 @@ class Puppet::Network::Handler
             mount.debug("Describing %s for %s" % [url, client]) if client
 
             # use the mount to resolve the path for us.
-            metadata = Puppet::FileServing::Metadata.new(url, :path => mount.file_path(path, client), :links => links)
+            return "" unless full_path = mount.file_path(path, client)
+
+            metadata = Puppet::FileServing::Metadata.new(url, :path => full_path, :links => links)
 
             return "" unless metadata.exist?
 
@@ -710,7 +712,7 @@ class Puppet::Network::Handler
             end
             
             def file_path(relpath, client = nil)
-                mod = valid_modules.map { |m| mod_path_exists?(m, relpath, client) ? m : nil }.compact.first
+                return nil unless mod = valid_modules.map { |m| mod_path_exists?(m, relpath, client) ? m : nil }.compact.first
                 mod_file_path(mod, relpath, client)
             end
 

@@ -5,7 +5,7 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 require 'puppet/network/handler/fileserver'
 
 
-describe Puppet::Network::Handler do
+describe Puppet::Network::Handler::FileServer do
     require 'tmpdir'
 
     def create_file(filename)
