@@ -1,10 +1,12 @@
 require 'syslog'
+require 'puppet/util/tagging'
 
 # Pass feedback to the user.  Log levels are modeled after syslog's, and it is
 # expected that that will be the most common log destination.  Supports
 # multiple destinations, one of which is a remote server.
 class Puppet::Util::Log
     include Puppet::Util
+    include Puppet::Util::Tagging
 
     @levels = [:debug,:info,:notice,:warning,:err,:alert,:emerg,:crit]
     @loglevel = 2
@@ -470,12 +472,12 @@ class Puppet::Util::Log
         @levels.include?(level)
     end
 
-    attr_accessor :level, :message, :time, :tags, :remote
+    attr_accessor :level, :message, :time, :remote
     attr_reader :source
 
     def initialize(args)
         unless args.include?(:level) && args.include?(:message)
-            raise Puppet::DevError, "Puppet::Util::Log called incorrectly"
+            raise ArgumentError, "Puppet::Util::Log called incorrectly"
         end
 
         if args[:level].class == String
@@ -483,8 +485,7 @@ class Puppet::Util::Log
         elsif args[:level].class == Symbol
             @level = args[:level]
         else
-            raise Puppet::DevError,
-                "Level is not a string or symbol: #{args[:level].class}"
+            raise ArgumentError, "Level is not a string or symbol: #{args[:level].class}"
         end
 
         # Just return unless we're actually at a level we should send
@@ -495,11 +496,11 @@ class Puppet::Util::Log
         # this should include the host name, and probly lots of other
         # stuff, at some point
         unless self.class.validlevel?(level)
-            raise Puppet::DevError, "Invalid message level #{level}"
+            raise ArgumentError, "Invalid message level #{level}"
         end
 
-        if args.include?(:tags)
-            @tags = args[:tags]
+        if tags = args[:tags]
+            tags.each { |t| self.tag(t) }
         end
 
         if args.include?(:source)
@@ -511,7 +512,7 @@ class Puppet::Util::Log
         Log.newmessage(self)
     end
 
-    # Was the source of this log an object?
+    # Was the source of this log a Puppet resource or parameter?
     def objectsource?
         if defined? @objectsource and @objectsource
             @objectsource
@@ -533,15 +534,9 @@ class Puppet::Util::Log
             @objectsource = false
             @source = source.to_s
         end
-        unless defined? @tags and @tags
-            if source.respond_to?(:tags)
-                @tags = source.tags
-            end
+        if source.respond_to?(:tags)
+            source.tags.each { |t| tag(t) }
         end
-    end
-
-    def tagged?(tag)
-        @tags.detect { |t| t.to_s == tag.to_s }
     end
 
     def to_report
