@@ -49,15 +49,14 @@ describe provider_class do
     end
 
     describe "when calling create" do
-        it "should use the add command when the user doesn't exist" do
-            @provider.stubs(:exists?).returns(false)
+        it "should use the add command when the user is not a role" do
+            @provider.stubs(:is_role?).returns(false)
             @provider.expects(:addcmd).returns("useradd")
             @provider.expects(:run)
             @provider.create
         end
 
         it "should use transition(normal) when the user is a role" do
-            @provider.stubs(:exists?).returns(true)
             @provider.stubs(:is_role?).returns(true)
             @provider.expects(:transition).with("normal")
             @provider.expects(:run)
@@ -103,6 +102,7 @@ describe provider_class do
     describe "when allow duplicate is enabled" do
         before do
             @resource.expects(:allowdupe?).returns true
+            @provider.stubs(:is_role?).returns(false)
             @provider.expects(:execute).with { |args| args.include?("-o") }
         end
 
