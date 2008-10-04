@@ -19,7 +19,7 @@ class Puppet::Parser::AST
         # in the current scope.
         def evaluate(scope)
             # Get our object reference.
-            object = @object.safeevaluate(scope)
+            resource = @object.safeevaluate(scope)
 
             hash = {}
 
@@ -30,21 +30,28 @@ class Puppet::Parser::AST
 
             # Now we just create a normal resource, but we call a very different
             # method on the scope.
-            obj = Puppet::Parser::Resource.new(
-                :type => object.type,
-                :title => object.title,
-                :params => params,
-                :file => @file,
-                :line => @line,
-                :source => scope.source,
-                :scope => scope
-            )
+            resource = [resource] unless resource.is_a?(Array)
+            
+            resource = resource.collect do |r|
+                res = Puppet::Parser::Resource.new(
+                    :type => r.type,
+                    :title => r.title,
+                    :params => params,
+                    :file => @file,
+                    :line => @line,
+                    :source => scope.source,
+                    :scope => scope
+                )
 
-            # Now we tell the scope that it's an override, and it behaves as
-            # necessary.
-            scope.compiler.add_override(obj)
+                # Now we tell the scope that it's an override, and it behaves as
+                # necessary.
+                scope.compiler.add_override(res)
 
-            obj
+                res
+            end
+            # decapsulate array in case of only one item
+            return resource.pop if resource.length == 1
+            return resource
         end
 
         # Create our ResourceDef.  Handles type checking for us.

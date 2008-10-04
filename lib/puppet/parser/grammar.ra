@@ -400,10 +400,10 @@ boolean:    BOOLEAN {
     result = ast AST::Boolean, :value => val[0]
 }
 
-resourceref: NAME LBRACK rvalue RBRACK {
+resourceref: NAME LBRACK rvalues RBRACK {
     Puppet.warning addcontext("Deprecation notice:  Resource references should now be capitalized")
     result = ast AST::ResourceReference, :type => val[0], :title => val[2]
-}               | classref LBRACK rvalue RBRACK {
+}               | classref LBRACK rvalues RBRACK {
     result = ast AST::ResourceReference, :type => val[0], :title => val[2]
 }
 
