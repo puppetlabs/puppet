@@ -419,10 +419,25 @@ ifstatement:      IF expression LBRACE statements RBRACE else {
 
     result = ast AST::IfStatement, args
 }
+                | IF expression LBRACE RBRACE else {
+    args = {
+        :test => val[1],
+        :statements => ast(AST::Nop)
+    }
+
+    if val[4]
+        args[:else] = val[4]
+    end
+
+    result = ast AST::IfStatement, args
+}
 
 else:             # nothing
                 | ELSE LBRACE statements RBRACE {
     result = ast AST::Else, :statements => val[2]
+}
+                | ELSE LBRACE RBRACE {
+    result = ast AST::Else, :statements => ast(AST::Nop)
 }
 
 # Unlike yacc/bison, it seems racc

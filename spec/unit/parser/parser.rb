@@ -116,4 +116,30 @@ describe Puppet::Parser do
         
     end
      
+    describe Puppet::Parser, "when parsing if statements" do
+
+        it "should not raise errors with empty if" do
+            lambda { @parser.parse("if true { }") }.should_not raise_error
+        end
+
+        it "should not raise errors with empty else" do
+            lambda { @parser.parse("if false { notice('if') } else { }") }.should_not raise_error
+        end
+
+        it "should not raise errors with empty if and else" do
+            lambda { @parser.parse("if false { } else { }") }.should_not raise_error
+        end
+
+        it "should create a nop node for empty branch" do
+            AST::Nop.expects(:new)
+            @parser.parse("if true { }")
+        end
+
+        it "should create a nop node for empty else branch" do
+            AST::Nop.expects(:new)
+            @parser.parse("if true { notice('test') } else { }")
+        end
+
+    end
+
  end
