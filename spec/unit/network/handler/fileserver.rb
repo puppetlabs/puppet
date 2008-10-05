@@ -126,6 +126,44 @@ describe Puppet::Network::Handler::FileServer do
         list.sort.should == [ ["/aFile", "file"], ["/", "directory"] ].sort
     end
 
+    describe Puppet::Network::Handler::FileServer::PluginMount do
+        PLUGINS = Puppet::Network::Handler::FileServer::PLUGINS
+
+        # create a module plugin hierarchy
+        def create_plugin(mod, plugin)
+            dirname = File.join(@basedir, mod)
+            Dir.mkdir(dirname)
+            plugins = File.join(dirname, PLUGINS)
+            Dir.mkdir(plugins)
+            facter = File.join(plugins, plugin)
+            Dir.mkdir(facter)
+            create_file(File.join(facter,"fact.rb"))
+        end
+
+        before :each do
+            @modules = ["one","two"]
+            Puppet::Module.stubs(:all).returns(@modules.collect{ |p| File.join(@basedir,p)} )
+            @modules.each { |m| create_plugin(m, "facter") }
+
+            @modules.each do |p|
+                File.stubs(:directory?).with(File.join(@basedir,p,PLUGINS)).returns(true)
+            end
+
+            @mount = Puppet::Network::Handler::FileServer::PluginMount.new(PLUGINS)
+            @mount.allow("*")
+        end
+        
+        it "should return a merged view of all plugins for all modules" do
+            list = @mount.list("facter",true,false)
+            list.should == [["/", "directory"], ["/fact.rb", "file"], ["/", "directory"], ["/fact.rb", "file"]]
+        end
+
+        it "should not fail for inexistant plugins type" do
+            lambda { @mount.list("puppet/parser",true,false) }.should_not raise_error
+        end
+
+    end
+
     after do
         FileUtils.rm_rf(@basedir)
     end

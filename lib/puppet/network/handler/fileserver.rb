@@ -653,8 +653,6 @@ class Puppet::Network::Handler
             # and "bad batch".
             #
             def list(relpath, recurse, ignore, client = nil)
-                require 'puppet/file_serving'
-                require 'puppet/file_serving/fileset'
                 abspath = file_path(relpath, client)
                 if FileTest.exists?(abspath)
                     if FileTest.directory?(abspath) and recurse
@@ -667,6 +665,8 @@ class Puppet::Network::Handler
             end
 
             def reclist(abspath, recurse, ignore)
+                require 'puppet/file_serving'
+                require 'puppet/file_serving/fileset'
                 args = { :recurse => recurse, :links => :follow }
                 args[:ignore] = ignore if ignore
                 fs = Puppet::FileServing::Fileset.new(abspath, args)
@@ -720,9 +720,12 @@ class Puppet::Network::Handler
             def list(relpath, recurse, ignore, client = nil)
                 result = []
                 valid_modules.each do |m|
-                    ary = reclist(mod_file_path(m, relpath, client), nil, recurse, ignore)
-                    ary = [] if ary.nil?
-                   result += ary
+                    modpath = mod_file_path(m, relpath, client)
+                    if FileTest.exists?(modpath)
+                        ary = reclist(modpath, recurse, ignore)
+                        ary = [] if ary.nil?
+                        result += ary
+                    end
                 end
                 result
             end
