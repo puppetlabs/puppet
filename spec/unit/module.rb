@@ -89,6 +89,19 @@ describe Puppet::Module, " when searching for templates" do
         Puppet::Module.find_template("mymod/mytemplate").should == "/my/templates/mymod/mytemplate"
     end
 
+    it "should raise an error if no valid templatedir exists" do
+        Puppet::Module.stubs(:templatepath).with(nil).returns(nil)
+        lambda { Puppet::Module.find_template("mytemplate") }.should raise_error
+    end
+
+    it "should not raise an error if no valid templatedir exists and the template exists in a module" do
+        Puppet::Module.stubs(:templatepath).with(nil).returns(nil)
+        Puppet[:modulepath] = "/one:/two"
+        File.stubs(:directory?).returns(true)
+        File.stubs(:exists?).returns(true)
+        Puppet::Module.find_template("mymod/mytemplate").should == "/one/mymod/templates/mytemplate"
+    end
+
     it "should use the main templatedir if no module is found" do
         Puppet::Module.stubs(:templatepath).with(nil).returns(["/my/templates"])
         Puppet::Module.expects(:find).with("mymod", nil).returns(nil)
