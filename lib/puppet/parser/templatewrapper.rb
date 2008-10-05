@@ -37,6 +37,16 @@ class Puppet::Parser::TemplateWrapper
         end
     end
 
+    # Allow templates to access the defined classes
+    def classes
+        return scope.catalog.classes
+    end
+
+    # Allow templates to access the defined tags
+    def tags
+        return scope.catalog.tags
+    end
+
     # Ruby treats variables like methods, so we used to expose variables
     # within scope to the ERB code via method_missing.  As per RedMine #1427,
     # though, this means that conflicts between methods in our inheritance
