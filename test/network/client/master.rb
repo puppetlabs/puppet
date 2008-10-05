@@ -419,8 +419,7 @@ end
         assert_equal(facts["environment"], Puppet[:environment], "Did not add environment to client facts")
 
         # Now set it to a real value
-        Puppet[:environments] = "something,else"
-        Puppet[:environment] = "something"
+	Puppet[:environment] = "something"
         facts = Puppet::Network::Client::Master.facts
         assert_equal(facts["environment"], Puppet[:environment], "Did not add environment to client facts")
     end
