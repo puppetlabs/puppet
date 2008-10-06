@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1202 - Collection attribute matching doesn't parse arrays
+
     Fixed #1473 - Puppetd stops with error after puppetmasterd 
     is unavailable
 
