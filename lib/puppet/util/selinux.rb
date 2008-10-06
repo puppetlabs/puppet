@@ -51,7 +51,7 @@ module Puppet::Util::SELinux
     # out to the three (or four) component parts.  Supports :seluser, :selrole,
     # :seltype, and on systems with range support, :selrange.
     def parse_selinux_context(component, context)
-        if context == "unlabeled"
+        if context.nil? or context == "unlabeled"
             return nil
         end
         unless context =~ /^[a-z0-9_]+:[a-z0-9_]+:[a-z0-9_]+(:[a-z0-9_])?/
