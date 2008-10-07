@@ -8,7 +8,7 @@
 # = Usage
 #
 #   puppet [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
-#               [-l|--logdest <file>] <file>
+#               [--detailed-exitcodes] [-l|--logdest <file>] <file>
 #
 # = Description
 #
@@ -30,6 +30,11 @@
 #
 # debug::
 #   Enable full debugging.
+#
+# detailed-exitcodes::
+#   Provide transaction information via exit codes.  If this is enabled, an exit
+#   code of '2' means there were changes, and an exit code of '4' means that there
+#   were failures during the transaction.
 #
 # help::
 #   Print this help message
@@ -72,6 +77,7 @@ options = [
     [ "--loadclasses", "-L",		GetoptLong::NO_ARGUMENT ],
     [ "--verbose",  "-v",			GetoptLong::NO_ARGUMENT ],
     [ "--use-nodes",    			GetoptLong::NO_ARGUMENT ],
+    [ "--detailed-exitcodes",		GetoptLong::NO_ARGUMENT ],
     [ "--version",  "-V",           GetoptLong::NO_ARGUMENT ]
 ]
 
@@ -87,7 +93,8 @@ options = {
     :logfile => false,
     :loadclasses => false,
     :logset => false,
-    :code => nil
+    :code => nil,
+    :detailed_exits => false,
 }
 
 
@@ -118,6 +125,8 @@ begin
                 options[:code] = arg
             when "--loadclasses"
                 options[:loadclasses] = true
+            when "--detailed-exitcodes"
+                options[:detailed_exits] = true
             when "--logdest"
                 begin
                     Puppet::Util::Log.newdestination(arg)
@@ -208,6 +217,7 @@ end
 
 begin
     # Compile our catalog
+    starttime = Time.now
     catalog = Puppet::Node::Catalog.find(node.name, :use_node => node)
 
     # Translate it to a RAL catalog
@@ -217,8 +227,18 @@ begin
 
     catalog.finalize
 
+    catalog.retrieval_duration = Time.now - starttime
+
     # And apply it
-    catalog.apply
+    transaction = catalog.apply
+
+    status = 0
+    if not Puppet[:noop] and options[:detailed_exits] then
+        transaction.generate_report
+    	status |= 2 if transaction.report.metrics["changes"][:total] > 0
+        status |= 4 if transaction.report.metrics["resources"][:failed] > 0
+    end
+    exit(status)
 rescue => detail
     if Puppet[:trace]
         puts detail.backtrace
