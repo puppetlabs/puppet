@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1354 - yum provider problems with RHEL 3
+
     Fixed #381 - Allow Allow multiple overrides in one statement
 
     Fixing #947 - pluginsync no longer fails poorly when no plugins exist
@@ -12,9 +14,11 @@
 
     Fixing #1614 - Environments no longer have to be listed out
 
-    Fixed #1628 - Changed node search to use certname rather than Facter hostname
+    Fixed #1628 - Changed node search to use certname rather than Facter 
+    hostname
     
-    Fixed #1613 - The client environment will be substituted when looking up settings.
+    Fixed #1613 - The client environment will be substituted when looking 
+    up settings.
 
     Updated puppet binary documentation 
 
