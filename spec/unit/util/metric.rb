@@ -75,6 +75,15 @@ describe Puppet::Util::Metric do
         @metric.values.should == [[:bar, "a", 10], [:foo, "b", 10]]
     end
 
+    it "should use an array indexer method to retrieve individual values" do
+        @metric.newvalue(:foo, 10)
+        @metric[:foo].should == 10
+    end
+
+    it "should return nil if the named value cannot be found" do
+        @metric[:foo].should be_nil
+    end
+
     # LAK: I'm not taking the time to develop these tests right now.
     # I expect they should actually be extracted into a separate class
     # anyway.

@@ -14,6 +14,15 @@ class Puppet::Util::Metric
 
     attr_writer :basedir
 
+    # Return a specific value
+    def [](name)
+        if value = @values.find { |v| v[0] == name }
+            return value[2]
+        else
+            return nil
+        end
+    end
+
     def basedir
         if defined? @basedir
             @basedir
