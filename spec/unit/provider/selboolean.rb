@@ -12,13 +12,11 @@ describe provider_class do
     end
 
     it "should return :on when getsebool returns on" do
-        @resource.stubs(:[]).returns "foo"
         @provider.expects(:getsebool).with("foo").returns "foo --> on\n"
         @provider.value.should == :on
     end
 
     it "should return :off when getsebool returns on" do
-        @resource.stubs(:[]).returns "foo"
         @provider.expects(:getsebool).with("foo").returns "foo --> off\n"
         @provider.value.should == :off
     end
@@ -29,7 +27,6 @@ describe provider_class do
     end
      
     it "should call execpipe with -P when updating persistent boolean setting" do
-        @resource.stubs(:[]).returns "foo"
         @resource.stubs(:[]).with(:persistent).returns :true
         @provider.expects(:execpipe).with("/usr/sbin/setsebool -P foo off")
         @provider.value = :off
