@@ -35,10 +35,6 @@ module Puppet::Network
 
             interface.methods.each { |ary|
                 method = ary[0]
-                if public_method_defined?(method)
-                    raise Puppet::DevError, "Method %s is already defined" %
-                        method
-                end
                 newclient.send(:define_method,method) { |*args|
                     Puppet.debug "Calling %s.%s" % [namespace, method]
                     begin
@@ -74,6 +70,10 @@ module Puppet::Network
                         Puppet.warning "Other end went away; restarting connection and retrying"
                         self.recycle_connection
                         retry
+                    rescue Timeout::Error => detail
+                        Puppet.err "Connection timeout calling %s.%s: %s" %
+                            [namespace, method, detail.to_s]
+                        raise XMLRPCClientError.new("Connection Timeout").set_backtrace(detail.backtrace)
                     rescue => detail
                         if detail.message =~ /^Wrong size\. Was \d+, should be \d+$/
                             Puppet.warning "XMLRPC returned wrong size.  Retrying."

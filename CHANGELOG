@@ -1,4 +1,7 @@
 0.24.x
+    Fixed #1473 - Puppetd stops with error after puppetmasterd 
+    is unavailable
+
     Fixed #1354 - yum provider problems with RHEL 3
 
     Fixed #381 - Allow Allow multiple overrides in one statement
