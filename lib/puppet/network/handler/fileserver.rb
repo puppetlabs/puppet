@@ -722,9 +722,13 @@ class Puppet::Network::Handler
                 valid_modules.each do |m|
                     modpath = mod_file_path(m, relpath, client)
                     if FileTest.exists?(modpath)
-                        ary = reclist(modpath, recurse, ignore)
-                        ary = [] if ary.nil?
-                        result += ary
+                        if FileTest.directory?(modpath) and recurse
+                            ary = reclist(modpath, recurse, ignore)
+                            ary = [] if ary.nil?
+                            result += ary
+                        else
+                            result += [["/", File.stat(modpath).ftype]]
+                        end
                     end
                 end
                 result
