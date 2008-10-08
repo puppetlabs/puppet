@@ -10,14 +10,20 @@ describe Puppet::Type.type(:selboolean), "when validating attributes" do
     end
 
     it "should have a value property" do
-            Puppet::Type.type(:selboolean).attrtype(:value).should == :property
+        Puppet::Type.type(:selboolean).attrtype(:value).should == :property
     end
 end
 
 describe Puppet::Type.type(:selboolean), "when validating values" do
     before do
-        @provider = stub 'provider', :class => Puppet::Type.type(:selboolean).defaultprovider, :clear => nil
-        Puppet::Type.type(:selboolean).defaultprovider.expects(:new).returns(@provider)
+        @class = Puppet::Type.type(:selboolean)
+
+        @provider_class = stub 'provider_class', :name => "fake", :suitable? => true, :supports_parameter? => true
+        @class.stubs(:defaultprovider).returns(@provider_class)
+        @class.stubs(:provider).returns(@provider_class)
+
+        @provider = stub 'provider', :class => @provider_class, :clear => nil
+        @provider_class.stubs(:new).returns(@provider)
     end
 
     it "should support :on as a value to :value" do
