@@ -18,11 +18,22 @@ module Puppet::Util::SELinux
         unless selinux_support?
             return nil
         end
-        context = `stat -c %C #{file}`
-        if ($?.to_i >> 8) > 0
+        context = ""
+        begin
+            execpipe("stat -c %C #{file}") do |out|
+                out.each do |line|
+                    context << line
+                end
+            end
+        rescue Puppet::ExecutionFailure
             return nil
         end
         context.chomp!
+        # Handle the case that the system seems to have SELinux support but
+        # stat finds unlabled files.
+        if context == "(null)"
+            return nil
+        end
         return context
     end
 
@@ -40,8 +51,14 @@ module Puppet::Util::SELinux
         unless FileTest.executable?("/usr/sbin/matchpathcon")
             return nil
         end
-        context = %x{/usr/sbin/matchpathcon #{file} 2>&1}
-        if ($?.to_i >> 8) > 0
+        context = ""
+        begin
+            execpipe("/usr/sbin/matchpathcon #{file}") do |out|
+                out.each do |line|
+                    context << line
+                end
+            end
+        rescue Puppet::ExecutionFailure
             return nil
         end
         # For a successful match, matchpathcon returns two fields separated by
@@ -57,18 +74,15 @@ module Puppet::Util::SELinux
         if context.nil? or context == "unlabeled"
             return nil
         end
-        unless context =~ /^[a-z0-9_]+:[a-z0-9_]+:[a-z0-9_]+(:[a-z0-9_])?/
+        unless context =~ /^([a-z0-9_]+):([a-z0-9_]+):([a-z0-9_]+)(?::([a-zA-Z0-9:,._-]+))?/
             raise Puppet::Error, "Invalid context to parse: #{context}"
         end
-        bits = context.split(':')
         ret = {
-            :seluser => bits[0],
-            :selrole => bits[1],
-            :seltype => bits[2]
+            :seluser => $1,
+            :selrole => $2,
+            :seltype => $3,
+            :selrange => $4,
         }
-        if bits.length == 4
-            ret[:selrange] = bits[3]
-        end
         return ret[component]
     end
 
@@ -97,7 +111,9 @@ module Puppet::Util::SELinux
         unless retval
             error = Puppet::Error.new("failed to chcon %s" % [@resource[:path]])
             raise error
+            return false
         end
+        return true
     end
 
     # Since this call relies on get_selinux_default_context it also needs a
@@ -113,7 +129,8 @@ module Puppet::Util::SELinux
         cur_context = get_selinux_current_context(file)
         if new_context != cur_context
             set_selinux_context(file, new_context)
+            return new_context
         end
-        return new_context
+        return nil
     end
 end
