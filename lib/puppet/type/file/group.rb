@@ -46,6 +46,21 @@ module Puppet
             end
         end
 
+        def insync?(current)
+            @should.each do |value|
+                if value =~ /^\d+$/
+                    gid = Integer(value)
+                elsif value.is_a?(String)
+                    fail "Could not find group %s" % value unless gid = gid(value)
+                else
+                    gid = value
+                end
+
+                return true if gid == current
+            end
+            return false
+        end
+
         def retrieve
             return :absent unless stat = resource.stat(false)
 

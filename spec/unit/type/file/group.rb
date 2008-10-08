@@ -6,7 +6,7 @@ property = Puppet::Type.type(:file).attrclass(:group)
 
 describe property do
     before do
-        @resource = mock 'resource'
+        @resource = stub 'resource', :line => "foo", :file => "bar"
         @resource.stubs(:[]).returns "foo"
         @resource.stubs(:[]).with(:path).returns "/my/file"
         @group = property.new :resource => @resource
@@ -50,6 +50,37 @@ describe property do
 
             @group.expects(:warning)
             @group.retrieve.should == :silly
+        end
+    end
+
+    describe "when determining if the file is in sync" do
+        it "should directly compare the group values if the desired group is an integer" do
+            @group.should = [10]
+            @group.must be_insync(10)
+        end
+
+        it "should treat numeric strings as integers" do
+            @group.should = ["10"]
+            @group.must be_insync(10)
+        end
+
+        it "should convert the group name to an integer if the desired group is a string" do
+            @group.expects(:gid).with("foo").returns 10
+            @group.should = %w{foo}
+
+            @group.must be_insync(10)
+        end
+
+        it "should fail if it cannot convert a group name to an integer" do
+            @group.expects(:gid).with("foo").returns nil
+            @group.should = %w{foo}
+
+            lambda { @group.insync?(10) }.should raise_error(Puppet::Error)
+        end
+
+        it "should return false if the groups are not equal" do
+            @group.should = [10]
+            @group.should_not be_insync(20)
         end
     end
 
