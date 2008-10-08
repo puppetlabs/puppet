@@ -1,6 +1,6 @@
 require 'puppet/util/user_attr'
 
-Puppet::Type.type(:user).provide :user_role_add, :parent => Puppet::Type::User::ProviderUseradd do
+Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd do
 
     desc "User management inherits ``useradd`` and adds logic to manage roles on Solaris using roleadd."
 
