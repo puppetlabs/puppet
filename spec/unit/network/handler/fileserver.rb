@@ -36,6 +36,10 @@ describe Puppet::Network::Handler::FileServer do
         @mount.list("/aFile", false, "false").should == [["/", "file"]]
     end
 
+    it "should list a file within a directory when given the file path with recursion" do
+        @mount.list("/aFile", true, "false").should == [["/", "file"]]
+    end
+
     it "should return nil for a non-existent path" do
         @mount.list("/no_such_file", false, false).should be(nil)
     end
@@ -152,6 +156,10 @@ describe Puppet::Network::Handler::FileServer do
             @mount = Puppet::Network::Handler::FileServer::PluginMount.new(PLUGINS)
             @mount.allow("*")
         end
+
+        it "should list a file within a directory when given the file path with recursion" do
+            @mount.list("facter/fact.rb", true, "false").should == [["/", "file"], ["/", "file"]]
+         end
         
         it "should return a merged view of all plugins for all modules" do
             list = @mount.list("facter",true,false)
