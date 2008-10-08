@@ -34,6 +34,9 @@ module Puppet::Util::SELinux
     # Note: For this command to work a full, non-relative, filesystem path
     # should be given.
     def get_selinux_default_context(file)
+        unless selinux_support?
+            return nil
+        end
         unless FileTest.executable?("/usr/sbin/matchpathcon")
             return nil
         end
@@ -73,6 +76,9 @@ module Puppet::Util::SELinux
     # only a single component or update the entire context.  It is just a
     # wrapper around the chcon command.
     def set_selinux_context(file, value, component = false)
+        unless selinux_support?
+            return nil
+        end
         case component
             when :seluser
                 flag = "-u"
