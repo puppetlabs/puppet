@@ -15,7 +15,10 @@ module Spec
                 prepare
                 success = true
                 example_groups.each do |example_group|
-                    next unless example_group.runnable?
+                    unless example_group.runnable?
+                        warn "Skipping unsuitable example group %s: %s" % [example_group.description, example_group.messages.join(", ")]
+                        next
+                    end
                     success = success & example_group.run
                 end
                 return success
