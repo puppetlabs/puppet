@@ -60,10 +60,10 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::FileBase
 
         case stat.ftype
         when "file":
-            @checksum = ("{%s}" % @checksum_type) + send("%s_file" % @checksum_type, real_path)
+            @checksum = ("{%s}" % @checksum_type) + send("%s_file" % @checksum_type, real_path).to_s
         when "directory": # Always just timestamp the directory.
-            sumtype = @checksum_type.to_s =~ /time/ ? @checksum_type : "ctime"
-            @checksum = ("{%s}" % sumtype) + send("%s_file" % sumtype, path).to_s
+            @checksum_type = "ctime"
+            @checksum = ("{%s}" % @checksum_type) + send("%s_file" % @checksum_type, path).to_s
         when "link":
             @destination = File.readlink(real_path)
         else

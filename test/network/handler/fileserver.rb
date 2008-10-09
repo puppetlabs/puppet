@@ -437,6 +437,14 @@ class TestFileServer < Test::Unit::TestCase
         assert_nil(retval, "Description of non-existent mounts returned a value")
     end
 
+    def test_describe_does_not_fail_when_mount_does_not_find_file
+        server = Puppet::Network::Handler.fileserver.new(:Local => true, :Config => false)
+
+        assert_nothing_raised("Failed when describing missing plugins") do
+            server.describe "/plugins"
+        end
+    end
+
     # test that our config file is parsing and working as planned
     def test_configfile
         server = nil

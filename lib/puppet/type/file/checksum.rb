@@ -53,6 +53,9 @@ Puppet::Type.type(:file).newproperty(:checksum) do
         else
             if FileTest.directory?(@resource[:path])
                 return :time
+            elsif @resource[:source]
+                 self.warning("Files with source set must use md5 as checksum. Forcing to md5 from %s for %s" % [ value, @resource[:path] ])
+                return :md5
             else
                 return symbolize(value)
             end
@@ -161,6 +164,7 @@ Puppet::Type.type(:file).newproperty(:checksum) do
 
         checktype = :mtime if checktype == :timestamp
         checktype = :ctime if checktype == :time
+        self.should = checktype = :md5 if @resource.property(:source)
 
         file ||= @resource[:path]
 

@@ -23,30 +23,39 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
 
             # now turn each returned line into a package object
             process.each { |line|
-                if match = regex.match(line)
-                    hash = {}
-
-                    fields.zip(match.captures) { |field,value|
-                        hash[field] = value
-                    }
-
-                    hash[:provider] = self.name
-
-                    if hash[:status] == 'not-installed'
-                        hash[:ensure] = :purged
-                    elsif hash[:status] != "installed"
-                        hash[:ensure] = :absent
-                    end
-
+                if hash = parse_line(line)
                     packages << new(hash)
-                else
-                    Puppet.warning "Failed to match dpkg-query line %s" %
-                        line.inspect
                 end
             }
         end
 
         return packages
+    end
+
+    REGEX = %r{^(\S+) +(\S+) +(\S+) (\S+) (\S*)$}
+    FIELDS = [:desired, :error, :status, :name, :ensure]
+
+    def self.parse_line(line)
+        if match = REGEX.match(line)
+            hash = {}
+
+            FIELDS.zip(match.captures) { |field,value|
+                hash[field] = value
+            }
+
+            hash[:provider] = self.name
+
+            if hash[:status] == 'not-installed'
+                hash[:ensure] = :purged
+            elsif hash[:status] != "installed"
+                hash[:ensure] = :absent
+            end
+        else
+            Puppet.warning "Failed to match dpkg-query line %s" % line.inspect
+            return nil
+        end
+
+        return hash
     end
 
     def install
@@ -56,15 +65,10 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
         
         args = []
 
-        if config = @resource[:configfiles]
-            case config
-            when :keep
-                args << '--force-confold'
-            when :replace
-                args << '--force-confnew'
-            else
-                raise Puppet::Error, "Invalid 'configfiles' value %s" % config
-            end
+        if @resource[:configfiles] == :keep
+            args << '--force-confold'
+        else
+            args << '--force-confnew'
         end
         args << '-i' << file
 
@@ -80,7 +84,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
         output = dpkg_deb "--show", @resource[:source]
         matches = /^(\S+)\t(\S+)$/.match(output).captures
         unless matches[0].match(@resource[:name])
-            Puppet.warning "source doesn't contain named package, but %s" % matches[0]
+            warning "source doesn't contain named package, but %s" % matches[0]
         end
         matches[1]
     end
@@ -103,35 +107,14 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
                 :name => @resource[:name], :error => 'ok'}
 
         end
-        # Our regex for matching dpkg-query output.  We could probably just
-        # use split here, but I'm not positive that dpkg-query will never
-        # return whitespace.
-        regex = %r{^(\S+) (\S+) (\S+) (\S+) (\S*)$}
 
-        line = output.split("\n").shift.chomp
-        
-        if match = regex.match(line)
-            fields.zip(match.captures) { |field,value|
-                hash[field] = value
-            }
-        else
-            notice "Failed to handle dpkg-query line %s" % line.inspect
-            return {:ensure => :absent, :status => 'missing',
-                :name => @resource[:name], :error => 'ok'}
-        end
+        hash = self.class.parse_line(output) || {:ensure => :absent, :status => 'missing', :name => @resource[:name], :error => 'ok'}
 
         if hash[:error] != "ok"
             raise Puppet::Error.new(
                 "Package %s, version %s is in error state: %s" %
                     [hash[:name], hash[:ensure], hash[:error]]
             )
-        end
-
-        # DPKG can discuss packages that are no longer installed, so allow that.
-        if hash[:status] == "not-installed"
-            hash[:ensure] = :purged
-        elsif hash[:status] != "installed"
-            hash[:ensure] = :absent
         end
 
         return hash
@@ -145,4 +128,3 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
         dpkg "--purge", @resource[:name]
     end
 end
-

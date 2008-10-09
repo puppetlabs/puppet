@@ -278,7 +278,7 @@ class TestLangFunctions < Test::Unit::TestCase
         file = tempfile()
 
         Puppet[:code] = %{file { "#{file}": content => template("#{template}") }}
-        Puppet[:environments] = "yay"
+        Puppet[:environment] = "yay"
         interp = Puppet::Parser::Interpreter.new
         node = mknode
         node.stubs(:environment).returns("yay")

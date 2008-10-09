@@ -99,6 +99,14 @@ describe Puppet::FileServing::Metadata, " when collecting attributes" do
             @metadata.checksum.should == "{md5}" + @checksum
         end
 
+        it "should give a mtime checksum when checksum_type is set" do
+            time = Time.now
+            @metadata.checksum_type = "mtime"
+            @metadata.expects(:mtime_file).returns(@time)
+            @metadata.collect_attributes
+            @metadata.checksum.should == "{mtime}" + @time.to_s
+        end
+
         it "should produce tab-separated mode, type, owner, group, and checksum for xmlrpc" do
             @metadata.attributes_with_tabs.should == "#{0755.to_s}\tfile\t10\t20\t{md5}#{@checksum}"
         end
@@ -109,14 +117,22 @@ describe Puppet::FileServing::Metadata, " when collecting attributes" do
             @stat.stubs(:ftype).returns("directory")
             @time = Time.now
             @metadata.expects(:ctime_file).returns(@time)
-            @metadata.collect_attributes
         end
 
         it "should only use checksums of type 'ctime' for directories" do
+            @metadata.collect_attributes
+            @metadata.checksum.should == "{ctime}" + @time.to_s
+        end
+
+        it "should only use checksums of type 'ctime' for directories even if checksum_type set" do
+            @metadata.checksum_type = "mtime"
+            @metadata.expects(:mtime_file).never
+            @metadata.collect_attributes
             @metadata.checksum.should == "{ctime}" + @time.to_s
         end
 
         it "should produce tab-separated mode, type, owner, group, and checksum for xmlrpc" do
+            @metadata.collect_attributes
             @metadata.attributes_with_tabs.should == "#{0755.to_s}\tdirectory\t10\t20\t{ctime}#{@time.to_s}"
         end
     end

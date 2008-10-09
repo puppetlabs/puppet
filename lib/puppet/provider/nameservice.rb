@@ -179,11 +179,33 @@ class Puppet::Provider::NameService < Puppet::Provider
     end
 
     def create
-        self.ensure = :present
+       if exists?
+            info "already exists"
+            # The object already exists
+            return nil
+        end
+
+        begin
+            execute(self.addcmd)
+        rescue Puppet::ExecutionFailure => detail
+            raise Puppet::Error, "Could not create %s %s: %s" %
+                [@resource.class.name, @resource.name, detail]
+        end
     end
 
     def delete
-        self.ensure = :absent
+        unless exists?
+            info "already absent"
+            # the object already doesn't exist
+            return nil
+        end
+
+        begin
+            execute(self.deletecmd)
+        rescue Puppet::ExecutionFailure => detail
+            raise Puppet::Error, "Could not delete %s %s: %s" %
+                [@resource.class.name, @resource.name, detail]
+        end
     end
 
     def ensure
@@ -191,43 +213,6 @@ class Puppet::Provider::NameService < Puppet::Provider
             :present
         else
             :absent
-        end
-    end
-
-    # This is only used when creating or destroying the object.
-    def ensure=(value)
-        cmd = nil
-        event = nil
-        case value
-        when :absent
-            # we need to remove the object...
-            unless exists?
-                info "already absent"
-                # the object already doesn't exist
-                return nil
-            end
-
-            # again, needs to be set by the ind. property or its
-            # parent
-            cmd = self.deletecmd
-            type = "delete"
-        when :present
-            if exists?
-                info "already exists"
-                # The object already exists
-                return nil
-            end
-
-            # blah blah, define elsewhere, blah blah
-            cmd = self.addcmd
-            type = "create"
-        end
-
-        begin
-            execute(cmd)
-        rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error, "Could not %s %s %s: %s" %
-                [type, @resource.class.name, @resource.name, detail]
         end
     end
 

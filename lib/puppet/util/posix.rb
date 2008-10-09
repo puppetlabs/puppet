@@ -7,10 +7,8 @@ module Puppet::Util::POSIX
     # method search_posix_field in the gid and uid methods if a sanity check
     # fails
     def get_posix_field(space, field, id)
-        unless id
-            raise ArgumentError, "Did not get id"
-        end
-        prefix = "get" + space.to_s
+        raise Puppet::DevError, "Did not get id from caller" unless id
+
         if id.is_a?(Integer)
             if id > Puppet[:maximum_uid].to_i
                 Puppet.err "Tried to get %s field for silly id %s" % [field, id]
@@ -132,16 +130,16 @@ module Puppet::Util::POSIX
     # Get the GID of a given group, provided either a GID or a name
     def gid(group)
         begin
-          group = Integer(group)
+            group = Integer(group)
         rescue ArgumentError
-          # pass
+            # pass
         end
         if group.is_a?(Integer)
-            name = get_posix_field(:group, :name, group)
+            return nil unless name = get_posix_field(:group, :name, group)
             gid = get_posix_field(:group, :gid, name)
             check_value = gid
         else
-            gid = get_posix_field(:group, :gid, group)
+            return nil unless gid = get_posix_field(:group, :gid, group)
             name = get_posix_field(:group, :name, gid)
             check_value = name
         end
@@ -155,16 +153,16 @@ module Puppet::Util::POSIX
     # Get the UID of a given user, whether a UID or name is provided
     def uid(user)
         begin
-          user = Integer(user)
+            user = Integer(user)
         rescue ArgumentError
-          # pass
+            # pass
         end
         if user.is_a?(Integer)
-            name = get_posix_field(:passwd, :name, user)
+            return nil unless name = get_posix_field(:passwd, :name, user)
             uid = get_posix_field(:passwd, :uid, name)
             check_value = uid
         else
-            uid = get_posix_field(:passwd, :uid, user)
+            return nil unless uid = get_posix_field(:passwd, :uid, user)
             name = get_posix_field(:passwd, :name, uid)
             check_value = name
         end

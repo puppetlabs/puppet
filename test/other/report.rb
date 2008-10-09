@@ -21,7 +21,7 @@ class TestReports < Test::Unit::TestCase
             # Make every third file
             File.open(file, "w") { |f| f.puts "" } if i % 3 == 0
 
-            objects << Puppet::Type.newfile(
+            objects << Puppet::Type.type(:file).create(
                 :path => file,
                 :ensure => "file"
             )
@@ -44,7 +44,7 @@ class TestReports < Test::Unit::TestCase
         }
 
         # Now make a file for testing logging
-        file = Puppet::Type.newfile(:path => tempfile(), :ensure => "file")
+        file = Puppet::Type.type(:file).create(:path => tempfile(), :ensure => "file")
         file.finish
 
         log = nil
@@ -91,8 +91,6 @@ class TestReports < Test::Unit::TestCase
 
         3.times { |i|
             log = Puppet.warning("Report test message %s" % i)
-            log.tags = %w{a list of tags}
-            log.tags << "tag%s" % i
 
             report.newlog(log)
         }

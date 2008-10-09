@@ -248,7 +248,7 @@ class TestTransactions < Test::Unit::TestCase
 
         assert_nothing_raised() {
             check.each { |property|
-                value = file.value(property)
+                value = file.property(property).retrieve
                 assert(value)
                 properties[property] = value
             }

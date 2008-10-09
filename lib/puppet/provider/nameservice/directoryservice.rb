@@ -206,9 +206,18 @@ class DirectoryService < Puppet::Provider::NameService
         if ensure_value == :present
             @resource.class.validproperties.each do |name|
                 next if name == :ensure
-                next unless val = @resource.should(name) || autogen(name)
-                # JJM: This calls the method.
-                self.send(name.to_s + "=", val)
+
+                # LAK: We use property.sync here rather than directly calling
+                # the settor method because the properties might do some kind
+                # of conversion.  In particular, the user gid property might
+                # have a string and need to convert it to a number
+                if @resource.should(name)
+                    @resource.property(name).sync
+                elsif value = autogen(name)
+                    self.send(name.to_s + "=", value)
+                else
+                    next
+                end
             end
         end 
     end

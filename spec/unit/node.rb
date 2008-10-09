@@ -45,20 +45,15 @@ describe Puppet::Node, "when initializing" do
     end
 
     it "should accept an environment value" do
-        Puppet.settings.stubs(:value).with(:environments).returns("myenv")
+        Puppet.settings.stubs(:value).with(:environment).returns("myenv")
         @node = Puppet::Node.new("testing", :environment => "myenv")
         @node.environment.should == "myenv"
-    end
-
-    it "should validate the environment" do
-        Puppet.settings.stubs(:value).with(:environments).returns("myenv")
-        proc { Puppet::Node.new("testing", :environment => "other") }.should raise_error(ArgumentError)
     end
 end
 
 describe Puppet::Node, "when returning the environment" do
     before do
-        Puppet.settings.stubs(:value).with(:environments).returns("one,two")
+        Puppet.settings.stubs(:value).with(:environment).returns("one,two")
         Puppet.settings.stubs(:value).with(:environment).returns("one")
         @node = Puppet::Node.new("testnode")
     end
@@ -72,16 +67,6 @@ describe Puppet::Node, "when returning the environment" do
         env = mock 'environment', :name => :myenv
         Puppet::Node::Environment.expects(:new).returns(env)
         @node.environment.should == "myenv"
-    end
-
-    it "should fail if the parameter environment is invalid" do
-        @node.parameters = {"environment" => "three"}
-        proc { @node.environment }.should raise_error(ArgumentError)
-    end
-
-    it "should fail if the parameter environment is invalid" do
-        @node.parameters = {"environment" => "three"}
-        proc { @node.environment }.should raise_error(ArgumentError)
     end
 end
 

@@ -23,9 +23,16 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     def self.instances
         packages = []
 
+        # rpm < 4.1 don't support --nosignature
+        output = rpm "--version"
+        sig = "--nosignature"
+        if output =~ /RPM version (([123].*)|(4\.0.*))/
+            sig = ""
+        end
+
         # list out all of the packages
         begin
-            execpipe("#{command(:rpm)} -qa --nosignature --nodigest --qf '#{NEVRAFORMAT}\n'") { |process|
+            execpipe("#{command(:rpm)} -qa #{sig} --nodigest --qf '#{NEVRAFORMAT}\n'") { |process|
                 # now turn each returned line into a package object
                 process.each { |line|
                     hash = nevra_to_hash(line)

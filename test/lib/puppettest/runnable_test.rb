@@ -12,6 +12,8 @@ module PuppetTest
             end
         end
 
+        attr_reader :messages
+
         # Evaluate all of our tests to see if any of them are false
         # and thus whether this test is considered not runnable.
         def runnable?

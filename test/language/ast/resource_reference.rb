@@ -23,34 +23,6 @@ class TestASTResourceReference < Test::Unit::TestCase
         @parser = @scope.compiler.parser
     end
 
-    def test_evaluate
-        @parser.newdefine "one::two"
-        @parser.newdefine "one-two"
-        [%w{File /tmp/yay}, %w{One::Two three}, %w{One-two three}].each do |type, title|
-            ref = newref(type, title)
-
-            evaled = nil
-            assert_nothing_raised("Could not evaluate resource ref") do
-                evaled = ref.evaluate(@scope)
-            end
-
-            assert_equal(type, evaled.type, "Type did not translate correctly")
-            assert_equal(title, evaled.title, "Title did not translate correctly")
-        end
-    end
-
-    def test_finding_classes_for_reference
-        @parser.newclass "one"
-        ref = newref("Class", "one")
-        evaled = nil
-        assert_nothing_raised("Could not evaluate resource ref") do
-            evaled = ref.evaluate(@scope)
-        end
-
-        assert_equal("Class", evaled.type, "Did not set type to 'class'")
-        assert_equal("one", evaled.title, "Did not look up class corectly")
-    end
-
     # Related to #706, make sure resource references correctly translate to qualified types.
     def test_scoped_references
         @parser.newdefine "one"

@@ -114,12 +114,14 @@ class Puppet::Util::Settings
     end
 
     # Do variable interpolation on the value.
-    def convert(value)
+    def convert(value, environment = nil)
         return value unless value
         return value unless value.is_a? String
         newval = value.gsub(/\$(\w+)|\$\{(\w+)\}/) do |value|
             varname = $2 || $1
-            if pval = self.value(varname)
+            if varname == "environment" and environment
+                environment
+            elsif pval = self.value(varname)
                 pval
             else
                 raise Puppet::DevError, "Could not find value for %s" % value
@@ -781,7 +783,7 @@ Generated on #{Time.now}.
         val = @config[param].default if val.nil?
 
         # Convert it if necessary
-        val = convert(val)
+        val = convert(val, environment)
 
         # And cache it
         @cache[environment||"none"][param] = val

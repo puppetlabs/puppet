@@ -176,6 +176,15 @@ describe Puppet::FileServing::Fileset, " when recursing" do
         @fileset.links = :manage
         @fileset.files.sort.should == @files.sort
     end
+
+    it "should succeed when paths have regexp significant characters" do
+        @path = "/my/path/rV1x2DafFr0R6tGG+1bbk++++TM"
+        File.expects(:lstat).with(@path).returns stub("stat", :directory? => true)
+        @fileset = Puppet::FileServing::Fileset.new(@path)
+        mock_dir_structure(@path)
+        @fileset.recurse = true
+        @fileset.files.sort.should == @files.sort
+    end
 end
 
 describe Puppet::FileServing::Fileset, " when following links that point to missing files" do

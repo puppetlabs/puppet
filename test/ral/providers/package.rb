@@ -244,36 +244,5 @@ class TestPackageProvider < Test::Unit::TestCase
             pkg[:adminfile] = "/usr/local/pkg/admin_file"
         end
     end
-
-    # Make sure providers throw an error when you tell them to install a
-    # non-existent package.
-    def test_no_such_package
-        Puppet::Type.type(:package).suitableprovider.each do |provider|
-            assert_raise(ArgumentError, Puppet::Error, Puppet::ExecutionFailure,
-                "Successfully installed nonexistent package with %s" % provider.name) {
-                pkg = Puppet::Type.newpackage :name => "nosuch%s" % provider.name.to_s,
-                    :provider => provider.name
-                provider = pkg.provider
-                provider.install
-            }
-        end
-    end
-
-    # Make sure all of the suitable providers on our platform can successfully
-    # list.
-    def test_instances
-        Puppet::Type.type(:package).suitableprovider.each do |provider|
-            result = nil
-            assert_nothing_raised("Could not list %s packages" % provider.name) do
-                result = provider.instances
-            end
-            result.each do |pkg|
-                assert_instance_of(provider, pkg,
-                    "%s returned non-provider" % provider.name)
-                assert_equal(provider.name, pkg.class.name,
-                    "Provider %s returned an instance of a different provider" %  provider.name)
-            end
-        end
-    end
 end
 

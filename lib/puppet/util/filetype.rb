@@ -1,7 +1,12 @@
 # Basic classes for reading, writing, and emptying files.  Not much
 # to see here.
+
+require 'puppet/util/selinux'
+
 class Puppet::Util::FileType
     attr_accessor :loaded, :path, :synced
+
+    include Puppet::Util::SELinux
 
     class << self
         attr_accessor :name
@@ -109,6 +114,8 @@ class Puppet::Util::FileType
             tf.print text; tf.flush 
             FileUtils.cp(tf.path, @path) 
             tf.close
+            # If SELinux is present, we need to ensure the file has its expected context
+            set_selinux_default_context(@path)
         end
     end
 

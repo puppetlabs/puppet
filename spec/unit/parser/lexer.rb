@@ -4,6 +4,27 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/parser/lexer'
 
+describe Puppet::Parser::Lexer do
+    describe "when reading strings" do
+        before { @lexer = Puppet::Parser::Lexer.new }
+        it "should increment the line count for every carriage return in the string" do
+            @lexer.line = 10
+            @lexer.string = "this\nis\natest'"
+            @lexer.slurpstring("'")
+
+            @lexer.line.should == 12
+        end
+
+        it "should not increment the line count for escapes in the string" do
+            @lexer.line = 10
+            @lexer.string = "this\\nis\\natest'"
+            @lexer.slurpstring("'")
+
+            @lexer.line.should == 10
+        end
+    end
+end
+
 describe Puppet::Parser::Lexer::Token do
     before do
         @token = Puppet::Parser::Lexer::Token.new(%r{something}, :NAME)
@@ -136,7 +157,13 @@ describe Puppet::Parser::Lexer::TOKENS do
         :BACKSLASH => '\\',
         :FARROW => '=>',
         :PARROW => '+>',
-        :APPENDS => '+='
+        :APPENDS => '+=',
+        :PLUS => '+',
+        :MINUS => '-',
+        :DIV => '/',
+        :TIMES => '*',
+        :LSHIFT => '<<',
+        :RSHIFT => '>>',
     }.each do |name, string|
         it "should have a token named #{name.to_s}" do
             Puppet::Parser::Lexer::TOKENS[name].should_not be_nil
@@ -213,10 +240,34 @@ describe Puppet::Parser::Lexer::TOKENS[:NAME] do
 end
 
 describe Puppet::Parser::Lexer::TOKENS[:NUMBER] do
-    before { @token = Puppet::Parser::Lexer::TOKENS[:NUMBER] }
+    before do
+        @token = Puppet::Parser::Lexer::TOKENS[:NUMBER]
+#        @regex = Regexp.new('^'+@token.regex.source+'$')
+        @regex = @token.regex
+    end
 
     it "should match against numeric terms" do
-        @token.regex.should =~ "2982383139"
+        @regex.should =~ "2982383139"
+    end
+
+    it "should match against float terms" do
+        @regex.should =~ "29823.235"
+    end
+
+    it "should match against hexadecimal terms" do
+        @regex.should =~ "0xBEEF0023"
+    end
+
+    it "should match against float with exponent terms" do
+        @regex.should =~ "10e23"
+    end
+
+    it "should match against float terms with negative exponents" do
+        @regex.should =~ "10e-23"
+    end
+
+    it "should match against float terms with fractional parts and exponent" do
+        @regex.should =~ "1.234e23"
     end
 
     it "should return the NAME token and the value" do

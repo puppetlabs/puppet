@@ -1,5 +1,6 @@
 require 'etc'
 require 'facter'
+require 'puppet/property/list'
 
 module Puppet
     newtype(:user) do
@@ -21,6 +22,9 @@ module Puppet
             "The provider can modify user passwords, by accepting a password
             hash."
 
+        feature :manages_solaris_rbac,
+            "The provider can manage roles and normal users"
+
         newproperty(:ensure, :parent => Puppet::Property::Ensure) do
             newvalue(:present, :event => :user_created) do
                 provider.create
@@ -28,6 +32,10 @@ module Puppet
 
             newvalue(:absent, :event => :user_removed) do
                 provider.delete
+            end
+
+            newvalue(:role, :event => :role_created, :required_features => :manages_solaris_rbac) do
+                provider.create_role
             end
 
             desc "The basic state that the object should be in."
@@ -44,30 +52,15 @@ module Puppet
 
             def retrieve
                 if provider.exists?
-                    return :present
+                    if provider.respond_to?(:is_role?) and provider.is_role?
+                        return :role
+                    else
+                        return :present
+                    end
                 else
                     return :absent
                 end
             end
-
-            # The default 'sync' method only selects among a list of registered
-            # values.
-            def sync
-#                if self.insync?
-#                    self.info "already in sync"
-#                    return nil
-                #else
-                    #self.info "%s vs %s" % [self.is.inspect, self.should.inspect]
-#               end
-                unless self.class.values
-                    self.devfail "No values defined for %s" %
-                        self.class.name
-                end
-
-                # Set ourselves to whatever our should value is.
-                self.set(self.should)
-            end
-
         end
 
         newproperty(:uid) do
@@ -95,50 +88,26 @@ module Puppet
         newproperty(:gid) do
             desc "The user's primary group.  Can be specified numerically or
                 by name."
-            
-            def found?
-                defined? @found and @found
-            end
 
-            munge do |gid|
-                method = :getgrgid
-                case gid
-                when String
-                    if gid =~ /^[-0-9]+$/
-                        gid = Integer(gid)
-                    else
-                        method = :getgrnam
-                    end
-                when Symbol
-                    unless gid == :auto or gid == :absent
-                        self.devfail "Invalid GID %s" % gid
-                    end
-                    # these are treated specially by sync()
-                    return gid
-                end
-
-                if group = Puppet::Util.gid(gid)
-                    @found = true
-                    return group
+            munge do |value|
+                if value.is_a?(String) and value =~ /^[-0-9]+$/
+                    Integer(value)
                 else
-                    @found = false
-                    return gid
+                    value
                 end
             end
 
-            # *shudder*  Make sure that we've looked up the group and gotten
-            # an ID for it.  Yuck-o.
-            def should
-                unless defined? @should
-                    return super
+            def sync
+                found = false
+                @should.each do |value|
+                    if number = Puppet::Util.gid(value)
+                        provider.gid = number
+                        found = true
+                        break
+                    end
                 end
-                unless found?
-                    @should = @should.each { |val|
-                        next unless val
-                        Puppet::Util.gid(val)
-                    }
-                end
-                super
+
+                fail "Could not find group(s) %s" % @should.join(",") unless found
             end
         end
 
@@ -168,94 +137,38 @@ module Puppet
             end
         end
 
-        newproperty(:groups) do
+        newproperty(:groups, :parent => Puppet::Property::List) do
             desc "The groups of which the user is a member.  The primary
                 group should not be listed.  Multiple groups should be
                 specified as an array."
-
-            def should_to_s(newvalue)
-                self.should
-            end
-
-            def is_to_s(currentvalue)
-                currentvalue.join(",")
-            end
-
-            # We need to override this because the groups need to
-            # be joined with commas
-            def should
-                current_value = retrieve
-
-                unless defined? @should and @should
-                    return nil
-                end
-
-                if @resource[:membership] == :inclusive
-                    return @should.sort.join(",")
-                else
-                    members = @should
-                    if current_value.is_a?(Array)
-                        members += current_value
-                    end
-                    return members.uniq.sort.join(",")
-                end
-            end
-
-            def retrieve
-                if tmp = provider.groups and tmp != :absent
-                    return tmp.split(",")
-                else
-                    return :absent
-                end
-            end
-
-            def insync?(is)
-                unless defined? @should and @should
-                    return true
-                end
-                unless defined? is and is
-                    return true
-                end
-                tmp = is
-                if is.is_a? Array
-                    tmp = is.sort.join(",")
-                end
-
-                return tmp == self.should
-            end
 
             validate do |value|
                 if value =~ /^\d+$/
                     raise ArgumentError, "Group names must be provided, not numbers"
                 end
                 if value.include?(",")
-                    raise ArgumentError, "Group names must be provided as an array, not a comma-separated list"
+                    raise ArgumentError, "Group names must be provided as an array, not as a comma-separated list '%s'" % value
                 end
             end
         end
 
-        # these three properties are all implemented differently on each platform,
-        # so i'm disabling them for now
+        newproperty(:roles, :parent => Puppet::Property::List, :required_features => :manages_solaris_rbac) do
+            desc "The roles of which the user the user has.  The roles should be
+                specified as an array."
 
-        # FIXME Puppet::Property::UserLocked is currently non-functional
-        #newproperty(:locked) do
-        #    desc "The expected return code.  An error will be returned if the
-        #        executed command returns something else."
-        #end
+            def membership
+                :role_membership
+            end
 
-        # FIXME Puppet::Property::UserExpire is currently non-functional
-        #newproperty(:expire) do
-        #    desc "The expected return code.  An error will be returned if the
-        #        executed command returns something else."
-        #    @objectaddflag = "-e"
-        #end
-
-        # FIXME Puppet::Property::UserInactive is currently non-functional
-        #newproperty(:inactive) do
-        #    desc "The expected return code.  An error will be returned if the
-        #        executed command returns something else."
-        #    @objectaddflag = "-f"
-        #end
+            validate do |value|
+                if value =~ /^\d+$/
+                    raise ArgumentError, "Role names must be provided, not numbers"
+                end
+                if value.include?(",")
+                    raise ArgumentError, "Role names must be provided as an array, not a comma-separated list"
+                end
+            end
+        end
 
         newparam(:name) do
             desc "User name.  While limitations are determined for
@@ -268,7 +181,17 @@ module Puppet
             desc "Whether specified groups should be treated as the only groups
                 of which the user is a member or whether they should merely
                 be treated as the minimum membership list."
-                
+
+            newvalues(:inclusive, :minimum)
+
+            defaultto :minimum
+        end
+
+        newparam(:role_membership) do
+            desc "Whether specified roles should be treated as the only roles
+                of which the user is a member or whether they should merely
+                be treated as the minimum membership list."
+
             newvalues(:inclusive, :minimum)
 
             defaultto :minimum
@@ -338,7 +261,7 @@ module Puppet
                 current_value = :absent
 
                 if absent
-                   prophash[property] = :absent
+                    prophash[property] = :absent
                 else
                     current_value = property.retrieve
                     prophash[property] = current_value
@@ -346,7 +269,6 @@ module Puppet
 
                 if property.name == :ensure and current_value == :absent
                     absent = true
-#                    next
                 end
                 prophash
             }

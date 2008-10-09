@@ -73,17 +73,23 @@ class Puppet::Module
         end
 
         template_paths = templatepath(environment)
-        default_template_path = File::join(template_paths.first, template)
+        if template_paths
+            # If we can find the template in :templatedir, we return that.
+            td_file = template_paths.collect { |path|
+                File::join(path, template)
+            }.find { |f| File.exists?(f) }
 
-        # If we can find the template in :templatedir, we return that.
-        td_file = template_paths.collect { |path|
-            File::join(path, template)
-        }.find { |f| File.exists?(f) }
-
-        return td_file unless td_file == nil
+            return td_file unless td_file == nil
+        end
 
         td_file = find_template_for_module(template, environment)
-        td_file ||= default_template_path
+
+        # check in the default template dir, if there is one
+        if td_file.nil?
+            raise Puppet::Error, "No valid template directory found, please check templatedir settings" if template_paths.nil?
+            td_file = File::join(template_paths.first, template)
+        end
+        td_file
     end
 
     def self.find_template_for_module(template, environment = nil)

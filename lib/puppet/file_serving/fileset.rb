@@ -20,7 +20,7 @@ class Puppet::FileServing::Fileset
 
         # Now strip off the leading path, so each file becomes relative, and remove
         # any slashes that might end up at the beginning of the path.
-        result = files.collect { |file| file.sub(%r{^#{@path}/*}, '') }
+        result = files.collect { |file| file.sub(%r{^#{Regexp.escape(@path)}/*}, '') }
 
         # And add the path itself.
         result.unshift(".")
@@ -120,7 +120,7 @@ class Puppet::FileServing::Fileset
 
         return result
     end
-
+    public
     # Stat a given file, using the links-appropriate method.
     def stat(path)
         unless defined?(@stat_method)

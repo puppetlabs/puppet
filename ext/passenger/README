@@ -1,0 +1,63 @@
+
+PUPPETMASTER INSIDE APACHE & PASSENGER
+======================================
+
+This is about running a puppetmaster inside Apache.
+
+Please also see the docs at http://reductivelabs.com/trac/puppet/wiki/UsingPassenger
+for further information.
+
+
+WHAT IS IT?
+===========
+
+Passenger [1] (AKA mod_rails or mod_rack) is an Apache 2.x Extension for 
+serving Rails or Rack applications.
+
+This extension allows running a puppetmasterd as a Rack application;
+it has only been tested with Passenger.
+
+
+SHORT INSTALLATION INSTRUCTIONS
+===============================
+
+Make sure puppetmasterd ran at least once, so the SSL certificates
+got set up. 
+
+Install Rack:
+  gem install -v 0.4.0 rack
+
+Install Apache and Passenger:
+  apt-get install apache2
+  gem install passenger
+  passenger-install-apache2-module
+  (See the Passenger installation instructions [2] for details.)
+
+Enable Apache modules:
+  a2enmod ssl
+  a2enmod headers
+
+Configure Apache:
+  cp apache2.conf /etc/apache2/conf.d/puppetmasterd
+  vim /etc/apache2/conf.d/puppetmasterd (replace the server hostnames)
+
+Install the rack application [3]:
+  mkdir -p /usr/share/puppet/rack/puppetmasterd
+  mkdir /usr/share/puppet/rack/puppetmasterd/public /usr/share/puppet/rack/puppetmasterd/tmp
+  cp config.ru /usr/share/puppet/rack/puppetmasterd
+  chown puppet /usr/share/puppet/rack/puppetmasterd/config.ru
+
+Go:
+/etc/init.d/apache2 restart
+
+
+
+[1] http://www.modrails.com/
+
+[2] http://www.modrails.com/install.html
+
+[3] Passenger will not let applications run as root or the Apache user, 
+instead an implicit setuid will be done, to the user whom owns 
+config.ru. Therefore, config.ru shall be owned by the puppet user.
+
+
