@@ -292,11 +292,9 @@ class TestFileSources < Test::Unit::TestCase
         # Lastly, make sure we return an empty array when no sources are there
         obj[:source] = [nosource, tempfile()]
         
-        assert_nothing_raised do
+        assert_raise(Puppet::Error) do
             result, sourced = obj.sourcerecurse(true)
         end
-        assert_equal([], sourced, "Did not get correct list of sourced objects")
-        assert_equal([], result, "Sourcerecurse failed when all sources are missing")
     end
 
     def test_simplelocalsource
