@@ -25,7 +25,9 @@ class TestMaster < Test::Unit::TestCase
         now1 = mock 'now1'
         Time.expects(:now).returns(now1)
 
-        assert_equal(@master.freshness, now1, "Did not return current time as freshness")
+        now1.expects(:to_i).returns 10
+
+        assert_equal(@master.freshness, 10, "Did not return current time as freshness")
     end
 
     def test_hostname_is_used_if_client_is_missing
