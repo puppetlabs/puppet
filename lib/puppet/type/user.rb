@@ -147,8 +147,7 @@ module Puppet
                     raise ArgumentError, "Group names must be provided, not numbers"
                 end
                 if value.include?(",")
-                    puts value
-                    raise ArgumentError, "Group names must be provided as an array, not a comma-separated list"
+                    raise ArgumentError, "Group names must be provided as an array, not as a comma-separated list '%s'" % value
                 end
             end
         end
