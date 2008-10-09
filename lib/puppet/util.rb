@@ -227,7 +227,11 @@ module Util
             end
         else
             x = %x{which #{bin} 2>/dev/null}.chomp
-            return x
+            if x == ""
+                return nil
+            else
+                return x
+            end
         end
     end
     module_function :binary
