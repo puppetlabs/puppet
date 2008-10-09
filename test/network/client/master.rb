@@ -402,12 +402,9 @@ end
             client.send(:splay)
         end
 
-        time = Puppet::Util::Storage.cache(:configuration)[:splay_time]
-        assert(time, "Splay time was not cached")
-
         # Now try it again
         client = mkclient
-        client.expects(:sleep).with(time)
+        client.expects(:sleep)
 
         assert_nothing_raised("Failed to call sleep when splay is true with a cached value") do
             client.send(:splay)
