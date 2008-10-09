@@ -30,14 +30,18 @@ class TestGroupProvider < Test::Unit::TestCase
     end
 
     def mkgroup(name, hash = {})
-        fakeresource = fakeresource(:group, name)
+        fakeresource = stub 'group', :allowdupe? => false, :name => name
+        fakeresource.stubs(:[]).returns nil
+        fakeresource.stubs(:should).returns nil
+        fakeresource.stubs(:[]).with(:name).returns name
+        hash.each do |name, val|
+            fakeresource.stubs(:should).with(name).returns val
+            fakeresource.stubs(:[]).with(name).returns val
+        end
         group = nil
         assert_nothing_raised {
             group = @provider.new(fakeresource)
         }
-        hash.each do |name, val|
-            fakeresource[name] = val
-        end
         assert(group, "Could not create provider group")
 
         return group
@@ -108,19 +112,19 @@ class TestGroupProvider < Test::Unit::TestCase
     def attrtest_ensure(group)
         old = group.ensure
         assert_nothing_raised {
-            group.ensure = :absent
+            group.delete
         }
 
         assert(!group.exists?, "Group was not deleted")
 
         assert_nothing_raised {
-            group.ensure = :present
+            group.create
         }
         assert(group.exists?, "Group was not created")
 
         unless old == :present
             assert_nothing_raised {
-                group.ensure = old
+                group.delete
             }
         end
     end
@@ -211,7 +215,6 @@ class TestGroupProvider < Test::Unit::TestCase
         unless Facter["operatingsystem"].value == "FreeBSD"
         def test_duplicateIDs
             group1 = mkgroup("group1", :gid => 125)
-            group2 = mkgroup("group2", :gid => 125)
 
             @@tmpgroups << "group1"
             @@tmpgroups << "group2"
@@ -222,16 +225,14 @@ class TestGroupProvider < Test::Unit::TestCase
 
             # Not all OSes fail here, so we can't test that it doesn't work with
             # it off, only that it does work with it on.
-            assert_nothing_raised {
-                group2.resource[:allowdupe] = :true
-            }
+            group2 = mkgroup("group2", :gid => 125)
+            group2.resource.stubs(:allowdupe?).returns true
 
             # Now create the second group
             assert_nothing_raised {
                 group2.create
             }
-            assert_equal(:present, group2.ensure,
-                         "Group did not get created")
+            assert_equal(:present, group2.ensure, "Group did not get created")
         end
         end
     else

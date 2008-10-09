@@ -214,20 +214,20 @@ class TestUserProvider < Test::Unit::TestCase
     def attrtest_ensure(user)
         old = user.ensure
         assert_nothing_raised {
-            user.ensure = :absent
+            user.delete
         }
 
         assert(missing?(user.name), "User is still present")
         assert_nothing_raised {
-            user.ensure = :present
+            user.create
         }
         assert(!missing?(user.name), "User is absent")
         assert_nothing_raised {
-            user.ensure = :absent
+            user.delete
         }
 
         unless old == :absent
-            user.ensure = old
+            user.create
         end
     end
 
@@ -398,10 +398,10 @@ class TestUserProvider < Test::Unit::TestCase
 
         # Some tests to verify that groups work correctly startig from nothing
         # Remove our user
-        user.ensure = :absent
+        user.delete
 
         # And add it again
-        user.ensure = :present
+        user.create
 
         # Make sure that the group list is added at creation time.
         # This is necessary because we don't have default fakedata for groups.
@@ -498,8 +498,8 @@ class TestUserProvider < Test::Unit::TestCase
             user2.resource[:uid] = 125
 
             cleanup do
-                user1.ensure = :absent
-                user2.ensure = :absent
+                user1.delete
+                user2.delete
             end
 
             # Not all OSes fail here, so we can't test that it doesn't work with
