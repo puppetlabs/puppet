@@ -133,6 +133,9 @@ module Puppet::SSLCertificates::Support
         #return nil unless FileTest.directory?(dir)
 
         raise ArgumentError, "Tried to fix SSL files to a file containing uppercase" unless short.downcase == short
+
+        return false unless File.directory?(dir)
+
         real_file = Dir.entries(dir).reject { |f| f =~ /^\./ }.find do |other|
             other.downcase == short
         end
