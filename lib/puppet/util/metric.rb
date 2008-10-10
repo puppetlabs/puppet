@@ -149,11 +149,6 @@ class Puppet::Util::Metric
 
     def values
         @values.sort { |a, b| a[1] <=> b[1] }
-    end 	
-
-    def [](key)
-        value = @values.find { |v| v[0] == key }
-        return value[2]
     end
 
     private
