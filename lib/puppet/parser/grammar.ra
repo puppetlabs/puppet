@@ -195,7 +195,27 @@ at:   AT { result = :virtual }
 
 # A collection statement.  Currently supports no arguments at all, but eventually
 # will, I assume.
-collection:     classref collectrhand {
+collection:     classref collectrhand LBRACE anyparams endcomma RBRACE {
+    if val[0] =~ /^[a-z]/
+        Puppet.warning addcontext("Collection names must now be capitalized")
+    end
+    type = val[0].downcase
+    args = {:type => type}
+
+    if val[1].is_a?(AST::CollExpr)
+        args[:query] = val[1]
+        args[:query].type = type
+        args[:form] = args[:query].form
+    else
+        args[:form] = val[1]
+    end
+    if args[:form] == :exported and ! Puppet[:storeconfigs] and ! Puppet[:parseonly]
+        Puppet.warning addcontext("You cannot collect exported resources without storeconfigs being set; the collection will be ignored")
+    end
+    args[:override] = val[3]
+    result = ast AST::Collection, args
+}
+                | classref collectrhand {
     if val[0] =~ /^[a-z]/
         Puppet.warning addcontext("Collection names must now be capitalized")
     end

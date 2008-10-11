@@ -1,10 +1,12 @@
 # An object that collects stored objects from the central cache and returns
 # them to the current host, yo.
 class Puppet::Parser::Collector
-    attr_accessor :type, :scope, :vquery, :equery, :form, :resources
+    attr_accessor :type, :scope, :vquery, :equery, :form, :resources, :overrides, :collected
 
     # Call the collection method, mark all of the returned objects as non-virtual,
-    # and then delete this object from the list of collections to evaluate.
+    # optionally applying parameter overrides. The collector can also delete himself
+    # from the compiler if there is no more resources to collect (valid only for resource fixed-set collector
+    # which get their resources from +collect_resources+ and not from the catalog)
     def evaluate
         # Shortcut if we're not using storeconfigs and they're trying to collect
         # exported resources.
@@ -12,10 +14,9 @@ class Puppet::Parser::Collector
             Puppet.warning "Not collecting exported resources without storeconfigs"
             return false
         end
+
         if self.resources
-            if objects = collect_resources and ! objects.empty?
-                return objects
-            else
+            unless objects = collect_resources and ! objects.empty?
                 return false
             end
         else
@@ -25,14 +26,53 @@ class Puppet::Parser::Collector
             end
             if objects.empty?
                 return false
-            else
-                return objects
             end
         end
+
+        # we have an override for the collected resources
+        if @overrides and !objects.empty?
+
+            # force the resource to be always child of any other resource
+            overrides[:source].meta_def(:child_of?) do
+                true
+            end
+
+            # tell the compiler we have some override for him unless we already
+            # overrided those resources
+            objects.each do |res|
+                unless @collected.include?(res.ref)
+                    res = Puppet::Parser::Resource.new(
+                        :type => res.type,
+                        :title => res.title,
+                        :params => overrides[:params],
+                        :file => overrides[:file],
+                        :line => overrides[:line],
+                        :source => overrides[:source],
+                        :scope => overrides[:scope]
+                    )
+
+                    scope.compiler.add_override(res)
+                end
+            end
+        end
+
+        # filter out object that already have been collected by ourself
+        objects.reject! { |o| @collected.include?(o.ref) }
+
+        return false if objects.empty?
+
+        # keep an eye on the resources we have collected
+        objects.inject(@collected) { |c,o| c[o.ref]=o; c }
+
+        # return our newly collected resources
+        objects
     end
 
     def initialize(scope, type, equery, vquery, form)
         @scope = scope
+
+        # initialisation
+        @collected = {}
 
         # Canonize the type
         @type = Puppet::Resource::Reference.new(type, "whatever").type
@@ -41,6 +81,16 @@ class Puppet::Parser::Collector
 
         raise(ArgumentError, "Invalid query form %s" % form) unless [:exported, :virtual].include?(form)
         @form = form
+    end
+
+    # add a resource override to the soon to be exported/realized resources
+    def add_override(hash)
+        unless hash[:params]
+            raise ArgumentError, "Exported resource try to override without parameters"
+        end
+
+        # schedule an override for an upcoming collection
+        @overrides = hash
     end
 
     private
@@ -132,13 +182,8 @@ class Puppet::Parser::Collector
 
     # Collect just virtual objects, from our local compiler.
     def collect_virtual(exported = false)
-        if exported
-            method = :exported?
-        else
-            method = :virtual?
-        end
         scope.compiler.resources.find_all do |resource|
-            resource.type == @type and resource.send(method) and match?(resource)
+            resource.type == @type and (exported ? resource.exported? : true) and match?(resource)
         end
     end
 
@@ -155,7 +200,7 @@ class Puppet::Parser::Collector
         resource = obj.to_resource(self.scope)
 
         resource.exported = false
-        
+
         scope.compiler.add_resource(scope, resource)
 
         return resource
