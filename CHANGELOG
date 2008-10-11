@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1104 - Classes and nodes should set $name variables
+
     Updated Red Hat spec file for 0.24.6
 
     Removed conf/debian directory - Debian packaging information 
