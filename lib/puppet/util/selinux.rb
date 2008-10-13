@@ -106,8 +106,8 @@ module Puppet::Util::SELinux
                 flag = ""
         end
 
-        Puppet.debug "Running chcon #{flag} #{value} #{file}"
-        retval = system("chcon #{flag} #{value} #{file}")
+        Puppet.debug "Running chcon -h #{flag} #{value} #{file}"
+        retval = system("chcon -h #{flag} #{value} #{file}")
         unless retval
             error = Puppet::Error.new("failed to chcon %s" % [@resource[:path]])
             raise error

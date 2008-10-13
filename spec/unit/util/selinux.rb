@@ -117,31 +117,31 @@ describe Puppet::Util::SELinux do
 
         it "should use chcon to set a context" do
             self.expects(:selinux_support?).returns true
-            self.expects(:system).with("chcon  user_u:role_r:type_t:s0 /foo").returns 0
+            self.expects(:system).with("chcon -h  user_u:role_r:type_t:s0 /foo").returns 0
             set_selinux_context("/foo", "user_u:role_r:type_t:s0").should be_true
         end
 
         it "should use chcon to set user_u user context" do
             self.expects(:selinux_support?).returns true
-            self.expects(:system).with("chcon -u user_u /foo").returns 0
+            self.expects(:system).with("chcon -h -u user_u /foo").returns 0
             set_selinux_context("/foo", "user_u", :seluser).should be_true
         end
 
         it "should use chcon to set role_r role context" do
             self.expects(:selinux_support?).returns true
-            self.expects(:system).with("chcon -r role_r /foo").returns 0
+            self.expects(:system).with("chcon -h -r role_r /foo").returns 0
             set_selinux_context("/foo", "role_r", :selrole).should be_true
         end
 
         it "should use chcon to set type_t type context" do
             self.expects(:selinux_support?).returns true
-            self.expects(:system).with("chcon -t type_t /foo").returns 0
+            self.expects(:system).with("chcon -h -t type_t /foo").returns 0
             set_selinux_context("/foo", "type_t", :seltype).should be_true
         end
 
         it "should use chcon to set s0:c3,c5 range context" do
             self.expects(:selinux_support?).returns true
-            self.expects(:system).with("chcon -l s0:c3,c5 /foo").returns 0
+            self.expects(:system).with("chcon -h -l s0:c3,c5 /foo").returns 0
             set_selinux_context("/foo", "s0:c3,c5", :selrange).should be_true
         end
     end
