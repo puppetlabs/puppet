@@ -3,7 +3,7 @@ require 'puppet/provider/confine'
 class Puppet::Provider::Confine::Variable < Puppet::Provider::Confine
     def self.summarize(confines)
         result = Hash.new { |hash, key| hash[key] = [] }
-        confines.inject(result) { |total, confine| total[confine.fact] += confine.values unless confine.valid?; total }
+        confines.inject(result) { |total, confine| total[confine.class.name] += confine.values unless confine.valid?; total }
     end
 
     attr_accessor :name
