@@ -1,4 +1,7 @@
 0.24.6
+    Fixed #1646 - service puppet status does not work as non-root 
+    on redhat system
+
     Fixed #1649 - Updated OSX package cleanup
   
     Fixed #1647 - puppetdoc -r providers now working again
