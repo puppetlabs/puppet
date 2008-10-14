@@ -27,19 +27,19 @@ describe Puppet::Util::SELinux do
 
         it "should return a context" do
             self.expects(:selinux_support?).returns true
-            self.expects(:execpipe).with("stat -c %C /foo").yields ["user_u:role_r:type_t:s0\n"]
+            self.expects(:execpipe).with("/usr/bin/stat -c %C /foo").yields ["user_u:role_r:type_t:s0\n"]
             get_selinux_current_context("/foo").should == "user_u:role_r:type_t:s0"
         end
 
         it "should return nil if an exception is raised calling stat" do
             self.expects(:selinux_support?).returns true
-            self.expects(:execpipe).with("stat -c %C /foo").raises(Puppet::ExecutionFailure, 'error')
+            self.expects(:execpipe).with("/usr/bin/stat -c %C /foo").raises(Puppet::ExecutionFailure, 'error')
             get_selinux_current_context("/foo").should be_nil
         end
 
         it "should return nil if stat finds an unlabeled file" do
             self.expects(:selinux_support?).returns true
-            self.expects(:execpipe).with("stat -c %C /foo").yields ["(null)\n"]
+            self.expects(:execpipe).with("/usr/bin/stat -c %C /foo").yields ["(null)\n"]
             get_selinux_current_context("/foo").should be_nil
         end
     end
@@ -117,31 +117,31 @@ describe Puppet::Util::SELinux do
 
         it "should use chcon to set a context" do
             self.expects(:selinux_support?).returns true
-            self.expects(:system).with("chcon -h  user_u:role_r:type_t:s0 /foo").returns 0
+            self.expects(:execute).with(["/usr/bin/chcon","-h","","user_u:role_r:type_t:s0","/foo"]).returns 0
             set_selinux_context("/foo", "user_u:role_r:type_t:s0").should be_true
         end
 
         it "should use chcon to set user_u user context" do
             self.expects(:selinux_support?).returns true
-            self.expects(:system).with("chcon -h -u user_u /foo").returns 0
+            self.expects(:execute).with(["/usr/bin/chcon","-h","-u","user_u","/foo"]).returns 0
             set_selinux_context("/foo", "user_u", :seluser).should be_true
         end
 
         it "should use chcon to set role_r role context" do
             self.expects(:selinux_support?).returns true
-            self.expects(:system).with("chcon -h -r role_r /foo").returns 0
+            self.expects(:execute).with(["/usr/bin/chcon","-h","-r","role_r","/foo"]).returns 0
             set_selinux_context("/foo", "role_r", :selrole).should be_true
         end
 
         it "should use chcon to set type_t type context" do
             self.expects(:selinux_support?).returns true
-            self.expects(:system).with("chcon -h -t type_t /foo").returns 0
+            self.expects(:execute).with(["/usr/bin/chcon","-h","-t","type_t","/foo"]).returns 0
             set_selinux_context("/foo", "type_t", :seltype).should be_true
         end
 
         it "should use chcon to set s0:c3,c5 range context" do
             self.expects(:selinux_support?).returns true
-            self.expects(:system).with("chcon -h -l s0:c3,c5 /foo").returns 0
+            self.expects(:execute).with(["/usr/bin/chcon","-h","-l","s0:c3,c5","/foo"]).returns 0
             set_selinux_context("/foo", "s0:c3,c5", :selrange).should be_true
         end
     end
