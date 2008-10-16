@@ -703,6 +703,13 @@ array:        LBRACK rvalues RBRACK {
     else
         result = ast AST::ASTArray, :children => [val[1]]
     end
+}
+            | LBRACK rvalues COMMA RBRACK {
+    if val[1].instance_of?(AST::ASTArray)
+        result = val[1]
+    else
+        result = ast AST::ASTArray, :children => [val[1]]
+    end
 }           | LBRACK RBRACK {
     result = ast AST::ASTArray
 }

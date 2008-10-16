@@ -162,6 +162,14 @@ describe Puppet::Parser do
 
         it "should not raise errors with multiple arguments and a trailing comma" do
             lambda { @parser.parse("notice(1,2,)") }.should_not raise_error
+		end
+
+	end
+
+	describe Puppet::Parser, "when parsing arrays with trailing comma" do
+
+        it "should not raise errors with a trailing comma" do
+            lambda { @parser.parse("$a = [1,2,]") }.should_not raise_error
         end
 
     end
