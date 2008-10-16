@@ -85,16 +85,26 @@ describe Puppet::Provider::Confine::Variable do
 
     describe "when summarizing multiple instances" do
         it "should return a hash of failing variables and their values" do
-            c1 = stub '1', :valid? => false, :values => %w{one}, :fact => "uno"
-            c2 = stub '2', :valid? => true,  :values => %w{two}, :fact => "dos"
-            c3 = stub '3', :valid? => false, :values => %w{three}, :fact => "tres"
+            c1 = Puppet::Provider::Confine::Variable.new("one")
+            c1.name = "uno"
+            c1.expects(:valid?).returns false
+            c2 = Puppet::Provider::Confine::Variable.new("two")
+            c2.name = "dos"
+            c2.expects(:valid?).returns true
+            c3 = Puppet::Provider::Confine::Variable.new("three")
+            c3.name = "tres"
+            c3.expects(:valid?).returns false
 
             Puppet::Provider::Confine::Variable.summarize([c1, c2, c3]).should == {"uno" => %w{one}, "tres" => %w{three}}
         end
 
         it "should combine the values of multiple confines with the same fact" do
-            c1 = stub '1', :valid? => false, :values => %w{one}, :fact => "uno"
-            c2 = stub '2', :valid? => false,  :values => %w{two}, :fact => "uno"
+            c1 = Puppet::Provider::Confine::Variable.new("one")
+            c1.name = "uno"
+            c1.expects(:valid?).returns false
+            c2 = Puppet::Provider::Confine::Variable.new("two")
+            c2.name = "uno"
+            c2.expects(:valid?).returns false
 
             Puppet::Provider::Confine::Variable.summarize([c1, c2]).should == {"uno" => %w{one two}}
         end

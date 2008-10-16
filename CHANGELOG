@@ -1,4 +1,6 @@
 0.24.6
+    Fixed #1655 - Provider::Confine::Variable tests are broken
+
     Fixed #1646 - service puppet status does not work as non-root 
     on redhat system
 
