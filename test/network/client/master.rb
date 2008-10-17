@@ -402,12 +402,9 @@ end
             client.send(:splay)
         end
 
-        time = Puppet::Util::Storage.cache(:configuration)[:splay_time]
-        assert(time, "Splay time was not cached")
-
         # Now try it again
         client = mkclient
-        client.expects(:sleep).with(time)
+        client.expects(:sleep)
 
         assert_nothing_raised("Failed to call sleep when splay is true with a cached value") do
             client.send(:splay)
@@ -419,8 +416,7 @@ end
         assert_equal(facts["environment"], Puppet[:environment], "Did not add environment to client facts")
 
         # Now set it to a real value
-        Puppet[:environments] = "something,else"
-        Puppet[:environment] = "something"
+	Puppet[:environment] = "something"
         facts = Puppet::Network::Client::Master.facts
         assert_equal(facts["environment"], Puppet[:environment], "Did not add environment to client facts")
     end

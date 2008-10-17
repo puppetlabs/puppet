@@ -114,44 +114,6 @@ class TestLog < Test::Unit::TestCase
         assert(FileTest.file?(file))
     end
 
-    def test_logtags
-        path = tempfile
-        File.open(path, "w") { |f| f.puts "yayness" }
-
-        file = Puppet.type(:file).create(
-            :path => path,
-            :check => [:owner, :group, :mode, :checksum],
-            :ensure => :file
-        )
-        file.tags = %w{this is a test}
-
-        property = file.property(:ensure)
-        assert(property, "Did not get property")
-        log = nil
-        assert_nothing_raised {
-            log = Puppet::Util::Log.new(
-                :level => :info,
-                :source => property,
-                :message => "A test message"
-            )
-        }
-
-        # Now yaml and de-yaml it, and test again
-        yamllog = YAML.load(YAML.dump(log))
-
-        {:log => log, :yaml => yamllog}.each do |type, msg|
-            assert(msg.tags, "Got no tags")
-
-            msg.tags.each do |tag|
-                assert(msg.tagged?(tag), "Was not tagged with %s" % tag)
-            end
-
-            assert_equal(msg.tags, property.tags, "Tags were not equal")
-            assert_equal(msg.source, property.path, "Source was not set correctly")
-        end
-
-    end
-
     # Verify that we can pass strings that match printf args
     def test_percentlogs
         Puppet::Util::Log.newdestination :syslog
@@ -180,27 +142,6 @@ class TestLog < Test::Unit::TestCase
 
         assert_instance_of(String, msg.to_s)
         assert_instance_of(String, msg.source)
-    end
-
-    # Verify that loglevel behaves as one expects
-    def test_loglevel
-        path = tempfile()
-        file = Puppet.type(:file).create(
-            :path => path,
-            :ensure => "file"
-        )
-
-        assert_nothing_raised {
-            assert_equal(:notice, file[:loglevel])
-        }
-
-        assert_nothing_raised {
-            file[:loglevel] = "warning"
-        }
-
-        assert_nothing_raised {
-            assert_equal(:warning, file[:loglevel])
-        }
     end
 
     def test_destination_matching

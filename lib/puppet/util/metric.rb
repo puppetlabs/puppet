@@ -5,12 +5,23 @@ require 'puppet'
 class Puppet::Util::Metric
     
     # Load the library as a feature, so we can test its presence.
+    # It's only used by this class, so there's no reason to move it
+    # to the main feature list.
     Puppet.features.add :rrd, :libs => 'RRDtool'
 
     attr_accessor :type, :name, :value, :label
     attr_writer :values
 
     attr_writer :basedir
+
+    # Return a specific value
+    def [](name)
+        if value = @values.find { |v| v[0] == name }
+            return value[2]
+        else
+            return nil
+        end
+    end
 
     def basedir
         if defined? @basedir
@@ -93,11 +104,7 @@ class Puppet::Util::Metric
     def initialize(name,label = nil)
         @name = name.to_s
 
-        if label
-            @label = label
-        else
-            @label = name.to_s.capitalize.gsub("_", " ")
-        end
+        @label = label || labelize(name)
 
         @values = []
     end
@@ -107,9 +114,7 @@ class Puppet::Util::Metric
     end
 
     def newvalue(name,value,label = nil)
-        unless label
-            label = name.to_s.capitalize.gsub("_", " ")
-        end
+        label ||= labelize(name)
         @values.push [name,label,value]
     end
 
@@ -145,7 +150,16 @@ class Puppet::Util::Metric
     def values
         @values.sort { |a, b| a[1] <=> b[1] }
     end
+
+    private
+    
+    # Convert a name into a label.
+    def labelize(name)
+        name.to_s.capitalize.gsub("_", " ")
+    end
 end
 
+# This is necessary because we changed the class path in early 2007,
+# and reports directly yaml-dump these metrics, so both client and server
+# have to agree on the class name.
 Puppet::Metric = Puppet::Util::Metric
-

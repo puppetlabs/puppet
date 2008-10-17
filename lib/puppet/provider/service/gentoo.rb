@@ -6,6 +6,8 @@ Puppet::Type.type(:service).provide :gentoo, :parent => :init do
 
     commands :update => "/sbin/rc-update"
 
+    confine :operatingsystem => :gentoo
+
     defaultfor :operatingsystem => :gentoo
 
     def self.defpath

@@ -24,16 +24,20 @@ class Puppet::Parser::AST
         # and name.
         def evaluate(scope)
             title = @title.safeevaluate(scope)
+            title = [title] unless title.is_a?(Array)
+            
             if @type.to_s.downcase == "class"
-                objtype = "class"
-                title = qualified_class(scope, title)
+                resource_type = "class"
+                title = title.collect { |t| qualified_class(scope, t) }
             else
-                objtype = qualified_type(scope)
+                resource_type = qualified_type(scope)
             end
 
-            return Puppet::Parser::Resource::Reference.new(
-                :type => objtype, :title => title
-            )
+            title = title.collect { |t| Puppet::Parser::Resource::Reference.new(
+                :type => resource_type, :title => t
+            ) }
+            return title.pop if title.length == 1
+            return title
         end
 
         # Look up a fully qualified class name.

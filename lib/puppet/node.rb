@@ -15,12 +15,7 @@ class Puppet::Node
 
     attr_accessor :name, :classes, :parameters, :source, :ipaddress
     attr_reader :time
-
-    # Set the environment, making sure that it's valid.
-    def environment=(value)
-        raise(ArgumentError, "Invalid environment %s" % value) unless Puppet::Node::Environment.valid?(value)
-        @environment = value
-    end
+    attr_writer :environment
 
     # Do not return environments that are the empty string, and use
     # explicitly set environments, then facts, then a central env
@@ -28,7 +23,6 @@ class Puppet::Node
     def environment
         unless @environment
             if env = parameters["environment"]
-                raise(ArgumentError, "Invalid environment %s from parameters" % env) unless Puppet::Node::Environment.valid?(env)
                 @environment = env
             else
                 @environment = Puppet::Node::Environment.new.name.to_s

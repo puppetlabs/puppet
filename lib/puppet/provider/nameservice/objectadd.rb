@@ -2,15 +2,6 @@ require 'puppet/provider/nameservice'
 
 class Puppet::Provider::NameService
 class ObjectAdd < Puppet::Provider::NameService
-    # Does the object already exist?
-    def self.exists?(obj)
-        if obj.getinfo(true)
-            return true
-        else
-            return false
-        end
-    end
-    
     def deletecmd
         [command(:delete), @resource[:name]]
     end
@@ -23,7 +14,7 @@ class ObjectAdd < Puppet::Provider::NameService
 
     def modifycmd(param, value)
         cmd = [command(:modify), flag(param), value]
-        if @resource.allowdupe? && ((param == :uid and self.class.name == :useradd) || (param == :gid and self.class.name == :groupadd))
+        if @resource.allowdupe? && ((param == :uid) || (param == :gid and self.class.name == :groupadd))
             cmd << "-o"
         end
         cmd << @resource[:name]

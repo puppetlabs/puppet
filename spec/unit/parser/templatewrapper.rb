@@ -55,6 +55,20 @@ describe Puppet::Parser::TemplateWrapper do
         tw.has_variable?("chicken").should eql(false)
     end
 
+    it "should allow you to retrieve the defined classes with classes" do
+        catalog = mock 'catalog', :classes => ["class1", "class2"]
+        @scope.expects(:catalog).returns( catalog )
+        tw = Puppet::Parser::TemplateWrapper.new(@scope, @file)
+        tw.classes().should == ["class1", "class2"]
+    end
+
+    it "should allow you to retrieve the defined tags with tags" do
+        catalog = mock 'catalog', :tags => ["tag1", "tag2"]
+        @scope.expects(:catalog).returns( catalog )
+        tw = Puppet::Parser::TemplateWrapper.new(@scope, @file)
+        tw.tags().should == ["tag1","tag2"]
+    end
+
     it "should set all of the scope's variables as instance variables" do
         template_mock = mock("template", :result => "woot!")
         File.expects(:read).with("/tmp/fake_template").returns("template contents")

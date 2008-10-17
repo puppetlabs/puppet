@@ -4,5 +4,8 @@ Puppet::Type.type(:package).provide :sunfreeware, :parent => :blastwave, :source
         At this point, support is exactly the same as ``blastwave`` support and
         has not actually been tested."
     commands :pkgget => "pkg-get"
+
+    confine :operatingsystem => :solaris
+
 end
 

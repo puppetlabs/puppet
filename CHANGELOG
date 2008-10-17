@@ -7,9 +7,100 @@
     whether we should even use a CRL.  This way we aren't trying to
     set file paths to 'false' to disable the CRL.
 
-0.24.x
+0.24.6
+    Fixed #1655 - Provider::Confine::Variable tests are broken
+
+    Fixed #1646 - service puppet status does not work as non-root 
+    on redhat system
+
+    Fixed #1649 - Updated OSX package cleanup
+  
+    Fixed #1647 - puppetdoc -r providers now working again
+
+    Fixed #1639 - uninitialized constant Puppet::Type::User::ProviderUseradd
+
+    Fixed #1637 - With an inexistant (global) templatedir, modules 
+    can't access their templates
+
+    Fixed #1202 - Collection attribute matching doesn't parse arrays
+
+    Fixed #1473 - Puppetd stops with error after puppetmasterd 
+    is unavailable
+
+    Fixed #1354 - yum provider problems with RHEL 3
+
+    Fixed #1633 - Added support for --detailed-exits to bin/puppet
+
+    Fixed #381 - Allow Allow multiple overrides in one statement
+
+    Fixing #947 - pluginsync no longer fails poorly when no plugins exist
+
+    Fixed #981 - Removed 'Adding aliases' info message
+    
+    Fixing #1089 - Log messages are now tagged with the log level,
+    making it easier to match messages in the 'tagmail' report.
+    
+    Fixing #1098 - Multiline strings now correctly increment the line count
+
+    Fixing #1614 - Environments no longer have to be listed out
+
+    Fixed #1628 - Changed node search to use certname rather than Facter 
+    hostname
+    
+    Fixed #1613 - The client environment will be substituted when looking 
+    up settings.
+
+    Updated puppet binary documentation 
+
+    Feature #1624 - Added RBAC roles to solaris user provider
+
+    Fixed #1586 - Specifying "fully qualified" package names in Gentoo
+
+    Fixed #1620 - Add 'sles' to Puppet confines when 'suse' is used
+
+    Fixed #1585 - Allow complex 'if' and variable expressions
+
+    Fixed #1564 - Saving File#checksum to state.yaml broken
+
+    Fixed #1603 - Added support for running Puppet inside a Rack application
+    (mod_rails) with Passenger and Apache
+
+    Fixed #1596 - Deploying file resources with ++ generates error
+
+    Modified the group and zone resource types to no longer call
+    'currentpropvalues' as a means of setting all values to absent.
+    There should be no behaviour change from this change.
+
+    Modified the behaviour of resource-level 'retrieve' -- it only
+    calls 'retrieve' on each property if the resource exists.
+
+    Fixed #1622 - Users and their groups should again add in one transaction
+
+    Fixed #791 - You should now be able to create and find a user/group in one transaction.
+
+    Fixed #1610 - Raise "Filebucketed" messages to Notice priority
+    
+    FIxed #1530 - ssh_authorized_keys provider does not crash anymore on SSH type 1 keys
+
+    Added a number of confines to package providers
+
+    Fixed #1609 - Added confines for the Gentoo, FreeBSD and 
+    SMF (Solaris) service providers 
+
+    Fixed #1608 - Added ubuntu to defaultfor for apt provider
+
+    Fixed #1607 - Added ubuntu to defaultfor for Debian service
+    provider
+
+    Fixed #1045 - Multiple metaparams all get added to resources.
+    
+    Fixed #1472 -- defined, exported resources in the current compile 
+    now get expanded correctly.
+
     Fixed #1595 - Internally, Property#retrieve is no longer called
     when no 'should' value is available for a resource.
+
+    Fixed #1588 - Fixed puppetca --clean --all 
 
     Fixed #1584 - Added support for appended variables
 

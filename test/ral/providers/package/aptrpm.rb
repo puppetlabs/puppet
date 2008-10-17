@@ -39,7 +39,7 @@ class AptrpmPackageProviderTest < PuppetTest::TestCase
                          'faff'
                     ).returns(0)
         
-        pkg.evaluate.each { |state| state.transaction = self; state.forward }
+        pkg.evaluate.each { |state| state.forward }
     end
     
     def test_uninstall
@@ -66,7 +66,7 @@ class AptrpmPackageProviderTest < PuppetTest::TestCase
                         'faff'
                     ).returns(0)
         
-        pkg.evaluate.each { |state| state.transaction = self; state.forward }
+        pkg.evaluate.each { |state| state.forward }
     end
 
     # LAK: I don't know where this test will ever return true..

@@ -164,56 +164,6 @@ class TestUser < Test::Unit::TestCase
         assert_equal(old, user.provider.shell, "Shell was not reverted")
     end
 
-    def attrtest_gid(user)
-        obj = nil
-        old = user.provider.gid
-        comp = mk_catalog("gidtest", user)
-
-        user.retrieve
-
-        user[:gid] = old
-
-        trans = assert_events([], comp, "user")
-
-        newgid = %w{nogroup nobody staff users daemon}.find { |gid|
-                begin
-                    group = Etc.getgrnam(gid)
-                rescue ArgumentError => detail
-                    next
-                end
-                old != group.gid and group.gid > 0
-        }
-
-        unless newgid
-            $stderr.puts "Cannot find alternate group; skipping gid test"
-            return
-        end
-
-        # first test by name
-        assert_nothing_raised("Failed to specify group by name") {
-            user[:gid] = newgid
-        }
-
-        trans = assert_events([:user_changed], comp, "user")
-
-        # then by id
-        newgid = Etc.getgrnam(newgid).gid
-
-        assert_nothing_raised("Failed to specify group by id for %s" % newgid) {
-            user[:gid] = newgid
-        }
-
-        user.retrieve
-
-        assert_events([], comp, "user")
-
-        assert_equal(newgid, user.provider.gid, "GID was not changed")
-
-        assert_rollback_events(trans, [:user_changed], "user")
-
-        assert_equal(old, user.provider.gid, "GID was not reverted")
-    end
-
     def attrtest_uid(user)
         obj = nil
         comp = mk_catalog("uidtest", user)
