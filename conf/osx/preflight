@@ -8,4 +8,5 @@
 # ${3} is the destination volume so that this works correctly
 # when being installed to volumes other than the current OS.
 
-rm -Rf "${3}{SITELIBDIR}/puppet*"
+/bin/rm -Rf "${3}{SITELIBDIR}/puppet"
+/bin/rm -Rf "${3}{SITELIBDIR}/puppet.rb"

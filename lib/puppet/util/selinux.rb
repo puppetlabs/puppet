@@ -20,7 +20,7 @@ module Puppet::Util::SELinux
         end
         context = ""
         begin
-            execpipe("stat -c %C #{file}") do |out|
+            execpipe("/usr/bin/stat -c %C #{file}") do |out|
                 out.each do |line|
                     context << line
                 end
@@ -106,13 +106,7 @@ module Puppet::Util::SELinux
                 flag = ""
         end
 
-        Puppet.debug "Running chcon #{flag} #{value} #{file}"
-        retval = system("chcon #{flag} #{value} #{file}")
-        unless retval
-            error = Puppet::Error.new("failed to chcon %s" % [@resource[:path]])
-            raise error
-            return false
-        end
+        execute(["/usr/bin/chcon","-h",flag,value,file])
         return true
     end
 

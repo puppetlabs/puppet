@@ -84,7 +84,7 @@ case "$1" in
 	[ -f "$pidfile" ] && restart
 	;;
   status)
-        status $puppetd
+        status -p "$pidfile" $puppetd
         RETVAL=$?
 	;;
   once)

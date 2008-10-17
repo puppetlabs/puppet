@@ -1,4 +1,13 @@
 0.24.6
+    Fixed #1655 - Provider::Confine::Variable tests are broken
+
+    Fixed #1646 - service puppet status does not work as non-root 
+    on redhat system
+
+    Fixed #1649 - Updated OSX package cleanup
+  
+    Fixed #1647 - puppetdoc -r providers now working again
+
     Fixed #1639 - uninitialized constant Puppet::Type::User::ProviderUseradd
 
     Fixed #1637 - With an inexistant (global) templatedir, modules 

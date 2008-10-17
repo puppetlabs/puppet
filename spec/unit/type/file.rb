@@ -41,12 +41,36 @@ describe Puppet::Type.type(:file) do
             lambda { @file.retrieve }.should raise_error(Puppet::Error)
         end
 
-        it "should always have a checksum type of md5" do
+        it "should have a checksum type of md5 and warn if retrieving with mtime" do
             File.open(@path, "w") do |f| f.puts "foo" end
+            @file.property(:checksum).expects(:warning).with("Files with source set must use md5 as checksum. Forcing to md5 from %s for %s" % [:mtime, @path]) 
             @file[:checksum] = :mtime
             @file.property(:checksum).checktype.should == :md5
             @file.property(:checksum).retrieve.should == "{md5}d3b07384d113edec49eaa6238ad5ff00"
+        end
+
+        it "should have a checksum type of md5 and warn if retrieving with md5lite" do
+            File.open(@path, "w") do |f| f.puts "foo" end
+            @file.property(:checksum).expects(:warning).with("Files with source set must use md5 as checksum. Forcing to md5 from %s for %s" % [:md5lite, @path]) 
+            @file[:checksum] = :md5lite
+            @file.property(:checksum).checktype.should == :md5
+            @file.property(:checksum).retrieve.should == "{md5}d3b07384d113edec49eaa6238ad5ff00"
+        end
+
+
+        it "should have a checksum type of md5 if getsum called with mtime" do
+            File.open(@path, "w") do |f| f.puts "foo" end
+            @file[:checksum] = :md5
+            @file.property(:checksum).checktype.should == :md5
             @file.property(:checksum).getsum(:mtime).should == "{md5}d3b07384d113edec49eaa6238ad5ff00"
+        end
+
+        it "should not warn if sumtype set to md5" do
+            File.open(@path, "w") do |f| f.puts "foo" end
+            @file.property(:checksum).expects(:warning).never
+            @file[:checksum] = :md5
+            @file.property(:checksum).checktype.should == :md5
+            @file.property(:checksum).retrieve.should == "{md5}d3b07384d113edec49eaa6238ad5ff00"
         end
 
     end
