@@ -62,9 +62,15 @@ describe Puppet::Parser::TemplateWrapper do
         tw.classes().should == ["class1", "class2"]
     end
 
-    it "should allow you to retrieve the defined tags with tags" do
+    it "should allow you to retrieve all the tags with all_tags" do
         catalog = mock 'catalog', :tags => ["tag1", "tag2"]
         @scope.expects(:catalog).returns( catalog )
+        tw = Puppet::Parser::TemplateWrapper.new(@scope, @file)
+        tw.all_tags().should == ["tag1","tag2"]
+    end
+
+    it "should allow you to retrieve the tags defined in the current scope" do
+        @scope.expects(:tags).returns( ["tag1", "tag2"] )
         tw = Puppet::Parser::TemplateWrapper.new(@scope, @file)
         tw.tags().should == ["tag1","tag2"]
     end

@@ -42,8 +42,13 @@ class Puppet::Parser::TemplateWrapper
         return scope.catalog.classes
     end
 
-    # Allow templates to access the defined tags
+    # Allow templates to access the tags defined in the current scope
     def tags
+        return scope.tags
+    end
+
+    # Allow templates to access the all the defined tags
+    def all_tags
         return scope.catalog.tags
     end
 
