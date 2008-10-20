@@ -1,4 +1,6 @@
 0.24.6
+    Fixed #1662 - Configuration Reference still references 'section'
+
     Fixed #1460 - enhance redhat puppetmaster init.d script to easy start puppetmaster as a mongrel cluster
 
     Fixed #1663 - Regression relating to facter fact naming from 0.24.5
