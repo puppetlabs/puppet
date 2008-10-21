@@ -1,4 +1,8 @@
 0.24.6
+    Adding support to the user type for: profiles, auths, project, 
+    key/value pairs (extension to Solaris RBAC support added in
+    0.24.6)
+
     Fixed #1662 - Configuration Reference still references 'section'
 
     Fixed #1460 - enhance redhat puppetmaster init.d script to easy start puppetmaster as a mongrel cluster

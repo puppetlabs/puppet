@@ -32,13 +32,19 @@ describe user do
         user.provider_feature(:manages_passwords).should_not be_nil
     end
 
+    it "should have a manages_solaris_rbac feature" do
+        user.provider_feature(:manages_solaris_rbac).should_not be_nil
+    end
+
     describe "instances" do
         it "should have a valid provider" do
             user.create(:name => "foo").provider.class.ancestors.should be_include(Puppet::Provider)
         end
     end
 
-    [:ensure, :uid, :gid, :home, :comment, :shell, :password, :groups].each do |property|
+    properties = [:ensure, :uid, :gid, :home, :comment, :shell, :password, :groups, :roles, :auths, :profiles, :project, :keys]
+
+    properties.each do |property|
         it "should have a %s property" % property do
             user.attrclass(property).ancestors.should be_include(Puppet::Property)
         end
@@ -182,6 +188,18 @@ describe user do
 
         it "should not include the password in the change log when changing the password" do
             @password.change_to_s("other", "mypass").should_not be_include("mypass")
+        end
+    end
+
+    describe "when manages_solaris_rbac is enabled" do
+        before do
+            @provider.stubs(:satisfies?).returns(false)
+            @provider.expects(:satisfies?).with(:manages_solaris_rbac).returns(true)
+        end
+
+        it "should support a :role value for ensure" do
+            @ensure = user.attrclass(:ensure).new(:resource => @resource)
+            lambda { @ensure.should = :role }.should_not raise_error
         end
     end
 end
