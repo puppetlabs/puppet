@@ -79,7 +79,13 @@ fstatement:   NAME LPAREN funcvalues RPAREN {
         :arguments => args,
         :ftype => :statement
 }
-            | NAME LPAREN RPAREN {
+ | NAME LPAREN funcvalues COMMA RPAREN {
+    args = aryfy(val[2])
+    result = ast AST::Function,
+        :name => val[0],
+        :arguments => args,
+        :ftype => :statement
+}            | NAME LPAREN RPAREN {
     result = ast AST::Function,
         :name => val[0],
         :arguments => AST::ASTArray.new({}),
@@ -93,14 +99,21 @@ fstatement:   NAME LPAREN funcvalues RPAREN {
         :ftype => :statement
 }
 
-funcvalues:       namestrings
-                | resourcerefs
-
-namestrings:      namestring
-                | namestrings COMMA namestring {
+funcvalues:       namestring
+                | resourceref
+                | funcvalues COMMA namestring {
     result = aryfy(val[0], val[2])
     result.line = @lexer.line
     result.file = @lexer.file
+}
+                | funcvalues COMMA resourceref {
+    unless val[0].is_a?(AST::ASTArray)
+        val[0] = aryfy(val[0])
+    end
+
+    val[0].push(val[2])
+
+    result = val[0]
 }
 
 # This is *almost* an rvalue, but I couldn't get a full
@@ -115,17 +128,6 @@ namestring:       name
                 | CLASSNAME {
                     result = ast AST::Name, :value => val[0]
                 }
-
-resourcerefs:     resourceref
-                | resourcerefs COMMA resourceref {
-    unless val[0].is_a?(AST::ASTArray)
-        val[0] = aryfy(val[0])
-    end
-
-    val[0].push(val[2])
-
-    result = val[0]
-}
 
 resource:       classname LBRACE resourceinstances endsemi RBRACE {
     array = val[2]
@@ -696,6 +698,13 @@ variable:     VARIABLE {
 }
 
 array:        LBRACK rvalues RBRACK {
+    if val[1].instance_of?(AST::ASTArray)
+        result = val[1]
+    else
+        result = ast AST::ASTArray, :children => [val[1]]
+    end
+}
+            | LBRACK rvalues COMMA RBRACK {
     if val[1].instance_of?(AST::ASTArray)
         result = val[1]
     else

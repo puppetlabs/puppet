@@ -66,6 +66,19 @@ class TestParser < Test::Unit::TestCase
         }
     end
 
+    def test_arrayrvalueswithtrailingcomma
+        parser = mkparser
+        ret = nil
+        file = tempfile()
+        assert_nothing_raised {
+            parser.string = "file { \"#{file}\": mode => [755, 640,] }"
+        }
+
+        assert_nothing_raised {
+            ret = parser.parse
+        }
+    end
+
     def mkmanifest(file)
         name = File.join(tmpdir, "file%s" % rand(100))
         @@tmpfiles << name

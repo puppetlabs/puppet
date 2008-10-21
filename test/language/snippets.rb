@@ -446,6 +446,20 @@ class TestSnippets < Test::Unit::TestCase
             "Did not make second file from duplicate subclass names")
     end
 
+    def snippet_funccomma
+        assert_file("/tmp/funccomma1",
+            "Did not make first file from trailing function comma")
+        assert_file("/tmp/funccomma2",
+            "Did not make second file from trailing function comma")
+    end
+
+    def snippet_arraytrailingcomma
+        assert_file("/tmp/arraytrailingcomma1",
+            "Did not make first file from array")
+        assert_file("/tmp/arraytrailingcomma2",
+            "Did not make second file from array")
+    end
+
     # Iterate across each of the snippets and create a test.
     Dir.entries(snippetdir).sort.each { |file|
         next if file =~ /^\./

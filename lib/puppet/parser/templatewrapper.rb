@@ -42,8 +42,13 @@ class Puppet::Parser::TemplateWrapper
         return scope.catalog.classes
     end
 
-    # Allow templates to access the defined tags
+    # Allow templates to access the tags defined in the current scope
     def tags
+        return scope.tags
+    end
+
+    # Allow templates to access the all the defined tags
+    def all_tags
         return scope.catalog.tags
     end
 
@@ -78,7 +83,8 @@ class Puppet::Parser::TemplateWrapper
         # to the regular methods.
         benchmark(:debug, "Bound template variables for #{file}") do
             scope.to_hash.each { |name, value| 
-                instance_variable_set("@#{name}", value) 
+                realname = name.gsub(/[^\w]/, "_")
+                instance_variable_set("@#{realname}", value)
             }
         end
 
