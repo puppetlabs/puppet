@@ -1,6 +1,7 @@
 require 'etc'
 require 'facter'
 require 'puppet/property/list'
+require 'puppet/property/keyvalue'
 
 module Puppet
     newtype(:user) do
@@ -137,6 +138,7 @@ module Puppet
             end
         end
 
+
         newproperty(:groups, :parent => Puppet::Property::List) do
             desc "The groups of which the user is a member.  The primary
                 group should not be listed.  Multiple groups should be
@@ -147,25 +149,7 @@ module Puppet
                     raise ArgumentError, "Group names must be provided, not numbers"
                 end
                 if value.include?(",")
-                    raise ArgumentError, "Group names must be provided as an array, not as a comma-separated list '%s'" % value
-                end
-            end
-        end
-
-        newproperty(:roles, :parent => Puppet::Property::List, :required_features => :manages_solaris_rbac) do
-            desc "The roles of which the user the user has.  The roles should be
-                specified as an array."
-
-            def membership
-                :role_membership
-            end
-
-            validate do |value|
-                if value =~ /^\d+$/
-                    raise ArgumentError, "Role names must be provided, not numbers"
-                end
-                if value.include?(",")
-                    raise ArgumentError, "Role names must be provided as an array, not a comma-separated list"
+                    raise ArgumentError, "Group names must be provided as an array, not a comma-separated list"
                 end
             end
         end
@@ -187,19 +171,9 @@ module Puppet
             defaultto :minimum
         end
 
-        newparam(:role_membership) do
-            desc "Whether specified roles should be treated as the only roles
-                of which the user is a member or whether they should merely
-                be treated as the minimum membership list."
-
-            newvalues(:inclusive, :minimum)
-
-            defaultto :minimum
-        end
-
         newparam(:allowdupe, :boolean => true) do
             desc "Whether to allow duplicate UIDs."
-                
+
             newvalues(:true, :false)
 
             defaultto false
@@ -240,7 +214,7 @@ module Puppet
                             gobj.should(:gid) == group
                         }
                             autos << obj
-                            
+
                         end
                     else
                         autos << group
@@ -272,6 +246,118 @@ module Puppet
                 end
                 prophash
             }
+        end
+
+        newproperty(:roles, :parent => Puppet::Property::List, :required_features => :manages_solaris_rbac) do
+            desc "The roles the user has.  Multiple roles should be
+                specified as an array."
+
+            def membership
+                :role_membership
+            end
+
+            validate do |value|
+                if value =~ /^\d+$/
+                    raise ArgumentError, "Role names must be provided, not numbers"
+                end
+                if value.include?(",")
+                    raise ArgumentError, "Role names must be provided as an array, not a comma-separated list"
+                end
+            end
+        end
+
+        newparam(:role_membership) do
+            desc "Whether specified roles should be treated as the only roles
+                of which the user is a member or whether they should merely
+                be treated as the minimum membership list."
+
+            newvalues(:inclusive, :minimum)
+
+            defaultto :minimum
+        end
+
+        newproperty(:auths, :parent => Puppet::Property::List, :required_features => :manages_solaris_rbac) do
+            desc "The auths the user has.  Multiple auths should be
+                specified as an array."
+
+            def membership
+                :auth_membership
+            end
+
+            validate do |value|
+                if value =~ /^\d+$/
+                    raise ArgumentError, "Auth names must be provided, not numbers"
+                end
+                if value.include?(",")
+                    raise ArgumentError, "Auth names must be provided as an array, not a comma-separated list"
+                end
+            end
+        end
+
+        newparam(:auth_membership) do
+            desc "Whether specified auths should be treated as the only auths
+                of which the user is a member or whether they should merely
+                be treated as the minimum membership list."
+
+            newvalues(:inclusive, :minimum)
+
+            defaultto :minimum
+        end
+
+        newproperty(:profiles, :parent => Puppet::Property::List, :required_features => :manages_solaris_rbac) do
+            desc "The profiles the user has.  Multiple profiles should be
+                specified as an array."
+
+            def membership
+                :profile_membership
+            end
+
+            validate do |value|
+                if value =~ /^\d+$/
+                    raise ArgumentError, "Profile names must be provided, not numbers"
+                end
+                if value.include?(",")
+                    raise ArgumentError, "Profile names must be provided as an array, not a comma-separated list"
+                end
+            end
+        end
+
+        newparam(:profile_membership) do
+            desc "Whether specified roles should be treated as the only roles
+                of which the user is a member or whether they should merely
+                be treated as the minimum membership list."
+
+            newvalues(:inclusive, :minimum)
+
+            defaultto :minimum
+        end
+
+        newproperty(:keys, :parent => Puppet::Property::KeyValue, :required_features => :manages_solaris_rbac) do
+            desc "Specify user attributes in an array of keyvalue pairs"
+
+            def membership
+                :key_membership
+            end
+
+            validate do |value|
+                unless value.include?("=")
+                    raise ArgumentError, "key value pairs must be seperated by an ="
+                end
+            end
+        end
+
+        newparam(:key_membership) do
+            desc "Whether specified key value pairs should be treated as the only attributes
+                of the user or whether they should merely
+                be treated as the minimum list."
+
+            newvalues(:inclusive, :minimum)
+
+            defaultto :minimum
+        end
+
+        newproperty(:project, :required_features => :manages_solaris_rbac) do
+            desc "The name of the project associated with a user"
         end
     end
 end

@@ -117,7 +117,7 @@ describe Puppet::Util::SELinux do
 
         it "should use chcon to set a context" do
             self.expects(:selinux_support?).returns true
-            self.expects(:execute).with(["/usr/bin/chcon","-h","","user_u:role_r:type_t:s0","/foo"]).returns 0
+            self.expects(:execute).with(["/usr/bin/chcon","-h","user_u:role_r:type_t:s0","/foo"]).returns 0
             set_selinux_context("/foo", "user_u:role_r:type_t:s0").should be_true
         end
 

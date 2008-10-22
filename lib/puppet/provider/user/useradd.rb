@@ -23,8 +23,22 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
         has_feature :manages_passwords
     end
 
-    def addcmd
-        cmd = [command(:add)]
+    def check_allow_dup
+        @resource.allowdupe? ? ["-o"] : []
+    end
+
+    def check_manage_home
+        cmd = []
+        if @resource.managehome?
+            cmd << "-m"
+        elsif %w{Fedora RedHat}.include?(Facter.value("operatingsystem"))
+            cmd << "-M"
+        end
+        cmd
+    end
+
+    def add_properties
+        cmd = []
         Puppet::Type.type(:user).validproperties.each do |property|
             next if property == :ensure
             # the value needs to be quoted, mostly because -c might
@@ -33,20 +47,15 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
                 cmd << flag(property) << value
             end
         end
-
-        if @resource.allowdupe?
-            cmd << "-o"
-        end
-
-        if @resource.managehome?
-            cmd << "-m"
-        elsif %w{Fedora RedHat}.include?(Facter.value("operatingsystem"))
-            cmd << "-M"
-        end
-
-        cmd << @resource[:name]
-
         cmd
+    end
+
+    def addcmd
+        cmd = [command(:add)]
+        cmd += add_properties
+        cmd += check_allow_dup
+        cmd += check_manage_home
+        cmd << @resource[:name]
     end
 
     # Retrieve the password using the Shadow Password library
