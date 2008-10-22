@@ -86,6 +86,15 @@ describe Puppet::Parser::TemplateWrapper do
         @tw.instance_variable_get("@one").should == "foo"
      end
 
+     it "should not error out if one of the variables is a symbol" do
+        template_mock = mock("template", :result => "woot!")
+        File.expects(:read).with("/tmp/fake_template").returns("template contents")
+        ERB.expects(:new).with("template contents", 0, "-").returns(template_mock)
+
+        @scope.expects(:to_hash).returns(:_timestamp => "1234")
+        @tw.result
+     end
+
      %w{! . ; :}.each do |badchar|
        it "should translate #{badchar} to _ when setting the instance variables" do
         template_mock = mock("template", :result => "woot!")
