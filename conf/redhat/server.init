@@ -1,7 +1,8 @@
 #!/bin/bash
 # puppetmaster  This shell script enables the puppetmaster server.
 #
-# Author:       Duane Griffin <d.griffin@psenterprise.com>
+# Authors:       Duane Griffin <d.griffin@psenterprise.com>
+#                Peter Meier <peter.meier@immerda.ch> (Mongrel enhancements)
 #
 # chkconfig: - 65 45
 #
@@ -22,6 +23,11 @@ fi
 
 PUPPETMASTER_OPTS=""
 [ -n "$PUPPETMASTER_MANIFEST" ] && PUPPETMASTER_OPTS="--manifest=${PUPPETMASTER_MANIFEST}"
+if [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -gt 1 ]; then
+    PUPPETMASTER_OPTS="$PUPPETMASTER_OPTS --servertype=mongrel"
+elif [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -eq 1 ]; then
+    PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} --masterport=${PUPPETMASTER_PORTS[0]}" 
+fi
 [ -n "$PUPPETMASTER_LOG" ] && PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} --logdest=${PUPPETMASTER_LOG}"
 PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} \
 	${PUPPETMASTER_EXTRA_OPTS}"
@@ -36,8 +42,16 @@ start() {
 
 	# Confirm the manifest exists
 	if [ -r $PUPPETMASTER_MANIFEST ]; then
-		daemon $PUPPETMASTER $PUPPETMASTER_OPTS
-		RETVAL=$?
+        if [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -gt 1 ]; then
+            for ((i=0; i<${#PUPPETMASTER_PORTS[@]}; i++)); do
+                echo -en "\nPort: ${PUPPETMASTER_PORTS[$i]}"
+                daemon $PUPPETMASTER $PUPPETMASTER_OPTS --masterport=${PUPPETMASTER_PORTS[$i]} --pidfile=/var/run/puppet/puppetmaster.${PUPPETMASTER_PORTS[$i]}.pid
+                ret=$?; [ $ret != 0 ] && RETVAL=$ret
+            done
+        else
+            daemon $PUPPETMASTER $PUPPETMASTER_OPTS
+            RETVAL=$?
+        fi
 	else
 		failure $"Manifest does not exist: $PUPPETMASTER_MANIFEST"
 		echo
@@ -50,8 +64,16 @@ start() {
 
 stop() {
 	echo -n  $"Stopping puppetmaster: "
-	killproc $PUPPETMASTER
-	RETVAL=$?
+    if [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -gt 1 ]; then
+        for ((i=0; i<${#PUPPETMASTER_PORTS[@]}; i++)); do
+            echo -en "\nPort: ${PUPPETMASTER_PORTS[$i]}"
+            killproc -p /var/run/puppet/puppetmaster.${PUPPETMASTER_PORTS[$i]}.pid puppetmaster 
+            ret=$?; [ $ret != 0 ] && RETVAL=$ret
+        done
+    else
+       killproc $PUPPETMASTER
+       RETVAL=$?
+    fi
 	echo
 	[ $RETVAL -eq 0 ] && rm -f "$lockfile"
 	return $RETVAL
@@ -65,6 +87,20 @@ restart() {
 genconfig() {
   echo -n $"Generate configuration puppetmaster: "
   $PUPPETMASTER $PUPPETMASTER_OPTS --genconfig
+}
+
+puppetmaster_status() {
+    if [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -gt 1 ]; then
+        for ((i=0; i<${#PUPPETMASTER_PORTS[@]}; i++)); do
+            echo -en "Port ${PUPPETMASTER_PORTS[$i]}: "
+            status -p /var/run/puppet/puppetmaster.${PUPPETMASTER_PORTS[$i]}.pid puppetmaster 
+            ret=$?; [ $ret != 0 ] && RETVAL=$ret
+        done 
+    else
+	    status $PUPPETMASTER
+        RETVAL=$?
+    fi
+    return $RETVAL
 }
 
 case "$1" in
@@ -81,8 +117,7 @@ case "$1" in
 	[ -f "$lockfile" ] && restart
 	;;
   status)
-	status $PUPPETMASTER
-        RETVAL=$?
+    puppetmaster_status
 	;;
   genconfig)
 	genconfig

@@ -62,9 +62,15 @@ describe Puppet::Parser::TemplateWrapper do
         tw.classes().should == ["class1", "class2"]
     end
 
-    it "should allow you to retrieve the defined tags with tags" do
+    it "should allow you to retrieve all the tags with all_tags" do
         catalog = mock 'catalog', :tags => ["tag1", "tag2"]
         @scope.expects(:catalog).returns( catalog )
+        tw = Puppet::Parser::TemplateWrapper.new(@scope, @file)
+        tw.all_tags().should == ["tag1","tag2"]
+    end
+
+    it "should allow you to retrieve the tags defined in the current scope" do
+        @scope.expects(:tags).returns( ["tag1", "tag2"] )
         tw = Puppet::Parser::TemplateWrapper.new(@scope, @file)
         tw.tags().should == ["tag1","tag2"]
     end
@@ -78,5 +84,27 @@ describe Puppet::Parser::TemplateWrapper do
         @tw.result
 
         @tw.instance_variable_get("@one").should == "foo"
-    end
+     end
+
+     it "should not error out if one of the variables is a symbol" do
+        template_mock = mock("template", :result => "woot!")
+        File.expects(:read).with("/tmp/fake_template").returns("template contents")
+        ERB.expects(:new).with("template contents", 0, "-").returns(template_mock)
+
+        @scope.expects(:to_hash).returns(:_timestamp => "1234")
+        @tw.result
+     end
+
+     %w{! . ; :}.each do |badchar|
+       it "should translate #{badchar} to _ when setting the instance variables" do
+        template_mock = mock("template", :result => "woot!")
+        File.expects(:read).with("/tmp/fake_template").returns("template contents")
+        ERB.expects(:new).with("template contents", 0, "-").returns(template_mock)
+
+        @scope.expects(:to_hash).returns("one#{badchar}" => "foo")
+        @tw.result
+
+        @tw.instance_variable_get("@one_").should == "foo"
+      end
+     end
 end

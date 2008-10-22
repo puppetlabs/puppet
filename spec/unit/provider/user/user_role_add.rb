@@ -42,9 +42,9 @@ describe provider_class do
     end
 
     describe "when calling transition" do
-        it "should return foomod setting the type to bar" do
+        it "should return the type set to whatever is passed in" do
             @provider.expects(:command).with(:modify).returns("foomod")
-            @provider.transition("bar").should == ["foomod", "-K", "type=bar", "fakeval"]
+            @provider.transition("bar").include?("type=bar")
         end
     end
 
@@ -115,17 +115,77 @@ describe provider_class do
         end
     end
 
-    describe "when getting roles" do
+    [:roles, :auths, :profiles].each do |val|
+        describe "when getting #{val}" do
+            it "should get the user_attributes" do
+                @provider.expects(:user_attributes)
+                @provider.send(val)
+            end
+
+            it "should get the #{val} attribute" do
+                attributes = mock("attributes")
+                attributes.expects(:[]).with(val)
+                @provider.stubs(:user_attributes).returns(attributes)
+                @provider.send(val)
+            end
+        end
+    end
+
+    describe "when getting the keys" do
         it "should get the user_attributes" do
             @provider.expects(:user_attributes)
-            @provider.roles
+            @provider.keys
         end
 
-        it "should get the :roles attribute" do
-            attributes = mock("attributes")
-            attributes.expects(:[]).with(:roles)
-            @provider.stubs(:user_attributes).returns(attributes)
-            @provider.roles
+        it "should call removed_managed_attributes" do
+            @provider.stubs(:user_attributes).returns({ :type => "normal", :foo => "something" })
+            @provider.expects(:remove_managed_attributes)
+            @provider.keys
+        end
+
+        it "should removed managed attribute (type, auths, roles, etc)" do
+            @provider.stubs(:user_attributes).returns({ :type => "normal", :foo => "something" })
+            @provider.keys.should == { :foo => "something" }
+        end
+    end
+
+    describe "when adding properties" do
+        it "should call build_keys_cmd" do
+            @resource.stubs(:should).returns ""
+            @resource.expects(:should).with(:keys).returns({ :foo => "bar" })
+            @provider.expects(:build_keys_cmd).returns([])
+            @provider.add_properties
+        end
+
+        it "should add the elements of the keys hash to an array" do
+            @resource.stubs(:should).returns ""
+            @resource.expects(:should).with(:keys).returns({ :foo => "bar"})
+            @provider.add_properties.must == ["-K", "foo=bar"]
+        end
+    end
+
+    describe "when calling build_keys_cmd" do
+        it "should build cmd array with keypairs seperated by -K ending with user" do
+            @provider.build_keys_cmd({"foo" => "bar", "baz" => "boo"}).should.eql? ["-K", "foo=bar", "-K", "baz=boo"]
+        end
+    end
+
+    describe "when setting the keys" do
+        before do
+            @provider.stubs(:is_role?).returns(false)
+        end
+
+        it "should run a command" do
+            @provider.expects(:run)
+            @provider.keys=({})
+        end
+
+        it "should build the command" do
+            @resource.stubs(:[]).with(:name).returns("someuser")
+            @provider.stubs(:command).returns("usermod")
+            @provider.expects(:build_keys_cmd).returns(["-K", "foo=bar"])
+            @provider.expects(:run).with(["usermod", "-K", "foo=bar", "someuser"], "modify attribute key pairs")
+            @provider.keys=({})
         end
     end
 end

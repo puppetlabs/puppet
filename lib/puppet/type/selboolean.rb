@@ -4,7 +4,8 @@
 
 module Puppet
     newtype(:selboolean) do
-        @doc = "Enable or disable SELinux booleans."
+        @doc = "Manages SELinux booleans on systems with SELinux support.  The supported booleans
+            are any of the ones found in /selinux/booleans/."
 
         newparam(:name) do
             desc "The name of the SELinux boolean to be managed."
@@ -12,13 +13,14 @@ module Puppet
         end
 
         newproperty(:value) do
-            desc "Whether the the SELinux boolean should be enabled or disabled.  Possible values are ``on`` or ``off``."
+            desc "Whether the the SELinux boolean should be enabled or disabled."
             newvalue(:on)
             newvalue(:off)
         end
 
         newparam(:persistent) do
-            desc "If set true, SELinux booleans will be written to disk and persist accross reboots."
+            desc "If set true, SELinux booleans will be written to disk and persist accross reboots.
+                The default is ``false``."
 
             defaultto :false
             newvalues(:true, :false)

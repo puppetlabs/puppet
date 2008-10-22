@@ -142,4 +142,36 @@ describe Puppet::Parser do
 
     end
 
+    describe Puppet::Parser, "when parsing function calls" do
+
+        it "should not raise errors with no arguments" do
+            lambda { @parser.parse("tag()") }.should_not raise_error
+        end
+
+        it "should not raise errors with rvalue function with no args" do
+            lambda { @parser.parse("$a = template()") }.should_not raise_error
+        end
+
+        it "should not raise errors with arguments" do
+            lambda { @parser.parse("notice(1)") }.should_not raise_error
+        end
+
+        it "should not raise errors with multiple arguments" do
+            lambda { @parser.parse("notice(1,2)") }.should_not raise_error
+        end
+
+        it "should not raise errors with multiple arguments and a trailing comma" do
+            lambda { @parser.parse("notice(1,2,)") }.should_not raise_error
+		end
+
+	end
+
+	describe Puppet::Parser, "when parsing arrays with trailing comma" do
+
+        it "should not raise errors with a trailing comma" do
+            lambda { @parser.parse("$a = [1,2,]") }.should_not raise_error
+        end
+
+    end
+
  end

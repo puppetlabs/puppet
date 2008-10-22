@@ -56,28 +56,45 @@ module Puppet
     end
 
     Puppet.type(:file).newproperty(:seluser, :parent => Puppet::SELFileContext) do
-        desc "What the SELinux User context of the file should be."
+        desc "What the SELinux user component of the context of the file should be.
+            Any valid SELinux user component is accepted.  For example ``user_u``.
+            If not specified it defaults to the value returned by matchpathcon for
+            the file, if any exists.  Only valid on systems with SELinux support
+            enabled."
 
         @event = :file_changed
         defaultto { self.retrieve_default_context(:seluser) }
     end
 
     Puppet.type(:file).newproperty(:selrole, :parent => Puppet::SELFileContext) do
-        desc "What the SELinux Role context of the file should be."
+        desc "What the SELinux role component of the context of the file should be.
+            Any valid SELinux role component is accepted.  For example ``role_r``.
+            If not specified it defaults to the value returned by matchpathcon for
+            the file, if any exists.  Only valid on systems with SELinux support
+            enabled."
 
         @event = :file_changed
         defaultto { self.retrieve_default_context(:selrole) }
     end
 
     Puppet.type(:file).newproperty(:seltype, :parent => Puppet::SELFileContext) do
-        desc "What the SELinux Type context of the file should be."
+        desc "What the SELinux type component of the context of the file should be.
+            Any valid SELinux type component is accepted.  For example ``tmp_t``.
+            If not specified it defaults to the value returned by matchpathcon for
+            the file, if any exists.  Only valid on systems with SELinux support
+            enabled."
 
         @event = :file_changed
         defaultto { self.retrieve_default_context(:seltype) }
     end
 
     Puppet.type(:file).newproperty(:selrange, :parent => Puppet::SELFileContext) do
-        desc "What the SELinux Range context of the file should be."
+        desc "What the SELinux range component of the context of the file should be.
+            Any valid SELinux range component is accepted.  For example ``s0`` or
+            ``SystemHigh``.  If not specified it defaults to the value returned by
+            matchpathcon for the file, if any exists.  Only valid on systems with
+            SELinux support enabled and that have support for MCS (Multi-Category
+            Security)."
 
         @event = :file_changed
         defaultto { self.retrieve_default_context(:selrange) }

@@ -49,10 +49,6 @@ On The Command-Line
 +++++++++++++++++++
 Every Puppet executable (with the exception of ``puppetdoc``) accepts all of
 the parameters below, but not all of the arguments make sense for every executable.
-Each parameter has a section listed with it in parentheses; often, that section
-will map to an executable (e.g., ``puppetd``), in which case it probably only
-makes sense for that one executable.  If ``main`` is listed as the section,
-it is most likely an option that is valid for everyone.
 
 I have tried to be as thorough as possible in the descriptions of the
 arguments, so it should be obvious whether an argument is appropriate or not.
@@ -121,9 +117,6 @@ Note that this invocation will replace the contents of any pre-existing
 `puppet.conf` file, so make a backup of your present config if it contains
 valuable information.
 
-All parameters will be under a single section heading matching the name of
-the process used to generate the configuraiton ('puppetd', in this case).
-  
 Like the `--genconfig` argument, the executables also accept a `--genmanifest`
 argument, which will generate a manifest that can be used to manage all of 
 Puppet's directories and files and prints it to standard output.  This can
