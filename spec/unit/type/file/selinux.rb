@@ -56,6 +56,7 @@ property = Puppet::Type.type(:file).attrclass(param)
         end
 
         it "should be able to detect matchpathcon defaults" do
+            @sel.stubs(:debug)
             @sel.expects(:get_selinux_default_context).with("/my/file").returns "user_u:role_r:type_t:s0"
             expectedresult = case param
                 when :seluser then "user_u"
