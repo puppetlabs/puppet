@@ -1,9 +1,0 @@
-#!/bin/sh -e
-
-if [ "$1" = "configure" ]; then
-	if [ -d /etc/puppet/ssl ] && [ ! -e /var/lib/puppet/ssl ] && grep -q 'ssldir=/var/lib/puppet/ssl' /etc/puppet/puppet.conf; then
-		mv /etc/puppet/ssl /var/lib/puppet/ssl
-	fi
-fi
-
-#DEBHELPER#

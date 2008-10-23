@@ -1,3 +1,9 @@
+0.24.x
+    Updated Red Hat spec file for 0.24.6
+
+    Removed conf/debian directory - Debian packaging information 
+    now maintained downstream
+
 0.24.6
     Adding support to the user type for: profiles, auths, project, 
     key/value pairs (extension to Solaris RBAC support added in

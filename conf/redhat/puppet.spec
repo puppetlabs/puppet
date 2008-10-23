@@ -1,41 +1,48 @@
 %{!?ruby_sitelibdir: %define ruby_sitelibdir %(ruby -rrbconfig -e 'puts Config::CONFIG["sitelibdir"]')}
-%define pbuild %{_builddir}/%{name}-%{version}
 %define confdir conf/redhat
 
-%define has_ruby_abi 0%{?fedora:%fedora} >= 5 || 0%{?rhel:%rhel} >= 5 || 0%{?centos:%centos} >= 5
-%define has_ruby_noarch %has_ruby_abi
+Name:           puppet
+Version:        0.24.6
+Release:        1%{?dist}
+Summary:        A network tool for managing many disparate systems
 
-Summary: A network tool for managing many disparate systems
-Name: puppet
-Version: 0.24.5
-Release: 1%{?dist}
-License: GPLv2+
-Group: System Environment/Base
+Group:          System Environment/Base
 
-URL: http://puppet.reductivelabs.com/
-Source: http://reductivelabs.com/downloads/puppet/%{name}-%{version}.tgz
+License:        GPLv2+
+URL:            http://puppet.reductivelabs.com/
+Source0:        http://reductivelabs.com/downloads/puppet/%{name}-%{version}.tgz
+BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-Requires: ruby >= 1.8.1
-%if %has_ruby_abi
-Requires: ruby(abi) = 1.8
+BuildRequires:  ruby >= 1.8.1
+
+%if 0%{?fedora} || 0%{?rhel} >= 5
+BuildArch:      noarch
+Requires:       ruby(abi) = 1.8
+Requires:       ruby-shadow
 %endif
-Requires: facter >= 1.1.4
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-%if %has_ruby_noarch
-BuildArchitectures: noarch
-%endif
-BuildRequires: ruby >= 1.8.1
+
+Requires:       facter >= 1.1.4
+Requires:       ruby >= 1.8.1
+Requires(pre):  shadow-utils
+Requires(post): chkconfig
+Requires(preun): chkconfig
+Requires(preun): initscripts
+Requires(postun): initscripts
 
 %description
-Puppet lets you centrally manage every important aspect of your system using a 
-cross-platform specification language that manages all the separate elements 
-normally aggregated in different files, like users, cron jobs, and hosts, 
+Puppet lets you centrally manage every important aspect of your system using a
+cross-platform specification language that manages all the separate elements
+normally aggregated in different files, like users, cron jobs, and hosts,
 along with obviously discrete elements like packages, services, and files.
 
 %package server
-Group: System Environment/Base
-Summary: Server for the puppet system management tool
-Requires: puppet = %{version}-%{release}
+Group:          System Environment/Base
+Summary:        Server for the puppet system management tool
+Requires:       puppet = %{version}-%{release}
+Requires(post): chkconfig
+Requires(preun): chkconfig
+Requires(preun): initscripts
+Requires(postun): initscripts
 
 %description server
 Provides the central puppet server daemon which provides manifests to clients.
@@ -45,7 +52,7 @@ The server can also function as a certificate authority and file server.
 %setup -q
 
 %build
-for f in bin/* ; do 
+for f in bin/* ; do
   sed -i -e '1c#!/usr/bin/ruby' $f
 done
 # Fix some rpmlint complaints
@@ -53,6 +60,9 @@ for f in mac_dscl.pp mac_dscl_revert.pp \
          mac_netinfo.pp mac_pkgdmg.pp ; do
   sed -i -e'1d' examples/$f
   chmod a-x examples/$f
+done
+for f in external/nagios.rb network/http_server/mongrel.rb relationship.rb; do
+  sed -i -e '1d' lib/puppet/$f
 done
 
 find examples/ -type f -empty | xargs rm
@@ -69,14 +79,14 @@ install -d -m0755 %{buildroot}%{_mandir}/man8
 install -d -m0755 %{buildroot}%{_localstatedir}/lib/puppet
 install -d -m0755 %{buildroot}%{_localstatedir}/run/puppet
 install -d -m0755 %{buildroot}%{_localstatedir}/log/puppet
-install -Dp -m0755 %{pbuild}/bin/* %{buildroot}%{_sbindir}
+install -Dp -m0755 bin/* %{buildroot}%{_sbindir}
 mv %{buildroot}%{_sbindir}/puppet %{buildroot}%{_bindir}/puppet
 mv %{buildroot}%{_sbindir}/ralsh %{buildroot}%{_bindir}/ralsh
 mv %{buildroot}%{_sbindir}/filebucket %{buildroot}%{_bindir}/filebucket
 mv %{buildroot}%{_sbindir}/puppetrun %{buildroot}%{_bindir}/puppetrun
 mv %{buildroot}%{_sbindir}/puppetdoc %{buildroot}%{_bindir}/puppetdoc
-install -Dp -m0644 %{pbuild}/lib/puppet.rb %{buildroot}%{ruby_sitelibdir}/puppet.rb
-cp -a %{pbuild}/lib/puppet %{buildroot}%{ruby_sitelibdir}
+install -Dp -m0644 lib/puppet.rb %{buildroot}%{ruby_sitelibdir}/puppet.rb
+cp -a lib/puppet %{buildroot}%{ruby_sitelibdir}
 find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -print0 | xargs -0 -r chmod a-x
 install -Dp -m0644 %{confdir}/client.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppet
 install -Dp -m0755 %{confdir}/client.init %{buildroot}%{_initrddir}/puppet
@@ -136,40 +146,59 @@ touch %{buildroot}%{_sysconfdir}/puppet/puppetd.conf
 %doc %{_mandir}/man8/puppetrun.8.gz
 
 %pre
-/usr/sbin/groupadd -r puppet 2>/dev/null || :
-/usr/sbin/useradd -g puppet -c "Puppet" \
-    -s /sbin/nologin -r -d /var/lib/puppet puppet 2> /dev/null || :
+getent group puppet >/dev/null || groupadd -r puppet
+getent passwd puppet >/dev/null || \
+useradd -r -g puppet -d %{_localstatedir}/lib/puppet -s /sbin/nologin \
+    -c "Puppet" puppet || :
+# ensure that old setups have the right puppet home dir
 if [ $1 -gt 1 ] ; then
-  /usr/sbin/usermod -d /var/lib/puppet puppet || :
+  usermod -d %{_localstatedir}/lib/puppet puppet || :
 fi
+
 %post
-/sbin/chkconfig --add puppet
-exit 0
+/sbin/chkconfig --add puppet || :
 
 %post server
-/sbin/chkconfig --add puppetmaster
+/sbin/chkconfig --add puppetmaster || :
 
 %preun
 if [ "$1" = 0 ] ; then
   /sbin/service puppet stop > /dev/null 2>&1
-  /sbin/chkconfig --del puppet
+  /sbin/chkconfig --del puppet || :
 fi
 
 %preun server
 if [ "$1" = 0 ] ; then
   /sbin/service puppetmaster stop > /dev/null 2>&1
-  /sbin/chkconfig --del puppetmaster
+  /sbin/chkconfig --del puppetmaster || :
+fi
+
+%postun
+if [ "$1" -ge 1 ]; then
+  /sbin/service puppet condrestart >/dev/null 2>&1 || :
 fi
 
 %postun server
 if [ "$1" -ge 1 ]; then
-  /sbin/service puppetmaster condrestart > /dev/null 2>&1
+  /sbin/service puppetmaster condrestart > /dev/null 2>&1 || :
 fi
 
 %clean
 rm -rf %{buildroot}
 
 %changelog
+* Wed Oct 22 2008 Todd Zullinger <tmz@pobox.com> - 0.24.6-1
+- Update to 0.24.6
+- Require ruby-shadow on Fedora and RHEL >= 5
+- Simplify Fedora/RHEL version checks for ruby(abi) and BuildArch
+- Require chkconfig and initstripts for preun, post, and postun scripts
+- Conditionally restart puppet in %%postun
+- Ensure %%preun, %%post, and %%postun scripts exit cleanly
+- Create puppet user/group according to Fedora packaging guidelines
+- Quiet a few rpmlint complaints
+- Remove useless %%pbuild macro
+- Make specfile more like the Fedora/EPEL template
+
 * Mon Jul 28 2008 David Lutterkort <dlutter@redhat.com> - 0.24.5-1
 - Add /usr/bin/puppetdoc
 
@@ -205,7 +234,7 @@ rm -rf %{buildroot}
 - Remove old config files
 
 * Wed Jun 20 2007 David Lutterkort <dlutter@redhat.com> - 0.23.0-1
-- Install one puppet.conf instead of old config files, keep old configs 
+- Install one puppet.conf instead of old config files, keep old configs
   around to ease update
 - Use plain shell commands in install instead of macros
 
@@ -266,7 +295,7 @@ rm -rf %{buildroot}
 
 * Mon Jun 19 2006 David Lutterkort <dlutter@redhat.com> - 0.18.0-1
 - Patch config for LSB compliance (lsb-config.patch)
-- Changed config moves /var/puppet to /var/lib/puppet, /etc/puppet/ssl 
+- Changed config moves /var/puppet to /var/lib/puppet, /etc/puppet/ssl
   to /var/lib/puppet, /etc/puppet/clases.txt to /var/lib/puppet/classes.txt,
   /etc/puppet/localconfig.yaml to /var/lib/puppet/localconfig.yaml
 
@@ -289,7 +318,7 @@ rm -rf %{buildroot}
 - Rebuilt for new version
 
 * Wed Mar 22 2006 David Lutterkort <dlutter@redhat.com> - 0.15.1-1
-- Patch0: Run puppetmaster as root; running as puppet is not ready 
+- Patch0: Run puppetmaster as root; running as puppet is not ready
   for primetime
 
 * Mon Mar 13 2006 David Lutterkort <dlutter@redhat.com> - 0.15.0-1
@@ -304,7 +333,7 @@ rm -rf %{buildroot}
   allocate the puppet uid/gid dynamically
 
 * Sun Feb 19 2006 David Lutterkort <dlutter@redhat.com> - 0.13.0-4
-- Use fedora-usermgmt to create puppet user/group. Use uid/gid 24. Fixed 
+- Use fedora-usermgmt to create puppet user/group. Use uid/gid 24. Fixed
 problem with listing fileserver.conf and puppetmaster.conf twice
 
 * Wed Feb  8 2006 David Lutterkort <dlutter@redhat.com> - 0.13.0-3
@@ -329,7 +358,7 @@ problem with listing fileserver.conf and puppetmaster.conf twice
 - Added basic fileserver.conf
 
 * Wed Jan 11 2006 David Lutterkort <dlutter@redhat.com> - 0.10.1-1
-- Updated. Moved installation of library files to sitelibdir. Pulled 
+- Updated. Moved installation of library files to sitelibdir. Pulled
 initscripts into separate files. Folded tools rpm into server
 
 * Thu Nov 24 2005 Duane Griffin <d.griffin@psenterprise.com>
