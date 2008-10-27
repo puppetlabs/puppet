@@ -439,18 +439,6 @@ module Puppet
             end
         end
         
-        def handleignore(children)
-            return children unless self[:ignore]
-            self[:ignore].each { |ignore|
-                ignored = []
-                Dir.glob(File.join(self[:path],ignore), File::FNM_DOTMATCH) {
-                    |match| ignored.push(File.basename(match))
-                }
-                children = children - ignored
-            }
-            return children
-        end
-          
         def initialize(hash)
             # Store a copy of the arguments for later.
             tmphash = hash.to_hash
@@ -856,12 +844,6 @@ module Puppet
             end
         end
     end # Puppet.type(:pfile)
-
-    # the filesource class can't include the path, because the path
-    # changes for every file instance
-    class ::Puppet::Type::File::FileSource
-        attr_accessor :mount, :root, :server, :local
-    end
 
     # We put all of the properties in separate files, because there are so many
     # of them.  The order these are loaded is important, because it determines

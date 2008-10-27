@@ -1223,69 +1223,6 @@ class TestFile < Test::Unit::TestCase
         assert_equal(:false, file[:replace], ":replace did not alias :false to :no")
     end
     
-    # #365 -- make sure generated files also use filebuckets.
-    def test_recursive_filebuckets
-        source = tempfile()
-        dest = tempfile()
-        s1 = File.join(source, "1")
-        sdir = File.join(source, "dir")
-        s2 = File.join(sdir, "2")
-        Dir.mkdir(source)
-        Dir.mkdir(sdir)
-        [s1, s2].each { |file| File.open(file, "w") { |f| f.puts "yay: %s" % File.basename(file) } }
-        
-        sums = {}
-        [s1, s2].each do |f|
-            sums[File.basename(f)] = Digest::MD5.hexdigest(File.read(f))
-        end
-        
-        dfiles = [File.join(dest, "1"), File.join(dest, "dir", "2")]
-        
-        bpath = tempfile
-        bucket = Puppet::Type.type(:filebucket).create :name => "rtest", :path => bpath
-        dipper = bucket.bucket
-        dipper = Puppet::Network::Handler.filebucket.new(
-            :Path => bpath
-        )
-        assert(dipper, "did not receive bucket client")
-        file = Puppet::Type.newfile :path => dest, :source => source, :recurse => true, :backup => "rtest"
-
-        catalog = mk_catalog(bucket, file)
-        
-        catalog.apply
-
-        dfiles.each do |f|
-            assert(FileTest.exists?(f), "destfile %s was not created" % f)
-        end
-        
-        # Now modify the source files to make sure things get backed up correctly
-        [s1, s2].each { |sf| File.open(sf, "w") { |f|
-            f.puts "boo: %s" % File.basename(sf)
-        } }
-        
-        catalog.apply
-        dfiles.each do |f|
-            assert_equal("boo: %s\n" % File.basename(f), File.read(f),
-                "file was not copied correctly")
-        end
-        
-        # Make sure we didn't just copy the files over to backup locations
-        dfiles.each do |f|
-            assert(! FileTest.exists?(f + "rtest"),
-            "file %s was copied for backup instead of bucketed" % File.basename(f))
-        end
-        
-        # Now make sure we can get the source sums from the bucket
-        sums.each do |f, sum|
-            result = nil
-            assert_nothing_raised do
-                result = dipper.getfile(sum)
-            end
-            assert(result, "file %s was not backed to filebucket" % f)
-            assert_equal("yay: %s\n" % f, result, "file backup was not correct")
-        end
-    end
-    
     def test_backup
         path = tempfile()
         file = Puppet::Type.newfile :path => path, :content => "yay"
@@ -1468,26 +1405,6 @@ class TestFile < Test::Unit::TestCase
 
         assert_instance_of(Puppet::Network::Client::Dipper, file.bucket,
             "did not default to a filebucket for backups")
-    end
-
-    # #515 - make sure 'ensure' other than "link" is deleted during recursion
-    def test_ensure_deleted_during_recursion
-        dir = tempfile()
-        Dir.mkdir(dir)
-        file = File.join(dir, "file")
-        File.open(file, "w") { |f| f.puts "asdfasdf" }
-
-        obj = Puppet::Type.newfile(:path => dir, :ensure => :directory,
-            :recurse => true)
-
-        catalog = mk_catalog(obj)
-        children = nil
-        assert_nothing_raised do
-            children = obj.eval_generate
-        end
-        fobj = catalog.resource(:file, file)
-        assert(fobj, "did not create file object")
-        assert(fobj.should(:ensure) != :directory, "ensure was passed to child")
     end
 
     # #567
