@@ -178,4 +178,39 @@ describe Puppet::Type.type(:file) do
 
         end
     end
+
+    it "should create files with content if both 'content' and 'ensure' are set" do
+        dest = tmpfile("files_with_content")
+
+        file = Puppet.type(:file).create(
+            :name => dest,
+            :ensure => "file",
+            :content => "this is some content, yo"
+        )
+
+        catalog = Puppet::Node::Catalog.new
+        catalog.add_resource file
+        catalog.apply
+
+        File.read(dest).should == "this is some content, yo"
+    end
+
+    it "should delete files with sources but that are set for deletion" do
+        dest = tmpfile("dest_source_with_ensure")
+        source = tmpfile("source_source_with_ensure")
+        File.open(source, "w") { |f| f.puts "yay" }
+        File.open(dest, "w") { |f| f.puts "boo" }
+
+        file = Puppet.type(:file).create(
+            :name => dest,
+            :ensure => :absent,
+            :source => source
+        )
+
+        catalog = Puppet::Node::Catalog.new
+        catalog.add_resource file
+        catalog.apply
+
+        File.should_not be_exist(dest)
+    end
 end

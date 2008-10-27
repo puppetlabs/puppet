@@ -129,7 +129,8 @@ module Puppet
                 end
             end
 
-            @resource[:ensure] = metadata.ftype
+            # Set the 'ensure' value, unless we're trying to delete the file.
+            @resource[:ensure] = metadata.ftype unless @resource[:ensure] == :absent
 
             if metadata.ftype == "link"
                 @resource[:target] = metadata.destination

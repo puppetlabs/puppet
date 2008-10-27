@@ -122,6 +122,16 @@ describe Puppet::Type.type(:file).attrclass(:source) do
             @source.copy_source_values
         end
 
+        it "should not set 'ensure' if it is already set to 'absent'" do
+            @resource.stubs(:[])
+            @resource.stubs(:[]=)
+            @metadata.stubs(:ftype).returns "foobar"
+
+            @resource.expects(:[]).with(:ensure).returns :absent
+            @resource.expects(:[]=).with(:ensure, "foobar").never
+            @source.copy_source_values
+        end
+
         describe "and the source is a file" do
             before do
                 @metadata.stubs(:ftype).returns "file"

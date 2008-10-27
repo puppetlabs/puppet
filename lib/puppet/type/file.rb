@@ -691,8 +691,7 @@ module Puppet
                                   }
 
                 # If the file doesn't exist but we have a source, then call
-                # retrieve on the source property so it will set the 'should'
-                # values all around.
+                # set our 'should' values based on the source file.
                 if @parameters.include?(:source)
                     @parameters[:source].copy_source_values
                 end
