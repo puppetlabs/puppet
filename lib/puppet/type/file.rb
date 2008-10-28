@@ -441,7 +441,7 @@ module Puppet
         
         def initialize(hash)
             # Store a copy of the arguments for later.
-            tmphash = hash.to_hash
+            @original_arguments = hash.to_hash
 
             # Used for caching clients
             @clients = {}
@@ -461,9 +461,19 @@ module Puppet
         def newchild(path)
             full_path = File.join(self[:path], path)
 
-            # the right-side hash wins in the merge.
-            options = to_hash.merge(:path => full_path, :implicit => true).reject { |param, value| value.nil? }
-            [:parent, :recurse, :target].each do |param|
+            # Add some new values to our original arguments -- these are the ones
+            # set at initialization.  We specifically want to exclude any param
+            # values set by the :source property or any default values.
+            # LAK:NOTE This is kind of silly, because the whole point here is that
+            # the values set at initialization should live as long as the resource
+            # but values set by default or by :source should only live for the transaction
+            # or so.  Unfortunately, we don't have a straightforward way to manage
+            # the different lifetimes of this data, so we kludge it like this.
+            # The right-side hash wins in the merge.
+            options = @original_arguments.merge(:path => full_path, :implicit => true).reject { |param, value| value.nil? }
+
+            # These should never be passed to our children.
+            [:parent, :ensure, :recurse, :target].each do |param|
                 options.delete(param) if options.include?(param)
             end
 

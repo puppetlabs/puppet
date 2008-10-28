@@ -564,38 +564,43 @@ describe Puppet::Type.type(:file) do
 
         describe "and making a new child resource" do
             it "should create an implicit resource using the provided relative path joined with the file's path" do
-                path = File.join(@file[:path], "my/path")
-                Puppet::Type.type(:file).expects(:create).with { |options| options[:implicit] == true and options[:path] == path }
-                @file.newchild("my/path")
-            end
-
-            it "should copy most of the parent resource's 'should' values to the new resource" do
-                @file.expects(:to_hash).returns :foo => "bar", :fee => "fum"
-                Puppet::Type.type(:file).expects(:create).with { |options| options[:foo] == "bar" and options[:fee] == "fum" }
-                @file.newchild("my/path")
+                @file.newchild("my/path").should be_implicit
             end
 
             it "should not copy the parent resource's parent" do
-                @file.expects(:to_hash).returns :parent => "foo"
                 Puppet::Type.type(:file).expects(:create).with { |options| ! options.include?(:parent) }
                 @file.newchild("my/path")
             end
 
-            it "should not copy the parent resource's recurse value" do
-                @file.expects(:to_hash).returns :recurse => true
-                Puppet::Type.type(:file).expects(:create).with { |options| ! options.include?(:recurse) }
+            {:recurse => true, :target => "/foo/bar", :ensure => :present}.each do |param, value|
+                it "should not pass on #{param} to the sub resource" do
+                    @file[param] = value
+
+                    @file.class.expects(:create).with { |params| params[param].nil? }
+
+                    @file.newchild("sub/file")
+                end
+            end
+
+            it "should copy all of the parent resource's 'should' values that were set at initialization" do
+                file = @file.class.create(:path => "/foo/bar", :owner => "root", :group => "wheel")
+                file.class.expects(:create).with { |options| options[:owner] == "root" and options[:group] == "wheel" }
+                file.newchild("my/path")
+            end
+
+            it "should not copy default values to the new child" do
+                @file.class.expects(:create).with { |params| params[:backup].nil? }
                 @file.newchild("my/path")
             end
 
-            it "should not copy the parent resource's target value" do
-                @file.expects(:to_hash).returns :target => "foo"
-                Puppet::Type.type(:file).expects(:create).with { |options| ! options.include?(:target) }
-                @file.newchild("my/path")
-            end
+            it "should not copy values to the child which were set by the source" do
+                @file[:source] = "/foo/bar"
+                metadata = stub 'metadata', :owner => "root", :group => "root", :mode => 0755, :ftype => "file", :checksum => "{md5}whatever"
+                @file.property(:source).stubs(:metadata).returns metadata
 
-            it "should not copy any nil values from the parent" do
-                @file.expects(:to_hash).returns :ensure => nil
-                Puppet::Type.type(:file).expects(:create).with { |options| ! options.include?(:ensure) }
+                @file.property(:source).copy_source_values
+
+                @file.class.expects(:create).with { |params| params[:group].nil? }
                 @file.newchild("my/path")
             end
         end
