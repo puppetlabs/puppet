@@ -201,7 +201,7 @@ describe Puppet::Parser::Lexer::TOKENS do
     end
 
     # These tokens' strings don't matter, just that the tokens exist.
-    [:DQTEXT, :SQTEXT, :BOOLEAN, :NAME, :NUMBER, :COMMENT, :RETURN, :SQUOTE, :DQUOTE, :VARIABLE].each do |name|
+    [:DQTEXT, :SQTEXT, :BOOLEAN, :NAME, :NUMBER, :COMMENT, :MLCOMMENT, :RETURN, :SQUOTE, :DQUOTE, :VARIABLE].each do |name|
         it "should have a token named #{name.to_s}" do
             Puppet::Parser::Lexer::TOKENS[name].should_not be_nil
         end
@@ -285,6 +285,34 @@ describe Puppet::Parser::Lexer::TOKENS[:COMMENT] do
     it "should be marked to get skipped" do
         @token.skip?.should be_true
     end
+end
+
+describe Puppet::Parser::Lexer::TOKENS[:MLCOMMENT] do
+    before do
+        @token = Puppet::Parser::Lexer::TOKENS[:MLCOMMENT]
+        @lexer = stub 'lexer', :line => 0
+    end
+
+    it "should match against lines enclosed with '/*' and '*/'" do
+        @token.regex.should =~ "/* this is a comment */"
+    end
+
+    it "should match multiple lines enclosed with '/*' and '*/'" do
+        @token.regex.should =~ """/*
+                                   this is a comment
+                                   */"""
+    end
+
+    it "should increase the lexer current line number by the amount of lines spanned by the comment" do
+        @lexer.expects(:line=).with(2)
+        @token.convert(@lexer, "1\n2\n3")
+    end
+
+    it "should not greedily match comments" do
+        match = @token.regex.match("/* first */ word /* second */")
+        match[1].should == " first "
+    end
+
 end
 
 describe Puppet::Parser::Lexer::TOKENS[:RETURN] do
