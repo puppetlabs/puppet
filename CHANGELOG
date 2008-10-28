@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1698 - All logs should now show up in the reports
+
     Fixed #1661 - Type reference: tidy should specify manditory parameters
 
     Fixed #1104 - Classes and nodes should set $name variables

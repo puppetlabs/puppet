@@ -103,51 +103,5 @@ describe Puppet::Util::Log do
             report.should be_include(log.source)
             report.should be_include(log.time.to_s)
         end
-
-        it "should have a method for indicating whether it was created by a resource" do
-            Puppet::Util::Log.new(:level => "notice", :message => :foo).should respond_to(:objectsource?)
-        end
-
-        describe "when setting a source" do
-            it "should mark itself as from a Puppet resource if its source is a Puppet resource" do
-                file = Puppet::Type.type(:file).create :path => "/testing/object/source/in/logs"
-                Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => file).should be_objectsource
-            end
-
-            it "should use the resource's path when its source is a resource" do
-                # Use a different path, so we don't use 'clear', which is deprecated in master
-                file = Puppet::Type.type(:file).create :path => "/testing/object/source/in/logs/with/path"
-                file.expects(:path).returns "mypath"
-                Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => file).source.should == "mypath"
-            end
-
-            it "should mark itself as from a Puppet resource if its source is a Puppet parameter" do
-                file = Puppet::Type.type(:file).create :path => "/testing/object/source/in/logs/with/parameters", :mode => "500"
-                mode = file.property(:mode)
-                Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => mode).should be_objectsource
-            end
-
-            it "should use the resource's path when its source is a Puppet parameter" do
-                # Use a different path, so we don't use 'clear', which is deprecated in master
-                file = Puppet::Type.type(:file).create :path => "/testing/object/source/in/logs/with/path/in/parameters", :mode => "500"
-                mode = file.property(:mode)
-                mode.expects(:path).returns "mypath"
-                Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => mode).source.should == "mypath"
-            end
-
-            it "should acquire its source's tags if its source has any" do
-                file = Puppet::Type.type(:file).create :path => "/testing/object/source/in/logs/with/tags"
-                file.tag("foo")
-                file.tag("bar")
-                log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => file)
-
-                log.should be_tagged("foo")
-                log.should be_tagged("bar")
-            end
-
-            it "should not set objectsource if the source is not a Parameter or Resource" do
-                Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => "mysource").should_not be_objectsource
-            end
-        end
     end
 end
