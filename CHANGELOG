@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1660 - Added specific recurse values for tidy
+
     Fixed #1698 - All logs should now show up in the reports
 
     Fixed #1661 - Type reference: tidy should specify manditory parameters
