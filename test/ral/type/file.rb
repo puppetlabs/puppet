@@ -955,48 +955,6 @@ class TestFile < Test::Unit::TestCase
         assert_equal("yayness", File.read(path), "Content did not get set correctly")
     end
 
-    # Make sure unmanaged files are purged.
-    def test_purge
-        sourcedir = tempfile()
-        destdir = tempfile()
-        Dir.mkdir(sourcedir)
-        Dir.mkdir(destdir)
-        sourcefile = File.join(sourcedir, "sourcefile")
-        dsourcefile = File.join(destdir, "sourcefile")
-        localfile = File.join(destdir, "localfile")
-        purgee = File.join(destdir, "to_be_purged")
-        File.open(sourcefile, "w") { |f| f.puts "funtest" }
-        # this file should get removed
-        File.open(purgee, "w") { |f| f.puts "footest" }
-
-        lfobj = Puppet::Type.newfile(
-            :title => "localfile",
-            :path => localfile,
-            :content => "rahtest",
-            :ensure => :file,
-            :backup => false
-        )
-
-        destobj = Puppet::Type.newfile(:title => "destdir", :path => destdir,
-                                    :source => sourcedir,
-                                    :backup => false,
-                                    :recurse => true)
-
-        config = mk_catalog(lfobj, destobj)
-        config.apply
-
-        assert(FileTest.exists?(dsourcefile), "File did not get copied")
-        assert(FileTest.exists?(localfile), "Local file did not get created")
-        assert(FileTest.exists?(purgee), "Purge target got prematurely purged")
-
-        assert_nothing_raised { destobj[:purge] = true }
-        config.apply
-
-        assert(FileTest.exists?(localfile), "Local file got purged")
-        assert(FileTest.exists?(dsourcefile), "Source file got purged")
-        assert(! FileTest.exists?(purgee), "File did not get purged")
-    end
-
     # Testing #274.  Make sure target can be used without 'ensure'.
     def test_target_without_ensure
         source = tempfile()

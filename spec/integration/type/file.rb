@@ -213,4 +213,53 @@ describe Puppet::Type.type(:file) do
 
         File.should_not be_exist(dest)
     end
+
+    describe "when purging files" do
+        before do
+            @sourcedir = tmpfile("purge_source")
+            @destdir = tmpfile("purge_dest")
+            Dir.mkdir(@sourcedir)
+            Dir.mkdir(@destdir)
+            @sourcefile = File.join(@sourcedir, "sourcefile")
+            @copiedfile = File.join(@destdir, "sourcefile")
+            @localfile = File.join(@destdir, "localfile")
+            @purgee = File.join(@destdir, "to_be_purged")
+            File.open(@localfile, "w") { |f| f.puts "rahtest" }
+            File.open(@sourcefile, "w") { |f| f.puts "funtest" }
+            # this file should get removed
+            File.open(@purgee, "w") { |f| f.puts "footest" }
+
+            @lfobj = Puppet::Type.newfile(
+                :title => "localfile",
+                :path => @localfile,
+                :content => "rahtest\n",
+                :ensure => :file,
+                :backup => false
+            )
+
+            @destobj = Puppet::Type.newfile(:title => "destdir", :path => @destdir,
+                                        :source => @sourcedir,
+                                        :backup => false,
+                                        :purge => true,
+                                        :recurse => true)
+
+            @catalog = Puppet::Node::Catalog.new
+            @catalog.add_resource @lfobj, @destobj
+        end
+
+        it "should still copy remote files" do
+            @catalog.apply
+            FileTest.should be_exist(@copiedfile)
+        end
+
+        it "should not purge managed, local files" do
+            @catalog.apply
+            FileTest.should be_exist(@localfile)
+        end
+
+        it "should purge files that are neither remote nor otherwise managed" do
+            @catalog.apply
+            FileTest.should_not be_exist(@purgee)
+        end
+    end
 end
