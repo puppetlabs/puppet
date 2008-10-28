@@ -460,6 +460,11 @@ class TestSnippets < Test::Unit::TestCase
             "Did not make second file from array")
     end
 
+    def snippet_multipleclass
+        assert_file("/tmp/multipleclassone", "one")
+        assert_file("/tmp/multipleclasstwo", "two")
+    end
+
     # Iterate across each of the snippets and create a test.
     Dir.entries(snippetdir).sort.each { |file|
         next if file =~ /^\./

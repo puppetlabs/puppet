@@ -291,10 +291,14 @@ class Puppet::Parser::Parser
                 if tmp == ""
                     tmp = "main"
                 end
-                
+
                 Puppet.debug addcontext("Adding code to %s" % tmp)
                 # Else, add our code to it.
                 if other.code and code
+                    # promote if neededcodes to ASTArray so that we can append code
+                    # ASTArray knows how to evaluate its members.
+                    other.code = ast AST::ASTArray, :children => [other.code] unless other.code.is_a?(AST::ASTArray)
+                    code = ast AST::ASTArray, :children => [code] unless code.is_a?(AST::ASTArray)
                     other.code.children += code.children
                 else
                     other.code ||= code
