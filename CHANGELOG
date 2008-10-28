@@ -1,5 +1,7 @@
 0.24.x
-    Fixed 1692 - k5login fails to set mode when file is created
+    Fixed #1667 - Documentation should specify natural language regexs, not Regexp objects
+
+    Fixed #1692 - k5login fails to set mode when file is created
 
     Fixed #1660 - Added specific recurse values for tidy
 

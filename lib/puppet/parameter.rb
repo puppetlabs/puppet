@@ -63,7 +63,7 @@ class Puppet::Parameter
                     end
                     unless regs.empty?
                         @doc += "  Values can also match ``" +
-                            regs.join("``, ``") + "``."
+                            regs.collect { |r| r.inspect }.join("``, ``") + "``."
                     end
                 end
 
