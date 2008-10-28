@@ -5,9 +5,6 @@ Name:           puppet
 Version:        0.24.6
 Release:        1%{?dist}
 Summary:        A network tool for managing many disparate systems
-
-Group:          System Environment/Base
-
 License:        GPLv2+
 URL:            http://puppet.reductivelabs.com/
 Source0:        http://reductivelabs.com/downloads/puppet/%{name}-%{version}.tgz
