@@ -1,4 +1,6 @@
 0.24.x
+    Fixed 1692 - k5login fails to set mode when file is created
+
     Fixed #1660 - Added specific recurse values for tidy
 
     Fixed #1698 - All logs should now show up in the reports
