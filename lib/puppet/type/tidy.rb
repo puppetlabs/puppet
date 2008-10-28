@@ -2,7 +2,10 @@ module Puppet
     newtype(:tidy, :parent => Puppet.type(:file)) do
         @doc = "Remove unwanted files based on specific criteria.  Multiple
             criteria are OR'd together, so a file that is too large but is not
-            old enough will still get tidied."
+            old enough will still get tidied.
+            
+            You must specify either the size or age of the file (or both) for
+            files to be tidied."
 
         newparam(:path) do
             desc "The path to the file or directory to manage.  Must be fully

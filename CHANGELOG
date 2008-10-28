@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1661 - Type reference: tidy should specify manditory parameters
+
     Fixed #1104 - Classes and nodes should set $name variables
 
     Updated Red Hat spec file for 0.24.6
