@@ -188,3 +188,32 @@ describe Puppet::Type.type(:mount)::Ensure do
         end
     end
 end
+
+describe Puppet::Type.type(:mount), "when modifying an existing mount entry" do
+    before do
+        @provider = stub 'provider', :class => Puppet::Type.type(:mount).defaultprovider, :clear => nil, :satisfies? => true, :name => :mock, :remount => nil
+        Puppet::Type.type(:mount).defaultprovider.stubs(:new).returns(@provider)
+        @mount = Puppet::Type.type(:mount).create(:name => "yay", :ensure => :mounted)
+
+        {:device => "/foo/bar", :blockdevice => "/other/bar", :target => "/what/ever", :fstype => 'eh', :options => "", :pass => 0, :dump => 0, :atboot => 0,
+            :ensure => :mounted}.each do
+            |param, value|
+            @mount.provider.stubs(param).returns value
+            @mount[param] = value
+        end
+
+        @mount.provider.stubs(:mounted?).returns true
+
+        @catalog = Puppet::Node::Catalog.new
+        @catalog.add_resource @mount
+    end
+
+    it "should use the provider to change the dump value" do
+        @mount.provider.expects(:dump).returns 0
+        @mount.provider.expects(:dump=).with(1)
+
+        @mount[:dump] = 1
+
+        @catalog.apply
+    end
+end

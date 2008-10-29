@@ -143,7 +143,7 @@ module Puppet
             desc "Whether to dump the mount.  Not all platforms
                 support this. Valid values are ``1`` or ``0``. Default is ``0``."
 
-             newvalue(%r{(0|1)}) { }
+             newvalue(%r{(0|1)})
 
             defaultto {
                 if @resource.managed?
