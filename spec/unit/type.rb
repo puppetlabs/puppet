@@ -3,7 +3,22 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 
 describe Puppet::Type do
-    describe "when retrieving current properties" do
+    it "should be able to retrieve a property by name" do
+        resource = Puppet::Type.type(:mount).create(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
+        resource.property(:fstype).must be_instance_of(Puppet::Type.type(:mount).attrclass(:fstype))
+    end
+
+    it "should be able to retrieve a parameter by name" do
+        resource = Puppet::Type.type(:mount).create(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
+        resource.parameter(:name).must be_instance_of(Puppet::Type.type(:mount).attrclass(:name))
+    end
+
+    it "should be able to retrieve a property by name using the :parameter method" do
+        resource = Puppet::Type.type(:mount).create(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
+        resource.parameter(:fstype).must be_instance_of(Puppet::Type.type(:mount).attrclass(:fstype))
+    end
+
+    describe "when retrieving current property values" do
         # Use 'mount' as an example, because it doesn't override 'retrieve'
         before do
             @resource = Puppet::Type.type(:mount).create(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)

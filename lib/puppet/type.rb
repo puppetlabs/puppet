@@ -601,10 +601,7 @@ class Type
 
     # return the value of a parameter
     def parameter(name)
-        unless name.is_a? Symbol
-            name = name.intern
-        end
-        return @parameters[name].value
+        @parameters[name.to_sym]
     end
 
     # Is the named property defined?
@@ -615,8 +612,9 @@ class Type
         return @parameters.include?(name)
     end
 
-    # return an actual type by name; to return the value, use 'inst[name]'
-    # FIXME this method should go away
+    # Return an actual property instance by name; to return the value, use 'resource[param]'
+    # LAK:NOTE(20081028) Since the 'parameter' method is now a superset of this method,
+    # this one should probably go away at some point.
     def property(name)
         if obj = @parameters[symbolize(name)] and obj.is_a?(Puppet::Property)
             return obj
