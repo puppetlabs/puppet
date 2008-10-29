@@ -27,6 +27,9 @@ end
 
 describe Puppet.type(:selboolean), " when manipulating booleans" do
 	before :each do
+        provider_class = Puppet::Type::Selboolean.provider(Puppet::Type::Selboolean.providers[0])
+		Puppet::Type::Selboolean.expects(:defaultprovider).returns provider_class
+
 		@bool = Puppet::Type::Selboolean.create(
 			:name => "foo",
 			:value => "on",
@@ -53,6 +56,9 @@ end
 
 describe Puppet.type(:selmodule), " when checking policy modules" do
 	before :each do
+        provider_class = Puppet::Type::Selmodule.provider(Puppet::Type::Selmodule.providers[0])
+		Puppet::Type::Selmodule.expects(:defaultprovider).returns provider_class
+
 		@module = Puppet::Type::Selmodule.create(
 			:name => "foo",
 			:selmoduledir => "/some/path",
