@@ -22,3 +22,6 @@ Puppet.features.add(:mongrel, :libs => %w{rubygems mongrel puppet/network/http_s
 
 # We have lcs diff
 Puppet.features.add :diff, :libs => %w{diff/lcs diff/lcs/hunk}
+
+# We have augeas
+Puppet.features.add(:augeas, :libs => ["augeas"])
