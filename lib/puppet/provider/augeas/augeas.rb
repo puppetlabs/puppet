@@ -158,12 +158,13 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     # Actually execute the augeas changes.
     def execute_changes
         aug = open_augeas
-        commands = self.resource[:changes]
+        commands = resource[:changes]
+        context = resource[:context]
         commands.each do |cmd_array|
             fail("invalid command #{cmd_array.join[" "]}") if cmd_array.length < 2
             command = cmd_array[0]
             cmd_array.shift()
-            cmd_array[0]=File.join(resource[:context], cmd_array[0])
+            cmd_array[0]=File.join(context, cmd_array[0])
             debug("sending command '#{command}' with params #{cmd_array.inspect}")
             begin
                 case command
