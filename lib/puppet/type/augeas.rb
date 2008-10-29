@@ -34,8 +34,8 @@ Puppet::Type.newtype(:augeas) do
          Sample usage with a string:
             augeas{\"test1\" :
                    context => \"/files/etc/sysconfig/firstboot\",
-                   changes => \"set RUN_FIRSTBOOT YES\"
-                   onlyif  => \"match other_value size > 0\"
+                   changes => \"set RUN_FIRSTBOOT YES\",
+                   onlyif  => \"match other_value size > 0\",
              }
 
          Sample usage with an array and custom lenses:
