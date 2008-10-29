@@ -86,17 +86,11 @@ class TestCertSupport < Test::Unit::TestCase
             # Write a key out to disk in a file containing upper-case.
             key = OpenSSL::PKey::RSA.new(32)
             should_path = Puppet[:hostprivkey]
-            puts "%s: %s" % [should_path, FileTest.exist?(should_path).inspect]
 
             dir, file = File.split(should_path)
             newfile = file.sub(/^([a-z.]+)\./) { $1.upcase + "."}
-            puts "%s: %s" % [should_path, FileTest.exist?(should_path).inspect]
             upper_path = File.join(dir, newfile)
-            puts "%s: %s" % [should_path, FileTest.exist?(should_path).inspect]
-            puts "%s: %s" % [upper_path, FileTest.exist?(upper_path).inspect]
             File.open(upper_path, "w") { |f| f.print key.to_s }
-            puts "%s: %s" % [should_path, FileTest.exist?(should_path).inspect]
-            puts "%s: %s" % [upper_path, FileTest.exist?(upper_path).inspect]
 
             user = CertUser.new
 
