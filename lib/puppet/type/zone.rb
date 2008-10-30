@@ -77,6 +77,7 @@ Puppet::Type.newtype(:zone) do
             used to stop zones."
 
         @states = {}
+        @parametervalues = []
 
         def self.alias_state(values)
             @state_aliases ||= {}

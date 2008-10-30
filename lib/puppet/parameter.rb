@@ -9,10 +9,222 @@ class Puppet::Parameter
     include Puppet::Util::LogPaths
     include Puppet::Util::Logging
     include Puppet::Util::MethodHelper
+
+    # A collection of values and regexes, used for specifying
+    # what values are allowed in a given parameter.
+    class ValueCollection
+        class Value
+            attr_reader :name, :options, :event
+            attr_accessor :block, :call, :method, :required_features
+
+            # Add an alias for this value.
+            def alias(name)
+                @aliases << convert(name)
+            end
+
+            # Return all aliases.
+            def aliases
+                @aliases.dup
+            end
+
+            # Store the event that our value generates, if it does so.
+            def event=(value)
+                @event = convert(value)
+            end
+
+            def initialize(name)
+                if name.is_a?(Regexp)
+                    @name = name
+                else
+                    # Convert to a string and then a symbol, so things like true/false
+                    # still show up as symbols.
+                    @name = convert(name)
+                end
+
+                @aliases = []
+
+                @call = :instead
+            end
+
+            # Does a provided value match our value?
+            def match?(value)
+                if regex?
+                    return true if name =~ value.to_s
+                else
+                    return true if name == convert(value)
+                    return @aliases.include?(convert(value))
+                end
+            end
+
+            # Is our value a regex?
+            def regex?
+                @name.is_a?(Regexp)
+            end
+
+            private
+            
+            # A standard way of converting all of our values, so we're always
+            # comparing apples to apples.
+            def convert(value)
+                if value == ''
+                    # We can't intern an empty string, yay.
+                    value
+                else
+                    value.to_s.to_sym
+                end
+            end
+        end
+
+        def aliasvalue(name, other)
+            other = other.to_sym
+            unless value = match?(other)
+                raise Puppet::DevError, "Cannot alias nonexistent value %s" % other
+            end
+
+            value.alias(name)
+        end
+
+        # Return a doc string for all of the values in this parameter/property.
+        def doc
+            unless defined?(@doc)
+                @doc = ""
+                unless values.empty?
+                    @doc += "  Valid values are "
+                    @doc += @strings.collect do |value|
+                        if aliases = value.aliases and ! aliases.empty?
+                            "``%s`` (also called ``%s``)" % [value.name, aliases.join(", ")]
+                        else
+                            "``%s``" % value.name
+                        end
+                    end.join(", ") + "."
+                end
+
+                unless regexes.empty?
+                    @doc += "  Values can match ``" + regexes.join("``, ``") + "``."
+                end
+            end
+
+            @doc
+        end
+
+        # Does this collection contain any value definitions?
+        def empty?
+            @values.empty?
+        end
+
+        def initialize
+            # We often look values up by name, so a hash makes more sense.
+            @values = {}
+
+            # However, we want to retain the ability to match values in order,
+            # but we always prefer directly equality (i.e., strings) over regex matches.
+            @regexes = []
+            @strings = []
+        end
+
+        # Can we match a given value?
+        def match?(test_value)
+            # First look for normal values
+            if value = @strings.find { |v| v.match?(test_value) }
+                return value
+            end
+            
+            # Then look for a regex match
+            @regexes.find { |v| v.match?(test_value) }
+        end
+
+        # If the specified value is allowed, then munge appropriately.
+        def munge(value)
+            return value if empty?
+
+            if instance = match?(value)
+                if instance.regex?
+                    return value
+                else
+                    return instance.name
+                end
+            else
+                return value
+            end
+        end
+
+        # Define a new valid value for a property.  You must provide the value itself,
+        # usually as a symbol, or a regex to match the value.
+        #
+        # The first argument to the method is either the value itself or a regex.
+        # The second argument is an option hash; valid options are:
+        # * <tt>:event</tt>: The event that should be returned when this value is set.
+        # * <tt>:call</tt>: When to call any associated block.  The default value
+        #   is ``instead``, which means to call the value instead of calling the
+        #   provider.  You can also specify ``before`` or ``after``, which will 
+        #   call both the block and the provider, according to the order you specify
+        #   (the ``first`` refers to when the block is called, not the provider).
+        def newvalue(name, options = {}, &block)
+            value = Value.new(name)
+            @values[value.name] = value
+            if value.regex?
+                @regexes << value
+            else
+                @strings << value
+            end
+
+            options.each { |opt, arg| value.send(opt.to_s + "=", arg) }
+            if block_given?
+                value.block = block
+            else
+                value.call = options[:call] || :none
+            end
+
+            if block_given? and ! value.regex?
+                value.method ||= "set_" + value.name.to_s
+            end
+
+            value
+        end
+
+        # Define one or more new values for our parameter.
+        def newvalues(*names)
+            names.each { |name| newvalue(name) }
+        end
+
+        def regexes
+            @regexes.collect { |r| r.name.inspect }
+        end
+
+        # Verify that the passed value is valid.
+        def validate(value)
+            return if empty?
+
+            unless @values.detect { |name, v| v.match?(value) }
+                str = "Invalid value %s. " % [value.inspect]
+
+                unless values.empty?
+                    str += "Valid values are %s. " % values.join(", ")
+                end
+
+                unless regexes.empty?
+                    str += "Valid values match %s." % regexes.join(", ")
+                end
+
+                raise ArgumentError, str
+            end
+        end
+
+        # Return a single value instance.
+        def value(name)
+            @values[name]
+        end
+
+        # Return the list of valid values.
+        def values
+            @strings.collect { |s| s.name }
+        end
+    end
+
     class << self
         include Puppet::Util
         include Puppet::Util::Docs
-        attr_reader :validater, :munger, :name, :default, :required_features
+        attr_reader :validater, :munger, :name, :default, :required_features, :value_collection
         attr_accessor :metaparam
 
         # Define the default value for a given parameter or parameter.  This
@@ -36,36 +248,7 @@ class Puppet::Parameter
             @doc ||= ""
 
             unless defined? @addeddocvals
-                unless values.empty?
-                    if @aliasvalues.empty?
-                        @doc += "  Valid values are ``" +
-                            values.join("``, ``") + "``."
-                    else
-                        @doc += "  Valid values are "
-
-                        @doc += values.collect do |value|
-                            ary = @aliasvalues.find do |name, val|
-                                val == value
-                            end
-                            if ary
-                                "``%s`` (also called ``%s``)" % [value, ary[0]]
-                            else
-                                "``#{value}``"
-                            end
-                        end.join(", ") + "."
-                    end
-                end
-
-                if defined? @parameterregexes and ! @parameterregexes.empty?
-                    regs = @parameterregexes
-                    if @parameterregexes.is_a? Hash
-                        regs = @parameterregexes.keys
-                    end
-                    unless regs.empty?
-                        @doc += "  Values can also match ``" +
-                            regs.collect { |r| r.inspect }.join("``, ``") + "``."
-                    end
-                end
+                @doc += value_collection.doc
 
                 if f = self.required_features
                     @doc += "  Requires features %s." % f.flatten.collect { |f| f.to_s }.join(" ")
@@ -88,9 +271,7 @@ class Puppet::Parameter
         end
 
         def initvars
-            @parametervalues = []
-            @aliasvalues = {}
-            @parameterregexes = []
+            @value_collection = ValueCollection.new
         end
 
         # This is how we munge the value.  Basically, this is our
@@ -101,23 +282,6 @@ class Puppet::Parameter
             # class's context, not the instance's, thus the two methods,
             # instead of just one.
             define_method(:unsafe_munge, &block)
-
-            define_method(:munge) do |*args|
-                begin
-                    ret = unsafe_munge(*args)
-                rescue Puppet::Error => detail
-                    Puppet.debug "Reraising %s" % detail
-                    raise
-                rescue => detail
-                    raise Puppet::DevError, "Munging failed for value %s in class %s: %s" %
-                        [args.inspect, self.name, detail], detail.backtrace
-                end
-
-                if self.shadow
-                    self.shadow.munge(*args)
-                end
-                ret
-            end
         end
 
         # Mark whether we're the namevar.
@@ -140,6 +304,11 @@ class Puppet::Parameter
             @required = true
         end
 
+        # Specify features that are required for this parameter to work.
+        def required_features=(*args)
+            @required_features = args.flatten.collect { |a| a.to_s.downcase.intern }
+        end
+
         # Is this parameter required?  Defaults to false.
         def required?
             if defined? @required
@@ -151,88 +320,16 @@ class Puppet::Parameter
 
         # Verify that we got a good value
         def validate(&block)
-            #@validater = block
             define_method(:unsafe_validate, &block)
-
-            define_method(:validate) do |*args|
-                begin
-                    unsafe_validate(*args)
-                rescue ArgumentError, Puppet::Error, TypeError
-                    raise
-                rescue => detail
-                    raise Puppet::DevError,
-                        "Validate method failed for class %s: %s" %
-                        [self.name, detail], detail.backtrace
-                end
-            end
-        end
-
-        # Does the value match any of our regexes?
-        def match?(value)
-            value = value.to_s unless value.is_a? String
-            @parameterregexes.find { |r|
-                r = r[0] if r.is_a? Array # Properties use a hash here
-                r =~ value
-            }
         end
 
         # Define a new value for our parameter.
         def newvalues(*names)
-            names.each { |name|
-                name = name.intern if name.is_a? String
-
-                case name
-                when Symbol
-                    if @parametervalues.include?(name)
-                        Puppet.warning "%s already has a value for %s" %
-                            [name, name]
-                    end
-                    @parametervalues << name
-                when Regexp
-                    if @parameterregexes.include?(name)
-                        Puppet.warning "%s already has a value for %s" %
-                            [name, name]
-                    end
-                    @parameterregexes << name
-                else
-                    raise ArgumentError, "Invalid value %s of type %s" %
-                        [name, name.class]
-                end
-            }
+            @value_collection.newvalues(*names)
         end
 
         def aliasvalue(name, other)
-            other = symbolize(other)
-            unless @parametervalues.include?(other)
-                raise Puppet::DevError,
-                    "Cannot alias nonexistent value %s" % other
-            end
-
-            @aliasvalues[name] = other
-        end
-
-        def alias(name)
-            @aliasvalues[name]
-        end
-
-        def regexes
-            return @parameterregexes.dup
-        end
-
-        def required_features=(*args)
-            @required_features = args.flatten.collect { |a| a.to_s.downcase.intern }
-        end
-
-        # Return the list of valid values.
-        def values
-            #[@aliasvalues.keys, @parametervalues.keys].flatten
-            if @parametervalues.is_a? Array
-                return @parametervalues.dup
-            elsif @parametervalues.is_a? Hash
-                return @parametervalues.keys
-            else
-                return []
-            end
+            @value_collection.aliasvalue(name, other)
         end
     end
 
@@ -252,7 +349,6 @@ class Puppet::Parameter
     attr_accessor :resource
     # LAK 2007-05-09: Keep the @parent around for backward compatibility.
     attr_accessor :parent
-    attr_reader :shadow
 
     def devfail(msg)
         self.fail(Puppet::DevError, msg)
@@ -289,17 +385,12 @@ class Puppet::Parameter
             raise Puppet::DevError, "No resource set for %s" % self.class.name
         end
 
-        if ! self.metaparam? and klass = Puppet::Type.metaparamclass(self.class.name)
-            setup_shadow(klass)
-        end
-
         set_options(options)
     end
 
     # Log a message using the resource's log level.
     def log(msg)
         unless @resource[:loglevel]
-            p @resource
             self.devfail "Parent %s has no loglevel" %
                 @resource.name
         end
@@ -344,73 +435,45 @@ class Puppet::Parameter
     end
 
     # If the specified value is allowed, then munge appropriately.
-    munge do |value|
-        if self.class.values.empty? and self.class.regexes.empty?
-            # This parameter isn't using defined values to do its work.
-            return value
+    # If the developer uses a 'munge' hook, this method will get overridden.
+    def unsafe_munge(value)
+        self.class.value_collection.munge(value)
+    end
+
+    # A wrapper around our munging that makes sure we raise useful exceptions.
+    def munge(value)
+        begin
+            ret = unsafe_munge(value)
+        rescue Puppet::Error => detail
+            Puppet.debug "Reraising %s" % detail
+            raise
+        rescue => detail
+            raise Puppet::DevError, "Munging failed for value %s in class %s: %s" % [value.inspect, self.name, detail], detail.backtrace
         end
-
-        # We convert to a string and then a symbol so that things like
-        # booleans work as we expect.
-        intern = value.to_s.intern
-
-        # If it's a valid value, always return it as a symbol.
-        if self.class.values.include?(intern)
-            retval = intern
-        elsif other = self.class.alias(intern)
-            retval = other
-        elsif ary = self.class.match?(value)
-            retval = value
-        else
-            # If it passed the validation but is not a registered value,
-            # we just return it as is.
-            retval = value
-        end
-
-        retval
+        ret
     end
 
     # Verify that the passed value is valid.
-    validate do |value|
-        vals = self.class.values
-        regs = self.class.regexes
+    # If the developer uses a 'validate' hook, this method will get overridden.
+    def unsafe_validate(value)
+        self.class.value_collection.validate(value)
+    end
 
-        # this is true on properties
-        regs = regs.keys if regs.is_a?(Hash)
-
-        # This parameter isn't using defined values to do its work.
-        return if vals.empty? and regs.empty?
-
-        newval = value
-        newval = value.to_s.intern unless value.is_a?(Symbol)
-
-        name = newval
-
-        unless vals.include?(newval) or name = self.class.alias(newval) or name = self.class.match?(value) # We match the string, not the symbol
-            str = "Invalid '%s' value %s. " %
-                [self.class.name, value.inspect]
-
-            unless vals.empty?
-                str += "Valid values are %s. " % vals.join(", ")
-            end
-
-            unless regs.empty?
-                str += "Valid values match %s." % regs.collect { |r|
-                    r.to_s
-                }.join(", ")
-            end
-
-            raise ArgumentError, str
+    # A protected validation method that only ever raises useful exceptions.
+    def validate(value)
+        begin
+            unsafe_validate(value)
+        rescue ArgumentError => detail
+            fail detail.to_s
+        rescue Puppet::Error, TypeError
+            raise
+        rescue => detail
+            raise Puppet::DevError, "Validate method failed for class %s: %s" % [self.name, detail], detail.backtrace
         end
-
-        # Now check for features.
-        name = name[0] if name.is_a?(Array) # This is true for regexes.
-        validate_features_per_value(name) if is_a?(Puppet::Property)
     end
 
     def remove
         @resource = nil
-        @shadow = nil
     end
 
     attr_reader :value
@@ -419,14 +482,9 @@ class Puppet::Parameter
     # late-binding (e.g., users might not exist when the value is assigned
     # but might when it is asked for).
     def value=(value)
-        if respond_to?(:validate)
-            validate(value)
-        end
+        validate(value)
 
-        if respond_to?(:munge)
-            value = munge(value)
-        end
-        @value = value
+        @value = munge(value)
     end
 
     def inspect
@@ -444,23 +502,7 @@ class Puppet::Parameter
         @resource.provider || @resource
     end
 
-    # If there's a shadowing metaparam, instantiate it now.
-    # This allows us to create a property or parameter with the
-    # same name as a metaparameter, and the metaparam will only be
-    # stored as a shadow.
-    def setup_shadow(klass)
-        @shadow = klass.new(:resource => self.resource)
-    end
-
     def to_s
         s = "Parameter(%s)" % self.name
     end
-
-    # Make sure that we've got all of the required features for a given value.
-    def validate_features_per_value(value)
-        if features = self.class.value_option(value, :required_features)
-            raise ArgumentError, "Provider must have features '%s' to set '%s' to '%s'" % [features, self.class.name, value] unless provider.satisfies?(features)
-        end
-    end
 end
-

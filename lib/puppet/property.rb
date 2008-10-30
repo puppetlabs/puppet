@@ -4,8 +4,7 @@
 require 'puppet'
 require 'puppet/parameter'
 
-module Puppet
-class Property < Puppet::Parameter
+class Puppet::Property < Puppet::Parameter
 
     # Because 'should' uses an array, we have a special method for handling
     # it.  We also want to keep copies of the original values, so that
@@ -54,32 +53,17 @@ class Property < Puppet::Parameter
     end
 
     # Look up a value's name, so we can find options and such.
-    def self.value_name(value)
-        if value != '' and name = symbolize(value) and @parametervalues.include?(name)
-            return name
-        elsif ary = self.match?(value)
-            return ary[0]
-        else
-            return nil
+    def self.value_name(name)
+        if value = value_collection.match?(name)
+            value.name
         end
     end
 
     # Retrieve an option set when a value was defined.
     def self.value_option(name, option)
-        option = option.to_sym
-        if hash = @parameteroptions[name]
-            hash[option]
-        else
-            nil
+        if value = value_collection.value(name)
+            value.send(option)
         end
-    end
-
-    # Create the value management variables.
-    def self.initvars
-        @parametervalues = {}
-        @aliasvalues = {}
-        @parameterregexes = {}
-        @parameteroptions = {}
     end
 
     # Define a new valid value for a property.  You must provide the value itself,
@@ -87,6 +71,8 @@ class Property < Puppet::Parameter
     #
     # The first argument to the method is either the value itself or a regex.
     # The second argument is an option hash; valid options are:
+    # * <tt>:method</tt>: The name of the method to define.  Defaults to 'set_<value>'.
+    # * <tt>:required_features</tt>: A list of features this value requires.
     # * <tt>:event</tt>: The event that should be returned when this value is set.
     # * <tt>:call</tt>: When to call any associated block.  The default value
     #   is ``instead``, which means to call the value instead of calling the
@@ -94,52 +80,12 @@ class Property < Puppet::Parameter
     #   call both the block and the provider, according to the order you specify
     #   (the ``first`` refers to when the block is called, not the provider).
     def self.newvalue(name, options = {}, &block)
-        name = name.intern if name.is_a? String
+        value = value_collection.newvalue(name, options, &block)
 
-        @parameteroptions[name] = {}
-        paramopts = @parameteroptions[name]
-
-        # Symbolize everything
-        options.each do |opt, val|
-            paramopts[symbolize(opt)] = symbolize(val)
+        if value.method and value.block
+            define_method(value.method, &value.block)
         end
-
-        # By default, call the block instead of the provider.
-        if block_given?
-            paramopts[:call] ||= :instead
-        else
-            paramopts[:call] ||= :none
-        end
-        # If there was no block given, we still want to store the information
-        # for validation, but we won't be defining a method
-        block ||= true
-
-        case name
-        when Symbol
-            if @parametervalues.include?(name)
-                Puppet.warning "%s reassigning value %s" % [self.name, name]
-            end
-            @parametervalues[name] = block
-
-            if block_given?
-                method = "set_" + name.to_s
-                settor = paramopts[:settor] || (self.name.to_s + "=")
-                define_method(method, &block)
-                paramopts[:method] = method
-            end
-        when Regexp
-            # The regexes are handled in parameter.rb.  This value is used
-            # for validation.
-            @parameterregexes[name] = block
-
-            # This is used for looking up the block for execution.
-            if block_given?
-                paramopts[:block] = block
-            end
-        else
-            raise ArgumentError, "Invalid value %s of type %s" %
-                [name, name.class]
-        end
+        value
     end
 
     # Call the provider method.
@@ -175,9 +121,9 @@ class Property < Puppet::Parameter
         elsif block = self.class.value_option(name, :block)
             # FIXME It'd be better here to define a method, so that
             # the blocks could return values.
-            # If the regex was defined with no associated block, then just pass
-            # through and the correct event will be passed back.
             event = self.instance_eval(&block)
+        else
+            devfail "Could not find method for value '%s'" % name
         end
         return event, name
     end
@@ -231,9 +177,15 @@ class Property < Puppet::Parameter
         return event
     end
     
+    attr_reader :shadow
+
     # initialize our property
     def initialize(hash = {})
         super
+
+        if ! self.metaparam? and klass = Puppet::Type.metaparamclass(self.class.name)
+            setup_shadow(klass)
+        end
     end
 
     def inspect
@@ -308,6 +260,13 @@ class Property < Puppet::Parameter
         self.class.array_matching == :all
     end
 
+    # Execute our shadow's munge code, too, if we have one.
+    def munge(value)
+        self.shadow.munge(value) if self.shadow
+
+        super
+    end
+
     # each property class must define the name() method, and property instances
     # do not change that name
     # this implicitly means that a given object can only have one property
@@ -344,25 +303,35 @@ class Property < Puppet::Parameter
 
         call = self.class.value_option(name, :call)
 
-        # If we're supposed to call the block first or instead, call it now
-        if call == :before or call == :instead
+        if call == :instead
             event, tmp = call_valuemethod(name, value) 
-        end
-        unless call == :instead
+        elsif call == :none
             if @resource.provider
                 call_provider(value)
             else
                 # They haven't provided a block, and our parent does not have
                 # a provider, so we have no idea how to handle this.
-                self.fail "%s cannot handle values of type %s" %
-                    [self.class.name, value.inspect]
+                self.fail "%s cannot handle values of type %s" % [self.class.name, value.inspect]
             end
-        end
-        if call == :after
-            event, tmp = call_valuemethod(name, value) 
+        else
+            # LAK:NOTE 20081031 This is a change in behaviour -- you could
+            # previously specify :call => [;before|:after], which would call
+            # the setter *in addition to* the block.  I'm convinced this
+            # was never used, and it makes things unecessarily complicated.
+            # If you want to specify a block and still call the setter, then
+            # do so in the block.
+            devfail "Cannot use obsolete :call value %s" % call
         end
 
         return event(name, event)
+    end
+
+    # If there's a shadowing metaparam, instantiate it now.
+    # This allows us to create a property or parameter with the
+    # same name as a metaparameter, and the metaparam will only be
+    # stored as a shadow.
+    def setup_shadow(klass)
+        @shadow = klass.new(:resource => self.resource)
     end
 
     # Only return the first value
@@ -390,18 +359,8 @@ class Property < Puppet::Parameter
 
         @shouldorig = values
 
-        if self.respond_to?(:validate)
-            values.each { |val|
-                validate(val)
-            }
-        end
-        if self.respond_to?(:munge)
-            @should = values.collect { |val|
-                self.munge(val)
-            }
-        else
-            @should = values
-        end
+        values.each { |val| validate(val) }
+        @should = values.collect { |val| self.munge(val) }
     end
 
     def should_to_s(newvalue)
@@ -415,7 +374,7 @@ class Property < Puppet::Parameter
 
     # The default 'sync' method only selects among a list of registered # values.
     def sync
-        self.devfail("No values defined for %s" % self.class.name) unless self.class.values
+        self.devfail("No values defined for %s" % self.class.name) if self.class.value_collection.empty?
 
         if value = self.should
             set(value)
@@ -432,13 +391,27 @@ class Property < Puppet::Parameter
             if @resource.respond_to? :tags
                 @tags = @resource.tags
             end
-            @tags << self.name
+            @tags << self.name.to_s
         end
         @tags
     end
 
     def to_s
         return "%s(%s)" % [@resource.name,self.name]
+    end
+
+    # Verify that the passed value is valid.
+    # If the developer uses a 'validate' hook, this method will get overridden.
+    def unsafe_validate(value)
+        super
+        validate_features_per_value(value)
+    end
+
+    # Make sure that we've got all of the required features for a given value.
+    def validate_features_per_value(value)
+        if features = self.class.value_option(self.class.value_name(value), :required_features)
+            raise ArgumentError, "Provider must have features '%s' to set '%s' to '%s'" % [features.collect { |f| f.to_s }.join(", "), self.class.name, value] unless provider.satisfies?(features)
+        end
     end
 
     # Just return any should value we might have.
@@ -545,5 +518,3 @@ class Property < Puppet::Parameter
         end
     end
 end
-end
-
