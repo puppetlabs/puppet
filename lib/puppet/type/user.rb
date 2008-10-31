@@ -210,11 +210,8 @@ module Puppet
                 groups.each { |group|
                     case group
                     when Integer:
-                        if obj = Puppet.type(:group).find { |gobj|
-                            gobj.should(:gid) == group
-                        }
-                            autos << obj
-
+                        if resource = catalog.resources.find { |r| r.is_a?(Puppet.type(:group)) and r.should(:gid) == group }
+                            autos << resource
                         end
                     else
                         autos << group

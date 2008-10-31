@@ -31,7 +31,7 @@ class TestSnippets < Test::Unit::TestCase
     end
 
     def assert_not_file(path, msg = nil)
-        if file = @file[path]
+        if file = @catalog.resource(:file, path)
             msg ||= "File %s exists!" % path
             raise msg
         end
