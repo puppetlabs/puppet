@@ -171,6 +171,34 @@ describe Puppet::Parser do
         it "should not raise errors with a trailing comma" do
             lambda { @parser.parse("$a = [1,2,]") }.should_not raise_error
         end
+    end
+            
+    describe Puppet::Parser, "when instantiating class of same name" do
+
+        before :each do
+            @one = stub 'one', :is_a? => true
+            @one.stubs(:is_a?).with(AST::ASTArray).returns(false)
+            @one.stubs(:is_a?).with(AST).returns(true)
+
+            @two = stub 'two'
+            @two.stubs(:is_a?).with(AST::ASTArray).returns(false)
+            @two.stubs(:is_a?).with(AST).returns(true)
+        end
+
+        it "should return the first class" do
+
+            klass1 = @parser.newclass("one", { :code => @one })
+
+            @parser.newclass("one", { :code => @two }).should == klass1
+        end
+
+        it "should concatenate code" do
+            klass1 = @parser.newclass("one", { :code => @one })
+
+            @parser.newclass("one", { :code => @two })
+
+            klass1.code.children.should == [@one,@two]
+        end
 
     end
 

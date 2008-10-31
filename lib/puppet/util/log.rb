@@ -369,11 +369,7 @@ class Puppet::Util::Log
         end
 
         def handle(msg)
-            # Only add messages from objects, since anything else is
-            # probably unrelated to this run.
-            if msg.objectsource?
-                @report.newlog(msg)
-            end
+            @report.newlog(msg)
         end
     end
 
@@ -505,15 +501,6 @@ class Puppet::Util::Log
         Log.newmessage(self)
     end
 
-    # Was the source of this log a Puppet resource or parameter?
-    def objectsource?
-        if defined? @objectsource and @objectsource
-            @objectsource
-        else
-            false
-        end
-    end
-
     # If they pass a source in to us, we make sure it is a string, and
     # we retrieve any tags we can.
     def source=(source)
@@ -521,10 +508,8 @@ class Puppet::Util::Log
         # We can't just check for whether it responds to :path, because
         # plenty of providers respond to that in their normal function.
         if (source.is_a?(Puppet::Type) or source.is_a?(Puppet::Parameter)) and source.respond_to?(:path)
-            @objectsource = true
             @source = source.path
         else
-            @objectsource = false
             @source = source.to_s
         end
         if source.respond_to?(:tags)

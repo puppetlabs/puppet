@@ -56,7 +56,12 @@ class Puppet::Parser::AST::HostClass < Puppet::Parser::AST::Definition
 
         # Don't create a subscope for the top-level class, since it already
         # has its own scope.
-        scope = subscope(scope, resource) unless resource.title == :main
+        unless resource.title == :main
+            scope = subscope(scope, resource)
+
+            scope.setvar("title", resource.title)
+            scope.setvar("name", resource.name)
+        end
 
         # Add the parent scope namespaces to our own.
         if pnames

@@ -2,7 +2,10 @@ module Puppet
     newtype(:tidy, :parent => Puppet.type(:file)) do
         @doc = "Remove unwanted files based on specific criteria.  Multiple
             criteria are OR'd together, so a file that is too large but is not
-            old enough will still get tidied."
+            old enough will still get tidied.
+            
+            You must specify either the size or age of the file (or both) for
+            files to be tidied."
 
         newparam(:path) do
             desc "The path to the file or directory to manage.  Must be fully
@@ -249,6 +252,23 @@ module Puppet
         newparam(:recurse) do
             desc "If target is a directory, recursively descend
                 into the directory looking for files to tidy."
+
+            newvalues(:true, :false, :inf, /^[0-9]+$/)
+
+            # Replace the validation so that we allow numbers in
+            # addition to string representations of them.
+            validate { |arg| }
+            munge do |value|
+                newval = super(value)
+                case newval
+                when :true, :inf: true
+                when :false: false
+                when Integer, Fixnum, Bignum: value
+                when /^\d+$/: Integer(value)
+                else
+                    raise ArgumentError, "Invalid recurse value %s" % value.inspect
+                end
+            end
         end
 
         newparam(:rmdirs) do

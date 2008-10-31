@@ -157,6 +157,11 @@ class Puppet::Parser::Lexer
 
     TOKENS.add_token :COMMENT, %r{#.*}, :skip => true
 
+    TOKENS.add_token :MLCOMMENT, %r{/\*(.*?)\*/}m do |lexer, value|
+        lexer.line += value.count("\n")
+        [nil,nil]
+    end
+
     TOKENS.add_token :RETURN, "\n", :skip => true, :incr_line => true, :skip_text => true
 
     TOKENS.add_token :SQUOTE, "'" do |lexer, value|

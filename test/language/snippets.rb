@@ -30,6 +30,13 @@ class TestSnippets < Test::Unit::TestCase
         end
     end
 
+    def assert_not_file(path, msg = nil)
+        if file = @file[path]
+            msg ||= "File %s exists!" % path
+            raise msg
+        end
+    end
+
     def assert_mode_equal(mode, path)
         unless file = @catalog.resource(:file, path)
             raise "Could not find file %s" % path
@@ -457,6 +464,15 @@ class TestSnippets < Test::Unit::TestCase
             "Did not make first file from array")
         assert_file("/tmp/arraytrailingcomma2",
             "Did not make second file from array")
+    end
+
+    def snippet_multipleclass
+        assert_file("/tmp/multipleclassone", "one")
+        assert_file("/tmp/multipleclasstwo", "two")
+    end
+    
+    def snippet_multilinecomments
+        assert_not_file("/tmp/multilinecomments","Did create a commented resource");
     end
 
     # Iterate across each of the snippets and create a test.

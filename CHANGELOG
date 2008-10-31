@@ -7,6 +7,26 @@
     whether we should even use a CRL.  This way we aren't trying to
     set file paths to 'false' to disable the CRL.
 
+0.24.x
+    Fixed #1710 - Spurious output in test run
+
+    Fixed #1667 - Documentation should specify natural language regexs, not Regexp objects
+
+    Fixed #1692 - k5login fails to set mode when file is created
+
+    Fixed #1660 - Added specific recurse values for tidy
+
+    Fixed #1698 - All logs should now show up in the reports
+
+    Fixed #1661 - Type reference: tidy should specify manditory parameters
+
+    Fixed #1104 - Classes and nodes should set $name variables
+
+    Updated Red Hat spec file for 0.24.6
+
+    Removed conf/debian directory - Debian packaging information 
+    now maintained downstream
+
 0.24.6
     Adding support to the user type for: profiles, auths, project, 
     key/value pairs (extension to Solaris RBAC support added in

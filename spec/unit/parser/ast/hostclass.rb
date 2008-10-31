@@ -123,6 +123,19 @@ describe Puppet::Parser::AST::HostClass do
             @compiler.class_scope(@middle).parent.should equal(@compiler.class_scope(@top))
         end
 
+        it "should add the class's name and title to its own scope" do
+            @top_resource.stubs(:safeevaluate)
+            @middle_resource.stubs(:safeevaluate)
+            resource = @middle.evaluate(@scope)
+            scope = stub_everything 'scope', :compiler => @compiler
+            @middle.stubs(:subscope).returns(scope)
+
+            scope.expects(:setvar).with("title","top::middle")
+            scope.expects(:setvar).with("name","top::middle")
+
+            @middle.evaluate_code(resource)
+        end
+
         it "should add the parent class's namespace to its namespace search path" do
             @top_resource.stubs(:safeevaluate)
             @middle_resource.stubs(:safeevaluate)
