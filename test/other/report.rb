@@ -54,10 +54,6 @@ class TestReports < Test::Unit::TestCase
 
         assert(report.logs.include?(log), "Report did not get log message")
 
-        log = Puppet.warning "This is a non-sourced message"
-
-        assert(! report.logs.include?(log), "Report got log message")
-
         assert_nothing_raised {
             Puppet::Util::Log.close(report)
         }
