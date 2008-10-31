@@ -6,7 +6,7 @@ source = Puppet::Type.type(:file).attrclass(:source)
 describe Puppet::Type.type(:file).attrclass(:source) do
     before do
         # Wow that's a messy interface to the resource.
-        @resource = stub 'resource', :uri2obj => true, :[]= => nil, :property => nil
+        @resource = stub 'resource', :[]= => nil, :property => nil
     end
 
     it "should be a subclass of Property" do
@@ -213,6 +213,86 @@ describe Puppet::Type.type(:file).attrclass(:source) do
             @source.flush
             @source.instance_variable_get("@content").should be_nil
         end
+    end
+    
+    describe "when testing whether the local file is in sync" do
+        before do
+            @source = source.new(:resource => @resource)
+        end
+
+        it "should be considered in sync if the remote file is a directory" do
+            metadata = mock 'data', :ftype => "directory"
+            @source.expects(:metadata).returns metadata
+
+            @source.must be_insync("some content")
+        end
+
+        it "should be considered in sync if the remote file is a symlink" do
+            metadata = mock 'data', :ftype => "link"
+            @source.expects(:metadata).returns metadata
+
+            @source.must be_insync("some content")
+        end
+
+        describe "and the remote file is a normal file" do
+            before do
+                @metadata = mock 'data', :ftype => "file"
+                @source.expects(:metadata).returns @metadata
+            end
+
+            it "should be not considered in sync if the file does not exist" do
+                @resource.expects(:stat).returns nil
+                @source.should_not be_insync("some content")
+            end
+
+            it "should be considered in sync if :replace is false and the file exists" do
+                @resource.expects(:stat).returns mock('stat')
+                @resource.expects(:replace?).returns false
+                @source.must be_insync("some content")
+            end
+
+            it "should be not considered in sync if :replace is false and the file does not exist" do
+                @resource.expects(:stat).returns nil
+                @resource.stubs(:replace?).returns false
+                @source.should_not be_insync("some content")
+            end
+
+            it "should not be considered in sync if the local file's contents are not the same as the remote file's contents"
+
+            it "should be considered in sync if the local file's content matches the remote file's contents"
+        end
+    end
+
+    def test_insync
+        source = tempfile()
+        dest = tempfile()
+        
+        file = Puppet::Type.type(:file).create :path => dest, :source => source, :title => "copier"
+        
+        property = file.property(:source)
+        assert(property, "did not get source property")
+        
+        # with a directory
+        Dir.mkdir(source)
+        currentvalues = file.retrieve
+        assert(property.insync?(currentvalues[property]), "source property not in sync with directory as source")
+        Dir.rmdir(source)
+        
+        # with a file
+        File.open(source, "w") { |f| f.puts "yay" }
+        currentvalues = file.retrieve
+        p currentvalues[property]
+        assert(!property.insync?(currentvalues[property]), "source property was in sync when file was missing")
+        
+        # With a different file
+        File.open(dest, "w") { |f| f.puts "foo" }
+        currentvalues = file.retrieve
+        assert(!property.insync?(currentvalues[property]), "source property was in sync with different file")
+        
+        # with matching files
+        File.open(dest, "w") { |f| f.puts "yay" }
+        currentvalues = file.retrieve
+        assert(property.insync?(currentvalues[property]), "source property was not in sync with matching file")
     end
 
     it "should have a method for returning the content" do

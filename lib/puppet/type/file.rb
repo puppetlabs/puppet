@@ -339,6 +339,7 @@ module Puppet
             @parameters.each do |name, param|
                 param.flush if param.respond_to?(:flush)
             end
+            @stat = nil
         end
 
         # Deal with backups.
@@ -729,14 +730,15 @@ module Puppet
                 method = :lstat
             end
             path = self[:path]
+
             if @stat.nil? or refresh == true
                 begin
                     @stat = File.send(method, self[:path])
                 rescue Errno::ENOENT => error
-                    @stat = nil
+                    return nil
                 rescue Errno::EACCES => error
-                    self.warning "Could not stat; permission denied"
-                    @stat = nil
+                    warning "Could not stat; permission denied"
+                    return nil
                 end
             end
 

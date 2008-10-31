@@ -89,9 +89,9 @@ module Puppet
         def change_to_s(currentvalue, newvalue)
             # newvalue = "{md5}" + @metadata.checksum
             if @resource.property(:ensure).retrieve == :absent
-                return "creating from source %s with contents %s" % [metadata.source, @metadata.checksum]
+                return "creating from source %s with contents %s" % [metadata.source, metadata.checksum]
             else
-                return "replacing from source %s with contents %s" % [metadata.source, @metadata.checksum]
+                return "replacing from source %s with contents %s" % [metadata.source, metadata.checksum]
             end
         end
         
@@ -108,8 +108,8 @@ module Puppet
             raise Puppet::DevError, "No source for content was stored with the metadata" unless metadata.source
 
             unless defined?(@content) and @content
-                unless tmp = Puppet::FileServing::Content.find(@metadata.source)
-                    fail "Could not find any content at %s" % @metadata.source
+                unless tmp = Puppet::FileServing::Content.find(metadata.source)
+                    fail "Could not find any content at %s" % metadata.source
                 end
                 @content = tmp.content
             end
@@ -147,18 +147,17 @@ module Puppet
         def insync?(currentvalue)
             # the only thing this actual state can do is copy files around.  Therefore,
             # only pay attention if the remote is a file.
-            unless @metadata.ftype == "file" 
-                return true
-            end
+            return true unless metadata.ftype == "file" 
             
-            #FIXARB: Inefficient?  Needed to call retrieve on parent's ensure and checksum
-            parentensure = @resource.property(:ensure).retrieve
-            if parentensure != :absent and ! @resource.replace?
-                return true
-            end
+            # The file is not in sync if it doesn't even exist.
+            return false unless resource.stat
+            
+            # The file is considered in sync if it exists and 'replace' is false.
+            return true unless resource.replace?
+
             # Now, we just check to see if the checksums are the same
             parentchecksum = @resource.property(:checksum).retrieve
-            result = (!parentchecksum.nil? and (parentchecksum == @metadata.checksum))
+            result = (!parentchecksum.nil? and (parentchecksum == metadata.checksum))
 
             # Diff the contents if they ask it.  This is quite annoying -- we need to do this in
             # 'insync?' because they might be in noop mode, but we don't want to do the file
@@ -174,7 +173,7 @@ module Puppet
         end
 
         def found?
-            ! (@metadata.nil? or @metadata.ftype.nil?)
+            ! (metadata.nil? or metadata.ftype.nil?)
         end
 
         # Provide, and retrieve if necessary, the metadata for this file.  Fail

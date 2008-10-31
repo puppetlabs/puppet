@@ -75,11 +75,90 @@ describe Puppet::Type.type(:file) do
         end
     end
 
+    it "should be able to retrieve a stat instance for the file it is managing" do
+        Puppet.type(:file).create(:path => "/foo/bar", :source => "/bar/foo").should respond_to(:stat)
+    end
+
+    describe "when stat'ing its file" do
+        before do
+            @resource = Puppet.type(:file).create(:path => "/foo/bar")
+            @resource[:links] = :manage # so we always use :lstat
+        end
+
+        it "should use :stat if it is following links" do
+            @resource[:links] = :follow
+            File.expects(:stat)
+
+            @resource.stat
+        end
+
+        it "should use :lstat if is it not following links" do
+            @resource[:links] = :manage
+            File.expects(:lstat)
+
+            @resource.stat
+        end
+
+        it "should stat the path of the file" do
+            File.expects(:lstat).with("/foo/bar")
+
+            @resource.stat
+        end
+
+        # This only happens in testing.
+        it "should return nil if the stat does not exist" do
+            File.expects(:lstat).returns nil
+
+            @resource.stat.should be_nil
+        end
+
+        it "should return nil if the file does not exist" do
+            File.expects(:lstat).raises(Errno::ENOENT)
+
+            @resource.stat.should be_nil
+        end
+
+        it "should return nil if the file cannot be stat'ed" do
+            File.expects(:lstat).raises(Errno::EACCES)
+
+            @resource.stat.should be_nil
+        end
+
+        it "should return the stat instance" do
+            File.expects(:lstat).returns "mystat"
+
+            @resource.stat.should == "mystat"
+        end
+
+        it "should cache the stat instance" do
+            stat = mock 'stat'
+            File.expects(:lstat).returns stat
+
+            @resource.stat.should equal(@resource.stat)
+        end
+
+        it "should not cache nil stat values" do
+            stat = mock 'stat'
+            File.expects(:lstat).times(2).returns(nil).then.returns(stat)
+
+            @resource.stat.should be_nil
+            @resource.stat.should equal(stat)
+        end
+    end
+
     describe "when flushing" do
         it "should flush all properties that respond to :flush" do
             @resource = Puppet.type(:file).create(:path => "/foo/bar", :source => "/bar/foo")
             @resource.property(:source).expects(:flush)
             @resource.flush
+        end
+
+        it "should reset its stat reference" do
+            @resource = Puppet.type(:file).create(:path => "/foo/bar")
+            File.expects(:lstat).times(2).returns("stat1").then.returns("stat2")
+            @resource.stat.should == "stat1"
+            @resource.flush
+            @resource.stat.should == "stat2"
         end
     end
 
@@ -131,7 +210,7 @@ describe Puppet::Type.type(:file) do
             @metadata = stub 'metadata', :relative_path => "my/file"
         end
 
-        it "should pass its to the :perform_recursion method" do
+        it "should pass its path to the :perform_recursion method" do
             @file.expects(:perform_recursion).with(@file[:path]).returns [@metadata]
             @file.stubs(:newchild)
             @file.recurse_local
