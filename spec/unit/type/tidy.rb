@@ -2,33 +2,38 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-tidy = Puppet::Type.type(:tidy)
+describe Puppet::Type.type(:tidy) do
+    it "should use :lstat when stating a file" do
+        tidy = Puppet::Type.type(:tidy).create :path => "/foo/bar", :age => "1d"
+        stat = mock 'stat'
+        File.expects(:lstat).with("/foo/bar").returns stat
+        tidy.stat.should == stat
+    end
 
-describe tidy do
     [:ensure, :age, :size].each do |property|
         it "should have a %s property" % property do
-            tidy.attrclass(property).ancestors.should be_include(Puppet::Property)
+            Puppet::Type.type(:tidy).attrclass(property).ancestors.should be_include(Puppet::Property)
         end
 
         it "should have documentation for its %s property" % property do
-            tidy.attrclass(property).doc.should be_instance_of(String)
+            Puppet::Type.type(:tidy).attrclass(property).doc.should be_instance_of(String)
         end
     end
 
     [:path, :matches, :type, :recurse, :rmdirs].each do |param|
         it "should have a %s parameter" % param do
-            tidy.attrclass(param).ancestors.should be_include(Puppet::Parameter)
+            Puppet::Type.type(:tidy).attrclass(param).ancestors.should be_include(Puppet::Parameter)
         end
 
         it "should have documentation for its %s param" % param do
-            tidy.attrclass(param).doc.should be_instance_of(String)
+            Puppet::Type.type(:tidy).attrclass(param).doc.should be_instance_of(String)
         end
     end
 
     describe "when validating parameter values" do
         describe "for 'recurse'" do
             before do
-                @tidy = tidy.create :path => "/tmp", :age => "100d"
+                @tidy = Puppet::Type.type(:tidy).create :path => "/tmp", :age => "100d"
             end
 
             it "should allow 'true'" do

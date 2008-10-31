@@ -729,11 +729,6 @@ module Puppet
                 method = :lstat
             end
             path = self[:path]
-            # Just skip them when they don't exist at all.
-            unless FileTest.exists?(path) or FileTest.symlink?(path)
-                @stat = nil
-                return @stat
-            end
             if @stat.nil? or refresh == true
                 begin
                     @stat = File.send(method, self[:path])
