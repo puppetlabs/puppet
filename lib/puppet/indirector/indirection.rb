@@ -281,9 +281,10 @@ class Puppet::Indirector::Indirection
             terminus_name = terminus_class
         end
 
-        check_authorization(request, terminus(terminus_name))
+        dest_terminus = terminus(terminus_name)
+        check_authorization(request, dest_terminus)
 
-        return terminus(terminus_name)
+        return dest_terminus
     end
 
     # Create a new terminus instance.
