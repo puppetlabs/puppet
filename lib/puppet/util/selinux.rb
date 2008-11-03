@@ -1,74 +1,55 @@
 # Provides utility functions to help interfaces Puppet to SELinux.
 #
-# Currently this is implemented via the command line tools.  At some
-# point support should be added to use the new SELinux ruby bindings
-# as that will be faster and more reliable then shelling out when they
-# are available.  At this time (2008-09-26) these bindings aren't bundled on
-# any SELinux-using distribution I know of.
+# This requires the very new SELinux Ruby bindings.  These bindings closely
+# mirror the SELinux C library interface.
+#
+# Support for the command line tools is not provided because the performance
+# was abysmal.  At this time (2008-11-02) the only distribution providing
+# these Ruby SELinux bindings which I am aware of is Fedora (in libselinux-ruby).
 
-require 'puppet/util'
+begin
+    require 'selinux'
+rescue LoadError
+    # Nothing
+end
 
 module Puppet::Util::SELinux
 
-    include Puppet::Util
-
     def selinux_support?
-        FileTest.exists?("/selinux/enforce")
+        unless defined? Selinux
+            return false
+        end
+        if Selinux.is_selinux_enabled == 1
+            return true
+        end
+        return false
     end
 
     # Retrieve and return the full context of the file.  If we don't have
-    # SELinux support or if the stat call fails then return nil.
+    # SELinux support or if the SELinux call fails then return nil.
     def get_selinux_current_context(file)
         unless selinux_support?
             return nil
         end
-        context = ""
-        begin
-            execpipe("/usr/bin/stat -c %C #{file}") do |out|
-                out.each do |line|
-                    context << line
-                end
-            end
-        rescue Puppet::ExecutionFailure
+        retval = Selinux.lgetfilecon(file)
+        if retval == -1
             return nil
         end
-        context.chomp!
-        # Handle the case that the system seems to have SELinux support but
-        # stat finds unlabled files.
-        if context == "(null)"
-            return nil
-        end
-        return context
+        return retval[1]
     end
 
-    # Use the matchpathcon command, if present, to return the SELinux context
-    # which the SELinux policy on the system expects the file to have.  We can
-    # use this to obtain a good default context.  If the command does not
-    # exist or the call fails return nil.
-    #
-    # Note: For this command to work a full, non-relative, filesystem path
-    # should be given.
+    # Retrieve and return the default context of the file.  If we don't have
+    # SELinux support or if the SELinux call fails to file a default then return nil.
     def get_selinux_default_context(file)
         unless selinux_support?
             return nil
         end
-        unless FileTest.executable?("/usr/sbin/matchpathcon")
+        filestat = File.lstat(file)
+        retval = Selinux.matchpathcon(file, filestat.mode)
+        if retval == -1
             return nil
         end
-        context = ""
-        begin
-            execpipe("/usr/sbin/matchpathcon #{file}") do |out|
-                out.each do |line|
-                    context << line
-                end
-            end
-        rescue Puppet::ExecutionFailure
-            return nil
-        end
-        # For a successful match, matchpathcon returns two fields separated by
-        # a variable amount of whitespace.  The second field is the full context.
-        context = context.split(/\s/)[1]
-        return context
+        return retval[1]
     end
 
     # Take the full SELinux context returned from the tools and parse it
@@ -91,32 +72,52 @@ module Puppet::Util::SELinux
     end
 
     # This updates the actual SELinux label on the file.  You can update
-    # only a single component or update the entire context.  It is just a
-    # wrapper around the chcon command.
+    # only a single component or update the entire context.
+    # The caveat is that since setting a partial context makes no sense the
+    # file has to already exist.  Puppet (via the File resource) will always
+    # just try to set components, even if all values are specified by the manifest.
+    # I believe that the OS should always provide at least a fall-through context
+    # though on any well-running system.
     def set_selinux_context(file, value, component = false)
         unless selinux_support?
             return nil
         end
-        case component
-            when :seluser
-                flag = "-u"
-            when :selrole
-                flag = "-r"
-            when :seltype
-                flag = "-t"
-            when :selrange
-                flag = "-l"
-            else
-                flag = nil
-        end
 
-        if flag.nil?
-            cmd = ["/usr/bin/chcon","-h",value,file]
+        if component
+            # Must first get existing context to replace a single component
+            context = Selinux.lgetfilecon(file)[1]
+            if context == -1
+                # We can't set partial context components when no context exists
+                # unless/until we can find a way to make Puppet call this method
+                # once for all selinux file label attributes.
+                Puppet.warning "Can't set SELinux context on file unless the file already has some kind of context"
+                return nil
+            end
+            context = context.split(':')
+            case component
+                when :seluser
+                    context[0] = value
+                when :selrole
+                    context[1] = value
+                when :seltype
+                    context[2] = value
+                when :selrange
+                    context[3] = value
+                else
+                    raise ArguementError, "set_selinux_context component must be one of :seluser, :selrole, :seltype, or :selrange"
+            end
+            context = context.join(':')
         else
-            cmd = ["/usr/bin/chcon","-h",flag,value,file]
+            context = value
         end
-        execute(cmd)
-        return true
+       
+        retval = Selinux.lsetfilecon(file, context)
+        if retval == 0
+            return true
+        else
+            Puppet.warning "Failed to set SELinux context %s on %s" % [context, file]
+            return false
+        end
     end
 
     # Since this call relies on get_selinux_default_context it also needs a
