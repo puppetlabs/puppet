@@ -40,7 +40,7 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
         @content = csr
     end
 
-    def save
+    def save(args = {})
         super()
 
         # Try to autosign the CSR.

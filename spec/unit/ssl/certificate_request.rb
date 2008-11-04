@@ -163,6 +163,13 @@ describe Puppet::SSL::CertificateRequest do
     end
 
     describe "when a CSR is saved" do
+        it "should allow arguments" do
+            csr = Puppet::SSL::CertificateRequest.new("me")
+            csr.class.indirection.stubs(:save)
+
+            lambda { csr.save :ipaddress => "foo" }.should_not raise_error
+        end
+
         describe "and a CA is available" do
             it "should save the CSR and trigger autosigning" do
                 ca = mock 'ca', :autosign
