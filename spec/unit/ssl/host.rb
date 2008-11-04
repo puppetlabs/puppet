@@ -267,13 +267,37 @@ describe Puppet::SSL::Host do
             @cert = stub 'cert', :content => @realcert
         end
 
+        it "should find the CA certificate if it does not have a certificate" do
+            Puppet::SSL::Certificate.expects(:find).with("ca").returns mock("cacert")
+            Puppet::SSL::Certificate.stubs(:find).with("myname").returns @cert
+
+            @host.certificate
+        end
+
+        it "should not find the CA certificate if it is the CA host" do
+            @host.expects(:ca?).returns true
+            Puppet::SSL::Certificate.stubs(:find)
+            Puppet::SSL::Certificate.expects(:find).with("ca").never
+
+            @host.certificate
+        end
+
+        it "should return nil if it cannot find a CA certificate" do
+            Puppet::SSL::Certificate.expects(:find).with("ca").returns nil
+            Puppet::SSL::Certificate.expects(:find).with("myname").never
+
+            @host.certificate.should be_nil
+        end
+
         it "should find the certificate in the Certificate class and return the Puppet certificate instance" do
+            Puppet::SSL::Certificate.expects(:find).with("ca").returns mock("cacert")
             Puppet::SSL::Certificate.expects(:find).with("myname").returns @cert
 
             @host.certificate.should equal(@cert)
         end
 
         it "should return any previously found certificate" do
+            Puppet::SSL::Certificate.expects(:find).with("ca").returns mock("cacert")
             Puppet::SSL::Certificate.expects(:find).with("myname").returns(@cert).once
 
             @host.certificate.should equal(@cert)
@@ -451,22 +475,17 @@ describe Puppet::SSL::Host do
             @host = Puppet::SSL::Host.new("me")
         end
 
-        it "should return :existing if it already has a certificate" do
-            @host.expects(:certificate).returns "foo"
-            @host.wait_for_cert(0).should == :existing
-        end
-
         it "should generate its certificate request and attempt to read the certificate again if no certificate is found" do
             @host.expects(:certificate).times(2).returns(nil).then.returns "foo"
             @host.expects(:generate)
-            @host.wait_for_cert(1).should == :new
+            @host.wait_for_cert(1)
         end
 
         it "should catch and log errors during CSR saving" do
             @host.expects(:certificate).times(2).returns(nil).then.returns "foo"
             @host.expects(:generate).times(2).raises(RuntimeError).then.returns nil
             @host.stubs(:sleep)
-            @host.wait_for_cert(1).should == :new
+            @host.wait_for_cert(1)
         end
 
         it "should sleep and retry after failures saving the CSR if waitforcert is enabled" do
@@ -498,7 +517,7 @@ describe Puppet::SSL::Host do
 
             @host.expects(:sleep).with(1)
 
-            @host.wait_for_cert(1).should == :new
+            @host.wait_for_cert(1)
         end
 
         it "should catch and log exceptions during certificate retrieval" do

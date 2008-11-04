@@ -350,7 +350,7 @@ end
 
 host = Puppet::SSL::Host.new
 cert = host.wait_for_cert(options[:waitforcert])
-client.recycle_connection if cert == :new
+client.recycle_connection
 
 objects = []
 

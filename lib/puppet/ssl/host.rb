@@ -137,7 +137,12 @@ class Puppet::SSL::Host
     end
 
     def certificate
-        return nil unless @certificate ||= Certificate.find(name)
+        unless @certificate
+            # get the CA cert first, since it's required for the normal cert
+            # to be of any use.
+            return nil unless Certificate.find("ca") unless ca?
+            @certificate = Certificate.find(name)
+        end
         @certificate
     end
 
@@ -172,6 +177,8 @@ class Puppet::SSL::Host
             @ssl_store = OpenSSL::X509::Store.new
             @ssl_store.purpose = purpose
 
+            # Use the file path here, because we don't want to cause
+            # a lookup in the middle of setting our ssl connection.
             @ssl_store.add_file(Puppet[:localcacert])
 
             # If there's a CRL, add it to our store.
@@ -186,11 +193,11 @@ class Puppet::SSL::Host
 
     # Attempt to retrieve a cert, if we don't already have one.
     def wait_for_cert(time)
-        return :existing if certificate
+        return if certificate
         begin
             generate
 
-            return :new if certificate
+            return if certificate
         rescue StandardError => detail
             Puppet.err "Could not request certificate: %s" % detail.to_s
             if time < 1
@@ -216,7 +223,6 @@ class Puppet::SSL::Host
                 Puppet.err "Could not request certificate: %s" % detail.to_s
             end
         end
-        return :new
     end
 end
 
