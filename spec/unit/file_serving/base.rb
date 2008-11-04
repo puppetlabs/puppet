@@ -90,6 +90,11 @@ describe Puppet::FileServing::Base do
             @file.relative_path = "not/qualified"
             @file.full_path.should == "/this/file/not/qualified"
         end
+
+        it "should strip extra slashes" do
+            file = Puppet::FileServing::Base.new("//this//file")
+            file.full_path.should == "/this/file"
+        end
     end
 
     describe "when stat'ing files" do

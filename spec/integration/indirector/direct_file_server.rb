@@ -64,7 +64,7 @@ describe Puppet::Indirector::DirectFileServer, " when interacting with FileServi
             case instance.full_path
             when /one/: instance.content.should == "one content"
             when /two/: instance.content.should == "two content"
-            when /\.$/: 
+            when @path: 
             else
                 raise "No valid key for %s" % instance.path.inspect
             end

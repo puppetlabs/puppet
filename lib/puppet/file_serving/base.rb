@@ -23,11 +23,11 @@ class Puppet::FileServing::Base
 
     # Return the full path to our file.  Fails if there's no path set.
     def full_path
-        if relative_path.nil? or relative_path == "" or relative_path == "."
+        (if relative_path.nil? or relative_path == "" or relative_path == "."
             path
         else
             File.join(path, relative_path)
-        end
+        end).gsub(%r{/+}, "/")
     end
 
     def initialize(path, options = {})
