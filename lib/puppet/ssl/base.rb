@@ -34,7 +34,7 @@ class Puppet::SSL::Base
     end
 
     def initialize(name)
-        @name = name.downcase
+        @name = name.to_s.downcase
     end
 
     # Read content from disk appropriately.
