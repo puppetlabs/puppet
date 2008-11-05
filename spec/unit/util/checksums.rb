@@ -28,6 +28,14 @@ describe Puppet::Util::Checksums do
         end
     end
 
+    it "should have a method for stripping a sum type from an existing checksum" do
+        @summer.sumtype("{md5}asdfasdfa").should == "md5"
+    end
+
+    it "should return a nil sumtype if the checksum does not mention a checksum type" do
+        @summer.sumtype("asdfasdfa").should be_nil
+    end
+
     {:md5 => Digest::MD5, :sha1 => Digest::SHA1}.each do |sum, klass|
         describe("when using %s" % sum) do
             it "should use #{klass} to calculate string checksums" do

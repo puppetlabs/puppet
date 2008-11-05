@@ -1,6 +1,15 @@
 # A stand-alone module for calculating checksums
 # in a generic way.
 module Puppet::Util::Checksums
+    # Strip the checksum type from an existing checksum
+    def sumtype(checksum)
+        if checksum =~ /^\{(\w+)\}/
+            return $1
+        else
+            return nil
+        end
+    end
+
     # Calculate a checksum using Digest::MD5.
     def md5(content)
         require 'digest/md5'
