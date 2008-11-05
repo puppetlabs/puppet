@@ -213,10 +213,10 @@ class Puppet::Util::FileType
             begin
                 output = Puppet::Util.execute(%w{crontab -l}, :uid => @path)
                 return "" if output.include?("can't open your crontab")
+                raise Puppet::Error, "User %s not authorized to use cron" % @path if output.include?("you are not authorized to use cron")
                 return output
-            rescue
-                # If there's a failure, treat it like an empty file.
-                return ""
+            rescue => detail
+                raise Puppet::Error, "Could not read crontab for %s: %s" % [@path, detail] 
             end
         end
 
