@@ -38,11 +38,6 @@ class Puppet::Node::Catalog < Puppet::SimpleGraph
     # that the host catalog needs.
     attr_accessor :host_config
 
-    # Whether this graph is another catalog's relationship graph.
-    # We don't want to accidentally create a relationship graph for another
-    # relationship graph.
-    attr_accessor :is_relationship_graph
-
     # Whether this catalog was retrieved from the cache, which affects
     # whether it is written back out again.
     attr_accessor :from_cache
@@ -77,7 +72,7 @@ class Puppet::Node::Catalog < Puppet::SimpleGraph
                 self.alias(resource, resource.name) if resource.isomorphic?
             end
 
-            resource.catalog = self if resource.respond_to?(:catalog=) and ! is_relationship_graph
+            resource.catalog = self if resource.respond_to?(:catalog=)
 
             add_vertex(resource)
         end
@@ -157,7 +152,7 @@ class Puppet::Node::Catalog < Puppet::SimpleGraph
         @resource_table.clear
 
         if defined?(@relationship_graph) and @relationship_graph
-            @relationship_graph.clear(false)
+            @relationship_graph.clear
             @relationship_graph = nil
         end
     end
@@ -202,7 +197,7 @@ class Puppet::Node::Catalog < Puppet::SimpleGraph
 
         add_resource(resource)
         if @relationship_graph
-            @relationship_graph.add_resource(resource) unless @relationship_graph.resource(resource.ref)
+            @relationship_graph.add_vertex(resource)
         end
         resource
     end

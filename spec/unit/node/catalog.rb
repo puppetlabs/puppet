@@ -359,12 +359,6 @@ describe Puppet::Node::Catalog, " when functioning as a resource container" do
         @catalog.add_resource @one
     end
 
-    it "should not set itself as the resource's catalog if it is a relationship graph" do
-        @one.expects(:catalog=).never
-        @catalog.is_relationship_graph = true
-        @catalog.add_resource @one
-    end
-
     it "should make all vertices available by resource reference" do
         @catalog.add_resource(@one)
         @catalog.resource(@one.ref).should equal(@one)
@@ -544,6 +538,54 @@ describe Puppet::Node::Catalog, " when functioning as a resource container" do
             raise "Aliased non-isomorphic resource"
         end
     end
+
+    it "should provide a method to create additional resources that also registers the resource" do
+        args = {:name => "/yay", :ensure => :file}
+        resource = stub 'file', :ref => "File[/yay]", :catalog= => @catalog, :title => "/yay", :[] => "/yay"
+        Puppet::Type.type(:file).expects(:create).with(args).returns(resource)
+        @catalog.create_resource :file, args
+        @catalog.resource("File[/yay]").should equal(resource)
+    end
+
+    it "should provide a mechanism for creating implicit resources" do
+        args = {:name => "/yay", :ensure => :file}
+        resource = stub 'file', :ref => "File[/yay]", :catalog= => @catalog, :title => "/yay", :[] => "/yay"
+        Puppet::Type.type(:file).expects(:create).with(args).returns(resource)
+        resource.expects(:implicit=).with(true)
+        @catalog.create_implicit_resource :file, args
+        @catalog.resource("File[/yay]").should equal(resource)
+    end
+
+    it "should remove resources created mid-transaction" do
+        args = {:name => "/yay", :ensure => :file}
+        resource = stub 'file', :ref => "File[/yay]", :catalog= => @catalog, :title => "/yay", :[] => "/yay"
+        @transaction = mock 'transaction'
+        Puppet::Transaction.stubs(:new).returns(@transaction)
+        @transaction.stubs(:evaluate)
+        @transaction.stubs(:cleanup)
+        @transaction.stubs(:addtimes)
+        Puppet::Type.type(:file).expects(:create).with(args).returns(resource)
+        resource.expects :remove
+        @catalog.apply do |trans|
+            @catalog.create_resource :file, args
+            @catalog.resource("File[/yay]").should equal(resource)
+        end
+        @catalog.resource("File[/yay]").should be_nil
+    end
+
+    it "should remove resources added mid-transaction" do
+        @transaction = mock 'transaction'
+        Puppet::Transaction.stubs(:new).returns(@transaction)
+        @transaction.stubs(:evaluate)
+        @transaction.stubs(:cleanup)
+        @transaction.stubs(:addtimes)
+        file = Puppet::Type.type(:file).create(:name => "/yay", :ensure => :file)
+        @catalog.apply do |trans|
+            @catalog.add_resource file 
+            @catalog.resource("File[/yay]").should_not be_nil
+        end
+        @catalog.resource("File[/yay]").should be_nil
+    end
 end
 
 describe Puppet::Node::Catalog do
@@ -689,12 +731,6 @@ describe Puppet::Node::Catalog, " when creating a relationship graph" do
         @relationships.should be_instance_of(Puppet::SimpleGraph)
     end
 
-    it "should copy its host_config setting to the relationship graph" do
-        config = Puppet::Node::Catalog.new
-        config.host_config = true
-        config.relationship_graph.host_config.should be_true
-    end
-
     it "should not have any components" do
         @relationships.vertices.find { |r| r.instance_of?(Puppet::Type::Component) }.should be_nil
     end
@@ -717,38 +753,40 @@ describe Puppet::Node::Catalog, " when creating a relationship graph" do
     end
 
     it "should get removed when the catalog is cleaned up" do
-        @relationships.expects(:clear).with(false)
+        @relationships.expects(:clear)
         @catalog.clear
         @catalog.instance_variable_get("@relationship_graph").should be_nil
     end
 
-    it "should create a new relationship graph after clearing the old one" do
-        @relationships.expects(:clear).with(false)
+    it "should write :relationships and :expanded_relationships graph files if the catalog is a host catalog" do
         @catalog.clear
-        @catalog.relationship_graph.should be_instance_of(Puppet::Node::Catalog)
+        graph = Puppet::SimpleGraph.new
+        Puppet::SimpleGraph.expects(:new).returns graph
+
+        graph.expects(:write_graph).with(:relationships)
+        graph.expects(:write_graph).with(:expanded_relationships)
+
+        @catalog.host_config = true
+
+        @catalog.relationship_graph
     end
 
-    it "should look up resources in the relationship graph if not found in the main catalog" do
-        five = stub 'five', :ref => "File[five]", :catalog= => nil, :title => "five", :[] => "five"
-        @relationships.add_resource five
-        @catalog.resource(five.ref).should equal(five)
+    it "should not write graph files if the catalog is not a host catalog" do
+        @catalog.clear
+        graph = Puppet::SimpleGraph.new
+        Puppet::SimpleGraph.expects(:new).returns graph
+
+        graph.expects(:write_graph).never
+
+        @catalog.host_config = false
+
+        @catalog.relationship_graph
     end
 
-    it "should provide a method to create additional resources that also registers the resource" do
-        args = {:name => "/yay", :ensure => :file}
-        resource = stub 'file', :ref => "File[/yay]", :catalog= => @catalog, :title => "/yay", :[] => "/yay"
-        Puppet::Type.type(:file).expects(:create).with(args).returns(resource)
-        @catalog.create_resource :file, args
-        @catalog.resource("File[/yay]").should equal(resource)
-    end
-
-    it "should provide a mechanism for creating implicit resources" do
-        args = {:name => "/yay", :ensure => :file}
-        resource = stub 'file', :ref => "File[/yay]", :catalog= => @catalog, :title => "/yay", :[] => "/yay"
-        Puppet::Type.type(:file).expects(:create).with(args).returns(resource)
-        resource.expects(:implicit=).with(true)
-        @catalog.create_implicit_resource :file, args
-        @catalog.resource("File[/yay]").should equal(resource)
+    it "should create a new relationship graph after clearing the old one" do
+        @relationships.expects(:clear)
+        @catalog.clear
+        @catalog.relationship_graph.should be_instance_of(Puppet::SimpleGraph)
     end
 
     it "should add implicit resources to the relationship graph if there is one" do
@@ -760,41 +798,10 @@ describe Puppet::Node::Catalog, " when creating a relationship graph" do
         relgraph = @catalog.relationship_graph
 
         @catalog.create_implicit_resource :file, args
-        relgraph.resource("File[/yay]").should equal(resource)
+        relgraph.should be_vertex(resource)
     end
 
-    it "should remove resources created mid-transaction" do
-        args = {:name => "/yay", :ensure => :file}
-        resource = stub 'file', :ref => "File[/yay]", :catalog= => @catalog, :title => "/yay", :[] => "/yay"
-        @transaction = mock 'transaction'
-        Puppet::Transaction.stubs(:new).returns(@transaction)
-        @transaction.stubs(:evaluate)
-        @transaction.stubs(:cleanup)
-        @transaction.stubs(:addtimes)
-        Puppet::Type.type(:file).expects(:create).with(args).returns(resource)
-        resource.expects :remove
-        @catalog.apply do |trans|
-            @catalog.create_resource :file, args
-            @catalog.resource("File[/yay]").should equal(resource)
-        end
-        @catalog.resource("File[/yay]").should be_nil
-    end
-
-    it "should remove resources added mid-transaction" do
-        @transaction = mock 'transaction'
-        Puppet::Transaction.stubs(:new).returns(@transaction)
-        @transaction.stubs(:evaluate)
-        @transaction.stubs(:cleanup)
-        @transaction.stubs(:addtimes)
-        file = Puppet::Type.type(:file).create(:name => "/yay", :ensure => :file)
-        @catalog.apply do |trans|
-            @catalog.add_resource file 
-            @catalog.resource("File[/yay]").should_not be_nil
-        end
-        @catalog.resource("File[/yay]").should be_nil
-    end
-
-    it "should remove resources from the relationship graph if it exists" do
+    it "should remove removed resources from the relationship graph if it exists" do
         @catalog.remove_resource(@one)
         @catalog.relationship_graph.vertex?(@one).should be_false
     end

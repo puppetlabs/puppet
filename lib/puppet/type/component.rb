@@ -5,7 +5,6 @@
 require 'puppet'
 require 'puppet/type'
 require 'puppet/transaction'
-require 'puppet/pgraph'
 
 Puppet::Type.newtype(:component) do
     include Enumerable
