@@ -53,94 +53,6 @@ class TestFileSources < Test::Unit::TestCase
         destfile = File.join(dest, "file")
         return source, dest, sourcefile, destfile
     end
-    
-    def test_source_retrieve
-        source = tempfile()
-        dest = tempfile()
-        
-        file = Puppet::Type.newfile :path => dest, :source => source,
-            :title => "copier"
-        
-        assert(file.property(:checksum), "source property did not create checksum property")
-        property = file.property(:source)
-        assert(property, "did not get source property")
-        
-        # Make sure the munge didn't actually change the source
-        assert_equal([source], property.should, "munging changed the source")
-        
-        currentvalue = nil
-        # Now make the dest a directory, and make sure the object sets :ensure
-        # up to create a directory
-        Dir.mkdir(source)
-        assert_nothing_raised do
-            currentvalue = property.retrieve
-        end
-        assert_equal(:directory, file.should(:ensure),
-            "Did not set to create directory")
-        
-        # And make sure the source property won't try to do anything with a
-        # remote dir
-        assert(property.insync?(currentvalue), "Source was out of sync even tho remote is dir")
-        
-        # Now remove the source, and make sure :ensure was not modified
-        Dir.rmdir(source)
-        assert_equal(:directory, file.should(:ensure),
-            "Did not keep :ensure setting")
-        
-        # Now have a remote file and make sure things work correctly
-        File.open(source, "w") { |f| f.puts "yay" }
-        File.chmod(0755, source)
-        
-        assert_nothing_raised do
-            property.retrieve
-        end
-        assert_equal(:file, file.should(:ensure),
-            "Did not make correct :ensure setting")
-        assert_equal(0755, file.should(:mode),
-            "Mode was not copied over")
-        
-        # Now let's make sure that we get the first found source
-        fake = tempfile()
-        property.should = [fake, source]
-        assert_nothing_raised do
-            property.retrieve
-        end
-        assert_equal(Digest::MD5.hexdigest(File.read(source)), property.checksum.sub(/^\{\w+\}/, ''), 
-            "Did not catch later source")
-    end
-    
-    def test_source_sync
-        source = tempfile()
-        dest = tempfile()
-
-        file = Puppet::Type.newfile :path => dest, :source => source,
-            :title => "copier"
-        property = file.property(:source)
-        
-        File.open(source, "w") { |f| f.puts "yay" }
-        
-        currentvalues = file.retrieve
-        assert(! property.insync?(currentvalues[property]), "source thinks it's in sync")
-        
-        event = nil
-        assert_nothing_raised do
-            event = property.sync
-        end
-        assert_equal(:file_created, event)
-        assert_equal(File.read(source), File.read(dest),
-            "File was not copied correctly")
-        
-        # Now write something different
-        File.open(source, "w") { |f| f.puts "rah" }
-        currentvalues = file.retrieve
-        assert(! property.insync?(currentvalues[property]), "source should be out of sync")
-        assert_nothing_raised do
-            event = property.sync
-        end
-        assert_equal(:file_changed, event)
-        assert_equal(File.read(source), File.read(dest),
-            "File was not copied correctly")
-    end
 
     def recursive_source_test(fromdir, todir)
         initstorage
@@ -259,7 +171,7 @@ class TestFileSources < Test::Unit::TestCase
         FileUtils.cd(todir) {
             %x{find . 2>/dev/null}.chomp.split(/\n/).each { |file|
                 if file =~ /file[0-9]+/
-                    File.unlink(file)
+                    FileUtils.rm_rf(file)
                 end
             }
         }

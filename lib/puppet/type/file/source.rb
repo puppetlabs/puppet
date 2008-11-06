@@ -8,7 +8,7 @@ module Puppet
     # the file down.  If the remote file is a dir or a link or whatever, then
     # this state, during retrieval, modifies the appropriate other states
     # so that things get taken care of appropriately.
-    Puppet.type(:file).newproperty(:source) do
+    Puppet.type(:file).newparam(:source) do
         include Puppet::Util::Diff
 
         attr_accessor :source, :local
@@ -63,27 +63,24 @@ module Puppet
             to ``follow`` if any remote sources are links.
             "
 
-        uncheckable
-        
-        validate do |source|
-            begin
-                uri = URI.parse(URI.escape(source))
-            rescue => detail
-                self.fail "Could not understand source %s: %s" % [source, detail.to_s]
-            end
+        validate do |sources|
+            sources = [sources] unless sources.is_a?(Array)
+            sources.each do |source|
+                begin
+                    uri = URI.parse(URI.escape(source))
+                rescue => detail
+                    self.fail "Could not understand source %s: %s" % [source, detail.to_s]
+                end
 
-            unless uri.scheme.nil? or %w{file puppet}.include?(uri.scheme)
-                self.fail "Cannot use URLs of type '%s' as source for fileserving" % [uri.scheme]
+                unless uri.scheme.nil? or %w{file puppet}.include?(uri.scheme)
+                    self.fail "Cannot use URLs of type '%s' as source for fileserving" % [uri.scheme]
+                end
             end
         end
             
-        munge do |source|
-            # if source.is_a? Symbol
-            #     return source
-            # end
-
-            # Remove any trailing slashes
-            source.sub(/\/$/, '')
+        munge do |sources|
+            sources = [sources] unless sources.is_a?(Array)
+            sources.collect { |source| source.sub(/\/$/, '') }
         end
         
         def change_to_s(currentvalue, newvalue)
@@ -124,6 +121,7 @@ module Puppet
             # if a value has not already been provided.
             [:owner, :mode, :group, :checksum].each do |param|
                 next if param == :owner and Puppet::Util::SUIDManager.uid != 0
+                next if param == :checksum and metadata.ftype == "directory"
                 unless value = @resource[param] and value != :absent
                     @resource[param] = metadata.send(param)
                 end
@@ -143,34 +141,8 @@ module Puppet
             @content = nil
         end
 
-        # Use the remote metadata to see if we're in sync.
-        # LAK:NOTE This method should still get refactored.
-        def insync?(currentvalue)
-            # the only thing this actual state can do is copy files around.  Therefore,
-            # only pay attention if the remote is a file.
-            return true unless metadata.ftype == "file" 
-            
-            # The file is not in sync if it doesn't even exist.
-            return false unless resource.stat
-            
-            # The file is considered in sync if it exists and 'replace' is false.
-            return true unless resource.replace?
-
-            # Now, we just check to see if the checksums are the same
-            parentchecksum = @resource.property(:checksum).retrieve
-            result = (!parentchecksum.nil? and (parentchecksum == metadata.checksum))
-
-            # Diff the contents if they ask it.  This is quite annoying -- we need to do this in
-            # 'insync?' because they might be in noop mode, but we don't want to do the file
-            # retrieval twice, so we cache the value.
-            if ! result and Puppet[:show_diff] and File.exists?(@resource[:path])
-                string_file_diff(@resource[:path], content)
-            end
-            return result
-        end
-
         def pinparams
-            [:mode, :type, :owner, :group]
+            [:mode, :type, :owner, :group, :content]
         end
 
         def found?
@@ -183,8 +155,8 @@ module Puppet
         attr_writer :metadata
         def metadata
             unless defined?(@metadata) and @metadata
-                return @metadata = nil unless should
-                should.each do |source|
+                return @metadata = nil unless value
+                value.each do |source|
                     begin
                         if data = Puppet::FileServing::Metadata.find(source)
                             @metadata = data
@@ -195,43 +167,20 @@ module Puppet
                         fail detail, "Could not retrieve file metadata for %s: %s" % [source, detail]
                     end
                 end
-                fail "Could not retrieve information from source(s) %s" % @should.join(", ") unless @metadata
+                fail "Could not retrieve information from source(s) %s" % value.join(", ") unless @metadata
             end
             return @metadata
         end
 
-        # Just call out to our copy method.  Hopefully we'll refactor 'source' to
-        # be a parameter soon, in which case 'retrieve' is unnecessary.
-        def retrieve
-            copy_source_values
-        end
-        
-        # Return the whole array, rather than the first item.
-        def should
-            @should
-        end
-        
         # Make sure we're also checking the checksum
-        def should=(value)
+        def value=(value)
             super
 
             checks = (pinparams + [:ensure])
             checks.delete(:checksum)
             
-            @resource[:check] = checks
-            @resource[:checksum] = :md5 unless @resource.property(:checksum)
-        end
-
-        def sync
-            exists = FileTest.exist?(@resource[:path])
-
-            @resource.write(content, :source, @metadata.checksum)
-
-            if exists
-                return :file_changed
-            else
-                return :file_created
-            end
+            resource[:check] = checks
+            resource[:checksum] = :md5 unless resource.property(:checksum)
         end
     end
 end

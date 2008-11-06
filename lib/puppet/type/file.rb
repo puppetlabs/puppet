@@ -240,6 +240,9 @@ module Puppet
             CREATORS.each do |param|
                 count += 1 if self.should(param)
             end
+            if @parameters.include?(:source)
+                count += 1
+            end
             if count > 1
                 self.fail "You cannot specify more than one of %s" % CREATORS.collect { |p| p.to_s}.join(", ")
             end
@@ -291,6 +294,12 @@ module Puppet
             end
 
             return asuser
+        end
+
+        # Does the file currently exist?  Just checks for whether
+        # we have a stat
+        def exist?
+            stat ? true : false
         end
 
         # We have to do some extra finishing, to retrieve our bucket if
@@ -478,6 +487,7 @@ module Puppet
             end
 
             return self.class.create(options)
+            #return catalog.create_implicit_resource(:file, options)
         end
 
         # Files handle paths specially, because they just lengthen their
@@ -576,6 +586,7 @@ module Puppet
 
             total = self[:source].collect do |source|
                 next unless result = perform_recursion(source)
+                return if top = result.find { |r| r.relative_path == "." } and top.ftype != "directory"
                 result.each { |data| data.source = "%s/%s" % [source, data.relative_path] }
                 break result if result and ! result.empty? and sourceselect == :first
                 result
@@ -593,14 +604,14 @@ module Puppet
 
             total.each do |meta|
                 if meta.relative_path == "."
-                    property(:source).metadata = meta
+                    parameter(:source).metadata = meta
                     next
                 end
                 children[meta.relative_path] ||= newchild(meta.relative_path)
                 children[meta.relative_path][:source] = meta.source
                 children[meta.relative_path][:checksum] = :md5 if meta.ftype == "file"
 
-                children[meta.relative_path].property(:source).metadata = meta
+                children[meta.relative_path].parameter(:source).metadata = meta
             end
 
             # If we're purging resources, then delete any resource that isn't on the
@@ -681,22 +692,10 @@ module Puppet
 
         # a wrapper method to make sure the file exists before doing anything
         def retrieve
-            unless stat = self.stat(true)
-
-                propertyvalues = properties().inject({}) { |hash, property|
-                                     hash[property] = :absent
-                                     hash
-                                  }
-
-                # If the file doesn't exist but we have a source, then call
-                # set our 'should' values based on the source file.
-                if @parameters.include?(:source)
-                    @parameters[:source].copy_source_values
-                end
-                return propertyvalues
+            if source = parameter(:source)
+                source.copy_source_values
             end
-
-            currentpropvalues()
+            super
         end
 
         # Set the checksum, from another property.  There are multiple
@@ -713,6 +712,28 @@ module Puppet
                     @parameters[:checksum].checksum = currentvalue
                 end
             end
+        end
+
+        # Should this thing be a normal file?  This is a relatively complex
+        # way of determining whether we're trying to create a normal file,
+        # and it's here so that the logic isn't visible in the content property.
+        def should_be_file?
+            return true if self[:ensure] == :file
+
+            # I.e., it's set to something like "directory"
+            return false if e = self[:ensure] and e != :present
+
+            # The user doesn't really care, apparently
+            if self[:ensure] == :present
+                return true unless s = stat
+                return true if s.ftype == "file"
+                return false
+            end
+
+            # If we've gotten here, then :ensure isn't set
+            return true if self[:content]
+            return true if stat and stat.ftype == "file"
+            return false
         end
 
         # Stat our file.  Depending on the value of the 'links' attribute, we

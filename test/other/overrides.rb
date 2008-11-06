@@ -23,33 +23,27 @@ class TestOverrides < Test::Unit::TestCase
         basedir = File.join(tmpdir(), "overridetesting")
         mksubdirs(basedir, 1)
 
-        baseobj = nil
         basefile = File.join(basedir, "file")
-        assert_nothing_raised("Could not create base obj") {
-            baseobj = Puppet.type(:file).create(
-                :title => "base",
-                :path => basedir,
-                :recurse => true,
-                :mode => "755"
-            )
-        }
+        baseobj = Puppet.type(:file).create(
+            :title => "base",
+            :path => basedir,
+            :recurse => true,
+            :mode => "755"
+        )
 
-        subobj = nil
         subdir = File.join(basedir, "0")
         subfile = File.join(subdir, "file")
-        assert_nothing_raised("Could not create sub obj") {
-            subobj = Puppet.type(:file).create(
-                :title => "sub",
-                :path => subdir,
-                :recurse => true,
-                :mode => "644"
-            )
-        }
+        subobj = Puppet.type(:file).create(
+            :title => "sub",
+            :path => subdir,
+            :recurse => true,
+            :mode => "644"
+        )
 
         assert_apply(baseobj, subobj)
 
-        assert(File.stat(basefile).mode & 007777 == 0755)
-        assert(File.stat(subfile).mode & 007777 == 0644)
+        assert_equal(0755, File.stat(basefile).mode & 007777, "Did not set base mode")
+        assert_equal(0644, File.stat(subfile).mode & 007777, "Did not set overridden mode")
     end
 
     def test_deepoverride

@@ -42,54 +42,6 @@ class TestFileTarget < Test::Unit::TestCase
         assert_events([], file)
         assert_events([], file)
     end
-    
-    def test_linkrecurse
-        dest = tempfile()
-        link = @file.create :path => tempfile(), :recurse => true, :ensure => dest
-        catalog = mk_catalog(link)
-        
-        ret = nil
-        
-        # Start with nothing, just to make sure we get nothing back
-        assert_nothing_raised { ret = link.linkrecurse(true) }
-        assert_nil(ret, "got a return when the dest doesn't exist")
-        
-        # then with a directory with only one file
-        Dir.mkdir(dest)
-        one = File.join(dest, "one")
-        File.open(one, "w") { |f| f.puts "" }
-        link[:ensure] = dest
-        assert_nothing_raised { ret = link.linkrecurse(true) }
-        
-        assert_equal(:directory, link.should(:ensure), "ensure was not set to directory")
-        assert_equal([File.join(link.title, "one")], ret.collect { |f| f.title },
-            "Did not get linked file")
-        oneobj = catalog.resource(:file, File.join(link.title, "one"))
-        assert_equal(one, oneobj.should(:target), "target was not set correctly")
-        
-        oneobj.remove
-        File.unlink(one)
-        
-        # Then make sure we get multiple files
-        returns = []
-        5.times do |i|
-            path = File.join(dest, i.to_s)
-            returns << File.join(link.title, i.to_s)
-            File.open(path, "w") { |f| f.puts "" }
-        end
-        assert_nothing_raised { ret = link.linkrecurse(true) }
-
-        assert_equal(returns.sort, ret.collect { |f| f.title }.sort,
-            "Did not get links back")
-        
-        returns.each do |path|
-            obj = catalog.resource(:file, path)
-            assert(path, "did not get obj for %s" % path)
-            sdest = File.join(dest, File.basename(path))
-            assert_equal(sdest, obj.should(:target),
-                "target was not set correctly for %s" % path)
-        end
-    end
 
     def test_simplerecursivelinking
         source = tempfile()
@@ -116,7 +68,8 @@ class TestFileTarget < Test::Unit::TestCase
         assert(File.symlink?(linkpath), "path is not a link")
         assert_equal(file, File.readlink(linkpath))
 
-        assert_nil(catalog.resource(:file, sublink), "objects were not removed")
+        # Use classes for comparison, because the resource inspection is so large
+        assert_equal(NilClass, catalog.resource(:file, sublink).class, "dynamically generated resources were not removed")
         assert_equal([], link.evaluate, "Link is not in sync")
     end
 
@@ -195,20 +148,20 @@ class TestFileTarget < Test::Unit::TestCase
         source = tempfile()
         dest = tempfile()
 
-        objects = []
-        objects << Puppet.type(:exec).create(
+        resources = []
+        resources << Puppet.type(:exec).create(
             :command => "mkdir %s; touch %s/file" % [source, source],
             :title => "yay",
             :path => ENV["PATH"]
         )
-        objects << Puppet.type(:file).create(
+        resources << Puppet.type(:file).create(
             :ensure => source,
             :path => dest,
             :recurse => true,
-            :require => objects[0]
+            :require => resources[0]
         )
 
-        assert_apply(*objects)
+        assert_apply(*resources)
 
         link = File.join(dest, "file")
         assert(FileTest.symlink?(link), "Did not make link")

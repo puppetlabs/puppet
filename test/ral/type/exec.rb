@@ -442,7 +442,7 @@ class TestExec < Test::Unit::TestCase
 
         Puppet.type(:exec).checks.each do |check|
             klass = Puppet.type(:exec).paramclass(check)
-            next if klass.values.include? :false
+            next if klass.value_collection.values.include? :false
             assert_raise(Puppet::Error, "Check '%s' did not fail on false" % check) do
                 exec[check] = false
             end

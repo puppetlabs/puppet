@@ -14,25 +14,59 @@ describe Puppet::Type.type(:file) do
         @file.catalog = @catalog
     end
 
-    describe "when used with content and replace=>false" do
-        before do
-            @file[:content] = "foo"
-            @file[:replace] = false
-        end
+    it "should have a method for determining if the file is present" do
+        @file.must respond_to(:exist?)
+    end
 
-        it "should be insync if the file exists and the content is different" do
-            File.open(@path, "w") do |f| f.puts "bar" end
-            @file.property(:content).insync?("bar").should be_true
-        end
+    it "should be considered existent if it can be stat'ed" do
+        @file.expects(:stat).returns mock('stat')
+        @file.must be_exist
+    end
 
-        it "should be insync if the file exists and the content is right" do
-            File.open(@path, "w") do |f| f.puts "foo" end
-            @file.property(:content).insync?("foo").should be_true
-        end
+    it "should be considered nonexistent if it can not be stat'ed" do
+        @file.expects(:stat).returns nil
+        @file.must_not be_exist
+    end
 
-        it "should not be insync if the file does not exist" do
-            @file.property(:content).insync?(:nil).should be_false
-        end
+    it "should have a method for determining if the file should be a normal file" do
+        @file.must respond_to(:should_be_file?)
+    end
+
+    it "should be a file if :ensure is set to :file" do
+        @file[:ensure] = :file
+        @file.must be_should_be_file
+    end
+
+    it "should be a file if :ensure is set to :present and the file exists as a normal file" do
+        @file.stubs(:stat).returns(mock('stat', :ftype => "file"))
+        @file[:ensure] = :present
+        @file.must be_should_be_file
+    end
+
+    it "should not be a file if :ensure is set to something other than :file" do
+        @file[:ensure] = :directory
+        @file.must_not be_should_be_file
+    end
+
+    it "should not be a file if :ensure is set to :present and the file exists but is not a normal file" do
+        @file.stubs(:stat).returns(mock('stat', :ftype => "directory"))
+        @file[:ensure] = :present
+        @file.must_not be_should_be_file
+    end
+
+    it "should be a file if :ensure is not set and :content is" do
+        @file[:content] = "foo"
+        @file.must be_should_be_file
+    end
+
+    it "should be a file if neither :ensure nor :content is set but the file exists as a normal file" do
+        @file.stubs(:stat).returns(mock("stat", :ftype => "file"))
+        @file.must be_should_be_file
+    end
+
+    it "should not be a file if neither :ensure nor :content is set but the file exists but not as a normal file" do
+        @file.stubs(:stat).returns(mock("stat", :ftype => "directory"))
+        @file.must_not be_should_be_file
     end
 
     describe "when managing links" do
@@ -149,7 +183,7 @@ describe Puppet::Type.type(:file) do
     describe "when flushing" do
         it "should flush all properties that respond to :flush" do
             @resource = Puppet.type(:file).create(:path => "/foo/bar", :source => "/bar/foo")
-            @resource.property(:source).expects(:flush)
+            @resource.parameter(:source).expects(:flush)
             @resource.flush
         end
 
@@ -318,15 +352,25 @@ describe Puppet::Type.type(:file) do
 
             @first = Puppet::FileServing::Metadata.new("/my", :relative_path => "first")
             @second = Puppet::FileServing::Metadata.new("/my", :relative_path => "second")
+            @first.stubs(:ftype).returns "directory"
+            @second.stubs(:ftype).returns "directory"
 
-            @property = stub 'property', :metadata= => nil
-            @resource = stub 'file', :[]= => nil, :property => @property
+            @parameter = stub 'property', :metadata= => nil
+            @resource = stub 'file', :[]= => nil, :parameter => @parameter
         end
 
         it "should pass its source to the :perform_recursion method" do
             data = Puppet::FileServing::Metadata.new("/whatever", :relative_path => "foobar")
             @file.expects(:perform_recursion).with("puppet://foo/bar").returns [data]
             @file.stubs(:newchild).returns @resource
+            @file.recurse_remote({})
+        end
+
+        it "should not recurse when the remote file is not a directory" do
+            data = Puppet::FileServing::Metadata.new("/whatever", :relative_path => ".")
+            data.stubs(:ftype).returns "file"
+            @file.expects(:perform_recursion).with("puppet://foo/bar").returns [data]
+            @file.expects(:newchild).never
             @file.recurse_remote({})
         end
 
@@ -368,9 +412,9 @@ describe Puppet::Type.type(:file) do
 
         it "should store the metadata in the source property for each resource so the source does not have to requery the metadata" do
             @file.stubs(:perform_recursion).returns [@first]
-            @resource.expects(:property).with(:source).returns @property
+            @resource.expects(:parameter).with(:source).returns @parameter
             
-            @property.expects(:metadata=).with(@first)
+            @parameter.expects(:metadata=).with(@first)
 
             @file.recurse_remote("first" => @resource)
         end
@@ -388,7 +432,7 @@ describe Puppet::Type.type(:file) do
             @first.stubs(:relative_path).returns "."
             @file.stubs(:perform_recursion).returns [@first]
 
-            @file.property(:source).expects(:metadata=).with @first
+            @file.parameter(:source).expects(:metadata=).with @first
             
             @file.recurse_remote("first" => @resource)
         end
@@ -403,7 +447,7 @@ describe Puppet::Type.type(:file) do
 
                 @resource.expects(:[]=).with(:ensure, :absent)
 
-                @file.expects(:newchild).returns stub('secondfile', :[]= => nil, :property => @property)
+                @file.expects(:newchild).returns stub('secondfile', :[]= => nil, :parameter => @parameter)
 
                 @file.recurse_remote("first" => @resource)
             end
@@ -582,8 +626,14 @@ describe Puppet::Type.type(:file) do
                 end
             end
 
+            it "should fail if it has no catalog" do
+                file = @file.class.create(:path => "/foo/bar", :owner => "root", :group => "wheel")
+                lambda { file.newchild("foo/bar").should raise_error(ArgumentError)
+            end
+
             it "should copy all of the parent resource's 'should' values that were set at initialization" do
                 file = @file.class.create(:path => "/foo/bar", :owner => "root", :group => "wheel")
+                @catalog.add_resource(file)
                 file.class.expects(:create).with { |options| options[:owner] == "root" and options[:group] == "wheel" }
                 file.newchild("my/path")
             end
@@ -596,12 +646,17 @@ describe Puppet::Type.type(:file) do
             it "should not copy values to the child which were set by the source" do
                 @file[:source] = "/foo/bar"
                 metadata = stub 'metadata', :owner => "root", :group => "root", :mode => 0755, :ftype => "file", :checksum => "{md5}whatever"
-                @file.property(:source).stubs(:metadata).returns metadata
+                @file.parameter(:source).stubs(:metadata).returns metadata
 
-                @file.property(:source).copy_source_values
+                @file.parameter(:source).copy_source_values
 
                 @file.class.expects(:create).with { |params| params[:group].nil? }
                 @file.newchild("my/path")
+            end
+
+            it "should return nil if the specified child resource already exists in the catalog" do
+                @catalog.expects(:resource).with(:file, File.join(@file[:path], "foo/bar")).returns mock("resource")
+                @file.newchild("foo/bar").should be_nil
             end
         end
     end

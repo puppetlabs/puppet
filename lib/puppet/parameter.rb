@@ -487,15 +487,6 @@ class Puppet::Parameter
         @value = munge(value)
     end
 
-    def inspect
-        s = "Parameter(%s = %s" % [self.name, self.value || "nil"]
-        if defined? @resource
-            s += ", @resource = %s)" % @resource
-        else
-            s += ")"
-        end
-    end
-
     # Retrieve the resource's provider.  Some types don't have providers, in which
     # case we return the resource object itself.
     def provider

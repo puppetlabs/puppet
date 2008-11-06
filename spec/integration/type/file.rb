@@ -175,8 +175,37 @@ describe Puppet::Type.type(:file) do
 
             # And make sure it's changed
             File.read(dest).should == "bar"
-
         end
+
+        it "should be able to copy individual files even if recurse has been specified" do
+            source = tmpfile("source")
+            dest = tmpfile("dest")
+
+            File.open(source, "w") { |f| f.print "foo" }
+
+            file = Puppet::Type::File.create(:name => dest, :source => source, :recurse => true)
+
+            catalog = Puppet::Node::Catalog.new
+            catalog.add_resource file
+            catalog.apply
+
+            File.read(dest).should == "foo"
+        end
+    end
+
+    it "should be able to create files when 'content' is specified but 'ensure' is not" do
+        dest = tmpfile("files_with_content")
+
+        file = Puppet.type(:file).create(
+            :name => dest,
+            :content => "this is some content, yo"
+        )
+
+        catalog = Puppet::Node::Catalog.new
+        catalog.add_resource file
+        catalog.apply
+
+        File.read(dest).should == "this is some content, yo"
     end
 
     it "should create files with content if both 'content' and 'ensure' are set" do

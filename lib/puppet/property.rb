@@ -188,16 +188,6 @@ class Puppet::Property < Puppet::Parameter
         end
     end
 
-    def inspect
-        str = "Property('%s', " % self.name
-
-        if defined? @should and @should
-            str += "@should = '%s')" % @should.join(", ")
-        else
-            str += "@should = nil)"
-        end
-    end
-
     # Determine whether the property is in-sync or not.  If @should is
     # not defined or is set to a non-true value, then we do not have
     # a valid value for it and thus consider the property to be in-sync

@@ -639,46 +639,6 @@ class TestFile < Test::Unit::TestCase
         assert_equal(subobj, edge.target, "file did not require its parent dir")
     end
 
-    def test_content
-        file = tempfile()
-        str = "This is some content"
-
-        obj = nil
-        assert_nothing_raised {
-            obj = Puppet.type(:file).create(
-                :name => file,
-                :content => str
-            )
-        }
-
-        assert(!obj.insync?(obj.retrieve), "Object is incorrectly in sync")
-
-        assert_events([:file_created], obj)
-
-        currentvalues = obj.retrieve
-
-        assert(obj.insync?(currentvalues), "Object is not in sync")
-
-        text = File.read(file)
-
-        assert_equal(str, text, "Content did not copy correctly")
-
-        newstr = "Another string, yo"
-
-        obj[:content] = newstr
-
-        assert(!obj.insync?(obj.retrieve), "Object is incorrectly in sync")
-
-        assert_events([:file_changed], obj)
-
-        text = File.read(file)
-
-        assert_equal(newstr, text, "Content did not copy correctly")
-
-        currentvalues = obj.retrieve
-        assert(obj.insync?(currentvalues), "Object is not in sync")
-    end
-
     # Unfortunately, I know this fails
     def disabled_test_recursivemkdir
         path = tempfile()
@@ -946,6 +906,7 @@ class TestFile < Test::Unit::TestCase
         currentvalues = file.retrieve
         assert(file.insync?(currentvalues), "Symlink not considered 'present'")
         File.unlink(path)
+        file.flush
 
         # Now set some content, and make sure it works
         file[:content] = "yayness"

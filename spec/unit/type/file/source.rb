@@ -9,22 +9,22 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         @resource = stub 'resource', :[]= => nil, :property => nil
     end
 
-    it "should be a subclass of Property" do
-        source.superclass.must == Puppet::Property
+    it "should be a subclass of Parameter" do
+        source.superclass.must == Puppet::Parameter
     end
 
     describe "when initializing" do
-        it "should fail if the 'should' values are not URLs" do
+        it "should fail if the set values are not URLs" do
             s = source.new(:resource => @resource)
             URI.expects(:parse).with('foo').raises RuntimeError
 
-            lambda { s.should = %w{foo} }.must raise_error(Puppet::Error)
+            lambda { s.value = %w{foo} }.must raise_error(Puppet::Error)
         end
 
         it "should fail if the URI is not a local file, file URI, or puppet URI" do
             s = source.new(:resource => @resource)
 
-            lambda { s.should = %w{http://foo/bar} }.must raise_error(Puppet::Error)
+            lambda { s.value = %w{http://foo/bar} }.must raise_error(Puppet::Error)
         end
     end
 
@@ -53,14 +53,14 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         end
 
         it "should collect its metadata using the Metadata class if it is not already set" do
-            @source = source.new(:resource => @resource, :should => "/foo/bar")
+            @source = source.new(:resource => @resource, :value => "/foo/bar")
             Puppet::FileServing::Metadata.expects(:find).with("/foo/bar").returns @metadata
             @source.metadata
         end
 
         it "should use the metadata from the first found source" do
             metadata = stub 'metadata', :source= => nil
-            @source = source.new(:resource => @resource, :should => ["/foo/bar", "/fee/booz"])
+            @source = source.new(:resource => @resource, :value => ["/foo/bar", "/fee/booz"])
             Puppet::FileServing::Metadata.expects(:find).with("/foo/bar").returns nil
             Puppet::FileServing::Metadata.expects(:find).with("/fee/booz").returns metadata
             @source.metadata.should equal(metadata)
@@ -68,7 +68,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
         it "should store the found source as the metadata's source" do
             metadata = mock 'metadata'
-            @source = source.new(:resource => @resource, :should => "/foo/bar")
+            @source = source.new(:resource => @resource, :value => "/foo/bar")
             Puppet::FileServing::Metadata.expects(:find).with("/foo/bar").returns metadata
 
             metadata.expects(:source=).with("/foo/bar")
@@ -76,7 +76,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         end
 
         it "should fail intelligently if an exception is encountered while querying for metadata" do
-            @source = source.new(:resource => @resource, :should => "/foo/bar")
+            @source = source.new(:resource => @resource, :value => "/foo/bar")
             Puppet::FileServing::Metadata.expects(:find).with("/foo/bar").raises RuntimeError
 
             @source.expects(:fail).raises ArgumentError
@@ -84,7 +84,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         end
 
         it "should fail if no specified sources can be found" do
-            @source = source.new(:resource => @resource, :should => "/foo/bar")
+            @source = source.new(:resource => @resource, :value => "/foo/bar")
             Puppet::FileServing::Metadata.expects(:find).with("/foo/bar").returns nil
 
             @source.expects(:fail).raises RuntimeError
@@ -200,15 +200,6 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         end
     end
 
-    describe "when retrieving the property state" do
-        it "should copy all metadata to the resource" do
-            @source = source.new(:resource => @resource)
-            @source.expects(:copy_source_values)
-
-            @source.retrieve
-        end
-    end
-
     describe "when flushing" do
         it "should set its metadata to nil" do
             @source = source.new(:resource => @resource)
@@ -223,86 +214,6 @@ describe Puppet::Type.type(:file).attrclass(:source) do
             @source.flush
             @source.instance_variable_get("@content").should be_nil
         end
-    end
-    
-    describe "when testing whether the local file is in sync" do
-        before do
-            @source = source.new(:resource => @resource)
-        end
-
-        it "should be considered in sync if the remote file is a directory" do
-            metadata = mock 'data', :ftype => "directory"
-            @source.expects(:metadata).returns metadata
-
-            @source.must be_insync("some content")
-        end
-
-        it "should be considered in sync if the remote file is a symlink" do
-            metadata = mock 'data', :ftype => "link"
-            @source.expects(:metadata).returns metadata
-
-            @source.must be_insync("some content")
-        end
-
-        describe "and the remote file is a normal file" do
-            before do
-                @metadata = mock 'data', :ftype => "file"
-                @source.expects(:metadata).returns @metadata
-            end
-
-            it "should be not considered in sync if the file does not exist" do
-                @resource.expects(:stat).returns nil
-                @source.should_not be_insync("some content")
-            end
-
-            it "should be considered in sync if :replace is false and the file exists" do
-                @resource.expects(:stat).returns mock('stat')
-                @resource.expects(:replace?).returns false
-                @source.must be_insync("some content")
-            end
-
-            it "should be not considered in sync if :replace is false and the file does not exist" do
-                @resource.expects(:stat).returns nil
-                @resource.stubs(:replace?).returns false
-                @source.should_not be_insync("some content")
-            end
-
-            it "should not be considered in sync if the local file's contents are not the same as the remote file's contents"
-
-            it "should be considered in sync if the local file's content matches the remote file's contents"
-        end
-    end
-
-    def test_insync
-        source = tempfile()
-        dest = tempfile()
-        
-        file = Puppet::Type.type(:file).create :path => dest, :source => source, :title => "copier"
-        
-        property = file.property(:source)
-        assert(property, "did not get source property")
-        
-        # with a directory
-        Dir.mkdir(source)
-        currentvalues = file.retrieve
-        assert(property.insync?(currentvalues[property]), "source property not in sync with directory as source")
-        Dir.rmdir(source)
-        
-        # with a file
-        File.open(source, "w") { |f| f.puts "yay" }
-        currentvalues = file.retrieve
-        p currentvalues[property]
-        assert(!property.insync?(currentvalues[property]), "source property was in sync when file was missing")
-        
-        # With a different file
-        File.open(dest, "w") { |f| f.puts "foo" }
-        currentvalues = file.retrieve
-        assert(!property.insync?(currentvalues[property]), "source property was in sync with different file")
-        
-        # with matching files
-        File.open(dest, "w") { |f| f.puts "yay" }
-        currentvalues = file.retrieve
-        assert(property.insync?(currentvalues[property]), "source property was not in sync with matching file")
     end
 
     it "should have a method for returning the content" do
@@ -338,35 +249,6 @@ describe Puppet::Type.type(:file).attrclass(:source) do
             Puppet::FileServing::Content.expects(:find).with("/my/source").returns nil
             @source.expects(:fail).raises RuntimeError
             lambda { @source.content }.should raise_error(RuntimeError)
-        end
-    end
-
-    describe "when changing the content" do
-        before do
-            @source = source.new(:resource => @resource)
-            @source.stubs(:content).returns "foobar"
-
-            @metadata = stub 'metadata', :checksum => 123
-            @source.metadata = @metadata
-            @resource.stubs(:[]).with(:path).returns "/boo"
-        end
-
-        it "should use the file's :write method to write the content" do
-            @resource.expects(:write).with("foobar", :source, 123)
-
-            @source.sync
-        end
-
-        it "should return :file_changed if the file already existed" do
-            @resource.stubs(:write)
-            FileTest.expects(:exist?).with("/boo").returns true
-            @source.sync.should == :file_changed
-        end
-
-        it "should return :file_created if the file already existed" do
-            @resource.stubs(:write)
-            FileTest.expects(:exist?).with("/boo").returns false
-            @source.sync.should == :file_created
         end
     end
 end
