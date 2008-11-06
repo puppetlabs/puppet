@@ -50,6 +50,13 @@ module Puppet
                 end
             end
 
+            selcontext = self.should
+
+            if selcontext == :absent
+                # This is only valid for create states...
+                return nil
+            end
+
             self.set_selinux_context(@resource[:path], @should, name)
             return :file_changed
         end

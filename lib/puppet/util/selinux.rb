@@ -44,8 +44,15 @@ module Puppet::Util::SELinux
         unless selinux_support?
             return nil
         end
-        filestat = File.lstat(file)
-        retval = Selinux.matchpathcon(file, filestat.mode)
+        # If the file exists we should pass the mode to matchpathcon for the most specific
+        # matching.  If not, we can pass a mode of 0.
+        begin
+            filestat = File.lstat(file)
+            mode = filestat.mode
+        rescue Errno::ENOENT
+            mode = 0
+        end
+        retval = Selinux.matchpathcon(file, mode)
         if retval == -1
             return nil
         end
