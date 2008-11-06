@@ -278,3 +278,28 @@ describe Puppet::SimpleGraph, " when sorting the graph" do
         proc { @graph.topsort }.should_not raise_error
     end
 end
+
+describe Puppet::SimpleGraph, " when writing dot files" do
+    before do
+        @graph = Puppet::SimpleGraph.new
+        @name = :test
+        @file = File.join(Puppet[:graphdir], @name.to_s + ".dot")
+    end
+
+    it "should only write when graphing is enabled" do
+        File.expects(:open).with(@file).never
+        Puppet[:graph] = false
+        @graph.write_graph(@name)
+    end
+
+    it "should write a dot file based on the passed name" do
+        File.expects(:open).with(@file, "w").yields(stub("file", :puts => nil))
+        @graph.expects(:to_dot).with("name" => @name.to_s.capitalize)
+        Puppet[:graph] = true
+        @graph.write_graph(@name)
+    end
+
+    after do
+        Puppet.settings.clear
+    end
+end

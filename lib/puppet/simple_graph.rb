@@ -315,4 +315,16 @@ class Puppet::SimpleGraph
       system( "dot -T#{fmt} #{src} -o #{dot}" )
       dot
     end
+
+    # Produce the graph files if requested.
+    def write_graph(name)
+        return unless Puppet[:graph]
+
+        Puppet.settings.use(:graphing)
+
+        file = File.join(Puppet[:graphdir], "%s.dot" % name.to_s)
+        File.open(file, "w") { |f|
+            f.puts to_dot("name" => name.to_s.capitalize)
+        }
+    end
 end
