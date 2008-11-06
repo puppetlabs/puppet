@@ -10,8 +10,6 @@ class Puppet::Node::Catalog::Yaml < Puppet::Indirector::Yaml
     # objects.  This is hackish, but eh.
     def from_yaml(text)
         if config = YAML.load(text)
-            # We can't yaml-dump classes.
-            #config.edgelist_class = Puppet::Relationship
             return config
         end
     end
