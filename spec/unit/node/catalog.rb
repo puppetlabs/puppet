@@ -685,12 +685,8 @@ describe Puppet::Node::Catalog, " when creating a relationship graph" do
         @relationships = @catalog.relationship_graph
     end
 
-    it "should fail when trying to create a relationship graph for a relationship graph" do
-        proc { @relationships.relationship_graph }.should raise_error(Puppet::DevError)
-    end
-
     it "should be able to create a relationship graph" do
-        @relationships.should be_instance_of(Puppet::Node::Catalog)
+        @relationships.should be_instance_of(Puppet::SimpleGraph)
     end
 
     it "should copy its host_config setting to the relationship graph" do
@@ -810,24 +806,10 @@ describe Puppet::Node::Catalog, " when writing dot files" do
         @name = :test
         @file = File.join(Puppet[:graphdir], @name.to_s + ".dot")
     end
+
     it "should only write when it is a host catalog" do
         File.expects(:open).with(@file).never
         @catalog.host_config = false
-        Puppet[:graph] = true
-        @catalog.write_graph(@name)
-    end
-
-    it "should only write when graphing is enabled" do
-        File.expects(:open).with(@file).never
-        @catalog.host_config = true
-        Puppet[:graph] = false
-        @catalog.write_graph(@name)
-    end
-
-    it "should write a dot file based on the passed name" do
-        File.expects(:open).with(@file, "w").yields(stub("file", :puts => nil))
-        @catalog.expects(:to_dot).with("name" => @name.to_s.capitalize)
-        @catalog.host_config = true
         Puppet[:graph] = true
         @catalog.write_graph(@name)
     end

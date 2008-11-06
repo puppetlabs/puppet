@@ -2,7 +2,7 @@
 #  Copyright (c) 2006. All rights reserved.
 
 require 'puppet'
-require 'puppet/pgraph'
+require 'puppet/simple_graph'
 
 # A module that handles the small amount of graph stuff in Puppet.
 module Puppet::Util::Graph
@@ -12,7 +12,7 @@ module Puppet::Util::Graph
     def to_graph(graph = nil, &block)
         # Allow our calling function to send in a graph, so that we
         # can call this recursively with one graph.
-        graph ||= Puppet::PGraph.new
+        graph ||= Puppet::SimpleGraph.new
         
         self.each do |child|
             unless block_given? and ! yield(child)

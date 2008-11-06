@@ -1,5 +1,5 @@
 require 'puppet/indirector'
-require 'puppet/pgraph'
+require 'puppet/simple_graph'
 require 'puppet/transaction'
 
 require 'puppet/util/tagging'
@@ -8,7 +8,7 @@ require 'puppet/util/tagging'
 # meant to be passed from server to client, and it contains all
 # of the information in the catalog, including the resources
 # and the relationships between them.
-class Puppet::Node::Catalog < Puppet::PGraph
+class Puppet::Node::Catalog < Puppet::SimpleGraph
     extend Puppet::Indirector
     indirects :catalog, :terminus_class => :compiler
 
@@ -321,17 +321,13 @@ class Puppet::Node::Catalog < Puppet::PGraph
     
     # Create a graph of all of the relationships in our catalog.
     def relationship_graph
-        raise(Puppet::DevError, "Tried get a relationship graph for a relationship graph") if self.is_relationship_graph
-
         unless defined? @relationship_graph and @relationship_graph
             # It's important that we assign the graph immediately, because
             # the debug messages below use the relationships in the
             # relationship graph to determine the path to the resources
             # spitting out the messages.  If this is not set,
             # then we get into an infinite loop.
-            @relationship_graph = Puppet::Node::Catalog.new
-            @relationship_graph.host_config = host_config?
-            @relationship_graph.is_relationship_graph = true
+            @relationship_graph = Puppet::SimpleGraph.new
             
             # First create the dependency graph
             self.vertices.each do |vertex|
@@ -355,12 +351,12 @@ class Puppet::Node::Catalog < Puppet::PGraph
                 end
             end
             
-            @relationship_graph.write_graph(:relationships)
+            @relationship_graph.write_graph(:relationships) if host_config?
             
             # Then splice in the container information
             @relationship_graph.splice!(self, Puppet::Type::Component)
 
-            @relationship_graph.write_graph(:expanded_relationships)
+            @relationship_graph.write_graph(:expanded_relationships) if host_config?
         end
         @relationship_graph
     end
@@ -391,11 +387,7 @@ class Puppet::Node::Catalog < Puppet::PGraph
             # Reference class canonizes for us.
             ref = Puppet::ResourceReference.new(nil, type).to_s
         end
-        if resource = @resource_table[ref]
-            return resource
-        elsif defined?(@relationship_graph) and @relationship_graph
-            @relationship_graph.resource(ref)
-        end
+        @resource_table[ref]
     end
 
     # Return an array of all resources.
@@ -417,15 +409,8 @@ class Puppet::Node::Catalog < Puppet::PGraph
     def write_graph(name)
         # We only want to graph the main host catalog.
         return unless host_config?
-        
-        return unless Puppet[:graph]
 
-        Puppet.settings.use(:graphing)
-
-        file = File.join(Puppet[:graphdir], "%s.dot" % name.to_s)
-        File.open(file, "w") { |f|
-            f.puts to_dot("name" => name.to_s.capitalize)
-        }
+        super
     end
 
     # LAK:NOTE We cannot yaml-dump the class in the edgelist_class, because classes cannot be

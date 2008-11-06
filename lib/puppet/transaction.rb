@@ -431,8 +431,8 @@ class Transaction
     def initialize(resources)
         if resources.is_a?(Puppet::Node::Catalog)
             @catalog = resources
-        elsif resources.is_a?(Puppet::PGraph)
-            raise "Transactions should get catalogs now, not PGraph"
+        elsif resources.is_a?(Puppet::SimpleGraph)
+            raise "Transactions should get catalogs now, not SimpleGraph"
         else
             raise "Transactions require catalogs"
         end
