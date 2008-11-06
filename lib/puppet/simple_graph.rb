@@ -116,6 +116,13 @@ class Puppet::SimpleGraph
     def directed?
         true
     end
+
+    # Determine all of the leaf nodes below a given vertex.
+    def leaves(vertex, direction = :out)
+        tree = tree_from_vertex(vertex, direction)
+        l = tree.keys.find_all { |c| adjacent(c, :direction => direction).empty? }
+        return l
+    end
     
     # Collect all of the edges that the passed events match.  Returns
     # an array of edges.
