@@ -68,6 +68,7 @@ class Puppet::Node::Catalog < Puppet::PGraph
 
             ref = resource.ref
 
+            @transient_resources << resource if applying?
             @resource_table[ref] = resource
 
             # If the name and title differ, set up an alias
@@ -199,7 +200,6 @@ class Puppet::Node::Catalog < Puppet::PGraph
         end
         return unless resource = klass.create(options)
 
-        @transient_resources << resource if applying?
         add_resource(resource)
         if @relationship_graph
             @relationship_graph.add_resource(resource) unless @relationship_graph.resource(resource.ref)

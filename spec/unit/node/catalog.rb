@@ -784,6 +784,20 @@ describe Puppet::Node::Catalog, " when creating a relationship graph" do
         @catalog.resource("File[/yay]").should be_nil
     end
 
+    it "should remove resources added mid-transaction" do
+        @transaction = mock 'transaction'
+        Puppet::Transaction.stubs(:new).returns(@transaction)
+        @transaction.stubs(:evaluate)
+        @transaction.stubs(:cleanup)
+        @transaction.stubs(:addtimes)
+        file = Puppet::Type.type(:file).create(:name => "/yay", :ensure => :file)
+        @catalog.apply do |trans|
+            @catalog.add_resource file 
+            @catalog.resource("File[/yay]").should_not be_nil
+        end
+        @catalog.resource("File[/yay]").should be_nil
+    end
+
     it "should remove resources from the relationship graph if it exists" do
         @catalog.remove_resource(@one)
         @catalog.relationship_graph.vertex?(@one).should be_false
