@@ -188,24 +188,7 @@ class Transaction
 
     # See if the resource generates new resources at evaluation time.
     def eval_generate(resource)
-        if resource.respond_to?(:eval_generate)
-            begin
-                children = resource.eval_generate
-            rescue => detail
-                if Puppet[:trace]
-                    puts detail.backtrace
-                end
-                resource.err "Failed to generate additional resources during transaction: %s" %
-                    detail
-                return nil
-            end
-            
-            if children
-                children.each { |child| child.finish }
-                @generated += children
-                return children
-            end
-        end
+        generate_additional_resources(resource, :eval_generate)
     end
     
     # Evaluate a single resource.
@@ -355,39 +338,32 @@ class Transaction
         return skip
     end
     
-    # Collect any dynamically generated resources.
+    # A general method for recursively generating new resources from a
+    # resource.
+    def generate_additional_resources(resource, method)
+        return [] unless resource.respond_to?(method)
+        begin
+            made = resource.send(method)
+        rescue => detail
+            resource.err "Failed to generate additional resources using '%s': %s" % [method, detail]
+        end
+        return [] unless made
+        made = [made] unless made.is_a?(Array)
+        made.uniq!
+        made.each do |res|
+            @catalog.add_resource(res) { |r| r.finish }
+        end
+    end
+
+    # Collect any dynamically generated resources.  This method is called
+    # before the transaction starts.
     def generate
         list = @catalog.vertices
-        
-        # Store a list of all generated resources, so that we can clean them up
-        # after the transaction closes.
-        @generated = []
-        
         newlist = []
         while ! list.empty?
             list.each do |resource|
-                if resource.respond_to?(:generate)
-                    begin
-                        made = resource.generate
-                    rescue => detail
-                        resource.err "Failed to generate additional resources: %s" %
-                            detail
-                    end
-                    next unless made
-                    unless made.is_a?(Array)
-                        made = [made]
-                    end
-                    made.uniq!
-                    made.each do |res|
-                        @catalog.add_resource(res)
-                        res.catalog = catalog
-                        newlist << res
-                        @generated << res
-                        res.finish
-                    end
-                end
+                newlist += generate_additional_resources(resource, :generate)
             end
-            list.clear
             list = newlist
             newlist = []
         end
