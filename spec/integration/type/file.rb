@@ -119,6 +119,44 @@ describe Puppet::Type.type(:file) do
         end
     end
 
+    describe "when generating resources" do
+        before do
+            @source = tmpfile("generating_in_catalog_source")
+
+            @dest = tmpfile("generating_in_catalog_dest")
+
+            Dir.mkdir(@source)
+
+            s1 = File.join(@source, "one")
+            s2 = File.join(@source, "two")
+
+            File.open(s1, "w") { |f| f.puts "uno" }
+            File.open(s2, "w") { |f| f.puts "dos" }
+
+            @file = Puppet::Type::File.create(:name => @dest, :source => @source, :recurse => true)
+
+            @catalog = Puppet::Node::Catalog.new
+            @catalog.add_resource @file
+        end
+
+        it "should add each generated resource to the catalog" do
+            @catalog.apply do |trans|
+                @catalog.resource(:file, File.join(@dest, "one")).should be_instance_of(@file.class)
+                @catalog.resource(:file, File.join(@dest, "two")).should be_instance_of(@file.class)
+            end
+        end
+        
+        it "should have an edge to each resource in the relationship graph" do
+            @catalog.apply do |trans|
+                one = @catalog.resource(:file, File.join(@dest, "one"))
+                @catalog.relationship_graph.should be_edge(@file, one)
+
+                two = @catalog.resource(:file, File.join(@dest, "two"))
+                @catalog.relationship_graph.should be_edge(@file, two)
+            end
+        end
+    end
+
     describe "when copying files" do
         # Ticket #285.
         it "should be able to copy files with pound signs in their names" do

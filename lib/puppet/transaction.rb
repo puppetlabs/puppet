@@ -160,7 +160,7 @@ class Transaction
 
     # Copy an important relationships from the parent to the newly-generated
     # child resource.
-    def copy_relationships(resource, children)
+    def make_parent_child_relationship(resource, children)
         depthfirst = resource.depthfirst?
         
         children.each do |gen_child|
@@ -169,7 +169,7 @@ class Transaction
             else
                 edge = [resource, gen_child]
             end
-            relationship_graph.add_resource(gen_child) unless relationship_graph.resource(gen_child.ref)
+            relationship_graph.add_vertex(gen_child)
 
             unless relationship_graph.edge?(edge[1], edge[0])
                 relationship_graph.add_edge(*edge)
@@ -228,13 +228,6 @@ class Transaction
                 end
             end
 
-            # Create a child/parent relationship.  We do this after everything else because
-            # we want explicit relationships to be able to override automatic relationships,
-            # including this one.
-            if children
-                copy_relationships(resource, children)
-            end
-            
             # A bit of hackery here -- if skipcheck is true, then we're the
             # top-level resource.  If that's the case, then make sure all of
             # the changes list this resource as a proxy.  This is really only
@@ -353,6 +346,8 @@ class Transaction
         made.each do |res|
             @catalog.add_resource(res) { |r| r.finish }
         end
+        make_parent_child_relationship(resource, made)
+        made
     end
 
     # Collect any dynamically generated resources.  This method is called

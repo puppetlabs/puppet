@@ -331,16 +331,15 @@ module Puppet
         
         # Create any children via recursion or whatever.
         def eval_generate
-            return nil unless self.recurse?
+            return [] unless self.recurse?
 
-            raise(Puppet::DevError, "Cannot generate resources for recursion without a catalog") unless catalog
-
-            recurse.reject do |resource|
-                catalog.resource(:file, resource[:path])
-            end.each do |child|
-                catalog.add_resource child
-                catalog.relationship_graph.add_edge self, child
-            end
+            recurse
+            #recurse.reject do |resource|
+            #    catalog.resource(:file, resource[:path])
+            #end.each do |child|
+            #    catalog.add_resource child
+            #    catalog.relationship_graph.add_edge self, child
+            #end
         end
 
         def flush
@@ -487,7 +486,6 @@ module Puppet
             end
 
             return self.class.create(options)
-            #return catalog.create_implicit_resource(:file, options)
         end
 
         # Files handle paths specially, because they just lengthen their
@@ -515,10 +513,6 @@ module Puppet
         # Should we be purging?
         def purge?
             @parameters.include?(:purge) and (self[:purge] == :true or self[:purge] == "true")
-        end
-
-        def make_children(metadata)
-            metadata.collect { |meta| newchild(meta.relative_path) }
         end
 
         # Recursively generate a list of file resources, which will

@@ -519,51 +519,17 @@ describe Puppet::Type.type(:file) do
         it "should not recurse if recursion is disabled" do
             @file.expects(:recurse?).returns false
             @file.expects(:recurse).never
-            @file.eval_generate.should be_nil
+            @file.eval_generate.should == []
         end
 
-        it "should fail if no catalog is set" do
-            @file.catalog = nil
-            lambda { @file.eval_generate }.should raise_error(Puppet::DevError)
-        end
-
-        it "should skip resources that are already in the catalog" do
+        it "should return each resource found through recursion" do
             foo = stub 'foo', :[] => "/foo"
             bar = stub 'bar', :[] => "/bar"
             bar2 = stub 'bar2', :[] => "/bar"
 
-            @catalog.expects(:resource).with(:file, "/foo").returns nil
-            @catalog.expects(:resource).with(:file, "/bar").returns bar2
-
             @file.expects(:recurse).returns [foo, bar]
 
-            @file.eval_generate.should == [foo]
-        end
-
-        it "should add each resource to the catalog" do
-            foo = stub 'foo', :[] => "/foo"
-            bar = stub 'bar', :[] => "/bar"
-            bar2 = stub 'bar2', :[] => "/bar"
-
-            @catalog.expects(:add_resource).with(foo)
-            @catalog.expects(:add_resource).with(bar)
-
-            @file.expects(:recurse).returns [foo, bar]
-
-            @file.eval_generate
-        end
-
-        it "should add a relationshp edge for each returned resource" do
-            foo = stub 'foo', :[] => "/foo"
-
-            @file.expects(:recurse).returns [foo]
-
-            graph = mock 'graph'
-            @catalog.stubs(:relationship_graph).returns graph
-
-            graph.expects(:add_edge).with(@file, foo)
-
-            @file.eval_generate
+            @file.eval_generate.should == [foo, bar]
         end
     end
 
@@ -626,11 +592,6 @@ describe Puppet::Type.type(:file) do
                 end
             end
 
-            it "should fail if it has no catalog" do
-                file = @file.class.create(:path => "/foo/bar", :owner => "root", :group => "wheel")
-                lambda { file.newchild("foo/bar").should raise_error(ArgumentError)
-            end
-
             it "should copy all of the parent resource's 'should' values that were set at initialization" do
                 file = @file.class.create(:path => "/foo/bar", :owner => "root", :group => "wheel")
                 @catalog.add_resource(file)
@@ -652,11 +613,6 @@ describe Puppet::Type.type(:file) do
 
                 @file.class.expects(:create).with { |params| params[:group].nil? }
                 @file.newchild("my/path")
-            end
-
-            it "should return nil if the specified child resource already exists in the catalog" do
-                @catalog.expects(:resource).with(:file, File.join(@file[:path], "foo/bar")).returns mock("resource")
-                @file.newchild("foo/bar").should be_nil
             end
         end
     end
