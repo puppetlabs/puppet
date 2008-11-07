@@ -343,15 +343,27 @@ end
 describe Puppet::Node::Catalog, " when functioning as a resource container" do
     before do
         @catalog = Puppet::Node::Catalog.new("host")
-        @one = stub 'resource1', :ref => "Me[one]", :catalog= => nil, :title => "one", :[] => "one"
-        @two = stub 'resource2', :ref => "Me[two]", :catalog= => nil, :title => "two", :[] => "two"
-        @dupe = stub 'resource3', :ref => "Me[one]", :catalog= => nil, :title => "one", :[] => "one"
+        @one = Puppet::Type.type(:notify).create :name => "one"
+        @two = Puppet::Type.type(:notify).create :name => "two"
+        @dupe = Puppet::Type.type(:notify).create :name => "one"
     end
 
     it "should provide a method to add one or more resources" do
         @catalog.add_resource @one, @two
         @catalog.resource(@one.ref).should equal(@one)
         @catalog.resource(@two.ref).should equal(@two)
+    end
+
+    it "should add resources to the relationship graph if it exists" do
+        relgraph = @catalog.relationship_graph
+        @catalog.add_resource @one
+        relgraph.should be_vertex(@one)
+    end
+
+    it "should yield added resources if a block is provided" do
+        yielded = []
+        @catalog.add_resource(@one, @two) { |r| yielded << r }
+        yielded.length.should == 2
     end
 
     it "should set itself as the resource's catalog if it is not a relationship graph" do
@@ -368,24 +380,63 @@ describe Puppet::Node::Catalog, " when functioning as a resource container" do
     it "should canonize how resources are referred to during retrieval when both type and title are provided" do
         @catalog.add_resource(@one)
 
-        @catalog.resource("me", "one").should equal(@one)
+        @catalog.resource("notify", "one").should equal(@one)
     end
 
     it "should canonize how resources are referred to during retrieval when just the title is provided" do
         @catalog.add_resource(@one)
 
-        @catalog.resource("me[one]", nil).should equal(@one)
+        @catalog.resource("notify[one]", nil).should equal(@one)
     end
 
     it "should not allow two resources with the same resource reference" do
         @catalog.add_resource(@one)
 
-        # These are used to build the failure
-        @dupe.stubs(:file)
-        @dupe.stubs(:line)
-        @one.stubs(:file)
-        @one.stubs(:line)
-        proc { @catalog.add_resource(@dupe) }.should raise_error(ArgumentError)
+        proc { @catalog.add_resource(@dupe) }.should raise_error(Puppet::Node::Catalog::DuplicateResourceError)
+    end
+
+    it "should ignore implicit resources that conflict with existing resources" do
+        @catalog.add_resource(@one)
+
+        @dupe.implicit = true
+
+        yielded = []
+        @catalog.add_resource(@dupe) { |r| yielded << r }
+        yielded.should be_empty
+    end
+
+    it "should not set the catalog for ignored implicit resources" do
+        @catalog.add_resource(@one)
+
+        @dupe.implicit = true
+
+        @catalog.add_resource(@dupe)
+        @dupe.catalog.should be_nil
+    end
+
+    it "should log when implicit resources are ignored" do
+        @catalog.add_resource(@one)
+
+        @dupe.implicit = true
+
+        @dupe.expects(:debug)
+        @catalog.add_resource(@dupe)
+    end
+
+    it "should replace implicit resources if a conflicting explicit resource is added" do
+        @catalog.add_resource(@one)
+        @one.implicit = true
+
+        proc { @catalog.add_resource(@dupe) }.should_not raise_error
+        @catalog.resource(:notify, "one").should equal(@dupe)
+    end
+
+    it "should log when implicit resources are removed from the catalog" do
+        @catalog.add_resource(@one)
+        @one.implicit = true
+
+        @one.expects(:debug)
+        @catalog.add_resource(@dupe)
     end
 
     it "should not store objects that do not respond to :ref" do
@@ -440,7 +491,7 @@ describe Puppet::Node::Catalog, " when functioning as a resource container" do
 
     it "should be able to find resources by reference or by type/title tuple" do
         @catalog.add_resource @one
-        @catalog.resource("me", "one").should equal(@one)
+        @catalog.resource("notify", "one").should equal(@one)
     end
 
     it "should have a mechanism for removing resources" do
@@ -454,7 +505,7 @@ describe Puppet::Node::Catalog, " when functioning as a resource container" do
     it "should have a method for creating aliases for resources" do
         @catalog.add_resource @one
         @catalog.alias(@one, "other")
-        @catalog.resource("me", "other").should equal(@one)
+        @catalog.resource("notify", "other").should equal(@one)
     end
 
     it "should ignore conflicting aliases that point to the aliased resource" do
@@ -483,7 +534,7 @@ describe Puppet::Node::Catalog, " when functioning as a resource container" do
     it "should alias using the class name from the resource reference, not the resource class name" do
         @catalog.add_resource @one
         @catalog.alias(@one, "other")
-        @catalog.resource("me", "other").should equal(@one)
+        @catalog.resource("notify", "other").should equal(@one)
     end
 
     it "should ignore conflicting aliases that point to the aliased resource" do
@@ -503,13 +554,13 @@ describe Puppet::Node::Catalog, " when functioning as a resource container" do
 
     it "should not create aliases that point back to the resource" do
         @catalog.alias(@one, "one")
-        @catalog.resource(:me, "one").should be_nil
+        @catalog.resource(:notify, "one").should be_nil
     end
 
     it "should be able to look resources up by their aliases" do
         @catalog.add_resource @one
         @catalog.alias @one, "two"
-        @catalog.resource(:me, "two").should equal(@one)
+        @catalog.resource(:notify, "two").should equal(@one)
     end
 
     it "should remove resource aliases when the target resource is removed" do
@@ -517,7 +568,7 @@ describe Puppet::Node::Catalog, " when functioning as a resource container" do
         @catalog.alias(@one, "other")
         @one.expects :remove
         @catalog.remove_resource(@one)
-        @catalog.resource("me", "other").should be_nil
+        @catalog.resource("notify", "other").should be_nil
     end
 
     it "should add an alias for the namevar when the title and name differ on isomorphic resource types" do
@@ -546,46 +597,6 @@ describe Puppet::Node::Catalog, " when functioning as a resource container" do
         @catalog.create_resource :file, args
         @catalog.resource("File[/yay]").should equal(resource)
     end
-
-    it "should provide a mechanism for creating implicit resources" do
-        args = {:name => "/yay", :ensure => :file}
-        resource = stub 'file', :ref => "File[/yay]", :catalog= => @catalog, :title => "/yay", :[] => "/yay"
-        Puppet::Type.type(:file).expects(:create).with(args).returns(resource)
-        resource.expects(:implicit=).with(true)
-        @catalog.create_implicit_resource :file, args
-        @catalog.resource("File[/yay]").should equal(resource)
-    end
-
-    it "should remove resources created mid-transaction" do
-        args = {:name => "/yay", :ensure => :file}
-        resource = stub 'file', :ref => "File[/yay]", :catalog= => @catalog, :title => "/yay", :[] => "/yay"
-        @transaction = mock 'transaction'
-        Puppet::Transaction.stubs(:new).returns(@transaction)
-        @transaction.stubs(:evaluate)
-        @transaction.stubs(:cleanup)
-        @transaction.stubs(:addtimes)
-        Puppet::Type.type(:file).expects(:create).with(args).returns(resource)
-        resource.expects :remove
-        @catalog.apply do |trans|
-            @catalog.create_resource :file, args
-            @catalog.resource("File[/yay]").should equal(resource)
-        end
-        @catalog.resource("File[/yay]").should be_nil
-    end
-
-    it "should remove resources added mid-transaction" do
-        @transaction = mock 'transaction'
-        Puppet::Transaction.stubs(:new).returns(@transaction)
-        @transaction.stubs(:evaluate)
-        @transaction.stubs(:cleanup)
-        @transaction.stubs(:addtimes)
-        file = Puppet::Type.type(:file).create(:name => "/yay", :ensure => :file)
-        @catalog.apply do |trans|
-            @catalog.add_resource file 
-            @catalog.resource("File[/yay]").should_not be_nil
-        end
-        @catalog.resource("File[/yay]").should be_nil
-    end
 end
 
 describe Puppet::Node::Catalog do
@@ -600,7 +611,7 @@ describe Puppet::Node::Catalog do
         @transaction.stubs(:addtimes)
     end
 
-    describe Puppet::Node::Catalog, " when applying" do
+    describe "when applying" do
 
         it "should create and evaluate a transaction" do
             @transaction.expects(:evaluate)
@@ -643,9 +654,40 @@ describe Puppet::Node::Catalog do
             @transaction.expects(:ignoreschedules=).with(true)
             @catalog.apply(:ignoreschedules => true)
         end
+
+        it "should remove resources created mid-transaction" do
+            args = {:name => "/yay", :ensure => :file}
+            resource = stub 'file', :ref => "File[/yay]", :catalog= => @catalog, :title => "/yay", :[] => "/yay"
+            @transaction = mock 'transaction'
+            Puppet::Transaction.stubs(:new).returns(@transaction)
+            @transaction.stubs(:evaluate)
+            @transaction.stubs(:cleanup)
+            @transaction.stubs(:addtimes)
+            Puppet::Type.type(:file).expects(:create).with(args).returns(resource)
+            resource.expects :remove
+            @catalog.apply do |trans|
+                @catalog.create_resource :file, args
+                @catalog.resource("File[/yay]").should equal(resource)
+            end
+            @catalog.resource("File[/yay]").should be_nil
+        end
+
+        it "should remove resources added mid-transaction" do
+            @transaction = mock 'transaction'
+            Puppet::Transaction.stubs(:new).returns(@transaction)
+            @transaction.stubs(:evaluate)
+            @transaction.stubs(:cleanup)
+            @transaction.stubs(:addtimes)
+            file = Puppet::Type.type(:file).create(:name => "/yay", :ensure => :file)
+            @catalog.apply do |trans|
+                @catalog.add_resource file 
+                @catalog.resource("File[/yay]").should_not be_nil
+            end
+            @catalog.resource("File[/yay]").should be_nil
+        end
     end
 
-    describe Puppet::Node::Catalog, " when applying host catalogs" do
+    describe "when applying host catalogs" do
 
         # super() doesn't work in the setup method for some reason
         before do
@@ -787,18 +829,6 @@ describe Puppet::Node::Catalog, " when creating a relationship graph" do
         @relationships.expects(:clear)
         @catalog.clear
         @catalog.relationship_graph.should be_instance_of(Puppet::SimpleGraph)
-    end
-
-    it "should add implicit resources to the relationship graph if there is one" do
-        args = {:name => "/yay", :ensure => :file}
-        resource = stub 'file', :ref => "File[/yay]", :catalog= => @catalog, :title => "/yay", :[] => "/yay"
-        resource.expects(:implicit=).with(true)
-        Puppet::Type.type(:file).expects(:create).with(args).returns(resource)
-        # build the graph
-        relgraph = @catalog.relationship_graph
-
-        @catalog.create_implicit_resource :file, args
-        relgraph.should be_vertex(resource)
     end
 
     it "should remove removed resources from the relationship graph if it exists" do

@@ -9,6 +9,8 @@ require 'puppet/util/tagging'
 # of the information in the catalog, including the resources
 # and the relationships between them.
 class Puppet::Node::Catalog < Puppet::SimpleGraph
+    class DuplicateResourceError < Puppet::Error; end
+
     extend Puppet::Indirector
     indirects :catalog, :terminus_class => :compiler
 
@@ -49,14 +51,18 @@ class Puppet::Node::Catalog < Puppet::SimpleGraph
     end
 
     # Add one or more resources to our graph and to our resource table.
+    # This is actually a relatively complicated method, because it handles multiple
+    # aspects of Catalog behaviour:
+    # * Add the resource to the resource table
+    # * Add the resource to the resource graph
+    # * Add the resource to the relationship graph
+    # * Add any aliases that make sense for the resource (e.g., name != title)
     def add_resource(*resources)
         resources.each do |resource|
             unless resource.respond_to?(:ref)
                 raise ArgumentError, "Can only add objects that respond to :ref, not instances of %s" % resource.class
             end
-
-            fail_unless_unique(resource)
-
+        end.find_all { |resource| fail_or_skip_unless_unique(resource) }.each do |resource|
             ref = resource.ref
 
             @transient_resources << resource if applying?
@@ -71,6 +77,12 @@ class Puppet::Node::Catalog < Puppet::SimpleGraph
             resource.catalog = self if resource.respond_to?(:catalog=)
 
             add_vertex(resource)
+
+            if @relationship_graph
+                @relationship_graph.add_vertex(resource)
+            end
+
+            yield(resource) if block_given?
         end
     end
 
@@ -157,33 +169,6 @@ class Puppet::Node::Catalog < Puppet::SimpleGraph
         @classes.dup
     end
 
-    # Create an implicit resource, meaning that it will lose out
-    # to any explicitly defined resources.  This method often returns
-    # nil.
-    #  The quirk of this method is that it's not possible to create
-    # an implicit resource before an explicit resource of the same name,
-    # because all explicit resources are created before any generate()
-    # methods are called on the individual resources.  Thus, this
-    # method can safely just check if an explicit resource already exists
-    # and toss this implicit resource if so.
-    def create_implicit_resource(type, options)
-        unless options.include?(:implicit)
-            options[:implicit] = true
-        end
-
-        # This will return nil if an equivalent explicit resource already exists.
-        # When resource classes no longer retain references to resource instances,
-        # this will need to be modified to catch that conflict and discard
-        # implicit resources.
-        if resource = create_resource(type, options)
-            resource.implicit = true
-
-            return resource
-        else
-            return nil
-        end
-    end
-
     # Create a new resource and register it in the catalog.
     def create_resource(type, options)
         unless klass = Puppet::Type.type(type)
@@ -192,9 +177,6 @@ class Puppet::Node::Catalog < Puppet::SimpleGraph
         return unless resource = klass.create(options)
 
         add_resource(resource)
-        if @relationship_graph
-            @relationship_graph.add_vertex(resource)
-        end
         resource
     end
 
@@ -415,9 +397,22 @@ class Puppet::Node::Catalog < Puppet::SimpleGraph
     end
 
     # Verify that the given resource isn't defined elsewhere.
-    def fail_unless_unique(resource)
+    def fail_or_skip_unless_unique(resource)
         # Short-curcuit the common case, 
-        return unless existing_resource = @resource_table[resource.ref]
+        return resource unless existing_resource = @resource_table[resource.ref]
+
+        if resource.implicit?
+            resource.debug "Generated resource conflicts with explicit resource; ignoring generated resource"
+            return nil
+        elsif old = resource(resource.ref) and old.implicit?
+            # The existing resource is implicit; remove it and replace it with
+            # the new one.
+            old.debug "Replacing with new resource"
+            remove_resource(old)
+            return resource
+        end
+
+        # If we've gotten this far, it's a real conflict
 
         # Either it's a defined type, which are never
         # isomorphic, or it's a non-isomorphic type, so
@@ -433,7 +428,7 @@ class Puppet::Node::Catalog < Puppet::SimpleGraph
             msg << "; cannot redefine"
         end
 
-        raise ArgumentError.new(msg)
+        raise DuplicateResourceError.new(msg)
     end
 
     # An abstracted method for converting one catalog into another type of catalog.
