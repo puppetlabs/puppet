@@ -218,14 +218,11 @@ describe Puppet::Parser::Compiler do
         end
 
         it "should fail to add resources that conflict with existing resources" do
-            type = stub 'faketype', :isomorphic? => true, :name => "mytype"
-            Puppet::Type.stubs(:type).with("mytype").returns(type)
+            file1 = Puppet::Type.type(:file).create :path => "/foo"
+            file2 = Puppet::Type.type(:file).create :path => "/foo"
 
-            resource1 = stub "iso1conflict", :ref => "Mytype[yay]", :type => "mytype", :file => "eh", :line => 0
-            resource2 = stub "iso2conflict", :ref => "Mytype[yay]", :type => "mytype", :file => "eh", :line => 0
-
-            @compiler.add_resource(@scope, resource1)
-            lambda { @compiler.add_resource(@scope, resource2) }.should raise_error(ArgumentError)
+            @compiler.add_resource(@scope, file1)
+            lambda { @compiler.add_resource(@scope, file2) }.should raise_error(Puppet::Node::Catalog::DuplicateResourceError)
         end
 
         it "should have a method for looking up resources" do
