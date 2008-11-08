@@ -362,10 +362,7 @@ class Puppet::Property < Puppet::Parameter
         end
     end
 
-    # The default 'sync' method only selects among a list of registered # values.
     def sync
-        self.devfail("No values defined for %s" % self.class.name) if self.class.value_collection.empty?
-
         if value = self.should
             set(value)
         else

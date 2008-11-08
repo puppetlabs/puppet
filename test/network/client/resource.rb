@@ -29,28 +29,29 @@ class TestResourceClient < Test::Unit::TestCase
         client = mkclient()
 
         # Test describing
-        tobj = nil
+        tresource = nil
         assert_nothing_raised {
-            tobj = client.describe("file", file)
+            tresource = client.describe("file", file)
         }
 
-        assert(tobj, "Did not get response")
+        assert(tresource, "Did not get response")
 
-        assert_instance_of(Puppet::TransObject, tobj)
+        assert_instance_of(Puppet::TransObject, tresource)
 
-        obj = nil
+        resource = nil
         assert_nothing_raised {
-            obj = tobj.to_type
+            resource = tresource.to_type
         }
-        assert_events([], obj)
+        assert_events([], resource)
+        p resource.instance_variable_get("@stat")
         File.unlink(file)
-        assert_events([:file_created], obj)
+        assert_events([:file_created], resource)
         File.unlink(file)
 
         # Now test applying
         result = nil
         assert_nothing_raised {
-            result = client.apply(tobj)
+            result = client.apply(tresource)
         }
         assert(FileTest.exists?(file), "File was not created on apply")
 
@@ -63,20 +64,20 @@ class TestResourceClient < Test::Unit::TestCase
         assert_instance_of(Puppet::TransBucket, list)
 
         count = 0
-        list.each do |tobj|
+        list.each do |tresource|
             break if count > 3
-            assert_instance_of(Puppet::TransObject, tobj)
+            assert_instance_of(Puppet::TransObject, tresource)
 
-            tobj2 = nil
+            tresource2 = nil
             assert_nothing_raised {
-                tobj2 = client.describe(tobj.type, tobj.name)
+                tresource2 = client.describe(tresource.type, tresource.name)
             }
 
-            obj = nil
+            resource = nil
             assert_nothing_raised {
-                obj = tobj2.to_type
+                resource = tresource2.to_type
             }
-            assert_events([], obj)
+            assert_events([], resource)
 
             count += 1
         end

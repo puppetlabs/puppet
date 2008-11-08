@@ -515,11 +515,12 @@ class TestFile < Test::Unit::TestCase
                 )
             }
             config = mk_catalog dir
+            transaction = Puppet::Transaction.new(config)
             
             children = nil
 
             assert_nothing_raised {
-                children = dir.eval_generate
+                children = transaction.eval_generate(dir)
             }
             
             assert_equal([subdir], children.collect {|c| c.title },
@@ -533,7 +534,7 @@ class TestFile < Test::Unit::TestCase
             File.open(tmpfile, "w") { |f| f.puts "yayness" }
             
             assert_nothing_raised {
-                children = dir.eval_generate
+                children = transaction.eval_generate(dir)
             }
 
             # And make sure we get both resources back.
@@ -605,10 +606,12 @@ class TestFile < Test::Unit::TestCase
             )
         }
         catalog = mk_catalog dirobj
+        transaction = Puppet::Transaction.new(catalog)
+        transaction.eval_generate(dirobj)
 
-        assert_nothing_raised {
-            dirobj.eval_generate
-        }
+        #assert_nothing_raised {
+        #    dirobj.eval_generate
+        #}
 
         file = catalog.resource(:file, path)
 
@@ -1194,10 +1197,11 @@ class TestFile < Test::Unit::TestCase
         File.open(file, "w") { |f| f.puts "" }
         obj = Puppet::Type.newfile :path => dir, :recurse => true, :mode => 0755
         catalog = mk_catalog obj
+        transaction = Puppet::Transaction.new(catalog)
         
         assert_equal("/%s" % obj.ref, obj.path)
         
-        list = obj.eval_generate
+        list = transaction.eval_generate(obj)
         fileobj = catalog.resource(:file, file)
         assert(fileobj, "did not generate file object")
         assert_equal("/%s" % fileobj.ref, fileobj.path, "did not generate correct subfile path")
@@ -1283,37 +1287,6 @@ class TestFile < Test::Unit::TestCase
             File.unlink(path)
         end
     end
-    end
-
-    # #505
-    def test_numeric_recurse
-        dir = tempfile()
-        subdir = File.join(dir, "subdir")
-        other = File.join(subdir, "deeper")
-        file = File.join(other, "file")
-        [dir, subdir, other].each { |d| Dir.mkdir(d) }
-        File.open(file, "w") { |f| f.puts "yay" }
-        File.chmod(0644, file)
-        obj = Puppet::Type.newfile(:path => dir, :mode => 0750, :recurse => "2")
-        catalog = mk_catalog(obj)
-
-        children = nil
-        assert_nothing_raised("Failure when recursing") do
-            children = obj.eval_generate
-        end
-        assert(catalog.resource(:file, subdir), "did not create subdir object")
-        children.each do |c|
-            assert_nothing_raised("Failure when recursing on %s" % c) do
-                c.catalog = catalog
-                others = c.eval_generate
-            end
-        end
-        oobj = catalog.resource(:file, other)
-        assert(oobj, "did not create other object")
-
-        assert_nothing_raised do
-            assert_nil(oobj.eval_generate, "recursed too far")
-        end
     end
 
     # Make sure we default to the "puppet" filebucket, rather than a string

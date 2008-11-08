@@ -49,19 +49,6 @@ module Puppet
             def retrieve
                 return provider.exists? ? :present : :absent
             end
-
-            # The default 'sync' method only selects among a list of registered
-            # values.
-            def sync
-                unless self.class.values
-                    self.devfail "No values defined for %s" %
-                        self.class.name
-                end
-
-                # Set ourselves to whatever our should value is.
-                self.set(self.should)
-            end
-
         end
 
         newproperty(:gid) do

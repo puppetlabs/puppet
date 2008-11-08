@@ -156,12 +156,12 @@ class TestTransactions < Test::Unit::TestCase
         firstpath = tempfile()
         secondpath = tempfile()
         file = Puppet::Type.type(:file).create(:title => "file", :path => path, :content => "yayness")
-        first = Puppet::Type.newexec(:title => "first",
+        first = Puppet::Type.type(:exec).create(:title => "first",
                                      :command => "/bin/echo first > #{firstpath}",
                                      :subscribe => [:file, path],
                                      :refreshonly => true
         )
-        second = Puppet::Type.newexec(:title => "second",
+        second = Puppet::Type.type(:exec).create(:title => "second",
                                      :command => "/bin/echo second > #{secondpath}",
                                      :subscribe => [:exec, "first"],
                                      :refreshonly => true
@@ -512,204 +512,6 @@ class TestTransactions < Test::Unit::TestCase
         assert(! FileTest.exists?(file2[:path]),
             "File got created even tho its deep dependency failed")
     end
-    end
-    
-    def test_relationship_graph
-        config = mktree
-
-        config.meta_def(:f) do |name|
-            self.resource("File[%s]" % name)
-        end
-        
-        {"one" => "two", "File[f]" => "File[c]", "File[h]" => "middle"}.each do |source_ref, target_ref|
-            source = config.resource(source_ref) or raise "Missing %s" % source_ref
-            target = config.resource(target_ref) or raise "Missing %s" % target_ref
-            target[:require] = source
-        end
-        
-        trans = Puppet::Transaction.new(config)
-        
-        graph = nil
-        assert_nothing_raised do
-            graph = trans.relationship_graph
-        end
-
-        assert_instance_of(Puppet::Node::Catalog, graph,
-            "Did not get relationship graph")
-        
-        # Make sure all of the components are gone
-        comps = graph.vertices.find_all { |v| v.is_a?(Puppet::Type::Component)}
-        assert(comps.empty?, "Deps graph still contains components %s" %
-            comps.collect { |c| c.ref }.join(","))
-        
-        assert_equal([], comps, "Deps graph still contains components")
-        
-        # It must be reversed because of how topsort works
-        sorted = graph.topsort.reverse
-        
-        # Now make sure the appropriate edges are there and are in the right order
-        assert(graph.dependents(config.f(:f)).include?(config.f(:c)),
-            "c not marked a dep of f")
-        assert(sorted.index(config.f(:c)) < sorted.index(config.f(:f)),
-            "c is not before f")
-            
-        config.resource("one").each do |o|
-            config.resource("two").each do |t|
-                assert(graph.dependents(o).include?(t),
-                    "%s not marked a dep of %s" % [t.ref, o.ref])
-                assert(sorted.index(t) < sorted.index(o),
-                    "%s is not before %s" % [t.ref, o.ref])
-            end
-        end
-        
-        trans.catalog.leaves(config.resource("middle")).each do |child|
-            assert(graph.dependents(config.f(:h)).include?(child),
-                "%s not marked a dep of h" % [child.ref])
-            assert(sorted.index(child) < sorted.index(config.f(:h)),
-                "%s is not before h" % child.ref)
-        end
-        
-        # Lastly, make sure our 'g' vertex made it into the relationship
-        # graph, since it's not involved in any relationships.
-        assert(graph.vertex?(config.f(:g)),
-            "Lost vertexes with no relations")
-
-        # Now make the reversal graph and make sure all of the vertices made it into that
-        reverse = graph.reversal
-        %w{a b c d e f g h}.each do |letter|
-            file = config.f(letter)
-            assert(reverse.vertex?(file), "%s did not make it into reversal" % letter)
-        end
-    end
-    
-    # Test pre-evaluation generation
-    def test_generate
-        mkgenerator() do
-            def generate
-                ret = []
-                if title.length > 1
-                    ret << self.class.create(:title => title[0..-2])
-                else
-                    return nil
-                end
-                ret
-            end
-        end
-        
-        yay = Puppet::Type.newgenerator :title => "yay"
-        rah = Puppet::Type.newgenerator :title => "rah"
-        catalog = mk_catalog(yay, rah)
-        trans = Puppet::Transaction.new(catalog)
-        
-        assert_nothing_raised do
-            trans.generate
-        end
-        
-        %w{ya ra y r}.each do |name|
-            assert(catalog.resource(:generator, name),
-                "Generated %s was not a vertex" % name)
-            assert($finished.include?(name), "%s was not finished" % name)
-        end
-        
-        # Now make sure that cleanup gets rid of those generated types.
-        assert_nothing_raised do
-            trans.cleanup
-        end
-        
-        %w{ya ra y r}.each do |name|
-            assert(! catalog.resource(:generator, name),
-                "Generated vertex %s was not removed from graph" % name)
-        end
-    end
-    
-    # Test mid-evaluation generation.
-    def test_eval_generate
-        $evaluated = []
-        cleanup { $evaluated = nil }
-        type = mkreducer() do
-            def evaluate
-                $evaluated << self.title
-                return []
-            end
-        end
-
-        yay = Puppet::Type.newgenerator :title => "yay"
-        rah = Puppet::Type.newgenerator :title => "rah", :subscribe => yay
-        catalog = mk_catalog(yay, rah)
-        trans = Puppet::Transaction.new(catalog)
-        
-        trans.prepare
-        
-        # Now apply the resources, and make sure they appropriately generate
-        # things.
-        assert_nothing_raised("failed to apply yay") do
-            trans.eval_resource(yay)
-        end
-        ya = catalog.resource(type.name, "ya")
-        assert(ya, "Did not generate ya")
-        assert(trans.relationship_graph.vertex?(ya),
-            "Did not add ya to rel_graph")
-        
-        # Now make sure the appropriate relationships were added
-        assert(trans.relationship_graph.edge?(yay, ya),
-            "parent was not required by child")
-        assert(! trans.relationship_graph.edge?(ya, rah),
-            "generated child ya inherited depencency on rah")
-        
-        # Now make sure it in turn eval_generates appropriately
-        assert_nothing_raised("failed to apply yay") do
-            trans.eval_resource(catalog.resource(type.name, "ya"))
-        end
-
-        %w{y}.each do |name|
-            res = catalog.resource(type.name, "ya")
-            assert(res, "Did not generate %s" % name)
-            assert(trans.relationship_graph.vertex?(res),
-                "Did not add %s to rel_graph" % name)
-            assert($finished.include?("y"), "y was not finished")
-        end
-        
-        assert_nothing_raised("failed to eval_generate with nil response") do
-            trans.eval_resource(catalog.resource(type.name, "y"))
-        end
-        assert(trans.relationship_graph.edge?(yay, ya), "no edge was created for ya => yay")
-        
-        assert_nothing_raised("failed to apply rah") do
-            trans.eval_resource(rah)
-        end
-
-        ra = catalog.resource(type.name, "ra")
-        assert(ra, "Did not generate ra")
-        assert(trans.relationship_graph.vertex?(ra),
-            "Did not add ra to rel_graph" % name)
-        assert($finished.include?("ra"), "y was not finished")
-        
-        # Now make sure this generated resource has the same relationships as
-        # the generating resource
-        assert(! trans.relationship_graph.edge?(yay, ra),
-           "rah passed its dependencies on to its children")
-        assert(! trans.relationship_graph.edge?(ya, ra),
-            "children have a direct relationship")
-        
-        # Now make sure that cleanup gets rid of those generated types.
-        assert_nothing_raised do
-            trans.cleanup
-        end
-        
-        %w{ya ra y r}.each do |name|
-            assert(!trans.relationship_graph.vertex?(catalog.resource(type.name, name)),
-                "Generated vertex %s was not removed from graph" % name)
-        end
-        
-        # Now, start over and make sure that everything gets evaluated.
-        trans = Puppet::Transaction.new(catalog)
-        $evaluated.clear
-        assert_nothing_raised do
-            trans.evaluate
-        end
-        
-        assert_equal(%w{yay ya y rah ra r}, $evaluated,
-            "Not all resources were evaluated or not in the right order")
     end
 
     # We need to generate resources before we prefetch them, else generated
@@ -1105,11 +907,12 @@ class TestTransactions < Test::Unit::TestCase
     end
 
     def test_flush
-        $state = "absent"
+        $state = :absent
         $flushed = 0
         type = Puppet::Type.newtype(:flushtest) do
             newparam(:name)
             newproperty(:ensure) do
+                newvalues :absent, :present, :other
                 def retrieve
                     $state
                 end
@@ -1126,12 +929,12 @@ class TestTransactions < Test::Unit::TestCase
 
         cleanup { Puppet::Type.rmtype(:flushtest) }
 
-        obj = type.create(:name => "test", :ensure => "present")
+        obj = type.create(:name => "test", :ensure => :present)
 
         # first make sure it runs through and flushes
         assert_apply(obj)
 
-        assert_equal("present", $state, "Object did not make a change")
+        assert_equal(:present, $state, "Object did not make a change")
         assert_equal(1, $flushed, "object was not flushed")
 
         # Now run a noop and make sure we don't flush
@@ -1139,7 +942,7 @@ class TestTransactions < Test::Unit::TestCase
         obj[:noop] = true
 
         assert_apply(obj)
-        assert_equal("present", $state, "Object made a change in noop")
+        assert_equal(:present, $state, "Object made a change in noop")
         assert_equal(1, $flushed, "object was flushed in noop")
     end
 end

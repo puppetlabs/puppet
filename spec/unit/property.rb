@@ -226,11 +226,6 @@ describe Puppet::Property do
     end
 
     describe "when syncing the 'should' value" do
-        it "should fail if no values have been defined and the 'sync' method has not been overridden" do
-            @property.should = "eh"
-            lambda { @property.sync }.should raise_error(Puppet::DevError)
-        end
-
         it "should set the value" do
             @class.newvalue(:foo)
             @property.should = :foo
