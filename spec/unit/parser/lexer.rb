@@ -30,7 +30,7 @@ describe Puppet::Parser::Lexer::Token do
         @token = Puppet::Parser::Lexer::Token.new(%r{something}, :NAME)
     end
 
-    [:regex, :name, :string, :skip, :incr_line, :skip_text].each do |param|
+    [:regex, :name, :string, :skip, :incr_line, :skip_text, :accumulate].each do |param|
         it "should have a #{param.to_s} reader" do
             @token.should be_respond_to(param)
         end
@@ -285,6 +285,14 @@ describe Puppet::Parser::Lexer::TOKENS[:COMMENT] do
     it "should be marked to get skipped" do
         @token.skip?.should be_true
     end
+
+    it "should be marked to accumulate" do
+        @token.accumulate?.should be_true
+    end
+
+    it "'s block should return the comment without the #" do
+        @token.convert(@lexer,"# this is a comment")[1].should == "this is a comment"
+    end
 end
 
 describe Puppet::Parser::Lexer::TOKENS[:MLCOMMENT] do
@@ -311,6 +319,16 @@ describe Puppet::Parser::Lexer::TOKENS[:MLCOMMENT] do
     it "should not greedily match comments" do
         match = @token.regex.match("/* first */ word /* second */")
         match[1].should == " first "
+    end
+
+    it "should be marked to accumulate" do
+        @token.accumulate?.should be_true
+    end
+
+    it "'s block should return the comment without the comment marks" do
+        @lexer.stubs(:line=).with(0)
+
+        @token.convert(@lexer,"/* this is a comment */")[1].should == "this is a comment"
     end
 
 end
@@ -381,6 +399,43 @@ describe Puppet::Parser::Lexer::TOKENS[:VARIABLE] do
     it "should return the VARIABLE token and the variable name stripped of the '$'" do
         @token.convert(stub("lexer"), "$myval").should == [Puppet::Parser::Lexer::TOKENS[:VARIABLE], "myval"]
     end
+end
+
+describe Puppet::Parser::Lexer, "when lexing comments" do
+    before { @lexer = Puppet::Parser::Lexer.new }
+
+    it "should accumulate token in munge_token" do
+        token = stub 'token', :skip => true, :accumulate? => true, :incr_line => nil, :skip_text => false
+
+        token.stubs(:convert).with(@lexer, "# this is a comment").returns([token, " this is a comment"])
+        @lexer.munge_token(token, "# this is a comment")
+        @lexer.munge_token(token, "# this is a comment")
+
+        @lexer.getcomment.should == " this is a comment\n this is a comment\n"
+    end
+
+    it "should add a new comment stack level on LBRACE" do
+        @lexer.string = "{"
+
+        @lexer.expects(:commentpush)
+
+        @lexer.fullscan
+    end
+
+    it "should return the current comments on getcomment" do
+        @lexer.string = "# comment"
+        @lexer.fullscan
+
+        @lexer.getcomment.should == "comment\n"
+    end
+
+    it "should discard the previous comments on blank line" do
+        @lexer.string = "# 1\n\n# 2"
+        @lexer.fullscan
+
+        @lexer.getcomment.should == "2\n"
+    end
+
 end
 
 # FIXME: We need to rewrite all of these tests, but I just don't want to take the time right now.
@@ -538,6 +593,7 @@ describe "Puppet::Parser::Lexer in the old tests" do
             @lexer.fullscan[0].should == [:CLASSREF, foo]
         end
     end
+
 end
 
 require 'puppettest/support/utils'

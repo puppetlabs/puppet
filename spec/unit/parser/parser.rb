@@ -37,7 +37,6 @@ describe Puppet::Parser do
         it "not, it should create the correct ast objects" do
             AST::Not.expects(:new).with { |h| h[:value].is_a?(AST::Boolean) }
             @parser.parse("if ! true { $var = 1 }")
-        
         end
 
         it "boolean operation, it should create the correct ast objects" do
@@ -60,14 +59,15 @@ describe Puppet::Parser do
 
     describe Puppet::Parser, "when parsing if complex expressions" do
          it "should create a correct ast tree" do
+             ast = stub_everything 'ast'
              AST::ComparisonOperator.expects(:new).with { 
                  |h| h[:rval].is_a?(AST::Name) and h[:lval].is_a?(AST::Name) and h[:operator]==">"
-             }.returns("whatever")
+             }.returns(ast)
              AST::ComparisonOperator.expects(:new).with { 
                  |h| h[:rval].is_a?(AST::Name) and h[:lval].is_a?(AST::Name) and h[:operator]=="=="
-             }.returns("whatever")
+             }.returns(ast)
              AST::BooleanOperator.expects(:new).with {
-                 |h| h[:rval]=="whatever" and h[:lval]=="whatever" and h[:operator]=="and"                
+                 |h| h[:rval]==ast and h[:lval]==ast and h[:operator]=="and"
              }
              @parser.parse("if (1 > 2) and (1 == 2) { $var = 1 }")
          end
@@ -199,7 +199,30 @@ describe Puppet::Parser do
 
             klass1.code.children.should == [@one,@two]
         end
-
     end
 
+    describe Puppet::Parser, "when parsing comments before statement" do
+        it "should associate the documentation to the statement AST node" do
+            ast = @parser.parse("""
+            # comment
+            class test {}
+            """)
+
+            ast[:classes]["test"].doc.should == "comment\n"
+        end
+    end
+
+    describe Puppet::Parser, "when building ast nodes" do
+        it "should get lexer comments if ast node declares use_docs" do
+            lexer = stub 'lexer'
+            ast = mock 'ast', :nil? => false, :use_docs => true, :doc => ""
+            @parser.stubs(:lexer).returns(lexer)
+
+            Puppet::Parser::AST::Definition.expects(:new).returns(ast)
+            lexer.expects(:getcomment).returns("comment")
+            ast.expects(:doc=).with("comment")
+
+            @parser.ast(Puppet::Parser::AST::Definition)
+        end
+    end
  end
