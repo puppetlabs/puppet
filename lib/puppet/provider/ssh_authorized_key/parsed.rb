@@ -19,7 +19,7 @@ Puppet::Type.type(:ssh_authorized_key).provide(:parsed,
             if record[:options].nil?
                 record[:options] = [:absent]
             else
-                record[:options] = record[:options].split(',')
+                record[:options] = Puppet::Type::Ssh_authorized_key::ProviderParsed.parse_options(record[:options])
             end
         },
         :pre_gen => proc { |record|
@@ -70,6 +70,26 @@ Puppet::Type.type(:ssh_authorized_key).provide(:parsed,
             File.chown(Puppet::Util.uid(user), nil, dir)
             File.chown(Puppet::Util.uid(user), nil, @property_hash[:target])
         end
+    end
+
+    # parse sshv2 option strings, wich is a comma separated list of
+    # either key="values" elements or bare-word elements
+    def self.parse_options(options)
+        result = []
+        scanner = StringScanner.new(options)
+        while !scanner.eos?
+            scanner.skip(/[ \t]*/)
+            # scan a long option
+            if out = scanner.scan(/[-a-z0-9A-Z_]+=\".*?\"/) or out = scanner.scan(/[-a-z0-9A-Z_]+/)
+                result << out
+            else
+                # found an unscannable token, let's abort
+                break
+            end
+            # eat a comma
+            scanner.skip(/[ \t]*,[ \t]*/)
+        end
+        result
     end
 end
 
