@@ -2,27 +2,36 @@
 #
 # author Brice Figureau <brice-puppet@daysofwonder.com>
 Puppet::Type.type(:service).provide :daemontools, :parent => :base do
-    desc "Daemontools service management.
-    This provider manages daemons running supervised by D.J.Bernstein daemontools.
-    It tries to detect the service directory, with by order of preference:
-     * /service
-     * /etc/service
-     * /var/lib/svscan
-    The daemon directory should be placed in a directory that can be 
-    by default in:
-     * /var/lib/service
-     * /etc
-    or this can be overriden in the service resource parameters:
+    desc """
+Daemontools service management.
+This provider manages daemons running supervised by D.J.Bernstein daemontools.
+It tries to detect the service directory, with by order of preference:
+
+ * /service
+ * /etc/service
+ * /var/lib/svscan
+
+The daemon directory should be placed in a directory that can be 
+by default in:
+
+ * /var/lib/service
+ * /etc
+
+or this can be overriden in the service resource parameters::
+
     service {
      \"myservice\":
        provider => \"daemontools\", path => \"/path/to/daemons\";
     }
 
-    This provider supports out of the box:
-     * start/stop (mapped to enable/disable)
-     * enable/disable
-     * restart
-     * status"
+This provider supports out of the box:
+
+ * start/stop (mapped to enable/disable)
+ * enable/disable
+ * restart
+ * status
+
+"""
 
     commands :svc  => "/usr/bin/svc"
     commands :svstat => "/usr/bin/svstat"
