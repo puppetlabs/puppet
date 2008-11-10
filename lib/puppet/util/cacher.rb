@@ -1,5 +1,11 @@
 module Puppet::Util::Cacher
-    # Cause all cached values to be considered invalid.
+    # It's basically not possible to test that this is set,
+    # but we need to start with a value so that all initial values
+    # start out valid -- that is, everything's valid until the
+    # first call to 'invalidate'.
+    @timestamp = Time.now
+
+    # Cause all cached values to be considered expired.
     def self.invalidate
         @timestamp = Time.now
     end
@@ -7,10 +13,6 @@ module Puppet::Util::Cacher
     # Is the provided timestamp later than or equal to our global timestamp?
     # If it is, then the associated value is valid, otherwise it should be flushed.
     def self.valid?(timestamp)
-        unless defined?(@timestamp) and @timestamp
-            @timestamp = Time.now
-            return true
-        end
         return timestamp >= @timestamp
     end
 
@@ -34,8 +36,11 @@ module Puppet::Util::Cacher
         # Provide a means of defining an attribute whose value will be cached.
         # Must provide a block capable of defining the value if it's flushed..
         def cached_attr(name, &block)
+            init_method = "init_" + name.to_s
+            define_method(init_method, &block)
+
             define_method(name) do
-                attr_cache(name, &block)
+                cacher_caches.value(name) { send(init_method) }
             end
         end
     end
@@ -48,11 +53,14 @@ module Puppet::Util::Cacher
         # of the thinking.  Note that we're using a single Cache instance
         # for all of this instance's cached values.
         def attr_cache(name, &block)
+            cacher_caches.value(name, &block)
+        end
+
+        def cacher_caches
             unless defined?(@cacher_caches) and @cacher_caches
                 @cacher_caches = Cache.new
             end
-
-            @cacher_caches.value(name, &block)
+            @cacher_caches
         end
     end
 
@@ -64,6 +72,12 @@ module Puppet::Util::Cacher
 
         def initialize
             @caches = {}
+            @timestamp = Time.now
+        end
+
+        # If our timestamp is out of date, our cached data is expired.
+        def expired?
+            ! Puppet::Util::Cacher.valid?(timestamp)
         end
 
         # Return a value; use the cached version if the associated timestamp is recent enough,
@@ -71,11 +85,11 @@ module Puppet::Util::Cacher
         def value(name)
             raise ArgumentError, "You must provide a block when using the cache" unless block_given?
 
-            # If we have no timestamp (because this is the first run) or our
-            # timestamp is out of date, clear the cache and get a new value.
-            # Note that if we clear the cache here, we potentially clear other
-            # cached values, too (if this instance is caching more than one value).
-            if timestamp.nil? or ! Puppet::Util::Cacher.valid?(timestamp)
+            # If the cached data is expired, clear the cache and get a new
+            # value.  Note that if we clear the cache here, we potentially
+            # clear other cached values, too (if this instance is caching more
+            # than one value).
+            if expired?
                 caches.clear
                 self.timestamp = Time.now
             end

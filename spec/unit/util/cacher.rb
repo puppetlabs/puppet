@@ -29,14 +29,6 @@ describe "a cacher user using cached values", :shared => true do
         @object.sa_cache.should equal(now)
     end
 
-    it "should not test for validity if it is creating the value" do
-        # This is only necessary in the class, since it has this value kicking
-        # around.
-        @object.instance_variable_set("@cacher_caches", nil)
-        Puppet::Util::Cacher.expects(:valid?).never
-        @object.sa_cache
-    end
-
     it "should not consider cached false values to be missing values" do
         Puppet::Util::Cacher.stubs(:valid?).returns true
 
