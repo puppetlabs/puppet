@@ -59,7 +59,8 @@ describe "Certificate REST Terminus" do
     end
 
     after do
-        Puppet::Util::Cacher.expire
+        Puppet::Network::HttpPool.expire
+        Puppet::SSL::Host.ca_location = :none
         Puppet.settings.clear
         @server.unlisten
     end

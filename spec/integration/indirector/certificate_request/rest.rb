@@ -55,7 +55,8 @@ describe "Certificate Request REST Terminus" do
     end
 
     after do
-        Puppet::Network::HttpPool.instance_variable_set("@ssl_host", nil)
+        Puppet::Network::HttpPool.expire
+        Puppet::SSL::Host.ca_location = :none
         Puppet.settings.clear
         @server.unlisten
     end
