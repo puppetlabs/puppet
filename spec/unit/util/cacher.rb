@@ -51,7 +51,7 @@ describe Puppet::Util::Cacher do
         CacheTest.new.expirer.should equal(Puppet::Util::Cacher)
     end
 
-    describe "when defining cached attributes" do
+    describe "when using cached attributes" do
         before do
             @expirer = ExpirerTest.new
             @object = CacheTest.new
@@ -89,6 +89,11 @@ describe Puppet::Util::Cacher do
             @object.instance_cache
             @expirer.expire
             @object.instance_cache.should equal(@object.instance_cache)
+        end
+
+        it "should always consider a value expired if it has no expirer" do
+            @object.stubs(:expirer).returns nil
+            @object.instance_cache.should_not equal(@object.instance_cache)
         end
     end
 end

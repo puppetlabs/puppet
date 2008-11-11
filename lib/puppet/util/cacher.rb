@@ -70,7 +70,8 @@ module Puppet::Util::Cacher
         end
 
         def cached_value(name)
-            if expirer.expired?(cache_timestamp)
+            # Allow a nil expirer, in which case we regenerate the value every time.
+            if expirer.nil? or expirer.expired?(cache_timestamp)
                 value_cache.clear
                 @cache_timestamp = Time.now
             end
