@@ -611,8 +611,11 @@ describe Puppet::Node::Catalog do
         @transaction.stubs(:addtimes)
     end
 
-    describe "when applying" do
+    it "should be an Expirer" do
+        Puppet::Node::Catalog.ancestors.should be_include(Puppet::Util::Cacher::Expirer)
+    end
 
+    describe "when applying" do
         it "should create and evaluate a transaction" do
             @transaction.expects(:evaluate)
             @catalog.apply
@@ -684,6 +687,11 @@ describe Puppet::Node::Catalog do
                 @catalog.resource("File[/yay]").should_not be_nil
             end
             @catalog.resource("File[/yay]").should be_nil
+        end
+
+        it "should expire cached data in the resources" do
+            @catalog.expects(:expire)
+            @catalog.apply
         end
     end
 

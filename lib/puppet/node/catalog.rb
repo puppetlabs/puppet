@@ -2,6 +2,8 @@ require 'puppet/indirector'
 require 'puppet/simple_graph'
 require 'puppet/transaction'
 
+require 'puppet/util/cacher'
+
 require 'puppet/util/tagging'
 
 # This class models a node catalog.  It is the thing
@@ -15,6 +17,7 @@ class Puppet::Node::Catalog < Puppet::SimpleGraph
     indirects :catalog, :terminus_class => :compiler
 
     include Puppet::Util::Tagging
+    include Puppet::Util::Cacher::Expirer
 
     # The host name this is a catalog for.
     attr_accessor :name
@@ -394,6 +397,9 @@ class Puppet::Node::Catalog < Puppet::SimpleGraph
             @transient_resources.clear
             @relationship_graph = nil
         end
+
+        # Expire any cached data the resources are keeping.
+        expire()
     end
 
     # Verify that the given resource isn't defined elsewhere.

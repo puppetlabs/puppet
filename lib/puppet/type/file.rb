@@ -734,7 +734,7 @@ module Puppet
         # use either 'stat' or 'lstat', and we expect the properties to use the
         # resulting stat object accordingly (mostly by testing the 'ftype'
         # value).
-        def stat(refresh = false)
+        cached_attr(:stat) do
             method = :stat
 
             # Files are the only types that support links
@@ -743,18 +743,14 @@ module Puppet
             end
             path = self[:path]
 
-            if @stat.nil? or refresh == true
-                begin
-                    @stat = File.send(method, self[:path])
-                rescue Errno::ENOENT => error
-                    return nil
-                rescue Errno::EACCES => error
-                    warning "Could not stat; permission denied"
-                    return nil
-                end
+            begin
+                File.send(method, self[:path])
+            rescue Errno::ENOENT => error
+                return nil
+            rescue Errno::EACCES => error
+                warning "Could not stat; permission denied"
+                return nil
             end
-
-            return @stat
         end
 
         # We have to hack this just a little bit, because otherwise we'll get

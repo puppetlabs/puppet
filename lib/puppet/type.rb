@@ -10,6 +10,7 @@ require 'puppet/util/errors'
 require 'puppet/util/log_paths'
 require 'puppet/util/logging'
 require 'puppet/resource_reference'
+require 'puppet/util/cacher'
 
 # see the bottom of the file for the rest of the inclusions
 
@@ -19,6 +20,7 @@ class Type
     include Puppet::Util::Errors
     include Puppet::Util::LogPaths
     include Puppet::Util::Logging
+    include Puppet::Util::Cacher
 
     ###############################
     # Code related to resource type attributes.
@@ -549,6 +551,12 @@ class Type
         properties().each { |property|
             yield property
         }
+    end
+
+    # Let the catalog determine whether a given cached value is
+    # still valid or has expired.
+    def expirer
+        catalog
     end
 
     # retrieve the 'should' value for a specified property

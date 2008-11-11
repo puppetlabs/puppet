@@ -3,6 +3,17 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 
 describe Puppet::Type do
+    it "should include the Cacher module" do
+        Puppet::Type.ancestors.should be_include(Puppet::Util::Cacher)
+    end
+
+    it "should use its catalog as its expirer" do
+        catalog = Puppet::Node::Catalog.new
+        resource = Puppet::Type.type(:mount).create(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
+        resource.catalog = catalog
+        resource.expirer.should equal(catalog)
+    end
+
     it "should be able to retrieve a property by name" do
         resource = Puppet::Type.type(:mount).create(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
         resource.property(:fstype).must be_instance_of(Puppet::Type.type(:mount).attrclass(:fstype))
