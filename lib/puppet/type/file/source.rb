@@ -101,16 +101,13 @@ module Puppet
         end
 
         # Look up (if necessary) and return remote content.
-        def content
+        cached_attr(:content) do
             raise Puppet::DevError, "No source for content was stored with the metadata" unless metadata.source
 
-            unless defined?(@content) and @content
-                unless tmp = Puppet::FileServing::Content.find(metadata.source)
-                    fail "Could not find any content at %s" % metadata.source
-                end
-                @content = tmp.content
+            unless tmp = Puppet::FileServing::Content.find(metadata.source)
+                fail "Could not find any content at %s" % metadata.source
             end
-            @content
+            tmp.content
         end
 
         # Copy the values from the source to the resource.  Yay.
@@ -135,12 +132,6 @@ module Puppet
             end
         end
 
-        # Remove any temporary attributes we manage.
-        def flush
-            @metadata = nil
-            @content = nil
-        end
-
         def pinparams
             [:mode, :type, :owner, :group, :content]
         end
@@ -152,24 +143,22 @@ module Puppet
         # Provide, and retrieve if necessary, the metadata for this file.  Fail
         # if we can't find data about this host, and fail if there are any
         # problems in our query.
-        attr_writer :metadata
-        def metadata
-            unless defined?(@metadata) and @metadata
-                return @metadata = nil unless value
-                value.each do |source|
-                    begin
-                        if data = Puppet::FileServing::Metadata.find(source)
-                            @metadata = data
-                            @metadata.source = source
-                            break
-                        end
-                    rescue => detail
-                        fail detail, "Could not retrieve file metadata for %s: %s" % [source, detail]
+        cached_attr(:metadata) do
+            return nil unless value
+            result = nil
+            value.each do |source|
+                begin
+                    if data = Puppet::FileServing::Metadata.find(source)
+                        result = data
+                        result.source = source
+                        break
                     end
+                rescue => detail
+                    fail detail, "Could not retrieve file metadata for %s: %s" % [source, detail]
                 end
-                fail "Could not retrieve information from source(s) %s" % value.join(", ") unless @metadata
             end
-            return @metadata
+            fail "Could not retrieve information from source(s) %s" % value.join(", ") unless result
+            result
         end
 
         # Make sure we're also checking the checksum

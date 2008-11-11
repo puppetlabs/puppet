@@ -2,6 +2,7 @@ require 'puppet/util/methodhelper'
 require 'puppet/util/log_paths'
 require 'puppet/util/logging'
 require 'puppet/util/docs'
+require 'puppet/util/cacher'
 
 class Puppet::Parameter
     include Puppet::Util
@@ -9,6 +10,7 @@ class Puppet::Parameter
     include Puppet::Util::LogPaths
     include Puppet::Util::Logging
     include Puppet::Util::MethodHelper
+    include Puppet::Util::Cacher
 
     # A collection of values and regexes, used for specifying
     # what values are allowed in a given parameter.
@@ -352,6 +354,10 @@ class Puppet::Parameter
 
     def devfail(msg)
         self.fail(Puppet::DevError, msg)
+    end
+
+    def expirer
+        resource.catalog
     end
 
     def fail(*args)

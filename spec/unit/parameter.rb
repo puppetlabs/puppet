@@ -20,6 +20,16 @@ describe Puppet::Parameter do
         @class.value_collection.should be_instance_of(Puppet::Parameter::ValueCollection)
     end
 
+    it "should be able to use cached attributes" do
+        Puppet::Parameter.ancestors.should be_include(Puppet::Util::Cacher)
+    end
+
+    it "should use the resource catalog for expiration" do
+        catalog = mock 'catalog'
+        @resource.stubs(:catalog).returns catalog
+        @parameter.expirer.should equal(catalog)
+    end
+
     describe "when returning the value" do
         it "should return nil if no value is set" do
             @parameter.value.should be_nil

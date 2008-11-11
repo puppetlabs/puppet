@@ -6,7 +6,7 @@ source = Puppet::Type.type(:file).attrclass(:source)
 describe Puppet::Type.type(:file).attrclass(:source) do
     before do
         # Wow that's a messy interface to the resource.
-        @resource = stub 'resource', :[]= => nil, :property => nil
+        @resource = stub 'resource', :[]= => nil, :property => nil, :catalog => stub("catalog", :expired? => false)
     end
 
     it "should be a subclass of Parameter" do
@@ -90,6 +90,20 @@ describe Puppet::Type.type(:file).attrclass(:source) do
             @source.expects(:fail).raises RuntimeError
 
             lambda { @source.metadata }.should raise_error(RuntimeError)
+        end
+
+        it "should expire the metadata appropriately" do
+            expirer = stub 'expired', :expired? => true
+
+            metadata = stub 'metadata', :source= => nil
+            Puppet::FileServing::Metadata.expects(:find).with("/fee/booz").returns metadata
+
+            @source = source.new(:resource => @resource, :value => ["/fee/booz"])
+            @source.metadata = "foo"
+
+            @source.stubs(:expirer).returns expirer
+
+            @source.metadata.should_not == "foo"
         end
     end
 
@@ -200,22 +214,6 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         end
     end
 
-    describe "when flushing" do
-        it "should set its metadata to nil" do
-            @source = source.new(:resource => @resource)
-            @source.metadata = "foo"
-            @source.flush
-            @source.instance_variable_get("@metadata").should be_nil
-        end
-
-        it "should reset its content" do
-            @source = source.new(:resource => @resource)
-            @source.instance_variable_set("@content", "foo")
-            @source.flush
-            @source.instance_variable_get("@content").should be_nil
-        end
-    end
-
     it "should have a method for returning the content" do
         source.new(:resource => @resource).must respond_to(:content)
     end
@@ -224,7 +222,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         before do
             @source = source.new(:resource => @resource)
             @metadata = stub 'metadata', :source => "/my/source"
-            @source.metadata = @metadata
+            @source.stubs(:metadata).returns @metadata
 
             @content = stub 'content', :content => "foobar"
         end
@@ -249,6 +247,18 @@ describe Puppet::Type.type(:file).attrclass(:source) do
             Puppet::FileServing::Content.expects(:find).with("/my/source").returns nil
             @source.expects(:fail).raises RuntimeError
             lambda { @source.content }.should raise_error(RuntimeError)
+        end
+
+        it "should expire the content appropriately" do
+            expirer = stub 'expired', :expired? => true
+
+            content2 = stub 'content', :content => "secondrun"
+            Puppet::FileServing::Content.expects(:find).with("/my/source").times(2).returns(@content).then.returns(content2)
+            @source.content.should == "foobar"
+
+            @source.stubs(:expirer).returns expirer
+
+            @source.content.should == "secondrun"
         end
     end
 end

@@ -47,6 +47,12 @@ module Puppet::Util::Cacher
             define_method(name) do
                 cached_value(name)
             end
+
+            define_method(name.to_s + "=") do |value|
+                # Make sure the cache timestamp is set
+                cache_timestamp
+                value_cache[name] = value
+            end
         end
     end
 

@@ -95,5 +95,15 @@ describe Puppet::Util::Cacher do
             @object.stubs(:expirer).returns nil
             @object.instance_cache.should_not equal(@object.instance_cache)
         end
+
+        it "should allow writing of the attribute" do
+            @object.should respond_to(:instance_cache=)
+        end
+
+        it "should correctly configure timestamps for expiration when the cached attribute is written to" do
+            @object.instance_cache = "foo"
+            @expirer.expire
+            @object.instance_cache.should_not == "foo"
+        end
     end
 end
