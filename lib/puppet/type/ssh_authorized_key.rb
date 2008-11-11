@@ -38,6 +38,22 @@ module Puppet
                   should be specified as an array."
 
             defaultto do :absent end
+
+            def is_to_s(value)
+                if value == :absent or value.include?(:absent)
+                    super
+                else
+                    value.join(",")
+                end
+            end
+
+            def should_to_s(value)
+                if value == :absent or value.include?(:absent)
+                    super
+                else
+                    value.join(",")
+                end
+            end
         end
 
         autorequire(:user) do

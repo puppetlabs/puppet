@@ -73,6 +73,18 @@ describe ssh_authorized_key do
         @class.attrtype(:options).should == :property
     end
 
+    it "'s options property should return well formed string of arrays from is_to_s" do
+        resource = @class.create(:name => "whev", :type => :rsa, :user => "nobody", :options => ["a","b","c"])
+
+        resource.property(:options).is_to_s(["a","b","c"]).should == "a,b,c"
+    end
+
+    it "'s options property should return well formed string of arrays from is_to_s" do
+        resource = @class.create(:name => "whev", :type => :rsa, :user => "nobody", :options => ["a","b","c"])
+
+        resource.property(:options).should_to_s(["a","b","c"]).should == "a,b,c"
+    end
+
     it "should have a target property" do
         @class.attrtype(:target).should == :property
     end
