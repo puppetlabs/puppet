@@ -29,7 +29,7 @@ describe Puppet::SSL::Host do
 
         system("rm -rf %s" % @dir)
         Puppet.settings.clear
-        Puppet::Util::Cacher.invalidate
+        Puppet::Util::Cacher.expire
     }
 
     it "should be considered a CA host if its name is equal to 'ca'" do

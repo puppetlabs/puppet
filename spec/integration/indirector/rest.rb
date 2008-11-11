@@ -57,7 +57,7 @@ describe Puppet::Indirector::REST do
 
     describe "when using webrick" do
         before :each do
-            Puppet::Util::Cacher.invalidate
+            Puppet::Util::Cacher.expire
 
             Puppet[:servertype] = 'webrick'
             Puppet[:server] = '127.0.0.1'

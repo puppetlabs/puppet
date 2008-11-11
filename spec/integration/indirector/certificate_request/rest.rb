@@ -8,7 +8,7 @@ require 'puppet/network/http/webrick/rest'
 
 describe "Certificate Request REST Terminus" do
     before do
-        Puppet::Util::Cacher.invalidate
+        Puppet::Util::Cacher.expire
 
         Puppet[:masterport] = 34343
         Puppet[:server] = "localhost"

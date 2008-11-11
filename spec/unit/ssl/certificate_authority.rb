@@ -6,7 +6,7 @@ require 'puppet/ssl/certificate_authority'
 
 describe Puppet::SSL::CertificateAuthority do
     after do
-        Puppet::Util::Cacher.invalidate
+        Puppet::Util::Cacher.expire
         Puppet.settings.clearused
     end
 

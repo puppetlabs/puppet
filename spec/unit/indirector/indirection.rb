@@ -104,7 +104,7 @@ end
 
 describe Puppet::Indirector::Indirection do
     after do
-        Puppet::Util::Cacher.invalidate
+        Puppet::Util::Cacher.expire
     end
     describe "when initializing" do
         # (LAK) I've no idea how to test this, really.
@@ -513,7 +513,7 @@ describe Puppet::Indirector::Indirection do
 
         after :each do
             @indirection.delete
-            Puppet::Util::Cacher.invalidate
+            Puppet::Util::Cacher.expire
         end
     end
 

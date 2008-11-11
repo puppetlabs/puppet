@@ -21,7 +21,7 @@ describe "Certificate REST Terminus" do
         Puppet.settings[:masterport] = "34343"
         Puppet.settings[:http_enable_post_connection_check] = false
 
-        Puppet::Util::Cacher.invalidate
+        Puppet::Util::Cacher.expire
 
         Puppet[:servertype] = 'webrick'
         Puppet[:server] = '127.0.0.1'

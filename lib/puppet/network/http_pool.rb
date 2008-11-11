@@ -28,7 +28,7 @@ module Puppet::Network::HttpPool
         http_cache.each do |name, connection|
             connection.finish if connection.started?
         end
-        Puppet::Util::Cacher.invalidate
+        Puppet::Util::Cacher.expire
     end
 
     # Make sure we set the driver up when we read the cert in.

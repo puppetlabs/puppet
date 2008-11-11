@@ -7,7 +7,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 describe Puppet::Node::Catalog do
     describe "when using the indirector" do
-        after { Puppet::Util::Cacher.invalidate }
+        after { Puppet::Util::Cacher.expire }
         before do
             # This is so the tests work w/out networking.
             Facter.stubs(:to_hash).returns({"hostname" => "foo.domain.com"})

@@ -2,11 +2,11 @@ module Puppet::Util::Cacher
     # It's basically not possible to test that this is set,
     # but we need to start with a value so that all initial values
     # start out valid -- that is, everything's valid until the
-    # first call to 'invalidate'.
+    # first call to 'expire'.
     @timestamp = Time.now
 
     # Cause all cached values to be considered expired.
-    def self.invalidate
+    def self.expire
         @timestamp = Time.now
     end
 
@@ -70,6 +70,11 @@ module Puppet::Util::Cacher
     class Cache
         attr_accessor :caches, :timestamp
 
+        def clear
+            caches.clear
+            self.timestamp = Time.now
+        end
+
         def initialize
             @caches = {}
             @timestamp = Time.now
@@ -90,8 +95,7 @@ module Puppet::Util::Cacher
             # clear other cached values, too (if this instance is caching more
             # than one value).
             if expired?
-                caches.clear
-                self.timestamp = Time.now
+                clear
             end
 
             # Generate a new value if we don't have one.  Use 'include?' here

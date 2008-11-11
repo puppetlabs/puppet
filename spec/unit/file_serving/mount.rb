@@ -13,7 +13,7 @@ end
 describe Puppet::FileServing::Mount do
     it "should provide a method for clearing its cached host information" do
         old = Puppet::FileServing::Mount.localmap
-        Puppet::Util::Cacher.invalidate
+        Puppet::Util::Cacher.expire
         Puppet::FileServing::Mount.localmap.should_not equal(old)
     end
 end
@@ -106,7 +106,7 @@ describe Puppet::FileServing::Mount, " when finding files" do
     end
 
     after do
-        Puppet::Util::Cacher.invalidate
+        Puppet::Util::Cacher.expire
     end
 end
 

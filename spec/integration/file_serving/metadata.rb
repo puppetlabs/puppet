@@ -16,5 +16,5 @@ describe Puppet::FileServing::Metadata, " when finding files" do
         @indirection = Puppet::FileServing::Metadata.indirection
     end
 
-    after { Puppet::Util::Cacher.invalidate }
+    after { Puppet::Util::Cacher.expire }
 end

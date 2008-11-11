@@ -8,7 +8,7 @@ require 'puppet/network/http_pool'
 
 describe Puppet::Network::HttpPool do
     after do
-        Puppet::Util::Cacher.invalidate
+        Puppet::Util::Cacher.expire
         Puppet::Network::HttpPool.clear_http_instances
         Puppet::Network::HttpPool.instance_variable_set("@ssl_host", nil)
     end

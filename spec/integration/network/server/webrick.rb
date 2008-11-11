@@ -30,7 +30,7 @@ describe Puppet::Network::Server do
 
             system("rm -rf %s" % @dir)
 
-            Puppet::Util::Cacher.invalidate
+            Puppet::Util::Cacher.expire
         end
 
         describe "before listening" do

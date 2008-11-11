@@ -28,7 +28,7 @@ describe Puppet::SSL::CertificateAuthority do
         system("rm -rf %s" % @dir)
         Puppet.settings.clear
 
-        Puppet::Util::Cacher.invalidate
+        Puppet::Util::Cacher.expire
 
         Puppet::SSL::CertificateAuthority.instance_variable_set("@instance", nil)
     }

@@ -30,7 +30,7 @@ describe Puppet::SSL::CertificateRequest do
         Puppet.settings.clear
 
         # This is necessary so the terminus instances don't lie around.
-        Puppet::Util::Cacher.invalidate
+        Puppet::Util::Cacher.expire
     end
 
     it "should be able to generate CSRs" do

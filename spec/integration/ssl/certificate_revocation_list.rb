@@ -28,7 +28,7 @@ describe Puppet::SSL::CertificateRevocationList do
         Puppet.settings.clear
 
         # This is necessary so the terminus instances don't lie around.
-        Puppet::Util::Cacher.invalidate
+        Puppet::Util::Cacher.expire
     }
 
     it "should be able to read in written out CRLs with no revoked certificates" do

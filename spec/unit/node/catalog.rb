@@ -860,7 +860,7 @@ describe Puppet::Node::Catalog, " when indirecting" do
     before do
         @indirection = stub 'indirection', :name => :catalog
 
-        Puppet::Util::Cacher.invalidate
+        Puppet::Util::Cacher.expire
     end
 
     it "should redirect to the indirection for retrieval" do
@@ -874,7 +874,7 @@ describe Puppet::Node::Catalog, " when indirecting" do
     end
 
     after do
-        Puppet::Util::Cacher.invalidate
+        Puppet::Util::Cacher.expire
     end
 end
 

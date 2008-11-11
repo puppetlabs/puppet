@@ -35,6 +35,6 @@ describe Puppet::Transaction::Report, " when being indirect" do
     end
 
     after do
-        Puppet::Util::Cacher.invalidate
+        Puppet::Util::Cacher.expire
     end
 end

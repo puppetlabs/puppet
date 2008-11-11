@@ -46,51 +46,45 @@ describe "a cacher user using cached values", :shared => true do
         @object.sa_cache.should equal(@object.sa_cache)
     end
 
-    it "should use the block to generate new values if the cached values are invalid" do
+    it "should use the block to generate new values if the cached values are expired" do
         Puppet::Util::Cacher.stubs(:valid?).returns false
 
         @object.sa_cache.should_not equal(@object.sa_cache)
     end
 
-    it "should still cache values after an invalidation" do
+    it "should still cache values after an expiration" do
         # Load the cache
         @object.sa_cache
 
-        Puppet::Util::Cacher.invalidate
+        Puppet::Util::Cacher.expire
         @object.sa_cache.should equal(@object.sa_cache)
     end
 end
 
 describe Puppet::Util::Cacher do
     before do
-        Puppet::Util::Cacher.invalidate
+        Puppet::Util::Cacher.expire
     end
     after do
-        Puppet::Util::Cacher.invalidate
+        Puppet::Util::Cacher.expire
     end
 
-    it "should have a method for invalidating caches" do
-        Puppet::Util::Cacher.should respond_to(:invalidate)
+    it "should have a method for expiring caches" do
+        Puppet::Util::Cacher.should respond_to(:expire)
     end
 
     it "should have a method for determining whether a cached value is valid" do
         Puppet::Util::Cacher.should respond_to(:valid?)
     end
 
-    it "should consider cached values valid if the cached value was created and there was never an invalidation" do
-        Puppet::Util::Cacher.instance_variable_set("@timestamp", nil)
-
-        Puppet::Util::Cacher.should be_valid(Time.now)
-    end
-
-    it "should consider cached values valid if the cached value was created since the last invalidation" do
-        Puppet::Util::Cacher.invalidate
+    it "should consider cached values valid if the cached value was created since the last expiration" do
+        Puppet::Util::Cacher.expire
 
         Puppet::Util::Cacher.should be_valid(Time.now + 1)
     end
 
-    it "should consider cached values invalid if the cache was invalidated after the cached value was created" do 
-        Puppet::Util::Cacher.invalidate
+    it "should consider cached values expired if the cache was expired after the cached value was created" do 
+        Puppet::Util::Cacher.expire
 
         Puppet::Util::Cacher.should_not be_valid(Time.now - 1)
     end

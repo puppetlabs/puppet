@@ -128,7 +128,7 @@ describe Puppet::Node, "when indirecting" do
     end
 
     after do
-        Puppet::Util::Cacher.invalidate
+        Puppet::Util::Cacher.expire
     end
 end
 

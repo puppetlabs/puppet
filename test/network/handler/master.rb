@@ -18,7 +18,7 @@ class TestMaster < Test::Unit::TestCase
 
     def teardown
         super
-        Puppet::Util::Cacher.invalidate
+        Puppet::Util::Cacher.expire
     end
 
     def test_freshness_is_always_now
