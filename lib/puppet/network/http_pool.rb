@@ -6,7 +6,14 @@ module Puppet::Network; end
 
 # Manage Net::HTTP instances for keep-alive.
 module Puppet::Network::HttpPool
-    extend Puppet::Util::Cacher
+    class << self
+        include Puppet::Util::Cacher
+        cached_attr(:ssl_host) { Puppet::SSL::Host.new }
+
+        private
+        
+        cached_attr(:http_cache) { Hash.new }
+    end
 
     # 2008/03/23
     # LAK:WARNING: Enabling this has a high propability of
@@ -15,12 +22,6 @@ module Puppet::Network::HttpPool
 
     def self.keep_alive?
         HTTP_KEEP_ALIVE
-    end
-
-    # Create an ssl host instance for getting certificate
-    # information.
-    def self.ssl_host
-        attr_cache(:ssl_host) { Puppet::SSL::Host.new }
     end
 
     # Clear our http cache, closing all connections.
@@ -101,12 +102,5 @@ module Puppet::Network::HttpPool
         http_cache[key] = http if keep_alive?
 
         return http
-    end
-
-    private
-    
-    def self.http_cache
-        # Default to an empty hash.
-        attr_cache(:http) { Hash.new }
     end
 end

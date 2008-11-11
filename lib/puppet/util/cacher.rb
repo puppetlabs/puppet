@@ -1,25 +1,30 @@
 module Puppet::Util::Cacher
-    # It's basically not possible to test that this is set,
-    # but we need to start with a value so that all initial values
-    # start out valid -- that is, everything's valid until the
-    # first call to 'expire'.
-    @timestamp = Time.now
+    module Expirer
+        attr_reader :timestamp
 
-    # Cause all cached values to be considered expired.
-    def self.expire
-        @timestamp = Time.now
+        # Cause all cached values to be considered expired.
+        def expire
+            @timestamp = Time.now
+        end
+
+        # Is the provided timestamp earlier than our expiration timestamp?
+        # If it is, then the associated value is expired.
+        def expired?(ts)
+            return false unless timestamp
+
+            return timestamp > ts
+        end
     end
 
-    # Is the provided timestamp later than or equal to our global timestamp?
-    # If it is, then the associated value is valid, otherwise it should be flushed.
-    def self.valid?(timestamp)
-        return timestamp >= @timestamp
-    end
+    extend Expirer
 
     # Our module has been extended in a class; we can only add the Instance methods,
     # which become *class* methods in the class.
     def self.extended(other)
-        other.extend(InstanceMethods)
+        class << other
+            extend ClassMethods
+            include InstanceMethods
+        end
     end
 
     # Our module has been included in a class, which means the class gets the class methods
@@ -40,72 +45,46 @@ module Puppet::Util::Cacher
             define_method(init_method, &block)
 
             define_method(name) do
-                cacher_caches.value(name) { send(init_method) }
+                cached_value(name)
             end
         end
     end
 
     # Methods that get added to instances.
     module InstanceMethods
+        def expire
+            expirer.expire
+        end
+
+        def expirer
+            Puppet::Util::Cacher
+        end
+
         private
 
-        # Use/define a cached value.  We just use the Cache class to do all
-        # of the thinking.  Note that we're using a single Cache instance
-        # for all of this instance's cached values.
-        def attr_cache(name, &block)
-            cacher_caches.value(name, &block)
-        end
-
-        def cacher_caches
-            unless defined?(@cacher_caches) and @cacher_caches
-                @cacher_caches = Cache.new
+        def cache_timestamp
+            unless defined?(@cache_timestamp)
+                @cache_timestamp = Time.now
             end
-            @cacher_caches
-        end
-    end
-
-    # An internal class that does all of our comparisons and calculations.
-    # This both caches a given value, and determines whether a given cache is
-    # still valid.
-    class Cache
-        attr_accessor :caches, :timestamp
-
-        def clear
-            caches.clear
-            self.timestamp = Time.now
+            @cache_timestamp
         end
 
-        def initialize
-            @caches = {}
-            @timestamp = Time.now
-        end
-
-        # If our timestamp is out of date, our cached data is expired.
-        def expired?
-            ! Puppet::Util::Cacher.valid?(timestamp)
-        end
-
-        # Return a value; use the cached version if the associated timestamp is recent enough,
-        # else calculate and store a new a value using the provided block.
-        def value(name)
-            raise ArgumentError, "You must provide a block when using the cache" unless block_given?
-
-            # If the cached data is expired, clear the cache and get a new
-            # value.  Note that if we clear the cache here, we potentially
-            # clear other cached values, too (if this instance is caching more
-            # than one value).
-            if expired?
-                clear
+        def cached_value(name)
+            if expirer.expired?(cache_timestamp)
+                value_cache.clear
+                @cache_timestamp = Time.now
             end
-
-            # Generate a new value if we don't have one.  Use 'include?' here
-            # rather than testing for truth, so we can cache false values.
-            unless caches.include?(name)
-                caches[name] = yield
+            unless value_cache.include?(name)
+                value_cache[name] = send("init_%s" % name)
             end
+            value_cache[name]
+        end
 
-            # Finally, return our cached value.
-            caches[name]
+        def value_cache
+            unless defined?(@value_cache) and @value_cache
+                @value_cache = {}
+            end
+            @value_cache
         end
     end
 end

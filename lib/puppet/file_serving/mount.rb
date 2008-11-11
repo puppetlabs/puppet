@@ -13,16 +13,17 @@ require 'puppet/file_serving/content'
 # or content objects.
 class Puppet::FileServing::Mount < Puppet::Network::AuthStore
     include Puppet::Util::Logging
-    extend Puppet::Util::Cacher
 
-    def self.localmap
-        attr_cache(:localmap) { 
+    class << self
+        include Puppet::Util::Cacher
+
+        cached_attr(:localmap) do
             {   "h" =>  Facter.value("hostname"),
                 "H" => [Facter.value("hostname"),
                         Facter.value("domain")].join("."),
                 "d" =>  Facter.value("domain")
             }
-        }
+        end
     end
 
     attr_reader :name

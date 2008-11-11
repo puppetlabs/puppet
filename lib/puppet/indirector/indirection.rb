@@ -296,8 +296,6 @@ class Puppet::Indirector::Indirection
         return klass.new
     end
 
-    # Use cached termini.
-    def termini
-        attr_cache(:termini) { Hash.new }
-    end
+    # Cache our terminus instances indefinitely, but make it easy to clean them up.
+    cached_attr(:termini) { Hash.new }
 end

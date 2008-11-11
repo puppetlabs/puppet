@@ -10,7 +10,10 @@ require 'puppet/util/cacher'
 class Puppet::FileServing::Configuration
     require 'puppet/file_serving/configuration/parser'
 
-    extend Puppet::Util::Cacher
+    class << self
+        include Puppet::Util::Cacher
+        cached_attr(:configuration) { new() }
+    end
 
     @config_fileuration = nil
 
@@ -18,7 +21,7 @@ class Puppet::FileServing::Configuration
 
     # Create our singleton configuration.
     def self.create
-        attr_cache(:configuration) { new() }
+        configuration
     end
 
     private_class_method  :new

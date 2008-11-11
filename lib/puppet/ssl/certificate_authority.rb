@@ -17,7 +17,11 @@ class Puppet::SSL::CertificateAuthority
 
     require 'puppet/ssl/certificate_authority/interface'
 
-    extend Puppet::Util::Cacher
+    class << self
+        include Puppet::Util::Cacher
+
+        cached_attr(:singleton_instance) { new }
+    end
 
     def self.ca?
         return false unless Puppet[:ca]
@@ -30,7 +34,7 @@ class Puppet::SSL::CertificateAuthority
     def self.instance
         return nil unless ca?
 
-        attr_cache(:instance) { new }
+        singleton_instance
     end
 
     attr_reader :name, :host
