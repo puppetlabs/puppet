@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1739 - Added uninstall functionality to yum provider
+
     Fixed #1710 - Spurious output in test run
 
     Fixed #1667 - Documentation should specify natural language regexs, not Regexp objects
