@@ -100,5 +100,10 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
         # Install in yum can be used for update, too
         self.install
     end
+     
+    def purge
+        yum "-y", :erase, @resource[:name]
+    end
+ end
 end
 
