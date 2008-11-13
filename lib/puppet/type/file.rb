@@ -1127,7 +1127,7 @@ module Puppet
         # file creation/modification, so we have to do some extra checking.
         def property_fix
             properties.each do |thing|
-                next unless [:mode, :owner, :group].include?(thing.name)
+                next unless [:mode, :owner, :group, :seluser, :selrole, :seltype, :selrange].include?(thing.name)
 
                 # Make sure we get a new stat objct
                 self.stat(true)
