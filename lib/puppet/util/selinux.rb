@@ -44,6 +44,11 @@ module Puppet::Util::SELinux
         unless selinux_support?
             return nil
         end
+        # If the filesystem has no support for SELinux labels, return a default of nil
+        # instead of what matchpathcon would return
+        unless selinux_label_support?(file)
+            return nil
+        end
         # If the file exists we should pass the mode to matchpathcon for the most specific
         # matching.  If not, we can pass a mode of 0.
         begin
@@ -144,4 +149,63 @@ module Puppet::Util::SELinux
         end
         return nil
     end
+
+    # Internal helper function to read and parse /proc/mounts
+    def read_mounts
+        begin
+            mounts = File.read("/proc/mounts")
+        rescue
+            return nil
+        end
+
+        mntpoint = {}
+
+        # Read all entries in /proc/mounts.  The second column is the
+        # mountpoint and the third column is the filesystem type.
+        # We skip rootfs because it is always mounted at /
+        mounts.collect do |line|
+            params = line.split(' ')
+            next if params[2] == 'rootfs'
+            mntpoint[params[1]] = params[2]
+        end
+        return mntpoint
+    end
+
+    # Internal helper function to return which type of filesystem a
+    # given file path resides on
+    def find_fs(file)
+        unless mnts = read_mounts()
+            return nil
+        end
+       
+        # For a given file:
+        # Check if the filename is in the data structure; 
+        #   return the fstype if it is.
+        # Just in case: return something if you're down to "/" or ""
+        # Remove the last slash and everything after it, 
+        #   and repeat with that as the file for the next loop through.
+        ary = file.split('/')
+        while not ary.empty? do
+            path = ary.join('/')
+            if mnts.has_key?(path)
+                return mnts[path]
+            end
+            ary.pop
+        end
+        return mnts['/']
+    end
+
+    # Check filesystem a path resides on for SELinux support against
+    # whitelist of known-good filesystems.
+    # Returns true if the filesystem can support SELinux labels and
+    # false if not.
+    def selinux_label_support?(file)
+        fstype = find_fs(file)
+        if fstype.nil?
+            return false
+        end
+        filesystems = ['ext2', 'ext3', 'ext4', 'gfs', 'gfs2', 'xfs', 'jfs']
+        return filesystems.include?(fstype)
+    end
+
 end

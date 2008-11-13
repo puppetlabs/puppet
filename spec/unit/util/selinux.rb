@@ -25,6 +25,38 @@ describe Puppet::Util::SELinux do
         end
     end
 
+    describe "filesystem detection" do
+        before :each do
+            File.expects(:read).with("/proc/mounts").returns "rootfs / rootfs rw 0 0\n/dev/root / ext3 rw,relatime,errors=continue,user_xattr,acl,data=ordered 0 0\n/dev /dev tmpfs rw,relatime,mode=755 0 0\n/proc /proc proc rw,relatime 0 0\n/sys /sys sysfs rw,relatime 0 0\n192.168.1.1:/var/export /mnt/nfs nfs rw,relatime,vers=3,rsize=32768,wsize=32768,namlen=255,hard,nointr,proto=tcp,timeo=600,retrans=2,sec=sys,mountaddr=192.168.1.1,mountvers=3,mountproto=udp,addr=192.168.1.1 0 0\n"
+        end
+
+        it "should parse the contents of /proc/mounts" do
+            read_mounts().should  == {
+                '/' => 'ext3',
+                '/sys' => 'sysfs',
+                '/mnt/nfs' => 'nfs',
+                '/proc' => 'proc',
+                '/dev' => 'tmpfs' }
+        end
+
+        it "should match a path on / to ext3" do
+            find_fs('/etc/puppet/testfile').should == "ext3"
+        end
+        
+        it "should match a path on /mnt/nfs to nfs" do
+            find_fs('/mnt/nfs/testfile/foobar').should == "nfs"
+        end
+
+        it "should reture true for a capable filesystem" do
+            selinux_label_support?('/etc/puppet/testfile').should be_true
+        end
+
+        it "should return false for a noncapable filesystem" do
+            selinux_label_support?('/mnt/nfs/testfile').should be_false
+        end
+
+    end
+
     describe "get_selinux_current_context" do
         it "should return nil if no SELinux support" do
             self.expects(:selinux_support?).returns false
@@ -54,6 +86,7 @@ describe Puppet::Util::SELinux do
             self.expects(:selinux_support?).returns true
             fstat = stub 'File::Stat', :mode => 0
             File.expects(:lstat).with("/foo").returns fstat
+            self.expects(:find_fs).with("/foo").returns "ext3"
             Selinux.expects(:matchpathcon).with("/foo", 0).returns [0, "user_u:role_r:type_t:s0"]
             get_selinux_default_context("/foo").should == "user_u:role_r:type_t:s0"
         end
@@ -62,9 +95,17 @@ describe Puppet::Util::SELinux do
             self.expects(:selinux_support?).returns true
             fstat = stub 'File::Stat', :mode => 0
             File.expects(:lstat).with("/foo").returns fstat
+            self.expects(:find_fs).with("/foo").returns "ext3"
             Selinux.expects(:matchpathcon).with("/foo", 0).returns -1
             get_selinux_default_context("/foo").should be_nil
         end
+
+        it "should return nil if selinux_label_support returns false" do
+            self.expects(:selinux_support?).returns true
+            self.expects(:find_fs).with("/foo").returns "nfs"
+            get_selinux_default_context("/foo").should be_nil
+        end
+            
     end
 
     describe "parse_selinux_context" do
