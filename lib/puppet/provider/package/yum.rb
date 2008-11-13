@@ -105,5 +105,4 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
         yum "-y", :erase, @resource[:name]
     end
  end
-end
 
