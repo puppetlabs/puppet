@@ -30,7 +30,8 @@ describe Puppet::Provider::Confiner do
     end
 
     it "should create a new confine collection if one does not exist" do
-        Puppet::Provider::ConfineCollection.expects(:new).returns "mycoll"
+        Puppet::Provider::ConfineCollection.expects(:new).with("mylabel").returns "mycoll"
+        @object.expects(:to_s).returns "mylabel"
         @object.confine_collection.should == "mycoll"
     end
 

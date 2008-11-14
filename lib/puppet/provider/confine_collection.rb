@@ -19,10 +19,13 @@ class Puppet::Provider::ConfineCollection
                 confine.name = test
                 @confines << confine
             end
+            @confines[-1].label = self.label
         end
     end
 
-    def initialize
+    attr_reader :label
+    def initialize(label)
+        @label = label
         @confines = []
     end
 

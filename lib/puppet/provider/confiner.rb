@@ -7,7 +7,7 @@ module Puppet::Provider::Confiner
 
     def confine_collection
         unless defined?(@confine_collection)
-            @confine_collection = Puppet::Provider::ConfineCollection.new
+            @confine_collection = Puppet::Provider::ConfineCollection.new(self.to_s)
         end
         @confine_collection
     end

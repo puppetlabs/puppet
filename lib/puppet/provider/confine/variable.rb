@@ -25,7 +25,7 @@ class Puppet::Provider::Confine::Variable < Puppet::Provider::Confine
     end
 
     def message(value)
-        "facter value '%s' for '%s' not in required list '%s'" % [value, self.name, values.join(",")]
+        "facter value '%s' for '%s' not in required list '%s'" % [test_value, self.name, values.join(",")]
     end
 
     # Compare the passed-in value to the retrieved value.

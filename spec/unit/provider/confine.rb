@@ -34,7 +34,10 @@ describe Puppet::Provider::Confine do
     end
 
     describe "when testing all values" do
-        before { @confine = Puppet::Provider::Confine.new(%w{a b c}) }
+        before do
+            @confine = Puppet::Provider::Confine.new(%w{a b c})
+            @confine.label = "foo"
+        end
 
         it "should be invalid if any values fail" do
             @confine.stubs(:pass?).returns true
@@ -49,6 +52,14 @@ describe Puppet::Provider::Confine do
 
         it "should short-cut at the first failing value" do
             @confine.expects(:pass?).once.returns false
+            @confine.valid?
+        end
+
+        it "should log failing confines with the label and message" do
+            @confine.stubs(:pass?).returns false
+            @confine.expects(:message).returns "My message"
+            @confine.expects(:label).returns "Mylabel"
+            Puppet.expects(:debug).with("Mylabel: My message")
             @confine.valid?
         end
     end
