@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1718 - Added preseed to apt uninstall and purge
+
     Fixed #1739 - Added uninstall functionality to yum provider
 
     Fixed #1710 - Spurious output in test run

@@ -99,10 +99,16 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     end
 
     def uninstall
+        if @resource[:responsefile]
+            self.run_preseed
+        end
         aptget "-y", "-q", :remove, @resource[:name]
     end
 
     def purge
+        if @resource[:responsefile]
+            self.run_preseed
+        end
         aptget '-y', '-q', :remove, '--purge', @resource[:name]
         # workaround a "bug" in apt, that already removed packages are not purged
         super
