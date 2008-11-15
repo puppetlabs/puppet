@@ -10,6 +10,8 @@ class Puppet::Parser::AST::Definition < Puppet::Parser::AST::Branch
         attr_accessor :name
     end
 
+    associates_doc
+
     # The class name
     @name = :definition
 

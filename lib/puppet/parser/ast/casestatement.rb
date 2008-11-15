@@ -6,6 +6,8 @@ class Puppet::Parser::AST
     class CaseStatement < AST::Branch
         attr_accessor :test, :options, :default
 
+        associates_doc
+
         # Short-curcuit evaluation.  Return the value of the statements for
         # the first option that matches.
         def evaluate(scope)

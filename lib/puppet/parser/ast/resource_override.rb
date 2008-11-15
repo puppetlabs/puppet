@@ -4,6 +4,9 @@ class Puppet::Parser::AST
     # Set a parameter on a resource specification created somewhere else in the
     # configuration.  The object is responsible for verifying that this is allowed.
     class ResourceOverride < Resource
+
+        associates_doc
+
         attr_accessor :object
         attr_reader :params
 

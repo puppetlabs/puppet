@@ -6,6 +6,8 @@ class Puppet::Parser::AST
     class ResourceDefaults < AST::Branch
         attr_accessor :type, :params
 
+        associates_doc
+
         # As opposed to ResourceDef, this stores each default for the given
         # object type.
         def evaluate(scope)

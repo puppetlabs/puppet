@@ -8,6 +8,8 @@ class Puppet::Parser::AST
 class Collection < AST::Branch
     attr_accessor :type, :query, :form
 
+    associates_doc
+
     # We return an object that does a late-binding evaluation.
     def evaluate(scope)
         if self.query
