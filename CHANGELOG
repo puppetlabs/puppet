@@ -1,4 +1,14 @@
 0.24.x
+    Fixed #1681 - Add filesystem type check to test for per-file SELinux context support
+
+    Fixed #1746 - Sync SELinux file attributes after file contents created/modified
+
+    Replaced SELInux calls to binaries with Ruby SELinux bindings
+
+    Fixed #1748 - Include spec directory in packages
+
+    Fixes #1672 - unsafe crontab handling in Solaris
+
     Fixed #1718 - Added preseed to apt uninstall and purge
 
     Fixed #1739 - Added uninstall functionality to yum provider
