@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1735 and #1747 - Fixes to confine system
+
     Fixed #1681 - Add filesystem type check to test for per-file SELinux context support
 
     Fixed #1746 - Sync SELinux file attributes after file contents created/modified

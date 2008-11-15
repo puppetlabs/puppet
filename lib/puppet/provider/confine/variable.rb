@@ -24,6 +24,11 @@ class Puppet::Provider::Confine::Variable < Puppet::Provider::Confine
         @facter_value
     end
 
+    def initialize(values)
+        super
+        @values = @values.collect { |v| v.to_s.downcase }
+    end
+
     def message(value)
         "facter value '%s' for '%s' not in required list '%s'" % [test_value, self.name, values.join(",")]
     end
@@ -35,8 +40,14 @@ class Puppet::Provider::Confine::Variable < Puppet::Provider::Confine
 
     def reset
         # Reset the cache.  We want to cache it during a given
-        # run, but across runs.
+        # run, but not across runs.
         @facter_value = nil
+    end
+
+    def valid?
+        @values.include?(test_value.to_s.downcase)
+    ensure
+        reset
     end
 
     private

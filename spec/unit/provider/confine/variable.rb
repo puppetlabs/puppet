@@ -27,52 +27,40 @@ describe Puppet::Provider::Confine::Variable do
             @confine.name = :myvar
         end
 
-        it "should use the 'pass?' method to test validity" do
-            @confine.expects(:pass?).with("foo")
-            @confine.valid?
-        end
-
         it "should use settings if the variable name is a valid setting" do
             Puppet.settings.expects(:valid?).with(:myvar).returns true
             Puppet.settings.expects(:value).with(:myvar).returns "foo"
-            @confine.pass?("foo")
+            @confine.valid?
         end
 
         it "should use Facter if the variable name is not a valid setting" do
             Puppet.settings.expects(:valid?).with(:myvar).returns false
             Facter.expects(:value).with(:myvar).returns "foo"
-            @confine.pass?("foo")
+            @confine.valid?
         end
 
-        it "should return true if the value matches the facter value" do
+        it "should be valid if the value matches the facter value" do
             @confine.expects(:test_value).returns "foo"
 
-            @confine.pass?("foo").should be_true
+            @confine.should be_valid
         end
 
         it "should return false if the value does not match the facter value" do
             @confine.expects(:test_value).returns "fee"
 
-            @confine.pass?("foo").should be_false
+            @confine.should_not be_valid
         end
 
         it "should be case insensitive" do
             @confine.expects(:test_value).returns "FOO"
 
-            @confine.pass?("foo").should be_true
+            @confine.should be_valid
         end
 
         it "should not care whether the value is a string or symbol" do
             @confine.expects(:test_value).returns "FOO"
 
-            @confine.pass?(:foo).should be_true
-        end
-
-        it "should cache the facter value during testing" do
-            Facter.expects(:value).once.returns("FOO")
-
-            @confine.pass?(:foo)
-            @confine.pass?(:foo)
+            @confine.should be_valid
         end
 
         it "should produce a message that the fact value is not correct" do
@@ -80,6 +68,12 @@ describe Puppet::Provider::Confine::Variable do
             message = @confine.message("value")
             message.should be_include("facter")
             message.should be_include("bar,bee")
+        end
+
+        it "should be valid if the test value matches any of the provided values" do
+            @confine = Puppet::Provider::Confine::Variable.new(%w{bar bee})
+            @confine.expects(:test_value).returns "bee"
+            @confine.should be_valid
         end
     end
 
