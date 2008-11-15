@@ -1,12 +1,17 @@
-# We need to keep the :file type as the parent type until
-# we refactor backups.
-Puppet::Type.newtype(:tidy, :parent => Puppet.type(:file)) do
+Puppet::Type.newtype(:tidy) do
+    require 'puppet/file_serving/fileset'
+
     @doc = "Remove unwanted files based on specific criteria.  Multiple
         criteria are OR'd together, so a file that is too large but is not
         old enough will still get tidied.
-        
-        You must specify either the size or age of the file (or both) for
-        files to be tidied."
+
+        If you don't specify either 'age' or 'size', then all files will
+        be removed.
+
+        This resource type works by generating a file resource for every file
+        that should be deleted and then letting that resource perform the
+        actual deletion.
+        "
 
     newparam(:path) do
         desc "The path to the file or directory to manage.  Must be fully
@@ -18,119 +23,36 @@ Puppet::Type.newtype(:tidy, :parent => Puppet.type(:file)) do
         desc "One or more file glob patterns, which restrict the list of
             files to be tidied to those whose basenames match at least one
             of the patterns specified.  Multiple patterns can be specified
-            using an array."
-    end
-
-    copyparam(Puppet::Type.type(:file), :backup)
-    
-    newproperty(:ensure) do
-        desc "An internal attribute used to determine which files should be removed."
-
-        @nodoc = true
-        
-        TATTRS = [:age, :size]
-        
-        defaultto :anything # just so we always get this property
-
-        def change_to_s(currentvalue, newvalue)
-            start = "Tidying"
-            if @out.include?(:age)
-                start += ", older than %s seconds" % @resource.should(:age)
-            end
-            if @out.include?(:size)
-                start += ", larger than %s bytes" % @resource.should(:size)
-            end
-
-            start
-        end
-
-        def insync?(is)
-            if is.is_a?(Symbol)
-                if [:absent, :notidy].include?(is)
-                    return true
-                else
-                    return false
-                end
-            else
-                @out = []
-                if @resource[:matches]
-                    basename = File.basename(@resource[:path])
-                    flags = File::FNM_DOTMATCH | File::FNM_PATHNAME
-                    unless @resource[:matches].any? {|pattern| File.fnmatch(pattern, basename, flags) }
-                        self.debug "No patterns specified match basename, skipping"
-                        return true
-                    end
-                end
-                TATTRS.each do |param|
-                    if property = @resource.property(param)
-                        self.debug "No is value for %s", [param] if is[property].nil?
-                        unless property.insync?(is[property])
-                            @out << param
-                        end
-                    end
-                end
-                
-                if @out.length > 0
-                    return false
-                else
-                    return true
-                end
-            end
-        end
-        
-        def retrieve
-            stat = nil
-            unless stat = @resource.stat
-                return { self => :absent}
-            end
+            using an array.
             
-            if stat.ftype == "directory" and ! @resource[:rmdirs]
-                return {self => :notidy}
-            end
+            Note that the patterns are matched against the
+            basename of each file -- that is, your glob patterns should not
+            have any '/' characters in them, since you're only specifying
+            against the last bit of the file."
 
-            allprops = TATTRS.inject({}) { |prophash, param|
-                if property = @resource.property(param)
-                    prophash[property] = property.assess(stat)
-                end
-                prophash
-            }
-            return { self => allprops } 
+        # Make sure we convert to an array.
+        munge do |value|
+            value = [value] unless value.is_a?(Array)
+            value
         end
 
-        def sync
-            file = @resource[:path]
-            case File.lstat(file).ftype
-            when "directory":
-                if @resource[:rmdirs]
-                    subs = Dir.entries(@resource[:path]).reject { |d|
-                        d == "." or d == ".."
-                    }.length
-                    if subs > 0
-                        self.info "%s has %s children; not tidying" %
-                            [@resource[:path], subs]
-                        self.info Dir.entries(@resource[:path]).inspect
-                    else
-                        Dir.rmdir(@resource[:path])
-                    end
-                else
-                    self.debug "Not tidying directories"
-                    return nil
-                end
-            when "file":
-                @resource.handlebackup(file)
-                File.unlink(file)
-            when "link":
-                File.unlink(file)
-            else
-                self.fail "Cannot tidy files of type %s" %
-                    File.lstat(file).ftype
-            end
-
-            return :file_tidied
+        # Does a given path match our glob patterns, if any?  Return true
+        # if no patterns have been provided.
+        def tidy?(path, stat)
+            basename = File.basename(path)
+            flags = File::FNM_DOTMATCH | File::FNM_PATHNAME
+            return true if value.find {|pattern| File.fnmatch(pattern, basename, flags) }
+            return false
         end
     end
 
-    newproperty(:age) do
+    newparam(:backup) do
+        desc "Whether tidied files should be backed up.  Any values are passed
+            directly to the file resources used for actual file deletion, so use
+            its backup documentation to determine valid values."
+    end
+
+    newparam(:age) do
         desc "Tidy files whose age is equal to or greater than
             the specified time.  You can choose seconds, minutes,
             hours, days, or weeks by specifying the first letter of any
@@ -145,17 +67,6 @@ Puppet::Type.newtype(:tidy, :parent => Puppet.type(:file)) do
         @@ageconvertors[:d] = @@ageconvertors[:h] * 24
         @@ageconvertors[:w] = @@ageconvertors[:d] * 7
 
-        def assess(stat)
-            type = nil
-            if stat.ftype == "directory"
-                type = :mtime
-            else
-                type = @resource[:type] || :atime
-            end
-            
-            return stat.send(type).to_i
-        end
-
         def convert(unit, multi)
             if num = @@ageconvertors[unit]
                 return num * multi
@@ -164,12 +75,13 @@ Puppet::Type.newtype(:tidy, :parent => Puppet.type(:file)) do
             end
         end
 
-        def insync?(is)
-            if (Time.now.to_i - is) > self.should
+        def tidy?(path, stat)
+            # If the file's older than we allow, we should get rid of it.
+            if (Time.now.to_i - stat.send(resource[:type]).to_i) > value
+                return true 
+            else
                 return false
             end
-
-            true
         end
 
         munge do |age|
@@ -189,7 +101,7 @@ Puppet::Type.newtype(:tidy, :parent => Puppet.type(:file)) do
         end
     end
 
-    newproperty(:size) do
+    newparam(:size) do
         desc "Tidy files whose size is equal to or greater than
             the specified size.  Unqualified values are in kilobytes, but
             *b*, *k*, and *m* can be appended to specify *bytes*, *kilobytes*,
@@ -203,11 +115,6 @@ Puppet::Type.newtype(:tidy, :parent => Puppet.type(:file)) do
             :g => 3
         }
 
-        # Retrieve the size from a File::Stat object
-        def assess(stat)
-            return stat.size
-        end
-
         def convert(unit, multi)
             if num = @@sizeconvertors[unit]
                 result = multi
@@ -218,12 +125,12 @@ Puppet::Type.newtype(:tidy, :parent => Puppet.type(:file)) do
             end
         end
         
-        def insync?(is)
-            if is > self.should
+        def tidy?(path, stat)
+            if stat.size > value
+                return true
+            else
                 return false
             end
-
-            true
         end
         
         munge do |size|
@@ -272,11 +179,13 @@ Puppet::Type.newtype(:tidy, :parent => Puppet.type(:file)) do
         end
     end
 
-    newparam(:rmdirs) do
+    newparam(:rmdirs, :boolean => true) do
         desc "Tidy directories in addition to files; that is, remove
             directories whose age is older than the specified criteria.
             This will only remove empty directories, so all contained
             files must also be tidied before a directory gets removed."
+
+        newvalues :true, :false
     end
     
     # Erase PFile's validate method
@@ -292,20 +201,18 @@ Puppet::Type.newtype(:tidy, :parent => Puppet.type(:file)) do
     def initialize(hash)
         super
 
-        unless  @parameters.include?(:age) or
-                @parameters.include?(:size)
-            unless FileTest.directory?(self[:path])
-                # don't do size comparisons for directories
-                self.fail "Tidy must specify size, age, or both"
-            end
-        end
-
         # only allow backing up into filebuckets
         unless self[:backup].is_a? Puppet::Network::Client.dipper
             self[:backup] = false
         end
     end
     
+    # Make a file resource to remove a given file.
+    def mkfile(path)
+        # Force deletion, so directories actually get deleted.
+        Puppet::Type.type(:file).create :path => path, :backup => self[:backup], :ensure => :absent, :force => true
+    end
+
     def retrieve
         # Our ensure property knows how to retrieve everything for us.
         if obj = @parameters[:ensure] 
@@ -318,5 +225,91 @@ Puppet::Type.newtype(:tidy, :parent => Puppet.type(:file)) do
     # Hack things a bit so we only ever check the ensure property.
     def properties
         []
+    end
+
+    def eval_generate
+        []
+    end
+
+    def generate
+        return [] unless stat(self[:path])
+
+        if self[:recurse]
+            files = Puppet::FileServing::Fileset.new(self[:path], :recurse => self[:recurse]).files.collect do |f|
+                f == "." ? self[:path] : File.join(self[:path], f)
+            end
+        else
+            files = [self[:path]]
+        end
+        result = files.find_all { |path| tidy?(path) }.collect { |path| mkfile(path) }.each { |file| notice "Tidying %s" % file.ref }.sort { |a,b| b[:path] <=> a[:path] }
+
+        # No need to worry about relationships if we don't have rmdirs; there won't be
+        # any directories.
+        return result unless rmdirs?
+
+        # Now make sure that all directories require the files they contain, if all are available,
+        # so that a directory is emptied before we try to remove it.
+        files_by_name = result.inject({}) { |hash, file| hash[file[:path]] = file; hash }
+
+        files_by_name.keys.sort { |a,b| b <=> b }.each do |path|
+            dir = File.dirname(path)
+            next unless resource = files_by_name[dir]
+            if resource[:require] 
+                resource[:require] << [:file, path]
+            else
+                resource[:require] = [[:file, path]]
+            end
+        end
+
+        return result
+    end
+
+    # Does a given path match our glob patterns, if any?  Return true
+    # if no patterns have been provided.
+    def matches?(path)
+        return true unless self[:matches]
+
+        basename = File.basename(path)
+        flags = File::FNM_DOTMATCH | File::FNM_PATHNAME
+        if self[:matches].find {|pattern| File.fnmatch(pattern, basename, flags) }
+            return true
+        else
+            debug "No specified patterns match %s, not tidying" % path
+            return false
+        end
+    end
+
+    # Should we remove the specified file?
+    def tidy?(path)
+        return false unless stat = self.stat(path)
+
+        return false if stat.ftype == "directory" and ! rmdirs?
+
+        # The 'matches' parameter isn't OR'ed with the other tests --
+        # it's just used to reduce the list of files we can match.
+        return false if param = parameter(:matches) and ! param.tidy?(path, stat)
+
+        tested = false
+        [:age, :size].each do |name|
+            next unless param = parameter(name)
+            tested = true
+            return true if param.tidy?(path, stat)
+        end
+
+        # If they don't specify either, then the file should always be removed.
+        return true unless tested
+        return false
+    end
+
+    def stat(path)
+        begin
+            File.lstat(path)
+        rescue Errno::ENOENT => error
+            info "File does not exist"
+            return nil
+        rescue Errno::EACCES => error
+            warning "Could not stat; permission denied"
+            return nil
+        end
     end
 end
