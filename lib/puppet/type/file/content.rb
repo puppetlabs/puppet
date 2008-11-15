@@ -58,6 +58,7 @@ module Puppet
             if self.should
                 return super
             elsif source = resource.parameter(:source)
+                fail "Got a remote source with no checksum" unless source.checksum
                 unless sum_method = sumtype(source.checksum)
                     fail "Could not extract checksum type from source checksum '%s'" % source.checksum
                 end

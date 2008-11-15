@@ -118,6 +118,10 @@ class Puppet::Node::Catalog < Puppet::SimpleGraph
     def apply(options = {})
         @applying = true
 
+        # Expire all of the resource data -- this ensures that all
+        # data we're operating against is entirely current.
+        expire()
+
         Puppet::Util::Storage.load if host_config?
         transaction = Puppet::Transaction.new(self)
 

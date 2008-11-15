@@ -433,12 +433,10 @@ class TestFileSources < Test::Unit::TestCase
             "File got replaced when :replace was false")
 
         # Now set it to true and make sure it does change.
-        assert_nothing_raised {
-            file[:replace] = true
-        }
+        file[:replace] = true
         assert_apply(file)
 
-        # Make sure it doesn't change.
+        # Make sure it changes.
         assert_equal("funtest\n", File.read(dest),
             "File was not replaced when :replace was true")
     end

@@ -700,8 +700,8 @@ describe Puppet::Node::Catalog do
             @catalog.resource("File[/yay]").should be_nil
         end
 
-        it "should expire cached data in the resources" do
-            @catalog.expects(:expire)
+        it "should expire cached data in the resources both before and after the transaction" do
+            @catalog.expects(:expire).times(2)
             @catalog.apply
         end
     end

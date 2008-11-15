@@ -93,8 +93,8 @@ module Puppet
         end
         
         def checksum
-            if defined?(@metadata)
-                @metadata.checksum
+            if metadata
+                metadata.checksum
             else
                 nil
             end

@@ -355,102 +355,6 @@ class TestFile < Test::Unit::TestCase
         }
     end
 
-    def test_checksums
-        types = %w{md5 md5lite timestamp time}
-        exists = "/tmp/sumtest-exists"
-        nonexists = "/tmp/sumtest-nonexists"
-
-        @@tmpfiles << exists
-        @@tmpfiles << nonexists
-
-        # try it both with files that exist and ones that don't
-        files = [exists, nonexists]
-        initstorage
-        File.open(exists,File::CREAT|File::TRUNC|File::WRONLY) { |of|
-            of.puts "initial text"
-        }
-        types.each { |type|
-            files.each { |path|
-                if Puppet[:debug]
-                    Puppet.warning "Testing %s on %s" % [type,path]
-                end
-                file = nil
-                events = nil
-                # okay, we now know that we have a file...
-                assert_nothing_raised() {
-                    file = Puppet.type(:file).create(
-                        :name => path,
-                        :ensure => "file",
-                        :checksum => type
-                    )
-                }
-                trans = nil
-
-                currentvalues = file.retrieve
-
-                if file.title !~ /nonexists/
-                    sum = file.property(:checksum)
-                    assert(sum.insync?(currentvalues[sum]), "file is not in sync")
-                end
-
-                events = assert_apply(file)
-
-                assert(events)
-
-                assert(! events.include?(:file_changed), "File incorrectly changed")
-                assert_events([], file)
-
-                # We have to sleep because the time resolution of the time-based
-                # mechanisms is greater than one second
-                sleep 1 if type =~ /time/
-
-                assert_nothing_raised() {
-                    File.open(path,File::CREAT|File::TRUNC|File::WRONLY) { |of|
-                        of.puts "some more text, yo"
-                    }
-                }
-
-                # now recreate the file
-                assert_nothing_raised() {
-                    file = Puppet.type(:file).create(
-                        :name => path,
-                        :checksum => type
-                    )
-                }
-                trans = nil
-
-                assert_events([:file_changed], file)
-
-                # Run it a few times to make sure we aren't getting
-                # spurious changes.
-                sum = nil
-                assert_nothing_raised do
-                    sum = file.property(:checksum).retrieve
-                end
-                assert(file.property(:checksum).insync?(sum),
-                    "checksum is not in sync")
-
-                sleep 1.1 if type =~ /time/
-                assert_nothing_raised() {
-                    File.unlink(path)
-                    File.open(path,File::CREAT|File::TRUNC|File::WRONLY) { |of|
-                        # We have to put a certain amount of text in here or
-                        # the md5-lite test fails
-                        2.times {
-                            of.puts rand(100)
-                        }
-                        of.flush
-                    }
-                }
-                assert_events([:file_changed], file)
-
-                if path =~ /nonexists/
-                    File.unlink(path)
-                end
-            }
-        }
-    end
-
     def cyclefile(path)
         # i had problems with using :name instead of :path
         [:name,:path].each { |param|
@@ -820,21 +724,20 @@ class TestFile < Test::Unit::TestCase
             500.times { |i| f.puts "line %s" % i }
         }
 
-        obj = Puppet::Type.type(:file).create(
+        resource = Puppet::Type.type(:file).create(
             :title => dest, :source => source
         )
 
-        assert_events([:file_created], obj)
+        assert_events([:file_created], resource)
 
         File.open(source, File::APPEND|File::WRONLY) { |f| f.puts "another line" }
 
-        assert_events([:file_changed], obj)
+        assert_events([:file_changed], resource)
 
         # Now modify the dest file
         File.open(dest, File::APPEND|File::WRONLY) { |f| f.puts "one more line" }
 
-        assert_events([:file_changed, :file_changed], obj)
-
+        assert_events([:file_changed, :file_changed], resource)
     end
 
     def test_replacefilewithlink
@@ -875,48 +778,6 @@ class TestFile < Test::Unit::TestCase
         assert_apply(obj)
 
         assert(FileTest.exists?(dest), "File did not get created")
-    end
-
-    def test_present_matches_anything
-        path = tempfile()
-
-        file = Puppet::Type.newfile(:path => path, :ensure => :present)
-
-        currentvalues = file.retrieve
-        assert(! file.insync?(currentvalues), "File incorrectly in sync")
-
-        # Now make a file
-        File.open(path, "w") { |f| f.puts "yay" }
-
-        currentvalues = file.retrieve
-        assert(file.insync?(currentvalues), "File not in sync")
-
-        # Now make a directory
-        File.unlink(path)
-        Dir.mkdir(path)
-
-        currentvalues = file.retrieve
-        assert(file.insync?(currentvalues), "Directory not considered 'present'")
-
-        Dir.rmdir(path)
-
-        # Now make a link
-        file[:links] = :manage
-
-        otherfile = tempfile()
-        File.symlink(otherfile, path)
-
-        currentvalues = file.retrieve
-        assert(file.insync?(currentvalues), "Symlink not considered 'present'")
-        File.unlink(path)
-        file.flush
-
-        # Now set some content, and make sure it works
-        file[:content] = "yayness"
-
-        assert_apply(file)
-
-        assert_equal("yayness", File.read(path), "Content did not get set correctly")
     end
 
     # Testing #274.  Make sure target can be used without 'ensure'.
@@ -985,7 +846,7 @@ class TestFile < Test::Unit::TestCase
         dir = tempfile()
         Dir.mkdir(dir)
 
-        bucket = Puppet::Type.newfilebucket :name => "main"
+        bucket = Puppet::Type.type(:filebucket).create :name => "main"
         File.symlink(dir, link)
         File.open(file, "w") { |f| f.puts "" }
         assert_equal(dir, File.readlink(link))
@@ -1036,7 +897,7 @@ class TestFile < Test::Unit::TestCase
             :link => proc { File.symlink(linkdest, path) }
         }
 
-        bucket = Puppet::Type.newfilebucket :name => "main", :path => tempfile()
+        bucket = Puppet::Type.type(:filebucket).create :name => "main", :path => tempfile()
 
         obj = Puppet::Type.newfile :path => path, :force => true,
             :links => :manage
