@@ -615,6 +615,17 @@ describe Puppet::Node::Catalog do
         Puppet::Node::Catalog.ancestors.should be_include(Puppet::Util::Cacher::Expirer)
     end
 
+    it "should always be expired if it's not applying" do
+        @catalog.expects(:applying?).returns false
+        @catalog.should be_expired(Time.now)
+    end
+
+    it "should not be expired if it's applying and the timestamp is late enough" do
+        @catalog.expire
+        @catalog.expects(:applying?).returns true
+        @catalog.should_not be_expired(Time.now)
+    end
+
     describe "when applying" do
         it "should create and evaluate a transaction" do
             @transaction.expects(:evaluate)

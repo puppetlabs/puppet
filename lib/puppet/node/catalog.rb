@@ -183,6 +183,14 @@ class Puppet::Node::Catalog < Puppet::SimpleGraph
         resource
     end
 
+    def expired?(ts)
+        if applying?
+            return super
+        else
+            return true
+        end
+    end
+
     # Make sure we support the requested extraction format.
     def extraction_format=(value)
         unless respond_to?("extract_to_%s" % value)

@@ -164,12 +164,14 @@ describe Puppet::Type.type(:file) do
             @resource.stat.should == "mystat"
         end
 
-        it "should cache the stat instance if it has a catalog" do
+        it "should cache the stat instance if it has a catalog and is applying" do
             stat = mock 'stat'
             File.expects(:lstat).returns stat
 
             catalog = Puppet::Node::Catalog.new
             @resource.catalog = catalog
+
+            catalog.stubs(:applying?).returns true
 
             @resource.stat.should equal(@resource.stat)
         end
