@@ -8,25 +8,36 @@
 #
 # = Usage
 #
-#   puppetdoc [-a|--all] [-h|--help] [-m|--mode <text|pdf|trac> [-r|--reference <[type]|configuration|..>]
+#   puppetdoc [-a|--all] [-h|--help] [-o|--outputdir <rdoc outputdir>] [-m|--mode <text|pdf|trac|rdoc>] 
+#             [-r|--reference <[type]|configuration|..>] [manifest-file]
 #
 # = Description
 #
-# This command generates a restructured-text document describing all installed
+# If mode is not 'rdoc', then this command generates a restructured-text document describing all installed
 # Puppet types or all allowable arguments to puppet executables.  It is largely
 # meant for internal use and is used to generate the reference document
 # available on the Reductive Labs web site.
 #
+# In 'rdoc' mode, this command generates an html RDoc hierarchy describing the manifests that
+# are in 'manifestdir' and 'modulepath' configuration directives. 
+# The generated documentation directory is doc by default but can be changed with the 'outputdir' option.
+#
+# If the command is started with 'manifest-file' command-line arguments, puppetdoc generate a single
+# manifest documentation that is output on stdout.
+#
 # = Options
 #
 # all::
-#   Output the docs for all of the reference types.
+#   Output the docs for all of the reference types. In 'rdoc' modes, this also outputs documentation for all resources
 #
 # help::
 #   Print this help message
 #
+# outputdir::
+#   Specifies the directory where to output the rdoc documentation in 'rdoc' mode.
+#
 # mode::
-#   Determine the output mode.  Valid modes are 'text', 'trac', and 'pdf'.  Note that 'trac' mode only works on Reductive Labs servers.  The default mode is 'text'.
+#   Determine the output mode.  Valid modes are 'text', 'trac', 'pdf' and 'rdoc'.  Note that 'trac' mode only works on Reductive Labs servers.  The default mode is 'text'.  In 'rdoc' mode you must provide 'manifests-path'
 #
 # reference::
 #   Build a particular reference.  Get a list of references by running +puppetdoc --list+.
@@ -34,6 +45,10 @@
 # = Example
 #
 #   $ puppetdoc -r type > /tmp/type_reference.rst
+# or
+#   $ puppetdoc --outputdir /tmp/rdoc --mode rdoc /path/to/manifests
+# or
+#   $ puppetdoc /etc/puppet/manifests/site.pp
 #
 # = Author
 #
@@ -47,16 +62,24 @@
 require 'puppet'
 require 'puppet/util/reference'
 require 'puppet/network/handler'
+require 'puppet/util/rdoc'
 require 'getoptlong'
 
-result = GetoptLong.new(
-	[ "--all",	"-a",			GetoptLong::NO_ARGUMENT ],
-	[ "--list",	"-l",			GetoptLong::NO_ARGUMENT ],
-	[ "--format",	"-f",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--mode",	"-m",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--reference",	"-r",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
-)
+options = [
+    [ "--all",          "-a",   GetoptLong::NO_ARGUMENT ],
+    [ "--list",         "-l",   GetoptLong::NO_ARGUMENT ],
+    [ "--format",       "-f",   GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--mode",         "-m",   GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--reference",    "-r",   GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--help",         "-h",   GetoptLong::NO_ARGUMENT ],
+    [ "--outputdir",    "-o",   GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--verbose",      "-v",   GetoptLong::NO_ARGUMENT ],
+    [ "--debug",        "-d",   GetoptLong::NO_ARGUMENT ]
+]
+
+# Add all of the config parameters as valid options.
+Puppet.settings.addargs(options)
+result = GetoptLong.new(*options)
 
 debug = false
 
@@ -66,8 +89,11 @@ options = {:references => [], :mode => :text, :format => :to_rest}
 Reference = Puppet::Util::Reference
 
 begin
+    unknown_args = []
     result.each { |opt,arg|
         case opt
+        when "--outputdir"
+            options[:outputdir] = arg
         when "--all"
             options[:all] = true
         when "--format"
@@ -78,7 +104,7 @@ begin
                 raise "Invalid output format %s" % arg
             end
         when "--mode"
-            if Reference.modes.include?(arg)
+            if Reference.modes.include?(arg) or arg.intern==:rdoc
                 options[:mode] = arg.intern
             else
                 raise "Invalid output mode %s" % arg
@@ -88,6 +114,10 @@ begin
             exit(0)
         when "--reference"
             options[:references] << arg.intern
+        when "--verbose"
+            options[:verbose] = true
+        when "--debug"
+            options[:debug] = true
         when "--help"
             if Puppet.features.usage?
                 RDoc::usage && exit
@@ -95,14 +125,52 @@ begin
                 puts "No help available unless you have RDoc::usage installed"
                 exit
             end
+        else
+            unknown_args << {:opt => opt, :arg => arg }
         end
     }
+
+    # sole manifest documentation
+    if ARGV.size > 0
+        options[:mode] = :rdoc
+        manifest = true
+    end
+
+    # consume the remaining unknown options
+    # and feed them as settings, but only for rdoc mode
+    if options[:mode] == :rdoc and unknown_args.size > 0
+        unknown_args.each do |option|
+            # force absolute path for modulepath when passed on commandline
+            if option[:opt]=="--modulepath" or option[:opt] == "--manifestdir"
+                option[:arg] = option[:arg].split(':').collect { |p| File.expand_path(p) }.join(':')
+            end
+            Puppet.settings.handlearg(option[:opt], option[:arg])
+        end
+    end
 rescue GetoptLong::InvalidOption => detail
     $stderr.puts "Try '#{$0} --help'"
     exit(1)
 end
 
-if options[:all]
+if options[:mode] == :rdoc # rdoc mode
+    # hack to get access to puppetmasterd modulepath and manifestdir
+    Puppet[:name] = "puppetmasterd"
+    # Now parse the config
+    Puppet.parse_config
+
+    # Handle the logging settings.
+    if options[:debug] or options[:verbose]
+        if options[:debug]
+            Puppet::Util::Log.level = :debug
+        else
+            Puppet::Util::Log.level = :info
+        end
+
+        Puppet::Util::Log.newdestination(:console)
+    end
+end
+
+if options[:all] and options[:mode] != :rdoc
     # Don't add dynamic references to the "all" list.
     options[:references] = Reference.references.reject do |ref|
         Reference.reference(ref).dynamic?
@@ -114,6 +182,33 @@ if options[:references].empty?
 end
 
 case options[:mode]
+when :rdoc # rdoc or sole manifest mode
+    exit_code = 0
+    files = []
+    unless manifest
+        files += Puppet[:modulepath].split(':').collect { |p| File.expand_path(p) }
+        files += Puppet[:manifestdir].split(':').collect { |p| File.expand_path(p) }
+    end
+    files += ARGV
+    Puppet.info "scanning: %s" % files.inspect
+    Puppet.settings.setdefaults("puppetdoc",
+        "document_all" => [false, "Document all resources"]
+    )
+    Puppet.settings[:document_all] = options[:all] || false
+    begin
+        if manifest
+            Puppet::Util::RDoc.manifestdoc(files)
+        else
+            Puppet::Util::RDoc.rdoc(options[:outputdir], files)
+        end
+    rescue => detail
+        if Puppet[:trace]
+            puts detail.backtrace
+        end
+        $stderr.puts "Could not generate documentation: %s" % detail
+        exit_code = 1
+    end
+    exit exit_code
 when :trac
     options[:references].each do |name|
         section = Puppet::Util::Reference.reference(name) or raise "Could not find section %s" % name
@@ -158,5 +253,4 @@ else
 
     exit exit_code
 end
-
 
