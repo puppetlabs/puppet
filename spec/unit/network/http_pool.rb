@@ -170,6 +170,10 @@ describe Puppet::Network::HttpPool do
             Puppet::Network::HttpPool.stubs(:ssl_host).returns @host
         end
 
+        after do
+            Puppet.settings.clear
+        end
+
         it "should do nothing if no certificate is on disk" do
             FileTest.expects(:exist?).with("/host/cert").returns false
             @http.expects(:cert=).never

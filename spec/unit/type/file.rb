@@ -69,6 +69,24 @@ describe Puppet::Type.type(:file) do
         @file.must_not be_should_be_file
     end
 
+    describe "when validating attributes" do
+        %w{path backup recurse source replace force ignore links purge sourceselect}.each do |attr|
+            it "should have a '#{attr}' parameter" do
+                Puppet::Type.type(:file).attrtype(attr.intern).should == :param
+            end
+        end
+
+        %w{checksum content target ensure owner group mode type}.each do |attr|
+            it "should have a '#{attr}' property" do
+                Puppet::Type.type(:file).attrtype(attr.intern).should == :property
+            end
+        end
+
+        it "should have its 'path' attribute set as its namevar" do
+            Puppet::Type.type(:file).namevar.should == :path
+        end
+    end
+
     describe "when managing links" do
         require 'puppettest/support/assertions'
         include PuppetTest
