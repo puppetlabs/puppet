@@ -14,7 +14,10 @@ describe Puppet::Provider::Confine::True do
     end
 
     describe "when testing values" do
-        before { @confine = Puppet::Provider::Confine::True.new("foo") }
+        before do
+            @confine = Puppet::Provider::Confine::True.new("foo")
+            @confine.label = "eh"
+        end
 
         it "should use the 'pass?' method to test validity" do
             @confine.expects(:pass?).with("foo")

@@ -7,6 +7,7 @@ require 'puppet/provider/confine/exists'
 describe Puppet::Provider::Confine::Exists do
     before do
         @confine = Puppet::Provider::Confine::Exists.new("/my/file")
+        @confine.label = "eh"
     end
 
     it "should be named :exists" do

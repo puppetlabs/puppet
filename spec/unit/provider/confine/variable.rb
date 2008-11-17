@@ -65,6 +65,7 @@ describe Puppet::Provider::Confine::Variable do
 
         it "should produce a message that the fact value is not correct" do
             @confine = Puppet::Provider::Confine::Variable.new(%w{bar bee})
+            @confine.name = "eh"
             message = @confine.message("value")
             message.should be_include("facter")
             message.should be_include("bar,bee")
