@@ -8,6 +8,8 @@
     whether stderr and stdout are combined in the output
     
     Added versionable feature to the RPM provider
+    
+    Fixed #1668 - puppetca can't clean unsigned certs
 
     Moved RRD feature from util/metric.rb to feature/base.rb
 

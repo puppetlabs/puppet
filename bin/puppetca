@@ -236,11 +236,12 @@ when :clean
         cleaned = true
     else
         hosts.each do |host|
-            cert = ca.getclientcert(host)[0]
-                if cert.nil?
-                    $stderr.puts "Could not find client certificate for %s" % host
-                    next
-                end
+          
+            unless cert = ca.getclientcert(host)[0] || ca.getclientcsr(host)
+                $stderr.puts "Could not find client certificate or request for %s" % host
+                next
+            end           
+            
             ca.clean(host)
             cleaned = true
         end
