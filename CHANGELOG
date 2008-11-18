@@ -1,4 +1,6 @@
 0.24.x
+    Added versionable feature to the RPM provider
+
     Moved RRD feature from util/metric.rb to feature/base.rb
 
     Fixed #1735 and #1747 - Fixes to confine system

@@ -4,6 +4,8 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     desc "RPM packaging support; should work anywhere with a working ``rpm``
         binary."
 
+    has_feature :versionable
+
     # The query format by which we identify installed packages
     NEVRAFORMAT = "%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}"
     NEVRA_FIELDS = [:name, :epoch, :version, :release, :arch]
