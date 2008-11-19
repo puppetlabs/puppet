@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1711 - fileserver test fails due to incorrect mocking
+
     Fixed #1751 - Mac OS X DirectoryService nameservice provider support for 
     plist output and password hash fil 
    

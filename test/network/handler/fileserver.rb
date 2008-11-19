@@ -980,6 +980,11 @@ allow *
         }
 
         dir = tempfile()
+
+        # When mocks attack, part 2
+        kernel_fact = Facter.value(:kernel)
+        Facter.stubs(:value).with(:kernel).returns(kernel_fact)
+
         Facter.stubs(:value).with(:ipaddress).returns("127.0.0.1")
         Facter.stubs(:value).with { |v| v.to_s == "hostname" }.returns("myhost")
         Facter.stubs(:value).with { |v| v.to_s == "domain" }.returns("mydomain.com")
