@@ -18,6 +18,10 @@ class Puppet::Parser::AST
             lval = @lval.safeevaluate(scope)
             rval = @rval.safeevaluate(scope)
 
+            # convert to number if operands are number
+            lval = Puppet::Parser::Scope.number?(lval) || lval
+            rval = Puppet::Parser::Scope.number?(rval) || rval
+            
             # return result
             unless @operator == '!='
                 lval.send(@operator,rval)
