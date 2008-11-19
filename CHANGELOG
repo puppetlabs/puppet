@@ -1,4 +1,7 @@
 0.24.x
+    Fixed #1751 - Mac OS X DirectoryService nameservice provider support for 
+    plist output and password hash fil 
+   
     Fixed #1752 - Add an optional argument to Puppet::Util.execute to determine 
     whether stderr and stdout are combined in the output
     

@@ -14,6 +14,7 @@
 
 require 'puppet'
 require 'puppet/provider/nameservice'
+require 'facter/util/plist'
 
 class Puppet::Provider::NameService
 class DirectoryService < Puppet::Provider::NameService
@@ -37,8 +38,7 @@ class DirectoryService < Puppet::Provider::NameService
     
     commands :dscl => "/usr/bin/dscl"
     confine :operatingsystem => :darwin
-    # JJM FIXME: This will need to be the default around October 2007.
-    # defaultfor :operatingsystem => :darwin
+    defaultfor :operatingsystem => :darwin
 
 
     # JJM 2007-07-25: This map is used to map NameService attributes to their
@@ -55,6 +55,7 @@ class DirectoryService < Puppet::Provider::NameService
         'UniqueID' => :uid,
         'RealName' => :comment,
         'Password' => :password,
+        'GeneratedUID' => :guid,
     }
     # JJM The same table as above, inverted.
     @@ns_to_ds_attribute_map = {
@@ -65,16 +66,16 @@ class DirectoryService < Puppet::Provider::NameService
         :uid => 'UniqueID',
         :comment => 'RealName',
         :password => 'Password',
+        :guid => 'GeneratedUID',
     }
+    
+    @@password_hash_dir = "/var/db/shadow/hash"
     
     def self.instances
         # JJM Class method that provides an array of instance objects of this
         #     type.
-        
         # JJM: Properties are dependent on the Puppet::Type we're managine.
         type_property_array = [:name] + @resource_type.validproperties
-        # JJM: No sense reporting the password.  It's hashed.
-        type_property_array.delete(:password) if type_property_array.include? :password
         
         # Create a new instance of this Puppet::Type for each object present
         #    on the system.
@@ -119,7 +120,7 @@ class DirectoryService < Puppet::Provider::NameService
         
         all_present_str_array = list_all_present()
         
-        # JJM: Return nil if the named object isn't present.
+        # NBK: shortcut the process if the resource is missing
         return nil unless all_present_str_array.include? resource_name
         
         dscl_vector = get_exec_preamble("-read", resource_name)
@@ -132,44 +133,20 @@ class DirectoryService < Puppet::Provider::NameService
         # JJM: We need a new hash to return back to our caller.
         attribute_hash = Hash.new
         
-        # JJM: First, the output string goes into an array.
-        #      Then, the each array element is split
-        #      If you want to figure out what this is doing, I suggest
-        #      ruby-debug, and stepping through it.
-        dscl_output.split("\n").each do |line|
-            # JJM: Split the attribute name and the list of values.
-            ds_attribute, ds_values_string = line.split(':')
-
-            # Split sets the values to nil if there's nothing after the :
-            ds_values_string ||= ""
-            
-            # JJM: skip this attribute line if the Puppet::Type doesn't care about it.
+        dscl_plist = Plist.parse_xml(dscl_output)
+        dscl_plist.keys().each do |key|
+            ds_attribute = key.sub("dsAttrTypeStandard:", "")
             next unless (@@ds_to_ns_attribute_map.keys.include?(ds_attribute) and type_properties.include? @@ds_to_ns_attribute_map[ds_attribute])
-
-            # JJM: We asked dscl to output url encoded values so we're able
-            #     to machine parse on whitespace.  We need to urldecode:
-            #     " Jeff%20McCune John%20Doe " => ["Jeff McCune", "John Doe"]
-            ds_value_array = ds_values_string.scan(/[^\s]+/).collect do |v|
-                url_decoded_value = CGI::unescape v
-                if url_decoded_value =~ /^[-0-9]+$/
-                    url_decoded_value.to_i
-                else                
-                    url_decoded_value
-                end
-            end
-            
-            # JJM: Finally, we're able to build up our attribute hash.
-            #    Remember, the hash is keyed by NameService attribute names,
-            #    not DirectoryService attribute names.
-            # NOTE: We're also sort of cheating here...  DirectoryService
-            #   is robust enough to allow multiple values for almost every
-            #   attribute in the system.  Traditional NameService things
-            #   really don't handle this case, so we'll always pull thet first
-            #   value returned from DirectoryService.
-            #   THERE MAY BE AN ORDERING ISSUE HERE, but I think it's ok...
-            attribute_hash[@@ds_to_ns_attribute_map[ds_attribute]] = ds_value_array[0]
+            ds_value = dscl_plist[key][0]  # only care about the first entry...
+            attribute_hash[@@ds_to_ns_attribute_map[ds_attribute]] = ds_value
         end
-        return attribute_hash
+        
+        # NBK: need to read the existing password here as it's not actually
+        # stored in the user record. It is stored at a path that involves the
+        # UUID of the user record for non-Mobile local acccounts.    
+        # Mobile Accounts are out of scope for this provider for now
+        attribute_hash[:password] = self.get_password(attribute_hash[:guid])
+        return attribute_hash    
     end
     
     def self.get_exec_preamble(ds_action, resource_name = nil)
@@ -181,7 +158,7 @@ class DirectoryService < Puppet::Provider::NameService
         #     We EXPECT name to be @resource[:name] when called from an instance object.
 
         # There are two ways to specify paths in 10.5.  See man dscl.
-        command_vector = [ command(:dscl), "-url", "." ]
+        command_vector = [ command(:dscl), "-plist", "." ]
         # JJM: The actual action to perform.  See "man dscl"
         #      Common actiosn: -create, -delete, -merge, -append, -passwd
         command_vector << ds_action
@@ -195,6 +172,52 @@ class DirectoryService < Puppet::Provider::NameService
         # JJM:  This returns most of the preamble of the command.
         #       e.g. 'dscl / -create /Users/mccune'
         return command_vector
+    end
+    
+    def self.set_password(resource_name, guid, password_hash)
+        password_hash_file = "#{@@password_hash_dir}/#{guid}"
+        begin
+            File.open(password_hash_file, 'w') { |f| f.write(password_hash)}
+        rescue Errno::EACCES => detail
+            raise Puppet::Error, "Could not write to password hash file: #{detail}"
+        end
+        
+        # NBK: For shadow hashes, the user AuthenticationAuthority must contain a value of
+        # ";ShadowHash;". The LKDC in 10.5 makes this more interesting though as it
+        # will dynamically generate ;Kerberosv5;;username@LKDC:SHA1 attributes if
+        # missing. Thus we make sure we only set ;ShadowHash; if it is missing, and
+        # we can do this with the merge command. This allows people to continue to
+        # use other custom AuthenticationAuthority attributes without stomping on them.
+        #
+        # There is a potential problem here in that we're only doing this when setting
+        # the password, and the attribute could get modified at other times while the 
+        # hash doesn't change and so this doesn't get called at all... but
+        # without switching all the other attributes to merge instead of create I can't
+        # see a simple enough solution for this that doesn't modify the user record
+        # every single time. This should be a rather rare edge case. (famous last words)
+        
+        dscl_vector = self.get_exec_preamble("-merge", resource_name)
+        dscl_vector << "AuthenticationAuthority" << ";ShadowHash;"
+        begin
+            dscl_output = execute(dscl_vector)
+        rescue Puppet::ExecutionFailure => detail
+            raise Puppet::Error, "Could not set AuthenticationAuthority."
+        end
+    end
+    
+    def self.get_password(guid)
+        password_hash = nil
+        password_hash_file = "#{@@password_hash_dir}/#{guid}"
+        # TODO: sort out error conditions?
+        if File.exists?(password_hash_file)
+            if not File.readable?(password_hash_file)
+                raise Puppet::Error("Could not read password hash file at #{password_hash_file} for #{@resource[:name]}")
+            end
+            f = File.new(password_hash_file)
+            password_hash = f.read
+            f.close
+          end
+        password_hash
     end
 
     def ensure=(ensure_value)
@@ -223,54 +246,19 @@ class DirectoryService < Puppet::Provider::NameService
     end
     
     def password=(passphrase)
-        # JJM: Setting the password is a special case.  We don't just
-        #      set the attribute because we need to update the password
-        #      databases.
-        # FIRST, make sure the AuthenticationAuthority is ;ShadowHash;  If
-        #  we don't do this, we don't get a shadow hash account.  ("Obviously...")
-        dscl_vector = self.class.get_exec_preamble("-create", @resource[:name])
-        dscl_vector << "AuthenticationAuthority" << ";ShadowHash;"
-        begin
-            dscl_output = execute(dscl_vector)
-        rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error, "Could not set AuthenticationAuthority."
-        end        
-        
-        # JJM: Second, we need to actually set the password.  dscl does
-        #   some magic, creating the proper hash for us based on the
-        #   AuthenticationAuthority attribute, set above.
-        dscl_vector = self.class.get_exec_preamble("-passwd", @resource[:name])
-        dscl_vector << passphrase
-        # JJM: Should we not log the password string?  This may be a security
-        #      risk...
-        begin
-            dscl_output = execute(dscl_vector)
-        rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error, "Could not set password using command vector: %{dscl_vector.inspect}"
-        end
-    end
-    
-    # JJM: nameservice.rb defines methods for each attribute of the type.
-    #   We implement these methods here, by implementing get() and set()
-    #   See the resource_type= method defined in nameservice.rb
-    #   I'm not sure what the implications are of doing things this way.
-    #   It was a bit difficult to sort out what was happening in my head,
-    #   but ruby-debug makes this process much more transparent.
-    #
-    def set(property, value)
-        # JJM: As it turns out, the set method defined in our parent class
-        #   is fine.  It just calls the modifycmd() method, which
-        #   I'll implement here.
-        super
-    end
-    
-    def get(param)
-        hash = getinfo(false)
-        if hash
-            return hash[param]
-        else
-            return :absent
-        end
+      exec_arg_vector = self.class.get_exec_preamble("-read", @resource.name)
+      exec_arg_vector << @@ns_to_ds_attribute_map[:guid]
+      begin
+          guid_output = execute(exec_arg_vector)
+          guid_plist = Plist.parse_xml(guid_output)
+          # Although GeneratedUID like all DirectoryService values can be multi-valued
+          # according to the schema, in practice user accounts cannot have multiple UUIDs
+          # otherwise Bad Things Happen, so we just deal with the first value.
+          guid = guid_plist["dsAttrTypeStandard:#{@@ns_to_ds_attribute_map[:guid]}"][0]
+          self.class.set_password(@resource.name, guid, passphrase)
+      rescue Puppet::ExecutionFailure => detail
+          raise Puppet::Error, "Could not set %s on %s[%s]: %s" % [param, @resource.class.name, @resource.name, detail]
+      end
     end
     
     def modifycmd(property, value)
@@ -287,15 +275,53 @@ class DirectoryService < Puppet::Provider::NameService
         return exec_arg_vector
     end
     
-    def addcmd
-        # JJM 2007-07-24: 
-        #    - addcmd returns an array to be executed to create a new object.
-        #    - This method is probably being called from the
-        #      ensure= method in nameservice.rb, or here...
-        #    - This should only be called if the object doesn't exist.
-        # JJM: Blame nameservice.rb for the terse method name. =)
-        #
-        self.class.get_exec_preamble("-create", @resource[:name])
+    # NBK: we override @parent.create as we need to execute a series of commands
+    # to create objects with dscl, rather than the single command nameservice.rb
+    # expects to be returned by addcmd. Thus we don't bother defining addcmd.
+    def create
+       if exists?
+            info "already exists"
+            # The object already exists
+            return nil
+        end
+        
+        # NBK: First we create the object with a known guid so we can set the contents
+        # of the password hash if required
+        # Shelling out sucks, but for a single use case it doesn't seem worth
+        # requiring people install a UUID library that doesn't come with the system.
+        # This should be revisited if Puppet starts managing UUIDs for other platform
+        # user records.
+        guid = %x{/usr/bin/uuidgen}.chomp
+        
+        exec_arg_vector = self.class.get_exec_preamble("-create", @resource[:name])
+        exec_arg_vector << @@ns_to_ds_attribute_map[:guid] << guid
+        begin
+          execute(exec_arg_vector)
+        rescue Puppet::ExecutionFailure => detail
+            raise Puppet::Error, "Could not set GeneratedUID for %s %s: %s" %
+                [@resource.class.name, @resource.name, detail]
+        end
+        
+        if value = @resource.should(:password) and value != ""
+          self.class.set_password(@resource[:name], guid, value)
+        end
+        
+        # Now we create all the standard properties
+        Puppet::Type.type(:user).validproperties.each do |property|
+            next if property == :ensure
+            if value = @resource.should(property) and value != ""
+                exec_arg_vector = self.class.get_exec_preamble("-create", @resource[:name])
+                exec_arg_vector << @@ns_to_ds_attribute_map[symbolize(property)]
+                next if property == :password  # skip setting the password here
+                exec_arg_vector << value.to_s
+                begin
+                  execute(exec_arg_vector)
+                rescue Puppet::ExecutionFailure => detail
+                    raise Puppet::Error, "Could not create %s %s: %s" %
+                        [@resource.class.name, @resource.name, detail]
+                end  
+            end
+        end
     end
     
     def deletecmd
@@ -341,6 +367,7 @@ class DirectoryService < Puppet::Provider::NameService
             # list, then report on the remaining list. Pretty whacky, ehh?
             type_properties = [:name] + self.class.resource_type.validproperties
             type_properties.delete(:ensure) if type_properties.include? :ensure
+            type_properties << :guid  # append GeneratedUID so we just get the report here
             @property_value_cache_hash = self.class.single_report(@resource[:name], *type_properties)
         end
         return @property_value_cache_hash
