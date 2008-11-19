@@ -1,4 +1,7 @@
 0.24.x
+    Fixed #1752 - Add an optional argument to Puppet::Util.execute to determine 
+    whether stderr and stdout are combined in the output
+    
     Added versionable feature to the RPM provider
 
     Moved RRD feature from util/metric.rb to feature/base.rb
