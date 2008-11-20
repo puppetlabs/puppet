@@ -44,6 +44,11 @@ module Puppet
             end
 
             def insync?(is)
+                if File.lstat(file).ftype == "directory" and ! @resource[:rmdirs]
+                    self.debug "Not tidying directories"
+                    return true
+                end
+
                 if is.is_a?(Symbol)
                     if [:absent, :notidy].include?(is)
                         return true
@@ -100,20 +105,17 @@ module Puppet
                 file = @resource[:path]
                 case File.lstat(file).ftype
                 when "directory":
-                    if @resource[:rmdirs]
-                        subs = Dir.entries(@resource[:path]).reject { |d|
-                            d == "." or d == ".."
-                        }.length
-                        if subs > 0
-                            self.info "%s has %s children; not tidying" %
-                                [@resource[:path], subs]
-                            self.info Dir.entries(@resource[:path]).inspect
-                        else
-                            Dir.rmdir(@resource[:path])
-                        end
+                    # If 'rmdirs' is disabled, then we would have never
+                    # gotten to this method.
+                    subs = Dir.entries(@resource[:path]).reject { |d|
+                        d == "." or d == ".."
+                    }.length
+                    if subs > 0
+                        self.info "%s has %s children; not tidying" %
+                            [@resource[:path], subs]
+                        self.info Dir.entries(@resource[:path]).inspect
                     else
-                        self.debug "Not tidying directories"
-                        return nil
+                        Dir.rmdir(@resource[:path])
                     end
                 when "file":
                     @resource.handlebackup(file)

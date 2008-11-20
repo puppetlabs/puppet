@@ -108,6 +108,7 @@ describe Puppet::Transaction::Change do
                     @change.stubs(:noop?).returns false
                     @property.stub_everything
                     @property.stubs(:resource).returns "myresource"
+                    @property.stubs(:name).returns :myprop
                 end
 
                 it "should sync the property" do
@@ -116,16 +117,20 @@ describe Puppet::Transaction::Change do
                     @change.forward
                 end
 
-                it "should return nil if syncing the property returns nil" do
+                it "should return the default event if syncing the property returns nil" do
                     @property.stubs(:sync).returns nil
 
-                    @change.forward.should be_nil
+                    @change.expects(:event).with(:myprop_changed).returns :myevent
+
+                    @change.forward.should == [:myevent]
                 end
 
-                it "should return nil if syncing the property returns an empty array" do
+                it "should return the default event if syncing the property returns an empty array" do
                     @property.stubs(:sync).returns []
 
-                    @change.forward.should be_nil
+                    @change.expects(:event).with(:myprop_changed).returns :myevent
+
+                    @change.forward.should == [:myevent]
                 end
 
                 it "should log the change" do

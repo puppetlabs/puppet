@@ -21,8 +21,8 @@ module Puppet
             for Mac OS X, NetInfo is used.  This is currently unconfigurable,
             but if you desperately need it to be so, please contact us."
 
-        newproperty(:ensure) do
-            desc "The basic state that the object should be in."
+        ensurable do
+            desc "Create or remove the group."
 
             newvalue(:present) do
                 provider.create
@@ -35,33 +35,6 @@ module Puppet
 
                 :group_removed
             end
-
-            # If they're talking about the thing at all, they generally want to
-            # say it should exist.
-            defaultto do
-                if @resource.managed?
-                    :present
-                else
-                    nil
-                end
-            end
-
-            def retrieve
-                return provider.exists? ? :present : :absent
-            end
-
-            # The default 'sync' method only selects among a list of registered
-            # values.
-            def sync
-                unless self.class.values
-                    self.devfail "No values defined for %s" %
-                        self.class.name
-                end
-
-                # Set ourselves to whatever our should value is.
-                self.set(self.should)
-            end
-
         end
 
         newproperty(:gid) do

@@ -109,6 +109,8 @@ module Puppet
                 end
 
                 fail "Could not find group(s) %s" % @should.join(",") unless found
+
+                # Use the default event.
             end
         end
 
