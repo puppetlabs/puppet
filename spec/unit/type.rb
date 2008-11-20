@@ -61,4 +61,18 @@ describe Puppet::Type do
             @catalog.clear(true)
         end
     end
+
+    describe "when converting to a transportable resource" do
+        before do
+            @user = Puppet::Type.type(:user).create(:name => "to_trans_testing", :ensure => :present)
+        end
+
+        it "should use each parameter's 'is_to_s' method to display the value" do
+            # Use 'ensure' because none of the other props will be tested if the user is absent.
+            @user.property(:ensure).expects(:retrieve).returns :absent
+            @user.property(:ensure).expects(:is_to_s).with(:absent)
+
+            @user.to_trans
+        end
+    end
 end
