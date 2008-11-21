@@ -2487,8 +2487,8 @@ class Type
         trans = TransObject.new(self.title, self.class.name)
 
         values = retrieve()
-        values.each do |param, value|
-            trans[param.name] = param.is_to_s(value)
+        values.each do |name, value|
+            trans[name.name] = value
         end
 
         @parameters.each do |name, param|
