@@ -1,31 +1,16 @@
 # A simple wrapper for templates, so they don't have full access to
 # the scope objects.
 class Puppet::Parser::TemplateWrapper
-    attr_accessor :scope, :file
+    attr_accessor :scope, :file, :string
     include Puppet::Util
     Puppet::Util.logmethods(self)
 
-    def initialize(scope, filename)
+    def initialize(scope)
         @__scope__ = scope
-        @__file__ = Puppet::Module::find_template(filename, scope.compiler.environment)
-
-        unless FileTest.exists?(file)
-            raise Puppet::ParseError,
-                "Could not find template %s" % file
-        end
-
-        # We'll only ever not have a parser in testing, but, eh.
-        if scope.parser
-            scope.parser.watch_file(file)
-        end
     end
 
     def scope
         @__scope__
-    end
-
-    def file
-        @__file__
     end
 
     # Should return true if a variable is defined, false if it is not
@@ -77,11 +62,34 @@ class Puppet::Parser::TemplateWrapper
         end
     end
 
-    def result
+    def file=(filename)
+        @file = Puppet::Module::find_template(filename, scope.compiler.environment)
+
+        unless FileTest.exists?(file)
+            raise Puppet::ParseError,
+                "Could not find template %s" % file
+        end
+
+        # We'll only ever not have a parser in testing, but, eh.
+        if scope.parser
+            scope.parser.watch_file(file)
+        end
+
+        @string = File.read(file)
+    end
+
+    def result(string = nil)
+        if string
+            self.string = string
+            template_source = "inline template"
+        else
+            template_source = file
+        end
+
         # Expose all the variables in our scope as instance variables of the
         # current object, making it possible to access them without conflict
         # to the regular methods.
-        benchmark(:debug, "Bound template variables for #{file}") do
+        benchmark(:debug, "Bound template variables for #{template_source}") do
             scope.to_hash.each { |name, value| 
                 if name.kind_of?(String)
                     realname = name.gsub(/[^\w]/, "_")
@@ -93,8 +101,8 @@ class Puppet::Parser::TemplateWrapper
         end
 
         result = nil
-        benchmark(:debug, "Interpolated template #{file}") do
-            template = ERB.new(File.read(file), 0, "-")
+        benchmark(:debug, "Interpolated template #{template_source}") do
+            template = ERB.new(self.string, 0, "-")
             result = template.result(binding)
         end
 
@@ -102,7 +110,7 @@ class Puppet::Parser::TemplateWrapper
     end
 
     def to_s
-        "template[%s]" % file
+        "template[%s]" % (file ? file : "inline")
     end
 end
 

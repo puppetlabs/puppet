@@ -9,10 +9,11 @@ Puppet::Parser::Functions::newfunction(:template, :type => :rvalue, :doc =>
             # Use a wrapper, so the template can't get access to the full
             # Scope object.
             debug "Retrieving template %s" % file
-            wrapper = Puppet::Parser::TemplateWrapper.new(self, file)
 
+            wrapper = Puppet::Parser::TemplateWrapper.new(self)
+            wrapper.file = file
             begin
-                wrapper.result()
+                wrapper.result
             rescue => detail
                 raise Puppet::ParseError,
                     "Failed to parse template %s: %s" %
