@@ -42,19 +42,9 @@ Autotest.add_hook :initialize do |at|
 	}
 end
 
+# a place for overrides when necessary.
 class Autotest::PuppetRspec < Autotest::Rspec
-  # Autotest will look for spec commands in the following
-  # locations, in this order:
-  #
-  #   * bin/spec
-  #   * default spec bin/loader installed in Rubygems
-  #   * our local vendor/gems/rspec/bin/spec
-  def spec_commands
-    [
-      File.join('vendor', 'gems', 'rspec', 'bin', 'spec') ,
-      File.join('bin', 'spec'),
-      File.join(Config::CONFIG['bindir'], 'spec')
-    ]
-  end
-
+    def spec_commands
+        ENV["PATH"].split(":").collect { |dir| File.join(dir, "spec") }
+    end
 end

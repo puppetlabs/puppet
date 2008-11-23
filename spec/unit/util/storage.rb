@@ -15,6 +15,10 @@ describe Puppet::Util::Storage do
     before(:each) do
         Puppet::Util::Storage.clear()
     end
+    
+    after do
+        Puppet::Type.type(:file).clear
+    end
 
     describe "when caching a symbol" do
         it "should return an empty hash" do

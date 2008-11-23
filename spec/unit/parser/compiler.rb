@@ -2,6 +2,34 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
+class CompilerTestResource
+    attr_accessor :builtin, :virtual, :evaluated, :type, :title
+
+    def initialize(type, title)
+        @type = type
+        @title = title
+    end
+
+    def ref
+        "%s[%s]" % [type.to_s.capitalize, title]
+    end
+
+    def evaluated?
+        @evaluated
+    end
+
+    def builtin?
+        @builtin
+    end
+
+    def virtual?
+        @virtual
+    end
+
+    def evaluate
+    end
+end
+
 describe Puppet::Parser::Compiler do
     before :each do
         @node = Puppet::Node.new "testnode"
@@ -164,11 +192,12 @@ describe Puppet::Parser::Compiler do
         end
 
         it "should evaluate unevaluated resources" do
-            resource = stub 'notevaluated', :ref => "File[testing]", :builtin? => false, :evaluated? => false, :virtual? => false
+            resource = CompilerTestResource.new(:file, "testing")
+
             @compiler.add_resource(@scope, resource)
 
             # We have to now mark the resource as evaluated
-            resource.expects(:evaluate).with { |*whatever| resource.stubs(:evaluated?).returns true }
+            resource.expects(:evaluate).with { |*whatever| resource.evaluated = true }
         
             @compiler.compile
         end
@@ -182,14 +211,14 @@ describe Puppet::Parser::Compiler do
         end
 
         it "should evaluate unevaluated resources created by evaluating other resources" do
-            resource = stub 'notevaluated', :ref => "File[testing]", :builtin? => false, :evaluated? => false, :virtual? => false
+            resource = CompilerTestResource.new(:file, "testing")
             @compiler.add_resource(@scope, resource)
 
-            resource2 = stub 'created', :ref => "File[other]", :builtin? => false, :evaluated? => false, :virtual? => false
+            resource2 = CompilerTestResource.new(:file, "other")
 
             # We have to now mark the resource as evaluated
-            resource.expects(:evaluate).with { |*whatever| resource.stubs(:evaluated?).returns(true); @compiler.add_resource(@scope, resource2) }
-            resource2.expects(:evaluate).with { |*whatever| resource2.stubs(:evaluated?).returns(true) }
+            resource.expects(:evaluate).with { |*whatever| resource.evaluated = true; @compiler.add_resource(@scope, resource2) }
+            resource2.expects(:evaluate).with { |*whatever| resource2.evaluated = true }
 
         
             @compiler.compile

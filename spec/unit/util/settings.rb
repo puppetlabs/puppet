@@ -486,6 +486,10 @@ describe Puppet::Util::Settings do
             @settings.setdefaults :files, :myfile => {:default => "/myfile", :desc => "a", :mode => 0755}
         end
 
+        after do
+            Puppet::Type.type(:file).clear
+        end
+
         def stub_transaction
             @bucket = mock 'bucket'
             @config = mock 'config', :clear => nil

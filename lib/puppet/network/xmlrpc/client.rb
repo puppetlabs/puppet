@@ -73,7 +73,9 @@ module Puppet::Network
                     rescue Timeout::Error => detail
                         Puppet.err "Connection timeout calling %s.%s: %s" %
                             [namespace, method, detail.to_s]
-                        raise XMLRPCClientError.new("Connection Timeout").set_backtrace(detail.backtrace)
+                        error = XMLRPCClientError.new("Connection Timeout")
+                        error.set_backtrace(detail.backtrace)
+                        raise error
                     rescue => detail
                         if detail.message =~ /^Wrong size\. Was \d+, should be \d+$/
                             Puppet.warning "XMLRPC returned wrong size.  Retrying."

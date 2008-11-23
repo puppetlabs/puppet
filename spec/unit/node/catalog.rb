@@ -152,7 +152,7 @@ describe Puppet::Node::Catalog, " when extracting transobjects" do
 end
 
 describe Puppet::Node::Catalog, " when converting to a transobject catalog" do
-    class TestResource
+    class CatalogTestResource
         attr_accessor :name, :virtual, :builtin
         def initialize(name, options = {})
             @name = name
@@ -185,14 +185,14 @@ describe Puppet::Node::Catalog, " when converting to a transobject catalog" do
         @original.tag(*%w{one two three})
         @original.add_class *%w{four five six}
 
-        @top            = TestResource.new 'top'
-        @topobject      = TestResource.new 'topobject', :builtin => true
-        @virtual        = TestResource.new 'virtual', :virtual => true
-        @virtualobject  = TestResource.new 'virtualobject', :builtin => true, :virtual => true
-        @middle         = TestResource.new 'middle'
-        @middleobject   = TestResource.new 'middleobject', :builtin => true
-        @bottom         = TestResource.new 'bottom'
-        @bottomobject   = TestResource.new 'bottomobject', :builtin => true
+        @top            = CatalogTestResource.new 'top'
+        @topobject      = CatalogTestResource.new 'topobject', :builtin => true
+        @virtual        = CatalogTestResource.new 'virtual', :virtual => true
+        @virtualobject  = CatalogTestResource.new 'virtualobject', :builtin => true, :virtual => true
+        @middle         = CatalogTestResource.new 'middle'
+        @middleobject   = CatalogTestResource.new 'middleobject', :builtin => true
+        @bottom         = CatalogTestResource.new 'bottom'
+        @bottomobject   = CatalogTestResource.new 'bottomobject', :builtin => true
 
         @resources = [@top, @topobject, @middle, @middleobject, @bottom, @bottomobject]
 
