@@ -45,6 +45,7 @@ end
 # a place for overrides when necessary.
 class Autotest::PuppetRspec < Autotest::Rspec
     def spec_commands
+        ENV["AUTOTEST"] = "true"
         ENV["PATH"].split(":").collect { |dir| File.join(dir, "spec") }
     end
 end
