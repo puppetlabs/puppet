@@ -161,6 +161,26 @@ describe user do
             gid.should.must == "foo"
         end
 
+        describe "when testing whether in sync" do
+            before do
+                @gid = user.attrclass(:gid).new(:resource => @resource, :should => %w{foo bar})
+            end
+
+            it "should return true if any of the specified groups are equal to the current integer" do
+                Puppet::Util.expects(:gid).with("foo").returns 300
+                Puppet::Util.expects(:gid).with("bar").returns 500
+
+                @gid.must be_insync(500)
+            end
+
+            it "should return false if none of the specified groups are equal to the current integer" do
+                Puppet::Util.expects(:gid).with("foo").returns 300
+                Puppet::Util.expects(:gid).with("bar").returns 500
+
+                @gid.should_not be_insync(700)
+            end
+        end
+
         describe "when syncing" do
             before do
                 @gid = user.attrclass(:gid).new(:resource => @resource, :should => %w{foo bar})

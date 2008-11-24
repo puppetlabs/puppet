@@ -98,6 +98,16 @@ module Puppet
                 end
             end
 
+            def insync?(is)
+                # We know the 'is' is a number, so we need to convert the 'should' to a number,
+                # too.
+                @should.each do |value|
+                    return true if number = Puppet::Util.gid(value) and is == number
+                end
+
+                return false
+            end
+
             def sync
                 found = false
                 @should.each do |value|
