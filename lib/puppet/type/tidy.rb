@@ -44,7 +44,7 @@ module Puppet
             end
 
             def insync?(is)
-                if File.lstat(file).ftype == "directory" and ! @resource[:rmdirs]
+                if File.lstat(resource[:path]).ftype == "directory" and ! @resource[:rmdirs]
                     self.debug "Not tidying directories"
                     return true
                 end
