@@ -30,7 +30,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
         
         self.defpath.each do |path|
             unless FileTest.directory?(path)
-                Puppet.notice "Service path %s does not exist" % path
+                Puppet.debug "Service path %s does not exist" % path
                 next
             end
         
