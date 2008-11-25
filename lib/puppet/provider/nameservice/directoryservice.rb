@@ -369,6 +369,9 @@ class DirectoryService < Puppet::Provider::NameService
             type_properties.delete(:ensure) if type_properties.include? :ensure
             type_properties << :guid  # append GeneratedUID so we just get the report here
             @property_value_cache_hash = self.class.single_report(@resource[:name], *type_properties)
+            [:uid, :gid].each do |param|
+                @property_value_cache_hash[param] = @property_value_cache_hash[param].to_i if @property_value_cache_hash and @property_value_cache_hash.include?(param)
+            end
         end
         return @property_value_cache_hash
     end

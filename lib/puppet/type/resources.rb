@@ -137,6 +137,7 @@ Puppet::Type.newtype(:resources) do
             return false
         end
 
+        p current_values[resource.property(:uid)]
         if current_values[resource.property(:uid)] <= self[:unless_system_user]
             return false
         else
