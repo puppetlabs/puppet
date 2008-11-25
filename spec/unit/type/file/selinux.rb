@@ -4,7 +4,7 @@ Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f
 
 
 [:seluser, :selrole, :seltype, :selrange].each do |param|
-property = Puppet::Type.type(:file).attrclass(param)
+    property = Puppet::Type.type(:file).attrclass(param)
     describe property do
         before do
             @resource = mock 'resource'
@@ -69,7 +69,6 @@ property = Puppet::Type.type(:file).attrclass(param)
 
         it "should be able to set a new context" do
             stat = stub 'stat', :ftype => "foo"
-            @resource.expects(:stat).returns stat
             @sel.should = %w{newone}
             @sel.expects(:set_selinux_context).with("/my/file", ["newone"], param)
             @sel.sync
