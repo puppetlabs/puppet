@@ -16,6 +16,7 @@ require 'puppet'
 require 'puppet/provider/nameservice'
 require 'facter/util/plist'
 
+
 class Puppet::Provider::NameService
 class DirectoryService < Puppet::Provider::NameService
     # JJM: Dive into the eigenclass
@@ -27,6 +28,7 @@ class DirectoryService < Puppet::Provider::NameService
         attr_writer :ds_path
     end
 
+    
     # JJM 2007-07-24: Not yet sure what initvars() does.  I saw it in netinfo.rb
     # I do know, however, that it makes methods "work"  =)
     # e.g. addcmd isn't available if this method call isn't present.
@@ -37,6 +39,7 @@ class DirectoryService < Puppet::Provider::NameService
     initvars()
     
     commands :dscl => "/usr/bin/dscl"
+    commands :dseditgroup => "/usr/sbin/dseditgroup"
     confine :operatingsystem => :darwin
     defaultfor :operatingsystem => :darwin
 
@@ -56,6 +59,9 @@ class DirectoryService < Puppet::Provider::NameService
         'RealName' => :comment,
         'Password' => :password,
         'GeneratedUID' => :guid,
+        'IPAddress'    => :ip_address,
+        'ENetAddress'  => :en_address,
+        'GroupMembership' => :members,
     }
     # JJM The same table as above, inverted.
     @@ns_to_ds_attribute_map = {
@@ -67,6 +73,9 @@ class DirectoryService < Puppet::Provider::NameService
         :comment => 'RealName',
         :password => 'Password',
         :guid => 'GeneratedUID',
+        :en_address => 'ENetAddress',
+        :ip_address => 'IPAddress',
+        :members => 'GroupMembership',
     }
     
     @@password_hash_dir = "/var/db/shadow/hash"
@@ -137,7 +146,10 @@ class DirectoryService < Puppet::Provider::NameService
         dscl_plist.keys().each do |key|
             ds_attribute = key.sub("dsAttrTypeStandard:", "")
             next unless (@@ds_to_ns_attribute_map.keys.include?(ds_attribute) and type_properties.include? @@ds_to_ns_attribute_map[ds_attribute])
-            ds_value = dscl_plist[key][0]  # only care about the first entry...
+            ds_value = dscl_plist[key]
+            if not @@ds_to_ns_attribute_map[ds_attribute] == :members  # only members uses arrays so far
+                ds_value = ds_value[0]
+            end
             attribute_hash[@@ds_to_ns_attribute_map[ds_attribute]] = ds_value
         end
         
@@ -229,7 +241,6 @@ class DirectoryService < Puppet::Provider::NameService
         if ensure_value == :present
             @resource.class.validproperties.each do |name|
                 next if name == :ensure
-
                 # LAK: We use property.sync here rather than directly calling
                 # the settor method because the properties might do some kind
                 # of conversion.  In particular, the user gid property might
@@ -261,18 +272,36 @@ class DirectoryService < Puppet::Provider::NameService
       end
     end
     
-    def modifycmd(property, value)
-        # JJM: This method will assemble a exec vector which modifies
-        #    a single property and it's value using dscl.
-        # JJM: With /usr/bin/dscl, the -create option will destroy an
-        #      existing property record if it exists
-        exec_arg_vector = self.class.get_exec_preamble("-create", @resource[:name])
-        # JJM: The following line just maps the NS name to the DS name
-        #      e.g. { :uid => 'UniqueID' }
-        exec_arg_vector << @@ns_to_ds_attribute_map[symbolize(property)]
-        # JJM: The following line sends the actual value to set the property to
-        exec_arg_vector << value.to_s
-        return exec_arg_vector
+    # NBK: we override @parent.set as we need to execute a series of commands
+    # to deal with array values, rather than the single command nameservice.rb
+    # expects to be returned by modifycmd. Thus we don't bother defining modifycmd.
+    
+    def set(param, value)
+        self.class.validate(param, value)
+        current_members = @property_value_cache_hash[:members]
+        if param == :members
+            # If we are meant to be authoritative for the group membership
+            # then remove all existing members who haven't been specified
+            # in the manifest.
+            if @resource[:auth_membership] and not current_members.nil?
+                remove_unwanted_members(current_members, value)
+             end
+             
+             # if they're not a member, make them one.
+             add_members(current_members, value)
+        else
+            exec_arg_vector = self.class.get_exec_preamble("-create", @resource[:name])
+            # JJM: The following line just maps the NS name to the DS name
+            #      e.g. { :uid => 'UniqueID' }
+            exec_arg_vector << @@ns_to_ds_attribute_map[symbolize(param)]
+            # JJM: The following line sends the actual value to set the property to
+            exec_arg_vector << value.to_s
+            begin
+                execute(exec_arg_vector)
+            rescue Puppet::ExecutionFailure => detail
+                raise Puppet::Error, "Could not set %s on %s[%s]: %s" % [param, @resource.class.name, @resource.name, detail]
+            end
+        end
     end
     
     # NBK: we override @parent.create as we need to execute a series of commands
@@ -307,20 +336,50 @@ class DirectoryService < Puppet::Provider::NameService
         end
         
         # Now we create all the standard properties
-        Puppet::Type.type(:user).validproperties.each do |property|
+        Puppet::Type.type(@resource.class.name).validproperties.each do |property|
             next if property == :ensure
             if value = @resource.should(property) and value != ""
-                exec_arg_vector = self.class.get_exec_preamble("-create", @resource[:name])
-                exec_arg_vector << @@ns_to_ds_attribute_map[symbolize(property)]
-                next if property == :password  # skip setting the password here
-                exec_arg_vector << value.to_s
-                begin
-                  execute(exec_arg_vector)
-                rescue Puppet::ExecutionFailure => detail
-                    raise Puppet::Error, "Could not create %s %s: %s" %
-                        [@resource.class.name, @resource.name, detail]
-                end  
+                if property == :members
+                    add_members(nil, value)
+                else
+                    exec_arg_vector = self.class.get_exec_preamble("-create", @resource[:name])
+                    exec_arg_vector << @@ns_to_ds_attribute_map[symbolize(property)]
+                    next if property == :password  # skip setting the password here
+                    exec_arg_vector << value.to_s
+                    begin
+                      execute(exec_arg_vector)
+                    rescue Puppet::ExecutionFailure => detail
+                        raise Puppet::Error, "Could not create %s %s: %s" %
+                            [@resource.class.name, @resource.name, detail]
+                    end
+                end
             end
+        end
+    end
+    
+    def remove_unwanted_members(current_members, new_members)
+        current_members.each do |member|
+            if not value.include?(member)
+                cmd = [:dseditgroup, "-o", "edit", "-n", ".", "-d", member, @resource[:name]]
+                begin
+                     execute(cmd)
+                rescue Puppet::ExecutionFailure => detail
+                     raise Puppet::Error, "Could not set %s on %s[%s]: %s" % [param, @resource.class.name, @resource.name, detail]
+                end
+             end
+         end
+    end
+    
+    def add_members(current_members, new_members)
+        new_members.each do |user|
+           if current_members.nil? or not current_members.include?(user)
+               cmd = [:dseditgroup, "-o", "edit", "-n", ".", "-a", user, @resource[:name]]
+               begin
+                    execute(cmd)
+               rescue Puppet::ExecutionFailure => detail
+                    raise Puppet::Error, "Could not set %s on %s[%s]: %s" % [param, @resource.class.name, @resource.name, detail]
+               end
+           end
         end
     end
     
