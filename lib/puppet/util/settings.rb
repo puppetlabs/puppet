@@ -9,8 +9,6 @@ class Puppet::Util::Settings
     include Enumerable
     include Puppet::Util
 
-    @@sync = Sync.new
-
     attr_accessor :file
     attr_reader :timer
 
@@ -21,22 +19,22 @@ class Puppet::Util::Settings
 
     # Set a config value.  This doesn't set the defaults, it sets the value itself.
     def []=(param, value)
-        @@sync.synchronize do # yay, thread-safe
-            param = symbolize(param)
-            unless element = @config[param]
-                raise ArgumentError,
-                    "Attempt to assign a value to unknown configuration parameter %s" % param.inspect
-            end
-            if element.respond_to?(:munge)
-                value = element.munge(value)
-            end
-            if element.respond_to?(:handle)
-                element.handle(value)
-            end
-            # Reset the name, so it's looked up again.
-            if param == :name
-                @name = nil
-            end
+        param = symbolize(param)
+        unless element = @config[param]
+            raise ArgumentError,
+                "Attempt to assign a value to unknown configuration parameter %s" % param.inspect
+        end
+        if element.respond_to?(:munge)
+            value = element.munge(value)
+        end
+        if element.respond_to?(:handle)
+            element.handle(value)
+        end
+        # Reset the name, so it's looked up again.
+        if param == :name
+            @name = nil
+        end
+        @sync.synchronize do # yay, thread-safe
             @values[:memory][param] = value
             @cache.clear
         end
@@ -58,7 +56,6 @@ class Puppet::Util::Settings
         return options
     end
 
-    # Turn the config into a Puppet configuration and apply it
     def apply
         trans = self.to_transportable
         begin
@@ -86,25 +83,21 @@ class Puppet::Util::Settings
 
     # Remove all set values, potentially skipping cli values.
     def clear(exceptcli = false)
-        @config.each { |name, obj|
-            unless exceptcli and obj.setbycli
-                obj.clear
+        @sync.synchronize do
+            @values.each do |name, values|
+                @values.delete(name) unless exceptcli and name == :cli
             end
-        }
-        @values.each do |name, values|
-            next if name == :cli and exceptcli
-            @values.delete(name) 
+
+            # Don't clear the 'used' in this case, since it's a config file reparse,
+            # and we want to retain this info.
+            unless exceptcli
+                @used = []
+            end
+
+            @cache.clear
+
+            @name = nil
         end
-
-        # Don't clear the 'used' in this case, since it's a config file reparse,
-        # and we want to retain this info.
-        unless exceptcli
-            @used = []
-        end
-
-        @cache.clear
-
-        @name = nil
     end
 
     # This is mostly just used for testing.
@@ -177,10 +170,12 @@ class Puppet::Util::Settings
         end
         str = str.intern
         if self.valid?(str)
-            if self.boolean?(str)
-                @values[:cli][str] = bool
-            else
-                @values[:cli][str] = value
+            @sync.synchronize do
+                if self.boolean?(str)
+                    @values[:cli][str] = bool
+                else
+                    @values[:cli][str] = value
+                end
             end
         else
             raise ArgumentError, "Invalid argument %s" % opt
@@ -198,13 +193,16 @@ class Puppet::Util::Settings
         @shortnames.include?(short)
     end
 
-    # Create a new config object
+    # Create a new collection of config settings.
     def initialize
         @config = {}
         @shortnames = {}
-
+        
         @created = []
         @searchpath = nil
+
+        # Mutex-like thing to protect @values
+        @sync = Sync.new
 
         # Keep track of set values.
         @values = Hash.new { |hash, key| hash[key] = {} }
@@ -309,7 +307,10 @@ class Puppet::Util::Settings
             end
             searchpath.each do |source|
                 next if source == :name
-                break if @name = @values[source][:name]
+                @sync.synchronize do
+                    @name = @values[source][:name]
+                end
+                break if @name
             end
             unless @name
                 @name = convert(@config[:name].default).intern
@@ -336,10 +337,12 @@ class Puppet::Util::Settings
     def parse(file)
         clear(true)
 
-        parse_file(file).each do |area, values|
-            @values[area] = values
+        @sync.synchronize do
+            parse_file(file).each do |area, values|
+                @values[area] = values
+            end
         end
-
+        
         # Determine our environment, if we have one.
         if @config[:environment]
             env = self.value(:environment).to_sym
@@ -348,16 +351,18 @@ class Puppet::Util::Settings
         end
 
         # Call any hooks we should be calling.
-        settings_with_hooks.each do |setting|
-            each_source(env) do |source|
-                if value = @values[source][setting.name]
-                    # We still have to use value() to retrieve the value, since
-                    # we want the fully interpolated value, not $vardir/lib or whatever.
-                    # This results in extra work, but so few of the settings
-                    # will have associated hooks that it ends up being less work this
-                    # way overall.
-                    setting.handle(self.value(setting.name, env))
-                    break
+        @sync.synchronize do
+            settings_with_hooks.each do |setting|
+                each_source(env) do |source|
+                    if value = @values[source][setting.name]
+                        # We still have to use value() to retrieve the value, since
+                        # we want the fully interpolated value, not $vardir/lib or whatever.
+                        # This results in extra work, but so few of the settings
+                        # will have associated hooks that it ends up being less work this
+                        # way overall.
+                        setting.handle(self.value(setting.name, env))
+                        break
+                    end
                 end
             end
         end
@@ -365,9 +370,11 @@ class Puppet::Util::Settings
         # We have to do it in the reverse of the search path,
         # because multiple sections could set the same value
         # and I'm too lazy to only set the metadata once.
-        searchpath.reverse.each do |source|
-            if meta = @values[source][:_meta]
-                set_metadata(meta)
+        @sync.synchronize do
+            searchpath.reverse.each do |source|
+                if meta = @values[source][:_meta]
+                    set_metadata(meta)
+                end
             end
         end
     end
@@ -394,9 +401,11 @@ class Puppet::Util::Settings
             raise Puppet::Error, "Permission denied to file %s" % file
         end
 
-        @values = Hash.new { |names, name|
-            names[name] = {}
-        }
+        @sync.synchronize do
+            @values = Hash.new { |names, name|
+                names[name] = {}
+            }
+        end
 
         # Get rid of the values set by the file, keeping cli values.
         self.clear(true)
@@ -404,72 +413,71 @@ class Puppet::Util::Settings
         section = "puppet"
         metas = %w{owner group mode}
         values = Hash.new { |hash, key| hash[key] = {} }
-        text.split(/\n/).each { |line|
-            case line
-            when /^\[(\w+)\]$/: section = $1 # Section names
-            when /^\s*#/: next # Skip comments
-            when /^\s*$/: next # Skip blanks
-            when /^\s*(\w+)\s*=\s*(.+)$/: # settings
-                var = $1.intern
-                if var == :mode
-                    value = $2
-                else
-                    value = munge_value($2)
-                end
-
-                # Only warn if we don't know what this config var is.  This
-                # prevents exceptions later on.
-                unless @config.include?(var) or metas.include?(var.to_s)
-                    Puppet.warning "Discarded unknown configuration parameter %s" % var.inspect
-                    next # Skip this line.
-                end
-
-                # Mmm, "special" attributes
-                if metas.include?(var.to_s)
-                    unless values.include?(section)
-                        values[section] = {}
+        @sync.synchronize do
+            text.split(/\n/).each { |line|
+                case line
+                when /^\[(\w+)\]$/: section = $1 # Section names
+                when /^\s*#/: next # Skip comments
+                when /^\s*$/: next # Skip blanks
+                when /^\s*(\w+)\s*=\s*(.+)$/: # settings
+                    var = $1.intern
+                    if var == :mode
+                        value = $2
+                    else
+                        value = munge_value($2)
                     end
-                    values[section][var.to_s] = value
 
-                    # If the parameter is valid, then set it.
-                    if section == Puppet[:name] and @config.include?(var)
-                        #@config[var].value = value
+                    # Only warn if we don't know what this config var is.  This
+                    # prevents exceptions later on.
+                    unless @config.include?(var) or metas.include?(var.to_s)
+                        Puppet.warning "Discarded unknown configuration parameter %s" % var.inspect
+                        next # Skip this line.
+                    end
+
+                    # Mmm, "special" attributes
+                    if metas.include?(var.to_s)
+                        unless values.include?(section)
+                            values[section] = {}
+                        end
+                        values[section][var.to_s] = value
+
+                        # If the parameter is valid, then set it.
+                        if section == Puppet[:name] and @config.include?(var)
+                            #@config[var].value = value
+                            @values[:main][var] = value
+                        end
+                        next
+                    end
+
+                    # Don't override set parameters, since the file is parsed
+                    # after cli arguments are handled.
+                    unless @config.include?(var) and @config[var].setbycli
+                        Puppet.debug "%s: Setting %s to '%s'" % [section, var, value]
                         @values[:main][var] = value
                     end
-                    next
-                end
+                    @config[var].section = symbolize(section)
 
-                # Don't override set parameters, since the file is parsed
-                # after cli arguments are handled.
-                unless @config.include?(var) and @config[var].setbycli
-                    Puppet.debug "%s: Setting %s to '%s'" % [section, var, value]
-                    @values[:main][var] = value
-                end
-                @config[var].section = symbolize(section)
-
-                metas.each { |meta|
-                    if values[section][meta]
-                        if @config[var].respond_to?(meta + "=")
-                            @config[var].send(meta + "=", values[section][meta])
+                    metas.each { |meta|
+                        if values[section][meta]
+                            if @config[var].respond_to?(meta + "=")
+                                @config[var].send(meta + "=", values[section][meta])
+                            end
                         end
-                    end
-                }
-            else
-                raise Puppet::Error, "Could not match line %s" % line
-            end
-        }
+                    }
+                else
+                    raise Puppet::Error, "Could not match line %s" % line
+                end
+            }
+        end
     end
 
-    # Create a new element.  The value is passed in because it's used to determine
-    # what kind of element we're creating, but the value itself might be either
-    # a default or a value, so we can't actually assign it.
+    # Create a new config option.
     def newelement(hash)
-        value = hash[:value] || hash[:default]
         klass = nil
         if hash[:section]
             hash[:section] = symbolize(hash[:section])
         end
-        case value
+        case hash[:default]
         when true, false, "true", "false":
             klass = CBoolean
         when /^\$\w+\//, /^\//:
@@ -479,7 +487,7 @@ class Puppet::Util::Settings
         else
             raise Puppet::Error, "Invalid value '%s' for %s" % [value.inspect, hash[:name]]
         end
-        hash[:parent] = self
+        hash[:settings] = self
         element = klass.new(hash)
 
         return element
@@ -502,7 +510,7 @@ class Puppet::Util::Settings
     def reparse
         if defined? @file and @file.changed?
             Puppet.notice "Reparsing %s" % @file.file
-            @@sync.synchronize do
+            @sync.synchronize do
                 parse(@file)
             end
             reuse()
@@ -511,7 +519,7 @@ class Puppet::Util::Settings
 
     def reuse
         return unless defined? @used
-        @@sync.synchronize do # yay, thread-safe
+        @sync.synchronize do # yay, thread-safe
             @used.each do |section|
                 @used.delete(section)
                 self.use(section)
@@ -595,7 +603,6 @@ class Puppet::Util::Settings
             name = symbolize(name)
             hash[:name] = name
             hash[:section] = section
-            name = hash[:name]
             if @config.include?(name)
                 raise ArgumentError, "Parameter %s is already defined" % name
             end
@@ -708,7 +715,7 @@ Generated on #{Time.now}.
     # Create the necessary objects to use a section.  This is idempotent;
     # you can 'use' a section as many times as you want.
     def use(*sections)
-        @@sync.synchronize do # yay, thread-safe
+        @sync.synchronize do # yay, thread-safe
             sections = sections.reject { |s| @used.include?(s.to_sym) }
 
             return if sections.empty?
@@ -769,16 +776,19 @@ Generated on #{Time.now}.
         end
 
         # See if we can find it within our searchable list of values
-        val = nil
-        each_source(environment) do |source|
-            # Look for the value.  We have to test the hash for whether
-            # it exists, because the value might be false.
-            if @values[source].include?(param)
-                val = @values[source][param]
-                break
+        val = catch :foundval do
+            each_source(environment) do |source|
+                # Look for the value.  We have to test the hash for whether
+                # it exists, because the value might be false.
+                @sync.synchronize do
+                    if @values[source].include?(param)
+                        throw :foundval, @values[source][param]
+                    end
+                end
             end
+            throw :foundval, nil
         end
-
+        
         # If we didn't get a value, use the default
         val = @config[param].default if val.nil?
 
@@ -1058,13 +1068,8 @@ Generated on #{Time.now}.
 
     # The base element type.
     class CElement
-        attr_accessor :name, :section, :default, :parent, :setbycli, :call_on_define
+        attr_accessor :name, :section, :default, :setbycli, :call_on_define
         attr_reader :desc, :short
-
-        # Unset any set value.
-        def clear
-            @value = nil
-        end
 
         def desc=(value)
             @desc = value.gsub(/^\s*/, '')
@@ -1085,10 +1090,9 @@ Generated on #{Time.now}.
 
         # Create the new element.  Pretty much just sets the name.
         def initialize(args = {})
-            if args.include?(:parent)
-                self.parent = args[:parent]
-                args.delete(:parent)
-            end
+            @settings = args.delete(:settings)
+            raise ArgumentError.new("You must refer to a settings object") if @settings.nil? or !@settings.is_a?(Puppet::Util::Settings)
+
             args.each do |param, value|
                 method = param.to_s + "="
                 unless self.respond_to? method
@@ -1143,7 +1147,7 @@ Generated on #{Time.now}.
             # If the value has not been overridden, then print it out commented
             # and unconverted, so it's clear that that's the default and how it
             # works.
-            value = @parent.value(self.name)
+            value = @settings.value(self.name)
 
             if value != @default
                 line = "%s = %s" % [@name, value]
@@ -1158,7 +1162,7 @@ Generated on #{Time.now}.
 
         # Retrieves the value, or if it's not set, retrieves the default.
         def value
-            @parent.value(self.name)
+            @settings.value(self.name)
         end
     end
 
@@ -1169,7 +1173,7 @@ Generated on #{Time.now}.
 
         def group
             if defined? @group
-                return @parent.convert(@group)
+                return @settings.convert(@group)
             else
                 return nil
             end
@@ -1177,7 +1181,7 @@ Generated on #{Time.now}.
 
         def owner
             if defined? @owner
-                return @parent.convert(@owner)
+                return @settings.convert(@owner)
             else
                 return nil
             end
@@ -1200,7 +1204,7 @@ Generated on #{Time.now}.
 
         # Return the appropriate type.
         def type
-            value = @parent.value(self.name)
+            value = @settings.value(self.name)
             if @name.to_s =~ /dir/
                 return :directory
             elsif value.to_s =~ /\/$/
@@ -1271,7 +1275,7 @@ Generated on #{Time.now}.
             return true unless value.is_a? String
             value.scan(/\$(\w+)/) { |name|
                 name = $1
-                unless @parent.include?(name)
+                unless @settings.include?(name)
                     raise ArgumentError,
                         "Settings parameter '%s' is undefined" %
                         name
