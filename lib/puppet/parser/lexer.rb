@@ -134,7 +134,7 @@ class Puppet::Parser::Lexer
         '*' => :TIMES,
         '<<' => :LSHIFT,
         '>>' => :RSHIFT,
-        %r{([a-z][-\w]*::)+[a-z][-\w]*} => :CLASSNAME,
+        %r{([a-z][-\w]*)?(::[a-z][-\w]*)+} => :CLASSNAME, # Require '::' in the class name, else we'd compete with NAME
         %r{((::){0,1}[A-Z][-\w]*)+} => :CLASSREF
     )
 

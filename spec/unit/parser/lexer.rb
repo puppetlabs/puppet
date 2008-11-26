@@ -208,6 +208,42 @@ describe Puppet::Parser::Lexer::TOKENS do
     end
 end
 
+describe Puppet::Parser::Lexer::TOKENS[:CLASSNAME] do
+    before { @token = Puppet::Parser::Lexer::TOKENS[:CLASSNAME] }
+
+    it "should match against lower-case alpha-numeric terms separated by double colons" do
+        @token.regex.should =~ "one::two"
+    end
+
+    it "should match against many lower-case alpha-numeric terms separated by double colons" do
+        @token.regex.should =~ "one::two::three::four::five"
+    end
+
+    it "should match against lower-case alpha-numeric terms prefixed by double colons" do
+        @token.regex.should =~ "::one"
+    end
+end
+
+describe Puppet::Parser::Lexer::TOKENS[:CLASSREF] do
+    before { @token = Puppet::Parser::Lexer::TOKENS[:CLASSREF] }
+
+    it "should match against single upper-case alpha-numeric terms" do
+        @token.regex.should =~ "One"
+    end
+
+    it "should match against upper-case alpha-numeric terms separated by double colons" do
+        @token.regex.should =~ "One::Two"
+    end
+
+    it "should match against many upper-case alpha-numeric terms separated by double colons" do
+        @token.regex.should =~ "One::Two::Three::Four::Five"
+    end
+
+    it "should match against upper-case alpha-numeric terms prefixed by double colons" do
+        @token.regex.should =~ "::One"
+    end
+end
+
 describe Puppet::Parser::Lexer::TOKENS[:NAME] do
     before { @token = Puppet::Parser::Lexer::TOKENS[:NAME] }
 
