@@ -29,23 +29,25 @@ Puppet::Type.newtype(:computer) do
     end
     
     newproperty(:ensure, :parent => Puppet::Property::Ensure) do
+        desc "Control the existences of this computer record. Set this attribute to
+            ``present`` to ensure the computer record exists.  Set it to ``absent``
+            to delete any computer records with this name"
         newvalue(:present) do
             provider.create
         end
 
         newvalue(:absent) do
-            Puppet.notice "prop ensure = absent"
             provider.delete
         end
     end
     
     newparam(:name) do
-        desc "The "
+        desc "The authoritative 'short' name of the computer record."
         isnamevar
     end
     
     newparam(:realname) do
-        desc "realname"
+        desc "The 'long' name of the computer record."
     end
         
     newproperty(:en_address) do

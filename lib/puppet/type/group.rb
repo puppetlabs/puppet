@@ -1,10 +1,3 @@
-# Manage Unix groups.  This class is annoyingly complicated; There
-# is some variety in whether systems use 'groupadd' or 'addgroup', but OS X
-# significantly complicates the picture by using NetInfo.  Eventually we
-# will also need to deal with systems that have their groups hosted elsewhere
-# (e.g., in LDAP).  That will likely only be a problem for OS X, since it
-# currently does not use the POSIX interfaces, since lookupd's cache screws
-# things up.
 
 require 'etc'
 require 'facter'
@@ -14,16 +7,10 @@ module Puppet
         @doc = "Manage groups. On most platforms this can only create groups.
             Group membership must be managed on individual users.  
             
-            On OS X, group membership is managed as an attribute of the group.
-            This resource type uses the prescribed native tools for creating 
-            groups and generally uses POSIX APIs for retrieving information
-            about them.  It does not directly modify ``/etc/group`` or anything.
-            
-            For most platforms, the tools used are ``groupadd`` and its ilk;
-            for Mac OS X, dscl/dseditgroup are used.
-                
-            This is currently unconfigurable, but if you desperately need it
-            to be so, please contact us."
+            On some platforms such as OS X, group membership is managed as an
+            attribute of the group, not the user record. Providers must have 
+            the feature 'manages_members' to manage the 'members' property of
+            a group record."
         
         feature :manages_members,
             "For directories where membership is an attribute of groups not users."
