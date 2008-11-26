@@ -24,7 +24,7 @@ class Puppet::Module
     def self.templatepath(environment = nil)
         dirs = Puppet.settings.value(:templatedir, environment).split(":")
         dirs.select do |p|
-            p =~ /^#{File::SEPARATOR}/ && File::directory?(p)
+            File::directory?(p)
         end
     end
 

@@ -114,6 +114,12 @@ describe Puppet::Module, " when searching for templates" do
         Puppet::Module.find_template("mytemplate").should == "/my/templates/mytemplate"
     end
 
+    it "should accept relative templatedirs" do
+        Puppet[:templatedir] = "my/templates"
+        File.expects(:directory?).with(File.join(Dir.getwd,"my/templates")).returns(true)
+        Puppet::Module.find_template("mytemplate").should == File.join(Dir.getwd,"my/templates/mytemplate")
+    end
+
     it "should use the environment templatedir if no module is found and an environment is specified" do
         Puppet::Module.stubs(:templatepath).with("myenv").returns(["/myenv/templates"])
         Puppet::Module.expects(:find).with("mymod", "myenv").returns(nil)
