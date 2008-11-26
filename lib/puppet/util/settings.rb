@@ -333,14 +333,22 @@ class Puppet::Util::Settings
         end
     end
 
-    # Parse the configuration file.
+    # Parse the configuration file.  Just provides
+    # thread safety.
     def parse(file)
+        # We have to clear outside of the sync, because it's
+        # also using synchronize().
         clear(true)
 
         @sync.synchronize do
-            parse_file(file).each do |area, values|
-                @values[area] = values
-            end
+            unsafe_parse(file)
+        end
+    end
+
+    # Unsafely parse the file -- this isn't thread-safe and causes plenty of problems if used directly.
+    def unsafe_parse(file)
+        parse_file(file).each do |area, values|
+            @values[area] = values
         end
         
         # Determine our environment, if we have one.
@@ -351,18 +359,16 @@ class Puppet::Util::Settings
         end
 
         # Call any hooks we should be calling.
-        @sync.synchronize do
-            settings_with_hooks.each do |setting|
-                each_source(env) do |source|
-                    if value = @values[source][setting.name]
-                        # We still have to use value() to retrieve the value, since
-                        # we want the fully interpolated value, not $vardir/lib or whatever.
-                        # This results in extra work, but so few of the settings
-                        # will have associated hooks that it ends up being less work this
-                        # way overall.
-                        setting.handle(self.value(setting.name, env))
-                        break
-                    end
+        settings_with_hooks.each do |setting|
+            each_source(env) do |source|
+                if value = @values[source][setting.name]
+                    # We still have to use value() to retrieve the value, since
+                    # we want the fully interpolated value, not $vardir/lib or whatever.
+                    # This results in extra work, but so few of the settings
+                    # will have associated hooks that it ends up being less work this
+                    # way overall.
+                    setting.handle(self.value(setting.name, env))
+                    break
                 end
             end
         end
@@ -370,14 +376,14 @@ class Puppet::Util::Settings
         # We have to do it in the reverse of the search path,
         # because multiple sections could set the same value
         # and I'm too lazy to only set the metadata once.
-        @sync.synchronize do
-            searchpath.reverse.each do |source|
-                if meta = @values[source][:_meta]
-                    set_metadata(meta)
-                end
+        searchpath.reverse.each do |source|
+            if meta = @values[source][:_meta]
+                set_metadata(meta)
             end
         end
     end
+
+    private :unsafe_parse
 
     # Parse the configuration file.  As of May 2007, this is a backward-compatibility method and
     # will be deprecated soon.
