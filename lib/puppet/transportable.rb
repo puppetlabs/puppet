@@ -53,6 +53,7 @@ module Puppet
                 Puppet.debug "Defining %s on %s" % [param, ref]
                 trans[param] = value
             }
+            trans.catalog = self.catalog
             Puppet::Type::Component.create(trans)
         end
 
