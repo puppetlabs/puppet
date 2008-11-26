@@ -163,12 +163,12 @@ namespace :ci do
 
   desc "Run CI Unit tests"
   task :unit => [:prep, 'ci:setup:testunit'] do
-     sh "cd test; rake test"
+     sh "cd test; rake test; exit 0"
   end
 
   desc "Run CI RSpec tests"
   task :spec => [:prep, 'ci:setup:rspec'] do
-     sh "cd spec; rake all"
+     sh "cd spec; rake all; exit 0"
   end
 
 end
