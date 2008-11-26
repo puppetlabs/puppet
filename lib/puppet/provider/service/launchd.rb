@@ -89,8 +89,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
     # finds the path for a given label and returns the path and parsed plist
     # as an array of [path, plist]. Note plist is really a Hash here.
-    def self.plist_from_label(label)
-        job = self.jobsearch(label)
+    def plist_from_label(label)
+        job = self.class.jobsearch(label)
         job_path = job[label]
         job_plist = Plist::parse_xml(job_path)
         if not job_plist
@@ -103,10 +103,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     def status
         # launchctl list <jobname> exits zero if the job is loaded
         # and non-zero if it isn't. Simple way to check...
-        cmds = []
-        cmds << :launchctl << "list" << @resource[:name]
         begin
-            execute(cmds)
+            launchctl :list, resource[:name]           
             return :running
         rescue Puppet::ExecutionFailure
             return :stopped
@@ -118,11 +116,10 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     # conditionally enable at load, then disable by modifying the plist file
     # directly.
     def start
-        job = self.class.jobsearch(@resource[:name])
-        job_path = job[@resource[:name]]
+        job_path, job_plist = plist_from_label(resource[:name])
         did_enable_job = false
         cmds = []
-        cmds << :launchctl << "load" 
+        cmds << :launchctl << :load 
         if self.enabled? == :false  # launchctl won't load disabled jobs
             cmds << "-w"
             did_enable_job = true
@@ -131,24 +128,33 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
         begin
             execute(cmds)
         rescue Puppet::ExecutionFailure
-            raise Puppet::Error.new("Unable to start service: %s at path: %s" % [@resource[:name], job_path])
+            raise Puppet::Error.new("Unable to start service: %s at path: %s" % [resource[:name], job_path])
         end
         # As load -w clears the Disabled flag, we need to add it in after
-        if did_enable_job and @resource[:enable] == :false
+        if did_enable_job and resource[:enable] == :false
             self.disable
         end 
     end
 
 
     def stop
-        job = self.class.jobsearch(@resource[:name])
-        job_path = job[@resource[:name]]
+        job_path, job_plist = plist_from_label(resource[:name])
+        did_disable_job = false
         cmds = []
-        cmds << :launchctl << "unload" << job_path
+        cmds << :launchctl << :unload 
+        if self.enabled? == :true # keepalive jobs can't be stopped without disabling
+            cmds << "-w"
+            did_disable_job = true
+        end
+        cmds << job_path
         begin
             execute(cmds)
         rescue Puppet::ExecutionFailure
-            raise Puppet::Error.new("Unable to stop service: %s at path: %s" % [@resource[:name], job_path])
+            raise Puppet::Error.new("Unable to stop service: %s at path: %s" % [resource[:name], job_path])
+        end
+        # As unload -w sets the Disabled flag, we need to add it in after
+        if did_disable_job and resource[:enable] == :true
+            self.enable
         end
     end
 
@@ -156,7 +162,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     # launchd jobs are enabled by default. They are only disabled if the key
     # "Disabled" is set to true, but it can also be set to false to enable it.
     def enabled?
-        job_path, job_plist = self.class.plist_from_label(@resource[:name])
+        job_path, job_plist = plist_from_label(resource[:name])
         if job_plist.has_key?("Disabled")
             if job_plist["Disabled"]  # inverse of disabled is enabled
                 return :false
@@ -170,8 +176,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     # rather than dealing with launchctl as it is unable to change the Disabled flag
     # without actually loading/unloading the job.
     def enable
-        job_path, job_plist = self.class.plist_from_label(@resource[:name])
-        if not self.enabled?
+        job_path, job_plist = plist_from_label(resource[:name])
+        if self.enabled? == :false
             job_plist.delete("Disabled")
             Plist::Emit.save_plist(job_plist, job_path)
         end
@@ -179,7 +185,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
 
     def disable
-        job_path, job_plist = self.class.plist_from_label(@resource[:name])
+        job_path, job_plist = plist_from_label(resource[:name])
         job_plist["Disabled"] = true
         Plist::Emit.save_plist(job_plist, job_path)
     end
