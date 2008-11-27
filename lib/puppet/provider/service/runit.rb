@@ -5,14 +5,14 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
     desc """
 Runit service management.
 This provider manages daemons running supervised by Runit.
-It tries to detect the service directory, with by order of preference:
+It tries to detect the service directory, with by order of preference::
 
  * /service
  * /var/service
  * /etc/service
 
 The daemon directory should be placed in a directory that can be 
-by default in:
+by default in::
 
  * /etc/sv
 
@@ -23,12 +23,14 @@ or this can be overriden in the service resource parameters::
        provider => \"runit\", path => \"/path/to/daemons\";
     }
 
-This provider supports out of the box:
+This provider supports out of the box::
 
  * start/stop
  * enable/disable
  * restart
  * status
+
+
 """
 
     commands :sv => "/usr/bin/sv"
