@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1776 - Trivial fix for gentoo service provider
+
     Added Rake :ci namespace and CI tasks
 
     Fixed #1767 - Minor fix to emacs mode
