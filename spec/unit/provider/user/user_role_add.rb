@@ -49,6 +49,10 @@ describe provider_class do
     end
 
     describe "when calling create" do
+        before do
+            @provider.stubs(:password=)
+        end
+
         it "should use the add command when the user is not a role" do
             @provider.stubs(:is_role?).returns(false)
             @provider.expects(:addcmd).returns("useradd")
@@ -107,6 +111,7 @@ describe provider_class do
         end
 
         it "should add -o when the user is being created" do
+            @provider.stubs(:password=)
             @provider.create
         end
 

@@ -28,7 +28,8 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd do
     def add_properties
         cmd = []
         Puppet::Type.type(:user).validproperties.each do |property|
-            next if property == :ensure
+            #skip the password because we can't create it with the solaris useradd
+            next if property == :ensure || property == :password
             # the value needs to be quoted, mostly because -c might
             # have spaces in it
             if value = @resource.should(property) and value != ""
@@ -82,6 +83,10 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd do
             run(transition("normal"), "transition role to")
         else
             run(addcmd, "create")
+        end
+        # added to handle case when password is specified
+        if @resource[:password]
+            self.password = @resource[:password]
         end
     end
 
