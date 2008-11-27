@@ -166,7 +166,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd do
             File.open("/etc/shadow_tmp", "w", 0600) do |shadow_tmp|
                 while line = shadow.gets do
                     line_arr = line.split(':')
-                    if line_arr[0] = @resource[:name]
+                    if line_arr[0] == @resource[:name]
                         line_arr[1] = cryptopw
                         line = line_arr.join(':')
                     end
