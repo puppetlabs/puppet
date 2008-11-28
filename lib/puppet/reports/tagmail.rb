@@ -151,12 +151,14 @@ Puppet::Reports.register_report(:tagmail) do
                     reports.each do |emails, messages|
                         Puppet.info "Sending report to %s" % emails.join(", ")
                         # We need to open a separate process for every set of email addresses
-                        IO.popen(Puppet[:sendmail] + " " + emails.join(" "), "w") do |p|
-                            p.puts "From: #{Puppet[:reportfrom]}"
-                            p.puts "Subject: Puppet Report for %s" % self.host
-                            p.puts "To: " + emails.join(", ")
+                        sync.synchronize do
+                            IO.popen(Puppet[:sendmail] + " " + emails.join(" "), "w") do |p|
+                                p.puts "From: #{Puppet[:reportfrom]}"
+                                p.puts "Subject: Puppet Report for %s" % self.host
+                                p.puts "To: " + emails.join(", ")
 
-                            p.puts messages
+                                p.puts messages
+                            end
                         end
                     end
                 rescue => detail
@@ -173,6 +175,12 @@ Puppet::Reports.register_report(:tagmail) do
 
         # Don't bother waiting for the pid to return.
         Process.detach(pid)
+    end
+
+    def sync
+        unless defined?(@sync)
+            @sync = Sync.new
+        end
     end
 end
 
