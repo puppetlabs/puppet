@@ -40,25 +40,55 @@ Puppet::Type.type(:ssh_authorized_key).provide(:parsed,
         # This was done in the type class but path expansion was failing for
         # not yet existing users, the only workaround I found was to move that
         # in the provider.
-        if user = @resource.should(:user)
-            target = File.expand_path("~%s/.ssh/authorized_keys" % user)
-            @property_hash[:target] = target
-            @resource[:target] = target
-        end
+        @resource[:target] = target
 
         super
+    end
+
+    def target
+        if user
+            File.expand_path("~%s/.ssh/authorized_keys" % user)
+        elsif target = @resource.should(:target)
+            target
+        end
+    end
+
+    def user
+        @resource.should(:user)
+    end
+
+    def dir_perm
+        # Determine correct permission for created directory and file
+        # we can afford more restrictive permissions when the user is known
+        if target
+            if user
+                0700
+            else
+                0755
+            end
+        end
+    end
+
+    def file_perm
+        if target
+            if user
+                0600
+            else
+                0644
+            end
+        end
     end
 
     def flush
         # As path expansion had to be moved in the provider, we cannot generate new file
         # resources and thus have to chown and chmod here. It smells hackish.
-        
+
         # Create target's parent directory if nonexistant
-        if target = @property_hash[:target]
-            dir = File.dirname(@property_hash[:target])
+        if target
+            dir = File.dirname(target)
             if not File.exist? dir
                 Puppet.debug("Creating directory %s which did not exist" % dir)
-                Dir.mkdir(dir, 0700)
+                Dir.mkdir(dir, dir_perm)
             end
         end
 
@@ -66,9 +96,19 @@ Puppet::Type.type(:ssh_authorized_key).provide(:parsed,
         super
 
         # Ensure correct permissions
-        if target and user = @property_hash[:user]
-            File.chown(Puppet::Util.uid(user), nil, dir)
-            File.chown(Puppet::Util.uid(user), nil, @property_hash[:target])
+        if target and user
+            uid = Puppet::Util.uid(user)
+
+            if uid
+                File.chown(uid, nil, dir)
+                File.chown(uid, nil, target)
+            else
+                raise Puppet::Error, "Specified user does not exist"
+            end
+        end
+
+        if target
+            File.chmod(file_perm, target)
         end
     end
 
