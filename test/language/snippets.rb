@@ -475,6 +475,12 @@ class TestSnippets < Test::Unit::TestCase
         assert_not_file("/tmp/multilinecomments","Did create a commented resource");
     end
 
+    def snippet_collection_override
+        path = "/tmp/collection"
+        assert_file(path)
+        assert_mode_equal(0600, path)
+    end
+
     # Iterate across each of the snippets and create a test.
     Dir.entries(snippetdir).sort.each { |file|
         next if file =~ /^\./
