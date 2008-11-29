@@ -411,29 +411,29 @@ describe Puppet::Network::Client::Master, " when using the cached catalog" do
                 Puppet.stubs(:[]).with(:splaylimit).returns(42)
             end
 
-            it "should sleep for a random time" do
-                @client.expects(:rand).with(42).returns(42)
-                @client.expects(:sleep).with(42)
+            it "should sleep for a random time plus 1" do
+                @client.expects(:rand).with(43).returns(43)
+                @client.expects(:sleep).with(43)
                 @client.send(:splay)
             end
 
             it "should inform that it is splayed" do
-                @client.stubs(:rand).with(42).returns(42)
-                @client.stubs(:sleep).with(42)
+                @client.stubs(:rand).with(43).returns(43)
+                @client.stubs(:sleep).with(43)
                 Puppet.expects(:info)
                 @client.send(:splay)
             end
 
             it "should set splay = true" do
-                @client.stubs(:rand).with(42).returns(42)
-                @client.stubs(:sleep).with(42)
+                @client.stubs(:rand).returns(43)
+                @client.stubs(:sleep)
                 @client.send(:splay)
                 @client.send(:splayed?).should == true
             end
 
             it "should do nothing if already splayed" do
-                @client.stubs(:rand).with(42).returns(42).at_most_once
-                @client.stubs(:sleep).with(42).at_most_once
+                @client.stubs(:rand).returns(43).at_most_once
+                @client.stubs(:sleep).at_most_once
                 @client.send(:splay)
                 @client.send(:splay)
             end
