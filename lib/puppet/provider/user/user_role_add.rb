@@ -29,7 +29,8 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd do
         cmd = []
         Puppet::Type.type(:user).validproperties.each do |property|
             #skip the password because we can't create it with the solaris useradd
-            next if property == :ensure || property == :password
+            next if [:ensure, :password].include?(property)
+            # 1680 Now you can set the hashed passwords on solaris:lib/puppet/provider/user/user_role_add.rb
             # the value needs to be quoted, mostly because -c might
             # have spaces in it
             if value = @resource.should(property) and value != ""
@@ -167,20 +168,26 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd do
     #Read in /etc/shadow, find the line for our used and rewrite it with the new pw
     #Smooth like 80 grit
     def password=(cryptopw)
-        File.open("/etc/shadow", "r") do |shadow|
-            File.open("/etc/shadow_tmp", "w", 0600) do |shadow_tmp|
-                while line = shadow.gets do
-                    line_arr = line.split(':')
-                    if line_arr[0] == @resource[:name]
-                        line_arr[1] = cryptopw
-                        line = line_arr.join(':')
+        begin
+            File.open("/etc/shadow", "r") do |shadow|
+                File.open("/etc/shadow_tmp", "w", 0600) do |shadow_tmp|
+                    while line = shadow.gets do
+                        line_arr = line.split(':')
+                        if line_arr[0] == @resource[:name]
+                            line_arr[1] = cryptopw
+                            line = line_arr.join(':')
+                        end
+                        shadow_tmp.print line
                     end
-                    shadow_tmp.print line
                 end
             end
+            File.rename("/etc/shadow_tmp", "/etc/shadow")
+        rescue => detail
+            fail "Could not write temporary shadow file: %s" % detail
+        ensure
+            # Make sure this *always* gets deleted
+            File.unlink("/etc/shadow_tmp") if File.exist?("/etc/shadow_tmp")
         end
-
-        File.rename("/etc/shadow_tmp", "/etc/shadow")
     end
 end
 
