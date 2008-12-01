@@ -54,6 +54,22 @@ describe user do
         end
     end
 
+    list_properties = [:groups, :roles, :auths]
+
+    list_properties.each do |property|
+        it "should have a list '%s'" % property do
+            user.attrclass(property).ancestors.should be_include(Puppet::Property::List)
+        end
+    end
+
+    it "should have an ordered list 'profiles'" do
+        user.attrclass(:profiles).ancestors.should be_include(Puppet::Property::OrderedList)
+    end
+
+    it "should have key values 'keys'" do
+        user.attrclass(:keys).ancestors.should be_include(Puppet::Property::KeyValue)
+    end
+
     describe "when retrieving all current values" do
         before do
             @user = user.create(:name => "foo", :uid => 10, :gid => 10)

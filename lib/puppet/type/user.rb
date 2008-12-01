@@ -1,6 +1,7 @@
 require 'etc'
 require 'facter'
 require 'puppet/property/list'
+require 'puppet/property/ordered_list'
 require 'puppet/property/keyvalue'
 
 module Puppet
@@ -316,7 +317,7 @@ module Puppet
             defaultto :minimum
         end
 
-        newproperty(:profiles, :parent => Puppet::Property::List, :required_features => :manages_solaris_rbac) do
+        newproperty(:profiles, :parent => Puppet::Property::OrderedList, :required_features => :manages_solaris_rbac) do
             desc "The profiles the user has.  Multiple profiles should be
                 specified as an array."
 
