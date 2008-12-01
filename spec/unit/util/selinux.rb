@@ -5,15 +5,19 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/util/selinux'
 include Puppet::Util::SELinux
 
+unless defined?(Selinux)
+    module Selinux
+        def self.is_selinux_enabled
+            false
+        end
+    end
+end
+
 describe Puppet::Util::SELinux do
 
     describe "selinux_support?" do
-        before :all do
-            if not defined? Selinux
-                Selinux = mock()
-            end
+        before do
         end
-
         it "should return :true if this system has SELinux enabled" do
              Selinux.expects(:is_selinux_enabled).returns 1
              selinux_support?.should be_true
