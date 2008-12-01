@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 
 describe Puppet::Parser::AST::ArithmeticOperator do
 
-		AST = Puppet::Parser::AST
+	ast = Puppet::Parser::AST
 
     before :each do
         @scope = Puppet::Parser::Scope.new()
@@ -18,19 +18,19 @@ describe Puppet::Parser::AST::ArithmeticOperator do
         rval = stub "rval"
         rval.expects(:safeevaluate).with(@scope).returns(2)
         
-        operator = AST::ArithmeticOperator.new :rval => rval, :operator => "+", :lval => lval
+        operator = ast::ArithmeticOperator.new :rval => rval, :operator => "+", :lval => lval
         operator.evaluate(@scope)
     end
 
     it "should fail for an unknown operator" do
-        lambda { operator = AST::ArithmeticOperator.new :lval => @one, :operator => "%", :rval => @two }.should raise_error
+        lambda { operator = ast::ArithmeticOperator.new :lval => @one, :operator => "%", :rval => @two }.should raise_error
     end
 
     it "should call Puppet::Parser::Scope.number?" do
 				Puppet::Parser::Scope.expects(:number?).with(1).returns(1)
 				Puppet::Parser::Scope.expects(:number?).with(2).returns(2)
 				
-        AST::ArithmeticOperator.new(:lval => @one, :operator => "+", :rval => @two).evaluate(@scope)
+        ast::ArithmeticOperator.new(:lval => @one, :operator => "+", :rval => @two).evaluate(@scope)
     end
 
 
@@ -38,7 +38,7 @@ describe Puppet::Parser::AST::ArithmeticOperator do
     	it "should call ruby Numeric '#{op}'" do
 					one = stub 'one'
 					two = stub 'two'
-        	operator = AST::ArithmeticOperator.new :lval => @one, :operator => op, :rval => @two
+        	operator = ast::ArithmeticOperator.new :lval => @one, :operator => op, :rval => @two
 					Puppet::Parser::Scope.stubs(:number?).with(1).returns(one)
 					Puppet::Parser::Scope.stubs(:number?).with(2).returns(two)
 					one.expects(:send).with(op,two)
@@ -49,24 +49,24 @@ describe Puppet::Parser::AST::ArithmeticOperator do
     it "should work even with numbers embedded in strings" do
         two = stub 'two', :safeevaluate => "2"
         one = stub 'one', :safeevaluate => "1"
-        operator = AST::ArithmeticOperator.new :lval => two, :operator => "+", :rval => one
+        operator = ast::ArithmeticOperator.new :lval => two, :operator => "+", :rval => one
         operator.evaluate(@scope).should == 3
     end
 
     it "should work even with floats" do
         two = stub 'two', :safeevaluate => 2.53
         one = stub 'one', :safeevaluate => 1.80
-        operator = AST::ArithmeticOperator.new :lval => two, :operator => "+", :rval => one
+        operator = ast::ArithmeticOperator.new :lval => two, :operator => "+", :rval => one
         operator.evaluate(@scope).should == 4.33
     end
 
     it "should work for variables too" do
         @scope.expects(:lookupvar).with("one").returns(1)
         @scope.expects(:lookupvar).with("two").returns(2)
-        one = AST::Variable.new( :value => "one" )
-        two = AST::Variable.new( :value => "two" )
+        one = ast::Variable.new( :value => "one" )
+        two = ast::Variable.new( :value => "two" )
         
-        operator = AST::ArithmeticOperator.new :lval => one, :operator => "+", :rval => two
+        operator = ast::ArithmeticOperator.new :lval => one, :operator => "+", :rval => two
         operator.evaluate(@scope).should == 3
     end
 

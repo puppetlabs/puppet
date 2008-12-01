@@ -4,12 +4,12 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 
 describe Puppet::Parser::AST::BooleanOperator do
 
-		AST = Puppet::Parser::AST
+    ast = Puppet::Parser::AST
 
     before :each do
         @scope = Puppet::Parser::Scope.new()
-        @true_ast = AST::Boolean.new( :value => true)
-        @false_ast = AST::Boolean.new( :value => false)
+        @true_ast = ast::Boolean.new( :value => true)
+        @false_ast = ast::Boolean.new( :value => false)
     end
 
     it "should evaluate left operand inconditionally" do
@@ -18,7 +18,7 @@ describe Puppet::Parser::AST::BooleanOperator do
         rval = stub "rval", :safeevaluate => false
 				rval.expects(:safeevaluate).never
         
-        operator = AST::BooleanOperator.new :rval => rval, :operator => "or", :lval => lval
+        operator = ast::BooleanOperator.new :rval => rval, :operator => "or", :lval => lval
         operator.evaluate(@scope)
     end
 
@@ -26,7 +26,7 @@ describe Puppet::Parser::AST::BooleanOperator do
         lval = stub "lval", :safeevaluate => true
         rval = stub "rval", :safeevaluate => false
         rval.expects(:safeevaluate).with(@scope).returns(false)
-        operator = AST::BooleanOperator.new :rval => rval, :operator => "and", :lval => lval
+        operator = ast::BooleanOperator.new :rval => rval, :operator => "and", :lval => lval
         operator.evaluate(@scope)
     end
 
@@ -34,20 +34,20 @@ describe Puppet::Parser::AST::BooleanOperator do
         lval = stub "lval", :safeevaluate => false
         rval = stub "rval", :safeevaluate => false
         rval.expects(:safeevaluate).with(@scope).returns(false)
-        operator = AST::BooleanOperator.new :rval => rval, :operator => "or", :lval => lval
+        operator = ast::BooleanOperator.new :rval => rval, :operator => "or", :lval => lval
         operator.evaluate(@scope)
     end
 
     it "should return true for false OR true" do
-        AST::BooleanOperator.new(:rval => @true_ast, :operator => "or", :lval => @false_ast).evaluate(@scope).should be_true
+        ast::BooleanOperator.new(:rval => @true_ast, :operator => "or", :lval => @false_ast).evaluate(@scope).should be_true
     end
 
     it "should return false for true AND false" do
-        AST::BooleanOperator.new(:rval => @true_ast, :operator => "and", :lval => @false_ast ).evaluate(@scope).should be_false
+        ast::BooleanOperator.new(:rval => @true_ast, :operator => "and", :lval => @false_ast ).evaluate(@scope).should be_false
     end
 
     it "should return true for true AND true" do
-        AST::BooleanOperator.new(:rval => @true_ast, :operator => "and", :lval => @true_ast ).evaluate(@scope).should be_true
+        ast::BooleanOperator.new(:rval => @true_ast, :operator => "and", :lval => @true_ast ).evaluate(@scope).should be_true
     end
 
 end
