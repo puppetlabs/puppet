@@ -25,20 +25,20 @@ describe Puppet::Parser::Functions do
 
     describe "when calling newfunction" do
         it "should create the function in the scope class" do
-            Puppet::Parser::Scope.expects(:define_method).with("function_name", nil)
+            Puppet::Parser::Scope.expects(:define_method).with { |name,block| name == "function_name" }
 
             Puppet::Parser::Functions.newfunction("name", :type => :rvalue)
         end
 
         it "should raise an error if the function already exists" do
-            Puppet::Parser::Scope.expects(:define_method).with("function_name", nil).once
+            Puppet::Parser::Scope.expects(:define_method).with { |name,block| name == "function_name" }.once
             Puppet::Parser::Functions.newfunction("name", :type => :rvalue)
 
             lambda { Puppet::Parser::Functions.newfunction("name", :type => :rvalue) }.should raise_error
         end
 
         it "should raise an error if the function type is not correct" do
-            Puppet::Parser::Scope.expects(:define_method).with("function_name", nil).never
+            Puppet::Parser::Scope.expects(:define_method).with { |name,block| name == "function_name" }.never
 
             lambda { Puppet::Parser::Functions.newfunction("name", :type => :unknown) }.should raise_error
         end
@@ -46,7 +46,7 @@ describe Puppet::Parser::Functions do
 
     describe "when calling rmfunction" do
         it "should remove the function in the scope class" do
-            Puppet::Parser::Scope.stubs(:define_method).with("function_name", nil)
+            Puppet::Parser::Scope.expects(:define_method).with { |name,block| name == "function_name" }
             Puppet::Parser::Functions.newfunction("name", :type => :rvalue)
 
             Puppet::Parser::Scope.expects(:remove_method).with("function_name").once
@@ -68,7 +68,7 @@ describe Puppet::Parser::Functions do
         end
 
         it "should return it's name if the function exists" do
-            Puppet::Parser::Scope.stubs(:define_method).with("function_name", nil)
+            Puppet::Parser::Scope.expects(:define_method).with { |name,block| name == "function_name" }
             Puppet::Parser::Functions.newfunction("name", :type => :rvalue)
 
             Puppet::Parser::Functions.function("name").should == "function_name"
