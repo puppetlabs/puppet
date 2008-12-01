@@ -279,6 +279,17 @@ module Puppet
             end
         end
 
+        #autorequire the roles that the user has
+        autorequire(:user) do
+            reqs = []
+
+            if roles_property = @parameters[:roles] and roles = roles_property.should
+                reqs += roles.split(',')
+            end
+
+            reqs
+        end
+
         newparam(:role_membership) do
             desc "Whether specified roles should be treated as the only roles
                 of which the user is a member or whether they should merely

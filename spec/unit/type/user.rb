@@ -238,4 +238,15 @@ describe user do
             lambda { @ensure.should = :role }.should_not raise_error
         end
     end
+
+    describe "when user has roles" do
+        it "should autorequire roles" do
+            testuser = Puppet.type(:user).create(:name => "testuser", :roles => "testrole")
+            testrole = Puppet.type(:user).create(:name => "testrole")
+            config = Puppet::Node::Catalog.new :testing do |conf|
+                [testuser, testrole].each { |resource| conf.add_resource resource }
+            end
+            testuser.autorequire
+        end
+    end
 end
