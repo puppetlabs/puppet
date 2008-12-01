@@ -12,6 +12,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
 
         properties = {}
         line.split(":").each_with_index { |value, index|
+            next unless fields[index]
             properties[fields[index]] = value
         }
 

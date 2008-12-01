@@ -1,4 +1,6 @@
 0.24.x
+    Fixed #1695 - Solaris 10 zone provider doesn't properly handle unknown zone attributes in newer releases
+
     Fixed #1776 - Trivial fix for gentoo service provider
 
     Added Rake :ci namespace and CI tasks
