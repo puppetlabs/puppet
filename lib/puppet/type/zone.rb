@@ -357,6 +357,14 @@ end
         end
     end
 
+    newparam(:create_args) do
+        desc "Arguments to the zonecfg create command.  This can be used to create branded zones."
+    end
+    
+    newparam(:install_args) do
+        desc "Arguments to the zoneadm install command.  This can be used to create branded zones."
+    end
+
     newparam(:realhostname) do
         desc "The actual hostname of the zone."
     end
