@@ -1,5 +1,8 @@
-# Manage NetInfo POSIX objects.  Probably only used on OS X, but I suppose
-# it could be used elsewhere.
+# Manage NetInfo POSIX objects.
+#
+# This provider has been deprecated. You should be using the directoryservice
+# nameservice provider instead.
+
 require 'puppet/provider/nameservice/netinfo'
 
 Puppet::Type.type(:user).provide :netinfo, :parent => Puppet::Provider::NameService::NetInfo do
@@ -15,7 +18,6 @@ Puppet::Type.type(:user).provide :netinfo, :parent => Puppet::Provider::NameServ
     options :comment, :key => "realname"
     options :password, :key => "passwd"
 
-    defaultfor :operatingsystem => :darwin
 
     autogen_defaults :home => "/var/empty", :shell => "/usr/bin/false", :password => '********'
 
@@ -36,6 +38,8 @@ Puppet::Type.type(:user).provide :netinfo, :parent => Puppet::Provider::NameServ
     # The list of all groups the user is a member of.  Different
     # user mgmt systems will need to override this method.
     def groups
+        warnonce "The NetInfo provider is deprecated; use directoryservice instead"
+        
         groups = []
 
         user = @resource[:name]
@@ -59,6 +63,8 @@ Puppet::Type.type(:user).provide :netinfo, :parent => Puppet::Provider::NameServ
     # This is really lame.  We have to iterate over each
     # of the groups and add us to them.
     def groups=(groups)
+        warnonce "The NetInfo provider is deprecated; use directoryservice instead"
+        
         case groups
         when Fixnum:
             groups = [groups.to_s]
