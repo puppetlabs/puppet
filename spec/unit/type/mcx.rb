@@ -55,6 +55,7 @@ describe mcx_type, "default values" do
 
     before :each do
         provider_class = mcx_type.provider(mcx_type.providers[0])
+        mcx_type.expects(:defaultprovider).returns provider_class
     end
 
     after :each do
@@ -79,6 +80,7 @@ describe mcx_type, "when validating properties" do
 
     before :each do
         provider_class = mcx_type.provider(mcx_type.providers[0])
+        mcx_type.expects(:defaultprovider).returns provider_class
     end
 
     after :each do
