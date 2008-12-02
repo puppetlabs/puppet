@@ -1,13 +1,11 @@
 #!/usr/bin/env ruby
  
 require File.dirname(__FILE__) + '/../../spec_helper'
- 
-require 'puppet/type/computer'
 
 computer = Puppet::Type.type(:computer)
 
 describe Puppet.type(:computer), " when checking computer objects" do
-    before :each do
+    before do
         provider_class = Puppet::Type::Computer.provider(Puppet::Type::Computer.providers[0])
         Puppet::Type::Computer.expects(:defaultprovider).returns provider_class
         @resource = Puppet::Type::Computer.create(
@@ -18,10 +16,12 @@ describe Puppet.type(:computer), " when checking computer objects" do
         @ensure = Puppet::Type::Computer.attrclass(:ensure).new(:resource => @resource)
     end
   
-    after :each do
+    after do
         computer.clear
-        provider_class = nil
-        Puppet::Type::Computer.provider(nil)
+#        Puppet::Type::Computer.clear
+#        provider_class = nil
+#        Puppet::Type::Computer.provider(nil)
+#        @resource.clear
     end
     
     it "should be able to create a instance" do
