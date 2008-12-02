@@ -109,6 +109,7 @@ describe Puppet::Type.type(:package) do
     before :each do
         @provider = stub 'provider', :class => Puppet::Type.type(:package).defaultprovider, :clear => nil, :satisfies? => true, :name => :mock
         Puppet::Type.type(:package).defaultprovider.stubs(:new).returns(@provider)
+        Puppet::Type.type(:package).defaultprovider.stubs(:instances).returns([])
         @package = Puppet::Type.type(:package).create(:name => "yay")
 
         @catalog = Puppet::Node::Catalog.new
