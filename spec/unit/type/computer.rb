@@ -18,10 +18,6 @@ describe Puppet.type(:computer), " when checking computer objects" do
   
     after do
         computer.clear
-#        Puppet::Type::Computer.clear
-#        provider_class = nil
-#        Puppet::Type::Computer.provider(nil)
-#        @resource.clear
     end
     
     it "should be able to create a instance" do
