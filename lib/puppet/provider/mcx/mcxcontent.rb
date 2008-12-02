@@ -40,7 +40,7 @@ Original Author: Jeff McCune (mccune.jeff@gmail.com)"
         :user => "Users",
         :group => "Groups",
         :computer => "Computers",
-        :computergroup => "ComputerGroups",
+        :computerlist => "ComputerLists",
     }
 
     class MCXContentProviderException < Exception
@@ -85,7 +85,6 @@ Original Author: Jeff McCune (mccune.jeff@gmail.com)"
         ds_t = TypeMap[ds_type]
         ds_n = ds_name.to_s
         ds_path = "/Local/Default/#{ds_t}/#{ds_n}"
-
         dscl 'localhost', '-mcxexport', ds_path
     end
 
@@ -139,6 +138,7 @@ Original Author: Jeff McCune (mccune.jeff@gmail.com)"
         if ds_type.nil?
             ds_type = parse_type(resource[:name])
         end
+        raise MCXContentProviderException unless TypeMap.keys.include? ds_type.to_sym
 
         ds_name = resource[:ds_name]
         if ds_name.nil?
