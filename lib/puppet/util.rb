@@ -268,7 +268,7 @@ module Util
 
     # Execute the desired command, and return the status and output.
     # def execute(command, failonfail = true, uid = nil, gid = nil)
-    def execute(command, arguments = {:failonfail => true})
+    def execute(command, arguments = {:failonfail => true, :combine => true})
         if command.is_a?(Array)
             command = command.flatten.collect { |i| i.to_s }
             str = command.join(" ")
@@ -301,9 +301,13 @@ module Util
 
         # The idea here is to avoid IO#read whenever possible.
         output_file="/dev/null"
+        error_file="/dev/null"
         if ! arguments[:squelch]
             require "tempfile"
             output_file = Tempfile.new("puppet")
+            if arguments[:combine]
+                error_file=output_file
+            end
         end
 
         oldverb = $VERBOSE
@@ -319,7 +323,8 @@ module Util
             begin
                 $stdin.reopen("/dev/null")
                 $stdout.reopen(output_file)
-                $stderr.reopen(output_file)
+                $stderr.reopen(error_file)
+
                 3.upto(256){|fd| IO::new(fd).close rescue nil} 
                 if arguments[:gid]
                     Process.egid = arguments[:gid]

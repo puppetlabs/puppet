@@ -142,7 +142,8 @@ describe Puppet::SSL::CertificateRequest do
         end
 
         it "should verify the generated request using the public key" do
-            @request.expects(:verify).with(@key.public_key)
+            # Stupid keys don't have a competent == method.
+            @request.expects(:verify).with { |public_key| public_key.to_s == @key.public_key.to_s }.returns true
             @instance.generate(@key)
         end
 

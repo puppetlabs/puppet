@@ -43,6 +43,10 @@ class Puppet::Rails::Host < ActiveRecord::Base
                 host.ip = ip
             end
 
+            if env = node.environment
+                host.environment = env
+            end
+
             # Store the facts into the database.
             host.setfacts node.parameters
 

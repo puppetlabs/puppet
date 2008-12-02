@@ -24,24 +24,30 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
 
     # List all services of this type.
     def self.instances
-        path = self.defpath
-        unless FileTest.directory?(path)
-            Puppet.notice "Service path %s does not exist" % path
-            next
+        self.defpath = [self.defpath] unless self.defpath.is_a? Array
+        
+        instances = []
+        
+        self.defpath.each do |path|
+            unless FileTest.directory?(path)
+                Puppet.debug "Service path %s does not exist" % path
+                next
+            end
+        
+            check = [:ensure]
+        
+            if public_method_defined? :enabled?
+                check << :enable
+            end
+            
+            Dir.entries(path).each do |name|
+                fullpath = File.join(path, name)
+                next if name =~ /^\./
+                next if not FileTest.executable?(fullpath)
+                instances << new(:name => name, :path => path)
+            end
         end
-
-        check = [:ensure]
-
-        if public_method_defined? :enabled?
-            check << :enable
-        end
-
-        Dir.entries(path).reject { |e|
-            fullpath = File.join(path, e)
-            e =~ /^\./ or ! FileTest.executable?(fullpath)
-        }.collect do |name|
-            new(:name => name, :path => path)
-        end
+        instances
     end
 
     # Mark that our init script supports 'status' commands.

@@ -4,11 +4,6 @@ require 'puppet'
 # A class for handling metrics.  This is currently ridiculously hackish.
 class Puppet::Util::Metric
     
-    # Load the library as a feature, so we can test its presence.
-    # It's only used by this class, so there's no reason to move it
-    # to the main feature list.
-    Puppet.features.add :rrd, :libs => 'RRDtool'
-
     attr_accessor :type, :name, :value, :label
     attr_writer :values
 

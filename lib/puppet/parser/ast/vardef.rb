@@ -3,6 +3,9 @@ require 'puppet/parser/ast/branch'
 class Puppet::Parser::AST
     # Define a variable.  Stores the value in the current scope.
     class VarDef < AST::Branch
+
+        associates_doc
+
         attr_accessor :name, :value, :append
 
         @settor = true

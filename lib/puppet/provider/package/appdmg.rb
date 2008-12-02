@@ -12,9 +12,6 @@
 # As a result, we store installed .app.dmg file names
 # in /var/db/.puppet_appdmg_installed_<name>
 
-# require 'ruby-debug'
-# Debugger.start
-
 require 'puppet/provider/package'
 Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Package) do
     desc "Package management which copies application bundles to a target."

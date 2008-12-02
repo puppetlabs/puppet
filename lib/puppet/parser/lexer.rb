@@ -17,7 +17,7 @@ class Puppet::Parser::Lexer
 
     # Our base token class.
     class Token
-        attr_accessor :regex, :name, :string, :skip, :incr_line, :skip_text
+        attr_accessor :regex, :name, :string, :skip, :incr_line, :skip_text, :accumulate
 
         def initialize(regex, name)
             if regex.is_a?(String)
@@ -28,8 +28,10 @@ class Puppet::Parser::Lexer
             end
         end
 
-        def skip?
-            self.skip
+        %w{skip accumulate}.each do |method|
+            define_method(method+"?") do
+                self.send(method)
+            end
         end
 
         def to_s
@@ -132,7 +134,7 @@ class Puppet::Parser::Lexer
         '*' => :TIMES,
         '<<' => :LSHIFT,
         '>>' => :RSHIFT,
-        %r{([a-z][-\w]*::)+[a-z][-\w]*} => :CLASSNAME,
+        %r{([a-z][-\w]*)?(::[a-z][-\w]*)+} => :CLASSNAME, # Require '::' in the class name, else we'd compete with NAME
         %r{((::){0,1}[A-Z][-\w]*)+} => :CLASSREF
     )
 
@@ -155,11 +157,16 @@ class Puppet::Parser::Lexer
         [string_token, value]
     end
 
-    TOKENS.add_token :COMMENT, %r{#.*}, :skip => true
+    TOKENS.add_token :COMMENT, %r{#.*}, :accumulate => true, :skip => true do |lexer,value|
+        value.sub!(/# ?/,'')
+        [self, value]
+    end
 
-    TOKENS.add_token :MLCOMMENT, %r{/\*(.*?)\*/}m do |lexer, value|
+    TOKENS.add_token :MLCOMMENT, %r{/\*(.*?)\*/}m, :accumulate => true, :skip => true do |lexer, value|
         lexer.line += value.count("\n")
-        [nil,nil]
+        value.sub!(/^\/\* ?/,'')
+        value.sub!(/ ?\*\/$/,'')
+        [self,value]
     end
 
     TOKENS.add_token :RETURN, "\n", :skip => true, :incr_line => true, :skip_text => true
@@ -325,6 +332,7 @@ class Puppet::Parser::Lexer
         @namestack = []
         @indefine = false
         @expected = []
+        @commentstack = ['']
     end
 
     # Make any necessary changes to the token and/or value.
@@ -333,11 +341,17 @@ class Puppet::Parser::Lexer
 
         skip() if token.skip_text
 
-        return if token.skip
+        return if token.skip and not token.accumulate?
 
         token, value = token.convert(self, value) if token.respond_to?(:convert)
 
         return unless token
+
+        if token.accumulate?
+            @commentstack.last << value + "\n"
+        end
+
+        return if token.skip
 
         return token, value
     end
@@ -389,6 +403,18 @@ class Puppet::Parser::Lexer
                 raise "Could not match '%s'" % nword
             end
 
+            if matched_token.name == :RETURN
+                # this matches a blank line
+                if @last_return
+                    # eat the previously accumulated comments
+                    getcomment
+                end
+                # since :RETURN skips, we won't survive to munge_token
+                @last_return = true
+            else
+                @last_return = false
+            end
+
             final_token, value = munge_token(matched_token, value)
 
             next unless final_token
@@ -397,6 +423,10 @@ class Puppet::Parser::Lexer
                 @expected << match
             elsif exp = @expected[-1] and exp == value and final_token.name != :DQUOTE and final_token.name != :SQUOTE
                 @expected.pop
+            end
+
+            if final_token.name == :LBRACE
+                commentpush
             end
 
             yield [final_token.name, value]
@@ -414,7 +444,6 @@ class Puppet::Parser::Lexer
                     @indefine = value
                 end
             end
-
             @previous_token = final_token
             skip()
         end
@@ -452,5 +481,20 @@ class Puppet::Parser::Lexer
     # just parse a string, not a whole file
     def string=(string)
         @scanner = StringScanner.new(string)
+    end
+
+    # returns the content of the currently accumulated content cache
+    def commentpop
+        return @commentstack.pop
+    end
+
+    def getcomment
+        comment = @commentstack.pop
+        @commentstack.push('')
+        return comment
+    end
+
+    def commentpush
+        @commentstack.push('')
     end
 end

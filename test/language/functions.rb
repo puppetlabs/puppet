@@ -12,13 +12,23 @@ class TestLangFunctions < Test::Unit::TestCase
     include PuppetTest::ParserTesting
     include PuppetTest::ResourceTesting
     def test_functions
-        assert_raise(Puppet::ParseError) do
+        assert_nothing_raised do
             Puppet::Parser::AST::Function.new(
                 :name => "fakefunction",
                 :arguments => AST::ASTArray.new(
                     :children => [nameobj("avalue")]
                 )
             )
+        end
+
+        assert_raise(Puppet::ParseError) do
+            func = Puppet::Parser::AST::Function.new(
+                :name => "fakefunction",
+                :arguments => AST::ASTArray.new(
+                    :children => [nameobj("avalue")]
+                )
+            )
+            func.evaluate(mkscope)
         end
 
         assert_nothing_raised do

@@ -18,6 +18,7 @@ class Puppet::Parser::Parser
     attr_reader :version, :environment
     attr_accessor :files
 
+    attr_accessor :lexer
 
     # Add context to a message; useful for error messages and such.
     def addcontext(message, obj = nil)
@@ -56,7 +57,9 @@ class Puppet::Parser::Parser
             end
         end
 
-        return klass.new(hash)
+        k = klass.new(hash)
+        k.doc = lexer.getcomment if !k.nil? and k.use_docs and k.doc.empty?
+        return k
     end
 
     # The fully qualifed name, with the full namespace.
@@ -272,6 +275,7 @@ class Puppet::Parser::Parser
         end
         code = options[:code]
         parent = options[:parent]
+        doc = options[:doc]
 
         # If the class is already defined, then add code to it.
         if other = @astset.classes[name]
@@ -304,6 +308,12 @@ class Puppet::Parser::Parser
                     other.code ||= code
                 end
             end
+
+            if other.doc and doc
+                other.doc += doc
+            else
+                other.doc ||= doc
+            end
         else
             # Define it anew.
             # Note we're doing something somewhat weird here -- we're setting
@@ -312,6 +322,8 @@ class Puppet::Parser::Parser
             args = {:namespace => name, :classname => name, :parser => self}
             args[:code] = code if code
             args[:parentclass] = parent if parent
+            args[:doc] = doc
+
             @astset.classes[name] = ast AST::HostClass, args
         end
 
@@ -336,7 +348,8 @@ class Puppet::Parser::Parser
             :arguments => options[:arguments],
             :code => options[:code],
             :parser => self,
-            :classname => name
+            :classname => name,
+            :doc => options[:doc]
         }
 
         [:code, :arguments].each do |param|
@@ -350,6 +363,7 @@ class Puppet::Parser::Parser
     # table, not according to namespaces.
     def newnode(names, options = {})
         names = [names] unless names.instance_of?(Array)
+        doc = lexer.getcomment
         names.collect do |name|
             name = name.to_s.downcase
             if other = @astset.nodes[name]
@@ -358,7 +372,8 @@ class Puppet::Parser::Parser
             name = name.to_s if name.is_a?(Symbol)
             args = {
                 :name => name,
-                :parser => self
+                :parser => self,
+                :doc => doc
             }
             if options[:code]
                 args[:code] = options[:code]
@@ -399,6 +414,7 @@ class Puppet::Parser::Parser
             self.string = string
         end
         begin
+            @yydebug = false
             main = yyparse(@lexer,:scan)
         rescue Racc::ParseError => except
             error = Puppet::ParseError.new(except)

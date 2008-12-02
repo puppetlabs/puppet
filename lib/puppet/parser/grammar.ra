@@ -130,6 +130,7 @@ namestring:       name
                 }
 
 resource:       classname LBRACE resourceinstances endsemi RBRACE {
+    @lexer.commentpop
     array = val[2]
     if array.instance_of?(AST::ResourceInstance)
         array = [array]
@@ -158,6 +159,7 @@ resource:       classname LBRACE resourceinstances endsemi RBRACE {
 
 # Override a value set elsewhere in the configuration.
 resourceoverride:     resourceref LBRACE anyparams endcomma RBRACE {
+    @lexer.commentpop
     result = ast AST::ResourceOverride, :object => val[0], :params => val[2]
 }
 
@@ -198,7 +200,7 @@ collection:     classref collectrhand {
         Puppet.warning addcontext("Collection names must now be capitalized")
     end
     type = val[0].downcase
-    args = {:type => type}
+    args = {:type => type }
 
     if val[1].is_a?(AST::CollExpr)
         args[:query] = val[1]
@@ -410,6 +412,7 @@ resourceref: NAME LBRACK rvalues RBRACK {
 }
 
 ifstatement:      IF expression LBRACE statements RBRACE else {
+    @lexer.commentpop
     args = {
         :test => val[1],
         :statements => val[3]
@@ -422,6 +425,7 @@ ifstatement:      IF expression LBRACE statements RBRACE else {
     result = ast AST::IfStatement, args
 }
                 | IF expression LBRACE RBRACE else {
+    @lexer.commentpop
     args = {
         :test => val[1],
         :statements => ast(AST::Nop)
@@ -436,9 +440,11 @@ ifstatement:      IF expression LBRACE statements RBRACE else {
 
 else:             # nothing
                 | ELSE LBRACE statements RBRACE {
+    @lexer.commentpop
     result = ast AST::Else, :statements => val[2]
 }
                 | ELSE LBRACE RBRACE {
+    @lexer.commentpop
     result = ast AST::Else, :statements => ast(AST::Nop)
 }
 
@@ -508,6 +514,7 @@ expression:   rvalue
 }
 
 casestatement:  CASE rvalue LBRACE caseopts RBRACE {
+    @lexer.commentpop
     options = val[3]
     unless options.instance_of?(AST::ASTArray)
         options = ast AST::ASTArray, :children => [val[3]]
@@ -526,8 +533,10 @@ caseopts:     caseopt
 }
 
 caseopt:        casevalues COLON LBRACE statements RBRACE {
+    @lexer.commentpop
     result = ast AST::CaseOpt, :value => val[0], :statements => val[3]
 }               | casevalues COLON LBRACE RBRACE {
+    @lexer.commentpop
     result = ast(AST::CaseOpt,
         :value => val[0],
         :statements => ast(AST::ASTArray)
@@ -549,7 +558,10 @@ selector:     selectlhand QMARK svalues {
 }
 
 svalues:      selectval
-            | LBRACE sintvalues endcomma RBRACE { result = val[1] }
+            | LBRACE sintvalues endcomma RBRACE { 
+    @lexer.commentpop
+    result = val[1] 
+}
 
 sintvalues:   selectval
             | sintvalues comma selectval {
@@ -593,12 +605,14 @@ import: IMPORT qtexts {
 # Disable definition inheritance for now. 8/27/06, luke
 #definition: DEFINE NAME argumentlist parent LBRACE statements RBRACE {
 definition: DEFINE classname argumentlist LBRACE statements RBRACE {
+    @lexer.commentpop
     newdefine classname(val[1]), :arguments => val[2], :code => val[4]
     @lexer.indefine = false
     result = nil
 
 #}           | DEFINE NAME argumentlist parent LBRACE RBRACE {
 }           | DEFINE classname argumentlist LBRACE RBRACE {
+    @lexer.commentpop
     newdefine classname(val[1]), :arguments => val[2]
     @lexer.indefine = false
     result = nil
@@ -606,11 +620,13 @@ definition: DEFINE classname argumentlist LBRACE statements RBRACE {
 
 #hostclass: CLASS NAME argumentlist parent LBRACE statements RBRACE {
 hostclass: CLASS classname classparent LBRACE statements RBRACE {
+    @lexer.commentpop
     # Our class gets defined in the parent namespace, not our own.
     @lexer.namepop
     newclass classname(val[1]), :code => val[4], :parent => val[2]
     result = nil
 }           | CLASS classname classparent LBRACE RBRACE {
+    @lexer.commentpop
     # Our class gets defined in the parent namespace, not our own.
     @lexer.namepop
     newclass classname(val[1]), :parent => val[2]
@@ -618,9 +634,11 @@ hostclass: CLASS classname classparent LBRACE statements RBRACE {
 }
 
 nodedef: NODE hostnames nodeparent LBRACE statements RBRACE {
+    @lexer.commentpop
     newnode val[1], :parent => val[2], :code => val[4]
     result = nil
 }       |  NODE hostnames nodeparent LBRACE RBRACE {
+    @lexer.commentpop
     newnode val[1], :parent => val[2]
     result = nil
 }

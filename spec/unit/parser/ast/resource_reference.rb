@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 
 describe Puppet::Parser::AST::ResourceReference do
 
-    AST = Puppet::Parser::AST
+    ast = Puppet::Parser::AST
 
     before :each do
         @scope = Puppet::Parser::Scope.new()
@@ -12,7 +12,7 @@ describe Puppet::Parser::AST::ResourceReference do
 
     def newref(title, type)
         title = stub 'title', :safeevaluate => title
-        ref = AST::ResourceReference.new(:type => type, :title => title)
+        ref = Puppet::Parser::AST::ResourceReference.new(:type => type, :title => title)
     end
 
     it "should evaluate correctly reference to builtin types" do
@@ -45,7 +45,7 @@ describe Puppet::Parser::AST::ResourceReference do
 
     it "should return an array of reference if given an array of titles" do
         titles = mock 'titles', :safeevaluate => ["title1","title2"]
-        ref = AST::ResourceReference.new( :title => titles, :type => "Resource" )
+        ref = ast::ResourceReference.new( :title => titles, :type => "Resource" )
         ref.stubs(:qualified_type).with(@scope).returns("Resource")
         
         ref.evaluate(@scope).should have(2).elements
@@ -53,7 +53,7 @@ describe Puppet::Parser::AST::ResourceReference do
 
     it "should qualify class of all titles for Class resource references" do
         titles = mock 'titles', :safeevaluate => ["title1","title2"]
-        ref = AST::ResourceReference.new( :title => titles, :type => "Class" )
+        ref = ast::ResourceReference.new( :title => titles, :type => "Class" )
         ref.expects(:qualified_class).with(@scope,"title1").returns("class")
         ref.expects(:qualified_class).with(@scope,"title2").returns("class")
         

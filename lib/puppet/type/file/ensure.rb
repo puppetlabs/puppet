@@ -2,11 +2,10 @@ module Puppet
     Puppet.type(:file).ensurable do
         require 'etc'
         desc "Whether to create files that don't currently exist.
-            Possible values are *absent*, *present* (will match any form of
-            file existence, and if the file is missing will create an empty
-            file), *file*, and *directory*.  Specifying ``absent`` will delete
-            the file, although currently this will not recursively delete
-            directories.
+            Possible values are *absent*, *present*, *file*, and *directory*.
+            Specifying ``present`` will match any form of file existence, and
+            if the file is missing will create an empty file. Specifying
+            ``absent`` will delete the file (and directory if recurse => true).
 
             Anything other than those values will be considered to be a symlink.
             For instance, the following text creates a link::

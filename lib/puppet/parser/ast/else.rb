@@ -4,6 +4,9 @@ class Puppet::Parser::AST
     # A separate ElseIf statement; can function as an 'else' if there's no
     # test.
     class Else < AST::Branch
+
+        associates_doc
+
         attr_accessor :statements
 
         def each

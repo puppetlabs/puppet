@@ -3,6 +3,9 @@ require 'puppet/parser/ast/branch'
 class Puppet::Parser::AST
     # A basic 'if/elsif/else' statement.
     class IfStatement < AST::Branch
+
+        associates_doc
+
         attr_accessor :test, :else, :statements
 
         def each

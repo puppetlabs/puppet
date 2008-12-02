@@ -4,6 +4,9 @@ require 'puppet/parser/ast/definition'
 # in that each class is a singleton -- only one will exist for a given
 # node.
 class Puppet::Parser::AST::HostClass < Puppet::Parser::AST::Definition
+
+    associates_doc
+
     @name = :class
 
     # Are we a child of the passed class?  Do a recursive search up our

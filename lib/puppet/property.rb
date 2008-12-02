@@ -445,7 +445,7 @@ class Puppet::Property < Puppet::Parameter
             end
 
             # This doc will probably get overridden
-            @doc ||= "The basic property that the object should be in."
+            @doc ||= "The basic property that the resource should be in."
         end
 
         def self.inherited(sub)

@@ -18,6 +18,7 @@ describe Puppet::Provider::Confine::False do
 
         it "should use the 'pass?' method to test validity" do
             @confine = Puppet::Provider::Confine::False.new("foo")
+            @confine.label = "eh"
             @confine.expects(:pass?).with("foo")
             @confine.valid?
         end

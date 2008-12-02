@@ -8,6 +8,44 @@
     set file paths to 'false' to disable the CRL.
 
 0.24.x
+    Fixed #1695 - Solaris 10 zone provider doesn't properly handle unknown zone attributes in newer releases
+
+    Fixed #1776 - Trivial fix for gentoo service provider
+
+    Added Rake :ci namespace and CI tasks
+
+    Fixed #1767 - Minor fix to emacs mode
+
+    Fixed #1711 - fileserver test fails due to incorrect mocking
+
+    Fixed #1751 - Mac OS X DirectoryService nameservice provider support for 
+    plist output and password hash fil 
+   
+    Fixed #1752 - Add an optional argument to Puppet::Util.execute to determine 
+    whether stderr and stdout are combined in the output
+    
+    Added versionable feature to the RPM provider
+    
+    Fixed #1668 - puppetca can't clean unsigned certs
+
+    Moved RRD feature from util/metric.rb to feature/base.rb
+
+    Fixed #1735 and #1747 - Fixes to confine system
+
+    Fixed #1681 - Add filesystem type check to test for per-file SELinux context support
+
+    Fixed #1746 - Sync SELinux file attributes after file contents created/modified
+
+    Replaced SELInux calls to binaries with Ruby SELinux bindings
+
+    Fixed #1748 - Include spec directory in packages
+
+    Fixes #1672 - unsafe crontab handling in Solaris
+
+    Fixed #1718 - Added preseed to apt uninstall and purge
+
+    Fixed #1739 - Added uninstall functionality to yum provider
+
     Fixed #1710 - Spurious output in test run
 
     Fixed #1667 - Documentation should specify natural language regexs, not Regexp objects

@@ -4,11 +4,11 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 describe Puppet::Parser do
 
-    AST = Puppet::Parser::AST
+    ast = Puppet::Parser::AST
 
     before :each do
         @parser = Puppet::Parser::Parser.new :environment => "development"
-        @true_ast = AST::Boolean.new :value => true
+        @true_ast = Puppet::Parser::AST::Boolean.new :value => true
     end
 
     describe "when parsing append operator" do
@@ -21,13 +21,13 @@ describe Puppet::Parser do
             lambda { @parser.parse("$var += ") }.should raise_error
         end
 
-        it "should call AST::VarDef with append=true" do
-            AST::VarDef.expects(:new).with { |h| h[:append] == true }
+        it "should call ast::VarDef with append=true" do
+            ast::VarDef.expects(:new).with { |h| h[:append] == true }
             @parser.parse("$var += 2")
         end
 
         it "should work with arrays too" do
-            AST::VarDef.expects(:new).with { |h| h[:append] == true }
+            ast::VarDef.expects(:new).with { |h| h[:append] == true }
             @parser.parse("$var += ['test']")
         end
 
@@ -35,22 +35,21 @@ describe Puppet::Parser do
 
     describe Puppet::Parser, "when parsing 'if'" do
         it "not, it should create the correct ast objects" do
-            AST::Not.expects(:new).with { |h| h[:value].is_a?(AST::Boolean) }
+            ast::Not.expects(:new).with { |h| h[:value].is_a?(ast::Boolean) }
             @parser.parse("if ! true { $var = 1 }")
-        
         end
 
         it "boolean operation, it should create the correct ast objects" do
-            AST::BooleanOperator.expects(:new).with { 
-                |h| h[:rval].is_a?(AST::Boolean) and h[:lval].is_a?(AST::Boolean) and h[:operator]=="or"
+            ast::BooleanOperator.expects(:new).with { 
+                |h| h[:rval].is_a?(ast::Boolean) and h[:lval].is_a?(ast::Boolean) and h[:operator]=="or"
             }
             @parser.parse("if true or true { $var = 1 }")
 
         end
 
         it "comparison operation, it should create the correct ast objects" do
-             AST::ComparisonOperator.expects(:new).with { 
-                 |h| h[:lval].is_a?(AST::Name) and h[:rval].is_a?(AST::Name) and h[:operator]=="<"
+             ast::ComparisonOperator.expects(:new).with { 
+                 |h| h[:lval].is_a?(ast::Name) and h[:rval].is_a?(ast::Name) and h[:operator]=="<"
              }
              @parser.parse("if 1 < 2 { $var = 1 }")
 
@@ -60,14 +59,15 @@ describe Puppet::Parser do
 
     describe Puppet::Parser, "when parsing if complex expressions" do
          it "should create a correct ast tree" do
-             AST::ComparisonOperator.expects(:new).with { 
-                 |h| h[:rval].is_a?(AST::Name) and h[:lval].is_a?(AST::Name) and h[:operator]==">"
-             }.returns("whatever")
-             AST::ComparisonOperator.expects(:new).with { 
-                 |h| h[:rval].is_a?(AST::Name) and h[:lval].is_a?(AST::Name) and h[:operator]=="=="
-             }.returns("whatever")
-             AST::BooleanOperator.expects(:new).with {
-                 |h| h[:rval]=="whatever" and h[:lval]=="whatever" and h[:operator]=="and"                
+             aststub = stub_everything 'ast'
+             ast::ComparisonOperator.expects(:new).with { 
+                 |h| h[:rval].is_a?(ast::Name) and h[:lval].is_a?(ast::Name) and h[:operator]==">"
+             }.returns(aststub)
+             ast::ComparisonOperator.expects(:new).with { 
+                 |h| h[:rval].is_a?(ast::Name) and h[:lval].is_a?(ast::Name) and h[:operator]=="=="
+             }.returns(aststub)
+             ast::BooleanOperator.expects(:new).with {
+                 |h| h[:rval]==aststub and h[:lval]==aststub and h[:operator]=="and"
              }
              @parser.parse("if (1 > 2) and (1 == 2) { $var = 1 }")
          end
@@ -88,10 +88,10 @@ describe Puppet::Parser do
             lambda { @parser.parse('exec { test: param => File["a","b"] }') }.should_not raise_error
         end
         
-        it "should create an AST::ResourceReference" do
-            AST::Resource.stubs(:new)
-            AST::ResourceReference.expects(:new).with { |arg| 
-                arg[:line]==1 and arg[:type]=="File" and arg[:title].is_a?(AST::ASTArray)
+        it "should create an ast::ResourceReference" do
+            ast::Resource.stubs(:new)
+            ast::ResourceReference.expects(:new).with { |arg| 
+                arg[:line]==1 and arg[:type]=="File" and arg[:title].is_a?(ast::ASTArray)
             }
             @parser.parse('exec { test: command => File["a","b"] }')
         end
@@ -107,9 +107,9 @@ describe Puppet::Parser do
             lambda { @parser.parse('Resource["title1","title2"] { param => value }') }.should_not raise_error
         end
 
-        it "should create an AST::ResourceOverride" do
-            AST::ResourceOverride.expects(:new).with { |arg| 
-                arg[:line]==1 and arg[:object].is_a?(AST::ResourceReference) and arg[:params].is_a?(AST::ResourceParam)
+        it "should create an ast::ResourceOverride" do
+            ast::ResourceOverride.expects(:new).with { |arg| 
+                arg[:line]==1 and arg[:object].is_a?(ast::ResourceReference) and arg[:params].is_a?(ast::ResourceParam)
             }
             @parser.parse('Resource["title1","title2"] { param => value }')
         end
@@ -131,12 +131,12 @@ describe Puppet::Parser do
         end
 
         it "should create a nop node for empty branch" do
-            AST::Nop.expects(:new)
+            ast::Nop.expects(:new)
             @parser.parse("if true { }")
         end
 
         it "should create a nop node for empty else branch" do
-            AST::Nop.expects(:new)
+            ast::Nop.expects(:new)
             @parser.parse("if true { notice('test') } else { }")
         end
 
@@ -177,12 +177,12 @@ describe Puppet::Parser do
 
         before :each do
             @one = stub 'one', :is_a? => true
-            @one.stubs(:is_a?).with(AST::ASTArray).returns(false)
-            @one.stubs(:is_a?).with(AST).returns(true)
+            @one.stubs(:is_a?).with(ast::ASTArray).returns(false)
+            @one.stubs(:is_a?).with(ast).returns(true)
 
             @two = stub 'two'
-            @two.stubs(:is_a?).with(AST::ASTArray).returns(false)
-            @two.stubs(:is_a?).with(AST).returns(true)
+            @two.stubs(:is_a?).with(ast::ASTArray).returns(false)
+            @two.stubs(:is_a?).with(ast).returns(true)
         end
 
         it "should return the first class" do
@@ -199,7 +199,30 @@ describe Puppet::Parser do
 
             klass1.code.children.should == [@one,@two]
         end
-
     end
 
+    describe Puppet::Parser, "when parsing comments before statement" do
+        it "should associate the documentation to the statement AST node" do
+            ast = @parser.parse("""
+            # comment
+            class test {}
+            """)
+
+            ast[:classes]["test"].doc.should == "comment\n"
+        end
+    end
+
+    describe Puppet::Parser, "when building ast nodes" do
+        it "should get lexer comments if ast node declares use_docs" do
+            lexer = stub 'lexer'
+            ast = mock 'ast', :nil? => false, :use_docs => true, :doc => ""
+            @parser.stubs(:lexer).returns(lexer)
+
+            Puppet::Parser::AST::Definition.expects(:new).returns(ast)
+            lexer.expects(:getcomment).returns("comment")
+            ast.expects(:doc=).with("comment")
+
+            @parser.ast(Puppet::Parser::AST::Definition)
+        end
+    end
  end

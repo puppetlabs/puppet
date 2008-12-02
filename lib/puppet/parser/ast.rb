@@ -12,7 +12,22 @@ class Puppet::Parser::AST
 
     include Puppet::Util::Errors
     include Puppet::Util::MethodHelper
+    include Puppet::Util::Docs
+
     attr_accessor :line, :file, :parent, :scope
+
+    # don't fetch lexer comment by default
+    def use_docs
+        self.class.use_docs
+    end
+
+    # allow our subclass to specify they want documentation
+    class << self
+       attr_accessor :use_docs
+       def associates_doc
+         self.use_docs = true
+       end
+    end
 
     # Does this ast object set something?  If so, it gets evaluated first.
     def self.settor?

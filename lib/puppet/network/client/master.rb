@@ -487,7 +487,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
         return unless Puppet[:splay]
         return if splayed?
 
-        time = rand(Integer(Puppet[:splaylimit]))
+        time = rand(Integer(Puppet[:splaylimit]) + 1)
         Puppet.info "Sleeping for %s seconds (splay is enabled)" % time
         sleep(time)
         @splayed = true

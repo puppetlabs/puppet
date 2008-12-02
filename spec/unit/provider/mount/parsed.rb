@@ -130,11 +130,11 @@ describe provider_class do
     describe provider_class, " when modifying the filesystem tab" do
         include ParsedMountTesting
         before do
-            @mount = mkmount
-            @target = @provider_class.default_target
-
             # Never write to disk, only to RAM.
             @provider_class.stubs(:filetype).returns(Puppet::Util::FileType.filetype(:ram))
+
+            @mount = mkmount
+            @target = @provider_class.default_target
         end
 
         it "should write the mount to disk when :flush is called" do

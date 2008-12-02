@@ -49,6 +49,10 @@ describe provider_class do
     end
 
     describe "when calling create" do
+        before do
+            @provider.stubs(:password=)
+        end
+
         it "should use the add command when the user is not a role" do
             @provider.stubs(:is_role?).returns(false)
             @provider.expects(:addcmd).returns("useradd")
@@ -107,6 +111,7 @@ describe provider_class do
         end
 
         it "should add -o when the user is being created" do
+            @provider.stubs(:password=)
             @provider.create
         end
 
@@ -186,6 +191,59 @@ describe provider_class do
             @provider.expects(:build_keys_cmd).returns(["-K", "foo=bar"])
             @provider.expects(:run).with(["usermod", "-K", "foo=bar", "someuser"], "modify attribute key pairs")
             @provider.keys=({})
+        end
+    end
+
+    describe "when getting the hashed password" do
+        before do
+            @array = mock "array"
+        end
+
+        it "should readlines of /etc/shadow" do
+            File.expects(:readlines).with("/etc/shadow").returns([])
+            @provider.password
+        end
+
+        it "should reject anything that doesn't start with alpha numerics" do
+            @array.expects(:reject).returns([])
+            File.stubs(:readlines).with("/etc/shadow").returns(@array)
+            @provider.password
+        end
+
+        it "should collect splitting on ':'" do
+            @array.stubs(:reject).returns(@array)
+            @array.expects(:collect).returns([])
+            File.stubs(:readlines).with("/etc/shadow").returns(@array)
+            @provider.password
+        end
+
+        it "should find the matching user" do
+            @resource.stubs(:[]).with(:name).returns("username")
+            @array.stubs(:reject).returns(@array)
+            @array.stubs(:collect).returns([["username", "hashedpassword"], ["someoneelse", "theirpassword"]])
+            File.stubs(:readlines).with("/etc/shadow").returns(@array)
+            @provider.password.must == "hashedpassword"
+        end
+
+        it "should get the right password" do
+            @resource.stubs(:[]).with(:name).returns("username")
+            File.stubs(:readlines).with("/etc/shadow").returns(["#comment", "   nonsense", "  ", "username:hashedpassword:stuff:foo:bar:::", "other:pword:yay:::"])
+            @provider.password.must == "hashedpassword"
+        end
+    end
+
+    describe "when setting the password" do
+        #how can you mock these blocks up?
+        it "should open /etc/shadow for reading and /etc/shadow_tmp for writing" do
+            File.expects(:open).with("/etc/shadow", "r")
+            File.stubs(:rename)
+            @provider.password=("hashedpassword")
+        end
+        
+        it "should rename the /etc/shadow_tmp to /etc/shadow" do
+            File.stubs(:open).with("/etc/shadow", "r")
+            File.expects(:rename).with("/etc/shadow_tmp", "/etc/shadow")
+            @provider.password=("hashedpassword")
         end
     end
 end

@@ -1,5 +1,8 @@
 module Puppet
     Puppet.type(:file).newproperty(:owner) do
+        include Puppet::Util::POSIX
+        include Puppet::Util::Warnings
+
         require 'etc'
         desc "To whom the file should belong.  Argument can be user name or
             user ID."
@@ -24,40 +27,32 @@ module Puppet
             end
         end
 
-        def name2id(value)
-            if value.is_a?(Symbol)
-                return value.to_s
+        def insync?(current)
+            unless Puppet::Util::SUIDManager.uid == 0
+                warning "Cannot manage ownership unless running as root"
+                return true
             end
-            begin
-                user = Etc.getpwnam(value)
-                if user.uid == ""
-                    return nil
+
+            @should.each do |value|
+                if value =~ /^\d+$/
+                    uid = Integer(value)
+                elsif value.is_a?(String)
+                    fail "Could not find user %s" % value unless uid = uid(value)
+                else
+                    uid = value
                 end
-                return user.uid
-            rescue ArgumentError => detail
-                return nil
+
+                return true if uid == current
             end
+            return false
         end
 
         # Determine if the user is valid, and if so, return the UID
         def validuser?(value)
-            if value =~ /^\d+$/
-                value = value.to_i
-            end
-
-            if value.is_a?(Integer)
-                # verify the user is a valid user
-                if tmp = id2name(value)
-                    return value
-                else
-                    return false
-                end
+            if number = uid(value)
+                return number
             else
-                if tmp = name2id(value)
-                    return tmp
-                else
-                    return false
-                end
+                return false
             end
         end
 
@@ -99,13 +94,6 @@ module Puppet
                 return :absent
             end
 
-            # Set our method appropriately, depending on links.
-            if stat.ftype == "link" and @resource[:links] != :follow
-                @method = :lchown
-            else
-                @method = :chown
-            end
-
             currentvalue = stat.uid
             
             # On OS X, files that are owned by -2 get returned as really
@@ -120,44 +108,24 @@ module Puppet
         end
 
         def sync
-            unless Puppet::Util::SUIDManager.uid == 0
-                unless defined? @@notifieduid
-                    self.notice "Cannot manage ownership unless running as root"
-                    #@resource.delete(self.name)
-                    @@notifieduid = true
-                end
-                return nil
+            # Set our method appropriately, depending on links.
+            if resource[:links] == :manage
+                method = :lchown
+            else
+                method = :chown
             end
 
-            user = nil
-            unless user = self.validuser?(self.should)
-                tmp = self.should
-                unless defined? @@usermissing
-                    @@usermissing = {}
-                end
-
-                if @@usermissing.include?(tmp)
-                    @@usermissing[tmp] += 1
-                else
-                    self.notice "user %s does not exist" % tmp
-                    @@usermissing[tmp] = 1
-                end
-                return nil
+            uid = nil
+            @should.each do |user|
+                break if uid = validuser?(user)
             end
 
-            unless @resource.stat(false)
-                unless @resource.stat(true)
-                    self.debug "File does not exist; cannot set owner"
-                    return nil
-                end
-                #self.debug "%s: after refresh, is '%s'" % [self.class.name,@is]
-            end
+            raise Puppet::Error, "Could not find user(s) %s" % @should.join(",") unless uid
 
             begin
-                File.send(@method, user, nil, @resource[:path])
+                File.send(method, uid, nil, @resource[:path])
             rescue => detail
-                raise Puppet::Error, "Failed to set owner to '%s': %s" %
-                    [user, detail]
+                raise Puppet::Error, "Failed to set owner to '%s': %s" % [uid, detail]
             end
 
             return :file_changed

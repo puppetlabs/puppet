@@ -58,24 +58,7 @@ class TestResources < Test::Unit::TestCase
 	    super
 	    @type = Puppet::Type.type(:resources)
     end
-	
-	def test_initialize
-	    assert(@type, "Could not retrieve resources type")
-	    # Make sure we can't create them for types that don't exist
-	    assert_raise(Puppet::Error) do
-	        @type.create :name => "thereisnotypewiththisname"
-        end
-        
-        # Now make sure it works for a normal type
-        usertype = nil
-        assert_nothing_raised do
-            usertype = @type.create :name => "user"
-        end
-        assert(usertype, "did not create user resource type")
-        assert_equal(Puppet::Type.type(:user), usertype.resource_type,
-            "resource_type was not set correctly")
-    end
-    
+
     def test_purge
         # Create a purgeable type
         mkpurgertype
@@ -149,7 +132,7 @@ class TestResources < Test::Unit::TestCase
         
         assert_nothing_raised {
             assert(res.check("A String"), "String failed check")
-            assert(res.check(Puppet::Type.newfile(:path => tempfile())), "File failed check")
+            assert(res.check(Puppet::Type.type(:file).create(:path => tempfile())), "File failed check")
             assert(res.check(Puppet::Type.type(:user).create(:name => "yayness")), "User failed check in package")
         }
         

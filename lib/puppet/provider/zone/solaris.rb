@@ -12,6 +12,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
 
         properties = {}
         line.split(":").each_with_index { |value, index|
+            next unless fields[index]
             properties[fields[index]] = value
         }
 
@@ -35,9 +36,8 @@ Puppet::Type.type(:zone).provide(:solaris) do
     # Perform all of our configuration steps.
     def configure
         # If the thing is entirely absent, then we need to create the config.
-        str = %{create -b
-set zonepath=%s
-} % @resource[:path]
+        # Is there someway to get this on one line?
+        str = "create -b #{@resource[:create_args]}\nset zonepath=%s\n" % @resource[:path]
 
         # Then perform all of our configuration steps.  It's annoying
         # that we need this much internal info on the resource.
@@ -65,7 +65,11 @@ set zonepath=%s
     end
 
     def install
-        zoneadm :install
+        if @resource[:install_args]
+            zoneadm :install, @resource[:install_args].split(" ")
+        else
+            zoneadm :install
+        end
     end
 
     # Look up the current status.

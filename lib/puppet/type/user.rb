@@ -1,6 +1,7 @@
 require 'etc'
 require 'facter'
 require 'puppet/property/list'
+require 'puppet/property/ordered_list'
 require 'puppet/property/keyvalue'
 
 module Puppet
@@ -98,6 +99,16 @@ module Puppet
                 end
             end
 
+            def insync?(is)
+                # We know the 'is' is a number, so we need to convert the 'should' to a number,
+                # too.
+                @should.each do |value|
+                    return true if number = Puppet::Util.gid(value) and is == number
+                end
+
+                return false
+            end
+
             def sync
                 found = false
                 @should.each do |value|
@@ -109,6 +120,8 @@ module Puppet
                 end
 
                 fail "Could not find group(s) %s" % @should.join(",") unless found
+
+                # Use the default event.
             end
         end
 
@@ -263,6 +276,17 @@ module Puppet
             end
         end
 
+        #autorequire the roles that the user has
+        autorequire(:user) do
+            reqs = []
+
+            if roles_property = @parameters[:roles] and roles = roles_property.should
+                reqs += roles.split(',')
+            end
+
+            reqs
+        end
+
         newparam(:role_membership) do
             desc "Whether specified roles should be treated as the only roles
                 of which the user is a member or whether they should merely
@@ -301,7 +325,7 @@ module Puppet
             defaultto :minimum
         end
 
-        newproperty(:profiles, :parent => Puppet::Property::List, :required_features => :manages_solaris_rbac) do
+        newproperty(:profiles, :parent => Puppet::Property::OrderedList, :required_features => :manages_solaris_rbac) do
             desc "The profiles the user has.  Multiple profiles should be
                 specified as an array."
 

@@ -28,6 +28,11 @@ module Puppet
                 @resource[membership] == :inclusive
             end
 
+            #dearrayify was motivated because to simplify the implementation of the OrderedList property
+            def dearrayify(array)
+                array.sort.join(delimiter)
+            end
+
             def should
                 unless defined? @should and @should
                     return nil
@@ -39,7 +44,7 @@ module Puppet
                     members = add_should_with_current(members, retrieve)
                 end
 
-                members.sort.join(delimiter)
+                dearrayify(members)
             end
 
             def delimiter
@@ -57,7 +62,7 @@ module Puppet
 
             def prepare_is_for_comparison(is)
                 if is.is_a? Array
-                    is = is.sort.join(delimiter)
+                    is = dearrayify(is)
                 end
                 is
             end

@@ -143,5 +143,14 @@ describe list_class do
                 @property.insync?(["bar","foo"]).must == false
             end
         end
+
+        describe "when calling dearrayify" do
+            it "should sort and join the array with 'delimiter'" do
+                array = mock "array"
+                array.expects(:sort).returns(array)
+                array.expects(:join).with(@property.delimiter)
+                @property.dearrayify(array)
+            end
+        end
     end
 end

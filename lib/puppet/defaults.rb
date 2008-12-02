@@ -320,7 +320,7 @@ module Puppet
             a proxy in front of the process or processes, since Mongrel cannot
             speak SSL.",
             :call_on_define => true, # Call our hook with the default value, so we always get the correct bind address set.
-            :hook => proc { |value|  value == "webrick" ? parent[:bindaddress] = "0.0.0.0" : parent[:bindaddress] = "127.0.0.1" if parent[:bindaddress] == "" }
+            :hook => proc { |value|  value == "webrick" ? Puppet.settings[:bindaddress] = "0.0.0.0" : Puppet.settings[:bindaddress] = "127.0.0.1" if Puppet.settings[:bindaddress] == "" }
         }
     )
 

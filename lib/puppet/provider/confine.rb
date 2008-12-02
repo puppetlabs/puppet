@@ -42,6 +42,9 @@ class Puppet::Provider::Confine
         for_binary
     end
 
+    # Used for logging.
+    attr_accessor :label
+
     def initialize(values)
         values = [values] unless values.is_a?(Array)
         @values = values
@@ -61,7 +64,7 @@ class Puppet::Provider::Confine
     def valid?
         values.each do |value|
             unless pass?(value)
-                Puppet.debug message(value)
+                Puppet.debug(label + ": " + message(value))
                 return false
             end
         end

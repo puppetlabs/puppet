@@ -72,4 +72,24 @@ describe Puppet::Parser::Resource::Reference, " when modeling defined types" do
         ref.builtin?.should be_false
         ref.definedtype.object_id.should  == @nodedef.object_id
     end
+
+    it "should only look for fully qualified classes" do
+        top = @parser.newclass "top"
+        sub = @parser.newclass "other::top"
+
+        scope = @compiler.topscope.class.new(:parent => @compiler.topscope, :namespace => "other", :parser => @parser)
+
+        ref = @type.new(:type => "class", :title => "top", :scope => scope)
+        ref.definedtype.classname.should equal(top.classname)
+    end
+
+    it "should only look for fully qualified definitions" do
+        top = @parser.newdefine "top"
+        sub = @parser.newdefine "other::top"
+
+        scope = @compiler.topscope.class.new(:parent => @compiler.topscope, :namespace => "other", :parser => @parser)
+
+        ref = @type.new(:type => "top", :title => "foo", :scope => scope)
+        ref.definedtype.classname.should equal(top.classname)
+    end
 end

@@ -3,25 +3,17 @@ require 'puppet/parser/ast/branch'
 class Puppet::Parser::AST
     # An AST object to call a function.
     class Function < AST::Branch
+
+        associates_doc
+
         attr_accessor :name, :arguments
 
         @settor = true
 
         def evaluate(scope)
-            # We don't need to evaluate the name, because it's plaintext
-            args = @arguments.safeevaluate(scope)
-
-            return scope.send("function_" + @name, args)
-        end
-
-        def initialize(hash)
-            @ftype = hash[:ftype] || :rvalue
-            hash.delete(:ftype) if hash.include? :ftype
-
-            super(hash)
 
             # Make sure it's a defined function
-            unless @fname = Puppet::Parser::Functions.function(@name)
+            unless @fname
                 raise Puppet::ParseError, "Unknown function %s" % @name
             end
 
@@ -42,6 +34,21 @@ class Puppet::Parser::AST
                 raise Puppet::DevError, "Invalid function type %s" % @ftype.inspect
             end
 
+
+
+            # We don't need to evaluate the name, because it's plaintext
+            args = @arguments.safeevaluate(scope)
+
+            return scope.send("function_" + @name, args)
+        end
+
+        def initialize(hash)
+            @ftype = hash[:ftype] || :rvalue
+            hash.delete(:ftype) if hash.include? :ftype
+
+            super(hash)
+
+             @fname = Puppet::Parser::Functions.function(@name)
             # Lastly, check the parity
         end
     end

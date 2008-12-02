@@ -3,6 +3,9 @@ require 'puppet/parser/ast/hostclass'
 # The specific code associated with a host.  Nodes are annoyingly unlike
 # other objects.  That's just the way it is, at least for now.
 class Puppet::Parser::AST::Node < Puppet::Parser::AST::HostClass
+
+    associates_doc
+
     @name = :node
 
     def initialize(options)

@@ -24,6 +24,7 @@ project = Rake::RedLabProject.new("puppet") do |p|
         'lib/puppet/**/*.rb',
         'lib/puppet/**/*.py',
         'test/**/*',
+        'spec/**/*',
         'bin/**/*',
         'ext/**/*',
         'examples/**/*',
@@ -136,7 +137,7 @@ desc "Run the specs under spec/"
 task :spec do
     require 'spec'
     require 'spec/rake/spectask'
-    require 'rcov'
+    # require 'rcov'
     Spec::Rake::SpecTask.new do |t|
          #   t.rcov = true
          t.spec_opts = ['--format','s', '--loadby','mtime']
@@ -147,6 +148,29 @@ end
 desc "Run the unit tests"
 task :unit do
     sh "cd test; rake"
+end
+
+namespace :ci do
+
+  desc "Run the CI prep tasks"
+  task :prep do
+    require 'rubygems'
+    gem 'ci_reporter'
+    require 'ci/reporter/rake/rspec'
+    require 'ci/reporter/rake/test_unit'
+    ENV['CI_REPORTS'] = 'results'
+  end
+
+  desc "Run CI Unit tests"
+  task :unit => [:prep, 'ci:setup:testunit'] do
+     sh "cd test; rake test; exit 0"
+  end
+
+  desc "Run CI RSpec tests"
+  task :spec => [:prep, 'ci:setup:rspec'] do
+     sh "cd spec; rake all; exit 0"
+  end
+
 end
 
 desc "Send patch information to the puppet-dev list"

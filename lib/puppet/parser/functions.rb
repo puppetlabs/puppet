@@ -54,6 +54,20 @@ module Functions
         end
     end
 
+    # Remove a function added by newfunction
+    def self.rmfunction(name)
+        name = symbolize(name)
+
+        unless @functions.include? name
+            raise Puppet::DevError, "Function %s is not defined" % name
+        end
+
+        @functions.delete(name)
+
+        fname = "function_" + name.to_s
+        Puppet::Parser::Scope.send(:remove_method, fname)
+    end
+
     # Determine if a given name is a function
     def self.function(name)
         name = symbolize(name)

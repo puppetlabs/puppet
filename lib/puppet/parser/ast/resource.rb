@@ -4,6 +4,9 @@ require 'puppet/parser/ast/resource_reference'
 # builtin type.
 class Puppet::Parser::AST
 class Resource < AST::ResourceReference
+
+    associates_doc
+
     attr_accessor :title, :type, :exported, :virtual
     attr_reader :params
 

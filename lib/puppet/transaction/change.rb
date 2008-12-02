@@ -53,12 +53,10 @@ class Puppet::Transaction::Change
         # The transaction catches any exceptions here.
         events = @property.sync
         if events.nil?
-            return nil
-        end
-
-        if events.is_a?(Array)
+            events = [(@property.name.to_s + "_changed").to_sym]
+        elsif events.is_a?(Array)
             if events.empty?
-                return nil
+                events = [(@property.name.to_s + "_changed").to_sym]
             end
         else
             events = [events]

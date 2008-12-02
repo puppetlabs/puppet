@@ -133,7 +133,7 @@ Signals
 -------
 The ``puppetd`` and ``puppetmasterd`` executables catch some signals for special 
 handling.  Both daemons catch (``SIGHUP``), which forces the server to restart 
-tself.  Predictably, interrupt and terminate (``SIGINT`` and ``SIGHUP``) will shut 
+tself.  Predictably, interrupt and terminate (``SIGINT`` and ``SIGTERM``) will shut 
 down the server, whether it be an instance of ``puppetd`` or ``puppetmasterd``.
 
 Sending the ``SIGUSR1`` signal to an instance of ``puppetd`` will cause it to 

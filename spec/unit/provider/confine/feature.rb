@@ -22,6 +22,7 @@ describe Puppet::Provider::Confine::Feature do
             @features = mock 'features'
             Puppet.stubs(:features).returns @features
             @confine = Puppet::Provider::Confine::Feature.new("myfeature")
+            @confine.label = "eh"
         end
 
         it "should use the Puppet features instance to test validity" do

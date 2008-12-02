@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 
 describe Puppet::Parser::AST::CollExpr do
 
-    AST = Puppet::Parser::AST
+    ast = Puppet::Parser::AST
 
     before :each do
         @scope = Puppet::Parser::Scope.new()        
@@ -19,12 +19,12 @@ describe Puppet::Parser::AST::CollExpr do
         end
 
         it "should evaluate both" do
-            collexpr = AST::CollExpr.new(:test1 => @test1, :test2 => @test2, :oper=>"==")
+            collexpr = ast::CollExpr.new(:test1 => @test1, :test2 => @test2, :oper=>"==")
             collexpr.evaluate(@scope)
         end
 
         it "should produce a textual representation and code of the expression" do
-            collexpr = AST::CollExpr.new(:test1 => @test1, :test2 => @test2, :oper=>"==")
+            collexpr = ast::CollExpr.new(:test1 => @test1, :test2 => @test2, :oper=>"==")
             result = collexpr.evaluate(@scope)
             result[0].should == "param_values.value = 'test2' and param_names.name = 'test1'"
             result[1].should be_an_instance_of(Proc)
@@ -39,7 +39,7 @@ describe Puppet::Parser::AST::CollExpr do
                 t.expects(:form=)
             end
         
-            collexpr = AST::CollExpr.new(:test1 => @test1, :test2 => @test2, :oper=>"==", :form => true, :type => true)
+            collexpr = ast::CollExpr.new(:test1 => @test1, :test2 => @test2, :oper=>"==", :form => true, :type => true)
             result = collexpr.evaluate(@scope)
         end
 
@@ -50,25 +50,25 @@ describe Puppet::Parser::AST::CollExpr do
             end
         
             it "should evaluate like the original expression for ==" do
-                collexpr = AST::CollExpr.new(:test1 => @test1, :test2 => @test2, :oper => "==")
+                collexpr = ast::CollExpr.new(:test1 => @test1, :test2 => @test2, :oper => "==")
                 collexpr.evaluate(@scope)[1].call(@resource).should === (@resource["test1"] == "test2")
             end
 
             it "should evaluate like the original expression for !=" do
-                collexpr = AST::CollExpr.new(:test1 => @test1, :test2 => @test2, :oper => "!=")
+                collexpr = ast::CollExpr.new(:test1 => @test1, :test2 => @test2, :oper => "!=")
                 collexpr.evaluate(@scope)[1].call(@resource).should === (@resource["test1"] != "test2")
             end
         end
 
         it "should warn if this is an exported collection containing parenthesis (unsupported)" do
-            collexpr = AST::CollExpr.new(:test1 => @test1, :test2 => @test2, :oper=>"==", :parens => true, :form => :exported)
+            collexpr = ast::CollExpr.new(:test1 => @test1, :test2 => @test2, :oper=>"==", :parens => true, :form => :exported)
             Puppet.expects(:warning)
             collexpr.evaluate(@scope)
         end
 
         %w{and or}.each do |op|
             it "should raise an error if this is an exported collection with #{op} operator (unsupported)" do
-                collexpr = AST::CollExpr.new(:test1 => @test1, :test2 => @test2, :oper=> op, :form => :exported)
+                collexpr = ast::CollExpr.new(:test1 => @test1, :test2 => @test2, :oper=> op, :form => :exported)
                 lambda { collexpr.evaluate(@scope) }.should raise_error(Puppet::ParseError)
             end
         end
@@ -81,12 +81,12 @@ describe Puppet::Parser::AST::CollExpr do
 
         resource = mock 'resource'
         resource.expects(:[]).with("array").at_least(1).returns(["test1","test2","test3"])
-        collexpr = AST::CollExpr.new(:test1 => array, :test2 => test1, :oper => "==")
+        collexpr = ast::CollExpr.new(:test1 => array, :test2 => test1, :oper => "==")
         collexpr.evaluate(@scope)[1].call(resource).should be_true
     end
 
     it "should raise an error for invalid operator" do
-        lambda { collexpr = AST::CollExpr.new(:oper=>">") }.should raise_error
+        lambda { collexpr = ast::CollExpr.new(:oper=>">") }.should raise_error
     end
 
 end

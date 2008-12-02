@@ -29,7 +29,7 @@ module Puppet
 
     class Parser < Racc::Parser
 
-module_eval <<'..end grammar.ra modeval..id5cb4445525', 'grammar.ra', 741
+module_eval <<'..end grammar.ra modeval..id987bcfd032', 'grammar.ra', 759
 
 # It got too annoying having code in a file that needs to be compiled.
 require 'puppet/parser/parser_support'
@@ -41,7 +41,7 @@ require 'puppet/parser/parser_support'
 
 # $Id$
 
-..end grammar.ra modeval..id5cb4445525
+..end grammar.ra modeval..id987bcfd032
 
 ##### racc 1.4.5 generates ###
 
@@ -1103,8 +1103,9 @@ module_eval <<'.,.,', 'grammar.ra', 130
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 151
+module_eval <<'.,.,', 'grammar.ra', 152
   def _reduce_34( val, _values, result )
+    @lexer.commentpop
     array = val[2]
     if array.instance_of?(AST::ResourceInstance)
         array = [array]
@@ -1127,7 +1128,7 @@ module_eval <<'.,.,', 'grammar.ra', 151
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 154
+module_eval <<'.,.,', 'grammar.ra', 155
   def _reduce_35( val, _values, result )
     # This is a deprecated syntax.
     error "All resource specifications require names"
@@ -1135,7 +1136,7 @@ module_eval <<'.,.,', 'grammar.ra', 154
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 157
+module_eval <<'.,.,', 'grammar.ra', 158
   def _reduce_36( val, _values, result )
     # a defaults setting for a type
     result = ast(AST::ResourceDefaults, :type => val[0], :params => val[2])
@@ -1143,14 +1144,15 @@ module_eval <<'.,.,', 'grammar.ra', 157
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 162
+module_eval <<'.,.,', 'grammar.ra', 164
   def _reduce_37( val, _values, result )
+    @lexer.commentpop
     result = ast AST::ResourceOverride, :object => val[0], :params => val[2]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 189
+module_eval <<'.,.,', 'grammar.ra', 191
   def _reduce_38( val, _values, result )
     type = val[0]
 
@@ -1178,27 +1180,27 @@ module_eval <<'.,.,', 'grammar.ra', 189
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 190
+module_eval <<'.,.,', 'grammar.ra', 192
   def _reduce_39( val, _values, result )
  result = :virtual
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 191
+module_eval <<'.,.,', 'grammar.ra', 193
   def _reduce_40( val, _values, result )
  result = :exported
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 214
+module_eval <<'.,.,', 'grammar.ra', 216
   def _reduce_41( val, _values, result )
     if val[0] =~ /^[a-z]/
         Puppet.warning addcontext("Collection names must now be capitalized")
     end
     type = val[0].downcase
-    args = {:type => type}
+    args = {:type => type }
 
     if val[1].is_a?(AST::CollExpr)
         args[:query] = val[1]
@@ -1215,7 +1217,7 @@ module_eval <<'.,.,', 'grammar.ra', 214
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 224
+module_eval <<'.,.,', 'grammar.ra', 226
   def _reduce_42( val, _values, result )
     if val[1]
         result = val[1]
@@ -1227,7 +1229,7 @@ module_eval <<'.,.,', 'grammar.ra', 224
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 232
+module_eval <<'.,.,', 'grammar.ra', 234
   def _reduce_43( val, _values, result )
     if val[1]
         result = val[1]
@@ -1243,7 +1245,7 @@ module_eval <<'.,.,', 'grammar.ra', 232
 
  # reduce 45 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 240
+module_eval <<'.,.,', 'grammar.ra', 242
   def _reduce_46( val, _values, result )
     result = ast AST::CollExpr, :test1 => val[0], :oper => val[1], :test2 => val[2]
    result
@@ -1252,7 +1254,7 @@ module_eval <<'.,.,', 'grammar.ra', 240
 
  # reduce 47 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 246
+module_eval <<'.,.,', 'grammar.ra', 248
   def _reduce_48( val, _values, result )
     result = val[1]
     result.parens = true
@@ -1264,7 +1266,7 @@ module_eval <<'.,.,', 'grammar.ra', 246
 
  # reduce 50 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 254
+module_eval <<'.,.,', 'grammar.ra', 256
   def _reduce_51( val, _values, result )
     result = ast AST::CollExpr, :test1 => val[0], :oper => val[1], :test2 => val[2]
     #result = ast AST::CollExpr
@@ -1273,7 +1275,7 @@ module_eval <<'.,.,', 'grammar.ra', 254
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 259
+module_eval <<'.,.,', 'grammar.ra', 261
   def _reduce_52( val, _values, result )
     result = ast AST::CollExpr, :test1 => val[0], :oper => val[1], :test2 => val[2]
     #result = ast AST::CollExpr
@@ -1286,7 +1288,7 @@ module_eval <<'.,.,', 'grammar.ra', 259
 
  # reduce 54 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 266
+module_eval <<'.,.,', 'grammar.ra', 268
   def _reduce_55( val, _values, result )
     result = ast AST::ResourceInstance, :children => [val[0],val[2]]
    result
@@ -1295,7 +1297,7 @@ module_eval <<'.,.,', 'grammar.ra', 266
 
  # reduce 56 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 276
+module_eval <<'.,.,', 'grammar.ra', 278
   def _reduce_57( val, _values, result )
     if val[0].instance_of?(AST::ResourceInstance)
         result = ast AST::ASTArray, :children => [val[0],val[2]]
@@ -1311,21 +1313,21 @@ module_eval <<'.,.,', 'grammar.ra', 276
 
  # reduce 59 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 283
+module_eval <<'.,.,', 'grammar.ra', 285
   def _reduce_60( val, _values, result )
     result = ast AST::Undef, :value => :undef
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 287
+module_eval <<'.,.,', 'grammar.ra', 289
   def _reduce_61( val, _values, result )
     result = ast AST::Name, :value => val[0]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 291
+module_eval <<'.,.,', 'grammar.ra', 293
   def _reduce_62( val, _values, result )
     result = ast AST::Type, :value => val[0]
    result
@@ -1344,7 +1346,7 @@ module_eval <<'.,.,', 'grammar.ra', 291
 
  # reduce 68 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 307
+module_eval <<'.,.,', 'grammar.ra', 309
   def _reduce_69( val, _values, result )
     if val[0] =~ /::/
         raise Puppet::ParseError, "Cannot assign to variables in other namespaces"
@@ -1356,7 +1358,7 @@ module_eval <<'.,.,', 'grammar.ra', 307
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 312
+module_eval <<'.,.,', 'grammar.ra', 314
   def _reduce_70( val, _values, result )
     variable = ast AST::Name, :value => val[0]
     result = ast AST::VarDef, :name => variable, :value => val[2], :append => true
@@ -1364,21 +1366,21 @@ module_eval <<'.,.,', 'grammar.ra', 312
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 317
+module_eval <<'.,.,', 'grammar.ra', 319
   def _reduce_71( val, _values, result )
     result = ast AST::ASTArray
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 317
+module_eval <<'.,.,', 'grammar.ra', 319
   def _reduce_72( val, _values, result )
  result = val[0]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 326
+module_eval <<'.,.,', 'grammar.ra', 328
   def _reduce_73( val, _values, result )
     if val[0].instance_of?(AST::ASTArray)
         val[0].push(val[2])
@@ -1390,14 +1392,14 @@ module_eval <<'.,.,', 'grammar.ra', 326
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 330
+module_eval <<'.,.,', 'grammar.ra', 332
   def _reduce_74( val, _values, result )
     result = ast AST::ResourceParam, :param => val[0], :value => val[2]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 335
+module_eval <<'.,.,', 'grammar.ra', 337
   def _reduce_75( val, _values, result )
     result = ast AST::ResourceParam, :param => val[0], :value => val[2],
                                      :add => true
@@ -1409,21 +1411,21 @@ module_eval <<'.,.,', 'grammar.ra', 335
 
  # reduce 77 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 343
+module_eval <<'.,.,', 'grammar.ra', 345
   def _reduce_78( val, _values, result )
     result = ast AST::ASTArray
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 343
+module_eval <<'.,.,', 'grammar.ra', 345
   def _reduce_79( val, _values, result )
  result = val[0]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 352
+module_eval <<'.,.,', 'grammar.ra', 354
   def _reduce_80( val, _values, result )
     if val[0].instance_of?(AST::ASTArray)
         val[0].push(val[2])
@@ -1437,7 +1439,7 @@ module_eval <<'.,.,', 'grammar.ra', 352
 
  # reduce 81 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 361
+module_eval <<'.,.,', 'grammar.ra', 363
   def _reduce_82( val, _values, result )
     if val[0].instance_of?(AST::ASTArray)
         result = val[0].push(val[2])
@@ -1480,7 +1482,7 @@ module_eval <<'.,.,', 'grammar.ra', 361
 
  # reduce 98 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 388
+module_eval <<'.,.,', 'grammar.ra', 390
   def _reduce_99( val, _values, result )
     args = aryfy(val[2])
     result = ast AST::Function,
@@ -1491,7 +1493,7 @@ module_eval <<'.,.,', 'grammar.ra', 388
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 393
+module_eval <<'.,.,', 'grammar.ra', 395
   def _reduce_100( val, _values, result )
     result = ast AST::Function,
         :name => val[0],
@@ -1501,28 +1503,28 @@ module_eval <<'.,.,', 'grammar.ra', 393
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 397
+module_eval <<'.,.,', 'grammar.ra', 399
   def _reduce_101( val, _values, result )
     result = ast AST::String, :value => val[0]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 399
+module_eval <<'.,.,', 'grammar.ra', 401
   def _reduce_102( val, _values, result )
     result = ast AST::FlatString, :value => val[0]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 403
+module_eval <<'.,.,', 'grammar.ra', 405
   def _reduce_103( val, _values, result )
     result = ast AST::Boolean, :value => val[0]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 408
+module_eval <<'.,.,', 'grammar.ra', 410
   def _reduce_104( val, _values, result )
     Puppet.warning addcontext("Deprecation notice:  Resource references should now be capitalized")
     result = ast AST::ResourceReference, :type => val[0], :title => val[2]
@@ -1530,15 +1532,16 @@ module_eval <<'.,.,', 'grammar.ra', 408
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 410
+module_eval <<'.,.,', 'grammar.ra', 412
   def _reduce_105( val, _values, result )
     result = ast AST::ResourceReference, :type => val[0], :title => val[2]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 423
+module_eval <<'.,.,', 'grammar.ra', 426
   def _reduce_106( val, _values, result )
+    @lexer.commentpop
     args = {
         :test => val[1],
         :statements => val[3]
@@ -1553,8 +1556,9 @@ module_eval <<'.,.,', 'grammar.ra', 423
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 435
+module_eval <<'.,.,', 'grammar.ra', 439
   def _reduce_107( val, _values, result )
+    @lexer.commentpop
     args = {
         :test => val[1],
         :statements => ast(AST::Nop)
@@ -1571,15 +1575,17 @@ module_eval <<'.,.,', 'grammar.ra', 435
 
  # reduce 108 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 440
+module_eval <<'.,.,', 'grammar.ra', 445
   def _reduce_109( val, _values, result )
+    @lexer.commentpop
     result = ast AST::Else, :statements => val[2]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 443
+module_eval <<'.,.,', 'grammar.ra', 449
   def _reduce_110( val, _values, result )
+    @lexer.commentpop
     result = ast AST::Else, :statements => ast(AST::Nop)
    result
   end
@@ -1587,127 +1593,128 @@ module_eval <<'.,.,', 'grammar.ra', 443
 
  # reduce 111 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 460
+module_eval <<'.,.,', 'grammar.ra', 466
   def _reduce_112( val, _values, result )
     result = ast AST::ArithmeticOperator, :operator => val[1], :lval => val[0], :rval => val[2]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 463
+module_eval <<'.,.,', 'grammar.ra', 469
   def _reduce_113( val, _values, result )
     result = ast AST::ArithmeticOperator, :operator => val[1], :lval => val[0], :rval => val[2]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 466
+module_eval <<'.,.,', 'grammar.ra', 472
   def _reduce_114( val, _values, result )
     result = ast AST::ArithmeticOperator, :operator => val[1], :lval => val[0], :rval => val[2]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 469
+module_eval <<'.,.,', 'grammar.ra', 475
   def _reduce_115( val, _values, result )
     result = ast AST::ArithmeticOperator, :operator => val[1], :lval => val[0], :rval => val[2]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 472
+module_eval <<'.,.,', 'grammar.ra', 478
   def _reduce_116( val, _values, result )
     result = ast AST::ArithmeticOperator, :operator => val[1], :lval => val[0], :rval => val[2]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 475
+module_eval <<'.,.,', 'grammar.ra', 481
   def _reduce_117( val, _values, result )
     result = ast AST::ArithmeticOperator, :operator => val[1], :lval => val[0], :rval => val[2]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 478
+module_eval <<'.,.,', 'grammar.ra', 484
   def _reduce_118( val, _values, result )
     result = ast AST::Minus, :value => val[1]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 481
+module_eval <<'.,.,', 'grammar.ra', 487
   def _reduce_119( val, _values, result )
     result = ast AST::ComparisonOperator, :operator => val[1], :lval => val[0], :rval => val[2]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 484
+module_eval <<'.,.,', 'grammar.ra', 490
   def _reduce_120( val, _values, result )
     result = ast AST::ComparisonOperator, :operator => val[1], :lval => val[0], :rval => val[2]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 487
+module_eval <<'.,.,', 'grammar.ra', 493
   def _reduce_121( val, _values, result )
     result = ast AST::ComparisonOperator, :operator => val[1], :lval => val[0], :rval => val[2]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 490
+module_eval <<'.,.,', 'grammar.ra', 496
   def _reduce_122( val, _values, result )
     result = ast AST::ComparisonOperator, :operator => val[1], :lval => val[0], :rval => val[2]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 493
+module_eval <<'.,.,', 'grammar.ra', 499
   def _reduce_123( val, _values, result )
     result = ast AST::ComparisonOperator, :operator => val[1], :lval => val[0], :rval => val[2]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 496
+module_eval <<'.,.,', 'grammar.ra', 502
   def _reduce_124( val, _values, result )
     result = ast AST::ComparisonOperator, :operator => val[1], :lval => val[0], :rval => val[2]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 499
+module_eval <<'.,.,', 'grammar.ra', 505
   def _reduce_125( val, _values, result )
     result = ast AST::Not, :value => val[1]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 502
+module_eval <<'.,.,', 'grammar.ra', 508
   def _reduce_126( val, _values, result )
     result = ast AST::BooleanOperator, :operator => val[1], :lval => val[0], :rval => val[2]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 505
+module_eval <<'.,.,', 'grammar.ra', 511
   def _reduce_127( val, _values, result )
     result = ast AST::BooleanOperator, :operator => val[1], :lval => val[0], :rval => val[2]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 508
+module_eval <<'.,.,', 'grammar.ra', 514
   def _reduce_128( val, _values, result )
     result = val[1]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 516
+module_eval <<'.,.,', 'grammar.ra', 523
   def _reduce_129( val, _values, result )
+    @lexer.commentpop
     options = val[3]
     unless options.instance_of?(AST::ASTArray)
         options = ast AST::ASTArray, :children => [val[3]]
@@ -1719,7 +1726,7 @@ module_eval <<'.,.,', 'grammar.ra', 516
 
  # reduce 130 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 526
+module_eval <<'.,.,', 'grammar.ra', 533
   def _reduce_131( val, _values, result )
     if val[0].instance_of?(AST::ASTArray)
         val[0].push val[1]
@@ -1731,15 +1738,17 @@ module_eval <<'.,.,', 'grammar.ra', 526
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 530
+module_eval <<'.,.,', 'grammar.ra', 538
   def _reduce_132( val, _values, result )
+    @lexer.commentpop
     result = ast AST::CaseOpt, :value => val[0], :statements => val[3]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 535
+module_eval <<'.,.,', 'grammar.ra', 544
   def _reduce_133( val, _values, result )
+    @lexer.commentpop
     result = ast(AST::CaseOpt,
         :value => val[0],
         :statements => ast(AST::ASTArray)
@@ -1750,7 +1759,7 @@ module_eval <<'.,.,', 'grammar.ra', 535
 
  # reduce 134 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 545
+module_eval <<'.,.,', 'grammar.ra', 554
   def _reduce_135( val, _values, result )
     if val[0].instance_of?(AST::ASTArray)
         val[0].push(val[2])
@@ -1762,7 +1771,7 @@ module_eval <<'.,.,', 'grammar.ra', 545
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 549
+module_eval <<'.,.,', 'grammar.ra', 558
   def _reduce_136( val, _values, result )
     result = ast AST::Selector, :param => val[0], :values => val[2]
    result
@@ -1771,16 +1780,17 @@ module_eval <<'.,.,', 'grammar.ra', 549
 
  # reduce 137 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 551
+module_eval <<'.,.,', 'grammar.ra', 564
   def _reduce_138( val, _values, result )
- result = val[1]
+    @lexer.commentpop
+    result = val[1]
    result
   end
 .,.,
 
  # reduce 139 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 562
+module_eval <<'.,.,', 'grammar.ra', 574
   def _reduce_140( val, _values, result )
     if val[0].instance_of?(AST::ASTArray)
         val[0].push(val[2])
@@ -1792,7 +1802,7 @@ module_eval <<'.,.,', 'grammar.ra', 562
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 566
+module_eval <<'.,.,', 'grammar.ra', 578
   def _reduce_141( val, _values, result )
     result = ast AST::ResourceParam, :param => val[0], :value => val[2]
    result
@@ -1813,28 +1823,28 @@ module_eval <<'.,.,', 'grammar.ra', 566
 
  # reduce 148 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 577
+module_eval <<'.,.,', 'grammar.ra', 589
   def _reduce_149( val, _values, result )
     result = ast AST::Default, :value => val[0]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 579
+module_eval <<'.,.,', 'grammar.ra', 591
   def _reduce_150( val, _values, result )
  result = [val[0].value]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 583
+module_eval <<'.,.,', 'grammar.ra', 595
   def _reduce_151( val, _values, result )
     results = val[0] << val[2].value
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 591
+module_eval <<'.,.,', 'grammar.ra', 603
   def _reduce_152( val, _values, result )
     val[1].each do |file|
         import(file)
@@ -1845,8 +1855,9 @@ module_eval <<'.,.,', 'grammar.ra', 591
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 601
+module_eval <<'.,.,', 'grammar.ra', 614
   def _reduce_153( val, _values, result )
+    @lexer.commentpop
     newdefine classname(val[1]), :arguments => val[2], :code => val[4]
     @lexer.indefine = false
     result = nil
@@ -1856,8 +1867,9 @@ module_eval <<'.,.,', 'grammar.ra', 601
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 605
+module_eval <<'.,.,', 'grammar.ra', 619
   def _reduce_154( val, _values, result )
+    @lexer.commentpop
     newdefine classname(val[1]), :arguments => val[2]
     @lexer.indefine = false
     result = nil
@@ -1865,8 +1877,9 @@ module_eval <<'.,.,', 'grammar.ra', 605
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 613
+module_eval <<'.,.,', 'grammar.ra', 628
   def _reduce_155( val, _values, result )
+    @lexer.commentpop
     # Our class gets defined in the parent namespace, not our own.
     @lexer.namepop
     newclass classname(val[1]), :code => val[4], :parent => val[2]
@@ -1875,8 +1888,9 @@ module_eval <<'.,.,', 'grammar.ra', 613
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 618
+module_eval <<'.,.,', 'grammar.ra', 634
   def _reduce_156( val, _values, result )
+    @lexer.commentpop
     # Our class gets defined in the parent namespace, not our own.
     @lexer.namepop
     newclass classname(val[1]), :parent => val[2]
@@ -1885,16 +1899,18 @@ module_eval <<'.,.,', 'grammar.ra', 618
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 623
+module_eval <<'.,.,', 'grammar.ra', 640
   def _reduce_157( val, _values, result )
+    @lexer.commentpop
     newnode val[1], :parent => val[2], :code => val[4]
     result = nil
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 626
+module_eval <<'.,.,', 'grammar.ra', 644
   def _reduce_158( val, _values, result )
+    @lexer.commentpop
     newnode val[1], :parent => val[2]
     result = nil
    result
@@ -1909,7 +1925,7 @@ module_eval <<'.,.,', 'grammar.ra', 626
 
  # reduce 162 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 640
+module_eval <<'.,.,', 'grammar.ra', 658
   def _reduce_163( val, _values, result )
     result = val[0]
     result = [result] unless result.is_a?(Array)
@@ -1926,14 +1942,14 @@ module_eval <<'.,.,', 'grammar.ra', 640
 
  # reduce 167 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 649
+module_eval <<'.,.,', 'grammar.ra', 667
   def _reduce_168( val, _values, result )
     result = nil
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 653
+module_eval <<'.,.,', 'grammar.ra', 671
   def _reduce_169( val, _values, result )
     result = ast AST::ASTArray, :children => []
    result
@@ -1942,14 +1958,14 @@ module_eval <<'.,.,', 'grammar.ra', 653
 
  # reduce 170 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 658
+module_eval <<'.,.,', 'grammar.ra', 676
   def _reduce_171( val, _values, result )
     result = nil
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 662
+module_eval <<'.,.,', 'grammar.ra', 680
   def _reduce_172( val, _values, result )
     result = val[1]
     result = [result] unless result[0].is_a?(Array)
@@ -1959,7 +1975,7 @@ module_eval <<'.,.,', 'grammar.ra', 662
 
  # reduce 173 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 669
+module_eval <<'.,.,', 'grammar.ra', 687
   def _reduce_174( val, _values, result )
     result = val[0]
     result = [result] unless result[0].is_a?(Array)
@@ -1968,7 +1984,7 @@ module_eval <<'.,.,', 'grammar.ra', 669
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 674
+module_eval <<'.,.,', 'grammar.ra', 692
   def _reduce_175( val, _values, result )
     Puppet.warning addcontext("Deprecation notice: must now include '$' in prototype")
     result = [val[0], val[2]]
@@ -1976,7 +1992,7 @@ module_eval <<'.,.,', 'grammar.ra', 674
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 678
+module_eval <<'.,.,', 'grammar.ra', 696
   def _reduce_176( val, _values, result )
     Puppet.warning addcontext("Deprecation notice: must now include '$' in prototype")
     result = [val[0]]
@@ -1984,14 +2000,14 @@ module_eval <<'.,.,', 'grammar.ra', 678
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 680
+module_eval <<'.,.,', 'grammar.ra', 698
   def _reduce_177( val, _values, result )
     result = [val[0], val[2]]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 682
+module_eval <<'.,.,', 'grammar.ra', 700
   def _reduce_178( val, _values, result )
     result = [val[0]]
    result
@@ -2000,7 +2016,7 @@ module_eval <<'.,.,', 'grammar.ra', 682
 
  # reduce 179 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 687
+module_eval <<'.,.,', 'grammar.ra', 705
   def _reduce_180( val, _values, result )
     result = val[1]
    result
@@ -2009,7 +2025,7 @@ module_eval <<'.,.,', 'grammar.ra', 687
 
  # reduce 181 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 692
+module_eval <<'.,.,', 'grammar.ra', 710
   def _reduce_182( val, _values, result )
     result = val[1]
    result
@@ -2020,14 +2036,14 @@ module_eval <<'.,.,', 'grammar.ra', 692
 
  # reduce 184 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 698
+module_eval <<'.,.,', 'grammar.ra', 716
   def _reduce_185( val, _values, result )
     result = ast AST::Variable, :value => val[0]
    result
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 706
+module_eval <<'.,.,', 'grammar.ra', 724
   def _reduce_186( val, _values, result )
     if val[1].instance_of?(AST::ASTArray)
         result = val[1]
@@ -2038,7 +2054,7 @@ module_eval <<'.,.,', 'grammar.ra', 706
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 713
+module_eval <<'.,.,', 'grammar.ra', 731
   def _reduce_187( val, _values, result )
     if val[1].instance_of?(AST::ASTArray)
         result = val[1]
@@ -2049,7 +2065,7 @@ module_eval <<'.,.,', 'grammar.ra', 713
   end
 .,.,
 
-module_eval <<'.,.,', 'grammar.ra', 715
+module_eval <<'.,.,', 'grammar.ra', 733
   def _reduce_188( val, _values, result )
     result = ast AST::ASTArray
    result
@@ -2062,7 +2078,7 @@ module_eval <<'.,.,', 'grammar.ra', 715
 
  # reduce 191 omitted
 
-module_eval <<'.,.,', 'grammar.ra', 720
+module_eval <<'.,.,', 'grammar.ra', 738
   def _reduce_192( val, _values, result )
  result = nil
    result

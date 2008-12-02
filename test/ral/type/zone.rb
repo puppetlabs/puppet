@@ -173,8 +173,6 @@ class TestZoneAsRoot < TestZone
             h
         }
 
-        Puppet::Type.type(:zone).clear
-
         # Get rid of any lingering zones
         @@zones.each do |zone|
             next unless current.include? zone

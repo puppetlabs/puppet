@@ -25,3 +25,6 @@ Puppet.features.add :diff, :libs => %w{diff/lcs diff/lcs/hunk}
 
 # We have augeas
 Puppet.features.add(:augeas, :libs => ["augeas"])
+
+# We have RRD available
+Puppet.features.add(:rrd, :libs => ["RRDtool"])

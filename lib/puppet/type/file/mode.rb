@@ -103,21 +103,7 @@ module Puppet
         end
 
         def sync
-            unless @resource.stat(false)
-                stat = @resource.stat(true)
-
-                unless stat
-                    self.debug "File does not exist; cannot set mode"
-                    return nil
-                end
-            end
-
             mode = self.should
-
-            if mode == :absent
-                # This is really only valid for create states...
-                return nil
-            end
 
             begin
                 File.chmod(mode, @resource[:path])

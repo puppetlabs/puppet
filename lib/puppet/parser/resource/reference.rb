@@ -37,7 +37,7 @@ class Puppet::Parser::Resource::Reference < Puppet::ResourceReference
                 if self.title == :main
                     tmp = @scope.findclass("")
                 else
-                    unless tmp = @scope.findclass(self.title)
+                    unless tmp = @scope.parser.classes[self.title]
                         fail Puppet::ParseError, "Could not find class '%s'" % self.title
                     end
                 end
@@ -46,8 +46,9 @@ class Puppet::Parser::Resource::Reference < Puppet::ResourceReference
                     fail Puppet::ParseError, "Could not find node '%s'" % self.title
                 end
             else # normal definitions
-                # We have to swap these variables around so the errors are right.
-                tmp = @scope.finddefine(self.type)
+                # The resource type is capitalized, so we have to downcase.  Really,
+                # we should have a better interface for finding these, but eh.
+                tmp = @scope.parser.definitions[self.type.downcase]
             end
 
             if tmp

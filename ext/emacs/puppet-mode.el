@@ -226,7 +226,7 @@ of the initial include plus puppet-include-indent."
              ;; Semicolon ends a block for a resource when multiple resources
              ;; are defined in the same block, but try not to get the case of
              ;; a complete resource on a single line wrong.
-             ((looking-at "^\\([^'\":\n]\\|\"[^\n\"]*\"\\|'[^\n']'\\)**;\\s-*$")
+             ((looking-at "^\\([^'\":\n]\\|\"[^\n\"]*\"\\|'[^\n']*'\\)*;\\s-*$")
               (setq cur-indent (- (current-indentation) puppet-indent-level))
               (setq not-indented nil))
 

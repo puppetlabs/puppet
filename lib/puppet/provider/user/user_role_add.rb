@@ -22,17 +22,15 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd do
         value !~ /\s/
     end
 
-    has_features :manages_homedir, :allows_duplicates, :manages_solaris_rbac
-
-    if Puppet.features.libshadow?
-        has_feature :manages_passwords
-    end
+    has_features :manages_homedir, :allows_duplicates, :manages_solaris_rbac, :manages_passwords
 
     #must override this to hand the keyvalue pairs
     def add_properties
         cmd = []
         Puppet::Type.type(:user).validproperties.each do |property|
-            next if property == :ensure
+            #skip the password because we can't create it with the solaris useradd
+            next if [:ensure, :password].include?(property)
+            # 1680 Now you can set the hashed passwords on solaris:lib/puppet/provider/user/user_role_add.rb
             # the value needs to be quoted, mostly because -c might
             # have spaces in it
             if value = @resource.should(property) and value != ""
@@ -86,6 +84,10 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd do
             run(transition("normal"), "transition role to")
         else
             run(addcmd, "create")
+        end
+        # added to handle case when password is specified
+        if @resource[:password]
+            self.password = @resource[:password]
         end
     end
 
@@ -151,6 +153,41 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd do
 
     def keys=(keys_hash)
         run([command(:modify)] + build_keys_cmd(keys_hash) << @resource[:name], "modify attribute key pairs")
+    end
+
+    #Read in /etc/shadow, find the line for this user (skipping comments, because who knows) and return the hashed pw (the second entry)
+    #No abstraction, all esoteric knowledge of file formats, yay
+    def password
+        #got perl?
+        if ary = File.readlines("/etc/shadow").reject { |r| r =~ /^[^\w]/}.collect { |l| l.split(':')[0..1] }.find { |user, passwd| user == @resource[:name] }
+            pass = ary[1]
+        end
+        pass
+    end
+
+    #Read in /etc/shadow, find the line for our used and rewrite it with the new pw
+    #Smooth like 80 grit
+    def password=(cryptopw)
+        begin
+            File.open("/etc/shadow", "r") do |shadow|
+                File.open("/etc/shadow_tmp", "w", 0600) do |shadow_tmp|
+                    while line = shadow.gets do
+                        line_arr = line.split(':')
+                        if line_arr[0] == @resource[:name]
+                            line_arr[1] = cryptopw
+                            line = line_arr.join(':')
+                        end
+                        shadow_tmp.print line
+                    end
+                end
+            end
+            File.rename("/etc/shadow_tmp", "/etc/shadow")
+        rescue => detail
+            fail "Could not write temporary shadow file: %s" % detail
+        ensure
+            # Make sure this *always* gets deleted
+            File.unlink("/etc/shadow_tmp") if File.exist?("/etc/shadow_tmp")
+        end
     end
 end
 
