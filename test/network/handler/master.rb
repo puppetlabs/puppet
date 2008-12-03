@@ -23,7 +23,7 @@ class TestMaster < Test::Unit::TestCase
 
     def test_freshness_is_always_now
         now1 = mock 'now1'
-        Time.expects(:now).returns(now1)
+        Time.stubs(:now).returns(now1)
 
         now1.expects(:to_i).returns 10
 

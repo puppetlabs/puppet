@@ -80,7 +80,7 @@ module Puppet
         def retrieve
             return :absent unless stat = @resource.stat
 
-            # Don't even try to manage the content on directories
+            # Don't even try to manage the content on directories or links
             return nil if stat.ftype == "directory"
 
             begin

@@ -435,7 +435,7 @@ class TestUser < Test::Unit::TestCase
             user[:managehome] = false
         end
 
-        assert_raise(ArgumentError, "did not fail when managehome? is false") do
+        assert_raise(Puppet::Error, "did not fail when managehome? is false") do
             user[:managehome] = true
         end
 

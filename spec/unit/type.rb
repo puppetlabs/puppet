@@ -14,6 +14,11 @@ describe Puppet::Type do
         resource.expirer.should equal(catalog)
     end
 
+    it "should do nothing when asked to expire when it has no catalog" do
+        resource = Puppet::Type.type(:mount).create(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
+        lambda { resource.expire }.should_not raise_error
+    end
+
     it "should be able to retrieve a property by name" do
         resource = Puppet::Type.type(:mount).create(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
         resource.property(:fstype).must be_instance_of(Puppet::Type.type(:mount).attrclass(:fstype))

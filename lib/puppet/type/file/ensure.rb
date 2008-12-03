@@ -110,8 +110,8 @@ module Puppet
         end
 
         def change_to_s(currentvalue, newvalue)
-            if property = @resource.property(:content) and ! property.insync?(currentvalue)
-                return property.change_to_s(currentvalue, property.should)
+            if property = @resource.property(:content) and content = property.retrieve and ! property.insync?(content)
+                return property.change_to_s(content, property.should)
             else
                 super(currentvalue, newvalue)
             end

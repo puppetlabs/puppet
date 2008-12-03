@@ -553,6 +553,13 @@ class Type
         }
     end
 
+    # If we've got a catalog, then use it to expire our data;
+    # otherwise, null-op.
+    def expire
+        return nil unless expirer
+        super
+    end
+
     # Let the catalog determine whether a given cached value is
     # still valid or has expired.
     def expirer

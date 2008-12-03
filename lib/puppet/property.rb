@@ -291,7 +291,7 @@ class Puppet::Property < Puppet::Parameter
         # Set a name for looking up associated options like the event.
         name = self.class.value_name(value)
 
-        call = self.class.value_option(name, :call)
+        call = self.class.value_option(name, :call) || :none
 
         if call == :instead
             event, tmp = call_valuemethod(name, value) 
@@ -310,7 +310,7 @@ class Puppet::Property < Puppet::Parameter
             # was never used, and it makes things unecessarily complicated.
             # If you want to specify a block and still call the setter, then
             # do so in the block.
-            devfail "Cannot use obsolete :call value %s" % call
+            devfail "Cannot use obsolete :call value '%s' for property '%s'" % [call, self.class.name]
         end
 
         return event(name, event)

@@ -659,7 +659,8 @@ module Puppet
         # Remove any existing data.  This is only used when dealing with
         # links or directories.
         def remove_existing(should)
-            return unless s = stat(true)
+            expire()
+            return unless s = stat
 
             self.fail "Could not back up; will not replace" unless handlebackup
 
