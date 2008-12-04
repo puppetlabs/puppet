@@ -1,5 +1,6 @@
 require 'facter/util/plist'
 require 'puppet'
+require 'tempfile'
 
 Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppet::Provider do
 # Puppet::Type.type(:macauthorization).provide :macauth  do
@@ -63,10 +64,10 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
         if not auth_plist
             Puppet.notice("This should be an error nigel")
         end
-        self.rights = auth_plist["rights"]
-        self.rules = auth_plist["rules"]
-        self.parsed_auth_db = self.rights
-        self.parsed_auth_db.merge(self.rules)
+        self.rights = auth_plist["rights"].dup
+        self.rules = auth_plist["rules"].dup
+        self.parsed_auth_db = self.rights.dup
+        self.parsed_auth_db.merge!(self.rules.dup)
     end
     
     def initialize(resource)
@@ -95,14 +96,43 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
         output = execute(cmds, :combine => false)
         current_values = Plist::parse_xml(output)
         specified_values = convert_plist_to_native_attributes(@property_hash)
-        
+
         # take the current values, merge the specified values to obtain a complete
         # description of the new values.
         new_values = current_values.merge(specified_values)
+        
+        # the security binary only allows for writes using stdin, so we dump this
+        # to a tempfile.
+        tmp = Tempfile.new('puppet_macauthorization')
+        begin
+            tmp.flush
+            Plist::Emit.save_plist(new_values, tmp.path)
+            tmp.flush
+            cmds = [] << :security << "authorizationdb" << "write" << resource[:name]
+            output = execute(cmds, :combine => false, :stdin => tmp.path)
+        ensure
+            tmp.close
+            tmp.unlink
+        end
     end
     
     def flush_rule
-        
+        # unfortunately the security binary doesn't support modifying rules at all
+        # so we have to twiddle the whole plist... :( See Apple Bug #6386000
+        authdb = Plist::parse_xml(AuthorizationDB)
+        authdb_rules = authdb["rules"].dup
+        current_values = []
+        if authdb_rules[resource[:name]]
+            current_values = authdb_rules[resource[:name]]
+        end
+        specified_values = convert_plist_to_native_attributes(@property_hash)
+        new_values = current_values.merge(specified_values)
+        authdb["rules"][resource[:name]] = new_values
+        begin
+            Plist::Emit.save_plist(authdb, AuthorizationDB)
+        rescue # what do I rescue here? TODO
+            raise Puppet::Error.new("couldn't write to authorizationdb")
+        end
     end
     
     # This mainly converts the keys from the puppet attributes to the 'native'
@@ -145,7 +175,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
         # Puppet.notice "retrieve #{attribute} from #{resource_name}"
         
         if not self.class.parsed_auth_db.has_key?(resource_name)
-            raise Puppet::Error("Unable to find resource #{resource_name} in authorization db.")
+            raise Puppet::Error.new("Unable to find resource #{resource_name} in authorization db.")
         end
        
         if PuppetToNativeAttributeMap.has_key?(attribute)
