@@ -268,7 +268,7 @@ module Util
 
     # Execute the desired command, and return the status and output.
     # def execute(command, failonfail = true, uid = nil, gid = nil)
-    def execute(command, arguments = {:failonfail => true, :combine => true})
+    def execute(command, arguments = {:failonfail => true, :combine => true, :stdin => "/dev/null"})
         if command.is_a?(Array)
             command = command.flatten.collect { |i| i.to_s }
             str = command.join(" ")
@@ -321,7 +321,7 @@ module Util
             # Child process executes this
             Process.setsid
             begin
-                $stdin.reopen("/dev/null")
+                $stdin.reopen(arguments[:stdin])
                 $stdout.reopen(output_file)
                 $stderr.reopen(error_file)
 
