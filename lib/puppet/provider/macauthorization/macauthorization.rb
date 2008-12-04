@@ -11,6 +11,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     defaultfor :operatingsystem => :darwin
     
     AuthorizationDB = "/etc/authorization"
+    
     @rights = {}
     @rules = {}
     @parsed_auth_db = {}
@@ -20,17 +21,19 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
                                     :authenticate_user => "authenticate-user",                                    
                                     :authclass => "class",
                                     :k_of_n => "k-of-n",
-                                    :comment => "comment",
+                                    # :comment => "comment",
                                     # :group => "group,"
-                                    :shared => "shared",
-                                    :mechanisms => "mechanisms"}
+                                    # :shared => "shared",
+                                    # :mechanisms => "mechanisms"
+                                    }
                               
     NativeToPuppetAttributeMap = {  "allow-root" => :allow_root,
                                     "authenticate-user" => :authenticate_user,
-                                    "class" => :authclass,
-                                    "comment" => :comment,
-                                    "shared" => :shared,
-                                    "mechanisms" => :mechanisms, }
+                                    # "class" => :authclass,
+                                    # "comment" => :comment,
+                                    # "shared" => :shared,
+                                    # "mechanisms" => :mechanisms, 
+                                    }
 
     mk_resource_methods
     
@@ -42,12 +45,12 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     end
     
     def self.prefetch(resources)
-        # Puppet.notice("self.prefetch.")
+        Puppet.notice("self.prefetch.")
         self.populate_rules_rights
     end
     
     def self.instances
-        # Puppet.notice("self.instances")
+        Puppet.notice("self.instances")
         self.populate_rules_rights
         self.parsed_auth_db.collect do |k,v|
             new(:name => k)  # doesn't seem to matter if I fill them in?
@@ -55,7 +58,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     end
     
     def self.populate_rules_rights
-        # Puppet.notice("self.populate_rules_rights")
+        Puppet.notice("self.populate_rules_rights")
         auth_plist = Plist::parse_xml("/etc/authorization")
         if not auth_plist
             Puppet.notice("This should be an error nigel")
@@ -68,11 +71,11 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     
     def initialize(resource)
         Puppet.notice "initialize"
+        self.class.populate_rules_rights
         super
     end
     
     def flush
-        # Puppet.notice("flush called")
         case resource[:auth_type]
         when :right
             flush_right
@@ -93,51 +96,33 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
         current_values = Plist::parse_xml(output)
         specified_values = convert_plist_to_native_attributes(@property_hash)
         
-        # specified_values.each_pair do |k,v|
-        #     Puppet.notice "specified_values: #{k} => #{v}"
-        # end
-        # current_values.each_pair do |k,v|
-        #     Puppet.notice "current values: #{k} => #{v}"
-        # end
-        
         # take the current values, merge the specified values to obtain a complete
         # description of the new values.
         new_values = current_values.merge(specified_values)
-        new_values.each_pair do |k,v|
-            Puppet.notice "new values: #{k} => #{v}"
-        end
     end
     
     def flush_rule
         
     end
     
+    # This mainly converts the keys from the puppet attributes to the 'native'
+    # ones, but also enforces that the keys are all Strings rather than Symbols
+    # so that any merges of the resultant Hash are sane.
     def convert_plist_to_native_attributes(propertylist)
         propertylist.each_pair do |key, value|
+            new_key = nil
             if PuppetToNativeAttributeMap.has_key?(key)
-                new_key = PuppetToNativeAttributeMap[key]
-                propertylist[new_key] = value
+                new_key = PuppetToNativeAttributeMap[key].to_s
+            elsif not key.is_a?(String)
+                new_key = key.to_s
+            end
+            if not new_key.nil?
                 propertylist.delete(key)
+                propertylist[new_key] = value
             end
         end
         propertylist
     end
-    
-    # # Look up the current status.
-    # def properties
-    #     if @property_hash.empty?
-    #         @property_hash = status || {}
-    #         if @property_hash.empty?
-    #             @property_hash[:ensure] = :absent
-    #         else
-    #             @resource.class.validproperties.each do |name|
-    #                 @property_hash[name] ||= :absent
-    #             end
-    #         end
-    # 
-    #     end
-    #     @property_hash.dup
-    # end
     
     def create
         Puppet.notice "creating #{resource[:name]}"
@@ -159,34 +144,30 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     def retrieve_value(resource_name, attribute)
         # Puppet.notice "retrieve #{attribute} from #{resource_name}"
         
-        return nil if not self.class.parsed_auth_db.has_key?(resource_name) # error!!
+        if not self.class.parsed_auth_db.has_key?(resource_name)
+            raise Puppet::Error("Unable to find resource #{resource_name} in authorization db.")
+        end
        
         if PuppetToNativeAttributeMap.has_key?(attribute)
-           native_attribute = PuppetToNativeAttributeMap[attribute]
-           # Puppet.notice "attribute set from: #{attribute} to #{PuppetToNativeAttributeMap[attribute]}"
+            native_attribute = PuppetToNativeAttributeMap[attribute]
         else
-            native_attribute = attribute
+            native_attribute = attribute.to_s
         end
         
         if self.class.parsed_auth_db[resource_name].has_key?(native_attribute)
             value = self.class.parsed_auth_db[resource_name][native_attribute]
-            # Puppet.notice "retrieve value has found: #{value} of kind #{value.class}"
-            if value == "true" or value == true or value == :true
+            case value
+            when true, "true", :true
                 value = :true
-            elsif value == "false" or value == false or value == :false
+            when false, "false", :false
                 value = :false
             end
             @property_hash[attribute] = value
-            # @property_hash.each_pair do |k,v|
-            #     next if k == :ensure
-            #     Puppet.notice "NBK: prop hash for #{k} is #{v}"
-            # end
             return value
         else
-            @property_hash.delete(attribute) # do I do this here?
-            return 
+            @property_hash.delete(attribute)
+            return ""
         end
-        
     end
     
     def allow_root
@@ -268,6 +249,8 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
         elsif self.class.rules.has_key?(resource[:name])
             return :rule
         else
+            Puppet.notice "self.class.rights.keys #{self.class.rights.keys}"
+            Puppet.notice "self.class.rules.keys #{self.class.rules.keys}"            
             raise Puppet::Error.new("wtf mate?")
         end
     end
