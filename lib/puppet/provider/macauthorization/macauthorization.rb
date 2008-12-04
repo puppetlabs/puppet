@@ -100,6 +100,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
         # take the current values, merge the specified values to obtain a complete
         # description of the new values.
         new_values = current_values.merge(specified_values)
+        Puppet.notice "new values: #{new_values}"
         
         # the security binary only allows for writes using stdin, so we dump this
         # to a tempfile.
@@ -107,9 +108,9 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
         begin
             tmp.flush
             Plist::Emit.save_plist(new_values, tmp.path)
-            tmp.flush
+            # tmp.flush
             cmds = [] << :security << "authorizationdb" << "write" << resource[:name]
-            output = execute(cmds, :combine => false, :stdin => tmp.path)
+            output = execute(cmds, :stdinfile => tmp.path.to_s)
         ensure
             tmp.close
             tmp.unlink
