@@ -1,17 +1,26 @@
+require 'facter'
 require 'facter/util/plist'
 require 'puppet'
 require 'tempfile'
 
 Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppet::Provider do
-# Puppet::Type.type(:macauthorization).provide :macauth  do
-    desc "Manage Mac OS X authorization database."
+
+    desc "Manage Mac OS X authorization database rules and rights."
 
     commands :security => "/usr/bin/security"
+    commands :sw_vers => "/usr/bin/sw_vers"
     
     confine :operatingsystem => :darwin
+    
+    product_version = sw_vers "-productVersion"
+    
+    confine :true => if /^10.5/.match(product_version) or /^10.6/.match(product_version)
+        true
+    end
+       
     defaultfor :operatingsystem => :darwin
     
-    AuthorizationDB = "/etc/authorization"
+    AuthDB = "/etc/authorization"
     
     @rights = {}
     @rules = {}
@@ -24,7 +33,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
                                     :authenticate_user => "authenticate-user",                                    
                                     :auth_class => "class",
                                     :k_of_n => "k-of-n",
-                                    }
+                                    :session_owner => "session-owner", }
 
     mk_resource_methods
     
@@ -32,46 +41,53 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
         attr_accessor :parsed_auth_db
         attr_accessor :rights
         attr_accessor :rules
-        attr_accessor :comments  # Not implemented yet. Is there any real need to?
-    end
+        attr_accessor :comments  # Not implemented yet.
     
-    def self.prefetch(resources)
-        self.populate_rules_rights
-    end
-    
-    def self.instances
-        self.populate_rules_rights
-        self.parsed_auth_db.collect do |k,v|
-            new(:name => k)
+        def prefetch(resources)
+            self.populate_rules_rights
         end
+    
+        def instances
+            if self.parsed_auth_db == {}
+                self.prefetch(nil)
+            end
+            self.parsed_auth_db.collect do |k,v|
+                new(:name => k)
+            end
+        end
+    
+        def populate_rules_rights
+            auth_plist = Plist::parse_xml(AuthDB)
+            if not auth_plist
+                raise Puppet::Error.new("Cannot parse: #{AuthDB}")
+            end
+            self.rights = auth_plist["rights"].dup
+            self.rules = auth_plist["rules"].dup
+            self.parsed_auth_db = self.rights.dup
+            self.parsed_auth_db.merge!(self.rules.dup)
+        end
+    
     end
     
-    def self.populate_rules_rights
-        auth_plist = Plist::parse_xml(AuthorizationDB)
-        if not auth_plist
-            raise Puppet::Error.new("Unable to parse authorization db at #{AuthorizationDB}")
-        end
-        self.rights = auth_plist["rights"].dup
-        self.rules = auth_plist["rules"].dup
-        self.parsed_auth_db = self.rights.dup
-        self.parsed_auth_db.merge!(self.rules.dup)
-    end
+    # standard required provider instance methods
     
     def initialize(resource)
-        if self.class.parsed_auth_db.nil?
-            self.class.prefetch
+        if self.class.parsed_auth_db == {}
+            self.class.prefetch(resource)
         end
         super
     end
     
     
     def create
-        # we just fill the @property_hash in here and let the flush method deal with it
+        # we just fill the @property_hash in here and let the flush method 
+        # deal with it rather than repeating code.
         new_values = {}
-        Puppet::Type.type(resource.class.name).validproperties.each do |property|
-            next if property == :ensure
-            if value = resource.should(property) and value != ""
-                new_values[property] = value
+        validprops = Puppet::Type.type(resource.class.name).validproperties
+        validprops.each do |prop|
+            next if prop == :ensure
+            if value = resource.should(prop) and value != ""
+                new_values[prop] = value
             end
         end
         @property_hash = new_values.dup
@@ -85,26 +101,12 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
         when :rule
             destroy_rule
         else
-            raise Puppet::Error("You must specify the auth_type when removing macauthorization resources.")
-        end
-    end
-    
-    def destroy_right
-        security :authorizationdb, :remove, resource[:name]
-    end
-    
-    def destroy_rule
-        authdb = Plist::parse_xml(AuthorizationDB)
-        authdb_rules = authdb["rules"].dup
-        if authdb_rules[resource[:name]]
-            authdb["rules"].delete(resource[:name])
-            Plist::Emit.save_plist(authdb, AuthorizationDB)
+            raise Puppet::Error.new("Must specify auth_type when destroying.")
         end
     end
     
     def exists?
         if self.class.parsed_auth_db.has_key?(resource[:name])
-            # return :present
             return true
         else
             return false
@@ -113,24 +115,47 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     
     
     def flush
-        if resource[:ensure] != :absent  # deletion happens in the destroy methods
+        # deletion happens in the destroy methods
+        if resource[:ensure] != :absent
             case resource[:auth_type]
             when :right
                 flush_right
             when :rule
                 flush_rule
             else
-                raise Puppet::Error.new("flushing something that isn't a right or a rule.")
+                raise Puppet::Error.new("flush requested for unknown type.")
             end
             @property_hash.clear
         end
     end
     
+    
+    # utility methods below
+    
+    def destroy_right
+        security "authorizationdb", :remove, resource[:name]
+    end
+    
+    def destroy_rule
+        authdb = Plist::parse_xml(AuthDB)
+        authdb_rules = authdb["rules"].dup
+        if authdb_rules[resource[:name]]
+            begin
+                authdb["rules"].delete(resource[:name])
+                Plist::Emit.save_plist(authdb, AuthDB)
+            rescue Errno::EACCES => e
+                raise Puppet::Error.new("Error saving #{AuthDB}: #{e}")
+            end
+        end
+    end
+    
     def flush_right
-        # first we re-read the right just to make sure we're in sync for values
-        # that weren't specified in the manifest. As we're supplying the whole
-        # plist when specifying the right it seems safest to be paranoid.
-        cmds = [] << :security << "authorizationdb" << "read" << resource[:name]
+        # first we re-read the right just to make sure we're in sync for 
+        # values that weren't specified in the manifest. As we're supplying 
+        # the whole plist when specifying the right it seems safest to be 
+        # paranoid given the low cost of quering the db once more.
+        cmds = [] 
+        cmds << :security << "authorizationdb" << "read" << resource[:name]
         output = execute(cmds, :combine => false)
         current_values = Plist::parse_xml(output)
         if current_values.nil?
@@ -138,14 +163,14 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
         end
         specified_values = convert_plist_to_native_attributes(@property_hash)
 
-        # take the current values, merge the specified values to obtain a complete
-        # description of the new values.
+        # take the current values, merge the specified values to obtain a 
+        # complete description of the new values.
         new_values = current_values.merge(specified_values)
         set_right(resource[:name], new_values)
     end
     
     def flush_rule
-        authdb = Plist::parse_xml(AuthorizationDB)
+        authdb = Plist::parse_xml(AuthDB)
         authdb_rules = authdb["rules"].dup
         current_values = {}
         if authdb_rules[resource[:name]]
@@ -163,11 +188,13 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
         values = convert_plist_to_native_attributes(values)
         tmp = Tempfile.new('puppet_macauthorization')
         begin
-            # tmp.flush
             Plist::Emit.save_plist(values, tmp.path)
-            # tmp.flush
-            cmds = [] << :security << "authorizationdb" << "write" << name
-            output = execute(cmds, :combine => false, :stdinfile => tmp.path.to_s)
+            cmds = [] 
+            cmds << :security << "authorizationdb" << "write" << name
+            output = execute(cmds, :combine => false,
+                             :stdinfile => tmp.path.to_s)
+        rescue Errno::EACCES => e
+            raise Puppet::Error.new("Cannot save right to #{tmp.path}: #{e}")
         ensure
             tmp.close
             tmp.unlink
@@ -175,29 +202,30 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     end
     
     def set_rule(name, values)
-        # Both creates and modifies rules as it overwrites the entry in the rules
-        # dictionary.
-        # Unfortunately the security binary doesn't support modifying rules at all
-        # so we have to twiddle the whole plist... :( See Apple Bug #6386000
+        # Both creates and modifies rules as it overwrites the entry in the 
+        # rules dictionary.  Unfortunately the security binary doesn't 
+        # support modifying rules at all so we have to twiddle the whole 
+        # plist... :( See Apple Bug #6386000
         values = convert_plist_to_native_attributes(values)
-        authdb = Plist::parse_xml(AuthorizationDB)
+        authdb = Plist::parse_xml(AuthDB)
         authdb["rules"][name] = values
 
         begin
-            Plist::Emit.save_plist(authdb, AuthorizationDB)
+            Plist::Emit.save_plist(authdb, AuthDB)
         rescue
-            raise Puppet::Error.new("Couldn't write to authorization db at #{AuthorizationDB}")
+            raise Puppet::Error.new("Error writing to: #{AuthDB}")
         end
     end
     
     def convert_plist_to_native_attributes(propertylist)
-        # This mainly converts the keys from the puppet attributes to the 'native'
-        # ones, but also enforces that the keys are all Strings rather than Symbols
-        # so that any merges of the resultant Hash are sane.
+        # This mainly converts the keys from the puppet attributes to the
+        # 'native' ones, but also enforces that the keys are all Strings 
+        # rather than Symbols so that any merges of the resultant Hash are 
+        # sane.
         newplist = {}
         propertylist.each_pair do |key, value|
-            next if key == :ensure
-            next if key == :auth_type
+            next if key == :ensure     # not part of the auth db schema.
+            next if key == :auth_type  # not part of the auth db schema.
             new_key = key
             if PuppetToNativeAttributeMap.has_key?(key)
                 new_key = PuppetToNativeAttributeMap[key].to_s
@@ -212,7 +240,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     def retrieve_value(resource_name, attribute)
         
         if not self.class.parsed_auth_db.has_key?(resource_name)
-            raise Puppet::Error.new("Unable to find resource #{resource_name} in authorization db.")
+            raise Puppet::Error.new("Cannot find #{resource_name} in auth db")
         end
        
         if PuppetToNativeAttributeMap.has_key?(attribute)
@@ -234,80 +262,28 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
             return value
         else
             @property_hash.delete(attribute)
-            return ""
+            return ""  # so ralsh doesn't display it.
         end
     end
     
-    def allow_root
-        retrieve_value(resource[:name], :allow_root)
-    end
     
-    def allow_root=(value)
-        @property_hash[:allow_root] = value
-    end
+    # property methods below
+    #
+    # We define them all dynamically apart from auth_type which is a special
+    # case due to not being in the actual authorization db schema.
     
-    def authenticate_user
-        retrieve_value(resource[:name], :authenticate_user)
-    end
-    
-    def authenticate_user= (dosync)
-        @property_hash[:authenticate_user] = value
-    end
-        
-    def auth_class
-        retrieve_value(resource[:name], :auth_class)
-    end
-    
-    def auth_class=(value)
-        @property_hash[:auth_class] = value
-    end
-    
-    def comment
-        retrieve_value(resource[:name], :comment)
-    end
-    
-    def comment=(value)
-        @property_hash[:comment] = value
-    end
-    
-    def group
-        retrieve_value(resource[:name], :group)
-    end
-    
-    def group=(value)
-        @property_hash[:group] = value
-    end
-    
-    def k_of_n
-        retrieve_value(resource[:name], :k_of_n)
-    end
-    
-    def k_of_n=(value)
-        @property_hash[:k_of_n] = value
-    end
+    properties = [  :allow_root, :authenticate_user, :auth_class, :comment,
+                    :group, :k_of_n, :mechanisms, :rule, :session_owner,
+                    :shared, :timeout, :tries ]
 
-    def mechanisms
-        retrieve_value(resource[:name], :mechanisms)
-    end
+    properties.each do |field|
+        define_method(field.to_s) do
+            retrieve_value(resource[:name], field)
+        end
 
-    def mechanisms=(value)
-        @property_hash[:mechanisms] = value
-    end
-    
-    def rule
-        retrieve_value(resource[:name], :rule)
-    end
-
-    def rule=(value)
-        @property_hash[:rule] = value
-    end
-    
-    def shared
-        retrieve_value(resource[:name], :shared)
-    end
-    
-    def shared=(value)
-        @property_hash[:shared] = value
+        define_method(field.to_s + "=") do |value|
+            @property_hash[field] = value
+        end
     end
     
     def auth_type
@@ -320,10 +296,10 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
             elsif self.class.rules.has_key?(resource[:name])
                 return :rule
             else
-                raise Puppet::Error.new("Unable to determine if macauthorization type: #{resource[:name]} is a right or a rule.")
+                raise Puppet::Error.new("#{resource[:name]} is unknown type.")
             end
         else
-            raise Puppet::Error.new("You must specify the auth_type for new macauthorization resources.")
+            raise Puppet::Error.new("auth_type required for new resources.")
         end
     end
     
