@@ -58,8 +58,8 @@ Puppet::Type.newtype(:macauthorization) do
     newproperty(:auth_class) do
         desc "Corresponds to 'class' in the authorization store. class is
         a reserved word in Puppet syntax, so we use 'authclass'."
-        newvalue(:user)
-        newvalue(:'evaluate-mechanisms')
+        # newvalue(:user)
+        # newvalue(:'evaluate-mechanisms')
     end
     
     newproperty(:comment) do
@@ -74,7 +74,7 @@ Puppet::Type.newtype(:macauthorization) do
         desc "k-of-n. odd."
     end
     
-    newproperty(:mechanisms, :array_match => :all) do
+    newproperty(:mechanisms, :array_matching => :all) do
         desc "mechanisms"
     end
     
