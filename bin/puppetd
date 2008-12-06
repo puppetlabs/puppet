@@ -327,6 +327,8 @@ end
 # be local.
 Puppet::SSL::Host.ca_location = :remote
 
+Puppet::Transaction::Report.terminus_class = :rest
+
 # We need tomake the client either way, we just don't start it
 # if --no-client is set.
 client = Puppet::Network::Client.master.new(args)

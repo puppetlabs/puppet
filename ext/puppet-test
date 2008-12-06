@@ -364,6 +364,49 @@ Suite.new :rails, "Rails Interactions" do
     end
 end
 
+Suite.new :report, "Reports interactions" do
+    def prepare
+        Puppet::Transaction::Report.terminus_class = :rest
+    end
+
+    newtest :empty, "send empty report" do
+        report = Puppet::Transaction::Report.new
+        report.time = Time.now
+        report.save
+    end
+
+    newtest :fake, "send fake report" do
+        report = Puppet::Transaction::Report.new
+
+        resourcemetrics = {
+            :total => 12,
+            :out_of_sync => 20,
+            :applied => 45,
+            :skipped => 1,
+            :restarted => 23,
+            :failed_restarts => 1,
+            :scheduled => 10
+        }
+        report.newmetric(:resources, resourcemetrics)
+
+        timemetrics = {
+            :resource1 => 10,
+            :resource2 => 50,
+            :resource3 => 40,
+            :resource4 => 20,
+        }
+        report.newmetric(:times, timemetrics)
+
+        report.newmetric(:changes,
+            :total => 20
+        )
+
+        report.time = Time.now
+        report.save
+    end
+end
+
+
 $cmdargs = [
 	[ "--compile",    "-c",			GetoptLong::NO_ARGUMENT ],
 	[ "--describe",     			GetoptLong::REQUIRED_ARGUMENT ],

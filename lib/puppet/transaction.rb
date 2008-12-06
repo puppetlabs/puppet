@@ -505,21 +505,11 @@ class Transaction
         
         if Puppet[:report]
             begin
-                reportclient().report(report)
+                report.save()
             rescue => detail
                 Puppet.err "Reporting failed: %s" % detail
             end
         end
-    end
-
-    def reportclient
-        unless defined? @reportclient
-            @reportclient = Puppet::Network::Client.report.new(
-                :Server => Puppet[:reportserver]
-            )
-        end
-
-        @reportclient
     end
 
     # Roll all completed changes back.

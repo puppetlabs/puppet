@@ -11,7 +11,13 @@ class Puppet::Transaction::Report
     indirects :report, :terminus_class => :processor
 
     attr_accessor :logs, :metrics, :time, :host
-    
+
+    # This is necessary since Marshall doesn't know how to
+    # dump hash with default proc (see below @records)
+    def self.default_format
+        :yaml
+    end
+
     def <<(msg)
         @logs << msg
         return self
