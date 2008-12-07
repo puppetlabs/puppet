@@ -34,8 +34,6 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
                                     :auth_class => "class",
                                     :k_of_n => "k-of-n",
                                     :session_owner => "session-owner", }
-
-    mk_resource_methods
     
     class << self
         attr_accessor :parsed_auth_db
