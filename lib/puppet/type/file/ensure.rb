@@ -137,6 +137,10 @@ module Puppet
         # We have to treat :present specially, because it works with any
         # type of file.
         def insync?(currentvalue)
+            unless currentvalue == :absent or resource.replace?
+                return true
+            end
+
             if self.should == :present
                 if currentvalue.nil? or currentvalue == :absent
                     return false
