@@ -6,6 +6,14 @@ tidy = Puppet::Type.type(:tidy)
 
 describe tidy do
     after { tidy.clear }
+    
+    it "should be in sync if the targeted file does not exist" do
+        File.expects(:lstat).with("/tmp/foonesslaters").raises Errno::ENOENT
+        @tidy = tidy.create :path => "/tmp/foonesslaters", :age => "100d"
+
+        @tidy.property(:ensure).must be_insync({})
+    end
+
     [:ensure, :age, :size].each do |property|
         it "should have a %s property" % property do
             tidy.attrclass(property).ancestors.should be_include(Puppet::Property)

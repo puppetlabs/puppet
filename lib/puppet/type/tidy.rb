@@ -44,7 +44,14 @@ module Puppet
             end
 
             def insync?(is)
-                if File.lstat(resource[:path]).ftype == "directory" and ! @resource[:rmdirs]
+                begin
+                    stat = File.lstat(resource[:path])
+                rescue Errno::ENOENT
+                    info "Tidy target does not exist; ignoring"
+                    return true
+                end
+
+                if stat.ftype == "directory" and ! @resource[:rmdirs]
                     self.debug "Not tidying directories"
                     return true
                 end
