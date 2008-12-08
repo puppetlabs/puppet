@@ -15,14 +15,6 @@ Puppet::Type.type(:zfs).provide(:solaris) do
         properties
     end
 
-    def arrayify_second_line_on_whitespace(text)
-        if second_line = text.split("\n")[1]
-            second_line.split("\s")
-        else
-            []
-        end
-    end
-
     def create
         zfs *([:create] + add_properties + [@resource[:name]])
     end
@@ -41,10 +33,7 @@ Puppet::Type.type(:zfs).provide(:solaris) do
 
     [:mountpoint, :compression, :copies, :quota, :reservation, :sharenfs, :snapdir].each do |field|
         define_method(field) do
-            #special knowledge of format
-            #the command returns values in this format with the header
-            #NAME PROPERTY VALUE SOURCE
-            arrayify_second_line_on_whitespace(zfs(:get, field, @resource[:name]))[2]
+            zfs(:get, "-H", "-o", "value", field, @resource[:name]).strip
         end
 
         define_method(field.to_s + "=") do |should|

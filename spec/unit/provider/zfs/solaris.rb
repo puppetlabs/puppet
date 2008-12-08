@@ -66,12 +66,12 @@ describe provider_class do
     [:mountpoint, :compression, :copies, :quota, :reservation, :sharenfs, :snapdir].each do |prop|
         describe "when getting the #{prop} value" do
             it "should call zfs with :get, #{prop} and this zfs" do
-                @provider.expects(:zfs).with(:get, prop, @resource[:name]).returns("NAME PROPERTY VALUE SOURCE\nmyzfs name value blah")
+                @provider.expects(:zfs).with(:get, "-H", "-o", "value", prop, @resource[:name]).returns("value\n")
                 @provider.send(prop)
             end
 
             it "should get the third value of the second line from the output" do
-                @provider.stubs(:zfs).with(:get, prop, @resource[:name]).returns("NAME PROPERTY VALUE SOURCE\nmyzfs name value blah")
+                @provider.stubs(:zfs).with(:get, "-H", "-o", "value", prop, @resource[:name]).returns("value\n")
                 @provider.send(prop).should == "value"
             end
         end
