@@ -40,6 +40,7 @@ describe "Report REST Terminus" do
         @server.listen
 
         # Let's use REST for our reports :-)
+        @old_terminus = Puppet::Transaction::Report.indirection.terminus_class
         Puppet::Transaction::Report.terminus_class = :rest
 
         # LAK:NOTE We need to have a fake model here so that our indirected methods get
@@ -55,6 +56,7 @@ describe "Report REST Terminus" do
         Puppet::SSL::Host.ca_location = :none
         Puppet.settings.clear
         @server.unlisten
+        Puppet::Transaction::Report.terminus_class = @old_terminus
     end
 
     it "should be able to send a report to the server" do
