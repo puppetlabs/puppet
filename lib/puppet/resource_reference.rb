@@ -10,6 +10,10 @@ class Puppet::ResourceReference
     attr_reader :type
     attr_accessor :title, :catalog
 
+    def builtin_type?
+        builtin_type ? true : false
+    end
+
     def initialize(type, title)
         # This will set @type if it looks like a resource reference.
         self.title = title
@@ -54,16 +58,12 @@ class Puppet::ResourceReference
 
     private
 
-    def builtin_type?
-        builtin_type ? true : false
-    end
-
     def builtin_type
         if @builtin_type.nil?
             if @type =~ /::/
                 @builtin_type = false
             elsif klass = Puppet::Type.type(@type.to_s.downcase)
-                @builtin_type = klass
+                @builtin_type = true
             else
                 @builtin_type = false
             end

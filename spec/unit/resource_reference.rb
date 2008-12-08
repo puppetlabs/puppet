@@ -46,6 +46,14 @@ describe Puppet::ResourceReference do
         ref.type.should == "Foo::Bar"
         ref.title.should =="baz[yay]"
     end
+
+    it "should be considered builtin if an existing resource type matches the type" do
+        Puppet::ResourceReference.new("file", "/f").should be_builtin_type
+    end
+
+    it "should be not considered builtin if an existing resource type does not match the type" do
+        Puppet::ResourceReference.new("foobar", "/f").should_not be_builtin_type
+    end
 end
 
 describe Puppet::ResourceReference, "when resolving resources with a catalog" do
