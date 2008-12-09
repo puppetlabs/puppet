@@ -1,4 +1,46 @@
-0.24.x
+0.24.7
+    Bug #1803 Zfs should auto require the ancestor file systems
+
+    Refactor #1802 Use 'zfs get -H -o value' instead of parsing output for value
+
+    Fixing #1800 - tidy now correctly ignores missing files and directories
+
+    Fixing #1794 - returning sync when it is already initialized
+
+    Fixing #1750 again - All of the properties and now :ensure check replace?
+
+    Deprecate the NetInfo nameservice provider. Use directoryservice instead
+
+    Add macauthorization type
+
+    Fixing #1703 - using a mutex around the sending of the tagmails
+
+    Fix #1788 - allow rspec rake to run only some tests
+
+    Fixing the AST constant warnings, using a variable instead of a constant
+
+    Feature #1696 Add support for branded zones
+
+    Feature #1783 - Add ZFS support
+
+    type/mcx.rb Feature #1026 - MCX Type
+
+    Fixing #1749 - Splay now hopefully behaves "better" for small values
+
+    Fix #1741 - Add inline_template function
+
+    Slight denormalisation to store a host's environment as a first class
+
+    Added Rake :ci namespace and CI tasks
+
+    Refactoring the thread-safety in Puppet::Util
+
+    Removing the included testing gems; you must now install them yourself
+
+    Refactoring of SELinux functions to use native Ruby SELinux interface
+
+    Removing all mention of EPM, RPM, or Sun packages.
+
     Fixed #1496 - nagios_servicedependency needs a unique host_name?
 
     Fixed #1420 - nagios_serviceescalation not allowing host_name more than one type
@@ -6,8 +48,6 @@
     Fixed #1695 - Solaris 10 zone provider doesn't properly handle unknown zone attributes in newer releases
 
     Fixed #1776 - Trivial fix for gentoo service provider
-
-    Added Rake :ci namespace and CI tasks
 
     Fixed #1767 - Minor fix to emacs mode
 
@@ -59,6 +99,13 @@
 
     Removed conf/debian directory - Debian packaging information 
     now maintained downstream
+
+    Added augeas type
+
+    Added support for @doc type and manifest documentation support - see:
+    http://reductivelabs.com/trac/puppet/wiki/PuppetManifestDocumentation
+
+    Added multiline comment support
 
 0.24.6
     Adding support to the user type for: profiles, auths, project, 

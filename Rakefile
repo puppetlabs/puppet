@@ -217,10 +217,9 @@ end
       mkdir(CHANGELOG_DIR) unless File.directory?(CHANGELOG_DIR)
  
       change_body=`git log --pretty=format:'%aD%n%an <%ae>%n%s%n'`
-      version = version + "\n"
 
       File.open(File.join(CHANGELOG_DIR, "CHANGELOG.git"), 'w') do |f|
-        f << version << change_body 
+        f << change_body 
       end
  
       # Changelog commit
