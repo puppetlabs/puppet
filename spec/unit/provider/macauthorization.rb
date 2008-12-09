@@ -16,31 +16,27 @@ describe provider_class do
         # Create a mock resource
         @resource = stub 'resource'
         
-        @provider = provider_class.new(@resource)
-        
         @authname = "foo.spam.eggs.puppettest"
         @authplist = {}
         
         @rules = {@authname => @authplist}
-        @authdb = {}
-        @authdb["rules"] = @rules
+        
+        authdb = {}
+        authdb["rules"] = { "foorule" => "foo" }
+        authdb["rights"] = { "fooright" => "foo" }
+        
+        # Stub out Plist::parse_xml
+        Plist.stubs(:parse_xml).returns(authdb)
 
         # A catch all; no parameters set
         @resource.stubs(:[]).returns(nil)
 
         # But set name, ensure
         @resource.stubs(:[]).with(:name).returns @authname
-        
         @resource.stubs(:[]).with(:ensure).returns :present
-        
         @resource.stubs(:ref).returns "MacAuthorization[#{@authname}]"
 
-        # stub out the provider methods that actually touch the filesystem
-        # or execute commands
-        @provider.stubs(:populate_rules_rights).returns("")
-        
-        # Stub out Plist::parse_xml
-        Plist.stubs("parse_xml").returns(@authdb)
+        @provider = provider_class.new(@resource)
     end
     
     it "should have a create method" do
@@ -60,9 +56,9 @@ describe provider_class do
     end
     
     properties = [  :allow_root, :authenticate_user, :auth_class, :comment,
-                    :group, :k_of_n, :mechanisms, :rule, :session_owner,
-                    :shared, :timeout, :tries, :auth_type ]
-                    
+                        :group, :k_of_n, :mechanisms, :rule, :session_owner,
+                        :shared, :timeout, :tries, :auth_type ]
+                        
     properties.each do |prop|
         it "should have a #{prop.to_s} method" do
             @provider.should respond_to(prop.to_s)
@@ -79,7 +75,7 @@ describe provider_class do
         end
         
         it "should call the internal method destroy_right" do
-            @provider.expects("destroy_right")
+            @provider.expects(:destroy_right)
             @provider.destroy
         end
         it "should call the external command 'security authorizationdb remove @authname" do
@@ -94,7 +90,7 @@ describe provider_class do
         end
         
         it "should call the internal method destroy_rule" do
-            @provider.expects("destroy_rule")
+            @provider.expects(:destroy_rule)
             @provider.destroy
         end
     end
@@ -105,12 +101,12 @@ describe provider_class do
         end
         
         it "should call the internal method flush_right" do
-            @provider.expects("flush_right")
+            @provider.expects(:flush_right)
             @provider.flush
         end
         
         it "should call the internal method set_right" do
-            @provider.expects("set_right")
+            @provider.expects(:set_right)
             @provider.flush
         end
         
@@ -138,16 +134,14 @@ describe provider_class do
         end
         
         it "should call the internal method flush_rule" do
-            @provider.expects("flush_rule")
+            @provider.expects(:flush_rule)
             @provider.flush
         end
         
         it "should call the internal method set_rule" do
-            @provider.expects("set_rule")
+            @provider.expects(:set_rule)
             @provider.flush
         end
     end
-    
-
 
 end
