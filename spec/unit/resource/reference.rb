@@ -62,6 +62,22 @@ describe Puppet::Resource::Reference do
     it "should downcase resource types when producing a backward-compatible reference array for builtin resource types" do
         Puppet::Resource::Reference.new("file", "/f").to_trans_ref.should == %w{file /f}
     end
+
+    it "should be considered equivalent to another reference if their type and title match" do
+        Puppet::Resource::Reference.new("file", "/f").should == Puppet::Resource::Reference.new("file", "/f")
+    end
+
+    it "should not be considered equivalent to a non-reference" do
+        Puppet::Resource::Reference.new("file", "/f").should_not == "foo"
+    end
+
+    it "should not be considered equivalent to another reference if their types do not match" do
+        Puppet::Resource::Reference.new("file", "/f").should_not == Puppet::Resource::Reference.new("exec", "/f")
+    end
+
+    it "should not be considered equivalent to another reference if their titles do not match" do
+        Puppet::Resource::Reference.new("file", "/foo").should_not == Puppet::Resource::Reference.new("file", "/f")
+    end
 end
 
 describe Puppet::Resource::Reference, "when resolving resources with a catalog" do

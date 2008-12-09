@@ -11,6 +11,12 @@ class Puppet::Resource::Reference
     attr_reader :type
     attr_accessor :title, :catalog
 
+    def ==(ref)
+        return false unless ref.is_a?(Puppet::Resource::Reference)
+        return true if ref.type == self.type and ref.title == self.title
+        return false
+    end
+
     def builtin_type?
         builtin_type ? true : false
     end
