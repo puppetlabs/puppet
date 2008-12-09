@@ -98,7 +98,64 @@ class Puppet::Resource
         end
     end
 
+    # Translate our object to a backward-compatible transportable object.
+    def to_trans
+        if @reference.builtin_type?
+            result = to_transobject
+        else
+            result = to_transbucket
+        end
+
+        result.file = self.file
+        result.line = self.line
+
+        return result
+    end
+
     private
+
+    # Create an old-style TransBucket instance, for non-builtin resource types.
+    def to_transbucket
+        bucket = Puppet::TransBucket.new([])
+
+        bucket.type = self.type
+        bucket.name = self.title
+
+        # TransBuckets don't support parameters, which is why they're being deprecated.
+        return bucket
+    end
+
+    # Create an old-style TransObject instance, for builtin resource types.
+    def to_transobject
+        # Now convert to a transobject
+        result = Puppet::TransObject.new(@reference.title, @reference.type)
+        to_hash.each do |p, v|
+            if v.is_a?(Puppet::ResourceReference)
+                v = v.to_trans_ref
+            elsif v.is_a?(Array)
+                v = v.collect { |av|
+                    if av.is_a?(Puppet::ResourceReference)
+                        av = av.to_trans_ref
+                    end
+                    av
+                }
+            end
+
+            # If the value is an array with only one value, then
+            # convert it to a single value.  This is largely so that
+            # the database interaction doesn't have to worry about
+            # whether it returns an array or a string.
+            result[p.to_s] = if v.is_a?(Array) and v.length == 1
+                              v[0]
+                          else
+                              v
+                          end
+        end
+
+        result.tags = self.tags
+
+        return result
+    end
 
     # Produce a canonical method name.
     def parameter_name(param)

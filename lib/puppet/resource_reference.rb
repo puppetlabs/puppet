@@ -51,6 +51,18 @@ class Puppet::ResourceReference
         end
     end
 
+    # Convert to the reference format that TransObject uses.  Yay backward
+    # compatibility.
+    def to_trans_ref
+        # We have to return different cases to provide backward compatibility
+        # from 0.24.x to 0.23.x.
+        if builtin_type?
+            return [type.to_s.downcase, title.to_s]
+        else
+            return [type.to_s, title.to_s]
+        end
+    end
+
     # Convert to the standard way of referring to resources.
     def to_s
         "%s[%s]" % [@type, @title]

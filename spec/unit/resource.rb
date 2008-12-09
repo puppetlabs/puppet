@@ -193,4 +193,87 @@ describe Puppet::Resource do
             @resource.to_manifest.should be_include("    foo => ['one','two']")
         end
     end
+
+    it "should be able to convert itself to a TransObject instance" do
+        Puppet::Resource.new("one::two", "/my/file").should respond_to(:to_trans)
+    end
+
+    describe "when converting to a TransObject" do
+        describe "and the resource is not an instance of a builtin type" do
+            before do
+                @resource = Puppet::Resource.new("foo", "bar")
+            end
+
+            it "should return a simple TransBucket if it is not an instance of a builtin type" do
+                bucket = @resource.to_trans
+                bucket.should be_instance_of(Puppet::TransBucket)
+                bucket.type.should == @resource.type
+                bucket.name.should == @resource.title
+            end
+
+            it "should copy over the resource's file" do
+                @resource.file = "/foo/bar"
+                @resource.to_trans.file.should == "/foo/bar"
+            end
+
+            it "should copy over the resource's line" do
+                @resource.line = 50
+                @resource.to_trans.line.should == 50
+            end
+        end
+
+        describe "and the resource is an instance of a builtin type" do
+            before do
+                @resource = Puppet::Resource.new("file", "bar")
+            end
+
+            it "should return a TransObject if it is an instance of a builtin resource type" do
+                trans = @resource.to_trans
+                trans.should be_instance_of(Puppet::TransObject)
+                trans.type.should == "file"
+                trans.name.should == @resource.title
+            end
+
+            it "should copy over the resource's file" do
+                @resource.file = "/foo/bar"
+                @resource.to_trans.file.should == "/foo/bar"
+            end
+
+            it "should copy over the resource's line" do
+                @resource.line = 50
+                @resource.to_trans.line.should == 50
+            end
+
+            # Only TransObjects support tags, annoyingly
+            it "should copy over the resource's tags" do
+                @resource.tag "foo"
+                @resource.to_trans.tags.should == @resource.tags
+            end
+
+            it "should copy the resource's parameters into the transobject and convert the parameter name to a string" do
+                @resource[:foo] = "bar"
+                @resource.to_trans["foo"].should == "bar"
+            end
+
+            it "should be able to copy arrays of values" do
+                @resource[:foo] = %w{yay fee}
+                @resource.to_trans["foo"].should == %w{yay fee}
+            end
+
+            it "should reduce single-value arrays to just a value" do
+                @resource[:foo] = %w{yay}
+                @resource.to_trans["foo"].should == "yay"
+            end
+
+            it "should convert resource references into the backward-compatible form" do
+                @resource[:foo] = Puppet::ResourceReference.new(:file, "/f")
+                @resource.to_trans["foo"].should == %w{file /f}
+            end
+
+            it "should convert resource references into the backward-compatible form even when within arrays" do
+                @resource[:foo] = ["a", Puppet::ResourceReference.new(:file, "/f")]
+                @resource.to_trans["foo"].should == ["a", %w{file /f}]
+            end
+        end
+    end
 end

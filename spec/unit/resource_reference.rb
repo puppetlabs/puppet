@@ -54,6 +54,14 @@ describe Puppet::ResourceReference do
     it "should be not considered builtin if an existing resource type does not match the type" do
         Puppet::ResourceReference.new("foobar", "/f").should_not be_builtin_type
     end
+
+    it "should be able to produce a backward-compatible reference array" do
+        Puppet::ResourceReference.new("foobar", "/f").to_trans_ref.should == %w{Foobar /f}
+    end
+
+    it "should downcase resource types when producing a backward-compatible reference array for builtin resource types" do
+        Puppet::ResourceReference.new("file", "/f").to_trans_ref.should == %w{file /f}
+    end
 end
 
 describe Puppet::ResourceReference, "when resolving resources with a catalog" do
