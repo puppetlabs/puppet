@@ -437,7 +437,8 @@ class Nagios::Base
       setparameters :dependent_host_name, :dependent_hostgroup_name, :host_name,
           :hostgroup_name, :inherits_parent, :execution_failure_criteria,
           :notification_failure_criteria, :dependency_period,
-          :register, :use
+          :register, :use,
+          :_naginator_name
 
       setnamevar :_naginator_name
     end

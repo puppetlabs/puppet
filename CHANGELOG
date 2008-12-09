@@ -1,4 +1,8 @@
 0.24.7
+    Fixed #1496 - nagios_servicedependency needs a unique host_name?
+
+    Fixed #1420 - nagios_serviceescalation not allowing host_name more than one type
+
     Bug #1803 Zfs should auto require the ancestor file systems
 
     Refactor #1802 Use 'zfs get -H -o value' instead of parsing output for value
