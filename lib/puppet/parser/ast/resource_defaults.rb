@@ -12,7 +12,7 @@ class Puppet::Parser::AST
         # object type.
         def evaluate(scope)
             # Use a resource reference to canonize the type
-            ref = Puppet::ResourceReference.new(@type, "whatever")
+            ref = Puppet::Resource::Reference.new(@type, "whatever")
             type = ref.type
             params = @params.safeevaluate(scope)
 

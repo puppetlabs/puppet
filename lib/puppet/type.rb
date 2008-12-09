@@ -9,7 +9,7 @@ require 'puppet/metatype/manager'
 require 'puppet/util/errors'
 require 'puppet/util/log_paths'
 require 'puppet/util/logging'
-require 'puppet/resource_reference'
+require 'puppet/resource/reference'
 require 'puppet/util/cacher'
 
 # see the bottom of the file for the rest of the inclusions
@@ -1537,7 +1537,7 @@ class Type
                 # we just have a name and a type, and we need to convert it
                 # to an object...
                 tname, name = value
-                reference = Puppet::ResourceReference.new(tname, name)
+                reference = Puppet::Resource::Reference.new(tname, name)
                 reference.catalog = resource.catalog
                 
                 # Either of the two retrieval attempts could have returned

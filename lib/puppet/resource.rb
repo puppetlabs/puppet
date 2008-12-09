@@ -1,6 +1,6 @@
 require 'puppet'
 require 'puppet/util/tagging'
-require 'puppet/resource_reference'
+require 'puppet/resource/reference'
 
 # The simplest resource class.  Eventually it will function as the
 # base class for all resource-like behaviour.
@@ -36,7 +36,7 @@ class Puppet::Resource
 
     # Create our resource.
     def initialize(type, title, parameters = {})
-        @reference = Puppet::ResourceReference.new(type, title)
+        @reference = Puppet::Resource::Reference.new(type, title)
         @parameters = {}
 
         parameters.each do |param, value|
@@ -130,11 +130,11 @@ class Puppet::Resource
         # Now convert to a transobject
         result = Puppet::TransObject.new(@reference.title, @reference.type)
         to_hash.each do |p, v|
-            if v.is_a?(Puppet::ResourceReference)
+            if v.is_a?(Puppet::Resource::Reference)
                 v = v.to_trans_ref
             elsif v.is_a?(Array)
                 v = v.collect { |av|
-                    if av.is_a?(Puppet::ResourceReference)
+                    if av.is_a?(Puppet::Resource::Reference)
                         av = av.to_trans_ref
                     end
                     av

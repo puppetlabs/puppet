@@ -3,10 +3,11 @@
 #  Copyright (c) 2007. All rights reserved.
 
 require 'puppet'
+require 'puppet/resource'
 
 # A simple class to canonize how we refer to and retrieve
 # resources.
-class Puppet::ResourceReference
+class Puppet::Resource::Reference
     attr_reader :type
     attr_accessor :title, :catalog
 

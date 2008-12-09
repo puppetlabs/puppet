@@ -1,7 +1,7 @@
-require 'puppet/resource_reference'
+require 'puppet/resource/reference'
 
 # A reference to a resource.  Mostly just the type and title.
-class Puppet::Parser::Resource::Reference < Puppet::ResourceReference
+class Puppet::Parser::Resource::Reference < Puppet::Resource::Reference
     include Puppet::Util::MethodHelper
     include Puppet::Util::Errors
 

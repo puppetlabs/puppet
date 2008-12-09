@@ -18,8 +18,8 @@ describe Puppet::Resource do
         end
 
         it "should create a resource reference with its type and title" do
-            ref = Puppet::ResourceReference.new("file", "/f")
-            Puppet::ResourceReference.expects(:new).with("file", "/f").returns ref
+            ref = Puppet::Resource::Reference.new("file", "/f")
+            Puppet::Resource::Reference.expects(:new).with("file", "/f").returns ref
             Puppet::Resource.new("file", "/f")
         end
 
@@ -41,24 +41,24 @@ describe Puppet::Resource do
     end
 
     it "should use the resource reference to determine its type" do
-        ref = Puppet::ResourceReference.new("file", "/f")
-        Puppet::ResourceReference.expects(:new).returns ref
+        ref = Puppet::Resource::Reference.new("file", "/f")
+        Puppet::Resource::Reference.expects(:new).returns ref
         resource = Puppet::Resource.new("file", "/f")
         ref.expects(:type).returns "mytype"
         resource.type.should == "mytype"
     end
 
     it "should use its resource reference to determine its title" do
-        ref = Puppet::ResourceReference.new("file", "/f")
-        Puppet::ResourceReference.expects(:new).returns ref
+        ref = Puppet::Resource::Reference.new("file", "/f")
+        Puppet::Resource::Reference.expects(:new).returns ref
         resource = Puppet::Resource.new("file", "/f")
         ref.expects(:title).returns "mytitle"
         resource.title.should == "mytitle"
     end
 
     it "should use its resource reference to produce its canonical reference string" do
-        ref = Puppet::ResourceReference.new("file", "/f")
-        Puppet::ResourceReference.expects(:new).returns ref
+        ref = Puppet::Resource::Reference.new("file", "/f")
+        Puppet::Resource::Reference.expects(:new).returns ref
         resource = Puppet::Resource.new("file", "/f")
         ref.expects(:to_s).returns "Foo[bar]"
         resource.ref.should == "Foo[bar]"
@@ -266,12 +266,12 @@ describe Puppet::Resource do
             end
 
             it "should convert resource references into the backward-compatible form" do
-                @resource[:foo] = Puppet::ResourceReference.new(:file, "/f")
+                @resource[:foo] = Puppet::Resource::Reference.new(:file, "/f")
                 @resource.to_trans["foo"].should == %w{file /f}
             end
 
             it "should convert resource references into the backward-compatible form even when within arrays" do
-                @resource[:foo] = ["a", Puppet::ResourceReference.new(:file, "/f")]
+                @resource[:foo] = ["a", Puppet::Resource::Reference.new(:file, "/f")]
                 @resource.to_trans["foo"].should == ["a", %w{file /f}]
             end
         end

@@ -1,5 +1,5 @@
 require 'puppet'
-require 'puppet/resource_reference'
+require 'puppet/resource/reference'
 require 'yaml'
 
 module Puppet
@@ -36,7 +36,7 @@ module Puppet
 
         def ref
             unless defined? @ref
-                @ref = Puppet::ResourceReference.new(@type, @name)
+                @ref = Puppet::Resource::Reference.new(@type, @name)
             end
             @ref.to_s
         end
@@ -221,11 +221,11 @@ module Puppet
         def to_ref
             unless defined? @ref
                 if self.type and self.name
-                    @ref = Puppet::ResourceReference.new(self.type, self.name)
+                    @ref = Puppet::Resource::Reference.new(self.type, self.name)
                 elsif self.type and ! self.name # This is old-school node types
-                    @ref = Puppet::ResourceReference.new("node", self.type)
+                    @ref = Puppet::Resource::Reference.new("node", self.type)
                 elsif ! self.type and self.name
-                    @ref = Puppet::ResourceReference.new("component", self.name)
+                    @ref = Puppet::Resource::Reference.new("component", self.name)
                 else
                     @ref = nil
                 end
