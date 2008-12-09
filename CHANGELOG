@@ -1,4 +1,8 @@
 0.24.x
+    Fixed #1496 - nagios_servicedependency needs a unique host_name?
+
+    Fixed #1420 - nagios_serviceescalation not allowing host_name more than one type
+
     Fixed #1695 - Solaris 10 zone provider doesn't properly handle unknown zone attributes in newer releases
 
     Fixed #1776 - Trivial fix for gentoo service provider
