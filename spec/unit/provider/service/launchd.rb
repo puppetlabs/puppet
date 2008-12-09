@@ -62,7 +62,7 @@ describe provider_class do
     
     describe "when checking status" do
         it "should call the external command 'launchctl list' once" do
-            @provider.expects("launchctl").with(:list, @resource[:name]).returns(:running).once
+            @provider.expects(:launchctl).with(:list, @resource[:name]).returns(:running).once
             @provider.status
         end
     end
