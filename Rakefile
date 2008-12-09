@@ -208,3 +208,21 @@ task :mail_patches do
     # Finally, clean up the patches
     sh "rm 00*.patch"
 end
+
+    desc "Create a changelog based on your git commits."
+    task :changelog do
+ 
+      CHANGELOG_DIR = "#{Dir.pwd}"
+ 
+      mkdir(CHANGELOG_DIR) unless File.directory?(CHANGELOG_DIR)
+ 
+      change_body=`git log --pretty=format:'%aD%n%an <%ae>%n%s%n'`
+
+      File.open(File.join(CHANGELOG_DIR, "CHANGELOG.git"), 'w') do |f|
+        f << change_body 
+      end
+ 
+      # Changelog commit
+      `git add #{CHANGELOG_DIR}/CHANGELOG.git`
+      `git commit -m "Update CHANGELOG.git"`
+    end

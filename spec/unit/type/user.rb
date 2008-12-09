@@ -239,12 +239,20 @@ describe user do
 
     describe "when user has roles" do
         it "should autorequire roles" do
-            testuser = Puppet.type(:user).create(:name => "testuser", :roles => "testrole")
+            #this is a little funky because the autorequire depends on a property with a feature
+            testuser = Puppet.type(:user).create(:name => "testuser")
+            testuser.provider.class.expects(:feature?).with(:manages_solaris_rbac).returns(true)
+            testuser[:roles] = "testrole"
+
             testrole = Puppet.type(:user).create(:name => "testrole")
+
             config = Puppet::Node::Catalog.new :testing do |conf|
                 [testuser, testrole].each { |resource| conf.add_resource resource }
             end
-            testuser.autorequire
+
+            rel = testuser.autorequire[0]
+            rel.source.ref.should == testrole.ref
+            rel.target.ref.should == testuser.ref
         end
     end
 end

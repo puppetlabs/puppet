@@ -268,6 +268,9 @@ module Util
 
     # Execute the desired command, and return the status and output.
     # def execute(command, failonfail = true, uid = nil, gid = nil)
+    # :combine sets whether or not to combine stdout/stderr in the output
+    # :stdinfile sets a file that can be used for stdin. Passing a string
+    # for stdin is not currently supported.
     def execute(command, arguments = {:failonfail => true, :combine => true})
         if command.is_a?(Array)
             command = command.flatten.collect { |i| i.to_s }
@@ -321,7 +324,11 @@ module Util
             # Child process executes this
             Process.setsid
             begin
-                $stdin.reopen("/dev/null")
+                if arguments[:stdinfile]
+                    $stdin.reopen(arguments[:stdinfile])
+                else
+                    $stdin.reopen("/dev/null")
+                end
                 $stdout.reopen(output_file)
                 $stderr.reopen(error_file)
 
@@ -466,4 +473,3 @@ require 'puppet/util/execution'
 require 'puppet/util/logging'
 require 'puppet/util/package'
 require 'puppet/util/warnings'
-

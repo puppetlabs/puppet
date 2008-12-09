@@ -1,5 +1,7 @@
-# Manage NetInfo POSIX objects.  Probably only used on OS X, but I suppose
-# it could be used elsewhere.
+# Manage NetInfo POSIX objects.
+#
+# This provider has been deprecated. You should be using the directoryservice
+# nameservice provider instead.
 
 require 'puppet'
 require 'puppet/provider/nameservice'
@@ -46,6 +48,7 @@ class NetInfo < Puppet::Provider::NameService
     end
     
     def self.instances
+        warnonce "The NetInfo provider is deprecated; use directoryservice instead"
         report(@resource_type.validproperties).collect do |hash|
             self.new(hash)
         end
@@ -131,6 +134,7 @@ class NetInfo < Puppet::Provider::NameService
     end
 
     def ensure=(arg)
+        warnonce "The NetInfo provider is deprecated; use directoryservice instead"
         super
 
         # Because our stupid type can't create the whole thing at once,
@@ -202,6 +206,7 @@ class NetInfo < Puppet::Provider::NameService
     
     # Get a report for a single resource, not the whole table
     def single_report(*properties)
+        warnonce "The NetInfo provider is deprecated; use directoryservice instead"
         self.class.report(*properties).find do |hash| hash[:name] == self.name end
     end
 

@@ -181,6 +181,7 @@ Puppet::Reports.register_report(:tagmail) do
         unless defined?(@sync)
             @sync = Sync.new
         end
+        @sync
     end
 end
 

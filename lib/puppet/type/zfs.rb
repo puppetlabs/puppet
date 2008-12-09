@@ -40,6 +40,12 @@ module Puppet
             #strip the zpool off the zfs name and autorequire it
             [@parameters[:name].value.split('/')[0]]
         end
+
+        autorequire(:zfs) do
+            #slice and dice, we want all the zfs before this one
+            names = @parameters[:name].value.split('/')
+            names.slice(1..-2).inject([]) { |a,v| a << "#{a.last}/#{v}" }.collect { |fs| names[0] + fs }
+        end
     end
 end
 

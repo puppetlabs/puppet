@@ -196,6 +196,9 @@ class Nagios::Base
         args.each { |param,value|
             self[param] = value
         }
+        if @namevar == :_naginator_name
+          self['_naginator_name'] = self['name']
+        end
     end
 
     # Handle parameters like attributes.
@@ -321,115 +324,155 @@ class Nagios::Base
     end
 
     # object types
-    newtype :command do
-        setparameters :command_name, :command_line
-    end
-
-    newtype :contact do
-        setparameters :contact_name, :alias, :host_notification_period,
-            :host_notification_commands, :service_notification_period,
-            :service_notification_commands, :register, :email, :pager, 
-            :service_notification_options, :host_notification_options
-
-        setsuperior "person"
-    end
-
-    newtype :contactgroup do
-        setparameters :contactgroup_name, :alias, :members
-    end
-
     newtype :host do
-        setparameters :host_name, :notifications_enabled, :event_handler_enabled,
-            :flap_detection_enabled, :process_perf_data, :retain_status_information,
-            :retain_nonstatus_information, :register, :use, :alias,
-            :address, :check_command, :max_check_attempts, :notification_interval,
-            :notification_period, :notification_options, :checks_enabled,
-            :failure_prediction_enabled, :parents, :contact_groups
+        setparameters :host_name, :alias, :display_name, :address, :parents,
+            :hostgroups, :check_command, :initial_state, :max_check_attempts,
+            :check_interval, :retry_interval, :active_checks_enabled,
+            :passive_checks_enabled, :check_period, :obsess_over_host,
+            :check_freshness, :freshness_threshold, :event_handler,
+            :event_handler_enabled, :low_flap_threshold, :high_flap_threshold,
+            :flap_detection_enabled, :flap_detection_options,
+            :failure_prediction_enabled, :process_perf_data,
+            :retain_status_information, :retain_nonstatus_information, :contacts,
+            :contact_groups, :notification_interval, :first_notification_delay,
+            :notification_period, :notification_options, :notifications_enabled,
+            :stalking_options, :notes, :notes_url, :action_url, :icon_image,
+            :icon_image_alt, :vrml_image, :statusmap_image, "2d_coords".intern,
+            "3d_coords".intern,
+            :register, :use
 
         setsuperior "person"
         map :address => "ipHostNumber"
     end
 
-    newtype :hostextinfo do
-        auxiliary = true
-        setparameters :host_name, :notes_url, :icon_image, :icon_image_alt, :vrml_image,
-            "2d_coords".intern, "3d_coords".intern
-
-        setnamevar :host_name
-    end
-
     newtype :hostgroup do
-        setparameters :hostgroup_name, :alias, :contact_groups, :members
-    end
-
-    newtype :hostescalation do
-        setparameters :name, :first_notification, :last_notification,
-            :notification_interval, :contact_groups,
-            :escalation_options, :register, :hostgroup_name
-        setnamevar :name
-    end              
-
-    newtype :hostgroupescalation do
-        auxiliary = true
-        setparameters :hostgroup_name, :first_notification, :last_notification,
-            :contact_groups, :notification_interval
-
-        setnamevar :hostgroup_name
+      setparameters :hostgroup_name, :alias, :members, :hostgroup_members, :notes,
+          :notes_url, :action_url,
+          :register, :use
     end
 
     newtype :service do
         attach :host => :host_name
-        setparameters :name, :active_checks_enabled, :passive_checks_enabled,
-            :parallelize_check, :obsess_over_service, :check_freshness,
-            :notifications_enabled, :event_handler_enabled,
-            :flap_detection_enabled, :process_perf_data,
-            :retain_status_information, :retain_nonstatus_information, :register,
-            :is_volatile, :check_period, :max_check_attempts,
-            :normal_check_interval, :retry_check_interval, :contact_groups,
-            :notification_interval, :notification_period, :notification_options,
-            :service_description, :host_name, :freshness_threshold,
-            :check_command, :hostgroup_name, :event_handler, :servicegroups, :host
+        setparameters :host_name, :hostgroup_name, :service_description,
+            :display_name, :servicegroups, :is_volatile, :check_command,
+            :initial_state, :max_check_attempts, :check_interval, :retry_interval,
+            :normal_check_interval, :retry_check_interval, :active_checks_enabled,
+            :passive_checks_enabled, :parallelize_check, :check_period,
+            :obsess_over_service, :check_freshness, :freshness_threshold,
+            :event_handler, :event_handler_enabled, :low_flap_threshold,
+            :high_flap_threshold, :flap_detection_enabled,:flap_detection_options,
+            :process_perf_data, :failure_prediction_enabled, :retain_status_information,
+            :retain_nonstatus_information, :notification_interval,
+            :first_notification_delay, :notification_period, :notification_options,
+            :notifications_enabled, :contacts, :contact_groups, :stalking_options,
+            :notes, :notes_url, :action_url, :icon_image, :icon_image_alt,
+            :register, :use,
+            :_naginator_name
 
         suppress :host_name
 
-        setnamevar :service_description
+        setnamevar :_naginator_name
+    end
+
+    newtype :servicegroup do
+        setparameters :servicegroup_name, :alias, :members, :servicegroup_members,
+            :notes, :notes_url, :action_url,
+            :register, :use
+    end
+
+    newtype :contact do
+        setparameters :contact_name, :alias, :contactgroups,
+            :host_notifications_enabled, :service_notifications_enabled,
+            :host_notification_period, :service_notification_period,
+            :host_notification_options, :service_notification_options,
+            :host_notification_commands, :service_notification_commands,
+            :email, :pager, :address1, :address2, :address3, :address4,
+            :address5, :address6, :can_submit_commands, :retain_status_information,
+            :retain_nonstatus_information,
+            :register, :use
+
+        setsuperior "person"
+    end
+
+    newtype :contactgroup do
+        setparameters :contactgroup_name, :alias, :members, :contactgroup_members,
+            :register, :use
+    end
+
+    # TODO - We should support generic time periods here eg "day 1 - 15"
+    newtype :timeperiod do
+        setparameters :timeperiod_name, :alias, :sunday, :monday, :tuesday,
+            :wednesday, :thursday, :friday, :saturday, :exclude,
+            :register, :use
+    end
+
+    newtype :command do
+        setparameters :command_name, :command_line
     end
 
     newtype :servicedependency do
         auxiliary = true
-        setparameters :host_name, :service_description, :dependent_host_name,
-            :dependent_service_description, :execution_failure_criteria,
-            :notification_failure_criteria, :hostgroup_name, 
-            :dependent_hostgroup_name
+        setparameters :dependent_host_name, :dependent_hostgroup_name,
+            :dependent_service_description, :host_name, :hostgroup_name,
+            :service_description, :inherits_parent, :execution_failure_criteria,
+            :notification_failure_criteria, :dependency_period,
+            :register, :use,
+            :_naginator_name
 
-        setnamevar :host_name
+        setnamevar :_naginator_name
     end
 
     newtype :serviceescalation do
-        setparameters :host_name, :service_description, :first_notification,
-            :last_notification, :contact_groups, :notification_interval, :hostgroup_name
+        setparameters :host_name, :hostgroup_name, :service_description, :contacts,
+            :contact_groups, :first_notification, :last_notification,
+            :notification_interval, :escalation_period, :escalation_options,
+            :register, :use,
+            :_naginator_name
 
-        setnamevar :host_name
+        setnamevar :_naginator_name
     end
 
-    newtype :servicegroup do
-        setparameters :servicegroup_name, :alias
+    newtype :hostdependency do
+      auxiliary = true
+      setparameters :dependent_host_name, :dependent_hostgroup_name, :host_name,
+          :hostgroup_name, :inherits_parent, :execution_failure_criteria,
+          :notification_failure_criteria, :dependency_period,
+          :register, :use,
+          :_naginator_name
 
-        setnamevar :servicegroup_name
+      setnamevar :_naginator_name
+    end
+
+    newtype :hostescalation do
+        setparameters :host_name, :hostgroup_name, :contacts, :contact_groups,
+            :first_notification, :last_notification, :notification_interval,
+            :escalation_period, :escalation_options,
+            :register, :use,
+            :_naginator_name
+
+        setnamevar :_naginator_name
+    end
+
+    newtype :hostextinfo do
+        auxiliary = true
+        setparameters :host_name, :notes, :notes_url, :icon_image, :icon_image_alt,
+            :vrml_image, :statusmap_image, "2d_coords".intern, "3d_coords".intern,
+            :register, :use
+
+        setnamevar :host_name
     end
 
     newtype :serviceextinfo do
         auxiliary = true
 
-        setparameters :host_name, :service_description, :icon_image, :icon_image_alt
+        setparameters :host_name, :service_description, :notes, :notes_url,
+            :action_url, :icon_image, :icon_image_alt,
+            :register, :use,
+            :_naginator_name
 
-        setnamevar :host_name
+        setnamevar :_naginator_name
     end
 
-    newtype :timeperiod do
-        setparameters :timeperiod_name, :alias, :sunday, :monday, :tuesday,
-            :wednesday, :thursday, :friday, :saturday
-    end
 end
 
 # $Id$

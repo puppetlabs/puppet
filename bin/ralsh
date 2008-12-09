@@ -192,7 +192,9 @@ properties = typeobj.properties.collect { |s| s.name }
 
 format = proc {|trans|
     trans.dup.collect do |param, value|
-        if value == "" or value == []
+        if value.nil? or value.to_s.empty?
+            trans.delete(param)
+        elsif value.to_s == "absent" and param.to_s != "ensure"
             trans.delete(param)
         end
 

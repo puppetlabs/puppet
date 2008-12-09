@@ -19,6 +19,7 @@ Puppet::Type.type(:user).provide :directoryservice, :parent => Puppet::Provider:
 
     commands :dscl => "/usr/bin/dscl"
     confine :operatingsystem => :darwin
+    defaultfor :operatingsystem => :darwin
     
     # JJM: DirectoryService can manage passwords.
     #      This needs to be a special option to dscl though (-passwd)

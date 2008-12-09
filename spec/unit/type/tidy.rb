@@ -122,6 +122,12 @@ describe Puppet::Type.type(:tidy) do
 
                 @tidy.mkfile("/what/ever")
             end
+
+            it "should do nothing if the targeted file does not exist" do
+                File.expects(:lstat).with("/what/ever").raises Errno::ENOENT
+
+                @tidy.generate.should == []
+            end
         end
 
         describe "and recursion is not used" do
