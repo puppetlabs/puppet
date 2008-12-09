@@ -15,11 +15,6 @@ describe Puppet.type(:macauthorization), "when checking macauthorization objects
         macauth_type.stubs(:defaultprovider).returns provider_class
     end
     
-    after do
-        macauth_type.clear
-    end
-        
-    
     describe "when validating attributes" do
     
         parameters = [:name,]
