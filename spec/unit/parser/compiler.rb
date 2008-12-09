@@ -251,7 +251,7 @@ describe Puppet::Parser::Compiler do
             file2 = Puppet::Type.type(:file).create :path => "/foo"
 
             @compiler.add_resource(@scope, file1)
-            lambda { @compiler.add_resource(@scope, file2) }.should raise_error(Puppet::Node::Catalog::DuplicateResourceError)
+            lambda { @compiler.add_resource(@scope, file2) }.should raise_error(Puppet::Resource::Catalog::DuplicateResourceError)
         end
 
         it "should have a method for looking up resources" do

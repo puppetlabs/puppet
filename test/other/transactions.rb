@@ -346,7 +346,7 @@ class TestTransactions < Test::Unit::TestCase
         file[:group] = @groups[0]
         assert_apply(file)
 
-        config = Puppet::Node::Catalog.new
+        config = Puppet::Resource::Catalog.new
         fcomp = Puppet::Type.type(:component).create(:name => "file")
         config.add_resource fcomp
         config.add_resource file
@@ -554,7 +554,7 @@ class TestTransactions < Test::Unit::TestCase
     end
 
     def test_ignore_tags?
-        config = Puppet::Node::Catalog.new
+        config = Puppet::Resource::Catalog.new
         config.host_config = true
         transaction = Puppet::Transaction.new(config)
         assert(! transaction.ignore_tags?, "Ignoring tags when applying a host catalog")
@@ -566,7 +566,7 @@ class TestTransactions < Test::Unit::TestCase
     
     def test_missing_tags?
         resource = stub 'resource', :tagged? => true
-        config = Puppet::Node::Catalog.new
+        config = Puppet::Resource::Catalog.new
 
         # Mark it as a host config so we don't care which test is first
         config.host_config = true
@@ -659,7 +659,7 @@ class TestTransactions < Test::Unit::TestCase
         end
 
         # Make a graph with some stuff in it.
-        graph = Puppet::Node::Catalog.new
+        graph = Puppet::Resource::Catalog.new
 
         # Add a non-triggering edge.
         a = trigger.new(:a)

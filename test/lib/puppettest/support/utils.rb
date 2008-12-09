@@ -24,7 +24,7 @@ module PuppetTest::Support::Utils
     # Turn a list of resources, or possibly a catalog and some resources,
     # into a catalog object.
     def resources2catalog(*resources)
-        if resources[0].is_a?(Puppet::Node::Catalog)
+        if resources[0].is_a?(Puppet::Resource::Catalog)
             config = resources.shift
             unless resources.empty?
                 resources.each { |r| config.add_resource r }
@@ -34,7 +34,7 @@ module PuppetTest::Support::Utils
             comp = resources.shift
             comp.delve
         else
-            config = Puppet::Node::Catalog.new
+            config = Puppet::Resource::Catalog.new
             resources.each { |res| config.add_resource res }
         end
         return config
@@ -159,7 +159,7 @@ module PuppetTest::Support::Utils
         else
             name = :testing
         end
-        config = Puppet::Node::Catalog.new :testing do |conf|
+        config = Puppet::Resource::Catalog.new :testing do |conf|
             resources.each { |resource| conf.add_resource resource }
         end
 

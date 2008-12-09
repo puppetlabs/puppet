@@ -10,7 +10,7 @@ require 'puppet/util/tagging'
 # meant to be passed from server to client, and it contains all
 # of the information in the catalog, including the resources
 # and the relationships between them.
-class Puppet::Node::Catalog < Puppet::SimpleGraph
+class Puppet::Resource::Catalog < Puppet::SimpleGraph
     class DuplicateResourceError < Puppet::Error; end
 
     extend Puppet::Indirector

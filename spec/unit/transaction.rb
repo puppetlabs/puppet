@@ -9,7 +9,7 @@ describe Puppet::Transaction do
         @generator_class = mkgenerator
         @generator = mkgenerator.create(:name => "foo")
 
-        @catalog = Puppet::Node::Catalog.new
+        @catalog = Puppet::Resource::Catalog.new
         @catalog.add_resource @generator
 
         @report = stub_everything 'report'

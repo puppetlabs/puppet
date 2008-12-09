@@ -2,34 +2,34 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-describe Puppet::Node::Catalog, " when compiling" do
+describe Puppet::Resource::Catalog, " when compiling" do
     it "should accept tags" do
-        config = Puppet::Node::Catalog.new("mynode")
+        config = Puppet::Resource::Catalog.new("mynode")
         config.tag("one")
         config.tags.should == %w{one}
     end
 
     it "should accept multiple tags at once" do
-        config = Puppet::Node::Catalog.new("mynode")
+        config = Puppet::Resource::Catalog.new("mynode")
         config.tag("one", "two")
         config.tags.should == %w{one two}
     end
 
     it "should convert all tags to strings" do
-        config = Puppet::Node::Catalog.new("mynode")
+        config = Puppet::Resource::Catalog.new("mynode")
         config.tag("one", :two)
         config.tags.should == %w{one two}
     end
 
     it "should tag with both the qualified name and the split name" do
-        config = Puppet::Node::Catalog.new("mynode")
+        config = Puppet::Resource::Catalog.new("mynode")
         config.tag("one::two")
         config.tags.include?("one").should be_true
         config.tags.include?("one::two").should be_true
     end
 
     it "should accept classes" do
-        config = Puppet::Node::Catalog.new("mynode")
+        config = Puppet::Resource::Catalog.new("mynode")
         config.add_class("one")
         config.classes.should == %w{one}
         config.add_class("two", "three")
@@ -37,22 +37,22 @@ describe Puppet::Node::Catalog, " when compiling" do
     end
 
     it "should tag itself with passed class names" do
-        config = Puppet::Node::Catalog.new("mynode")
+        config = Puppet::Resource::Catalog.new("mynode")
         config.add_class("one")
         config.tags.should == %w{one}
     end
 end
 
-describe Puppet::Node::Catalog, " when extracting" do
+describe Puppet::Resource::Catalog, " when extracting" do
     it "should return extraction result as the method result" do
-        config = Puppet::Node::Catalog.new("mynode")
+        config = Puppet::Resource::Catalog.new("mynode")
         config.expects(:extraction_format).returns(:whatever)
         config.expects(:extract_to_whatever).returns(:result)
         config.extract.should == :result
     end
 end
 
-describe Puppet::Node::Catalog, " when extracting transobjects" do
+describe Puppet::Resource::Catalog, " when extracting transobjects" do
 
     def mkscope
         @parser = Puppet::Parser::Parser.new :Code => ""
@@ -69,7 +69,7 @@ describe Puppet::Node::Catalog, " when extracting transobjects" do
     end
 
     it "should always create a TransBucket for the 'main' class" do
-        config = Puppet::Node::Catalog.new("mynode")
+        config = Puppet::Resource::Catalog.new("mynode")
 
         @scope = mkscope
         @source = mock 'source'
@@ -87,7 +87,7 @@ describe Puppet::Node::Catalog, " when extracting transobjects" do
 
     # This isn't really a spec-style test, but I don't know how better to do it.
     it "should transform the resource graph into a tree of TransBuckets and TransObjects" do
-        config = Puppet::Node::Catalog.new("mynode")
+        config = Puppet::Resource::Catalog.new("mynode")
 
         @scope = mkscope
         @source = mock 'source'
@@ -108,7 +108,7 @@ describe Puppet::Node::Catalog, " when extracting transobjects" do
 
     # Now try it with a more complicated graph -- a three tier graph, each tier
     it "should transform arbitrarily deep graphs into isomorphic trees" do
-        config = Puppet::Node::Catalog.new("mynode")
+        config = Puppet::Resource::Catalog.new("mynode")
 
         @scope = mkscope
         @scope.stubs(:tags).returns([])
@@ -151,7 +151,7 @@ describe Puppet::Node::Catalog, " when extracting transobjects" do
     end
 end
 
-describe Puppet::Node::Catalog, " when converting to a transobject catalog" do
+describe Puppet::Resource::Catalog, " when converting to a transobject catalog" do
     class CatalogTestResource
         attr_accessor :name, :virtual, :builtin
         def initialize(name, options = {})
@@ -181,7 +181,7 @@ describe Puppet::Node::Catalog, " when converting to a transobject catalog" do
     end
 
     before do
-        @original = Puppet::Node::Catalog.new("mynode")
+        @original = Puppet::Resource::Catalog.new("mynode")
         @original.tag(*%w{one two three})
         @original.add_class *%w{four five six}
 
@@ -244,9 +244,9 @@ describe Puppet::Node::Catalog, " when converting to a transobject catalog" do
     end
 end
 
-describe Puppet::Node::Catalog, " when converting to a RAL catalog" do
+describe Puppet::Resource::Catalog, " when converting to a RAL catalog" do
     before do
-        @original = Puppet::Node::Catalog.new("mynode")
+        @original = Puppet::Resource::Catalog.new("mynode")
         @original.tag(*%w{one two three})
         @original.add_class *%w{four five six}
 
@@ -293,12 +293,12 @@ describe Puppet::Node::Catalog, " when converting to a RAL catalog" do
     end
 
     it "should convert parser resources to transobjects and set the catalog" do
-        catalog = Puppet::Node::Catalog.new("mynode")
+        catalog = Puppet::Resource::Catalog.new("mynode")
 
         result = mock 'catalog'
         result.stub_everything
 
-        Puppet::Node::Catalog.expects(:new).returns result
+        Puppet::Resource::Catalog.expects(:new).returns result
 
         trans = mock 'trans'
         resource = Puppet::Parser::Resource.new(:scope => mock("scope"), :source => mock("source"), :type => :file, :title => "/eh")
@@ -316,7 +316,7 @@ describe Puppet::Node::Catalog, " when converting to a RAL catalog" do
     it "should not lose track of resources whose names vary" do
         changer = Puppet::TransObject.new 'changer', 'test'
 
-        config = Puppet::Node::Catalog.new('test')
+        config = Puppet::Resource::Catalog.new('test')
         config.add_resource(changer)
         config.add_resource(@top)
 
@@ -340,9 +340,9 @@ describe Puppet::Node::Catalog, " when converting to a RAL catalog" do
     end
 end
 
-describe Puppet::Node::Catalog, " when functioning as a resource container" do
+describe Puppet::Resource::Catalog, " when functioning as a resource container" do
     before do
-        @catalog = Puppet::Node::Catalog.new("host")
+        @catalog = Puppet::Resource::Catalog.new("host")
         @one = Puppet::Type.type(:notify).create :name => "one"
         @two = Puppet::Type.type(:notify).create :name => "two"
         @dupe = Puppet::Type.type(:notify).create :name => "one"
@@ -392,7 +392,7 @@ describe Puppet::Node::Catalog, " when functioning as a resource container" do
     it "should not allow two resources with the same resource reference" do
         @catalog.add_resource(@one)
 
-        proc { @catalog.add_resource(@dupe) }.should raise_error(Puppet::Node::Catalog::DuplicateResourceError)
+        proc { @catalog.add_resource(@dupe) }.should raise_error(Puppet::Resource::Catalog::DuplicateResourceError)
     end
 
     it "should ignore implicit resources that conflict with existing resources" do
@@ -473,7 +473,7 @@ describe Puppet::Node::Catalog, " when functioning as a resource container" do
     it "should optionally support an initialization block and should finalize after such blocks" do
         @one.expects :finish
         @two.expects :finish
-        config = Puppet::Node::Catalog.new("host") do |conf|
+        config = Puppet::Resource::Catalog.new("host") do |conf|
             conf.add_resource @one
             conf.add_resource @two
         end
@@ -599,9 +599,9 @@ describe Puppet::Node::Catalog, " when functioning as a resource container" do
     end
 end
 
-describe Puppet::Node::Catalog do
+describe Puppet::Resource::Catalog do
     before :each do
-        @catalog = Puppet::Node::Catalog.new("host")
+        @catalog = Puppet::Resource::Catalog.new("host")
 
         @catalog.retrieval_duration = Time.now
         @transaction = mock 'transaction'
@@ -612,7 +612,7 @@ describe Puppet::Node::Catalog do
     end
 
     it "should be an Expirer" do
-        Puppet::Node::Catalog.ancestors.should be_include(Puppet::Util::Cacher::Expirer)
+        Puppet::Resource::Catalog.ancestors.should be_include(Puppet::Util::Cacher::Expirer)
     end
 
     it "should always be expired if it's not applying" do
@@ -745,7 +745,7 @@ describe Puppet::Node::Catalog do
         after { Puppet.settings.clear }
     end
 
-    describe Puppet::Node::Catalog, " when applying non-host catalogs" do
+    describe Puppet::Resource::Catalog, " when applying non-host catalogs" do
 
         before do
             @catalog.host_config = false
@@ -768,10 +768,10 @@ describe Puppet::Node::Catalog do
     end
 end
 
-describe Puppet::Node::Catalog, " when creating a relationship graph" do
+describe Puppet::Resource::Catalog, " when creating a relationship graph" do
     before do
         Puppet::Type.type(:component)
-        @catalog = Puppet::Node::Catalog.new("host")
+        @catalog = Puppet::Resource::Catalog.new("host")
         @compone = Puppet::Type::Component.create :name => "one"
         @comptwo = Puppet::Type::Component.create :name => "two", :require => ["class", "one"]
         @file = Puppet::Type.type(:file)
@@ -856,9 +856,9 @@ describe Puppet::Node::Catalog, " when creating a relationship graph" do
     end
 end
 
-describe Puppet::Node::Catalog, " when writing dot files" do
+describe Puppet::Resource::Catalog, " when writing dot files" do
     before do
-        @catalog = Puppet::Node::Catalog.new("host")
+        @catalog = Puppet::Resource::Catalog.new("host")
         @name = :test
         @file = File.join(Puppet[:graphdir], @name.to_s + ".dot")
     end
@@ -875,7 +875,7 @@ describe Puppet::Node::Catalog, " when writing dot files" do
     end
 end
 
-describe Puppet::Node::Catalog, " when indirecting" do
+describe Puppet::Resource::Catalog, " when indirecting" do
     before do
         @indirection = stub 'indirection', :name => :catalog
 
@@ -883,13 +883,13 @@ describe Puppet::Node::Catalog, " when indirecting" do
     end
 
     it "should redirect to the indirection for retrieval" do
-        Puppet::Node::Catalog.stubs(:indirection).returns(@indirection)
+        Puppet::Resource::Catalog.stubs(:indirection).returns(@indirection)
         @indirection.expects(:find)
-        Puppet::Node::Catalog.find(:myconfig)
+        Puppet::Resource::Catalog.find(:myconfig)
     end
 
     it "should default to the 'compiler' terminus" do
-        Puppet::Node::Catalog.indirection.terminus_class.should == :compiler
+        Puppet::Resource::Catalog.indirection.terminus_class.should == :compiler
     end
 
     after do
@@ -897,9 +897,9 @@ describe Puppet::Node::Catalog, " when indirecting" do
     end
 end
 
-describe Puppet::Node::Catalog, " when converting to yaml" do
+describe Puppet::Resource::Catalog, " when converting to yaml" do
     before do
-        @catalog = Puppet::Node::Catalog.new("me")
+        @catalog = Puppet::Resource::Catalog.new("me")
         @catalog.add_edge("one", "two")
     end
 
@@ -908,9 +908,9 @@ describe Puppet::Node::Catalog, " when converting to yaml" do
     end
 end
 
-describe Puppet::Node::Catalog, " when converting from yaml" do
+describe Puppet::Resource::Catalog, " when converting from yaml" do
     before do
-        @catalog = Puppet::Node::Catalog.new("me")
+        @catalog = Puppet::Resource::Catalog.new("me")
         @catalog.add_edge("one", "two")
 
         text = YAML.dump(@catalog)
@@ -918,7 +918,7 @@ describe Puppet::Node::Catalog, " when converting from yaml" do
     end
 
     it "should get converted back to a catalog" do
-        @newcatalog.should be_instance_of(Puppet::Node::Catalog)
+        @newcatalog.should be_instance_of(Puppet::Resource::Catalog)
     end
 
     it "should have all vertices" do

@@ -108,7 +108,7 @@ describe Puppet::Type.type(:package) do
         Puppet::Type.type(:package).defaultprovider.stubs(:instances).returns([])
         @package = Puppet::Type.type(:package).create(:name => "yay")
 
-        @catalog = Puppet::Node::Catalog.new
+        @catalog = Puppet::Resource::Catalog.new
         @catalog.add_resource(@package)
     end
 

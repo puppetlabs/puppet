@@ -218,7 +218,7 @@ end
 begin
     # Compile our catalog
     starttime = Time.now
-    catalog = Puppet::Node::Catalog.find(node.name, :use_node => node)
+    catalog = Puppet::Resource::Catalog.find(node.name, :use_node => node)
 
     # Translate it to a RAL catalog
     catalog = catalog.to_ral

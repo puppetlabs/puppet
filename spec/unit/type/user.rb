@@ -246,7 +246,7 @@ describe user do
 
             testrole = Puppet.type(:user).create(:name => "testrole")
 
-            config = Puppet::Node::Catalog.new :testing do |conf|
+            config = Puppet::Resource::Catalog.new :testing do |conf|
                 [testuser, testrole].each { |resource| conf.add_resource resource }
             end
 

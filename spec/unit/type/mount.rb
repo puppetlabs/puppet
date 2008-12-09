@@ -196,7 +196,7 @@ describe Puppet::Type.type(:mount), "when modifying an existing mount entry" do
 
         @mount.provider.stubs(:mounted?).returns true
 
-        @catalog = Puppet::Node::Catalog.new
+        @catalog = Puppet::Resource::Catalog.new
         @catalog.add_resource @mount
     end
 

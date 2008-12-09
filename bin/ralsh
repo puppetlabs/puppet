@@ -231,7 +231,7 @@ else
             params.each do |param, value|
                 obj[param] = value
             end
-            catalog = Puppet::Node::Catalog.new
+            catalog = Puppet::Resource::Catalog.new
             catalog.add_resource obj
             begin
                 catalog.apply

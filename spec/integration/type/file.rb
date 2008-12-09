@@ -37,7 +37,7 @@ describe Puppet::Type.type(:file) do
 
             @file = Puppet::Type::File.create(:name => @path, :mode => 0644, :recurse => true)
 
-            @catalog = Puppet::Node::Catalog.new
+            @catalog = Puppet::Resource::Catalog.new
             @catalog.add_resource @file
 
             lambda { @file.eval_generate }.should_not raise_error
@@ -50,7 +50,7 @@ describe Puppet::Type.type(:file) do
 
             @file = Puppet::Type::File.create(:name => @path, :mode => 0644, :recurse => true)
 
-            @catalog = Puppet::Node::Catalog.new
+            @catalog = Puppet::Resource::Catalog.new
             @catalog.add_resource @file
 
             @catalog.apply
@@ -73,7 +73,7 @@ describe Puppet::Type.type(:file) do
 
             @file = Puppet::Type::File.create(:name => dest, :target => source, :recurse => true, :ensure => :link)
 
-            @catalog = Puppet::Node::Catalog.new
+            @catalog = Puppet::Resource::Catalog.new
             @catalog.add_resource @file
 
             @catalog.apply
@@ -100,7 +100,7 @@ describe Puppet::Type.type(:file) do
 
             @file = Puppet::Type::File.create(:name => dest, :source => source, :recurse => true)
 
-            @catalog = Puppet::Node::Catalog.new
+            @catalog = Puppet::Resource::Catalog.new
             @catalog.add_resource @file
 
             @catalog.apply
@@ -135,7 +135,7 @@ describe Puppet::Type.type(:file) do
 
             @file = Puppet::Type::File.create(:name => @dest, :source => @source, :recurse => true)
 
-            @catalog = Puppet::Node::Catalog.new
+            @catalog = Puppet::Resource::Catalog.new
             @catalog.add_resource @file
         end
 
@@ -168,7 +168,7 @@ describe Puppet::Type.type(:file) do
 
             file = Puppet::Type::File.create(:name => dest, :source => source)
 
-            catalog = Puppet::Node::Catalog.new
+            catalog = Puppet::Resource::Catalog.new
             catalog.add_resource file
 
             catalog.apply
@@ -185,7 +185,7 @@ describe Puppet::Type.type(:file) do
 
             file = Puppet::Type::File.create(:name => dest, :source => source)
 
-            catalog = Puppet::Node::Catalog.new
+            catalog = Puppet::Resource::Catalog.new
             catalog.add_resource file
 
             catalog.apply
@@ -201,7 +201,7 @@ describe Puppet::Type.type(:file) do
 
             file = Puppet::Type::File.create(:name => dest, :source => source)
 
-            catalog = Puppet::Node::Catalog.new
+            catalog = Puppet::Resource::Catalog.new
             catalog.add_resource file
             catalog.apply
 
@@ -223,7 +223,7 @@ describe Puppet::Type.type(:file) do
 
             file = Puppet::Type::File.create(:name => dest, :source => source, :recurse => true)
 
-            catalog = Puppet::Node::Catalog.new
+            catalog = Puppet::Resource::Catalog.new
             catalog.add_resource file
             catalog.apply
 
@@ -239,7 +239,7 @@ describe Puppet::Type.type(:file) do
             :content => "this is some content, yo"
         )
 
-        catalog = Puppet::Node::Catalog.new
+        catalog = Puppet::Resource::Catalog.new
         catalog.add_resource file
         catalog.apply
 
@@ -255,7 +255,7 @@ describe Puppet::Type.type(:file) do
             :content => "this is some content, yo"
         )
 
-        catalog = Puppet::Node::Catalog.new
+        catalog = Puppet::Resource::Catalog.new
         catalog.add_resource file
         catalog.apply
 
@@ -274,7 +274,7 @@ describe Puppet::Type.type(:file) do
             :source => source
         )
 
-        catalog = Puppet::Node::Catalog.new
+        catalog = Puppet::Resource::Catalog.new
         catalog.add_resource file
         catalog.apply
 
@@ -310,7 +310,7 @@ describe Puppet::Type.type(:file) do
                                         :purge => true,
                                         :recurse => true)
 
-            @catalog = Puppet::Node::Catalog.new
+            @catalog = Puppet::Resource::Catalog.new
             @catalog.add_resource @lfobj, @destobj
         end
 

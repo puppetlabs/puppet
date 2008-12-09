@@ -7,7 +7,7 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 
 require 'puppet/indirector/catalog/compiler'
 
-describe Puppet::Node::Catalog::Compiler do
+describe Puppet::Resource::Catalog::Compiler do
     before do
         Puppet.expects(:version).returns(1)
         Facter.expects(:value).with('fqdn').returns("my.server.com")
@@ -15,11 +15,11 @@ describe Puppet::Node::Catalog::Compiler do
     end
 
     it "should gather data about itself" do
-        Puppet::Node::Catalog::Compiler.new
+        Puppet::Resource::Catalog::Compiler.new
     end
 
     it "should cache the server metadata and reuse it" do
-        compiler = Puppet::Node::Catalog::Compiler.new
+        compiler = Puppet::Resource::Catalog::Compiler.new
         node1 = stub 'node1', :merge => nil
         node2 = stub 'node2', :merge => nil
         compiler.stubs(:compile)
@@ -31,16 +31,16 @@ describe Puppet::Node::Catalog::Compiler do
     end
 
     it "should provide a method for determining if the catalog is networked" do
-        compiler = Puppet::Node::Catalog::Compiler.new
+        compiler = Puppet::Resource::Catalog::Compiler.new
         compiler.should respond_to(:networked?)
     end
 end
 
-describe Puppet::Node::Catalog::Compiler, " when creating the interpreter" do
+describe Puppet::Resource::Catalog::Compiler, " when creating the interpreter" do
     before do
         # This gets pretty annoying on a plane where we have no IP address
         Facter.stubs(:value).returns("whatever")
-        @compiler = Puppet::Node::Catalog::Compiler.new
+        @compiler = Puppet::Resource::Catalog::Compiler.new
     end
 
     it "should not create the interpreter until it is asked for the first time" do
@@ -57,10 +57,10 @@ describe Puppet::Node::Catalog::Compiler, " when creating the interpreter" do
     end
 end
 
-describe Puppet::Node::Catalog::Compiler, " when finding nodes" do
+describe Puppet::Resource::Catalog::Compiler, " when finding nodes" do
     before do
         Facter.stubs(:value).returns("whatever")
-        @compiler = Puppet::Node::Catalog::Compiler.new
+        @compiler = Puppet::Resource::Catalog::Compiler.new
         @name = "me"
         @node = mock 'node'
         @request = stub 'request', :key => @name, :options => {}
@@ -74,12 +74,12 @@ describe Puppet::Node::Catalog::Compiler, " when finding nodes" do
     end
 end
 
-describe Puppet::Node::Catalog::Compiler, " after finding nodes" do
+describe Puppet::Resource::Catalog::Compiler, " after finding nodes" do
     before do
         Puppet.expects(:version).returns(1)
         Facter.expects(:value).with('fqdn').returns("my.server.com")
         Facter.expects(:value).with('ipaddress').returns("my.ip.address")
-        @compiler = Puppet::Node::Catalog::Compiler.new
+        @compiler = Puppet::Resource::Catalog::Compiler.new
         @name = "me"
         @node = mock 'node'
         @request = stub 'request', :key => @name, :options => {}
@@ -103,13 +103,13 @@ describe Puppet::Node::Catalog::Compiler, " after finding nodes" do
     end
 end
 
-describe Puppet::Node::Catalog::Compiler, " when creating catalogs" do
+describe Puppet::Resource::Catalog::Compiler, " when creating catalogs" do
     before do
         Facter.stubs(:value).returns("whatever")
         env = stub 'environment', :name => "yay"
         Puppet::Node::Environment.stubs(:new).returns(env)
 
-        @compiler = Puppet::Node::Catalog::Compiler.new
+        @compiler = Puppet::Resource::Catalog::Compiler.new
         @name = "me"
         @node = Puppet::Node.new @name
         @node.stubs(:merge)

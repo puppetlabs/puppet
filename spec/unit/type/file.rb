@@ -105,7 +105,7 @@ describe Puppet::Type.type(:file) do
                 :path => @link,
                 :mode => "755"
             )
-            @catalog = Puppet::Node::Catalog.new
+            @catalog = Puppet::Resource::Catalog.new
             @catalog.add_resource @resource
         end
 
@@ -186,7 +186,7 @@ describe Puppet::Type.type(:file) do
             stat = mock 'stat'
             File.expects(:lstat).returns stat
 
-            catalog = Puppet::Node::Catalog.new
+            catalog = Puppet::Resource::Catalog.new
             @resource.catalog = catalog
 
             catalog.stubs(:applying?).returns true

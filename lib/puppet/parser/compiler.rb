@@ -2,7 +2,7 @@
 #  Copyright (c) 2007. All rights reserved.
 
 require 'puppet/node'
-require 'puppet/node/catalog'
+require 'puppet/resource/catalog'
 require 'puppet/util/errors'
 
 # Maintain a graph of scopes, along with a bunch of data
@@ -412,7 +412,7 @@ class Puppet::Parser::Compiler
         @scope_graph = Puppet::SimpleGraph.new
 
         # For maintaining the relationship between scopes and their resources.
-        @catalog = Puppet::Node::Catalog.new(@node.name)
+        @catalog = Puppet::Resource::Catalog.new(@node.name)
         @catalog.version = @parser.version
     end
 

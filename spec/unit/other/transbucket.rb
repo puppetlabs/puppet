@@ -130,14 +130,14 @@ describe Puppet::TransBucket, " when generating a catalog" do
     end
 
     it "should set each TransObject's catalog before converting to a RAL resource" do
-        @middleobj.expects(:catalog=).with { |c| c.is_a?(Puppet::Node::Catalog) }
+        @middleobj.expects(:catalog=).with { |c| c.is_a?(Puppet::Resource::Catalog) }
         @top.to_catalog
     end
 
     it "should set each TransBucket's catalog before converting to a RAL resource" do
         # each bucket is seen twice in the loop, so we have to handle the case where the config
         # is set twice
-        @bottom.expects(:catalog=).with { |c| c.is_a?(Puppet::Node::Catalog) }.at_least_once
+        @bottom.expects(:catalog=).with { |c| c.is_a?(Puppet::Resource::Catalog) }.at_least_once
         @top.to_catalog
     end
 end

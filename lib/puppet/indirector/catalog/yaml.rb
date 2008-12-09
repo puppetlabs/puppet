@@ -1,7 +1,7 @@
-require 'puppet/node/catalog'
+require 'puppet/resource/catalog'
 require 'puppet/indirector/yaml'
 
-class Puppet::Node::Catalog::Yaml < Puppet::Indirector::Yaml
+class Puppet::Resource::Catalog::Yaml < Puppet::Indirector::Yaml
     desc "Store catalogs as flat files, serialized using YAML."
 
     private

@@ -25,7 +25,7 @@ module PuppetTest::Support::Resources
     end
     
     def mktree
-        catalog = Puppet::Node::Catalog.new do |config|
+        catalog = Puppet::Resource::Catalog.new do |config|
             one = treenode(config, "one", "a", "b")
             two = treenode(config, "two", "c", "d")
             middle = treenode(config, "middle", "e", "f", two)

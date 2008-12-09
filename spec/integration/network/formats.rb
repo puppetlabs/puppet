@@ -14,6 +14,6 @@ describe Puppet::Network::FormatHandler.format(:s) do
     end
 
     it "should not support catalogs" do
-        @format.should_not be_supported(Puppet::Node::Catalog)
+        @format.should_not be_supported(Puppet::Resource::Catalog)
     end
 end

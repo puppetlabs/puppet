@@ -400,7 +400,7 @@ class Transaction
     # this should only be called by a Puppet::Type::Component resource now
     # and it should only receive an array
     def initialize(resources)
-        if resources.is_a?(Puppet::Node::Catalog)
+        if resources.is_a?(Puppet::Resource::Catalog)
             @catalog = resources
         elsif resources.is_a?(Puppet::SimpleGraph)
             raise "Transactions should get catalogs now, not SimpleGraph"

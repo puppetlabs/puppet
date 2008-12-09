@@ -13,7 +13,7 @@ class TestMaster < Test::Unit::TestCase
         @master = Puppet::Network::Handler.master.new(:Manifest => tempfile)
 
         @catalog = stub 'catalog', :extract => ""
-        Puppet::Node::Catalog.stubs(:find).returns(@catalog)
+        Puppet::Resource::Catalog.stubs(:find).returns(@catalog)
     end
 
     def teardown
@@ -53,7 +53,7 @@ class TestMaster < Test::Unit::TestCase
 
         @master.stubs(:decode_facts)
 
-        Puppet::Node::Catalog.expects(:find).with("foo.com").returns(@catalog)
+        Puppet::Resource::Catalog.expects(:find).with("foo.com").returns(@catalog)
 
         @master.getconfig("facts", "yaml", "foo.com")
     end
@@ -68,7 +68,7 @@ class TestMasterFormats < Test::Unit::TestCase
         @master.stubs(:decode_facts)
 
         @catalog = stub 'catalog', :extract => ""
-        Puppet::Node::Catalog.stubs(:find).returns(@catalog)
+        Puppet::Resource::Catalog.stubs(:find).returns(@catalog)
     end
 
     def test_marshal_can_be_used

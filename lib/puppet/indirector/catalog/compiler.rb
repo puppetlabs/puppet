@@ -1,10 +1,10 @@
 require 'puppet/node'
-require 'puppet/node/catalog'
+require 'puppet/resource/catalog'
 require 'puppet/indirector/code'
 require 'puppet/parser/interpreter'
 require 'yaml'
 
-class Puppet::Node::Catalog::Compiler < Puppet::Indirector::Code
+class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     desc "Puppet's catalog compilation interface, and its back-end is
         Puppet's compiler"
 

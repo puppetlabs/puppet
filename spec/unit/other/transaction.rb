@@ -6,7 +6,7 @@ require 'puppet/transaction'
 
 describe Puppet::Transaction, " when determining tags" do
     before do
-        @config = Puppet::Node::Catalog.new
+        @config = Puppet::Resource::Catalog.new
         @transaction = Puppet::Transaction.new(@config)
     end
 

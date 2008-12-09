@@ -8,7 +8,7 @@ describe Puppet::Type do
     end
 
     it "should use its catalog as its expirer" do
-        catalog = Puppet::Node::Catalog.new
+        catalog = Puppet::Resource::Catalog.new
         resource = Puppet::Type.type(:mount).create(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
         resource.catalog = catalog
         resource.expirer.should equal(catalog)
@@ -67,7 +67,7 @@ describe Puppet::Type do
 
     describe "when in a catalog" do
         before do
-            @catalog = Puppet::Node::Catalog.new
+            @catalog = Puppet::Resource::Catalog.new
             @container = Puppet::Type.type(:component).create(:name => "container")
             @one = Puppet::Type.type(:file).create(:path => "/file/one")
             @two = Puppet::Type.type(:file).create(:path => "/file/two")

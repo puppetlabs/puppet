@@ -220,7 +220,7 @@ Suite.new :local_catalog, "Local catalog handling" do
     end
 
     newtest :compile, "Compiled catalog" do
-        Puppet::Node::Catalog.find(@node)
+        Puppet::Resource::Catalog.find(@node)
     end
 end
 

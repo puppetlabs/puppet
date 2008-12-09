@@ -14,7 +14,7 @@ describe ssh_authorized_key do
 
         @provider = stub 'provider', :class => @provider_class, :file_path => "/tmp/whatever", :clear => nil
         @provider_class.stubs(:new).returns(@provider)
-        @catalog = Puppet::Node::Catalog.new
+        @catalog = Puppet::Resource::Catalog.new
     end
 
     it "should have a name parameter" do
