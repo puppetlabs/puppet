@@ -84,53 +84,6 @@ class TestResource < PuppetTest::TestCase
         res.send(:paramcheck, :other)
     end
 
-    def test_to_transobject
-        # First try translating a builtin resource.  Make sure we use some references
-        # and arrays, to make sure they translate correctly.
-        source = mock("source")
-        scope = mkscope
-        scope.stubs(:tags).returns([])
-        refs = []
-        4.times { |i| refs << Puppet::Parser::Resource::Reference.new(:title => "file%s" % i, :type => "file") }
-        res = Parser::Resource.new :type => "file", :title => "/tmp",
-            :source => source, :scope => scope,
-            :params => paramify(source, :owner => "nobody", :group => %w{you me},
-            :require => refs[0], :ignore => %w{svn},
-            :subscribe => [refs[1], refs[2]], :notify => [refs[3]])
-
-        obj = nil
-        assert_nothing_raised do
-            obj = res.to_trans
-        end
-
-        assert_instance_of(Puppet::TransObject, obj)
-
-        assert_equal(obj.type, res.type.downcase)
-        assert_equal(obj.name, res.title)
-
-        # TransObjects use strings, resources use symbols
-        assert_equal("nobody", obj["owner"], "Single-value string was not passed correctly")
-        assert_equal(%w{you me}, obj["group"], "Array of strings was not passed correctly")
-        assert_equal("svn", obj["ignore"], "Array with single string was not turned into single value")
-        assert_equal(["file", refs[0].title], obj["require"], "Resource reference was not passed correctly")
-        assert_equal([["file", refs[1].title], ["file", refs[2].title]], obj["subscribe"], "Array of resource references was not passed correctly")
-        assert_equal(["file", refs[3].title], obj["notify"], "Array with single resource reference was not turned into single value")
-    end
-
-    # FIXME This isn't a great test, but I need to move on.
-    def test_to_transbucket
-        bucket = mock("transbucket")
-        source = mock("source")
-        scope = mkscope
-        res = Parser::Resource.new :type => "mydefine", :title => "yay",
-            :source => source, :scope => scope
-
-
-        result = res.to_trans
-        assert_equal("yay", result.name, "did not set bucket name correctly")
-        assert_equal("Mydefine", result.type, "did not set bucket type correctly")
-    end
-
     def test_evaluate
         # First try the most common case, we're not a builtin type.
         res = mkresource
@@ -152,43 +105,6 @@ class TestResource < PuppetTest::TestCase
         assert_equal("Evaltest", res.type)
         assert_equal("yay", res.title)
         assert_equal(false, res.builtin?)
-    end
-
-    def test_reference_conversion
-        # First try it as a normal string
-        ref = Parser::Resource::Reference.new(:type => "file", :title => "/tmp/ref1")
-
-        # Now create an obj that uses it
-        res = mkresource :type => "file", :title => "/tmp/resource",
-            :params => {:require => ref}
-        res.scope = mkscope
-
-        trans = nil
-        assert_nothing_raised do
-            trans = res.to_trans
-        end
-
-        assert_instance_of(Array, trans["require"])
-        assert_equal(["file", "/tmp/ref1"], trans["require"])
-
-        # Now try it when using an array of references.
-        two = Parser::Resource::Reference.new(:type => "file", :title => "/tmp/ref2")
-        res = mkresource :type => "file", :title => "/tmp/resource2",
-            :params => {:require => [ref, two]}
-        res.scope = mkscope
-
-        trans = nil
-        assert_nothing_raised do
-            trans = res.to_trans
-        end
-
-        assert_instance_of(Array, trans["require"][0])
-        trans["require"].each do |val|
-            assert_instance_of(Array, val)
-            assert_equal("file", val[0])
-            assert(val[1] =~ /\/tmp\/ref[0-9]/,
-                "Was %s instead of the file name" % val[1])
-        end
     end
 
     # This is a bit of a weird one -- the user should not actually know

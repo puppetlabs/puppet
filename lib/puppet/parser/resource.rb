@@ -278,6 +278,42 @@ class Puppet::Parser::Resource
         return db_resource
     end
 
+    # Create a Puppet::Resource instance from this parser resource.
+    # We plan, at some point, on not needing to do this conversion, but
+    # it's sufficient for now.
+    def to_resource
+        result = Puppet::Resource.new(type, title)
+
+        to_hash.each do |p, v|
+            if v.is_a?(Puppet::Parser::Resource::Reference)
+                v = Puppet::Resource::Reference.new(v.type, v.title)
+            elsif v.is_a?(Array)
+                v = v.collect do |av|
+                    if av.is_a?(Puppet::Parser::Resource::Reference)
+                        av = Puppet::Resource::Reference.new(av.type, av.title)
+                    end
+                    av
+                end
+            end
+
+            # If the value is an array with only one value, then
+            # convert it to a single value.  This is largely so that
+            # the database interaction doesn't have to worry about
+            # whether it returns an array or a string.
+            result[p] = if v.is_a?(Array) and v.length == 1
+                              v[0]
+                          else
+                              v
+                          end
+        end
+
+        result.file = self.file
+        result.line = self.line
+        result.tag(*self.tags)
+
+        return result
+    end
+
     def to_s
         self.ref
     end
@@ -286,61 +322,13 @@ class Puppet::Parser::Resource
     def to_trans
         return nil if virtual?
 
-        if builtin?
-            to_transobject
-        else
-            to_transbucket
-        end
-    end
-
-    def to_transbucket
-        bucket = Puppet::TransBucket.new([])
-
-        bucket.type = self.type
-        bucket.name = self.title
-
-        # TransBuckets don't support parameters, which is why they're being deprecated.
-        return bucket
+        return to_resource.to_trans
     end
 
     # Convert this resource to a RAL resource.  We hackishly go via the
     # transportable stuff.
     def to_type
         to_trans.to_type
-    end
-
-    def to_transobject
-        # Now convert to a transobject
-        obj = Puppet::TransObject.new(@ref.title, @ref.type)
-        to_hash.each do |p, v|
-            if v.is_a?(Reference)
-                v = v.to_ref
-            elsif v.is_a?(Array)
-                v = v.collect { |av|
-                    if av.is_a?(Reference)
-                        av = av.to_ref
-                    end
-                    av
-                }
-            end
-
-            # If the value is an array with only one value, then
-            # convert it to a single value.  This is largely so that
-            # the database interaction doesn't have to worry about
-            # whether it returns an array or a string.
-            obj[p.to_s] = if v.is_a?(Array) and v.length == 1
-                              v[0]
-                          else
-                              v
-                          end
-        end
-
-        obj.file = self.file
-        obj.line = self.line
-
-        obj.tags = self.tags
-
-        return obj
     end
     
     private

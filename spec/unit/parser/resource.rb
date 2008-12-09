@@ -333,4 +333,84 @@ describe Puppet::Parser::Resource do
 
 
     end
+
+    it "should be able to be converted to a normal resource" do
+        @source = stub 'scope', :name => "myscope"
+        @resource = mkresource :source => @source
+        @resource.should respond_to(:to_resource)
+    end
+
+    it "should use its resource converter to convert to a transportable resource" do
+        @source = stub 'scope', :name => "myscope"
+        @resource = mkresource :source => @source
+
+        newresource = Puppet::Resource.new(:file, "/my")
+        Puppet::Resource.expects(:new).returns(newresource)
+
+        newresource.expects(:to_trans).returns "mytrans"
+
+        @resource.to_trans.should == "mytrans"
+    end
+
+    it "should return nil if converted to a transportable resource and it is virtual" do
+        @source = stub 'scope', :name => "myscope"
+        @resource = mkresource :source => @source
+
+        @resource.expects(:virtual?).returns true
+        @resource.to_trans.should be_nil
+    end
+
+    describe "when being converted to a resource" do
+        before do
+            @source = stub 'scope', :name => "myscope"
+            @parser_resource = mkresource :source => @source, :params => {:foo => "bar", :fee => "fum"}
+        end
+
+        it "should create an instance of Puppet::Resource" do
+            @parser_resource.to_resource.should be_instance_of(Puppet::Resource)
+        end
+
+        it "should set the type correctly on the Puppet::Resource" do
+            @parser_resource.to_resource.type.should == @parser_resource.type
+        end
+
+        it "should set the title correctly on the Puppet::Resource" do
+            @parser_resource.to_resource.title.should == @parser_resource.title
+        end
+
+        it "should copy over all of the parameters" do
+            @parser_resource.to_resource.to_hash.should == {:foo => "bar", :fee => "fum"}
+        end
+
+        it "should copy over the tags" do
+            @parser_resource.tag "foo"
+            @parser_resource.tag "bar"
+
+            @parser_resource.to_resource.tags.should == @parser_resource.tags
+        end
+
+        it "should copy over the line" do
+            @parser_resource.line = 40
+            @parser_resource.to_resource.line.should == 40
+        end
+
+        it "should copy over the file" do
+            @parser_resource.file = "/my/file"
+            @parser_resource.to_resource.file.should == "/my/file"
+        end
+
+        it "should convert any parser resource references to Puppet::Resource::Reference instances" do
+            ref = Puppet::Parser::Resource::Reference.new(:title => "/my/file", :type => "file")
+            @parser_resource = mkresource :source => @source, :params => {:foo => "bar", :fee => ref}
+            result = @parser_resource.to_resource
+            result[:fee].should == Puppet::Resource::Reference.new(:file, "/my/file")
+        end
+
+        it "should convert any parser resource references to Puppet::Resource::Reference instances even if they are in an array" do
+            ref = Puppet::Parser::Resource::Reference.new(:title => "/my/file", :type => "file")
+            @parser_resource = mkresource :source => @source, :params => {:foo => "bar", :fee => ["a", ref]}
+            result = @parser_resource.to_resource
+            result[:fee].should == ["a", Puppet::Resource::Reference.new(:file, "/my/file")]
+        end
+    end
 end
