@@ -95,33 +95,14 @@ describe Puppet::Resource::Catalog, "when compiling" do
             main = mkresource("class", :main)
             config.add_vertex(main)
 
-            bucket = mock 'bucket'
-            bucket.expects(:classes=).with(config.classes)
+            bucket = stub 'bucket', :file= => nil, :line= => nil, :classes= => nil
+            bucket.expects(:type=).with("Class")
+            bucket.expects(:name=).with(:main)
             main.stubs(:builtin?).returns(false)
-            main.expects(:to_transbucket).returns(bucket)
+            
+            Puppet::TransBucket.expects(:new).returns bucket
 
             config.extract_to_transportable.should equal(bucket)
-        end
-
-        # This isn't really a spec-style test, but I don't know how better to do it.
-        it "should transform the resource graph into a tree of TransBuckets and TransObjects" do
-            config = Puppet::Resource::Catalog.new("mynode")
-
-            @scope = mkscope
-            @source = mock 'source'
-
-            defined = mkresource("class", :main)
-            builtin = mkresource("file", "/yay")
-
-            config.add_edge(defined, builtin)
-
-            bucket = []
-            bucket.expects(:classes=).with(config.classes)
-            defined.stubs(:builtin?).returns(false)
-            defined.expects(:to_transbucket).returns(bucket)
-            builtin.expects(:to_transobject).returns(:builtin)
-
-            config.extract_to_transportable.should == [:builtin]
         end
 
         # Now try it with a more complicated graph -- a three tier graph, each tier

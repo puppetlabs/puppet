@@ -328,7 +328,7 @@ class Puppet::Parser::Resource
     # Convert this resource to a RAL resource.  We hackishly go via the
     # transportable stuff.
     def to_type
-        to_trans.to_type
+        to_resource.to_type
     end
     
     private
