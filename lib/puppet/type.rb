@@ -35,12 +35,11 @@ class Type
         properties()
     end
 
-    # All parameters, in the appropriate order.  The namevar comes first,
-    # then the properties, then the params and metaparams in the order they
-    # were specified in the files.
+    # All parameters, in the appropriate order.  The namevar comes first, then
+    # the provider, then the properties, and finally the params and metaparams
+    # in the order they were specified in the files.
     def self.allattrs
-        # now get all of the arguments, in a specific order
-        # Cache this, since it gets called so many times
+        # Cache this, since it gets called multiple times
         namevar = self.namevar
 
         order = [namevar]
@@ -52,7 +51,7 @@ class Type
             self.metaparams].flatten.reject { |param|
                 # we don't want our namevar in there multiple times
                 param == namevar
-        }
+            }
 
         order.flatten!
 
@@ -276,15 +275,6 @@ class Type
 
         param.isnamevar if options[:namevar]
 
-        # These might be enabled later.
-#        define_method(name) do
-#            @parameters[name].value
-#        end
-#
-#        define_method(name.to_s + "=") do |value|
-#            newparam(param, value)
-#        end
-
         if param.isnamevar?
             @namevar = param.name
         end
@@ -348,14 +338,6 @@ class Type
         else
             @properties << prop
         end
-
-#        define_method(name) do
-#            @parameters[name].should
-#        end
-#
-#        define_method(name.to_s + "=") do |value|
-#            newproperty(name, :should => value)
-#        end
 
         return prop
     end
@@ -425,38 +407,6 @@ class Type
         end
     end
 
-    # fix any namevar => param translations
-    def argclean(oldhash)
-        # This duplication is here because it might be a transobject.
-        hash = oldhash.dup.to_hash
-
-        if hash.include?(:resource)
-            hash.delete(:resource)
-        end
-        namevar = self.class.namevar
-
-        # Do a simple translation for those cases where they've passed :name
-        # but that's not our namevar
-        if hash.include? :name and namevar != :name
-            if hash.include? namevar
-                raise ArgumentError, "Cannot provide both name and %s" % namevar
-            end
-            hash[namevar] = hash[:name]
-            hash.delete(:name)
-        end
-
-        # Make sure we have a name, one way or another
-        unless hash.include? namevar
-            if defined? @title and @title
-                hash[namevar] = @title
-            else
-                raise Puppet::Error, "Was not passed a namevar or title"
-            end
-        end
-
-        return hash
-    end
-
     # Return either the attribute alias or the attribute.
     def attr_alias(name)
         name = symbolize(name)
@@ -491,7 +441,7 @@ class Type
         name = attr_alias(name)
 
         unless self.class.validattr?(name)
-            raise TypeError.new("Invalid parameter %s(%s)" % [name, name.inspect])
+            fail("Invalid parameter %s(%s)" % [name, name.inspect])
         end
 
         if name == :name
@@ -514,7 +464,7 @@ class Type
         name = attr_alias(name)
 
         unless self.class.validattr?(name)
-            raise TypeError.new("Invalid parameter %s" % [name])
+            fail("Invalid parameter %s" % [name])
         end
 
         if name == :name
@@ -638,19 +588,10 @@ class Type
         end
     end
 
-#    def set(name, value)
-#        send(name.to_s + "=", value)
-#    end
-#
-#    def get(name)
-#        send(name)
-#    end
-
     # For any parameters or properties that have defaults and have not yet been
     # set, set them now.  This method can be handed a list of attributes,
     # and if so it will only set defaults for those attributes.
     def setdefaults(*ary)
-        #self.class.eachattr(*ary) { |klass, type|
         self.class.eachattr(*ary) { |klass, type|
             # not many attributes will have defaults defined, so we short-circuit
             # those away
@@ -782,19 +723,6 @@ class Type
     
     def depthfirst?
         self.class.depthfirst?
-    end
-
-    # Add a hook for testing for recursion.
-    def parentof?(child)
-        if (self == child)
-            debug "parent is equal to child"
-            return true
-        elsif defined? @parent and @parent.parentof?(child)
-            debug "My parent is parent of child"
-            return true
-        else
-            return false
-        end
     end
 
     # Remove an object.  The argument determines whether the object's
@@ -996,11 +924,6 @@ class Type
     # Code related to managing resource instances.
     require 'puppet/transportable'
 
-    # Make 'new' private, so people have to use create instead.
-    class << self
-        private :new
-    end
-
     # retrieve a named instance of the current type
     def self.[](name)
         raise "Global resource access is deprecated"
@@ -1080,69 +1003,7 @@ class Type
     # Force users to call this, so that we can merge objects if
     # necessary.
     def self.create(args)
-        # Don't modify the original hash; instead, create a duplicate and modify it.
-        # We have to dup and use the ! so that it stays a TransObject if it is
-        # one.
-        hash = args.dup
-        symbolizehash!(hash)
-
-        # If we're the base class, then pass the info on appropriately
-        if self == Puppet::Type
-            type = nil
-            if hash.is_a? Puppet::TransObject
-                type = hash.type
-            else
-                # If we're using the type to determine object type, then delete it
-                if type = hash[:type]
-                    hash.delete(:type)
-                end
-            end
-
-            # If they've specified a type and called on the base, then
-            # delegate to the subclass.
-            if type
-                if typeklass = self.type(type)
-                    return typeklass.create(hash)
-                else
-                    raise Puppet::Error, "Unknown type %s" % type
-                end
-            else
-                raise Puppet::Error, "No type found for %s" % hash.inspect
-            end
-        end
-
-        # Handle this new object being implicit
-        implicit = hash[:implicit] || false
-        if hash.include?(:implicit)
-            hash.delete(:implicit)
-        end
-
-        name = nil
-        unless hash.is_a? Puppet::TransObject
-            hash = self.hash2trans(hash)
-        end
-
-        # XXX This will have to change when transobjects change to using titles
-        title = hash.name
-
-        # create it anew
-        # if there's a failure, destroy the object if it got that far, but raise
-        # the error.
-        begin
-            obj = new(hash)
-        rescue => detail
-            Puppet.err "Could not create %s: %s" % [title, detail.to_s]
-            if obj
-                obj.remove(true)
-            end
-            raise
-        end
-
-        if implicit
-            obj.implicit = true
-        end
-
-        return obj
+        new(args)
     end
 
     # remove a specified object
@@ -1181,52 +1042,6 @@ class Type
         return @objects.has_key?(name)
     end
 
-    # Convert a hash to a TransObject.
-    def self.hash2trans(hash)
-        title = nil
-        if hash.include? :title
-            title = hash[:title]
-            hash.delete(:title)
-        elsif hash.include? self.namevar
-            title = hash[self.namevar]
-            hash.delete(self.namevar)
-
-            if hash.include? :name
-                raise ArgumentError, "Cannot provide both name and %s to %s" %
-                    [self.namevar, self.name]
-            end
-        elsif hash[:name]
-            title = hash[:name]
-            hash.delete :name
-        end
-
-        if catalog = hash[:catalog]
-            hash.delete(:catalog)
-        end
-
-        raise(Puppet::Error, "You must specify a title for objects of type %s" % self.to_s) unless title
-
-        if hash.include? :type
-            unless self.validattr? :type
-                hash.delete :type
-            end
-        end
-
-        # okay, now make a transobject out of hash
-        begin
-            trans = Puppet::TransObject.new(title, self.name.to_s)
-            trans.catalog = catalog if catalog
-            hash.each { |param, value|
-                trans[param] = value
-            }
-        rescue => detail
-            raise Puppet::Error, "Could not create %s: %s" %
-                [name, detail]
-        end
-
-        return trans
-    end
-
     # Retrieve all known instances.  Either requires providers or must be overridden.
     def self.instances
         unless defined?(@providers) and ! @providers.empty?
@@ -1261,6 +1076,44 @@ class Type
             sources << provider.source
             provider
         end.compact
+    end
+
+    # Convert a simple hash into a Resource instance.  This is a convenience method,
+    # so people can create RAL resources with a hash and get the same behaviour
+    # as we get internally when we use Resource instances.
+    #   This should only be used directly from Ruby -- it's not used when going through
+    # normal Puppet usage.
+    def self.hash2resource(hash)
+        hash = hash.inject({}) { |result, ary| result[ary[0].to_sym] = ary[1]; hash }
+
+        if title = hash[:title]
+            hash.delete(:title)
+        else
+            if self.namevar != :name
+                if hash.include?(:name) and hash.include?(self.namevar)
+                    raise ArgumentError, "Cannot provide both name and %s to resources of type %s" % [self.namevar, self.name]
+                end
+                if title = hash[self.namevar]
+                    hash.delete(self.namevar)
+                end
+            end
+
+            unless title ||= hash[:name]
+                raise Puppet::Error, "You must specify a name or title for resources"
+            end
+        end
+
+        if catalog = hash[:catalog]
+            hash.delete(:catalog)
+        end
+
+        # Now create our resource.
+        resource = Puppet::Resource.new(self.name, title)
+        resource.catalog = catalog if catalog
+        hash.each do |param, value|
+            resource[param] = value
+        end
+        return resource
     end
 
     # Create the path for logging and such.
@@ -1732,47 +1585,6 @@ class Type
         return @defaultprovider
     end
 
-    # Convert a hash, as provided by, um, a provider, into an instance of self.
-    def self.hash2obj(hash)
-        obj = nil
-        
-        namevar = self.namevar
-        unless hash.include?(namevar) and hash[namevar]
-            raise Puppet::DevError, "Hash was not passed with namevar"
-        end
-
-        # if the obj already exists with that name...
-        if obj = self[hash[namevar]]
-            # We're assuming here that objects with the same name
-            # are the same object, which *should* be the case, assuming
-            # we've set up our naming stuff correctly everywhere.
-
-            # Mark found objects as present
-            hash.each { |param, value|
-                if property = obj.property(param)
-                elsif val = obj[param]
-                    obj[param] = val
-                else
-                    # There is a value on disk, but it should go away
-                    obj[param] = :absent
-                end
-            }
-        else
-            # create a new obj, since no existing one seems to
-            # match
-            obj = self.create(namevar => hash[namevar])
-
-            # We can't just pass the hash in at object creation time,
-            # because it sets the should value, not the is value.
-            hash.delete(namevar)
-            hash.each { |param, value|
-                obj[param] = value unless obj.add_property_parameter(param)
-            }
-        end
-
-        return obj
-    end
-
     # Retrieve a provider by name.
     def self.provider(name)
         name = Puppet::Util.symbolize(name)
@@ -2009,47 +1821,6 @@ class Type
         return false
     end
 
-    # we've received an event
-    # we only support local events right now, so we can pass actual
-    # objects around, including the transaction object
-    # the assumption here is that container objects will pass received
-    # methods on to contained objects
-    # i.e., we don't trigger our children, our refresh() method calls
-    # refresh() on our children
-    def trigger(event, source)
-        trans = event.transaction
-        if @callbacks.include?(source)
-            [:ALL_EVENTS, event.event].each { |eventname|
-                if method = @callbacks[source][eventname]
-                    if trans.triggered?(self, method) > 0
-                        next
-                    end
-                    if self.respond_to?(method)
-                        self.send(method)
-                    end
-
-                    trans.triggered(self, method)
-                end
-            }
-        end
-    end
-    
-    # Unsubscribe from a given object, possibly with a specific event.
-    def unsubscribe(object, event = nil)
-        # First look through our own relationship params
-        [:require, :subscribe].each do |param|
-            if values = self[param]
-                newvals = values.reject { |d|
-                    d == [object.class.name, object.title]
-                }
-                if newvals.length != values.length
-                    self.delete(param)
-                    self[param] = newvals
-                end
-            end
-        end
-    end
-
     ###############################
     # All of the scheduling code.
 
@@ -2227,145 +1998,59 @@ class Type
 
     public
 
-    def initvars
-        @evalcount = 0
-        @tags = []
-
-        # callbacks are per object and event
-        @callbacks = Hash.new { |chash, key|
-            chash[key] = {}
-        }
-
-        # properties and parameters are treated equivalently from the outside:
-        # as name-value pairs (using [] and []=)
-        # internally, however, parameters are merely a hash, while properties
-        # point to Property objects
-        # further, the lists of valid properties and parameters are defined
-        # at the class level
-        unless defined? @parameters
-            @parameters = {}
-        end
-
-        # keeping stats for the total number of changes, and how many were
-        # completely sync'ed
-        # this isn't really sufficient either, because it adds lots of special
-        # cases such as failed changes
-        # it also doesn't distinguish between changes from the current transaction
-        # vs. changes over the process lifetime
-        @totalchanges = 0
-        @syncedchanges = 0
-        @failedchanges = 0
-
-        @inited = true
-    end
-
     # initialize the type instance
-    def initialize(hash)
-        unless defined? @inited
-            self.initvars
+    def initialize(resource)
+        if resource.is_a?(Puppet::TransObject)
+            raise Puppet::DevError, "Got TransObject instead of Resource or hash"
         end
-        namevar = self.class.namevar
 
-        orighash = hash
+        unless resource.is_a?(Puppet::Resource)
+            resource = self.class.hash2resource(resource)
+        end
 
-        # If we got passed a transportable object, we just pull a bunch of info
-        # directly from it.  This is the main object instantiation mechanism.
-        if hash.is_a?(Puppet::TransObject)
-            # XXX This will need to change when transobjects change to titles.
-            self.title = hash.name
+        # The list of parameter/property instances.
+        @parameters = {}
 
-            #self[:name] = hash[:name]
-            [:file, :line, :tags, :catalog].each { |getter|
-                if hash.respond_to?(getter)
-                    setter = getter.to_s + "="
-                    if val = hash.send(getter)
-                        self.send(setter, val)
-                    end
-                end
-            }
-
-            hash = hash.to_hash
+        # Set the title first, so any failures print correctly.
+        if resource.type.to_s.downcase.to_sym == self.class.name
+            self.title = resource.title
         else
-            if hash[:title]
-                @title = hash[:title]
-                hash.delete(:title)
+            # This should only ever happen for components
+            self.title = resource.ref
+        end
+
+        [:file, :line, :catalog].each do |getter|
+            setter = getter.to_s + "="
+            if val = resource.send(getter)
+                self.send(setter, val)
             end
         end
 
-        # Before anything else, set our parent if it was included
-        if hash.include?(:parent)
-            @parent = hash[:parent]
-            hash.delete(:parent)
+        @tags = resource.tags
+
+        # If they've provided a title but no name, then set the name now.
+        unless name = resource[:name] || resource[self.class.namevar]
+            self[:name] = resource.title
         end
 
-        # Munge up the namevar stuff so we only have one value.
-        hash = self.argclean(hash)
-
-        # Let's do the name first, because some things need to happen once
-        # we have the name but before anything else
-
-        attrs = self.class.allattrs
-
-        if hash.include?(namevar)
-            #self.send(namevar.to_s + "=", hash[namevar])
-            self[namevar] = hash[namevar]
-            hash.delete(namevar)
-            if attrs.include?(namevar)
-                attrs.delete(namevar)
-            else
-                self.devfail "My namevar isn't a valid attribute...?"
-            end
-        else
-            self.devfail "I was not passed a namevar"
-        end
-
-        # If the name and title differ, set up an alias
-        if self.name != self.title and self.catalog
-            if obj = catalog.resource(self.class.name, self.name) 
-                if self.class.isomorphic?
-                    raise Puppet::Error, "%s already exists with name %s" %
-                        [obj.title, self.name]
-                end
-            else
-                catalog.alias(self, self.name)
+        found = []
+        (self.class.allattrs + resource.keys).uniq.each do |attr|
+            next unless resource.has_key?(attr)
+            begin
+                self[attr] = resource[attr]
+            rescue ArgumentError, Puppet::Error, TypeError
+                raise
+            rescue => detail
+                error = Puppet::DevError.new( "Could not set %s on %s: %s" % [attr, self.class.name, detail])
+                error.set_backtrace(detail.backtrace)
+                raise error
             end
         end
-
-        if hash.include?(:provider)
-            self[:provider] = hash[:provider]
-            hash.delete(:provider)
-        else
-            setdefaults(:provider)
-        end
-
-        # This is all of our attributes except the namevar.
-        attrs.each { |attr|
-            if hash.include?(attr)
-                begin
-                    self[attr] = hash[attr]
-                rescue ArgumentError, Puppet::Error, TypeError
-                    raise
-                rescue => detail
-                    error = Puppet::DevError.new( "Could not set %s on %s: %s" % [attr, self.class.name, detail])
-                    error.set_backtrace(detail.backtrace)
-                    raise error
-                end
-                hash.delete attr
-            end
-        }
         
         # Set all default values.
         self.setdefaults
 
-        if hash.length > 0
-            self.debug hash.inspect
-            self.fail("Class %s does not accept argument(s) %s" %
-                [self.class.name, hash.keys.join(" ")])
-        end
-
-        if self.respond_to?(:validate)
-            self.validate
-        end
+        self.validate if self.respond_to?(:validate)
     end
 
     # Set up all of our autorequires.
@@ -2394,14 +2079,6 @@ class Type
         Puppet::Util::Storage.cache(self)[name] = value
         #@cache[name] = value
     end
-
-#    def set(name, value)
-#        send(name.to_s + "=", value)
-#    end
-#
-#    def get(name)
-#        send(name)
-#    end
 
     # For now, leave the 'name' method functioning like it used to.  Once 'title'
     # works everywhere, I'll switch it.

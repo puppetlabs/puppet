@@ -137,13 +137,6 @@ class TestType < Test::Unit::TestCase
         }
     end
 
-    def test_catalogs_are_set_during_initialization_if_present_on_the_transobject
-        trans = Puppet::TransObject.new("/path/to/some/file", :file)
-        trans.catalog = stub 'catalog', :resource => nil
-        resource = trans.to_ral
-        assert_equal(resource.catalog, trans.catalog, "Did not set catalog on initialization")
-    end
-
     # Verify that requirements don't depend on file order
     def test_prereqorder
         one = tempfile()
@@ -310,37 +303,6 @@ class TestType < Test::Unit::TestCase
         }
 
         assert_equal(:yayness, ret)
-    end
-
-    def test_name_vs_title
-        path = tempfile()
-
-        trans = nil
-
-        assert_nothing_raised {
-            trans = Puppet::TransObject.new(path, :file)
-        }
-
-        file = nil
-        assert_nothing_raised {
-            file = Puppet::Type.newfile(trans)
-        }
-
-        assert(file.respond_to?(:title),
-            "No 'title' method")
-
-        assert(file.respond_to?(:name),
-            "No 'name' method")
-
-        assert_equal(file.title, file.name,
-            "Name and title were not marked equal")
-
-        assert_nothing_raised {
-            file.title = "My file"
-        }
-
-        assert_equal("My file", file.title)
-        assert_equal(path, file.name)
     end
 
     # Make sure the title is sufficiently differentiated from the namevar.

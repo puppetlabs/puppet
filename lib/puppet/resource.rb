@@ -11,7 +11,7 @@ class Puppet::Resource
 
     # Proxy these methods to the parameters hash.  It's likely they'll
     # be overridden at some point, but this works for now.
-    %w{has_key? length delete empty? <<}.each do |method|
+    %w{has_key? keys length delete empty? <<}.each do |method|
         define_method(method) do |*args|
             @parameters.send(method, *args)
         end
@@ -112,19 +112,6 @@ class Puppet::Resource
         return result
     end
 
-    private
-
-    # Create an old-style TransBucket instance, for non-builtin resource types.
-    def to_transbucket
-        bucket = Puppet::TransBucket.new([])
-
-        bucket.type = self.type
-        bucket.name = self.title
-
-        # TransBuckets don't support parameters, which is why they're being deprecated.
-        return bucket
-    end
-
     # Create an old-style TransObject instance, for builtin resource types.
     def to_transobject
         # Now convert to a transobject
@@ -155,6 +142,19 @@ class Puppet::Resource
         result.tags = self.tags
 
         return result
+    end
+
+    private
+
+    # Create an old-style TransBucket instance, for non-builtin resource types.
+    def to_transbucket
+        bucket = Puppet::TransBucket.new([])
+
+        bucket.type = self.type
+        bucket.name = self.title
+
+        # TransBuckets don't support parameters, which is why they're being deprecated.
+        return bucket
     end
 
     # Produce a canonical method name.

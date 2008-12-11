@@ -108,6 +108,14 @@ describe Puppet::Resource do
             @resource.should_not be_has_key(:eh)
         end
 
+        it "should have a method for providing the list of parameters" do
+            @resource[:foo] = "bar"
+            @resource[:bar] = "foo"
+            keys = @resource.keys
+            keys.should be_include(:foo)
+            keys.should be_include(:bar)
+        end
+
         it "should have a method for providing the number of parameters" do
             @resource[:foo] = "bar"
             @resource.length.should == 1

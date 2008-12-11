@@ -35,6 +35,122 @@ describe Puppet::Type do
     end
 
     describe "when initializing" do
+        it "should fail when passed a TransObject" do
+            trans = Puppet::TransObject.new("/foo", :mount)
+            lambda { Puppet::Type.type(:mount).new(trans) }.should raise_error(Puppet::DevError)
+        end
+
+        it "should create a Resource instance and use it to configure the RAL resource if passed a hash" do
+            resource = Puppet::Resource.new(:mount, "/foo")
+            Puppet::Resource.expects(:new).with(:mount, "/foo").returns resource
+            Puppet::Type.type(:mount).new(:name => "/foo")
+        end
+
+        it "should set its title to the title of the resource if the resource type is equal to the current type" do
+            resource = Puppet::Resource.new(:mount, "/foo", :name => "/other")
+            Puppet::Type.type(:mount).new(resource).title.should == "/foo"
+        end
+
+        it "should set its title to the resource reference if the resource type is not equal to the current type" do
+            resource = Puppet::Resource.new(:file, "/foo")
+            Puppet::Type.type(:mount).new(resource).title.should == "File[/foo]"
+        end
+
+        [:line, :file, :catalog].each do |param|
+            it "should copy #{param} from the resource if present" do
+                resource = Puppet::Resource.new(:mount, "/foo")
+                resource.send(param.to_s + "=", "foo")
+                Puppet::Type.type(:mount).new(resource).send(param).should == "foo"
+            end
+        end
+
+        it "should copy any tags from the resource" do
+            resource = Puppet::Resource.new(:mount, "/foo")
+            resource.tag "one", "two"
+            tags = Puppet::Type.type(:mount).new(resource).tags
+            tags.should be_include("one")
+            tags.should be_include("two")
+        end
+
+        it "should fail if any invalid attributes have been provided" do
+            resource = Puppet::Resource.new(:mount, "/foo", :nosuchattr => "foo")
+            lambda { Puppet::Type.type(:mount).new(resource) }.should raise_error(Puppet::Error)
+        end
+
+        it "should set its name to the resource's title if the resource does not have a :name or namevar parameter set" do
+            resource = Puppet::Resource.new(:mount, "/foo")
+
+            Puppet::Type.type(:mount).new(resource).name.should == "/foo"
+        end
+
+        it "should set the attributes in the order returned by the class's :allattrs method" do
+            Puppet::Type.type(:mount).stubs(:allattrs).returns([:name, :atboot, :noop])
+            resource = Puppet::Resource.new(:mount, "/foo", :name => "myname", :atboot => "myboot", :noop => "whatever")
+
+            set = []
+
+            Puppet::Type.type(:mount).any_instance.stubs(:newattr).with do |param, hash|
+                set << param
+                true
+            end
+
+            Puppet::Type.type(:mount).new(resource)
+
+            set.should == [:name, :atboot, :noop]
+        end
+    end
+
+    it "should have a class method for converting a hash into a Puppet::Resource instance" do
+        Puppet::Type.type(:mount).must respond_to(:hash2resource)
+    end
+
+    describe "when converting a hash to a Puppet::Resource instance" do
+        before do
+            @type = Puppet::Type.type(:mount)
+        end
+
+        it "should treat a :title key as the title of the resource" do
+            @type.hash2resource(:name => "/foo", :title => "foo").title.should == "foo"
+        end
+
+        it "should use the name from the hash as the title if no explicit title is provided" do
+            @type.hash2resource(:name => "foo").title.should == "foo"
+        end
+        
+        it "should use the Resource Type's namevar to determine how to find the name in the hash" do
+            @type.stubs(:namevar).returns :myname
+
+            @type.hash2resource(:myname => "foo").title.should == "foo"
+        end
+
+        it "should fail if the namevar is not equal to :name and both :name and the namevar are provided" do
+            @type.stubs(:namevar).returns :myname
+
+            lambda { @type.hash2resource(:myname => "foo", :name => 'bar') }.should raise_error(ArgumentError)
+        end
+
+        it "should use any provided catalog" do
+            @type.hash2resource(:name => "foo", :catalog => "eh").catalog.should == "eh"
+        end
+
+        it "should set all provided parameters on the resource" do
+            @type.hash2resource(:name => "foo", :fstype => "boo", :boot => "fee").to_hash.should == {:name => "foo", :fstype => "boo", :boot => "fee"}
+        end
+
+        it "should not set the title as a parameter on the resource" do
+            @type.hash2resource(:name => "foo", :title => "eh")[:title].should be_nil
+        end
+
+        it "should not set the catalog as a parameter on the resource" do
+            @type.hash2resource(:name => "foo", :catalog => "eh")[:catalog].should be_nil
+        end
+
+        it "should treat hash keys equivalently whether provided as strings or symbols" do
+            resource = @type.hash2resource("name" => "foo", "title" => "eh", "fstype" => "boo")
+            resource.title.should == "eh"
+            resource[:name].should == "foo"
+            resource[:fstype].should == "boo"
+        end
     end
 
     describe "when retrieving current property values" do
@@ -74,6 +190,7 @@ describe Puppet::Type do
             @container = Puppet::Type.type(:component).create(:name => "container")
             @one = Puppet::Type.type(:file).create(:path => "/file/one")
             @two = Puppet::Type.type(:file).create(:path => "/file/two")
+
             @catalog.add_resource @container
             @catalog.add_resource @one
             @catalog.add_resource @two

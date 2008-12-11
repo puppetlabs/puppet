@@ -306,28 +306,6 @@ module Puppet
             @provider.get(:ensure) != :absent
         end
 
-        def initialize(params)
-            self.initvars
-            provider = nil
-            [:provider, "use"].each { |label|
-                if params.include?(label)
-                    provider = params[label]
-                    params.delete(label)
-                end
-            }
-            if provider
-                self[:provider] = provider
-            else
-                self.setdefaults(:provider)
-            end
-
-            super(params)
-
-            unless @parameters.include?(:provider)
-                raise Puppet::DevError, "No package provider set"
-            end
-        end
-
         def retrieve
             @provider.properties.inject({}) do |props, ary|
                 name, value = ary
