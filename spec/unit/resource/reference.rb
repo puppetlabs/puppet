@@ -47,6 +47,16 @@ describe Puppet::Resource::Reference do
         ref.title.should =="baz[yay]"
     end
 
+    it "should interpret the type as a reference and assign appropriately if the title is nil and the type contains square brackets" do
+        ref = Puppet::Resource::Reference.new("foo::bar[baz]")
+        ref.type.should == "Foo::Bar"
+        ref.title.should =="baz"
+    end
+
+    it "should fail if the title is nil and the type is not a valid resource reference string" do
+        lambda { Puppet::Resource::Reference.new("foo") }.should raise_error(ArgumentError)
+    end
+
     it "should be considered builtin if an existing resource type matches the type" do
         Puppet::Resource::Reference.new("file", "/f").should be_builtin_type
     end

@@ -21,12 +21,17 @@ class Puppet::Resource::Reference
         builtin_type ? true : false
     end
 
-    def initialize(type, title)
-        # This will set @type if it looks like a resource reference.
-        self.title = title
+    def initialize(argtype, argtitle = nil)
+        if argtitle.nil?
+            self.title = argtype
+            raise ArgumentError, "No title provided and title '%s' is not a valid resource reference" % argtype if self.title == argtype
+        else
+            # This will set @type if it looks like a resource reference.
+            self.title = argtitle
 
-        # Don't override whatever was done by setting the title.
-        self.type = type if self.type.nil?
+            # Don't override whatever was done by setting the title.
+            self.type ||= argtype
+        end
         
         @builtin_type = nil
     end
