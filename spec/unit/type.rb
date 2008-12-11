@@ -210,4 +210,51 @@ describe Puppet::Type do
             @catalog.clear(true)
         end
     end
+
+    describe "when managing relationships" do
+    end
+end
+
+describe Puppet::Type::RelationshipMetaparam do
+    it "should be a subclass of Puppet::Parameter" do
+        Puppet::Type::RelationshipMetaparam.superclass.should equal(Puppet::Parameter)
+    end
+
+    it "should be able to produce a list of subclasses" do
+        Puppet::Type::RelationshipMetaparam.should respond_to(:subclasses)
+    end
+
+    describe "when munging relationships" do
+        before do
+            @resource = Puppet::Type.type(:mount).create :name => "/foo"
+            @metaparam = Puppet::Type.metaparamclass(:require).new :resource => @resource
+        end
+
+        it "should accept Puppet::Resource::Reference instances" do
+            ref = Puppet::Resource::Reference.new(:file, "/foo")
+            @metaparam.munge(ref)[0].should equal(ref)
+        end
+
+        it "should turn any string into a Puppet::Resource::Reference" do
+            @metaparam.munge("File[/ref]")[0].should be_instance_of(Puppet::Resource::Reference)
+        end
+    end
+
+    it "should be able to validate relationships" do
+        Puppet::Type.metaparamclass(:require).new(:resource => mock("resource")).should respond_to(:validate_relationship)
+    end
+
+    it "should fail if any specified resource is not found in the catalog" do
+        catalog = mock 'catalog'
+        resource = stub 'resource', :catalog => catalog, :ref => "resource"
+
+        param = Puppet::Type.metaparamclass(:require).new(:resource => resource, :value => %w{Foo[bar] Class[test]})
+
+        catalog.expects(:resource).with("Foo[bar]").returns "something"
+        catalog.expects(:resource).with("Class[test]").returns nil
+
+        param.expects(:fail).with { |string| string.include?("Class[test]") }
+
+        param.validate_relationship
+    end
 end

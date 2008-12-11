@@ -185,8 +185,6 @@ class Type
                 end
             end
         end
-        
-        # If this param handles relationships, store that information
     end
 
     # Is the parameter in question a meta-parameter?
@@ -1209,47 +1207,6 @@ class Type
             }
         end
     end
-    
-    # We've got four relationship metaparameters, so this method is used
-    # to reduce code duplication between them.
-    def munge_relationship(param, values)
-        # We need to support values passed in as an array or as a
-        # resource reference.
-        result = []
-        
-        # 'values' could be an array or a reference.  If it's an array,
-        # it could be an array of references or an array of arrays.
-        if values.is_a?(Puppet::Type)
-            result << [values.class.name, values.title]
-        else
-            unless values.is_a?(Array)
-                devfail "Relationships must be resource references"
-            end
-            if values[0].is_a?(String) or values[0].is_a?(Symbol)
-                # we're a type/title array reference
-                values[0] = symbolize(values[0])
-                result << values
-            else
-                # we're an array of stuff
-                values.each do |value|
-                    if value.is_a?(Puppet::Type)
-                        result << [value.class.name, value.title]
-                    elsif value.is_a?(Array)
-                        value[0] = symbolize(value[0])
-                        result << value
-                    else
-                        devfail "Invalid relationship %s" % value.inspect
-                    end
-                end
-            end
-        end
-        
-        if existing = self[param]
-            result = existing + result
-        end
-        
-        result
-    end
 
     newmetaparam(:loglevel) do
         desc "Sets the level that information will be logged.
@@ -1363,16 +1320,22 @@ class Type
             @subclasses << sub
         end
         
-        def munge(rels)
-            @resource.munge_relationship(self.class.name, rels)
+        def munge(references)
+            references = [references] unless references.is_a?(Array)
+            references.collect do |ref|
+                if ref.is_a?(Puppet::Resource::Reference)
+                    ref
+                else
+                    Puppet::Resource::Reference.new(ref)
+                end
+            end
         end
 
         def validate_relationship
-            @value.each do |value|
-                unless @resource.catalog.resource(*value)
+            @value.each do |ref|
+                unless @resource.catalog.resource(ref.to_s)
                     description = self.class.direction == :in ? "dependency" : "dependent"
-                    fail Puppet::Error, "Could not find %s %s[%s] for %s" % 
-                        [description, value[0].to_s.capitalize, value[1], resource.ref]
+                    fail "Could not find %s %s for %s" % [description, ref.to_s, resource.ref]
                 end
             end
         end
@@ -1386,27 +1349,23 @@ class Type
         # which resource is applied first and which resource is considered
         # to be the event generator.
         def to_edges
-            @value.collect do |value|
-                # we just have a name and a type, and we need to convert it
-                # to an object...
-                tname, name = value
-                reference = Puppet::Resource::Reference.new(tname, name)
+            @value.collect do |reference|
                 reference.catalog = resource.catalog
                 
                 # Either of the two retrieval attempts could have returned
                 # nil.
-                unless object = reference.resolve
+                unless related_resource = reference.resolve
                     self.fail "Could not retrieve dependency '%s' of %s" % [reference, @resource.ref]
                 end
 
                 # Are we requiring them, or vice versa?  See the method docs
                 # for futher info on this.
                 if self.class.direction == :in
-                    source = object
+                    source = related_resource
                     target = @resource
                 else
                     source = @resource
-                    target = object
+                    target = related_resource
                 end
 
                 if method = self.class.callback
@@ -1414,12 +1373,12 @@ class Type
                         :event => self.class.events,
                         :callback => method
                     }
-                    self.debug("subscribes to %s" % [object.ref])
+                    self.debug("subscribes to %s" % [related_resource.ref])
                 else
                     # If there's no callback, there's no point in even adding
                     # a label.
                     subargs = nil
-                    self.debug("requires %s" % [object.ref])
+                    self.debug("requires %s" % [related_resource.ref])
                 end
                 
                 rel = Puppet::Relationship.new(source, target, subargs)

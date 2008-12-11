@@ -209,7 +209,8 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     end
 
     # Create the traditional TransBuckets and TransObjects from our catalog
-    # graph.  This will hopefully be deprecated soon.
+    # graph.  LAK:NOTE(20081211): This is a  pre-0.25 backward compatibility method.
+    # It can be removed as soon as xmlrpc is killed.
     def extract_to_transportable
         top = nil
         current = nil
@@ -338,7 +339,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
                     end
                 end
             end
-            
             @relationship_graph.write_graph(:relationships) if host_config?
             
             # Then splice in the container information
@@ -388,9 +388,9 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         to_catalog :to_ral
     end
 
-    # Turn our parser catalog into a transportable catalog.
-    def to_transportable
-        to_catalog :to_transobject
+    # Convert our catalog into a catalog of Puppet::Resource instances.
+    def to_resource
+        to_catalog :to_resource
     end
 
     # Produce the graph files if requested.

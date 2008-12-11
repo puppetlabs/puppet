@@ -150,72 +150,34 @@ describe Puppet::Resource::Catalog, "when compiling" do
         end
     end
 
-    describe "when converting to a transobject catalog" do
-        class CatalogTestResource
-            attr_accessor :name, :virtual, :builtin
-            def initialize(name, options = {})
-                @name = name
-                options.each { |p,v| send(p.to_s + "=", v) }
-            end
-
-            def ref
-                if builtin?
-                    "File[%s]" % name
-                else
-                    "Class[%s]" % name
-                end
-            end
-
-            def virtual?
-                virtual
-            end
-
-            def builtin?
-                builtin
-            end
-
-            def to_transobject
-                Puppet::TransObject.new(name, builtin? ? "file" : "class")
-            end
-        end
-
+    describe " when converting to a Puppet::Resource catalog" do
         before do
             @original = Puppet::Resource::Catalog.new("mynode")
             @original.tag(*%w{one two three})
             @original.add_class *%w{four five six}
 
-            @top            = CatalogTestResource.new 'top'
-            @topobject      = CatalogTestResource.new 'topobject', :builtin => true
-            @virtual        = CatalogTestResource.new 'virtual', :virtual => true
-            @virtualobject  = CatalogTestResource.new 'virtualobject', :builtin => true, :virtual => true
-            @middle         = CatalogTestResource.new 'middle'
-            @middleobject   = CatalogTestResource.new 'middleobject', :builtin => true
-            @bottom         = CatalogTestResource.new 'bottom'
-            @bottomobject   = CatalogTestResource.new 'bottomobject', :builtin => true
+            @top            = Puppet::TransObject.new 'top', "class"
+            @topobject      = Puppet::TransObject.new '/topobject', "file"
+            @middle         = Puppet::TransObject.new 'middle', "class"
+            @middleobject   = Puppet::TransObject.new '/middleobject', "file"
+            @bottom         = Puppet::TransObject.new 'bottom', "class"
+            @bottomobject   = Puppet::TransObject.new '/bottomobject', "file"
 
             @resources = [@top, @topobject, @middle, @middleobject, @bottom, @bottomobject]
 
+            @original.add_resource(*@resources)
+
             @original.add_edge(@top, @topobject)
-            @original.add_edge(@top, @virtual)
-            @original.add_edge(@virtual, @virtualobject)
             @original.add_edge(@top, @middle)
             @original.add_edge(@middle, @middleobject)
             @original.add_edge(@middle, @bottom)
             @original.add_edge(@bottom, @bottomobject)
 
-            @catalog = @original.to_transportable
+            @catalog = @original.to_resource
         end
 
-        it "should add all resources as TransObjects" do
-            @resources.each { |resource| @catalog.resource(resource.ref).should be_instance_of(Puppet::TransObject) }
-        end
-
-        it "should not extract defined virtual resources" do
-            @catalog.vertices.find { |v| v.name == "virtual" }.should be_nil
-        end
-
-        it "should not extract builtin virtual resources" do
-            @catalog.vertices.find { |v| v.name == "virtualobject" }.should be_nil
+        it "should add all resources as Puppet::Resource instances" do
+            @resources.each { |resource| @catalog.resource(resource.ref).should be_instance_of(Puppet::Resource) }
         end
 
         it "should copy the tag list to the new catalog" do
@@ -228,13 +190,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
         it "should duplicate the original edges" do
             @original.edges.each do |edge|
-                next if edge.source.virtual? or edge.target.virtual?
-                source = @catalog.resource(edge.source.ref)
-                target = @catalog.resource(edge.target.ref)
-
-                source.should_not be_nil
-                target.should_not be_nil
-                @catalog.edge?(source, target).should be_true
+                @catalog.edge?(@catalog.resource(edge.source.ref), @catalog.resource(edge.target.ref)).should be_true
             end
         end
 
@@ -249,12 +205,12 @@ describe Puppet::Resource::Catalog, "when compiling" do
             @original.tag(*%w{one two three})
             @original.add_class *%w{four five six}
 
-            @top            = Puppet::TransObject.new 'top', "class"
-            @topobject      = Puppet::TransObject.new '/topobject', "file"
-            @middle         = Puppet::TransObject.new 'middle', "class"
-            @middleobject   = Puppet::TransObject.new '/middleobject', "file"
-            @bottom         = Puppet::TransObject.new 'bottom', "class"
-            @bottomobject   = Puppet::TransObject.new '/bottomobject', "file"
+            @top            = Puppet::Resource.new :class, 'top'
+            @topobject      = Puppet::Resource.new :file, '/topobject'
+            @middle         = Puppet::Resource.new :class, 'middle'
+            @middleobject   = Puppet::Resource.new :file, '/middleobject'
+            @bottom         = Puppet::Resource.new :class, 'bottom'
+            @bottomobject   = Puppet::Resource.new :file, '/bottomobject'
 
             @resources = [@top, @topobject, @middle, @middleobject, @bottom, @bottomobject]
 
@@ -289,26 +245,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
         it "should set itself as the catalog for each converted resource" do
             @catalog.vertices.each { |v| v.catalog.object_id.should equal(@catalog.object_id) }
-        end
-
-        it "should convert parser resources to transobjects and set the catalog" do
-            catalog = Puppet::Resource::Catalog.new("mynode")
-
-            result = mock 'catalog'
-            result.stub_everything
-
-            Puppet::Resource::Catalog.expects(:new).returns result
-
-            trans = mock 'trans'
-            resource = Puppet::Parser::Resource.new(:scope => mock("scope"), :source => mock("source"), :type => :file, :title => "/eh")
-            resource.expects(:to_transobject).returns trans
-            trans.expects(:catalog=).with result
-
-            trans.stub_everything
-
-            catalog.add_resource(resource)
-
-            catalog.to_ral
         end
 
         # This tests #931.
@@ -755,7 +691,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
             Puppet::Type.type(:component)
             @catalog = Puppet::Resource::Catalog.new("host")
             @compone = Puppet::Type::Component.create :name => "one"
-            @comptwo = Puppet::Type::Component.create :name => "two", :require => ["class", "one"]
+            @comptwo = Puppet::Type::Component.create :name => "two", :require => "Class[one]"
             @file = Puppet::Type.type(:file)
             @one = @file.create :path => "/one"
             @two = @file.create :path => "/two"
@@ -764,9 +700,10 @@ describe Puppet::Resource::Catalog, "when compiling" do
             @catalog.add_edge @comptwo, @two
 
             @three = @file.create :path => "/three"
-            @four = @file.create :path => "/four", :require => ["file", "/three"]
+            @four = @file.create :path => "/four", :require => "File[/three]"
             @five = @file.create :path => "/five"
             @catalog.add_resource @compone, @comptwo, @one, @two, @three, @four, @five, @sub
+
             @relationships = @catalog.relationship_graph
         end
 

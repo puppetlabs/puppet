@@ -9,12 +9,12 @@ describe Puppet::TransBucket do
 
     it "should be able to produce a RAL component" do
         @bucket.name = "luke"
-        @bucket.type = "user"
+        @bucket.type = "foo"
 
         resource = nil
         proc { resource = @bucket.to_ral }.should_not raise_error
         resource.should be_instance_of(Puppet::Type::Component)
-        resource.title.should == "User[luke]"
+        resource.title.should == "Foo[luke]"
     end
 
     it "should accept TransObjects into its children list" do
@@ -164,5 +164,25 @@ describe Puppet::TransBucket, " when serializing" do
             children << o
         end
         children.should == %w{one two}
+    end
+end
+
+describe Puppet::TransBucket, " when converting to a Puppet::Resource" do
+    before do
+        @trans = Puppet::TransBucket.new
+        @trans.name = "foo"
+        @trans.type = "bar"
+        @trans.param(:noop, true)
+    end
+
+    it "should create a resource with the correct type and title" do
+        result = @trans.to_resource
+        result.type.should == "Bar"
+        result.title.should == "foo"
+    end
+
+    it "should add all of its parameters to the created resource" do
+        @trans.param(:noop, true)
+        @trans.to_resource[:noop].should be_true
     end
 end

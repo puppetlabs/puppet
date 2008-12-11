@@ -39,6 +39,32 @@ describe Puppet::TransObject, " when serializing" do
     end
 end
 
+describe Puppet::TransObject, " when converting to a Puppet::Resource" do
+    before do
+        @trans = Puppet::TransObject.new("/my/file", "file")
+        @trans["one"] = "test"
+        @trans["two"] = "other"
+    end
+
+    it "should create a resource with the correct type and title" do
+        result = @trans.to_resource
+        result.type.should == "File"
+        result.title.should == "/my/file"
+    end
+
+    it "should add all of its parameters to the created resource" do
+        @trans[:noop] = true
+        @trans.to_resource[:noop].should be_true
+    end
+
+    it "should copy over the tags" do
+        @trans.tags = %w{foo bar}
+        result = @trans.to_resource
+        result.should be_tagged("foo")
+        result.should be_tagged("bar")
+    end
+end
+
 describe Puppet::TransObject, " when converting to a RAL resource" do
     before do
         @resource = Puppet::TransObject.new("/my/file", "file")
@@ -46,17 +72,11 @@ describe Puppet::TransObject, " when converting to a RAL resource" do
         @resource["two"] = "other"
     end
 
-    it "should use the resource type's :create method to create the resource" do
-        type = mock 'resource type'
-        type.expects(:create).with(@resource).returns(:myresource)
-        Puppet::Type.expects(:type).with("file").returns(type)
-        @resource.to_ral.should == :myresource
-    end
-
-    it "should convert to a component instance if the resource type cannot be found" do
-        Puppet::Type.expects(:type).with("file").returns(nil)
-        @resource.expects(:to_component).returns(:mycomponent)
-        @resource.to_ral.should == :mycomponent
+    it "should use a Puppet::Resource to create the resource" do
+        resource = mock 'resource'
+        @resource.expects(:to_resource).returns resource
+        resource.expects(:to_ral).returns "myral"
+        @resource.to_ral.should == "myral"
     end
 end
 

@@ -78,6 +78,14 @@ module Puppet
                 ]
         end
 
+        # Create a normalized resource from our TransObject.
+        def to_resource
+            result = Puppet::Resource.new(type, name, @params.dup)
+            result.tag(*tags)
+
+            result
+        end
+
         def to_yaml_properties
             instance_variables.reject { |v| %w{@ref}.include?(v) }
         end
@@ -87,11 +95,7 @@ module Puppet
         end
 
         def to_ral
-            if typeklass = Puppet::Type.type(self.type)
-                return typeklass.create(self)
-            else
-                return to_component
-            end
+            to_resource.to_ral
         end
     end
 
@@ -234,17 +238,13 @@ module Puppet
         end
 
         def to_ral
-            Puppet.debug("TransBucket '%s' has no type" % @name) unless defined? @type
+            to_resource.to_ral
+        end
 
-            # Nodes have the same name and type
-            trans = TransObject.new(to_ref, :component)
-            if defined? @parameters
-                @parameters.each { |param,value|
-                    Puppet.debug "Defining %s on %s" % [param, to_ref]
-                    trans[param] = value
-                }
-            end
-            return Puppet::Type::Component.create(trans)
+        # Create a normalized resource from our TransObject.
+        def to_resource
+            params = defined?(@parameters) ? @parameters.dup : {}
+            Puppet::Resource.new(type, name, params)
         end
 
         def param(param,value)

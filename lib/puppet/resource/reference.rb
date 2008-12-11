@@ -24,7 +24,9 @@ class Puppet::Resource::Reference
     def initialize(argtype, argtitle = nil)
         if argtitle.nil?
             self.title = argtype
-            raise ArgumentError, "No title provided and title '%s' is not a valid resource reference" % argtype if self.title == argtype
+            if self.title == argtype
+                raise ArgumentError, "No title provided and title '%s' is not a valid resource reference" % argtype
+            end
         else
             # This will set @type if it looks like a resource reference.
             self.title = argtitle
