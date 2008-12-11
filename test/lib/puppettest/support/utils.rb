@@ -17,7 +17,7 @@ module PuppetTest::Support::Utils
         transport[:path] = path
         transport[:ensure] = "file"
         assert_nothing_raised {
-            file = transport.to_type
+            file = transport.to_ral
         }
     end
 

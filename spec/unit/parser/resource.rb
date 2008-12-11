@@ -65,10 +65,10 @@ describe Puppet::Parser::Resource do
     end
 
     it "should use a Puppet::Resource for converting to a ral resource" do
-        trans = mock 'resource', :to_type => "yay"
+        trans = mock 'resource', :to_ral => "yay"
         @resource = mkresource
         @resource.expects(:to_resource).returns trans
-        @resource.to_type.should == "yay"
+        @resource.to_ral.should == "yay"
     end
 
     describe "when initializing" do

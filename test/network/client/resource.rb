@@ -40,7 +40,7 @@ class TestResourceClient < Test::Unit::TestCase
 
         resource = nil
         assert_nothing_raised {
-            resource = tresource.to_type
+            resource = tresource.to_ral
         }
         assert_events([], resource)
         p resource.instance_variable_get("@stat")
@@ -75,7 +75,7 @@ class TestResourceClient < Test::Unit::TestCase
 
             resource = nil
             assert_nothing_raised {
-                resource = tresource2.to_type
+                resource = tresource2.to_ral
             }
             assert_events([], resource)
 

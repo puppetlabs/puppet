@@ -140,7 +140,7 @@ class TestType < Test::Unit::TestCase
     def test_catalogs_are_set_during_initialization_if_present_on_the_transobject
         trans = Puppet::TransObject.new("/path/to/some/file", :file)
         trans.catalog = stub 'catalog', :resource => nil
-        resource = trans.to_type
+        resource = trans.to_ral
         assert_equal(resource.catalog, trans.catalog, "Did not set catalog on initialization")
     end
 
@@ -373,75 +373,6 @@ class TestType < Test::Unit::TestCase
 
         assert_equal("Myfile", file.title, "Did not get correct title")
         assert_equal(path, file[:name], "Did not get correct name")
-    end
-
-    # Make sure the "create" class method behaves appropriately.
-    def test_class_create
-        title = "Myfile"
-        validate = proc do |element|
-            assert(element, "Did not create file")
-            assert_instance_of(Puppet::Type.type(:file), element)
-            assert_equal(title, element.title, "Title is not correct")
-        end
-        type = :file
-        args = {:path => tempfile(), :owner => "root"}
-
-        trans = Puppet::TransObject.new(title, type)
-        args.each do |name, val| trans[name] = val end
-
-        # First call it on the appropriate typeclass
-        obj = nil
-        assert_nothing_raised do
-            obj = Puppet::Type.type(:file).create(trans)
-        end
-
-        validate.call(obj)
-
-        # Now try it using the class method on Type
-        oldid = obj.object_id
-        obj = nil
-
-        assert_nothing_raised {
-            obj = Puppet::Type.create(trans)
-        }
-
-        validate.call(obj)
-        assert(oldid != obj.object_id, "Got same object back")
-
-        # Now try the same things with hashes instead of a transobject
-        oldid = obj.object_id
-        obj = nil
-        hash = {
-            :type => :file,
-            :title => "Myfile",
-            :path => tempfile(),
-            :owner => "root"
-        }
-
-        # First call it on the appropriate typeclass
-        obj = nil
-        assert_nothing_raised do
-            obj = Puppet::Type.type(:file).create(hash)
-        end
-
-        validate.call(obj)
-        assert_equal(:file, obj.should(:type),
-            "Type param did not pass through")
-
-        assert(oldid != obj.object_id, "Got same object back")
-
-        # Now try it using the class method on Type
-        oldid = obj.object_id
-        obj = nil
-
-        assert_nothing_raised {
-            obj = Puppet::Type.create(hash)
-        }
-
-        validate.call(obj)
-        assert(oldid != obj.object_id, "Got same object back")
-        assert_nil(obj.should(:type),
-            "Type param passed through")
     end
 
     def test_multiplenames

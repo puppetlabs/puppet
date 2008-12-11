@@ -50,13 +50,13 @@ describe Puppet::TransObject, " when converting to a RAL resource" do
         type = mock 'resource type'
         type.expects(:create).with(@resource).returns(:myresource)
         Puppet::Type.expects(:type).with("file").returns(type)
-        @resource.to_type.should == :myresource
+        @resource.to_ral.should == :myresource
     end
 
     it "should convert to a component instance if the resource type cannot be found" do
         Puppet::Type.expects(:type).with("file").returns(nil)
         @resource.expects(:to_component).returns(:mycomponent)
-        @resource.to_type.should == :mycomponent
+        @resource.to_ral.should == :mycomponent
     end
 end
 

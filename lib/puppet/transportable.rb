@@ -86,7 +86,7 @@ module Puppet
             ref
         end
 
-        def to_type
+        def to_ral
             if typeklass = Puppet::Type.type(self.type)
                 return typeklass.create(self)
             else
@@ -189,13 +189,13 @@ module Puppet
             delver = proc do |obj|
                 obj.catalog = catalog
                 unless container = catalog.resource(obj.to_ref)
-                    container = obj.to_type
+                    container = obj.to_ral
                     catalog.add_resource container
                 end
                 obj.each do |child|
                     child.catalog = catalog
                     unless resource = catalog.resource(child.to_ref)
-                        resource = child.to_type
+                        resource = child.to_ral
                         catalog.add_resource resource
                     end
 
@@ -233,7 +233,7 @@ module Puppet
             @ref.to_s if @ref
         end
 
-        def to_type
+        def to_ral
             Puppet.debug("TransBucket '%s' has no type" % @name) unless defined? @type
 
             # Nodes have the same name and type

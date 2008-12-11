@@ -385,7 +385,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
 
     # Convert our catalog into a RAL catalog.
     def to_ral
-        to_catalog :to_type
+        to_catalog :to_ral
     end
 
     # Turn our parser catalog into a transportable catalog.
@@ -463,11 +463,14 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
             #Aliases aren't working in the ral catalog because the current instance of the resource
             #has a reference to the catalog being converted. . . So, give it a reference to the new one
             #problem solved. . .
-            if resource.is_a?(Puppet::TransObject)
+            if resource.is_a?(Puppet::Resource)
+                resource = resource.dup
+                resource.catalog = result
+            elsif resource.is_a?(Puppet::TransObject)
                 resource = resource.dup
                 resource.catalog = result
             elsif resource.is_a?(Puppet::Parser::Resource)
-                resource = resource.to_transobject
+                resource = resource.to_resource
                 resource.catalog = result
             end
 

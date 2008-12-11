@@ -15,7 +15,7 @@ class TestResourceServer < Test::Unit::TestCase
         described.each do |name, trans|
             obj = nil
             assert_nothing_raised do
-                obj = trans.to_type
+                obj = trans.to_ral
             end
 
             assert(obj, "Could not create object")
@@ -61,7 +61,7 @@ class TestResourceServer < Test::Unit::TestCase
 
             object = nil
             assert_nothing_raised do
-                object = result.to_type
+                object = result.to_ral
             end
 
             assert(object, "Could not create type")
@@ -110,7 +110,7 @@ class TestResourceServer < Test::Unit::TestCase
 
             object = nil
             assert_nothing_raised do
-                object = result.to_type
+                object = result.to_ral
             end
 
             catalog = mk_catalog(object)

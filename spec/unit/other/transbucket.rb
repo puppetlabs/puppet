@@ -12,7 +12,7 @@ describe Puppet::TransBucket do
         @bucket.type = "user"
 
         resource = nil
-        proc { resource = @bucket.to_type }.should_not raise_error
+        proc { resource = @bucket.to_ral }.should_not raise_error
         resource.should be_instance_of(Puppet::Type::Component)
         resource.title.should == "User[luke]"
     end
@@ -99,7 +99,7 @@ describe Puppet::TransBucket, " when generating a catalog" do
     end
 
     it "should fail if any transportable resources fail to convert to RAL resources" do
-        @bottomobj.expects(:to_type).raises ArgumentError
+        @bottomobj.expects(:to_ral).raises ArgumentError
         lambda { @bottom.to_catalog }.should raise_error(ArgumentError)
     end
 
@@ -120,12 +120,12 @@ describe Puppet::TransBucket, " when generating a catalog" do
         @catalog.vertices.each do |vertex| vertex.should be_finalized end
     end
 
-    it "should only call to_type on each resource once" do
+    it "should only call to_ral on each resource once" do
         # We just raise exceptions here because we're not interested in
         # what happens with the result, only that the method only
         # gets called once.
-        resource = @topobj.to_type
-        @topobj.expects(:to_type).once.returns resource
+        resource = @topobj.to_ral
+        @topobj.expects(:to_ral).once.returns resource
         @top.to_catalog
     end
 

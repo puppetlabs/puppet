@@ -34,6 +34,9 @@ describe Puppet::Type do
         resource.parameter(:fstype).must be_instance_of(Puppet::Type.type(:mount).attrclass(:fstype))
     end
 
+    describe "when initializing" do
+    end
+
     describe "when retrieving current property values" do
         # Use 'mount' as an example, because it doesn't override 'retrieve'
         before do

@@ -325,7 +325,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
             #changer is going to get duplicated as part of a fix for aliases 1094
             changer.expects(:dup).returns(changer)
-            changer.expects(:to_type).returns(resource)
+            changer.expects(:to_ral).returns(resource)
 
             newconfig = nil
 

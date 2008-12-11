@@ -51,7 +51,7 @@ class TestSettings < Test::Unit::TestCase
 
         comp = nil
         assert_nothing_raised("Could not convert transportable to component") {
-            comp = trans.to_type
+            comp = trans.to_ral
         }
 
         assert_nothing_raised("Could not retrieve transported config") {
