@@ -181,7 +181,7 @@ describe Puppet::Util::Storage do
             end
 
             it "should fail gracefully on load() if it cannot get a read lock on the state file" do
-                Puppet::Util.expects(:readlock).yields(false)
+                Puppet::Util::FileLocking.expects(:readlock).yields(false)
                 test_yaml = {'File["/yayness"]'=>{"name"=>{:a=>:b,:c=>:d}}}
                 YAML.expects(:load).returns(test_yaml)
 
@@ -223,7 +223,7 @@ describe Puppet::Util::Storage do
         end
 
         it "should raise an exception if it cannot get a write lock on the state file" do
-            Puppet::Util.expects(:writelock).yields(false)
+            Puppet::Util::FileLocking.expects(:writelock).yields(false)
             Puppet::Util::Storage.cache(:yayness)
 
             proc { Puppet::Util::Storage.store() }.should raise_error()

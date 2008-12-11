@@ -8,39 +8,6 @@ require 'mocha'
 class TestPuppetUtil < Test::Unit::TestCase
     include PuppetTest
 
-    # we're getting corrupt files, probably because multiple processes
-    # are reading or writing the file at once
-    # so we need to test that
-    def test_multiwrite
-        file = tempfile()
-        File.open(file, "w") { |f| f.puts "starting" }
-
-        value = {:a => :b}
-        threads = []
-        sync = Sync.new
-        9.times { |a|
-            threads << Thread.new {
-                9.times { |b|
-                    assert_nothing_raised {
-                        sync.synchronize(Sync::SH) {
-                            Puppet::Util.readlock(file) { |f|
-                                f.read
-                            }
-                        }
-                        sleep 0.01
-                        sync.synchronize(Sync::EX) {
-                            Puppet::Util.writelock(file) { |f|
-                                f.puts "%s %s" % [a, b]
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        threads.each { |th| th.join }
-    end
-
-
     def test_withumask
         oldmask = File.umask
 

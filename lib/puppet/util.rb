@@ -10,6 +10,8 @@ module Puppet
 module Util
     require 'benchmark'
     
+    # These are all for backward compatibility -- these are methods that used
+    # to be in Puppet::Util but have been moved into external modules.
     require 'puppet/util/posix'
     extend Puppet::Util::POSIX
 
@@ -61,40 +63,6 @@ module Util
                 rescue
                     $stderr.puts "could not change to user %s" % user
                     exit(74)
-                end
-            end
-        end
-    end
-
-    # Create a shared lock for reading
-    def self.readlock(file)
-        self.sync(file).synchronize(Sync::SH) do
-            File.open(file) { |f|
-                f.lock_shared { |lf| yield lf }
-            }
-        end
-    end
-
-    # Create an exclusive lock for writing, and do the writing in a
-    # tmp file.
-    def self.writelock(file, mode = 0600)
-        tmpfile = file + ".tmp"
-        unless FileTest.directory?(File.dirname(tmpfile))
-            raise Puppet::DevError, "Cannot create %s; directory %s does not exist" %
-                [file, File.dirname(file)]
-        end
-        self.sync(file).synchronize(Sync::EX) do
-            File.open(file, "w", mode) do |rf|
-                rf.lock_exclusive do |lrf|
-                    File.open(tmpfile, "w", mode) do |tf|
-                        yield tf
-                    end
-                    begin
-                        File.rename(tmpfile, file)
-                    rescue => detail
-                        Puppet.err "Could not rename %s to %s: %s" %
-                            [file, tmpfile, detail]
-                    end
                 end
             end
         end

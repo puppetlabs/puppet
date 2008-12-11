@@ -1,6 +1,8 @@
 require 'yaml'
 require 'sync'
 
+require 'puppet/util/file_locking'
+
 # a class for storing state
 class Puppet::Util::Storage
     include Singleton
@@ -59,7 +61,7 @@ class Puppet::Util::Storage
             return
         end
         Puppet::Util.benchmark(:debug, "Loaded state") do
-            Puppet::Util.readlock(Puppet[:statefile]) do |file|
+            Puppet::Util::FileLocking.readlock(Puppet[:statefile]) do |file|
                 begin
                     @@state = YAML.load(file)
                 rescue => detail
@@ -97,7 +99,7 @@ class Puppet::Util::Storage
         end
 
         Puppet::Util.benchmark(:debug, "Stored state") do
-            Puppet::Util.writelock(Puppet[:statefile], 0660) do |file|
+            Puppet::Util::FileLocking.writelock(Puppet[:statefile], 0660) do |file|
                 file.print YAML.dump(@@state)
             end
         end
