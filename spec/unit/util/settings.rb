@@ -477,7 +477,154 @@ describe Puppet::Util::Settings do
         end
     end
 
-    describe "when being used to manage the host machine" do
+    it "should provide a method for creating a catalog of resources from its configuration" do
+        Puppet::Util::Settings.new.should respond_to(:to_catalog)
+    end
+
+    describe "when creating a catalog" do
+        before do
+            @settings = Puppet::Util::Settings.new
+        end
+
+        it "should add all file resources to the catalog if no sections have been specified" do
+            @settings.setdefaults :main, :maindir => ["/maindir", "a"], :seconddir => ["/seconddir", "a"]
+            @settings.setdefaults :other, :otherdir => ["/otherdir", "a"]
+            catalog = @settings.to_catalog
+            %w{/maindir /seconddir /otherdir}.each do |path|
+                catalog.resource(:file, path).should be_instance_of(Puppet::Resource)
+            end
+        end
+
+        it "should add only files in the specified sections if section names are provided" do
+            @settings.setdefaults :main, :maindir => ["/maindir", "a"]
+            @settings.setdefaults :other, :otherdir => ["/otherdir", "a"]
+            catalog = @settings.to_catalog(:main)
+            catalog.resource(:file, "/otherdir").should be_nil
+            catalog.resource(:file, "/maindir").should be_instance_of(Puppet::Resource)
+        end
+
+        it "should not try to add the same file twice" do
+            @settings.setdefaults :main, :maindir => ["/maindir", "a"]
+            @settings.setdefaults :other, :otherdir => ["/maindir", "a"]
+            lambda { @settings.to_catalog }.should_not raise_error
+        end
+
+        it "should ignore files whose :to_resource method returns nil" do
+            @settings.setdefaults :main, :maindir => ["/maindir", "a"]
+            @settings.element(:maindir).expects(:to_resource).returns nil
+
+            Puppet::Resource::Catalog.any_instance.expects(:add_resource).never
+            @settings.to_catalog
+        end
+
+        describe "when adding users and groups to the catalog" do
+            before do
+                Puppet.features.stubs(:root?).returns true
+                @settings.setdefaults :foo, :mkusers => [true, "e"]
+                @settings.setdefaults :other, :otherdir => {:default => "/otherdir", :desc => "a", :owner => "luke", :group => "johnny"}
+
+                @catalog = @settings.to_catalog
+            end
+
+            it "should add each specified user and group to the catalog if :mkusers is a valid setting, is enabled, and we're running as root" do
+                @catalog.resource(:user, "luke").should be_instance_of(Puppet::Resource)
+                @catalog.resource(:group, "johnny").should be_instance_of(Puppet::Resource)
+            end
+
+            it "should only add users and groups to the catalog from specified sections" do
+                @settings.setdefaults :yay, :yaydir => {:default => "/yaydir", :desc => "a", :owner => "jane", :group => "billy"}
+                catalog = @settings.to_catalog(:other)
+                catalog.resource(:user, "jane").should be_nil
+                catalog.resource(:group, "billy").should be_nil
+            end
+
+            it "should not add users or groups to the catalog if :mkusers not running as root" do
+                Puppet.features.stubs(:root?).returns false
+
+                catalog = @settings.to_catalog
+                catalog.resource(:user, "luke").should be_nil
+                catalog.resource(:group, "johnny").should be_nil
+            end
+
+            it "should not add users or groups to the catalog if :mkusers is not a valid setting" do
+                Puppet.features.stubs(:root?).returns true
+                settings = Puppet::Util::Settings.new
+                settings.setdefaults :other, :otherdir => {:default => "/otherdir", :desc => "a", :owner => "luke", :group => "johnny"}
+
+                catalog = settings.to_catalog
+                catalog.resource(:user, "luke").should be_nil
+                catalog.resource(:group, "johnny").should be_nil
+            end
+
+            it "should not add users or groups to the catalog if :mkusers is a valid setting but is disabled" do
+                @settings[:mkusers] = false
+
+                catalog = @settings.to_catalog
+                catalog.resource(:user, "luke").should be_nil
+                catalog.resource(:group, "johnny").should be_nil
+            end
+
+            it "should not try to add users or groups to the catalog twice" do
+                @settings.setdefaults :yay, :yaydir => {:default => "/yaydir", :desc => "a", :owner => "luke", :group => "johnny"}
+
+                # This would fail if users/groups were added twice
+                lambda { @settings.to_catalog }.should_not raise_error
+            end
+
+            it "should set :ensure to :present on each created user and group" do
+                @catalog.resource(:user, "luke")[:ensure].should == :present
+                @catalog.resource(:group, "johnny")[:ensure].should == :present
+            end
+
+            it "should set each created user's :gid to the main group if one is available" do
+                @settings.setdefaults :foo, :group => ["yay", 'eh']
+
+                @settings.to_catalog.resource(:user, "luke")[:gid].should == "yay"
+            end
+
+            it "should not set each created user's :gid if no main group is available" do
+                @settings.to_catalog.resource(:user, "luke")[:gid].should be_nil
+            end
+
+            it "should not attempt to manage the root user" do
+                Puppet.features.stubs(:root?).returns true
+                @settings.setdefaults :foo, :foodir => {:default => "/foodir", :desc => "a", :owner => "root", :group => "johnny"}
+
+                @settings.to_catalog.resource(:user, "root").should be_nil
+            end
+
+            it "should not attempt to manage the wheel or root groups" do
+                @settings.setdefaults :foo, :foodir => {:default => "/foodir", :desc => "a", :owner => "root", :group => "root"}
+                @settings.setdefaults :fee, :feedir => {:default => "/feedir", :desc => "a", :owner => "root", :group => "wheel"}
+
+                catalog = @settings.to_catalog
+                catalog.resource(:group, "root").should be_nil
+                catalog.resource(:group, "wheel").should be_nil
+            end
+        end
+    end
+
+    it "should be able to be converted to a manifest" do
+        Puppet::Util::Settings.new.should respond_to(:to_manifest)
+    end
+
+    describe "when being converted to a manifest" do
+        it "should produce a string with the code for each resource joined by two carriage returns" do
+            @settings = Puppet::Util::Settings.new
+            @settings.setdefaults :main, :maindir => ["/maindir", "a"], :seconddir => ["/seconddir", "a"]
+
+            main = stub 'main_resource', :ref => "File[/maindir]"
+            main.expects(:to_manifest).returns "maindir"
+            second = stub 'second_resource', :ref => "File[/seconddir]"
+            second.expects(:to_manifest).returns "seconddir"
+            @settings.element(:maindir).expects(:to_resource).returns main
+            @settings.element(:seconddir).expects(:to_resource).returns second
+
+            @settings.to_manifest.split("\n\n").sort.should == %w{maindir seconddir}
+        end
+    end
+
+    describe "when using sections of the configuration to manage the local host" do
         before do
             @settings = Puppet::Util::Settings.new
             @settings.setdefaults :main, :maindir => ["/maindir", "a"], :seconddir => ["/seconddir", "a"]
@@ -486,19 +633,8 @@ describe Puppet::Util::Settings do
             @settings.setdefaults :files, :myfile => {:default => "/myfile", :desc => "a", :mode => 0755}
         end
 
-        def stub_transaction
-            @bucket = mock 'bucket'
-            @config = mock 'config'
-            @trans = mock 'transaction'
-
-            @settings.expects(:to_transportable).with(:whatever).returns(@bucket)
-            @bucket.expects(:to_catalog).returns(@config)
-            @config.expects(:apply).yields(@trans)
-            @config.stubs(:host_config=)
-        end
-
         it "should provide a method that writes files with the correct modes" do
-            pending "Not converted from test/unit yet"
+            @settings.should respond_to(:write)
         end
 
         it "should provide a method that creates directories with the correct modes" do
@@ -507,176 +643,60 @@ describe Puppet::Util::Settings do
             @settings.mkdir(:otherdir)
         end
 
-        it "should be able to create needed directories in a single section" do
-            Dir.expects(:mkdir).with("/maindir")
-            Dir.expects(:mkdir).with("/seconddir")
+        it "should create a catalog with the specified sections" do
+            @settings.expects(:to_catalog).with(:main, :other).returns Puppet::Resource::Catalog.new("foo")
+            @settings.use(:main, :other)
+        end
+
+        it "should ignore sections that have already been used" do
+            @settings.expects(:to_catalog).with(:main).returns Puppet::Resource::Catalog.new("foo")
             @settings.use(:main)
-        end
-
-        it "should be able to create needed directories in multiple sections" do
-            Dir.expects(:mkdir).with("/maindir")
-            Dir.expects(:mkdir).with("/seconddir")
-            Dir.expects(:mkdir).with("/thirddir")
-            @settings.use(:main, :third)
-        end
-
-        it "should provide a method to trigger enforcing of file modes on existing files and directories" do
-            pending "Not converted from test/unit yet"
-        end
-
-        it "should provide a method to convert the file mode enforcement into a Puppet manifest" do
-            pending "Not converted from test/unit yet"
-        end
-
-        it "should create files when configured to do so with the :create parameter"
-
-        it "should provide a method to convert the file mode enforcement into transportable resources" do
-            # Make it think we're root so it tries to manage user and group.
-            Puppet.features.stubs(:root?).returns(true)
-            File.stubs(:exist?).with("/myfile").returns(true)
-            trans = nil
-            trans = @settings.to_transportable
-            resources = []
-            trans.delve { |obj| resources << obj if obj.is_a? Puppet::TransObject }
-            %w{/maindir /seconddir /otherdir /myfile}.each do |path|
-                obj = resources.find { |r| r.type == "file" and r.name == path }
-                if path.include?("dir")
-                    obj[:ensure].should == :directory
-                else
-                    # Do not create the file, just manage mode
-                    obj[:ensure].should be_nil
-                end
-                obj.should be_instance_of(Puppet::TransObject)
-                case path
-                when "/otherdir":
-                    obj[:owner].should == "luke"
-                    obj[:group].should == "johnny"
-                    obj[:mode].should == 0755
-                when "/myfile":
-                    obj[:mode].should == 0755
-                end
-            end
-        end
-
-        it "should not try to manage user or group when not running as root" do
-            Puppet.features.stubs(:root?).returns(false)
-            trans = nil
-            trans = @settings.to_transportable(:other)
-            trans.delve do |obj|
-                next unless obj.is_a?(Puppet::TransObject)
-                obj[:owner].should be_nil
-                obj[:group].should be_nil
-            end
-        end
-
-        it "should add needed users and groups to the manifest when asked" do
-            # This is how we enable user/group management
-            @settings.setdefaults :main, :mkusers => [true, "w"]
-            Puppet.features.stubs(:root?).returns(false)
-            trans = nil
-            trans = @settings.to_transportable(:other)
-            resources = []
-            trans.delve { |obj| resources << obj if obj.is_a? Puppet::TransObject and obj.type != "file" }
-
-            user = resources.find { |r| r.type == "user" }
-            user.should be_instance_of(Puppet::TransObject)
-            user.name.should == "luke"
-            user[:ensure].should == :present
-
-            # This should maybe be a separate test, but...
-            group = resources.find { |r| r.type == "group" }
-            group.should be_instance_of(Puppet::TransObject)
-            group.name.should == "johnny"
-            group[:ensure].should == :present
+            @settings.expects(:to_catalog).with(:other).returns Puppet::Resource::Catalog.new("foo")
+            @settings.use(:main, :other)
         end
 
         it "should ignore tags and schedules when creating files and directories"
-
-        it "should apply all resources in debug mode to reduce logging"
-
-        it "should not try to manage absent files" do
-            # Make it think we're root so it tries to manage user and group.
-            Puppet.features.stubs(:root?).returns(true)
-            trans = nil
-            trans = @settings.to_transportable
-            file = nil
-            trans.delve { |obj| file = obj if obj.name == "/myfile" }
-            file.should be_nil
-        end
-
-        it "should not try to manage files in memory" do
-            main = Puppet::Type.type(:file).create(:path => "/maindir")
-
-            trans = @settings.to_transportable
-
-            lambda { trans.to_catalog }.should_not raise_error
-        end
-
-        it "should do nothing if a catalog cannot be created" do
-            bucket = mock 'bucket'
-            catalog = mock 'catalog'
-
-            @settings.expects(:to_transportable).returns bucket
-            bucket.expects(:to_catalog).raises RuntimeError
-            catalog.expects(:apply).never
-
-            @settings.use(:mysection)
-        end
-
-        it "should do nothing if all specified sections have already been used" do
-            bucket = mock 'bucket'
-            catalog = mock 'catalog'
-
-            @settings.expects(:to_transportable).once.returns(bucket)
-            bucket.expects(:to_catalog).returns catalog
-            catalog.stub_everything
-
-            @settings.use(:whatever)
-
-            @settings.use(:whatever)
-        end
-
-        it "should ignore file settings whose values are not strings" do
-            @settings[:maindir] = false
-
-            lambda { trans = @settings.to_transportable }.should_not raise_error
-        end
-
-        it "should be able to turn the current configuration into a parseable manifest"
-
-        it "should convert octal numbers correctly when producing a manifest"
 
         it "should be able to provide all of its parameters in a format compatible with GetOpt::Long" do
             pending "Not converted from test/unit yet"
         end
 
-        it "should not attempt to manage files within /dev" do
-            pending "Not converted from test/unit yet"
-        end
+        it "should convert the created catalog to a RAL catalog" do
+            @catalog = Puppet::Resource::Catalog.new("foo")
+            @settings.expects(:to_catalog).with(:main).returns @catalog
 
-        it "should not modify the stored state database when managing resources" do
-            Puppet::Util::Storage.expects(:store).never
-            Puppet::Util::Storage.expects(:load).never
-            Dir.expects(:mkdir).with("/maindir")
-            Dir.expects(:mkdir).with("/seconddir")
+            @catalog.expects(:to_ral).returns @catalog
             @settings.use(:main)
         end
 
-        it "should convert all relative paths to fully-qualified paths (#795)" do
-            @settings[:myfile] = "unqualified"
-            dir = Dir.getwd
-            @settings[:myfile].should == File.join(dir, "unqualified")
+        it "should specify that it is not managing a host catalog" do
+            catalog = Puppet::Resource::Catalog.new("foo")
+            @settings.expects(:to_catalog).returns catalog
+
+            catalog.stubs(:to_ral).returns catalog
+
+            catalog.expects(:host_config=).with false
+
+            @settings.use(:main)
         end
 
         it "should support a method for re-using all currently used sections" do
-            Dir.expects(:mkdir).with("/thirddir").times(2)
-            @settings.use(:third)
+            @settings.expects(:to_catalog).with(:main, :third).times(2).returns Puppet::Resource::Catalog.new("foo")
+
+            @settings.use(:main, :third)
             @settings.reuse
         end
 
         it "should fail with an appropriate message if any resources fail" do
-            stub_transaction
+            @catalog = Puppet::Resource::Catalog.new("foo")
+            @catalog.stubs(:to_ral).returns @catalog
+            @settings.expects(:to_catalog).returns @catalog
+
+            @trans = mock("transaction")
+            @catalog.expects(:apply).yields(@trans)
+
             @trans.expects(:any_failed?).returns(true)
+
             report = mock 'report'
             @trans.expects(:report).returns report
 
@@ -808,6 +828,116 @@ describe Puppet::Util::Settings do
                     @settings.print_configs.should be_true
                 end
             end
+        end
+    end
+end
+
+describe Puppet::Util::Settings::CFile do
+    it "should be able to be converted into a resource" do
+        Puppet::Util::Settings::CFile.new(:settings => mock("settings"), :desc => "eh").should respond_to(:to_resource)
+    end
+
+    describe "when being converted to a resource" do
+        before do
+            @settings = mock 'settings'
+            @file = Puppet::Util::Settings::CFile.new(:settings => @settings, :desc => "eh", :name => :mydir, :section => "mysect")
+            @settings.stubs(:value).with(:mydir).returns "/my/file"
+        end
+
+        it "should skip files that cannot determine their types" do
+            @file.expects(:type).returns nil
+            @file.to_resource.should be_nil
+        end
+
+        it "should skip non-existent files if 'create_files' is not enabled" do
+            @file.expects(:create_files?).returns false
+            @file.expects(:type).returns :file
+            File.expects(:exist?).with("/my/file").returns false
+            @file.to_resource.should be_nil
+        end
+
+        it "should manage existent files even if 'create_files' is not enabled" do
+            @file.expects(:create_files?).returns false
+            @file.expects(:type).returns :file
+            File.expects(:exist?).with("/my/file").returns true
+            @file.to_resource.should be_instance_of(Puppet::Resource)
+        end
+
+        it "should skip files in /dev" do
+            @settings.stubs(:value).with(:mydir).returns "/dev/file"
+            @file.to_resource.should be_nil
+        end
+
+        it "should skip files whose paths are not strings" do
+            @settings.stubs(:value).with(:mydir).returns :foo
+            @file.to_resource.should be_nil
+        end
+
+        it "should return a file resource with the path set appropriately" do
+            resource = @file.to_resource
+            resource.type.should == "File"
+            resource.title.should == "/my/file"
+        end
+
+        it "should fully qualified returned files if necessary (#795)" do
+            @settings.stubs(:value).with(:mydir).returns "myfile"
+            @file.to_resource.title.should == File.join(Dir.getwd, "myfile")
+        end
+
+        it "should set the mode on the file if a mode is provided" do
+            @file.mode = 0755
+
+            @file.to_resource[:mode].should == 0755
+        end
+
+        it "should set the owner if running as root and the owner is provided" do
+            Puppet.features.expects(:root?).returns true
+            @file.stubs(:owner).returns "foo"
+            @file.to_resource[:owner].should == "foo"
+        end
+
+        it "should set the group if running as root and the group is provided" do
+            Puppet.features.expects(:root?).returns true
+            @file.stubs(:group).returns "foo"
+            @file.to_resource[:group].should == "foo"
+        end
+
+        it "should not set owner if not running as root" do
+            Puppet.features.expects(:root?).returns false
+            @file.stubs(:owner).returns "foo"
+            @file.to_resource[:owner].should be_nil
+        end
+
+        it "should not set group if not running as root" do
+            Puppet.features.expects(:root?).returns false
+            @file.stubs(:group).returns "foo"
+            @file.to_resource[:group].should be_nil
+        end
+
+        it "should set :ensure to the file type" do
+            @file.expects(:type).returns :directory
+            @file.to_resource[:ensure].should == :directory
+        end
+
+        it "should set the loglevel to :debug" do
+            @file.to_resource[:loglevel].should == :debug
+        end
+
+        it "should set the backup to false" do
+            @file.to_resource[:backup].should be_false
+        end
+
+        it "should tag the resource with the settings section" do
+            @file.expects(:section).returns "mysect"
+            @file.to_resource.should be_tagged("mysect")
+        end
+
+        it "should tag the resource with the setting name" do
+            @file.to_resource.should be_tagged("mydir")
+        end
+
+        it "should tag the resource with 'settings'" do
+            @file.to_resource.should be_tagged("settings")
         end
     end
 end

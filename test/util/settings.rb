@@ -42,23 +42,6 @@ class TestSettings < Test::Unit::TestCase
         assert(count > 0, "Found no users")
     end
 
-    def test_to_transportable
-        set_configs
-        trans = nil
-        assert_nothing_raised("Could not convert to a transportable") {
-            trans = @config.to_transportable
-        }
-
-        comp = nil
-        assert_nothing_raised("Could not convert transportable to component") {
-            comp = trans.to_ral
-        }
-
-        assert_nothing_raised("Could not retrieve transported config") {
-            comp.retrieve
-        }
-    end
-
     def test_to_config
         set_configs
 
@@ -565,7 +548,7 @@ yay = /a/path
             }
         )
 
-        config = @config.to_configuration
+        config = @config.to_catalog
 
         assert(! config.resource(:file, "/dev/testing"), "Created dev file")
     end
@@ -918,7 +901,7 @@ yay = /a/path
         # Now enable it so they'll be added
         config[:mkusers] = true
 
-        comp = config.to_configuration
+        comp = config.to_catalog
 
         comp.vertices.find_all { |r| r.class.name == :user }.each do |u|
             assert(u.name != "root", "Tried to manage root user")

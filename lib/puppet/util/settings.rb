@@ -58,20 +58,6 @@ class Puppet::Util::Settings
         return options
     end
 
-    def apply
-        trans = self.to_transportable
-        begin
-            config = trans.to_catalog
-            config.store_state = false
-            config.apply
-        rescue => detail
-            if Puppet[:trace]
-                puts detail.backtrace
-            end
-            Puppet.err "Could not configure myself: %s" % detail
-        end
-    end
-
     # Is our parameter a boolean parameter?
     def boolean?(param)
         param = symbolize(param)
@@ -435,10 +421,9 @@ class Puppet::Util::Settings
     def reuse
         return unless defined? @used
         @sync.synchronize do # yay, thread-safe
-            @used.each do |section|
-                @used.delete(section)
-                self.use(section)
-            end
+            new = @used
+            @used = []
+            self.use(*new)
         end
     end
 
@@ -464,41 +449,6 @@ class Puppet::Util::Settings
         }
 
         return sectionlist, sections
-    end
-
-    # Convert a single section into transportable objects.
-    def section_to_transportable(section, done = nil)
-        done ||= Hash.new { |hash, key| hash[key] = {} }
-        objects = []
-        persection(section) do |obj|
-            if @config[:mkusers] and value(:mkusers)
-                objects += add_user_resources(section, obj, done)
-            end
-
-            value = obj.value
-
-            # Only files are convertable to transportable resources.
-            next unless obj.respond_to? :to_transportable and transobjects = obj.to_transportable
-
-            transobjects = [transobjects] unless transobjects.is_a? Array
-            transobjects.each do |trans|
-                # transportable could return nil
-                next unless trans
-                unless done[:file].include? trans.name
-                    @created << trans.name
-                    objects << trans
-                    done[:file][trans.name] = trans
-                end
-            end
-        end
-
-        bucket = Puppet::TransBucket.new
-        bucket.type = "Settings"
-        bucket.name = section
-        bucket.push(*objects)
-        bucket.keyword = "class"
-
-        return bucket
     end
 
     # Set a bunch of defaults in a given section.  The sections are actually pretty
@@ -552,10 +502,25 @@ class Puppet::Util::Settings
         end
     end
 
-    # Convert our list of objects into a component that can be applied.
-    def to_configuration
-        transport = self.to_transportable
-        return transport.to_catalog
+    # Convert the settings we manage into a catalog full of resources that model those settings.
+    # We currently have to go through Trans{Object,Bucket} instances,
+    # because this hasn't been ported yet.
+    def to_catalog(*sections)
+        sections = nil if sections.empty?
+
+        catalog = Puppet::Resource::Catalog.new("Settings")
+
+        @config.values.find_all { |value| value.is_a?(CFile) }.each do |file|
+            next unless (sections.nil? or sections.include?(file.section))
+            next if catalog.resource(:file, value(file.name))
+            next unless resource = file.to_resource
+
+            catalog.add_resource(resource)
+        end
+
+        add_user_resources(catalog, sections)
+
+        catalog
     end
 
     # Convert our list of config elements into a configuration file.
@@ -586,45 +551,13 @@ Generated on #{Time.now}.
         return str
     end
 
-    # Convert our configuration into a list of transportable objects.
-    def to_transportable(*sections)
-        done = Hash.new { |hash, key|
-            hash[key] = {}
-        }
-
-        topbucket = Puppet::TransBucket.new
-        if defined? @file.file and @file.file
-            topbucket.name = @file.file
-        else
-            topbucket.name = "top"
-        end
-        topbucket.type = "Settings"
-        topbucket.top = true
-
-        # Now iterate over each section
-        if sections.empty?
-            eachsection do |section|
-                sections << section
-            end
-        end
-        sections.each do |section|
-            obj = section_to_transportable(section, done)
-            topbucket.push obj
-        end
-
-        topbucket
-    end
-
     # Convert to a parseable manifest
     def to_manifest
-        transport = self.to_transportable
-
-        manifest = transport.to_manifest + "\n"
-        eachsection { |section|
-            manifest += "include #{section}\n"
-        }
-
-        return manifest
+        catalog = to_catalog
+        # The resource list is a list of references, not actual instances.
+        catalog.resources.collect do |ref|
+            catalog.resource(ref).to_manifest
+        end.join("\n\n")
     end
 
     # Create the necessary objects to use a section.  This is idempotent;
@@ -635,10 +568,8 @@ Generated on #{Time.now}.
 
             return if sections.empty?
 
-            bucket = to_transportable(*sections)
-
             begin
-                catalog = bucket.to_catalog
+                catalog = to_catalog(*sections).to_ral
             rescue => detail
                 puts detail.backtrace if Puppet[:trace]
                 Puppet.err "Could not create resources for managing Puppet's files and directories in sections %s: %s" % [sections.inspect, detail]
@@ -799,45 +730,25 @@ Generated on #{Time.now}.
     end
     
     # Create the transportable objects for users and groups.
-    def add_user_resources(section, obj, done)
-        resources = []
-        [:owner, :group].each do |attr|
-            type = nil
-            if attr == :owner
-                type = :user
-            else
-                type = attr
-            end
-            # If a user and/or group is set, then make sure we're
-            # managing that object
-            if obj.respond_to? attr and name = obj.send(attr)
-                # Skip root or wheel
-                next if %w{root wheel}.include?(name.to_s)
+    def add_user_resources(catalog, sections)
+        return unless Puppet.features.root?
+        return unless self[:mkusers]
 
-                # Skip owners and groups we've already done, but tag
-                # them with our section if necessary
-                if done[type].include?(name)
-                    tags = done[type][name].tags
-                    unless tags.include?(section)
-                        done[type][name].tags = tags << section
-                    end
-                else
-                    newobj = Puppet::TransObject.new(name, type.to_s)
-                    newobj.tags = ["puppet", "configuration", section]
-                    newobj[:ensure] = :present
-                    if type == :user
-                        newobj[:comment] ||= "%s user" % name
-                    end
-                    # Set the group appropriately for the user
-                    if type == :user
-                        newobj[:gid] = Puppet[:group]
-                    end
-                    done[type][name] = newobj
-                    resources << newobj
+        @config.each do |name, element|
+            next unless element.respond_to?(:owner)
+            next unless sections.nil? or sections.include?(element.section)
+
+            if user = element.owner and user != "root" and catalog.resource(:user, user).nil?
+                resource = Puppet::Resource.new(:user, user, :ensure => :present)
+                if self[:group]
+                    resource[:gid] = self[:group]
                 end
+                catalog.add_resource resource
+            end
+            if group = element.group and ! %w{root wheel}.include?(group) and catalog.resource(:group, group).nil?
+                catalog.add_resource Puppet::Resource.new(:group, group, :ensure => :present)
             end
         end
-        resources
     end
 
     # Yield each search source in turn.
@@ -1009,8 +920,9 @@ Generated on #{Time.now}.
 
         # Create the new element.  Pretty much just sets the name.
         def initialize(args = {})
-            @settings = args.delete(:settings)
-            raise ArgumentError.new("You must refer to a settings object") if @settings.nil? or !@settings.is_a?(Puppet::Util::Settings)
+            unless @settings = args.delete(:settings)
+                raise ArgumentError.new("You must refer to a settings object")
+            end
 
             args.each do |param, value|
                 method = param.to_s + "="
@@ -1090,6 +1002,11 @@ Generated on #{Time.now}.
         attr_writer :owner, :group
         attr_accessor :mode, :create
 
+        # Should we create files, rather than just directories?
+        def create_files?
+            create
+        end
+
         def group
             if defined? @group
                 return @settings.convert(@group)
@@ -1135,57 +1052,35 @@ Generated on #{Time.now}.
             end
         end
 
-        # Convert the object to a TransObject instance.
-        def to_transportable
-            type = self.type
-            return nil unless type
+        # Turn our setting thing into a Puppet::Resource instance.
+        def to_resource
+            return nil unless type = self.type
 
             path = self.value
 
             return nil unless path.is_a?(String)
+
+            # Make sure the paths are fully qualified.
+            path = File.join(Dir.getwd, path) unless path =~ /^\//
+
+            return nil unless type == :directory or create_files? or File.exist?(path)
             return nil if path =~ /^\/dev/
 
-            objects = []
+            resource = Puppet::Resource.new(:file, path)
+            resource[:mode] = self.mode if self.mode
 
-            # Skip plain files that don't exist, since we won't be managing them anyway.
-            return nil unless self.name.to_s =~ /dir$/ or File.exist?(path) or self.create
-            obj = Puppet::TransObject.new(path, "file")
-
-            # Only create directories, or files that are specifically marked to
-            # create.
-            if type == :directory or self.create
-                obj[:ensure] = type
-            end
-            [:mode].each { |var|
-                if value = self.send(var)
-                    # Don't bother converting the mode, since the file type
-                    # can handle it any old way.
-                    obj[var] = value
-                end
-            }
-
-            # Only chown or chgrp when root
             if Puppet.features.root?
-                [:group, :owner].each { |var|
-                    if value = self.send(var)
-                        obj[var] = value
-                    end
-                }
+                resource[:owner] = self.owner if self.owner
+                resource[:group] = self.group if self.group
             end
 
-            # And set the loglevel to debug for everything
-            obj[:loglevel] = "debug"
-            
-            # We're not actually modifying any files here, and if we allow a
-            # filebucket to get used here we get into an infinite recursion
-            # trying to set the filebucket up.
-            obj[:backup] = false
+            resource[:ensure] = type
+            resource[:loglevel] = :debug
+            resource[:backup] = false
 
-            if self.section
-                obj.tags += ["puppet", "configuration", self.section, self.name]
-            end
-            objects << obj
-            objects
+            resource.tag(self.section, self.name, "settings")
+
+            resource
         end
 
         # Make sure any provided variables look up to something.

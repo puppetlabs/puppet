@@ -755,13 +755,6 @@ class Type
                 raise Puppet::Error, "Provider %s is not functional on this platform" % provider.class.name
             end
         end
-        #Puppet.err "Evaluating %s" % self.path.join(":")
-        unless defined? @evalcount
-            self.err "No evalcount defined on '%s' of type '%s'" %
-                [self.title,self.class]
-            @evalcount = 0
-        end
-        @evalcount += 1
 
         if p = self.provider and p.respond_to?(:prefetch)
             p.prefetch
