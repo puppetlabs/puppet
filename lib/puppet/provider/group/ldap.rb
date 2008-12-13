@@ -1,16 +1,18 @@
 require 'puppet/provider/ldap'
 
 Puppet::Type.type(:group).provide :ldap, :parent => Puppet::Provider::Ldap do
-    desc "Group management via ``ldap``.  This provider requires that you
-        have valid values for all of the ldap-related settings,
-        including ``ldapbase``.  You will also almost definitely need settings
-        for ``ldapuser`` and ``ldappassword``, so that your clients can write
-        to ldap.
+    desc "Group management via ``ldap``.
+
+    This provider requires that you have valid values for all of the
+    ldap-related settings, including ``ldapbase``.  You will also almost
+    definitely need settings for ``ldapuser`` and ``ldappassword``, so that
+    your clients can write to ldap.
         
-        Note that this provider will automatically generate a GID for you if
-        you do not specify one, but it is a potentially expensive operation,
-        as it iterates across all existing groups to pick the appropriate next
-        one."
+    Note that this provider will automatically generate a GID for you if you do
+    not specify one, but it is a potentially expensive operation, as it
+    iterates across all existing groups to pick the appropriate next one.
+
+  "
 
     confine :true => Puppet.features.ldap?, :false => (Puppet[:ldapuser] == "")
 

@@ -2,7 +2,6 @@ require 'puppet/provider/nameservice/directoryservice'
 
 Puppet::Type.type(:computer).provide :directoryservice, :parent => Puppet::Provider::NameService::DirectoryService do
     desc "Computer object management using DirectoryService on OS X.
-    
     Note that these are distinctly different kinds of objects to 'hosts',
     as they require a MAC address and can have all sorts of policy attached to
     them.
@@ -12,6 +11,7 @@ Puppet::Type.type(:computer).provide :directoryservice, :parent => Puppet::Provi
     
     If you wish to manage /etc/hosts on Mac OS X, then simply use the host
     type as per other platforms.
+
     "
 
     confine :operatingsystem => :darwin

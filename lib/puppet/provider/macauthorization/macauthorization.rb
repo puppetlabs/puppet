@@ -5,7 +5,9 @@ require 'tempfile'
 
 Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppet::Provider do
 
-    desc "Manage Mac OS X authorization database rules and rights."
+    desc "Manage Mac OS X authorization database rules and rights.
+
+  "
 
     commands :security => "/usr/bin/security"
     commands :sw_vers => "/usr/bin/sw_vers"

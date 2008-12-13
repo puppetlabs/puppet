@@ -1,9 +1,12 @@
 # Solaris 10 SMF-style services.
 Puppet::Type.type(:service).provide :smf, :parent => :base do
-    desc "Support for Sun's new Service Management Framework.  Starting a service
-        is effectively equivalent to enabling it, so there is only support
-        for starting and stopping services, which also enables and disables them,
-        respectively."
+    desc "Support for Sun's new Service Management Framework.
+
+    Starting a service is effectively equivalent to enabling it, so there is
+    only support for starting and stopping services, which also enables and
+    disables them, respectively.
+
+  "
 
     defaultfor :operatingsystem => :solaris
 
