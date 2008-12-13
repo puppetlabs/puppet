@@ -496,7 +496,7 @@ class Puppet::Parameter
     # Retrieve the resource's provider.  Some types don't have providers, in which
     # case we return the resource object itself.
     def provider
-        @resource.provider || @resource
+        @resource.provider
     end
 
     def to_s

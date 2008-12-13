@@ -98,6 +98,16 @@ describe Puppet::Type do
 
             set.should == [:name, :atboot, :noop]
         end
+
+        # This one is really hard to test :/
+        it "should each default immediately if no value is provided" do
+            defaults = []
+            Puppet::Type.type(:package).any_instance.stubs(:setdefaults).with { |value| defaults << value; true }
+
+            Puppet::Type.type(:package).new :name => "whatever"
+
+            defaults[0].should == :provider
+        end
     end
 
     it "should have a class method for converting a hash into a Puppet::Resource instance" do

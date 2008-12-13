@@ -1987,9 +1987,16 @@ class Type
 
         found = []
         (self.class.allattrs + resource.keys).uniq.each do |attr|
-            next unless resource.has_key?(attr)
+
             begin
-                self[attr] = resource[attr]
+                # Set any defaults immediately.  This is mostly done so
+                # that the default provider is available for any other
+                # property validation.
+                if resource.has_key?(attr)
+                    self[attr] = resource[attr]
+                else
+                    setdefaults(attr)
+                end
             rescue ArgumentError, Puppet::Error, TypeError
                 raise
             rescue => detail
@@ -1998,9 +2005,6 @@ class Type
                 raise error
             end
         end
-        
-        # Set all default values.
-        self.setdefaults
 
         self.validate if self.respond_to?(:validate)
     end
