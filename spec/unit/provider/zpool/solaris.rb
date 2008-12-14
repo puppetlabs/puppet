@@ -42,20 +42,41 @@ describe provider_class do
         end
 
         describe "when there is a spare" do
-            it "should add the spare disk to the hash and strip the array" do
+            it "should add the spare disk to the hash" do
                 @zpool_data += ["spares", "spare_disk"]
                 @provider.process_zpool_data(@zpool_data)[:spare].should == ["spare_disk"]
             end
         end
 
+        describe "when there are two spares" do
+            it "should add the spare disk to the hash as a single string" do
+                @zpool_data += ["spares", "spare_disk", "spare_disk2"]
+                @provider.process_zpool_data(@zpool_data)[:spare].should == ["spare_disk spare_disk2"]
+            end
+        end
+
         describe "when there is a log" do
-            it "should add the log disk to the hash and strip the array" do
+            it "should add the log disk to the hash" do
                 @zpool_data += ["logs", "log_disk"]
                 @provider.process_zpool_data(@zpool_data)[:log].should == ["log_disk"]
             end
         end
 
-        describe "when the vdev is a mirror" do
+        describe "when there are two logs" do
+            it "should add the log disks to the hash as a single string" do
+                @zpool_data += ["spares", "spare_disk", "spare_disk2"]
+                @provider.process_zpool_data(@zpool_data)[:spare].should == ["spare_disk spare_disk2"]
+            end
+        end
+
+        describe "when the vdev is a single mirror" do
+            it "should call create_multi_array with mirror" do
+                @zpool_data = ["mirrorpool", "mirror", "disk1", "disk2"]
+                @provider.process_zpool_data(@zpool_data)[:mirror].should == ["disk1 disk2"]
+            end
+        end
+
+        describe "when the vdev is a double mirror" do
             it "should call create_multi_array with mirror" do
                 @zpool_data = ["mirrorpool", "mirror", "disk1", "disk2", "mirror", "disk3", "disk4"]
                 @provider.process_zpool_data(@zpool_data)[:mirror].should == ["disk1 disk2", "disk3 disk4"]

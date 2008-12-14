@@ -1,4 +1,6 @@
 0.24.7
+    Fixed #1804 - Added VDev and MultiVDev properties to the ZPool type
+
     Fixed #1496 - nagios_servicedependency needs a unique host_name?
 
     Fixed #1420 - nagios_serviceescalation not allowing host_name more than one type
