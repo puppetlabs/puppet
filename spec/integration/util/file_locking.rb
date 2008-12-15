@@ -11,7 +11,7 @@ describe Puppet::Util::FileLocking do
         file = file.path
         File.open(file, "w") { |f| f.puts "starting" }
 
-        value = {:a => :b}
+        data = {:a => :b, :c => "A string", :d => "another string", :e => %w{an array of strings}}
         threads = []
         sync = Sync.new
         9.times { |a|
@@ -19,13 +19,13 @@ describe Puppet::Util::FileLocking do
                 9.times { |b|
                     sync.synchronize(Sync::SH) {
                         Puppet::Util::FileLocking.readlock(file) { |f|
-                            f.read
+                            YAML.load(f.read)
                         }
                     }
                     sleep 0.01
                     sync.synchronize(Sync::EX) {
                         Puppet::Util::FileLocking.writelock(file) { |f|
-                            f.puts "%s %s" % [a, b]
+                            f.puts YAML.dump(data)
                         }
                     }
                 }
