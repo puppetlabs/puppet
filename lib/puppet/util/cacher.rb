@@ -59,7 +59,14 @@ module Puppet::Util::Cacher
     # Methods that get added to instances.
     module InstanceMethods
         def expire
-            expirer.expire
+            # Only expire if we have an expirer.  This is
+            # mostly so that we can comfortably handle cases
+            # like Puppet::Type instances, which use their
+            # catalog as their expirer, and they often don't
+            # have a catalog.
+            if e = expirer
+                e.expire
+            end
         end
 
         def expirer

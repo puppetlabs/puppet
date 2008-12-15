@@ -79,6 +79,21 @@ describe Puppet::Util::Cacher do
             @object.instance_cache.should_not equal(value)
         end
 
+        it "should be able to trigger expiration on its expirer" do
+            @expirer.expects(:expire)
+            @object.expire
+        end
+
+        it "should do nothing when asked to expire when no expirer is available" do
+            cacher = CacheTest.new
+            class << cacher
+                def expirer
+                    nil
+                end
+            end
+            lambda { cacher.expire }.should_not raise_error
+        end
+
         it "should be able to cache false values" do
             @object.expects(:init_instance_cache).returns false
             @object.instance_cache.should be_false
