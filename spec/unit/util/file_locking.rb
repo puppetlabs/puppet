@@ -98,49 +98,18 @@ describe Puppet::Util::FileLocking do
             Puppet::Util::FileLocking.writelock('/file')
         end
 
-        it "should write to a temporary file" do
+        it "should allow the caller to write to the locked file" do
             fh = mock 'fh'
             File.expects(:open).yields fh
 
             lfh = mock 'locked_filehandle'
-            fh.expects(:lock_exclusive).yields lfh
+            fh.expects(:lock_exclusive).yields(lfh)
 
-            tf = mock 'tmp_filehandle'
-            File.expects(:open).with { |path, *args| path == "/file.tmp" }.yields tf
+            lfh.expects(:print).with "foo"
 
-            result = nil
-            File.stubs(:rename)
-            Puppet::Util::FileLocking.writelock('/file') { |f| result = f }
-            result.should equal(tf)
-        end
-
-        it "should rename the temporary file to the normal file" do
-            fh = stub 'fh'
-            fh.stubs(:lock_exclusive).yields fh
-            File.stubs(:open).yields fh
-
-            File.expects(:rename).with("/file.tmp", "/file")
-            Puppet::Util::FileLocking.writelock('/file') { |f| }
-        end
-
-        it "should fail if it cannot rename the file" do
-            fh = stub 'fh'
-            fh.stubs(:lock_exclusive).yields fh
-            File.stubs(:open).yields fh
-
-            File.expects(:rename).with("/file.tmp", "/file").raises(RuntimeError)
-            lambda { Puppet::Util::FileLocking.writelock('/file') { |f| } }.should raise_error(Puppet::Error)
-        end
-
-        it "should remove the temporary file if the rename fails" do
-            fh = stub 'fh'
-            fh.stubs(:lock_exclusive).yields fh
-            File.stubs(:open).yields fh
-
-            File.expects(:rename).with("/file.tmp", "/file").raises(RuntimeError)
-            File.expects(:exist?).with("/file.tmp").returns true
-            File.expects(:unlink).with("/file.tmp")
-            lambda { Puppet::Util::FileLocking.writelock('/file') { |f| } }.should raise_error(Puppet::Error)
+            Puppet::Util::FileLocking.writelock('/file') do |f|
+                f.print "foo"
+            end
         end
     end
 end

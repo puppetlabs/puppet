@@ -21,6 +21,11 @@ module Puppet::Util::FileLocking
         tmpfile = file + ".tmp"
 
         unless mode
+            # It's far more likely that the file will be there than not, so it's
+            # better to stat once to check for existence and mode.
+            # If we can't stat, it's most likely because the file's not there,
+            # but could also be because the directory isn't readable, in which case
+            # we won't be able to write anyway.
             begin
                 mode = File.stat(file).mode
             rescue
@@ -31,15 +36,7 @@ module Puppet::Util::FileLocking
         Puppet::Util.sync(file).synchronize(Sync::EX) do
             File.open(file, "w", mode) do |rf|
                 rf.lock_exclusive do |lrf|
-                    File.open(tmpfile, "w", mode) do |tf|
-                        yield tf
-                    end
-                    begin
-                        File.rename(tmpfile, file)
-                    rescue => detail
-                        File.unlink(tmpfile) if File.exist?(tmpfile)
-                        raise Puppet::Error, "Could not rename %s to %s: %s; file %s was unchanged" % [file, tmpfile, Thread.current.object_id, detail, file]
-                    end
+                    yield lrf
                 end
             end
         end
