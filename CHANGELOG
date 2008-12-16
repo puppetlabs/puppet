@@ -1,3 +1,6 @@
+0.25.x
+    Updated Red Hat spec file 0.24.7
+
 0.24.7
     Fixed #1804 - Added VDev and MultiVDev properties to the ZPool type
 
