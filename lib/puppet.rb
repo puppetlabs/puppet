@@ -25,7 +25,7 @@ require 'puppet/util/suidmanager'
 # it's also a place to find top-level commands like 'debug'
 
 module Puppet
-    PUPPETVERSION = '0.24.6'
+    PUPPETVERSION = '0.24.7'
 
     def Puppet.version
         return PUPPETVERSION
