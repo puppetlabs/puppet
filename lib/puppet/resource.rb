@@ -7,7 +7,7 @@ require 'puppet/resource/reference'
 class Puppet::Resource
     include Puppet::Util::Tagging
     include Enumerable
-    attr_accessor :type, :title, :file, :line, :catalog
+    attr_accessor :type, :title, :file, :line, :catalog, :implicit
 
     # Proxy these methods to the parameters hash.  It's likely they'll
     # be overridden at some point, but this works for now.
@@ -64,7 +64,14 @@ class Puppet::Resource
 
     # Produce a simple hash of our parameters.
     def to_hash
-        @parameters.dup
+        result = @parameters.dup
+        unless result.include?(namevar)
+            result[namevar] = title
+        end
+        if result.has_key?(nil)
+            raise "wtf? %s" % namevar.inspect
+        end
+        result
     end
 
     def to_s
@@ -146,6 +153,30 @@ class Puppet::Resource
 
     private
 
+    # Produce a canonical method name.
+    def parameter_name(param)
+        param = param.to_s.downcase.to_sym
+        if param == :name and n = namevar()
+            param = namevar
+        end
+        param
+    end
+
+    # The namevar for our resource type. If the type doesn't exist,
+    # always use :name.
+    def namevar
+        if t = resource_type
+            t.namevar
+        else
+            :name
+        end
+    end
+
+    # Retrieve the resource type.
+    def resource_type
+        Puppet::Type.type(type)
+    end
+
     # Create an old-style TransBucket instance, for non-builtin resource types.
     def to_transbucket
         bucket = Puppet::TransBucket.new([])
@@ -155,10 +186,5 @@ class Puppet::Resource
 
         # TransBuckets don't support parameters, which is why they're being deprecated.
         return bucket
-    end
-
-    # Produce a canonical method name.
-    def parameter_name(param)
-        param.to_s.downcase.to_sym
     end
 end

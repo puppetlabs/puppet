@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + '/../spec_helper'
 require 'puppet/resource'
 
 describe Puppet::Resource do
-    [:catalog, :file, :line].each do |attr|
+    [:catalog, :file, :line, :implicit].each do |attr|
         it "should have an #{attr} attribute" do
             resource = Puppet::Resource.new("file", "/my/file")
             resource.should respond_to(attr)
@@ -88,6 +88,29 @@ describe Puppet::Resource do
             @resource[:foo].should == "bar"
         end
 
+        it "should set the namevar when asked to set the name" do
+            Puppet::Type.type(:file).stubs(:namevar).returns :myvar
+            @resource[:name] = "/foo"
+            @resource[:myvar].should == "/foo"
+        end
+
+        it "should return the namevar when asked to return the name" do
+            Puppet::Type.type(:file).stubs(:namevar).returns :myvar
+            @resource[:myvar] = "/foo"
+            @resource[:name].should == "/foo"
+        end
+
+        it "should be able to set the name for non-builtin types" do
+            resource = Puppet::Resource.new(:foo, "bar")
+            lambda { resource[:name] = "eh" }.should_not raise_error
+        end
+
+        it "should be able to return the name for non-builtin types" do
+            resource = Puppet::Resource.new(:foo, "bar")
+            resource[:name] = "eh"
+            resource[:name].should == "eh"
+        end
+
         it "should be able to iterate over parameters" do
             @resource[:foo] = "bar"
             @resource[:fee] = "bare"
@@ -131,6 +154,31 @@ describe Puppet::Resource do
             @resource.should be_empty
             @resource[:foo] = "bar"
             @resource.should_not be_empty
+        end
+
+        it "should be able to produce a hash of all existing parameters" do
+            @resource[:foo] = "bar"
+            @resource[:fee] = "yay"
+
+            hash = @resource.to_hash
+            hash[:foo].should == "bar"
+            hash[:fee].should == "yay"
+        end
+
+        it "should not provide direct access to the internal parameters hash when producing a hash" do
+            hash = @resource.to_hash
+            hash[:foo] = "bar"
+            @resource[:foo].should be_nil
+        end
+
+        it "should use the title as the namevar to the hash if no namevar is present" do
+            Puppet::Type.type(:file).stubs(:namevar).returns :myvar
+            @resource.to_hash[:myvar].should == "/my/file"
+        end
+
+        it "should set :name to the title if :name is not present for non-builtin types" do
+            resource = Puppet::Resource.new :foo, "bar"
+            resource.to_hash[:name].should == "bar"
         end
     end
 
