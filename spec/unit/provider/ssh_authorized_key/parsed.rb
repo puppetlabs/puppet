@@ -13,7 +13,7 @@ describe provider_class do
     include PuppetTest::FileParsing
 
     before :each do
-        @sshauthkey_class = Puppet.type(:ssh_authorized_key)
+        @sshauthkey_class = Puppet::Type.type(:ssh_authorized_key)
         @provider = @sshauthkey_class.provider(:parsed)
     end
 

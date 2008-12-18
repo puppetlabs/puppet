@@ -234,7 +234,7 @@ describe Puppet::Type.type(:file) do
     it "should be able to create files when 'content' is specified but 'ensure' is not" do
         dest = tmpfile("files_with_content")
 
-        file = Puppet.type(:file).create(
+        file = Puppet::Type.type(:file).create(
             :name => dest,
             :content => "this is some content, yo"
         )
@@ -249,7 +249,7 @@ describe Puppet::Type.type(:file) do
     it "should create files with content if both 'content' and 'ensure' are set" do
         dest = tmpfile("files_with_content")
 
-        file = Puppet.type(:file).create(
+        file = Puppet::Type.type(:file).create(
             :name => dest,
             :ensure => "file",
             :content => "this is some content, yo"
@@ -268,7 +268,7 @@ describe Puppet::Type.type(:file) do
         File.open(source, "w") { |f| f.puts "yay" }
         File.open(dest, "w") { |f| f.puts "boo" }
 
-        file = Puppet.type(:file).create(
+        file = Puppet::Type.type(:file).create(
             :name => dest,
             :ensure => :absent,
             :source => source

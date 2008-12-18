@@ -46,7 +46,7 @@ class TestUserProvider < Test::Unit::TestCase
         end
 
         def current?(param, user)
-            property = Puppet.type(:user).properties.find { |st|
+            property = Puppet::Type.type(:user).properties.find { |st|
                 st.name == param
             }
 
@@ -81,7 +81,7 @@ class TestUserProvider < Test::Unit::TestCase
         end
 
         def current?(param, user)
-            property = Puppet.type(:user).properties.find { |st|
+            property = Puppet::Type.type(:user).properties.find { |st|
                 st.name == param
             }
 
@@ -370,7 +370,7 @@ class TestUserProvider < Test::Unit::TestCase
         5.times do |i|
             i += 1
             name = "pptstgr%s" % i
-            tmpgroup = Puppet.type(:group).create(
+            tmpgroup = Puppet::Type.type(:group).create(
                 :name => name,
                 :gid => max + i
             )

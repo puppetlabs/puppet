@@ -37,7 +37,7 @@ class TestCron < Test::Unit::TestCase
     def cronback
         tab = nil
         assert_nothing_raised {
-            tab = Puppet.type(:cron).filetype.read(@me)
+            tab = Puppet::Type.type(:cron).filetype.read(@me)
         }
 
         if $? == 0
@@ -157,7 +157,7 @@ class TestCron < Test::Unit::TestCase
             cron = nil
 
             assert(cron = catalog.resource(:cron, name), "Could not retrieve named cron")
-            assert_instance_of(Puppet.type(:cron), cron)
+            assert_instance_of(Puppet::Type.type(:cron), cron)
         end
     end
 

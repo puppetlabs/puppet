@@ -43,7 +43,7 @@ class TestHost < Test::Unit::TestCase
 
         host = nil
         assert_nothing_raised {
-            host = Puppet.type(:host).create(
+            host = Puppet::Type.type(:host).create(
                 :name => "fakehost%s" % @hcount,
                 :ip => "192.168.27.%s" % @hcount,
                 :alias => "alias%s" % @hcount,
@@ -73,7 +73,7 @@ class TestHost < Test::Unit::TestCase
         end
 
         assert_nothing_raised {
-            host = Puppet.type(:host).create(
+            host = Puppet::Type.type(:host).create(
                 :name => "culain",
                 :ip => "192.168.0.3"
             )

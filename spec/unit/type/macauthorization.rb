@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 macauth_type = Puppet::Type.type(:macauthorization)
 
-describe Puppet.type(:macauthorization), "when checking macauthorization objects" do
+describe Puppet::Type.type(:macauthorization), "when checking macauthorization objects" do
     
     before do
         authplist = {}

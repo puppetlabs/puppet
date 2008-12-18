@@ -1,5 +1,5 @@
 module Puppet
-    Puppet.type(:file).newproperty(:owner) do
+    Puppet::Type.type(:file).newproperty(:owner) do
         include Puppet::Util::POSIX
         include Puppet::Util::Warnings
 

@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 computer = Puppet::Type.type(:computer)
 
-describe Puppet.type(:computer), " when checking computer objects" do
+describe Puppet::Type.type(:computer), " when checking computer objects" do
     before do
         provider_class = Puppet::Type::Computer.provider(Puppet::Type::Computer.providers[0])
         Puppet::Type::Computer.expects(:defaultprovider).returns provider_class

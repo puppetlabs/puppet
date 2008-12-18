@@ -13,7 +13,7 @@ class TestParsedHostProvider < Test::Unit::TestCase
 
     def setup
         super
-        @provider = Puppet.type(:host).provider(:parsed)
+        @provider = Puppet::Type.type(:host).provider(:parsed)
 
         @oldfiletype = @provider.filetype
     end

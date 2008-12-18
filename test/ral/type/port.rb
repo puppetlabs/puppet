@@ -11,7 +11,7 @@ require 'puppettest'
 #
 #    def setup
 #        super
-#        @porttype = Puppet.type(:port)
+#        @porttype = Puppet::Type.type(:port)
 #
 #        @provider = @porttype.defaultprovider
 #
@@ -40,7 +40,7 @@ require 'puppettest'
 #            @pcount = 1
 #        end
 #        assert_nothing_raised {
-#            port = Puppet.type(:port).create(
+#            port = Puppet::Type.type(:port).create(
 #                :name => "puppet%s" % @pcount,
 #                :number => "813%s" % @pcount,
 #                :protocols => "tcp",
@@ -54,7 +54,7 @@ require 'puppettest'
 #
 #    def test_list
 #        assert_nothing_raised {
-#            Puppet.type(:port).list
+#            Puppet::Type.type(:port).list
 #        }
 #
 #        count = 0

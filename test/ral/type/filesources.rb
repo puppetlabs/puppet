@@ -59,7 +59,7 @@ class TestFileSources < Test::Unit::TestCase
         tofile = nil
         trans = nil
 
-        tofile = Puppet.type(:file).create(
+        tofile = Puppet::Type.type(:file).create(
             :path => todir,
             :recurse => true,
             :backup => false,
@@ -192,7 +192,7 @@ class TestFileSources < Test::Unit::TestCase
         File.open(file1, "w") { |f| f.puts "yay" }
         rootobj = nil
         assert_nothing_raised {
-            rootobj = Puppet.type(:file).create(
+            rootobj = Puppet::Type.type(:file).create(
                 :name => basedir,
                 :recurse => true,
                 :check => %w{type owner},
@@ -264,7 +264,7 @@ class TestFileSources < Test::Unit::TestCase
         sleep(1)
 
         name = File.join(tmpdir(), "nosourcefile")
-        file = Puppet.type(:file).create(
+        file = Puppet::Type.type(:file).create(
             :source => "puppet://localhost/noexist/file",
             :name => name
         )
@@ -291,7 +291,7 @@ class TestFileSources < Test::Unit::TestCase
         # Now the files should be exactly the same, so we should not see attempts
         # at copying
         assert_nothing_raised {
-            file = Puppet.type(:file).create(
+            file = Puppet::Type.type(:file).create(
                 :path => to,
                 :source => from
             )
@@ -317,7 +317,7 @@ class TestFileSources < Test::Unit::TestCase
 
         file = nil
         assert_nothing_raised {
-            file = Puppet.type(:file).create(
+            file = Puppet::Type.type(:file).create(
                 :name => to,
                 :source => files
             )
@@ -343,7 +343,7 @@ class TestFileSources < Test::Unit::TestCase
 
         file = nil
         assert_nothing_raised {
-            file = Puppet.type(:file).create(
+            file = Puppet::Type.type(:file).create(
                 :name => dest,
                 :source => source
             )
@@ -364,7 +364,7 @@ class TestFileSources < Test::Unit::TestCase
 
         file = nil
         assert_nothing_raised {
-            file = Puppet.type(:file).create(
+            file = Puppet::Type.type(:file).create(
                 :name => dest,
                 :ensure => "file",
                 :source => source
@@ -387,7 +387,7 @@ class TestFileSources < Test::Unit::TestCase
         File.open(source, "w") { |f| f.puts "yay" }
         File.symlink(source, link)
 
-        file = Puppet.type(:file).create(:name => dest, :source => link)
+        file = Puppet::Type.type(:file).create(:name => dest, :source => link)
 
         catalog = mk_catalog(file)
 

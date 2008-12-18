@@ -8,7 +8,7 @@ module Puppet
     # the file down.  If the remote file is a dir or a link or whatever, then
     # this state, during retrieval, modifies the appropriate other states
     # so that things get taken care of appropriately.
-    Puppet.type(:file).newparam(:source) do
+    Puppet::Type.type(:file).newparam(:source) do
         include Puppet::Util::Diff
 
         attr_accessor :source, :local

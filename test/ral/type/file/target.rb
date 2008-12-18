@@ -24,7 +24,7 @@ class TestFileTarget < Test::Unit::TestCase
 
         file = nil
         assert_nothing_raised {
-            file = Puppet.type(:file).create(
+            file = Puppet::Type.type(:file).create(
                 :title => "somethingelse",
                 :ensure => path,
                 :path => link
@@ -52,7 +52,7 @@ class TestFileTarget < Test::Unit::TestCase
         system("mkdir -p %s" % subdir)
         system("touch %s" % file)
 
-        link = Puppet.type(:file).create(
+        link = Puppet::Type.type(:file).create(
             :ensure => source,
             :path => path,
             :recurse => true
@@ -97,7 +97,7 @@ class TestFileTarget < Test::Unit::TestCase
 
         link = nil
         assert_nothing_raised {
-            link = Puppet.type(:file).create(
+            link = Puppet::Type.type(:file).create(
                 :ensure => source,
                 :path => dest,
                 :recurse => true
@@ -132,7 +132,7 @@ class TestFileTarget < Test::Unit::TestCase
 
         link = nil
         assert_nothing_raised {
-            link = Puppet.type(:file).create(
+            link = Puppet::Type.type(:file).create(
                 :path => dest,
                 :ensure => "source"
             )
@@ -149,12 +149,12 @@ class TestFileTarget < Test::Unit::TestCase
         dest = tempfile()
 
         resources = []
-        resources << Puppet.type(:exec).create(
+        resources << Puppet::Type.type(:exec).create(
             :command => "mkdir %s; touch %s/file" % [source, source],
             :title => "yay",
             :path => ENV["PATH"]
         )
-        resources << Puppet.type(:file).create(
+        resources << Puppet::Type.type(:file).create(
             :ensure => source,
             :path => dest,
             :recurse => true,
@@ -203,7 +203,7 @@ class TestFileTarget < Test::Unit::TestCase
 
         file = nil
         assert_nothing_raised {
-            file = Puppet.type(:file).create(
+            file = Puppet::Type.type(:file).create(
                 :ensure => path,
                 :path => link,
                 :backup => false

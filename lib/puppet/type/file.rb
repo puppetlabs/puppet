@@ -863,7 +863,7 @@ module Puppet
                 end
             end
         end
-    end # Puppet.type(:pfile)
+    end # Puppet::Type.type(:pfile)
 
     # We put all of the properties in separate files, because there are so many
     # of them.  The order these are loaded is important, because it determines

@@ -5,7 +5,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/type/selboolean'
 require 'puppet/type/selmodule'
 
-describe Puppet.type(:file), " when manipulating file contexts" do
+describe Puppet::Type.type(:file), " when manipulating file contexts" do
 	before :each do
 	        @file = Puppet::Type::File.create(
 			:name => "/tmp/foo",
@@ -25,7 +25,7 @@ describe Puppet.type(:file), " when manipulating file contexts" do
 	end
 end
 
-describe Puppet.type(:selboolean), " when manipulating booleans" do
+describe Puppet::Type.type(:selboolean), " when manipulating booleans" do
 	before :each do
         provider_class = Puppet::Type::Selboolean.provider(Puppet::Type::Selboolean.providers[0])
 		Puppet::Type::Selboolean.expects(:defaultprovider).returns provider_class
@@ -54,7 +54,7 @@ describe Puppet.type(:selboolean), " when manipulating booleans" do
 	end
 end
 
-describe Puppet.type(:selmodule), " when checking policy modules" do
+describe Puppet::Type.type(:selmodule), " when checking policy modules" do
 	before :each do
         provider_class = Puppet::Type::Selmodule.provider(Puppet::Type::Selmodule.providers[0])
 		Puppet::Type::Selmodule.expects(:defaultprovider).returns provider_class

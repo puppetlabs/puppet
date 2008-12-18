@@ -101,7 +101,7 @@ describe Puppet::Type.type(:file) do
             File.open(@file, "w", 0644) { |f| f.puts "yayness"; f.flush }
             File.symlink(@file, @link)
 
-            @resource = Puppet.type(:file).create(
+            @resource = Puppet::Type.type(:file).create(
                 :path => @link,
                 :mode => "755"
             )
@@ -128,12 +128,12 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should be able to retrieve a stat instance for the file it is managing" do
-        Puppet.type(:file).create(:path => "/foo/bar", :source => "/bar/foo").should respond_to(:stat)
+        Puppet::Type.type(:file).create(:path => "/foo/bar", :source => "/bar/foo").should respond_to(:stat)
     end
 
     describe "when stat'ing its file" do
         before do
-            @resource = Puppet.type(:file).create(:path => "/foo/bar")
+            @resource = Puppet::Type.type(:file).create(:path => "/foo/bar")
             @resource[:links] = :manage # so we always use :lstat
         end
 
@@ -197,13 +197,13 @@ describe Puppet::Type.type(:file) do
 
     describe "when flushing" do
         it "should flush all properties that respond to :flush" do
-            @resource = Puppet.type(:file).create(:path => "/foo/bar", :source => "/bar/foo")
+            @resource = Puppet::Type.type(:file).create(:path => "/foo/bar", :source => "/bar/foo")
             @resource.parameter(:source).expects(:flush)
             @resource.flush
         end
 
         it "should reset its stat reference" do
-            @resource = Puppet.type(:file).create(:path => "/foo/bar")
+            @resource = Puppet::Type.type(:file).create(:path => "/foo/bar")
             File.expects(:lstat).times(2).returns("stat1").then.returns("stat2")
             @resource.stat.should == "stat1"
             @resource.flush

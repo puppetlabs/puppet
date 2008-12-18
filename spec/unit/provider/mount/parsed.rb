@@ -75,7 +75,7 @@ provider_class = Puppet::Type.type(:mount).provider(:parsed)
 
 describe provider_class do
     before :each do
-        @mount_class = Puppet.type(:mount)
+        @mount_class = Puppet::Type.type(:mount)
         @provider_class = @mount_class.provider(:parsed)
     end
 

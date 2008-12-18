@@ -37,8 +37,8 @@ describe Puppet::Util::Storage do
 
     describe "when caching a Puppet::Type" do
         before(:all) do
-            @file_test = Puppet.type(:file).create(:name => "/yayness", :check => %w{checksum type})
-            @exec_test = Puppet.type(:exec).create(:name => "/bin/ls /yayness")
+            @file_test = Puppet::Type.type(:file).create(:name => "/yayness", :check => %w{checksum type})
+            @exec_test = Puppet::Type.type(:exec).create(:name => "/bin/ls /yayness")
         end
 
         it "should return an empty hash" do

@@ -366,6 +366,8 @@ module Puppet
 
     # Retrieve a type by name.  Just proxy to the Type class.
     def self.type(name)
+        # LAK:DEP Deprecation notice added 12/17/2008
+        Puppet.warning "Puppet.type is deprecated; use Puppet::Type.type"
         Puppet::Type.type(name)
     end
 end

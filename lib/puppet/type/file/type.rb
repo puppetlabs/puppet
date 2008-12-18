@@ -1,5 +1,5 @@
 module Puppet
-    Puppet.type(:file).newproperty(:type) do
+    Puppet::Type.type(:file).newproperty(:type) do
         require 'etc'
         desc "A read-only state to check the file type."
 

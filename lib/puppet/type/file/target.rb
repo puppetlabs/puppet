@@ -1,5 +1,5 @@
 module Puppet
-    Puppet.type(:file).newproperty(:target) do
+    Puppet::Type.type(:file).newproperty(:target) do
         desc "The target for creating a link.  Currently, symlinks are the
             only type supported."
 

@@ -2,7 +2,7 @@
 # for specification (e.g., u+rwx, or -0011), but for now only supports
 # specifying the full mode.
 module Puppet
-    Puppet.type(:file).newproperty(:mode) do
+    Puppet::Type.type(:file).newproperty(:mode) do
         require 'etc'
         desc "Mode the file should be.  Currently relatively limited:
             you must specify the exact mode the file should be."

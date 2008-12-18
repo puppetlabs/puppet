@@ -16,10 +16,10 @@ class TestYumRepo < Test::Unit::TestCase
         File.open(@yumconf, "w") do |f|
             f.print "[main]\nreposdir=#{@yumdir} /no/such/dir\n"
         end
-        Puppet.type(:yumrepo).yumconf = @yumconf
+        Puppet::Type.type(:yumrepo).yumconf = @yumconf
 
         # It needs to be reset each time, otherwise the cache is used.
-        Puppet.type(:yumrepo).inifile = nil
+        Puppet::Type.type(:yumrepo).inifile = nil
     end
 
     # Modify one existing section
@@ -33,7 +33,7 @@ class TestYumRepo < Test::Unit::TestCase
         assert_equal('New description', devel.property(:descr).should)
         assert_apply(devel)
 
-        inifile = Puppet.type(:yumrepo).read()
+        inifile = Puppet::Type.type(:yumrepo).read()
         assert_equal('New description', inifile['development']['name'])
         assert_equal('Fedora Core $releasever - $basearch - Base', inifile['base']['name'])
         assert_equal("foo\n  bar\n  baz", inifile['base']['exclude'])
@@ -56,7 +56,7 @@ class TestYumRepo < Test::Unit::TestCase
         repo = make_repo("base", values)
 
         assert_apply(repo)
-        inifile = Puppet.type(:yumrepo).read()
+        inifile = Puppet::Type.type(:yumrepo).read()
         sections = all_sections(inifile)
         assert_equal(['base', 'main'], sections)
         text = inifile["base"].format
@@ -72,7 +72,7 @@ class TestYumRepo < Test::Unit::TestCase
                             :baseurl => baseurl })
         devel.retrieve
         assert_apply(devel)
-        inifile = Puppet.type(:yumrepo).read()
+        inifile = Puppet::Type.type(:yumrepo).read()
         sec = inifile["development"]
         assert_nil(sec["mirrorlist"])
         assert_equal(baseurl, sec["baseurl"])
@@ -80,7 +80,7 @@ class TestYumRepo < Test::Unit::TestCase
 
     def make_repo(name, hash={})
         hash[:name] = name
-        Puppet.type(:yumrepo).create(hash)
+        Puppet::Type.type(:yumrepo).create(hash)
     end
 
     def all_sections(inifile)

@@ -29,7 +29,7 @@ module PuppetTest::Support::Utils
             unless resources.empty?
                 resources.each { |r| config.add_resource r }
             end
-        elsif resources[0].is_a?(Puppet.type(:component))
+        elsif resources[0].is_a?(Puppet::Type.type(:component))
             raise ArgumentError, "resource2config() no longer accpts components"
             comp = resources.shift
             comp.delve

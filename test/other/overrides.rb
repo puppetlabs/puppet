@@ -24,7 +24,7 @@ class TestOverrides < Test::Unit::TestCase
         mksubdirs(basedir, 1)
 
         basefile = File.join(basedir, "file")
-        baseobj = Puppet.type(:file).create(
+        baseobj = Puppet::Type.type(:file).create(
             :title => "base",
             :path => basedir,
             :recurse => true,
@@ -33,7 +33,7 @@ class TestOverrides < Test::Unit::TestCase
 
         subdir = File.join(basedir, "0")
         subfile = File.join(subdir, "file")
-        subobj = Puppet.type(:file).create(
+        subobj = Puppet::Type.type(:file).create(
             :title => "sub",
             :path => subdir,
             :recurse => true,
@@ -52,7 +52,7 @@ class TestOverrides < Test::Unit::TestCase
 
         baseobj = nil
         assert_nothing_raised("Could not create base obj") {
-            baseobj = Puppet.type(:file).create(
+            baseobj = Puppet::Type.type(:file).create(
                 :path => basedir,
                 :recurse => true,
                 :mode => "755"
@@ -76,7 +76,7 @@ class TestOverrides < Test::Unit::TestCase
             end
 
             assert_nothing_raised("Could not create sub obj") {
-                children << Puppet.type(:file).create(
+                children << Puppet::Type.type(:file).create(
                     :path => subdir,
                     :recurse => true,
                     :mode => mode

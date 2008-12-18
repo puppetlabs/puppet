@@ -17,7 +17,7 @@ class TestMetric < PuppetTest::TestCase
         eventmax = 10
         maxdiff = 10
 
-        types = [Puppet.type(:file), Puppet.type(:package), Puppet.type(:package)]
+        types = [Puppet::Type.type(:file), Puppet::Type.type(:package), Puppet::Type.type(:package)]
         data = [:total, :managed, :outofsync, :changed, :totalchanges]
         events = [:file_changed, :package_installed, :service_started]
 

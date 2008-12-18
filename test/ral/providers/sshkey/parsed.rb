@@ -11,7 +11,7 @@ class TestParsedSSHKey < Test::Unit::TestCase
 
     def setup
         super
-        @provider = Puppet.type(:sshkey).provider(:parsed)
+        @provider = Puppet::Type.type(:sshkey).provider(:parsed)
 
         @oldfiletype = @provider.filetype
     end

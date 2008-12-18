@@ -1,5 +1,5 @@
 module Puppet
-    Puppet.type(:file).ensurable do
+    Puppet::Type.type(:file).ensurable do
         require 'etc'
         desc "Whether to create files that don't currently exist.
             Possible values are *absent*, *present*, *file*, and *directory*.

@@ -13,7 +13,7 @@ class TestFile < Test::Unit::TestCase
     def mkfile(hash)
         file = nil
         assert_nothing_raised {
-            file = Puppet.type(:file).create(hash)
+            file = Puppet::Type.type(:file).create(hash)
         }
         return file
     end
@@ -118,7 +118,7 @@ class TestFile < Test::Unit::TestCase
 
             file = nil
             assert_nothing_raised {
-                file = Puppet.type(:file).create(
+                file = Puppet::Type.type(:file).create(
                     :path => path,
                     :owner => user.name,
                     :ensure => "file",
@@ -148,7 +148,7 @@ class TestFile < Test::Unit::TestCase
 
             obj = nil
             assert_nothing_raised {
-                obj = Puppet.type(:file).create(
+                obj = Puppet::Type.type(:file).create(
                     :title => link,
                     :owner => user.name
                 )
@@ -302,7 +302,7 @@ class TestFile < Test::Unit::TestCase
         %w{a b c d}.collect { |name| tempfile() + name.to_s }.each { |path|
             file =nil
             assert_nothing_raised() {
-                file = Puppet.type(:file).create(
+                file = Puppet::Type.type(:file).create(
                     :name => path,
                     :ensure => "file"
                 )
@@ -321,7 +321,7 @@ class TestFile < Test::Unit::TestCase
         %w{a b c d}.collect { |name| "#{basedir}/%s" % name }.each { |path|
             file = nil
             assert_nothing_raised() {
-                file = Puppet.type(:file).create(
+                file = Puppet::Type.type(:file).create(
                     :name => path,
                     :ensure => "directory"
                 )
@@ -365,13 +365,13 @@ class TestFile < Test::Unit::TestCase
 
             initstorage
             assert_nothing_raised {
-                file = Puppet.type(:file).create(
+                file = Puppet::Type.type(:file).create(
                     param => path,
                     :recurse => true,
                     :checksum => "md5"
                 )
             }
-            comp = Puppet.type(:component).create(
+            comp = Puppet::Type.type(:component).create(
                 :name => "component"
             )
             comp.push file
@@ -412,7 +412,7 @@ class TestFile < Test::Unit::TestCase
         dir = nil
         [true, "true", "inf", 50].each do |value|
             assert_nothing_raised {
-                dir = Puppet.type(:file).create(
+                dir = Puppet::Type.type(:file).create(
                     :path => basedir,
                     :recurse => value,
                     :check => %w{owner mode group}
@@ -454,7 +454,7 @@ class TestFile < Test::Unit::TestCase
 
         # Verify it retrieves files of type directory
         assert_nothing_raised {
-            file = Puppet.type(:file).create(
+            file = Puppet::Type.type(:file).create(
                 :name => tmpdir(),
                 :check => :type
             )
@@ -468,7 +468,7 @@ class TestFile < Test::Unit::TestCase
 
         # And then check files
         assert_nothing_raised {
-            file = Puppet.type(:file).create(
+            file = Puppet::Type.type(:file).create(
                 :name => tempfile(),
                 :ensure => "file"
             )
@@ -503,7 +503,7 @@ class TestFile < Test::Unit::TestCase
         file = nil
         dirobj = nil
         assert_nothing_raised("Could not make file object") {
-            dirobj = Puppet.type(:file).create(
+            dirobj = Puppet::Type.type(:file).create(
                 :path => dir,
                 :recurse => true,
                 :check => %w{mode owner group}
@@ -528,12 +528,12 @@ class TestFile < Test::Unit::TestCase
         basedir = tempfile()
         subfile = File.join(basedir, "subfile")
 
-        baseobj = Puppet.type(:file).create(
+        baseobj = Puppet::Type.type(:file).create(
             :name => basedir,
             :ensure => "directory"
         )
 
-        subobj = Puppet.type(:file).create(
+        subobj = Puppet::Type.type(:file).create(
             :name => subfile,
             :ensure => "file"
         )
@@ -552,7 +552,7 @@ class TestFile < Test::Unit::TestCase
         subpath = File.join(path, "this", "is", "a", "dir")
         file = nil
         assert_nothing_raised {
-            file = Puppet.type(:file).create(
+            file = Puppet::Type.type(:file).create(
                 :name => subpath,
                 :ensure => "directory",
                 :recurse => true
@@ -574,7 +574,7 @@ class TestFile < Test::Unit::TestCase
 
         file = nil
         assert_nothing_raised {
-            file = Puppet.type(:file).create(
+            file = Puppet::Type.type(:file).create(
                 :name => dest,
                 :checksum => "md5",
                 :content => "This is some content"
@@ -594,7 +594,7 @@ class TestFile < Test::Unit::TestCase
 
         file = nil
         assert_nothing_raised {
-            file = Puppet.type(:file).create(
+            file = Puppet::Type.type(:file).create(
                 :name => dest,
                 :checksum => "md5",
                 :ensure => "file"
@@ -613,7 +613,7 @@ class TestFile < Test::Unit::TestCase
 
         file = nil
         assert_nothing_raised {
-            file = Puppet.type(:file).create(
+            file = Puppet::Type.type(:file).create(
                 :title => "fileness",
                 :path => path,
                 :content => "this is some content"
@@ -629,7 +629,7 @@ class TestFile < Test::Unit::TestCase
     def test_missinggroup
         file = nil
         assert_nothing_raised {
-            file = Puppet.type(:file).create(
+            file = Puppet::Type.type(:file).create(
                 :path => tempfile(),
                 :group => "fakegroup"
             )
@@ -640,7 +640,7 @@ class TestFile < Test::Unit::TestCase
 
     def test_modecreation
         path = tempfile()
-        file = Puppet.type(:file).create(
+        file = Puppet::Type.type(:file).create(
             :path => path,
             :ensure => "file",
             :mode => "0777"
@@ -664,7 +664,7 @@ class TestFile < Test::Unit::TestCase
 
         file = nil
         assert_nothing_raised {
-            file = Puppet.type(:file).create(
+            file = Puppet::Type.type(:file).create(
                 :path => path,
                 :ensure => "file",
                 :content => "some text\n",
@@ -749,7 +749,7 @@ class TestFile < Test::Unit::TestCase
 
         file = nil
         assert_nothing_raised {
-            file = Puppet.type(:file).create(
+            file = Puppet::Type.type(:file).create(
                 :ensure => path,
                 :path => link
             )
@@ -802,18 +802,18 @@ class TestFile < Test::Unit::TestCase
         home = nil
         ogroup = nil
         assert_nothing_raised {
-            user = Puppet.type(:user).create(
+            user = Puppet::Type.type(:user).create(
                 :name => "pptestu",
                 :home => file,
                 :gid => "pptestg"
             )
-            home = Puppet.type(:file).create(
+            home = Puppet::Type.type(:file).create(
                 :path => file,
                 :owner => "pptestu",
                 :group => "pptestg",
                 :ensure => "directory"
             )
-            group = Puppet.type(:group).create(
+            group = Puppet::Type.type(:group).create(
                 :name => "pptestg"
             )
             comp = mk_catalog(user, group, home)

@@ -59,7 +59,7 @@ class Puppet::Network::Handler
             Puppet.info "Describing %s[%s]" % [type.to_s.capitalize, name]
             @local = true unless client
             typeklass = nil
-            unless typeklass = Puppet.type(type)
+            unless typeklass = Puppet::Type.type(type)
                 raise Puppet::Error, "Puppet type %s is unsupported" % type
             end
 
@@ -124,7 +124,7 @@ class Puppet::Network::Handler
         def list(type, ignore = [], base = nil, format = "yaml", client = nil, clientip = nil)
             @local = true unless client
             typeklass = nil
-            unless typeklass = Puppet.type(type)
+            unless typeklass = Puppet::Type.type(type)
                 raise Puppet::Error, "Puppet type %s is unsupported" % type
             end
 

@@ -10,7 +10,7 @@ class TestSSHKey < Test::Unit::TestCase
     def setup
         super
         # god i'm lazy
-        @sshkeytype = Puppet.type(:sshkey)
+        @sshkeytype = Puppet::Type.type(:sshkey)
 
         @provider = @sshkeytype.defaultprovider
 
@@ -64,7 +64,7 @@ class TestSSHKey < Test::Unit::TestCase
     def test_instances
         list = nil
         assert_nothing_raised {
-            list = Puppet.type(:sshkey).instances
+            list = Puppet::Type.type(:sshkey).instances
         }
 
         count = 0

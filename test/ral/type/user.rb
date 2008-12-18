@@ -64,7 +64,7 @@ class TestUser < Test::Unit::TestCase
     def mkuser(name)
         user = nil
         assert_nothing_raised {
-            user = Puppet.type(:user).create(
+            user = Puppet::Type.type(:user).create(
                 :name => name,
                 :comment => "Puppet Testing User",
                 :gid => Puppet::Util::SUIDManager.gid,
@@ -326,21 +326,21 @@ class TestUser < Test::Unit::TestCase
         home = nil
         ogroup = nil
         assert_nothing_raised {
-            user = Puppet.type(:user).create(
+            user = Puppet::Type.type(:user).create(
                 :name => "pptestu",
                 :home => file,
                 :gid => "pptestg",
                 :groups => "yayness"
             )
-            home = Puppet.type(:file).create(
+            home = Puppet::Type.type(:file).create(
                 :path => file,
                 :owner => "pptestu",
                 :ensure => "directory"
             )
-            group = Puppet.type(:group).create(
+            group = Puppet::Type.type(:group).create(
                 :name => "pptestg"
             )
-            ogroup = Puppet.type(:group).create(
+            ogroup = Puppet::Type.type(:group).create(
                 :name => "yayness"
             )
             comp = mk_catalog(user, group, home, ogroup)
@@ -388,7 +388,7 @@ class TestUser < Test::Unit::TestCase
         assert_equal("Puppet Testing User", user.provider.comment,
             "Comment was not set")
 
-        tests = Puppet.type(:user).validproperties
+        tests = Puppet::Type.type(:user).validproperties
 
         tests.each { |test|
             if self.respond_to?("attrtest_%s" % test)

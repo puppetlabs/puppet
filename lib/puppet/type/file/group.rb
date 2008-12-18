@@ -2,7 +2,7 @@ require 'puppet/util/posix'
 
 # Manage file group ownership.
 module Puppet
-    Puppet.type(:file).newproperty(:group) do
+    Puppet::Type.type(:file).newproperty(:group) do
         include Puppet::Util::POSIX
 
         require 'etc'

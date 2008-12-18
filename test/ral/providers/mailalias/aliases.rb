@@ -11,7 +11,7 @@ class TestMailaliasAliasesProvider < Test::Unit::TestCase
 
     def setup
         super
-        @provider = Puppet.type(:mailalias).provider(:aliases)
+        @provider = Puppet::Type.type(:mailalias).provider(:aliases)
 
         @oldfiletype = @provider.filetype
 

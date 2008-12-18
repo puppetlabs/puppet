@@ -52,7 +52,7 @@ class TestType < Test::Unit::TestCase
         path = tempfile()
         assert_nothing_raised() {
             system("rm -f %s" % path)
-            file = Puppet.type(:file).create(
+            file = Puppet::Type.type(:file).create(
                 :path => path,
                 :ensure => "file",
                 :recurse => true,
@@ -67,7 +67,7 @@ class TestType < Test::Unit::TestCase
         }
         assert_nothing_raised() {
             system("rm -f %s" % path)
-            file = Puppet.type(:file).create(
+            file = Puppet::Type.type(:file).create(
                 "path" => path,
                 "ensure" => "file",
                 "recurse" => true,
@@ -101,7 +101,7 @@ class TestType < Test::Unit::TestCase
         # currently groups are the only objects with the namevar as a property
         group = nil
         assert_nothing_raised {
-            group = Puppet.type(:group).create(
+            group = Puppet::Type.type(:group).create(
                 :name => "testing"
             )
         }
@@ -110,7 +110,7 @@ class TestType < Test::Unit::TestCase
     end
 
     def test_aliases_are_added_to_catalog
-        resource = Puppet.type(:file).create(
+        resource = Puppet::Type.type(:file).create(
             :name => "/path/to/some/missing/file",
             :ensure => "file"
         )
@@ -127,7 +127,7 @@ class TestType < Test::Unit::TestCase
     end
 
     def test_aliasing_fails_without_a_catalog
-        resource = Puppet.type(:file).create(
+        resource = Puppet::Type.type(:file).create(
             :name => "/no/such/file",
             :ensure => "file"
         )
@@ -145,14 +145,14 @@ class TestType < Test::Unit::TestCase
         twoobj = nil
         oneobj = nil
         assert_nothing_raised("Could not create prereq that doesn't exist yet") {
-            twoobj = Puppet.type(:file).create(
+            twoobj = Puppet::Type.type(:file).create(
                 :name => two,
                 :require => [:file, one]
             )
         }
 
         assert_nothing_raised {
-            oneobj = Puppet.type(:file).create(
+            oneobj = Puppet::Type.type(:file).create(
                 :name => one
             )
         }
@@ -170,7 +170,7 @@ class TestType < Test::Unit::TestCase
     def test_ensuredefault
         user = nil
         assert_nothing_raised {
-            user = Puppet.type(:user).create(
+            user = Puppet::Type.type(:user).create(
                 :name => "pptestAA",
                 :check => [:uid]
             )
@@ -180,7 +180,7 @@ class TestType < Test::Unit::TestCase
         assert(! user.property(:ensure), "User got an ensure property")
 
         assert_nothing_raised {
-            user = Puppet.type(:user).create(
+            user = Puppet::Type.type(:user).create(
                 :name => "pptestAB",
                 :comment => "Testingness"
             )
@@ -189,7 +189,7 @@ class TestType < Test::Unit::TestCase
         assert(user.property(:ensure), "User did not add ensure property")
 
         assert_nothing_raised {
-            user = Puppet.type(:user).create(
+            user = Puppet::Type.type(:user).create(
                 :name => "pptestBC",
                 :comment => "A fake user"
             )

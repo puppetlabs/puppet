@@ -219,13 +219,13 @@ class TestTransactions < Test::Unit::TestCase
 
         hash[:name] = tmpfile
         assert_nothing_raised() {
-            return Puppet.type(:file).create(hash)
+            return Puppet::Type.type(:file).create(hash)
         }
     end
 
     def newexec(file)
         assert_nothing_raised() {
-            return Puppet.type(:exec).create(
+            return Puppet::Type.type(:exec).create(
                 :name => "touch %s" % file,
                 :path => "/bin:/usr/bin:/sbin:/usr/sbin",
                 :returns => 0
@@ -377,17 +377,17 @@ class TestTransactions < Test::Unit::TestCase
         path = tempfile()
         file1 = tempfile()
         file2 = tempfile()
-        file = Puppet.type(:file).create(
+        file = Puppet::Type.type(:file).create(
             :path => path,
             :ensure => "file"
         )
-        exec1 = Puppet.type(:exec).create(
+        exec1 = Puppet::Type.type(:exec).create(
             :path => ENV["PATH"],
             :command => "touch %s" % file1,
             :refreshonly => true,
             :subscribe => [:file, path]
         )
-        exec2 = Puppet.type(:exec).create(
+        exec2 = Puppet::Type.type(:exec).create(
             :path => ENV["PATH"],
             :command => "touch %s" % file2,
             :refreshonly => true,
@@ -404,11 +404,11 @@ class TestTransactions < Test::Unit::TestCase
     def test_failedrefreshes
         path = tempfile()
         newfile = tempfile()
-        file = Puppet.type(:file).create(
+        file = Puppet::Type.type(:file).create(
             :path => path,
             :ensure => "file"
         )
-        exec1 = Puppet.type(:exec).create(
+        exec1 = Puppet::Type.type(:exec).create(
             :path => ENV["PATH"],
             :command => "touch /this/cannot/possibly/exist",
             :logoutput => true,
@@ -416,7 +416,7 @@ class TestTransactions < Test::Unit::TestCase
             :subscribe => file,
             :title => "one"
         )
-        exec2 = Puppet.type(:exec).create(
+        exec2 = Puppet::Type.type(:exec).create(
             :path => ENV["PATH"],
             :command => "touch %s" % newfile,
             :logoutput => true,
@@ -433,14 +433,14 @@ class TestTransactions < Test::Unit::TestCase
     def test_unscheduled_and_untagged_response
         Puppet::Type.type(:schedule).mkdefaultschedules
         Puppet[:ignoreschedules] = false
-        file = Puppet.type(:file).create(
+        file = Puppet::Type.type(:file).create(
             :name => tempfile(),
             :ensure => "file",
             :backup => false
         )
 
         fname = tempfile()
-        exec = Puppet.type(:exec).create(
+        exec = Puppet::Type.type(:exec).create(
             :name => "touch %s" % fname,
             :path => "/usr/bin:/bin",
             :schedule => "monthly",

@@ -14,7 +14,7 @@ require 'puppettest'
 #
 #    def setup
 #        super
-#        @provider = Puppet.type(:port).provider(:parsed)
+#        @provider = Puppet::Type.type(:port).provider(:parsed)
 #        @oldfiletype = @provider.filetype
 #    end
 #

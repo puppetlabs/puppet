@@ -1685,7 +1685,7 @@ class Type
         reqs = []
         self.class.eachautorequire { |type, block|
             # Ignore any types we can't find, although that would be a bit odd.
-            next unless typeobj = Puppet.type(type)
+            next unless typeobj = Puppet::Type.type(type)
 
             # Retrieve the list of names from the block.
             next unless list = self.instance_eval(&block)
