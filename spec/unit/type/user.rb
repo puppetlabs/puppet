@@ -15,7 +15,7 @@ describe user do
     end
 
     it "should be able to create a instance" do
-        user.create(:name => "foo").should_not be_nil
+        user.new(:name => "foo").should_not be_nil
     end
 
     it "should have an allows_duplicates feature" do
@@ -36,7 +36,7 @@ describe user do
 
     describe "instances" do
         it "should have a valid provider" do
-            user.create(:name => "foo").provider.class.ancestors.should be_include(Puppet::Provider)
+            user.new(:name => "foo").provider.class.ancestors.should be_include(Puppet::Provider)
         end
     end
 
@@ -70,7 +70,7 @@ describe user do
 
     describe "when retrieving all current values" do
         before do
-            @user = user.create(:name => "foo", :uid => 10, :gid => 10)
+            @user = user.new(:name => "foo", :uid => 10, :gid => 10)
         end
 
         it "should return a hash containing values for all set properties" do
@@ -239,11 +239,11 @@ describe user do
     describe "when user has roles" do
         it "should autorequire roles" do
             #this is a little funky because the autorequire depends on a property with a feature
-            testuser = Puppet::Type.type(:user).create(:name => "testuser")
+            testuser = Puppet::Type.type(:user).new(:name => "testuser")
             testuser.provider.class.expects(:feature?).with(:manages_solaris_rbac).returns(true)
             testuser[:roles] = "testrole"
 
-            testrole = Puppet::Type.type(:user).create(:name => "testrole")
+            testrole = Puppet::Type.type(:user).new(:name => "testrole")
 
             config = Puppet::Resource::Catalog.new :testing do |conf|
                 [testuser, testrole].each { |resource| conf.add_resource resource }

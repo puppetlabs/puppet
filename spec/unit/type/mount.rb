@@ -8,7 +8,7 @@ describe Puppet::Type.type(:mount) do
     end
 
     it "should have no default value for :ensure" do
-        mount = Puppet::Type.type(:mount).create(:name => "yay")
+        mount = Puppet::Type.type(:mount).new(:name => "yay")
         mount.should(:ensure).should be_nil
     end
 end
@@ -34,20 +34,20 @@ describe Puppet::Type.type(:mount)::Ensure, "when validating values" do
     end
 
     it "should support :present as a value to :ensure" do
-        Puppet::Type.type(:mount).create(:name => "yay", :ensure => :present)
+        Puppet::Type.type(:mount).new(:name => "yay", :ensure => :present)
     end
 
     it "should alias :unmounted to :present as a value to :ensure" do
-        mount = Puppet::Type.type(:mount).create(:name => "yay", :ensure => :unmounted)
+        mount = Puppet::Type.type(:mount).new(:name => "yay", :ensure => :unmounted)
         mount.should(:ensure).should == :present
     end
 
     it "should support :absent as a value to :ensure" do
-        Puppet::Type.type(:mount).create(:name => "yay", :ensure => :absent)
+        Puppet::Type.type(:mount).new(:name => "yay", :ensure => :absent)
     end
 
     it "should support :mounted as a value to :ensure" do
-        Puppet::Type.type(:mount).create(:name => "yay", :ensure => :mounted)
+        Puppet::Type.type(:mount).new(:name => "yay", :ensure => :mounted)
     end
 end
 
@@ -55,7 +55,7 @@ describe Puppet::Type.type(:mount)::Ensure do
     before :each do
         @provider = stub 'provider', :class => Puppet::Type.type(:mount).defaultprovider, :clear => nil, :satisfies? => true, :name => :mock
         Puppet::Type.type(:mount).defaultprovider.stubs(:new).returns(@provider)
-        @mount = Puppet::Type.type(:mount).create(:name => "yay", :check => :ensure)
+        @mount = Puppet::Type.type(:mount).new(:name => "yay", :check => :ensure)
 
         @ensure = @mount.property(:ensure)
     end
@@ -185,7 +185,7 @@ describe Puppet::Type.type(:mount), "when modifying an existing mount entry" do
     before do
         @provider = stub 'provider', :class => Puppet::Type.type(:mount).defaultprovider, :clear => nil, :satisfies? => true, :name => :mock, :remount => nil
         Puppet::Type.type(:mount).defaultprovider.stubs(:new).returns(@provider)
-        @mount = Puppet::Type.type(:mount).create(:name => "yay", :ensure => :mounted)
+        @mount = Puppet::Type.type(:mount).new(:name => "yay", :ensure => :mounted)
 
         {:device => "/foo/bar", :blockdevice => "/other/bar", :target => "/what/ever", :fstype => 'eh', :options => "", :pass => 0, :dump => 0, :atboot => 0,
             :ensure => :mounted}.each do

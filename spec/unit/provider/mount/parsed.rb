@@ -150,7 +150,7 @@ describe provider_class do
         include ParsedMountTesting
 
         before do
-            @mount = @mount_class.create :name => "/"
+            @mount = @mount_class.new :name => "/"
             @provider = @mount.provider
         end
 

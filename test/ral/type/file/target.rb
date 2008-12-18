@@ -24,7 +24,7 @@ class TestFileTarget < Test::Unit::TestCase
 
         file = nil
         assert_nothing_raised {
-            file = Puppet::Type.type(:file).create(
+            file = Puppet::Type.type(:file).new(
                 :title => "somethingelse",
                 :ensure => path,
                 :path => link
@@ -52,7 +52,7 @@ class TestFileTarget < Test::Unit::TestCase
         system("mkdir -p %s" % subdir)
         system("touch %s" % file)
 
-        link = Puppet::Type.type(:file).create(
+        link = Puppet::Type.type(:file).new(
             :ensure => source,
             :path => path,
             :recurse => true
@@ -97,7 +97,7 @@ class TestFileTarget < Test::Unit::TestCase
 
         link = nil
         assert_nothing_raised {
-            link = Puppet::Type.type(:file).create(
+            link = Puppet::Type.type(:file).new(
                 :ensure => source,
                 :path => dest,
                 :recurse => true
@@ -132,7 +132,7 @@ class TestFileTarget < Test::Unit::TestCase
 
         link = nil
         assert_nothing_raised {
-            link = Puppet::Type.type(:file).create(
+            link = Puppet::Type.type(:file).new(
                 :path => dest,
                 :ensure => "source"
             )
@@ -149,12 +149,12 @@ class TestFileTarget < Test::Unit::TestCase
         dest = tempfile()
 
         resources = []
-        resources << Puppet::Type.type(:exec).create(
+        resources << Puppet::Type.type(:exec).new(
             :command => "mkdir %s; touch %s/file" % [source, source],
             :title => "yay",
             :path => ENV["PATH"]
         )
-        resources << Puppet::Type.type(:file).create(
+        resources << Puppet::Type.type(:file).new(
             :ensure => source,
             :path => dest,
             :recurse => true,
@@ -203,7 +203,7 @@ class TestFileTarget < Test::Unit::TestCase
 
         file = nil
         assert_nothing_raised {
-            file = Puppet::Type.type(:file).create(
+            file = Puppet::Type.type(:file).new(
                 :ensure => path,
                 :path => link,
                 :backup => false
@@ -234,7 +234,7 @@ class TestFileTarget < Test::Unit::TestCase
         File.open(file, "w") { |f| f.puts "yayness" }
         File.symlink(file, link)
 
-        obj = Puppet::Type.type(:file).create(
+        obj = Puppet::Type.type(:file).new(
             :path => link,
             :ensure => "file"
         )
@@ -265,7 +265,7 @@ class TestFileTarget < Test::Unit::TestCase
         File.open(sourcefile, "w") { |f| f.puts "source" }
         File.symlink(file, link)
 
-        obj = Puppet::Type.type(:file).create(
+        obj = Puppet::Type.type(:file).new(
             :path => dirs["target"],
             :ensure => :file,
             :source => dirs["source"],
@@ -295,7 +295,7 @@ class TestFileTarget < Test::Unit::TestCase
         File.open(dest, "w") { |f| f.puts "boo" }
         File.open(otherdest, "w") { |f| f.puts "yay" }
 
-        obj = Puppet::Type.type(:file).create(
+        obj = Puppet::Type.type(:file).new(
             :path => link,
             :ensure => otherdest
         )

@@ -268,7 +268,7 @@ module Puppet
                     obj[:check] = :all
                     files << obj
                 else
-                    files << self.create(
+                    files << self.new(
                         :name => path, :check => :all
                     )
                 end
@@ -482,7 +482,7 @@ module Puppet
                 options.delete(param) if options.include?(param)
             end
 
-            return self.class.create(options)
+            return self.class.new(options)
         end
 
         # Files handle paths specially, because they just lengthen their

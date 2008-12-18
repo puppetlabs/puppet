@@ -34,31 +34,31 @@ describe ssh_authorized_key do
     end
 
     it "should support :present as a value for :ensure" do
-        proc { @class.create(:name => "whev", :ensure => :present, :user => "nobody") }.should_not raise_error
+        proc { @class.new(:name => "whev", :ensure => :present, :user => "nobody") }.should_not raise_error
     end
 
     it "should support :absent as a value for :ensure" do
-        proc { @class.create(:name => "whev", :ensure => :absent, :user => "nobody") }.should_not raise_error
+        proc { @class.new(:name => "whev", :ensure => :absent, :user => "nobody") }.should_not raise_error
     end
 
     it "should have an type property" do
         @class.attrtype(:type).should == :property
     end
     it "should support ssh-dss as an type value" do
-        proc { @class.create(:name => "whev", :type => "ssh-dss", :user => "nobody") }.should_not raise_error
+        proc { @class.new(:name => "whev", :type => "ssh-dss", :user => "nobody") }.should_not raise_error
     end
     it "should support ssh-rsa as an type value" do
-        proc { @class.create(:name => "whev", :type => "ssh-rsa", :user => "nobody") }.should_not raise_error
+        proc { @class.new(:name => "whev", :type => "ssh-rsa", :user => "nobody") }.should_not raise_error
     end
     it "should support :dsa as an type value" do
-        proc { @class.create(:name => "whev", :type => :dsa, :user => "nobody") }.should_not raise_error
+        proc { @class.new(:name => "whev", :type => :dsa, :user => "nobody") }.should_not raise_error
     end
     it "should support :rsa as an type value" do
-        proc { @class.create(:name => "whev", :type => :rsa, :user => "nobody") }.should_not raise_error
+        proc { @class.new(:name => "whev", :type => :rsa, :user => "nobody") }.should_not raise_error
     end
 
     it "should not support values other than ssh-dss, ssh-rsa, dsa, rsa in the ssh_authorized_key_type" do
-        proc { @class.create(:name => "whev", :type => :something) }.should raise_error(Puppet::Error)
+        proc { @class.new(:name => "whev", :type => :something) }.should raise_error(Puppet::Error)
     end
 
     it "should have an key property" do
@@ -74,13 +74,13 @@ describe ssh_authorized_key do
     end
 
     it "'s options property should return well formed string of arrays from is_to_s" do
-        resource = @class.create(:name => "whev", :type => :rsa, :user => "nobody", :options => ["a","b","c"])
+        resource = @class.new(:name => "whev", :type => :rsa, :user => "nobody", :options => ["a","b","c"])
 
         resource.property(:options).is_to_s(["a","b","c"]).should == "a,b,c"
     end
 
     it "'s options property should return well formed string of arrays from is_to_s" do
-        resource = @class.create(:name => "whev", :type => :rsa, :user => "nobody", :options => ["a","b","c"])
+        resource = @class.new(:name => "whev", :type => :rsa, :user => "nobody", :options => ["a","b","c"])
 
         resource.property(:options).should_to_s(["a","b","c"]).should == "a,b,c"
     end
@@ -91,7 +91,7 @@ describe ssh_authorized_key do
 
     it "should raise an error when neither user nor target is given" do
         proc do
-            @class.create(
+            @class.new(
               :name   => "Test",
               :key    => "AAA",
               :type   => "ssh-rsa",

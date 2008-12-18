@@ -54,7 +54,7 @@ class TestTypeProviders < Test::Unit::TestCase
         # first make sure we can pass the name in
         resource = nil
         assert_nothing_raised("Could not create provider instance by name") do
-            resource = @type.create :name => "yay", :provider => :testing
+            resource = @type.new :name => "yay", :provider => :testing
         end
 
         assert_instance_of(provider, resource.provider, "Did not create provider instance")
@@ -62,7 +62,7 @@ class TestTypeProviders < Test::Unit::TestCase
         # Now make sure we can pass in an instance
         provinst = provider.new(:name => "foo")
         assert_nothing_raised("Could not pass in provider instance") do
-            resource = @type.create :name => "foo", :provider => provinst
+            resource = @type.new :name => "foo", :provider => provinst
         end
 
         assert_equal(provinst, resource.provider, "Did not retain provider instance")
@@ -74,11 +74,11 @@ class TestTypeProviders < Test::Unit::TestCase
         end
 
         # And make sure the provider must be a valid provider type for this resource
-        pkgprov = Puppet::Type.type(:package).create(:name => "yayness").provider
+        pkgprov = Puppet::Type.type(:package).new(:name => "yayness").provider
         assert(provider, "did not get package provider")
 
         assert_raise(Puppet::Error, "Did not fail on invalid provider instance") do
-            resource = @type.create :name => "bar", :provider => pkgprov
+            resource = @type.new :name => "bar", :provider => pkgprov
         end
 
     end
@@ -89,7 +89,7 @@ class TestTypeProviders < Test::Unit::TestCase
         Puppet::Type.type(:user).provider(:useradd).stubs(:suitable?).returns false
 
         assert_nothing_raised("Unsuitable providers failed at initialization") do
-            Puppet::Type.type(:user).create :name => "luke", :ensure => :present, :provider => :useradd
+            Puppet::Type.type(:user).new :name => "luke", :ensure => :present, :provider => :useradd
         end
     end
 
@@ -98,7 +98,7 @@ class TestTypeProviders < Test::Unit::TestCase
     def test_unsuitable_providers_should_fail_at_evaluation
         Puppet::Type.type(:user).provider(:useradd).stubs(:suitable?).returns false
 
-        user = Puppet::Type.type(:user).create :name => "luke", :ensure => :present, :provider => :useradd
+        user = Puppet::Type.type(:user).new :name => "luke", :ensure => :present, :provider => :useradd
         assert_raise(Puppet::Error, "Unsuitable provider did not fail at evaluation") do
             user.evaluate
         end

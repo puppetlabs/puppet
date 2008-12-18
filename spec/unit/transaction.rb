@@ -7,7 +7,7 @@ require 'puppet/transaction'
 describe Puppet::Transaction do
     before do
         @generator_class = mkgenerator
-        @generator = mkgenerator.create(:name => "foo")
+        @generator = mkgenerator.new(:name => "foo")
 
         @catalog = Puppet::Resource::Catalog.new
         @catalog.add_resource @generator
@@ -30,8 +30,8 @@ describe Puppet::Transaction do
         end
 
         it "should add all generated resources to the catalog" do
-            one = @generator_class.create :name => "one"
-            two = @generator_class.create :name => "two"
+            one = @generator_class.new :name => "one"
+            two = @generator_class.new :name => "two"
             @generator.expects(:generate).returns [one, two]
             @transaction.generate
 
@@ -40,8 +40,8 @@ describe Puppet::Transaction do
         end
 
         it "should generate and add resources from the generated resources" do
-            one = @generator_class.create :name => "one"
-            two = @generator_class.create :name => "two"
+            one = @generator_class.new :name => "one"
+            two = @generator_class.new :name => "two"
             @generator.expects(:generate).returns [one]
             one.expects(:generate).returns [two]
             @transaction.generate
@@ -50,8 +50,8 @@ describe Puppet::Transaction do
         end
 
         it "should add an edge in the relationship graph between the generating and generated resource" do
-            one = @generator_class.create :name => "one"
-            two = @generator_class.create :name => "two"
+            one = @generator_class.new :name => "one"
+            two = @generator_class.new :name => "two"
             @generator.expects(:generate).returns [one]
             one.expects(:generate).returns [two]
             @transaction.generate
@@ -61,7 +61,7 @@ describe Puppet::Transaction do
         end
 
         it "should finish all non-conflicting resources" do
-            one = @generator_class.create :name => "one"
+            one = @generator_class.new :name => "one"
             one.expects(:finish)
             @generator.expects(:generate).returns [one]
             @transaction.generate
@@ -74,8 +74,8 @@ describe Puppet::Transaction do
             end
 
             it "should add all generated resources to the catalog" do
-                one = @generator_class.create :name => "one"
-                two = @generator_class.create :name => "two"
+                one = @generator_class.new :name => "one"
+                two = @generator_class.new :name => "two"
                 @generator.expects(:eval_generate).returns [one, two]
                 @transaction.eval_generate(@generator)
 
@@ -84,7 +84,7 @@ describe Puppet::Transaction do
             end
 
             it "should add an edge in the relationship graph between the generating and generated resource" do
-                one = @generator_class.create :name => "one"
+                one = @generator_class.new :name => "one"
                 @generator.expects(:eval_generate).returns [one]
                 @transaction.eval_generate(@generator)
 
@@ -92,15 +92,15 @@ describe Puppet::Transaction do
             end
 
             it "should not recursively eval_generate resources" do
-                one = @generator_class.create :name => "one"
-                two = @generator_class.create :name => "two"
+                one = @generator_class.new :name => "one"
+                two = @generator_class.new :name => "two"
                 @generator.expects(:eval_generate).returns [one]
                 one.expects(:eval_generate).never
                 @transaction.eval_generate(@generator)
             end
 
             it "should finish all non-conflicting resources" do
-                one = @generator_class.create :name => "one"
+                one = @generator_class.new :name => "one"
                 one.expects(:finish)
                 @generator.expects(:eval_generate).returns [one]
                 @transaction.eval_generate(@generator)

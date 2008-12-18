@@ -240,7 +240,7 @@ class TestGroupProvider < Test::Unit::TestCase
     
     def test_autogen
         provider = nil
-        group = Puppet::Type.type(:group).create(:name => nonrootgroup.name)
+        group = Puppet::Type.type(:group).new(:name => nonrootgroup.name)
         provider = group.provider
         assert(provider, "did not get provider")
 

@@ -13,7 +13,7 @@ describe augeas do
         end
         
         it "should have a valid provider" do
-            augeas.create(:name => "foo").provider.class.ancestors.should be_include(Puppet::Provider)
+            augeas.new(:name => "foo").provider.class.ancestors.should be_include(Puppet::Provider)
         end        
     end
 
@@ -21,7 +21,7 @@ describe augeas do
         it "should be able to create a instance" do
             provider_class = Puppet::Type::Augeas.provider(Puppet::Type::Augeas.providers[0])
             Puppet::Type::Augeas.expects(:defaultprovider).returns provider_class
-            augeas.create(:name => "bar").should_not be_nil
+            augeas.new(:name => "bar").should_not be_nil
         end
 
         it "should have an parse_commands feature" do
@@ -67,23 +67,23 @@ describe augeas do
         end
 
         it "should be blank for context" do
-            augeas.create(:name => :context)[:context].should == ""
+            augeas.new(:name => :context)[:context].should == ""
         end
         
         it "should be blank for onlyif" do
-            augeas.create(:name => :onlyif)[:onlyif].should == ""
+            augeas.new(:name => :onlyif)[:onlyif].should == ""
         end        
         
         it "should be blank for load_path" do
-            augeas.create(:name => :load_path)[:load_path].should == ""
+            augeas.new(:name => :load_path)[:load_path].should == ""
         end        
         
         it "should be / for root" do
-            augeas.create(:name => :root)[:root].should == "/"
+            augeas.new(:name => :root)[:root].should == "/"
         end        
         
         it "should be false for type_check" do
-            augeas.create(:name => :type_check)[:type_check].should == :false
+            augeas.new(:name => :type_check)[:type_check].should == :false
         end                
     end
     

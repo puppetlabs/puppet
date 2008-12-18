@@ -7,7 +7,7 @@ require 'puppet/type/selmodule'
 
 describe Puppet::Type.type(:file), " when manipulating file contexts" do
 	before :each do
-	        @file = Puppet::Type::File.create(
+	        @file = Puppet::Type::File.new(
 			:name => "/tmp/foo",
 			:ensure => "file",
 			:seluser => "user_u",
@@ -30,7 +30,7 @@ describe Puppet::Type.type(:selboolean), " when manipulating booleans" do
         provider_class = Puppet::Type::Selboolean.provider(Puppet::Type::Selboolean.providers[0])
 		Puppet::Type::Selboolean.expects(:defaultprovider).returns provider_class
 
-		@bool = Puppet::Type::Selboolean.create(
+		@bool = Puppet::Type::Selboolean.new(
 			:name => "foo",
 			:value => "on",
 			:persistent => true )
@@ -59,7 +59,7 @@ describe Puppet::Type.type(:selmodule), " when checking policy modules" do
         provider_class = Puppet::Type::Selmodule.provider(Puppet::Type::Selmodule.providers[0])
 		Puppet::Type::Selmodule.expects(:defaultprovider).returns provider_class
 
-		@module = Puppet::Type::Selmodule.create(
+		@module = Puppet::Type::Selmodule.new(
 			:name => "foo",
 			:selmoduledir => "/some/path",
 			:selmodulepath => "/some/path/foo.pp",

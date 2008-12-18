@@ -40,7 +40,7 @@ require 'puppettest'
 #            @pcount = 1
 #        end
 #        assert_nothing_raised {
-#            port = Puppet::Type.type(:port).create(
+#            port = Puppet::Type.type(:port).new(
 #                :name => "puppet%s" % @pcount,
 #                :number => "813%s" % @pcount,
 #                :protocols => "tcp",

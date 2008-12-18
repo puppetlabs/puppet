@@ -21,7 +21,7 @@ class TestReports < Test::Unit::TestCase
             # Make every third file
             File.open(file, "w") { |f| f.puts "" } if i % 3 == 0
 
-            objects << Puppet::Type.type(:file).create(
+            objects << Puppet::Type.type(:file).new(
                 :path => file,
                 :ensure => "file"
             )
@@ -44,7 +44,7 @@ class TestReports < Test::Unit::TestCase
         }
 
         # Now make a file for testing logging
-        file = Puppet::Type.type(:file).create(:path => tempfile(), :ensure => "file")
+        file = Puppet::Type.type(:file).new(:path => tempfile(), :ensure => "file")
         file.finish
 
         log = nil

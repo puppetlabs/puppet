@@ -210,7 +210,7 @@ Puppet::Type.newtype(:tidy) do
     # Make a file resource to remove a given file.
     def mkfile(path)
         # Force deletion, so directories actually get deleted.
-        Puppet::Type.type(:file).create :path => path, :backup => self[:backup], :ensure => :absent, :force => true
+        Puppet::Type.type(:file).new :path => path, :backup => self[:backup], :ensure => :absent, :force => true
     end
 
     def retrieve

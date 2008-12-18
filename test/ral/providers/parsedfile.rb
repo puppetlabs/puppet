@@ -47,7 +47,7 @@ class TestParsedFile < Test::Unit::TestCase
         options[:two] ||= "c"
         options[:name] ||= name
 
-        resource = @type.create(options)
+        resource = @type.new(options)
     end
 
     def mkprovider(name = :parsed)
@@ -610,7 +610,7 @@ class TestParsedFile < Test::Unit::TestCase
         # Now make a resource
         bill = nil
         assert_nothing_raised do
-            bill = @type.create :name => "bill"
+            bill = @type.new :name => "bill"
         end
 
         assert_equal("a", bill.provider.one,
@@ -627,7 +627,7 @@ class TestParsedFile < Test::Unit::TestCase
 
         bill = nil
         assert_nothing_raised do
-            bill = @type.create :name => "bill",
+            bill = @type.new :name => "bill",
                 :one => "a", :two => "c"
         end
 
@@ -683,7 +683,7 @@ class TestParsedFile < Test::Unit::TestCase
         otarget.write("oname b d\n")
 
         # Now make a resource that targets elsewhat.
-        res = @type.create(:name => "test", :one => "a", :two => "c",
+        res = @type.new(:name => "test", :one => "a", :two => "c",
             :target => opath)
 
         assert(res.property(:target), "Target is a parameter, not a property")

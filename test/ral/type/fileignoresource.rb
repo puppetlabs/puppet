@@ -69,7 +69,7 @@ class TestFileIgnoreSources < Test::Unit::TestCase
 
         #makes Puppet file Object
         assert_nothing_raised {
-            tofile = Puppet::Type.type(:file).create(
+            tofile = Puppet::Type.type(:file).new(
                 :name => topath,
                 :source => frompath,
                 :recurse => true,                             
@@ -133,7 +133,7 @@ class TestFileIgnoreSources < Test::Unit::TestCase
 
         #makes Puppet file Object
         assert_nothing_raised {
-            tofile = Puppet::Type.type(:file).create(
+            tofile = Puppet::Type.type(:file).new(
                 :name => topath,
                 :source => frompath,
                 :recurse => true,                             
@@ -205,7 +205,7 @@ class TestFileIgnoreSources < Test::Unit::TestCase
 
         #makes Puppet file Object
         assert_nothing_raised {
-            tofile = Puppet::Type.type(:file).create(
+            tofile = Puppet::Type.type(:file).new(
                 :name => topath,
                 :source => frompath,
                 :recurse => true,

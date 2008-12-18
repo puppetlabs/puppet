@@ -10,7 +10,7 @@ class TestServiceType < Test::Unit::TestCase
 
     # #199
     def test_no_refresh_when_starting
-        service = Puppet::Type.type(:service).create :name => "hopefully_this_isnt_in_the_process_table",
+        service = Puppet::Type.type(:service).new :name => "hopefully_this_isnt_in_the_process_table",
             :ensure => :running, :provider => :base
 
         assert_equal :running, service.instance_eval('@parameters[:ensure]').should
@@ -25,7 +25,7 @@ class TestServiceType < Test::Unit::TestCase
     end
 
     def test_refresh_normally
-        service = Puppet::Type.type(:service).create :name => "testing",
+        service = Puppet::Type.type(:service).new :name => "testing",
             :ensure => :running, :provider => :base, :status => "cat /dev/null"
 
         service.provider.expects(:restart)

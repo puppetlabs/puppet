@@ -99,9 +99,9 @@ class Puppet::Resource
     # instances for resource types that don't exist.
     def to_ral
         if typeklass = Puppet::Type.type(self.type)
-            return typeklass.create(self)
+            return typeklass.new(self)
         else
-            return Puppet::Type::Component.create(self)
+            return Puppet::Type::Component.new(self)
         end
     end
 

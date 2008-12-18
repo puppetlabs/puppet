@@ -80,7 +80,7 @@ class TestYumRepo < Test::Unit::TestCase
 
     def make_repo(name, hash={})
         hash[:name] = name
-        Puppet::Type.type(:yumrepo).create(hash)
+        Puppet::Type.type(:yumrepo).new(hash)
     end
 
     def all_sections(inifile)

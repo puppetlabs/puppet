@@ -31,6 +31,6 @@ describe Puppet::Type.type(:group) do
 
     # #1407 - we need to declare the allowdupe param as boolean.
     it "should have a boolean method for determining if duplicates are allowed" do
-        @class.create(:name => "foo").methods.should be_include("allowdupe?")
+        @class.new(:name => "foo").methods.should be_include("allowdupe?")
     end
 end

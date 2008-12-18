@@ -319,7 +319,7 @@ class TestProvider < Test::Unit::TestCase
     def test_initialize
         test = @type.provide(:test)
 
-        inst = @type.create :name => "boo"
+        inst = @type.new :name => "boo"
         prov = nil
         assert_nothing_raised("Could not init with a resource") do
             prov = test.new(inst)
@@ -381,7 +381,7 @@ class TestProviderFeatures < Test::Unit::TestCase
             end
         end
 
-        resource = @type.create(:name => "foo")
+        resource = @type.new(:name => "foo")
         {:numbers => [:numeric], :letters => [:alpha], :both => [:numeric, :alpha],
             :mixed => [], :neither => []}.each do |name, should|
                 should.sort! { |a,b| a.to_s <=> b.to_s }

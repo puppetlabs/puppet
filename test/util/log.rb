@@ -129,7 +129,7 @@ class TestLog < Test::Unit::TestCase
     # Verify that the error and source are always strings
     def test_argsAreStrings
         msg = nil
-        file = Puppet::Type.type(:file).create(
+        file = Puppet::Type.type(:file).new(
             :path => tempfile(),
             :check => %w{owner group}
         )

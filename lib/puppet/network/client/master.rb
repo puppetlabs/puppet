@@ -320,7 +320,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
             hash[:ignore] = args[:ignore].split(/\s+/)
         end
         downconfig = Puppet::Resource::Catalog.new("downloading")
-        downconfig.add_resource Puppet::Type.type(:file).create(hash)
+        downconfig.add_resource Puppet::Type.type(:file).new(hash)
         
         Puppet.info "Retrieving #{args[:name]}s"
 

@@ -52,7 +52,7 @@ class TestType < Test::Unit::TestCase
         path = tempfile()
         assert_nothing_raised() {
             system("rm -f %s" % path)
-            file = Puppet::Type.type(:file).create(
+            file = Puppet::Type.type(:file).new(
                 :path => path,
                 :ensure => "file",
                 :recurse => true,
@@ -67,7 +67,7 @@ class TestType < Test::Unit::TestCase
         }
         assert_nothing_raised() {
             system("rm -f %s" % path)
-            file = Puppet::Type.type(:file).create(
+            file = Puppet::Type.type(:file).new(
                 "path" => path,
                 "ensure" => "file",
                 "recurse" => true,
@@ -101,7 +101,7 @@ class TestType < Test::Unit::TestCase
         # currently groups are the only objects with the namevar as a property
         group = nil
         assert_nothing_raised {
-            group = Puppet::Type.type(:group).create(
+            group = Puppet::Type.type(:group).new(
                 :name => "testing"
             )
         }
@@ -110,7 +110,7 @@ class TestType < Test::Unit::TestCase
     end
 
     def test_aliases_are_added_to_catalog
-        resource = Puppet::Type.type(:file).create(
+        resource = Puppet::Type.type(:file).new(
             :name => "/path/to/some/missing/file",
             :ensure => "file"
         )
@@ -127,7 +127,7 @@ class TestType < Test::Unit::TestCase
     end
 
     def test_aliasing_fails_without_a_catalog
-        resource = Puppet::Type.type(:file).create(
+        resource = Puppet::Type.type(:file).new(
             :name => "/no/such/file",
             :ensure => "file"
         )
@@ -145,14 +145,14 @@ class TestType < Test::Unit::TestCase
         twoobj = nil
         oneobj = nil
         assert_nothing_raised("Could not create prereq that doesn't exist yet") {
-            twoobj = Puppet::Type.type(:file).create(
+            twoobj = Puppet::Type.type(:file).new(
                 :name => two,
                 :require => [:file, one]
             )
         }
 
         assert_nothing_raised {
-            oneobj = Puppet::Type.type(:file).create(
+            oneobj = Puppet::Type.type(:file).new(
                 :name => one
             )
         }
@@ -170,7 +170,7 @@ class TestType < Test::Unit::TestCase
     def test_ensuredefault
         user = nil
         assert_nothing_raised {
-            user = Puppet::Type.type(:user).create(
+            user = Puppet::Type.type(:user).new(
                 :name => "pptestAA",
                 :check => [:uid]
             )
@@ -180,7 +180,7 @@ class TestType < Test::Unit::TestCase
         assert(! user.property(:ensure), "User got an ensure property")
 
         assert_nothing_raised {
-            user = Puppet::Type.type(:user).create(
+            user = Puppet::Type.type(:user).new(
                 :name => "pptestAB",
                 :comment => "Testingness"
             )
@@ -189,7 +189,7 @@ class TestType < Test::Unit::TestCase
         assert(user.property(:ensure), "User did not add ensure property")
 
         assert_nothing_raised {
-            user = Puppet::Type.type(:user).create(
+            user = Puppet::Type.type(:user).new(
                 :name => "pptestBC",
                 :comment => "A fake user"
             )
@@ -341,7 +341,7 @@ class TestType < Test::Unit::TestCase
         obj = nil
         path = tempfile()
         assert_raise ArgumentError do
-            obj = Puppet::Type.type(:file).create(
+            obj = Puppet::Type.type(:file).new(
                 :name => path,
                 :path => path
             )
@@ -378,14 +378,14 @@ class TestType < Test::Unit::TestCase
         echo = Puppet::Util.binary "echo"
         exec1 = exec2 = nil
         assert_nothing_raised do
-            exec1 = Puppet::Type.type(:exec).create(
+            exec1 = Puppet::Type.type(:exec).new(
                 :title => "exec1",
                 :command => "#{echo} funtest"
             )
         end
         catalog.add_resource(exec1)
         assert_nothing_raised do
-            exec2 = Puppet::Type.type(:exec).create(
+            exec2 = Puppet::Type.type(:exec).new(
                 :title => "exec2",
                 :command => "#{echo} funtest"
             )
@@ -395,14 +395,14 @@ class TestType < Test::Unit::TestCase
         # Now do files, since they are. This should fail.
         file1 = file2 = nil
         path = tempfile()
-        file1 = Puppet::Type.type(:file).create(
+        file1 = Puppet::Type.type(:file).new(
             :title => "file1",
             :path => path,
             :content => "yayness"
         )
         catalog.add_resource(file1)
 
-        file2 = Puppet::Type.type(:file).create(
+        file2 = Puppet::Type.type(:file).new(
             :title => "file2",
             :path => path,
             :content => "rahness"
@@ -411,7 +411,7 @@ class TestType < Test::Unit::TestCase
     end
 
     def test_tags
-        obj = Puppet::Type.type(:file).create(:path => tempfile())
+        obj = Puppet::Type.type(:file).new(:path => tempfile())
 
         tags = [:some, :test, :tags]
 
@@ -530,7 +530,7 @@ class TestType < Test::Unit::TestCase
 
     # Partially test #704, but also cover the rest of the schedule management bases.
     def test_schedule
-        schedule = Puppet::Type.type(:schedule).create(:name => "maint")
+        schedule = Puppet::Type.type(:schedule).new(:name => "maint")
         catalog = mk_catalog(schedule)
 
         {"maint" => true, nil => false, :fail => :fail}.each do |name, should|
@@ -538,7 +538,7 @@ class TestType < Test::Unit::TestCase
             if name
                 args[:schedule] = name
             end
-            resource = Puppet::Type.type(:file).create(args)
+            resource = Puppet::Type.type(:file).new(args)
             catalog.add_resource(resource)
 
             if should == :fail
@@ -566,7 +566,7 @@ class TestType < Test::Unit::TestCase
     # #801 -- resources only checked in noop should be rescheduled immediately.
     def test_reschedule_when_noop
         Puppet::Type.type(:schedule).mkdefaultschedules
-        file = Puppet::Type.type(:file).create(:path => "/tmp/whatever", :mode => "755", :noop => true, :schedule => :daily, :ensure => :file)
+        file = Puppet::Type.type(:file).new(:path => "/tmp/whatever", :mode => "755", :noop => true, :schedule => :daily, :ensure => :file)
 
         assert(file.noop?, "File not considered in noop")
         assert(file.scheduled?, "File is not considered scheduled")

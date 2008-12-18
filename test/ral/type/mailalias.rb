@@ -33,7 +33,7 @@ class TestMailAlias < Test::Unit::TestCase
 
     # This isn't much of a test, but then, it's not much of a type.
     def test_recipient_arrays
-        resource = @type.create(:name => "luke", :recipient => "yay", :target => tempfile)
+        resource = @type.new(:name => "luke", :recipient => "yay", :target => tempfile)
         values = nil
         assert_nothing_raised("Could not retrieve mailalias") do
             values = resource.retrieve.inject({}) { |hash, a| hash[a[0].name] = a[1]; hash }

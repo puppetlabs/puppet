@@ -47,7 +47,7 @@ class TestGroup < Test::Unit::TestCase
         group = nil
         hash[:name] = name
         assert_nothing_raised {
-            group = Puppet::Type.type(:group).create(hash)
+            group = Puppet::Type.type(:group).new(hash)
         }
 
         return group
@@ -115,7 +115,7 @@ class TestGroup < Test::Unit::TestCase
             gobj = nil
             comp = nil
             assert_nothing_raised {
-                gobj = Puppet::Type.type(:group).create(
+                gobj = Puppet::Type.type(:group).new(
                     :name => group,
                     :check => [:gid]
                 )
@@ -139,7 +139,7 @@ class TestGroup < Test::Unit::TestCase
         name = "pptestgr"
 
         assert_nothing_raised {
-            gobj = Puppet::Type.type(:group).create(
+            gobj = Puppet::Type.type(:group).new(
                 :name => name,
                 :gid => 123
             )

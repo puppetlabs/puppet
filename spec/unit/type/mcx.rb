@@ -59,15 +59,15 @@ describe mcx_type, "default values" do
     end
 
     it "should be nil for :ds_type" do
-        mcx_type.create(:name => '/Foo/bar')[:ds_type].should be_nil
+        mcx_type.new(:name => '/Foo/bar')[:ds_type].should be_nil
     end
 
     it "should be nil for :ds_name" do
-        mcx_type.create(:name => '/Foo/bar')[:ds_name].should be_nil
+        mcx_type.new(:name => '/Foo/bar')[:ds_name].should be_nil
     end
 
     it "should be nil for :content" do
-        mcx_type.create(:name => '/Foo/bar')[:content].should be_nil
+        mcx_type.new(:name => '/Foo/bar')[:content].should be_nil
     end
 
 end
@@ -81,19 +81,19 @@ describe mcx_type, "when validating properties" do
 
     it "should be able to create an instance" do
         lambda {
-            mcx_type.create(:name => '/Foo/bar')
+            mcx_type.new(:name => '/Foo/bar')
         }.should_not raise_error
     end
 
     it "should support :present as a value to :ensure" do
         lambda {
-            mcx_type.create(:name => "/Foo/bar", :ensure => :present)
+            mcx_type.new(:name => "/Foo/bar", :ensure => :present)
         }.should_not raise_error
     end
 
     it "should support :absent as a value to :ensure" do
         lambda {
-            mcx_type.create(:name => "/Foo/bar", :ensure => :absent)
+            mcx_type.new(:name => "/Foo/bar", :ensure => :absent)
         }.should_not raise_error
     end
 

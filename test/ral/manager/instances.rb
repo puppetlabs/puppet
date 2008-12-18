@@ -64,9 +64,9 @@ class TestTypeInstances < Test::Unit::TestCase
 
         # Now make a couple of instances, so we know we correctly match instead of always
         # trying to create new ones.
-        one = @type.create(:name => :one, :ensure => :present)
-        three = @type.create(:name => :three, :ensure => :present, :provider => :sub)
-        five = @type.create(:name => :five, :ensure => :present, :provider => :yep)
+        one = @type.new(:name => :one, :ensure => :present)
+        three = @type.new(:name => :three, :ensure => :present, :provider => :sub)
+        five = @type.new(:name => :five, :ensure => :present, :provider => :yep)
 
         result = nil
         assert_nothing_raised("Could not get instance list") do

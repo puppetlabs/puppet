@@ -953,6 +953,8 @@ class Type
     # Force users to call this, so that we can merge objects if
     # necessary.
     def self.create(args)
+        # LAK:DEP Deprecation notice added 12/17/2008
+        Puppet.warning "Puppet::Type.create is deprecated; use Puppet::Type.new"
         new(args)
     end
 

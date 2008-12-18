@@ -269,7 +269,7 @@ end
 
         user = nonrootuser()
         group = nonrootgroup()
-        chowner = Puppet::Type.type(:file).create :path => dir,
+        chowner = Puppet::Type.type(:file).new :path => dir,
             :owner => user.name, :group => group.name, :recurse => true
         assert_apply(chowner)
         chowner.remove

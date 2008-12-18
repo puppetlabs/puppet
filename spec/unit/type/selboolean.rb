@@ -27,19 +27,19 @@ describe Puppet::Type.type(:selboolean), "when validating values" do
     end
 
     it "should support :on as a value to :value" do
-        Puppet::Type.type(:selboolean).create(:name => "yay", :value => :on)
+        Puppet::Type.type(:selboolean).new(:name => "yay", :value => :on)
     end
 
     it "should support :off as a value to :value" do
-        Puppet::Type.type(:selboolean).create(:name => "yay", :value => :off)
+        Puppet::Type.type(:selboolean).new(:name => "yay", :value => :off)
     end
 
     it "should support :true as a value to :persistent" do
-        Puppet::Type.type(:selboolean).create(:name => "yay", :value => :on, :persistent => :true)
+        Puppet::Type.type(:selboolean).new(:name => "yay", :value => :on, :persistent => :true)
     end
 
     it "should support :false as a value to :persistent" do
-        Puppet::Type.type(:selboolean).create(:name => "yay", :value => :on, :persistent => :false)
+        Puppet::Type.type(:selboolean).new(:name => "yay", :value => :on, :persistent => :false)
     end
 end
 

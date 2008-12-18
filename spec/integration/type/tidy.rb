@@ -17,7 +17,7 @@ describe Puppet::Type.type(:tidy) do
         Dir.mkdir(dir)
         File.symlink(target, link)
         
-        tidy = Puppet::Type.type(:tidy).create :path => dir, :recurse => true
+        tidy = Puppet::Type.type(:tidy).new :path => dir, :recurse => true
 
         catalog = Puppet::Resource::Catalog.new
         catalog.add_resource(tidy)

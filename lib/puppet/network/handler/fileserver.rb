@@ -512,7 +512,7 @@ class Puppet::Network::Handler
                     # the effort.
                     obj[:check] = CHECKPARAMS
                 else
-                    obj = Puppet::Type.type(:file).create(
+                    obj = Puppet::Type.type(:file).new(
                         :name => file_path(path, client),
                         :check => CHECKPARAMS
                     )

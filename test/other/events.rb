@@ -11,11 +11,11 @@ class TestEvents < Test::Unit::TestCase
 
     def test_simplesubscribe
         name = tempfile()
-        file = Puppet::Type.type(:file).create(
+        file = Puppet::Type.type(:file).new(
             :name => name,
             :ensure => "file"
         )
-        exec = Puppet::Type.type(:exec).create(
+        exec = Puppet::Type.type(:exec).new(
             :name => "echo true",
             :path => "/usr/bin:/bin",
             :refreshonly => true,
@@ -31,11 +31,11 @@ class TestEvents < Test::Unit::TestCase
 
     def test_simplerequire
         name = tempfile()
-        file = Puppet::Type.type(:file).create(
+        file = Puppet::Type.type(:file).new(
             :name => name,
             :ensure => "file"
         )
-        exec = Puppet::Type.type(:exec).create(
+        exec = Puppet::Type.type(:exec).new(
             :name => "echo true",
             :path => "/usr/bin:/bin",
             :refreshonly => true,
@@ -57,14 +57,14 @@ class TestEvents < Test::Unit::TestCase
         files = []
 
         4.times { |i|
-            files << Puppet::Type.type(:file).create(
+            files << Puppet::Type.type(:file).new(
                 :name => tempfile(),
                 :ensure => "file"
             )
         }
 
         fname = tempfile()
-        exec = Puppet::Type.type(:exec).create(
+        exec = Puppet::Type.type(:exec).new(
             :name => "touch %s" % fname,
             :path => "/usr/bin:/bin",
             :refreshonly => true
@@ -84,13 +84,13 @@ class TestEvents < Test::Unit::TestCase
     def test_refreshordering
         file = tempfile()
 
-        exec1 = Puppet::Type.type(:exec).create(
+        exec1 = Puppet::Type.type(:exec).new(
             :title => "one",
             :name => "echo one >> %s" % file,
             :path => "/usr/bin:/bin"
         )
 
-        exec2 = Puppet::Type.type(:exec).create(
+        exec2 = Puppet::Type.type(:exec).new(
             :title => "two",
             :name => "echo two >> %s" % file,
             :path => "/usr/bin:/bin",
@@ -98,7 +98,7 @@ class TestEvents < Test::Unit::TestCase
             :subscribe => exec1
         )
 
-        exec3 = Puppet::Type.type(:exec).create(
+        exec3 = Puppet::Type.type(:exec).new(
             :title => "three",
             :name => "echo three >> %s" % file,
             :path => "/usr/bin:/bin",

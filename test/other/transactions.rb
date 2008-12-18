@@ -53,7 +53,7 @@ class TestTransactions < Test::Unit::TestCase
             def eval_generate
                 ret = []
                 if title.length > 1
-                    ret << self.class.create(:title => title[0..-2])
+                    ret << self.class.new(:title => title[0..-2])
                 else
                     return nil
                 end
@@ -72,11 +72,11 @@ class TestTransactions < Test::Unit::TestCase
         path1 = tempfile()
         path2 = tempfile()
         objects = []
-        objects << Puppet::Type.type(:file).create(
+        objects << Puppet::Type.type(:file).new(
             :path => path1,
             :content => "yayness"
         )
-        objects << Puppet::Type.type(:file).create(
+        objects << Puppet::Type.type(:file).new(
             :path => path2,
             :content => "booness"
         )
@@ -130,7 +130,7 @@ class TestTransactions < Test::Unit::TestCase
         end
 
         # Now create an instance
-        inst = type.create :name => "yay"
+        inst = type.new :name => "yay"
         
         # Create a transaction
         trans = Puppet::Transaction.new(mk_catalog(inst))
@@ -155,13 +155,13 @@ class TestTransactions < Test::Unit::TestCase
         path = tempfile()
         firstpath = tempfile()
         secondpath = tempfile()
-        file = Puppet::Type.type(:file).create(:title => "file", :path => path, :content => "yayness")
-        first = Puppet::Type.type(:exec).create(:title => "first",
+        file = Puppet::Type.type(:file).new(:title => "file", :path => path, :content => "yayness")
+        first = Puppet::Type.type(:exec).new(:title => "first",
                                      :command => "/bin/echo first > #{firstpath}",
                                      :subscribe => [:file, path],
                                      :refreshonly => true
         )
-        second = Puppet::Type.type(:exec).create(:title => "second",
+        second = Puppet::Type.type(:exec).new(:title => "second",
                                      :command => "/bin/echo second > #{secondpath}",
                                      :subscribe => [:exec, "first"],
                                      :refreshonly => true
@@ -219,13 +219,13 @@ class TestTransactions < Test::Unit::TestCase
 
         hash[:name] = tmpfile
         assert_nothing_raised() {
-            return Puppet::Type.type(:file).create(hash)
+            return Puppet::Type.type(:file).new(hash)
         }
     end
 
     def newexec(file)
         assert_nothing_raised() {
-            return Puppet::Type.type(:exec).create(
+            return Puppet::Type.type(:exec).new(
                 :name => "touch %s" % file,
                 :path => "/bin:/usr/bin:/sbin:/usr/sbin",
                 :returns => 0
@@ -347,12 +347,12 @@ class TestTransactions < Test::Unit::TestCase
         assert_apply(file)
 
         config = Puppet::Resource::Catalog.new
-        fcomp = Puppet::Type.type(:component).create(:name => "file")
+        fcomp = Puppet::Type.type(:component).new(:name => "file")
         config.add_resource fcomp
         config.add_resource file
         config.add_edge(fcomp, file)
 
-        ecomp = Puppet::Type.type(:component).create(:name => "exec")
+        ecomp = Puppet::Type.type(:component).new(:name => "exec")
         config.add_resource ecomp
         config.add_resource exec
         config.add_edge(ecomp, exec)
@@ -377,17 +377,17 @@ class TestTransactions < Test::Unit::TestCase
         path = tempfile()
         file1 = tempfile()
         file2 = tempfile()
-        file = Puppet::Type.type(:file).create(
+        file = Puppet::Type.type(:file).new(
             :path => path,
             :ensure => "file"
         )
-        exec1 = Puppet::Type.type(:exec).create(
+        exec1 = Puppet::Type.type(:exec).new(
             :path => ENV["PATH"],
             :command => "touch %s" % file1,
             :refreshonly => true,
             :subscribe => [:file, path]
         )
-        exec2 = Puppet::Type.type(:exec).create(
+        exec2 = Puppet::Type.type(:exec).new(
             :path => ENV["PATH"],
             :command => "touch %s" % file2,
             :refreshonly => true,
@@ -404,11 +404,11 @@ class TestTransactions < Test::Unit::TestCase
     def test_failedrefreshes
         path = tempfile()
         newfile = tempfile()
-        file = Puppet::Type.type(:file).create(
+        file = Puppet::Type.type(:file).new(
             :path => path,
             :ensure => "file"
         )
-        exec1 = Puppet::Type.type(:exec).create(
+        exec1 = Puppet::Type.type(:exec).new(
             :path => ENV["PATH"],
             :command => "touch /this/cannot/possibly/exist",
             :logoutput => true,
@@ -416,7 +416,7 @@ class TestTransactions < Test::Unit::TestCase
             :subscribe => file,
             :title => "one"
         )
-        exec2 = Puppet::Type.type(:exec).create(
+        exec2 = Puppet::Type.type(:exec).new(
             :path => ENV["PATH"],
             :command => "touch %s" % newfile,
             :logoutput => true,
@@ -433,14 +433,14 @@ class TestTransactions < Test::Unit::TestCase
     def test_unscheduled_and_untagged_response
         Puppet::Type.type(:schedule).mkdefaultschedules
         Puppet[:ignoreschedules] = false
-        file = Puppet::Type.type(:file).create(
+        file = Puppet::Type.type(:file).new(
             :name => tempfile(),
             :ensure => "file",
             :backup => false
         )
 
         fname = tempfile()
-        exec = Puppet::Type.type(:exec).create(
+        exec = Puppet::Type.type(:exec).new(
             :name => "touch %s" % fname,
             :path => "/usr/bin:/bin",
             :schedule => "monthly",
@@ -484,19 +484,19 @@ class TestTransactions < Test::Unit::TestCase
     end
 
     def test_failed_reqs_mean_no_run
-        exec = Puppet::Type.type(:exec).create(
+        exec = Puppet::Type.type(:exec).new(
             :command => "/bin/mkdir /this/path/cannot/possibly/exit",
             :title => "mkdir"
         )
 
-        file1 = Puppet::Type.type(:file).create(
+        file1 = Puppet::Type.type(:file).new(
             :title => "file1",
             :path => tempfile(),
             :require => exec,
             :ensure => :file
         )
 
-        file2 = Puppet::Type.type(:file).create(
+        file2 = Puppet::Type.type(:file).new(
             :title => "file2",
             :path => tempfile(),
             :require => file1,
@@ -527,7 +527,7 @@ class TestTransactions < Test::Unit::TestCase
         trans.prepare
         return
 
-        resource = Puppet::Type.type(:file).create :ensure => :present, :path => tempfile()
+        resource = Puppet::Type.type(:file).new :ensure => :present, :path => tempfile()
         other_resource = mock 'generated'
         def resource.generate
             [other_resource]
@@ -599,7 +599,7 @@ class TestTransactions < Test::Unit::TestCase
             end
         end
         
-        resource = type.create :name => "test"
+        resource = type.new :name => "test"
         config = mk_catalog(resource)
         trans = Puppet::Transaction.new(config)
         trans.prepare
@@ -627,8 +627,8 @@ class TestTransactions < Test::Unit::TestCase
         File.chmod(0644, file)
         File.chmod(0755, dir) # So only the child file causes a change
         
-        dirobj = Puppet::Type.type(:file).create :mode => "755", :recurse => true, :path => dir
-        exec = Puppet::Type.type(:exec).create :title => "make",
+        dirobj = Puppet::Type.type(:file).new :mode => "755", :recurse => true, :path => dir
+        exec = Puppet::Type.type(:exec).new :title => "make",
             :command => "touch #{maker}", :path => ENV['PATH'], :refreshonly => true,
             :subscribe => dirobj
         
@@ -712,9 +712,9 @@ class TestTransactions < Test::Unit::TestCase
     end
     
     def test_set_target
-        file = Puppet::Type.type(:file).create(:path => tempfile(), :content => "yay")
-        exec1 = Puppet::Type.type(:exec).create :command => "/bin/echo exec1"
-        exec2 = Puppet::Type.type(:exec).create :command => "/bin/echo exec2"
+        file = Puppet::Type.type(:file).new(:path => tempfile(), :content => "yay")
+        exec1 = Puppet::Type.type(:exec).new :command => "/bin/echo exec1"
+        exec2 = Puppet::Type.type(:exec).new :command => "/bin/echo exec2"
         trans = Puppet::Transaction.new(mk_catalog(file, exec1, exec2))
         
         # First try it with an edge that has no callback
@@ -747,8 +747,8 @@ class TestTransactions < Test::Unit::TestCase
             Puppet::Type.rmtype(:norefresh)
         end
 
-        file = Puppet::Type.type(:file).create :path => tempfile(), :content => "yay"
-        one = klass.create :name => "one", :subscribe => file
+        file = Puppet::Type.type(:file).new :path => tempfile(), :content => "yay"
+        one = klass.new :name => "one", :subscribe => file
         
         assert_apply(file, one)
         
@@ -757,8 +757,8 @@ class TestTransactions < Test::Unit::TestCase
 
     # Testing #437 - cyclic graphs should throw failures.
     def test_fail_on_cycle
-        one = Puppet::Type.type(:exec).create(:name => "/bin/echo one")
-        two = Puppet::Type.type(:exec).create(:name => "/bin/echo two")
+        one = Puppet::Type.type(:exec).new(:name => "/bin/echo one")
+        two = Puppet::Type.type(:exec).new(:name => "/bin/echo two")
         one[:require] = two
         two[:require] = one
 
@@ -781,7 +781,7 @@ class TestTransactions < Test::Unit::TestCase
         end
         cleanup { Puppet::Type.rmtype(:failer) }
 
-        obj = type.create(:name => "testing")
+        obj = type.new(:name => "testing")
 
         assert_apply(obj)
     end
@@ -802,7 +802,7 @@ class TestTransactions < Test::Unit::TestCase
         end
         cleanup { Puppet::Type.rmtype(:refresher)}
         
-        obj = type.create(:name => "yay", :testing => "cool")
+        obj = type.new(:name => "yay", :testing => "cool")
         
         assert(! obj.insync?(obj.retrieve), "fake object is already in sync")
         
@@ -816,8 +816,8 @@ class TestTransactions < Test::Unit::TestCase
         # Create a couple of different resource sets that have automatic relationships and make sure the manual relationships win
         rels = {}
         # First users and groups
-        group = Puppet::Type.type(:group).create(:name => nonrootgroup.name, :ensure => :present)
-        user = Puppet::Type.type(:user).create(:name => nonrootuser.name, :ensure => :present, :gid => group.title)
+        group = Puppet::Type.type(:group).new(:name => nonrootgroup.name, :ensure => :present)
+        user = Puppet::Type.type(:user).new(:name => nonrootuser.name, :ensure => :present, :gid => group.title)
         
         # Now add the explicit relationship
         group[:require] = user
@@ -825,8 +825,8 @@ class TestTransactions < Test::Unit::TestCase
         # Now files
         d = tempfile()
         f = File.join(d, "file")
-        file = Puppet::Type.type(:file).create(:path => f, :content => "yay")
-        dir = Puppet::Type.type(:file).create(:path => d, :ensure => :directory, :require => file)
+        file = Puppet::Type.type(:file).new(:path => f, :content => "yay")
+        dir = Puppet::Type.type(:file).new(:path => d, :ensure => :directory, :require => file)
         
         rels[dir] = file
         rels.each do |after, before|
@@ -850,12 +850,12 @@ class TestTransactions < Test::Unit::TestCase
         path = tempfile
         epath = tempfile
         spath = tempfile
-        file = Puppet::Type.type(:file).create(:path => path, :ensure => :file,
+        file = Puppet::Type.type(:file).new(:path => path, :ensure => :file,
             :title => "file")
-        exec = Puppet::Type.type(:exec).create(:command => "touch %s" % epath,
+        exec = Puppet::Type.type(:exec).new(:command => "touch %s" % epath,
             :path => ENV["PATH"], :subscribe => file, :refreshonly => true,
             :title => 'exec1')
-        exec2 = Puppet::Type.type(:exec).create(:command => "touch %s" % spath,
+        exec2 = Puppet::Type.type(:exec).new(:command => "touch %s" % spath,
             :path => ENV["PATH"], :subscribe => exec, :refreshonly => true,
             :title => 'exec2')
 
@@ -888,7 +888,7 @@ class TestTransactions < Test::Unit::TestCase
         3.times do |i|
             path = tempfile
             paths << path
-            file = Puppet::Type.type(:file).create(:path => path, :ensure => :absent,
+            file = Puppet::Type.type(:file).new(:path => path, :ensure => :absent,
                 :backup => false, :title => "file%s" % i)
             File.open(path, "w") { |f| f.puts "" }
             files << file
@@ -929,7 +929,7 @@ class TestTransactions < Test::Unit::TestCase
 
         cleanup { Puppet::Type.rmtype(:flushtest) }
 
-        obj = type.create(:name => "test", :ensure => :present)
+        obj = type.new(:name => "test", :ensure => :present)
 
         # first make sure it runs through and flushes
         assert_apply(obj)

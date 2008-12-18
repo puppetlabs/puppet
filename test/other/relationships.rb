@@ -14,7 +14,7 @@ class TestRelationships < Test::Unit::TestCase
     
     def newfile
         assert_nothing_raised() {
-            return Puppet::Type.type(:file).create(
+            return Puppet::Type.type(:file).new(
                 :path => tempfile,
                 :check => [:mode, :owner, :group]
             )

@@ -12,7 +12,7 @@ class TestStorage < Test::Unit::TestCase
         path = tempfile()
         File.open(path, "w") { |f| f.puts :yayness }
 
-        f = Puppet::Type.type(:file).create(
+        f = Puppet::Type.type(:file).new(
             :name => path,
             :check => %w{checksum type}
         )
@@ -101,7 +101,7 @@ class TestStorage < Test::Unit::TestCase
     
     def test_caching
         hash = nil
-        one = Puppet::Type.type(:exec).create :title => "/bin/echo one"
+        one = Puppet::Type.type(:exec).new :title => "/bin/echo one"
         [one, :yayness].each do |object|
             assert_nothing_raised do
                 hash = Puppet::Util::Storage.cache(object)

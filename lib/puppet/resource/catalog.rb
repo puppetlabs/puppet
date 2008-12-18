@@ -181,7 +181,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         unless klass = Puppet::Type.type(type)
             raise ArgumentError, "Unknown resource type %s" % type
         end
-        return unless resource = klass.create(options)
+        return unless resource = klass.new(options)
 
         add_resource(resource)
         resource

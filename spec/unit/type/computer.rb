@@ -8,7 +8,7 @@ describe Puppet::Type.type(:computer), " when checking computer objects" do
     before do
         provider_class = Puppet::Type::Computer.provider(Puppet::Type::Computer.providers[0])
         Puppet::Type::Computer.expects(:defaultprovider).returns provider_class
-        @resource = Puppet::Type::Computer.create(
+        @resource = Puppet::Type::Computer.new(
                         :name => "puppetcomputertest",
                         :en_address => "aa:bb:cc:dd:ee:ff",
                         :ip_address => "1.2.3.4")
@@ -19,7 +19,7 @@ describe Puppet::Type.type(:computer), " when checking computer objects" do
     it "should be able to create a instance" do
         provider_class = Puppet::Type::Computer.provider(Puppet::Type::Computer.providers[0])
         Puppet::Type::Computer.expects(:defaultprovider).returns provider_class
-        computer.create(:name => "bar").should_not be_nil
+        computer.new(:name => "bar").should_not be_nil
     end
   
     properties = [:en_address, :ip_address]
@@ -58,11 +58,11 @@ describe Puppet::Type.type(:computer), " when checking computer objects" do
         end
 
         it "should be nil for en_address" do
-            computer.create(:name => :en_address)[:en_address].should == nil
+            computer.new(:name => :en_address)[:en_address].should == nil
         end
         
         it "should be nil for ip_address" do
-            computer.create(:name => :ip_address)[:ip_address].should == nil
+            computer.new(:name => :ip_address)[:ip_address].should == nil
         end
     end
         

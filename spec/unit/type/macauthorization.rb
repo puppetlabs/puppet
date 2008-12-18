@@ -52,19 +52,19 @@ describe Puppet::Type.type(:macauthorization), "when checking macauthorization o
     
         it "should be able to create an instance" do
             lambda {
-                macauth_type.create(:name => 'foo')
+                macauth_type.new(:name => 'foo')
             }.should_not raise_error
         end
             
         it "should support :present as a value to :ensure" do
             lambda {
-                macauth_type.create(:name => "foo", :ensure => :present)
+                macauth_type.new(:name => "foo", :ensure => :present)
             }.should_not raise_error
         end
             
         it "should support :absent as a value to :ensure" do
             lambda {
-                macauth_type.create(:name => "foo", :ensure => :absent)
+                macauth_type.new(:name => "foo", :ensure => :absent)
             }.should_not raise_error
         end
     

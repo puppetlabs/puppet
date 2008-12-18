@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 describe Puppet::Type.type(:tidy) do
     it "should use :lstat when stating a file" do
-        tidy = Puppet::Type.type(:tidy).create :path => "/foo/bar", :age => "1d"
+        tidy = Puppet::Type.type(:tidy).new :path => "/foo/bar", :age => "1d"
         stat = mock 'stat'
         File.expects(:lstat).with("/foo/bar").returns stat
         tidy.stat("/foo/bar").should == stat
@@ -23,7 +23,7 @@ describe Puppet::Type.type(:tidy) do
     describe "when validating parameter values" do
         describe "for 'recurse'" do
             before do
-                @tidy = Puppet::Type.type(:tidy).create :path => "/tmp", :age => "100d"
+                @tidy = Puppet::Type.type(:tidy).new :path => "/tmp", :age => "100d"
             end
 
             it "should allow 'true'" do
@@ -64,7 +64,7 @@ describe Puppet::Type.type(:tidy) do
 
         convertors.each do |unit, multiple|
             it "should consider a %s to be %s seconds" % [unit, multiple] do
-                tidy = Puppet::Type.type(:tidy).create :path => "/what/ever", :age => "5%s" % unit.to_s[0..0]
+                tidy = Puppet::Type.type(:tidy).new :path => "/what/ever", :age => "5%s" % unit.to_s[0..0]
 
                 tidy[:age].should == 5 * multiple
             end
@@ -81,7 +81,7 @@ describe Puppet::Type.type(:tidy) do
 
         convertors.each do |unit, multiple|
             it "should consider a %s to be 1024^%s bytes" % [unit, multiple] do
-                tidy = Puppet::Type.type(:tidy).create :path => "/what/ever", :size => "5%s" % unit
+                tidy = Puppet::Type.type(:tidy).new :path => "/what/ever", :size => "5%s" % unit
 
                 total = 5
                 multiple.times { total *= 1024 }
@@ -92,7 +92,7 @@ describe Puppet::Type.type(:tidy) do
 
     describe "when tidying" do
         before do
-            @tidy = Puppet::Type.type(:tidy).create :path => "/what/ever"
+            @tidy = Puppet::Type.type(:tidy).new :path => "/what/ever"
             @stat = stub 'stat', :ftype => "directory"
             File.stubs(:lstat).with("/what/ever").returns @stat
         end
@@ -100,25 +100,25 @@ describe Puppet::Type.type(:tidy) do
         describe "and generating files" do
             it "should set the backup on the file if backup is set on the tidy instance" do
                 @tidy[:backup] = "whatever"
-                Puppet::Type.type(:file).expects(:create).with { |args| args[:backup] == "whatever" }
+                Puppet::Type.type(:file).expects(:new).with { |args| args[:backup] == "whatever" }
 
                 @tidy.mkfile("/what/ever")
             end
 
             it "should set the file's path to the tidy's path" do
-                Puppet::Type.type(:file).expects(:create).with { |args| args[:path] == "/what/ever" }
+                Puppet::Type.type(:file).expects(:new).with { |args| args[:path] == "/what/ever" }
 
                 @tidy.mkfile("/what/ever")
             end
 
             it "should configure the file for deletion" do
-                Puppet::Type.type(:file).expects(:create).with { |args| args[:ensure] == :absent }
+                Puppet::Type.type(:file).expects(:new).with { |args| args[:ensure] == :absent }
 
                 @tidy.mkfile("/what/ever")
             end
 
             it "should force deletion on the file" do
-                Puppet::Type.type(:file).expects(:create).with { |args| args[:force] == true }
+                Puppet::Type.type(:file).expects(:new).with { |args| args[:force] == true }
 
                 @tidy.mkfile("/what/ever")
             end
@@ -133,7 +133,7 @@ describe Puppet::Type.type(:tidy) do
         describe "and recursion is not used" do
             it "should generate a file resource if the file should be tidied" do
                 @tidy.expects(:tidy?).with("/what/ever").returns true
-                file = Puppet::Type.type(:file).create(:path => "/eh")
+                file = Puppet::Type.type(:file).new(:path => "/eh")
                 @tidy.expects(:mkfile).with("/what/ever").returns file
 
                 @tidy.generate.should == [file]
@@ -170,7 +170,7 @@ describe Puppet::Type.type(:tidy) do
                 @tidy.expects(:tidy?).with("/what/ever/one").returns true
                 @tidy.expects(:tidy?).with("/what/ever/two").returns false
 
-                file = Puppet::Type.type(:file).create(:path => "/eh")
+                file = Puppet::Type.type(:file).new(:path => "/eh")
                 @tidy.expects(:mkfile).with("/what/ever").returns file
                 @tidy.expects(:mkfile).with("/what/ever/one").returns file
 
@@ -180,7 +180,7 @@ describe Puppet::Type.type(:tidy) do
 
         describe "and determining whether a file matches provided glob patterns" do
             before do
-                @tidy = Puppet::Type.type(:tidy).create :path => "/what/ever"
+                @tidy = Puppet::Type.type(:tidy).new :path => "/what/ever"
                 @tidy[:matches] = %w{*foo* *bar*}
 
                 @stat = mock 'stat'
@@ -206,7 +206,7 @@ describe Puppet::Type.type(:tidy) do
 
         describe "and determining whether a file is too old" do
             before do
-                @tidy = Puppet::Type.type(:tidy).create :path => "/what/ever"
+                @tidy = Puppet::Type.type(:tidy).new :path => "/what/ever"
                 @stat = stub 'stat'
 
                 @tidy[:age] = "1s"
@@ -236,7 +236,7 @@ describe Puppet::Type.type(:tidy) do
 
         describe "and determining whether a file is too large" do
             before do
-                @tidy = Puppet::Type.type(:tidy).create :path => "/what/ever"
+                @tidy = Puppet::Type.type(:tidy).new :path => "/what/ever"
                 @stat = stub 'stat', :ftype => "file"
 
                 @tidy[:size] = "1kb"
@@ -258,7 +258,7 @@ describe Puppet::Type.type(:tidy) do
 
         describe "and determining whether a file should be tidied" do
             before do
-                @tidy = Puppet::Type.type(:tidy).create :path => "/what/ever"
+                @tidy = Puppet::Type.type(:tidy).new :path => "/what/ever"
                 @stat = stub 'stat', :ftype => "file"
                 File.stubs(:lstat).with("/what/ever").returns @stat
             end

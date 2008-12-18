@@ -7,7 +7,7 @@ module ExecModuleTesting
         @user_name = 'some_user_name'
         @group_name = 'some_group_name'
         Puppet.features.stubs(:root?).returns(true)
-        @execer = Puppet::Type.type(:exec).create(:name => command, :path => %w{/usr/bin /bin}, :user => @user_name, :group => @group_name)
+        @execer = Puppet::Type.type(:exec).new(:name => command, :path => %w{/usr/bin /bin}, :user => @user_name, :group => @group_name)
 
         status = stub "process"
         status.stubs(:exitstatus).returns(exitstatus)

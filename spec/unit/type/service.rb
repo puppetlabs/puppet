@@ -33,86 +33,86 @@ describe Puppet::Type.type(:service), "when validating attribute values" do
     end
 
     it "should support :running as a value to :ensure" do
-        Puppet::Type.type(:service).create(:name => "yay", :ensure => :running)
+        Puppet::Type.type(:service).new(:name => "yay", :ensure => :running)
     end
 
     it "should support :stopped as a value to :ensure" do
-        Puppet::Type.type(:service).create(:name => "yay", :ensure => :stopped)
+        Puppet::Type.type(:service).new(:name => "yay", :ensure => :stopped)
     end
 
     it "should alias the value :true to :running in :ensure" do
-        svc = Puppet::Type.type(:service).create(:name => "yay", :ensure => true)
+        svc = Puppet::Type.type(:service).new(:name => "yay", :ensure => true)
         svc.should(:ensure).should == :running
     end
 
     it "should alias the value :false to :stopped in :ensure" do
-        svc = Puppet::Type.type(:service).create(:name => "yay", :ensure => false)
+        svc = Puppet::Type.type(:service).new(:name => "yay", :ensure => false)
         svc.should(:ensure).should == :stopped
     end
 
     it "should support :true as a value to :enable" do
-        Puppet::Type.type(:service).create(:name => "yay", :enable => :true)
+        Puppet::Type.type(:service).new(:name => "yay", :enable => :true)
     end
 
     it "should support :false as a value to :enable" do
-        Puppet::Type.type(:service).create(:name => "yay", :enable => :false)
+        Puppet::Type.type(:service).new(:name => "yay", :enable => :false)
     end
 
     it "should support :true as a value to :hasstatus" do
-        Puppet::Type.type(:service).create(:name => "yay", :hasstatus => :true)
+        Puppet::Type.type(:service).new(:name => "yay", :hasstatus => :true)
     end
 
     it "should support :false as a value to :hasstatus" do
-        Puppet::Type.type(:service).create(:name => "yay", :hasstatus => :false)
+        Puppet::Type.type(:service).new(:name => "yay", :hasstatus => :false)
     end
 
     it "should support :true as a value to :hasrestart" do
-        Puppet::Type.type(:service).create(:name => "yay", :hasrestart => :true)
+        Puppet::Type.type(:service).new(:name => "yay", :hasrestart => :true)
     end
 
     it "should support :false as a value to :hasrestart" do
-        Puppet::Type.type(:service).create(:name => "yay", :hasrestart => :false)
+        Puppet::Type.type(:service).new(:name => "yay", :hasrestart => :false)
     end
 
     it "should allow setting the :enable parameter if the provider has the :enableable feature" do
         Puppet::Type.type(:service).defaultprovider.stubs(:supports_parameter?).returns(true)
         Puppet::Type.type(:service).defaultprovider.expects(:supports_parameter?).with(Puppet::Type.type(:service).attrclass(:enable)).returns(true)
-        svc = Puppet::Type.type(:service).create(:name => "yay", :enable => true)
+        svc = Puppet::Type.type(:service).new(:name => "yay", :enable => true)
         svc.should(:enable).should == :true
     end
 
     it "should not allow setting the :enable parameter if the provider is missing the :enableable feature" do
         Puppet::Type.type(:service).defaultprovider.stubs(:supports_parameter?).returns(true)
         Puppet::Type.type(:service).defaultprovider.expects(:supports_parameter?).with(Puppet::Type.type(:service).attrclass(:enable)).returns(false)
-        svc = Puppet::Type.type(:service).create(:name => "yay", :enable => true)
+        svc = Puppet::Type.type(:service).new(:name => "yay", :enable => true)
         svc.should(:enable).should be_nil
     end
 
     it "should discard paths that do not exist" do
         FileTest.stubs(:exist?).returns(false)
         FileTest.stubs(:directory?).returns(false)
-        svc = Puppet::Type.type(:service).create(:name => "yay", :path => "/one/two")
+        svc = Puppet::Type.type(:service).new(:name => "yay", :path => "/one/two")
         svc[:path].should be_empty
     end
 
     it "should discard paths that are not directories" do
         FileTest.stubs(:exist?).returns(true)
         FileTest.stubs(:directory?).returns(false)
-        svc = Puppet::Type.type(:service).create(:name => "yay", :path => "/one/two")
+        svc = Puppet::Type.type(:service).new(:name => "yay", :path => "/one/two")
         svc[:path].should be_empty
     end
 
     it "should split paths on ':'" do
         FileTest.stubs(:exist?).returns(true)
         FileTest.stubs(:directory?).returns(true)
-        svc = Puppet::Type.type(:service).create(:name => "yay", :path => "/one/two:/three/four")
+        svc = Puppet::Type.type(:service).new(:name => "yay", :path => "/one/two:/three/four")
         svc[:path].should == %w{/one/two /three/four}
     end
 
     it "should accept arrays of paths joined by ':'" do
         FileTest.stubs(:exist?).returns(true)
         FileTest.stubs(:directory?).returns(true)
-        svc = Puppet::Type.type(:service).create(:name => "yay", :path => ["/one:/two", "/three:/four"])
+        svc = Puppet::Type.type(:service).new(:name => "yay", :path => ["/one:/two", "/three:/four"])
         svc[:path].should == %w{/one /two /three /four}
     end
 end
@@ -124,31 +124,31 @@ describe Puppet::Type.type(:service), "when setting default attribute values" do
 
         Puppet::Type.type(:service).defaultprovider.stubs(:respond_to?).returns(true)
         Puppet::Type.type(:service).defaultprovider.stubs(:defpath).returns("testing")
-        svc = Puppet::Type.type(:service).create(:name => "other")
+        svc = Puppet::Type.type(:service).new(:name => "other")
         svc[:path].should == ["testing"]
     end
 
     it "should default 'pattern' to the binary if one is provided" do
-        svc = Puppet::Type.type(:service).create(:name => "other", :binary => "/some/binary")
+        svc = Puppet::Type.type(:service).new(:name => "other", :binary => "/some/binary")
         svc[:pattern].should == "/some/binary"
     end
 
     it "should default 'pattern' to the name if no pattern is provided" do
-        svc = Puppet::Type.type(:service).create(:name => "other")
+        svc = Puppet::Type.type(:service).new(:name => "other")
         svc[:pattern].should == "other"
     end
 
     it "should default 'control' to the upcased service name with periods replaced by underscores if the provider supports the 'controllable' feature" do
         provider = stub 'provider', :controllable? => true, :class => Puppet::Type.type(:service).defaultprovider, :clear => nil
         Puppet::Type.type(:service).defaultprovider.stubs(:new).returns(provider)
-        svc = Puppet::Type.type(:service).create(:name => "nfs.client")
+        svc = Puppet::Type.type(:service).new(:name => "nfs.client")
         svc[:control].should == "NFS_CLIENT_START"
     end
 end
 
 describe Puppet::Type.type(:service), "when retrieving the host's current state" do
     before do
-        @service = Puppet::Type.type(:service).create(:name => "yay")
+        @service = Puppet::Type.type(:service).new(:name => "yay")
     end
 
     it "should use the provider's status to determine whether the service is running" do
@@ -167,7 +167,7 @@ end
 
 describe Puppet::Type.type(:service), "when changing the host" do
     before do
-        @service = Puppet::Type.type(:service).create(:name => "yay")
+        @service = Puppet::Type.type(:service).new(:name => "yay")
     end
 
     it "should start the service if it is supposed to be running" do
@@ -213,7 +213,7 @@ end
 
 describe Puppet::Type.type(:service), "when refreshing the service" do
     before do
-        @service = Puppet::Type.type(:service).create(:name => "yay")
+        @service = Puppet::Type.type(:service).new(:name => "yay")
     end
 
     it "should restart the service if it is running" do

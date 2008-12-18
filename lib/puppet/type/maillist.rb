@@ -46,7 +46,7 @@ module Puppet
                     if atype[name]
                         nil
                     else
-                        malias = Puppet::Type.type(:mailalias).create(:name => name, :recipient => recipient, :ensure => should)
+                        malias = Puppet::Type.type(:mailalias).new(:name => name, :recipient => recipient, :ensure => should)
                     end
                 end.compact
             end

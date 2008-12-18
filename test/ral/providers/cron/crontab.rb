@@ -435,13 +435,13 @@ class TestCronParsedProvider < Test::Unit::TestCase
 
         # Now make some crons that should match
         matchers = [
-            @type.create(
+            @type.new(
                 :name => "yaycron",
                 :minute => [0, 30],
                 :command => "date",
                 :user => @me
             ),
-            @type.create(
+            @type.new(
                 :name => "youtest",
                 :command => "yaytest",
                 :user => you
@@ -449,14 +449,14 @@ class TestCronParsedProvider < Test::Unit::TestCase
         ]
 
         nonmatchers = [
-            @type.create(
+            @type.new(
                 :name => "footest",
                 :minute => [0, 30],
                 :hour => 1,
                 :command => "fooness",
                 :user => @me # wrong target
             ),
-            @type.create(
+            @type.new(
                 :name => "funtest2",
                 :command => "funtest",
                 :user => you # wrong target for this cron
@@ -464,7 +464,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
         ]
 
         # Create another cron so we prefetch two of them
-        @type.create(:name => "testing", :minute => 30, :command => "whatever", :user => "you")
+        @type.new(:name => "testing", :minute => 30, :command => "whatever", :user => "you")
 
         assert_nothing_raised("Could not prefetch cron") do
             @provider.prefetch([matchers, nonmatchers].flatten.inject({}) { |crons, cron| crons[cron.name] = cron; crons })
@@ -555,7 +555,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
     end
 
     def test_prefetch
-        cron = @type.create :command => "/bin/echo yay", :name => "test", :hour => 4
+        cron = @type.new :command => "/bin/echo yay", :name => "test", :hour => 4
 
         assert_nothing_raised("Could not prefetch cron") do
             cron.provider.class.prefetch("test" => cron)
@@ -570,7 +570,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
         target = @provider.target_object(@me)
 
         # First with no env settings
-        resource = @type.create :command => "/bin/echo yay", :name => "test", :hour => 4
+        resource = @type.new :command => "/bin/echo yay", :name => "test", :hour => 4
         cron = resource.provider
 
         cron.ensure = :present

@@ -18,7 +18,7 @@ require 'erb'
 #   def generate
 #       template = Puppet::Util::ResourceTemplate.new("/path/to/template", self)
 #
-#       return Puppet::Type.type(:file).create :path => "/my/file",
+#       return Puppet::Type.type(:file).new :path => "/my/file",
 #           :content => template.evaluate
 #   end
 #

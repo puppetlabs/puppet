@@ -77,7 +77,7 @@ class TestCron < Test::Unit::TestCase
             args = {:command => command, :name => name}
         end
         assert_nothing_raised {
-            cron = @crontype.create(args)
+            cron = @crontype.new(args)
         }
 
         return cron
@@ -124,7 +124,7 @@ class TestCron < Test::Unit::TestCase
             name = "yaytest"
             command = "date > /dev/null "
             assert_nothing_raised {
-                cron = @crontype.create(
+                cron = @crontype.new(
                     :name => name,
                     :command => "date > /dev/null ",
                     :month => "May",
@@ -224,7 +224,7 @@ class TestCron < Test::Unit::TestCase
         eachprovider do |provider|
             cron = nil
             assert_nothing_raised {
-                cron = @crontype.create(
+                cron = @crontype.new(
                     :command => "/bin/date > /dev/null",
                     :minute => [0, 30],
                     :name => "crontest",
@@ -250,7 +250,7 @@ class TestCron < Test::Unit::TestCase
     def test_fieldremoval
         cron = nil
         assert_nothing_raised {
-            cron = @crontype.create(
+            cron = @crontype.new(
                 :command => "/bin/date > /dev/null",
                 :minute => [0, 30],
                 :name => "crontest",
@@ -282,7 +282,7 @@ class TestCron < Test::Unit::TestCase
         cleanup { provider.filetype = ft }
 
         setme
-        cron = @crontype.create(:name => "testing",
+        cron = @crontype.new(:name => "testing",
             :minute => [0, 30],
             :command => "/bin/testing",
             :user => @me
@@ -424,7 +424,7 @@ class TestCron < Test::Unit::TestCase
         crons = []
         users = ["root", nonrootuser.name]
         users.each do |user|
-            cron = Puppet::Type.type(:cron).create(
+            cron = Puppet::Type.type(:cron).new(
                 :name => "testcron-#{user}",
                 :user => user,
                 :command => "/bin/echo",
@@ -455,7 +455,7 @@ class TestCron < Test::Unit::TestCase
     def test_default_user
         crontab = @crontype.provider(:crontab)
         if crontab.suitable?
-            inst = @crontype.create(
+            inst = @crontype.new(
                 :name => "something", :command => "/some/thing",
                 :provider => :crontab)
             assert_equal(Etc.getpwuid(Process.uid).name, inst.should(:user),
@@ -465,7 +465,7 @@ class TestCron < Test::Unit::TestCase
 
             # Now make a new cron with a user, and make sure it gets copied
             # over
-            inst = @crontype.create(:name => "yay", :command => "/some/thing",
+            inst = @crontype.new(:name => "yay", :command => "/some/thing",
                 :user => "bin", :provider => :crontab)
             assert_equal("bin", inst.should(:target),
                 "target did not default to user with crontab")
@@ -475,10 +475,10 @@ class TestCron < Test::Unit::TestCase
     # #705 - make sure extra spaces don't screw things up
     def test_spaces_in_command
         string = "echo   multiple  spaces"
-        cron = @crontype.create(:name => "space testing", :command => string)
+        cron = @crontype.new(:name => "space testing", :command => string)
         assert_apply(cron)
 
-        cron = @crontype.create(:name => "space testing", :command => string)
+        cron = @crontype.new(:name => "space testing", :command => string)
 
         # Now make sure that it's correctly in sync
         cron.provider.class.prefetch("testing" => cron)

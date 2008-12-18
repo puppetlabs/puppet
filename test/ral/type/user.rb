@@ -64,7 +64,7 @@ class TestUser < Test::Unit::TestCase
     def mkuser(name)
         user = nil
         assert_nothing_raised {
-            user = Puppet::Type.type(:user).create(
+            user = Puppet::Type.type(:user).new(
                 :name => name,
                 :comment => "Puppet Testing User",
                 :gid => Puppet::Util::SUIDManager.gid,
@@ -314,7 +314,7 @@ class TestUser < Test::Unit::TestCase
 
     def test_groups_list_must_not_contain_commas
         assert_raise(Puppet::Error) do
-            Puppet::Type.type(:user).create :name => "luke", :groups => "root,adm"
+            Puppet::Type.type(:user).new :name => "luke", :groups => "root,adm"
         end
     end
 
@@ -326,21 +326,21 @@ class TestUser < Test::Unit::TestCase
         home = nil
         ogroup = nil
         assert_nothing_raised {
-            user = Puppet::Type.type(:user).create(
+            user = Puppet::Type.type(:user).new(
                 :name => "pptestu",
                 :home => file,
                 :gid => "pptestg",
                 :groups => "yayness"
             )
-            home = Puppet::Type.type(:file).create(
+            home = Puppet::Type.type(:file).new(
                 :path => file,
                 :owner => "pptestu",
                 :ensure => "directory"
             )
-            group = Puppet::Type.type(:group).create(
+            group = Puppet::Type.type(:group).new(
                 :name => "pptestg"
             )
-            ogroup = Puppet::Type.type(:group).create(
+            ogroup = Puppet::Type.type(:group).new(
                 :name => "yayness"
             )
             comp = mk_catalog(user, group, home, ogroup)
@@ -404,7 +404,7 @@ class TestUser < Test::Unit::TestCase
     
     # Testing #455
     def test_autorequire_with_no_group_should
-        user = Puppet::Type.type(:user).create(:name => "yaytest", :check => :all)
+        user = Puppet::Type.type(:user).new(:name => "yaytest", :check => :all)
         catalog = mk_catalog(user)
         
         assert_nothing_raised do
@@ -424,7 +424,7 @@ class TestUser < Test::Unit::TestCase
     # Make sure the 'managehome' param can only be set when the provider
     # has that feature.  Uses a patch from #432.
     def test_managehome
-        user = Puppet::Type.type(:user).create(:name => "yaytest", :check => :all)
+        user = Puppet::Type.type(:user).new(:name => "yaytest", :check => :all)
 
         prov = user.provider
 

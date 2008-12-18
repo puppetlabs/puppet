@@ -5,7 +5,7 @@
 
 module PuppetTest::Support::Resources
     def tree_resource(name)
-        Puppet::Type.type(:file).create :title => name, :path => "/tmp/#{name}", :mode => 0755
+        Puppet::Type.type(:file).new :title => name, :path => "/tmp/#{name}", :mode => 0755
     end
     
     def tree_container(name)

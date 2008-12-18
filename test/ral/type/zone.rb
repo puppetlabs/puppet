@@ -21,7 +21,7 @@ class TestZone < PuppetTest::TestCase
         File.chmod(0700, base)
         root = File.join(base, "zonebase")
         assert_nothing_raised {
-            zone = Puppet::Type.type(:zone).create(
+            zone = Puppet::Type.type(:zone).new(
                 :name => name,
                 :path => root,
                 :ensure => "configured" # don't want to install zones automatically
@@ -177,7 +177,7 @@ class TestZoneAsRoot < TestZone
         @@zones.each do |zone|
             next unless current.include? zone
 
-            obj = Puppet::Type.type(:zone).create(:name => zone)
+            obj = Puppet::Type.type(:zone).new(:name => zone)
             obj[:ensure] = :absent
             assert_apply(obj)
         end

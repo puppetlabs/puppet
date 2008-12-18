@@ -9,37 +9,37 @@ describe Puppet::Type do
 
     it "should use its catalog as its expirer" do
         catalog = Puppet::Resource::Catalog.new
-        resource = Puppet::Type.type(:mount).create(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
+        resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
         resource.catalog = catalog
         resource.expirer.should equal(catalog)
     end
 
     it "should do nothing when asked to expire when it has no catalog" do
-        resource = Puppet::Type.type(:mount).create(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
+        resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
         lambda { resource.expire }.should_not raise_error
     end
 
     it "should be able to retrieve a property by name" do
-        resource = Puppet::Type.type(:mount).create(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
+        resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
         resource.property(:fstype).must be_instance_of(Puppet::Type.type(:mount).attrclass(:fstype))
     end
 
     it "should be able to retrieve a parameter by name" do
-        resource = Puppet::Type.type(:mount).create(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
+        resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
         resource.parameter(:name).must be_instance_of(Puppet::Type.type(:mount).attrclass(:name))
     end
 
     it "should be able to retrieve a property by name using the :parameter method" do
-        resource = Puppet::Type.type(:mount).create(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
+        resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
         resource.parameter(:fstype).must be_instance_of(Puppet::Type.type(:mount).attrclass(:fstype))
     end
 
     it "should have a method for setting default values for resources" do
-        Puppet::Type.type(:mount).create(:name => "foo").should respond_to(:set_default)
+        Puppet::Type.type(:mount).new(:name => "foo").should respond_to(:set_default)
     end
 
     it "should do nothing for attributes that have no defaults and no specified value" do
-        Puppet::Type.type(:mount).create(:name => "foo").parameter(:noop).should be_nil
+        Puppet::Type.type(:mount).new(:name => "foo").parameter(:noop).should be_nil
     end
 
     describe "when initializing" do
@@ -247,7 +247,7 @@ describe Puppet::Type do
     describe "when retrieving current property values" do
         # Use 'mount' as an example, because it doesn't override 'retrieve'
         before do
-            @resource = Puppet::Type.type(:mount).create(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
+            @resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
             @properties = {}
         end
 
@@ -278,9 +278,9 @@ describe Puppet::Type do
     describe "when in a catalog" do
         before do
             @catalog = Puppet::Resource::Catalog.new
-            @container = Puppet::Type.type(:component).create(:name => "container")
-            @one = Puppet::Type.type(:file).create(:path => "/file/one")
-            @two = Puppet::Type.type(:file).create(:path => "/file/two")
+            @container = Puppet::Type.type(:component).new(:name => "container")
+            @one = Puppet::Type.type(:file).new(:path => "/file/one")
+            @two = Puppet::Type.type(:file).new(:path => "/file/two")
 
             @catalog.add_resource @container
             @catalog.add_resource @one
@@ -317,7 +317,7 @@ describe Puppet::Type::RelationshipMetaparam do
 
     describe "when munging relationships" do
         before do
-            @resource = Puppet::Type.type(:mount).create :name => "/foo"
+            @resource = Puppet::Type.type(:mount).new :name => "/foo"
             @metaparam = Puppet::Type.metaparamclass(:require).new :resource => @resource
         end
 

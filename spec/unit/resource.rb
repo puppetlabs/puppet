@@ -214,14 +214,14 @@ describe Puppet::Resource do
 
         it "should use the resource type's :create method to create the resource if the resource is of a builtin type" do
             type = mock 'resource type'
-            type.expects(:create).with(@resource).returns(:myresource)
+            type.expects(:new).with(@resource).returns(:myresource)
             Puppet::Type.expects(:type).with(@resource.type).returns(type)
             @resource.to_ral.should == :myresource
         end
 
         it "should convert to a component instance if the resource type is not of a builtin type" do
             component = mock 'component type'
-            Puppet::Type::Component.expects(:create).with(@resource).returns "meh"
+            Puppet::Type::Component.expects(:new).with(@resource).returns "meh"
 
             Puppet::Type.expects(:type).with(@resource.type).returns(nil)
             @resource.to_ral.should == "meh"

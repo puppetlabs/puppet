@@ -10,15 +10,15 @@ describe resources do
         it "should fail if the specified resource type does not exist" do
             Puppet::Type.stubs(:type).with("Resources").returns resources
             Puppet::Type.expects(:type).with("nosuchtype").returns nil
-            lambda { resources.create :name => "nosuchtype" }.should raise_error(Puppet::Error)
+            lambda { resources.new :name => "nosuchtype" }.should raise_error(Puppet::Error)
         end
 
         it "should not fail when the specified resource type exists" do
-            lambda { resources.create :name => "file" }.should_not raise_error
+            lambda { resources.new :name => "file" }.should_not raise_error
         end
 
         it "should set its :resource_type attribute" do
-            resources.create(:name => "file").resource_type.should == Puppet::Type.type(:file)
+            resources.new(:name => "file").resource_type.should == Puppet::Type.type(:file)
         end
     end
 end

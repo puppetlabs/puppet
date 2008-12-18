@@ -25,7 +25,7 @@ class UserAddProviderTest < PuppetTest::TestCase
 	end
 
     def setup_user
-		@user = @type.create(@vals)
+		@user = @type.new(@vals)
 
         @vals.each do |name, val|
             next unless @user.class.validproperty?(name)
@@ -230,7 +230,7 @@ class UserRootAddProviderTest < PuppetTest::TestCase
     confine "not running as root" => (Process.uid == 0)
 
     def test_password
-        user = Puppet::Type.type(:user).create(:name => "root", :check => [:password], :provider => :useradd)
+        user = Puppet::Type.type(:user).new(:name => "root", :check => [:password], :provider => :useradd)
 
         provider = user.provider
 

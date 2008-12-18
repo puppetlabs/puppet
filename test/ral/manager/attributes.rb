@@ -29,7 +29,7 @@ class TestTypeAttributes < Test::Unit::TestCase
         # and a param
         type.newparam(:param)
 
-        inst = type.create(:name => "yay")
+        inst = type.new(:name => "yay")
 
         # Make sure we can set each of them, including a metaparam
         [:param, :property, :noop].each do |param|
@@ -66,7 +66,7 @@ class TestTypeAttributes < Test::Unit::TestCase
             type.newproperty(prop) {}
         end
 
-        inst = type.create(:name => "yay")
+        inst = type.new(:name => "yay")
 
         inst[:one] = "boo"
         one = inst.property(:one)
@@ -88,7 +88,7 @@ class TestTypeAttributes < Test::Unit::TestCase
         @num ||= 0
         @num += 1
         name = "name%s" % @num
-        inst = type.create(:name => name)
+        inst = type.new(:name => name)
         [:meta, :param, :prop].each do |name|
             klass = type.attrclass(name)
             assert(klass, "did not get class for %s" % name)
@@ -162,7 +162,7 @@ class TestTypeAttributes < Test::Unit::TestCase
 
         assert_nil(type.attr_alias(:name), "got invalid alias info for name")
 
-        inst = type.create(:name => "my name")
+        inst = type.new(:name => "my name")
         assert(inst, "could not create instance")
 
         aliases.each do |new, old|
@@ -227,7 +227,7 @@ class TestTypeAttributes < Test::Unit::TestCase
 
         # Now make sure that we get warnings and no properties in those cases where our providers do not support the features requested
         [nope, maybe, yep].each_with_index do |prov, i|
-            resource = type.create(:provider => prov.name, :name => "test%s" % i, :none => "a", :one => "b", :two => "c")
+            resource = type.new(:provider => prov.name, :name => "test%s" % i, :none => "a", :one => "b", :two => "c")
 
             case prov.name
             when :nope:
@@ -257,7 +257,7 @@ class TestTypeAttributes < Test::Unit::TestCase
         file = Puppet::Type.type(:file)
         klass = file.attrclass(:check)
 
-        resource = file.create(:path => tempfile)
+        resource = file.new(:path => tempfile)
         inst = klass.new(:resource => resource)
 
         {:property => [:owner, :group], :parameter => [:ignore, :recurse], :metaparam => [:require, :subscribe]}.each do |attrtype, attrs|
@@ -308,7 +308,7 @@ class TestTypeAttributes < Test::Unit::TestCase
         end
         cleanup { Puppet::Type.rmtype(:unsupported) }
 
-        obj = type.create(:name => "test", :check => :yep)
+        obj = type.new(:name => "test", :check => :yep)
         obj.expects(:newattr).with(:nope).never
         obj[:check] = :all
     end

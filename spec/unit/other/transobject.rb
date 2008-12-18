@@ -88,25 +88,25 @@ describe Puppet::TransObject, " when converting to a RAL component instance" do
     end
 
     it "should use a new TransObject whose name is a resource reference of the type and title of the original TransObject" do
-        Puppet::Type::Component.expects(:create).with { |resource| resource.type == "component" and resource.name == "One::Two[/my/file]" }.returns(:yay)
+        Puppet::Type::Component.expects(:new).with { |resource| resource.type == "component" and resource.name == "One::Two[/my/file]" }.returns(:yay)
         @resource.to_component.should == :yay
     end
 
     it "should pass the resource parameters on to the newly created TransObject" do
-        Puppet::Type::Component.expects(:create).with { |resource| resource["noop"] == "other" }.returns(:yay)
+        Puppet::Type::Component.expects(:new).with { |resource| resource["noop"] == "other" }.returns(:yay)
         @resource.to_component.should == :yay
     end
 
     it "should copy over the catalog" do
         @resource.catalog = "mycat"
-        Puppet::Type::Component.expects(:create).with { |resource| resource.catalog == "mycat" }.returns(:yay)
+        Puppet::Type::Component.expects(:new).with { |resource| resource.catalog == "mycat" }.returns(:yay)
         @resource.to_component
     end
 
     # LAK:FIXME This really isn't the design we want going forward, but it's
     # good enough for now.
     it "should not pass resource parameters that are not metaparams" do
-        Puppet::Type::Component.expects(:create).with { |resource| resource["one"].nil? }.returns(:yay)
+        Puppet::Type::Component.expects(:new).with { |resource| resource["one"].nil? }.returns(:yay)
         @resource.to_component.should == :yay
     end
 end

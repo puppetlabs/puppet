@@ -65,7 +65,7 @@ class TestResources < Test::Unit::TestCase
         
         purger = nil
         assert_nothing_raised do
-            purger = @type.create :name => "purgetest", :noop => true, :loglevel => :warning
+            purger = @type.new :name => "purgetest", :noop => true, :loglevel => :warning
         end
         assert(purger, "did not get purger manager")
         add_purge_lister()
@@ -126,18 +126,18 @@ class TestResources < Test::Unit::TestCase
     # Part of #408.
     def test_check
         # First check a non-user
-        res = Puppet::Type.type(:resources).create :name => :package
+        res = Puppet::Type.type(:resources).new :name => :package
         assert_nil(res[:unless_system_user], "got bad default for package")
         
         
         assert_nothing_raised {
             assert(res.check("A String"), "String failed check")
-            assert(res.check(Puppet::Type.type(:file).create(:path => tempfile())), "File failed check")
-            assert(res.check(Puppet::Type.type(:user).create(:name => "yayness")), "User failed check in package")
+            assert(res.check(Puppet::Type.type(:file).new(:path => tempfile())), "File failed check")
+            assert(res.check(Puppet::Type.type(:user).new(:name => "yayness")), "User failed check in package")
         }
         
         # Now create a user manager
-        res = Puppet::Type.type(:resources).create :name => :user
+        res = Puppet::Type.type(:resources).new :name => :user
         
         # Make sure the default is 500
         assert_equal(500, res[:unless_system_user], "got bad default")
@@ -175,7 +175,7 @@ class TestResources < Test::Unit::TestCase
     
     # The other half of #408.
     def test_check_is_called
-        res = Puppet::Type.type(:resources).create :name => :user, :purge => true
+        res = Puppet::Type.type(:resources).new :name => :user, :purge => true
         
         list = nil
         assert_nothing_raised { list = res.generate }

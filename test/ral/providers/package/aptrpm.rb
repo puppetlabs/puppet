@@ -14,7 +14,7 @@ class AptrpmPackageProviderTest < PuppetTest::TestCase
     end
     
     def test_install
-        pkg = @type.create :name => 'faff',
+        pkg = @type.new :name => 'faff',
                            :provider => :aptrpm,
                            :ensure => :present,
                            :source => "/tmp/faff.rpm"
@@ -43,7 +43,7 @@ class AptrpmPackageProviderTest < PuppetTest::TestCase
     end
     
     def test_uninstall
-        pkg = @type.create :name => 'faff', :provider => :aptrpm, :ensure => :absent
+        pkg = @type.new :name => 'faff', :provider => :aptrpm, :ensure => :absent
 
         pkg.provider.expects(
                          :rpm
@@ -71,7 +71,7 @@ class AptrpmPackageProviderTest < PuppetTest::TestCase
 
     # LAK: I don't know where this test will ever return true..
     def disabled_test_latest
-        pkg = @type.create :name => 'ssh', :provider => :aptrpm
+        pkg = @type.new :name => 'ssh', :provider => :aptrpm
 
         assert(pkg, "did not create pkg")
         status = pkg.provider.query

@@ -278,9 +278,9 @@ describe Puppet::Resource::Catalog, "when compiling" do
     describe "when functioning as a resource container" do
         before do
             @catalog = Puppet::Resource::Catalog.new("host")
-            @one = Puppet::Type.type(:notify).create :name => "one"
-            @two = Puppet::Type.type(:notify).create :name => "two"
-            @dupe = Puppet::Type.type(:notify).create :name => "one"
+            @one = Puppet::Type.type(:notify).new :name => "one"
+            @two = Puppet::Type.type(:notify).new :name => "two"
+            @dupe = Puppet::Type.type(:notify).new :name => "one"
         end
 
         it "should provide a method to add one or more resources" do
@@ -449,7 +449,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
         end
 
         it "should create aliases for resources isomorphic resources whose names do not match their titles" do
-            resource = Puppet::Type::File.create(:title => "testing", :path => "/something")
+            resource = Puppet::Type::File.new(:title => "testing", :path => "/something")
 
             @catalog.add_resource(resource)
 
@@ -457,7 +457,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
         end
 
         it "should not create aliases for resources non-isomorphic resources whose names do not match their titles" do
-            resource = Puppet::Type.type(:exec).create(:title => "testing", :command => "echo", :path => %w{/bin /usr/bin /usr/local/bin})
+            resource = Puppet::Type.type(:exec).new(:title => "testing", :command => "echo", :path => %w{/bin /usr/bin /usr/local/bin})
 
             @catalog.add_resource(resource)
 
@@ -507,7 +507,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
         end
 
         it "should add an alias for the namevar when the title and name differ on isomorphic resource types" do
-            resource = Puppet::Type.type(:file).create :path => "/something", :title => "other", :content => "blah"
+            resource = Puppet::Type.type(:file).new :path => "/something", :title => "other", :content => "blah"
             resource.expects(:isomorphic?).returns(true)
             @catalog.add_resource(resource)
             @catalog.resource(:file, "other").should equal(resource)
@@ -515,7 +515,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
         end
 
         it "should not add an alias for the namevar when the title and name differ on non-isomorphic resource types" do
-            resource = Puppet::Type.type(:file).create :path => "/something", :title => "other", :content => "blah"
+            resource = Puppet::Type.type(:file).new :path => "/something", :title => "other", :content => "blah"
             resource.expects(:isomorphic?).returns(false)
             @catalog.add_resource(resource)
             @catalog.resource(:file, resource.title).should equal(resource)
@@ -528,7 +528,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
         it "should provide a method to create additional resources that also registers the resource" do
             args = {:name => "/yay", :ensure => :file}
             resource = stub 'file', :ref => "File[/yay]", :catalog= => @catalog, :title => "/yay", :[] => "/yay"
-            Puppet::Type.type(:file).expects(:create).with(args).returns(resource)
+            Puppet::Type.type(:file).expects(:new).with(args).returns(resource)
             @catalog.create_resource :file, args
             @catalog.resource("File[/yay]").should equal(resource)
         end
@@ -596,7 +596,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
             @transaction.stubs(:evaluate)
             @transaction.stubs(:cleanup)
             @transaction.stubs(:addtimes)
-            Puppet::Type.type(:file).expects(:create).with(args).returns(resource)
+            Puppet::Type.type(:file).expects(:new).with(args).returns(resource)
             resource.expects :remove
             @catalog.apply do |trans|
                 @catalog.create_resource :file, args
@@ -611,7 +611,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
             @transaction.stubs(:evaluate)
             @transaction.stubs(:cleanup)
             @transaction.stubs(:addtimes)
-            file = Puppet::Type.type(:file).create(:name => "/yay", :ensure => :file)
+            file = Puppet::Type.type(:file).new(:name => "/yay", :ensure => :file)
             @catalog.apply do |trans|
                 @catalog.add_resource file 
                 @catalog.resource("File[/yay]").should_not be_nil
@@ -690,18 +690,18 @@ describe Puppet::Resource::Catalog, "when compiling" do
         before do
             Puppet::Type.type(:component)
             @catalog = Puppet::Resource::Catalog.new("host")
-            @compone = Puppet::Type::Component.create :name => "one"
-            @comptwo = Puppet::Type::Component.create :name => "two", :require => "Class[one]"
+            @compone = Puppet::Type::Component.new :name => "one"
+            @comptwo = Puppet::Type::Component.new :name => "two", :require => "Class[one]"
             @file = Puppet::Type.type(:file)
-            @one = @file.create :path => "/one"
-            @two = @file.create :path => "/two"
-            @sub = @file.create :path => "/two/subdir"
+            @one = @file.new :path => "/one"
+            @two = @file.new :path => "/two"
+            @sub = @file.new :path => "/two/subdir"
             @catalog.add_edge @compone, @one
             @catalog.add_edge @comptwo, @two
 
-            @three = @file.create :path => "/three"
-            @four = @file.create :path => "/four", :require => "File[/three]"
-            @five = @file.create :path => "/five"
+            @three = @file.new :path => "/three"
+            @four = @file.new :path => "/four", :require => "File[/three]"
+            @five = @file.new :path => "/five"
             @catalog.add_resource @compone, @comptwo, @one, @two, @three, @four, @five, @sub
 
             @relationships = @catalog.relationship_graph

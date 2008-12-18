@@ -7,7 +7,7 @@ describe Puppet::Type.type(:file) do
         @path = Tempfile.new("puppetspec")
         @path.close!()
         @path = @path.path
-        @file = Puppet::Type::File.create(:name => @path)
+        @file = Puppet::Type::File.new(:name => @path)
 
         @catalog = mock 'catalog'
         @catalog.stub_everything
@@ -101,7 +101,7 @@ describe Puppet::Type.type(:file) do
             File.open(@file, "w", 0644) { |f| f.puts "yayness"; f.flush }
             File.symlink(@file, @link)
 
-            @resource = Puppet::Type.type(:file).create(
+            @resource = Puppet::Type.type(:file).new(
                 :path => @link,
                 :mode => "755"
             )
@@ -128,12 +128,12 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should be able to retrieve a stat instance for the file it is managing" do
-        Puppet::Type.type(:file).create(:path => "/foo/bar", :source => "/bar/foo").should respond_to(:stat)
+        Puppet::Type.type(:file).new(:path => "/foo/bar", :source => "/bar/foo").should respond_to(:stat)
     end
 
     describe "when stat'ing its file" do
         before do
-            @resource = Puppet::Type.type(:file).create(:path => "/foo/bar")
+            @resource = Puppet::Type.type(:file).new(:path => "/foo/bar")
             @resource[:links] = :manage # so we always use :lstat
         end
 
@@ -197,13 +197,13 @@ describe Puppet::Type.type(:file) do
 
     describe "when flushing" do
         it "should flush all properties that respond to :flush" do
-            @resource = Puppet::Type.type(:file).create(:path => "/foo/bar", :source => "/bar/foo")
+            @resource = Puppet::Type.type(:file).new(:path => "/foo/bar", :source => "/bar/foo")
             @resource.parameter(:source).expects(:flush)
             @resource.flush
         end
 
         it "should reset its stat reference" do
-            @resource = Puppet::Type.type(:file).create(:path => "/foo/bar")
+            @resource = Puppet::Type.type(:file).new(:path => "/foo/bar")
             File.expects(:lstat).times(2).returns("stat1").then.returns("stat2")
             @resource.stat.should == "stat1"
             @resource.flush
@@ -593,7 +593,7 @@ describe Puppet::Type.type(:file) do
             end
 
             it "should not copy the parent resource's parent" do
-                Puppet::Type.type(:file).expects(:create).with { |options| ! options.include?(:parent) }
+                Puppet::Type.type(:file).expects(:new).with { |options| ! options.include?(:parent) }
                 @file.newchild("my/path")
             end
 
@@ -601,21 +601,21 @@ describe Puppet::Type.type(:file) do
                 it "should not pass on #{param} to the sub resource" do
                     @file[param] = value
 
-                    @file.class.expects(:create).with { |params| params[param].nil? }
+                    @file.class.expects(:new).with { |params| params[param].nil? }
 
                     @file.newchild("sub/file")
                 end
             end
 
             it "should copy all of the parent resource's 'should' values that were set at initialization" do
-                file = @file.class.create(:path => "/foo/bar", :owner => "root", :group => "wheel")
+                file = @file.class.new(:path => "/foo/bar", :owner => "root", :group => "wheel")
                 @catalog.add_resource(file)
-                file.class.expects(:create).with { |options| options[:owner] == "root" and options[:group] == "wheel" }
+                file.class.expects(:new).with { |options| options[:owner] == "root" and options[:group] == "wheel" }
                 file.newchild("my/path")
             end
 
             it "should not copy default values to the new child" do
-                @file.class.expects(:create).with { |params| params[:backup].nil? }
+                @file.class.expects(:new).with { |params| params[:backup].nil? }
                 @file.newchild("my/path")
             end
 
@@ -626,7 +626,7 @@ describe Puppet::Type.type(:file) do
 
                 @file.parameter(:source).copy_source_values
 
-                @file.class.expects(:create).with { |params| params[:group].nil? }
+                @file.class.expects(:new).with { |params| params[:group].nil? }
                 @file.newchild("my/path")
             end
         end

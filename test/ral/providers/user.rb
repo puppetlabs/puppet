@@ -370,7 +370,7 @@ class TestUserProvider < Test::Unit::TestCase
         5.times do |i|
             i += 1
             name = "pptstgr%s" % i
-            tmpgroup = Puppet::Type.type(:group).create(
+            tmpgroup = Puppet::Type.type(:group).new(
                 :name => name,
                 :gid => max + i
             )
@@ -538,7 +538,7 @@ class TestUserProvider < Test::Unit::TestCase
     
     def test_autogen
         provider = nil
-        user = Puppet::Type.type(:user).create(:name => nonrootuser.name)
+        user = Puppet::Type.type(:user).new(:name => nonrootuser.name)
         provider = user.provider
         assert(provider, "did not get provider")
         

@@ -14,7 +14,7 @@ class AptitudePackageProviderTest < PuppetTest::TestCase
 	end
 	
 	def test_install
-		pkg = @type.create :name => 'faff',
+		pkg = @type.new :name => 'faff',
 		                   :provider => :aptitude,
 		                   :ensure => :present,
 		                   :source => "/tmp/faff.deb"
@@ -46,7 +46,7 @@ class AptitudePackageProviderTest < PuppetTest::TestCase
 	end
 	
 	def test_purge
-		pkg = @type.create :name => 'faff', :provider => :aptitude, :ensure => :purged
+		pkg = @type.new :name => 'faff', :provider => :aptitude, :ensure => :purged
 
 		pkg.provider.expects(
 		                 :dpkgquery

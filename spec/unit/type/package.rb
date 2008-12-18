@@ -24,7 +24,7 @@ describe Puppet::Type.type(:package) do
     end
 
     it "should default to being installed" do
-        pkg = Puppet::Type.type(:package).create(:name => "yay")
+        pkg = Puppet::Type.type(:package).new(:name => "yay")
         pkg.should(:ensure).should == :present
     end
 end
@@ -48,50 +48,50 @@ describe Puppet::Type.type(:package), "when validating attribute values" do
     end
 
     it "should support :present as a value to :ensure" do
-        Puppet::Type.type(:package).create(:name => "yay", :ensure => :present)
+        Puppet::Type.type(:package).new(:name => "yay", :ensure => :present)
     end
 
     it "should alias :installed to :present as a value to :ensure" do
-        pkg = Puppet::Type.type(:package).create(:name => "yay", :ensure => :installed)
+        pkg = Puppet::Type.type(:package).new(:name => "yay", :ensure => :installed)
         pkg.should(:ensure).should == :present
     end
 
     it "should support :absent as a value to :ensure" do
-        Puppet::Type.type(:package).create(:name => "yay", :ensure => :absent)
+        Puppet::Type.type(:package).new(:name => "yay", :ensure => :absent)
     end
 
     it "should support :purged as a value to :ensure if the provider has the :purgeable feature" do
         @provider.expects(:satisfies?).with(:purgeable).returns(true)
-        Puppet::Type.type(:package).create(:name => "yay", :ensure => :purged)
+        Puppet::Type.type(:package).new(:name => "yay", :ensure => :purged)
     end
 
     it "should not support :purged as a value to :ensure if the provider does not have the :purgeable feature" do
         @provider.expects(:satisfies?).with(:purgeable).returns(false)
-        proc { Puppet::Type.type(:package).create(:name => "yay", :ensure => :purged) }.should raise_error(Puppet::Error)
+        proc { Puppet::Type.type(:package).new(:name => "yay", :ensure => :purged) }.should raise_error(Puppet::Error)
     end
 
     it "should support :latest as a value to :ensure if the provider has the :upgradeable feature" do
         @provider.expects(:satisfies?).with(:upgradeable).returns(true)
-        Puppet::Type.type(:package).create(:name => "yay", :ensure => :latest)
+        Puppet::Type.type(:package).new(:name => "yay", :ensure => :latest)
     end
 
     it "should not support :latest as a value to :ensure if the provider does not have the :upgradeable feature" do
         @provider.expects(:satisfies?).with(:upgradeable).returns(false)
-        proc { Puppet::Type.type(:package).create(:name => "yay", :ensure => :latest) }.should raise_error(Puppet::Error)
+        proc { Puppet::Type.type(:package).new(:name => "yay", :ensure => :latest) }.should raise_error(Puppet::Error)
     end
 
     it "should support version numbers as a value to :ensure if the provider has the :versionable feature" do
         @provider.expects(:satisfies?).with(:versionable).returns(true)
-        Puppet::Type.type(:package).create(:name => "yay", :ensure => "1.0")
+        Puppet::Type.type(:package).new(:name => "yay", :ensure => "1.0")
     end
 
     it "should not support version numbers as a value to :ensure if the provider does not have the :versionable feature" do
         @provider.expects(:satisfies?).with(:versionable).returns(false)
-        proc { Puppet::Type.type(:package).create(:name => "yay", :ensure => "1.0") }.should raise_error(Puppet::Error)
+        proc { Puppet::Type.type(:package).new(:name => "yay", :ensure => "1.0") }.should raise_error(Puppet::Error)
     end
 
     it "should accept any string as an argument to :source" do
-        proc { Puppet::Type.type(:package).create(:name => "yay", :source => "stuff") }.should_not raise_error(Puppet::Error)
+        proc { Puppet::Type.type(:package).new(:name => "yay", :source => "stuff") }.should_not raise_error(Puppet::Error)
     end
 end
 
@@ -106,7 +106,7 @@ describe Puppet::Type.type(:package) do
         @provider = stub 'provider', :class => Puppet::Type.type(:package).defaultprovider, :clear => nil, :satisfies? => true, :name => :mock
         Puppet::Type.type(:package).defaultprovider.stubs(:new).returns(@provider)
         Puppet::Type.type(:package).defaultprovider.stubs(:instances).returns([])
-        @package = Puppet::Type.type(:package).create(:name => "yay")
+        @package = Puppet::Type.type(:package).new(:name => "yay")
 
         @catalog = Puppet::Resource::Catalog.new
         @catalog.add_resource(@package)

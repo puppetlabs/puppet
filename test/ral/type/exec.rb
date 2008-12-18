@@ -10,7 +10,7 @@ class TestExec < Test::Unit::TestCase
         command = nil
         output = nil
         assert_nothing_raised {
-            command = Puppet::Type.type(:exec).create(
+            command = Puppet::Type.type(:exec).new(
                 :command => "/bin/echo"
             )
         }
@@ -25,7 +25,7 @@ class TestExec < Test::Unit::TestCase
             command = nil
             output = nil
             assert_nothing_raised {
-                command = Puppet::Type.type(:exec).create(
+                command = Puppet::Type.type(:exec).new(
                     :command => "/bin/echo",
                     :returns => val
                 )
@@ -38,23 +38,23 @@ class TestExec < Test::Unit::TestCase
         command = nil
         output = nil
         assert_raise(Puppet::Error) {
-            command = Puppet::Type.type(:exec).create(
+            command = Puppet::Type.type(:exec).new(
                 :command => "echo"
             )
         }
         assert_nothing_raised {
-            command = Puppet::Type.type(:exec).create(
+            command = Puppet::Type.type(:exec).new(
                 :command => "echo",
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin"
             )
         }
         assert_nothing_raised {
-            command = Puppet::Type.type(:exec).create(
+            command = Puppet::Type.type(:exec).new(
                 :command => "/bin/echo"
             )
         }
         assert_nothing_raised {
-            command = Puppet::Type.type(:exec).create(
+            command = Puppet::Type.type(:exec).new(
                 :command => "/bin/echo",
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin"
             )
@@ -63,21 +63,21 @@ class TestExec < Test::Unit::TestCase
 
     def test_nonzero_returns
         assert_nothing_raised {
-            command = Puppet::Type.type(:exec).create(
+            command = Puppet::Type.type(:exec).new(
                 :command => "mkdir /this/directory/does/not/exist",
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
                 :returns => 1
             )
         }
         assert_nothing_raised {
-            command = Puppet::Type.type(:exec).create(
+            command = Puppet::Type.type(:exec).new(
                 :command => "touch /etc",
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
                 :returns => 1
             )
         }
         assert_nothing_raised {
-            command = Puppet::Type.type(:exec).create(
+            command = Puppet::Type.type(:exec).new(
                 :command => "thiscommanddoesnotexist",
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
                 :returns => 127
@@ -92,7 +92,7 @@ class TestExec < Test::Unit::TestCase
             Dir.getwd
         }
         assert_nothing_raised {
-            command = Puppet::Type.type(:exec).create(
+            command = Puppet::Type.type(:exec).new(
                 :command => "pwd",
                 :cwd => dir,
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
@@ -109,7 +109,7 @@ class TestExec < Test::Unit::TestCase
         tmpfile = tempfile()
         @@tmpfiles.push tmpfile
         trans = nil
-        file = Puppet::Type.type(:file).create(
+        file = Puppet::Type.type(:file).new(
             :path => tmpfile,
             :content => "yay"
         )
@@ -119,7 +119,7 @@ class TestExec < Test::Unit::TestCase
         # Now make an exec
         maker = tempfile()
         assert_nothing_raised {
-            cmd = Puppet::Type.type(:exec).create(
+            cmd = Puppet::Type.type(:exec).new(
                 :command => "touch %s" % maker,
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
                 :subscribe => file,
@@ -145,7 +145,7 @@ class TestExec < Test::Unit::TestCase
     def test_refreshonly
         cmd = true
         assert_nothing_raised {
-            cmd = Puppet::Type.type(:exec).create(
+            cmd = Puppet::Type.type(:exec).new(
                 :command => "pwd",
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
                 :refreshonly => true
@@ -168,7 +168,7 @@ class TestExec < Test::Unit::TestCase
         exec = nil
         assert(! FileTest.exists?(file), "File already exists")
         assert_nothing_raised {
-            exec = Puppet::Type.type(:exec).create(
+            exec = Puppet::Type.type(:exec).new(
                 :command => "touch %s" % file,
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
                 :creates => file
@@ -187,13 +187,13 @@ class TestExec < Test::Unit::TestCase
         sh = %x{which sh}
         File.open(exe, "w") { |f| f.puts "#!#{sh}\necho yup" }
 
-        file = Puppet::Type.type(:file).create(
+        file = Puppet::Type.type(:file).new(
             :path => oexe,
             :source => exe,
             :mode => 0755
         )
 
-        exec = Puppet::Type.type(:exec).create(
+        exec = Puppet::Type.type(:exec).new(
             :command => oexe,
             :require => [:file, oexe]
         )
@@ -210,31 +210,31 @@ class TestExec < Test::Unit::TestCase
         sh = %x{which sh}
         File.open(exe, "w") { |f| f.puts "#!#{sh}\necho yup" }
 
-        file = Puppet::Type.type(:file).create(
+        file = Puppet::Type.type(:file).new(
             :path => oexe,
             :source => exe,
             :mode => 755
         )
 
         basedir = File.dirname(oexe)
-        baseobj = Puppet::Type.type(:file).create(
+        baseobj = Puppet::Type.type(:file).new(
             :path => basedir,
             :source => exe,
             :mode => 755
         )
 
-        ofile = Puppet::Type.type(:file).create(
+        ofile = Puppet::Type.type(:file).new(
             :path => exe,
             :mode => 755
         )
 
-        exec = Puppet::Type.type(:exec).create(
+        exec = Puppet::Type.type(:exec).new(
             :command => oexe,
             :path => ENV["PATH"],
             :cwd => basedir
         )
 
-        cat = Puppet::Type.type(:exec).create(
+        cat = Puppet::Type.type(:exec).new(
             :command => "cat %s %s" % [exe, oexe],
             :path => ENV["PATH"]
         )
@@ -270,7 +270,7 @@ class TestExec < Test::Unit::TestCase
 
         exec = nil
         assert_nothing_raised {
-            exec = Puppet::Type.type(:exec).create(
+            exec = Puppet::Type.type(:exec).new(
                 :command => "touch %s" % bfile,
                 :onlyif => "test -f %s" % afile,
                 :path => ENV['PATH']
@@ -291,7 +291,7 @@ class TestExec < Test::Unit::TestCase
 
         exec = nil
         assert_nothing_raised {
-            exec = Puppet::Type.type(:exec).create(
+            exec = Puppet::Type.type(:exec).new(
                 :command => "touch %s" % bfile,
                 :unless => "test -f %s" % afile,
                 :path => ENV['PATH']
@@ -339,7 +339,7 @@ class TestExec < Test::Unit::TestCase
             end
             exec = nil
             assert_nothing_raised {
-                exec = Puppet::Type.type(:exec).create(args)
+                exec = Puppet::Type.type(:exec).new(args)
             }
 
             comp = mk_catalog("usertest", exec)
@@ -374,7 +374,7 @@ class TestExec < Test::Unit::TestCase
     def test_logoutput
         exec = nil
         assert_nothing_raised {
-            exec = Puppet::Type.type(:exec).create(
+            exec = Puppet::Type.type(:exec).new(
                 :title => "logoutputesting",
                 :path => "/usr/bin:/bin",
                 :command => "echo logoutput is false",
@@ -405,7 +405,7 @@ class TestExec < Test::Unit::TestCase
         basedir = tempfile()
         path = File.join(basedir, "subfile")
         assert_nothing_raised {
-            exec = Puppet::Type.type(:exec).create(
+            exec = Puppet::Type.type(:exec).new(
                 :title => "mkdir",
                 :path => "/usr/bin:/bin",
                 :creates => basedir,
@@ -415,7 +415,7 @@ class TestExec < Test::Unit::TestCase
         }
 
         assert_nothing_raised {
-            file = Puppet::Type.type(:file).create(
+            file = Puppet::Type.type(:file).new(
                 :path => basedir,
                 :recurse => true,
                 :mode => "755",
@@ -435,7 +435,7 @@ class TestExec < Test::Unit::TestCase
     def test_falsevals
         exec = nil
         assert_nothing_raised do
-            exec = Puppet::Type.type(:exec).create(
+            exec = Puppet::Type.type(:exec).new(
                 :command => "/bin/touch yayness"
             )
         end
@@ -455,7 +455,7 @@ class TestExec < Test::Unit::TestCase
         file = tempfile()
 
         assert_nothing_raised {
-            exec1 = Puppet::Type.type(:exec).create(
+            exec1 = Puppet::Type.type(:exec).new(
                 :title => "one",
                 :path => ENV["PATH"],
                 :command => "mkdir #{dir}"
@@ -463,7 +463,7 @@ class TestExec < Test::Unit::TestCase
         }
 
         assert_nothing_raised("Could not create exec w/out existing cwd") {
-            exec2 = Puppet::Type.type(:exec).create(
+            exec2 = Puppet::Type.type(:exec).new(
                 :title => "two",
                 :path => ENV["PATH"],
                 :command => "touch #{file}",
@@ -497,7 +497,7 @@ class TestExec < Test::Unit::TestCase
         test = "test -f #{file}"
 
         assert_nothing_raised {
-            exec = Puppet::Type.type(:exec).create(
+            exec = Puppet::Type.type(:exec).new(
                 :path => ENV["PATH"],
                 :command => "touch #{file}"
             )
@@ -534,7 +534,7 @@ class TestExec < Test::Unit::TestCase
     def test_missing_checks_cause_failures
         # Solaris's sh exits with 1 here instead of 127
         return if Facter.value(:operatingsystem) == "Solaris"
-        exec = Puppet::Type.type(:exec).create(
+        exec = Puppet::Type.type(:exec).new(
                                     :command => "echo true",
                                     :path => ENV["PATH"],
                                     :onlyif => "/bin/nosuchthingexists"
@@ -626,7 +626,7 @@ and stuff"
     end
 
     def test_timeout
-        exec = Puppet::Type.type(:exec).create(:command => "sleep 1", :path => ENV["PATH"], :timeout => "0.2")
+        exec = Puppet::Type.type(:exec).new(:command => "sleep 1", :path => ENV["PATH"], :timeout => "0.2")
         time = Time.now
         
         assert_raise(Timeout::Error) {
@@ -644,7 +644,7 @@ and stuff"
         if Process.uid == 0
             user = "nosuchuser"
             assert_nothing_raised("Could not create exec with non-existent user") do
-                exec = Puppet::Type.type(:exec).create(
+                exec = Puppet::Type.type(:exec).new(
                     :command => "/bin/echo yay",
                     :user => user
                 )
@@ -654,7 +654,7 @@ and stuff"
         # Now try the group
         group = "nosuchgroup"
         assert_nothing_raised("Could not create exec with non-existent user") do
-            exec = Puppet::Type.type(:exec).create(
+            exec = Puppet::Type.type(:exec).new(
                 :command => "/bin/echo yay",
                 :group => group
             )
@@ -666,17 +666,17 @@ and stuff"
         path = %w{/usr/bin /usr/sbin /sbin}
         exec = nil
         assert_nothing_raised("Could not use an array for the path") do
-            exec = Puppet::Type.type(:exec).create(:command => "echo yay",
+            exec = Puppet::Type.type(:exec).new(:command => "echo yay",
                 :path => path)
         end
         assert_equal(path, exec[:path], "array-based path did not match")
         assert_nothing_raised("Could not use a string for the path") do
-            exec = Puppet::Type.type(:exec).create(:command => "echo yay",
+            exec = Puppet::Type.type(:exec).new(:command => "echo yay",
                 :path => path.join(":"))
         end
         assert_equal(path, exec[:path], "string-based path did not match")
         assert_nothing_raised("Could not use a colon-separated strings in an array for the path") do
-            exec = Puppet::Type.type(:exec).create(:command => "echo yay",
+            exec = Puppet::Type.type(:exec).new(:command => "echo yay",
                 :path => ["/usr/bin", "/usr/sbin:/sbin"])
         end
         assert_equal(path, exec[:path], "colon-separated array path did not match")
@@ -685,7 +685,7 @@ and stuff"
     def test_checks_apply_to_refresh
         file = tempfile()
         maker = tempfile()
-        exec = Puppet::Type.type(:exec).create(
+        exec = Puppet::Type.type(:exec).new(
             :title => "maker",
             :command => "touch #{maker}",
             :path => ENV["PATH"]
@@ -724,7 +724,7 @@ and stuff"
     def test_explicit_refresh
         refresher = tempfile()
         maker = tempfile()
-        exec = Puppet::Type.type(:exec).create(
+        exec = Puppet::Type.type(:exec).new(
             :title => "maker",
             :command => "touch #{maker}",
             :path => ENV["PATH"]
@@ -754,8 +754,8 @@ and stuff"
 
     if Puppet.features.root?
         def test_autorequire_user
-            user = Puppet::Type.type(:user).create(:name => "yay")
-            exec = Puppet::Type.type(:exec).create(:command => "/bin/echo fun", :user => "yay")
+            user = Puppet::Type.type(:user).new(:name => "yay")
+            exec = Puppet::Type.type(:exec).new(:command => "/bin/echo fun", :user => "yay")
 
             rels = nil
             assert_nothing_raised("Could not evaluate autorequire") do
