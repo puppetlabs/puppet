@@ -12,7 +12,7 @@ Puppet::Reports.register_report(:store) do
 
     def mkclientdir(client, dir)
         config = Puppet::Util::Settings.new
-        config.setdefaults("reportclient-#{client}",
+        config.setdefaults("reportclient-#{client}".to_sym,
             "client-#{client}-dir" => { :default => dir,
                 :mode => 0750,
                 :desc => "Client dir for %s" % client,
@@ -21,7 +21,7 @@ Puppet::Reports.register_report(:store) do
             }
         )
 
-        config.use("reportclient-#{client}")
+        config.use("reportclient-#{client}".to_sym)
     end
 
     def process

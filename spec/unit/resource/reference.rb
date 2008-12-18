@@ -53,6 +53,14 @@ describe Puppet::Resource::Reference do
         ref.title.should =="baz"
     end
 
+    it "should be able to extract its information from a Puppet::Type instance" do
+        ral = Puppet::Type.type(:file).new :path => "/foo"
+        ref = Puppet::Resource::Reference.new(ral)
+        ref.type.should == "File"
+        ref.title.should == "/foo"
+    end
+
+
     it "should fail if the title is nil and the type is not a valid resource reference string" do
         lambda { Puppet::Resource::Reference.new("foo") }.should raise_error(ArgumentError)
     end

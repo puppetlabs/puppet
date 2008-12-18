@@ -137,36 +137,6 @@ class TestType < Test::Unit::TestCase
         }
     end
 
-    # Verify that requirements don't depend on file order
-    def test_prereqorder
-        one = tempfile()
-        two = tempfile()
-
-        twoobj = nil
-        oneobj = nil
-        assert_nothing_raised("Could not create prereq that doesn't exist yet") {
-            twoobj = Puppet::Type.type(:file).new(
-                :name => two,
-                :require => [:file, one]
-            )
-        }
-
-        assert_nothing_raised {
-            oneobj = Puppet::Type.type(:file).new(
-                :name => one
-            )
-        }
-
-        comp = mk_catalog(twoobj, oneobj)
-
-        assert_nothing_raised {
-            comp.finalize
-        }
-
-
-        assert(twoobj.requires?(oneobj), "Requirement was not created")
-    end
-
     def test_ensuredefault
         user = nil
         assert_nothing_raised {
@@ -337,17 +307,6 @@ class TestType < Test::Unit::TestCase
         assert_equal(path, file[:name], "Did not get correct name")
     end
 
-    def test_multiplenames
-        obj = nil
-        path = tempfile()
-        assert_raise ArgumentError do
-            obj = Puppet::Type.type(:file).new(
-                :name => path,
-                :path => path
-            )
-        end
-    end
-
     # Make sure default providers behave correctly
     def test_defaultproviders
         # Make a fake type
@@ -505,27 +464,6 @@ class TestType < Test::Unit::TestCase
         config.add_edge comp, newcomp
         exec = mk.call(6, :parent => newcomp)
         assert_equal("//Good[bad]/Exec[exec6]", exec.path)
-    end
-
-    def test_evaluate
-        faketype = Puppet::Type.newtype(:faketype) do
-            newparam(:name) {}
-        end
-        cleanup { Puppet::Type.rmtype(:faketype) }
-        faketype.provide(:fake) do
-            def prefetch
-            end
-        end
-
-        obj = faketype.create :name => "yayness", :provider => :fake
-        assert(obj, "did not create object")
-
-        obj.provider.expects(:prefetch)
-        obj.expects(:retrieve)
-        obj.expects(:propertychanges).returns([])
-        obj.expects(:cache)
-
-        obj.evaluate
     end
 
     # Partially test #704, but also cover the rest of the schedule management bases.

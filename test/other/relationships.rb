@@ -53,116 +53,11 @@ class TestRelationships < Test::Unit::TestCase
         end
     end
 
-    # Make sure our various metaparams work correctly.  We're just checking
-    # here whether they correctly set up the callbacks and the direction of
-    # the relationship.
-    def test_relationship_metaparams
-        out = {:require => false, :subscribe => false,
-            :notify => true, :before => true}
-        refreshers = [:subscribe, :notify]
-        [:require, :subscribe, :notify, :before].each do |param|
-            # Create three files to generate our events and three
-            # execs to receive them
-            files = []
-            execs = []
-            3.times do |i|
-                files << Puppet::Type.newfile(
-                    :title => "file#{i}",
-                    :path => tempfile(),
-                    :ensure => :file
-                )
-
-                path = tempfile()
-                execs << Puppet::Type.newexec(
-                    :title => "notifytest#{i}",
-                    :path => "/usr/bin:/bin",
-                    :command => "touch #{path}",
-                    :refreshonly => true
-                )
-            end
-
-            catalog = mk_catalog(*files)
-            catalog.add_resource(*execs)
-
-            # Add our first relationship
-            if out[param]
-                files[0][param] = execs[0]
-                sources = files[0]
-                targets = [execs[0]]
-            else
-                execs[0][param] = files[0]
-                sources = [files[0]]
-                targets = execs[0]
-            end
-            check_relationship(sources, targets, out[param], refreshers.include?(param))
-
-            # Now add another relationship
-            if out[param]
-                files[0][param] = execs[1]
-                targets << execs[1]
-                assert_equal(targets.collect { |t| [t.class.name, t.title]},
-                    files[0][param], "Incorrect target list")
-            else
-                execs[0][param] = files[1]
-                sources << files[1]
-                assert_equal(sources.collect { |t| [t.class.name, t.title]},
-                    execs[0][param], "Incorrect source list")
-            end
-            check_relationship(sources, targets, out[param], refreshers.include?(param))
-        end
-    end
-    
-    def test_munge_relationship
-        file = Puppet::Type.newfile :path => tempfile(), :mode => 0755
-        execs = []
-        3.times do |i|
-            execs << Puppet::Type.newexec(:title => "yay#{i}", :command => "/bin/echo yay")
-        end
-        
-        # First try it with one object, specified as a reference and an array
-        result = nil
-        [execs[0], [:exec, "yay0"], ["exec", "yay0"]].each do |target|
-            assert_nothing_raised do
-                result = file.send(:munge_relationship, :require, target)
-            end
-        
-            assert_equal([[:exec, "yay0"]], result)
-        end
-        
-        # Now try it with multiple objects
-        symbols = execs.collect { |e| [e.class.name, e.title] }
-        strings = execs.collect { |e| [e.class.name.to_s, e.title] }
-        [execs, symbols, strings].each do |target|
-            assert_nothing_raised do
-                result = file.send(:munge_relationship, :require, target)
-            end
-        
-            assert_equal(symbols, result)
-        end
-        
-        # Make sure we can mix it up, even though this shouldn't happen
-        assert_nothing_raised do
-            result = file.send(:munge_relationship, :require, [execs[0], [execs[1].class.name, execs[1].title]])
-        end
-        
-        assert_equal([[:exec, "yay0"], [:exec, "yay1"]], result)
-        
-        # Finally, make sure that new results get added to old.  The only way
-        # to get rid of relationships is to delete the parameter.
-        file[:require] = execs[0]
-        
-        assert_nothing_raised do
-            result = file.send(:munge_relationship, :require, [execs[1], execs[2]])
-        end
-        
-        assert_equal(symbols, result)
-    end
-    
     def test_autorequire
         # We know that execs autorequire their cwd, so we'll use that
         path = tempfile()
         
-        file = Puppet::Type.newfile(:title => "myfile", :path => path,
+        file = Puppet::Type.type(:file).new(:title => "myfile", :path => path,
             :ensure => :directory)
         exec = Puppet::Type.newexec(:title => "myexec", :cwd => path,
             :command => "/bin/echo")
@@ -183,32 +78,9 @@ class TestRelationships < Test::Unit::TestCase
         end
     end
     
-    def test_requires?
-        # Test the first direction
-        file1 = Puppet::Type.newfile(:title => "one", :path => tempfile,
-            :ensure => :directory)
-        file2 = Puppet::Type.newfile(:title => "two", :path => tempfile,
-            :ensure => :directory)
-        
-        file1[:require] = file2
-        assert(file1.requires?(file2), "requires? failed to catch :require relationship")
-        file1.delete(:require)
-        assert(! file1.requires?(file2), "did not delete relationship")
-        file1[:subscribe] = file2
-        assert(file1.requires?(file2), "requires? failed to catch :subscribe relationship")
-        file1.delete(:subscribe)
-        assert(! file1.requires?(file2), "did not delete relationship")
-        file2[:before] = file1
-        assert(file1.requires?(file2), "requires? failed to catch :before relationship")
-        file2.delete(:before)
-        assert(! file1.requires?(file2), "did not delete relationship")
-        file2[:notify] = file1
-        assert(file1.requires?(file2), "requires? failed to catch :notify relationship")
-    end
-    
     # Testing #411.  It was a problem with builddepends.
     def test_missing_deps
-        file = Puppet::Type.newfile :path => tempfile, :require => ["file", "/no/such/file"]
+        file = Puppet::Type.type(:file).new :path => tempfile, :require => Puppet::Resource::Reference.new("file", "/no/such/file")
         
         assert_raise(Puppet::Error) do
             file.builddepends

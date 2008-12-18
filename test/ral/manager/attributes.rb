@@ -184,27 +184,6 @@ class TestTypeAttributes < Test::Unit::TestCase
         end
     end
 
-    # Make sure eachattr is called in the parameter order.
-    def test_eachattr
-        type = mktype
-        name = type.newparam(:name) {}
-        one = type.newparam(:one) {}
-        two = type.newproperty(:two) {}
-        type.provide(:testing) {}
-        provider = type.attrclass(:provider)
-        should = [[name, :param], [provider, :param], [two, :property], [one, :param]]
-        assert_nothing_raised do
-            result = nil
-            type.eachattr do |obj, name|
-                result = [obj, name]
-                shouldary = should.shift
-                assert_equal(shouldary, result, "Did not get correct parameter")
-                break if should.empty?
-            end
-        end
-        assert(should.empty?, "Did not get all of the parameters.")
-    end
-
     # Make sure newattr handles required features correctly.
     def test_newattr_and_required_features
         # Make a type with some features

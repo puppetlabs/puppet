@@ -158,12 +158,12 @@ class TestTransactions < Test::Unit::TestCase
         file = Puppet::Type.type(:file).new(:title => "file", :path => path, :content => "yayness")
         first = Puppet::Type.type(:exec).new(:title => "first",
                                      :command => "/bin/echo first > #{firstpath}",
-                                     :subscribe => [:file, path],
+                                     :subscribe => Puppet::Resource::Reference.new(:file, path),
                                      :refreshonly => true
         )
         second = Puppet::Type.type(:exec).new(:title => "second",
                                      :command => "/bin/echo second > #{secondpath}",
-                                     :subscribe => [:exec, "first"],
+                                     :subscribe => Puppet::Resource::Reference.new(:exec, "first"),
                                      :refreshonly => true
         )
 
@@ -301,7 +301,7 @@ class TestTransactions < Test::Unit::TestCase
         @@tmpfiles << execfile
 
         # 'subscribe' expects an array of arrays
-        exec[:subscribe] = [[file.class.name,file.name]]
+        exec[:subscribe] = Puppet::Resource::Reference.new(file.class.name,file.name)
         exec[:refreshonly] = true
 
         assert_nothing_raised() {
@@ -385,13 +385,13 @@ class TestTransactions < Test::Unit::TestCase
             :path => ENV["PATH"],
             :command => "touch %s" % file1,
             :refreshonly => true,
-            :subscribe => [:file, path]
+            :subscribe => Puppet::Resource::Reference.new(:file, path)
         )
         exec2 = Puppet::Type.type(:exec).new(
             :path => ENV["PATH"],
             :command => "touch %s" % file2,
             :refreshonly => true,
-            :subscribe => [:file, path]
+            :subscribe => Puppet::Resource::Reference.new(:file, path)
         )
 
         assert_apply(file, exec1, exec2)
@@ -444,7 +444,7 @@ class TestTransactions < Test::Unit::TestCase
             :name => "touch %s" % fname,
             :path => "/usr/bin:/bin",
             :schedule => "monthly",
-            :subscribe => ["file", file.name]
+            :subscribe => Puppet::Resource::Reference.new("file", file.name)
         )
 
         config = mk_catalog(file, exec)
@@ -791,6 +791,10 @@ class TestTransactions < Test::Unit::TestCase
             attr_accessor :refreshed, :testing
             newparam(:name) {}
             newproperty(:testing) do
+                def retrieve
+                    :eh
+                end
+
                 def sync
                     # noop
                     :ran_testing

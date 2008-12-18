@@ -608,13 +608,9 @@ class TestParsedFile < Test::Unit::TestCase
         prov.prefetch
 
         # Now make a resource
-        bill = nil
-        assert_nothing_raised do
-            bill = @type.new :name => "bill"
-        end
+        bill = @type.new :name => "bill"
 
-        assert_equal("a", bill.provider.one,
-            "Record was not found in memory")
+        assert_equal("a", bill.provider.one, "Record was not found in memory")
     end
 
     # Make sure invalid fields always show up as insync

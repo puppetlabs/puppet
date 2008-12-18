@@ -209,7 +209,7 @@ class TestResourceServer < Test::Unit::TestCase
         }
 
         bucket = Puppet::TransBucket.new
-        bucket.type = "file"
+        bucket.type = "class"
         bucket.name = "test"
         bucket.push filetrans
 

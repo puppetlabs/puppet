@@ -260,7 +260,7 @@ class Puppet::Provider
             # use the hash here for later events.
             @property_hash = resource
         elsif resource
-            @resource = resource if resource
+            @resource = resource
             # LAK 2007-05-09: Keep the model stuff around for backward compatibility
             @model = resource
             @property_hash = {}

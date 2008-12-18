@@ -57,8 +57,8 @@ describe Puppet::Type do
             end
 
             it "should set its title to the resource reference if the resource type is not equal to the current type" do
-                resource = Puppet::Resource.new(:file, "/foo")
-                Puppet::Type.type(:mount).new(resource).title.should == "File[/foo]"
+                resource = Puppet::Resource.new(:user, "foo")
+                Puppet::Type.type(:mount).new(resource).title.should == "User[foo]"
             end
 
             [:line, :file, :catalog, :implicit].each do |param|
@@ -152,10 +152,11 @@ describe Puppet::Type do
 
             Puppet::Type.type(:mount).new(resource)
 
-            set[1..-1].should == [:name, :atboot, :noop]
+            set[-1].should == :noop
+            set[-2].should == :atboot
         end
 
-        it "should always set the default provider before anything else" do
+        it "should always set the name and then default provider before anything else" do
             Puppet::Type.type(:mount).stubs(:allattrs).returns([:provider, :name, :atboot])
             resource = Puppet::Resource.new(:mount, "/foo", :name => "myname", :atboot => "myboot")
 
@@ -167,7 +168,8 @@ describe Puppet::Type do
             end
 
             Puppet::Type.type(:mount).new(resource)
-            set[0].should == :provider
+            set[0].should == :name
+            set[1].should == :provider
         end
 
         # This one is really hard to test :/
@@ -181,11 +183,11 @@ describe Puppet::Type do
         end
 
         it "should retain a copy of the originally provided parameters" do
-            Puppet::Type.type(:mount).new(:name => "foo", :atboot => true, :noop => false).original_parameters.should == {:name => "foo", :atboot => true, :noop => false}
+            Puppet::Type.type(:mount).new(:name => "foo", :atboot => true, :noop => false).original_parameters.should == {:atboot => true, :noop => false}
         end
 
-        it "should store the name via the namevar in the originally provided parameters" do
-            Puppet::Type.type(:file).new(:name => "/foo").original_parameters[:path].should == "/foo"
+        it "should delete the name via the namevar from the originally provided parameters" do
+            Puppet::Type.type(:file).new(:name => "/foo").original_parameters[:path].should be_nil
         end
     end
 

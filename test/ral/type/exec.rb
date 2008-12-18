@@ -195,7 +195,7 @@ class TestExec < Test::Unit::TestCase
 
         exec = Puppet::Type.type(:exec).new(
             :command => oexe,
-            :require => [:file, oexe]
+            :require => Puppet::Resource::Reference.new(:file, oexe)
         )
 
         comp = mk_catalog("Testing", file, exec)
@@ -254,7 +254,6 @@ class TestExec < Test::Unit::TestCase
 
         # Verify we don't require ourselves
         assert(! rels.detect { |r| r.source == ofile }, "Exec incorrectly required mentioned file")
-        assert(!exec.requires?(ofile), "Exec incorrectly required file")
 
         # We not longer autorequire inline files
         assert_nothing_raised do
@@ -419,7 +418,7 @@ class TestExec < Test::Unit::TestCase
                 :path => basedir,
                 :recurse => true,
                 :mode => "755",
-                :require => ["exec", "mkdir"]
+                :require => Puppet::Resource::Reference.new("exec", "mkdir")
             )
         }
 

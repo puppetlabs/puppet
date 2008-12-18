@@ -19,7 +19,7 @@ class TestEvents < Test::Unit::TestCase
             :name => "echo true",
             :path => "/usr/bin:/bin",
             :refreshonly => true,
-            :subscribe => [[file.class.name, file.name]] 
+            :subscribe => Puppet::Resource::Reference.new(file.class.name, file.name)
         )
 
         comp = mk_catalog("eventtesting", file, exec)
@@ -39,7 +39,7 @@ class TestEvents < Test::Unit::TestCase
             :name => "echo true",
             :path => "/usr/bin:/bin",
             :refreshonly => true,
-            :require => [[file.class.name, file.name]] 
+            :require => Puppet::Resource::Reference.new(file.class.name, file.name)
         )
 
 
@@ -71,7 +71,7 @@ class TestEvents < Test::Unit::TestCase
         )
 
         exec[:subscribe] = files.collect { |f|
-            ["file", f.name]
+            Puppet::Resource::Reference.new(:file, f.name)
         }
 
         comp = mk_catalog(exec, *files)
