@@ -34,53 +34,109 @@ describe Puppet::Type do
         resource.parameter(:fstype).must be_instance_of(Puppet::Type.type(:mount).attrclass(:fstype))
     end
 
+    it "should have a method for setting default values for resources" do
+        Puppet::Type.type(:mount).create(:name => "foo").should respond_to(:set_default)
+    end
+
+    it "should do nothing for attributes that have no defaults and no specified value" do
+        Puppet::Type.type(:mount).create(:name => "foo").parameter(:noop).should be_nil
+    end
+
     describe "when initializing" do
-        it "should fail when passed a TransObject" do
-            trans = Puppet::TransObject.new("/foo", :mount)
-            lambda { Puppet::Type.type(:mount).new(trans) }.should raise_error(Puppet::DevError)
-        end
-
-        it "should create a Resource instance and use it to configure the RAL resource if passed a hash" do
-            resource = Puppet::Resource.new(:mount, "/foo")
-            Puppet::Resource.expects(:new).with(:mount, "/foo").returns resource
-            Puppet::Type.type(:mount).new(:name => "/foo")
-        end
-
-        it "should set its title to the title of the resource if the resource type is equal to the current type" do
-            resource = Puppet::Resource.new(:mount, "/foo", :name => "/other")
-            Puppet::Type.type(:mount).new(resource).title.should == "/foo"
-        end
-
-        it "should set its title to the resource reference if the resource type is not equal to the current type" do
-            resource = Puppet::Resource.new(:file, "/foo")
-            Puppet::Type.type(:mount).new(resource).title.should == "File[/foo]"
-        end
-
-        [:line, :file, :catalog].each do |param|
-            it "should copy #{param} from the resource if present" do
-                resource = Puppet::Resource.new(:mount, "/foo")
-                resource.send(param.to_s + "=", "foo")
-                Puppet::Type.type(:mount).new(resource).send(param).should == "foo"
+        describe "and passed a TransObject" do
+            it "should fail" do
+                trans = Puppet::TransObject.new("/foo", :mount)
+                lambda { Puppet::Type.type(:mount).new(trans) }.should raise_error(Puppet::DevError)
             end
         end
 
-        it "should copy any tags from the resource" do
-            resource = Puppet::Resource.new(:mount, "/foo")
-            resource.tag "one", "two"
-            tags = Puppet::Type.type(:mount).new(resource).tags
-            tags.should be_include("one")
-            tags.should be_include("two")
+        describe "and passed a Puppet::Resource instance" do
+            it "should set its title to the title of the resource if the resource type is equal to the current type" do
+                resource = Puppet::Resource.new(:mount, "/foo", :name => "/other")
+                Puppet::Type.type(:mount).new(resource).title.should == "/foo"
+            end
+
+            it "should set its title to the resource reference if the resource type is not equal to the current type" do
+                resource = Puppet::Resource.new(:file, "/foo")
+                Puppet::Type.type(:mount).new(resource).title.should == "File[/foo]"
+            end
+
+            [:line, :file, :catalog, :implicit].each do |param|
+                it "should copy '#{param}' from the resource if present" do
+                    resource = Puppet::Resource.new(:mount, "/foo")
+                    resource.send(param.to_s + "=", "foo")
+                    resource.send(param.to_s + "=", "foo")
+                    Puppet::Type.type(:mount).new(resource).send(param).should == "foo"
+                end
+            end
+
+            it "should copy any tags from the resource" do
+                resource = Puppet::Resource.new(:mount, "/foo")
+                resource.tag "one", "two"
+                tags = Puppet::Type.type(:mount).new(resource).tags
+                tags.should be_include("one")
+                tags.should be_include("two")
+            end
+
+            it "should copy the resource's parameters as its own" do
+                resource = Puppet::Resource.new(:mount, "/foo", :atboot => true, :fstype => "boo")
+                params = Puppet::Type.type(:mount).new(resource).to_hash
+                params[:fstype].should == "boo"
+                params[:atboot].should == true
+            end
+        end
+
+        describe "and passed a Hash" do
+            it "should extract the title from the hash" do
+                Puppet::Type.type(:mount).new(:title => "/yay").title.should == "/yay"
+            end
+
+            it "should work when hash keys are provided as strings" do
+                Puppet::Type.type(:mount).new("title" => "/yay").title.should == "/yay"
+            end
+
+            it "should work when hash keys are provided as symbols" do
+                Puppet::Type.type(:mount).new(:title => "/yay").title.should == "/yay"
+            end
+
+            it "should use the name from the hash as the title if no explicit title is provided" do
+                Puppet::Type.type(:mount).new(:name => "/yay").title.should == "/yay"
+            end
+            
+            it "should use the Resource Type's namevar to determine how to find the name in the hash" do
+                Puppet::Type.type(:file).new(:path => "/yay").title.should == "/yay"
+            end
+
+            it "should fail if the namevar is not equal to :name and both :name and the namevar are provided" do
+                lambda { Puppet::Type.type(:file).new(:path => "/yay", :name => "/foo") }.should raise_error(Puppet::Error)
+                @type.stubs(:namevar).returns :myname
+            end
+
+            [:catalog, :implicit].each do |param|
+                it "should extract '#{param}' from the hash if present" do
+                    Puppet::Type.type(:mount).new(:name => "/yay", param => "foo").send(param).should == "foo"
+                end
+            end
+
+            it "should use any remaining hash keys as its parameters" do
+                resource = Puppet::Type.type(:mount).new(:title => "/foo", :catalog => "foo", :atboot => true, :fstype => "boo")
+                resource[:fstype].must == "boo"
+                resource[:atboot].must == true
+            end
         end
 
         it "should fail if any invalid attributes have been provided" do
-            resource = Puppet::Resource.new(:mount, "/foo", :nosuchattr => "foo")
-            lambda { Puppet::Type.type(:mount).new(resource) }.should raise_error(Puppet::Error)
+            lambda { Puppet::Type.type(:mount).new(:title => "/foo", :nosuchattr => "whatever") }.should raise_error(Puppet::Error)
         end
 
         it "should set its name to the resource's title if the resource does not have a :name or namevar parameter set" do
             resource = Puppet::Resource.new(:mount, "/foo")
 
             Puppet::Type.type(:mount).new(resource).name.should == "/foo"
+        end
+
+        it "should fail if no title, name, or namevar are provided" do
+            lambda { Puppet::Type.type(:file).new(:atboot => true) }.should raise_error(Puppet::Error)
         end
 
         it "should set the attributes in the order returned by the class's :allattrs method" do
@@ -96,17 +152,40 @@ describe Puppet::Type do
 
             Puppet::Type.type(:mount).new(resource)
 
-            set.should == [:name, :atboot, :noop]
+            set[1..-1].should == [:name, :atboot, :noop]
+        end
+
+        it "should always set the default provider before anything else" do
+            Puppet::Type.type(:mount).stubs(:allattrs).returns([:provider, :name, :atboot])
+            resource = Puppet::Resource.new(:mount, "/foo", :name => "myname", :atboot => "myboot")
+
+            set = []
+
+            Puppet::Type.type(:mount).any_instance.stubs(:newattr).with do |param, hash|
+                set << param
+                true
+            end
+
+            Puppet::Type.type(:mount).new(resource)
+            set[0].should == :provider
         end
 
         # This one is really hard to test :/
         it "should each default immediately if no value is provided" do
             defaults = []
-            Puppet::Type.type(:package).any_instance.stubs(:setdefaults).with { |value| defaults << value; true }
+            Puppet::Type.type(:package).any_instance.stubs(:set_default).with { |value| defaults << value; true }
 
             Puppet::Type.type(:package).new :name => "whatever"
 
             defaults[0].should == :provider
+        end
+
+        it "should retain a copy of the originally provided parameters" do
+            Puppet::Type.type(:mount).new(:name => "foo", :atboot => true, :noop => false).original_parameters.should == {:name => "foo", :atboot => true, :noop => false}
+        end
+
+        it "should store the name via the namevar in the originally provided parameters" do
+            Puppet::Type.type(:file).new(:name => "/foo").original_parameters[:path].should == "/foo"
         end
     end
 
@@ -136,11 +215,13 @@ describe Puppet::Type do
         it "should fail if the namevar is not equal to :name and both :name and the namevar are provided" do
             @type.stubs(:namevar).returns :myname
 
-            lambda { @type.hash2resource(:myname => "foo", :name => 'bar') }.should raise_error(ArgumentError)
+            lambda { @type.hash2resource(:myname => "foo", :name => 'bar') }.should raise_error(Puppet::Error)
         end
 
-        it "should use any provided catalog" do
-            @type.hash2resource(:name => "foo", :catalog => "eh").catalog.should == "eh"
+        [:catalog, :implicit].each do |attr|
+            it "should use any provided #{attr}" do
+                @type.hash2resource(:name => "foo", attr => "eh").send(attr).should == "eh"
+            end
         end
 
         it "should set all provided parameters on the resource" do

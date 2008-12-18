@@ -183,7 +183,7 @@ describe Puppet::Type.type(:file) do
 
             File.open(source, "w") { |f| f.print "foo" }
 
-            file = Puppet::Type::File.create(:name => dest, :source => source)
+            file = Puppet::Type::File.create(:path => dest, :source => source)
 
             catalog = Puppet::Resource::Catalog.new
             catalog.add_resource file

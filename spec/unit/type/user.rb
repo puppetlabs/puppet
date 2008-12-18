@@ -71,7 +71,6 @@ describe user do
     describe "when retrieving all current values" do
         before do
             @user = user.create(:name => "foo", :uid => 10, :gid => 10)
-            @properties = {}
         end
 
         it "should return a hash containing values for all set properties" do

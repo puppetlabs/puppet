@@ -448,9 +448,6 @@ module Puppet
         end
         
         def initialize(hash)
-            # Store a copy of the arguments for later.
-            @original_arguments = hash.to_hash
-
             # Used for caching clients
             @clients = {}
 
@@ -478,7 +475,7 @@ module Puppet
             # or so.  Unfortunately, we don't have a straightforward way to manage
             # the different lifetimes of this data, so we kludge it like this.
             # The right-side hash wins in the merge.
-            options = @original_arguments.merge(:path => full_path, :implicit => true).reject { |param, value| value.nil? }
+            options = @original_parameters.merge(:path => full_path, :implicit => true).reject { |param, value| value.nil? }
 
             # These should never be passed to our children.
             [:parent, :ensure, :recurse, :target].each do |param|
@@ -683,6 +680,7 @@ module Puppet
             else
                 self.fail "Could not back up files of type %s" % s.ftype
             end
+            expire
         end
 
         # a wrapper method to make sure the file exists before doing anything

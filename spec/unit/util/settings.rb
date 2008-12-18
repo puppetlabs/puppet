@@ -46,6 +46,15 @@ describe Puppet::Util::Settings do
             @settings.setdefaults(:section, :myvalue => {:default => "w", :desc => "b", :short => "m"})
         end
 
+        it "should support specifying the setting type" do
+            @settings.setdefaults(:section, :myvalue => {:default => "w", :desc => "b", :type => :element})
+            @settings.element(:myvalue).should be_instance_of(Puppet::Util::Settings::CElement)
+        end
+
+        it "should fail if an invalid setting type is specified" do
+            lambda { @settings.setdefaults(:section, :myvalue => {:default => "w", :desc => "b", :type => :foo}) }.should raise_error(ArgumentError)
+        end
+
         it "should fail when short names conflict" do
             @settings.setdefaults(:section, :myvalue => {:default => "w", :desc => "b", :short => "m"})
             lambda { @settings.setdefaults(:section, :myvalue => {:default => "w", :desc => "b", :short => "m"}) }.should raise_error(ArgumentError)

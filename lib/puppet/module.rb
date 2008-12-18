@@ -12,9 +12,14 @@ class Puppet::Module
         dirs = Puppet.settings.value(:modulepath, environment).split(":")
         if ENV["PUPPETLIB"]
             dirs = ENV["PUPPETLIB"].split(":") + dirs
-        else
         end
-        dirs.select do |p|
+        dirs.collect do |dir|
+            if dir !~ /^#{File::SEPARATOR}/
+                File.join(Dir.getwd, dir)
+            else
+                dir
+            end
+        end.select do |p|
             p =~ /^#{File::SEPARATOR}/ && File::directory?(p)
         end
     end

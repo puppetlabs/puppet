@@ -96,10 +96,6 @@ class Type
                 when @validproperties.include?(attr): :property
                 when @paramhash.include?(attr): :param
                 when @@metaparamhash.include?(attr): :meta
-                else
-                    raise Puppet::DevError,
-                        "Invalid attribute '%s' for class '%s'" %
-                        [attr, self.name]
                 end
         end
 
@@ -120,30 +116,6 @@ class Type
 
         if param.isnamevar?
             @namevar = param.name
-        end
-    end
-
-    # A similar function but one that yields the class and type.
-    # This is mainly so that setdefaults doesn't call quite so many functions.
-    def self.eachattr(*ary)
-        if ary.empty?
-            ary = nil
-        end
-
-        # We have to do this in a specific order, so that defaults are
-        # created in that order (e.g., providers should be set up before
-        # anything else).
-        allattrs.each do |name|
-            next unless ary.nil? or ary.include?(name)
-            if obj = @properties.find { |p| p.name == name }
-                yield obj, :property
-            elsif obj = @parameters.find { |p| p.name == name }
-                yield obj, :param
-            elsif obj = @@metaparams.find { |p| p.name == name }
-                yield obj, :meta
-            else
-                raise Puppet::DevError, "Could not find parameter %s" % name
-            end
         end
     end
 
@@ -501,13 +473,6 @@ class Type
         }
     end
 
-    # If we've got a catalog, then use it to expire our data;
-    # otherwise, null-op.
-    def expire
-        return nil unless expirer
-        super
-    end
-
     # Let the catalog determine whether a given cached value is
     # still valid or has expired.
     def expirer
@@ -589,24 +554,18 @@ class Type
     # For any parameters or properties that have defaults and have not yet been
     # set, set them now.  This method can be handed a list of attributes,
     # and if so it will only set defaults for those attributes.
-    def setdefaults(*ary)
-        self.class.eachattr(*ary) { |klass, type|
-            # not many attributes will have defaults defined, so we short-circuit
-            # those away
-            next unless klass.method_defined?(:default)
-            next if @parameters[klass.name]
+    def set_default(attr)
+        return unless klass = self.class.attrclass(attr)
+        return unless klass.method_defined?(:default)
+        return if @parameters.include?(klass.name)
 
-            next unless obj = self.newattr(klass)
+        return unless parameter = newattr(klass.name)
 
-            # We have to check for nil values, not "truth", so we allow defaults
-            # to false.
-            value = obj.default and ! value.nil?
-            if ! value.nil?
-                obj.value = value
-            else
-                @parameters.delete(obj.name)
-            end
-        }
+        if value = parameter.default and ! value.nil?
+            parameter.value = value
+        else
+            @parameters.delete(parameter.name)
+        end
     end
 
     # Convert our object to a hash.  This just includes properties.
@@ -658,7 +617,7 @@ class Type
 
     ###############################
     # Code related to the closure-like behaviour of the resource classes.
-    attr_writer :implicit
+    attr_accessor :implicit
 
     # Is this type's name isomorphic with the object?  That is, if the
     # name conflicts, does it necessarily mean that the objects conflict?
@@ -1075,14 +1034,14 @@ class Type
     #   This should only be used directly from Ruby -- it's not used when going through
     # normal Puppet usage.
     def self.hash2resource(hash)
-        hash = hash.inject({}) { |result, ary| result[ary[0].to_sym] = ary[1]; hash }
+        hash = hash.inject({}) { |result, ary| result[ary[0].to_sym] = ary[1]; result }
 
         if title = hash[:title]
             hash.delete(:title)
         else
             if self.namevar != :name
                 if hash.include?(:name) and hash.include?(self.namevar)
-                    raise ArgumentError, "Cannot provide both name and %s to resources of type %s" % [self.namevar, self.name]
+                    raise Puppet::Error, "Cannot provide both name and %s to resources of type %s" % [self.namevar, self.name]
                 end
                 if title = hash[self.namevar]
                     hash.delete(self.namevar)
@@ -1094,13 +1053,16 @@ class Type
             end
         end
 
-        if catalog = hash[:catalog]
-            hash.delete(:catalog)
-        end
 
         # Now create our resource.
         resource = Puppet::Resource.new(self.name, title)
-        resource.catalog = catalog if catalog
+        [:catalog, :implicit].each do |attribute|
+            if value = hash[attribute]
+                hash.delete(attribute)
+                resource.send(attribute.to_s + "=", value)
+            end
+        end
+
         hash.each do |param, value|
             resource[param] = value
         end
@@ -1950,15 +1912,12 @@ class Type
 
     public
 
+    attr_reader :original_parameters
+
     # initialize the type instance
     def initialize(resource)
-        if resource.is_a?(Puppet::TransObject)
-            raise Puppet::DevError, "Got TransObject instead of Resource or hash"
-        end
-
-        unless resource.is_a?(Puppet::Resource)
-            resource = self.class.hash2resource(resource)
-        end
+        raise Puppet::DevError, "Got TransObject instead of Resource or hash" if resource.is_a?(Puppet::TransObject)
+        resource = self.class.hash2resource(resource) unless resource.is_a?(Puppet::Resource)
 
         # The list of parameter/property instances.
         @parameters = {}
@@ -1971,7 +1930,7 @@ class Type
             self.title = resource.ref
         end
 
-        [:file, :line, :catalog].each do |getter|
+        [:file, :line, :catalog, :implicit].each do |getter|
             setter = getter.to_s + "="
             if val = resource.send(getter)
                 self.send(setter, val)
@@ -1980,22 +1939,32 @@ class Type
 
         @tags = resource.tags
 
-        # If they've provided a title but no name, then set the name now.
-        unless name = resource[:name] || resource[self.class.namevar]
-            self[:name] = resource.title
-        end
+        @original_parameters = resource.to_hash
 
-        found = []
-        (self.class.allattrs + resource.keys).uniq.each do |attr|
+        set_default(:provider)
 
+        set_parameters(@original_parameters)
+
+        self.validate if self.respond_to?(:validate)
+    end
+
+    private
+
+    # Set all of the parameters from a hash, in the appropriate order.
+    def set_parameters(hash)
+        # Use the order provided by allattrs, but add in any
+        # extra attributes from the resource so we get failures
+        # on invalid attributes.
+        no_values = []
+        (self.class.allattrs + hash.keys).uniq.each do |attr|
             begin
                 # Set any defaults immediately.  This is mostly done so
                 # that the default provider is available for any other
                 # property validation.
-                if resource.has_key?(attr)
-                    self[attr] = resource[attr]
+                if hash.has_key?(attr)
+                    self[attr] = hash[attr]
                 else
-                    setdefaults(attr)
+                    no_values << attr
                 end
             rescue ArgumentError, Puppet::Error, TypeError
                 raise
@@ -2005,9 +1974,12 @@ class Type
                 raise error
             end
         end
-
-        self.validate if self.respond_to?(:validate)
+        no_values.each do |attr|
+            set_default(attr)
+        end
     end
+
+    public
 
     # Set up all of our autorequires.
     def finish

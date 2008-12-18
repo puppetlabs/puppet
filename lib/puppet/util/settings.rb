@@ -378,15 +378,22 @@ class Puppet::Util::Settings
         if hash[:section]
             hash[:section] = symbolize(hash[:section])
         end
-        case hash[:default]
-        when true, false, "true", "false":
-            klass = CBoolean
-        when /^\$\w+\//, /^\//:
-            klass = CFile
-        when String, Integer, Float: # nothing
-            klass = CElement
+        if type = hash[:type]
+            unless klass = {:element => CElement, :file => CFile, :boolean => CBoolean}[type]
+                raise ArgumentError, "Invalid setting type '%s'" % type
+            end
+            hash.delete(:type)
         else
-            raise Puppet::Error, "Invalid value '%s' for %s" % [value.inspect, hash[:name]]
+            case hash[:default]
+            when true, false, "true", "false":
+                klass = CBoolean
+            when /^\$\w+\//, /^\//:
+                klass = CFile
+            when String, Integer, Float: # nothing
+                klass = CElement
+            else
+                raise Puppet::Error, "Invalid value '%s' for %s" % [value.inspect, hash[:name]]
+            end
         end
         hash[:settings] = self
         element = klass.new(hash)
@@ -512,8 +519,8 @@ class Puppet::Util::Settings
 
         @config.values.find_all { |value| value.is_a?(CFile) }.each do |file|
             next unless (sections.nil? or sections.include?(file.section))
-            next if catalog.resource(:file, value(file.name))
             next unless resource = file.to_resource
+            next if catalog.resource(resource.ref)
 
             catalog.add_resource(resource)
         end

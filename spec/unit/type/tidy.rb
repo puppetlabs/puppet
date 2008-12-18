@@ -365,7 +365,8 @@ describe Puppet::Type.type(:tidy) do
                 "/what/ever/one/subone" => ["/what/ever/one/subone/ssone"]
             }.each do |parent, children|
                 children.each do |child|
-                    result[parent][:require].should be_include([:file, child])
+                    ref = Puppet::Resource::Reference.new(:file, child)
+                    result[parent][:require].find { |req| req.to_s == ref.to_s }.should_not be_nil
                 end
             end
         end

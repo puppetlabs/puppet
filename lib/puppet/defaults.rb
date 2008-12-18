@@ -364,9 +364,9 @@ module Puppet
             :desc => "Where FileBucket files are stored."
         },
         :ca => [true, "Wether the master should function as a certificate authority."],
-        :modulepath => [ "$confdir/modules:/usr/share/puppet/modules",
-           "The search path for modules as a colon-separated list of
-            directories." ],
+        :modulepath => {:default => "$confdir/modules:/usr/share/puppet/modules",
+           :desc => "The search path for modules as a colon-separated list of
+            directories.", :type => :element }, # We don't want this to be considered a file, since it's multiple files.
         :ssl_client_header => ["HTTP_X_CLIENT_DN", "The header containing an authenticated
             client's SSL DN.  Only used with Mongrel.  This header must be set by the proxy
             to the authenticated client's SSL DN (e.g., ``/CN=puppet.reductivelabs.com``).
@@ -501,11 +501,12 @@ module Puppet
 
     # Plugin information.
     self.setdefaults(:main,
-        :pluginpath => ["$vardir/plugins",
-            "Where Puppet should look for plugins.  Multiple directories should
+        :pluginpath => {:default => "$vardir/plugins/",
+            :desc => "Where Puppet should look for plugins.  Multiple directories should
             be colon-separated, like normal PATH variables.  As of 0.23.1, this
             option is deprecated; download your custom libraries to the $libdir
-            instead."],
+            instead.",
+            :type => :element}, # Don't consider this a file, since it's a colon-separated list.
         :plugindest => ["$libdir",
             "Where Puppet should store plugins that it pulls down from the central
             server."],
@@ -521,15 +522,16 @@ module Puppet
 
     # Central fact information.
     self.setdefaults(:main,
-        :factpath => {:default => "$vardir/facts",
+        :factpath => {:default => "$vardir/facts/",
             :desc => "Where Puppet should look for facts.  Multiple directories should
                 be colon-separated, like normal PATH variables.",
             :call_on_define => true, # Call our hook with the default value, so we always get the value added to facter.
+            :type => :element, # Don't consider it a file, because it could be multiple colon-separated files
             :hook => proc { |value| Facter.search(value) if Facter.respond_to?(:search) }},
-        :factdest => ["$vardir/facts",
+        :factdest => ["$vardir/facts/",
             "Where Puppet should store facts that it pulls down from the central
             server."],
-        :factsource => ["puppet://$server/facts",
+        :factsource => ["puppet://$server/facts/",
             "From where to retrieve facts.  The standard Puppet ``file`` type
              is used for retrieval, so anything that is a valid file source can
              be used here."],

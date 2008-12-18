@@ -71,4 +71,16 @@ describe "Puppet defaults" do
         Puppet.settings[:bindaddress] = "192.168.0.1"
         Puppet.settings[:bindaddress].should == "192.168.0.1"
     end
+
+    [:factdest, :pluginpath].each do |setting|
+        it "should force the #{setting} to be a directory" do
+            Puppet.settings[setting].should =~ /\/$/
+        end
+    end
+
+    [:modulepath, :pluginpath, :factpath].each do |setting|
+        it "should configure '#{setting}' not to be a file setting, so multi-directory settings are acceptable" do
+            Puppet.settings.element(setting).should be_instance_of(Puppet::Util::Settings::CElement)
+        end
+    end
 end

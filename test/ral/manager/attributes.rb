@@ -139,41 +139,6 @@ class TestTypeAttributes < Test::Unit::TestCase
         end
     end
 
-    def test_setdefaults
-        type = mktype
-        type.newparam(:name) {}
-        
-        # Make one of each param type
-        {
-            :meta2 => :newmetaparam, :param2 => :newparam, :prop2 => :newproperty
-        }.each do |name, method|
-            assert_nothing_raised("Could not make %s of type %s" % [name, method]) do
-                type.send(method, name) do
-                    defaultto "testing"
-                end
-            end
-        end
-
-        inst = type.create(:name => 'yay')
-        assert_nothing_raised do
-            inst.setdefaults
-        end
-
-        [:meta2, :param2, :prop2].each do |name|
-            assert(inst.value(name), "did not get a value for %s" % name)
-        end
-
-        # Try a default of "false"
-        type.newparam(:falsetest) do
-            defaultto false
-        end
-
-        assert_nothing_raised do
-            inst.setdefaults
-        end
-        assert_equal(false, inst[:falsetest], "false default was not set")
-    end
-
     def test_alias_parameter
         type = mktype
         type.newparam(:name) {}

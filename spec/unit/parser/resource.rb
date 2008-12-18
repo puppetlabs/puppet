@@ -379,7 +379,11 @@ describe Puppet::Parser::Resource do
         end
 
         it "should copy over all of the parameters" do
-            @parser_resource.to_resource.to_hash.should == {:foo => "bar", :fee => "fum"}
+            result = @parser_resource.to_resource.to_hash
+
+            # The name will be in here, also.
+            result[:foo].should == "bar"
+            result[:fee].should == "fum"
         end
 
         it "should copy over the tags" do
