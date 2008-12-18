@@ -657,6 +657,11 @@ describe Puppet::Util::Settings do
             @settings.use(:main, :other)
         end
 
+        it "should canonicalize the sections" do
+            @settings.expects(:to_catalog).with(:main, :other).returns Puppet::Resource::Catalog.new("foo")
+            @settings.use("main", "other")
+        end
+
         it "should ignore sections that have already been used" do
             @settings.expects(:to_catalog).with(:main).returns Puppet::Resource::Catalog.new("foo")
             @settings.use(:main)

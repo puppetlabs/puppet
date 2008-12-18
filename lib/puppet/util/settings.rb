@@ -7,7 +7,6 @@ require 'getoptlong'
 # The class for handling configuration files.
 class Puppet::Util::Settings
     include Enumerable
-    include Puppet::Util
 
     attr_accessor :file
     attr_reader :timer
@@ -19,7 +18,7 @@ class Puppet::Util::Settings
 
     # Set a config value.  This doesn't set the defaults, it sets the value itself.
     def []=(param, value)
-        param = symbolize(param)
+        param = param.to_sym
         unless element = @config[param]
             raise ArgumentError,
                 "Attempt to assign a value to unknown configuration parameter %s" % param.inspect
@@ -60,7 +59,7 @@ class Puppet::Util::Settings
 
     # Is our parameter a boolean parameter?
     def boolean?(param)
-        param = symbolize(param)
+        param = param.to_sym
         if @config.include?(param) and @config[param].kind_of? CBoolean
             return true
         else
@@ -113,7 +112,7 @@ class Puppet::Util::Settings
 
     # Return a value's description.
     def description(name)
-        if obj = @config[symbolize(name)]
+        if obj = @config[name.to_sym]
             obj.desc
         else
             nil
@@ -140,7 +139,7 @@ class Puppet::Util::Settings
 
     # Return an object by name.
     def element(param)
-        param = symbolize(param)
+        param = param.to_sym
         @config[param]
     end
 
@@ -264,7 +263,7 @@ class Puppet::Util::Settings
 
     # Return a given object's file metadata.
     def metadata(param)
-        if obj = @config[symbolize(param)] and obj.is_a?(CFile)
+        if obj = @config[param.to_sym] and obj.is_a?(CFile)
             return [:owner, :group, :mode].inject({}) do |meta, p|
                 if v = obj.send(p)
                     meta[p] = v
@@ -376,7 +375,7 @@ class Puppet::Util::Settings
     def newelement(hash)
         klass = nil
         if hash[:section]
-            hash[:section] = symbolize(hash[:section])
+            hash[:section] = hash[:section].to_sym
         end
         if type = hash[:type]
             unless klass = {:element => CElement, :file => CFile, :boolean => CBoolean}[type]
@@ -406,7 +405,7 @@ class Puppet::Util::Settings
 
     # Iterate across all of the objects in a given section.
     def persection(section)
-        section = symbolize(section)
+        section = section.to_sym
         self.each { |name, obj|
             if obj.section == section
                 yield obj
@@ -461,7 +460,7 @@ class Puppet::Util::Settings
     # Set a bunch of defaults in a given section.  The sections are actually pretty
     # pointless, but they help break things up a bit, anyway.
     def setdefaults(section, defs)
-        section = symbolize(section)
+        section = section.to_sym
         call = []
         defs.each { |name, hash|
             if hash.is_a? Array
@@ -472,7 +471,7 @@ class Puppet::Util::Settings
                 hash = {}
                 [:default, :desc].zip(tmp).each { |p,v| hash[p] = v }
             end
-            name = symbolize(name)
+            name = name.to_sym
             hash[:name] = name
             hash[:section] = section
             if @config.include?(name)
@@ -570,8 +569,9 @@ Generated on #{Time.now}.
     # Create the necessary objects to use a section.  This is idempotent;
     # you can 'use' a section as many times as you want.
     def use(*sections)
+        sections = sections.collect { |s| s.to_sym }
         @sync.synchronize do # yay, thread-safe
-            sections = sections.reject { |s| @used.include?(s.to_sym) }
+            sections = sections.reject { |s| @used.include?(s) }
 
             return if sections.empty?
 
@@ -603,15 +603,15 @@ Generated on #{Time.now}.
     end
 
     def valid?(param)
-        param = symbolize(param)
+        param = param.to_sym
         @config.has_key?(param)
     end
 
     # Find the correct value using our search path.  Optionally accept an environment
     # in which to search before the other configuration sections.
     def value(param, environment = nil)
-        param = symbolize(param)
-        environment = symbolize(environment) if environment
+        param = param.to_sym
+        environment = environment.to_sym if environment
 
         # Short circuit to nil for undefined parameters.
         return nil unless @config.include?(param)
