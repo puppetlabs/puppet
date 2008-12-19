@@ -54,6 +54,23 @@ describe Puppet::Node::Facts::Facter do
             facts = @facter.find(@request)
             facts.values["one"].should == "two"
         end
+
+        it "should add the Puppet version as a 'clientversion' fact" do
+            Facter.expects(:to_hash).returns("one" => "two")
+            @facter.find(@request).values["clientversion"].should == Puppet.version.to_s
+        end
+
+        it "should add the current environment as a fact if one is not set" do
+            Facter.expects(:to_hash).returns("one" => "two")
+
+            @facter.find(@request).values["environment"].should == Puppet[:environment]
+        end
+
+        it "should not replace any existing environment fact" do
+            Facter.expects(:to_hash).returns("one" => "two", "environment" => "foo")
+
+            @facter.find(@request).values["environment"].should == "foo"
+        end
     end
 
     describe Puppet::Node::Facts::Facter, " when saving facts" do

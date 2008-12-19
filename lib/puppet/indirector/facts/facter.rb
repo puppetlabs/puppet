@@ -58,10 +58,19 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
 
     # Look a host's facts up in Facter.
     def find(request)
-        Puppet::Node::Facts.new(request.key, Facter.to_hash)
+        result = Puppet::Node::Facts.new(request.key, Facter.to_hash)
+        add_local_facts(result)
+        result
     end
 
     def save(facts)
         raise Puppet::DevError, "You cannot save facts to the code store; it is only used for getting facts from Facter"
+    end
+
+    private
+
+    def add_local_facts(facts)
+        facts.values["clientversion"] = Puppet.version.to_s
+        facts.values["environment"] ||= Puppet.settings[:environment]
     end
 end
