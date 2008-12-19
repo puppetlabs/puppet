@@ -8,11 +8,15 @@ module Puppet::Network; end
 module Puppet::Network::HttpPool
     class << self
         include Puppet::Util::Cacher
-        cached_attr(:ssl_host) { Puppet::SSL::Host.new }
 
         private
         
         cached_attr(:http_cache) { Hash.new }
+    end
+
+    # Use the global localhost instance.
+    def self.ssl_host
+        Puppet::SSL::Host.localhost
     end
 
     # 2008/03/23

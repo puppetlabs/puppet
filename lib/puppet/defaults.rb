@@ -148,7 +148,12 @@ module Puppet
             "The HTTP proxy port to use for outgoing connections"],
         :http_enable_post_connection_check => [true,
             "Boolean; wheter or not puppetd should validate the server
-            SSL certificate against the request hostname."]
+            SSL certificate against the request hostname."],
+        :filetimeout => [ 15,
+            "The minimum time to wait (in seconds) between checking for updates in
+            configuration files.  This timeout determines how quickly Puppet checks whether
+            a file (such as manifests or templates) has changed on disk."
+        ]
     )
 
     hostname = Facter["hostname"].value
@@ -380,7 +385,31 @@ module Puppet
         :yamldir => {:default => "$vardir/yaml", :owner => "$user", :group => "$user", :mode => "750",
             :desc => "The directory in which YAML data is stored, usually in a subdirectory."},
         :clientyamldir => {:default => "$vardir/client_yaml", :mode => "750",
-            :desc => "The directory in which client-side YAML data is stored."}
+            :desc => "The directory in which client-side YAML data is stored."},
+        :reports => ["store",
+            "The list of reports to generate.  All reports are looked for
+            in puppet/reports/<name>.rb, and multiple report names should be
+            comma-separated (whitespace is okay)."
+        ],
+        :reportdir => {:default => "$vardir/reports",
+                :mode => 0750,
+                :owner => "$user",
+                :group => "$group",
+                :desc => "The directory in which to store reports
+                    received from the client.  Each client gets a separate
+                    subdirectory."},
+        :fileserverconfig => ["$confdir/fileserver.conf",
+            "Where the fileserver configuration is stored."],
+        :rrddir => {:default => "$vardir/rrd",
+            :owner => "$user",
+            :group => "$group",
+            :desc => "The directory where RRD database files are stored.
+                Directories for each reporting host will be created under
+                this directory."
+        },
+        :rrdgraph => [false, "Whether RRD information should be graphed."],
+        :rrdinterval => ["$runinterval", "How often RRD should expect data.
+            This should match how often the hosts report back to the server."]
     )
 
     self.setdefaults(:puppetd,
@@ -428,35 +457,7 @@ module Puppet
         :ca_port => ["$masterport", "The port to use for the certificate authority."],
         :catalog_format => ["yaml", "What format to use to dump the catalog.  Only supports
             'marshal' and 'yaml'.  Only matters on the client, since it asks the server
-            for a specific format."]
-    )
-        
-    self.setdefaults(:filebucket,
-        :clientbucketdir => {
-            :default => "$vardir/clientbucket",
-            :mode => 0750,
-            :desc => "Where FileBucket files are stored locally."
-        }
-    )
-    self.setdefaults(:fileserver,
-        :fileserverconfig => ["$confdir/fileserver.conf",
-            "Where the fileserver configuration is stored."]
-    )
-    self.setdefaults(:reporting,
-        :reports => ["store",
-            "The list of reports to generate.  All reports are looked for
-            in puppet/reports/<name>.rb, and multiple report names should be
-            comma-separated (whitespace is okay)."
-        ],
-        :reportdir => {:default => "$vardir/reports",
-                :mode => 0750,
-                :owner => "$user",
-                :group => "$group",
-                :desc => "The directory in which to store reports
-                    received from the client.  Each client gets a separate
-                    subdirectory."}
-    )
-    self.setdefaults(:puppetd,
+            for a specific format."],
         :puppetdlockfile => [ "$statedir/puppetdlock",
             "A lock file to temporarily stop puppetd from doing anything."],
         :usecacheonfailure => [true,
@@ -482,10 +483,12 @@ module Puppet
             run interval."],
         :splay => [false,
             "Whether to sleep for a pseudo-random (but consistent) amount of time before
-            a run."]
-    )
-
-    self.setdefaults(:puppetd,
+            a run."],
+        :clientbucketdir => {
+            :default => "$vardir/clientbucket",
+            :mode => 0750,
+            :desc => "Where FileBucket files are stored locally."
+        },
         :configtimeout => [120,
             "How long the client should wait for the configuration to be retrieved
             before considering it a failure.  This can help reduce flapping if too
@@ -496,7 +499,14 @@ module Puppet
         ],
         :report => [false,
             "Whether to send reports after every transaction."
-        ]
+        ],
+        :graph => [false, "Whether to create dot graph files for the different
+            configuration graphs.  These dot files can be interpreted by tools
+            like OmniGraffle or dot (which is part of ImageMagick)."],
+        :graphdir => ["$statedir/graphs", "Where to store dot-outputted graphs."],
+        :storeconfigs => [false,
+            "Whether to store each client's configuration.  This
+             requires ActiveRecord from Ruby on Rails."]
     )
 
     # Plugin information.
@@ -582,13 +592,6 @@ module Puppet
             and other environments normally use ``debug``."]
     )
 
-    setdefaults(:graphing,
-        :graph => [false, "Whether to create dot graph files for the different
-            configuration graphs.  These dot files can be interpreted by tools
-            like OmniGraffle or dot (which is part of ImageMagick)."],
-        :graphdir => ["$statedir/graphs", "Where to store dot-outputted graphs."]
-    )
-
     setdefaults(:transaction,
         :tags => ["", "Tags to use to find resources.  If this is set, then
             only resources tagged with the specified tags will be applied.
@@ -665,12 +668,6 @@ module Puppet
             branch under your main directory."]
     )
 
-    setdefaults(:puppetmasterd,
-        :storeconfigs => [false,
-            "Whether to store each client's configuration.  This
-             requires ActiveRecord from Ruby on Rails."]
-    )
-
     # This doesn't actually work right now.
     setdefaults(:parser,
         :lexical => [false, "Whether to use lexical scoping (vs. dynamic)."],
@@ -679,26 +676,4 @@ module Puppet
              directories."
         ]
     )
-
-    setdefaults(:main,
-        :filetimeout => [ 15,
-            "The minimum time to wait (in seconds) between checking for updates in
-            configuration files.  This timeout determines how quickly Puppet checks whether
-            a file (such as manifests or templates) has changed on disk."
-        ]
-    )
-
-    setdefaults(:metrics,
-        :rrddir => {:default => "$vardir/rrd",
-            :owner => "$user",
-            :group => "$group",
-            :desc => "The directory where RRD database files are stored.
-                Directories for each reporting host will be created under
-                this directory."
-        },
-        :rrdgraph => [false, "Whether RRD information should be graphed."],
-        :rrdinterval => ["$runinterval", "How often RRD should expect data.
-            This should match how often the hosts report back to the server."]
-    )
 end
-

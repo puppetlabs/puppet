@@ -10,6 +10,11 @@ describe Puppet::SSL::Host do
         @host = @class.new("myname")
     end
 
+    after do
+        # Cleaned out any cached localhost instance.
+        Puppet::Util::Cacher.expire
+    end
+
     it "should use any provided name as its name" do
         @host.name.should == "myname"
     end
@@ -41,6 +46,50 @@ describe Puppet::SSL::Host do
         Puppet::SSL::Host.should respond_to(:ca_location=)
     end
 
+    it "should have a method for retrieving the default ssl host" do
+        Puppet::SSL::Host.should respond_to(:ca_location=)
+    end
+
+    it "should have a method for producing an instance to manage the local host's keys" do
+        Puppet::SSL::Host.should respond_to(:localhost)
+    end
+
+    it "should generate the certificate for the localhost instance if no certificate is available" do
+        host = stub 'host', :key => nil
+        Puppet::SSL::Host.expects(:new).returns host
+
+        host.expects(:certificate).returns nil
+        host.expects(:generate)
+
+        Puppet::SSL::Host.localhost.should equal(host)
+    end
+
+    it "should always read the key for the localhost instance in from disk" do
+        host = stub 'host', :certificate => "eh"
+        Puppet::SSL::Host.expects(:new).returns host
+
+        host.expects(:key)
+
+        Puppet::SSL::Host.localhost
+    end
+
+    it "should cache the localhost instance" do
+        host = stub 'host', :certificate => "eh", :key => 'foo'
+        Puppet::SSL::Host.expects(:new).once.returns host
+
+        Puppet::SSL::Host.localhost.should == Puppet::SSL::Host.localhost
+    end
+
+    it "should be able to expire the cached instance" do
+        one = stub 'host1', :certificate => "eh", :key => 'foo'
+        two = stub 'host2', :certificate => "eh", :key => 'foo'
+        Puppet::SSL::Host.expects(:new).times(2).returns(one).then.returns(two)
+
+        Puppet::SSL::Host.localhost.should equal(one)
+        Puppet::Util::Cacher.expire
+        Puppet::SSL::Host.localhost.should equal(two)
+    end
+
     describe "when specifying the CA location" do
         before do
             [Puppet::SSL::Key, Puppet::SSL::Certificate, Puppet::SSL::CertificateRequest, Puppet::SSL::CertificateRevocationList].each do |klass|
@@ -59,6 +108,10 @@ describe Puppet::SSL::Host do
 
         it "should support the location ':none'" do
             lambda { Puppet::SSL::Host.ca_location = :none }.should_not raise_error
+        end
+
+        it "should support the location ':only'" do
+            lambda { Puppet::SSL::Host.ca_location = :only }.should_not raise_error
         end
 
         it "should not support other modes" do
@@ -110,6 +163,17 @@ describe Puppet::SSL::Host do
                 Puppet::SSL::CertificateRevocationList.expects(:terminus_class=).with :rest
 
                 Puppet::SSL::Host.ca_location = :remote
+            end
+        end
+
+        describe "as 'only'" do
+            it "should set the terminus class for Key, Certificate, CertificateRevocationList, and CertificateRequest as :ca" do
+                Puppet::SSL::Key.expects(:terminus_class=).with :ca
+                Puppet::SSL::Certificate.expects(:terminus_class=).with :ca
+                Puppet::SSL::CertificateRequest.expects(:terminus_class=).with :ca
+                Puppet::SSL::CertificateRevocationList.expects(:terminus_class=).with :ca
+
+                Puppet::SSL::Host.ca_location = :only
             end
         end
 

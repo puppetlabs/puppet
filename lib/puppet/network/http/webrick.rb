@@ -89,9 +89,8 @@ class Puppet::Network::HTTP::WEBrick
     def setup_ssl
         results = {}
 
-        host = Puppet::SSL::Host.new
-
-        host.generate unless host.certificate
+        # Get the cached copy.  We know it's been generated, too.
+        host = Puppet::SSL::Host.localhost
 
         raise Puppet::Error, "Could not retrieve certificate for %s and not running on a valid certificate authority" % host.name unless host.certificate
 

@@ -3,7 +3,7 @@ require 'puppet/ssl/key'
 require 'puppet/ssl/certificate'
 require 'puppet/ssl/certificate_request'
 require 'puppet/ssl/certificate_revocation_list'
-require 'puppet/util/constant_inflector'
+require 'puppet/util/cacher'
 
 # The class that manages all aspects of our SSL certificates --
 # private keys, public keys, requests, etc.
@@ -14,15 +14,23 @@ class Puppet::SSL::Host
     CertificateRequest = Puppet::SSL::CertificateRequest
     CertificateRevocationList = Puppet::SSL::CertificateRevocationList
 
-    extend Puppet::Util::ConstantInflector
-
     attr_reader :name
     attr_accessor :ca
 
     attr_writer :key, :certificate, :certificate_request
 
-    CA_NAME = "ca"
+    class << self
+        include Puppet::Util::Cacher
 
+        cached_attr(:localhost) do
+            result = new()
+            result.generate unless result.certificate
+            result.key # Make sure it's read in
+            result
+        end
+    end
+
+    CA_NAME = "ca"
     # This is the constant that people will use to mark that a given host is
     # a certificate authority.
     def self.ca_name
@@ -40,7 +48,7 @@ class Puppet::SSL::Host
         CertificateRevocationList.terminus_class = terminus
 
         if cache
-            # This is weird; we don't actually cache our keys or CRL, we
+            # This is weird; we don't actually cache our keys, we
             # use what would otherwise be the cache as our normal
             # terminus.
             Key.terminus_class = cache
@@ -55,23 +63,25 @@ class Puppet::SSL::Host
         end
     end
 
+    CA_MODES = {
+        # Our ca is local, so we use it as the ultimate source of information
+        # And we cache files locally.
+        :local => [:ca, :file],
+        # We're a remote CA client.
+        :remote => [:rest, :file],
+        # We are the CA, so we don't have read/write access to the normal certificates.
+        :only => [:ca],
+        # We have no CA, so we just look in the local file store.
+        :none => [:file]
+    }
+
     # Specify how we expect to interact with our certificate authority.
     def self.ca_location=(mode)
-        raise ArgumentError, "CA Mode can only be :local, :remote, or :none" unless [:local, :remote, :none].include?(mode)
+        raise ArgumentError, "CA Mode can only be %s" % CA_MODES.collect { |m| m.to_s }.join(", ") unless CA_MODES.include?(mode)
 
-        @ca_mode = mode
+        @ca_location = mode
 
-        case @ca_mode
-        when :local:
-            # Our ca is local, so we use it as the ultimate source of information
-            # And we cache files locally.
-            configure_indirection :ca, :file
-        when :remote:
-            configure_indirection :rest, :file
-        when :none:
-            # We have no CA, so we just look in the local file store.
-            configure_indirection :file
-        end
+        configure_indirection(*CA_MODES[@ca_location])
     end
 
     # Remove all traces of a given host

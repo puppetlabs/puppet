@@ -17,16 +17,9 @@ describe Puppet::Network::HttpPool do
         Puppet::Network::HttpPool::HTTP_KEEP_ALIVE.should be_false
     end
 
-    it "should use an SSL::Host instance to get its certificate information" do
+    it "should use the global SSL::Host instance to get its certificate information" do
         host = mock 'host'
-        Puppet::SSL::Host.expects(:new).with().returns host
-        Puppet::Network::HttpPool.ssl_host.should equal(host)
-    end
-
-    it "should reuse the same host instance" do
-        host = mock 'host'
-        Puppet::SSL::Host.expects(:new).with().once.returns host
-        Puppet::Network::HttpPool.ssl_host.should equal(host)
+        Puppet::SSL::Host.expects(:localhost).with().returns host
         Puppet::Network::HttpPool.ssl_host.should equal(host)
     end
 
@@ -121,16 +114,6 @@ describe Puppet::Network::HttpPool do
                 one.expects(:started?).returns(false)
                 one.expects(:finish).never
                 Puppet::Network::HttpPool.clear_http_instances
-            end
-
-            it "should reset its ssl host when clearing the cache" do
-                stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :configtimeout => 120, :http_enable_post_connection_check => true, :certname => "a"
-                one = Puppet::Network::HttpPool.http_instance("me", 54321)
-                one.expects(:started?).returns(false)
-                one.expects(:finish).never
-                id = Puppet::Network::HttpPool.ssl_host.object_id
-                Puppet::Network::HttpPool.clear_http_instances
-                Puppet::Network::HttpPool.ssl_host.object_id.should_not == id
             end
         end
 

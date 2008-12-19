@@ -155,6 +155,8 @@ if Puppet.settings.print_configs?
     exit(Puppet.settings.print_configs ? 0 : 1)
 end
 
+Puppet.settings.use :main, :puppetmasterd, :ssl
+
 # A temporary solution, to at least make the master work for now.
 Puppet::Node::Facts.terminus_class = :yaml
 
@@ -164,7 +166,7 @@ Puppet::Node.cache_class = :yaml
 # Configure all of the SSL stuff.
 if Puppet::SSL::CertificateAuthority.ca?
     Puppet::SSL::Host.ca_location = :local
-    Puppet.settings.use :main, :ssl, :ca
+    Puppet.settings.use :ca
     Puppet::SSL::CertificateAuthority.instance
 else
     Puppet::SSL::Host.ca_location = :none
@@ -196,6 +198,16 @@ if Puppet[:ca]
 end
 
 server = Puppet::Network::Server.new(:handlers => rest_handlers, :xmlrpc_handlers => xmlrpc_handlers)
+
+# Make sure we've got a localhost ssl cert
+Puppet::SSL::Host.localhost
+
+# And now configure our server to *only* hit the CA for data, because that's
+# all it will have write access to.
+if Puppet::SSL::CertificateAuthority.ca?
+    Puppet::SSL::Host.ca_location = :only
+    Puppet::SSL::Host.ca_location = :none
+end
 
 if Process.uid == 0
     begin
