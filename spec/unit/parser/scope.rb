@@ -81,7 +81,21 @@ describe Puppet::Parser::Scope do
             Puppet::Parser::Scope.number?("0755").should == 0755
         end
 
+        it "should return nil on malformed integers" do
+            Puppet::Parser::Scope.number?("0.24.5").should be_nil
+        end
 
+        it "should convert strings with leading 0 to integer if they are not octal" do
+            Puppet::Parser::Scope.number?("0788").should == 788
+        end
+
+        it "should convert strings of negative integers" do
+            Puppet::Parser::Scope.number?("-0788").should == -788
+        end
+
+        it "should return nil on malformed hexadecimal numbers" do
+            Puppet::Parser::Scope.number?("0x89g").should be_nil
+        end
     end
 
 end

@@ -52,11 +52,11 @@ class Puppet::Parser::Scope
         if value.is_a?(String)
             if value =~ /^-?\d+(:?\.\d+|(:?\.\d+)?e\d+)$/
                 return value.to_f
-            elsif value =~ /^0x\d+/i
+            elsif value =~ /^0x[0-9a-f]+$/i
                 return value.to_i(16)
-            elsif value =~ /^0\d+/i
+            elsif value =~ /^0[0-7]+$/
                 return value.to_i(8)
-            elsif value =~ /^-?\d+/
+            elsif value =~ /^-?\d+$/
                 return value.to_i
             else
                 return nil
