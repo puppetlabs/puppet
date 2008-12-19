@@ -28,4 +28,6 @@ module Puppet::Util::Package
         end
         return version_a <=> version_b;
     end
+    
+    module_function :versioncmp
 end
