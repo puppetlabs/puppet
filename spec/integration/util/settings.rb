@@ -5,8 +5,9 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 describe Puppet::Util::Settings do
     def tmpfile(name)
         source = Tempfile.new(name)
+        path = source.path
         source.close!
-        source.path
+        path
     end
 
     it "should be able to make needed directories" do

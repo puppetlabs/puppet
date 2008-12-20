@@ -12,8 +12,9 @@ describe "Puppet::Indirector::FileServerTerminus", :shared => true do
         FileTest.stubs(:exists?).with(Puppet[:fileserverconfig]).returns(true)
 
         @path = Tempfile.new("file_server_testing")
+        path = @path.path
         @path.close!
-        @path = @path.path
+        @path = path
 
         Dir.mkdir(@path)
         File.open(File.join(@path, "myfile"), "w") { |f| f.print "my content" }

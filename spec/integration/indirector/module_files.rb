@@ -32,8 +32,9 @@ describe Puppet::Indirector::ModuleFiles, " when interacting with FileServing::F
         @terminus = Puppet::Indirector::FileContent::Modules.new
 
         @path = Tempfile.new("module_file_testing")
+        path = @path.path
         @path.close!
-        @path = @path.path
+        @path = path
 
         Dir.mkdir(@path)
         Dir.mkdir(File.join(@path, "files"))
