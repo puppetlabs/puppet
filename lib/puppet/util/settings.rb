@@ -55,6 +55,17 @@ class Puppet::Util::Settings
         return options
     end
 
+    # Generate the list of valid arguments, in a format that OptionParser can
+    # understand, and add them to the passed option list.
+    def optparse_addargs(options)
+        # Add all of the config parameters as valid options.
+        self.each { |name, element|
+            options << element.optparse_args
+        }
+
+        return options
+    end
+
     # Is our parameter a boolean parameter?
     def boolean?(param)
         param = param.to_sym
@@ -912,6 +923,15 @@ Generated on #{Time.now}.
             end
         end
 
+        # get the arguments in OptionParser format
+        def optparse_args
+            if short
+                ["--#{name}", "-#{short}", desc, :REQUIRED]
+            else
+                ["--#{name}", desc, :REQUIRED]
+            end
+        end
+
         def hook=(block)
             meta_def :handle, &block
         end
@@ -1105,6 +1125,14 @@ Generated on #{Time.now}.
             else
                 [["--#{name}", GetoptLong::NO_ARGUMENT],
                  ["--no-#{name}", GetoptLong::NO_ARGUMENT]]
+            end
+        end
+
+        def optparse_args
+            if short
+                ["--[no-]#{name}", "-#{short}", desc, :NONE ]
+            else
+                ["--[no-]#{name}", desc, :NONE]
             end
         end
 
