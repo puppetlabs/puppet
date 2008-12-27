@@ -30,10 +30,11 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
      * started => job loaded
      * enabled => 'Disable' removed from job plist file
      * disabled => 'Disable' added to job plist file
-     
+
     Note that this allows you to do something launchctl can't do, which is to
     be in a state of \"stopped/enabled\ or \"running/disabled\".
-    "
+
+  "
 
     commands :launchctl => "/bin/launchctl"
     

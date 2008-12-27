@@ -1,8 +1,11 @@
 # Manage gentoo services.  Start/stop is the same as InitSvc, but enable/disable
 # is special.
 Puppet::Type.type(:service).provide :gentoo, :parent => :init do
-    desc "Gentoo's form of ``init``-style service
-        management; uses ``rc-update`` for service enabling and disabling."
+    desc "Gentoo's form of ``init``-style service management.
+
+    Uses ``rc-update`` for service enabling and disabling.
+
+  "
 
     commands :update => "/sbin/rc-update"
 

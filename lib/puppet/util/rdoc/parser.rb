@@ -167,7 +167,7 @@ class Parser
         code.each do |stmt|
             scan_for_resource(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::ASTArray)
 
-            if stmt.is_a?(Puppet::Parser::AST::Resource)
+            if stmt.is_a?(Puppet::Parser::AST::Resource) and !stmt.type.nil?
                 type = stmt.type.split("::").collect { |s| s.capitalize }.join("::")
                 title = value_to_s(stmt.title)
                 Puppet.debug "rdoc: found resource: %s[%s]" % [type,title]

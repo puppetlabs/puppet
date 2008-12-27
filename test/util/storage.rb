@@ -63,30 +63,6 @@ class TestStorage < Test::Unit::TestCase
         assert_equal(state["name"], hash)
     end
 
-    # we're getting corrupt files, probably because multiple processes
-    # are reading or writing the file at once
-    # so we need to test that
-    def test_multiwrite
-        f = mkfile()
-
-        value = {:a => :b}
-        threads = []
-        9.times { |a|
-            threads << Thread.new {
-                9.times { |b|
-                    assert_nothing_raised {
-                        Puppet::Util::Storage.load
-                        state = Puppet::Util::Storage.cache(f)
-                        value.each { |k,v| state[k] = v }
-                        state[:e] = rand(100)
-                        Puppet::Util::Storage.store
-                    }
-                }
-            }
-        }
-        threads.each { |th| th.join }
-    end
-
     def test_emptyrestore
         Puppet::Util::Storage.load
         Puppet::Util::Storage.store

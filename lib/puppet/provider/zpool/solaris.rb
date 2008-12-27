@@ -9,25 +9,29 @@ Puppet::Type.type(:zpool).provide(:solaris) do
             return Hash.new(:absent)
         end
         #get the name and get rid of it
-        pool = Hash.new([])
+        pool = Hash.new
         pool[:pool] = pool_array[0]
         pool_array.shift
 
-        #order matters here :(
         tmp = []
 
-        pool_array.reverse.each_with_index do |value, i|
+        #order matters here :(
+        pool_array.reverse.each do |value|
+            sym = nil
             case value
-            when "spares": pool[:spare] = tmp.reverse and tmp.clear
-            when "logs": pool[:log] = tmp.reverse and tmp.clear
+            when "spares": sym = :spare
+            when "logs": sym = :log
             when "mirror", "raidz1", "raidz2":
                 sym = value == "mirror" ? :mirror : :raidz
-                pool[sym].unshift(tmp.reverse.join(' '))
                 pool[:raid_parity] = "raidz2" if value == "raidz2"
-                tmp.clear
             else
                 tmp << value
-                pool[:disk] = tmp.reverse if i == 0
+                sym = :disk if value == pool_array.first
+            end
+
+            if sym
+                pool[sym] = pool[sym] ? pool[sym].unshift(tmp.reverse.join(' ')) : [tmp.reverse.join(' ')]
+                tmp.clear
             end
         end
 

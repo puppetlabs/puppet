@@ -31,14 +31,16 @@ Puppet::Type.newtype(:augeas) do
            - augeas to be installed (http://www.augeas.net)
            - ruby-augeas bindings
 
-         Sample usage with a string:
+         Sample usage with a string::
+
             augeas{\"test1\" :
                    context => \"/files/etc/sysconfig/firstboot\",
                    changes => \"set RUN_FIRSTBOOT YES\",
                    onlyif  => \"match other_value size > 0\",
              }
 
-         Sample usage with an array and custom lenses:
+         Sample usage with an array and custom lenses::
+
             augeas{\"jboss_conf\":
                 context => \"/files\",
                 changes => [
@@ -47,6 +49,7 @@ Puppet::Type.newtype(:augeas) do
                 ],
                 load_path => \"$/usr/share/jbossas/lenses\",
             }
+
          "
 
     newparam (:name) do
@@ -61,19 +64,21 @@ Puppet::Type.newtype(:augeas) do
 
     newparam (:onlyif) do
         desc "Optional augeas command and comparisons to control the execution of this type.
-             Supported onlyif syntax:
+             Supported onlyif syntax::
+
                get [AUGEAS_PATH] [COMPARATOR] [STRING]
                match [MATCH_PATH] size [COMPARATOR] [INT]
                match [MATCH_PATH] include [STRING]
                match [MATCH_PATH] == [AN_ARRAY]
 
-             where
+             where::
+
                AUGEAS_PATH is a valid path scoped by the context
                MATCH_PATH is a valid match synatx scoped by the context
                COMPARATOR is in the set [> >= != == <= <]
                STRING is a string
                INT is a number
-               AN_ARRAY is in the form ['a string', 'another']        "
+               AN_ARRAY is in the form ['a string', 'another']"
         defaultto ""
     end
     
@@ -81,14 +86,14 @@ Puppet::Type.newtype(:augeas) do
     newparam(:changes) do
         desc "The changes which should be applied to the filesystem. This
         can be either a string which contains a command or an array of commands.
-        Commands supported are:
+        Commands supported are::
 
-        set [PATH] [VALUE]     Sets the value VALUE at loction PATH
-        rm [PATH]              Removes the node at location PATH
-        remove [PATH]          Synonym for rm
-        clear [PATH]           Keeps the node at PATH, but removes the value.
-        ins [PATH]             Inserts an empty node at PATH.
-        insert [PATH]          Synonym for ins
+          set [PATH] [VALUE]     Sets the value VALUE at loction PATH
+          rm [PATH]              Removes the node at location PATH
+          remove [PATH]          Synonym for rm
+          clear [PATH]           Keeps the node at PATH, but removes the value.
+          ins [PATH]             Inserts an empty node at PATH.
+          insert [PATH]          Synonym for ins
 
         If the parameter 'context' is set that that value is prepended to PATH"
 
