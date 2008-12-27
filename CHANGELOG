@@ -1,3 +1,6 @@
+0.25.0
+    Fixed #1840 - Bug fixes and improvements for Emacs puppet-mode.el
+
 0.24.7
     Fixed #1496 - nagios_servicedependency needs a unique host_name?
 

@@ -30,22 +30,23 @@
 
 (defvar puppet-mode-syntax-table
   (let ((table (make-syntax-table)))
-    (modify-syntax-entry ?\' "\"" table)
-    (modify-syntax-entry ?\" "\"" table)
-    (modify-syntax-entry ?#  "<"  table)
-    (modify-syntax-entry ?\n ">"  table)
-    (modify-syntax-entry ?\\ "\\" table)
-    (modify-syntax-entry ?$  "."  table)
-    (modify-syntax-entry ?-  "_"  table)
-    (modify-syntax-entry ?>  "."  table)
-    (modify-syntax-entry ?=  "."  table)
-    (modify-syntax-entry ?\; "."  table)
-    (modify-syntax-entry ?\( "()" table)
-    (modify-syntax-entry ?\) ")(" table)
-    (modify-syntax-entry ?\{ "(}" table)
-    (modify-syntax-entry ?\} "){" table)
-    (modify-syntax-entry ?\[ "(]" table)
-    (modify-syntax-entry ?\] ")[" table)
+    (modify-syntax-entry ?\' "\"'"  table)
+    (modify-syntax-entry ?\" "\"\"" table)
+    (modify-syntax-entry ?#  "<"    table)
+    (modify-syntax-entry ?\n ">#"   table)
+    (modify-syntax-entry ?\\ "\\"   table)
+    (modify-syntax-entry ?$  "'"    table)
+    (modify-syntax-entry ?-  "_"    table)
+    (modify-syntax-entry ?:  "_"    table)
+    (modify-syntax-entry ?>  "."    table)
+    (modify-syntax-entry ?=  "."    table)
+    (modify-syntax-entry ?\; "."    table)
+    (modify-syntax-entry ?\( "()"   table)
+    (modify-syntax-entry ?\) ")("   table)
+    (modify-syntax-entry ?\{ "(}"   table)
+    (modify-syntax-entry ?\} "){"   table)
+    (modify-syntax-entry ?\[ "(]"   table)
+    (modify-syntax-entry ?\] ")["   table)
     table)
   "Syntax table in use in puppet-mode buffers.")
 
@@ -180,10 +181,10 @@ of the initial include plus puppet-include-indent."
           (setq cur-indent (current-column))))
        (include-start
         (setq cur-indent include-start))
-       ((and (looking-at "^\\s-*}\\s-*$") block-indent)
-        ;; This line contains only a closing brace and we're at the inner
-        ;; block, so we should indent it matching the indentation of the
-        ;; opening brace of the block.
+       ((and (looking-at "^\\s-*},?\\s-*$") block-indent)
+        ;; This line contains a closing brace or a closing brace followed by a
+        ;; comma and we're at the inner block, so we should indent it matching
+        ;; the indentation of the opening brace of the block.
         (setq cur-indent block-indent))
        (t
         ;; Otherwise, we did not start on a block-ending-only line.
@@ -204,10 +205,10 @@ of the initial include plus puppet-include-indent."
               (setq cur-indent (current-indentation))
               (setq not-indented nil))
 
-             ;; Brace or paren not on a line by itself will be indented one
-             ;; level too much, but don't catch cases where the block is
-             ;; started and closed on the same line.
-             ((looking-at "^[^\n\({]*[\)}]\\s-*$")
+             ;; Brace (possibly followed by a comma) or paren not on a line by
+             ;; itself will be indented one level too much, but don't catch
+             ;; cases where the block is started and closed on the same line.
+             ((looking-at "^[^\n\({]*[\)}],?\\s-*$")
               (setq cur-indent (- (current-indentation) puppet-indent-level))
               (setq not-indented nil))
 
@@ -307,15 +308,13 @@ of the initial include plus puppet-include-indent."
      ;; variables
      '("\\(^\\|[^_:.@$]\\)\\b\\(true\\|false\\)\\>"
        2 font-lock-variable-name-face)
-     '("\\(\\$\\([^a-zA-Z0-9 \n]\\|[0-9]\\)\\)\\W"
-       1 font-lock-variable-name-face)
-     '("\\(\\$\\|@\\|@@\\)\\(\\w\\|_\\|:\\)+"
+     '("\\$[a-zA-Z0-9_:]+"
        0 font-lock-variable-name-face)
      ;; usage of types
-     '("^\\s *\\([a-zA-Z_-]+\\)\\s +{"
+     '("^\\s *\\([a-z][a-zA-Z0-9_:-]*\\)\\s +{"
        1 font-lock-type-face)
      ;; overrides and type references
-     '("\\s +\\([A-Z][a-zA-Z_:-]*\\)\\["
+     '("\\s +\\([A-Z][a-zA-Z0-9_:-]*\\)\\["
        1 font-lock-type-face)
      ;; general delimited string
      '("\\(^\\|[[ \t\n<+(,=]\\)\\(%[xrqQwW]?\\([^<[{(a-zA-Z0-9 \n]\\)[^\n\\\\]*\\(\\\\.[^\n\\\\]*\\)*\\(\\3\\)\\)"
@@ -337,14 +336,16 @@ The variable puppet-indent-level controls the amount of indentation.
   (set (make-local-variable 'local-abbrev-table) puppet-mode-abbrev-table)
   (set (make-local-variable 'comment-start) "# ")
   (set (make-local-variable 'comment-start-skip) "#+ *")
+  (set (make-local-variable 'comment-use-syntax) t)
   (set (make-local-variable 'comment-end) "")
+  (set (make-local-variable 'comment-auto-fill-only-comments) t)
   (set (make-local-variable 'comment-column) puppet-comment-column)
   (set (make-local-variable 'indent-line-function) 'puppet-indent-line)
   (set (make-local-variable 'indent-tabs-mode) puppet-indent-tabs-mode)
   (set (make-local-variable 'require-final-newline) t)
   (set (make-local-variable 'paragraph-ignore-fill-prefix) t)
-  (set (make-local-variable 'paragraph-start) "\f\\|[ 	]*$")
-  (set (make-local-variable 'paragraph-separate) "[ 	\f]*$")
+  (set (make-local-variable 'paragraph-start) "\f\\|[ 	]*$\\|#$")
+  (set (make-local-variable 'paragraph-separate) "\\([ 	\f]*\\|#\\)$")
   (or (boundp 'font-lock-variable-name-face)
       (setq font-lock-variable-name-face font-lock-type-face))
   (set (make-local-variable 'font-lock-keywords) puppet-font-lock-keywords)
