@@ -478,6 +478,7 @@ describe Puppet::Parser::Compiler do
     end
 
     describe Puppet::Parser::Compiler, "when storing compiled resources" do
+        confine "Cannot test Rails integration without ActiveRecord" => Puppet.features.rails?
 
         it "should store the resources" do
             Puppet.features.expects(:rails?).returns(true)

@@ -5,8 +5,9 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 describe Puppet::Type.type(:tidy) do
     def tmpfile(name)
         source = Tempfile.new(name)
+        path = source.path
         source.close!
-        source.path
+        path
     end
 
     # Testing #355.

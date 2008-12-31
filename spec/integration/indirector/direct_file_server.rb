@@ -38,8 +38,9 @@ describe Puppet::Indirector::DirectFileServer, " when interacting with FileServi
         @terminus = Puppet::Indirector::FileContent::File.new
 
         @path = Tempfile.new("direct_file_server_testing")
+        path = @path.path
         @path.close!
-        @path = @path.path
+        @path = path
 
         Dir.mkdir(@path)
         File.open(File.join(@path, "one"), "w") { |f| f.print "one content" }

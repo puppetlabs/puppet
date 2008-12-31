@@ -66,7 +66,7 @@ describe Puppet::Rails, "when initializing any connection" do
 end
 
 describe Puppet::Rails, "when initializing a sqlite3 connection" do
-    confine Puppet.features.rails? => "Cannot test without ActiveRecord" 
+    confine "Cannot test without ActiveRecord" => Puppet.features.rails?
 
     it "should provide the adapter, log_level, and dbfile arguments" do
         Puppet.settings.expects(:value).with(:dbadapter).returns("sqlite3")
@@ -82,7 +82,7 @@ describe Puppet::Rails, "when initializing a sqlite3 connection" do
 end
 
 describe Puppet::Rails, "when initializing a mysql or postgresql connection" do
-    confine Puppet.features.rails? => "Cannot test without ActiveRecord" 
+    confine "Cannot test without ActiveRecord" => Puppet.features.rails?
 
     it "should provide the adapter, log_level, and host, username, password, and database arguments" do
         Puppet.settings.stubs(:value).with(:dbadapter).returns("mysql")

@@ -5,8 +5,9 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 describe Puppet::Type.type(:file) do
     before do
         @path = Tempfile.new("puppetspec")
+        pathname = @path.path
         @path.close!()
-        @path = @path.path
+        @path = pathname
         @file = Puppet::Type::File.new(:name => @path)
 
         @catalog = mock 'catalog'

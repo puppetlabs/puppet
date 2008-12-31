@@ -194,7 +194,7 @@ describe Puppet::Parser::Collector, "when collecting virtual resources" do
 end
 
 describe Puppet::Parser::Collector, "when collecting exported resources" do
-    confine Puppet.features.rails? => "Cannot test Rails integration without ActiveRecord"
+    confine "Cannot test Rails integration without ActiveRecord" => Puppet.features.rails?
 
     before do
         @scope = stub 'scope', :host => "myhost", :debug => nil
@@ -364,7 +364,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
 end
 
 describe Puppet::Parser::Collector, "when building its ActiveRecord query for collecting exported resources" do
-    confine Puppet.features.rails? => "Cannot test Rails integration without ActiveRecord"
+    confine "Cannot test Rails integration without ActiveRecord" => Puppet.features.rails?
 
     before do
         @scope = stub 'scope', :host => "myhost", :debug => nil
