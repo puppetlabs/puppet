@@ -22,6 +22,7 @@ module Puppet::Util::RDoc
             # specify our own format & where to output
             options = [ "--fmt", "puppet",
                         "--quiet",
+                        "--force-update",
                         "--op", outputdir ]
 
             options += files
