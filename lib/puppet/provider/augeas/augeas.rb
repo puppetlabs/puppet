@@ -22,9 +22,9 @@ require 'augeas' if Puppet.features.augeas?
 Puppet::Type.type(:augeas).provide(:augeas) do
 #class Puppet::Provider::Augeas < Puppet::Provider
     include Puppet::Util
-    
-    confine :true => Puppet.features.augeas?   
-    
+
+    confine :true => Puppet.features.augeas?
+
     has_features :parse_commands, :need_to_run?,:execute_changes
 
     # Extracts an 2 dimensional array of commands which are in the
@@ -38,10 +38,27 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         if data.is_a?(String)
             data.each_line do |line|
                 cmd_array = Array.new()
-                tokens = line.split(" ")
-                cmd = tokens.shift()
-                file = tokens.shift()
-                other = tokens.join(" ")
+                single = line.index("'")
+                double = line.index('"')
+                tokens = nil
+                delim = " "
+                if ((single != nil) or (double != nil))
+                    single = 99999 if single == nil
+                    double = 99999 if double == nil
+                    delim = '"' if double < single
+                    delim = "'" if single < double
+                end
+                tokens = line.split(delim)
+                # If the length of tokens is 2, thn that means the pattern was
+                # command file "some text", therefore we need to re-split
+                # the first line
+                if tokens.length == 2
+                    tokens = (tokens[0].split(" ")) << tokens[1]
+                end
+                cmd = tokens.shift().strip()
+                delim = "" if delim == " "
+                file = tokens.shift().strip()
+                other = tokens.join(" ").strip()
                 cmd_array << cmd if !cmd.nil?
                 cmd_array << file if !file.nil?
                 cmd_array << other if other != ""
@@ -64,7 +81,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         debug("Opening augeas with root #{root}, lens path #{load_path}, flags #{flags}")
         Augeas.open(root, load_path,flags)
     end
-    
+
     # Used by the need_to_run? method to process get filters. Returns
     # true if there is a match, false if otherwise
     # Assumes a syntax of get /files/path [COMPARATOR] value
@@ -94,8 +111,8 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             end
         end
         return_value
-    end    
-    
+    end
+
     # Used by the need_to_run? method to process match filters. Returns
     # true if there is a match, false if otherwise
     def process_match(cmd_array)
@@ -132,8 +149,8 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             end
         end
         return_value
-    end    
-    
+    end
+
     # Determines if augeas acutally needs to run.
     def need_to_run?
         return_value = true
@@ -153,8 +170,8 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             end
         end
         return_value
-    end 
-    
+    end
+
     # Actually execute the augeas changes.
     def execute_changes
         aug = open_augeas
@@ -164,7 +181,8 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             fail("invalid command #{cmd_array.join[" "]}") if cmd_array.length < 2
             command = cmd_array[0]
             cmd_array.shift()
-            cmd_array[0]=File.join(context, cmd_array[0])
+            loc = cmd_array[0]
+            cmd_array[0]=File.join(context, loc)
             debug("sending command '#{command}' with params #{cmd_array.inspect}")
             begin
                 case command
@@ -183,7 +201,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             fail("Save failed with return code #{success}")
         end
 
-        return :executed    
-    end   
-    
+        return :executed
+    end
+
 end
