@@ -822,10 +822,6 @@ class Type
         end
         @evalcount += 1
 
-        if p = self.provider and p.respond_to?(:prefetch)
-            p.prefetch
-        end
-
         # this only operates on properties, not properties + children
         # it's important that we call retrieve() on the type instance,
         # not directly on the property, because it allows the type to override
