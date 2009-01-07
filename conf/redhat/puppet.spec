@@ -2,12 +2,14 @@
 %define confdir conf/redhat
 
 Name:           puppet
-Version:        0.24.6
-Release:        1%{?dist}
+Version:        0.24.7
+Release:        3%{?dist}
 Summary:        A network tool for managing many disparate systems
 License:        GPLv2+
 URL:            http://puppet.reductivelabs.com/
 Source0:        http://reductivelabs.com/downloads/puppet/%{name}-%{version}.tgz
+Group:          System Environment/Base
+
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires:  ruby >= 1.8.1
@@ -18,8 +20,14 @@ Requires:       ruby(abi) = 1.8
 Requires:       ruby-shadow
 %endif
 
+# Pull in libselinux-ruby where it is available
+%if 0%{?fedora} >=9
+Requires:       libselinux-ruby
+%endif
+
 Requires:       facter >= 1.1.4
 Requires:       ruby >= 1.8.1
+Requires:       ruby-augeas
 Requires(pre):  shadow-utils
 Requires(post): chkconfig
 Requires(preun): chkconfig
@@ -142,9 +150,12 @@ touch %{buildroot}%{_sysconfdir}/puppet/puppetd.conf
 %doc %{_mandir}/man8/puppetmasterd.8.gz
 %doc %{_mandir}/man8/puppetrun.8.gz
 
+# Fixed uid/gid were assigned in bz 472073 (Fedora), 471918 (RHEL-5),
+# and 471919 (RHEL-4)
 %pre
-getent group puppet >/dev/null || groupadd -r puppet
+getent group puppet >/dev/null || groupadd -r puppet -g 52
 getent passwd puppet >/dev/null || \
+useradd -r -u 52 -g puppet -d %{_localstatedir}/lib/puppet -s /sbin/nologin \
 useradd -r -g puppet -d %{_localstatedir}/lib/puppet -s /sbin/nologin \
     -c "Puppet" puppet || :
 # ensure that old setups have the right puppet home dir
@@ -184,6 +195,12 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Tue Dec 16 2008 Jeroen van Meeuwen <kanarip@kanarip.com> - 0.24.7-3
+- New upstream version
+- Set a static uid and gid (#472073, #471918, #471919)
+- Add a conditional requirement on libselinux-ruby for Fedora >= 9
+- Add a dependency on ruby-augeas
+
 * Wed Oct 22 2008 Todd Zullinger <tmz@pobox.com> - 0.24.6-1
 - Update to 0.24.6
 - Require ruby-shadow on Fedora and RHEL >= 5
