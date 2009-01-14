@@ -13,6 +13,9 @@ describe Puppet::Util::NagiosMaker do
 
         @nagtype = stub 'nagios type', :parameters => [], :namevar => :name
         Nagios::Base.stubs(:type).with(:test).returns(@nagtype)
+
+        @provider = stub 'provider', :nagios_type => nil
+        @type = stub 'type', :newparam => nil, :newproperty => nil, :provide => @provider, :desc => nil, :ensurable => nil
     end
 
     it "should be able to create a new nagios type" do
@@ -26,73 +29,59 @@ describe Puppet::Util::NagiosMaker do
     end
 
     it "should create a new RAL type with the provided name prefixed with 'nagios_'" do
-        type = stub 'type', :newparam => nil, :newproperty => nil, :ensurable => nil, :provide => nil, :desc => nil
-
-        Puppet::Type.expects(:newtype).with(:nagios_test).returns(type)
+        Puppet::Type.expects(:newtype).with(:nagios_test).returns(@type)
         @module.create_nagios_type(:test)
     end
 
     it "should mark the created type as ensurable" do
-        type = stub 'type', :newparam => nil, :newproperty => nil, :provide => nil, :desc => nil
+        @type.expects(:ensurable)
 
-        type.expects(:ensurable)
-
-        Puppet::Type.expects(:newtype).with(:nagios_test).returns(type)
+        Puppet::Type.expects(:newtype).with(:nagios_test).returns(@type)
         @module.create_nagios_type(:test)
     end
 
     it "should create a namevar parameter for the nagios type's name parameter" do
-        type = stub 'type', :newproperty => nil, :ensurable => nil, :provide => nil, :desc => nil
+        @type.expects(:newparam).with(:name, :namevar => true)
 
-        type.expects(:newparam).with(:name, :namevar => true)
-
-        Puppet::Type.expects(:newtype).with(:nagios_test).returns(type)
+        Puppet::Type.expects(:newtype).with(:nagios_test).returns(@type)
         @module.create_nagios_type(:test)
     end
 
     it "should create a property for all non-namevar parameters" do
-        type = stub 'type', :newparam => nil, :ensurable => nil, :provide => nil, :desc => nil
-
         @nagtype.stubs(:parameters).returns([:one, :two])
 
-        type.expects(:newproperty).with(:one)
-        type.expects(:newproperty).with(:two)
-        type.expects(:newproperty).with(:target)
+        @type.expects(:newproperty).with(:one)
+        @type.expects(:newproperty).with(:two)
+        @type.expects(:newproperty).with(:target)
 
-        Puppet::Type.expects(:newtype).with(:nagios_test).returns(type)
+        Puppet::Type.expects(:newtype).with(:nagios_test).returns(@type)
         @module.create_nagios_type(:test)
     end
 
     it "should skip parameters that start with integers" do
-        type = stub 'type', :newparam => nil, :ensurable => nil, :provide => nil, :desc => nil
-
         @nagtype.stubs(:parameters).returns(["2dcoords".to_sym, :other])
 
-        type.expects(:newproperty).with(:other)
-        type.expects(:newproperty).with(:target)
+        @type.expects(:newproperty).with(:other)
+        @type.expects(:newproperty).with(:target)
 
-        Puppet::Type.expects(:newtype).with(:nagios_test).returns(type)
+        Puppet::Type.expects(:newtype).with(:nagios_test).returns(@type)
         @module.create_nagios_type(:test)
     end
 
     it "should deduplicate the parameter list" do
-        type = stub 'type', :newparam => nil, :ensurable => nil, :provide => nil, :desc => nil
-
         @nagtype.stubs(:parameters).returns([:one, :one])
 
-        type.expects(:newproperty).with(:one)
-        type.expects(:newproperty).with(:target)
+        @type.expects(:newproperty).with(:one)
+        @type.expects(:newproperty).with(:target)
 
-        Puppet::Type.expects(:newtype).with(:nagios_test).returns(type)
+        Puppet::Type.expects(:newtype).with(:nagios_test).returns(@type)
         @module.create_nagios_type(:test)
     end
 
     it "should create a target property" do
-        type = stub 'type', :newparam => nil, :ensurable => nil, :provide => nil, :desc => nil
+        @type.expects(:newproperty).with(:target)
 
-        type.expects(:newproperty).with(:target)
-
-        Puppet::Type.expects(:newtype).with(:nagios_test).returns(type)
+        Puppet::Type.expects(:newtype).with(:nagios_test).returns(@type)
         @module.create_nagios_type(:test)
     end
 end
@@ -100,6 +89,7 @@ end
 describe Puppet::Util::NagiosMaker, " when creating the naginator provider" do
     before do
         @module = Puppet::Util::NagiosMaker
+        @provider = stub 'provider', :nagios_type => nil
 
         @nagtype = stub 'nagios type', :parameters => [], :namevar => :name
         Nagios::Base.stubs(:type).with(:test).returns(@nagtype)
@@ -109,19 +99,27 @@ describe Puppet::Util::NagiosMaker, " when creating the naginator provider" do
     end
 
     it "should add a naginator provider" do
-        @type.expects(:provide).with { |name, options| name == :naginator }
+        @type.expects(:provide).with { |name, options| name == :naginator }.returns @provider
 
         @module.create_nagios_type(:test)
     end
 
     it "should set Puppet::Provider::Naginator as the parent class of the provider" do
-        @type.expects(:provide).with { |name, options| options[:parent] == Puppet::Provider::Naginator }
+        @type.expects(:provide).with { |name, options| options[:parent] == Puppet::Provider::Naginator }.returns @provider
 
         @module.create_nagios_type(:test)
     end
 
     it "should use /etc/nagios/$name.cfg as the default target" do
-        @type.expects(:provide).with { |name, options| options[:default_target] == "/etc/nagios/nagios_test.cfg" }
+        @type.expects(:provide).with { |name, options| options[:default_target] == "/etc/nagios/nagios_test.cfg" }.returns @provider
+
+        @module.create_nagios_type(:test)
+    end
+
+    it "should trigger the lookup of the Nagios class" do
+        @type.expects(:provide).returns @provider
+
+        @provider.expects(:nagios_type)
 
         @module.create_nagios_type(:test)
     end

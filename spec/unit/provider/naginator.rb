@@ -47,4 +47,12 @@ describe Puppet::Provider::Naginator do
     it "should be able to prefetch instance from configuration files" do
         @class.should respond_to(:prefetch)
     end
+
+    it "should be able to generate a list of instances" do
+        @class.should respond_to(:instances)
+    end
+
+    it "should never skip records" do
+        @class.should_not be_skip_record("foo")
+    end
 end
