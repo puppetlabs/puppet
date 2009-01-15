@@ -74,7 +74,7 @@ class Puppet::Util::FileType
 
     # Back the file up before replacing it.
     def backup
-        bucket.backup(@path) if FileTest.exists?(@path)
+        bucket.backup(@path) if File.exists?(@path)
     end
 
     # Pick or create a filebucket to use.
@@ -92,7 +92,7 @@ class Puppet::Util::FileType
     newfiletype(:flat) do
         # Read the file.
         def read
-            if File.exists?(@path)
+            if File.exist?(@path)
                 File.read(@path)
             else
                 return nil
@@ -101,7 +101,7 @@ class Puppet::Util::FileType
 
         # Remove the file.
         def remove
-            if File.exists?(@path)
+            if File.exist?(@path)
                 File.unlink(@path)
             end
         end
