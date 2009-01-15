@@ -17,6 +17,14 @@ Puppet::Type.type(:mailalias).provide(:aliases,
             record
         end
 
+        def process(line)
+          ret = {}
+          records = line.split(':',2)
+          ret[:name] = records[0].strip()
+          ret[:recipient] = records[1].strip()
+          ret
+        end
+
         def to_line(record)
             dest = record[:recipient].collect do |d|
                 # Quote aliases that have non-alpha chars
