@@ -47,4 +47,40 @@ describe Puppet::Provider::ParsedFile do
             @class.instances
         end
     end
+
+    describe "when flushing a file's records to disk" do
+        before do
+            # This way we start with some @records, like we would in real life.
+            @class.stubs(:retrieve).returns []
+            @class.default_target = "/foo/bar"
+            @class.initvars
+            @class.prefetch
+
+            @filetype = mock 'filetype'
+            Puppet::Util::FileType.filetype(:flat).expects(:new).with("/my/file").returns @filetype
+
+            @filetype.stubs(:write)
+        end
+
+        it "should back up the file being written" do
+            @filetype.expects(:backup)
+
+            @class.flush_target("/my/file")
+        end
+
+        it "should not back up the file more than once between calls to 'prefetch'" do
+            @filetype.expects(:backup).once
+
+            @class.flush_target("/my/file")
+            @class.flush_target("/my/file")
+        end
+
+        it "should back the file up again once the file has been reread" do
+            @filetype.expects(:backup).times(2)
+
+            @class.flush_target("/my/file")
+            @class.prefetch
+            @class.flush_target("/my/file")
+        end
+    end
 end

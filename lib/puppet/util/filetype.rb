@@ -108,7 +108,6 @@ class Puppet::Util::FileType
 
         # Overwrite the file.
         def write(text)
-            backup()
             require "tempfile"
             tf = Tempfile.new("puppet") 
             tf.print text; tf.flush 

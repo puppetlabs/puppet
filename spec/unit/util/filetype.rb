@@ -91,12 +91,6 @@ describe Puppet::Util::FileType do
                 Tempfile.stubs(:new).returns @tempfile
             end
 
-            it "should back up the file" do
-                @file.expects(:backup)
-
-                @file.write("foo")
-            end
-
             it "should first create a temp file and copy its contents over to the file location" do
                 Tempfile.expects(:new).with("puppet").returns @tempfile
                 @tempfile.expects(:print).with("my text")
