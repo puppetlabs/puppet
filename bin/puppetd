@@ -328,19 +328,22 @@ end
 Puppet::SSL::Host.ca_location = :remote
 
 Puppet::Transaction::Report.terminus_class = :rest
+Puppet::Node::Facts.terminus_class = :facter
+Puppet::Node::Facts.cache_class = :rest
 
-# We need tomake the client either way, we just don't start it
-# if --no-client is set.
-client = Puppet::Network::Client.master.new(args)
 if options[:enable]
-    client.enable
+    Puppet::Agent.enable
 elsif options[:disable]
-    client.disable
+    Puppet::Agent.disable
 end
 
 if options[:enable] or options[:disable]
     exit(0)
 end
+
+# We need tomake the client either way, we just don't start it
+# if --no-client is set.
+client = Puppet::Network::Client.master.new(args)
 
 server = nil
 

@@ -1,25 +1,9 @@
 require 'puppet/agent'
 
+# A simple class that abstracts downloading files
+# fromthe server.
 class Puppet::Agent::Downloader
     attr_reader :name, :path, :source, :ignore
-
-    # Determine the timeout value to use.
-    def self.timeout
-        timeout = Puppet[:configtimeout]
-        case timeout
-        when String:
-            if timeout =~ /^\d+$/
-                timeout = Integer(timeout)
-            else
-                raise ArgumentError, "Configuration timeout must be an integer"
-            end
-        when Integer: # nothing
-        else
-            raise ArgumentError, "Configuration timeout must be an integer"
-        end
-
-        return timeout
-    end
 
     # Evaluate our download, returning the list of changed values.
     def evaluate
@@ -27,10 +11,10 @@ class Puppet::Agent::Downloader
 
         files = []
         begin
-            Timeout.timeout(self.class.timeout) do
+            Timeout.timeout(Puppet::Agent.timeout) do
                 catalog.apply do |trans|
                     trans.changed?.find_all do |resource|
-                        yield resource if block_given?
+                        yield resource[:path] if block_given?
                         files << resource[:path]
                     end
                 end
