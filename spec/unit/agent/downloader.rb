@@ -20,6 +20,15 @@ describe Puppet::Agent::Downloader do
         dler.source.should == "source"
     end
 
+    it "should be able to provide a timeout value" do
+        Puppet::Agent::Downloader.should respond_to(:timeout)
+    end
+
+    it "should use the configtimeout, converted to an integer, as its timeout" do
+        Puppet.settings.expects(:value).with(:configtimeout).returns "50"
+        Puppet::Agent::Downloader.timeout.should == 50
+    end
+
     describe "when creating the file that does the downloading" do
         before do
             @dler = Puppet::Agent::Downloader.new("foo", "path", "source")
@@ -109,8 +118,8 @@ describe Puppet::Agent::Downloader do
             @dler.evaluate
         end
 
-        it "should use the agent timeout for the download" do
-            Puppet::Agent.expects(:timeout).returns 50
+        it "should set a timeout for the download" do
+            Puppet::Agent::Downloader.expects(:timeout).returns 50
             Timeout.expects(:timeout).with(50)
 
             @dler.evaluate
@@ -144,7 +153,7 @@ describe Puppet::Agent::Downloader do
             @dler.evaluate.should == %w{/changed/file}
         end
 
-        it "should yield the downloaded file's path if a block is given" do
+        it "should yield the resources if a block is given" do
             trans = mock 'transaction'
 
             catalog = mock 'catalog'
@@ -154,13 +163,13 @@ describe Puppet::Agent::Downloader do
             Timeout.expects(:timeout).yields
 
             resource = mock 'resource'
-            resource.stubs(:[]).with(:path).returns "/changed/file"
+            resource.expects(:[]).with(:path).returns "/changed/file"
 
             trans.expects(:changed?).returns([resource])
 
             yielded = nil
             @dler.evaluate { |r| yielded = r }
-            yielded.should == "/changed/file"
+            yielded.should == resource
         end
 
         it "should catch and log exceptions" do
