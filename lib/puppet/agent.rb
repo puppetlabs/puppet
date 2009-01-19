@@ -2,8 +2,12 @@
 require 'sync'
 require 'timeout'
 require 'puppet/network/http_pool'
+require 'puppet/util'
 
-class Puppet::Network::Client::Master < Puppet::Network::Client
+class Puppet::Agent
+    # For benchmarking
+    include Puppet::Util
+
     unless defined? @@sync
         @@sync = Sync.new
     end
@@ -136,7 +140,7 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
             facts = self.class.facts
         end
 
-        raise Puppet::Network::ClientError.new("Could not retrieve any facts") unless facts.length > 0
+        raise Puppet::Error.new("Could not retrieve any facts") unless facts.length > 0
 
         Puppet.debug("Retrieving catalog")
 
@@ -192,9 +196,8 @@ class Puppet::Network::Client::Master < Puppet::Network::Client
     end
     
     # Just so we can specify that we are "the" instance.
-    def initialize(*args)
+    def initialize
         Puppet.settings.use(:main, :ssl, :puppetd)
-        super
 
         self.class.instance = self
         @running = false

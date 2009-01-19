@@ -1,48 +1,23 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../lib/puppettest'
+require File.dirname(__FILE__) + '/lib/puppettest'
 
 require 'puppettest'
+require 'puppet/agent'
 require 'mocha'
 
-class TestMasterClient < Test::Unit::TestCase
+class TestAgent < Test::Unit::TestCase
     include PuppetTest::ServerTest
 
     def setup
         super
-        @master = Puppet::Network::Client.master
-    end
-
-    def mkmaster(options = {})
-        options[:UseNodes] = false
-        options[:Local] = true
-        if code = options[:Code]
-            Puppet[:code] = code
-        else
-            Puppet[:manifest] = options[:Manifest] || mktestmanifest
-        end
-        # create our master
-        # this is the default server setup
-        master = Puppet::Network::Handler.master.new(options)
-        return master
-    end
-
-    def mkclient(master = nil)
-        master ||= mkmaster()
-        client = Puppet::Network::Client.master.new(
-            :Master => master
-        )
-
-        return client
+        @agent_class = Puppet::Agent
     end
 
     def test_disable
         FileUtils.mkdir_p(Puppet[:statedir])
-        manifest = mktestmanifest
 
-        master = mkmaster(:Manifest => manifest)
-
-        client = mkclient(master)
+        client = Puppet::Agent.new
 
         assert_nothing_raised("Could not disable client") {
             client.disable
@@ -52,7 +27,7 @@ class TestMasterClient < Test::Unit::TestCase
 
         client.run
 
-        client = mkclient(master)
+        client = Puppet::Agent.new
 
         client.expects(:getconfig)
 
@@ -66,7 +41,7 @@ class TestMasterClient < Test::Unit::TestCase
     def test_clientversionfact
         facts = nil
         assert_nothing_raised {
-            facts = Puppet::Network::Client.master.facts
+            facts = Puppet::Agent.facts
         }
 
         assert_equal(Puppet.version.to_s, facts["clientversion"])
@@ -81,15 +56,11 @@ class TestMasterClient < Test::Unit::TestCase
             setcode { 1 }
         end
 
-        assert_equal(1, Facter.nonstring, "Fact was a string from facter")
+        # so we don't lose our fact setting
+        Facter.stubs(:clear)
+        Puppet::Agent.stubs(:loadfacts)
 
-        client = mkclient()
-
-        assert(! FileTest.exists?(@createdfile))
-
-        assert_nothing_raised {
-            client.run
-        }
+        assert_equal("1", Puppet::Agent.facts["nonstring"], "Did not convert all facts to strings")
     end
     
     # This method downloads files, and yields each file object if a block is given.
@@ -103,7 +74,7 @@ class TestMasterClient < Test::Unit::TestCase
         
         files = []
         assert_nothing_raised do
-            files = Puppet::Network::Client.master.download(:dest => dest, :source => source, :name => "testing")
+            files = Puppet::Agent.download(:dest => dest, :source => source, :name => "testing")
         end
         
         assert(FileTest.directory?(dest), "dest dir was not created")
@@ -127,7 +98,7 @@ class TestMasterClient < Test::Unit::TestCase
         end
 
         assert_nothing_raised("Could not get plugins") {
-            Puppet::Network::Client.master.getplugins
+            Puppet::Agent.getplugins
         }
 
         destfile = File.join(Puppet[:plugindest], "testing", "myplugin.rb")
@@ -144,14 +115,14 @@ class TestMasterClient < Test::Unit::TestCase
         end
 
         assert_nothing_raised("Could not get plugin changes") {
-            Puppet::Network::Client.master.getplugins
+            Puppet::Agent.getplugins
         }
 
         assert($loaded.include?(:changed), "Changed code was not evaluated")
 
         # Now try it again, to make sure we don't have any objects lying around
         assert_nothing_raised {
-            Puppet::Network::Client.master.getplugins
+            Puppet::Agent.getplugins
         }
     end
 
@@ -170,14 +141,14 @@ end
         end
 
         assert_nothing_raised {
-            Puppet::Network::Client.master.getfacts
+            Puppet::Agent.getfacts
         }
 
         destfile = File.join(Puppet[:factdest], "myfact.rb")
 
         assert(File.exists?(destfile), "Did not get fact")
 
-        facts = Puppet::Network::Client.master.facts
+        facts = Puppet::Agent.facts
 
         assert_equal(hostname, facts["hostname"],
             "Lost value to hostname")
@@ -194,9 +165,9 @@ end
         end
 
         assert_nothing_raised {
-            Puppet::Network::Client.master.getfacts
+            Puppet::Agent.getfacts
         }
-        facts = Puppet::Network::Client.master.facts
+        facts = Puppet::Agent.facts
 
         assert_equal("funtest", facts["myfact"],
             "Did not reload fact")
@@ -205,9 +176,9 @@ end
 
         # Now run it again and make sure the fact still loads
         assert_nothing_raised {
-            Puppet::Network::Client.master.getfacts
+            Puppet::Agent.getfacts
         }
-        facts = Puppet::Network::Client.master.facts
+        facts = Puppet::Agent.facts
 
         assert_equal("funtest", facts["myfact"],
             "Did not reload fact")
@@ -222,7 +193,7 @@ end
 
         Facter.stubs(:to_hash).returns(name => value)
 
-        assert_equal(value, Puppet::Network::Client.master.facts[name])
+        assert_equal(value, Puppet::Agent.facts[name])
     end
 
     # Make sure we load all facts on startup.
@@ -250,7 +221,7 @@ end
         end
 
         assert_nothing_raised {
-            Puppet::Network::Client.master.loadfacts
+            Puppet::Agent.loadfacts
         }
 
         names.each do |name|
@@ -279,7 +250,7 @@ end
 
 
         assert_nothing_raised {
-            Puppet::Network::Client.master.download(:dest => dest, :source => dir,
+            Puppet::Agent.download(:dest => dest, :source => dir,
                 :name => "testing"
             ) {}
         }
@@ -296,7 +267,7 @@ end
     def test_facts
         facts = nil
         assert_nothing_raised do
-            facts = Puppet::Network::Client.master.facts
+            facts = Puppet::Agent.facts
         end
         Facter.to_hash.each do |fact, value|
             assert_equal(facts[fact.downcase], value.to_s, "%s is not equal" % fact.inspect)
@@ -318,7 +289,7 @@ end
         node = stub 'node', :environment => "development"
         Puppet::Node.stubs(:find).returns node
         assert_nothing_raised("Could not download in noop") do
-            @master.download(:dest => dest, :source => source, :tag => "yay")
+            @agent_class.download(:dest => dest, :source => source, :tag => "yay")
         end
 
         assert(FileTest.exists?(dest), "did not download in noop mode")
@@ -328,10 +299,7 @@ end
 
     # #491 - make sure a missing config doesn't kill us
     def test_missing_localconfig
-        master = mkclient
-        master.local = false
-        driver = master.send(:instance_variable_get, "@driver")
-        driver.local = false
+        master = Puppet::Agent.new
         Puppet::Node::Facts.indirection.stubs(:save)
         # Retrieve the configuration
 
@@ -351,7 +319,7 @@ end
     end
 
     def test_locking
-        master = mkclient
+        master = Puppet::Agent.new
 
         class << master
             def getconfig
@@ -367,7 +335,7 @@ end
 
     # Make sure we get a value for timeout
     def test_config_timeout
-        master = Puppet::Network::Client.client(:master)
+        master = Puppet::Agent
         time = Integer(Puppet[:configtimeout])
         assert_equal(time, master.timeout, "Did not get default value for timeout")
         assert_equal(time, master.timeout, "Did not get default value for timeout on second run")
@@ -384,7 +352,7 @@ end
     end
 
     def test_splay
-        client = mkclient
+        client = Puppet::Agent.new
 
         # Make sure we default to no splay
         client.expects(:sleep).never
@@ -394,7 +362,7 @@ end
         end
 
         # Now set it to true and make sure we get the right value
-        client = mkclient
+        client = Puppet::Agent.new
         client.expects(:sleep)
 
         Puppet[:splay] = true
@@ -403,7 +371,7 @@ end
         end
 
         # Now try it again
-        client = mkclient
+        client = Puppet::Agent.new
         client.expects(:sleep)
 
         assert_nothing_raised("Failed to call sleep when splay is true with a cached value") do
@@ -412,18 +380,18 @@ end
     end
 
     def test_environment_is_added_to_facts
-        facts = Puppet::Network::Client::Master.facts
+        facts = Puppet::Agent.facts
         assert_equal(facts["environment"], Puppet[:environment], "Did not add environment to client facts")
 
         # Now set it to a real value
-	Puppet[:environment] = "something"
-        facts = Puppet::Network::Client::Master.facts
+        Puppet[:environment] = "something"
+        facts = Puppet::Agent.facts
         assert_equal(facts["environment"], Puppet[:environment], "Did not add environment to client facts")
     end
 
     # #685
     def test_http_failures_do_not_kill_puppetd
-        client = mkclient
+        client = Puppet::Agent.new
 
         client.meta_def(:getconfig) { raise "A failure" }
 
@@ -432,33 +400,12 @@ end
         end
     end
 
-    def test_invalid_catalogs_do_not_get_cached
-        master = mkmaster :Code => "notify { one: require => File[yaytest] }"
-        master.local = false # so it gets cached
-        client = mkclient(master)
-        client.stubs(:facts).returns({})
-        client.local = false
-
-        Puppet::Node::Facts.indirection.stubs(:terminus_class).returns(:memory)
-
-        # Make sure the config is not cached.
-        client.expects(:cache).never
-
-        client.getconfig
-        # Doesn't throw an exception, but definitely fails.
-        client.run
-    end
-
     def test_classfile
         Puppet[:code] = "class yaytest {}\n class bootest {}\n include yaytest, bootest"
 
         Puppet::Node::Facts.indirection.stubs(:save)
 
-        master = Puppet::Network::Handler.master.new( :Local => false)
-        client = Puppet::Network::Client.master.new( :Master => master)
-
-        # Fake that it's local, so it creates the class file
-        client.local = false
+        client = Puppet::Agent.new
 
         # We can't guarantee class ordering
         client.expects(:setclasses).with do |array|
