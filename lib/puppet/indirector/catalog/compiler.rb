@@ -14,8 +14,14 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
     # Compile a node's catalog.
     def find(request)
-        unless node = request.options[:use_node] || find_node(request.key)
-            raise ArgumentError, "Could not find node '%s'; cannot compile" % request.key
+        unless node = request.options[:use_node]
+            # If the request is authenticated, then the 'node' info will
+            # be available; if not, then we use the passed-in key.  We rely
+            # on our authorization system to determine whether this is allowed.
+            name = request.node || request.key
+            unless node = find_node(name)
+                raise ArgumentError, "Could not find node '%s'; cannot compile" % name
+            end
         end
 
         if catalog = compile(node)
@@ -81,15 +87,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     end
 
     # Turn our host name into a node object.
-    def find_node(key)
-        # If we want to use the cert name as our key
-        # LAK:FIXME This needs to be figured out somehow, but it requires the routing.
-        # This should be able to use the request, yay.
-        #if Puppet[:node_name] == 'cert' and client
-        #    key = client
-        #end
-
-        return nil unless node = Puppet::Node.find(key)
+    def find_node(name)
+        return nil unless node = Puppet::Node.find(name)
 
         # Add any external data to the node.
         add_node_data(node)

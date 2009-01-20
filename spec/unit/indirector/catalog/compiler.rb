@@ -27,8 +27,8 @@ describe Puppet::Resource::Catalog::Compiler do
             Puppet::Node.stubs(:find).with('node1').returns(node1)
             Puppet::Node.stubs(:find).with('node2').returns(node2)
 
-            compiler.find(stub('request', :key => 'node1', :options => {}))
-            compiler.find(stub('node2request', :key => 'node2', :options => {}))
+            compiler.find(stub('request', :node => 'node1', :options => {}))
+            compiler.find(stub('node2request', :node => 'node2', :options => {}))
         end
 
         it "should provide a method for determining if the catalog is networked" do
@@ -58,53 +58,7 @@ describe Puppet::Resource::Catalog::Compiler do
         end
     end
 
-    describe "when finding nodes" do
-        before do
-            Facter.stubs(:value).returns("whatever")
-            @compiler = Puppet::Resource::Catalog::Compiler.new
-            @name = "me"
-            @node = mock 'node'
-            @request = stub 'request', :key => @name, :options => {}
-            @compiler.stubs(:compile)
-        end
-
-        it "should look node information up via the Node class with the provided key" do
-            @node.stubs :merge 
-            Puppet::Node.expects(:find).with(@name).returns(@node)
-            @compiler.find(@request)
-        end
-    end
-
-    describe "after finding nodes" do
-        before do
-            Puppet.expects(:version).returns(1)
-            Facter.expects(:value).with('fqdn').returns("my.server.com")
-            Facter.expects(:value).with('ipaddress').returns("my.ip.address")
-            @compiler = Puppet::Resource::Catalog::Compiler.new
-            @name = "me"
-            @node = mock 'node'
-            @request = stub 'request', :key => @name, :options => {}
-            @compiler.stubs(:compile)
-            Puppet::Node.stubs(:find).with(@name).returns(@node)
-        end
-
-        it "should add the server's Puppet version to the node's parameters as 'serverversion'" do
-            @node.expects(:merge).with { |args| args["serverversion"] == "1" }
-            @compiler.find(@request)
-        end
-
-        it "should add the server's fqdn to the node's parameters as 'servername'" do
-            @node.expects(:merge).with { |args| args["servername"] == "my.server.com" }
-            @compiler.find(@request)
-        end
-
-        it "should add the server's IP address to the node's parameters as 'serverip'" do
-            @node.expects(:merge).with { |args| args["serverip"] == "my.ip.address" }
-            @compiler.find(@request)
-        end
-    end
-
-    describe "when creating catalogs" do
+    describe "when finding catalogs" do
         before do
             Facter.stubs(:value).returns("whatever")
             env = stub 'environment', :name => "yay"
@@ -114,13 +68,28 @@ describe Puppet::Resource::Catalog::Compiler do
             @name = "me"
             @node = Puppet::Node.new @name
             @node.stubs(:merge)
-            @request = stub 'request', :key => @name, :options => {}
+            @request = stub 'request', :key => "does not matter", :node => @name, :options => {}
         end
 
         it "should directly use provided nodes" do
             Puppet::Node.expects(:find).never
             @compiler.expects(:compile).with(@node)
             @request.stubs(:options).returns(:use_node => @node)
+            @compiler.find(@request)
+        end
+
+        it "should use the request's node name if no explicit node is provided" do
+            Puppet::Node.expects(:find).with(@name).returns(@node)
+            @compiler.expects(:compile).with(@node)
+            @compiler.find(@request)
+        end
+
+        it "should use the provided node name if no explicit node is provided and no authenticated node information is available" do
+            @request.expects(:node).returns nil
+            @request.expects(:key).returns "my_node"
+
+            Puppet::Node.expects(:find).with("my_node").returns @node
+            @compiler.expects(:compile).with(@node)
             @compiler.find(@request)
         end
 
@@ -152,6 +121,52 @@ describe Puppet::Resource::Catalog::Compiler do
                 level == :notice and message =~ /^Compiled catalog/
             end
             @compiler.interpreter.stubs(:compile).with(@node)
+            @compiler.find(@request)
+        end
+    end
+
+    describe "when finding nodes" do
+        before do
+            Facter.stubs(:value).returns("whatever")
+            @compiler = Puppet::Resource::Catalog::Compiler.new
+            @name = "me"
+            @node = mock 'node'
+            @request = stub 'request', :node => @name, :options => {}
+            @compiler.stubs(:compile)
+        end
+
+        it "should look node information up via the Node class with the provided key" do
+            @node.stubs :merge 
+            Puppet::Node.expects(:find).with(@name).returns(@node)
+            @compiler.find(@request)
+        end
+    end
+
+    describe "after finding nodes" do
+        before do
+            Puppet.expects(:version).returns(1)
+            Facter.expects(:value).with('fqdn').returns("my.server.com")
+            Facter.expects(:value).with('ipaddress').returns("my.ip.address")
+            @compiler = Puppet::Resource::Catalog::Compiler.new
+            @name = "me"
+            @node = mock 'node'
+            @request = stub 'request', :node => @name, :options => {}
+            @compiler.stubs(:compile)
+            Puppet::Node.stubs(:find).with(@name).returns(@node)
+        end
+
+        it "should add the server's Puppet version to the node's parameters as 'serverversion'" do
+            @node.expects(:merge).with { |args| args["serverversion"] == "1" }
+            @compiler.find(@request)
+        end
+
+        it "should add the server's fqdn to the node's parameters as 'servername'" do
+            @node.expects(:merge).with { |args| args["servername"] == "my.server.com" }
+            @compiler.find(@request)
+        end
+
+        it "should add the server's IP address to the node's parameters as 'serverip'" do
+            @node.expects(:merge).with { |args| args["serverip"] == "my.ip.address" }
             @compiler.find(@request)
         end
     end
