@@ -37,17 +37,6 @@ class TestAgent < Test::Unit::TestCase
         client.run
     end
 
-    # Make sure we're getting the client version in our list of facts
-    def test_clientversionfact
-        facts = nil
-        assert_nothing_raised {
-            facts = Puppet::Agent.facts
-        }
-
-        assert_equal(Puppet.version.to_s, facts["clientversion"])
-        
-    end
-
     # Make sure non-string facts don't make things go kablooie
     def test_nonstring_facts
         FileUtils.mkdir_p(Puppet[:statedir])
@@ -186,16 +175,6 @@ end
             "Lost value to hostname")
     end
 
-    # Make sure that setting environment by fact takes precedence to configuration
-    def test_setenvironmentwithfact
-        name = "environment"
-        value = "test_environment"
-
-        Facter.stubs(:to_hash).returns(name => value)
-
-        assert_equal(value, Puppet::Agent.facts[name])
-    end
-
     # Make sure we load all facts on startup.
     def test_loadfacts
         dirs = [tempfile(), tempfile()]
@@ -272,12 +251,6 @@ end
         Facter.to_hash.each do |fact, value|
             assert_equal(facts[fact.downcase], value.to_s, "%s is not equal" % fact.inspect)
         end
-        
-        # Make sure the puppet version got added
-        assert_equal(Puppet::PUPPETVERSION, facts["clientversion"], "client version did not get added")
-        
-        # And make sure the ruby version is in there
-        assert_equal(RUBY_VERSION, facts["rubyversion"], "ruby version did not get added")
     end
     
     # #540 - make sure downloads aren't affected by noop
@@ -377,16 +350,6 @@ end
         assert_nothing_raised("Failed to call sleep when splay is true with a cached value") do
             client.send(:splay)
         end
-    end
-
-    def test_environment_is_added_to_facts
-        facts = Puppet::Agent.facts
-        assert_equal(facts["environment"], Puppet[:environment], "Did not add environment to client facts")
-
-        # Now set it to a real value
-        Puppet[:environment] = "something"
-        facts = Puppet::Agent.facts
-        assert_equal(facts["environment"], Puppet[:environment], "Did not add environment to client facts")
     end
 
     # #685

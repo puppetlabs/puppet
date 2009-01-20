@@ -54,15 +54,6 @@ class Puppet::Agent
             newhash
         end
 
-        # Add our client version to the list of facts, so people can use it
-        # in their manifests
-        facts["clientversion"] = Puppet.version.to_s
-
-        # And add our environment as a fact.
-        unless facts.include?("environment")
-            facts["environment"] = Puppet[:environment]
-        end
- 
         facts
     end
 
