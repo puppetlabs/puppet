@@ -92,7 +92,7 @@ module Functions
             #ret += "%s\n%s\n" % [name, hash[:type]]
             ret += "%s\n%s\n" % [name, "-" * name.to_s.length]
             if hash[:doc]
-                ret += hash[:doc].gsub(/\n\s*/, ' ')
+                ret += Puppet::Util::Docs.scrub(hash[:doc])
             else
                 ret += "Undocumented.\n"
             end

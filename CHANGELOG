@@ -1,4 +1,6 @@
 0.25.0
+    Doc strings update for REST
+
     Fixed #1840 - Bug fixes and improvements for Emacs puppet-mode.el
 
     Updated Red Hat spec file 0.24.7
