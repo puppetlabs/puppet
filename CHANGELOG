@@ -1,4 +1,6 @@
 0.25.0
+    Fix autotest on win32
+
     Doc strings update for REST
 
     Fixed #1840 - Bug fixes and improvements for Emacs puppet-mode.el
