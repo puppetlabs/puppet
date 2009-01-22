@@ -6,323 +6,295 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 require 'puppet/agent'
 
-describe Puppet::Agent, " when retrieving the catalog" do
+describe Puppet::Agent do
+    it "should include the Plugin Handler module" do
+        Puppet::Agent.ancestors.should be_include(Puppet::Agent::PluginHandler)
+    end
+
+    it "should include the Fact Handler module" do
+        Puppet::Agent.ancestors.should be_include(Puppet::Agent::FactHandler)
+    end
+end
+
+describe Puppet::Agent, "when executing a catalog run" do
     before do
         Puppet.settings.stubs(:use).returns(true)
-        @client = Puppet::Agent.new
+        @agent = Puppet::Agent.new
+        @agent.stubs(:splay)
+
+        @lockfile = stub 'lockfile', :lock => true, :locked? => false, :lockfile => "/my/lock/file", :unlock => true
+
+        @agent.stubs(:lockfile).returns @lockfile
+    end
+
+    it "should splay" do
+        Puppet::Util.sync(:puppetrun).stubs(:synchronize)
+        @agent.expects(:splay)
+        @agent.run
+    end
+
+    it "should use a global mutex to make sure no other thread is executing the catalog" do
+        sync = mock 'sync'
+        Puppet::Util.expects(:sync).with(:puppetrun).returns sync
+
+        sync.expects(:synchronize)
+
+        @agent.expects(:retrieve_config).never # i.e., if we don't yield, we don't retrieve the config
+        @agent.run
+    end
+
+    it "should use a lockfile to make sure no other process is executing the catalog" do
+        @lockfile.expects(:lock).returns true
+
+        @agent.expects(:retrieve_catalog)
+
+        @agent.run
+    end
+
+    it "should log and do nothing if the lock cannot be acquired" do
+        @lockfile.expects(:lock).returns false
+
+        @agent.expects(:retrieve_catalog).never
+
+        Puppet.expects(:notice)
+
+        @agent.run
+    end
+
+    it "should retrieve the catalog" do
+        @agent.expects(:retrieve_catalog)
+
+        @agent.run
+    end
+
+    it "should log a failure and do nothing if no catalog can be retrieved" do
+        @agent.expects(:retrieve_catalog).returns nil
+
+        Puppet.expects(:err)
+
+        @agent.run
+    end
+
+    it "should apply the catalog with all options to :run" do
+        catalog = stub 'catalog', :retrieval_duration= => nil
+        @agent.expects(:retrieve_catalog).returns catalog
+
+        catalog.expects(:apply).with(:one => true)
+        @agent.run :one => true
+    end
+    
+    it "should benchmark how long it takes to apply the catalog" do
+        @agent.expects(:benchmark).with(:notice, "Finished catalog run")
+
+        catalog = stub 'catalog', :retrieval_duration= => nil
+        @agent.expects(:retrieve_catalog).returns catalog
+
+        catalog.expects(:apply).never # because we're not yielding
+        @agent.run
+    end
+
+    it "should remove the lock file when done applying the catalog" do
+        catalog = stub 'catalog', :retrieval_duration= => nil, :apply => nil
+        @agent.expects(:retrieve_catalog).returns catalog
+
+        @lockfile.expects(:lock).returns true
+
+        @lockfile.expects(:unlock)
+
+        @agent.run
+    end
+
+    it "should remove the lock file even if there was an exception during the run" do
+        catalog = stub 'catalog', :retrieval_duration= => nil
+        @agent.expects(:retrieve_catalog).returns catalog
+
+        catalog.expects(:apply).raises "eh"
+
+        @lockfile.expects(:unlock)
+        @agent.run
+    end
+
+    it "should HUP itself if it should be restarted" do
+        catalog = stub 'catalog', :retrieval_duration= => nil, :apply => nil
+        @agent.expects(:retrieve_catalog).returns catalog
+
+        Process.expects(:kill).with(:HUP, $$)
+
+        @agent.expects(:restart?).returns true
+
+        @agent.run
+    end
+
+    it "should not HUP itself if it should not be restarted" do
+        catalog = stub 'catalog', :retrieval_duration= => nil, :apply => nil
+        @agent.expects(:retrieve_catalog).returns catalog
+
+        Process.expects(:kill).never
+
+        @agent.expects(:restart?).returns false
+
+        @agent.run
+    end
+end
+
+describe Puppet::Agent, "when retrieving a catalog" do
+    before do
+        Puppet.settings.stubs(:use).returns(true)
+        @agent = Puppet::Agent.new
+
+        @catalog = stub 'catalog', :retrieval_duration= => nil
+    end
+
+    it "should use the Catalog class to get its catalog" do
+        Puppet::Resource::Catalog.expects(:get).returns @catalog
+
+        @agent.retrieve_catalog
+    end
+
+    it "should use its Facter name to retrieve the catalog" do
+        Facter.stubs(:value).returns "eh"
+        Facter.expects(:value).with("hostname").returns "myhost"
+        Puppet::Resource::Catalog.expects(:get).with { |name, options| name == "myhost" }.returns @catalog
+
+        @agent.retrieve_catalog
+    end
+
+    it "should default to returning a catalog retrieved directly from the server, skipping the cache" do
+        Puppet::Resource::Catalog.expects(:get).with { |name, options| options[:use_cache] == false }.returns @catalog
+
+        @agent.retrieve_catalog.should == @catalog
+    end
+
+    it "should return the cached catalog when no catalog can be retrieved from the server" do
+        Puppet::Resource::Catalog.expects(:get).with { |name, options| options[:use_cache] == false }.returns nil
+        Puppet::Resource::Catalog.expects(:get).with { |name, options| options[:use_cache] == true }.returns @catalog
+
+        @agent.retrieve_catalog.should == @catalog
+    end
+
+    it "should return the cached catalog when retrieving the remote catalog throws an exception" do
+        Puppet::Resource::Catalog.expects(:get).with { |name, options| options[:use_cache] == false }.raises "eh"
+        Puppet::Resource::Catalog.expects(:get).with { |name, options| options[:use_cache] == true }.returns @catalog
+
+        @agent.retrieve_catalog.should == @catalog
+    end
+
+    it "should return nil if no cached catalog is available and no catalog can be retrieved from the server" do
+        Puppet::Resource::Catalog.expects(:get).with { |name, options| options[:use_cache] == false }.returns nil
+        Puppet::Resource::Catalog.expects(:get).with { |name, options| options[:use_cache] == true }.returns nil
+
+        @agent.retrieve_catalog.should be_nil
+    end
+
+    it "should record the retrieval time with the catalog" do
+        @agent.expects(:thinmark).yields.then.returns 10
+
+        catalog = mock 'catalog'
+        Puppet::Resource::Catalog.expects(:get).returns catalog
+
+        catalog.expects(:retrieval_duration=).with 10
+
+        @agent.retrieve_catalog
+    end
+
+    it "should update the class file with the classes contained within the catalog"
+
+    it "should mark the catalog as a host catalog"
+
+    it "should return nil if there is an error while retrieving the catalog" do
+        Puppet::Resource::Catalog.expects(:get).raises "eh"
+
+        @agent.retrieve_catalog.should be_nil
+    end
+end
+
+describe Puppet::Agent, "when preparing for a run" do
+    before do
+        Puppet.settings.stubs(:use).returns(true)
+        @agent = Puppet::Agent.new
+        @agent.stubs(:dostorage)
+        @agent.stubs(:upload_facts)
         @facts = {"one" => "two", "three" => "four"}
     end
 
     it "should initialize the metadata store" do
-        @client.class.stubs(:facts).returns(@facts)
-        @client.expects(:dostorage)
-        @master.stubs(:getconfig).returns(nil)
-        @client.getconfig
+        @agent.class.stubs(:facts).returns(@facts)
+        @agent.expects(:dostorage)
+        @agent.prepare
     end
 
-    it "should collect facts to use for catalog retrieval" do
-        @client.stubs(:dostorage)
-        @client.class.expects(:facts).returns(@facts)
-        @master.stubs(:getconfig).returns(nil)
-        @client.getconfig
+    it "should download fact plugins" do
+        @agent.stubs(:dostorage)
+        @agent.expects(:download_fact_plugins)
+
+        @agent.prepare
     end
 
-    it "should fail if no facts could be collected" do
-        @client.stubs(:dostorage)
-        @client.class.expects(:facts).returns({})
-        @master.stubs(:getconfig).returns(nil)
-        proc { @client.getconfig }.should raise_error(Puppet::Error)
+    it "should download plugins" do
+        @agent.stubs(:dostorage)
+        @agent.expects(:download_plugins)
+
+        @agent.prepare
     end
 
-    it "should retrieve plugins if :pluginsync is enabled" do
-        file = "/path/to/cachefile"
-        @client.stubs(:cachefile).returns(file)
-        @client.stubs(:dostorage)
-        @client.class.stubs(:facts).returns(@facts)
-        Puppet.settings.expects(:value).with(:pluginsync).returns(true)
-        @client.expects(:getplugins)
-        @client.stubs(:get_actual_config).returns(nil)
-        FileTest.stubs(:exist?).with(file).returns(true)
-        @client.stubs(:use_cached_config).returns(true)
-        @client.class.stubs(:facts).returns(@facts)
-        @client.getconfig
-    end
-
-    it "should use the cached catalog if no catalog could be retrieved" do
-        @client.stubs(:dostorage)
-        @client.class.stubs(:facts).returns(@facts)
-        @master.stubs(:getconfig).raises(ArgumentError.new("whev"))
-        @client.expects(:use_cached_config).with(true)
-        @client.getconfig
-    end
-
-    describe "when the catalog format is set to yaml" do
-        before do
-            Puppet.settings.stubs(:value).returns "foo"
-            Puppet.settings.stubs(:value).with(:pluginsync).returns false
-            Puppet.settings.stubs(:value).with(:configtimeout).returns 10
-            Puppet.settings.stubs(:value).with(:factsync).returns false
-            Puppet.settings.stubs(:value).with(:catalog_format).returns "yaml"
-        end
-
-        it "should request a yaml-encoded catalog" do
-            @client.stubs(:dostorage)
-            @client.class.stubs(:facts).returns(@facts)
-            @master.expects(:getconfig).with { |*args| args[1] == "yaml" }
-
-            @client.getconfig
-        end
-
-        it "should load the retrieved catalog using YAML" do
-            @client.stubs(:dostorage)
-            @client.class.stubs(:facts).returns(@facts)
-            @master.stubs(:getconfig).returns("myconfig")
-
-            config = mock 'config'
-            YAML.expects(:load).with("myconfig").returns(config)
-
-            @client.stubs(:setclasses)
-
-            config.stubs(:classes)
-            config.stubs(:to_catalog).returns(config)
-            config.stubs(:host_config=)
-            config.stubs(:from_cache).returns(true)
-
-            @client.getconfig
-        end
-
-        it "should use the cached catalog if the retrieved catalog cannot be converted from YAML" do
-            @client.stubs(:dostorage)
-            @client.class.stubs(:facts).returns(@facts)
-            @master.stubs(:getconfig).returns("myconfig")
-
-            YAML.expects(:load).with("myconfig").raises(ArgumentError)
-
-            @client.expects(:use_cached_config).with(true)
-
-            @client.getconfig
-        end
-    end
-
-    describe "from Marshal" do
-        before do
-            Puppet.settings.stubs(:value).returns "foo"
-            Puppet.settings.stubs(:value).with(:pluginsync).returns false
-            Puppet.settings.stubs(:value).with(:configtimeout).returns 10
-            Puppet.settings.stubs(:value).with(:factsync).returns false
-            Puppet.settings.stubs(:value).with(:catalog_format).returns "marshal"
-        end
-
-        it "should load the retrieved catalog using Marshal" do
-            @client.stubs(:dostorage)
-            @client.class.stubs(:facts).returns(@facts)
-            @master.stubs(:getconfig).returns("myconfig")
-
-            config = mock 'config'
-            Marshal.expects(:load).with("myconfig").returns(config)
-
-            @client.stubs(:setclasses)
-
-            config.stubs(:classes)
-            config.stubs(:to_catalog).returns(config)
-            config.stubs(:host_config=)
-            config.stubs(:from_cache).returns(true)
-
-            @client.getconfig
-        end
-
-        it "should use the cached catalog if the retrieved catalog cannot be converted from Marshal" do
-            @client.stubs(:dostorage)
-            @client.class.stubs(:facts).returns(@facts)
-            @master.stubs(:getconfig).returns("myconfig")
-
-            Marshal.expects(:load).with("myconfig").raises(ArgumentError)
-
-            @client.expects(:use_cached_config).with(true)
-
-            @client.getconfig
-        end
-    end
-
-    it "should set the classes.txt file with the classes listed in the retrieved catalog" do
-        @client.stubs(:dostorage)
-        @client.class.stubs(:facts).returns(@facts)
-        @master.stubs(:getconfig).returns("myconfig")
-
-        config = mock 'config'
-        YAML.expects(:load).with("myconfig").returns(config)
-
-        config.expects(:classes).returns(:myclasses)
-        @client.expects(:setclasses).with(:myclasses)
-
-        config.stubs(:to_catalog).returns(config)
-        config.stubs(:host_config=)
-        config.stubs(:from_cache).returns(true)
-
-        @client.getconfig
-    end
-
-    it "should convert the retrieved catalog to a RAL catalog" do
-        @client.stubs(:dostorage)
-        @client.class.stubs(:facts).returns(@facts)
-        @master.stubs(:getconfig).returns("myconfig")
-
-        yamlconfig = mock 'yaml config'
-        YAML.stubs(:load).returns(yamlconfig)
-
-        @client.stubs(:setclasses)
-
-        config = mock 'config'
-
-        yamlconfig.stubs(:classes)
-        yamlconfig.expects(:to_catalog).returns(config)
-
-        config.stubs(:host_config=)
-        config.stubs(:from_cache).returns(true)
-
-        @client.getconfig
-    end
-
-    it "should use the cached catalog if the retrieved catalog cannot be converted to a RAL catalog" do
-        @client.stubs(:dostorage)
-        @client.class.stubs(:facts).returns(@facts)
-        @master.stubs(:getconfig).returns("myconfig")
-
-        yamlconfig = mock 'yaml config'
-        YAML.stubs(:load).returns(yamlconfig)
-
-        @client.stubs(:setclasses)
-
-        config = mock 'config'
-
-        yamlconfig.stubs(:classes)
-        yamlconfig.expects(:to_catalog).raises(ArgumentError)
-
-        @client.expects(:use_cached_config).with(true)
-
-        @client.getconfig
-    end
-
-    it "should clear the failed catalog if using the cached catalog after failing to instantiate the retrieved catalog" do
-        @client.stubs(:dostorage)
-        @client.class.stubs(:facts).returns(@facts)
-        @master.stubs(:getconfig).returns("myconfig")
-
-        yamlconfig = mock 'yaml config'
-        YAML.stubs(:load).returns(yamlconfig)
-
-        @client.stubs(:setclasses)
-
-        config = mock 'config'
-
-        yamlconfig.stubs(:classes)
-        yamlconfig.stubs(:to_catalog).raises(ArgumentError)
-
-        @client.stubs(:use_cached_config).with(true)
-
-        @client.expects(:clear)
-
-        @client.getconfig
-    end
-
-    it "should cache the retrieved yaml catalog if it is not from the cache and is valid" do
-        @client.stubs(:dostorage)
-        @client.class.stubs(:facts).returns(@facts)
-        @master.stubs(:getconfig).returns("myconfig")
-
-        yamlconfig = mock 'yaml config'
-        YAML.stubs(:load).returns(yamlconfig)
-
-        @client.stubs(:setclasses)
-
-        config = mock 'config'
-
-        yamlconfig.stubs(:classes)
-        yamlconfig.expects(:to_catalog).returns(config)
-
-        config.stubs(:host_config=)
-
-        config.expects(:from_cache).returns(false)
-
-        @client.expects(:cache).with("myconfig")
-
-        @client.getconfig
-    end
-
-    it "should mark the catalog as a host catalog" do
-        @client.stubs(:dostorage)
-        @client.class.stubs(:facts).returns(@facts)
-        @master.stubs(:getconfig).returns("myconfig")
-
-        yamlconfig = mock 'yaml config'
-        YAML.stubs(:load).returns(yamlconfig)
-
-        @client.stubs(:setclasses)
-
-        config = mock 'config'
-
-        yamlconfig.stubs(:classes)
-        yamlconfig.expects(:to_catalog).returns(config)
-
-        config.stubs(:from_cache).returns(true)
-
-        config.expects(:host_config=).with(true)
-
-        @client.getconfig
+    it "should upload facts to use for catalog retrieval" do
+        @agent.stubs(:dostorage)
+        @agent.expects(:upload_facts)
+        @agent.prepare
     end
 end
 
 describe Puppet::Agent, " when using the cached catalog" do
     before do
         Puppet.settings.stubs(:use).returns(true)
-        @client = Puppet::Agent.new
+        @agent = Puppet::Agent.new
         @facts = {"one" => "two", "three" => "four"}
     end
 
     it "should return do nothing and true if there is already an in-memory catalog" do
-        @client.catalog = :whatever
+        @agent.catalog = :whatever
         Puppet::Agent.publicize_methods :use_cached_config do
-            @client.use_cached_config.should be_true
+            @agent.use_cached_config.should be_true
         end
     end
 
     it "should return do nothing and false if it has been told there is a failure and :nocacheonfailure is enabled" do
         Puppet.settings.expects(:value).with(:usecacheonfailure).returns(false)
         Puppet::Agent.publicize_methods :use_cached_config do
-            @client.use_cached_config(true).should be_false
+            @agent.use_cached_config(true).should be_false
         end
     end
 
     it "should return false if no cached catalog can be found" do
-        @client.expects(:retrievecache).returns(nil)
+        @agent.expects(:retrievecache).returns(nil)
         Puppet::Agent.publicize_methods :use_cached_config do
-            @client.use_cached_config().should be_false
+            @agent.use_cached_config().should be_false
         end
     end
 
     it "should return false if the cached catalog cannot be instantiated" do
         YAML.expects(:load).raises(ArgumentError)
-        @client.expects(:retrievecache).returns("whatever")
+        @agent.expects(:retrievecache).returns("whatever")
         Puppet::Agent.publicize_methods :use_cached_config do
-            @client.use_cached_config().should be_false
+            @agent.use_cached_config().should be_false
         end
     end
 
     it "should warn if the cached catalog cannot be instantiated" do
         YAML.stubs(:load).raises(ArgumentError)
-        @client.stubs(:retrievecache).returns("whatever")
+        @agent.stubs(:retrievecache).returns("whatever")
         Puppet.expects(:warning).with { |m| m.include?("Could not load cache") }
         Puppet::Agent.publicize_methods :use_cached_config do
-            @client.use_cached_config().should be_false
+            @agent.use_cached_config().should be_false
         end
     end
 
     it "should clear the client if the cached catalog cannot be instantiated" do
         YAML.stubs(:load).raises(ArgumentError)
-        @client.stubs(:retrievecache).returns("whatever")
-        @client.expects(:clear)
+        @agent.stubs(:retrievecache).returns("whatever")
+        @agent.expects(:clear)
         Puppet::Agent.publicize_methods :use_cached_config do
-            @client.use_cached_config().should be_false
+            @agent.use_cached_config().should be_false
         end
     end
 
@@ -335,9 +307,9 @@ describe Puppet::Agent, " when using the cached catalog" do
         ral_config.stubs(:host_config=)
         config.expects(:to_catalog).returns(ral_config)
 
-        @client.stubs(:retrievecache).returns("whatever")
+        @agent.stubs(:retrievecache).returns("whatever")
         Puppet::Agent.publicize_methods :use_cached_config do
-            @client.use_cached_config().should be_true
+            @agent.use_cached_config().should be_true
         end
     end
 
@@ -350,12 +322,12 @@ describe Puppet::Agent, " when using the cached catalog" do
         ral_config.stubs(:host_config=)
         config.expects(:to_catalog).returns(ral_config)
 
-        @client.stubs(:retrievecache).returns("whatever")
+        @agent.stubs(:retrievecache).returns("whatever")
         Puppet::Agent.publicize_methods :use_cached_config do
-            @client.use_cached_config()
+            @agent.use_cached_config()
         end
 
-        @client.catalog.should equal(ral_config)
+        @agent.catalog.should equal(ral_config)
     end
 
     it "should mark the catalog as a host_config if valid" do
@@ -367,12 +339,12 @@ describe Puppet::Agent, " when using the cached catalog" do
         ral_config.expects(:host_config=).with(true)
         config.expects(:to_catalog).returns(ral_config)
 
-        @client.stubs(:retrievecache).returns("whatever")
+        @agent.stubs(:retrievecache).returns("whatever")
         Puppet::Agent.publicize_methods :use_cached_config do
-            @client.use_cached_config()
+            @agent.use_cached_config()
         end
 
-        @client.catalog.should equal(ral_config)
+        @agent.catalog.should equal(ral_config)
     end
 
     it "should mark the catalog as from the cache if valid" do
@@ -384,19 +356,19 @@ describe Puppet::Agent, " when using the cached catalog" do
         ral_config.stubs(:host_config=)
         config.expects(:to_catalog).returns(ral_config)
 
-        @client.stubs(:retrievecache).returns("whatever")
+        @agent.stubs(:retrievecache).returns("whatever")
         Puppet::Agent.publicize_methods :use_cached_config do
-            @client.use_cached_config()
+            @agent.use_cached_config()
         end
 
-        @client.catalog.should equal(ral_config)
+        @agent.catalog.should equal(ral_config)
     end
 
     describe "when calling splay" do
         it "should do nothing if splay is not enabled" do
             Puppet.stubs(:[]).with(:splay).returns(false)
-            @client.expects(:rand).never
-            @client.send(:splay)
+            @agent.expects(:rand).never
+            @agent.send(:splay)
         end
 
         describe "when splay is enabled" do
@@ -406,30 +378,30 @@ describe Puppet::Agent, " when using the cached catalog" do
             end
 
             it "should sleep for a random time plus 1" do
-                @client.expects(:rand).with(43).returns(43)
-                @client.expects(:sleep).with(43)
-                @client.send(:splay)
+                @agent.expects(:rand).with(43).returns(43)
+                @agent.expects(:sleep).with(43)
+                @agent.send(:splay)
             end
 
             it "should inform that it is splayed" do
-                @client.stubs(:rand).with(43).returns(43)
-                @client.stubs(:sleep).with(43)
+                @agent.stubs(:rand).with(43).returns(43)
+                @agent.stubs(:sleep).with(43)
                 Puppet.expects(:info)
-                @client.send(:splay)
+                @agent.send(:splay)
             end
 
             it "should set splay = true" do
-                @client.stubs(:rand).returns(43)
-                @client.stubs(:sleep)
-                @client.send(:splay)
-                @client.send(:splayed?).should == true
+                @agent.stubs(:rand).returns(43)
+                @agent.stubs(:sleep)
+                @agent.send(:splay)
+                @agent.send(:splayed?).should == true
             end
 
             it "should do nothing if already splayed" do
-                @client.stubs(:rand).returns(43).at_most_once
-                @client.stubs(:sleep).at_most_once
-                @client.send(:splay)
-                @client.send(:splay)
+                @agent.stubs(:rand).returns(43).at_most_once
+                @agent.stubs(:sleep).at_most_once
+                @agent.send(:splay)
+                @agent.send(:splay)
             end
         end 
     end

@@ -1,4 +1,5 @@
 require 'puppet/agent'
+require 'puppet/resource/catalog'
 
 class Puppet::Agent::Downloader
     attr_reader :name, :path, :source, :ignore
@@ -48,7 +49,7 @@ class Puppet::Agent::Downloader
     end
 
     def catalog
-        catalog = Puppet::Node::Catalog.new
+        catalog = Puppet::Resource::Catalog.new
         catalog.add_resource(file)
         catalog
     end

@@ -99,7 +99,7 @@ describe Puppet::Agent::Downloader do
 
             @dler.expects(:file).returns file
 
-            Puppet::Node::Catalog.expects(:new).returns catalog
+            Puppet::Resource::Catalog.expects(:new).returns catalog
             catalog.expects(:add_resource).with(file)
 
             @dler.catalog.should equal(catalog)

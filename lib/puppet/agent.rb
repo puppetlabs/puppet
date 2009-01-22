@@ -5,6 +5,12 @@ require 'puppet/network/http_pool'
 require 'puppet/util'
 
 class Puppet::Agent
+    require 'puppet/agent/fact_handler'
+    require 'puppet/agent/plugin_handler'
+
+    include Puppet::Agent::FactHandler
+    include Puppet::Agent::PluginHandler
+
     # For benchmarking
     include Puppet::Util
 
@@ -20,66 +26,6 @@ class Puppet::Agent
         # to retrieve it.
         attr_accessor :instance
         include Puppet::Util
-    end
-
-    def self.facts
-        # Retrieve the facts from the central server.
-        if Puppet[:factsync]
-            self.getfacts()
-        end
-        
-        down = Puppet[:downcasefacts]
-
-        Facter.clear
-
-        # Reload everything.
-        if Facter.respond_to? :loadfacts
-            Facter.loadfacts
-        elsif Facter.respond_to? :load
-            Facter.load
-        else
-            Puppet.warning "You should upgrade your version of Facter to at least 1.3.8"
-        end
-
-        # This loads all existing facts and any new ones.  We have to remove and
-        # reload because there's no way to unload specific facts.
-        loadfacts()
-        facts = Facter.to_hash.inject({}) do |newhash, array|
-            name, fact = array
-            if down
-                newhash[name] = fact.to_s.downcase
-            else
-                newhash[name] = fact.to_s
-            end
-            newhash
-        end
-
-        facts
-    end
-
-    # Return the list of dynamic facts as an array of symbols
-    # NOTE:LAK(2008/04/10): This code is currently unused, since we now always
-    # recompile.
-    def self.dynamic_facts
-        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
-        x = Puppet.settings[:dynamicfacts].split(/\s*,\s*/).collect { |fact| fact.downcase }
-    end
-
-    # Cache the config
-    def cache(text)
-        Puppet.info "Caching catalog at %s" % self.cachefile
-        confdir = ::File.dirname(Puppet[:localconfig])
-        ::File.open(self.cachefile + ".tmp", "w", 0660) { |f|
-            f.print text
-        }
-        ::File.rename(self.cachefile + ".tmp", self.cachefile)
-    end
-
-    def cachefile
-        unless defined? @cachefile
-            @cachefile = Puppet[:localconfig] + ".yaml"
-        end
-        @cachefile
     end
 
     def clear
@@ -117,74 +63,6 @@ class Puppet::Agent
     def disable
         lockfile.lock(:anonymous => true)
     end
-
-    # Retrieve the config from a remote server.  If this fails, then
-    # use the cached copy.
-    def getconfig
-        dostorage()
-
-        # Retrieve the plugins.
-        getplugins() if Puppet[:pluginsync]
-
-        facts = nil
-        Puppet::Util.benchmark(:debug, "Retrieved facts") do
-            facts = self.class.facts
-        end
-
-        raise Puppet::Error.new("Could not retrieve any facts") unless facts.length > 0
-
-        Puppet.debug("Retrieving catalog")
-
-        # If we can't retrieve the catalog, just return, which will either
-        # fail, or use the in-memory catalog.
-        unless marshalled_objects = get_actual_config(facts)
-            use_cached_config(true)
-            return
-        end
-
-        begin
-            case Puppet[:catalog_format]
-            when "marshal": objects = Marshal.load(marshalled_objects)
-            when "yaml": objects = YAML.load(marshalled_objects)
-            else
-                raise "Invalid catalog format '%s'" % Puppet[:catalog_format]
-            end
-        rescue => detail
-            msg = "Configuration could not be translated from %s" % Puppet[:catalog_format]
-            msg += "; using cached catalog" if use_cached_config(true)
-            Puppet.warning msg
-            return
-        end
-
-        self.setclasses(objects.classes)
-
-        # Clear all existing objects, so we can recreate our stack.
-        clear() if self.catalog
-
-        # Now convert the objects to a puppet catalog graph.
-        begin
-            @catalog = objects.to_catalog
-        rescue => detail
-            clear()
-            puts detail.backtrace if Puppet[:trace]
-            msg = "Configuration could not be instantiated: %s" % detail
-            msg += "; using cached catalog" if use_cached_config(true)
-            Puppet.warning msg
-            return
-        end
-
-        if ! @catalog.from_cache
-            self.cache(marshalled_objects)
-        end
-
-        # Keep the state database up to date.
-        @catalog.host_config = true
-    end
-    
-    # A simple proxy method, so it's easy to test.
-    def getplugins
-        self.class.getplugins
-    end
     
     # Just so we can specify that we are "the" instance.
     def initialize
@@ -193,6 +71,17 @@ class Puppet::Agent
         self.class.instance = self
         @running = false
         @splayed = false
+    end
+
+    # Prepare for catalog retrieval.  Downloads everything necessary, etc.
+    def prepare
+        dostorage()
+
+        download_plugins()
+
+        download_fact_plugins()
+
+        upload_facts()
     end
 
     # Mark that we should restart.  The Puppet module checks whether we're running,
@@ -221,6 +110,37 @@ class Puppet::Agent
         end
     end
 
+    # Get the remote catalog, yo.  Returns nil if no catalog can be found.
+    def retrieve_catalog
+        name = Facter.value("hostname")
+        catalog_class = Puppet::Resource::Catalog
+
+        # First try it with no cache, then with the cache.
+        result = nil
+        begin
+            duration = thinmark do
+                result = catalog_class.get(name, :use_cache => false)
+            end
+        rescue => detail
+            puts detail.backtrace if Puppet[:trace]
+            Puppet.err "Could not retrieve catalog from remote server: %s" % detail
+        end
+
+        begin
+            duration = thinmark do
+                result = catalog_class.get(name, :use_cache => true)
+            end
+        rescue => detail
+            puts detail.backtrace if Puppet[:trace]
+            Puppet.err "Could not retrieve catalog from cache: %s" % detail
+        end
+
+        return nil unless result
+
+        result.retrieval_duration = duration
+        return result
+    end
+
     # The code that actually runs the catalog.  
     # This just passes any options on to the catalog,
     # which accepts :tags and :ignoreschedules.
@@ -228,40 +148,35 @@ class Puppet::Agent
         got_lock = false
         splay
         Puppet::Util.sync(:puppetrun).synchronize(Sync::EX) do
-            if !lockfile.lock
-                Puppet.notice "Lock file %s exists; skipping catalog run" %
-                    lockfile.lockfile
-            else
-                got_lock = true
-                begin
-                    duration = thinmark do
-                        self.getconfig
-                    end
-                rescue => detail
-                    puts detail.backtrace if Puppet[:trace]
-                    Puppet.err "Could not retrieve catalog: %s" % detail
-                end
-
-                if self.catalog
-                    @catalog.retrieval_duration = duration
-                    Puppet.notice "Starting catalog run" unless @local
-                    benchmark(:notice, "Finished catalog run") do
-                        @catalog.apply(options)
-                    end
-                end
-
-                # Now close all of our existing http connections, since there's no
-                # reason to leave them lying open.
-                Puppet::Network::HttpPool.clear_http_instances
+            unless lockfile.lock
+                Puppet.notice "Lock file %s exists; skipping catalog run" % lockfile.lockfile
+                return
             end
+
+            got_lock = true
+            unless catalog = retrieve_catalog
+                Puppet.err "Could not retrieve catalog; skipping run"
+                return
+            end
+
+            begin
+                benchmark(:notice, "Finished catalog run") do
+                    catalog.apply(options)
+                end
+            rescue => detail
+                puts detail.backtrace if Puppet[:trace]
+                Puppet.err "Failed to apply catalog: %s" % detail
+            end
+
+            # Now close all of our existing http connections, since there's no
+            # reason to leave them lying open.
+            Puppet::Network::HttpPool.clear_http_instances
             
             lockfile.unlock
 
             # Did we get HUPped during the run?  If so, then restart now that we're
             # done with the run.
-            if self.restart?
-                Process.kill(:HUP, $$)
-            end
+            Process.kill(:HUP, $$) if self.restart?
         end
     ensure
         # Just make sure we remove the lock file if we set it.
@@ -294,113 +209,6 @@ class Puppet::Agent
 
     private
 
-    # Download files from the remote server, returning a list of all
-    # changed files.
-    def self.download(args)
-        hash = {
-            :path => args[:dest],
-            :recurse => true,
-            :source => args[:source],
-            :tag => "#{args[:name]}s",
-            :owner => Process.uid,
-            :group => Process.gid,
-            :purge => true,
-            :force => true,
-            :backup => false,
-            :noop => false
-        }
-
-        if args[:ignore]
-            hash[:ignore] = args[:ignore].split(/\s+/)
-        end
-        downconfig = Puppet::Resource::Catalog.new("downloading")
-        downconfig.add_resource Puppet::Type.type(:file).new(hash)
-        
-        Puppet.info "Retrieving #{args[:name]}s"
-
-        files = []
-        begin
-            Timeout::timeout(self.timeout) do
-                downconfig.apply do |trans|
-                    trans.changed?.find_all do |resource|
-                        yield resource if block_given?
-                        files << resource[:path]
-                    end
-                end
-            end
-        rescue Puppet::Error, Timeout::Error => detail
-            if Puppet[:debug]
-                puts detail.backtrace
-            end
-            Puppet.err "Could not retrieve %ss: %s" % [args[:name], detail]
-        end
-
-        # Now clean up after ourselves
-        downconfig.clear
-
-        return files
-    end
-
-    # Retrieve facts from the central server.
-    def self.getfacts
-        # Download the new facts
-        path = Puppet[:factpath].split(":")
-        files = []
-        download(:dest => Puppet[:factdest], :source => Puppet[:factsource],
-            :ignore => Puppet[:factsignore], :name => "fact") do |resource|
-
-            next unless path.include?(::File.dirname(resource[:path]))
-
-            files << resource[:path]
-        end
-    end
-
-    # Retrieve the plugins from the central server.  We only have to load the
-    # changed plugins, because Puppet::Type loads plugins on demand.
-    def self.getplugins
-        download(:dest => Puppet[:plugindest], :source => Puppet[:pluginsource],
-            :ignore => Puppet[:pluginsignore], :name => "plugin") do |resource|
-
-            next if FileTest.directory?(resource[:path])
-            path = resource[:path].sub(Puppet[:plugindest], '').sub(/^\/+/, '')
-            unless Puppet::Util::Autoload.loaded?(path)
-                next
-            end
-
-            begin
-                Puppet.info "Reloading downloaded file %s" % path
-                load resource[:path]
-            rescue => detail
-                Puppet.warning "Could not reload downloaded file %s: %s" %
-                    [resource[:path], detail]
-            end
-        end
-    end
-
-    def self.loaddir(dir, type)
-        return unless FileTest.directory?(dir)
-
-        Dir.entries(dir).find_all { |e| e =~ /\.rb$/ }.each do |file|
-            fqfile = ::File.join(dir, file)
-            begin
-                Puppet.info "Loading %s %s" % 
-                    [type, ::File.basename(file.sub(".rb",''))]
-                Timeout::timeout(self.timeout) do
-                    load fqfile
-                end
-            rescue => detail
-                Puppet.warning "Could not load %s %s: %s" % [type, fqfile, detail]
-            end
-        end
-    end
-
-    def self.loadfacts
-        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
-        x = Puppet[:factpath].split(":").each do |dir|
-            loaddir(dir, "fact")
-        end
-    end
-    
     def self.timeout
         timeout = Puppet[:configtimeout]
         case timeout
@@ -417,8 +225,6 @@ class Puppet::Agent
 
         return timeout
     end
-
-    loadfacts()
 
     # Actually retrieve the catalog, either from the server or from a
     # local master.
@@ -488,6 +294,14 @@ class Puppet::Agent
     end
 
     private
+
+    def retrieve_and_apply_catalog(options)
+        catalog = self.retrieve_catalog
+        Puppet.notice "Starting catalog run"
+        benchmark(:notice, "Finished catalog run") do
+            catalog.apply(options)
+        end
+    end
 
     # Use our cached config, optionally specifying whether this is
     # necessary because of a failure.
