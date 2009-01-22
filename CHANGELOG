@@ -1,4 +1,6 @@
 0.25.0
+    Fixed #1877 - Tidy type reference update for use of 0
+
     Fix autotest on win32
 
     Doc strings update for REST

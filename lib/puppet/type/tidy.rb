@@ -56,7 +56,9 @@ Puppet::Type.newtype(:tidy) do
         desc "Tidy files whose age is equal to or greater than
             the specified time.  You can choose seconds, minutes,
             hours, days, or weeks by specifying the first letter of any
-            of those words (e.g., '1w')."
+            of those words (e.g., '1w').
+        
+            Specifying 0 will remove all files."
 
         @@ageconvertors = {
             :s => 1,
