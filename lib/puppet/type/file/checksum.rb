@@ -11,7 +11,11 @@ Puppet::Type.type(:file).newproperty(:checksum) do
         like Tripwire without managing the file contents in any way.  You can
         specify that a file's checksum should be monitored and then subscribe to
         the file from another object and receive events to signify
-        checksum changes, for instance."
+        checksum changes, for instance.  
+     
+        There are a number of checksum types available including MD5 hashing (and
+        an md5lite variation that only hashes the first 500 characters of the 
+        file."
 
     @event = :file_changed
 
