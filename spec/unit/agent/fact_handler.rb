@@ -82,36 +82,9 @@ describe Puppet::Agent::FactHandler do
             @facthandler.reload_facter
         end
 
-        it "should load all Puppet Fact plugins" do
-            @facthandler.expects(:load_fact_plugins)
+        it "should use the Facter terminus load all Puppet Fact plugins" do
+            Puppet::Node::Facts::Facter.expects(:load_fact_plugins)
             @facthandler.reload_facter
         end
-    end
-
-    it "should load each directory in the Fact path when loading fact plugins" do
-        Puppet.settings.expects(:value).with(:factpath).returns("one%stwo" % File::PATH_SEPARATOR)
-
-        @facthandler.expects(:load_facts_in_dir).with("one")
-        @facthandler.expects(:load_facts_in_dir).with("two")
-
-        @facthandler.load_fact_plugins
-    end
-
-    it "should skip files when asked to load a directory" do
-        FileTest.expects(:directory?).with("myfile").returns false
-
-        @facthandler.load_facts_in_dir("myfile")
-    end
-
-    it "should load each ruby file when asked to load a directory" do
-        FileTest.expects(:directory?).with("mydir").returns true
-        Dir.expects(:chdir).with("mydir").yields
-
-        Dir.expects(:glob).with("*.rb").returns %w{a.rb b.rb}
-
-        @facthandler.expects(:load).with("a.rb")
-        @facthandler.expects(:load).with("b.rb")
-
-        @facthandler.load_facts_in_dir("mydir")
     end
 end

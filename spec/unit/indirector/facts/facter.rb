@@ -26,7 +26,7 @@ describe Puppet::Node::Facts::Facter do
     end
 
     it "should load facts on initialization" do
-        Puppet::Node::Facts::Facter.expects(:loadfacts)
+        Puppet::Node::Facts::Facter.expects(:load_fact_plugins)
         Puppet::Node::Facts::Facter.new
     end
 end
@@ -40,7 +40,6 @@ describe Puppet::Node::Facts::Facter do
     end
 
     describe Puppet::Node::Facts::Facter, " when finding facts" do
-
         it "should return a Facts instance" do
             @facter.find(@request).should be_instance_of(Puppet::Node::Facts)
         end
@@ -55,21 +54,28 @@ describe Puppet::Node::Facts::Facter do
             facts.values["one"].should == "two"
         end
 
-        it "should add the Puppet version as a 'clientversion' fact" do
-            Facter.expects(:to_hash).returns("one" => "two")
-            @facter.find(@request).values["clientversion"].should == Puppet.version.to_s
+        it "should add local facts" do
+            facts = Puppet::Node::Facts.new("foo")
+            Puppet::Node::Facts.expects(:new).returns facts
+            facts.expects(:add_local_facts)
+
+            @facter.find(@request)
         end
 
-        it "should add the current environment as a fact if one is not set" do
-            Facter.expects(:to_hash).returns("one" => "two")
+        it "should convert all facts into strings" do
+            facts = Puppet::Node::Facts.new("foo")
+            Puppet::Node::Facts.expects(:new).returns facts
+            facts.expects(:stringify)
 
-            @facter.find(@request).values["environment"].should == Puppet[:environment]
+            @facter.find(@request)
         end
 
-        it "should not replace any existing environment fact" do
-            Facter.expects(:to_hash).returns("one" => "two", "environment" => "foo")
+        it "should call the downcase hook" do
+            facts = Puppet::Node::Facts.new("foo")
+            Puppet::Node::Facts.expects(:new).returns facts
+            facts.expects(:downcase_if_necessary)
 
-            @facter.find(@request).values["environment"].should == "foo"
+            @facter.find(@request)
         end
     end
 
@@ -87,7 +93,30 @@ describe Puppet::Node::Facts::Facter do
         end
     end
 
-    describe Puppet::Node::Facts::Facter, " when loading facts from the factpath" do
-        it "should load every fact in each factpath directory"
+    it "should load each directory in the Fact path when loading fact plugins" do
+        Puppet.settings.expects(:value).with(:factpath).returns("one%stwo" % File::PATH_SEPARATOR)
+
+        Puppet::Node::Facts::Facter.expects(:load_facts_in_dir).with("one")
+        Puppet::Node::Facts::Facter.expects(:load_facts_in_dir).with("two")
+
+        Puppet::Node::Facts::Facter.load_fact_plugins
+    end
+
+    it "should skip files when asked to load a directory" do
+        FileTest.expects(:directory?).with("myfile").returns false
+
+        Puppet::Node::Facts::Facter.load_facts_in_dir("myfile")
+    end
+
+    it "should load each ruby file when asked to load a directory" do
+        FileTest.expects(:directory?).with("mydir").returns true
+        Dir.expects(:chdir).with("mydir").yields
+
+        Dir.expects(:glob).with("*.rb").returns %w{a.rb b.rb}
+
+        Puppet::Node::Facts::Facter.expects(:load).with("a.rb")
+        Puppet::Node::Facts::Facter.expects(:load).with("b.rb")
+
+        Puppet::Node::Facts::Facter.load_facts_in_dir("mydir")
     end
 end

@@ -5,6 +5,61 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/node/facts'
 
 describe Puppet::Node::Facts, "when indirecting" do
+    before do
+        @facts = Puppet::Node::Facts.new("me")
+    end
+
+    it "should be able to convert all fact values to strings" do
+        @facts.values["one"] = 1
+        @facts.stringify
+        @facts.values["one"].should == "1"
+    end
+
+    it "should add the Puppet version as a 'clientversion' fact when adding local facts" do
+        @facts.add_local_facts
+        @facts.values["clientversion"].should == Puppet.version.to_s
+    end
+
+    it "should add the current environment as a fact if one is not set when adding local facts" do
+        @facts.add_local_facts
+        @facts.values["environment"].should == Puppet[:environment]
+    end
+
+    it "should not replace any existing environment fact when adding local facts" do
+        @facts.values["environment"] = "foo"
+        @facts.add_local_facts
+        @facts.values["environment"].should == "foo"
+    end
+
+    it "should be able to downcase fact values" do
+        Puppet.settings.stubs(:value).returns "eh"
+        Puppet.settings.expects(:value).with(:downcasefacts).returns true
+
+        @facts.values["one"] = "Two"
+        
+        @facts.downcase_if_necessary
+        @facts.values["one"].should == "two"
+    end
+
+    it "should only try to downcase strings" do
+        Puppet.settings.stubs(:value).returns "eh"
+        Puppet.settings.expects(:value).with(:downcasefacts).returns true
+
+        @facts.values["now"] = Time.now
+
+        @facts.downcase_if_necessary
+        @facts.values["now"].should be_instance_of(Time)
+    end
+
+    it "should not downcase facts if not configured to do so" do
+        Puppet.settings.stubs(:value).returns "eh"
+        Puppet.settings.expects(:value).with(:downcasefacts).returns false
+
+        @facts.values["one"] = "Two"
+        @facts.downcase_if_necessary
+        @facts.values["one"].should == "Two"
+    end
+
     describe "when indirecting" do
         before do
             @indirection = stub 'indirection', :request => mock('request'), :name => :facts

@@ -1,3 +1,5 @@
+require 'puppet/indirector/facts/facter'
+
 # Break out the code related to facts.  This module is
 # just included into the agent, but having it here makes it
 # easier to test.
@@ -24,31 +26,6 @@ module Puppet::Agent::FactHandler
         Puppet::Agent::Downloader.new("fact", Puppet[:factsource], Puppet[:factdest], Puppet[:factsignore]).evaluate
     end
 
-    def load_fact_plugins
-        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
-        x = Puppet[:factpath].split(":").each do |dir|
-            load_facts_in_dir(dir)
-        end
-    end
-
-    def load_facts_in_dir(dir)
-        return unless FileTest.directory?(dir)
-
-        Dir.chdir(dir) do
-            Dir.glob("*.rb").each do |file|
-                fqfile = ::File.join(dir, file)
-                begin
-                    Puppet.info "Loading facts in %s" % [::File.basename(file.sub(".rb",''))]
-                    Timeout::timeout(Puppet::Agent.timeout) do
-                        load file
-                    end
-                rescue => detail
-                    Puppet.warning "Could not load fact file %s: %s" % [fqfile, detail]
-                end
-            end
-        end
-    end
-
     # Clear out all of the loaded facts and reload them from disk.
     # NOTE: This is clumsy and shouldn't be required for later (1.5.x) versions
     # of Facter.
@@ -66,6 +43,6 @@ module Puppet::Agent::FactHandler
 
         # This loads all existing facts and any new ones.  We have to remove and
         # reload because there's no way to unload specific facts.
-        load_fact_plugins()
+        Puppet::Node::Facts::Facter.load_fact_plugins()
     end
 end

@@ -21,11 +21,32 @@ class Puppet::Node::Facts
 
     attr_accessor :name, :values
 
+    def add_local_facts
+        values["clientversion"] = Puppet.version.to_s
+        values["environment"] ||= Puppet.settings[:environment]
+    end
+
     def initialize(name, values = {})
         @name = name
         @values = values
 
         add_internal
+    end
+
+    def downcase_if_necessary
+        return unless Puppet.settings[:downcasefacts]
+
+        Puppet.warning "DEPRECATION NOTICE: Fact downcasing is deprecated; please disable (20080122)"
+        values.each do |fact, value|
+            values[fact] = value.downcase if value.is_a?(String)
+        end
+    end
+
+    # Convert all fact values into strings.
+    def stringify
+        values.each do |fact, value|
+            values[fact] = value.to_s
+        end
     end
 
     private

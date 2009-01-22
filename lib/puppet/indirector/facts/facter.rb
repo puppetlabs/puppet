@@ -6,27 +6,29 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
         between Puppet and Facter.  It's only `somewhat` abstract because it always
         returns the local host's facts, regardless of what you attempt to find."
 
-    def self.loaddir(dir, type)
-        return unless FileTest.directory?(dir)
 
-        Dir.entries(dir).find_all { |e| e =~ /\.rb$/ }.each do |file|
-            fqfile = ::File.join(dir, file)
-            begin
-                Puppet.info "Loading %s %s" % 
-                    [type, ::File.basename(file.sub(".rb",''))]
-                Timeout::timeout(self.timeout) do
-                    load fqfile
-                end
-            rescue => detail
-                Puppet.warning "Could not load %s %s: %s" % [type, fqfile, detail]
-            end
+    def self.load_fact_plugins
+        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
+        x = Puppet[:factpath].split(":").each do |dir|
+            load_facts_in_dir(dir)
         end
     end
 
-    def self.loadfacts
-        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
-        x = Puppet[:factpath].split(":").each do |dir|
-            loaddir(dir, "fact")
+    def self.load_facts_in_dir(dir)
+        return unless FileTest.directory?(dir)
+
+        Dir.chdir(dir) do
+            Dir.glob("*.rb").each do |file|
+                fqfile = ::File.join(dir, file)
+                begin
+                    Puppet.info "Loading facts in %s" % [::File.basename(file.sub(".rb",''))]
+                    Timeout::timeout(self.timeout) do
+                        load file
+                    end
+                rescue => detail
+                    Puppet.warning "Could not load fact file %s: %s" % [fqfile, detail]
+                end
+            end
         end
     end
 
@@ -49,7 +51,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
 
     def initialize(*args)
         super
-        self.class.loadfacts
+        self.class.load_fact_plugins
     end
 
     def destroy(facts)
@@ -59,18 +61,15 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
     # Look a host's facts up in Facter.
     def find(request)
         result = Puppet::Node::Facts.new(request.key, Facter.to_hash)
-        add_local_facts(result)
+
+        result.add_local_facts
+        result.stringify
+        result.downcase_if_necessary
+
         result
     end
 
     def save(facts)
         raise Puppet::DevError, "You cannot save facts to the code store; it is only used for getting facts from Facter"
-    end
-
-    private
-
-    def add_local_facts(facts)
-        facts.values["clientversion"] = Puppet.version.to_s
-        facts.values["environment"] ||= Puppet.settings[:environment]
     end
 end
