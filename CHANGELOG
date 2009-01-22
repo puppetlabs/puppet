@@ -1,4 +1,6 @@
 0.25.0
+    Fixed #1879 - Added to tidy documentation
+
     Fixed #1881 - Added md5lite explanation
 
     Fixed #1877 - Tidy type reference update for use of 0
