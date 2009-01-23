@@ -393,6 +393,17 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         to_catalog :to_resource
     end
 
+    # Store the classes in the classfile.
+    def write_class_file
+        begin
+            ::File.open(Puppet[:classfile], "w") do |f|
+                f.puts classes.join("\n")
+            end
+        rescue => detail
+            Puppet.err "Could not create class file %s: %s" % [Puppet[:classfile], detail]
+        end
+    end
+
     # Produce the graph files if requested.
     def write_graph(name)
         # We only want to graph the main host catalog.

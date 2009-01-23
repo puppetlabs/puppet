@@ -20,6 +20,21 @@ describe Puppet::Resource::Catalog, "when compiling" do
         @catalog.should_not be_expired(Time.now)
     end
 
+    it "should be able to write its list of classes to the class file" do
+        @catalog = Puppet::Resource::Catalog.new("host")
+
+        @catalog.add_class "foo", "bar"
+
+        Puppet.settings.expects(:value).with(:classfile).returns "/class/file"
+
+        fh = mock 'filehandle'
+        File.expects(:open).with("/class/file", "w").yields fh
+
+        fh.expects(:puts).with "foo\nbar"
+
+        @catalog.write_class_file
+    end
+
     describe "when compiling" do
         it "should accept tags" do
             config = Puppet::Resource::Catalog.new("mynode")

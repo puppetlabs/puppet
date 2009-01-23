@@ -142,7 +142,7 @@ describe Puppet::Agent, "when retrieving a catalog" do
         Puppet.settings.stubs(:use).returns(true)
         @agent = Puppet::Agent.new
 
-        @catalog = stub 'catalog', :retrieval_duration= => nil
+        @catalog = Puppet::Resource::Catalog.new
     end
 
     it "should use the Catalog class to get its catalog" do
@@ -189,17 +189,28 @@ describe Puppet::Agent, "when retrieving a catalog" do
     it "should record the retrieval time with the catalog" do
         @agent.expects(:thinmark).yields.then.returns 10
 
-        catalog = mock 'catalog'
-        Puppet::Resource::Catalog.expects(:get).returns catalog
+        Puppet::Resource::Catalog.expects(:get).returns @catalog
 
-        catalog.expects(:retrieval_duration=).with 10
+        @catalog.expects(:retrieval_duration=).with 10
 
         @agent.retrieve_catalog
     end
 
-    it "should update the class file with the classes contained within the catalog"
+    it "should write the catalog's class file" do
+        @catalog.expects(:write_class_file)
 
-    it "should mark the catalog as a host catalog"
+        Puppet::Resource::Catalog.expects(:get).returns @catalog
+
+        @agent.retrieve_catalog
+    end
+
+    it "should mark the catalog as a host catalog" do
+        @catalog.expects(:host_config=).with true
+
+        Puppet::Resource::Catalog.expects(:get).returns @catalog
+
+        @agent.retrieve_catalog
+    end
 
     it "should return nil if there is an error while retrieving the catalog" do
         Puppet::Resource::Catalog.expects(:get).raises "eh"

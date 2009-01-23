@@ -138,6 +138,8 @@ class Puppet::Agent
         return nil unless result
 
         result.retrieval_duration = duration
+        result.host_config = true
+        result.write_class_file
         return result
     end
 
@@ -186,25 +188,6 @@ class Puppet::Agent
 
     def running?
         lockfile.locked?
-    end
-
-    # Store the classes in the classfile, but only if we're not local.
-    def setclasses(ary)
-        if @local
-            return
-        end
-        unless ary and ary.length > 0
-            Puppet.info "No classes to store"
-            return
-        end
-        begin
-            ::File.open(Puppet[:classfile], "w") { |f|
-                f.puts ary.join("\n")
-            }
-        rescue => detail
-            Puppet.err "Could not create class file %s: %s" %
-                [Puppet[:classfile], detail]
-        end
     end
 
     private
