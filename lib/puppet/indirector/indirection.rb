@@ -244,9 +244,10 @@ class Puppet::Indirector::Indirection
         request = request(:save, instance, *args)
         terminus = prepare(request)
 
+        terminus.save(request)
+
         # If caching is enabled, save our document there
         cache.save(request) if cache?
-        terminus.save(request)
     end
 
     private

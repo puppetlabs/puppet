@@ -359,7 +359,7 @@ describe Puppet::Indirector::Indirection do
             describe "when caching is enabled" do
                 before do
                     @indirection.cache_class = :cache_terminus
-                    @cache_class.expects(:new).returns(@cache)
+                    @cache_class.stubs(:new).returns(@cache)
 
                     @instance.stubs(:expired?).returns false
                 end
@@ -372,6 +372,16 @@ describe Puppet::Indirector::Indirection do
                     @cache.expects(:save).with(request)
                     @terminus.stubs(:save)
                     @indirection.save(@instance)
+                end
+
+                it "should not save to the cache if the normal save fails" do
+                    request = stub 'request', :instance => @instance, :node => nil
+
+                    @indirection.expects(:request).returns request
+
+                    @cache.expects(:save).never
+                    @terminus.expects(:save).raises "eh"
+                    lambda { @indirection.save(@instance) }.should raise_error
                 end
             end
         end
