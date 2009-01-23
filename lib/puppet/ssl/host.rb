@@ -60,6 +60,14 @@ class Puppet::SSL::Host
             Certificate.cache_class = cache
             CertificateRequest.cache_class = cache
             CertificateRevocationList.cache_class = cache
+        else
+            # Make sure we have no cache configured.  puppetmasterd
+            # switches the configurations around a bit, so it's important
+            # that we specify the configs for absolutely everything, every
+            # time.
+            Certificate.cache_class = nil
+            CertificateRequest.cache_class = nil
+            CertificateRevocationList.cache_class = nil
         end
     end
 

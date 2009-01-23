@@ -175,6 +175,14 @@ describe Puppet::SSL::Host do
 
                 Puppet::SSL::Host.ca_location = :only
             end
+
+            it "should reset the cache class for Certificate, CertificateRevocationList, and CertificateRequest to nil" do
+                Puppet::SSL::Certificate.expects(:cache_class=).with nil
+                Puppet::SSL::CertificateRequest.expects(:cache_class=).with nil
+                Puppet::SSL::CertificateRevocationList.expects(:cache_class=).with nil
+
+                Puppet::SSL::Host.ca_location = :only
+            end
         end
 
         describe "as 'none'" do
