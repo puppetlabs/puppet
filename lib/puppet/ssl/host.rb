@@ -128,7 +128,12 @@ class Puppet::SSL::Host
     def generate_key
         @key = Key.new(name)
         @key.generate
-        @key.save
+        begin
+            @key.save
+        rescue
+            @key = nil
+            raise
+        end
         true
     end
 
@@ -142,7 +147,13 @@ class Puppet::SSL::Host
         generate_key unless key
         @certificate_request = CertificateRequest.new(name)
         @certificate_request.generate(key.content)
-        @certificate_request.save
+        begin
+            @certificate_request.save
+        rescue
+            @certificate_request = nil
+            raise
+        end
+
         return true
     end
 

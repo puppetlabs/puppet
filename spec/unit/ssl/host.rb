@@ -267,6 +267,16 @@ describe Puppet::SSL::Host do
             @host.key.should equal(@key)
         end
 
+        it "should not retain keys that could not be saved" do
+            Puppet::SSL::Key.expects(:new).with("myname").returns(@key)
+
+            @key.stubs(:generate)
+            @key.expects(:save).raises "eh"
+
+            lambda { @host.generate_key }.should raise_error
+            @host.key.should be_nil
+        end
+
         it "should return any previously found key without requerying" do
             Puppet::SSL::Key.expects(:find).with("myname").returns(@key).once
             @host.key.should equal(@key)
@@ -322,6 +332,19 @@ describe Puppet::SSL::Host do
 
             @host.certificate_request.should equal(@request)
             @host.certificate_request.should equal(@request)
+        end
+
+        it "should not keep its certificate request in memory if the request cannot be saved" do
+            Puppet::SSL::CertificateRequest.expects(:new).with("myname").returns @request
+
+            key = stub 'key', :public_key => mock("public_key"), :content => "mycontent"
+            @host.stubs(:key).returns(key)
+            @request.stubs(:generate)
+            @request.expects(:save).raises "eh"
+
+            lambda { @host.generate_certificate_request }.should raise_error
+
+            @host.certificate_request.should be_nil
         end
     end
 
