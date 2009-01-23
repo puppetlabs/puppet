@@ -690,8 +690,9 @@ describe Puppet::Indirector::Indirection do
             proc { @indirection.cache_class = "" }.should raise_error(ArgumentError)
         end
 
-        it "should fail to set the cache class when the cache class name is nil" do
-            proc { @indirection.cache_class = nil }.should raise_error(ArgumentError)
+        it "should allow resetting the cache_class to nil" do
+            @indirection.cache_class = nil
+            @indirection.cache_class.should be_nil
         end
 
         it "should fail to set the cache class when the specified cache class cannot be found" do
