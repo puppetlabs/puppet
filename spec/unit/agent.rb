@@ -14,6 +14,10 @@ describe Puppet::Agent do
     it "should include the Fact Handler module" do
         Puppet::Agent.ancestors.should be_include(Puppet::Agent::FactHandler)
     end
+
+    it "should include the Locker module" do
+        Puppet::Agent.ancestors.should be_include(Puppet::Agent::Locker)
+    end
 end
 
 describe Puppet::Agent, "when executing a catalog run" do
@@ -21,10 +25,7 @@ describe Puppet::Agent, "when executing a catalog run" do
         Puppet.settings.stubs(:use).returns(true)
         @agent = Puppet::Agent.new
         @agent.stubs(:splay)
-
-        @lockfile = stub 'lockfile', :lock => true, :locked? => false, :lockfile => "/my/lock/file", :unlock => true
-
-        @agent.stubs(:lockfile).returns @lockfile
+        @agent.stubs(:lock).yields.then.returns true
     end
 
     it "should splay" do
@@ -43,8 +44,8 @@ describe Puppet::Agent, "when executing a catalog run" do
         @agent.run
     end
 
-    it "should use a lockfile to make sure no other process is executing the catalog" do
-        @lockfile.expects(:lock).returns true
+    it "should retrieve the catalog if a lock is attained" do
+        @agent.expects(:lock).yields.then.returns true
 
         @agent.expects(:retrieve_catalog)
 
@@ -52,7 +53,7 @@ describe Puppet::Agent, "when executing a catalog run" do
     end
 
     it "should log and do nothing if the lock cannot be acquired" do
-        @lockfile.expects(:lock).returns false
+        @agent.expects(:lock).returns false
 
         @agent.expects(:retrieve_catalog).never
 
@@ -90,27 +91,6 @@ describe Puppet::Agent, "when executing a catalog run" do
         @agent.expects(:retrieve_catalog).returns catalog
 
         catalog.expects(:apply).never # because we're not yielding
-        @agent.run
-    end
-
-    it "should remove the lock file when done applying the catalog" do
-        catalog = stub 'catalog', :retrieval_duration= => nil, :apply => nil
-        @agent.expects(:retrieve_catalog).returns catalog
-
-        @lockfile.expects(:lock).returns true
-
-        @lockfile.expects(:unlock)
-
-        @agent.run
-    end
-
-    it "should remove the lock file even if there was an exception during the run" do
-        catalog = stub 'catalog', :retrieval_duration= => nil
-        @agent.expects(:retrieve_catalog).returns catalog
-
-        catalog.expects(:apply).raises "eh"
-
-        @lockfile.expects(:unlock)
         @agent.run
     end
 

@@ -7,9 +7,11 @@ require 'puppet/util'
 class Puppet::Agent
     require 'puppet/agent/fact_handler'
     require 'puppet/agent/plugin_handler'
+    require 'puppet/agent/locker'
 
     include Puppet::Agent::FactHandler
     include Puppet::Agent::PluginHandler
+    include Puppet::Agent::Locker
 
     # For benchmarking
     include Puppet::Util
@@ -51,17 +53,6 @@ class Puppet::Agent
                     [Puppet[:statefile], detail])
             end
         end
-    end
-
-    # Let the daemon run again, freely in the filesystem.  Frolick, little
-    # daemon!
-    def enable
-        lockfile.unlock(:anonymous => true)
-    end
-
-    # Stop the daemon from making any catalog runs.
-    def disable
-        lockfile.lock(:anonymous => true)
     end
     
     # Just so we can specify that we are "the" instance.
@@ -150,24 +141,25 @@ class Puppet::Agent
         got_lock = false
         splay
         Puppet::Util.sync(:puppetrun).synchronize(Sync::EX) do
-            unless lockfile.lock
+            got_lock = lock do
+                unless catalog = retrieve_catalog
+                    Puppet.err "Could not retrieve catalog; skipping run"
+                    return
+                end
+
+                begin
+                    benchmark(:notice, "Finished catalog run") do
+                        catalog.apply(options)
+                    end
+                rescue => detail
+                    puts detail.backtrace if Puppet[:trace]
+                    Puppet.err "Failed to apply catalog: %s" % detail
+                end
+            end
+
+            unless got_lock
                 Puppet.notice "Lock file %s exists; skipping catalog run" % lockfile.lockfile
                 return
-            end
-
-            got_lock = true
-            unless catalog = retrieve_catalog
-                Puppet.err "Could not retrieve catalog; skipping run"
-                return
-            end
-
-            begin
-                benchmark(:notice, "Finished catalog run") do
-                    catalog.apply(options)
-                end
-            rescue => detail
-                puts detail.backtrace if Puppet[:trace]
-                Puppet.err "Failed to apply catalog: %s" % detail
             end
 
             # Now close all of our existing http connections, since there's no
@@ -180,10 +172,6 @@ class Puppet::Agent
             # done with the run.
             Process.kill(:HUP, $$) if self.restart?
         end
-    ensure
-        # Just make sure we remove the lock file if we set it.
-        lockfile.unlock if got_lock and lockfile.locked?
-        clear()
     end
 
     def running?
@@ -251,14 +239,6 @@ class Puppet::Agent
         Puppet::Util::Storage.cache(:configuration)[:compile_time] = @compile_time
 
         return textobjects
-    end
-
-    def lockfile
-        unless defined?(@lockfile)
-            @lockfile = Puppet::Util::Pidlock.new(Puppet[:puppetdlockfile])
-        end
-
-        @lockfile
     end
 
     def splayed?
