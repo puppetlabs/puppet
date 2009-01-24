@@ -92,15 +92,6 @@ class Puppet::Agent
         end
     end
 
-    # Retrieve the cached config
-    def retrievecache
-        if FileTest.exists?(self.cachefile)
-            return ::File.read(self.cachefile)
-        else
-            return nil
-        end
-    end
-
     # Get the remote catalog, yo.  Returns nil if no catalog can be found.
     def retrieve_catalog
         name = Facter.value("hostname")
@@ -205,50 +196,6 @@ class Puppet::Agent
         return timeout
     end
 
-    # Actually retrieve the catalog, either from the server or from a
-    # local master.
-    def get_actual_config(facts)
-        begin
-            Timeout::timeout(self.class.timeout) do
-                return get_remote_config(facts)
-            end
-        rescue Timeout::Error
-            Puppet.err "Configuration retrieval timed out"
-            return nil
-        end
-    end
-    
-    # Retrieve a config from a remote master.
-    def get_remote_config(facts)
-        textobjects = ""
-
-        textfacts = CGI.escape(YAML.dump(facts))
-
-        benchmark(:debug, "Retrieved catalog") do
-            # error handling for this is done in the network client
-            begin
-                textobjects = @driver.getconfig(textfacts, Puppet[:catalog_format])
-                begin
-                    textobjects = CGI.unescape(textobjects)
-                rescue => detail
-                    raise Puppet::Error, "Could not CGI.unescape catalog"
-                end
-
-            rescue => detail
-                Puppet.err "Could not retrieve catalog: %s" % detail
-                return nil
-            end
-        end
-
-        return nil if textobjects == ""
-
-        @compile_time = Time.now
-        Puppet::Util::Storage.cache(:configuration)[:facts] = facts
-        Puppet::Util::Storage.cache(:configuration)[:compile_time] = @compile_time
-
-        return textobjects
-    end
-
     def splayed?
         @splayed
     end
@@ -262,41 +209,5 @@ class Puppet::Agent
         Puppet.info "Sleeping for %s seconds (splay is enabled)" % time
         sleep(time)
         @splayed = true
-    end
-
-    private
-
-    def retrieve_and_apply_catalog(options)
-        catalog = self.retrieve_catalog
-        Puppet.notice "Starting catalog run"
-        benchmark(:notice, "Finished catalog run") do
-            catalog.apply(options)
-        end
-    end
-
-    # Use our cached config, optionally specifying whether this is
-    # necessary because of a failure.
-    def use_cached_config(because_of_failure = false)
-        return true if self.catalog
-
-        if because_of_failure and ! Puppet[:usecacheonfailure]
-            @catalog = nil
-            Puppet.warning "Not using cache on failed catalog"
-            return false
-        end
-
-        return false unless oldtext = self.retrievecache
-
-        begin
-            @catalog = YAML.load(oldtext).to_catalog
-            @catalog.from_cache = true
-            @catalog.host_config = true
-        rescue => detail
-            puts detail.backtrace if Puppet[:trace]
-            Puppet.warning "Could not load cached catalog: %s" % detail
-            clear
-            return false
-        end
-        return true
     end
 end
