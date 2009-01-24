@@ -123,10 +123,12 @@ describe Puppet::Agent, "when retrieving a catalog" do
         @agent = Puppet::Agent.new
 
         @catalog = Puppet::Resource::Catalog.new
+
+        @agent.stubs(:convert_catalog).returns @catalog
     end
 
     it "should use the Catalog class to get its catalog" do
-        Puppet::Resource::Catalog.expects(:get).returns @catalog
+        Puppet::Resource::Catalog.expects(:find).returns @catalog
 
         @agent.retrieve_catalog
     end
@@ -134,68 +136,90 @@ describe Puppet::Agent, "when retrieving a catalog" do
     it "should use its Facter name to retrieve the catalog" do
         Facter.stubs(:value).returns "eh"
         Facter.expects(:value).with("hostname").returns "myhost"
-        Puppet::Resource::Catalog.expects(:get).with { |name, options| name == "myhost" }.returns @catalog
+        Puppet::Resource::Catalog.expects(:find).with { |name, options| name == "myhost" }.returns @catalog
 
         @agent.retrieve_catalog
     end
 
     it "should default to returning a catalog retrieved directly from the server, skipping the cache" do
-        Puppet::Resource::Catalog.expects(:get).with { |name, options| options[:use_cache] == false }.returns @catalog
+        Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:use_cache] == false }.returns @catalog
 
         @agent.retrieve_catalog.should == @catalog
     end
 
     it "should return the cached catalog when no catalog can be retrieved from the server" do
-        Puppet::Resource::Catalog.expects(:get).with { |name, options| options[:use_cache] == false }.returns nil
-        Puppet::Resource::Catalog.expects(:get).with { |name, options| options[:use_cache] == true }.returns @catalog
+        Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:use_cache] == false }.returns nil
+        Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:use_cache] == true }.returns @catalog
+
+        @agent.retrieve_catalog.should == @catalog
+    end
+
+    it "should not look in the cache for a catalog if one is returned from the server" do
+        Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:use_cache] == false }.returns @catalog
+        Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:use_cache] == true }.never
 
         @agent.retrieve_catalog.should == @catalog
     end
 
     it "should return the cached catalog when retrieving the remote catalog throws an exception" do
-        Puppet::Resource::Catalog.expects(:get).with { |name, options| options[:use_cache] == false }.raises "eh"
-        Puppet::Resource::Catalog.expects(:get).with { |name, options| options[:use_cache] == true }.returns @catalog
+        Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:use_cache] == false }.raises "eh"
+        Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:use_cache] == true }.returns @catalog
 
         @agent.retrieve_catalog.should == @catalog
     end
 
     it "should return nil if no cached catalog is available and no catalog can be retrieved from the server" do
-        Puppet::Resource::Catalog.expects(:get).with { |name, options| options[:use_cache] == false }.returns nil
-        Puppet::Resource::Catalog.expects(:get).with { |name, options| options[:use_cache] == true }.returns nil
+        Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:use_cache] == false }.returns nil
+        Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:use_cache] == true }.returns nil
 
         @agent.retrieve_catalog.should be_nil
     end
 
-    it "should record the retrieval time with the catalog" do
-        @agent.expects(:thinmark).yields.then.returns 10
+    it "should convert the catalog before returning" do
+        Puppet::Resource::Catalog.stubs(:find).returns @catalog
 
-        Puppet::Resource::Catalog.expects(:get).returns @catalog
-
-        @catalog.expects(:retrieval_duration=).with 10
-
-        @agent.retrieve_catalog
-    end
-
-    it "should write the catalog's class file" do
-        @catalog.expects(:write_class_file)
-
-        Puppet::Resource::Catalog.expects(:get).returns @catalog
-
-        @agent.retrieve_catalog
-    end
-
-    it "should mark the catalog as a host catalog" do
-        @catalog.expects(:host_config=).with true
-
-        Puppet::Resource::Catalog.expects(:get).returns @catalog
-
-        @agent.retrieve_catalog
+        @agent.expects(:convert_catalog).with { |cat, dur| cat == @catalog }.returns "converted catalog"
+        @agent.retrieve_catalog.should == "converted catalog"
     end
 
     it "should return nil if there is an error while retrieving the catalog" do
-        Puppet::Resource::Catalog.expects(:get).raises "eh"
+        Puppet::Resource::Catalog.expects(:find).raises "eh"
 
         @agent.retrieve_catalog.should be_nil
+    end
+end
+
+describe Puppet::Agent, "when converting the catalog" do
+    before do
+        Puppet.settings.stubs(:use).returns(true)
+        @agent = Puppet::Agent.new
+
+        @catalog = Puppet::Resource::Catalog.new
+        @oldcatalog = stub 'old_catalog', :to_ral => @catalog
+    end
+
+    it "should convert the catalog to a RAL-formed catalog" do
+        @oldcatalog.expects(:to_ral).returns @catalog
+
+        @agent.convert_catalog(@oldcatalog, 10).should equal(@catalog)
+    end
+
+    it "should record the passed retrieval time with the RAL catalog" do
+        @catalog.expects(:retrieval_duration=).with 10
+
+        @agent.convert_catalog(@oldcatalog, 10)
+    end
+
+    it "should write the RAL catalog's class file" do
+        @catalog.expects(:write_class_file)
+
+        @agent.convert_catalog(@oldcatalog, 10)
+    end
+
+    it "should mark the RAL catalog as a host catalog" do
+        @catalog.expects(:host_config=).with true
+
+        @agent.convert_catalog(@oldcatalog, 10)
     end
 end
 

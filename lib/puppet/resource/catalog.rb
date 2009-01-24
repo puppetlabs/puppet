@@ -485,7 +485,11 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
                 resource.catalog = result
             end
 
-            newres = resource.send(convert)
+            if resource.is_a?(Puppet::Resource) and convert.to_s == "to_resource"
+                newres = resource
+            else
+                newres = resource.send(convert)
+            end
 
             # We can't guarantee that resources don't munge their names
             # (like files do with trailing slashes), so we have to keep track

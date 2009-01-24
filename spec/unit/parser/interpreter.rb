@@ -112,7 +112,8 @@ describe Puppet::Parser::Interpreter do
         end
 
         it "should create a compile with the node and parser" do
-            @compiler.expects(:compile).returns(:config)
+            catalog = stub 'catalog', :to_resource => nil
+            @compiler.expects(:compile).returns(catalog)
             @interp.expects(:parser).with(:myenv).returns(@parser)
             Puppet::Parser::Compiler.expects(:new).with(@node, @parser).returns(@compiler)
             @interp.compile(@node)
@@ -122,6 +123,16 @@ describe Puppet::Parser::Interpreter do
             @node.stubs(:name).returns("whatever")
             @interp.expects(:parser).with(:myenv).returns(nil)
             proc { @interp.compile(@node) }.should raise_error(Puppet::ParseError)
+        end
+
+        it "should return the results of the compile, converted to a plain resource catalog" do
+            catalog = mock 'catalog'
+            @compiler.expects(:compile).returns(catalog)
+            @interp.stubs(:parser).returns(@parser)
+            Puppet::Parser::Compiler.stubs(:new).returns(@compiler)
+
+            catalog.expects(:to_resource).returns "my_resource_catalog"
+            @interp.compile(@node).should == "my_resource_catalog"
         end
     end
 

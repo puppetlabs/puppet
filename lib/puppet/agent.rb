@@ -110,28 +110,36 @@ class Puppet::Agent
         result = nil
         begin
             duration = thinmark do
-                result = catalog_class.get(name, :use_cache => false)
+                result = catalog_class.find(name, :use_cache => false)
             end
         rescue => detail
             puts detail.backtrace if Puppet[:trace]
             Puppet.err "Could not retrieve catalog from remote server: %s" % detail
         end
 
-        begin
-            duration = thinmark do
-                result = catalog_class.get(name, :use_cache => true)
+        unless result
+            begin
+                duration = thinmark do
+                    result = catalog_class.find(name, :use_cache => true)
+                end
+            rescue => detail
+                puts detail.backtrace if Puppet[:trace]
+                Puppet.err "Could not retrieve catalog from cache: %s" % detail
             end
-        rescue => detail
-            puts detail.backtrace if Puppet[:trace]
-            Puppet.err "Could not retrieve catalog from cache: %s" % detail
         end
 
         return nil unless result
 
-        result.retrieval_duration = duration
-        result.host_config = true
-        result.write_class_file
-        return result
+        convert_catalog(result, duration)
+    end
+
+    # Convert a plain resource catalog into our full host catalog.
+    def convert_catalog(result, duration)
+        catalog = result.to_ral
+        catalog.retrieval_duration = duration
+        catalog.host_config = true
+        catalog.write_class_file
+        return catalog
     end
 
     # The code that actually runs the catalog.  
