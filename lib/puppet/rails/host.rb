@@ -3,7 +3,7 @@ require 'puppet/rails/fact_name'
 require 'puppet/rails/source_file'
 require 'puppet/util/rails/collection_merger'
 
-# Puppet::TIME_DEBUG = true
+Puppet::TIME_DEBUG = true
 
 class Puppet::Rails::Host < ActiveRecord::Base
     include Puppet::Util
@@ -12,9 +12,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
     has_many :fact_values, :dependent => :destroy
     has_many :fact_names, :through => :fact_values
     belongs_to :source_file
-    has_many :resources,
-        :include => :param_values,
-        :dependent => :destroy
+    has_many :resources, :dependent => :destroy
 
     # If the host already exists, get rid of its objects
     def self.clean(host)
@@ -119,25 +117,49 @@ class Puppet::Rails::Host < ActiveRecord::Base
     def setresources(list)
         existing = nil
         seconds = Benchmark.realtime {
-
-            # Preload the parameters with the resource query, but not the tags, since doing so makes the query take about 10x longer.
-            # I've left the other queries in so that it's straightforward to switch between them for testing, if we so desire.
-            #existing = resources.find(:all, :include => [{:param_values => :param_name, :resource_tags => :puppet_tag}, :source_file]).inject({}) do | hash, resource |
-            #existing = resources.find(:all, :include => [{:resource_tags => :puppet_tag}, :source_file]).inject({}) do | hash, resource |
-            existing = resources.find(:all, :include => [{:param_values => :param_name}, :source_file]).inject({}) do | hash, resource |
-                hash[resource.ref] = resource
-                hash
-            end
+            existing = find_resources()
         }
-
         Puppet.notice("Searched for resources in %0.2f seconds" % seconds) if defined?(Puppet::TIME_DEBUG)
 
+        seconds = Benchmark.realtime {
+            find_resources_parameters_tags(existing)
+        } if id
+        Puppet.notice("Searched for resource params and tags in %0.2f seconds" % seconds) if defined?(Puppet::TIME_DEBUG)
+
+        seconds = Benchmark.realtime {
+            compare_to_catalog(existing, list)
+        }
+        Puppet.notice("Resource comparison took %0.2f seconds" % seconds) if defined?(Puppet::TIME_DEBUG)
+    end
+
+    def find_resources
+        resources.find(:all, :include => :source_file).inject({}) do | hash, resource |
+            hash[resource.ref] = resource
+            hash
+        end
+    end
+
+    def find_resources_parameters_tags(resources)
+        # initialize all resource parameters
+        resources.each do |key,resource|
+            resource.params_hash = []
+        end
+
+        resources_by_id = resources.inject({}) do |hash, res|
+            hash[res[1]['id']] = res[1]
+            hash
+        end
+
+        find_resources_parameters(resources_by_id)
+        find_resources_tags(resources_by_id)
+    end
+
+    def compare_to_catalog(resources, list)
         compiled = list.inject({}) do |hash, resource|
             hash[resource.ref] = resource
             hash
         end
-        
-        ar_hash_merge(existing, compiled,
+        ar_hash_merge(resources, compiled,
                       :create => Proc.new { |ref, resource|
                           resource.to_rails(self)
                       }, :delete => Proc.new { |resource|
@@ -145,6 +167,23 @@ class Puppet::Rails::Host < ActiveRecord::Base
                       }, :modify => Proc.new { |db, mem|
                           mem.modify_rails(db)
                       })
+    end
+
+    def find_resources_parameters(resources)
+        params = Puppet::Rails::ParamValue.find_all_params_from_host(self)
+
+        # assign each loaded parameters/tags to the resource it belongs to
+        params.each do |param|
+            resources[param['resource_id']].add_param_to_hash(param)
+        end
+    end
+
+    def find_resources_tags(resources)
+        tags = Puppet::Rails::ResourceTag.find_all_tags_from_host(self)
+
+        tags.each do |tag|
+            resources[tag['resource_id']].add_tag_to_hash(tag)
+        end
     end
 
     def update_connect_time

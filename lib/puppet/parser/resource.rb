@@ -181,11 +181,11 @@ class Puppet::Parser::Resource
             hash
         end
         
-        db_resource.ar_hash_merge(db_resource.get_params_hash(db_resource.param_values), updated_params,
+        db_resource.ar_hash_merge(db_resource.get_params_hash(), updated_params,
                                   :create => Proc.new { |name, parameter|
                                       parameter.to_rails(db_resource)
                                   }, :delete => Proc.new { |values|
-                                      values.each { |value| db_resource.param_values.delete(value) }
+                                      values.each { |value| Puppet::Rails::ParamValue.delete(value['id']) }
                                   }, :modify => Proc.new { |db, mem|
                                       mem.modify_rails_values(db)
                                   })
@@ -194,13 +194,13 @@ class Puppet::Parser::Resource
             hash[tag] = tag
             hash
         }
-            
+
         db_resource.ar_hash_merge(db_resource.get_tag_hash(), 
                                   updated_tags,
                                   :create => Proc.new { |name, tag|
                                       db_resource.add_resource_tag(name)
                                   }, :delete => Proc.new { |tag|
-                                      db_resource.resource_tags.delete(tag)
+                                      Puppet::Rails::ResourceTag.delete(tag['id'])
                                   }, :modify => Proc.new { |db, mem|
                                       # nothing here
                                   })
@@ -437,7 +437,7 @@ class Puppet::Parser::Resource
             # 'type' isn't a valid column name, so we have to use another name.
             to = (param == :type) ? :restype : param
             if value = self.send(param)
-                hash[to] = value 
+                hash[to] = value
             end
             hash
         end

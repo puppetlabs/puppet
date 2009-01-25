@@ -5,6 +5,7 @@ require 'puppet/util/rails/collection_merger'
 
 class Puppet::Rails::Resource < ActiveRecord::Base
     include Puppet::Util::CollectionMerger
+    include Puppet::Util::ReferenceSerializer
 
     has_many :param_values, :dependent => :destroy, :class_name => "Puppet::Rails::ParamValue"
     has_many :param_names, :through => :param_values, :class_name => "Puppet::Rails::ParamName"
@@ -32,21 +33,46 @@ class Puppet::Rails::Resource < ActiveRecord::Base
         self.source_file = Puppet::Rails::SourceFile.find_or_create_by_filename(file)
     end
 
+    def title
+        unserialize_value(self[:title])
+    end
+
+    def add_param_to_hash(param)
+        @params_hash ||= []
+        @params_hash << param
+    end
+
+    def add_tag_to_hash(tag)
+        @tags_hash ||= []
+        @tags_hash << tag
+    end
+
+    def params_hash=(hash)
+        @params_hash = hash
+    end
+
+    def tags_hash=(hash)
+        @tags_hash = hash
+    end
+
     # returns a hash of param_names.name => [param_values]
     def get_params_hash(values = nil)
-        values ||= param_values.find(:all, :include => :param_name)
-        values.inject({}) do | hash, value |
-            hash[value.param_name.name] ||= []
-            hash[value.param_name.name] << value
+        values ||= @params_hash || Puppet::Rails::ParamValues.find_all_params_from_resource(id)
+        if values.size == 0
+            return {}
+        end
+        values.inject({}) do |hash, value|
+            hash[value['name']] ||= []
+            hash[value['name']] << value
             hash
         end
     end
-    
+
     def get_tag_hash(tags = nil)
-        tags ||= resource_tags.find(:all, :include => :puppet_tag)
+        tags ||= @tags_hash || Puppet::Rails::ResourceTag.find_all_tags_from_resource(id)
         return tags.inject({}) do |hash, tag|
             # We have to store the tag object, not just the tag name.
-            hash[tag.puppet_tag.name] = tag
+            hash[tag['name']] = tag
             hash
         end
     end
@@ -82,7 +108,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     end
 
     def ref
-        "%s[%s]" % [self[:restype].split("::").collect { |s| s.capitalize }.join("::"), self[:title]]
+        "%s[%s]" % [self[:restype].split("::").collect { |s| s.capitalize }.join("::"), self.title.to_s]
     end
 
     # Convert our object to a resource.  Do not retain whether the object

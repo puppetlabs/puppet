@@ -12,7 +12,7 @@ class Puppet::Parser::Resource::Param
     end
 
     def inspect
-        "#<#{self.class} @name => #{name}, @value => #{value}, @source => #{source.name}>"
+        "#<#{self.class} @name => #{name}, @value => #{value}, @source => #{source.name}, @line => #{line}>"
     end
 
     def line_to_i
@@ -39,7 +39,6 @@ class Puppet::Parser::Resource::Param
 
         param_name = Puppet::Rails::ParamName.find_or_create_by_name(self.name.to_s)
         line_number = line_to_i()
-
         return values.collect do |v|
             db_resource.param_values.create(:value => v,
                                            :line => line_number,
@@ -48,18 +47,18 @@ class Puppet::Parser::Resource::Param
     end
 
     def modify_rails_values(db_values)
-        #dev_warn if db_values.nil? || db_values.empty? 
+        #dev_warn if db_values.nil? || db_values.empty?
 
         values_to_remove(db_values).each { |remove_me|
-            Puppet::Rails::ParamValue.delete(remove_me.id)
+            Puppet::Rails::ParamValue.delete(remove_me['id'])
         }
         line_number = line_to_i()
-        values_to_add(db_values).each { |add_me| 
-            db_resource = db_values[0].resource
-            db_param_name = db_values[0].param_name
-            db_resource.param_values.create(:value => add_me,
+        db_param_name = db_values[0]['param_name_id']
+        values_to_add(db_values).each { |add_me|
+            Puppet::Rails::ParamValue.create(:value => add_me,
                                            :line => line_number,
-                                           :param_name => db_param_name)
+                                           :param_name_id => db_param_name,
+                                           :resource_id => db_values[0]['resource_id'] )
         }
     end
     
@@ -79,9 +78,9 @@ class Puppet::Parser::Resource::Param
         values = munge_for_rails(value)
         line_number = line_to_i()
         db_values.collect do |db|
-            db unless (db.line == line_number && 
+            db unless (db['line'] == line_number && 
                        values.find { |v| 
-                         compare(v,db.value)
+                         compare(v,db['value'])
                        } )
         end.compact
     end
@@ -90,8 +89,8 @@ class Puppet::Parser::Resource::Param
         values = munge_for_rails(value)
         line_number = line_to_i()
         values.collect do |v|
-            v unless db_values.find { |db| (compare(v,db.value) && 
-                                         line_number == db.line) }
+            v unless db_values.find { |db| (compare(v,db['value']) && 
+                                         line_number == db['line']) }
         end.compact
     end
 end
