@@ -1,4 +1,6 @@
 0.25.x
+    Fixed #1852 - Correct behaviour when no SELinux bindings
+ 
     Updated Red Hat spec file 0.24.7
 
 0.24.7

@@ -74,6 +74,12 @@ Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f
             @sel.sync
         end
 
+        it "should do nothing for insync? if no SELinux support" do
+            @sel.should = %{newcontext}
+            @sel.expects(:selinux_support?).returns false
+            @sel.insync?("oldcontext").should == true
+        end
+
         after do
             Puppet::Type.type(:file).clear
         end
