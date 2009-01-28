@@ -195,6 +195,15 @@ describe Puppet::Parser::Resource do
             @resource["require"].sort.should == %w{container resource}
         end
 
+        it "should not stack relationship metaparams that are set to 'undef'" do
+            @resource.set_parameter("require", :undef)
+            @scope.setvar("require", "container")
+
+            @resource.class.publicize_methods(:add_metaparams)  { @resource.add_metaparams }
+
+            @resource["require"].should == :undef
+        end
+
         it "should flatten the array resulting from stacking relationship metaparams" do
             @resource.set_parameter("require", ["resource1", "resource2"])
             @scope.setvar("require", %w{container1 container2})

@@ -352,6 +352,7 @@ class Puppet::Parser::Resource
             # LAK:NOTE Relationship metaparams get treated specially -- we stack them, instead of
             # overriding.
             next if @params[name] and not self.class.relationship_parameter?(name)
+            next if @params[name] and @params[name].value == :undef
 
             # Skip metaparams for which we get no value.
             next unless val = scope.lookupvar(name.to_s, false) and val != :undefined
