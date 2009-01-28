@@ -106,6 +106,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
             raise(ArgumentError, "Cannot alias %s to %s; resource %s already exists" % [resource.ref, name, newref])
         end
         @resource_table[newref] = resource
+        @aliases[resource.ref] ||= []
         @aliases[resource.ref] << newref
     end
 
@@ -286,7 +287,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         @applying = false
         @relationship_graph = nil
 
-        @aliases = Hash.new { |hash, key| hash[key] = [] }
+        @aliases = {}
 
         if block_given?
             yield(self)
@@ -355,8 +356,10 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     def remove_resource(*resources)
         resources.each do |resource|
             @resource_table.delete(resource.ref)
-            @aliases[resource.ref].each { |res_alias| @resource_table.delete(res_alias) }
-            @aliases[resource.ref].clear
+            if aliases = @aliases[resource.ref]
+                aliases.each { |res_alias| @resource_table.delete(res_alias) }
+                @aliases.delete(resource.ref)
+            end
             remove_vertex!(resource) if vertex?(resource)
             @relationship_graph.remove_vertex!(resource) if @relationship_graph and @relationship_graph.vertex?(resource)
             resource.remove
