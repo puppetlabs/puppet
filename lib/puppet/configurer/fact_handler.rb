@@ -3,7 +3,7 @@ require 'puppet/indirector/facts/facter'
 # Break out the code related to facts.  This module is
 # just included into the agent, but having it here makes it
 # easier to test.
-module Puppet::Agent::FactHandler
+module Puppet::Configurer::FactHandler
     def download_fact_plugins?
         Puppet[:factsync]
     end
@@ -23,7 +23,7 @@ module Puppet::Agent::FactHandler
     def download_fact_plugins
         return unless download_fact_plugins?
 
-        Puppet::Agent::Downloader.new("fact", Puppet[:factsource], Puppet[:factdest], Puppet[:factsignore]).evaluate
+        Puppet::Configurer::Downloader.new("fact", Puppet[:factsource], Puppet[:factdest], Puppet[:factsignore]).evaluate
     end
 
     # Clear out all of the loaded facts and reload them from disk.

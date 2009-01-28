@@ -1,14 +1,14 @@
 #!/usr/bin/env ruby
 
 require File.dirname(__FILE__) + '/../../spec_helper'
-require 'puppet/agent'
-require 'puppet/agent/plugin_handler'
+require 'puppet/configurer'
+require 'puppet/configurer/plugin_handler'
 
 class PluginHandlerTester
-    include Puppet::Agent::PluginHandler
+    include Puppet::Configurer::PluginHandler
 end
 
-describe Puppet::Agent::PluginHandler do
+describe Puppet::Configurer::PluginHandler do
     before do
         @pluginhandler = PluginHandlerTester.new
     end
@@ -32,7 +32,7 @@ describe Puppet::Agent::PluginHandler do
     end
 
     it "should not download plugins when downloading is disabled" do
-        Puppet::Agent::Downloader.expects(:new).never
+        Puppet::Configurer::Downloader.expects(:new).never
         @pluginhandler.expects(:download_plugins?).returns false
         @pluginhandler.download_plugins
     end
@@ -44,7 +44,7 @@ describe Puppet::Agent::PluginHandler do
         Puppet.settings.expects(:value).with(:plugindest).returns "pdest"
         Puppet.settings.expects(:value).with(:pluginsignore).returns "pignore"
 
-        Puppet::Agent::Downloader.expects(:new).with("plugin", "psource", "pdest", "pignore").returns downloader
+        Puppet::Configurer::Downloader.expects(:new).with("plugin", "psource", "pdest", "pignore").returns downloader
 
         downloader.expects(:evaluate).returns []
 
@@ -59,7 +59,7 @@ describe Puppet::Agent::PluginHandler do
     it "should load each downloaded file" do
         downloader = mock 'downloader'
 
-        Puppet::Agent::Downloader.expects(:new).returns downloader
+        Puppet::Configurer::Downloader.expects(:new).returns downloader
 
         downloader.expects(:evaluate).returns %w{one two}
 

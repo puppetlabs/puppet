@@ -76,8 +76,6 @@ module Puppet::Daemon
         Puppet::Util::Log.destinations.reject { |d| d == :console }.each do |dest|
             Puppet::Util::Log.close(dest)
         end
-
-        super
     end
 end
 

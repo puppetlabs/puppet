@@ -1,7 +1,7 @@
 require 'puppet/agent'
 require 'puppet/resource/catalog'
 
-class Puppet::Agent::Downloader
+class Puppet::Configurer::Downloader
     attr_reader :name, :path, :source, :ignore
 
     # Determine the timeout value to use.

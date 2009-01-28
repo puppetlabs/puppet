@@ -1,14 +1,14 @@
 #!/usr/bin/env ruby
 
 require File.dirname(__FILE__) + '/../../spec_helper'
-require 'puppet/agent'
-require 'puppet/agent/fact_handler'
+require 'puppet/configurer'
+require 'puppet/configurer/fact_handler'
 
 class FactHandlerTester
-    include Puppet::Agent::FactHandler
+    include Puppet::Configurer::FactHandler
 end
 
-describe Puppet::Agent::FactHandler do
+describe Puppet::Configurer::FactHandler do
     before do
         @facthandler = FactHandlerTester.new
     end
@@ -32,7 +32,7 @@ describe Puppet::Agent::FactHandler do
     end
 
     it "should not download fact plugins when downloading is disabled" do
-        Puppet::Agent::Downloader.expects(:new).never
+        Puppet::Configurer::Downloader.expects(:new).never
         @facthandler.expects(:download_fact_plugins?).returns false
         @facthandler.download_fact_plugins
     end
@@ -44,7 +44,7 @@ describe Puppet::Agent::FactHandler do
         Puppet.settings.expects(:value).with(:factdest).returns "fdest"
         Puppet.settings.expects(:value).with(:factsignore).returns "fignore"
 
-        Puppet::Agent::Downloader.expects(:new).with("fact", "fsource", "fdest", "fignore").returns downloader
+        Puppet::Configurer::Downloader.expects(:new).with("fact", "fsource", "fdest", "fignore").returns downloader
 
         downloader.expects(:evaluate)
 

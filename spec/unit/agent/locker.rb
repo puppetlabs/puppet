@@ -11,10 +11,19 @@ end
 describe Puppet::Agent::Locker do
     before do
         @locker = LockerTester.new
+        @locker.stubs(:lockfile_path).returns "/my/lock"
     end
 
     it "should use a Pidlock instance as its lockfile" do
         @locker.lockfile.should be_instance_of(Puppet::Util::Pidlock)
+    end
+
+    it "should use 'lockfile_path' to determine its lockfile path" do
+        @locker.expects(:lockfile_path).returns "/my/lock"
+        lock = Puppet::Util::Pidlock.new("/my/lock")
+        Puppet::Util::Pidlock.expects(:new).with("/my/lock").returns lock
+
+        @locker.lockfile
     end
 
     it "should reuse the same lock file each time" do
@@ -82,5 +91,10 @@ describe Puppet::Agent::Locker do
         @locker.lockfile.expects(:unlock)
 
         lambda { @locker.lock { raise "foo" } }.should raise_error(RuntimeError)
+    end
+
+    it "should be considered running if the lockfile is locked" do
+        @locker.lockfile.expects(:locked?).returns true
+        @locker.should be_running
     end
 end

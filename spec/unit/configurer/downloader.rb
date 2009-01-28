@@ -2,36 +2,36 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-require 'puppet/agent/downloader'
+require 'puppet/configurer/downloader'
 
-describe Puppet::Agent::Downloader do
+describe Puppet::Configurer::Downloader do
     it "should require a name" do
-        lambda { Puppet::Agent::Downloader.new }.should raise_error(ArgumentError)
+        lambda { Puppet::Configurer::Downloader.new }.should raise_error(ArgumentError)
     end
 
     it "should require a path and a source at initialization" do
-        lambda { Puppet::Agent::Downloader.new("name") }.should raise_error(ArgumentError)
+        lambda { Puppet::Configurer::Downloader.new("name") }.should raise_error(ArgumentError)
     end
 
     it "should set the name, path and source appropriately" do
-        dler = Puppet::Agent::Downloader.new("facts", "path", "source")
+        dler = Puppet::Configurer::Downloader.new("facts", "path", "source")
         dler.name.should == "facts"
         dler.path.should == "path"
         dler.source.should == "source"
     end
 
     it "should be able to provide a timeout value" do
-        Puppet::Agent::Downloader.should respond_to(:timeout)
+        Puppet::Configurer::Downloader.should respond_to(:timeout)
     end
 
     it "should use the configtimeout, converted to an integer, as its timeout" do
         Puppet.settings.expects(:value).with(:configtimeout).returns "50"
-        Puppet::Agent::Downloader.timeout.should == 50
+        Puppet::Configurer::Downloader.timeout.should == 50
     end
 
     describe "when creating the file that does the downloading" do
         before do
-            @dler = Puppet::Agent::Downloader.new("foo", "path", "source")
+            @dler = Puppet::Configurer::Downloader.new("foo", "path", "source")
         end
 
         it "should create a file instance with the right path and source" do
@@ -83,14 +83,14 @@ describe Puppet::Agent::Downloader do
 
         it "should support providing an 'ignore' parameter" do
             Puppet::Type.type(:file).expects(:create).with { |opts| opts[:ignore] == ".svn" }
-            @dler = Puppet::Agent::Downloader.new("foo", "path", "source", ".svn")
+            @dler = Puppet::Configurer::Downloader.new("foo", "path", "source", ".svn")
             @dler.file
         end
     end
 
     describe "when creating the catalog to do the downloading" do
         before do
-            @dler = Puppet::Agent::Downloader.new("foo", "path", "source")
+            @dler = Puppet::Configurer::Downloader.new("foo", "path", "source")
         end
 
         it "should create a catalog and add the file to it" do
@@ -108,7 +108,7 @@ describe Puppet::Agent::Downloader do
 
     describe "when downloading" do
         before do
-            @dler = Puppet::Agent::Downloader.new("foo", "path", "source")
+            @dler = Puppet::Configurer::Downloader.new("foo", "path", "source")
         end
 
         it "should log that it is downloading" do
@@ -119,7 +119,7 @@ describe Puppet::Agent::Downloader do
         end
 
         it "should set a timeout for the download" do
-            Puppet::Agent::Downloader.expects(:timeout).returns 50
+            Puppet::Configurer::Downloader.expects(:timeout).returns 50
             Timeout.expects(:timeout).with(50)
 
             @dler.evaluate

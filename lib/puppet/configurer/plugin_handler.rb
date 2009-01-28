@@ -1,7 +1,7 @@
 # Break out the code related to plugins.  This module is
 # just included into the agent, but having it here makes it
 # easier to test.
-module Puppet::Agent::PluginHandler
+module Puppet::Configurer::PluginHandler
     def download_plugins?
         Puppet[:pluginsync]
     end
@@ -9,7 +9,7 @@ module Puppet::Agent::PluginHandler
     # Retrieve facts from the central server.
     def download_plugins
         return nil unless download_plugins?
-        Puppet::Agent::Downloader.new("plugin", Puppet[:pluginsource], Puppet[:plugindest], Puppet[:pluginsignore]).evaluate.each { |file| load_plugin(file) }
+        Puppet::Configurer::Downloader.new("plugin", Puppet[:pluginsource], Puppet[:plugindest], Puppet[:pluginsignore]).evaluate.each { |file| load_plugin(file) }
     end
 
     def load_plugin(file)

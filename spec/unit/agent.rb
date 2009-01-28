@@ -6,255 +6,200 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 require 'puppet/agent'
 
+class AgentTestClient
+    def run
+        # no-op
+    end
+    def stop
+        # no-op
+    end
+end
+
 describe Puppet::Agent do
-    it "should include the Plugin Handler module" do
-        Puppet::Agent.ancestors.should be_include(Puppet::Agent::PluginHandler)
+    before do
+        @agent = Puppet::Agent.new(AgentTestClient)
+
+        # So we don't actually try to hit the filesystem.
+        @agent.stubs(:lock).yields
     end
 
-    it "should include the Fact Handler module" do
-        Puppet::Agent.ancestors.should be_include(Puppet::Agent::FactHandler)
+    it "should set its client class at initialization" do
+        Puppet::Agent.new("foo").client_class.should == "foo"
     end
 
     it "should include the Locker module" do
         Puppet::Agent.ancestors.should be_include(Puppet::Agent::Locker)
     end
-end
 
-describe Puppet::Agent, "when executing a catalog run" do
-    before do
-        Puppet.settings.stubs(:use).returns(true)
-        @agent = Puppet::Agent.new
-        @agent.stubs(:splay)
-        @agent.stubs(:lock).yields.then.returns true
-    end
+    it "should create an instance of its client class and run it when asked to run" do
+        client = mock 'client'
+        AgentTestClient.expects(:new).returns client
 
-    it "should splay" do
-        Puppet::Util.sync(:puppetrun).stubs(:synchronize)
-        @agent.expects(:splay)
-        @agent.run
-    end
-
-    it "should use a global mutex to make sure no other thread is executing the catalog" do
-        sync = mock 'sync'
-        Puppet::Util.expects(:sync).with(:puppetrun).returns sync
-
-        sync.expects(:synchronize)
-
-        @agent.expects(:retrieve_config).never # i.e., if we don't yield, we don't retrieve the config
-        @agent.run
-    end
-
-    it "should retrieve the catalog if a lock is attained" do
-        @agent.expects(:lock).yields.then.returns true
-
-        @agent.expects(:retrieve_catalog)
+        client.expects(:run)
 
         @agent.run
     end
 
-    it "should log and do nothing if the lock cannot be acquired" do
-        @agent.expects(:lock).returns false
-
-        @agent.expects(:retrieve_catalog).never
-
-        Puppet.expects(:notice)
-
-        @agent.run
+    it "should determine its lock file path by asking the client class" do
+        AgentTestClient.expects(:lockfile_path).returns "/my/lock"
+        @agent.lockfile_path.should == "/my/lock"
     end
 
-    it "should retrieve the catalog" do
-        @agent.expects(:retrieve_catalog)
+    describe "when running" do
+        it "should splay" do
+            @agent.expects(:splay)
 
-        @agent.run
+            @agent.run
+        end
+
+        it "should do nothing if a client instance exists" do
+            @agent.expects(:client).returns "eh"
+            AgentTestClient.expects(:new).never
+            @agent.run
+        end
+
+        it "should do nothing if it is in the process of stopping" do
+            @agent.expects(:stopping?).returns true
+            AgentTestClient.expects(:new).never
+            @agent.run
+        end
+
+        it "should not fail if a client class instance cannot be created" do
+            AgentTestClient.expects(:new).raises "eh"
+            Puppet.expects(:err)
+            @agent.run
+        end
+
+        it "should not fail if there is an exception while running its client" do
+            client = AgentTestClient.new
+            AgentTestClient.expects(:new).returns client
+            client.expects(:run).raises "eh"
+            Puppet.expects(:err)
+            @agent.run
+        end
+
+        it "should use a mutex to restrict multi-threading" do
+            client = AgentTestClient.new
+            AgentTestClient.expects(:new).returns client
+
+            mutex = mock 'mutex'
+            @agent.expects(:sync).returns mutex
+
+            mutex.expects(:synchronize)
+            client.expects(:run).never # if it doesn't run, then we know our yield is what triggers it
+            @agent.run
+        end
+
+        it "should use a filesystem lock to restrict multiple processes running the agent" do
+            client = AgentTestClient.new
+            AgentTestClient.expects(:new).returns client
+
+            @agent.expects(:lock)
+
+            client.expects(:run).never # if it doesn't run, then we know our yield is what triggers it
+            @agent.run
+        end
+
+        it "should make its client instance available while running" do
+            client = AgentTestClient.new
+            AgentTestClient.expects(:new).returns client
+
+            client.expects(:run).with { @agent.client.should equal(client); true }
+            @agent.run
+        end
     end
 
-    it "should log a failure and do nothing if no catalog can be retrieved" do
-        @agent.expects(:retrieve_catalog).returns nil
+    describe "when splaying" do
+        before do
+            Puppet.settings.stubs(:value).with(:splay).returns true
+            Puppet.settings.stubs(:value).with(:splaylimit).returns "10"
+        end
 
-        Puppet.expects(:err)
+        it "should do nothing if splay is disabled" do
+            Puppet.settings.expects(:value).returns false
+            @agent.expects(:sleep).never
+            @agent.splay
+        end
 
-        @agent.run
-    end
+        it "should do nothing if it has already splayed" do
+            @agent.expects(:splayed?).returns true
+            @agent.expects(:sleep).never
+            @agent.splay
+        end
 
-    it "should apply the catalog with all options to :run" do
-        catalog = stub 'catalog', :retrieval_duration= => nil
-        @agent.expects(:retrieve_catalog).returns catalog
+        it "should log that it is splaying" do
+            @agent.stubs :sleep
+            Puppet.expects :info
+            @agent.splay
+        end
 
-        catalog.expects(:apply).with(:one => true)
-        @agent.run :one => true
+        it "should sleep for a random portion of the splaylimit plus 1" do
+            Puppet.settings.expects(:value).with(:splaylimit).returns "50"
+            @agent.expects(:rand).with(51).returns 10
+            @agent.expects(:sleep).with(10)
+            @agent.splay
+        end
+
+        it "should mark that it has splayed" do
+            @agent.stubs(:sleep)
+            @agent.splay
+            @agent.should be_splayed
+        end
     end
     
-    it "should benchmark how long it takes to apply the catalog" do
-        @agent.expects(:benchmark).with(:notice, "Finished catalog run")
+    describe "when shutting down" do
+        it "should do nothing if already stopping" do
+            @agent.expects(:stopping?).returns true
+            @agent.shutdown
+        end
 
-        catalog = stub 'catalog', :retrieval_duration= => nil
-        @agent.expects(:retrieve_catalog).returns catalog
+        it "should stop the client if one is available and it responds to 'stop'" do
+            client = AgentTestClient.new
 
-        catalog.expects(:apply).never # because we're not yielding
-        @agent.run
+            @agent.stubs(:client).returns client
+            client.expects(:stop)
+            @agent.shutdown
+        end
+
+        it "should remove its pid file" do
+            @agent.expects(:rmpidfile)
+            @agent.shutdown
+        end
+
+        it "should mark itself as stopping while waiting for the client to stop" do
+            client = AgentTestClient.new
+
+            @agent.stubs(:client).returns client
+            client.expects(:stop).with { @agent.should be_stopping; true }
+
+            @agent.shutdown
+        end
     end
 
-    it "should HUP itself if it should be restarted" do
-        catalog = stub 'catalog', :retrieval_duration= => nil, :apply => nil
-        @agent.expects(:retrieve_catalog).returns catalog
+    describe "when starting" do
+        it "should create a timer with the runinterval, a tolerance of 1, and :start? set to true" do
+            Puppet.settings.expects(:value).with(:runinterval).returns 5
+            Puppet.expects(:newtimer).with(:interval => 5, :start? => true, :tolerance => 1)
+            @agent.stubs(:run)
+            @agent.start
+        end
 
-        Process.expects(:kill).with(:HUP, $$)
+        it "should run once immediately" do
+            Puppet.stubs(:newtimer)
+            @agent.expects(:run)
+            @agent.start
+        end
 
-        @agent.expects(:restart?).returns true
+        it "should run within the block passed to the timer" do
+            Puppet.stubs(:newtimer).yields
+            @agent.expects(:run).times(2)
+            @agent.start
+        end
 
-        @agent.run
-    end
-
-    it "should not HUP itself if it should not be restarted" do
-        catalog = stub 'catalog', :retrieval_duration= => nil, :apply => nil
-        @agent.expects(:retrieve_catalog).returns catalog
-
-        Process.expects(:kill).never
-
-        @agent.expects(:restart?).returns false
-
-        @agent.run
-    end
-end
-
-describe Puppet::Agent, "when retrieving a catalog" do
-    before do
-        Puppet.settings.stubs(:use).returns(true)
-        @agent = Puppet::Agent.new
-
-        @catalog = Puppet::Resource::Catalog.new
-
-        @agent.stubs(:convert_catalog).returns @catalog
-    end
-
-    it "should use the Catalog class to get its catalog" do
-        Puppet::Resource::Catalog.expects(:find).returns @catalog
-
-        @agent.retrieve_catalog
-    end
-
-    it "should use its Facter name to retrieve the catalog" do
-        Facter.stubs(:value).returns "eh"
-        Facter.expects(:value).with("hostname").returns "myhost"
-        Puppet::Resource::Catalog.expects(:find).with { |name, options| name == "myhost" }.returns @catalog
-
-        @agent.retrieve_catalog
-    end
-
-    it "should default to returning a catalog retrieved directly from the server, skipping the cache" do
-        Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:use_cache] == false }.returns @catalog
-
-        @agent.retrieve_catalog.should == @catalog
-    end
-
-    it "should return the cached catalog when no catalog can be retrieved from the server" do
-        Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:use_cache] == false }.returns nil
-        Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:use_cache] == true }.returns @catalog
-
-        @agent.retrieve_catalog.should == @catalog
-    end
-
-    it "should not look in the cache for a catalog if one is returned from the server" do
-        Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:use_cache] == false }.returns @catalog
-        Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:use_cache] == true }.never
-
-        @agent.retrieve_catalog.should == @catalog
-    end
-
-    it "should return the cached catalog when retrieving the remote catalog throws an exception" do
-        Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:use_cache] == false }.raises "eh"
-        Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:use_cache] == true }.returns @catalog
-
-        @agent.retrieve_catalog.should == @catalog
-    end
-
-    it "should return nil if no cached catalog is available and no catalog can be retrieved from the server" do
-        Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:use_cache] == false }.returns nil
-        Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:use_cache] == true }.returns nil
-
-        @agent.retrieve_catalog.should be_nil
-    end
-
-    it "should convert the catalog before returning" do
-        Puppet::Resource::Catalog.stubs(:find).returns @catalog
-
-        @agent.expects(:convert_catalog).with { |cat, dur| cat == @catalog }.returns "converted catalog"
-        @agent.retrieve_catalog.should == "converted catalog"
-    end
-
-    it "should return nil if there is an error while retrieving the catalog" do
-        Puppet::Resource::Catalog.expects(:find).raises "eh"
-
-        @agent.retrieve_catalog.should be_nil
-    end
-end
-
-describe Puppet::Agent, "when converting the catalog" do
-    before do
-        Puppet.settings.stubs(:use).returns(true)
-        @agent = Puppet::Agent.new
-
-        @catalog = Puppet::Resource::Catalog.new
-        @oldcatalog = stub 'old_catalog', :to_ral => @catalog
-    end
-
-    it "should convert the catalog to a RAL-formed catalog" do
-        @oldcatalog.expects(:to_ral).returns @catalog
-
-        @agent.convert_catalog(@oldcatalog, 10).should equal(@catalog)
-    end
-
-    it "should record the passed retrieval time with the RAL catalog" do
-        @catalog.expects(:retrieval_duration=).with 10
-
-        @agent.convert_catalog(@oldcatalog, 10)
-    end
-
-    it "should write the RAL catalog's class file" do
-        @catalog.expects(:write_class_file)
-
-        @agent.convert_catalog(@oldcatalog, 10)
-    end
-
-    it "should mark the RAL catalog as a host catalog" do
-        @catalog.expects(:host_config=).with true
-
-        @agent.convert_catalog(@oldcatalog, 10)
-    end
-end
-
-describe Puppet::Agent, "when preparing for a run" do
-    before do
-        Puppet.settings.stubs(:use).returns(true)
-        @agent = Puppet::Agent.new
-        @agent.stubs(:dostorage)
-        @agent.stubs(:upload_facts)
-        @facts = {"one" => "two", "three" => "four"}
-    end
-
-    it "should initialize the metadata store" do
-        @agent.class.stubs(:facts).returns(@facts)
-        @agent.expects(:dostorage)
-        @agent.prepare
-    end
-
-    it "should download fact plugins" do
-        @agent.stubs(:dostorage)
-        @agent.expects(:download_fact_plugins)
-
-        @agent.prepare
-    end
-
-    it "should download plugins" do
-        @agent.stubs(:dostorage)
-        @agent.expects(:download_plugins)
-
-        @agent.prepare
-    end
-
-    it "should upload facts to use for catalog retrieval" do
-        @agent.stubs(:dostorage)
-        @agent.expects(:upload_facts)
-        @agent.prepare
+        it "should run within the block passed to the timer" do
+            Puppet.stubs(:newtimer).yields
+            @agent.expects(:run).times(2)
+            @agent.start
+        end
     end
 end
