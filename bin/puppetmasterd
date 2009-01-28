@@ -206,7 +206,6 @@ Puppet::SSL::Host.localhost
 # all it will have write access to.
 if Puppet::SSL::CertificateAuthority.ca?
     Puppet::SSL::Host.ca_location = :only
-    Puppet::SSL::Host.ca_location = :none
 end
 
 if Process.uid == 0
