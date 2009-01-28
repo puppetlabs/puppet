@@ -19,8 +19,7 @@ class Puppet::SimpleGraph
 
         def initialize(vertex)
             @vertex = vertex
-            @adjacencies = {:in => Hash.new { |h,k| h[k] = [] }, :out => Hash.new { |h,k| h[k] = [] }}
-            #@adjacencies = {:in => [], :out => []}
+            @adjacencies = {:in => {}, :out => {}}
         end
 
         # Find adjacent vertices or edges.
@@ -35,7 +34,7 @@ class Puppet::SimpleGraph
 
         # Add an edge to our list.
         def add_edge(direction, edge)
-            @adjacencies[direction][other_vertex(direction, edge)] << edge
+            opposite_adjacencies(direction, edge) << edge
         end
 
         # Return all known edges.
@@ -45,7 +44,7 @@ class Puppet::SimpleGraph
 
         # Test whether we share an edge with a given vertex.
         def has_edge?(direction, vertex)
-            return true if @adjacencies[direction][vertex].length > 0
+            return true if vertex_adjacencies(direction, vertex).length > 0
             return false
         end
 
@@ -74,11 +73,28 @@ class Puppet::SimpleGraph
         # Remove an edge from our list.  Assumes that we've already checked
         # that the edge is valid.
         def remove_edge(direction, edge)
-            @adjacencies[direction][other_vertex(direction, edge)].delete(edge)
+            opposite_adjacencies(direction, edge).delete(edge)
         end
 
         def to_s
             vertex.to_s
+        end
+
+        private
+
+        # These methods exist so we don't need a Hash with a default proc.
+
+        # Look up the adjacencies for a vertex at the other end of an
+        # edge.
+        def opposite_adjacencies(direction, edge)
+            opposite_vertex = other_vertex(direction, edge)
+            vertex_adjacencies(direction, opposite_vertex)
+        end
+
+        # Look up the adjacencies for a given vertex.
+        def vertex_adjacencies(direction, vertex)
+            @adjacencies[direction][vertex] ||= []
+            @adjacencies[direction][vertex]
         end
     end
 
