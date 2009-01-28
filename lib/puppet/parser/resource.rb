@@ -176,7 +176,7 @@ class Puppet::Parser::Resource
             db_resource.file = self.file
         end
         
-        updated_params = @params.inject({}) do |hash, ary|
+        updated_params = @params.reject { |name, param| param.value == :undef }.inject({}) do |hash, ary|
             hash[ary[0].to_s] = ary[1]
             hash
         end
@@ -270,6 +270,7 @@ class Puppet::Parser::Resource
         db_resource.save
 
         @params.each { |name, param|
+            next if param.value == :undef
             param.to_rails(db_resource)
         }
         
