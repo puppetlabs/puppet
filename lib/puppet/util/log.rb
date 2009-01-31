@@ -104,6 +104,13 @@ class Puppet::Util::Log
         end
     end
 
+    def self.close_all
+        # And close all logs except the console.
+        destinations.each do |dest|
+            close(dest)
+        end
+    end
+
     # Flush any log destinations that support such operations.
     def Log.flush
         @destinations.each { |type, dest|

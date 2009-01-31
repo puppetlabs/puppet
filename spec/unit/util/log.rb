@@ -5,6 +5,14 @@ Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f
 require 'puppet/util/log'
 
 describe Puppet::Util::Log do
+    it "should be able to close all log destinations" do
+        Puppet::Util::Log.expects(:destinations).returns %w{foo bar}
+        Puppet::Util::Log.expects(:close).with("foo")
+        Puppet::Util::Log.expects(:close).with("bar")
+
+        Puppet::Util::Log.close_all
+    end
+
     describe "instances" do
         before do
             Puppet::Util::Log.stubs(:newmessage)
