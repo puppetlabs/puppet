@@ -79,23 +79,6 @@ class Puppet::Configurer
         upload_facts()
     end
 
-    # Mark that we should restart.  The Puppet module checks whether we're running,
-    # so this only gets called if we're in the middle of a run.
-    def restart
-        # If we're currently running, then just mark for later
-        Puppet.notice "Received signal to restart; waiting until run is complete"
-        @restart = true
-    end
-
-    # Should we restart?
-    def restart?
-        if defined? @restart
-            @restart
-        else
-            false
-        end
-    end
-
     # Get the remote catalog, yo.  Returns nil if no catalog can be found.
     def retrieve_catalog
         name = Facter.value("hostname")
@@ -158,10 +141,6 @@ class Puppet::Configurer
         # Now close all of our existing http connections, since there's no
         # reason to leave them lying open.
         Puppet::Network::HttpPool.clear_http_instances
-
-        # Did we get HUPped during the run?  If so, then restart now that we're
-        # done with the run.
-        Process.kill(:HUP, $$) if self.restart?
     end
 
     private

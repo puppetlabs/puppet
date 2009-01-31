@@ -58,28 +58,6 @@ describe Puppet::Configurer, "when executing a catalog run" do
         catalog.expects(:apply).never # because we're not yielding
         @agent.run
     end
-
-    it "should HUP itself if it should be restarted" do
-        catalog = stub 'catalog', :retrieval_duration= => nil, :apply => nil
-        @agent.expects(:retrieve_catalog).returns catalog
-
-        Process.expects(:kill).with(:HUP, $$)
-
-        @agent.expects(:restart?).returns true
-
-        @agent.run
-    end
-
-    it "should not HUP itself if it should not be restarted" do
-        catalog = stub 'catalog', :retrieval_duration= => nil, :apply => nil
-        @agent.expects(:retrieve_catalog).returns catalog
-
-        Process.expects(:kill).never
-
-        @agent.expects(:restart?).returns false
-
-        @agent.run
-    end
 end
 
 describe Puppet::Configurer, "when retrieving a catalog" do
