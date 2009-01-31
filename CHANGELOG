@@ -1,4 +1,6 @@
 0.25.0
+    Fixed #1916 - Added environment option to puppetd
+
     Fixed #1910 - Updated logcheck regex
 
     Fixed #1879 - Added to tidy documentation
