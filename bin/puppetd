@@ -9,10 +9,9 @@
 # = Usage
 #
 #   puppetd  [-D|--daemonize|--no-daemonize] [-d|--debug] [--disable] [--enable]
-#            [-e|--environment=<environment>] [-h|--help] [--fqdn <host name>] 
-#            [-l|--logdest syslog|<file>|console] [-o|--onetime] 
-#            [--serve <handler>] [-t|--test] [--noop] [-V|--version] 
-#            [-v|--verbose] [-w|--waitforcert <seconds>]
+#       [-h|--help] [--fqdn <host name>] [-l|--logdest syslog|<file>|console]
+#       [-o|--onetime] [--serve <handler>] [-t|--test] [--noop]
+#       [-V|--version] [-v|--verbose] [-w|--waitforcert <seconds>]
 #
 # = Description
 #
@@ -90,14 +89,6 @@
 #   to use its normal scheduling, so it might not start for another half hour).
 #
 #   +puppetd+ exits after executing this.
-#
-# environment:: 
-#   Specify an environment to run. This enables you to run a different
-#   set of manifests, modules, templates etc. for a different
-#   environment than is default. For example, the default environment
-#   is set to 'production', and so using this option you could test
-#   your new development module by specifying that the 'development'
-#   environment should be run, like so: puppetd --test --environment=development
 #
 # fqdn::
 #   Set the fully-qualified domain name of the client.  This is only used for
@@ -179,7 +170,6 @@ options = [
 	[ "--disable",	    			GetoptLong::NO_ARGUMENT ],
 	[ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
 	[ "--enable",	    			GetoptLong::NO_ARGUMENT ],
-	[ "--environment=<environment>",        GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--fqdn",     "-f",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
 	[ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
