@@ -351,9 +351,9 @@ describe Puppet::Indirector::Indirection do
             it_should_behave_like "Indirection Delegator"
             it_should_behave_like "Delegation Authorizer"
 
-            it "should return nil" do
-                @terminus.stubs(:save)
-                @indirection.save(@instance).should be_nil
+            it "should return the result of the save" do
+                @terminus.stubs(:save).returns "foo"
+                @indirection.save(@instance).should == "foo"
             end
 
             describe "when caching is enabled" do
@@ -362,6 +362,16 @@ describe Puppet::Indirector::Indirection do
                     @cache_class.stubs(:new).returns(@cache)
 
                     @instance.stubs(:expired?).returns false
+                end
+
+                it "should return the result of saving to the terminus" do
+                    request = stub 'request', :instance => @instance, :node => nil
+
+                    @indirection.expects(:request).returns request
+
+                    @cache.stubs(:save)
+                    @terminus.stubs(:save).returns @instance
+                    @indirection.save(@instance).should equal(@instance)
                 end
 
                 it "should use a request to save the object to the cache" do
