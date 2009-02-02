@@ -1,7 +1,6 @@
 # the available clients
 
 require 'puppet'
-require 'puppet/daemon'
 require 'puppet/network/xmlrpc/client'
 require 'puppet/util/subclass_loader'
 require 'puppet/util/methodhelper'
@@ -34,7 +33,6 @@ end
 # provide a different interface.
 class Puppet::Network::Client
     Client = self
-    include Puppet::Daemon
     include Puppet::Util
     extend Puppet::Util::SubclassLoader
     include Puppet::Util::MethodHelper
