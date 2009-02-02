@@ -45,14 +45,22 @@ describe Puppet::Agent do
         @agent.lockfile_path.should == "/my/lock"
     end
 
-    describe "when running" do
+    it "should be considered running if a client instance is available" do
+        client = AgentTestClient.new
+        AgentTestClient.expects(:new).returns client
+
+        client.expects(:run).with { @agent.should be_running }
+        @agent.run
+    end
+
+    describe "when being run" do
         it "should splay" do
             @agent.expects(:splay)
 
             @agent.run
         end
 
-        it "should do nothing if a client instance exists" do
+        it "should do nothing if already running" do
             @agent.expects(:client).returns "eh"
             AgentTestClient.expects(:new).never
             @agent.run
@@ -147,10 +155,10 @@ describe Puppet::Agent do
         end
     end
     
-    describe "when shutting down" do
+    describe "when stopping" do
         it "should do nothing if already stopping" do
             @agent.expects(:stopping?).returns true
-            @agent.shutdown
+            @agent.stop
         end
 
         it "should stop the client if one is available and it responds to 'stop'" do
@@ -158,12 +166,7 @@ describe Puppet::Agent do
 
             @agent.stubs(:client).returns client
             client.expects(:stop)
-            @agent.shutdown
-        end
-
-        it "should remove its pid file" do
-            @agent.expects(:rmpidfile)
-            @agent.shutdown
+            @agent.stop
         end
 
         it "should mark itself as stopping while waiting for the client to stop" do
@@ -172,34 +175,68 @@ describe Puppet::Agent do
             @agent.stubs(:client).returns client
             client.expects(:stop).with { @agent.should be_stopping; true }
 
-            @agent.shutdown
+            @agent.stop
         end
     end
 
     describe "when starting" do
+        before do
+            @agent.stubs(:observe_signal)
+        end
+
         it "should create a timer with the runinterval, a tolerance of 1, and :start? set to true" do
             Puppet.settings.expects(:value).with(:runinterval).returns 5
-            Puppet.expects(:newtimer).with(:interval => 5, :start? => true, :tolerance => 1)
+            timer = stub 'timer', :sound_alarm => nil
+            EventLoop::Timer.expects(:new).with(:interval => 5, :start? => true, :tolerance => 1).returns timer
+
             @agent.stubs(:run)
             @agent.start
         end
 
         it "should run once immediately" do
-            Puppet.stubs(:newtimer)
-            @agent.expects(:run)
+            timer = mock 'timer'
+            EventLoop::Timer.expects(:new).returns timer
+
+            timer.expects(:sound_alarm)
+
             @agent.start
         end
 
         it "should run within the block passed to the timer" do
-            Puppet.stubs(:newtimer).yields
-            @agent.expects(:run).times(2)
+            timer = stub 'timer', :sound_alarm => nil
+            EventLoop::Timer.expects(:new).returns(timer).yields
             @agent.start
         end
+    end
 
-        it "should run within the block passed to the timer" do
-            Puppet.stubs(:newtimer).yields
-            @agent.expects(:run).times(2)
-            @agent.start
+    describe "when restarting" do
+        it "should configure itself for a delayed restart if currently running" do
+            @agent.expects(:running?).returns true
+
+            @agent.restart
+
+            @agent.should be_needing_restart
+        end
+
+        it "should hup itself if not running" do
+            @agent.expects(:running?).returns false
+
+            Process.expects(:kill).with(:HUP, $$)
+
+            @agent.restart
+        end
+
+        it "should turn off the needing_restart switch" do
+            @agent.expects(:running?).times(2).returns(true).then.returns false
+
+            Process.stubs(:kill)
+
+            # First call sets up the switch
+            @agent.restart
+
+            # Second call should disable it
+            @agent.restart
+            @agent.should_not be_needing_restart
         end
     end
 end

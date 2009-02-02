@@ -3,6 +3,7 @@ require 'sync'
 require 'puppet/transportable'
 require 'getoptlong'
 
+require 'puppet/external/event-loop'
 
 # The class for handling configuration files.
 class Puppet::Util::Settings
@@ -46,9 +47,6 @@ class Puppet::Util::Settings
     # Generate the list of valid arguments, in a format that GetoptLong can
     # understand, and add them to the passed option list.
     def addargs(options)
-        # Hackish, but acceptable.  Copy the current ARGV for restarting.
-        Puppet.args = ARGV.dup
-
         # Add all of the config parameters as valid options.
         self.each { |name, element|
             element.getopt_args.each { |args| options << args }
@@ -496,16 +494,9 @@ class Puppet::Util::Settings
     end
 
     # Create a timer to check whether the file should be reparsed.
-    def settimer
-        if Puppet[:filetimeout] > 0
-            @timer = Puppet.newtimer(
-                :interval => Puppet[:filetimeout],
-                :tolerance => 1,
-                :start? => true
-            ) do
-                self.reparse()
-            end
-        end
+    def set_filetimeout_timer
+        return unless timeout = self[:filetimeout] and timeout > 0
+        EventLoop::Timer.new(:interval => timeout, :tolerance => 1, :start? => true) { self.reparse() }
     end
 
     # Convert the settings we manage into a catalog full of resources that model those settings.
@@ -822,7 +813,7 @@ Generated on #{Time.now}.
 
         # Create a timer so that this file will get checked automatically
         # and reparsed if necessary.
-        settimer()
+        set_filetimeout_timer()
 
         result = Hash.new { |names, name|
             names[name] = {}

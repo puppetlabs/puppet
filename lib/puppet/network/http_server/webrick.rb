@@ -1,5 +1,4 @@
 require 'puppet'
-require 'puppet/daemon'
 require 'webrick'
 require 'webrick/https'
 require 'fcntl'
@@ -16,7 +15,6 @@ module Puppet
         # The old-school, pure ruby webrick server, which is the default serving
         # mechanism.
         class HTTPServer::WEBrick < WEBrick::HTTPServer
-            include Puppet::Daemon
             include Puppet::SSLCertificates::Support
 
             # Read the CA cert and CRL and populate an OpenSSL::X509::Store

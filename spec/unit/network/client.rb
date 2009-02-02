@@ -24,7 +24,7 @@ describe Puppet::Network::Client do
             Net::HTTP.stubs(:new).returns http
 
             # Pick a random subclass...
-            Puppet::Network::Client.master.new :Server => Puppet[:server]
+            Puppet::Network::Client.runner.new :Server => Puppet[:server]
         end
     end
 
@@ -39,7 +39,7 @@ describe Puppet::Network::Client do
             Net::HTTP.stubs(:new).returns http
 
             # Pick a random subclass...
-            Puppet::Network::Client.master.new :Server => Puppet[:server]
+            Puppet::Network::Client.runner.new :Server => Puppet[:server]
         end
     end
 end

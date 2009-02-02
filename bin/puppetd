@@ -163,8 +163,13 @@ end
 
 require 'puppet'
 require 'puppet/agent'
+require 'puppet/daemon'
 require 'puppet/configurer'
 require 'getoptlong'
+
+# Create this now, so it has access to ARGV
+daemon = Puppet::Daemon.new
+daemon.argv = ARGV.dup
 
 options = [
 	[ "--centrallogging",			GetoptLong::NO_ARGUMENT ],
@@ -214,7 +219,7 @@ begin
                 options[:disable] = true
             when "--serve"
                 if Puppet::Network::Handler.handler(arg)
-                    options[:serve][arg.to_sym] = {}
+                    options[:serve] << arg.to_sym
                 else
                     raise "Could not find handler for %s" % arg
                 end
@@ -349,12 +354,14 @@ if options[:enable] or options[:disable]
     exit(0)
 end
 
+daemon.agent = agent
+
 server = nil
 
 # It'd be nice to daemonize later, but we have to daemonize before the
 # waitforcert happens.
 if Puppet[:daemonize]
-    agent.daemonize
+    daemon.daemonize
 end
 
 host = Puppet::SSL::Host.new
@@ -380,39 +387,19 @@ if Puppet[:listen] and ! options[:onetime]
     handlers = nil
 
     if options[:serve].empty?
-        handlers = {:Runner => {}}
+        handlers = [:Runner]
     else
         handlers = options[:serve]
     end
 
-    handlers.each do |name, hash|
-        Puppet.info "Starting handler for %s" % name
-    end
+    require 'puppet/network/server'
+    # No REST handlers yet.
+    server = Puppet::Network::Server.new(:handlers => [:facts], :xmlrpc_handlers => handlers, :port => Puppet[:puppetport])
 
-    args[:Handlers] = handlers
-    args[:Port] = Puppet[:puppetport]
-
-    require 'puppet/network/http_server/webrick'
-
-    begin
-        server = Puppet::Network::HTTPServer::WEBrick.new(args)
-    rescue => detail
-        $stderr.puts detail
-        puts detail.backtrace
-        exit(1)
-    end
-
-    objects << server
+    daemon.server = server
 elsif options[:onetime] and Puppet[:listen]
     Puppet.notice "Ignoring --listen on onetime run"
 end
-
-if options[:client]
-    objects << agent
-end
-
-# Set traps for INT and TERM
-Puppet.settraps
 
 # If --onetime is specified, we don't run 'start', which means we don't
 # create a pidfile.
@@ -422,8 +409,7 @@ if options[:onetime]
         exit(43)
     end
 
-    # Add the service, so the traps work correctly.
-    Puppet.newservice(agent)
+    daemon.set_signal_traps
 
     begin
         agent.run
@@ -435,17 +421,7 @@ if options[:onetime]
     end
     exit(0)
 else
-    if server
-        Puppet.newservice(server)
-    end
+    Puppet.notice "Starting Puppet client version %s" % [Puppet.version]
 
-    if options[:client]
-        Puppet.notice "Starting Puppet client version %s" % [Puppet.version]
-        Puppet.newservice(agent)
-    end
-
-    Puppet.settraps
-
-    Puppet.start
+    daemon.start
 end
-

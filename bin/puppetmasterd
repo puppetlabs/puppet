@@ -70,7 +70,12 @@ end
 
 require 'getoptlong'
 require 'puppet'
+require 'puppet/daemon'
 require 'puppet/network/server'
+
+# Create this first-off, so we have ARGV
+daemon = Puppet::Daemon.new
+daemon.argv = ARGV.dup
 
 options = [
 	[ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
@@ -197,7 +202,7 @@ if Puppet[:ca]
     xmlrpc_handlers << :CA
 end
 
-server = Puppet::Network::Server.new(:handlers => rest_handlers, :xmlrpc_handlers => xmlrpc_handlers)
+daemon.server = Puppet::Network::Server.new(:handlers => rest_handlers, :xmlrpc_handlers => xmlrpc_handlers)
 
 # Make sure we've got a localhost ssl cert
 Puppet::SSL::Host.localhost
@@ -218,16 +223,8 @@ if Process.uid == 0
     end
 end
 
-# Tell Puppet to manage this service for us, which has it starting and stopping
-# as appropriate.
-Puppet.newservice(server)
-
-Puppet.settraps
-
-if Puppet[:daemonize]
-    server.daemonize
-end
+daemon.daemonize if Puppet[:daemonize]
 
 Puppet.notice "Starting Puppet server version %s" % [Puppet.version]
 
-Puppet.start
+daemon.start

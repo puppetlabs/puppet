@@ -1,16 +1,18 @@
 require 'sync'
-require 'puppet/daemon'
+require 'puppet/external/event-loop'
 
 # A general class for triggering a run of another
 # class.
 class Puppet::Agent
-    include Puppet::Daemon
-
     require 'puppet/agent/locker'
     include Puppet::Agent::Locker
 
-    attr_reader :client_class, :client
+    attr_reader :client_class, :client, :needing_restart, :splayed
     attr_accessor :stopping
+
+    def configure_delayed_restart
+        @needing_restart = true
+    end
 
     # Just so we can specify that we are "the" instance.
     def initialize(client_class)
@@ -21,6 +23,16 @@ class Puppet::Agent
 
     def lockfile_path
         client_class.lockfile_path
+    end
+
+    def needing_restart?
+        @needing_restart
+    end
+
+    def restart
+        configure_delayed_restart and return if running?
+        Process.kill(:HUP, $$)
+        @needing_restart = false
     end
 
     # Perform a run with our client.
@@ -44,7 +56,12 @@ class Puppet::Agent
         end
     end
 
-    def shutdown
+    # If the client instance is set, we're mid-run.
+    def running?
+        ! client.nil?
+    end
+
+    def stop
         if self.stopping?
             Puppet.notice "Already in shutdown"
             return
@@ -58,8 +75,6 @@ class Puppet::Agent
                 Puppet.err "Could not stop %s: %s" % [client_class, detail]
             end
         end
-
-        super
     ensure
         self.stopping = false
     end
@@ -70,7 +85,7 @@ class Puppet::Agent
 
     # Have we splayed already?
     def splayed?
-        @splayed
+        splayed
     end
 
     # Sleep when splay is enabled; else just return.
@@ -88,16 +103,12 @@ class Puppet::Agent
     # timer events here.
     def start
         # Create our timer.  Puppet will handle observing it and such.
-        Puppet.newtimer(
-            :interval => Puppet[:runinterval],
-            :tolerance => 1,
-            :start? => true
-        ) do
+        timer = EventLoop::Timer.new(:interval => Puppet[:runinterval], :tolerance => 1, :start? => true) do
             run()
         end
 
         # Run once before we start following the timer
-        run()
+        timer.sound_alarm
     end
 
     def sync
