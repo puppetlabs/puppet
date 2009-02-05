@@ -30,7 +30,7 @@ class Resource < AST::ResourceReference
         # This is where our implicit iteration takes place; if someone
         # passed an array as the name, then we act just like the called us
         # many times.
-        objtitles.collect { |objtitle|
+        objtitles.flatten.collect { |objtitle|
             exceptwrap :type => Puppet::ParseError do
                 exp = self.exported || scope.resource.exported?
                 # We want virtual to be true if exported is true.  We can't
