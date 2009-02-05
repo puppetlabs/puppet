@@ -37,7 +37,7 @@ class Puppet::Agent
 
     # Perform a run with our client.
     def run
-        if client
+        if running?
             Puppet.notice "Run of %s already in progress; skipping" % client_class
             return
         end
@@ -54,11 +54,6 @@ class Puppet::Agent
                 Puppet.err "Could not run %s: %s" % [client_class, detail]
             end
         end
-    end
-
-    # If the client instance is set, we're mid-run.
-    def running?
-        ! client.nil?
     end
 
     def stop

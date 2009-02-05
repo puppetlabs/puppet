@@ -37,6 +37,7 @@ describe Puppet::Agent do
 
         client.expects(:run)
 
+        @agent.stubs(:running?).returns false
         @agent.run
     end
 
@@ -45,23 +46,29 @@ describe Puppet::Agent do
         @agent.lockfile_path.should == "/my/lock"
     end
 
-    it "should be considered running if a client instance is available" do
-        client = AgentTestClient.new
-        AgentTestClient.expects(:new).returns client
+    it "should be considered running if the lock file is locked" do
+        lockfile = mock 'lockfile'
 
-        client.expects(:run).with { @agent.should be_running }
-        @agent.run
+        @agent.expects(:lockfile).returns lockfile
+        lockfile.expects(:locked?).returns true
+
+        @agent.should be_running
     end
 
     describe "when being run" do
+        before do
+            @agent.stubs(:running?).returns false
+        end
+
         it "should splay" do
             @agent.expects(:splay)
+            @agent.stubs(:running?).returns false
 
             @agent.run
         end
 
         it "should do nothing if already running" do
-            @agent.expects(:client).returns "eh"
+            @agent.expects(:running?).returns true
             AgentTestClient.expects(:new).never
             @agent.run
         end
@@ -205,6 +212,8 @@ describe Puppet::Agent do
         it "should run within the block passed to the timer" do
             timer = stub 'timer', :sound_alarm => nil
             EventLoop::Timer.expects(:new).returns(timer).yields
+            @agent.expects(:run)
+
             @agent.start
         end
     end
