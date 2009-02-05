@@ -1,4 +1,5 @@
 0.24.8
+    Fixed #1922 - Functions squash all arguments into a single hash
     Fixed #1538 - Yumrepo sets permissions wrongly on files in /etc/yum.repos.d
 
     Fixed #1936 - Added /* */ support to the vim file
