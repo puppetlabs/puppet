@@ -10,7 +10,7 @@ require 'puppet/util/errors'
 class Puppet::Parser::Compiler
     include Puppet::Util
     include Puppet::Util::Errors
-    attr_reader :parser, :node, :facts, :collections, :catalog, :node_scope
+    attr_reader :parser, :node, :facts, :collections, :catalog, :node_scope, :resources
 
     # Add a collection to the global list.
     def add_collection(coll)
@@ -31,6 +31,8 @@ class Puppet::Parser::Compiler
 
     # Store a resource in our resource table.
     def add_resource(scope, resource)
+        @resources << resource
+
         # Note that this will fail if the resource is not unique.
         @catalog.add_resource(resource)
 
@@ -204,11 +206,6 @@ class Puppet::Parser::Compiler
         @resource_overrides[resource.ref]
     end
 
-    # Return a list of all resources.
-    def resources
-        @catalog.vertices
-    end
-
     # The top scope is usually the top-level scope, but if we're using AST nodes,
     # then it is instead the node's scope.
     def topscope
@@ -310,6 +307,7 @@ class Puppet::Parser::Compiler
         @main_resource = Puppet::Parser::Resource.new(:type => "class", :title => :main, :scope => @topscope, :source => @main)
         @topscope.resource = @main_resource
 
+        @resources << @main_resource
         @catalog.add_resource(@main_resource)
 
         @main_resource.evaluate
@@ -366,7 +364,7 @@ class Puppet::Parser::Compiler
     # Make sure all of our resources and such have done any last work
     # necessary.
     def finish
-        @catalog.vertices.each do |resource|
+        resources.each do |resource|
             # Add in any resource overrides.
             if overrides = resource_overrides(resource)
                 overrides.each do |over|
@@ -414,6 +412,9 @@ class Puppet::Parser::Compiler
         # For maintaining the relationship between scopes and their resources.
         @catalog = Puppet::Resource::Catalog.new(@node.name)
         @catalog.version = @parser.version
+
+        # local resource array to maintain resource ordering
+        @resources = []
     end
 
     # Set the node's parameters into the top-scope as variables.
@@ -436,7 +437,7 @@ class Puppet::Parser::Compiler
 
         # We used to have hooks here for forking and saving, but I don't
         # think it's worth retaining at this point.
-        store_to_active_record(@node, @catalog.vertices)
+        store_to_active_record(@node, resources)
     end
 
     # Do the actual storage.
@@ -459,7 +460,7 @@ class Puppet::Parser::Compiler
     # Return an array of all of the unevaluated resources.  These will be definitions,
     # which need to get evaluated into native resources.
     def unevaluated_resources
-        ary = @catalog.vertices.reject { |resource| resource.builtin? or resource.evaluated?  }
+        ary = resources.reject { |resource| resource.builtin? or resource.evaluated?  }
 
         if ary.empty?
             return nil

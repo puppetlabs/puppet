@@ -239,6 +239,31 @@ describe Puppet::Parser::Compiler do
             @compiler.send(:finish)
         end
 
+        it "should call finish() in add_resource order" do
+            resources = sequence('resources')
+
+            resource1 = Puppet::Parser::Resource.new :scope => @scope, :type => "file", :title => "finish1"
+            resource1.expects(:finish).in_sequence(resources)
+
+            @compiler.add_resource(@scope, resource1)
+
+            resource2 = Puppet::Parser::Resource.new :scope => @scope, :type => "file", :title => "finish2"
+            resource2.expects(:finish).in_sequence(resources)
+
+            @compiler.add_resource(@scope, resource2)
+
+            @compiler.send(:finish)
+        end
+
+        it "should return added resources in add order" do
+            resource1 = stub "1", :ref => "File[yay]"
+            @compiler.add_resource(@scope, resource1)
+            resource2 = stub "2", :ref => "File[youpi]"
+            @compiler.add_resource(@scope, resource2)
+
+            @compiler.resources.should == [resource1, resource2]
+        end
+
         it "should add resources that do not conflict with existing resources" do
             resource = stub "noconflict", :ref => "File[yay]"
             @compiler.add_resource(@scope, resource)
@@ -484,7 +509,7 @@ describe Puppet::Parser::Compiler do
             Puppet.features.expects(:rails?).returns(true)
             Puppet::Rails.expects(:connect)
 
-            @compiler.catalog.expects(:vertices).returns(:resources)
+            @compiler.expects(:resources).returns(:resources)
 
             @compiler.expects(:store_to_active_record).with(@node, :resources)
             @compiler.send(:store)
