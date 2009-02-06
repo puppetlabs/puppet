@@ -29,6 +29,16 @@ class Puppet::Resource
         @parameters[parameter_name(param)]
     end
 
+    # Compatibility method.
+    def builtin?
+        builtin_type?
+    end
+
+    # Is this a builtin resource type?
+    def builtin_type?
+        @reference.builtin_type?
+    end
+
     # Iterate over each param/value pair, as required for Enumerable.
     def each
         @parameters.each { |p,v| yield p, v }

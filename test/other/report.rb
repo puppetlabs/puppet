@@ -83,7 +83,7 @@ class TestReports < Test::Unit::TestCase
         
         # We have to reuse reporting here because of something going on in the
         # server/report.rb file
-        Puppet.settings.use(:main, :reporting)
+        Puppet.settings.use(:main, :puppetmasterd)
 
         3.times { |i|
             log = Puppet.warning("Report test message %s" % i)
@@ -97,10 +97,7 @@ class TestReports < Test::Unit::TestCase
 
         yaml = YAML.dump(report)
 
-        file = nil
-        assert_nothing_raised {
-            file = report.process
-        }
+        file = report.process
 
         assert(FileTest.exists?(file), "report file did not get created")
         assert_equal(yaml, File.read(file), "File did not get written")

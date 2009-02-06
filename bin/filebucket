@@ -152,7 +152,10 @@ Puppet::Log.newdestination(:console)
 client = nil
 server = nil
 
-Puppet.settraps
+trap(:INT) do
+    $stderr.puts "Cancelling"
+    exit(1)
+end
 
 if options[:debug]
     Puppet::Log.level = :debug

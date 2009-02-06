@@ -191,6 +191,11 @@ describe Puppet::Resource::Catalog, "when compiling" do
             @catalog = @original.to_resource
         end
 
+        it "should copy over the version" do
+            @original.version = "foo"
+            @original.to_resource.version.should == "foo"
+        end
+
         it "should add all resources as Puppet::Resource instances" do
             @resources.each { |resource| @catalog.resource(resource.ref).should be_instance_of(Puppet::Resource) }
         end

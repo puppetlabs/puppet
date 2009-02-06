@@ -65,39 +65,6 @@ class TestWebrickServer < Test::Unit::TestCase
         }
         assert_equal(1, retval)
     end
-
-    # Test that a client whose cert has been revoked really can't connect
-    def test_xcertificate_revocation
-        Puppet[:autosign] = true
-
-        serverpid, server = mk_status_server
-
-        client = mk_status_client
-
-        status = nil
-        assert_nothing_raised() {
-            status = client.status
-        }
-        assert_equal(1, status)
-        client.shutdown
-
-        # Revoke the client's cert
-        ca = Puppet::SSLCertificates::CA.new()
-        ca.revoke(ca.getclientcert(Puppet[:certname])[0].serial)
-
-        # Restart the server
-        @@port += 1
-        Puppet[:autosign] = false
-        kill_and_wait(serverpid, server.pidfile)
-        serverpid, server = mk_status_server
-
-        # This time the client should be denied.  With keep-alive,
-        # the client starts its connection immediately, thus throwing
-        # the error.
-        assert_raise(OpenSSL::SSL::SSLError) {
-            Puppet::Network::HttpPool.http_instance("localhost", @@port).start
-        }
-    end
     
     def mk_status_client
         client = nil

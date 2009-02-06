@@ -469,6 +469,8 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     def to_catalog(convert)
         result = self.class.new(self.name)
 
+        result.version = self.version
+
         map = {}
         vertices.each do |resource|
             next if resource.respond_to?(:virtual?) and resource.virtual?

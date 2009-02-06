@@ -203,8 +203,6 @@ yay = /a/path
 
         file = tempfile()
         File.open(file, "w") { |f| f.puts text }
-
-        @config.expects(:settimer)
         
         result = nil
         assert_nothing_raised {
@@ -607,8 +605,6 @@ yay = /a/path
     end
 
     def test_correct_type_assumptions
-        config = mkconfig
-
         file = Puppet::Util::Settings::CFile
         element = Puppet::Util::Settings::CElement
         bool = Puppet::Util::Settings::CBoolean
@@ -624,11 +620,13 @@ yay = /a/path
             ["$server/yayness", file],
             ["$server/yayness.conf", file]
         ].each do |ary|
+            config = mkconfig
             value, type = ary
+            name = value.to_s + "_setting"
             assert_nothing_raised {
-                config.setdefaults(:yayness, value => { :default => value, :desc => name.to_s})
+                config.setdefaults(:yayness, name => { :default => value, :desc => name.to_s})
             }
-            elem = config.element(value)
+            elem = config.element(name)
 
             assert_instance_of(type, elem,
                 "%s got created as wrong type" % value.inspect)

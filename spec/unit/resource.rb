@@ -56,6 +56,20 @@ describe Puppet::Resource do
         resource.title.should == "mytitle"
     end
 
+    it "should use its resource reference to determine whether it is builtin" do
+        ref = Puppet::Resource::Reference.new("file", "/f")
+        Puppet::Resource::Reference.expects(:new).returns ref
+        resource = Puppet::Resource.new("file", "/f")
+        ref.expects(:builtin_type?).returns "yep"
+        resource.builtin_type?.should == "yep"
+    end
+
+    it "should call its builtin_type? method when 'builtin?' is called" do
+        resource = Puppet::Resource.new("file", "/f")
+        resource.expects(:builtin_type?).returns "foo"
+        resource.builtin?.should == "foo"
+    end
+
     it "should use its resource reference to produce its canonical reference string" do
         ref = Puppet::Resource::Reference.new("file", "/f")
         Puppet::Resource::Reference.expects(:new).returns ref

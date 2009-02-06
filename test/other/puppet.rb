@@ -41,36 +41,6 @@ class TestPuppetModule < Test::Unit::TestCase
         end
     end
 
-    # Make sure that services get correctly started and stopped
-    def test_servicehandling
-        file = tempfile()
-        testclass = mktestclass()
-
-        obj = testclass.new(file)
-
-        assert_nothing_raised {
-            Puppet.newservice(obj)
-        }
-
-        assert_nothing_raised {
-            Puppet.start(false)
-        }
-
-        # Give it a sec or so
-        sleep 0.3
-
-        assert(obj.started?, "Object was not started")
-
-        assert_nothing_raised {
-            Puppet.shutdown(false)
-        }
-        # Give it a sec or so
-        sleep 0.3
-
-        assert(!obj.started?, "Object is still running")
-
-    end
-
     def test_path
         oldpath = ENV["PATH"]
         cleanup do

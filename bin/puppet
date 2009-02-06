@@ -166,7 +166,10 @@ end
 client = nil
 server = nil
 
-Puppet.settraps
+trap(:INT) do
+    $stderr.puts "Exiting"
+    exit(1)
+end
 
 if options[:debug]
     Puppet::Util::Log.level = :debug
