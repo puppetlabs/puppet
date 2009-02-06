@@ -7,6 +7,8 @@ class Puppet::Agent
     require 'puppet/agent/locker'
     include Puppet::Agent::Locker
 
+    require 'puppet/agent/runner'
+
     attr_reader :client_class, :client, :needing_restart, :splayed
     attr_accessor :stopping
 

@@ -1,4 +1,4 @@
-require 'puppet/agent'
+require 'puppet/configurer'
 require 'puppet/resource/catalog'
 
 class Puppet::Configurer::Downloader
