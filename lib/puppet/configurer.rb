@@ -88,7 +88,7 @@ class Puppet::Configurer
         result = nil
         begin
             duration = thinmark do
-                result = catalog_class.find(name, :use_cache => false)
+                result = catalog_class.find(name, :ignore_cache => true)
             end
         rescue => detail
             puts detail.backtrace if Puppet[:trace]
@@ -98,7 +98,7 @@ class Puppet::Configurer
         unless result
             begin
                 duration = thinmark do
-                    result = catalog_class.find(name, :use_cache => true)
+                    result = catalog_class.find(name, :ignore_terminus => true)
                 end
             rescue => detail
                 puts detail.backtrace if Puppet[:trace]

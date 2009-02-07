@@ -6,7 +6,7 @@ require 'puppet/indirector/indirection'
 
 describe "Indirection Delegator", :shared => true do
     it "should create a request object with the appropriate method name and all of the passed arguments" do
-        request = stub 'request', :node => nil
+        request = Puppet::Indirector::Request.new(:indirection, :find, "me")
 
         @indirection.expects(:request).with(@method, "mystuff", :one => :two).returns request
 
@@ -22,7 +22,7 @@ describe "Indirection Delegator", :shared => true do
             end
         end
 
-        request = stub 'request', :key => "me", :options => {}
+        request = Puppet::Indirector::Request.new(:indirection, :find, "me")
 
         @indirection.stubs(:request).returns request
 
@@ -261,8 +261,23 @@ describe Puppet::Indirector::Indirection do
                 it "should not look in the cache if the request specifies not to use the cache" do
                     @terminus.expects(:find).returns @instance
                     @cache.expects(:find).never
+                    @cache.stubs(:save)
 
-                    @indirection.find("/my/key", :use_cache => false)
+                    @indirection.find("/my/key", :ignore_cache => true)
+                end
+
+                it "should still save to the cache even if the cache is being ignored during readin" do
+                    @terminus.expects(:find).returns @instance
+                    @cache.expects(:save)
+
+                    @indirection.find("/my/key", :ignore_cache => true)
+                end
+
+                it "should only look in the cache if the request specifies not to use the terminus" do
+                    @terminus.expects(:find).never
+                    @cache.expects(:find)
+
+                    @indirection.find("/my/key", :ignore_terminus => true)
                 end
 
                 it "should use a request to look in the cache for cached objects" do

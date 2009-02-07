@@ -127,12 +127,20 @@ describe Puppet::Indirector::Request do
             end
         end
 
-        it "should allow indication that it should not use a cached instance" do
-            Puppet::Indirector::Request.new(:ind, :method, :key, :use_cache => false).should_not be_use_cache
+        it "should allow indication that it should not read a cached instance" do
+            Puppet::Indirector::Request.new(:ind, :method, :key, :ignore_cache => true).should be_ignore_cache
         end
 
-        it "should default to using cached instances" do
-            Puppet::Indirector::Request.new(:ind, :method, :key).should be_use_cache
+        it "should default to not ignoring the cache" do
+            Puppet::Indirector::Request.new(:ind, :method, :key).should_not be_ignore_cache
+        end
+
+        it "should allow indication that it should not not read an instance from the terminus" do
+            Puppet::Indirector::Request.new(:ind, :method, :key, :ignore_terminus => true).should be_ignore_terminus
+        end
+
+        it "should default to not ignoring the terminus" do
+            Puppet::Indirector::Request.new(:ind, :method, :key).should_not be_ignore_terminus
         end
     end
 
