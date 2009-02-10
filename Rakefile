@@ -193,7 +193,7 @@ task :mail_patches do
     type, parent, name = $1, $2, $3
 
     # Create all of the patches
-    sh "git-format-patch -C -M -s -n #{parent}..HEAD"
+    sh "git format-patch -C -M -s -n #{parent}..HEAD"
 
     # And then mail them out.
 
