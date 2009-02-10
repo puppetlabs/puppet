@@ -1,7 +1,15 @@
-0.25.x
+0.24.8
+    Added README.rst file
+
+    Enhancements to Stored Configuration performance
+
+    Added Reductive Labs build library to tasks directory
+
     Fixed #1852 - Correct behaviour when no SELinux bindings
  
     Updated Red Hat spec file 0.24.7
+
+    Fixed #1920 - Shadow password corruption 
 
 0.24.7
     Fixed #1804 - Added VDev and MultiVDev properties to the ZPool type
