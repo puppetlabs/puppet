@@ -1,4 +1,8 @@
 0.24.8
+    Fixing #1912 - gid still works with no 'should' value fixing ralsh issues
+
+    Fixing the Rakefile to use 'git format-patch'
+
     Added README.rst file
 
     Enhancements to Stored Configuration performance

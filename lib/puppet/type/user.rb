@@ -100,6 +100,8 @@ module Puppet
             end
 
             def insync?(is)
+                return true unless self.should
+
                 # We know the 'is' is a number, so we need to convert the 'should' to a number,
                 # too.
                 @should.each do |value|
