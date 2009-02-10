@@ -240,10 +240,10 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
         one = stub 'one', :type => "Mytype", :virtual? => true, :exported? => true
         two = stub 'two', :type => "Mytype", :virtual? => true, :exported? => true
 
-        one.expects(:exported=).with(false)
-        one.expects(:virtual=).with(false)
-        two.expects(:exported=).with(false)
-        two.expects(:virtual=).with(false)
+        one.stubs(:exported=)
+        one.stubs(:virtual=)
+        two.stubs(:exported=)
+        two.stubs(:virtual=)
 
         @compiler.expects(:resources).returns([one, two])
 

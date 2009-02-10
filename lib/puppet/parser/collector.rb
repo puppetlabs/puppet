@@ -72,8 +72,7 @@ class Puppet::Parser::Collector
     def collect_exported
         # First get everything from the export table.  Just reuse our
         # collect_virtual method but tell it to use 'exported? for the test.
-        resources = collect_virtual(true).reject { |r| ! r.virtual? }.each { |r| r.exported = false }
-        #resources = collect_virtual(true).reject { |r| ! r.virtual? }
+        resources = collect_virtual(true).reject { |r| ! r.virtual? }
 
         count = resources.length
 

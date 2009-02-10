@@ -3,7 +3,6 @@
 require File.dirname(__FILE__) + '/../../../spec_helper'
 
 describe Puppet::Parser::AST::Resource do
-
     ast = Puppet::Parser::AST
 
     before :each do
@@ -19,7 +18,6 @@ describe Puppet::Parser::AST::Resource do
     end
 
     it "should evaluate all its parameters" do
-
         @param1.expects(:safeevaluate).with(@scope)
 
         @resource.evaluate(@scope)
@@ -86,5 +84,20 @@ describe Puppet::Parser::AST::Resource do
         @resource.title = titles
         @resource.evaluate(@scope).should == [resource]
     end
-end
 
+    it "should generate virtual resources if it is virtual" do
+        @resource.virtual = true
+
+        Puppet::Parser::Resource.expects(:new).with { |hash| hash[:virtual] == true }
+
+        @resource.evaluate(@scope)
+    end
+
+    it "should generate virtual and exported resources if it is exported" do
+        @resource.exported = true
+
+        Puppet::Parser::Resource.expects(:new).with { |hash| hash[:virtual] == true and hash[:exported] == true }
+
+        @resource.evaluate(@scope)
+    end
+end

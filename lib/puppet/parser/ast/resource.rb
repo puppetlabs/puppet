@@ -32,8 +32,7 @@ class Resource < AST::ResourceReference
         # because sometimes the :virtual attribute is set *after*
         # :exported, in which case it clobbers :exported if :exported
         # is true.  Argh, this was a very tough one to track down.
-        exp = self.exported || scope.resource.exported?
-        virt = self.virtual || scope.resource.virtual? || exp
+        virt = self.virtual || self.exported
 
         # This is where our implicit iteration takes place; if someone
         # passed an array as the name, then we act just like the called us
