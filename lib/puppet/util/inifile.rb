@@ -163,6 +163,7 @@ module Puppet::Util::IniConfig
                 end
                 if dirty
                     Puppet::Util::FileType.filetype(:flat).new(file).write(text)
+                    return file
                 end
             end
         end
