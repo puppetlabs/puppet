@@ -1,4 +1,6 @@
 0.24.8
+    Fixing #1543 - Nagios parse errors no longer kill Puppet
+
     Fixed #1420 - nagios_serviceescalation not allowing host_name more than one type
 
     Fixed #1884 - Exported resources are marked as unexported when collected on the exporting host

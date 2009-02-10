@@ -23,7 +23,11 @@ class Puppet::Provider::Naginator < Puppet::Provider::ParsedFile
     end
 
     def self.parse(text)
-        Nagios::Parser.new.parse(text)
+        begin
+            Nagios::Parser.new.parse(text)
+        rescue => detail
+            raise Puppet::Error, "Could not parse configuration for %s: %s" % [resource_type.name, detail]
+        end
     end
 
     def self.to_file(records)
