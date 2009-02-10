@@ -49,6 +49,7 @@ syn keyword puppetControl    case default
 
 " comments last overriding everything else
 syn match   puppetComment            "\s*#.*$" contains=puppetTodo
+syn region  puppetComment            start="/\*" end="\*/" contains=puppetTodo extend
 syn keyword puppetTodo               TODO NOTE FIXME XXX contained
 
 " Define the default highlighting.

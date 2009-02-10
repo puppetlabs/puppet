@@ -1,4 +1,6 @@
 0.24.8
+    Fixed #1936 - Added /* */ support to the vim file
+
     Fixed #1541 -  nagios objects write files to clientbucket on every change
 
     Fixed #1542 - cannot purge nagios objects
