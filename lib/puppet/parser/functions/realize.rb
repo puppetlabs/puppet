@@ -8,7 +8,7 @@ Puppet::Parser::Functions::newfunction(:realize, :doc => "Make a virtual object 
         reference; e.g.: ``realize User[luke]``." ) do |vals|
         coll = Puppet::Parser::Collector.new(self, :nomatter, nil, nil, :virtual)
         vals = [vals] unless vals.is_a?(Array)
-        coll.resources = vals
+        coll.resources = vals.flatten
 
         compiler.add_collection(coll)
 end

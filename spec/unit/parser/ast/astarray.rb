@@ -49,7 +49,7 @@ describe Puppet::Parser::AST::ASTArray do
         operator.evaluate(@scope).should == [123]
     end
 
-    it "should flatten the results of children evaluation" do
+    it "should not flatten the results of children evaluation" do
         item1 = stub "item1", :is_a? => true
         item2 = stub "item2"
         item2.stubs(:is_a?).with(Puppet::Parser::AST).returns(true)
@@ -59,7 +59,7 @@ describe Puppet::Parser::AST::ASTArray do
         item1.expects(:safeevaluate).with(@scope).returns([123])
         
         operator = Puppet::Parser::AST::ASTArray.new :children => [item2]
-        operator.evaluate(@scope).should == [123]
+        operator.evaluate(@scope).should == [[123]]
     end
     
     

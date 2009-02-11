@@ -18,34 +18,34 @@ class Resource < AST::ResourceReference
             param.safeevaluate(scope)
         }
 
-        objtitles = @title.safeevaluate(scope)
+        resource_titles = @title.safeevaluate(scope)
 
         # it's easier to always use an array, even for only one name
-        unless objtitles.is_a?(Array)
-            objtitles = [objtitles]
+        unless resource_titles.is_a?(Array)
+            resource_titles = [resource_titles]
         end
 
-        objtype = qualified_type(scope)
+        resource_type = qualified_type(scope)
+
+        # We want virtual to be true if exported is true.  We can't
+        # just set :virtual => self.virtual in the initialization,
+        # because sometimes the :virtual attribute is set *after*
+        # :exported, in which case it clobbers :exported if :exported
+        # is true.  Argh, this was a very tough one to track down.
+        virt = self.virtual || self.exported
 
         # This is where our implicit iteration takes place; if someone
         # passed an array as the name, then we act just like the called us
         # many times.
-        objtitles.collect { |objtitle|
+        resource_titles.flatten.collect { |resource_title|
             exceptwrap :type => Puppet::ParseError do
-                exp = self.exported || scope.resource.exported?
-                # We want virtual to be true if exported is true.  We can't
-                # just set :virtual => self.virtual in the initialization,
-                # because sometimes the :virtual attribute is set *after*
-                # :exported, in which case it clobbers :exported if :exported
-                # is true.  Argh, this was a very tough one to track down.
-                virt = self.virtual || scope.resource.virtual? || exp
-                obj = Puppet::Parser::Resource.new(
-                    :type => objtype,
-                    :title => objtitle,
+                resource = Puppet::Parser::Resource.new(
+                    :type => resource_type,
+                    :title => resource_title,
                     :params => paramobjects,
                     :file => self.file,
                     :line => self.line,
-                    :exported => exp,
+                    :exported => self.exported,
                     :virtual => virt,
                     :source => scope.source,
                     :scope => scope
@@ -53,11 +53,11 @@ class Resource < AST::ResourceReference
 
                 # And then store the resource in the compiler.
                 # At some point, we need to switch all of this to return
-                # objects instead of storing them like this.
-                scope.compiler.add_resource(scope, obj)
-                obj
+                # resources instead of storing them like this.
+                scope.compiler.add_resource(scope, resource)
+                resource
             end
-        }.reject { |obj| obj.nil? }
+        }.reject { |resource| resource.nil? }
     end
 
     # Set the parameters for our object.

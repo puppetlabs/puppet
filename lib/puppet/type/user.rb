@@ -100,6 +100,8 @@ module Puppet
             end
 
             def insync?(is)
+                return true unless self.should
+
                 # We know the 'is' is a number, so we need to convert the 'should' to a number,
                 # too.
                 @should.each do |value|
@@ -141,6 +143,10 @@ module Puppet
 
         newproperty(:password, :required_features => :manages_passwords) do
             desc "The user's password, in whatever encrypted format the local machine requires. Be sure to enclose any value that includes a dollar sign ($) in single quotes (\')."
+
+            validate do |value|
+                raise ArgumentError, "Passwords cannot include ':'" if value.include?(":")
+            end
 
             def change_to_s(currentvalue, newvalue)
                 if currentvalue == :absent

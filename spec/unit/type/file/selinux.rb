@@ -73,6 +73,12 @@ Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f
             @sel.expects(:set_selinux_context).with("/my/file", ["newone"], param)
             @sel.sync
         end
+
+        it "should do nothing for insync? if no SELinux support" do
+            @sel.should = %{newcontext}
+            @sel.expects(:selinux_support?).returns false
+            @sel.insync?("oldcontext").should == true
+        end
     end
 end
 

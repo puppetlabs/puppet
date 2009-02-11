@@ -178,7 +178,10 @@ module Puppet
 
         # Store all modifications back to disk
         def self.store
-            inifile.store
+            file = inifile.store
+            unless file.nil?
+                File.chmod(0644, file)
+            end
         end
 
         # This is only used during testing.

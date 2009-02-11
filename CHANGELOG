@@ -13,8 +13,39 @@
 
     Fixed #1840 - Bug fixes and improvements for Emacs puppet-mode.el
 
+0.24.8
+    Fixing #1543 - Nagios parse errors no longer kill Puppet
+
+    Fixed #1420 - nagios_serviceescalation not allowing host_name more than one type
+
+    Fixed #1884 - Exported resources are marked as unexported when collected on the exporting host
+
+    Fixed #1922 - Functions squash all arguments into a single hash
+    
+    Fixed #1538 - Yumrepo sets permissions wrongly on files in /etc/yum.repos.d
+
+    Fixed #1936 - Added /* */ support to the vim file
+
+    Fixed #1541 -  nagios objects write files to clientbucket on every change
+
+    Fixed #1542 - cannot purge nagios objects
+ 
+    Fixing #1912 - gid still works with no 'should' value fixing ralsh issues
+
+    Fixing the Rakefile to use 'git format-patch'
+
+    Added README.rst file
+
+    Enhancements to Stored Configuration performance
+
+    Added Reductive Labs build library to tasks directory
+
+    Fixed #1852 - Correct behaviour when no SELinux bindings
+
     Updated Red Hat spec file 0.24.7
 
+    Fixed #1920 - Shadow password corruption 
+ 
 0.24.7
     Fixed #1804 - Added VDev and MultiVDev properties to the ZPool type
 

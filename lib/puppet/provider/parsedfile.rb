@@ -108,10 +108,11 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
     # Return a list of all of the records we can find.
     def self.instances
-        prefetch()
-        @records.find_all { |r| r[:record_type] == self.name }.collect { |r|
-            new(r)
-        }
+        targets.collect do |target|
+            prefetch_target(target)
+        end.flatten.reject { |r| skip_record?(r) }.collect do |record|
+            new(record)
+        end
     end
 
     # Override the default method with a lot more functionality.
@@ -171,29 +172,37 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     # resource instance.
     def self.prefetch(resources = nil)
         # Reset the record list.
-        @records = []
-        targets(resources).each do |target|
-            @records += prefetch_target(target)
-        end
+        @records = prefetch_all_targets(resources)
 
-        if resources
-            matchers = resources.dup
-            @records.each do |record|
-                # Skip things like comments and blank lines
-                next if skip_record?(record)
+        match_providers_with_resources(resources)
+    end
 
-                if name = record[:name] and resource = resources[name]
+    def self.match_providers_with_resources(resources)
+        return unless resources
+        matchers = resources.dup
+        @records.each do |record|
+            # Skip things like comments and blank lines
+            next if skip_record?(record)
+
+            if name = record[:name] and resource = resources[name]
+                resource.provider = new(record)
+            elsif respond_to?(:match)
+                if resource = match(record, matchers)
+                    # Remove this resource from circulation so we don't unnecessarily try to match
+                    matchers.delete(resource.title)
+                    record[:name] = resource[:name]
                     resource.provider = new(record)
-                elsif respond_to?(:match)
-                    if resource = match(record, matchers)
-                        # Remove this resource from circulation so we don't unnecessarily try to match
-                        matchers.delete(resource.title)
-                        record[:name] = resource[:name]
-                        resource.provider = new(record)
-                    end
                 end
             end
         end
+    end
+
+    def self.prefetch_all_targets(resources)
+        records = []
+        targets(resources).each do |target|
+            records += prefetch_target(target)
+        end
+        records
     end
 
     # Prefetch an individual target.
@@ -217,6 +226,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
     # Is there an existing record with this name?
     def self.record?(name)
+        return nil unless @records
         @records.find { |r| r[:name] == name }
     end
 
@@ -367,4 +377,3 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         end
     end
 end
-

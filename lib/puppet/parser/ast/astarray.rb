@@ -30,9 +30,10 @@ class Puppet::Parser::AST
                     items << child
                 end
             }
+
             rets = items.flatten.collect { |child|
                 child.safeevaluate(scope)
-            }.flatten
+            }
             return rets.reject { |o| o.nil? }
         end
 

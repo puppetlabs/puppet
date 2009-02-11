@@ -44,6 +44,14 @@ module Puppet
             return property_default
         end
 
+        def insync?(value)
+            if not selinux_support?
+              debug("SELinux bindings not found. Ignoring parameter.")
+              return true
+            end
+            super
+        end
+
         def sync
             self.set_selinux_context(@resource[:path], @should, name)
             return :file_changed

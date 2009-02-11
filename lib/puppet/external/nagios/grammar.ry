@@ -55,6 +55,8 @@ end
 
 ----inner
 
+class ::Nagios::Parser::SyntaxError < RuntimeError; end
+
 def parse(src)
 	@src = src
 
@@ -66,12 +68,7 @@ def parse(src)
 	@line = 0
 	@yydebug = true
 
-    begin
-        do_parse
-    rescue SyntaxError
-        $stderr.print "#{$!}\n"
-        exit
-    end
+    do_parse
 end
 
 # The lexer.  Very simple.
@@ -183,6 +180,6 @@ def on_error(token, value, vstack )
 	if token == '$end'.intern
 		puts "okay, this is silly"
 	else
-		raise SyntaxError, msg
+		raise ::Nagios::Parser::SyntaxError, msg
 	end
 end
