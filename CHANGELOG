@@ -1,4 +1,6 @@
 0.24.8
+    Fixed #1959 - Added column protection for environment schema migration
+
     Fixing #1869 - autoloaded files should never leak exceptions
 
     Fixing #1543 - Nagios parse errors no longer kill Puppet
