@@ -20,6 +20,28 @@ describe Puppet::Network::XMLRPCClient do
             @client.report("eh").should == "foo"
         end
 
+        it "should always close the http connection if it is still open after the call" do
+            http = mock 'http'
+            @client.stubs(:http).returns http
+
+            http.expects(:started?).returns true
+            http.expects(:finish)
+
+            @client.report("eh").should == "foo"
+        end
+
+        it "should always close the http connection if it is still open after a call that raises an exception" do
+            http = mock 'http'
+            @client.stubs(:http).returns http
+
+            @client.expects(:call).raises RuntimeError
+
+            http.expects(:started?).returns true
+            http.expects(:finish)
+
+            lambda { @client.report("eh") }.should raise_error
+        end
+
         describe "when returning the http instance" do
             it "should use the http pool to create the instance" do
                 @client.instance_variable_set("@http", nil)

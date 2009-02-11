@@ -128,7 +128,7 @@ module Puppet::Network
         end
 
         handle_error(Errno::EPIPE, EOFError) do |client, detail, namespace, method|
-            Puppet.warning "Other end went away; restarting connection and retrying"
+            Puppet.info "Other end went away; restarting connection and retrying"
             client.recycle_connection
             return :retry
         end
@@ -147,6 +147,8 @@ module Puppet::Network
             rescue Exception => detail
                 retry if self.class.error_handler(detail).execute(self, detail, namespace, method) == :retry
             end
+        ensure
+            http.finish if http.started?
         end
 
         def http

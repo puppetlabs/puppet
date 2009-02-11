@@ -1,4 +1,8 @@
 0.24.8
+    Fixing #944 - changing error message from warning to info - connection recycled 
+
+    Fixed #961 - puppetd creating too many/not closing TCP connections
+
     Fixed #1959 - Added column protection for environment schema migration
 
     Fixing #1869 - autoloaded files should never leak exceptions
