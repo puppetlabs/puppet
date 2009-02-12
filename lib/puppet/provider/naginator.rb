@@ -7,6 +7,7 @@ require 'puppet/external/nagios'
 
 # The base class for all Naginator providers.
 class Puppet::Provider::Naginator < Puppet::Provider::ParsedFile
+    NAME_STRING = "## --PUPPET_NAME-- (called '_naginator_name' in the manifest)"
     # Retrieve the associated class from Nagios::Base.
     def self.nagios_type
         unless defined?(@nagios_type) and @nagios_type
@@ -24,14 +25,14 @@ class Puppet::Provider::Naginator < Puppet::Provider::ParsedFile
 
     def self.parse(text)
         begin
-            Nagios::Parser.new.parse(text)
+            Nagios::Parser.new.parse(text.gsub(NAME_STRING, "_naginator_name"))
         rescue => detail
             raise Puppet::Error, "Could not parse configuration for %s: %s" % [resource_type.name, detail]
         end
     end
 
     def self.to_file(records)
-        header + records.collect { |record| record.to_s }.join("\n")
+        header + records.collect { |record| record.to_s }.join("\n").gsub("_naginator_name", NAME_STRING)
     end
 
     def self.skip_record?(record)
