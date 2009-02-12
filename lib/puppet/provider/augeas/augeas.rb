@@ -164,14 +164,34 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             fail("invalid command #{cmd_array.join[" "]}") if cmd_array.length < 2
             command = cmd_array[0]
             cmd_array.shift()
-            cmd_array[0]=File.join(context, cmd_array[0])
-            debug("sending command '#{command}' with params #{cmd_array.inspect}")
             begin
                 case command
-                    when "set": aug.set(cmd_array[0], cmd_array[1])
-                    when "rm", "remove": aug.rm(cmd_array[0])
-                    when "clear": aug.clear(cmd_array[0])
-                    when "insert", "ins": aug.insert(cmd_array[0])
+                    when "set":
+                        cmd_array[0]=File.join(context, cmd_array[0])
+                        debug("sending command '#{command}' with params #{cmd_array.inspect}")
+                        aug.set(cmd_array[0], cmd_array[1])
+                    when "rm", "remove":
+                        cmd_array[0]=File.join(context, cmd_array[0])
+                        debug("sending command '#{command}' with params #{cmd_array.inspect}")                    
+                        aug.rm(cmd_array[0])
+                    when "clear":
+                        cmd_array[0]=File.join(context, cmd_array[0])
+                        debug("sending command '#{command}' with params #{cmd_array.inspect}")                    
+                        aug.clear(cmd_array[0])
+                    when "insert", "ins"
+                        if cmd_array.size < 3
+                            fail("ins requires 3 parameters")
+                        end
+                        label = cmd_array[0]
+                        where = cmd_array[1]
+                        path = File.join(context, cmd_array[2]) 
+                        case where
+                            when "before": before = true
+                            when "after": before = false
+                            else fail("Invalid value '#{where}' for where param")
+                        end
+                        debug("sending command '#{command}' with params #{[label, where, path]}") 
+                        aug.insert(path, label, before)
                     else fail("Command '#{command}' is not supported")
                 end
             rescue Exception => e
