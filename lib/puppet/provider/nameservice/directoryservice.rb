@@ -15,6 +15,7 @@
 require 'puppet'
 require 'puppet/provider/nameservice'
 require 'facter/util/plist'
+require 'cgi'
 
 
 class Puppet::Provider::NameService
@@ -26,6 +27,7 @@ class DirectoryService < Puppet::Provider::NameService
         #  e.g. Puppet::Type.type(:user).provide :directoryservice, :ds_path => "Users"
         #  This is referenced in the get_ds_path class method
         attr_writer :ds_path
+        attr_writer :macosx_version_major
     end
 
     
@@ -40,6 +42,7 @@ class DirectoryService < Puppet::Provider::NameService
     
     commands :dscl => "/usr/bin/dscl"
     commands :dseditgroup => "/usr/sbin/dseditgroup"
+    commands :sw_vers => "/usr/bin/sw_vers"
     confine :operatingsystem => :darwin
     defaultfor :operatingsystem => :darwin
 
@@ -100,12 +103,31 @@ class DirectoryService < Puppet::Provider::NameService
         #   @ds_path is an attribute of the class itself.  
         if defined? @ds_path
             return @ds_path
-        else
-            # JJM: "Users" or "Groups" etc ...  (Based on the Puppet::Type)
-            #       Remember this is a class method, so self.class is Class
-            #       Also, @resource_type seems to be the reference to the
-            #       Puppet::Type this class object is providing for.
-            return @resource_type.name.to_s.capitalize + "s"
+        end
+        # JJM: "Users" or "Groups" etc ...  (Based on the Puppet::Type)
+        #       Remember this is a class method, so self.class is Class
+        #       Also, @resource_type seems to be the reference to the
+        #       Puppet::Type this class object is providing for.
+        return @resource_type.name.to_s.capitalize + "s"
+    end
+    
+    def self.get_macosx_version_major
+        if defined? @macosx_version_major
+            return @macosx_version_major
+        end
+        begin
+            product_version = Facter.value(:macosx_productversion)
+            if product_version.nil?
+                raise Puppet::Error, "Could not determine OS X version: %s" % detail
+            end
+            product_version_major = product_version.scan(/(\d+)\.(\d+)./).join(".")
+            if %w{10.0 10.1 10.2 10.3}.include?(product_version_major)
+                raise Puppet::Error, "%s is not supported by the directoryservice provider" % product_version_major
+            end
+            @macosx_version_major = product_version_major
+            return @macosx_version_major
+        rescue Puppet::ExecutionFailure => detail
+            raise Puppet::Error, "Could not determine OS X version: %s" % detail
         end
     end
 
@@ -119,34 +141,56 @@ class DirectoryService < Puppet::Provider::NameService
         return dscl_output.split("\n")
     end
     
-    def self.single_report(resource_name, *type_properties)
-        # JJM 2007-07-24:
-        #     Given a the name of an object and a list of properties of that
-        #     object, return all property values in a hash.
-        #     
-        #     This class method returns nil if the object doesn't exist
-        #     Otherwise, it returns a hash of the object properties.
+    def self.parse_dscl_url_data(dscl_output)
+        # we need to construct a Hash from the dscl -url output to match
+        # that returned by the dscl -plist output for 10.5+ clients.
+        #
+        # Nasty assumptions:
+        #   a) no values *end* in a colon ':', only keys
+        #   b) if a line ends in a colon and the next line does start with
+        #      a space, then the second line is a value of the first.
+        #   c) (implied by (b)) keys don't start with spaces.
         
-        all_present_str_array = list_all_present()
-        
-        # NBK: shortcut the process if the resource is missing
-        return nil unless all_present_str_array.include? resource_name
-        
-        dscl_vector = get_exec_preamble("-read", resource_name)
-        begin
-            dscl_output = execute(dscl_vector)
-        rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error, "Could not get report.  command execution failed."
+        dscl_plist = {}
+        dscl_output.split("\n").inject([]) do |array, line|
+          if line =~ /^\s+/   # it's a value
+            array[-1] << line # add the value to the previous key
+          else
+            array << line
+          end
+          array
+        end.compact
+
+        dscl_output.each do |line|
+            # This should be a 'normal' entry. key and value on one line.
+            # We split on ': ' to deal with keys/values with a colon in them.
+            split_array = line.split(/:\s+/)
+            key = split_array.first
+            value = CGI::unescape(split_array.last.strip.chomp)
+            # We need to treat GroupMembership separately as it is currently
+            # the only attribute we care about multiple values for, and
+            # the values can never contain spaces (shortnames)
+            # We also make every value an array to be consistent with the
+            # output of dscl -plist under 10.5
+            if key == "GroupMembership"
+                dscl_plist[key] = value.split(/\s/)
+            else
+                dscl_plist[key] = [value]
+            end
         end
-        
-        # JJM: We need a new hash to return back to our caller.
-        attribute_hash = Hash.new
-        
-        dscl_plist = Plist.parse_xml(dscl_output)
-        dscl_plist.keys().each do |key|
+        return dscl_plist
+    end
+    
+    def self.parse_dscl_plist_data(dscl_output)
+        return Plist.parse_xml(dscl_output)
+    end
+    
+    def self.generate_attribute_hash(input_hash, *type_properties)
+        attribute_hash = {}
+        input_hash.keys().each do |key|
             ds_attribute = key.sub("dsAttrTypeStandard:", "")
             next unless (@@ds_to_ns_attribute_map.keys.include?(ds_attribute) and type_properties.include? @@ds_to_ns_attribute_map[ds_attribute])
-            ds_value = dscl_plist[key]
+            ds_value = input_hash[key]
             case @@ds_to_ns_attribute_map[ds_attribute]
                 when :members: 
                     ds_value = ds_value # only members uses arrays so far
@@ -172,7 +216,41 @@ class DirectoryService < Puppet::Provider::NameService
         if @resource_type.validproperties.include?(:password)
             attribute_hash[:password] = self.get_password(attribute_hash[:guid])
         end
-        return attribute_hash    
+        return attribute_hash
+    end
+    
+    def self.single_report(resource_name, *type_properties)
+        # JJM 2007-07-24:
+        #     Given a the name of an object and a list of properties of that
+        #     object, return all property values in a hash.
+        #     
+        #     This class method returns nil if the object doesn't exist
+        #     Otherwise, it returns a hash of the object properties.
+        
+        all_present_str_array = list_all_present()
+        
+        # NBK: shortcut the process if the resource is missing
+        return nil unless all_present_str_array.include? resource_name
+        
+        dscl_vector = get_exec_preamble("-read", resource_name)
+        begin
+            dscl_output = execute(dscl_vector)
+        rescue Puppet::ExecutionFailure => detail
+            raise Puppet::Error, "Could not get report.  command execution failed."
+        end
+        
+        # Two code paths is ugly, but until we can drop 10.4 support we don't
+        # have a lot of choice. Ultimately this should all be done using Ruby
+        # to access the DirectoryService APIs directly, but that's simply not
+        # feasible for a while yet.
+        case self.get_macosx_version_major
+        when "10.4"
+            dscl_plist = self.parse_dscl_url_data(dscl_output)
+        when "10.5", "10.6"
+            dscl_plist = self.parse_dscl_plist_data(dscl_output)
+        end
+        
+        return self.generate_attribute_hash(dscl_plist, *type_properties)
     end
     
     def self.get_exec_preamble(ds_action, resource_name = nil)
@@ -183,8 +261,16 @@ class DirectoryService < Puppet::Provider::NameService
         #     This method spits out proper DSCL commands for us.
         #     We EXPECT name to be @resource[:name] when called from an instance object.
 
-        # There are two ways to specify paths in 10.5.  See man dscl.
-        command_vector = [ command(:dscl), "-plist", "." ]
+        # 10.4 doesn't support the -plist option for dscl, and 10.5 has a
+        # different format for the -url output with objects with spaces in
+        # their values. *sigh*. Use -url for 10.4 in the hope this can be
+        # deprecated one day, and use -plist for 10.5 and higher.
+        case self.get_macosx_version_major
+        when "10.4"
+            command_vector = [ command(:dscl), "-url", "." ]
+        when "10.5", "10.6"
+            command_vector = [ command(:dscl), "-plist", "." ]
+        end
         # JJM: The actual action to perform.  See "man dscl"
         #      Common actiosn: -create, -delete, -merge, -append, -passwd
         command_vector << ds_action
@@ -234,7 +320,6 @@ class DirectoryService < Puppet::Provider::NameService
     def self.get_password(guid)
         password_hash = nil
         password_hash_file = "#{@@password_hash_dir}/#{guid}"
-        # TODO: sort out error conditions?
         if File.exists?(password_hash_file)
             if not File.readable?(password_hash_file)
                 raise Puppet::Error("Could not read password hash file at #{password_hash_file} for #{@resource[:name]}")
@@ -322,9 +407,8 @@ class DirectoryService < Puppet::Provider::NameService
     # to create objects with dscl, rather than the single command nameservice.rb
     # expects to be returned by addcmd. Thus we don't bother defining addcmd.
     def create
-       if exists?
+        if exists?
             info "already exists"
-            # The object already exists
             return nil
         end
         
