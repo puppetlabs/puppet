@@ -16,7 +16,7 @@ elseif exists("b:current_syntax")
   finish
 endif
 
-syn region  puppetDefine        start="^\s*\(class\|define\|site\|node\)" end="{" contains=puppetDefType,puppetDefName,puppetDefArguments
+syn region  puppetDefine        start="^\s*\(class\|define\|node\)" end="{" contains=puppetDefType,puppetDefName,puppetDefArguments
 syn keyword puppetDefType       class define site node inherits contained
 syn keyword puppetInherits      inherits contained
 syn region  puppetDefArguments  start="(" end=")" contains=puppetArgument
