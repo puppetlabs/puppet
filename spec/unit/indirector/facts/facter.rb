@@ -70,7 +70,14 @@ describe Puppet::Node::Facts::Facter do
         end
     end
 
-    describe Puppet::Node::Facts::Facter, " when loading facts from the factpath" do
-        it "should load every fact in each factpath directory"
+    describe Puppet::Node::Facts::Facter, "when loading facts from the factpath" do
+        it "should load each directory in the Fact path when loading fact" do
+            Puppet.settings.expects(:value).with(:factpath).returns("one%stwo" % File::PATH_SEPARATOR)
+
+            Puppet::Node::Facts::Facter.expects(:loaddir).with("one", "fact")
+            Puppet::Node::Facts::Facter.expects(:loaddir).with("two", "fact")
+
+            Puppet::Node::Facts::Facter.loadfacts
+        end
     end
 end
