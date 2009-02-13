@@ -42,4 +42,12 @@ describe Puppet::FileCollection do
     it "should return nil as the file name when an unknown index is provided" do
         @collection.path(50).should be_nil
     end
+
+    it "should provide a global collection" do
+        Puppet::FileCollection.collection.should be_instance_of(Puppet::FileCollection)
+    end
+
+    it "should reuse the global collection" do
+        Puppet::FileCollection.collection.should equal(Puppet::FileCollection.collection)
+    end
 end

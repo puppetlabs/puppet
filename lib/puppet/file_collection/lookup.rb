@@ -5,6 +5,10 @@ require 'puppet/file_collection'
 module Puppet::FileCollection::Lookup
     attr_accessor :line, :file_index
 
+    def file_collection
+        Puppet::FileCollection.collection
+    end
+
     def file=(path)
         @file_index = file_collection.index(path)
     end

@@ -10,6 +10,7 @@ require 'puppet/util/errors'
 require 'puppet/util/log_paths'
 require 'puppet/util/logging'
 require 'puppet/resource_reference'
+require 'puppet/file_collection/lookup'
 
 # see the bottom of the file for the rest of the inclusions
 
@@ -19,6 +20,7 @@ class Type
     include Puppet::Util::Errors
     include Puppet::Util::LogPaths
     include Puppet::Util::Logging
+    include Puppet::FileCollection::Lookup
 
     ###############################
     # Code related to resource type attributes.
@@ -2135,8 +2137,6 @@ class Type
     # In naming methods, I have tried to consistently name the method so
     # that it is clear whether it operates on all attributes (thus has 'attr' in
     # the method name, or whether it operates on a specific type of attributes.
-    attr_accessor :file, :line
-
     attr_writer :title
     attr_writer :noop
 

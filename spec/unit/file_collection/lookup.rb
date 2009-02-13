@@ -12,7 +12,7 @@ describe Puppet::FileCollection::Lookup do
         @tester = LookupTester.new
 
         @file_collection = mock 'file_collection'
-        @tester.stubs(:file_collection).returns @file_collection
+        Puppet::FileCollection.stubs(:collection).returns @file_collection
     end
 
     it "should use the file collection to determine the index of the file name" do
@@ -37,5 +37,10 @@ describe Puppet::FileCollection::Lookup do
     it "should support a line attribute" do
         @tester.line = 50
         @tester.line.should == 50
+    end
+
+    it "should default to the global file collection" do
+        Puppet::FileCollection.expects(:collection).returns "collection"
+        @tester.file_collection.should == "collection"
     end
 end

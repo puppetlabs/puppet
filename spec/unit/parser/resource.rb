@@ -44,6 +44,10 @@ describe Puppet::Parser::Resource do
         end
     end
 
+    it "should use the file lookup module" do
+        Puppet::Parser::Resource.ancestors.should be_include(Puppet::FileCollection::Lookup)
+    end
+
     it "should be isomorphic if it is builtin and models an isomorphic type" do
         Puppet::Type.type(:file).expects(:isomorphic?).returns(true)
         @resource = Puppet::Parser::Resource.new(:type => "file", :title => "whatever", :scope => @scope, :source => @source).isomorphic?.should be_true
