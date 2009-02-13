@@ -52,7 +52,6 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                 commands.concat(parse_commands(datum))
             end
         end
-
         return commands
     end
 
@@ -179,18 +178,20 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                         debug("sending command '#{command}' with params #{cmd_array.inspect}")                    
                         aug.clear(cmd_array[0])
                     when "insert", "ins"
-                        if cmd_array.size < 3
+
+                        ext_array = cmd_array[1].split(" ") ;
+                        if cmd_array.size < 2 or ext_array.size < 2
                             fail("ins requires 3 parameters")
                         end
                         label = cmd_array[0]
-                        where = cmd_array[1]
-                        path = File.join(context, cmd_array[2]) 
+                        where = ext_array[0]
+                        path = File.join(context, ext_array[1]) 
                         case where
                             when "before": before = true
                             when "after": before = false
                             else fail("Invalid value '#{where}' for where param")
                         end
-                        debug("sending command '#{command}' with params #{[label, where, path]}") 
+                        debug("sending command '#{command}' with params #{[label, where, path].inspect()}") 
                         aug.insert(path, label, before)
                     else fail("Command '#{command}' is not supported")
                 end
