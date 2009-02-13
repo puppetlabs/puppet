@@ -24,8 +24,12 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
     end
 
     def self.loadfacts
-        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
-        x = Puppet[:factpath].split(":").each do |dir|
+        # Add any per-module fact directories to the factpath
+        module_fact_dirs = Puppet[:modulepath].split(":").collect do |d|
+            Dir.glob("%s/*/plugins/facter" % d)
+        end.flatten
+        dirs = module_fact_dirs + Puppet[:factpath].split(":")
+        x = dirs.each do |dir|
             loaddir(dir, "fact")
         end
     end
