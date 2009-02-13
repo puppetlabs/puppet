@@ -9,14 +9,16 @@ class Puppet::FileCollection
 
     def initialize
         @paths = []
+        @inverse = {}
     end
 
     def index(path)
-        if @paths.include?(path)
-            return @paths.index(path)
+        if i = @inverse[path]
+            return i
         else
             @paths << path
-            return @paths.length - 1
+            i = @inverse[path] = @paths.length - 1
+            return i
         end
     end
 
