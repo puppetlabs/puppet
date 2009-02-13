@@ -1,4 +1,6 @@
 0.24.8
+    Updated up2date and service confines to add support for Oracle EL and VM
+
     Fixing #1948 and #1953 - augeas ins bug: wrong number of arguments (1 for 3)
 
     Fixing #944 - changing error message from warning to info - connection recycled 
