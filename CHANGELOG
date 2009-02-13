@@ -1,4 +1,6 @@
 0.24.8
+    Fixed #1830 - Added regsubst function
+
     Updated up2date and service confines to add support for Oracle EL and VM
 
     Fixing #1948 and #1953 - augeas ins bug: wrong number of arguments (1 for 3)
