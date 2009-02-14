@@ -32,12 +32,9 @@ Puppet::Application.new(:puppetca) do
         end
     end
 
-    option("--version","-V")
-
     option("--verbose", "-v") do
         Puppet::Util::Log.level = :info
     end
-
 
     command(:main) do
         if @all

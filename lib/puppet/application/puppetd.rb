@@ -56,11 +56,6 @@ Puppet::Application.new(:puppetd) do
         end
     end
 
-    option("--version", "-V") do |arg|
-        puts "%s" % Puppet.version
-        exit
-    end
-
     option("--no-client") do |arg|
         options[:client] = false
     end

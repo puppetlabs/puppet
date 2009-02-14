@@ -9,10 +9,6 @@ describe "Puppet" do
         @puppet = Puppet::Application[:puppet]
     end
 
-    it "should declare a version option" do
-        @puppet.should respond_to(:handle_version)
-    end
-
     [:debug,:execute,:loadclasses,:verbose,:use_nodes,:detailed_exitcodes].each do |option|
         it "should declare handle_#{option} method" do
             @puppet.should respond_to("handle_#{option}".to_sym)
@@ -29,11 +25,6 @@ describe "Puppet" do
     end
 
     describe "when applying options" do
-        it "should exit after printing the version" do
-            @puppet.stubs(:puts)
-
-            lambda { @puppet.handle_version(nil) }.should raise_error(SystemExit)
-        end
 
         it "should set the log destination with --logdest" do
             Puppet::Log.expects(:newdestination).with("console")

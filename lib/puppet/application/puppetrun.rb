@@ -25,11 +25,6 @@ Puppet::Application.new(:puppetrun) do
     option("--ping","-P")
     option("--test")
 
-    option("--version", "-V") do |arg|
-        puts "%s" % Puppet.version
-        exit
-    end
-
     option("--host HOST") do |arg|
         @hosts << arg
     end

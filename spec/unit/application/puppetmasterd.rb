@@ -66,12 +66,6 @@ describe "PuppetMaster" do
     end
 
     describe "when applying options" do
-        it "should exit after printing the version" do
-            @puppetmasterd.stubs(:puts)
-
-            lambda { @puppetmasterd.handle_version(nil) }.should raise_error(SystemExit)
-        end
-
         it "should set the log destination with --logdest" do
             Puppet::Log.expects(:newdestination).with("console")
 

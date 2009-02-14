@@ -23,11 +23,6 @@ Puppet::Application.new(:puppet) do
         end
     end
 
-    option("--version",  "-V") do |arg|
-        puts "%s" % Puppet.version
-        exit
-    end
-
     dispatch do
         return Puppet[:parseonly] ? :parseonly : :main
     end

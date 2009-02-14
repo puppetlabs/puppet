@@ -175,6 +175,17 @@ class Puppet::Application
 
         name = symbolize(name)
 
+        init_default
+
+        @options = {}
+
+        instance_eval(&block) if block_given?
+
+        @@applications[name] = self
+    end
+
+    # initialize default application behaviour
+    def init_default
         setup do 
             default_setup
         end
@@ -187,15 +198,14 @@ class Puppet::Application
         preinit do
         end
 
+        option("--version", "-V") do |arg|
+            puts "%s" % Puppet.version
+            exit
+        end
+
         option("--help", "-h") do |v|
             help
         end
-
-        @options = {}
-
-        instance_eval(&block) if block_given?
-
-        @@applications[name] = self
     end
 
     # This is the main application entry point

@@ -22,11 +22,6 @@ Puppet::Application.new(:puppetmasterd) do
         end
     end
 
-    option("--version",  "-V") do |arg|
-        puts "%s" % Puppet.version
-        exit
-    end
-
     preinit do
         trap(:INT) do
             $stderr.puts "Cancelling startup"

@@ -6,11 +6,6 @@ Puppet::Application.new(:filebucket) do
 
     should_not_parse_config
 
-    option("--version", "-V") do |arg|
-        puts "%s" % Puppet.version
-        exit
-    end
-
     option("--bucket BUCKET","-b")
     option("--debug","-d")
     option("--local","-l")

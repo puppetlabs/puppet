@@ -32,10 +32,6 @@ describe "puppetd" do
         @puppetd.should respond_to(:run_preinit)
     end
 
-    it "should declare a version option" do
-        @puppetd.should respond_to(:handle_version)
-    end
-
     describe "in preinit" do
         before :each do
             @pupetd.stubs(:trap)
@@ -91,10 +87,6 @@ describe "puppetd" do
 
             @puppetd.handle_serve("handler")
             @puppetd.options[:serve].should == [ :handler ]
-        end
-
-        it "should exit after printing the version" do
-            lambda { @puppetd.handle_version(nil) }.should raise_error(SystemExit)
         end
 
         it "should set client to false with --no-client" do

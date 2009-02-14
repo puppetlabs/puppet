@@ -83,6 +83,18 @@ describe Puppet::Application do
 
         end
 
+        describe "when using --version" do
+            it "should declare a version option" do
+                @app.should respond_to(:handle_version)
+            end
+
+            it "should exit after printing the version" do
+                @app.stubs(:puts)
+
+                lambda { @app.handle_version(nil) }.should raise_error(SystemExit)
+            end
+        end
+
         describe "when dealing with an argument not declared directly by the application" do
             it "should pass it to handle_unknown if this method exists" do
                 Puppet.settings.stubs(:optparse_addargs).returns([["--not-handled"]])

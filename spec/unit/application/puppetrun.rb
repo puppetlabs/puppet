@@ -70,12 +70,6 @@ describe "puppetrun" do
             end
         end
 
-        it "should exit after printing the version" do
-            @puppetrun.stubs(:puts)
-
-            lambda { @puppetrun.handle_version(nil) }.should raise_error(SystemExit)
-        end
-
         it "should add to the host list with the host option" do
             @puppetrun.handle_host('host')
 
