@@ -56,14 +56,23 @@ describe Puppet::Provider::ParsedFile do
             @class.initvars
             @class.prefetch
 
-            @filetype = mock 'filetype'
-            Puppet::Util::FileType.filetype(:flat).expects(:new).with("/my/file").returns @filetype
+            @filetype = Puppet::Util::FileType.filetype(:flat).new("/my/file")
+            Puppet::Util::FileType.filetype(:flat).stubs(:new).with("/my/file").returns @filetype
 
             @filetype.stubs(:write)
         end
 
-        it "should back up the file being written" do
+        it "should back up the file being written if the filetype can be backed up" do
             @filetype.expects(:backup)
+
+            @class.flush_target("/my/file")
+        end
+
+        it "should not try to back up the file if the filetype cannot be backed up" do
+            @filetype = Puppet::Util::FileType.filetype(:ram).new("/my/file")
+            Puppet::Util::FileType.filetype(:flat).expects(:new).returns @filetype
+
+            @filetype.stubs(:write)
 
             @class.flush_target("/my/file")
         end
