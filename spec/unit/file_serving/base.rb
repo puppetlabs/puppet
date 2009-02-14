@@ -31,6 +31,10 @@ describe Puppet::FileServing::Base do
         proc { Puppet::FileServing::Base.new("/module/dir/file", :links => :else) }.should raise_error(ArgumentError)
     end
 
+    it "should allow links values to be set as strings" do
+        Puppet::FileServing::Base.new("/module/dir/file", :links => "follow").links.should == :follow
+    end
+
     it "should default to :manage for :links" do
         Puppet::FileServing::Base.new("/module/dir/file").links.should == :manage
     end

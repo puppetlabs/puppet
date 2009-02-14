@@ -94,7 +94,7 @@ describe Puppet::Indirector::REST do
                 end
 
                 it "should pass options all the way through" do
-                    @mock_model.expects(:find).with { |key, args| args["one"] == "two" and args["three"] == "four" }.returns @model_instance
+                    @mock_model.expects(:find).with { |key, args| args[:one] == "two" and args[:three] == "four" }.returns @model_instance
                     Puppet::TestIndirectedFoo.find('bar', :one => "two", :three => "four")
                 end
     
@@ -159,7 +159,7 @@ describe Puppet::Indirector::REST do
                 end
 
                 it "should pass options all the way through" do
-                    @mock_model.expects(:search).with { |key, args| args["one"] == "two" and args["three"] == "four" }.returns @model_instances
+                    @mock_model.expects(:search).with { |key, args| args[:one] == "two" and args[:three] == "four" }.returns @model_instances
                     Puppet::TestIndirectedFoo.search("foo", :one => "two", :three => "four")
                 end
     
@@ -328,7 +328,7 @@ describe Puppet::Indirector::REST do
                 end
 
                 it "should pass options all the way through" do
-                    @mock_model.expects(:find).with { |key, args| args["one"] == "two" and args["three"] == "four" }.returns @model_instance
+                    @mock_model.expects(:find).with { |key, args| args[:one] == "two" and args[:three] == "four" }.returns @model_instance
                     Puppet::TestIndirectedFoo.find('bar', :one => "two", :three => "four")
                 end
     
@@ -390,7 +390,7 @@ describe Puppet::Indirector::REST do
                 end
 
                 it "should pass options all the way through" do
-                    @mock_model.expects(:search).with { |key, args| args["one"] == "two" and args["three"] == "four" }.returns @model_instances
+                    @mock_model.expects(:search).with { |key, args| args[:one] == "two" and args[:three] == "four" }.returns @model_instances
                     Puppet::TestIndirectedFoo.search('bar', :one => "two", :three => "four")
                 end
     

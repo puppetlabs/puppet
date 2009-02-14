@@ -64,7 +64,7 @@ class Puppet::FileServing::Fileset
     end
 
     def links=(links)
-        links = links.intern if links.is_a?(String)
+        links = links.to_sym
         raise(ArgumentError, "Invalid :links value '%s'" % links) unless [:manage, :follow].include?(links)
         @links = links
         @stat_method = links == :manage ? :lstat : :stat

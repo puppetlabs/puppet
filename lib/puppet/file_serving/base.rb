@@ -46,6 +46,7 @@ class Puppet::FileServing::Base
     # Determine how we deal with links.
     attr_reader :links
     def links=(value)
+        value = value.to_sym
         value = :manage if value == :ignore
         raise(ArgumentError, ":links can only be set to :manage or :follow") unless [:manage, :follow].include?(value) 
         @links = value
