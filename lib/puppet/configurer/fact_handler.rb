@@ -18,7 +18,12 @@ module Puppet::Configurer::FactHandler
         # This works because puppetd configures Facts to use 'facter' for
         # finding facts and the 'rest' terminus for caching them.  Thus, we'll
         # compile them and then "cache" them on the server.
-        Puppet::Node::Facts.find(Puppet[:certname])
+        begin
+            Puppet::Node::Facts.find(Puppet[:certname])
+        rescue => detail
+            puts detail.backtrace if Puppet[:trace]
+            Puppet.err("Could not retrieve local facts: %s" % detail)
+        end
     end
 
     # Retrieve facts from the central server.

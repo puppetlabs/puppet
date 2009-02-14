@@ -65,6 +65,18 @@ describe Puppet::Configurer::FactHandler do
         @facthandler.upload_facts
     end
 
+    it "should not fail if uploading facts fails" do
+        @facthandler.stubs(:reload_facter)
+
+        Puppet.settings.stubs(:value).with(:trace).returns false
+        Puppet.settings.stubs(:value).with(:certname).returns "myhost"
+        Puppet::Node::Facts.expects(:find).raises RuntimeError
+
+        Puppet.expects(:err)
+
+        lambda { @facthandler.upload_facts }.should_not raise_error
+    end
+
     describe "when reloading Facter" do
         before do
             Facter.stubs(:clear)

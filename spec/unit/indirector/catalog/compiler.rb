@@ -98,6 +98,11 @@ describe Puppet::Resource::Catalog::Compiler do
             proc { @compiler.find(@request) }.should raise_error(ArgumentError)
         end
 
+        it "should fail intelligently when searching for a node raises an exception" do
+            Puppet::Node.stubs(:find).with(@name).raises "eh"
+            proc { @compiler.find(@request) }.should raise_error(Puppet::Error)
+        end
+
         it "should pass the found node to the interpreter for compiling" do
             Puppet::Node.expects(:find).with(@name).returns(@node)
             config = mock 'config'

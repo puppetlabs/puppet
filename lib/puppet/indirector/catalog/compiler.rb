@@ -88,7 +88,13 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
     # Turn our host name into a node object.
     def find_node(name)
-        return nil unless node = Puppet::Node.find(name)
+        begin
+            return nil unless node = Puppet::Node.find(name)
+        rescue => detail
+            puts detail.backtrace if Puppet[:trace]
+            raise Puppet::Error, "Failed when searching for node %s: %s" % [name, detail]
+        end
+
 
         # Add any external data to the node.
         add_node_data(node)
