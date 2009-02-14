@@ -124,6 +124,8 @@ class Puppet::Configurer
     # This just passes any options on to the catalog,
     # which accepts :tags and :ignoreschedules.
     def run(options = {})
+        prepare()
+
         unless catalog = retrieve_catalog
             Puppet.err "Could not retrieve catalog; skipping run"
             return

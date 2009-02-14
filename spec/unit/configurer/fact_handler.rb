@@ -44,7 +44,7 @@ describe Puppet::Configurer::FactHandler do
         Puppet.settings.expects(:value).with(:factdest).returns "fdest"
         Puppet.settings.expects(:value).with(:factsignore).returns "fignore"
 
-        Puppet::Configurer::Downloader.expects(:new).with("fact", "fsource", "fdest", "fignore").returns downloader
+        Puppet::Configurer::Downloader.expects(:new).with("fact", "fdest", "fsource", "fignore").returns downloader
 
         downloader.expects(:evaluate)
 

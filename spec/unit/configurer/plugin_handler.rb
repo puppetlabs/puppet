@@ -44,7 +44,7 @@ describe Puppet::Configurer::PluginHandler do
         Puppet.settings.expects(:value).with(:plugindest).returns "pdest"
         Puppet.settings.expects(:value).with(:pluginsignore).returns "pignore"
 
-        Puppet::Configurer::Downloader.expects(:new).with("plugin", "psource", "pdest", "pignore").returns downloader
+        Puppet::Configurer::Downloader.expects(:new).with("plugin", "pdest", "psource", "pignore").returns downloader
 
         downloader.expects(:evaluate).returns []
 

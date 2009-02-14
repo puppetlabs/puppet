@@ -27,6 +27,12 @@ describe Puppet::Configurer, "when executing a catalog run" do
         @agent = Puppet::Configurer.new
     end
 
+    it "should prepare for the run" do
+        @agent.expects(:prepare)
+
+        @agent.run
+    end
+
     it "should retrieve the catalog" do
         @agent.expects(:retrieve_catalog)
 
