@@ -1,4 +1,7 @@
 0.24.8
+    Fixed #1956 - Cleaned up variable names to be more sane, clarified error messages 
+    and fixed incorrect use of 'value' variable rather than 'member'.
+    
     Fixed #1831 - Added sprintf function
 
     Fixed #1830 - Added regsubst function

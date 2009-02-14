@@ -457,25 +457,25 @@ class DirectoryService < Puppet::Provider::NameService
     
     def remove_unwanted_members(current_members, new_members)
         current_members.each do |member|
-            if not value.include?(member)
+            if not new_members.include?(member)
                 cmd = [:dseditgroup, "-o", "edit", "-n", ".", "-d", member, @resource[:name]]
                 begin
                      execute(cmd)
                 rescue Puppet::ExecutionFailure => detail
-                     raise Puppet::Error, "Could not set %s on %s[%s]: %s" % [param, @resource.class.name, @resource.name, detail]
+                     raise Puppet::Error, "Could not remove %s from group: %s, %s" % [member, @resource.name, detail]
                 end
              end
          end
     end
     
     def add_members(current_members, new_members)
-        new_members.each do |user|
-           if current_members.nil? or not current_members.include?(user)
-               cmd = [:dseditgroup, "-o", "edit", "-n", ".", "-a", user, @resource[:name]]
+        new_members.each do |new_member|
+           if current_members.nil? or not current_members.include?(new_member)
+               cmd = [:dseditgroup, "-o", "edit", "-n", ".", "-a", new_member, @resource[:name]]
                begin
                     execute(cmd)
                rescue Puppet::ExecutionFailure => detail
-                    raise Puppet::Error, "Could not set %s on %s[%s]: %s" % [param, @resource.class.name, @resource.name, detail]
+                    raise Puppet::Error, "Could not add %s to group: %s, %s" % [new_member, @resource.name, detail]
                end
            end
         end
