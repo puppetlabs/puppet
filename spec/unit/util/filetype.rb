@@ -27,20 +27,10 @@ describe Puppet::Util::FileType do
             @file.backup
         end
 
-        it "should use the filebucket named 'puppet' if it finds one" do
+        it "should use the default filebucket" do
             bucket = mock 'bucket'
             bucket.expects(:bucket).returns "mybucket"
 
-            Puppet::Type.type(:filebucket).expects(:[]).with("puppet").returns bucket
-
-            @file.bucket.should == "mybucket"
-        end
-
-        it "should use the default filebucket if none named 'puppet' is found" do
-            bucket = mock 'bucket'
-            bucket.expects(:bucket).returns "mybucket"
-
-            Puppet::Type.type(:filebucket).expects(:[]).with("puppet").returns nil
             Puppet::Type.type(:filebucket).expects(:mkdefaultbucket).returns bucket
 
             @file.bucket.should == "mybucket"
