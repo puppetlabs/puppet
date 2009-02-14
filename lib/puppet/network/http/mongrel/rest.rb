@@ -23,7 +23,9 @@ class Puppet::Network::HTTP::MongrelREST < Mongrel::HttpHandler
     # Return the query params for this request.  We had to expose this method for
     # testing purposes.
     def params(request)
-        Mongrel::HttpRequest.query_parse(request.params["QUERY_STRING"]).merge(client_info(request))
+        params = Mongrel::HttpRequest.query_parse(request.params["QUERY_STRING"])
+        params = decode_params(params)
+        params.merge(client_info(request))
     end
 
     # what path was requested?

@@ -87,11 +87,21 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
         deserialize network(request).put("/#{indirection.name}/", request.instance.render, headers)
     end
 
-    private
-
     # Create the query string, if options are present.
     def query_string(request)
         return "" unless request.options and ! request.options.empty?
-        "?" + request.options.collect { |key, value| "%s=%s" % [key, value] }.join("&")
+        "?" + request.options.collect do |key, value|
+            case value
+            when nil; next
+            when true, false; value = value.to_s
+            when String; value = URI.escape(value)
+            when Symbol; value = URI.escape(value.to_s)
+            when Array; value = URI.escape(YAML.dump(value))
+            else
+                raise ArgumentError, "HTTP REST queries cannot handle values of type '%s'" % value.class
+            end
+
+            "%s=%s" % [key, value]
+        end.join("&")
     end
 end

@@ -13,6 +13,7 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
     # Retrieve the request parameters, including authentication information.
     def params(request)
         result = request.query
+        result = decode_params(result)
         result.merge(client_information(request))
     end
 

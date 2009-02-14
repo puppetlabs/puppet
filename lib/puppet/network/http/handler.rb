@@ -180,4 +180,19 @@ module Puppet::Network::HTTP::Handler
     def params(request)
         raise NotImplementedError
     end
+
+    def decode_params(params)
+        params.inject({}) do |result, ary|
+            param, value = ary
+            value = URI.unescape(value)
+            if value =~ /^---/
+                value = YAML.load(value)
+            else
+                value = true if value == "true"
+                value = false if value == "false"
+            end
+            result[param.to_sym] = value
+            result
+        end
+    end
 end

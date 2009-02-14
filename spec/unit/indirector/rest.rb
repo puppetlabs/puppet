@@ -146,6 +146,66 @@ describe Puppet::Indirector::REST do
         end
     end
 
+    describe "when building a query string from request options" do
+        it "should return an empty query string if there are no options" do
+            @request.stubs(:options).returns nil
+            @searcher.query_string(@request).should == ""
+        end
+
+        it "should return an empty query string if the options are empty" do
+            @request.stubs(:options).returns({})
+            @searcher.query_string(@request).should == ""
+        end
+
+        it "should prefix the query string with '?'" do
+            @request.stubs(:options).returns(:one => "two")
+            @searcher.query_string(@request).should =~ /^\?/
+        end
+
+        it "should include all options in the query string, separated by '&'" do
+            @request.stubs(:options).returns(:one => "two", :three => "four")
+            @searcher.query_string(@request).sub(/^\?/, '').split("&").sort.should == %w{one=two three=four}.sort
+        end
+
+        it "should ignore nil options" do
+            @request.stubs(:options).returns(:one => "two", :three => nil)
+            @searcher.query_string(@request).should_not be_include("three")
+        end
+
+        it "should convert 'true' option values into strings" do
+            @request.stubs(:options).returns(:one => true)
+            @searcher.query_string(@request).should == "?one=true"
+        end
+
+        it "should convert 'false' option values into strings" do
+            @request.stubs(:options).returns(:one => false)
+            @searcher.query_string(@request).should == "?one=false"
+        end
+
+        it "should URI-escape all option values that are strings" do
+            escaping = URI.escape("one two")
+            @request.stubs(:options).returns(:one => "one two")
+            @searcher.query_string(@request).should == "?one=#{escaping}"
+        end
+
+        it "should YAML-dump and URI-escape arrays" do
+            escaping = URI.escape(YAML.dump(%w{one two}))
+            @request.stubs(:options).returns(:one => %w{one two})
+            @searcher.query_string(@request).should == "?one=#{escaping}"
+        end
+
+        it "should convert to a string and URI-escape all option values that are symbols" do
+            escaping = URI.escape("sym bol")
+            @request.stubs(:options).returns(:one => :"sym bol")
+            @searcher.query_string(@request).should == "?one=#{escaping}"
+        end
+
+        it "should fail if options other than booleans or strings are provided" do
+            @request.stubs(:options).returns(:one => {:one => :two})
+            lambda { @searcher.query_string(@request) }.should raise_error(ArgumentError)
+        end
+    end
+
     describe "when doing a find" do
         before :each do
             @connection = stub('mock http connection', :get => @response)
@@ -170,13 +230,6 @@ describe Puppet::Indirector::REST do
         it "should use the indirection name and request key to create the path" do
             should_path = "/%s/%s" % [@indirection.name.to_s, "foo"]
             @connection.expects(:get).with { |path, args| path == should_path }.returns(@response)
-            @searcher.find(@request)
-        end
-
-        it "should include all options in the query string" do
-            @request.stubs(:options).returns(:one => "two", :three => "four")
-            should_path = "/%s/%s" % [@indirection.name.to_s, "foo"]
-            @connection.expects(:get).with { |path, args| path =~ /\?one=two&three=four$/ or path =~ /\?three=four&one=two$/ }.returns(@response)
             @searcher.find(@request)
         end
 

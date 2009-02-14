@@ -83,11 +83,37 @@ describe Puppet::Network::HTTP::WEBrickREST do
         end
 
         describe "and determining the request parameters" do
-            it "should include the HTTP request parameters" do
-                @request.stubs(:query).returns(:foo => :baz, :bar => :xyzzy)
+            it "should include the HTTP request parameters, with the keys as symbols" do
+                @request.stubs(:query).returns("foo" => "baz", "bar" => "xyzzy")
                 result = @handler.params(@request)
-                result[:foo].should == :baz
-                result[:bar].should == :xyzzy
+                result[:foo].should == "baz"
+                result[:bar].should == "xyzzy"
+            end
+
+            it "should URI-decode the HTTP parameters" do
+                encoding = URI.escape("foo bar")
+                @request.expects(:query).returns('foo' => encoding)
+                result = @handler.params(@request)
+                result[:foo].should == "foo bar"
+            end
+
+            it "should convert the string 'true' to the boolean" do
+                @request.expects(:query).returns('foo' => "true")
+                result = @handler.params(@request)
+                result[:foo].should be_true
+            end
+
+            it "should convert the string 'false' to the boolean" do
+                @request.expects(:query).returns('foo' => "false")
+                result = @handler.params(@request)
+                result[:foo].should be_false
+            end
+
+            it "should YAML-load and URI-decode values that are YAML-encoded" do
+                escaping = URI.escape(YAML.dump(%w{one two}))
+                @request.expects(:query).returns('foo' => escaping)
+                result = @handler.params(@request)
+                result[:foo].should == %w{one two}
             end
 
             it "should pass the client's ip address to model find" do

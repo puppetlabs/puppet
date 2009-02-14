@@ -97,16 +97,42 @@ describe "Puppet::Network::HTTP::MongrelREST" do
             end
         end
 
-        describe "and determining the request parameters", :shared => true do
+        describe "and determining the request parameters" do
             before do
                 @request.stubs(:params).returns({})
             end
 
-            it "should include the HTTP request parameters" do
+            it "should include the HTTP request parameters, with the keys as symbols" do
                 @request.expects(:params).returns('QUERY_STRING' => 'foo=baz&bar=xyzzy')
                 result = @handler.params(@request)
-                result["foo"].should == "baz"
-                result["bar"].should == "xyzzy"
+                result[:foo].should == "baz"
+                result[:bar].should == "xyzzy"
+            end
+
+            it "should URI-decode the HTTP parameters" do
+                encoding = URI.escape("foo bar")
+                @request.expects(:params).returns('QUERY_STRING' => "foo=#{encoding}")
+                result = @handler.params(@request)
+                result[:foo].should == "foo bar"
+            end
+
+            it "should convert the string 'true' to the boolean" do
+                @request.expects(:params).returns('QUERY_STRING' => 'foo=true')
+                result = @handler.params(@request)
+                result[:foo].should be_true
+            end
+
+            it "should convert the string 'false' to the boolean" do
+                @request.expects(:params).returns('QUERY_STRING' => 'foo=false')
+                result = @handler.params(@request)
+                result[:foo].should be_false
+            end
+
+            it "should YAML-load and URI-decode values that are YAML-encoded" do
+                escaping = URI.escape(YAML.dump(%w{one two}))
+                @request.expects(:params).returns('QUERY_STRING' => "foo=#{escaping}")
+                result = @handler.params(@request)
+                result[:foo].should == %w{one two}
             end
 
             it "should pass the client's ip address to model find" do
