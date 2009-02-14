@@ -736,14 +736,11 @@ class TestType < Test::Unit::TestCase
         end
         cleanup { Puppet::Type.rmtype(:faketype) }
         faketype.provide(:fake) do
-            def prefetch
-            end
         end
 
         obj = faketype.create :name => "yayness", :provider => :fake
         assert(obj, "did not create object")
 
-        obj.provider.expects(:prefetch)
         obj.expects(:retrieve)
         obj.expects(:propertychanges).returns([])
         obj.expects(:cache)
