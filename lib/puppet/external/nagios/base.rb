@@ -416,18 +416,20 @@ class Nagios::Base
             :dependent_service_description, :host_name, :hostgroup_name,
             :service_description, :inherits_parent, :execution_failure_criteria,
             :notification_failure_criteria, :dependency_period,
-            :register, :use
+            :register, :use,
+            :_naginator_name
 
-        setnamevar :service_description
+        setnamevar :_naginator_name
     end
 
     newtype :serviceescalation do
         setparameters :host_name, :hostgroup_name, :service_description, :contacts,
             :contact_groups, :first_notification, :last_notification,
             :notification_interval, :escalation_period, :escalation_options,
-            :register, :use
+            :register, :use,
+            :_naginator_name
 
-        setnamevar :service_description
+        setnamevar :_naginator_name
     end
 
     newtype :hostdependency do
@@ -435,18 +437,20 @@ class Nagios::Base
       setparameters :dependent_host_name, :dependent_hostgroup_name, :host_name,
           :hostgroup_name, :inherits_parent, :execution_failure_criteria,
           :notification_failure_criteria, :dependency_period,
-          :register, :use
+          :register, :use,
+          :_naginator_name
 
-      setnamevar :host_name
+      setnamevar :_naginator_name
     end
 
     newtype :hostescalation do
         setparameters :host_name, :hostgroup_name, :contacts, :contact_groups,
             :first_notification, :last_notification, :notification_interval,
             :escalation_period, :escalation_options,
-            :register, :use
+            :register, :use,
+            :_naginator_name
 
-        setnamevar :host_name
+        setnamevar :_naginator_name
     end
 
     newtype :hostextinfo do
@@ -463,9 +467,10 @@ class Nagios::Base
 
         setparameters :host_name, :service_description, :notes, :notes_url,
             :action_url, :icon_image, :icon_image_alt,
-            :register, :use
+            :register, :use,
+            :_naginator_name
 
-        setnamevar :service_description
+        setnamevar :_naginator_name
     end
 
 end

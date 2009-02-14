@@ -36,57 +36,7 @@ module Puppet::Network
             interface.methods.each { |ary|
                 method = ary[0]
                 newclient.send(:define_method,method) { |*args|
-                    Puppet.debug "Calling %s.%s" % [namespace, method]
-                    begin
-                        call("%s.%s" % [namespace, method.to_s],*args)
-                    rescue OpenSSL::SSL::SSLError => detail
-                        if detail.message =~ /bad write retry/
-                            Puppet.warning "Transient SSL write error; restarting connection and retrying"
-                            self.recycle_connection
-                            retry
-                        end
-                        ["certificate verify failed", "hostname was not match", "hostname not match"].each do |str|
-                            if detail.message.include?(str)
-                                Puppet.warning "Certificate validation failed; consider using the certname configuration option"
-                            end
-                        end 
-                        raise XMLRPCClientError,
-                            "Certificates were not trusted: %s" % detail
-                    rescue ::XMLRPC::FaultException => detail
-                        raise XMLRPCClientError, detail.faultString
-                    rescue Errno::ECONNREFUSED => detail
-                        msg = "Could not connect to %s on port %s" %
-                            [@host, @port]
-                        raise XMLRPCClientError, msg
-                    rescue SocketError => detail
-                        Puppet.err "Could not find server %s: %s" %
-                            [@host, detail.to_s]
-                        error = XMLRPCClientError.new(
-                            "Could not find server %s" % @host
-                        )
-                        error.set_backtrace detail.backtrace
-                        raise error
-                    rescue Errno::EPIPE, EOFError
-                        Puppet.warning "Other end went away; restarting connection and retrying"
-                        self.recycle_connection
-                        retry
-                    rescue Timeout::Error => detail
-                        Puppet.err "Connection timeout calling %s.%s: %s" %
-                            [namespace, method, detail.to_s]
-                        error = XMLRPCClientError.new("Connection Timeout")
-                        error.set_backtrace(detail.backtrace)
-                        raise error
-                    rescue => detail
-                        if detail.message =~ /^Wrong size\. Was \d+, should be \d+$/
-                            Puppet.warning "XMLRPC returned wrong size.  Retrying."
-                            retry
-                        end    
-                        Puppet.err "Could not call %s.%s: %s" %
-                            [namespace, method, detail.inspect]
-                        error = XMLRPCClientError.new(detail.to_s)
-                        error.set_backtrace detail.backtrace
-                        raise error
-                    end
+                    make_rpc_call(namespace, method, *args)
                 }
             }
 
@@ -97,12 +47,118 @@ module Puppet::Network
             @clients[handler] || self.mkclient(handler)
         end
 
+        class ErrorHandler
+            def initialize(&block)
+                metaclass.define_method(:execute, &block)
+            end
+        end
+
+        # Use a class variable so all subclasses have access to it.
+        @@error_handlers = {}
+
+        def self.error_handler(exception)
+            if handler = @@error_handlers[exception.class]
+                return handler
+            else
+                return @@error_handlers[:default]
+            end
+        end
+
+        def self.handle_error(*exceptions, &block)
+            handler = ErrorHandler.new(&block)
+
+            exceptions.each do |exception|
+                @@error_handlers[exception] = handler
+            end
+        end
+
+        handle_error(OpenSSL::SSL::SSLError) do |client, detail, namespace, method|
+            if detail.message =~ /bad write retry/
+                Puppet.warning "Transient SSL write error; restarting connection and retrying"
+                client.recycle_connection
+                return :retry
+            end
+            ["certificate verify failed", "hostname was not match", "hostname not match"].each do |str|
+                if detail.message.include?(str)
+                    Puppet.warning "Certificate validation failed; consider using the certname configuration option"
+                end
+            end 
+            raise XMLRPCClientError, "Certificates were not trusted: %s" % detail
+        end
+
+        handle_error(:default) do |client, detail, namespace, method|
+            if detail.message.to_s =~ /^Wrong size\. Was \d+, should be \d+$/
+                Puppet.warning "XMLRPC returned wrong size.  Retrying."
+                return :retry
+            end    
+            Puppet.err "Could not call %s.%s: %s" % [namespace, method, detail.inspect]
+            error = XMLRPCClientError.new(detail.to_s)
+            error.set_backtrace detail.backtrace
+            raise error
+        end
+
+        handle_error(OpenSSL::SSL::SSLError) do |client, detail, namespace, method|
+            if detail.message =~ /bad write retry/
+                Puppet.warning "Transient SSL write error; restarting connection and retrying"
+                client.recycle_connection
+                return :retry
+            end
+            ["certificate verify failed", "hostname was not match", "hostname not match"].each do |str|
+                if detail.message.include?(str)
+                    Puppet.warning "Certificate validation failed; consider using the certname configuration option"
+                end
+            end 
+            raise XMLRPCClientError, "Certificates were not trusted: %s" % detail
+        end
+
+        handle_error(::XMLRPC::FaultException) do |client, detail, namespace, method|
+            raise XMLRPCClientError, detail.faultString
+        end
+
+        handle_error(Errno::ECONNREFUSED) do |client, detail, namespace, method|
+            msg = "Could not connect to %s on port %s" % [client.host, client.port]
+            raise XMLRPCClientError, msg
+        end
+
+        handle_error(SocketError) do |client, detail, namespace, method|
+            Puppet.err "Could not find server %s: %s" % [@host, detail.to_s]
+            error = XMLRPCClientError.new("Could not find server %s" % client.host)
+            error.set_backtrace detail.backtrace
+            raise error
+        end
+
+        handle_error(Errno::EPIPE, EOFError) do |client, detail, namespace, method|
+            Puppet.info "Other end went away; restarting connection and retrying"
+            client.recycle_connection
+            return :retry
+        end
+
+        handle_error(Timeout::Error) do |client, detail, namespace, method|
+            Puppet.err "Connection timeout calling %s.%s: %s" % [namespace, method, detail.to_s]
+            error = XMLRPCClientError.new("Connection Timeout")
+            error.set_backtrace(detail.backtrace)
+            raise error
+        end
+
+        def make_rpc_call(namespace, method, *args)
+            Puppet.debug "Calling %s.%s" % [namespace, method]
+            begin
+                call("%s.%s" % [namespace, method.to_s],*args)
+            rescue Exception => detail
+                retry if self.class.error_handler(detail).execute(self, detail, namespace, method) == :retry
+            end
+        ensure
+            http.finish if http.started?
+        end
+
         def http
             unless @http
-                @http = Puppet::Network::HttpPool.http_instance(@host, @port, true)
+                @http = Puppet::Network::HttpPool.http_instance(host, port, true)
             end
             @http
         end
+
+        attr_reader :host, :port
 
         def initialize(hash = {})
             hash[:Path] ||= "/RPC2"
@@ -135,7 +191,11 @@ module Puppet::Network
         # or we've just downloaded certs and we need to create new http instances
         # with the certs added.
         def recycle_connection
-            @http = Puppet::Network::HttpPool.http_instance(@host, @port, true) # reset the instance
+            if http.started?
+                http.finish
+            end
+            @http = nil
+            self.http # force a new one
         end
         
         def start

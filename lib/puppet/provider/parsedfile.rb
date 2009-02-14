@@ -78,8 +78,22 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         @modified.reject! { |t| flushed.include?(t) }
     end
 
+    # Make sure our file is backed up, but only back it up once per transaction.
+    # We cheat and rely on the fact that @records is created on each prefetch.
+    def self.backup_target(target)
+        unless defined?(@backup_stats)
+            @backup_stats = {}
+        end
+        return nil if @backup_stats[target] == @records.object_id
+
+        target_object(target).backup
+        @backup_stats[target] = @records.object_id
+    end
+
     # Flush all of the records relating to a specific target.
     def self.flush_target(target)
+        backup_target(target)
+
         records = target_records(target).reject { |r|
             r[:ensure] == :absent
         }

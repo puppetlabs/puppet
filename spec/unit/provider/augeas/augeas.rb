@@ -285,32 +285,42 @@ describe provider_class do
             @augeas.expects(:clear).with("/foo/Jar/Jar")
             @augeas.expects(:save).returns(true)
             @provider.execute_changes.should == :executed
-        end
+        end        
+    
 
-        it "should handle insert commands" do
-            command = [["insert", "/Jar/Jar"]]
+        it "should handle ins commands with before" do
+            command = [["ins", "Binks", "before /Jar/Jar"]]
             context = "/foo"
             @resource.expects(:[]).times(2).returns(command).then.returns(context)
-            @augeas.expects(:insert).with("/foo/Jar/Jar")
+            @augeas.expects(:insert).with("/foo/Jar/Jar", "Binks", true)
             @augeas.expects(:save).returns(true)
             @provider.execute_changes.should == :executed
         end
 
-        it "should handle ins commands" do
-            command = [["ins", "/Jar/Jar"]]
+        it "should handle ins commands with before" do
+            command = [["ins", "Binks", "after /Jar/Jar"]]
             context = "/foo"
             @resource.expects(:[]).times(2).returns(command).then.returns(context)
-            @augeas.expects(:insert).with("/foo/Jar/Jar")
+            @augeas.expects(:insert).with("/foo/Jar/Jar", "Binks", false)
             @augeas.expects(:save).returns(true)
             @provider.execute_changes.should == :executed
         end
 
+        it "should handle ins with no context" do
+            command = [["ins", "Binks", "after /Jar/Jar"]]
+            context = "" # this is the default
+            @resource.expects(:[]).times(2).returns(command).then.returns(context)
+            @augeas.expects(:insert).with("/Jar/Jar", "Binks", false)
+            @augeas.expects(:save).returns(true)
+            @provider.execute_changes.should == :executed
+        end         
+        
         it "should handle multiple commands" do
-            command = [["ins", "/Jar/Jar"], ["clear", "/Jar/Jar"]]
+            command = [["ins", "Binks", "after /Jar/Jar"], ["clear", "/Jar/Jar"]]
             context = "/foo"
             @resource.expects(:[]).times(2).returns(command).then.returns(context)
-            @augeas.expects(:insert).with("/foo/Jar/Jar")
-            @augeas.expects(:clear).with("/foo/Jar/Jar")
+            @augeas.expects(:insert).with("/foo/Jar/Jar", "Binks", false)
+            @augeas.expects(:clear).with("/foo/Jar/Jar")            
             @augeas.expects(:save).returns(true)
             @provider.execute_changes.should == :executed
         end

@@ -14,6 +14,22 @@
     Fixed #1840 - Bug fixes and improvements for Emacs puppet-mode.el
 
 0.24.8
+    Fixed #1831 - Added sprintf function
+
+    Fixed #1830 - Added regsubst function
+
+    Updated up2date and service confines to add support for Oracle EL and VM
+
+    Fixing #1948 and #1953 - augeas ins bug: wrong number of arguments (1 for 3)
+
+    Fixing #944 - changing error message from warning to info - connection recycled 
+
+    Fixed #961 - puppetd creating too many/not closing TCP connections
+
+    Fixed #1959 - Added column protection for environment schema migration
+
+    Fixing #1869 - autoloaded files should never leak exceptions
+
     Fixing #1543 - Nagios parse errors no longer kill Puppet
 
     Fixed #1420 - nagios_serviceescalation not allowing host_name more than one type

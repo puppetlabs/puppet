@@ -93,15 +93,6 @@ describe Puppet::Node::Facts::Facter do
         end
     end
 
-    it "should load each directory in the Fact path when loading fact plugins" do
-        Puppet.settings.expects(:value).with(:factpath).returns("one%stwo" % File::PATH_SEPARATOR)
-
-        Puppet::Node::Facts::Facter.expects(:load_facts_in_dir).with("one")
-        Puppet::Node::Facts::Facter.expects(:load_facts_in_dir).with("two")
-
-        Puppet::Node::Facts::Facter.load_fact_plugins
-    end
-
     it "should skip files when asked to load a directory" do
         FileTest.expects(:directory?).with("myfile").returns false
 
@@ -118,5 +109,34 @@ describe Puppet::Node::Facts::Facter do
         Puppet::Node::Facts::Facter.expects(:load).with("b.rb")
 
         Puppet::Node::Facts::Facter.load_facts_in_dir("mydir")
+    end
+
+    describe Puppet::Node::Facts::Facter, "when loading fact plugins from disk" do
+        it "should load each directory in the Fact path" do
+            Puppet.settings.stubs(:value).returns "foo"
+            Puppet.settings.expects(:value).with(:factpath).returns("one%stwo" % File::PATH_SEPARATOR)
+
+            Puppet::Node::Facts::Facter.expects(:load_facts_in_dir).with("one")
+            Puppet::Node::Facts::Facter.expects(:load_facts_in_dir).with("two")
+
+            Puppet::Node::Facts::Facter.load_fact_plugins
+        end
+
+        it "should load all facts from the modules" do
+            Puppet.settings.stubs(:value).returns "foo"
+            Puppet::Node::Facts::Facter.stubs(:load_facts_in_dir)
+
+            Puppet.settings.expects(:value).with(:modulepath).returns("one%stwo" % File::PATH_SEPARATOR)
+
+            Dir.expects(:glob).with("one/*/plugins/facter").returns %w{oneA oneB}
+            Dir.expects(:glob).with("two/*/plugins/facter").returns %w{twoA twoB}
+
+            Puppet::Node::Facts::Facter.expects(:load_facts_in_dir).with("oneA")
+            Puppet::Node::Facts::Facter.expects(:load_facts_in_dir).with("oneB")
+            Puppet::Node::Facts::Facter.expects(:load_facts_in_dir).with("twoA")
+            Puppet::Node::Facts::Facter.expects(:load_facts_in_dir).with("twoB")
+
+            Puppet::Node::Facts::Facter.load_fact_plugins
+        end
     end
 end

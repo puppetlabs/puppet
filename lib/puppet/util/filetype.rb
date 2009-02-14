@@ -74,7 +74,7 @@ class Puppet::Util::FileType
 
     # Back the file up before replacing it.
     def backup
-        bucket.backup(@path) if FileTest.exists?(@path)
+        bucket.backup(@path) if File.exists?(@path)
     end
 
     # Pick or create a filebucket to use.
@@ -94,7 +94,7 @@ class Puppet::Util::FileType
     newfiletype(:flat) do
         # Read the file.
         def read
-            if File.exists?(@path)
+            if File.exist?(@path)
                 File.read(@path)
             else
                 return nil
@@ -103,17 +103,13 @@ class Puppet::Util::FileType
 
         # Remove the file.
         def remove
-            if File.exists?(@path)
+            if File.exist?(@path)
                 File.unlink(@path)
             end
         end
 
         # Overwrite the file.
         def write(text)
-            backup()
-
-            raise("Cannot create file %s in absent directory" % @path) unless FileTest.exist?(File.dirname(@path))
-
             require "tempfile"
             tf = Tempfile.new("puppet") 
             tf.print text; tf.flush 
@@ -255,92 +251,4 @@ class Puppet::Util::FileType
             output_file.delete
         end
     end
-
-    # Treat netinfo tables as a single file, just for simplicity of certain
-    # types
-    newfiletype(:netinfo) do
-        class << self
-            attr_accessor :format
-        end
-        def read
-            %x{nidump -r /#{@path} /}
-        end
-
-        # This really only makes sense for cron tabs.
-        def remove
-            %x{nireport / /#{@path} name}.split("\n").each do |name|
-                newname = name.gsub(/\//, '\/').sub(/\s+$/, '')
-                output = %x{niutil -destroy / '/#{@path}/#{newname}'}
-
-                unless $? == 0
-                    raise Puppet::Error, "Could not remove %s from %s" %
-                        [name, @path]
-                end
-            end
-        end
-
-        # Convert our table to an array of hashes.  This only works for
-        # handling one table at a time.
-        def to_array(text = nil)
-            unless text
-                text = read
-            end
-
-            hash = nil
-
-            # Initialize it with the first record
-            records = []
-            text.split("\n").each do |line|
-                next if line =~ /^[{}]$/ # Skip the wrapping lines
-                next if line =~ /"name" = \( "#{@path}" \)/ # Skip the table name
-                next if line =~ /CHILDREN = \(/ # Skip this header
-                next if line =~ /^  \)/ # and its closer
-
-                # Now we should have nothing but records, wrapped in braces
-
-                case line
-                when /^\s+\{/: hash = {}
-                when /^\s+\}/: records << hash
-                when /\s+"(\w+)" = \( (.+) \)/
-                    field = $1
-                    values = $2
-
-                    # Always use an array
-                    hash[field] = []
-
-                    values.split(/, /).each do |value|
-                        if value =~ /^"(.*)"$/
-                            hash[field] << $1
-                        else
-                            raise ArgumentError, "Could not match value %s" % value
-                        end
-                    end
-                else    
-                    raise ArgumentError, "Could not match line %s" % line
-                end
-            end
-
-            records
-        end
-
-        def write(text)
-            text.gsub!(/^#.*\n/,'')
-            text.gsub!(/^$/,'')
-            if text == "" or text == "\n"
-                self.remove
-                return
-            end
-            unless format = self.class.format
-                raise Puppe::DevError, "You must define the NetInfo format to inport"
-            end
-            IO.popen("niload -d #{format} . 1>/dev/null 2>/dev/null", "w") { |p|
-                p.print text
-            }
-
-            unless $? == 0
-                raise ArgumentError, "Failed to write %s" % @path
-            end
-        end
-    end
 end
-

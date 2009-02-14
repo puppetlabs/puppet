@@ -92,10 +92,12 @@ Puppet::Type.newtype(:augeas) do
           rm [PATH]              Removes the node at location PATH
           remove [PATH]          Synonym for rm
           clear [PATH]           Keeps the node at PATH, but removes the value.
-          ins [PATH]             Inserts an empty node at PATH.
-          insert [PATH]          Synonym for ins
+          ins [LABEL] [WHERE] [PATH]             
+                                 Inserts an empty node LABEL either [WHERE={before|after}] PATH.
+          insert [LABEL] [WHERE] [PATH]  
+                                 Synonym for ins
 
-        If the parameter 'context' is set that that value is prepended to PATH"
+        If the parameter 'context' is set that value is prepended to PATH"
 
         munge do |value|    
             provider.parse_commands(value)
