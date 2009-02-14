@@ -254,44 +254,4 @@ class TestResource < PuppetTest::TestCase
 
         assert_nil(hash[:owner], "got a value for an undef parameter")
     end
-
-    # #643 - Make sure virtual defines result in virtual resources
-    def test_virtual_defines
-        parser = mkparser
-        define = parser.newdefine("yayness",
-            :code => resourcedef("file", varref("name"),
-                "mode" => "644"))
-
-        config = mkcompiler(parser)
-
-        res = mkresource :type => "yayness", :title => "foo", :params => {}, :scope => config.topscope
-        res.virtual = true
-
-        result = nil
-        assert_nothing_raised("Could not evaluate defined resource") do
-            result = res.evaluate
-        end
-
-        scope = res.scope
-        newres = scope.findresource("File[foo]")
-        assert(newres, "Could not find resource")
-
-        assert(newres.virtual?, "Virtual defined resource generated non-virtual resources")
-
-        # Now try it with exported resources
-        res = mkresource :type => "yayness", :title => "bar", :params => {}, :scope => config.topscope
-        res.exported = true
-
-        result = nil
-        assert_nothing_raised("Could not evaluate exported resource") do
-            result = res.evaluate
-        end
-
-        scope = res.scope
-        newres = scope.findresource("File[bar]")
-        assert(newres, "Could not find resource")
-
-        assert(newres.exported?, "Exported defined resource generated non-exported resources")
-        assert(newres.virtual?, "Exported defined resource generated non-virtual resources")
-    end
 end
