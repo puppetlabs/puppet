@@ -57,7 +57,7 @@ class Puppet::Configurer::Downloader
     def file
         args = default_arguments.merge(:path => path, :source => source)
         args[:ignore] = ignore if ignore
-        Puppet::Type.type(:file).create(args)
+        Puppet::Type.type(:file).new(args)
     end
 
     private

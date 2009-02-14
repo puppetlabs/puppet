@@ -35,54 +35,54 @@ describe Puppet::Configurer::Downloader do
         end
 
         it "should create a file instance with the right path and source" do
-            Puppet::Type.type(:file).expects(:create).with { |opts| opts[:path] == "path" and opts[:source] == "source" }
+            Puppet::Type.type(:file).expects(:new).with { |opts| opts[:path] == "path" and opts[:source] == "source" }
             @dler.file
         end
 
         it "should tag the file with the downloader name" do
-            Puppet::Type.type(:file).expects(:create).with { |opts| opts[:tag] == "foo" }
+            Puppet::Type.type(:file).expects(:new).with { |opts| opts[:tag] == "foo" }
             @dler.file
         end
 
         it "should always recurse" do
-            Puppet::Type.type(:file).expects(:create).with { |opts| opts[:recurse] == true }
+            Puppet::Type.type(:file).expects(:new).with { |opts| opts[:recurse] == true }
             @dler.file
         end
 
         it "should always purge" do
-            Puppet::Type.type(:file).expects(:create).with { |opts| opts[:purge] == true }
+            Puppet::Type.type(:file).expects(:new).with { |opts| opts[:purge] == true }
             @dler.file
         end
 
         it "should never be in noop" do
-            Puppet::Type.type(:file).expects(:create).with { |opts| opts[:noop] == false }
+            Puppet::Type.type(:file).expects(:new).with { |opts| opts[:noop] == false }
             @dler.file
         end
 
         it "should always set the owner to the current UID" do
             Process.expects(:uid).returns 51
-            Puppet::Type.type(:file).expects(:create).with { |opts| opts[:owner] == 51 }
+            Puppet::Type.type(:file).expects(:new).with { |opts| opts[:owner] == 51 }
             @dler.file
         end
 
         it "should always set the group to the current GID" do
             Process.expects(:gid).returns 61
-            Puppet::Type.type(:file).expects(:create).with { |opts| opts[:group] == 61 }
+            Puppet::Type.type(:file).expects(:new).with { |opts| opts[:group] == 61 }
             @dler.file
         end
 
         it "should always force the download" do
-            Puppet::Type.type(:file).expects(:create).with { |opts| opts[:force] == true }
+            Puppet::Type.type(:file).expects(:new).with { |opts| opts[:force] == true }
             @dler.file
         end
 
         it "should never back up when downloading" do
-            Puppet::Type.type(:file).expects(:create).with { |opts| opts[:backup] == false }
+            Puppet::Type.type(:file).expects(:new).with { |opts| opts[:backup] == false }
             @dler.file
         end
 
         it "should support providing an 'ignore' parameter" do
-            Puppet::Type.type(:file).expects(:create).with { |opts| opts[:ignore] == ".svn" }
+            Puppet::Type.type(:file).expects(:new).with { |opts| opts[:ignore] == ".svn" }
             @dler = Puppet::Configurer::Downloader.new("foo", "path", "source", ".svn")
             @dler.file
         end
