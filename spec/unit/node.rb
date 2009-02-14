@@ -76,6 +76,11 @@ describe Puppet::Node, "when merging facts" do
         Puppet::Node::Facts.stubs(:find).with(@node.name).returns(Puppet::Node::Facts.new(@node.name, "one" => "c", "two" => "b"))
     end
 
+    it "should fail intelligently if it cannot find facts" do
+        Puppet::Node::Facts.expects(:find).with(@node.name).raises "foo"
+        lambda { @node.fact_merge }.should raise_error(Puppet::Error)
+    end
+
     it "should prefer parameters already set on the node over facts from the node" do
         @node.parameters = {"one" => "a"}
         @node.fact_merge

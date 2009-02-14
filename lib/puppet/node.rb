@@ -67,10 +67,14 @@ class Puppet::Node
 
     # Merge the node facts with parameters from the node source.
     def fact_merge
-        if facts = Puppet::Node::Facts.find(name)
-            merge(facts.values)
-        else
-            Puppet.warning "Could not find facts for %s; you probably have a discrepancy between the node and fact names" % name
+        begin
+            if facts = Puppet::Node::Facts.find(name)
+                merge(facts.values)
+            end
+        rescue => detail
+            error = Puppet::Error.new("Could not retrieve facts for %s: %s" % [name, detail])
+            error.set_backtrace(detail.backtrace)
+            raise error
         end
     end
 
