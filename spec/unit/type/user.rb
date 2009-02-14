@@ -40,10 +40,6 @@ describe user do
         it "should have a valid provider" do
             user.create(:name => "foo").provider.class.ancestors.should be_include(Puppet::Provider)
         end
-
-        it "should fail if a ':' is included in the password" do
-            lambda { user.create(:name => "foo", :password => 'some:thing') }.should raise_error(Puppet::Error)
-        end
     end
 
     properties = [:ensure, :uid, :gid, :home, :comment, :shell, :password, :groups, :roles, :auths, :profiles, :project, :keys]
@@ -234,6 +230,14 @@ describe user do
 
         it "should not include the password in the change log when changing the password" do
             @password.change_to_s("other", "mypass").should_not be_include("mypass")
+        end
+
+        it "should fail if a ':' is included in the password" do
+            lambda { @password.should = "some:thing" }.should raise_error(ArgumentError)
+        end
+
+        it "should allow the value to be set to :absent" do
+            lambda { @password.should = :absent }.should_not raise_error
         end
     end
 
