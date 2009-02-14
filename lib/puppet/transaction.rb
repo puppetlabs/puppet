@@ -338,6 +338,7 @@ class Transaction
         begin
             made = resource.send(method)
         rescue => detail
+            puts detail.backtrace if Puppet[:trace]
             resource.err "Failed to generate additional resources using '%s': %s" % [method, detail]
         end
         return [] unless made
