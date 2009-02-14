@@ -66,7 +66,7 @@ module Puppet::Network::HTTP::Handler
     def do_exception(response, exception, status=400)
         if exception.is_a?(Exception)
             puts exception.backtrace if Puppet[:trace]
-            puts exception if Puppet[:trace]
+            Puppet.err(exception)
         end
         set_content_type(response, "text/plain")
         set_response(response, exception.to_s, status)
