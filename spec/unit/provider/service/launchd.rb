@@ -62,8 +62,16 @@ describe provider_class do
     
     describe "when checking status" do
         it "should call the external command 'launchctl list' once" do
-            @provider.expects(:launchctl).with(:list, @resource[:name]).returns(:running).once
+            @provider.expects(:launchctl).with(:list).returns("rotating-strawberry-madonnas")
             @provider.status
+        end
+        it "should return stopped if not listed in launchctl list output" do
+            @provider.stubs(:launchctl).with(:list).returns("rotating-strawberry-madonnas")
+            assert_equal @provider.status, :stopped
+        end
+        it "should return running if listed in launchctl list output" do
+            @provider.stubs(:launchctl).with(:list).returns(@joblabel)
+            assert_equal @provider.status, :running
         end
     end
     
