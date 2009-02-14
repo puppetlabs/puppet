@@ -125,17 +125,6 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         end
     end
 
-    # Translate our catalog appropriately for sending back to a client.
-    # LAK:FIXME This method should probably be part of the protocol, but it
-    # shouldn't be here.
-    def translate(config)
-        unless networked?
-            config
-        else
-            CGI.escape(config.to_yaml(:UseBlock => true))
-        end
-    end
-
     # Mark that the node has checked in. LAK:FIXME this needs to be moved into
     # the Node class, or somewhere that's got abstract backends.
     def update_node_check(node)
