@@ -70,10 +70,14 @@ describe user do
 
     describe "when retrieving all current values" do
         before do
-            @user = user.new(:name => "foo", :uid => 10, :gid => 10)
+            @user = user.new(:name => "foo", :uid => 10)
         end
 
         it "should return a hash containing values for all set properties" do
+            @user[:gid] = 10
+            @user.property(:ensure).expects(:retrieve).returns :present
+            @user.property(:uid).expects(:retrieve).returns 15
+            @user.property(:gid).expects(:retrieve).returns 15
             values = @user.retrieve
             [@user.property(:uid), @user.property(:gid)].each { |property| values.should be_include(property) }
         end
@@ -230,7 +234,7 @@ describe user do
         end
 
         it "should fail if a ':' is included in the password" do
-            lambda { @password.should = "some:thing" }.should raise_error(ArgumentError)
+            lambda { @password.should = "some:thing" }.should raise_error(Puppet::Error)
         end
 
         it "should allow the value to be set to :absent" do
@@ -262,6 +266,7 @@ describe user do
             config = Puppet::Resource::Catalog.new :testing do |conf|
                 [testuser, testrole].each { |resource| conf.add_resource resource }
             end
+            Puppet::Type::User::ProviderDirectoryservice.stubs(:get_macosx_version_major).returns "10.5"
 
             rel = testuser.autorequire[0]
             rel.source.ref.should == testrole.ref
