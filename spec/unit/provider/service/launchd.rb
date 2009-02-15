@@ -67,11 +67,11 @@ describe provider_class do
         end
         it "should return stopped if not listed in launchctl list output" do
             @provider.stubs(:launchctl).with(:list).returns("rotating-strawberry-madonnas")
-            assert_equal @provider.status, :stopped
+            @provider.status.should == :stopped
         end
         it "should return running if listed in launchctl list output" do
             @provider.stubs(:launchctl).with(:list).returns(@joblabel)
-            assert_equal @provider.status, :running
+            @provider.status.should == :running
         end
     end
     
