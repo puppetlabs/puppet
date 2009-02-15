@@ -109,7 +109,7 @@ describe Puppet::Network::XMLRPCClient do
             it "should log, recycle the connection, and retry if Errno::EPIPE is raised" do
                 @client.expects(:call).times(2).raises(Errno::EPIPE).then.returns "eh"
 
-                Puppet.expects(:warning)
+                Puppet.expects(:info)
                 @client.expects(:recycle_connection)
 
                 @client.report("eh")
@@ -118,7 +118,7 @@ describe Puppet::Network::XMLRPCClient do
             it "should log, recycle the connection, and retry if EOFError is raised" do
                 @client.expects(:call).times(2).raises(EOFError).then.returns "eh"
 
-                Puppet.expects(:warning)
+                Puppet.expects(:info)
                 @client.expects(:recycle_connection)
 
                 @client.report("eh")

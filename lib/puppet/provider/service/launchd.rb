@@ -103,12 +103,21 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
     def status
         # launchctl list <jobname> exits zero if the job is loaded
-        # and non-zero if it isn't. Simple way to check...
+        # and non-zero if it isn't. Simple way to check... but is only
+        # available on OS X 10.5 unfortunately, so we grab the whole list
+        # and check if our resource is included. The output formats differ
+        # between 10.4 and 10.5, thus the necessity for splitting
         begin
-            launchctl :list, resource[:name]           
-            return :running
-        rescue Puppet::ExecutionFailure
+            output = launchctl :list
+            if output.nil?
+                raise Puppet::Error.new("launchctl list failed to return any data.")
+            end
+            output.split("\n").each do |j|
+                return :running if j.split(/\s/).last == resource[:name]
+            end
             return :stopped
+        rescue Puppet::ExecutionFailure
+            raise Puppet::Error.new("Unable to determine status of #{resource[:name]}")
         end
     end
 

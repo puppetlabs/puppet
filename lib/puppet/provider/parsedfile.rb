@@ -81,6 +81,8 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     # Make sure our file is backed up, but only back it up once per transaction.
     # We cheat and rely on the fact that @records is created on each prefetch.
     def self.backup_target(target)
+        return nil unless target_object(target).respond_to?(:backup)
+
         unless defined?(@backup_stats)
             @backup_stats = {}
         end

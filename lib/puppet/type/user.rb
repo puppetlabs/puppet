@@ -145,7 +145,7 @@ module Puppet
             desc "The user's password, in whatever encrypted format the local machine requires. Be sure to enclose any value that includes a dollar sign ($) in single quotes (\')."
 
             validate do |value|
-                raise ArgumentError, "Passwords cannot include ':'" if value.include?(":")
+                raise ArgumentError, "Passwords cannot include ':'" if value.is_a?(String) and value.include?(":")
             end
 
             def change_to_s(currentvalue, newvalue)

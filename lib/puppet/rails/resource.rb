@@ -1,5 +1,6 @@
 require 'puppet'
 require 'puppet/rails/param_name'
+require 'puppet/rails/param_value'
 require 'puppet/rails/puppet_tag'
 require 'puppet/util/rails/collection_merger'
 
@@ -57,7 +58,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
 
     # returns a hash of param_names.name => [param_values]
     def get_params_hash(values = nil)
-        values ||= @params_hash || Puppet::Rails::ParamValues.find_all_params_from_resource(id)
+        values ||= @params_hash || Puppet::Rails::ParamValue.find_all_params_from_resource(self)
         if values.size == 0
             return {}
         end
@@ -69,7 +70,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     end
 
     def get_tag_hash(tags = nil)
-        tags ||= @tags_hash || Puppet::Rails::ResourceTag.find_all_tags_from_resource(id)
+        tags ||= @tags_hash || Puppet::Rails::ResourceTag.find_all_tags_from_resource(self)
         return tags.inject({}) do |hash, tag|
             # We have to store the tag object, not just the tag name.
             hash[tag['name']] = tag
@@ -99,7 +100,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
         result = get_params_hash
         result.each do |param, value|
             if value.is_a?(Array)
-                result[param] = value.collect { |v| v.value }
+                result[param] = value.collect { |v| v['value'] }
             else
                 result[param] = value.value
             end

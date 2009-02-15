@@ -72,11 +72,6 @@ class Puppet::Util::FileType
         @filetypes[type]
     end
 
-    # Back the file up before replacing it.
-    def backup
-        bucket.backup(@path) if File.exists?(@path)
-    end
-
     # Pick or create a filebucket to use.
     def bucket
         unless defined?(@bucket)
@@ -92,6 +87,11 @@ class Puppet::Util::FileType
 
     # Operate on plain files.
     newfiletype(:flat) do
+        # Back the file up before replacing it.
+        def backup
+            bucket.backup(@path) if File.exists?(@path)
+        end
+
         # Read the file.
         def read
             if File.exist?(@path)
