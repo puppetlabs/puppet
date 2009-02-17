@@ -7,6 +7,28 @@ class Puppet::Module
     PLUGINS = "plugins"
 
     FILETYPES = [MANIFESTS, FILES, TEMPLATES, PLUGINS]
+
+    # Search through a list of paths, yielding each found module in turn.
+    def self.each_module(*paths)
+        paths = paths.flatten.collect { |p| p.split(File::PATH_SEPARATOR) }.flatten
+
+        yielded = {}
+        paths.each do |dir|
+            next unless FileTest.directory?(dir)
+
+            Dir.entries(dir).each do |name|
+                next if name =~ /^\./
+                next if yielded.include?(name)
+
+                module_path = File.join(dir, name)
+                next unless FileTest.directory?(module_path)
+
+                yielded[name] = true
+
+                yield Puppet::Module.new(name, module_path)
+            end
+        end
+    end
     
     # Return an array of paths by splitting the +modulepath+ config
     # parameter. Only consider paths that are absolute and existing
