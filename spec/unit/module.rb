@@ -2,6 +2,39 @@
 
 require File.dirname(__FILE__) + '/../spec_helper'
 
+describe Puppet::Module do
+    [:plugins, :templates, :files, :manifests].each do |filetype|
+        it "should be able to indicate whether it has #{filetype}" do
+            Puppet::Module.new("foo", "/foo/bar").should respond_to(filetype.to_s + "?")
+        end
+
+        it "should correctly detect when it has #{filetype}" do
+            FileTest.expects(:exist?).with("/foo/bar/#{filetype}").returns true
+            Puppet::Module.new("foo", "/foo/bar").send(filetype.to_s + "?").should be_true
+        end
+
+        it "should correctly detect when it does not have #{filetype}" do
+            FileTest.expects(:exist?).with("/foo/bar/#{filetype}").returns false
+            Puppet::Module.new("foo", "/foo/bar").send(filetype.to_s + "?").should be_false
+        end
+
+        it "should have a method for returning the full path to the #{filetype}" do
+            Puppet::Module.new("foo", "/foo/bar").send(filetype.to_s).should == File.join("/foo/bar", filetype.to_s)
+        end
+
+        it "should be able to return individual #{filetype}" do
+            path = File.join("/foo/bar", filetype.to_s, "my/file")
+            FileTest.expects(:exist?).with(path).returns true
+            Puppet::Module.new("foo", "/foo/bar").send(filetype.to_s.sub(/s$/, ''), "my/file").should == path
+        end
+
+        it "should return nil if asked to return individual #{filetype} that don't exist" do
+            FileTest.expects(:exist?).with(File.join("/foo/bar", filetype.to_s, "my/file")).returns false
+            Puppet::Module.new("foo", "/foo/bar").send(filetype.to_s.sub(/s$/, ''), "my/file").should be_nil
+        end
+    end
+end
+
 describe Puppet::Module, " when building its search path" do
     include PuppetTest
 
@@ -78,6 +111,8 @@ describe Puppet::Module, " when searching for templates" do
     it "should return the template from the first found module" do
         Puppet[:modulepath] = "/one:/two"
         File.stubs(:directory?).returns(true)
+        FileTest.stubs(:exist?).returns false
+        FileTest.expects(:exist?).with("/one/mymod/templates/mytemplate").returns true
         Puppet::Module.find_template("mymod/mytemplate").should == "/one/mymod/templates/mytemplate"
     end
     
@@ -151,6 +186,8 @@ describe Puppet::Module, " when searching for templates" do
         Puppet.settings.stubs(:value).returns.returns("/my/directory")
         Puppet.settings.expects(:value).with(:modulepath, "myenv").returns("/my/modules")
         File.stubs(:directory?).returns(true)
+        FileTest.stubs(:exist?).returns false
+        FileTest.expects(:exist?).with("/my/modules/mymod/templates/envtemplate").returns true
         Puppet::Module.find_template("mymod/envtemplate", "myenv").should == "/my/modules/mymod/templates/envtemplate"
     end
 

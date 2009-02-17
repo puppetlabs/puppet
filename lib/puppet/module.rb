@@ -4,6 +4,9 @@ class Puppet::Module
     TEMPLATES = "templates"
     FILES = "files"
     MANIFESTS = "manifests"
+    PLUGINS = "plugins"
+
+    FILETYPES = [MANIFESTS, FILES, TEMPLATES, PLUGINS]
     
     # Return an array of paths by splitting the +modulepath+ config
     # parameter. Only consider paths that are absolute and existing
@@ -148,14 +151,24 @@ class Puppet::Module
         @path = path
     end
 
-    def template(file)
-        full_path = File::join(path, TEMPLATES, file)
-        return nil unless full_path
-        return full_path
-    end
+    FILETYPES.each do |type|
+        # Create a method for returning the full path to a given
+        # file type's directory.
+        define_method(type.to_s) do
+            File.join(path, type.to_s)
+        end
+        # Create a boolean method for testing whether our module has
+        # files of a given type.
+        define_method(type.to_s + "?") do
+            FileTest.exist?(send(type))
+        end
 
-    def files
-        return File::join(path, FILES)
+        # Finally, a method for returning an individual file
+        define_method(type.to_s.sub(/s$/, '')) do |file|
+            path = File.join(send(type), file)
+            return nil unless FileTest.exist?(path)
+            return path
+        end
     end
 
     # Return the list of manifests matching the given glob pattern,
