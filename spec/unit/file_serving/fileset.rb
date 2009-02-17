@@ -244,3 +244,46 @@ describe Puppet::FileServing::Fileset, " when ignoring" do
         @fileset.ignore?("my_file").should be_true
     end
 end
+
+describe Puppet::FileServing::Fileset, "when merging other filesets" do
+    before do
+        @paths = %w{/first/path /second/path /third/path}
+
+        @filesets = @paths.collect do |path|
+            File.stubs(:lstat).with(path).returns stub("stat", :directory? => true)
+            Puppet::FileServing::Fileset.new(path, :recurse => true)
+        end
+
+        Dir.stubs(:entries).returns []
+    end
+
+    it "should return a hash of all files in each fileset with the value being the base path" do
+        Dir.expects(:entries).with("/first/path").returns(%w{one uno})
+        Dir.expects(:entries).with("/second/path").returns(%w{two dos})
+        Dir.expects(:entries).with("/third/path").returns(%w{three tres})
+
+        Puppet::FileServing::Fileset.merge(*@filesets).should == {
+            "." => "/first/path",
+            "one" => "/first/path",
+            "uno" => "/first/path",
+            "two" => "/second/path",
+            "dos" => "/second/path",
+            "three" => "/third/path",
+            "tres" => "/third/path",
+        }
+    end
+
+    it "should include the base directory from the first fileset" do
+        Dir.expects(:entries).with("/first/path").returns(%w{one})
+        Dir.expects(:entries).with("/second/path").returns(%w{two})
+
+        Puppet::FileServing::Fileset.merge(*@filesets)["."].should == "/first/path"
+    end
+
+    it "should use the base path of the first found file when relative file paths conflict" do
+        Dir.expects(:entries).with("/first/path").returns(%w{one})
+        Dir.expects(:entries).with("/second/path").returns(%w{one})
+
+        Puppet::FileServing::Fileset.merge(*@filesets)["one"].should == "/first/path"
+    end
+end

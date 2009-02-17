@@ -11,6 +11,23 @@ class Puppet::FileServing::Fileset
     attr_reader :path, :ignore, :links
     attr_accessor :recurse
 
+    # Produce a hash of files, with merged so that earlier files
+    # with the same postfix win.  E.g., /dir1/subfile beats /dir2/subfile.
+    # It's a hash because we need to know the relative path of each file,
+    # and the base directory.
+    #   This will probably only ever be used for searching for plugins.
+    def self.merge(*filesets)
+        result = {}
+
+        filesets.each do |fileset|
+            fileset.files.each do |file|
+                result[file] ||= fileset.path
+            end
+        end
+
+        result
+    end
+
     # Return a list of all files in our fileset.  This is different from the
     # normal definition of find in that we support specific levels
     # of recursion, which means we need to know when we're going another
