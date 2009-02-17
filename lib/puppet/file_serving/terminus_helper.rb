@@ -8,7 +8,7 @@ require 'puppet/file_serving/fileset'
 # Define some common methods for FileServing termini.
 module Puppet::FileServing::TerminusHelper
     # Create model instances for all files in a fileset.
-    def path2instances(request, path)
+    def path2instances(request, *paths)
         args = [:links, :ignore, :recurse].inject({}) do |hash, param|
             if request.options.include?(param) # use 'include?' so the values can be false
                 hash[param] = request.options[param]
@@ -19,8 +19,12 @@ module Puppet::FileServing::TerminusHelper
             hash[param] = false if hash[param] == "false"
             hash
         end
-        Puppet::FileServing::Fileset.new(path, args).files.collect do |file|
-            inst = model.new(path, :relative_path => file)
+        filesets = paths.collect do |path|
+            Puppet::FileServing::Fileset.new(path, args)
+        end
+
+        Puppet::FileServing::Fileset.merge(*filesets).collect do |file, base_path|
+            inst = model.new(base_path, :relative_path => file)
             inst.links = request.options[:links] if request.options[:links]
             inst.collect
             inst
