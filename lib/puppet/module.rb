@@ -37,9 +37,8 @@ class Puppet::Module
     # absolute, or if there is no module whose name is the first component
     # of +path+, return +nil+
     def self.find(modname, environment = nil)
-        if modname =~ %r/^#{File::SEPARATOR}/
-            return nil
-        end
+        # Modules shouldn't be fully qualified.
+        return nil if modname =~ %r/^#{File::SEPARATOR}/
 
         modpath = modulepath(environment).collect { |path|
             File::join(path, modname)
@@ -77,20 +76,17 @@ class Puppet::Module
             return template
         end
 
-        template_paths = templatepath(environment)
-        if template_paths
+        if template_paths = templatepath(environment)
             # If we can find the template in :templatedir, we return that.
             td_file = template_paths.collect { |path|
                 File::join(path, template)
-            }.find { |f| File.exists?(f) }
-
-            return td_file unless td_file == nil
+            }.each do |f|
+                return f if FileTest.exist?(f)
+            end
         end
 
-        td_file = find_template_for_module(template, environment)
-
         # check in the default template dir, if there is one
-        if td_file.nil?
+        unless td_file = find_template_for_module(template, environment)
             raise Puppet::Error, "No valid template directory found, please check templatedir settings" if template_paths.nil?
             td_file = File::join(template_paths.first, template)
         end
@@ -103,14 +99,15 @@ class Puppet::Module
         # Because templates don't have an assumed template name, like manifests do,
         # we treat templates with no name as being templates in the main template
         # directory.
-        if not file.nil?
-            mod = find(path, environment)
-            if mod
-                return mod.template(file)
-            end
+        return nil unless file
+
+        if mod = find(path, environment) and t = mod.template(file)
+            return t
         end
         nil
     end
+
+    private_class_method :find_template_for_module
 
     # Return a list of manifests (as absolute filenames) that match +pat+
     # with the current directory set to +cwd+. If the first component of
@@ -121,7 +118,7 @@ class Puppet::Module
         cwd = options[:cwd] || Dir.getwd
         module_name, pattern = split_path(start)
         if module_name and mod = find(module_name, options[:environment])
-            return mod.manifests(pattern)
+            return mod.match_manifests(pattern)
         else
             abspat = File::expand_path(start, cwd)
             files = Dir.glob(abspat).reject { |f| FileTest.directory?(f) }
@@ -152,7 +149,9 @@ class Puppet::Module
     end
 
     def template(file)
-        return File::join(path, TEMPLATES, file)
+        full_path = File::join(path, TEMPLATES, file)
+        return nil unless full_path
+        return full_path
     end
 
     def files
@@ -161,7 +160,7 @@ class Puppet::Module
 
     # Return the list of manifests matching the given glob pattern,
     # defaulting to 'init.pp' for empty modules.
-    def manifests(rest)
+    def match_manifests(rest)
         rest ||= "init.pp"
         p = File::join(path, MANIFESTS, rest)
         files = Dir.glob(p).reject { |f| FileTest.directory?(f) }
@@ -170,7 +169,4 @@ class Puppet::Module
         end
         return files
     end
-
-    private :initialize
-    private_class_method :find_template_for_module
 end

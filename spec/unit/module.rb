@@ -85,7 +85,7 @@ describe Puppet::Module, " when searching for templates" do
         Puppet.settings.expects(:value).with(:templatedir, nil).returns("/my/templates")
         Puppet[:modulepath] = "/one:/two"
         File.stubs(:directory?).returns(true)
-        File.stubs(:exists?).returns(true)
+        FileTest.stubs(:exist?).returns(true)
         Puppet::Module.find_template("mymod/mytemplate").should == "/my/templates/mymod/mytemplate"
     end
 
@@ -98,7 +98,7 @@ describe Puppet::Module, " when searching for templates" do
         Puppet::Module.stubs(:templatepath).with(nil).returns(nil)
         Puppet[:modulepath] = "/one:/two"
         File.stubs(:directory?).returns(true)
-        File.stubs(:exists?).returns(true)
+        FileTest.stubs(:exist?).returns(true)
         Puppet::Module.find_template("mymod/mytemplate").should == "/one/mymod/templates/mytemplate"
     end
 
@@ -134,15 +134,15 @@ describe Puppet::Module, " when searching for templates" do
 
     it "should use a valid dir when templatedir is a path for unqualified templates and the first dir contains template" do
         Puppet::Module.stubs(:templatepath).returns(["/one/templates", "/two/templates"])
-        File.expects(:exists?).with("/one/templates/mytemplate").returns(true)
+        FileTest.expects(:exist?).with("/one/templates/mytemplate").returns(true)
         Puppet::Module.expects(:find).never
         Puppet::Module.find_template("mytemplate").should == "/one/templates/mytemplate"
     end
 
     it "should use a valid dir when templatedir is a path for unqualified templates and only second dir contains template" do
         Puppet::Module.stubs(:templatepath).returns(["/one/templates", "/two/templates"])
-        File.expects(:exists?).with("/one/templates/mytemplate").returns(false)
-        File.expects(:exists?).with("/two/templates/mytemplate").returns(true)
+        FileTest.expects(:exist?).with("/one/templates/mytemplate").returns(false)
+        FileTest.expects(:exist?).with("/two/templates/mytemplate").returns(true)
         Puppet::Module.expects(:find).never
         Puppet::Module.find_template("mytemplate").should == "/two/templates/mytemplate"
     end
