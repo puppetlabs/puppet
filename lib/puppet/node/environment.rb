@@ -28,4 +28,21 @@ class Puppet::Node::Environment
     def initialize(name)
         @name = name
     end
+
+    def module(name)
+        Puppet::Module.each_module(self[:modulepath]) do |mod|
+            return mod if mod.name == name
+        end
+
+        return nil
+    end
+
+    # Return all modules from this environment.
+    def modules
+        result = []
+        Puppet::Module.each_module(self[:modulepath]) do |mod|
+            result << mod
+        end
+        result
+    end
 end
