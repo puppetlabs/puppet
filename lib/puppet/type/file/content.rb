@@ -22,14 +22,17 @@ module Puppet
             This attribute is especially useful when used with
             `PuppetTemplating templating`:trac:."
 
-        def change_to_s(currentvalue, newvalue)
-            newvalue = "{md5}" + Digest::MD5.hexdigest(newvalue)
-            if currentvalue == :absent
-                return "created file with contents %s" % newvalue
-            else
-                currentvalue = "{md5}" + Digest::MD5.hexdigest(currentvalue)
-                return "changed file contents from %s to %s" % [currentvalue, newvalue]
-            end
+        def string_as_checksum(string)
+            return "absent" if string == :absent
+            "{md5}" + Digest::MD5.hexdigest(string)
+        end
+
+        def should_to_s(should)
+            string_as_checksum(should)
+        end
+
+        def is_to_s(is)
+            string_as_checksum(is)
         end
 
         # Override this method to provide diffs if asked for.
