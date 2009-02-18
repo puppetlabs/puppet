@@ -34,19 +34,7 @@ class Puppet::Module
     # parameter. Only consider paths that are absolute and existing
     # directories
     def self.modulepath(environment = nil)
-        dirs = Puppet.settings.value(:modulepath, environment).split(":")
-        if ENV["PUPPETLIB"]
-            dirs = ENV["PUPPETLIB"].split(":") + dirs
-        end
-        dirs.collect do |dir|
-            if dir !~ /^#{File::SEPARATOR}/
-                File.join(Dir.getwd, dir)
-            else
-                dir
-            end
-        end.select do |p|
-            p =~ /^#{File::SEPARATOR}/ && File::directory?(p)
-        end
+        Puppet::Node::Environment.new(environment).modulepath
     end
 
     # Return an array of paths by splitting the +templatedir+ config
@@ -62,30 +50,7 @@ class Puppet::Module
     # absolute, or if there is no module whose name is the first component
     # of +path+, return +nil+
     def self.find(modname, environment = nil)
-        # Modules shouldn't be fully qualified.
-        return nil if modname =~ %r/^#{File::SEPARATOR}/
-
-        modpath = modulepath(environment).collect { |path|
-            File::join(path, modname)
-        }.find { |f| File::directory?(f) }
-        return nil unless modpath
-
-        return self.new(modname, modpath)
-    end
-
-    # Return an array of the full path of every subdirectory in each
-    # directory in the modulepath.
-    def self.all(environment = nil)
-        modulepath(environment).map do |mp|
-            Dir.new(mp).map do |modfile|
-                modpath = File.join(mp, modfile)
-                unless modfile == '.' or modfile == '..' or !File.directory?(modpath)
-                    modpath
-                else
-                    nil
-                end
-            end
-        end.flatten.compact
+        Puppet::Node::Environment.new(environment).module(modname)
     end
 
     # Instance methods
