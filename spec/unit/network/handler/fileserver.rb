@@ -146,12 +146,9 @@ describe Puppet::Network::Handler::FileServer do
 
         before :each do
             @modules = ["one","two"]
-            Puppet::Module.stubs(:all).returns(@modules.collect{ |p| File.join(@basedir,p)} )
             @modules.each { |m| create_plugin(m, "facter") }
 
-            @modules.each do |p|
-                File.stubs(:directory?).with(File.join(@basedir,p,PLUGINS)).returns(true)
-            end
+            Puppet::Node::Environment.new.stubs(:modulepath).returns @basedir
 
             @mount = Puppet::Network::Handler::FileServer::PluginMount.new(PLUGINS)
             @mount.allow("*")

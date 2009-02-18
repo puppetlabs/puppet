@@ -254,8 +254,7 @@ class Puppet::Network::Handler
             end
 
             # And use the environment to look up the module.
-            mod = Puppet::Module::find(module_name, env)
-            if mod
+            if mod = Puppet::Node::Environment.new(env).module(module_name)
                 return @mounts[MODULES].copy(mod.name, mod.files)
             else
                 return nil
@@ -477,7 +476,10 @@ class Puppet::Network::Handler
             def file_path(relative_path, node = nil)
                 full_path = path(node)
 
-                raise ArgumentError.new("Mounts without paths are not usable") unless full_path
+                unless full_path
+                    p self
+                    raise ArgumentError.new("Mounts without paths are not usable") unless full_path
+                end
 
                 # If there's no relative path name, then we're serving the mount itself.
                 return full_path unless relative_path and relative_path != "/"
@@ -699,11 +701,11 @@ class Puppet::Network::Handler
             end
 
             def mod_path_exists?(mod, relpath, client = nil)
-                File.exists?(File.join(mod, PLUGINS, relpath))
+                ! mod.plugin(relpath).nil?
             end
 
             def path_exists?(relpath, client = nil)
-               !valid_modules.find { |m| mod_path_exists?(m, relpath, client) }.nil?
+               !valid_modules(client).find { |mod| mod.plugin(relpath) }.nil?
             end
 
             def valid?
@@ -715,16 +717,15 @@ class Puppet::Network::Handler
             end
             
             def file_path(relpath, client = nil)
-                return nil unless mod = valid_modules.map { |m| mod_path_exists?(m, relpath, client) ? m : nil }.compact.first
-                mod_file_path(mod, relpath, client)
+                return nil unless mod = valid_modules(client).find { |m| m.plugin(relpath) }
+                mod.plugin(relpath)
             end
 
             # create a list of files by merging all modules
             def list(relpath, recurse, ignore, client = nil)
                 result = []
-                valid_modules.each do |m|
-                    modpath = mod_file_path(m, relpath, client)
-                    if FileTest.exists?(modpath)
+                valid_modules(client).each do |mod|
+                    if modpath = mod.plugin(relpath)
                         if FileTest.directory?(modpath) and recurse
                             ary = reclist(modpath, recurse, ignore)
                             ary = [] if ary.nil?
@@ -738,8 +739,8 @@ class Puppet::Network::Handler
             end
 
             private
-            def valid_modules
-               Puppet::Module.all.find_all { |m| File.directory?(File.join(m, PLUGINS)) }
+            def valid_modules(client)
+                Puppet::Node::Environment.new.modules.find_all { |mod| mod.plugins? }
             end
             
             def add_to_filetree(f, filetree)
