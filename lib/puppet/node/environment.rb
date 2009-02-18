@@ -30,7 +30,7 @@ class Puppet::Node::Environment
     end
 
     def module(name)
-        Puppet::Module.each_module(self[:modulepath]) do |mod|
+        Puppet::Module.each_module(modulepath) do |mod|
             return mod if mod.name == name
         end
 
@@ -56,7 +56,7 @@ class Puppet::Node::Environment
     # Return all modules from this environment.
     def modules
         result = []
-        Puppet::Module.each_module(self[:modulepath]) do |mod|
+        Puppet::Module.each_module(modulepath) do |mod|
             result << mod
         end
         result

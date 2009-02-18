@@ -83,7 +83,7 @@ describe Puppet::Node::Environment do
         it "should return each module from the environment-specific module path when asked for its modules" do
             env = Puppet::Node::Environment.new("testing")
             module_path = %w{/one /two}.join(File::PATH_SEPARATOR)
-            env.expects(:[]).with(:modulepath).returns module_path
+            env.expects(:modulepath).returns module_path
 
             Puppet::Module.expects(:each_module).with(module_path).multiple_yields("mod1", "mod2")
 
@@ -93,7 +93,7 @@ describe Puppet::Node::Environment do
         it "should be able to return an individual module by matching the module name" do
             env = Puppet::Node::Environment.new("testing")
             module_path = %w{/one /two}.join(File::PATH_SEPARATOR)
-            env.expects(:[]).with(:modulepath).returns module_path
+            env.expects(:modulepath).returns module_path
 
             one = stub 'one', :name => 'one'
             two = stub 'two', :name => 'two'
@@ -105,7 +105,7 @@ describe Puppet::Node::Environment do
         it "should return nil if asked for a module that is not in its path" do
             env = Puppet::Node::Environment.new("testing")
             module_path = %w{/one /two}.join(File::PATH_SEPARATOR)
-            env.expects(:[]).with(:modulepath).returns module_path
+            env.expects(:modulepath).returns module_path
 
             one = stub 'one', :name => 'one'
             two = stub 'two', :name => 'two'
