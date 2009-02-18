@@ -37,7 +37,7 @@ class Puppet::Indirector::ModuleFiles < Puppet::Indirector::Terminus
 
     # Try to find our module.
     def find_module(module_name, node_name)
-        Puppet::Module::find(module_name, environment(node_name))
+        environment(node_name).module(module_name)
     end
 
     # Search for a list of files.
@@ -56,9 +56,9 @@ class Puppet::Indirector::ModuleFiles < Puppet::Indirector::Terminus
     # Determine the environment to use, if any.
     def environment(node_name)
         if node_name and node = Puppet::Node.find(node_name)
-            node.environment
+            Puppet::Node::Environment.new(node.environment)
         else
-            Puppet::Node::Environment.new.name
+            Puppet::Node::Environment.new
         end
     end
 

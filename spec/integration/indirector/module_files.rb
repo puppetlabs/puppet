@@ -10,11 +10,13 @@ require 'puppet/indirector/module_files'
 
 describe Puppet::Indirector::ModuleFiles, " when interacting with Puppet::Module and FileServing::Content" do
     it "should look for files in the module's 'files' directory" do
-        Puppet::Node::Environment.stubs(:new).returns(stub('env', :name => "myenv"))
+        @environment = stub('env', :name => "myenv")
+        Puppet::Node::Environment.stubs(:new).returns(@environment)
         # We just test a subclass, since it's close enough.
         @terminus = Puppet::Indirector::FileContent::Modules.new
         @module = Puppet::Module.new("mymod", "/some/path/mymod")
-        Puppet::Module.expects(:find).with("mymod", "myenv").returns(@module)
+
+        @environment.expects(:module).with("mymod").returns @module
 
         filepath = "/some/path/mymod/files/myfile"
 
@@ -28,7 +30,8 @@ end
 
 describe Puppet::Indirector::ModuleFiles, " when interacting with FileServing::Fileset and FileServing::Content" do
     it "should return an instance for every file in the fileset" do
-        Puppet::Node::Environment.stubs(:new).returns(stub('env', :name => "myenv"))
+        @environment = stub('env', :name => "myenv")
+        Puppet::Node::Environment.stubs(:new).returns @environment
         @terminus = Puppet::Indirector::FileContent::Modules.new
 
         @path = Tempfile.new("module_file_testing")
@@ -46,7 +49,7 @@ describe Puppet::Indirector::ModuleFiles, " when interacting with FileServing::F
         File.open(File.join(basedir, "two"), "w") { |f| f.print "two content" }
 
         @module = Puppet::Module.new("mymod", @path)
-        Puppet::Module.expects(:find).with("mymod", "myenv").returns(@module)
+        @environment.expects(:module).with("mymod").returns @module
 
         @request = Puppet::Indirector::Request.new(:content, :search, "puppet://host/modules/mymod/myfile", :recurse => true)
 
