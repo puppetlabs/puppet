@@ -42,10 +42,27 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         if data.is_a?(String)
             data.each_line do |line|
                 cmd_array = Array.new()
-                tokens = line.split(" ")
-                cmd = tokens.shift()
-                file = tokens.shift()
-                other = tokens.join(" ")
+                single = line.index("'")
+                double = line.index('"')
+                tokens = nil
+                delim = " "
+                if ((single != nil) or (double != nil))
+                    single = 99999 if single == nil
+                    double = 99999 if double == nil
+                    delim = '"' if double < single
+                    delim = "'" if single < double
+                end
+                tokens = line.split(delim)
+                # If the length of tokens is 2, thn that means the pattern was
+                # command file "some text", therefore we need to re-split
+                # the first line
+                if tokens.length == 2
+                    tokens = (tokens[0].split(" ")) << tokens[1]
+                end
+                cmd = tokens.shift().strip()
+                delim = "" if delim == " "
+                file = tokens.shift().strip()
+                other = tokens.join(" ").strip()
                 cmd_array << cmd if !cmd.nil?
                 cmd_array << file if !file.nil?
                 cmd_array << other if other != ""
@@ -58,6 +75,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         end
         return commands
     end
+
 
     def open_augeas
         if (@aug.nil?)

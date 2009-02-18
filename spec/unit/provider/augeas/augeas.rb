@@ -54,6 +54,86 @@ describe provider_class do
             tokens[0][1].should == "/Jar/Jar"
             tokens[0][2].should == "Binks is my copilot"            
         end
+
+        it "should accept spaces and and single ticks" do
+            provider = provider_class.new()
+            tokens = provider.parse_commands("set 'Jar Jar' Binks")
+            tokens.size.should == 1
+            tokens[0].size.should == 3
+            tokens[0][0].should == "set"
+            tokens[0][1].should == "Jar Jar"
+            tokens[0][2].should == "Binks"
+        end
+ 
+        it "should accept spaces in the value and and single ticks" do
+            provider = provider_class.new()
+            tokens = provider.parse_commands("set 'Jar Jar' 'Binks is my copilot'")
+            tokens.size.should == 1
+            tokens[0].size.should == 3
+            tokens[0][0].should == "set"
+            tokens[0][1].should == "Jar Jar"
+            tokens[0][2].should == "Binks is my copilot"
+        end
+ 
+        it "should accept spaces and and double ticks" do
+            provider = provider_class.new()
+            tokens = provider.parse_commands('set "Jar Jar" Binks')
+            tokens.size.should == 1
+            tokens[0].size.should == 3
+            tokens[0][0].should == "set"
+            tokens[0][1].should == 'Jar Jar'
+            tokens[0][2].should == 'Binks'
+        end
+ 
+        it "should accept spaces in the value and and double ticks" do
+            provider = provider_class.new()
+            tokens = provider.parse_commands('set "Jar Jar" "Binks is my copilot"')
+            tokens.size.should == 1
+            tokens[0].size.should == 3
+            tokens[0][0].should == "set"
+            tokens[0][1].should == 'Jar Jar'
+            tokens[0][2].should == 'Binks is my copilot'
+        end
+ 
+        it "should accept mixed ticks" do
+            provider = provider_class.new()
+            tokens = provider.parse_commands('set "Jar Jar" "Some \'Test\'"')
+            tokens.size.should == 1
+            tokens[0].size.should == 3
+            tokens[0][0].should == "set"
+            tokens[0][1].should == 'Jar Jar'
+            tokens[0][2].should == "Some \'Test\'"
+        end
+ 
+        it "should accept only the last value using ticks" do
+            provider = provider_class.new()
+            tokens = provider.parse_commands('set /Jar/Jar "Binks is my copilot"')
+            tokens.size.should == 1
+            tokens[0].size.should == 3
+            tokens[0][0].should == "set"
+            tokens[0][1].should == '/Jar/Jar'
+            tokens[0][2].should == "Binks is my copilot"
+        end
+ 
+        it "should accept only the first value using ticks" do
+            provider = provider_class.new()
+            tokens = provider.parse_commands('set "Jar Jar" copilot')
+            tokens.size.should == 1
+            tokens[0].size.should == 3
+            tokens[0][0].should == "set"
+            tokens[0][1].should == 'Jar Jar'
+            tokens[0][2].should == "copilot"
+        end
+ 
+        it "should accept only the first value using ticks and the last values being concatenated" do
+            provider = provider_class.new()
+            tokens = provider.parse_commands('set "Jar Jar" Binks is my copilot')
+            tokens.size.should == 1
+            tokens[0].size.should == 3
+            tokens[0][0].should == "set"
+            tokens[0][1].should == 'Jar Jar'
+            tokens[0][2].should == "Binks is my copilot"
+        end         
     end
     
     describe "get filters" do
