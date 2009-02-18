@@ -20,12 +20,16 @@
 require 'augeas' if Puppet.features.augeas?
 
 Puppet::Type.type(:augeas).provide(:augeas) do
-#class Puppet::Provider::Augeas < Puppet::Provider
     include Puppet::Util
     
     confine :true => Puppet.features.augeas?   
     
     has_features :parse_commands, :need_to_run?,:execute_changes
+
+    SAVE_NOOP = "noop"
+    SAVE_OVERWRITE = "overwrite"
+
+    attr_accessor :aug
 
     # Extracts an 2 dimensional array of commands which are in the
     # form of command path value.
@@ -56,12 +60,19 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     end
 
     def open_augeas
-        flags = 0
-        (flags = 1 << 2 ) if self.resource[:type_check] == :true
-        root = self.resource[:root]
-        load_path = self.resource[:load_path]
-        debug("Opening augeas with root #{root}, lens path #{load_path}, flags #{flags}")
-        Augeas.open(root, load_path,flags)
+        if (@aug.nil?)
+            flags = 0
+            (flags = 1 << 2 ) if self.resource[:type_check] == :true
+            root = self.resource[:root]
+            load_path = self.resource[:load_path]
+            debug("Opening augeas with root #{root}, lens path #{load_path}, flags #{flags}")
+            @aug = Augeas.open(root, load_path,flags)
+            
+            if (self.get_augeas_version() >= "0.3.6")
+                debug("Augeas version #{self.get_augeas_version()} is installed")
+            end
+        end
+        @aug
     end
     
     # Used by the need_to_run? method to process get filters. Returns
@@ -78,8 +89,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         arg = cmd_array.join(" ")
 
         #check the value in augeas
-        aug = open_augeas()
-        result = aug.get(path) || ''
+        result = @aug.get(path) || ''
         unless result.nil?
             case comparator
                 when "!=":
@@ -107,8 +117,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         verb = cmd_array.shift()
 
         #Get the values from augeas
-        aug = open_augeas()
-        result = aug.match(path) || ''
+        result = @aug.match(path) || ''
         # Now do the work
         if (!result.nil?)
             case verb
@@ -131,10 +140,24 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             end
         end
         return_value
-    end    
+    end
+
+    def get_augeas_version
+        return @aug.get("/augeas/version") || ""
+    end
+
+    def set_augeas_save_mode(mode)
+        return @aug.set("/augeas/save", mode)
+    end
+
+    def files_changed?
+        saved_files = @aug.match("/augeas/events/saved")
+        return saved_files.size() > 0 
+    end
     
     # Determines if augeas acutally needs to run.
     def need_to_run?
+        self.open_augeas()
         return_value = true
         filter = resource[:onlyif]
         unless (filter == "")
@@ -151,12 +174,46 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                 fail("Error sending command '#{command}' with params #{cmd_array[1..-1].inspect}/#{e.message}")
             end
         end
-        return_value
+
+        # If we have a verison of augeas which is at least 0.3.6 then we
+        # can make the changes now, see if changes were made, and
+        # actually do the save.
+        if ((return_value) and (self.get_augeas_version() >= "0.3.6"))
+            debug("Will attempt to save and only run if files changed")
+            self.set_augeas_save_mode(SAVE_NOOP)
+            self.do_execute_changes()
+            save_result = @aug.save()
+            saved_files = @aug.match("/augeas/events/saved")
+            if ((save_result) and (not files_changed?))
+                debug("Skipping becuase no files were changed")
+                return_value = false
+            else
+                debug("Files changed, should execute")
+            end
+        end
+
+        return return_value
     end 
+
+    def execute_changes
+        # if we have version 0.3.6 or greater we have already executed
+        # the changes. We just need to save them. If not, do the changes
+        if (self.get_augeas_version() >= "0.3.6")
+            self.set_augeas_save_mode(SAVE_OVERWRITE)
+        else
+            self.do_execute_changes()
+        end
+        
+        success = @aug.save()
+        if (success != true)
+            fail("Save failed with return code #{success}")
+        end
+
+        return :executed            
+    end
     
     # Actually execute the augeas changes.
-    def execute_changes
-        aug = open_augeas
+    def do_execute_changes
         commands = resource[:changes]
         context = resource[:context]
         commands.each do |cmd_array|
@@ -168,15 +225,15 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                     when "set":
                         cmd_array[0]=File.join(context, cmd_array[0])
                         debug("sending command '#{command}' with params #{cmd_array.inspect}")
-                        aug.set(cmd_array[0], cmd_array[1])
+                        @aug.set(cmd_array[0], cmd_array[1])
                     when "rm", "remove":
                         cmd_array[0]=File.join(context, cmd_array[0])
                         debug("sending command '#{command}' with params #{cmd_array.inspect}")                    
-                        aug.rm(cmd_array[0])
+                        @aug.rm(cmd_array[0])
                     when "clear":
                         cmd_array[0]=File.join(context, cmd_array[0])
                         debug("sending command '#{command}' with params #{cmd_array.inspect}")                    
-                        aug.clear(cmd_array[0])
+                        @aug.clear(cmd_array[0])
                     when "insert", "ins"
                         if cmd_array.size < 3
                             fail("ins requires 3 parameters")
@@ -190,19 +247,13 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                             else fail("Invalid value '#{where}' for where param")
                         end
                         debug("sending command '#{command}' with params #{[label, where, path].inspect()}") 
-                        aug.insert(path, label, before)
+                        @aug.insert(path, label, before)
                     else fail("Command '#{command}' is not supported")
                 end
             rescue Exception => e
                 fail("Error sending command '#{command}' with params #{cmd_array.inspect}/#{e.message}")
             end
         end
-        success = aug.save()
-        if (success != true)
-            fail("Save failed with return code #{success}")
-        end
-
-        return :executed    
     end   
     
 end

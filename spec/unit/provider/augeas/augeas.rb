@@ -60,7 +60,7 @@ describe provider_class do
         before do
             augeas_stub = stub("augeas", :get => "value")
             @provider = provider_class.new()        
-            @provider.stubs(:open_augeas).returns(augeas_stub)        
+            @provider.aug= augeas_stub 
         end
         
         it "should return false for a = nonmatch" do
@@ -88,7 +88,7 @@ describe provider_class do
         before do
             augeas_stub = stub("augeas", :match => ["set", "of", "values"])
             @provider = provider_class.new()        
-            @provider.stubs(:open_augeas).returns(augeas_stub)        
+            @provider.aug= augeas_stub       
         end
         
         it "should return true for size match" do
@@ -122,10 +122,12 @@ describe provider_class do
         end                 
     end    
     
-    describe "need_to_run" do
+    describe "legacy need to run" do
         it "should handle no filters" do
             resource = stub("resource", :[] => "")
+            augeas_stub = stub("augeas", :match => ["set", "of", "values"])            
             provider = provider_class.new(resource)
+            provider.stubs(:get_augeas_version).returns("0.3.5")
             provider.need_to_run?.should == true        
         end
         
@@ -133,7 +135,8 @@ describe provider_class do
             resource = stub("resource", :[] => "get path == value")
             provider = provider_class.new(resource)
             augeas_stub = stub("augeas", :get => "value")
-            provider.stubs(:open_augeas).returns(augeas_stub)              
+            provider.aug= augeas_stub
+            provider.stubs(:get_augeas_version).returns("0.3.5")      
             provider.need_to_run?.should == true       
         end       
         
@@ -141,7 +144,8 @@ describe provider_class do
             resource = stub("resource", :[] => "get path == another value")
             provider = provider_class.new(resource)
             augeas_stub = stub("augeas", :get => "value")
-            provider.stubs(:open_augeas).returns(augeas_stub)              
+            provider.aug= augeas_stub
+            provider.stubs(:get_augeas_version).returns("0.3.5")               
             provider.need_to_run?.should == false       
         end            
         
@@ -149,7 +153,8 @@ describe provider_class do
             resource = stub("resource", :[] => "match path size == 3")
             provider = provider_class.new(resource)
             augeas_stub = stub("augeas", :match => ["set", "of", "values"])
-            provider.stubs(:open_augeas).returns(augeas_stub)              
+            provider.aug= augeas_stub
+            provider.stubs(:get_augeas_version).returns("0.3.5")       
             provider.need_to_run?.should == true       
         end       
         
@@ -157,18 +162,20 @@ describe provider_class do
             resource = stub("resource", :[] => "match path size == 2")
             provider = provider_class.new(resource)
             augeas_stub = stub("augeas", :match => ["set", "of", "values"])
-            provider.stubs(:open_augeas).returns(augeas_stub)              
+            provider.aug= augeas_stub
+            provider.stubs(:get_augeas_version).returns("0.3.5")              
             provider.need_to_run?.should == false       
         end       
     end
     
-    describe "augeas integration" do
+    describe "legacy augeas integration" do
         
         before do
             @resource = stub("resource")
             @provider = provider_class.new(@resource)
             @augeas = stub("augeas")
-            @provider.stubs(:open_augeas).returns(@augeas)
+            @provider.aug= @augeas
+            @provider.stubs(:get_augeas_version).returns("0.3.5")  
         end
     
         it "should handle set commands" do
