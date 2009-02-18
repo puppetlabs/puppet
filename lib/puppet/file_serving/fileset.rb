@@ -68,13 +68,10 @@ class Puppet::FileServing::Fileset
         @links = :manage
         @recurse = false
 
-        options.each do |option, value|
-            method = option.to_s + "="
-            begin
-                send(method, value)
-            rescue NoMethodError
-                raise ArgumentError, "Invalid option '%s'" % option
-            end
+        if options.is_a?(Puppet::Indirector::Request)
+            initialize_from_request(options)
+        else
+            initialize_from_hash(options)
         end
 
         raise ArgumentError.new("Fileset paths must exist") unless stat = stat(path)
@@ -101,6 +98,31 @@ class Puppet::FileServing::Fileset
 
         # Else, return false.
         return false
+    end
+
+    def initialize_from_hash(options)
+        options.each do |option, value|
+            method = option.to_s + "="
+            begin
+                send(method, value)
+            rescue NoMethodError
+                raise ArgumentError, "Invalid option '%s'" % option
+            end
+        end
+    end
+
+    def initialize_from_request(request)
+        [:links, :ignore, :recurse].each do |param|
+            if request.options.include?(param) # use 'include?' so the values can be false
+                value = request.options[param]
+            elsif request.options.include?(param.to_s)
+                value = request.options[param.to_s]
+            end
+            next if value.nil? 
+            value = true if value == "true"
+            value = false if value == "false"
+            send(param.to_s + "=", value)
+        end
     end
     
     private

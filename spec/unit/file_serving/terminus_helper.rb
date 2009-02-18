@@ -23,7 +23,7 @@ describe Puppet::FileServing::TerminusHelper do
 
     it "should use a fileset to find paths" do
         @fileset = stub 'fileset', :files => [], :path => "/my/files"
-        Puppet::FileServing::Fileset.expects(:new).with("/my/file", {}).returns(@fileset)
+        Puppet::FileServing::Fileset.expects(:new).with { |key, options| key == "/my/file" }.returns(@fileset)
         @helper.path2instances(@request, "/my/file")
     end
 
@@ -38,27 +38,8 @@ describe Puppet::FileServing::TerminusHelper do
         @helper.path2instances(@request, "/first/file", "/second/file")
     end
 
-    it "should pass :recurse, :ignore, and :links settings on to the fileset if present" do
-        Puppet::FileServing::Fileset.expects(:new).with { |path, options| options == {:links => :a, :ignore => :b, :recurse => :c } }.returns(@fileset)
-        @request.stubs(:options).returns(:links => :a, :ignore => :b, :recurse => :c)
-        @helper.path2instances(@request, "/my/file")
-    end
-
-    it "should pass :recurse, :ignore, and :links settings on to the fileset if present with the keys stored as strings" do
-        Puppet::FileServing::Fileset.expects(:new).with { |path, options| options == {:links => :a, :ignore => :b, :recurse => :c} }.returns(@fileset)
-        @request.stubs(:options).returns("links" => :a, "ignore" => :b, "recurse" => :c)
-        @helper.path2instances(@request, "/my/file")
-    end
-
-    it "should convert the string 'true' to the boolean true when setting options" do
-        Puppet::FileServing::Fileset.expects(:new).with { |path, options| options[:recurse] == true }.returns(@fileset)
-        @request.stubs(:options).returns(:recurse => "true")
-        @helper.path2instances(@request, "/my/file")
-    end
-
-    it "should convert the string 'false' to the boolean false when setting options" do
-        Puppet::FileServing::Fileset.expects(:new).with { |path, options| options[:recurse] == false }.returns(@fileset)
-        @request.stubs(:options).returns(:recurse => "false")
+    it "should pass the indirection request to the Fileset at initialization" do
+        Puppet::FileServing::Fileset.expects(:new).with { |path, options| options == @request }.returns @fileset
         @helper.path2instances(@request, "/my/file")
     end
 

@@ -9,18 +9,9 @@ require 'puppet/file_serving/fileset'
 module Puppet::FileServing::TerminusHelper
     # Create model instances for all files in a fileset.
     def path2instances(request, *paths)
-        args = [:links, :ignore, :recurse].inject({}) do |hash, param|
-            if request.options.include?(param) # use 'include?' so the values can be false
-                hash[param] = request.options[param]
-            elsif request.options.include?(param.to_s)
-                hash[param] = request.options[param.to_s]
-            end
-            hash[param] = true if hash[param] == "true"
-            hash[param] = false if hash[param] == "false"
-            hash
-        end
         filesets = paths.collect do |path|
-            Puppet::FileServing::Fileset.new(path, args)
+            # Filesets support indirector requests as an options collection
+            Puppet::FileServing::Fileset.new(path, request)
         end
 
         Puppet::FileServing::Fileset.merge(*filesets).collect do |file, base_path|

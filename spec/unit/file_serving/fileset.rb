@@ -54,6 +54,42 @@ describe Puppet::FileServing::Fileset, " when initializing" do
         File.expects(:lstat).with("/some/file").returns stub("stat")
         Puppet::FileServing::Fileset.new("/some/file").links.should == :manage
     end
+
+    it "should support using an Indirector Request for its options" do
+        File.expects(:lstat).with("/some/file").returns stub("stat")
+        request = Puppet::Indirector::Request.new(:file_serving, :find, "foo")
+        lambda { Puppet::FileServing::Fileset.new("/some/file", request) }.should_not raise_error
+    end
+
+    describe "using an indirector request" do
+        before do
+            File.stubs(:lstat).returns stub("stat")
+            @values = {:links => :manage, :ignore => %w{a b}, :recurse => true}
+            @request = Puppet::Indirector::Request.new(:file_serving, :find, "foo")
+        end
+
+        [:recurse, :ignore, :links].each do |option|
+            it "should pass :recurse, :ignore, and :links settings on to the fileset if present" do
+                @request.stubs(:options).returns(option => @values[option])
+                Puppet::FileServing::Fileset.new("/my/file", @request).send(option).should == @values[option]
+            end
+
+            it "should pass :recurse, :ignore, and :links settings on to the fileset if present with the keys stored as strings" do
+                @request.stubs(:options).returns(option.to_s => @values[option])
+                Puppet::FileServing::Fileset.new("/my/file", @request).send(option).should == @values[option]
+            end
+        end
+
+        it "should convert the string 'true' to the boolean true when setting options" do
+            @request.stubs(:options).returns(:recurse => "true")
+            Puppet::FileServing::Fileset.new("/my/file", @request).recurse.should == true
+        end
+
+        it "should convert the string 'false' to the boolean false when setting options" do
+            @request.stubs(:options).returns(:recurse => "false")
+            Puppet::FileServing::Fileset.new("/my/file", @request).recurse.should == false
+        end
+    end
 end
 
 describe Puppet::FileServing::Fileset, " when determining whether to recurse" do
