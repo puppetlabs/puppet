@@ -5,17 +5,20 @@
 require 'puppet'
 require 'puppet/file_serving'
 require 'puppet/file_serving/mount'
+require 'puppet/file_serving/mount/file'
+require 'puppet/file_serving/mount/modules'
+require 'puppet/file_serving/mount/plugins'
 require 'puppet/util/cacher'
+require 'puppet/util/uri_helper'
 
 class Puppet::FileServing::Configuration
+    include Puppet::Util::URIHelper
     require 'puppet/file_serving/configuration/parser'
 
     class << self
         include Puppet::Util::Cacher
         cached_attr(:configuration) { new() }
     end
-
-    @config_fileuration = nil
 
     Mount = Puppet::FileServing::Mount
 
@@ -26,23 +29,26 @@ class Puppet::FileServing::Configuration
 
     private_class_method  :new
 
-    # Verify that the client is allowed access to this file.
-    def authorized?(file, options = {})
-        mount, file_path = split_path(file, options[:node])
-        # If we're not serving this mount, then access is denied.
-        return false unless mount
-        return mount.allowed?(options[:node], options[:ipaddress])
-    end
+    attr_reader :mounts
+    #private :mounts
 
-    # Search for a file.
-    def file_path(key, options = {})
-        mount, file_path = split_path(key, options[:node])
+    # Find the right mount.  Does some shenanigans to support old-style module
+    # mounts.
+    def find_mount(mount_name, node)
+        # Reparse the configuration if necessary.
+        readconfig
 
-        return nil unless mount
+        if mount = mounts[mount_name]
+            return mount
+        end
 
-        # The mount checks to see if the file exists, and returns nil
-        # if not.
-        return mount.file(file_path, options)
+        if mounts["modules"].environment(node).module(mount_name)
+            Puppet.warning "DEPRECATION NOTICE: Found module '%s' without using the 'modules' mount; please prefix path with 'modules/'" % mount_name
+            return mounts["modules"]
+        end
+
+        # This can be nil.
+        mounts[mount_name]
     end
 
     def initialize
@@ -59,21 +65,38 @@ class Puppet::FileServing::Configuration
         @mounts.include?(name)
     end
 
+    # Split the path into the separate mount point and path.
+    def split_path(request)
+        # Reparse the configuration if necessary.
+        readconfig
+
+        uri = key2uri(request.key)
+
+        mount_name, path = uri.path.sub(/^\//, '').split(File::Separator, 2)
+
+        raise(ArgumentError, "Cannot find file: Invalid path '%s'" % mount_name) unless mount_name =~ %r{^[-\w]+$}
+
+        return nil unless mount = find_mount(mount_name, request.options[:node])
+        if mount.name == "modules" and mount_name != "modules"
+            # yay backward-compatibility
+            path = "%s/%s" % [mount_name, path]
+        end
+
+        if path == ""
+            path = nil
+        elsif path
+            # Remove any double slashes that might have occurred
+            path = path.gsub(/\/+/, "/")
+        end
+
+        return mount, path
+    end
+
     def umount(name)
         @mounts.delete(name) if @mounts.include? name
     end
 
     private
-
-    # Deal with ignore parameters.
-    def handleignore(children, path, ignore)            
-        ignore.each { |ignore|                
-            Dir.glob(File.join(path,ignore), File::FNM_DOTMATCH) { |match|
-                children.delete(File.basename(match))
-            }                
-        }
-        return children
-    end  
 
     # Read the configuration file.
     def readconfig(check = true)
@@ -92,37 +115,8 @@ class Puppet::FileServing::Configuration
             newmounts = @parser.parse
             @mounts = newmounts
         rescue => detail
+            puts detail.backtrace if Puppet[:trace]
             Puppet.err "Error parsing fileserver configuration: %s; using old configuration" % detail
         end
-    end
-
-    # Split the path into the separate mount point and path.
-    def split_path(uri, node)
-        # Reparse the configuration if necessary.
-        readconfig
-
-        raise(ArgumentError, "Cannot find file: Invalid path '%s'" % uri) unless uri =~ %r{^([-\w]+)(/|$)}
-
-        # the dir is based on one of the mounts
-        # so first retrieve the mount path
-        mount = path = nil
-
-        # Strip off the mount name.
-        mount_name, path = uri.split(File::Separator, 2)
-
-        return nil unless mount = @mounts[mount_name]
-
-        if path == ""
-            path = nil
-        elsif path
-            # Remove any double slashes that might have occurred
-            path = URI.unescape(path.gsub(/\/\//, "/"))
-        end
-
-        return mount, path
-    end
-
-    def to_s
-        "fileserver"
     end
 end

@@ -29,19 +29,6 @@ module Puppet::FileServing::IndirectionHooks
         end
 
         # If we're still here, we're using the file_server or modules.
-
-        # This is the backward-compatible module terminus.
-        modname = request.key.split("/")[0]
-
-        if modname == "modules"
-            terminus = :modules
-        elsif terminus(:modules).find_module(modname, request.options[:node])
-            Puppet.warning "DEPRECATION NOTICE: Found file '%s' in module without using the 'modules' mount; please prefix path with 'modules/'" % request.key
-            terminus = :modules
-        else
-            terminus = :file_server
-        end
-
-        return terminus
+        return :file_server
     end
 end

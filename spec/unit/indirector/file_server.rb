@@ -31,161 +31,221 @@ describe Puppet::Indirector::FileServer do
         @request = Puppet::Indirector::Request.new(:myind, :mymethod, @uri)
     end
 
-    describe Puppet::Indirector::FileServer, " when finding files" do
+    describe "when finding files" do
+        before do
+            @mount = stub 'mount', :find => nil
+            @instance = stub('instance', :links= => nil, :collect => nil)
+        end
 
-        it "should use the path portion of the URI as the file name" do
-            @configuration.expects(:file_path).with("my/local/file", :node => nil)
+        it "should use the configuration to find the mount and relative path" do
+            @configuration.expects(:split_path).with(@request)
+
             @file_server.find(@request)
         end
 
-        it "should use the FileServing configuration to convert the file name to a fully qualified path" do
-            @configuration.expects(:file_path).with("my/local/file", :node => nil)
-            @file_server.find(@request)
-        end
+        it "should return nil if it cannot find the mount" do
+            @configuration.expects(:split_path).with(@request).returns(nil, nil)
 
-        it "should pass the node name to the FileServing configuration if one is provided" do
-            @configuration.expects(:file_path).with("my/local/file", :node => "testing")
-            @request.node = "testing"
-            @file_server.find(@request)
-        end
-
-        it "should return nil if no fully qualified path is found" do
-            @configuration.expects(:file_path).with("my/local/file", :node => nil).returns(nil)
             @file_server.find(@request).should be_nil
         end
 
-        it "should return an instance of the model created with the full path if a file is found" do
-            @configuration.expects(:file_path).with("my/local/file", :node => nil).returns("/some/file")
-            instance = stub("instance", :collect => nil)
-            @model.expects(:new).returns instance
-            @file_server.find(@request).should equal(instance)
-        end
-    end
+        it "should use the mount to find the full path" do
+            @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
 
-    describe Puppet::Indirector::FileServer, " when returning instances" do
-        before :each do
-            @configuration.expects(:file_path).with("my/local/file", :node => nil).returns("/some/file")
-            @instance = stub 'instance', :collect => nil
-        end
+            @mount.expects(:find).with { |key, options| key == "rel/path" }
 
-        it "should create the instance with the path at which the instance was found" do
-            @model.expects(:new).with { |key, options| key == "/some/file" }.returns @instance
             @file_server.find(@request)
         end
 
-        it "should set the provided :links setting on to the instance if one is provided" do
-            @model.expects(:new).returns(@instance)
-            @instance.expects(:links=).with(:mytest)
-            @request.options[:links] = :mytest
-            @file_server.find(@request)
+        it "should return nil if it cannot find a full path" do
+            @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
+
+            @mount.expects(:find).with { |key, options| key == "rel/path" }.returns nil
+
+            @file_server.find(@request).should be_nil
         end
 
-        it "should not set a :links value if no :links parameter is provided" do
-            @model.expects(:new).returns(@instance)
-            @file_server.find(@request)
+        it "should create an instance with the found path" do
+            @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
+
+            @mount.expects(:find).with { |key, options| key == "rel/path" }.returns "/my/file"
+
+            @model.expects(:new).with("/my/file").returns @instance
+
+            @file_server.find(@request).should equal(@instance)
         end
 
-        it "should collect each instance's attributes before returning" do
+        it "should set 'links' on the instance if it is set in the request options" do
+            @request.options[:links] = true
+            @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
+
+            @mount.expects(:find).with { |key, options| key == "rel/path" }.returns "/my/file"
+
+            @model.expects(:new).with("/my/file").returns @instance
+
+            @instance.expects(:links=).with(true)
+
+            @file_server.find(@request).should equal(@instance)
+        end
+
+        it "should collect the instance" do
+            @request.options[:links] = true
+            @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
+
+            @mount.expects(:find).with { |key, options| key == "rel/path" }.returns "/my/file"
+
+            @model.expects(:new).with("/my/file").returns @instance
+
             @instance.expects(:collect)
-            @model.expects(:new).returns @instance
-            @file_server.find(@request)
+
+            @file_server.find(@request).should equal(@instance)
         end
     end
 
-    describe Puppet::Indirector::FileServer, " when checking authorization" do
-
-        it "should have an authorization hook" do
-            @file_server.should respond_to(:authorized?)
+    describe "when searching for instances" do
+        before do
+            @mount = stub 'mount', :search => nil
+            @instance = stub('instance', :links= => nil, :collect => nil)
         end
 
-        it "should deny the :destroy method" do
-            @request.method = :destroy
-            @file_server.authorized?(@request).should be_false
-        end
+        it "should use the configuration to search the mount and relative path" do
+            @configuration.expects(:split_path).with(@request)
 
-        it "should deny the :save method" do
-            @request.method = :save
-            @file_server.authorized?(@request).should be_false
-        end
-        
-        describe "and finding file information" do
-            before do
-                @request.method = :find 
-            end
-
-            it "should use the file server configuration to determine authorization" do
-                @configuration.expects(:authorized?)
-                @file_server.authorized?(@request)
-            end
-
-            it "should pass the file path from the URI to the file server configuration" do
-                @configuration.expects(:authorized?).with { |uri, *args| uri == "my/local/file" }
-                @file_server.authorized?(@request)
-            end
-
-            it "should pass the node name to the file server configuration" do
-                @configuration.expects(:authorized?).with { |key, options| options[:node] == "mynode" }
-                @request.node = "mynode"
-                @file_server.authorized?(@request)
-            end
-
-            it "should pass the IP address to the file server configuration" do
-                @configuration.expects(:authorized?).with { |key, options| options[:ipaddress] == "myip" }
-                @request.ip = "myip"
-                @file_server.authorized?(@request)
-            end
-
-            it "should return false if the file server configuration denies authorization" do
-                @configuration.expects(:authorized?).returns(false)
-                @file_server.authorized?(@request)
-            end
-
-            it "should return true if the file server configuration approves authorization" do
-                @configuration.expects(:authorized?).returns(true)
-                @file_server.authorized?(@request)
-            end
-        end
-    end
-
-    describe Puppet::Indirector::FileServer, " when searching for files" do
-
-        it "should use the path portion of the URI as the file name" do
-            @configuration.expects(:file_path).with("my/local/file", :node => nil)
             @file_server.search(@request)
         end
 
-        it "should use the FileServing configuration to convert the file name to a fully qualified path" do
-            @configuration.expects(:file_path).with("my/local/file", :node => nil)
-            @file_server.search(@request)
-        end
+        it "should return nil if it cannot search the mount" do
+            @configuration.expects(:split_path).with(@request).returns(nil, nil)
 
-        it "should pass the node name to the FileServing configuration if one is provided" do
-            @configuration.expects(:file_path).with("my/local/file", :node => "testing")
-            @request.node = "testing"
-            @file_server.search(@request)
-        end
-
-        it "should return nil if no fully qualified path is found" do
-            @configuration.expects(:file_path).with("my/local/file", :node => nil).returns(nil)
             @file_server.search(@request).should be_nil
         end
 
-        it "should use :path2instances from the terminus_helper to return instances if a module is found and the file exists" do
-            @configuration.expects(:file_path).with("my/local/file", :node => nil).returns("my/file")
-            @file_server.expects(:path2instances)
+        it "should use the mount to search for the full paths" do
+            @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
+
+            @mount.expects(:search).with { |key, options| key == "rel/path" }
+
             @file_server.search(@request)
         end
 
-        it "should pass the request on to :path2instances" do
-            @configuration.expects(:file_path).with("my/local/file", :node => nil).returns("my/file")
-            @file_server.expects(:path2instances).with(@request, "my/file").returns []
+        it "should return nil if searching does not find any full paths" do
+            @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
+
+            @mount.expects(:search).with { |key, options| key == "rel/path" }.returns nil
+
+            @file_server.search(@request).should be_nil
+        end
+
+        it "should create a fileset with each returned path and merge them" do
+            @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
+
+            @mount.expects(:search).with { |key, options| key == "rel/path" }.returns %w{/one /two}
+
+            FileTest.stubs(:exist?).returns true
+
+            one = mock 'fileset_one'
+            Puppet::FileServing::Fileset.expects(:new).with("/one", @request).returns(one)
+            two = mock 'fileset_two'
+            Puppet::FileServing::Fileset.expects(:new).with("/two", @request).returns(two)
+
+            Puppet::FileServing::Fileset.expects(:merge).with(one, two).returns []
+
             @file_server.search(@request)
         end
 
-        it "should return the result of :path2instances" do
-            @configuration.expects(:file_path).with("my/local/file", :node => nil).returns("my/file")
-            @file_server.expects(:path2instances).with(@request, "my/file").returns :footest
-            @file_server.search(@request).should == :footest
+        it "should create an instance with each path resulting from the merger of the filesets" do
+            @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
+
+            @mount.expects(:search).with { |key, options| key == "rel/path" }.returns []
+
+            FileTest.stubs(:exist?).returns true
+
+            Puppet::FileServing::Fileset.expects(:merge).returns("one" => "/one", "two" => "/two")
+
+            one = stub 'one', :collect => nil
+            @model.expects(:new).with("/one", :relative_path => "one").returns one
+
+            two = stub 'two', :collect => nil
+            @model.expects(:new).with("/two", :relative_path => "two").returns two
+
+            # order can't be guaranteed
+            result = @file_server.search(@request)
+            result.should be_include(one)
+            result.should be_include(two)
+            result.length.should == 2
+        end
+
+        it "should set 'links' on the instances if it is set in the request options" do
+            @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
+
+            @mount.expects(:search).with { |key, options| key == "rel/path" }.returns []
+
+            FileTest.stubs(:exist?).returns true
+
+            Puppet::FileServing::Fileset.expects(:merge).returns("one" => "/one")
+
+            one = stub 'one', :collect => nil
+            @model.expects(:new).with("/one", :relative_path => "one").returns one
+            one.expects(:links=).with true
+
+            @request.options[:links] = true
+
+            @file_server.search(@request)
+        end
+
+        it "should collect the instances" do
+            @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
+
+            @mount.expects(:search).with { |key, options| key == "rel/path" }.returns []
+
+            FileTest.stubs(:exist?).returns true
+
+            Puppet::FileServing::Fileset.expects(:merge).returns("one" => "/one")
+
+            one = mock 'one'
+            @model.expects(:new).with("/one", :relative_path => "one").returns one
+            one.expects(:collect)
+
+            @file_server.search(@request)
+        end
+    end
+
+    describe "when checking authorization" do
+        before do
+            @request.method = :find
+        end
+
+        it "should return false when destroying" do
+            @request.method = :destroy
+            @file_server.should_not be_authorized(@request)
+        end
+
+        it "should return false when saving" do
+            @request.method = :save
+            @file_server.should_not be_authorized(@request)
+        end
+
+        it "should use the configuration to find the mount and relative path" do
+            @configuration.expects(:split_path).with(@request)
+
+            @file_server.authorized?(@request)
+        end
+
+        it "should return false if it cannot find the mount" do
+            @configuration.expects(:split_path).with(@request).returns(nil, nil)
+
+            @file_server.should_not be_authorized(@request)
+        end
+
+        it "should return the results of asking the mount whether the node and IP are authorized" do
+            @mount = stub 'mount'
+            @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
+
+            @request.options[:node] = "mynode"
+            @request.options[:ipaddress] = "myip"
+            @mount.expects(:allowed?).with("mynode", "myip").returns "something"
+
+            @file_server.authorized?(@request).should == "something"
         end
     end
 end

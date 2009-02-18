@@ -47,23 +47,33 @@ describe Puppet::FileServing::Configuration::Parser do
         end
 
         it "should create a new mount for each section in the configuration" do
-            mount1 = mock 'one'
-            mount2 = mock 'two'
-            Puppet::FileServing::Mount.expects(:new).with("one").returns(mount1)
-            Puppet::FileServing::Mount.expects(:new).with("two").returns(mount2)
+            mount1 = mock 'one', :validate => true
+            mount2 = mock 'two', :validate => true
+            Puppet::FileServing::Mount::File.expects(:new).with("one").returns(mount1)
+            Puppet::FileServing::Mount::File.expects(:new).with("two").returns(mount2)
             mock_file_content "[one]\n[two]\n"
             @parser.parse
         end
 
         # This test is almost the exact same as the previous one.
         it "should return a hash of the created mounts" do
-            mount1 = mock 'one'
-            mount2 = mock 'two'
-            Puppet::FileServing::Mount.expects(:new).with("one").returns(mount1)
-            Puppet::FileServing::Mount.expects(:new).with("two").returns(mount2)
+            mount1 = mock 'one', :validate => true
+            mount2 = mock 'two', :validate => true
+            Puppet::FileServing::Mount::File.expects(:new).with("one").returns(mount1)
+            Puppet::FileServing::Mount::File.expects(:new).with("two").returns(mount2)
             mock_file_content "[one]\n[two]\n"
 
-            @parser.parse.should == {"one" => mount1, "two" => mount2}
+            result = @parser.parse
+            result["one"].should equal(mount1)
+            result["two"].should equal(mount2)
+        end
+
+        it "should add plugins and modules mounts if they do not exist" do
+            mock_file_content "[one]\npath /foo"
+
+            result = @parser.parse
+            result["plugins"].should_not be_nil
+            result["modules"].should_not be_nil
         end
 
         it "should only allow mount names that are alphanumeric plus dashes" do
@@ -75,14 +85,34 @@ describe Puppet::FileServing::Configuration::Parser do
             mock_file_content "[one]\npath = /testing"
             proc { @parser.parse }.should raise_error(ArgumentError)
         end
+
+        it "should validate each created mount" do
+            mount1 = mock 'one'
+            Puppet::FileServing::Mount::File.expects(:new).with("one").returns(mount1)
+            mock_file_content "[one]\n"
+
+            mount1.expects(:validate)
+
+            @parser.parse
+        end
+
+        it "should fail if any mount does not pass validation" do
+            mount1 = mock 'one'
+            Puppet::FileServing::Mount::File.expects(:new).with("one").returns(mount1)
+            mock_file_content "[one]\n"
+
+            mount1.expects(:validate).raises RuntimeError
+
+            lambda { @parser.parse }.should raise_error(RuntimeError)
+        end
     end
 
     describe Puppet::FileServing::Configuration::Parser, " when parsing mount attributes" do
         include FSConfigurationParserTesting
 
         before do
-            @mount = stub 'mount', :name => "one"
-            Puppet::FileServing::Mount.expects(:new).with("one").returns(@mount)
+            @mount = stub 'testmount', :name => "one", :validate => true
+            Puppet::FileServing::Mount::File.expects(:new).with("one").returns(@mount)
             @parser.stubs(:add_modules_mount)
         end
 
@@ -120,14 +150,42 @@ describe Puppet::FileServing::Configuration::Parser do
         include FSConfigurationParserTesting
 
         before do
-            @mount = stub 'mount', :name => "modules"
-            Puppet::FileServing::Mount.expects(:new).with("modules").returns(@mount)
+            @mount = stub 'modulesmount', :name => "modules", :validate => true
+        end
+
+        it "should create an instance of the Modules Mount class" do
+            mock_file_content "[modules]\n"
+
+            Puppet::FileServing::Mount::Modules.expects(:new).with("modules").returns @mount
+            @parser.parse
         end
 
         it "should warn if a path is set" do
             mock_file_content "[modules]\npath /some/path\n"
+            Puppet::FileServing::Mount::Modules.expects(:new).with("modules").returns(@mount)
 
-            @modules.expects(:path=).never
+            Puppet.expects(:warning)
+            @parser.parse
+        end
+    end
+
+    describe Puppet::FileServing::Configuration::Parser, " when parsing the plugins mount" do
+        include FSConfigurationParserTesting
+
+        before do
+            @mount = stub 'pluginsmount', :name => "plugins", :validate => true
+        end
+
+        it "should create an instance of the Plugins Mount class" do
+            mock_file_content "[plugins]\n"
+
+            Puppet::FileServing::Mount::Plugins.expects(:new).with("plugins").returns @mount
+            @parser.parse
+        end
+
+        it "should warn if a path is set" do
+            mock_file_content "[plugins]\npath /some/path\n"
+
             Puppet.expects(:warning)
             @parser.parse
         end

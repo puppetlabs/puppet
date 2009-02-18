@@ -152,7 +152,11 @@ class Puppet::Module
 
         # Finally, a method for returning an individual file
         define_method(type.to_s.sub(/s$/, '')) do |file|
-            path = File.join(send(type), file)
+            if file
+                path = File.join(send(type), file)
+            else
+                path = send(type)
+            end
             return nil unless FileTest.exist?(path)
             return path
         end

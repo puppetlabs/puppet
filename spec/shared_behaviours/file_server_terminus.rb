@@ -20,7 +20,7 @@ describe "Puppet::Indirector::FileServerTerminus", :shared => true do
         File.open(File.join(@path, "myfile"), "w") { |f| f.print "my content" }
 
         # Use a real mount, so the integration is a bit deeper.
-        @mount1 = Puppet::FileServing::Configuration::Mount.new("one")
+        @mount1 = Puppet::FileServing::Configuration::Mount::File.new("one")
         @mount1.path = @path
 
         @parser = stub 'parser', :changed? => false

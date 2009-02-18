@@ -6,7 +6,6 @@
 require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/indirector/file_content/file'
-require 'puppet/indirector/module_files'
 
 describe Puppet::Indirector::DirectFileServer, " when interacting with the filesystem and the model" do
     before do

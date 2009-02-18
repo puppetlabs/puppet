@@ -46,19 +46,14 @@ class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
             }
         }
 
+        mk_default_mounts
+
+        validate()
+
         return @mounts
     end
 
     private
-
-    # Add the mount for getting files from modules.
-    def add_module_mount
-        unless @mounts[MODULES]
-            mount = Mount.new(MODULES)
-            mount.allow("*")
-            @mounts[MODULES] = mount
-        end
-    end
 
     # Allow a given pattern access to a mount.
     def allow(mount, value)
@@ -88,39 +83,47 @@ class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
         }
     end
 
+    def mk_default_mounts
+        ["plugins", "modules"].each do |name|
+            newmount(name) unless @mounts[name]
+        end
+    end
+
     # Create a new mount.
     def newmount(name)
         if @mounts.include?(name)
             raise ArgumentError, "%s is already mounted at %s" %
                 [@mounts[name], name], @count, file
         end
-        mount = Mount.new(name)
+        case name
+        when "modules"
+            mount = Mount::Modules.new(name)
+        when "plugins"
+            mount = Mount::Plugins.new(name)
+        else
+            mount = Mount::File.new(name)
+        end
         @mounts[name] = mount
         return mount
     end
 
     # Set the path for a mount.
     def path(mount, value)
-        if mount.name == MODULES
-            Puppet.warning "The '#{MODULES}' module can not have a path. Ignoring attempt to set it"
-        else
+        if mount.respond_to?(:path=)
             begin
                 mount.path = value
             rescue ArgumentError => detail
-                Puppet.err "Removing mount %s: %s" %
-                    [mount.name, detail]
+                Puppet.err "Removing mount %s: %s" % [mount.name, detail]
                 @mounts.delete(mount.name)
             end
+        else
+            Puppet.warning "The '#{mount.name}' module can not have a path. Ignoring attempt to set it"
         end
     end
 
     # Make sure all of our mounts are valid.  We have to do this after the fact
     # because details are added over time as the file is parsed.
     def validate
-        @mounts.each { |name, mount|
-            unless mount.valid?
-                raise ArgumentError, "No path specified for mount %s" % name
-            end
-        }
+        @mounts.each { |name, mount| mount.validate }
     end
 end

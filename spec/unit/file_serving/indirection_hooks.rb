@@ -50,74 +50,13 @@ describe Puppet::FileServing::IndirectionHooks do
                 @object.select_terminus(@request).should == :rest
             end
 
-            it "should not choose :rest when the settings name is 'puppet' and no server is specified" do
+            it "should choose :file_server when the settings name is 'puppet' and no server is specified" do
                 modules = mock 'modules'
-
-                @object.stubs(:terminus).with(:modules).returns(modules)
-                modules.stubs(:find_module).with("mymod", @request.options[:node]).returns nil
 
                 @request.expects(:protocol).returns "puppet"
                 @request.expects(:server).returns nil
                 Puppet.settings.expects(:value).with(:name).returns "puppet"
-                @object.select_terminus(@request).should_not == :rest
-            end
-        end
-
-        describe "and the terminus is not :rest or :file" do
-            before do
-                @request.stubs(:protocol).returns nil
-            end
-
-            it "should choose :modules if the mount name is 'modules'" do
-                @request.stubs(:key).returns "modules/mymod/file"
-                @object.select_terminus(@request).should == :modules
-            end
-
-            it "should choose :modules and provide a deprecation notice if a module exists with the mount name" do
-                modules = mock 'modules'
-
-                @object.expects(:terminus).with(:modules).returns(modules)
-                modules.expects(:find_module).with("mymod", @request.options[:node]).returns(:thing)
-
-                Puppet.expects(:warning)
-
-                @request.stubs(:key).returns "mymod/file"
-                @object.select_terminus(@request).should == :modules
-            end
-
-            it "should choose :file_server if the mount name is not 'modules' nor matches a module name" do
-                modules = mock 'modules'
-                @object.stubs(:terminus).with(:modules).returns(modules)
-                modules.stubs(:find_module).returns(nil)
-
-                @request.stubs(:key).returns "notmodules/file"
-
                 @object.select_terminus(@request).should == :file_server
-            end
-        end
-
-        describe "when looking for a module whose name matches the mount name" do
-            before do
-                @modules = mock 'modules'
-                @object.stubs(:terminus).with(:modules).returns(@modules)
-
-                @request.stubs(:key).returns "mymod/file"
-            end
-
-            it "should use the modules terminus to look up the module" do
-                @modules.expects(:find_module).with("mymod", @request.options[:node])
-                @object.select_terminus @request
-            end
-
-            it "should pass the node name to the modules terminus" do
-                @modules.expects(:find_module).with("mymod", @request.options[:node])
-                @object.select_terminus @request
-            end
-
-            it "should log a deprecation warning if a module is found" do
-                @modules.expects(:find_module).with("mymod", @request.options[:node]).returns(:something)
-                Puppet.expects(:warning)
-                @object.select_terminus @request
             end
         end
     end

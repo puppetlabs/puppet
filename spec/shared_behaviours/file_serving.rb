@@ -26,7 +26,7 @@ describe "Puppet::FileServing::Files", :shared => true do
 
     it "should use the file_server terminus when the 'puppet' URI scheme is used, no host name is present, and the process name is 'puppet'" do
         uri = "puppet:///fakemod/my/file"
-        Puppet::Node::Environment.stubs(:new).returns(stub("env", :name => "testing"))
+        Puppet::Node::Environment.stubs(:new).returns(stub("env", :name => "testing", :module => nil))
         Puppet.settings.stubs(:value).returns ""
         Puppet.settings.stubs(:value).with(:name).returns("puppet")
         Puppet.settings.stubs(:value).with(:fileserverconfig).returns("/whatever")
@@ -49,11 +49,12 @@ describe "Puppet::FileServing::Files", :shared => true do
 
     it "should use the configuration to test whether the request is allowed" do
         uri = "fakemod/my/file"
-        config = mock 'configuration'
+        mount = mock 'mount'
+        config = stub 'configuration', :split_path => [mount, "eh"]
         @indirection.terminus(:file_server).stubs(:configuration).returns config
 
         @indirection.terminus(:file_server).expects(:find)
-        config.expects(:authorized?).returns(true)
+        mount.expects(:allowed?).returns(true)
         @test_class.find(uri, :node => "foo", :ip => "bar")
     end
 end

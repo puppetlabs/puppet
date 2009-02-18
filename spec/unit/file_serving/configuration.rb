@@ -28,6 +28,7 @@ describe Puppet::FileServing::Configuration do
 
     before :each do
         @path = "/path/to/configuration/file.conf"
+        Puppet.settings.stubs(:value).with(:trace).returns(false)
         Puppet.settings.stubs(:value).with(:fileserverconfig).returns(@path)
     end
 
@@ -35,7 +36,7 @@ describe Puppet::FileServing::Configuration do
         Puppet::Util::Cacher.expire
     end
 
-    describe Puppet::FileServing::Configuration, "when initializing" do
+    describe "when initializing" do
 
         it "should work without a configuration file" do
             FileTest.stubs(:exists?).with(@path).returns(false)
@@ -55,7 +56,7 @@ describe Puppet::FileServing::Configuration do
         end
     end
 
-    describe Puppet::FileServing::Configuration, "when parsing the configuration file" do
+    describe "when parsing the configuration file" do
 
         before do
             FileTest.stubs(:exists?).with(@path).returns(true)
@@ -95,135 +96,113 @@ describe Puppet::FileServing::Configuration do
         end
     end
 
-    describe Puppet::FileServing::Configuration, "when finding files" do
-
-        before do
-            @parser = mock 'parser'
-            @parser.stubs(:changed?).returns true
-            FileTest.stubs(:exists?).with(@path).returns(true)
-            Puppet::FileServing::Configuration::Parser.stubs(:new).returns(@parser)
-
-            @mount1 = stub 'mount', :name => "one"
-            @mounts = {"one" => @mount1}
-
-            Facter.stubs(:value).with("hostname").returns("whatever")
-
-            @config = Puppet::FileServing::Configuration.create
+    describe "when finding the specified mount" do
+        it "should choose the named mount if one exists" do
+            config = Puppet::FileServing::Configuration.create
+            config.expects(:mounts).returns("one" => "foo")
+            config.find_mount("one", "mynode").should == "foo"
         end
 
-        it "should fail if the uri has a leading slash" do
-            @parser.expects(:parse).returns(@mounts)
-            proc { @config.file_path("/something") }.should raise_error(ArgumentError)
+        it "should modules mount's environment to find a matching module if the named module cannot be found" do
+            config = Puppet::FileServing::Configuration.create
+
+            mod = mock 'module'
+            env = mock 'environment'
+            env.expects(:module).with("foo").returns mod
+            mount = mock 'mount'
+            mount.expects(:environment).with("mynode").returns env
+
+            config.stubs(:mounts).returns("modules" => mount)
+            config.find_mount("foo", "mynode").should equal(mount)
         end
 
-        it "should fail if the uri does not start with a valid mount name" do
-            @parser.expects(:parse).returns(@mounts)
-            proc { @config.file_path("some.thing") }.should raise_error(ArgumentError)
-        end
+        it "should return nil if there is no such named mount and no module with the same name exists" do
+            config = Puppet::FileServing::Configuration.create
 
-        it "should use the first term after the first slash for the mount name" do
-            @parser.expects(:parse).returns(@mounts)
-            FileTest.stubs(:exists?).returns(true)
-            @mount1.expects(:file)
-            @config.file_path("one")
-        end
+            env = mock 'environment'
+            env.expects(:module).with("foo").returns nil
+            mount = mock 'mount'
+            mount.expects(:environment).with("mynode").returns env
 
-        it "should use the remainder of the URI after the mount name as the file name" do
-            @parser.expects(:parse).returns(@mounts)
-            @mount1.expects(:file).with("something/else", {})
-            FileTest.stubs(:exists?).returns(true)
-            @config.file_path("one/something/else")
-        end
-
-        it "should treat a bare name as a mount and no relative file" do
-            @parser.expects(:parse).returns(@mounts)
-            @mount1.expects(:file).with(nil, {})
-            FileTest.stubs(:exists?).returns(true)
-            @config.file_path("one")
-        end
-
-        it "should treat a name with a trailing slash equivalently to a name with no trailing slash" do
-            @parser.expects(:parse).returns(@mounts)
-            @mount1.expects(:file).with(nil, {})
-            FileTest.stubs(:exists?).returns(true)
-            @config.file_path("one/")
-        end
-
-        it "should return nil if the mount cannot be found" do
-            @parser.expects(:changed?).returns(true)
-            @parser.expects(:parse).returns({})
-            @config.file_path("one/something").should be_nil
-        end
-
-        it "should return nil if the mount does not contain the file" do
-            @parser.expects(:parse).returns(@mounts)
-            @mount1.expects(:file).with("something/else", {}).returns(nil)
-            @config.file_path("one/something/else").should be_nil
-        end
-
-        it "should return the fully qualified path if the mount exists" do
-            @parser.expects(:parse).returns(@mounts)
-            @mount1.expects(:file).with("something/else", {}).returns("/full/path")
-            @config.file_path("one/something/else").should == "/full/path"
-        end
-
-        it "should reparse the configuration file when it has changed" do
-            @mount1.stubs(:file).returns("whatever")
-            @parser.expects(:changed?).returns(true)
-            @parser.expects(:parse).returns(@mounts)
-            FileTest.stubs(:exists?).returns(true)
-            @config.file_path("one/something")
-
-            @parser.expects(:changed?).returns(true)
-            @parser.expects(:parse).returns({})
-            @config.file_path("one/something").should be_nil
+            config.stubs(:mounts).returns("modules" => mount)
+            config.find_mount("foo", "mynode").should be_nil
         end
     end
 
-    describe Puppet::FileServing::Configuration, "when checking authorization" do
-
+    describe "when finding the mount name and relative path in a request key" do
         before do
-            @parser = mock 'parser'
-            @parser.stubs(:changed?).returns true
-            FileTest.stubs(:exists?).with(@path).returns(true)
-            Puppet::FileServing::Configuration::Parser.stubs(:new).returns(@parser)
-
-            @mount1 = stub 'mount', :name => "one"
-            @mounts = {"one" => @mount1}
-            @parser.stubs(:parse).returns(@mounts)
-
-            Facter.stubs(:value).with("hostname").returns("whatever")
-
             @config = Puppet::FileServing::Configuration.create
+            @config.stubs(:find_mount)
+
+            @request = stub 'request', :key => "puppet:///foo/bar/baz", :options => {}
         end
 
-        it "should return false if the mount cannot be found" do
-            @config.authorized?("nope/my/file").should be_false
+        it "should reread the configuration" do
+            @config.expects(:readconfig)
+
+            @config.split_path(@request)
         end
 
-        it "should use the mount to determine authorization" do
-            @mount1.expects(:allowed?)
-            @config.authorized?("one/my/file")
+        it "should treat the first field of the URI path as the mount name" do
+            @config.expects(:find_mount).with { |name, node| name == "foo" }
+
+            @config.split_path(@request)
         end
 
-        it "should pass the client's name to the mount if provided" do
-            @mount1.expects(:allowed?).with("myhost", nil)
-            @config.authorized?("one/my/file", :node => "myhost")
+        it "should fail if the mount name is not alpha-numeric" do
+            @request.expects(:key).returns "puppet:///foo&bar/asdf"
+
+            lambda { @config.split_path(@request) }.should raise_error(ArgumentError)
         end
 
-        it "should pass the client's IP to the mount if provided" do
-            @mount1.expects(:allowed?).with("myhost", "myip")
-            @config.authorized?("one/my/file", :node => "myhost", :ipaddress => "myip")
+        it "should support dashes in the mount name" do
+            @request.expects(:key).returns "puppet:///foo-bar/asdf"
+
+            lambda { @config.split_path(@request) }.should_not raise_error(ArgumentError)
         end
 
-        it "should return true if the mount allows the client" do
-            @mount1.expects(:allowed?).returns(true)
-            @config.authorized?("one/my/file").should be_true
+        it "should use the mount name and node to find the mount" do
+            @config.expects(:find_mount).with { |name, node| name == "foo" and node == "mynode" }
+            @request.options[:node] = "mynode"
+
+            @config.split_path(@request)
         end
 
-        it "should return false if the mount denies the client"  do
-            @mount1.expects(:allowed?).returns(false)
-            @config.authorized?("one/my/file").should be_false
+        it "should return nil if the mount cannot be found" do
+            @config.expects(:find_mount).returns nil
+
+            @config.split_path(@request).should be_nil
+        end
+
+        it "should return the mount and the relative path if the mount is found" do
+            mount = stub 'mount', :name => "foo"
+            @config.expects(:find_mount).returns mount
+
+            @config.split_path(@request).should == [mount, "bar/baz"]
+        end
+
+        it "should remove any double slashes" do
+            @request.stubs(:key).returns "puppet:///foo/bar//baz"
+            mount = stub 'mount', :name => "foo"
+            @config.expects(:find_mount).returns mount
+
+            @config.split_path(@request).should == [mount, "bar/baz"]
+        end
+
+        it "should return the relative path as nil if it is an empty string" do
+            @request.expects(:key).returns "puppet:///foo"
+            mount = stub 'mount', :name => "foo"
+            @config.expects(:find_mount).returns mount
+
+            @config.split_path(@request).should == [mount, nil]
+        end
+
+        it "should add 'modules/' to the relative path if the modules mount is used but not specified, for backward compatibility" do
+            @request.expects(:key).returns "puppet:///foo/bar"
+            mount = stub 'mount', :name => "modules"
+            @config.expects(:find_mount).returns mount
+
+            @config.split_path(@request).should == [mount, "foo/bar"]
         end
     end
 end

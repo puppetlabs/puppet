@@ -32,6 +32,12 @@ describe Puppet::Module do
             FileTest.expects(:exist?).with(File.join("/foo/bar", filetype.to_s, "my/file")).returns false
             Puppet::Module.new("foo", "/foo/bar").send(filetype.to_s.sub(/s$/, ''), "my/file").should be_nil
         end
+
+        it "should return the base directory if asked for a nil path" do
+            path = File.join("/foo/bar", filetype.to_s)
+            FileTest.expects(:exist?).with(path).returns true
+            Puppet::Module.new("foo", "/foo/bar").send(filetype.to_s.sub(/s$/, ''), nil).should == path
+        end
     end
 end
 
