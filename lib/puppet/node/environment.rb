@@ -37,6 +37,22 @@ class Puppet::Node::Environment
         return nil
     end
 
+    def modulepath
+        dirs = self[:modulepath].split(File::PATH_SEPARATOR)
+        if ENV["PUPPETLIB"]
+            dirs = ENV["PUPPETLIB"].split(File::PATH_SEPARATOR) + dirs
+        end
+        dirs.collect do |dir|
+            if dir !~ /^#{File::SEPARATOR}/
+                File.join(Dir.getwd, dir)
+            else
+                dir
+            end
+        end.find_all do |p|
+            p =~ /^#{File::SEPARATOR}/ && FileTest.directory?(p)
+        end
+    end
+
     # Return all modules from this environment.
     def modules
         result = []

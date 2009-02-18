@@ -3,6 +3,7 @@
 require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/node/environment'
+require 'puppet/util/execution'
 
 describe Puppet::Node::Environment do
     it "should use the default environment if no name is provided while initializing an environment" do
@@ -16,6 +17,47 @@ describe Puppet::Node::Environment do
 
     it "should treat an environment specified as names or strings as equivalent" do
         Puppet::Node::Environment.new(:one).should equal(Puppet::Node::Environment.new("one"))
+    end
+
+    it "should consider its module path to be the environment-specific modulepath setting" do
+        FileTest.stubs(:directory?).returns true
+        env = Puppet::Node::Environment.new("testing")
+        module_path = %w{/one /two}.join(File::PATH_SEPARATOR)
+        env.expects(:[]).with(:modulepath).returns module_path
+
+        env.modulepath.should == %w{/one /two}
+    end
+
+    it "should prefix the value of the 'PUPPETLIB' environment variable to the module path if present" do
+        FileTest.stubs(:directory?).returns true
+        Puppet::Util::Execution.withenv("PUPPETLIB" => %w{/l1 /l2}.join(File::PATH_SEPARATOR)) do
+            env = Puppet::Node::Environment.new("testing")
+            module_path = %w{/one /two}.join(File::PATH_SEPARATOR)
+            env.expects(:[]).with(:modulepath).returns module_path
+
+            env.modulepath.should == %w{/l1 /l2 /one /two}
+        end
+    end
+
+    it "should not return non-directories in the module path" do
+        env = Puppet::Node::Environment.new("testing")
+        module_path = %w{/one /two}.join(File::PATH_SEPARATOR)
+        env.expects(:[]).with(:modulepath).returns module_path
+
+        FileTest.expects(:directory?).with("/one").returns true
+        FileTest.expects(:directory?).with("/two").returns false
+
+        env.modulepath.should == %w{/one}
+    end
+
+    it "should use the current working directory to fully-qualify unqualified paths" do
+        FileTest.stubs(:directory?).returns true
+        env = Puppet::Node::Environment.new("testing")
+        module_path = %w{/one two}.join(File::PATH_SEPARATOR)
+        env.expects(:[]).with(:modulepath).returns module_path
+
+        two = File.join(Dir.getwd, "two")
+        env.modulepath.should == ["/one", two]
     end
 
     describe "when modeling a specific environment" do
