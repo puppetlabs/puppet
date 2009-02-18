@@ -265,7 +265,7 @@ class Puppet::Indirector::Indirection
         return unless terminus.respond_to?(:authorized?)
 
         unless terminus.authorized?(request)
-            msg = "Not authorized to call %s on %s" % [request.method, request.key]
+            msg = "Not authorized to call %s on %s" % [request.method, request.to_s]
             unless request.options.empty?
                 msg += " with %s" % request.options.inspect
             end

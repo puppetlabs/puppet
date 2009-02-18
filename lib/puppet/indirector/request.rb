@@ -78,6 +78,11 @@ class Puppet::Indirector::Request
         method == :search
     end
 
+    def to_s
+        return uri if uri
+        return "/%s/%s" % [indirection_name, key]
+    end
+
     private
 
     # Parse the key as a URI, setting attributes appropriately.

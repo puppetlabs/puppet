@@ -163,4 +163,12 @@ describe Puppet::Indirector::Request do
     it "should not be considered plural if the method is not 'search'" do
         Puppet::Indirector::Request.new(:myind, :find, :key).should_not be_plural
     end
+
+    it "should use its uri, if it has one, as its string representation" do
+        Puppet::Indirector::Request.new(:myind, :find, "foo://bar/baz").to_s.should == "foo://bar/baz"
+    end
+
+    it "should use its indirection name and key, if it has no uri, as its string representation" do
+        Puppet::Indirector::Request.new(:myind, :find, "key") == "/myind/key"
+    end
 end
