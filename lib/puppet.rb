@@ -118,10 +118,7 @@ module Puppet
 
     # Parse the config file for this process.
     def self.parse_config
-        if Puppet[:config] and File.exists? Puppet[:config]
-            Puppet.debug "Parsing %s" % Puppet[:config]
-            Puppet.settings.parse(Puppet[:config])
-        end
+        Puppet.settings.parse
     end
 
     # XXX this should all be done using puppet objects, not using

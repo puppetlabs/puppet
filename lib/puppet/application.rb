@@ -212,7 +212,7 @@ class Puppet::Application
     def run
         run_preinit
         parse_options
-        Puppet.parse_config if should_parse_config?
+        Puppet.settings.parse if should_parse_config?
         run_setup
         run_command
     end

@@ -145,7 +145,8 @@ describe Puppet::Util::Settings do
     describe "when returning values" do
         before do
             @settings = Puppet::Util::Settings.new
-            @settings.setdefaults :section, :one => ["ONE", "a"], :two => ["$one TWO", "b"], :three => ["$one $two THREE", "c"], :four => ["$two $three FOUR", "d"]
+            @settings.setdefaults :section, :config => ["/my/file", "eh"], :one => ["ONE", "a"], :two => ["$one TWO", "b"], :three => ["$one $two THREE", "c"], :four => ["$two $three FOUR", "d"]
+            FileTest.stubs(:exist?).returns true
         end
 
         it "should provide a mechanism for returning set values" do
@@ -182,11 +183,8 @@ describe Puppet::Util::Settings do
 
         it "should not cache values such that information from one environment is returned for another environment" do
             text = "[env1]\none = oneval\n[env2]\none = twoval\n"
-            file = mock 'file'
-            file.stubs(:changed?).returns(true)
-            file.stubs(:file).returns("/whatever")
-            @settings.stubs(:read_file).with(file).returns(text)
-            @settings.parse(file)
+            @settings.stubs(:read_file).returns(text)
+            @settings.parse
 
             @settings.value(:one, "env1").should == "oneval"
             @settings.value(:one, "env2").should == "twoval"
@@ -204,8 +202,10 @@ describe Puppet::Util::Settings do
         before do
             @settings = Puppet::Util::Settings.new
             @settings.setdefaults :section,
+                :config => ["/my/file", "a"],
                 :one => ["ONE", "a"],
                 :name => ["myname", "w"]
+            FileTest.stubs(:exist?).returns true
         end
 
         it "should return default values if no values have been set" do
@@ -214,12 +214,9 @@ describe Puppet::Util::Settings do
 
         it "should return values set on the cli before values set in the configuration file" do
             text = "[main]\none = fileval\n"
-            file = mock 'file'
-            file.stubs(:changed?).returns(true)
-            file.stubs(:file).returns("/whatever")
-            @settings.stubs(:parse_file).returns(text)
+            @settings.stubs(:read_file).returns(text)
             @settings.handlearg("--one", "clival")
-            @settings.parse(file)
+            @settings.parse
 
             @settings[:one].should == "clival"
         end
@@ -232,11 +229,8 @@ describe Puppet::Util::Settings do
 
         it "should return values set in the executable-specific section before values set in the main section" do
             text = "[main]\none = mainval\n[myname]\none = nameval\n"
-            file = mock 'file'
-            file.stubs(:changed?).returns(true)
-            file.stubs(:file).returns("/whatever")
-            @settings.stubs(:read_file).with(file).returns(text)
-            @settings.parse(file)
+            @settings.stubs(:read_file).returns(text)
+            @settings.parse
 
             @settings[:one].should == "nameval"
         end
@@ -244,22 +238,15 @@ describe Puppet::Util::Settings do
         it "should not return values outside of its search path" do
             text = "[other]\none = oval\n"
             file = "/some/file"
-            file = mock 'file'
-            file.stubs(:changed?).returns(true)
-            file.stubs(:file).returns("/whatever")
-            @settings.stubs(:read_file).with(file).returns(text)
-            @settings.parse(file)
+            @settings.stubs(:read_file).returns(text)
+            @settings.parse
             @settings[:one].should == "ONE"
         end
 
         it "should return values in a specified environment" do
             text = "[env]\none = envval\n"
-            file = "/some/file"
-            file = mock 'file'
-            file.stubs(:changed?).returns(true)
-            file.stubs(:file).returns("/whatever")
-            @settings.stubs(:read_file).with(file).returns(text)
-            @settings.parse(file)
+            @settings.stubs(:read_file).returns(text)
+            @settings.parse
             @settings.value(:one, "env").should == "envval"
         end
 
@@ -271,12 +258,8 @@ describe Puppet::Util::Settings do
 
         it "should return values in a specified environment before values in the main or name sections" do
             text = "[env]\none = envval\n[main]\none = mainval\n[myname]\none = nameval\n"
-            file = "/some/file"
-            file = mock 'file'
-            file.stubs(:changed?).returns(true)
-            file.stubs(:file).returns("/whatever")
-            @settings.stubs(:read_file).with(file).returns(text)
-            @settings.parse(file)
+            @settings.stubs(:read_file).returns(text)
+            @settings.parse
             @settings.value(:one, "env").should == "envval"
         end
     end
@@ -284,33 +267,53 @@ describe Puppet::Util::Settings do
     describe "when parsing its configuration" do
         before do
             @settings = Puppet::Util::Settings.new
-            @settings.setdefaults :section, :one => ["ONE", "a"], :two => ["$one TWO", "b"], :three => ["$one $two THREE", "c"]
+            @file = "/some/file"
+            @settings.setdefaults :section, :config => ["/some/file", "eh"], :one => ["ONE", "a"], :two => ["$one TWO", "b"], :three => ["$one $two THREE", "c"]
+            FileTest.stubs(:exist?).returns true
         end
 
-        it "should set a timer that triggers reparsing" do
-            @settings.expects(:set_filetimeout_timer)
-            file = "/some/file"
-            @settings.expects(:read_file).with(file).returns("[main]")
+        it "should use its current ':config' value for the file to parse" do
+            @settings[:config] = "/my/file"
 
-            @settings.parse(file)
+            File.expects(:read).with("/my/file").returns("[main]")
+
+            @settings.parse
+        end
+
+        it "should fail if no configuration setting is defined" do
+            @settings = Puppet::Util::Settings.new
+            lambda { @settings.parse }.should raise_error(RuntimeError)
+        end
+
+        it "should not try to parse non-existent files" do
+            FileTest.expects(:exist?).with("/some/file").returns false
+
+            File.expects(:read).with("/some/file").never
+
+            @settings.parse
+        end
+
+        it "should set a timer that triggers reparsing, even if the file does not exist" do
+            FileTest.expects(:exist?).returns false
+            @settings.expects(:set_filetimeout_timer)
+
+            @settings.parse
         end
 
         it "should return values set in the configuration file" do
             text = "[main]
             one = fileval
             "
-            file = "/some/file"
-            @settings.expects(:read_file).with(file).returns(text)
-            @settings.parse(file)
+            @settings.expects(:read_file).returns(text)
+            @settings.parse
             @settings[:one].should == "fileval"
         end
 
         #484 - this should probably be in the regression area
         it "should not throw an exception on unknown parameters" do
             text = "[main]\nnosuchparam = mval\n"
-            file = "/some/file"
-            @settings.expects(:read_file).with(file).returns(text)
-            lambda { @settings.parse(file) }.should_not raise_error
+            @settings.expects(:read_file).returns(text)
+            lambda { @settings.parse }.should_not raise_error
         end
 
         it "should convert booleans in the configuration file into Ruby booleans" do
@@ -318,9 +321,8 @@ describe Puppet::Util::Settings do
             one = true
             two = false
             "
-            file = "/some/file"
-            @settings.expects(:read_file).with(file).returns(text)
-            @settings.parse(file)
+            @settings.expects(:read_file).returns(text)
+            @settings.parse
             @settings[:one].should == true
             @settings[:two].should == false
         end
@@ -329,9 +331,8 @@ describe Puppet::Util::Settings do
             text = "[main]
             one = 65
             "
-            file = "/some/file"
-            @settings.expects(:read_file).with(file).returns(text)
-            @settings.parse(file)
+            @settings.expects(:read_file).returns(text)
+            @settings.parse
             @settings[:one].should == 65
         end
 
@@ -341,9 +342,8 @@ describe Puppet::Util::Settings do
             text = "[main]
             myfile = /other/file {owner = luke, group = luke, mode = 644}
             "
-            file = "/some/file"
-            @settings.expects(:read_file).with(file).returns(text)
-            @settings.parse(file)
+            @settings.expects(:read_file).returns(text)
+            @settings.parse
             @settings[:myfile].should == "/other/file"
             @settings.metadata(:myfile).should == {:owner => "luke", :group => "luke", :mode => "644"}
         end
@@ -355,8 +355,8 @@ describe Puppet::Util::Settings do
             myfile = /other/file {owner = luke}
             "
             file = "/some/file"
-            @settings.expects(:read_file).with(file).returns(text)
-            @settings.parse(file)
+            @settings.expects(:read_file).returns(text)
+            @settings.parse
             @settings[:myfile].should == "/other/file"
             @settings.metadata(:myfile).should == {:owner => "luke"}
         end
@@ -368,9 +368,8 @@ describe Puppet::Util::Settings do
             text = "[main]
             mysetting = setval
             "
-            file = "/some/file"
-            @settings.expects(:read_file).with(file).returns(text)
-            @settings.parse(file)
+            @settings.expects(:read_file).returns(text)
+            @settings.parse
             values.should == ["setval"]
         end
 
@@ -383,9 +382,8 @@ describe Puppet::Util::Settings do
             [puppet]
             mysetting = other
             "
-            file = "/some/file"
-            @settings.expects(:read_file).with(file).returns(text)
-            @settings.parse(file)
+            @settings.expects(:read_file).returns(text)
+            @settings.parse
             values.should == ["setval"]
         end
 
@@ -400,9 +398,8 @@ describe Puppet::Util::Settings do
             [yay]
             mysetting = other
             "
-            file = "/some/file"
-            @settings.expects(:read_file).with(file).returns(text)
-            @settings.parse(file)
+            @settings.expects(:read_file).returns(text)
+            @settings.parse
             values.should == ["other"]
         end
 
@@ -414,9 +411,8 @@ describe Puppet::Util::Settings do
             text = "[main]
             mysetting = $base/setval
             "
-            file = "/some/file"
-            @settings.expects(:read_file).with(file).returns(text)
-            @settings.parse(file)
+            @settings.expects(:read_file).returns(text)
+            @settings.parse
             values.should == ["yay/setval"]
         end
 
@@ -427,7 +423,7 @@ describe Puppet::Util::Settings do
             myarg =
             "
             @settings.stubs(:read_file).returns(text)
-            @settings.parse("/some/file")
+            @settings.parse
             @settings[:myarg].should == ""
         end
     end
@@ -435,7 +431,59 @@ describe Puppet::Util::Settings do
     describe "when reparsing its configuration" do
         before do
             @settings = Puppet::Util::Settings.new
-            @settings.setdefaults :section, :one => ["ONE", "a"], :two => ["$one TWO", "b"], :three => ["$one $two THREE", "c"]
+            @settings.setdefaults :section, :config => ["/test/file", "a"], :one => ["ONE", "a"], :two => ["$one TWO", "b"], :three => ["$one $two THREE", "c"]
+            FileTest.stubs(:exist?).returns true
+        end
+
+        it "should use a LoadedFile instance to determine if the file has changed" do
+            file = mock 'file'
+            Puppet::Util::LoadedFile.expects(:new).with("/test/file").returns file
+
+            file.expects(:changed?)
+
+            @settings.stubs(:parse)
+            @settings.reparse
+        end
+
+        it "should not create the LoadedFile instance and should not parse if the file does not exist" do
+            FileTest.expects(:exist?).with("/test/file").returns false
+            Puppet::Util::LoadedFile.expects(:new).never
+
+            @settings.expects(:parse).never
+
+            @settings.reparse
+        end
+
+        it "should not reparse if the file has not changed" do
+            file = mock 'file'
+            Puppet::Util::LoadedFile.expects(:new).with("/test/file").returns file
+
+            file.expects(:changed?).returns false
+
+            @settings.expects(:parse).never
+
+            @settings.reparse
+        end
+
+        it "should reparse if the file has changed" do
+            file = stub 'file', :file => "/test/file"
+            Puppet::Util::LoadedFile.expects(:new).with("/test/file").returns file
+
+            file.expects(:changed?).returns true
+
+            @settings.expects(:parse)
+
+            @settings.reparse
+        end
+
+        it "should use a cached LoadedFile instance" do
+            first = mock 'first'
+            second = mock 'second'
+            Puppet::Util::LoadedFile.expects(:new).times(2).with("/test/file").returns(first).then.returns(second)
+
+            @settings.file.should equal(first)
+            Puppet::Util::Cacher.expire
+            @settings.file.should equal(second)
         end
 
         it "should replace in-memory values with on-file values" do
@@ -453,7 +501,7 @@ describe Puppet::Util::Settings do
             # This is kinda ridiculous - the reason it parses twice is that
             # it goes to parse again when we ask for the value, because the
             # mock always says it should get reparsed.
-            @settings.expects(:read_file).with(file).returns(text).times(2)
+            @settings.stubs(:read_file).returns(text)
             @settings.reparse
             @settings[:one].should == "disk-replace"
         end
@@ -462,10 +510,8 @@ describe Puppet::Util::Settings do
             @settings.handlearg("--one", "clival")
 
             text = "[main]\none = on-disk\n"
-            file = mock 'file'
-            file.stubs(:file).returns("/test/file")
-            @settings.stubs(:read_file).with(file).returns(text)
-            @settings.parse(file)
+            @settings.stubs(:read_file).returns(text)
+            @settings.parse
 
             @settings[:one].should == "clival"
         end
@@ -473,17 +519,14 @@ describe Puppet::Util::Settings do
         it "should remove in-memory values that are no longer set in the file" do
             # Init the value
             text = "[main]\none = disk-init\n"
-            file = mock 'file'
-            file.stubs(:changed?).returns(true)
-            file.stubs(:file).returns("/test/file")
-            @settings.expects(:read_file).with(file).returns(text)
-            @settings.parse(file)
+            @settings.expects(:read_file).returns(text)
+            @settings.parse
             @settings[:one].should == "disk-init"
 
             # Now replace the value
             text = "[main]\ntwo = disk-replace\n"
-            @settings.expects(:read_file).with(file).returns(text)
-            @settings.parse(file)
+            @settings.expects(:read_file).returns(text)
+            @settings.parse
             #@settings.reparse
 
             # The originally-overridden value should be replaced with the default
@@ -862,6 +905,12 @@ describe Puppet::Util::Settings do
         it "should do nothing if no filetimeout setting is available" do
             @settings.expects(:value).with(:filetimeout).returns nil
             EventLoop::Timer.expects(:new).never
+            @settings.set_filetimeout_timer
+        end
+
+        it "should always convert the timer interval to an integer" do
+            @settings.expects(:value).with(:filetimeout).returns "10"
+            EventLoop::Timer.expects(:new).with(:interval => 10, :start? => true, :tolerance => 1)
             @settings.set_filetimeout_timer
         end
 

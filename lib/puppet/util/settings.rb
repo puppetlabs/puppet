@@ -4,10 +4,13 @@ require 'puppet/transportable'
 require 'getoptlong'
 
 require 'puppet/external/event-loop'
+require 'puppet/util/cacher'
+require 'puppet/util/LoadedFile'
 
 # The class for handling configuration files.
 class Puppet::Util::Settings
     include Enumerable
+    include Puppet::Util::Cacher
 
     attr_accessor :file
     attr_reader :timer
@@ -330,7 +333,18 @@ class Puppet::Util::Settings
 
     # Parse the configuration file.  Just provides
     # thread safety.
-    def parse(file)
+    def parse
+        raise "No :config setting defined; cannot parse unknown config file" unless self[:config]
+
+        # Create a timer so that this file will get checked automatically
+        # and reparsed if necessary.
+        set_filetimeout_timer()
+
+        # Retrieve the value now, so that we don't lose it in the 'clear' call.
+        file = self[:config]
+
+        return unless FileTest.exist?(file)
+
         # We have to clear outside of the sync, because it's
         # also using synchronize().
         clear(true)
@@ -422,12 +436,20 @@ class Puppet::Util::Settings
         }
     end
 
+    # Cache this in an easily clearable way, since we were
+    # having trouble cleaning it up after tests.
+    cached_attr(:file) do
+        if path = self[:config] and FileTest.exist?(path)
+            Puppet::Util::LoadedFile.new(path)
+        end
+    end
+
     # Reparse our config file, if necessary.
     def reparse
-        if defined? @file and @file.changed?
-            Puppet.notice "Reparsing %s" % @file.file
+        if file and file.changed?
+            Puppet.notice "Reparsing %s" % file.file
             @sync.synchronize do
-                parse(@file)
+                parse
             end
             reuse()
         end
@@ -506,8 +528,8 @@ class Puppet::Util::Settings
 
     # Create a timer to check whether the file should be reparsed.
     def set_filetimeout_timer
-        return unless timeout = self[:filetimeout] and timeout > 0
-        EventLoop::Timer.new(:interval => timeout, :tolerance => 1, :start? => true) { self.reparse() }
+        return unless timeout = self[:filetimeout] and timeout = Integer(timeout) and timeout > 0
+        timer = EventLoop::Timer.new(:interval => timeout, :tolerance => 1, :start? => true) { self.reparse() }
     end
 
     # Convert the settings we manage into a catalog full of resources that model those settings.
@@ -619,7 +641,7 @@ Generated on #{Time.now}.
         return nil unless @config.include?(param)
 
         # Yay, recursion.
-        self.reparse() unless param == :filetimeout
+        #self.reparse() unless [:config, :filetimeout].include?(param)
 
         # Check the cache first.  It needs to be a per-environment
         # cache so that we don't spread values from one env
@@ -822,10 +844,6 @@ Generated on #{Time.now}.
     def parse_file(file)
         text = read_file(file)
 
-        # Create a timer so that this file will get checked automatically
-        # and reparsed if necessary.
-        set_filetimeout_timer()
-
         result = Hash.new { |names, name|
             names[name] = {}
         }
@@ -881,14 +899,8 @@ Generated on #{Time.now}.
 
     # Read the file in.
     def read_file(file)
-        if file.is_a? Puppet::Util::LoadedFile
-            @file = file
-        else
-            @file = Puppet::Util::LoadedFile.new(file)
-        end
-
         begin
-            return File.read(@file.file)
+            return File.read(file)
         rescue Errno::ENOENT
             raise ArgumentError, "No such file %s" % file
         rescue Errno::EACCES

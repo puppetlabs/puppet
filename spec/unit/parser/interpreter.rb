@@ -35,11 +35,9 @@ describe Puppet::Parser::Interpreter do
             # Set our per-environment values.  We can't just stub :value, because
             # it's called by too much of the rest of the code.
             text = "[env1]\nmanifest = /t/env1.pp\n[env2]\nmanifest = /t/env2.pp"
-            file = mock 'file'
-            file.stubs(:changed?).returns(true)
-            file.stubs(:file).returns("/whatever")
-            Puppet.settings.stubs(:read_file).with(file).returns(text)
-            Puppet.settings.parse(file)
+            FileTest.stubs(:exist?).returns true
+            Puppet.settings.stubs(:read_file).returns(text)
+            Puppet.settings.parse
 
             parser1 = mock 'parser1'
             Puppet::Parser::Parser.expects(:new).with(:environment => :env1).returns(parser1)

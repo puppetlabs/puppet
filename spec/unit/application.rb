@@ -223,7 +223,7 @@ describe Puppet::Application do
             @app.stubs(:run_command)
             @app.should_parse_config
 
-            Puppet.expects(:parse_config)
+            Puppet.settings.expects(:parse)
 
             @app.run
         end
@@ -232,7 +232,7 @@ describe Puppet::Application do
             @app.stubs(:run_command)
             @app.should_not_parse_config
 
-            Puppet.expects(:parse_config).never
+            Puppet.settings.expects(:parse).never
 
             @app.run
         end
@@ -241,7 +241,7 @@ describe Puppet::Application do
             @app.stubs(:run_command)
             @app.stubs(:should_parse_config?).returns(true)
 
-            Puppet.expects(:parse_config)
+            Puppet.settings.expects(:parse)
 
             @app.run
         end
