@@ -81,7 +81,7 @@ describe "puppetdoc" do
         end
 
         it "should store the mode if valid" do
-            Puppet::Util::Reference.stubs(:modes).returns(stub 'mode', :include? => true)
+            Puppet::Util::Reference.stubs(:modes).returns(stub('mode', :include? => true))
 
             @puppetdoc.options.expects(:[]=).with(:mode, :mode)
 
