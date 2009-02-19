@@ -60,7 +60,7 @@ describe Puppet::Application do
         it "should add Puppet.settings options to OptionParser" do
             Puppet.settings.stubs(:optparse_addargs).returns( [["--option","-o", "Funny Option"]])
 
-            @app.opt_parser.expects(:on).with { |*arg,&block| arg == ["--option","-o", "Funny Option"] }
+            @app.opt_parser.expects(:on).with { |*arg| arg == ["--option","-o", "Funny Option"] }
 
             @app.parse_options
         end
@@ -352,7 +352,7 @@ describe Puppet::Application do
                 end
 
                 it "should declare the option to OptionParser" do
-                    @app.opt_parser.expects(:on).with { |*arg,&block| arg[0] == "--[no-]test3" }
+                    @app.opt_parser.expects(:on).with { |*arg| arg[0] == "--[no-]test3" }
 
                     @app.option("--[no-]test3","-t") do
                     end
