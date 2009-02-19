@@ -54,16 +54,6 @@ describe "Puppet" do
             @puppet.options.stubs(:[]).with(any_parameters)
         end
 
-        it "should parse additionnal Puppet config if set to" do
-            Puppet.stubs(:[]).with(:noop)
-            Puppet.stubs(:[]).with(:config).returns("file.conf")
-            File.stubs(:exists?).with("file.conf").returns(true)
-
-            Puppet.settings.expects(:parse).with("file.conf")
-
-            @puppet.run_setup
-        end
-
         it "should set show_diff on --noop" do
             Puppet.stubs(:[]=)
             Puppet.stubs(:[]).with(:config)

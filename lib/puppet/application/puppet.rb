@@ -99,11 +99,6 @@ Puppet::Application.new(:puppet) do
     end
 
     setup do
-        # Now parse the config
-        if Puppet[:config] and File.exists? Puppet[:config]
-            Puppet.settings.parse(Puppet[:config])
-        end
-
         if Puppet.settings.print_configs?
             exit(Puppet.settings.print_configs ? 0 : 1)
         end
