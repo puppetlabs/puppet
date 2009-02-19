@@ -9,6 +9,8 @@ describe "puppetdoc" do
         @puppetdoc = Puppet::Application[:puppetdoc]
         @puppetdoc.stubs(:puts)
         @puppetdoc.run_preinit
+        Puppet::Util::Log.stubs(:newdestination)
+        Puppet::Util::Log.stubs(:level=)
     end
 
     it "should ask Puppet::Application to not parse Puppet configuration file" do

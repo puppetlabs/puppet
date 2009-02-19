@@ -9,6 +9,8 @@ describe "puppetrun" do
     before :each do
         Puppet::Util::Ldap::Connection.stubs(:new).returns(stub_everything)
         @puppetrun = Puppet::Application[:puppetrun]
+        Puppet::Util::Log.stubs(:newdestination)
+        Puppet::Util::Log.stubs(:level=)
     end
 
     it "should ask Puppet::Application to not parse Puppet configuration file" do

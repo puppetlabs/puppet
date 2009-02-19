@@ -7,6 +7,8 @@ require 'puppet/application/puppet'
 describe "Puppet" do
     before :each do
         @puppet = Puppet::Application[:puppet]
+        Puppet::Util::Log.stubs(:newdestination)
+        Puppet::Util::Log.stubs(:level=)
     end
 
     [:debug,:execute,:loadclasses,:verbose,:use_nodes,:detailed_exitcodes].each do |option|

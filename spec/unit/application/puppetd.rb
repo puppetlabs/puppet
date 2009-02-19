@@ -14,6 +14,13 @@ describe "puppetd" do
         @agent = stub_everything 'agent'
         Puppet::Agent.stubs(:new).returns(@agent)
         @puppetd.run_preinit
+        Puppet::Util::Log.stubs(:newdestination)
+        Puppet::Util::Log.stubs(:level=)
+
+        Puppet::Node.stubs(:terminus_class=)
+        Puppet::Node.stubs(:cache_class=)
+        Puppet::Node::Facts.stubs(:terminus_class=)
+        Puppet::Node::Facts.stubs(:cache_class=)
     end
 
     it "should ask Puppet::Application to parse Puppet configuration file" do

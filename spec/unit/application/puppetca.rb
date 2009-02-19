@@ -7,6 +7,8 @@ require 'puppet/application/puppetca'
 describe "PuppetCA" do
     before :each do
         @puppetca = Puppet::Application[:puppetca]
+        Puppet::Util::Log.stubs(:newdestination)
+        Puppet::Util::Log.stubs(:level=)
     end
 
     it "should ask Puppet::Application to parse Puppet configuration file" do

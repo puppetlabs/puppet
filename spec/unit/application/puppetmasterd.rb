@@ -9,6 +9,15 @@ describe "PuppetMaster" do
         @puppetmasterd = Puppet::Application[:puppetmasterd]
         @daemon = stub_everything 'daemon'
         Puppet::Daemon.stubs(:new).returns(@daemon)
+        Puppet::Util::Log.stubs(:newdestination)
+        Puppet::Util::Log.stubs(:level=)
+
+        Puppet::Node.stubs(:terminus_class=)
+        Puppet::Node.stubs(:cache_class=)
+        Puppet::Node::Facts.stubs(:terminus_class=)
+        Puppet::Node::Facts.stubs(:cache_class=)
+        Puppet::Transaction::Report.stubs(:terminus_class=)
+        Puppet::Resource::Catalog.stubs(:terminus_class=)
     end
 
     it "should ask Puppet::Application to parse Puppet configuration file" do
