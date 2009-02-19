@@ -79,10 +79,12 @@ describe Puppet::Indirector::Request do
         describe "and the request key is a URI" do
             describe "and the URI is a 'file' URI" do
                 before do
-                    @request = Puppet::Indirector::Request.new(:ind, :method, "file:///my/file")
+                    @request = Puppet::Indirector::Request.new(:ind, :method, "file:///my/file with spaces")
                 end
 
-                it "should set the request key to the full file path" do @request.key.should == "/my/file" end
+                it "should set the request key to the unescaped full file path" do
+                    @request.key.should == "/my/file with spaces"
+                end
 
                 it "should not set the protocol" do
                     @request.protocol.should be_nil
@@ -118,8 +120,8 @@ describe Puppet::Indirector::Request do
                 Puppet::Indirector::Request.new(:ind, :method, "http://host/stuff").port.should == 80
             end
 
-            it "should set the request key to the unqualified path from the URI" do
-                Puppet::Indirector::Request.new(:ind, :method, "http:///stuff").key.should == "stuff"
+            it "should set the request key to the unescaped unqualified path from the URI" do
+                Puppet::Indirector::Request.new(:ind, :method, "http:///stuff with spaces").key.should == "stuff with spaces"
             end
 
             it "should set the :uri attribute to the full URI" do
@@ -170,5 +172,9 @@ describe Puppet::Indirector::Request do
 
     it "should use its indirection name and key, if it has no uri, as its string representation" do
         Puppet::Indirector::Request.new(:myind, :find, "key") == "/myind/key"
+    end
+
+    it "should be able to return the URI-escaped key" do
+        Puppet::Indirector::Request.new(:myind, :find, "my key").escaped_key.should == URI.escape("my key")
     end
 end

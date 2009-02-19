@@ -62,12 +62,12 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     end
 
     def find(request)
-        deserialize network(request).get("/#{indirection.name}/#{request.key}#{query_string(request)}", headers)
+        deserialize network(request).get("/#{indirection.name}/#{request.escaped_key}#{query_string(request)}", headers)
     end
     
     def search(request)
         if request.key
-            path = "/#{indirection.name}s/#{request.key}#{query_string(request)}"
+            path = "/#{indirection.name}s/#{request.escaped_key}#{query_string(request)}"
         else
             path = "/#{indirection.name}s#{query_string(request)}"
         end
@@ -79,7 +79,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     
     def destroy(request)
         raise ArgumentError, "DELETE does not accept options" unless request.options.empty?
-        deserialize network(request).delete("/#{indirection.name}/#{request.key}", headers)
+        deserialize network(request).delete("/#{indirection.name}/#{request.escaped_key}", headers)
     end
     
     def save(request)

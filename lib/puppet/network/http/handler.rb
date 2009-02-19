@@ -75,6 +75,7 @@ module Puppet::Network::HTTP::Handler
     # Execute our find.
     def do_find(request, response)
         key = request_key(request) || raise(ArgumentError, "Could not locate lookup key in request path [#{path(request)}]")
+        key = URI.unescape(key)
         args = params(request)
         unless result = model.find(key, args)
             return do_exception(response, "Could not find %s %s" % [model.name, key], 404)
@@ -93,6 +94,7 @@ module Puppet::Network::HTTP::Handler
     def do_search(request, response)
         args = params(request)
         if key = request_key(request)
+            key = URI.unescape(key)
             result = model.search(key, args)
         else
             result = model.search(args)
@@ -110,6 +112,7 @@ module Puppet::Network::HTTP::Handler
     # Execute our destroy.
     def do_destroy(request, response)
         key = request_key(request) || raise(ArgumentError, "Could not locate lookup key in request path [#{path(request)}]")
+        key = URI.unescape(key)
         args = params(request)
         result = model.destroy(key, args)
 

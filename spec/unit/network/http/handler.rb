@@ -229,10 +229,18 @@ describe Puppet::Network::HTTP::Handler do
                 Puppet::Network::FormatHandler.stubs(:format).returns @format
             end
 
-            it "should fail to find model if key is not specified" do
+            it "should fail if the key is not specified" do
                 @handler.stubs(:request_key).returns(nil)
 
                 lambda { @handler.do_find(@request, @response) }.should raise_error(ArgumentError)
+            end
+
+            it "should use the escaped request key" do
+                @handler.stubs(:request_key).returns URI.escape("my key")
+                @model_class.expects(:find).with do |key, args|
+                    key == "my key"
+                end.returns @result
+                @handler.do_find(@request, @response)
             end
 
             it "should use a common method for determining the request parameters" do
@@ -336,9 +344,9 @@ describe Puppet::Network::HTTP::Handler do
                 @handler.do_search(@request, @response)
             end
 
-            it "should use a request key if one is provided" do
-                @handler.expects(:request_key).with(@request).returns "foo"
-                @model_class.expects(:search).with { |key, args| key == "foo" }.returns @result
+            it "should use an escaped request key if one is provided" do
+                @handler.expects(:request_key).with(@request).returns URI.escape("foo bar")
+                @model_class.expects(:search).with { |key, args| key == "foo bar" }.returns @result
                 @handler.do_search(@request, @response)
             end
 
@@ -400,6 +408,14 @@ describe Puppet::Network::HTTP::Handler do
             it "should fail to destroy model if key is not specified" do
                 @handler.expects(:request_key).returns nil
                 lambda { @handler.do_destroy(@request, @response) }.should raise_error(ArgumentError)
+            end
+
+            it "should use the escaped request key to destroy the instance in the model" do
+                @handler.expects(:request_key).returns URI.escape("foo bar")
+                @model_class.expects(:destroy).with do |key, args|
+                    key == "foo bar"
+                end
+                @handler.do_destroy(@request, @response)
             end
 
             it "should use a common method for determining the request parameters" do

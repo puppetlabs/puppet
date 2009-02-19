@@ -9,10 +9,8 @@ require 'puppet/file_serving/mount/file'
 require 'puppet/file_serving/mount/modules'
 require 'puppet/file_serving/mount/plugins'
 require 'puppet/util/cacher'
-require 'puppet/util/uri_helper'
 
 class Puppet::FileServing::Configuration
-    include Puppet::Util::URIHelper
     require 'puppet/file_serving/configuration/parser'
 
     class << self
@@ -70,9 +68,7 @@ class Puppet::FileServing::Configuration
         # Reparse the configuration if necessary.
         readconfig
 
-        uri = key2uri(request.key)
-
-        mount_name, path = uri.path.sub(/^\//, '').split(File::Separator, 2)
+        mount_name, path = request.key.split(File::Separator, 2)
 
         raise(ArgumentError, "Cannot find file: Invalid path '%s'" % mount_name) unless mount_name =~ %r{^[-\w]+$}
 

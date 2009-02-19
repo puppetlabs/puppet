@@ -1,3 +1,4 @@
+require 'uri'
 require 'puppet/indirector'
 
 # This class encapsulates all of the information you need to make an
@@ -12,6 +13,10 @@ class Puppet::Indirector::Request
     def authenticated?
         # Double negative, so we just get true or false
         ! ! authenticated
+    end
+
+    def escaped_key
+        URI.escape(key)
     end
 
     # LAK:NOTE This is a messy interface to the cache, and it's only
@@ -96,7 +101,7 @@ class Puppet::Indirector::Request
 
         # Just short-circuit these to full paths
         if uri.scheme == "file"
-            @key = uri.path
+            @key = URI.unescape(uri.path)
             return
         end
 
@@ -111,6 +116,6 @@ class Puppet::Indirector::Request
         end
 
         @protocol = uri.scheme
-        @key = uri.path.sub(/^\//, '')
+        @key = URI.unescape(uri.path.sub(/^\//, ''))
     end
 end

@@ -211,7 +211,8 @@ describe Puppet::Indirector::REST do
             @connection = stub('mock http connection', :get => @response)
             @searcher.stubs(:network).returns(@connection)    # neuter the network connection
 
-            @request = stub 'request', :key => 'foo', :options => {}
+            # Use a key with spaces, so we can test escaping
+            @request = stub 'request', :escaped_key => 'foo', :options => {}
         end
 
         it "should call the GET http method on a network connection" do
@@ -227,7 +228,7 @@ describe Puppet::Indirector::REST do
             @searcher.find(@request).should == 'myobject'
         end        
 
-        it "should use the indirection name and request key to create the path" do
+        it "should use the indirection name and escaped request key to create the path" do
             should_path = "/%s/%s" % [@indirection.name.to_s, "foo"]
             @connection.expects(:get).with { |path, args| path == should_path }.returns(@response)
             @searcher.find(@request)
@@ -258,7 +259,7 @@ describe Puppet::Indirector::REST do
 
             @model.stubs(:convert_from_multiple)
 
-            @request = stub 'request', :key => 'foo', :options => {}
+            @request = stub 'request', :escaped_key => 'foo', :options => {}, :key => "bar"
         end
 
         it "should call the GET http method on a network connection" do
@@ -281,7 +282,7 @@ describe Puppet::Indirector::REST do
             @searcher.search(@request)
         end
 
-        it "should use the plural indirection name and request key to create the path if the request key is set" do
+        it "should use the plural indirection name and escaped request key to create the path if the request key is set" do
             should_path = "/%ss/%s" % [@indirection.name.to_s, "foo"]
             @connection.expects(:get).with { |path, args| path == should_path }.returns(@response)
             @searcher.search(@request)
@@ -319,7 +320,7 @@ describe Puppet::Indirector::REST do
             @connection = stub('mock http connection', :delete => @response)
             @searcher.stubs(:network).returns(@connection)    # neuter the network connection
 
-            @request = stub 'request', :key => 'foo', :options => {}
+            @request = stub 'request', :escaped_key => 'foo', :options => {}
         end
 
         it "should call the DELETE http method on a network connection" do
@@ -341,7 +342,7 @@ describe Puppet::Indirector::REST do
             @searcher.destroy(@request).should == 'myobject'
         end        
 
-        it "should use the indirection name and request key to create the path" do
+        it "should use the indirection name and escaped request key to create the path" do
             should_path = "/%s/%s" % [@indirection.name.to_s, "foo"]
             @connection.expects(:delete).with { |path, args| path == should_path }.returns(@response)
             @searcher.destroy(@request)

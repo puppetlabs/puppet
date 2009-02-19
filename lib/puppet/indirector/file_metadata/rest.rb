@@ -3,7 +3,6 @@
 #  Copyright (c) 2007. All rights reserved.
 
 require 'puppet/file_serving/metadata'
-require 'puppet/util/uri_helper'
 require 'puppet/indirector/file_metadata'
 require 'puppet/indirector/rest'
 

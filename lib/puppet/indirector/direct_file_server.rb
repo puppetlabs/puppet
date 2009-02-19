@@ -3,12 +3,10 @@
 #  Copyright (c) 2007. All rights reserved.
 
 require 'puppet/file_serving/terminus_helper'
-require 'puppet/util/uri_helper'
 require 'puppet/indirector/terminus'
 
 class Puppet::Indirector::DirectFileServer < Puppet::Indirector::Terminus
 
-    include Puppet::Util::URIHelper
     include Puppet::FileServing::TerminusHelper
 
     def find(request)

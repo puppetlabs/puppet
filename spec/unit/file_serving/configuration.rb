@@ -134,7 +134,7 @@ describe Puppet::FileServing::Configuration do
             @config = Puppet::FileServing::Configuration.create
             @config.stubs(:find_mount)
 
-            @request = stub 'request', :key => "puppet:///foo/bar/baz", :options => {}
+            @request = stub 'request', :key => "foo/bar/baz", :options => {}
         end
 
         it "should reread the configuration" do
@@ -150,13 +150,13 @@ describe Puppet::FileServing::Configuration do
         end
 
         it "should fail if the mount name is not alpha-numeric" do
-            @request.expects(:key).returns "puppet:///foo&bar/asdf"
+            @request.expects(:key).returns "foo&bar/asdf"
 
             lambda { @config.split_path(@request) }.should raise_error(ArgumentError)
         end
 
         it "should support dashes in the mount name" do
-            @request.expects(:key).returns "puppet:///foo-bar/asdf"
+            @request.expects(:key).returns "foo-bar/asdf"
 
             lambda { @config.split_path(@request) }.should_not raise_error(ArgumentError)
         end
@@ -182,7 +182,7 @@ describe Puppet::FileServing::Configuration do
         end
 
         it "should remove any double slashes" do
-            @request.stubs(:key).returns "puppet:///foo/bar//baz"
+            @request.stubs(:key).returns "foo/bar//baz"
             mount = stub 'mount', :name => "foo"
             @config.expects(:find_mount).returns mount
 
@@ -190,7 +190,7 @@ describe Puppet::FileServing::Configuration do
         end
 
         it "should return the relative path as nil if it is an empty string" do
-            @request.expects(:key).returns "puppet:///foo"
+            @request.expects(:key).returns "foo"
             mount = stub 'mount', :name => "foo"
             @config.expects(:find_mount).returns mount
 
@@ -198,7 +198,7 @@ describe Puppet::FileServing::Configuration do
         end
 
         it "should add 'modules/' to the relative path if the modules mount is used but not specified, for backward compatibility" do
-            @request.expects(:key).returns "puppet:///foo/bar"
+            @request.expects(:key).returns "foo/bar"
             mount = stub 'mount', :name => "modules"
             @config.expects(:find_mount).returns mount
 
