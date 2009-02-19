@@ -69,7 +69,7 @@ Puppet::Type.type(:file).newproperty(:checksum) do
     # Store the checksum in the data cache, or retrieve it if only the
     # sum type is provided.
     def cache(type, sum = nil)
-        return unless resource.catalog.host_config?
+        return unless c = resource.catalog and c.host_config?
         unless type
             raise ArgumentError, "A type must be specified to cache a checksum"
         end
@@ -262,7 +262,7 @@ Puppet::Type.type(:file).newproperty(:checksum) do
 
     # Store the new sum to the state db.
     def updatesum(newvalue)
-        return unless resource.catalog.host_config?
+        return unless c = resource.catalog and c.host_config?
         result = false
 
         # if we're replacing, vs. updating

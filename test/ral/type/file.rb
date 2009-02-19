@@ -715,31 +715,6 @@ class TestFile < Test::Unit::TestCase
         assert_equal(0440, filemode(file))
     end
 
-    def test_largefilechanges
-        source = tempfile()
-        dest = tempfile()
-
-        # Now make a large file
-        File.open(source, "w") { |f|
-            500.times { |i| f.puts "line %s" % i }
-        }
-
-        resource = Puppet::Type.type(:file).new(
-            :title => dest, :source => source
-        )
-
-        assert_events([:file_created], resource)
-
-        File.open(source, File::APPEND|File::WRONLY) { |f| f.puts "another line" }
-
-        assert_events([:file_changed], resource)
-
-        # Now modify the dest file
-        File.open(dest, File::APPEND|File::WRONLY) { |f| f.puts "one more line" }
-
-        assert_events([:file_changed, :file_changed], resource)
-    end
-
     def test_replacefilewithlink
         path = tempfile()
         link = tempfile()

@@ -66,8 +66,10 @@ class TestSettings < Test::Unit::TestCase
             end
         }
 
+        newc.setdefaults :section, :config => [newfile, "eh"]
+
         assert_nothing_raised("Could not parse generated configuration") {
-            newc.parse(newfile)
+            newc.parse
         }
 
         @config.each do |name, object|
@@ -237,151 +239,6 @@ yay = /a/path
         end
     end
 
-    def test_parse
-        result = {
-            :main => {:main => "main", :bad => "invalid", :cliparam => "reset"},
-            :puppet => {:other => "puppet", :cliparam => "reset"},
-            :puppetd => {:other => "puppetd", :cliparam => "reset"}
-        }
-        # Set our defaults, so they're valid. Don't define 'bad', since we want to test for failures.
-        @config.setdefaults(:main,
-            :main => ["whatever", "a"],
-            :cliparam => ["default", "y"],
-            :other => ["a", "b"],
-            :name => ["puppet", "b"] # our default name
-        )
-        @config.setdefaults(:other,
-            :one => ["whatever", "a"],
-            :two => ["default", "y"],
-            :apple => ["a", "b"],
-            :shoe => ["puppet", "b"] # our default name
-        )
-        @config.handlearg("--cliparam", "changed")
-        @config.stubs(:parse_file).returns(result)
-
-        # First do it with our name being 'puppet'
-        assert_nothing_raised("Could not handle parse results") do
-            @config.parse(tempfile)
-        end
-
-        assert_equal(:puppet, @config.name, "Did not get correct name")
-        assert_equal("main", @config[:main], "Did not get main value")
-        assert_equal("puppet", @config[:other], "Did not get name value")
-        assert_equal("changed", @config[:cliparam], "CLI values were overridden by config")
-
-        # Now switch names and make sure the parsing switches, too.
-        @config.clear(true)
-        assert_nothing_raised("Could not handle parse results") do
-            @config.parse(tempfile)
-        end
-        @config[:name] = :puppetd
-
-        assert_equal(:puppetd, @config.name, "Did not get correct name")
-        assert_equal("main", @config[:main], "Did not get main value")
-        assert_equal("puppetd", @config[:other], "Did not get name value")
-        assert_equal("changed", @config[:cliparam], "CLI values were overridden by config")
-    end
-
-    # Make sure we can extract file options correctly.
-    def test_parsing_file_options
-        @config.setdefaults(:whev,
-            :file => {
-                :desc => "whev",
-                :default => "/default",
-                :owner => "me",
-                :group => "me",
-                :mode => "755"
-            }
-        )
-
-        file = tempfile
-        count = 0
-
-        {
-            :pass => {
-                " {owner = you}" => {:owner => "you"},
-                " {owner = you, group = you}" => {:owner => "you", :group => "you"},
-                " {owner = you, group = you, mode = 755}" => {:owner => "you", :group => "you", :mode => "755"},
-                " { owner = you, group = you } " => {:owner => "you", :group => "you"},
-                "{owner=you,group=you} " => {:owner => "you", :group => "you"},
-                "{owner=you,} " => {:owner => "you"}
-            },
-            :fail => [
-                %{{owner = you group = you}},
-                %{{owner => you, group => you}},
-                %{{user => you}},
-                %{{random => you}},
-                %{{mode => you}}, # make sure modes are numbers
-                %{{owner => you}}
-            ]
-        }.each do |type, list|
-            count += 1
-            list.each do |value|
-                if type == :pass
-                    value, should = value[0], value[1]
-                end
-                path = "/other%s" % count
-                # Write our file out
-                File.open(file, "w") do |f|
-                    f.puts %{[main]\nfile = #{path}#{value}}
-                end
-
-                if type == :fail
-                    assert_raise(ArgumentError, "Did not fail on %s" % value.inspect) do
-                        @config.send(:parse_file, file)
-                    end
-                else
-                    result = nil
-                    assert_nothing_raised("Failed to parse %s" % value.inspect) do
-                        result = @config.send(:parse_file, file)
-                    end
-                    assert_equal(should, result[:main][:_meta][:file], "Got incorrect return for %s" % value.inspect)
-                    assert_equal(path, result[:main][:file], "Got incorrect value for %s" % value.inspect)
-                end
-            end
-        end
-    end
-
-    # Make sure file options returned from parse_file are handled correctly.
-    def test_parsed_file_options
-        @config.setdefaults(:whev,
-            :file => {
-                :desc => "whev",
-                :default => "/default",
-                :owner => "me",
-                :group => "me",
-                :mode => "755"
-            }
-        )
-
-        result = {
-            :main => {
-                :file => "/other",
-                :_meta => {
-                    :file => {
-                        :owner => "you",
-                        :group => "you",
-                        :mode => "644"
-                    }
-                }
-            }
-        }
-
-        @config.expects(:parse_file).returns(result)
-
-        assert_nothing_raised("Could not handle file options") do
-            @config.parse("/whatever")
-        end
-
-        # Get the actual object, so we can verify metadata
-        file = @config.element(:file)
-
-        assert_equal("/other", @config[:file], "Did not get correct value")
-        assert_equal("you", file.owner, "Did not pass on user")
-        assert_equal("you", file.group, "Did not pass on group")
-        assert_equal("644", file.mode, "Did not pass on mode")
-    end
-
     def test_arghandling
         c = mkconfig
 
@@ -478,10 +335,10 @@ yay = /a/path
         end
 
         config = mkconfig
-        config.setdefaults(Puppet[:name], :group => ["puppet", "a group"])
+        config.setdefaults(Puppet[:name], :group => ["puppet", "a group"], :config => [cfile, "eh"])
 
         assert_nothing_raised {
-            config.parse(cfile)
+            config.parse
         }
 
         assert_equal(group, config[:group], "Group did not take")
@@ -633,45 +490,6 @@ yay = /a/path
         end
     end
 
-    # Make sure we correctly reparse our config files but don't lose CLI values.
-    def test_reparse
-        Puppet[:filetimeout] = 0
-
-        config = mkconfig()
-        config.setdefaults(:mysection, :default => ["default", "yay"])
-        config.setdefaults(:mysection, :clichange => ["clichange", "yay"])
-        config.setdefaults(:mysection, :filechange => ["filechange", "yay"])
-
-        config.stubs(:read_file).returns(%{[main]\nfilechange = filevalue\n})
-        file = mock 'file'
-        file.stubs(:changed?).returns(true)
-
-        assert_nothing_raised {
-            config.parse(file)
-        }
-
-        # Set another "from the cli"
-        assert_nothing_raised {
-            config.handlearg("clichange", "clivalue")
-        }
-
-        # And leave the other unset
-        assert_equal("default", config[:default])
-        assert_equal("filevalue", config[:filechange], "Did not get value from file")
-        assert_equal("clivalue", config[:clichange])
-
-        # Now reparse
-        config.stubs(:read_file).returns(%{[main]\nfilechange = newvalue\n})
-        file = mock 'file'
-        file.stubs(:changed?).returns(true)
-        config.parse(file)
-
-        # And check all of the values
-        assert_equal("default", config[:default])
-        assert_equal("clivalue", config[:clichange])
-        assert_equal("newvalue", config[:filechange])
-    end
-
     def test_parse_removes_quotes
         config = mkconfig()
         config.setdefaults(:mysection, :singleq => ["single", "yay"])
@@ -690,57 +508,16 @@ yay = /a/path
 }
         }
 
+        config.setdefaults(:mysection, :config => [file, "eh"])
+
         assert_nothing_raised {
-            config.parse(file)
+            config.parse
         }
 
         %w{singleq doubleq none}.each do |p|
             assert_equal("one", config[p], "%s did not match" % p)
         end
         assert_equal('mid"quote', config["middle"], "middle did not match")
-    end
-
-    def test_timer
-        Puppet[:filetimeout] = 0.1
-        origpath = tempfile()
-        config = mkconfig()
-        config.setdefaults(:mysection, :paramdir => [tempfile(), "yay"])
-
-        file = tempfile()
-        # Set one parameter in the file
-        File.open(file, "w") { |f|
-            f.puts %{[main]\n
-    paramdir = #{origpath}
-}
-        }
-
-        assert_nothing_raised {
-            config.parse(file)
-            config.use(:mysection)
-        }
-
-        assert(FileTest.directory?(origpath), "dir did not get created")
-
-        # Now start the timer
-        assert_nothing_raised {
-            EventLoop.current.monitor_timer config.timer
-        }
-
-        newpath = tempfile()
-
-        File.open(file, "w") { |f|
-            f.puts %{[main]\n
-    paramdir = #{newpath}
-}
-        }
-        config.file.send("tstamp=".intern, Time.now - 50)
-        sleep 1
-
-        assert_equal(newpath, config["paramdir"],
-                    "File did not get reparsed from timer")
-        assert(FileTest.directory?(newpath), "new dir did not get created")
-
-
     end
 
     # Test that config parameters correctly call passed-in blocks when the value
@@ -837,12 +614,12 @@ yay = /a/path
     # #415
     def test_remove_trailing_spaces
         config = mkconfig()
-        config.setdefaults(:yay, :rah => ["testing", "a desc"])
-        
         file = tempfile()
         File.open(file, "w") { |f| f.puts "rah = something " }
         
-        assert_nothing_raised { config.parse(file) }
+        config.setdefaults(:yay, :config => [file, "eh"], :rah => ["testing", "a desc"])
+        
+        assert_nothing_raised { config.parse }
         assert_equal("something", config[:rah], "did not remove trailing whitespace in parsing")
     end
 
@@ -850,7 +627,6 @@ yay = /a/path
     def test_parsing_unknown_variables
         logstore()
         config = mkconfig()
-        config.setdefaults(:mysection, :one => ["yay", "yay"])
         file = tempfile()
         File.open(file, "w") { |f|
             f.puts %{[main]\n
@@ -859,8 +635,10 @@ yay = /a/path
             }
         }
 
+        config.setdefaults(:mysection, :config => [file, "eh"], :one => ["yay", "yay"])
+
         assert_nothing_raised("Unknown parameter threw an exception") do
-            config.parse(file)
+            config.parse
         end
     end
 

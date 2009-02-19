@@ -11,6 +11,12 @@ class TestResourceClient < Test::Unit::TestCase
     include PuppetTest::ServerTest
     include PuppetTest::Support::Utils
 
+    def setup
+        super
+
+        Puppet::Type.type(:user).provider(:directoryservice).stubs(:get_macosx_version_major).returns "10.5"
+    end
+
     def mkresourceserver
         Puppet::Network::Handler.resource.new
     end
@@ -43,7 +49,6 @@ class TestResourceClient < Test::Unit::TestCase
             resource = tresource.to_ral
         }
         assert_events([], resource)
-        p resource.instance_variable_get("@stat")
         File.unlink(file)
         assert_events([:file_created], resource)
         File.unlink(file)
@@ -54,33 +59,6 @@ class TestResourceClient < Test::Unit::TestCase
             result = client.apply(tresource)
         }
         assert(FileTest.exists?(file), "File was not created on apply")
-
-        # Lastly, test "list"
-        list = nil
-        assert_nothing_raised {
-            list = client.list("user")
-        }
-
-        assert_instance_of(Puppet::TransBucket, list)
-
-        count = 0
-        list.each do |tresource|
-            break if count > 3
-            assert_instance_of(Puppet::TransObject, tresource)
-
-            tresource2 = nil
-            assert_nothing_raised {
-                tresource2 = client.describe(tresource.type, tresource.name)
-            }
-
-            resource = nil
-            assert_nothing_raised {
-                resource = tresource2.to_ral
-            }
-            assert_events([], resource)
-
-            count += 1
-        end
     end
 end
 
