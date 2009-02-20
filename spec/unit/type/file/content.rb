@@ -166,4 +166,29 @@ describe content do
             @content.sync.should == :file_created
         end
     end
+
+    describe "when logging changes" do
+        before do
+            @resource = stub 'resource', :line => "foo", :file => "bar", :replace? => true
+            @resource.stubs(:[]).returns "foo"
+            @resource.stubs(:[]).with(:path).returns "/my/file"
+            @content = content.new :resource => @resource
+        end
+
+        it "should not include current contents" do
+            @content.change_to_s("current_content", "desired").should_not be_include("current_content")
+        end
+
+        it "should not include desired contents" do
+            @content.change_to_s("current", "desired_content").should_not be_include("desired_content")
+        end
+
+        it "should not include the content when converting current content to a string" do
+            @content.is_to_s("my_content").should_not be_include("my_content")
+        end
+
+        it "should not include the content when converting desired content to a string" do
+            @content.should_to_s("my_content").should_not be_include("my_content")
+        end
+    end
 end

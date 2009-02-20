@@ -14,6 +14,8 @@
     Fixed #1840 - Bug fixes and improvements for Emacs puppet-mode.el
 
 0.24.8
+    Fixed #1871 - Sensitive information leaked in log reports
+
     Fixed #1956 - Cleaned up variable names to be more sane, clarified error messages 
     and fixed incorrect use of 'value' variable rather than 'member'.
     
