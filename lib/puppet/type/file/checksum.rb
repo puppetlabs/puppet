@@ -37,11 +37,6 @@ Puppet::Type.type(:file).newproperty(:checksum) do
         handlesum()
     end
 
-    newvalue(:nosum) do
-        # nothing
-        :nochange
-    end
-
     # If they pass us a sum type, behave normally, but if they pass
     # us a sum type + sum, stick the sum in the cache.
     munge do |value|
@@ -127,35 +122,6 @@ Puppet::Type.type(:file).newproperty(:checksum) do
 
     def currentsum
         cache(checktype())
-    end
-
-    # Retrieve the cached sum
-    def getcachedsum
-        hash = nil
-        unless hash = @resource.cached(:checksums) 
-            hash = {}
-            @resource.cache(:checksums, hash)
-        end
-
-        sumtype = self.should
-
-        if hash.include?(sumtype)
-            #self.notice "Found checksum %s for %s" %
-            #    [hash[sumtype] ,@resource[:path]]
-            sum = hash[sumtype]
-
-            unless sum =~ /^\{\w+\}/
-                sum = "{%s}%s" % [sumtype, sum]
-            end
-            return sum
-        elsif hash.empty?
-            #self.notice "Could not find sum of type %s" % sumtype
-            return :nosum
-        else
-            #self.notice "Found checksum for %s but not of type %s" %
-            #    [@resource[:path],sumtype]
-            return :nosum
-        end
     end
 
     # Calculate the sum from disk.
