@@ -3,8 +3,6 @@ require 'puppet/rails/fact_name'
 require 'puppet/rails/source_file'
 require 'puppet/util/rails/collection_merger'
 
-Puppet::TIME_DEBUG = true
-
 class Puppet::Rails::Host < ActiveRecord::Base
     include Puppet::Util
     include Puppet::Util::CollectionMerger
@@ -36,7 +34,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
                     host = new(:name => node.name)
                 end
             }
-            Puppet.notice("Searched for host in %0.2f seconds" % seconds) if defined?(Puppet::TIME_DEBUG)
+            Puppet.debug("Searched for host in %0.2f seconds" % seconds)
             if ip = node.parameters["ipaddress"]
                 host.ip = ip
             end
@@ -51,7 +49,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
             seconds = Benchmark.realtime {
                 host.setresources(resources)
             }
-            Puppet.notice("Handled resources in %0.2f seconds" % seconds) if defined?(Puppet::TIME_DEBUG)
+            Puppet.debug("Handled resources in %0.2f seconds" % seconds)
 
             host.last_compile = Time.now
 
@@ -119,17 +117,17 @@ class Puppet::Rails::Host < ActiveRecord::Base
         seconds = Benchmark.realtime {
             existing = find_resources()
         }
-        Puppet.notice("Searched for resources in %0.2f seconds" % seconds) if defined?(Puppet::TIME_DEBUG)
+        Puppet.debug("Searched for resources in %0.2f seconds" % seconds)
 
         seconds = Benchmark.realtime {
             find_resources_parameters_tags(existing)
         } if id
-        Puppet.notice("Searched for resource params and tags in %0.2f seconds" % seconds) if defined?(Puppet::TIME_DEBUG)
+        Puppet.debug("Searched for resource params and tags in %0.2f seconds" % seconds)
 
         seconds = Benchmark.realtime {
             compare_to_catalog(existing, list)
         }
-        Puppet.notice("Resource comparison took %0.2f seconds" % seconds) if defined?(Puppet::TIME_DEBUG)
+        Puppet.debug("Resource comparison took %0.2f seconds" % seconds)
     end
 
     def find_resources
