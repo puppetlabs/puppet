@@ -5,7 +5,7 @@ require 'getoptlong'
 
 require 'puppet/external/event-loop'
 require 'puppet/util/cacher'
-require 'puppet/util/LoadedFile'
+require 'puppet/util/loadedfile'
 
 # The class for handling configuration files.
 class Puppet::Util::Settings
