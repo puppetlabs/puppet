@@ -113,26 +113,26 @@ class Puppet::Rails::Host < ActiveRecord::Base
 
     # Set our resources.
     def setresources(list)
-        existing = nil
+        resource_by_id = nil
         seconds = Benchmark.realtime {
-            existing = find_resources()
+            resource_by_id = find_resources()
         }
         Puppet.debug("Searched for resources in %0.2f seconds" % seconds)
 
         seconds = Benchmark.realtime {
-            find_resources_parameters_tags(existing)
+            find_resources_parameters_tags(resource_by_id)
         } if id
         Puppet.debug("Searched for resource params and tags in %0.2f seconds" % seconds)
 
         seconds = Benchmark.realtime {
-            compare_to_catalog(existing, list)
+            compare_to_catalog(resource_by_id, list)
         }
         Puppet.debug("Resource comparison took %0.2f seconds" % seconds)
     end
 
     def find_resources
         resources.find(:all, :include => :source_file).inject({}) do | hash, resource |
-            hash[resource.ref] = resource
+            hash[resource.id] = resource
             hash
         end
     end
@@ -143,20 +143,29 @@ class Puppet::Rails::Host < ActiveRecord::Base
             resource.params_hash = []
         end
 
-        resources_by_id = resources.inject({}) do |hash, res|
-            hash[res[1]['id']] = res[1]
+        find_resources_parameters(resources)
+        find_resources_tags(resources)
+    end
+
+    # it seems that it can happen (see bug #2010) some resources are duplicated in the
+    # database (ie logically corrupted database), in which case we remove the extraneous
+    # entries.
+    def compare_to_catalog(existing, list)
+        extra_db_resources = []
+        resources = existing.inject({}) do |hash, res|
+            resource = res[1]
+            if hash.include?(resource.ref)
+                extra_db_resources << hash[resource.ref]
+            end
+            hash[resource.ref] = resource
             hash
         end
 
-        find_resources_parameters(resources_by_id)
-        find_resources_tags(resources_by_id)
-    end
-
-    def compare_to_catalog(resources, list)
         compiled = list.inject({}) do |hash, resource|
             hash[resource.ref] = resource
             hash
         end
+
         ar_hash_merge(resources, compiled,
                       :create => Proc.new { |ref, resource|
                           resource.to_rails(self)
@@ -165,6 +174,11 @@ class Puppet::Rails::Host < ActiveRecord::Base
                       }, :modify => Proc.new { |db, mem|
                           mem.modify_rails(db)
                       })
+
+        # fix-up extraneous resources
+        extra_db_resources.each do |resource|
+            self.resources.delete(resource)
+        end
     end
 
     def find_resources_parameters(resources)
@@ -172,7 +186,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
 
         # assign each loaded parameters/tags to the resource it belongs to
         params.each do |param|
-            resources[param['resource_id']].add_param_to_hash(param)
+            resources[param['resource_id']].add_param_to_hash(param) if resources.include?(param['resource_id'])
         end
     end
 
@@ -180,7 +194,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
         tags = Puppet::Rails::ResourceTag.find_all_tags_from_host(self)
 
         tags.each do |tag|
-            resources[tag['resource_id']].add_tag_to_hash(tag)
+            resources[tag['resource_id']].add_tag_to_hash(tag) if resources.include?(tag['resource_id'])
         end
     end
 
