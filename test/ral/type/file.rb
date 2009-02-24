@@ -392,7 +392,7 @@ class TestFile < Test::Unit::TestCase
         # Make sure we default to false
         assert(! file.recurse?, "Recurse defaulted to true")
         
-        [true, "true", 10, "inf"].each do |value|
+        [true, "true", 10, "inf", "remote"].each do |value|
             file[:recurse] = value
             assert(file.recurse?, "%s did not cause recursion" % value)
         end

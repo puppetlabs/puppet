@@ -9,7 +9,7 @@ require 'puppet/file_serving/metadata'
 # Operate recursively on a path, returning a set of file paths.
 class Puppet::FileServing::Fileset
     attr_reader :path, :ignore, :links
-    attr_accessor :recurse
+    attr_accessor :recurse, :recurselimit
 
     # Produce a hash of files, with merged so that earlier files
     # with the same postfix win.  E.g., /dir1/subfile beats /dir2/subfile.
@@ -67,6 +67,7 @@ class Puppet::FileServing::Fileset
         @ignore = []
         @links = :manage
         @recurse = false
+        @recurselimit = 0 # infinite recursion
 
         if options.is_a?(Puppet::Indirector::Request)
             initialize_from_request(options)
@@ -75,6 +76,7 @@ class Puppet::FileServing::Fileset
         end
 
         raise ArgumentError.new("Fileset paths must exist") unless stat = stat(path)
+        raise ArgumentError.new("Fileset recurse parameter must not be a number anymore, please use recurselimit") if @recurse.is_a?(Integer)
     end
 
     def links=(links)
@@ -87,17 +89,8 @@ class Puppet::FileServing::Fileset
     # Should we recurse further?  This is basically a single
     # place for all of the logic around recursion.
     def recurse?(depth)
-        # If recurse is true, just return true
-        return true if self.recurse == true
-
-        # Return false if the value is false or zero.
-        return false if [false, 0].include?(self.recurse)
-
-        # Return true if our current depth is less than the allowed recursion depth.
-        return true if self.recurse.is_a?(Fixnum) and depth <= self.recurse
-
-        # Else, return false.
-        return false
+        # recurse if told to, and infinite recursion or current depth not at the limit
+        self.recurse and (self.recurselimit == 0 or depth <= self.recurselimit)
     end
 
     def initialize_from_hash(options)
@@ -112,7 +105,7 @@ class Puppet::FileServing::Fileset
     end
 
     def initialize_from_request(request)
-        [:links, :ignore, :recurse].each do |param|
+        [:links, :ignore, :recurse, :recurselimit].each do |param|
             if request.options.include?(param) # use 'include?' so the values can be false
                 value = request.options[param]
             elsif request.options.include?(param.to_s)
@@ -121,6 +114,7 @@ class Puppet::FileServing::Fileset
             next if value.nil? 
             value = true if value == "true"
             value = false if value == "false"
+            value = Integer(value) if value.is_a?(String) and value =~ /^\d+$/
             send(param.to_s + "=", value)
         end
     end

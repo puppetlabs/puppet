@@ -71,7 +71,7 @@ describe Puppet::Type.type(:file) do
     end
 
     describe "when validating attributes" do
-        %w{path backup recurse source replace force ignore links purge sourceselect}.each do |attr|
+        %w{path backup recurse recurselimit source replace force ignore links purge sourceselect}.each do |attr|
             it "should have a '#{attr}' parameter" do
                 Puppet::Type.type(:file).attrtype(attr.intern).should == :param
             end
@@ -233,8 +233,20 @@ describe Puppet::Type.type(:file) do
         end
 
         it "should pass its recursion value to the search" do
-            @file[:recurse] = 10
-            Puppet::FileServing::Metadata.expects(:search).with { |key, options| options[:recurse] == 10 }
+            @file[:recurse] = true
+            Puppet::FileServing::Metadata.expects(:search).with { |key, options| options[:recurse] == true }
+            @file.perform_recursion(@file[:path])
+        end
+
+        it "should pass true if recursion is remote" do
+            @file[:recurse] = :remote
+            Puppet::FileServing::Metadata.expects(:search).with { |key, options| options[:recurse] == true }
+            @file.perform_recursion(@file[:path])
+        end
+
+        it "should pass its recursion limit value to the search" do
+            @file[:recurselimit] = 10
+            Puppet::FileServing::Metadata.expects(:search).with { |key, options| options[:recurselimit] == 10 }
             @file.perform_recursion(@file[:path])
         end
 
@@ -575,8 +587,14 @@ describe Puppet::Type.type(:file) do
             end
         end
 
-        it "should use recurse_local" do
+        it "should use recurse_local if recurse is not remote" do
             @file.expects(:recurse_local).returns({})
+            @file.recurse
+        end
+
+        it "should not use recurse_local if recurse remote" do
+            @file[:recurse] = :remote
+            @file.expects(:recurse_local).never
             @file.recurse
         end
 

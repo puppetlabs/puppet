@@ -115,7 +115,7 @@ module Puppet
             desc "Whether and how deeply to do recursive
                 management."
 
-            newvalues(:true, :false, :inf, /^[0-9]+$/)
+            newvalues(:true, :false, :inf, :remote, /^[0-9]+$/)
 
             # Replace the validation so that we allow numbers in
             # addition to string representations of them.
@@ -123,12 +123,35 @@ module Puppet
             munge do |value|
                 newval = super(value)
                 case newval
-                when :true, :inf; true
-                when :false; false
-                when Integer, Fixnum, Bignum; value
-                when /^\d+$/; Integer(value)
+                when :true, :inf: true
+                when :false: false
+                when :remote: :remote
+                when Integer, Fixnum, Bignum:
+                    self.warning "Setting recursion depth with the recurse parameter is now deprecated, please use recurselimit"
+                    resource[:recurselimit] = value
+                    true
+                when /^\d+$/:
+                    self.warning "Setting recursion depth with the recurse parameter is now deprecated, please use recurselimit"
+                    resource[:recurselimit] = Integer(value)
+                    true
                 else
                     raise ArgumentError, "Invalid recurse value %s" % value.inspect
+                end
+            end
+        end
+
+        newparam(:recurselimit) do
+            desc "How deeply to do recursive management."
+
+            newvalues(/^[0-9]+$/)
+
+            munge do |value|
+                newval = super(value)
+                case newval
+                when Integer, Fixnum, Bignum: value
+                when /^\d+$/: Integer(value)
+                else
+                    raise ArgumentError, "Invalid recurselimit value %s" % value.inspect
                 end
             end
         end
@@ -246,6 +269,14 @@ module Puppet
             end
             if count > 1
                 self.fail "You cannot specify more than one of %s" % CREATORS.collect { |p| p.to_s}.join(", ")
+            end
+
+            if !self[:source] and self[:recurse] == :remote
+                self.fail "You cannot specify a remote recursion without a source"
+            end
+
+            if !self[:recurse] and self[:recurselimit]
+                self.warning "Possible error: recurselimit is set but not recurse, no recursion will happen"
             end
         end
         
@@ -479,7 +510,7 @@ module Puppet
             options = @original_parameters.merge(:path => full_path, :implicit => true).reject { |param, value| value.nil? }
 
             # These should never be passed to our children.
-            [:parent, :ensure, :recurse, :target, :alias, :source].each do |param|
+            [:parent, :ensure, :recurse, :recurselimit, :target, :alias, :source].each do |param|
                 options.delete(param) if options.include?(param)
             end
 
@@ -517,7 +548,10 @@ module Puppet
         # be used to copy remote files, manage local files, and/or make links
         # to map to another directory.
         def recurse
-            children = recurse_local
+            children = {}
+            if self[:recurse] != :remote
+                children = recurse_local
+            end
 
             if self[:target]
                 recurse_link(children)
@@ -534,7 +568,7 @@ module Puppet
 
             val = @parameters[:recurse].value
 
-            if val and (val == true or val > 0)
+            if val and (val == true or val == :remote)
                 return true
             else
                 return false
@@ -624,7 +658,7 @@ module Puppet
         end
 
         def perform_recursion(path)
-            Puppet::FileServing::Metadata.search(path, :links => self[:links], :recurse => self[:recurse], :ignore => self[:ignore])
+            Puppet::FileServing::Metadata.search(path, :links => self[:links], :recurse => (self[:recurse] == :remote ? true : self[:recurse]), :recurselimit => self[:recurselimit], :ignore => self[:ignore])
         end
 
         # Remove the old backup.

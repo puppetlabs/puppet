@@ -24,6 +24,12 @@ describe Puppet::FileServing::Fileset, " when initializing" do
         set.recurse.should be_true
     end
 
+    it "should accept a 'recurselimit' option" do
+        File.expects(:lstat).with("/some/file").returns stub("stat")
+        set = Puppet::FileServing::Fileset.new("/some/file", :recurselimit => 3)
+        set.recurselimit.should == 3
+    end
+
     it "should accept an 'ignore' option" do
         File.expects(:lstat).with("/some/file").returns stub("stat")
         set = Puppet::FileServing::Fileset.new("/some/file", :ignore => ".svn")
@@ -45,6 +51,11 @@ describe Puppet::FileServing::Fileset, " when initializing" do
         Puppet::FileServing::Fileset.new("/some/file").recurse.should == false
     end
 
+    it "should default to 0 (infinite) for recurselimit" do
+        File.expects(:lstat).with("/some/file").returns stub("stat")
+        Puppet::FileServing::Fileset.new("/some/file").recurselimit.should == 0
+    end
+
     it "should default to an empty ignore list" do
         File.expects(:lstat).with("/some/file").returns stub("stat")
         Puppet::FileServing::Fileset.new("/some/file").ignore.should == []
@@ -64,20 +75,25 @@ describe Puppet::FileServing::Fileset, " when initializing" do
     describe "using an indirector request" do
         before do
             File.stubs(:lstat).returns stub("stat")
-            @values = {:links => :manage, :ignore => %w{a b}, :recurse => true}
+            @values = {:links => :manage, :ignore => %w{a b}, :recurse => true, :recurselimit => 1234}
             @request = Puppet::Indirector::Request.new(:file_serving, :find, "foo")
         end
 
-        [:recurse, :ignore, :links].each do |option|
-            it "should pass :recurse, :ignore, and :links settings on to the fileset if present" do
+        [:recurse, :recurselimit, :ignore, :links].each do |option|
+            it "should pass :recurse, :recurselimit, :ignore, and :links settings on to the fileset if present" do
                 @request.stubs(:options).returns(option => @values[option])
                 Puppet::FileServing::Fileset.new("/my/file", @request).send(option).should == @values[option]
             end
 
-            it "should pass :recurse, :ignore, and :links settings on to the fileset if present with the keys stored as strings" do
+            it "should pass :recurse, :recurselimit, :ignore, and :links settings on to the fileset if present with the keys stored as strings" do
                 @request.stubs(:options).returns(option.to_s => @values[option])
                 Puppet::FileServing::Fileset.new("/my/file", @request).send(option).should == @values[option]
             end
+        end
+
+        it "should convert the integer as a string to their integer counterpart when setting options" do
+            @request.stubs(:options).returns(:recurselimit => "1234")
+            Puppet::FileServing::Fileset.new("/my/file", @request).recurselimit.should == 1234
         end
 
         it "should convert the string 'true' to the boolean true when setting options" do
@@ -99,8 +115,9 @@ describe Puppet::FileServing::Fileset, " when determining whether to recurse" do
         @fileset = Puppet::FileServing::Fileset.new(@path)
     end
 
-    it "should always recurse if :recurse is set to 'true'" do
+    it "should always recurse if :recurse is set to 'true' and with infinite recursion" do
         @fileset.recurse = true
+        @fileset.recurselimit = 0
         @fileset.recurse?(0).should be_true
     end
 
@@ -109,24 +126,22 @@ describe Puppet::FileServing::Fileset, " when determining whether to recurse" do
         @fileset.recurse?(-1).should be_false
     end
 
-    it "should recurse if :recurse is set to an integer and the current depth is less than that integer" do
-        @fileset.recurse = 1
+    it "should recurse if :recurse is set to true, :recurselimit is set to an integer and the current depth is less than that integer" do
+        @fileset.recurse = true
+        @fileset.recurselimit = 1
         @fileset.recurse?(0).should be_true
     end
 
-    it "should recurse if :recurse is set to an integer and the current depth is equal to that integer" do
-        @fileset.recurse = 1
+    it "should recurse if :recurse is set to true, :recurselimit is set to an integer and the current depth is equal to that integer" do
+        @fileset.recurse = true
+        @fileset.recurselimit = 1
         @fileset.recurse?(1).should be_true
     end
 
-    it "should not recurse if :recurse is set to an integer and the current depth is greater than that integer" do
-        @fileset.recurse = 1
+    it "should not recurse if :recurse is set to true, :recurselimit is set to an integer and the current depth is greater than that integer" do
+        @fileset.recurse = true
+        @fileset.recurselimit = 1
         @fileset.recurse?(2).should be_false
-    end
-
-    it "should not recurse if :recurse is set to 0" do
-        @fileset.recurse = 0
-        @fileset.recurse?(-1).should be_false
     end
 end
 
@@ -173,9 +188,10 @@ describe Puppet::FileServing::Fileset, " when recursing" do
 
     # It seems like I should stub :recurse? here, or that I shouldn't stub the
     # examples above, but...
-    it "should recurse to the level set if :recurse is set to an integer" do
+    it "should recurse to the level set if :recurselimit is set to an integer" do
         mock_dir_structure(@path)
-        @fileset.recurse = 1
+        @fileset.recurse = true
+        @fileset.recurselimit = 1
         @fileset.files.should == %w{. one two .svn CVS}
     end
 
