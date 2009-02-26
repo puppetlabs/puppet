@@ -1,4 +1,6 @@
 0.24.8
+    Fixed #2025 - gentoo service provider handle only default init level
+
     Fixed #1910 - updated logcheck
 
     Fixed #1871 - Sensitive information leaked in log reports
