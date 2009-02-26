@@ -2,7 +2,7 @@ require 'puppet/provider/parsedfile'
 
 known = nil
 case Facter.value(:operatingsystem)
-when "Darwin": known = "/etc/ssh_known_hosts"
+when "Darwin"; known = "/etc/ssh_known_hosts"
 else
     known = "/etc/ssh/ssh_known_hosts"
 end

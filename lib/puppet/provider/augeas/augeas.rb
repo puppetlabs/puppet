@@ -99,9 +99,9 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         result = aug.get(path) || ''
         unless result.nil?
             case comparator
-                when "!=":
+                when "!="
                     return_value = true if !(result == arg)
-                when "=~":
+                when "=~"
                     regex = Regexp.new(arg)
                     loc = result=~ regex
                     return_value = true if ! loc.nil?
@@ -129,15 +129,15 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         # Now do the work
         if (!result.nil?)
             case verb
-                when "size":
+                when "size"
                     fail("Invalid command: #{cmd_array.join(" ")}") if cmd_array.length != 2
                     comparator = cmd_array.shift()
                     arg = cmd_array.shift().to_i
                     return_value = true if (result.size.send(comparator, arg))
-                when "include":
+                when "include"
                     arg = cmd_array.join(" ")
                     return_value = true if result.include?(arg)
-                when "==":
+                when "=="
                     begin
                         arg = cmd_array.join(" ")
                         new_array = eval arg
@@ -161,8 +161,8 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             begin
                 data = nil
                 case command
-                    when "get" then return_value = process_get(cmd_array)
-                    when "match" then return_value = process_match(cmd_array)
+                    when "get"; return_value = process_get(cmd_array)
+                    when "match"; return_value = process_match(cmd_array)
                 end
             rescue Exception => e
                 fail("Error sending command '#{command}' with params #{cmd_array[1..-1].inspect}/#{e.message}")
@@ -182,15 +182,15 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             cmd_array.shift()
             begin
                 case command
-                    when "set":
+                    when "set"
                         cmd_array[0]=File.join(context, cmd_array[0])
                         debug("sending command '#{command}' with params #{cmd_array.inspect}")
                         aug.set(cmd_array[0], cmd_array[1])
-                    when "rm", "remove":
+                    when "rm", "remove"
                         cmd_array[0]=File.join(context, cmd_array[0])
                         debug("sending command '#{command}' with params #{cmd_array.inspect}")                    
                         aug.rm(cmd_array[0])
-                    when "clear":
+                    when "clear"
                         cmd_array[0]=File.join(context, cmd_array[0])
                         debug("sending command '#{command}' with params #{cmd_array.inspect}")                    
                         aug.clear(cmd_array[0])
@@ -204,8 +204,8 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                         where = ext_array[0]
                         path = File.join(context, ext_array[1]) 
                         case where
-                            when "before": before = true
-                            when "after": before = false
+                            when "before"; before = true
+                            when "after"; before = false
                             else fail("Invalid value '#{where}' for where param")
                         end
                         debug("sending command '#{command}' with params #{[label, where, path].inspect()}") 

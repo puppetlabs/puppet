@@ -20,20 +20,20 @@ class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
                 @count += 1
 
                 case line
-                when /^\s*#/: next # skip comments
-                when /^\s*$/: next # skip blank lines
-                when /\[([-\w]+)\]/:
+                when /^\s*#/; next # skip comments
+                when /^\s*$/; next # skip blank lines
+                when /\[([-\w]+)\]/
                     mount = newmount($1)
-                when /^\s*(\w+)\s+(.+)$/:
+                when /^\s*(\w+)\s+(.+)$/
                     var = $1
                     value = $2
                     raise(ArgumentError, "Fileserver configuration file does not use '=' as a separator") if value =~ /^=/
                     case var
-                    when "path":
+                    when "path"
                         path(mount, value)
-                    when "allow":
+                    when "allow"
                         allow(mount, value)
-                    when "deny":
+                    when "deny"
                         deny(mount, value)
                     else
                         raise ArgumentError.new("Invalid argument '%s'" % var,

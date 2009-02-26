@@ -102,7 +102,7 @@ describe provider_class do
         # LAK:FIXME I can't mock Facter because this test happens at parse-time.
         it "should default to /etc/vfstab on Solaris and /etc/fstab everywhere else" do
             should = case Facter.value(:operatingsystem)
-                when "Solaris": "/etc/vfstab"
+                when "Solaris"; "/etc/vfstab"
                 else
                     "/etc/fstab"
                 end

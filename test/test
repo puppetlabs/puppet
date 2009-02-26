@@ -184,8 +184,8 @@ def run(files, flags = nil)
 
     files.each do |file|
         case File.stat(file).ftype
-        when "file": args << file
-        when "directory": args += ruby_files(file)
+        when "file"; args << file
+        when "directory"; args += ruby_files(file)
         else
             $stderr.puts "Skipping %s; can't handle %s" %
                 [file, File.stat(file).ftype]

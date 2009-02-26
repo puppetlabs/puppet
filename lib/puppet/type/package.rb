@@ -131,9 +131,9 @@ module Puppet
                         end
 
                         case is
-                        when @latest:
+                        when @latest
                             return true
-                        when :present:
+                        when :present
                             # This will only happen on retarded packaging systems
                             # that can't query versions.
                             return true

@@ -79,9 +79,9 @@ class Type
         # of times (as in, hundreds of thousands in a given run).
         unless @attrclasses.include?(name)
             @attrclasses[name] = case self.attrtype(name)
-            when :property: @validproperties[name]
-            when :meta: @@metaparamhash[name]
-            when :param: @paramhash[name]
+            when :property; @validproperties[name]
+            when :meta; @@metaparamhash[name]
+            when :param; @paramhash[name]
             end
         end
         @attrclasses[name]
@@ -93,9 +93,9 @@ class Type
         @attrtypes ||= {}
         unless @attrtypes.include?(attr)
             @attrtypes[attr] = case
-                when @validproperties.include?(attr): :property
-                when @paramhash.include?(attr): :param
-                when @@metaparamhash.include?(attr): :meta
+                when @validproperties.include?(attr); :property
+                when @paramhash.include?(attr); :param
+                when @@metaparamhash.include?(attr); :meta
                 end
         end
 
@@ -1085,8 +1085,8 @@ class Type
         newvalues(:true, :false)
         munge do |value|
             case value
-            when true, :true, "true": @resource.noop = true
-            when false, :false, "false": @resource.noop = false
+            when true, :true, "true"; @resource.noop = true
+            when false, :false, "false"; @resource.noop = false
             end
         end
     end
@@ -1776,8 +1776,8 @@ class Type
 
         @tags = list.collect do |t|
             case t
-            when String: t.intern
-            when Symbol: t
+            when String; t.intern
+            when Symbol; t
             else
                 self.warning "Ignoring tag %s of type %s" % [tag.inspect, tag.class]
             end

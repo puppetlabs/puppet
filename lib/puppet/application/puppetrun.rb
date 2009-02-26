@@ -135,8 +135,8 @@ Puppet::Application.new(:puppetrun) do
         end
 
         case result
-        when "success": exit(0)
-        when "running":
+        when "success"; exit(0)
+        when "running"
             $stderr.puts "Host %s is already running" % host
             exit(3)
         else

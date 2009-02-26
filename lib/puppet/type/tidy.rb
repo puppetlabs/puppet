@@ -99,10 +99,10 @@ Puppet::Type.newtype(:tidy) do
         munge do |age|
             unit = multi = nil
             case age
-            when /^([0-9]+)(\w)\w*$/:
+            when /^([0-9]+)(\w)\w*$/
                 multi = Integer($1)
                 unit = $2.downcase.intern
-            when /^([0-9]+)$/:
+            when /^([0-9]+)$/
                 multi = Integer($1)
                 unit = :d
             else
@@ -147,10 +147,10 @@ Puppet::Type.newtype(:tidy) do
         
         munge do |size|
             case size
-            when /^([0-9]+)(\w)\w*$/:
+            when /^([0-9]+)(\w)\w*$/
                 multi = Integer($1)
                 unit = $2.downcase.intern
-            when /^([0-9]+)$/:
+            when /^([0-9]+)$/
                 multi = Integer($1)
                 unit = :k
             else
@@ -181,10 +181,10 @@ Puppet::Type.newtype(:tidy) do
         munge do |value|
             newval = super(value)
             case newval
-            when :true, :inf: true
-            when :false: false
-            when Integer, Fixnum, Bignum: value
-            when /^\d+$/: Integer(value)
+            when :true, :inf; true
+            when :false; false
+            when Integer, Fixnum, Bignum; value
+            when /^\d+$/; Integer(value)
             else
                 raise ArgumentError, "Invalid recurse value %s" % value.inspect
             end

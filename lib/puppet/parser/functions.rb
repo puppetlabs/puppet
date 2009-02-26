@@ -113,8 +113,8 @@ module Functions
 
         if @functions.include? name
             case @functions[name][:type]
-            when :statement: return false
-            when :rvalue: return true
+            when :statement; return false
+            when :rvalue; return true
             end
         else
             return false

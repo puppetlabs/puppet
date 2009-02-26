@@ -71,7 +71,7 @@ Puppet::Type.type(:user).provide :directoryservice, :parent => Puppet::Provider:
     # of the groups and add us to them.
     def groups=(groups)
         # case groups
-        # when Fixnum:
+        # when Fixnum
         #     groups = [groups.to_s]
         # when String
         #     groups = groups.split(/\s*,\s*/)

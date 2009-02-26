@@ -2,7 +2,7 @@ require 'puppet/provider/parsedfile'
 
 #services = nil
 #case Facter.value(:operatingsystem)
-#when "Solaris": services = "/etc/inet/services"
+#when "Solaris"; services = "/etc/inet/services"
 #else
 #    services = "/etc/services"
 #end

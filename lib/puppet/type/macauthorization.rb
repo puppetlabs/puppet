@@ -12,7 +12,7 @@ Puppet::Type.newtype(:macauthorization) do
     
     def munge_boolean(value)
         case value
-        when true, "true", :true:
+        when true, "true", :true
             :true
         when false, "false", :false
             :false

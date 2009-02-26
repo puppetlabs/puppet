@@ -47,7 +47,7 @@ class TestGroupProvider < Test::Unit::TestCase
     end
 
     case Facter["operatingsystem"].value
-    when "Darwin":
+    when "Darwin"
         def missing?(group)
             output = %x{nidump -r /groups/#{group} / 2>/dev/null}.chomp
 

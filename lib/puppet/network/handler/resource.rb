@@ -29,7 +29,7 @@ class Puppet::Network::Handler
             unless local?
                 begin
                     case format
-                    when "yaml":
+                    when "yaml"
                         bucket = YAML::load(Base64.decode64(bucket))
                     else
                         raise Puppet::Error, "Unsupported format '%s'" % format
@@ -99,7 +99,7 @@ class Puppet::Network::Handler
 
             unless @local
                 case format
-                when "yaml":
+                when "yaml"
                     trans = Base64.encode64(YAML::dump(trans))
                 else
                     raise XMLRPC::FaultException.new(
@@ -143,7 +143,7 @@ class Puppet::Network::Handler
 
             unless @local
                 case format
-                when "yaml":
+                when "yaml"
                     begin
                     bucket = Base64.encode64(YAML::dump(bucket))
                     rescue => detail

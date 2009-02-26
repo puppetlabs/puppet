@@ -29,8 +29,8 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
         }
 
         case ftype
-        when "file", "directory": desc << checksum
-        when "link": desc << @destination
+        when "file", "directory"; desc << checksum
+        when "link"; desc << @destination
         else
             raise ArgumentError, "Cannot manage files of type %s" % ftype
         end
@@ -59,12 +59,12 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
         @mode = stat.mode & 007777
 
         case stat.ftype
-        when "file":
+        when "file"
             @checksum = ("{%s}" % @checksum_type) + send("%s_file" % @checksum_type, real_path).to_s
-        when "directory": # Always just timestamp the directory.
+        when "directory" # Always just timestamp the directory.
             @checksum_type = "ctime"
             @checksum = ("{%s}" % @checksum_type) + send("%s_file" % @checksum_type, path).to_s
-        when "link":
+        when "link"
             @destination = File.readlink(real_path)
         else
             raise ArgumentError, "Cannot manage files of type %s" % stat.ftype

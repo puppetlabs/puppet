@@ -10,7 +10,7 @@ module Puppet
             desc "The message to be sent to the log."
             def sync
                 case @resource["withpath"]
-                when :true:
+                when :true
                     send(@resource[:loglevel], self.should)
                 else  
                     Puppet.send(@resource[:loglevel], self.should)

@@ -1108,9 +1108,9 @@ class TestFile < Test::Unit::TestCase
 
             # Now change something so that we replace the file
             case attr
-            when :source:
+            when :source
                     File.open(source, "w") { |f| f.puts "some different text" }
-            when :content: file[:content] = "something completely different"
+            when :content; file[:content] = "something completely different"
             else
                 raise "invalid attr %s" % attr
             end

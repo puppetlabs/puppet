@@ -194,7 +194,7 @@ class TestCron < Test::Unit::TestCase
             [:valid, :invalid].each { |type|
                 hash[type].each { |value|
                     case type
-                    when :valid:
+                    when :valid
                         assert_nothing_raised {
                             cron[param] = value
                         }
@@ -203,7 +203,7 @@ class TestCron < Test::Unit::TestCase
                             assert_equal([value.to_s], cron.should(param),
                                 "Cron value was not set correctly")
                         end
-                    when :invalid:
+                    when :invalid
                         assert_raise(Puppet::Error, "%s is incorrectly a valid %s" %
                             [value, param]) {
                             cron[param] = value

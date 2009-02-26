@@ -66,7 +66,7 @@ Puppet::Type.type(:user).provide :netinfo, :parent => Puppet::Provider::NameServ
         warnonce "The NetInfo provider is deprecated; use directoryservice instead"
         
         case groups
-        when Fixnum:
+        when Fixnum
             groups = [groups.to_s]
         when String
             groups = groups.split(/\s*,\s*/)

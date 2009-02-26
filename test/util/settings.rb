@@ -379,7 +379,7 @@ yay = /a/path
             assert_equal(user.uid, File.stat(path).uid, "UIDS are not equal")
 
             case Facter["operatingsystem"].value
-            when /BSD/, "Darwin": # nothing
+            when /BSD/, "Darwin" # nothing
             else
                 assert_equal(group.gid, File.stat(path).gid, "GIDS are not equal")
             end
@@ -418,7 +418,7 @@ yay = /a/path
             assert_equal(user.uid, File.stat(path).uid, "UIDS are not equal")
 
             case Facter["operatingsystem"].value
-            when /BSD/, "Darwin": # nothing
+            when /BSD/, "Darwin" # nothing
             else
                 assert_equal(group.gid, File.stat(path).gid, "GIDS are not equal")
             end

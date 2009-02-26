@@ -64,7 +64,7 @@ class Puppet::SimpleGraph
         # The other vertex in the edge.
         def other_vertex(direction, edge)
             case direction
-            when :in: edge.source
+            when :in; edge.source
             else
                 edge.target
             end

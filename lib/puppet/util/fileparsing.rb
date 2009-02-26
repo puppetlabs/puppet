@@ -332,7 +332,7 @@ module Puppet::Util::FileParsing
         end
 
         case record.type
-        when :text: return details[:line]
+        when :text; return details[:line]
         else
             if record.respond_to?(:to_line)
                 return record.to_line(details)

@@ -32,7 +32,7 @@ class TestUserProvider < Test::Unit::TestCase
     end
 
     case Facter["operatingsystem"].value
-    when "Darwin":
+    when "Darwin"
         def missing?(user)
             output = %x{nidump -r /users/#{user} / 2>/dev/null}.chomp
 
@@ -119,12 +119,12 @@ class TestUserProvider < Test::Unit::TestCase
 
     def fakedata(name, param)
         case param
-        when :name: name
-        when :ensure: :present
-        when :comment: "Puppet's Testing User %s" % name # use a single quote a la #375
-        when :gid: nonrootgroup.gid
-        when :shell: findshell()
-        when :home: "/home/%s" % name
+        when :name; name
+        when :ensure; :present
+        when :comment; "Puppet's Testing User %s" % name # use a single quote a la #375
+        when :gid; nonrootgroup.gid
+        when :shell; findshell()
+        when :home; "/home/%s" % name
         else
             return nil
         end

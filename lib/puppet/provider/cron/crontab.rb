@@ -1,7 +1,7 @@
 require 'puppet/provider/parsedfile'
 
 tab = case Facter.value(:operatingsystem)
-    when "Solaris": :suntab
+    when "Solaris"; suntab
     else
         :crontab
     end
@@ -141,7 +141,7 @@ Puppet::Type.type(:cron).provide(:crontab,
         envs = nil
         result = records.each { |record|
             case record[:record_type]
-            when :comment:
+            when :comment
                 if record[:name]
                     name = record[:name]
                     record[:skip] = true
@@ -149,14 +149,14 @@ Puppet::Type.type(:cron).provide(:crontab,
                     # Start collecting env values
                     envs = []
                 end
-            when :environment:
+            when :environment
                 # If we're collecting env values (meaning we're in a named cronjob),
                 # store the line and skip the record.
                 if envs
                     envs << record[:line]
                     record[:skip] = true
                 end
-            when :blank:
+            when :blank
                 # nothing
             else
                 if name

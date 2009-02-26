@@ -62,9 +62,9 @@ describe Puppet::Indirector::DirectFileServer, " when interacting with FileServi
     it "should return instances capable of returning their content" do
         @terminus.search(@request).each do |instance|
             case instance.full_path
-            when /one/: instance.content.should == "one content"
-            when /two/: instance.content.should == "two content"
-            when @path: 
+            when /one/; instance.content.should == "one content"
+            when /two/; instance.content.should == "two content"
+            when @path
             else
                 raise "No valid key for %s" % instance.path.inspect
             end

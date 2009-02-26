@@ -33,7 +33,7 @@ class Puppet::Parser::Resource::Reference < Puppet::Resource::Reference
     def definedtype
         unless defined? @definedtype
             case self.type
-            when "Class": # look for host classes
+            when "Class" # look for host classes
                 if self.title == :main
                     tmp = @scope.findclass("")
                 else
@@ -41,7 +41,7 @@ class Puppet::Parser::Resource::Reference < Puppet::Resource::Reference
                         fail Puppet::ParseError, "Could not find class '%s'" % self.title
                     end
                 end
-            when "Node": # look for node definitions
+            when "Node" # look for node definitions
                 unless tmp = @scope.parser.nodes[self.title]
                     fail Puppet::ParseError, "Could not find node '%s'" % self.title
                 end

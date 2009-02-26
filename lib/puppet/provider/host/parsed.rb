@@ -2,7 +2,7 @@ require 'puppet/provider/parsedfile'
 
 hosts = nil
 case Facter.value(:operatingsystem)
-when "Solaris": hosts = "/etc/inet/hosts"
+when "Solaris"; hosts = "/etc/inet/hosts"
 else
     hosts = "/etc/hosts"
 end

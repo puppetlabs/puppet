@@ -15,9 +15,9 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     end
 
     case Facter["operatingsystem"].value
-    when "FreeBSD":
+    when "FreeBSD"
         @defpath = ["/etc/rc.d", "/usr/local/etc/rc.d"]
-    when "HP-UX":
+    when "HP-UX"
         @defpath = "/sbin/init.d"
     else
         @defpath = "/etc/init.d"
@@ -57,8 +57,8 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     # Mark that our init script supports 'status' commands.
     def hasstatus=(value)
         case value
-        when true, "true": @parameters[:hasstatus] = true
-        when false, "false": @parameters[:hasstatus] = false
+        when true, "true"; @parameters[:hasstatus] = true
+        when false, "false"; @parameters[:hasstatus] = false
         else
             raise Puppet::Error, "Invalid 'hasstatus' value %s" %
                 value.inspect

@@ -34,7 +34,7 @@ module Puppet
                 case is
                 when String
                     is = is.split(/\s*,\s*/)
-                when Symbol:
+                when Symbol
                     is = [is]
                 when Array
                     # nothing

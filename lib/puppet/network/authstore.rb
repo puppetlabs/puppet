@@ -174,7 +174,7 @@ module Puppet
             # Mapping a type of statement into a return value.
             def result
                 case @type
-                when :allow: true
+                when :allow; true
                 else
                     false
                 end
@@ -243,16 +243,16 @@ module Puppet
             # statement it is.  The output of this is used for later matching.
             def parse(value)
                 case value
-                when /^(\d+\.){1,3}\*$/: # an ip address with a '*' at the end
+                when /^(\d+\.){1,3}\*$/ # an ip address with a '*' at the end
                     @name = :ip
                     match = $1
                     match.sub!(".", '')
                     ary = value.split(".")
 
                     mask = case ary.index(match)
-                    when 0: 8
-                    when 1: 16
-                    when 2: 24
+                    when 0; 8
+                    when 1; 16
+                    when 2; 24
                     else
                         raise AuthStoreError, "Invalid IP pattern %s" % value
                     end
@@ -269,10 +269,10 @@ module Puppet
                     rescue ArgumentError => detail
                         raise AuthStoreError, "Invalid IP address pattern %s" % value
                     end
-                when /^([a-zA-Z][-\w]*\.)+[-\w]+$/: # a full hostname
+                when /^([a-zA-Z][-\w]*\.)+[-\w]+$/ # a full hostname
                     @name = :domain
                     @pattern = munge_name(value)
-                when /^\*(\.([a-zA-Z][-\w]*)){1,}$/: # *.domain.com
+                when /^\*(\.([a-zA-Z][-\w]*)){1,}$/ # *.domain.com
                     @name = :domain
                     @pattern = munge_name(value)
                     @pattern.pop # take off the '*'

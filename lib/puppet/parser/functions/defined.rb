@@ -8,13 +8,13 @@ Puppet::Parser::Functions::newfunction(:defined, :type => :rvalue, :doc => "Dete
         result = false
         vals.each do |val|
             case val
-            when String:
+            when String
                 # For some reason, it doesn't want me to return from here.
                 if Puppet::Type.type(val) or finddefine(val) or findclass(val)
                     result = true
                     break
                 end
-            when Puppet::Parser::Resource::Reference:
+            when Puppet::Parser::Resource::Reference
                 if findresource(val.to_s)
                     result = true
                     break

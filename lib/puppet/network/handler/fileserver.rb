@@ -278,9 +278,9 @@ class Puppet::Network::Handler
                     count = 1
                     f.each { |line|
                         case line
-                        when /^\s*#/: next # skip comments
-                        when /^\s*$/: next # skip blank lines
-                        when /\[([-\w]+)\]/:
+                        when /^\s*#/; next # skip comments
+                        when /^\s*$/; next # skip blank lines
+                        when /\[([-\w]+)\]/
                             name = $1
                             if newmounts.include?(name)
                                 raise FileServerError, "%s is already mounted at %s" %
@@ -288,11 +288,11 @@ class Puppet::Network::Handler
                             end
                             mount = Mount.new(name)
                             newmounts[name] = mount
-                        when /^\s*(\w+)\s+(.+)$/:
+                        when /^\s*(\w+)\s+(.+)$/
                             var = $1
                             value = $2
                             case var
-                            when "path":
+                            when "path"
                                 if mount.name == MODULES
                                     Puppet.warning "The '#{mount.name}' module can not have a path. Ignoring attempt to set it"
                                 else
@@ -304,7 +304,7 @@ class Puppet::Network::Handler
                                         newmounts.delete(mount.name)
                                     end
                                 end
-                            when "allow":
+                            when "allow"
                                 value.split(/\s*,\s*/).each { |val|
                                     begin
                                         mount.info "allowing %s access" % val
@@ -314,7 +314,7 @@ class Puppet::Network::Handler
                                             count, @configuration.file)
                                     end
                                 }
-                            when "deny":
+                            when "deny"
                                 value.split(/\s*,\s*/).each { |val|
                                     begin
                                         mount.info "denying %s access" % val

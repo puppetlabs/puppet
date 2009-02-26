@@ -53,13 +53,13 @@ module Puppet::SSLCertificates
 
         ex = []
         case hash[:type]
-        when :ca:
+        when :ca
             basic_constraint = "CA:TRUE"
             key_usage = %w{cRLSign keyCertSign}
-        when :terminalsubca:
+        when :terminalsubca
             basic_constraint = "CA:TRUE,pathlen:0"
             key_usage = %w{cRLSign keyCertSign}
-        when :server:
+        when :server
             basic_constraint = "CA:FALSE"
             dnsnames = Puppet[:certdnsnames]
             name = hash[:name].to_s.sub(%r{/CN=},'')
@@ -73,11 +73,11 @@ module Puppet::SSLCertificates
             end
             key_usage = %w{digitalSignature keyEncipherment}
             ext_key_usage = %w{serverAuth clientAuth emailProtection}
-        when :ocsp:
+        when :ocsp
             basic_constraint = "CA:FALSE"
             key_usage = %w{nonRepudiation digitalSignature}
             ext_key_usage = %w{serverAuth OCSPSigning}
-        when :client:
+        when :client
             basic_constraint = "CA:FALSE"
             key_usage = %w{nonRepudiation digitalSignature keyEncipherment}
             ext_key_usage = %w{clientAuth emailProtection}

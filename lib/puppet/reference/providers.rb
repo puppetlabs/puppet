@@ -61,9 +61,9 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
                 details = ".. [%s]\n" % count
                 missing.each do |test, values|
                     case test
-                    when :exists:
+                    when :exists
                         details += "  - Missing files %s\n" % values.join(", ")
-                    when :variable:
+                    when :variable
                         values.each do |name, facts|
                             if Puppet.settings.valid?(name)
                                 details += "  - Setting %s (currently %s) not in list %s\n" % [name, Puppet.settings.value(name).inspect, facts.join(", ")]
@@ -71,11 +71,11 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
                                 details += "  - Fact %s (currently %s) not in list %s\n" % [name, Facter.value(name).inspect, facts.join(", ")]
                             end
                         end
-                    when :true:
+                    when :true
                         details += "  - Got %s true tests that should have been false\n" % values
-                    when :false:
+                    when :false
                         details += "  - Got %s false tests that should have been true\n" % values
-                    when :feature:
+                    when :feature
                         details += "  - Missing features %s\n" % values.collect { |f| f.to_s }.join(",")
                     end
                 end

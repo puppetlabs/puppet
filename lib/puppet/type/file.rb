@@ -82,13 +82,13 @@ module Puppet
                 value = value.shift if value.is_a?(Array)
 
                 case value
-                when false, "false", :false:
+                when false, "false", :false
                     false
-                when true, "true", ".puppet-bak", :true:
+                when true, "true", ".puppet-bak", :true
                     ".puppet-bak"
                 when /^\./
                     value
-                when String:
+                when String
                     # We can't depend on looking this up right now,
                     # we have to do it after all of the objects
                     # have been instantiated.
@@ -101,7 +101,7 @@ module Puppet
                         @resource.bucket = value
                         value
                     end
-                when Puppet::Network::Client.client(:Dipper):
+                when Puppet::Network::Client.client(:Dipper)
                     @resource.bucket = value
                     value.name
                 else
@@ -123,10 +123,10 @@ module Puppet
             munge do |value|
                 newval = super(value)
                 case newval
-                when :true, :inf: true
-                when :false: false
-                when Integer, Fixnum, Bignum: value
-                when /^\d+$/: Integer(value)
+                when :true, :inf; true
+                when :false; false
+                when Integer, Fixnum, Bignum; value
+                when /^\d+$/; Integer(value)
                 else
                     raise ArgumentError, "Invalid recurse value %s" % value.inspect
                 end
@@ -309,7 +309,7 @@ module Puppet
             # Look up our bucket, if there is one
             if bucket = self.bucket
                 case bucket
-                when String:
+                when String
                     if catalog and obj = catalog.resource(:filebucket, bucket)
                         self.bucket = obj.bucket
                     elsif bucket == "puppet"
@@ -320,7 +320,7 @@ module Puppet
                     else
                         self.fail "Could not find filebucket '%s'" % bucket
                     end
-                when Puppet::Network::Client.client(:Dipper): # things are hunky-dorey
+                when Puppet::Network::Client.client(:Dipper) # things are hunky-dorey
                 when Puppet::Type::Filebucket # things are hunky-dorey
                     self.bucket = bucket.bucket
                 else
@@ -366,14 +366,14 @@ module Puppet
             end
 
             case File.stat(file).ftype
-            when "directory":
+            when "directory"
                 if self[:recurse]
                     # we don't need to backup directories when recurse is on
                     return true
                 else
                     backup = self.bucket || self[:backup]
                     case backup
-                    when Puppet::Network::Client.client(:Dipper):
+                    when Puppet::Network::Client.client(:Dipper)
                         notice "Recursively backing up to filebucket"
                         require 'find'
                         Find.find(self[:path]) do |f|
@@ -385,7 +385,7 @@ module Puppet
                         end
 
                         return true
-                    when String:
+                    when String
                         newfile = file + backup
                         # Just move it, since it's a directory.
                         if FileTest.exists?(newfile)
@@ -409,15 +409,15 @@ module Puppet
                         return false
                     end
                 end
-            when "file":
+            when "file"
                 backup = self.bucket || self[:backup]
                 case backup
-                when Puppet::Network::Client.client(:Dipper):
+                when Puppet::Network::Client.client(:Dipper)
                     sum = backup.backup(file)
                     self.notice "Filebucketed to %s with sum %s" %
                         [backup.name, sum]
                     return true
-                when String:
+                when String
                     newfile = file + backup
                     if FileTest.exists?(newfile)
                         remove_backup(newfile)
@@ -441,7 +441,7 @@ module Puppet
                     self.err "Invalid backup type %s" % backup.inspect
                     return false
                 end
-            when "link": return true
+            when "link"; return true
             else
                 self.notice "Cannot backup files of type %s" % File.stat(file).ftype
                 return false
@@ -667,14 +667,14 @@ module Puppet
             end
 
             case s.ftype
-            when "directory":
+            when "directory"
                 if self[:force] == :true
                     debug "Removing existing directory for replacement with %s" % should
                     FileUtils.rmtree(self[:path])
                 else
                     notice "Not removing directory; use 'force' to override"
                 end
-            when "link", "file":
+            when "link", "file"
                 debug "Removing existing %s for replacement with %s" %
                     [s.ftype, should]
                 File.unlink(self[:path])

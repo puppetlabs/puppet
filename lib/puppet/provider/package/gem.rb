@@ -83,7 +83,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
             end
 
             case uri.scheme
-            when nil: 
+            when nil
                 # no URI scheme => interpret the source as a local file
                 command << source
             when /file/i

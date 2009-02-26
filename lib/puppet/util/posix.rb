@@ -52,8 +52,8 @@ module Puppet::Util::POSIX
         # Apparently the group/passwd methods need to get reset; if we skip
         # this call, then new users aren't found.
         case type
-        when :passwd: Etc.send(:endpwent)
-        when :group: Etc.send(:endgrent)
+        when :passwd; Etc.send(:endpwent)
+        when :group; Etc.send(:endgrent)
         end
         return nil
     end
@@ -61,8 +61,8 @@ module Puppet::Util::POSIX
     # Determine what the field name is for users and groups.
     def idfield(space)
         case Puppet::Util.symbolize(space)
-        when :gr, :group: return :gid
-        when :pw, :user, :passwd: return :uid
+        when :gr, :group; return :gid
+        when :pw, :user, :passwd; return :uid
         else
             raise ArgumentError.new("Can only handle users and groups")
         end
@@ -71,8 +71,8 @@ module Puppet::Util::POSIX
     # Determine what the method is to get users and groups by id
     def methodbyid(space)
         case Puppet::Util.symbolize(space)
-        when :gr, :group: return :getgrgid
-        when :pw, :user, :passwd: return :getpwuid
+        when :gr, :group; return :getgrgid
+        when :pw, :user, :passwd; return :getpwuid
         else
             raise ArgumentError.new("Can only handle users and groups")
         end
@@ -81,8 +81,8 @@ module Puppet::Util::POSIX
     # Determine what the method is to get users and groups by name
     def methodbyname(space)
         case Puppet::Util.symbolize(space)
-        when :gr, :group: return :getgrnam
-        when :pw, :user, :passwd: return :getpwnam
+        when :gr, :group; return :getgrnam
+        when :pw, :user, :passwd; return :getpwnam
         else
             raise ArgumentError.new("Can only handle users and groups")
         end

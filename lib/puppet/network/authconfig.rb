@@ -99,9 +99,9 @@ module Puppet
                     count = 1
                     f.each { |line|
                         case line
-                        when /^\s*#/: next # skip comments
-                        when /^\s*$/: next # skip blank lines
-                        when /\[([\w.]+)\]/: # "namespace" or "namespace.method"
+                        when /^\s*#/; next # skip comments
+                        when /^\s*$/; next # skip blank lines
+                        when /\[([\w.]+)\]/ # "namespace" or "namespace.method"
                             name = $1
                             if newrights.include?(name)
                                 raise FileServerError, "%s is already set at %s" %
@@ -109,11 +109,11 @@ module Puppet
                             end
                             newrights.newright(name)
                             right = newrights[name]
-                        when /^\s*(\w+)\s+(.+)$/:
+                        when /^\s*(\w+)\s+(.+)$/
                             var = $1
                             value = $2
                             case var
-                            when "allow":
+                            when "allow"
                                 value.split(/\s*,\s*/).each { |val|
                                     begin
                                         right.info "allowing %s access" % val
@@ -123,7 +123,7 @@ module Puppet
                                             [detail.to_s, count, @config]
                                     end
                                 }
-                            when "deny":
+                            when "deny"
                                 value.split(/\s*,\s*/).each { |val|
                                     begin
                                         right.info "denying %s access" % val

@@ -544,13 +544,13 @@ class TestFileServer < Test::Unit::TestCase
                     host, ip = sub
 
                     case type
-                    when :deny:
+                    when :deny
                         assert_raise(Puppet::AuthorizationError,
                             "Host %s, ip %s, allowed %s" %
                             [host, ip, mount]) {
                                 list = server.list(mount, :manage, true, false, host, ip)
                         }
-                    when :allow:
+                    when :allow
                         assert_nothing_raised("Host %s, ip %s, denied %s" %
                             [host, ip, mount]) {
                                 list = server.list(mount, :manage, true, false, host, ip)

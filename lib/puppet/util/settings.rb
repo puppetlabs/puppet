@@ -407,11 +407,11 @@ class Puppet::Util::Settings
             hash.delete(:type)
         else
             case hash[:default]
-            when true, false, "true", "false":
+            when true, false, "true", "false"
                 klass = CBoolean
-            when /^\$\w+\//, /^\//:
+            when /^\$\w+\//, /^\//
                 klass = CFile
-            when String, Integer, Float: # nothing
+            when String, Integer, Float # nothing
                 klass = CElement
             else
                 raise Puppet::Error, "Invalid value '%s' for %s" % [value.inspect, hash[:name]]
@@ -829,9 +829,9 @@ Generated on #{Time.now}.
     def munge_value(value)
         # Handle different data types correctly
         return case value
-            when /^false$/i: false
-            when /^true$/i: true
-            when /^\d+$/i: Integer(value)
+            when /^false$/i; false
+            when /^true$/i; true
+            when /^\d+$/i; Integer(value)
             else
                 value.gsub(/^["']|["']$/,'').sub(/\s+$/, '')
         end
@@ -856,13 +856,13 @@ Generated on #{Time.now}.
         text.split(/\n/).each { |line|
             count += 1
             case line
-            when /^\s*\[(\w+)\]$/:
+            when /^\s*\[(\w+)\]$/
                 section = $1.intern # Section names
                 # Add a meta section
                 result[section][:_meta] ||= {}
-            when /^\s*#/: next # Skip comments
-            when /^\s*$/: next # Skip blanks
-            when /^\s*(\w+)\s*=\s*(.*)$/: # settings
+            when /^\s*#/; next # Skip comments
+            when /^\s*$/; next # Skip blanks
+            when /^\s*(\w+)\s*=\s*(.*)$/ # settings
                 var = $1.intern
 
                 # We don't want to munge modes, because they're specified in octal, so we'll
@@ -1150,8 +1150,8 @@ Generated on #{Time.now}.
 
         def munge(value)
             case value
-            when true, "true": return true
-            when false, "false": return false
+            when true, "true"; return true
+            when false, "false"; return false
             else
                 raise ArgumentError, "Invalid value '%s' for %s" %
                     [value.inspect, @name]

@@ -1,4 +1,6 @@
 0.25.0
+    Fixed #1849 - Ruby 1.9 portability: `when' doesn't like colons, replace with semicolons
+
     Fixed #1910 - Updated logcheck regex
 
     Fixed #1879 - Added to tidy documentation

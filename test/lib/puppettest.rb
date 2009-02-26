@@ -255,8 +255,8 @@ module PuppetTest
     def tmpdir
         unless defined? @tmpdir and @tmpdir
             @tmpdir = case Facter["operatingsystem"].value
-                      when "Darwin": "/private/tmp"
-                      when "SunOS": "/var/tmp"
+                      when "Darwin"; "/private/tmp"
+                      when "SunOS"; "/var/tmp"
                       else
                             "/tmp"
                       end

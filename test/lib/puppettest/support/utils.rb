@@ -72,7 +72,7 @@ module PuppetTest::Support::Utils
 
     def run_events(type, trans, events, msg)
         case type
-        when :evaluate, :rollback: # things are hunky-dory
+        when :evaluate, :rollback # things are hunky-dory
         else
             raise Puppet::DevError, "Incorrect run_events type"
         end

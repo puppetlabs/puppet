@@ -19,9 +19,9 @@ Puppet::Type.type(:zpool).provide(:solaris) do
         pool_array.reverse.each do |value|
             sym = nil
             case value
-            when "spares": sym = :spare
-            when "logs": sym = :log
-            when "mirror", "raidz1", "raidz2":
+            when "spares"; sym = :spare
+            when "logs"; sym = :log
+            when "mirror", "raidz1", "raidz2"
                 sym = value == "mirror" ? :mirror : :raidz
                 pool[:raid_parity] = "raidz2" if value == "raidz2"
             else

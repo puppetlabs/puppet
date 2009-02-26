@@ -41,9 +41,9 @@ module Puppet::Rails
         args = {:adapter => adapter, :log_level => Puppet[:rails_loglevel]}
 
         case adapter
-        when "sqlite3":
+        when "sqlite3"
             args[:dbfile] = Puppet[:dblocation]
-        when "mysql", "postgresql":
+        when "mysql", "postgresql"
             args[:host]     = Puppet[:dbserver] unless Puppet[:dbserver].empty?
             args[:username] = Puppet[:dbuser] unless Puppet[:dbuser].empty?
             args[:password] = Puppet[:dbpassword] unless Puppet[:dbpassword].empty?

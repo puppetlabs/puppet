@@ -56,7 +56,7 @@ Puppet::Type.newtype(:resources) do
                 500
             when :false, false
                 false
-            when Integer: value
+            when Integer; value
             else
                 raise ArgumentError, "Invalid value %s" % value.inspect
             end

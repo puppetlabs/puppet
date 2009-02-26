@@ -20,7 +20,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
 
     def enabled?
         case self.status
-        when :running:
+        when :running
             return :true
         else
             return :false
@@ -62,15 +62,15 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
                 next
             end
             case var
-            when "state":
+            when "state"
                 case value
-                when "online":
+                when "online"
                     #self.warning "matched running %s" % line.inspect
                     return :running
                 when "offline", "disabled", "uninitialized"
                     #self.warning "matched stopped %s" % line.inspect
                     return :stopped
-                when "legacy_run":
+                when "legacy_run"
                     raise Puppet::Error,
                         "Cannot manage legacy services through SMF"
                 else

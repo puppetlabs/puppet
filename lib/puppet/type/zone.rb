@@ -400,7 +400,7 @@ end
         hash.each do |param, value|
             next if param == :name
             case self.class.attrtype(param)
-            when :property:
+            when :property
                 # Only try to provide values for the properties we're managing
                 if prop = self.property(param)
                     prophash[prop] = value

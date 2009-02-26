@@ -154,8 +154,8 @@ class Puppet::Provider::NameService < Puppet::Provider
 
         group = method = nil
         case @resource.class.name
-        when :user: group = :passwd; method = :uid
-        when :group: group = :group; method = :gid
+        when :user; group = :passwd; method = :uid
+        when :group; group = :group; method = :gid
         else
             raise Puppet::DevError, "Invalid resource name %s" % resource
         end

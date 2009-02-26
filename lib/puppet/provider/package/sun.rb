@@ -41,12 +41,12 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
             # piece of information
             process.each { |line|
                 case line
-                when /^$/:
+                when /^$/
                     hash[:provider] = :sun
 
                     packages << new(hash)
                     hash = {}
-                when /\s*(\w+):\s+(.+)/:
+                when /\s*(\w+):\s+(.+)/
                     name = $1
                     value = $2
                     if names.include?(name)
@@ -54,7 +54,7 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
                             hash[names[name]] = value
                         end
                     end
-                when /\s+\d+.+/:
+                when /\s+\d+.+/
                     # nothing; we're ignoring the FILES info
                 end
             }
@@ -96,8 +96,8 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
                 # piece of information
                 process.each { |line|
                     case line
-                    when /^$/:  # ignore
-                    when /\s*([A-Z]+):\s+(.+)/:
+                    when /^$/  # ignore
+                    when /\s*([A-Z]+):\s+(.+)/
                         name = $1
                         value = $2
                         if names.include?(name)
@@ -105,7 +105,7 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
                                 hash[names[name]] = value
                             end
                         end
-                    when /\s+\d+.+/:
+                    when /\s+\d+.+/
                         # nothing; we're ignoring the FILES info
                     end
                 }

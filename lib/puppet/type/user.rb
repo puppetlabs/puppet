@@ -228,7 +228,7 @@ module Puppet
                 }
                 groups.each { |group|
                     case group
-                    when Integer:
+                    when Integer
                         if resource = catalog.resources.find { |r| r.is_a?(Puppet::Type.type(:group)) and r.should(:gid) == group }
                             autos << resource
                         end

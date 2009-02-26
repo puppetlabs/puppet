@@ -75,9 +75,9 @@ Puppet::Reports.register_report(:tagmail) do
         text.split("\n").each do |line|
             taglist = emails = nil
             case line.chomp
-            when /^\s*#/: next
-            when /^\s*$/: next
-            when /^\s*(.+)\s*:\s*(.+)\s*$/:
+            when /^\s*#/; next
+            when /^\s*$/; next
+            when /^\s*(.+)\s*:\s*(.+)\s*$/
                 taglist = $1
                 emails = $2.sub(/#.*$/,'')
             else
@@ -91,8 +91,8 @@ Puppet::Reports.register_report(:tagmail) do
                     raise ArgumentError, "Invalid tag %s" % tag.inspect
                 end
                 case tag
-                when /^\w+/: pos << tag
-                when /^!\w+/: neg << tag.sub("!", '')
+                when /^\w+/; pos << tag
+                when /^!\w+/; neg << tag.sub("!", '')
                 else
                     raise Puppet::Error, "Invalid tag '%s'" % tag
                 end

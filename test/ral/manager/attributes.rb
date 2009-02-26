@@ -172,7 +172,7 @@ class TestTypeAttributes < Test::Unit::TestCase
             end
 
             case old
-            when :one: # param
+            when :one # param
                 assert_equal(val, inst[new],
                     "Incorrect alias value for %s in []" % new)
             else
@@ -209,13 +209,13 @@ class TestTypeAttributes < Test::Unit::TestCase
             resource = type.new(:provider => prov.name, :name => "test%s" % i, :none => "a", :one => "b", :two => "c")
 
             case prov.name
-            when :nope:
+            when :nope
                 yes = [:none]
                 no = [:one, :two]
-            when :maybe:
+            when :maybe
                 yes = [:none, :one]
                 no = [:two]
-            when :yep:
+            when :yep
                 yes = [:none, :one, :two]
                 no = []
             end

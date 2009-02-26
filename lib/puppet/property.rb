@@ -165,8 +165,8 @@ class Puppet::Property < Puppet::Parameter
 
         if self.class.name == :ensure
             event = case self.should
-            when :present: (@resource.class.name.to_s + "_created").intern
-            when :absent: (@resource.class.name.to_s + "_removed").intern
+            when :present; (@resource.class.name.to_s + "_created").intern
+            when :absent; (@resource.class.name.to_s + "_removed").intern
             else
                 (@resource.class.name.to_s + "_changed").intern
             end

@@ -40,9 +40,9 @@ class NetInfo < Puppet::Provider::NameService
 
     def self.finish
         case self.name
-        when :uid:
+        when :uid
             noautogen
-        when :gid:
+        when :gid
             noautogen
         end
     end

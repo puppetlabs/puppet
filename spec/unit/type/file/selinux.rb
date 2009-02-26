@@ -29,10 +29,10 @@ Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f
             @resource.expects(:stat).returns stat
             @sel.expects(:get_selinux_current_context).with("/my/file").returns "user_u:role_r:type_t:s0"
             expectedresult = case param
-                when :seluser then "user_u"
-                when :selrole then "role_r"
-                when :seltype then "type_t"
-                when :selrange then "s0"
+                when :seluser; "user_u"
+                when :selrole; "role_r"
+                when :seltype; "type_t"
+                when :selrange; "s0"
             end
             @sel.retrieve.should == expectedresult
         end
@@ -42,10 +42,10 @@ Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f
             @resource.expects(:stat).returns stat
             @sel.expects(:get_selinux_current_context).with("/my/file").returns "user_u:role_r:type_t"
             expectedresult = case param
-                when :seluser then "user_u"
-                when :selrole then "role_r"
-                when :seltype then "type_t"
-                when :selrange then nil
+                when :seluser; "user_u"
+                when :selrole; "role_r"
+                when :seltype; "type_t"
+                when :selrange; nil
             end
             @sel.retrieve.should == expectedresult
         end
@@ -59,10 +59,10 @@ Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f
             @sel.stubs(:debug)
             @sel.expects(:get_selinux_default_context).with("/my/file").returns "user_u:role_r:type_t:s0"
             expectedresult = case param
-                when :seluser then "user_u"
-                when :selrole then "role_r"
-                when :seltype then "type_t"
-                when :selrange then "s0"
+                when :seluser; "user_u"
+                when :selrole; "role_r"
+                when :seltype; "type_t"
+                when :selrange; "s0"
             end
             @sel.default.must == expectedresult
         end

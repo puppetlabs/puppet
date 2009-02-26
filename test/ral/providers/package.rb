@@ -240,7 +240,7 @@ class TestPackageProvider < Test::Unit::TestCase
 
     def modpkg(pkg)
         case pkg[:provider]
-        when :sun:
+        when :sun
             pkg[:adminfile] = "/usr/local/pkg/admin_file"
         end
     end

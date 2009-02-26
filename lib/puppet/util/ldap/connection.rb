@@ -62,9 +62,9 @@ class Puppet::Util::Ldap::Connection
     def start
         begin
             case ssl
-            when :tls:
+            when :tls
                 @connection = LDAP::SSLConn.new(host, port, true)
-            when true:
+            when true
                 @connection = LDAP::SSLConn.new(host, port)
             else
                 @connection = LDAP::Conn.new(host, port)

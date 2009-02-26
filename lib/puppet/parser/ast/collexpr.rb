@@ -28,15 +28,15 @@ class CollExpr < AST::Branch
         # case statements as doing an eval here.
         code = proc do |resource|
             case @oper
-            when "and": code1.call(resource) and code2.call(resource)
-            when "or": code1.call(resource) or code2.call(resource)
-            when "==":
+            when "and"; code1.call(resource) and code2.call(resource)
+            when "or"; code1.call(resource) or code2.call(resource)
+            when "=="
                 if resource[str1].is_a?(Array) && form != :exported
                     resource[str1].include?(str2)
                 else
                     resource[str1] == str2
                 end
-            when "!=": resource[str1] != str2
+            when "!="; resource[str1] != str2
             end
         end
 
@@ -46,12 +46,12 @@ class CollExpr < AST::Branch
         end
 
         case @oper
-        when "and", "or":
+        when "and", "or"
             if form == :exported
                 raise Puppet::ParseError, "Puppet does not currently support collecting exported resources with more than one condition"
             end
             oper = @oper.upcase
-        when "==": oper = "="
+        when "=="; oper = "="
         else
             oper = @oper
         end

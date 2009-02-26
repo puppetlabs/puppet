@@ -65,9 +65,9 @@ class Puppet::Network::Handler
             catalog = Puppet::Resource::Catalog.find(client)
 
             case format
-            when "yaml":
+            when "yaml"
                 return CGI.escape(catalog.extract.to_yaml(:UseBlock => true))
-            when "marshal":
+            when "marshal"
                 return CGI.escape(Marshal.dump(catalog.extract))
             else
                 raise "Invalid markup format '%s'" % format

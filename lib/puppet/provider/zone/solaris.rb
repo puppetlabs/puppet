@@ -112,12 +112,12 @@ Puppet::Type.type(:zone).provide(:solaris) do
         hash = {}
         output.split("\n").each do |line|
             case line
-            when /^(\S+):\s*$/:
+            when /^(\S+):\s*$/
                 name = $1
                 current = nil # reset it
-            when /^(\S+):\s*(.+)$/:
+            when /^(\S+):\s*(.+)$/
                 hash[$1.intern] = $2
-            when /^\s+(\S+):\s*(.+)$/:
+            when /^\s+(\S+):\s*(.+)$/
                 if name
                     unless hash.include? name
                         hash[name] = []

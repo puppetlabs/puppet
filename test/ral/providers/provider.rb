@@ -506,13 +506,13 @@ class TestProviderFeatures < Test::Unit::TestCase
         [nope, maybe, yep].each do |prov|
             assert(prov.respond_to?(:supports_parameter?), "%s does not respond to :supports_parameter?" % prov.name)
             case prov.name
-            when :nope:
+            when :nope
                 supported = [:neither]
                 un = [:some, :both]
-            when :maybe:
+            when :maybe
                 supported = [:neither, :some]
                 un = [:both]
-            when :yep:
+            when :yep
                 supported = [:neither, :some, :both]
                 un = []
             end
