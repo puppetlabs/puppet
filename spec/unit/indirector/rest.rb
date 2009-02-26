@@ -146,83 +146,13 @@ describe Puppet::Indirector::REST do
         end
     end
 
-    describe "when building a query string from request options" do
-        it "should return an empty query string if there are no options" do
-            @request.stubs(:options).returns nil
-            @searcher.query_string(@request).should == ""
-        end
-
-        it "should return an empty query string if the options are empty" do
-            @request.stubs(:options).returns({})
-            @searcher.query_string(@request).should == ""
-        end
-
-        it "should prefix the query string with '?'" do
-            @request.stubs(:options).returns(:one => "two")
-            @searcher.query_string(@request).should =~ /^\?/
-        end
-
-        it "should include all options in the query string, separated by '&'" do
-            @request.stubs(:options).returns(:one => "two", :three => "four")
-            @searcher.query_string(@request).sub(/^\?/, '').split("&").sort.should == %w{one=two three=four}.sort
-        end
-
-        it "should ignore nil options" do
-            @request.stubs(:options).returns(:one => "two", :three => nil)
-            @searcher.query_string(@request).should_not be_include("three")
-        end
-
-        it "should convert 'true' option values into strings" do
-            @request.stubs(:options).returns(:one => true)
-            @searcher.query_string(@request).should == "?one=true"
-        end
-
-        it "should convert 'false' option values into strings" do
-            @request.stubs(:options).returns(:one => false)
-            @searcher.query_string(@request).should == "?one=false"
-        end
-
-        it "should URI-escape all option values that are strings" do
-            escaping = URI.escape("one two")
-            @request.stubs(:options).returns(:one => "one two")
-            @searcher.query_string(@request).should == "?one=#{escaping}"
-        end
-
-        it "should YAML-dump and URI-escape arrays" do
-            escaping = URI.escape(YAML.dump(%w{one two}))
-            @request.stubs(:options).returns(:one => %w{one two})
-            @searcher.query_string(@request).should == "?one=#{escaping}"
-        end
-
-        it "should convert to a string all option values that are integers" do
-            @request.stubs(:options).returns(:one => 50)
-            @searcher.query_string(@request).should == "?one=50"
-        end
-
-        it "should convert to a string all option values that are floating point numbers" do
-            @request.stubs(:options).returns(:one => 1.2)
-            @searcher.query_string(@request).should == "?one=1.2"
-        end
-
-        it "should convert to a string and URI-escape all option values that are symbols" do
-            escaping = URI.escape("sym bol")
-            @request.stubs(:options).returns(:one => :"sym bol")
-            @searcher.query_string(@request).should == "?one=#{escaping}"
-        end
-
-        it "should fail if options other than booleans or strings are provided" do
-            @request.stubs(:options).returns(:one => {:one => :two})
-            lambda { @searcher.query_string(@request) }.should raise_error(ArgumentError)
-        end
-    end
-
     describe "when doing a find" do
         before :each do
             @connection = stub('mock http connection', :get => @response)
             @searcher.stubs(:network).returns(@connection)    # neuter the network connection
 
             # Use a key with spaces, so we can test escaping
-            @request = stub 'request', :escaped_key => 'foo', :options => {}
+            @request = stub 'request', :escaped_key => 'foo', :query_string => ""
         end
 
         it "should call the GET http method on a network connection" do
@@ -245,7 +175,7 @@ describe Puppet::Indirector::REST do
         end
 
         it "should include the query string" do
-            @searcher.expects(:query_string).with(@request).returns "?my_string"
+            @request.expects(:query_string).with().returns "?my_string"
             @connection.expects(:get).with { |path, args| path.include?("?my_string") }.returns(@response)
             @searcher.find(@request)
         end
@@ -275,7 +205,7 @@ describe Puppet::Indirector::REST do
 
             @model.stubs(:convert_from_multiple)
 
-            @request = stub 'request', :escaped_key => 'foo', :options => {}, :key => "bar"
+            @request = stub 'request', :escaped_key => 'foo', :query_string => "", :key => "bar"
         end
 
         it "should call the GET http method on a network connection" do
@@ -305,7 +235,7 @@ describe Puppet::Indirector::REST do
         end
 
         it "should include the query string" do
-            @searcher.expects(:query_string).with(@request).returns "?my_string"
+            @request.expects(:query_string).with().returns "?my_string"
             @connection.expects(:get).with { |path, args| path.include?("?my_string") }.returns(@response)
             @searcher.search(@request)
         end
@@ -334,7 +264,7 @@ describe Puppet::Indirector::REST do
             @connection = stub('mock http connection', :delete => @response)
             @searcher.stubs(:network).returns(@connection)    # neuter the network connection
 
-            @request = stub 'request', :escaped_key => 'foo', :options => {}
+            @request = stub 'request', :escaped_key => 'foo', :query_string => "", :options => {}
         end
 
         it "should call the DELETE http method on a network connection" do
@@ -363,7 +293,7 @@ describe Puppet::Indirector::REST do
         end
 
         it "should not include the query string" do
-            @searcher.expects(:query_string).never
+            @request.expects(:query_string).never
             @connection.stubs(:delete).returns @response
             @searcher.destroy(@request)
         end
@@ -392,7 +322,7 @@ describe Puppet::Indirector::REST do
             @searcher.stubs(:network).returns(@connection)    # neuter the network connection
 
             @instance = stub 'instance', :render => "mydata"
-            @request = stub 'request', :instance => @instance, :options => {}
+            @request = stub 'request', :instance => @instance, :query_string => "", :options => {}
         end
 
         it "should call the PUT http method on a network connection" do
@@ -414,7 +344,7 @@ describe Puppet::Indirector::REST do
         end
 
         it "should not include the query string" do
-            @searcher.expects(:query_string).never
+            @request.expects(:query_string).never
             @connection.stubs(:put).returns @response
             @searcher.save(@request)
         end

@@ -177,4 +177,78 @@ describe Puppet::Indirector::Request do
     it "should be able to return the URI-escaped key" do
         Puppet::Indirector::Request.new(:myind, :find, "my key").escaped_key.should == URI.escape("my key")
     end
+
+    describe "when building a query string from its options" do
+        before do
+            @request = Puppet::Indirector::Request.new(:myind, :find, "my key")
+        end
+
+        it "should return an empty query string if there are no options" do
+            @request.stubs(:options).returns nil
+            @request.query_string.should == ""
+        end
+
+        it "should return an empty query string if the options are empty" do
+            @request.stubs(:options).returns({})
+            @request.query_string.should == ""
+        end
+
+        it "should prefix the query string with '?'" do
+            @request.stubs(:options).returns(:one => "two")
+            @request.query_string.should =~ /^\?/
+        end
+
+        it "should include all options in the query string, separated by '&'" do
+            @request.stubs(:options).returns(:one => "two", :three => "four")
+            @request.query_string.sub(/^\?/, '').split("&").sort.should == %w{one=two three=four}.sort
+        end
+
+        it "should ignore nil options" do
+            @request.stubs(:options).returns(:one => "two", :three => nil)
+            @request.query_string.should_not be_include("three")
+        end
+
+        it "should convert 'true' option values into strings" do
+            @request.stubs(:options).returns(:one => true)
+            @request.query_string.should == "?one=true"
+        end
+
+        it "should convert 'false' option values into strings" do
+            @request.stubs(:options).returns(:one => false)
+            @request.query_string.should == "?one=false"
+        end
+
+        it "should convert to a string all option values that are integers" do
+            @request.stubs(:options).returns(:one => 50)
+            @request.query_string.should == "?one=50"
+        end
+
+        it "should convert to a string all option values that are floating point numbers" do
+            @request.stubs(:options).returns(:one => 1.2)
+            @request.query_string.should == "?one=1.2"
+        end
+
+        it "should URI-escape all option values that are strings" do
+            escaping = URI.escape("one two")
+            @request.stubs(:options).returns(:one => "one two")
+            @request.query_string.should == "?one=#{escaping}"
+        end
+
+        it "should YAML-dump and URI-escape arrays" do
+            escaping = URI.escape(YAML.dump(%w{one two}))
+            @request.stubs(:options).returns(:one => %w{one two})
+            @request.query_string.should == "?one=#{escaping}"
+        end
+
+        it "should convert to a string and URI-escape all option values that are symbols" do
+            escaping = URI.escape("sym bol")
+            @request.stubs(:options).returns(:one => :"sym bol")
+            @request.query_string.should == "?one=#{escaping}"
+        end
+
+        it "should fail if options other than booleans or strings are provided" do
+            @request.stubs(:options).returns(:one => {:one => :two})
+            lambda { @request.query_string }.should raise_error(ArgumentError)
+        end
+    end
 end

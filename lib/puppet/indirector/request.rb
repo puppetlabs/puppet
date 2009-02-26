@@ -83,6 +83,25 @@ class Puppet::Indirector::Request
         method == :search
     end
 
+    # Create the query string, if options are present.
+    def query_string
+        return "" unless options and ! options.empty?
+        "?" + options.collect do |key, value|
+            case value
+            when nil; next
+            when true, false; value = value.to_s
+            when Fixnum, Bignum, Float; value = value # nothing
+            when String; value = URI.escape(value)
+            when Symbol; value = URI.escape(value.to_s)
+            when Array; value = URI.escape(YAML.dump(value))
+            else
+                raise ArgumentError, "HTTP REST queries cannot handle values of type '%s'" % value.class
+            end
+
+            "%s=%s" % [key, value]
+        end.join("&")
+    end
+
     def to_s
         return uri if uri
         return "/%s/%s" % [indirection_name, key]

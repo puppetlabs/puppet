@@ -62,14 +62,14 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     end
 
     def find(request)
-        deserialize network(request).get("/#{indirection.name}/#{request.escaped_key}#{query_string(request)}", headers)
+        deserialize network(request).get("/#{indirection.name}/#{request.escaped_key}#{request.query_string}", headers)
     end
     
     def search(request)
         if request.key
-            path = "/#{indirection.name}s/#{request.escaped_key}#{query_string(request)}"
+            path = "/#{indirection.name}s/#{request.escaped_key}#{request.query_string}"
         else
-            path = "/#{indirection.name}s#{query_string(request)}"
+            path = "/#{indirection.name}s#{request.query_string}"
         end
         unless result = deserialize(network(request).get(path, headers), true)
             return []
@@ -85,24 +85,5 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     def save(request)
         raise ArgumentError, "PUT does not accept options" unless request.options.empty?
         deserialize network(request).put("/#{indirection.name}/", request.instance.render, headers)
-    end
-
-    # Create the query string, if options are present.
-    def query_string(request)
-        return "" unless request.options and ! request.options.empty?
-        "?" + request.options.collect do |key, value|
-            case value
-            when nil; next
-            when true, false; value = value.to_s
-            when Fixnum, Bignum, Float; value = value # nothing
-            when String; value = URI.escape(value)
-            when Symbol; value = URI.escape(value.to_s)
-            when Array; value = URI.escape(YAML.dump(value))
-            else
-                raise ArgumentError, "HTTP REST queries cannot handle values of type '%s'" % value.class
-            end
-
-            "%s=%s" % [key, value]
-        end.join("&")
     end
 end
