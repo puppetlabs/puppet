@@ -244,6 +244,12 @@ describe Puppet::Indirector::REST do
             @searcher.find(@request)
         end
 
+        it "should include the query string" do
+            @searcher.expects(:query_string).with(@request).returns "?my_string"
+            @connection.expects(:get).with { |path, args| path.include?("?my_string") }.returns(@response)
+            @searcher.find(@request)
+        end
+
         it "should provide an Accept header containing the list of supported formats joined with commas" do
             @connection.expects(:get).with { |path, args| args["Accept"] == "supported, formats" }.returns(@response)
 
@@ -298,11 +304,9 @@ describe Puppet::Indirector::REST do
             @searcher.search(@request)
         end
 
-        it "should include all options in the query string" do
-            @request.stubs(:options).returns(:one => "two", :three => "four")
-
-            should_path = "/%s/%s" % [@indirection.name.to_s, "foo"]
-            @connection.expects(:get).with { |path, args| path =~ /\?one=two&three=four$/ or path =~ /\?three=four&one=two$/ }.returns(@response)
+        it "should include the query string" do
+            @searcher.expects(:query_string).with(@request).returns "?my_string"
+            @connection.expects(:get).with { |path, args| path.include?("?my_string") }.returns(@response)
             @searcher.search(@request)
         end
 
@@ -358,6 +362,12 @@ describe Puppet::Indirector::REST do
             @searcher.destroy(@request)
         end
 
+        it "should not include the query string" do
+            @searcher.expects(:query_string).never
+            @connection.stubs(:delete).returns @response
+            @searcher.destroy(@request)
+        end
+
         it "should provide an Accept header containing the list of supported formats joined with commas" do
             @connection.expects(:delete).with { |path, args| args["Accept"] == "supported, formats" }.returns(@response)
 
@@ -400,6 +410,12 @@ describe Puppet::Indirector::REST do
         it "should use the indirection name as the path for the request" do
             @connection.expects(:put).with { |path, data, args| path == "/#{@indirection.name.to_s}/" }.returns @response
 
+            @searcher.save(@request)
+        end
+
+        it "should not include the query string" do
+            @searcher.expects(:query_string).never
+            @connection.stubs(:put).returns @response
             @searcher.save(@request)
         end
 
