@@ -384,8 +384,6 @@ module Puppet
         # it to be in the server section (#1138).
         :yamldir => {:default => "$vardir/yaml", :owner => "$user", :group => "$user", :mode => "750",
             :desc => "The directory in which YAML data is stored, usually in a subdirectory."},
-        :clientyamldir => {:default => "$vardir/client_yaml", :mode => "750",
-            :desc => "The directory in which client-side YAML data is stored."},
         :reports => ["store",
             "The list of reports to generate.  All reports are looked for
             in puppet/reports/<name>.rb, and multiple report names should be
@@ -425,6 +423,8 @@ module Puppet
                 this file reflects the state discovered through interacting
                 with clients."
             },
+        :clientyamldir => {:default => "$vardir/client_yaml", :mode => "750",
+            :desc => "The directory in which client-side YAML data is stored."},
         :classfile => { :default => "$statedir/classes.txt",
             :owner => "root",
             :mode => 0644,
