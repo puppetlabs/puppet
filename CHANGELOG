@@ -1,4 +1,6 @@
 0.24.8
+    Fixed #1963 - Failing to read /proc/mounts for selinux kills file downloads
+
     Fixed #2025 - gentoo service provider handle only default init level
 
     Fixed #1910 - updated logcheck
