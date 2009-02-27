@@ -1,4 +1,6 @@
 0.24.8
+    Added ext/dbfix.sql script - fixes common errors in stored configuration databases
+
     Fixed #1963 - Failing to read /proc/mounts for selinux kills file downloads
 
     Fixed #2025 - gentoo service provider handle only default init level
