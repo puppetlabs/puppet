@@ -49,7 +49,12 @@ module Puppet
                           exit(23) if @one_time
                        end
 
-                       sleep @wait_for_cert 
+                        if @wait_for_cert > 0
+                            sleep @wait_for_cert
+                        else
+                            Puppet.notice "waitforcert disabled; exiting with no certificate"
+                            exit(1)
+                        end
                     end
                 end
 

@@ -91,6 +91,19 @@ describe cert_handler, "when handling certificates" do
         end
     end
 
+    describe "when waitforcert is disabled" do
+        before do
+            @handler = cert_handler.new(0, false)
+            @handler.stubs(:read_cert).returns false
+        end
+
+        it "should exit if the cert request does not return a certificate" do
+            @caclient.stubs(:request_cert).returns(false)
+            @handler.expects(:exit).with(1).raises(SystemExit)
+            lambda { @handler.retrieve_cert }.should raise_error(SystemExit)
+        end
+    end
+
     describe "when in one time mode" do
         before do
             #true puts us in onetime mode
