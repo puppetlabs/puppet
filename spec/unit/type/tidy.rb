@@ -5,6 +5,10 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 tidy = Puppet::Type.type(:tidy)
 
 describe tidy do
+    before do
+        Puppet.settings.stubs(:use)
+    end
+
     after { tidy.clear }
     
     it "should be in sync if the targeted file does not exist" do

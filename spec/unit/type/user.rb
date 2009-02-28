@@ -6,6 +6,9 @@ user = Puppet::Type.type(:user)
 
 describe user do
     before do
+        unless ENV["PATH"].split(File::PATH_SEPARATOR).include?("/usr/sbin")
+            ENV["PATH"] += File::PATH_SEPARATOR + "/usr/sbin"
+        end
         @provider = stub 'provider'
         @resource = stub 'resource', :resource => nil, :provider => @provider, :line => nil, :file => nil
     end

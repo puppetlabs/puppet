@@ -130,6 +130,7 @@ describe provider_class do
     describe provider_class, " when modifying the filesystem tab" do
         include ParsedMountTesting
         before do
+            Puppet.settings.stubs(:use)
             # Never write to disk, only to RAM.
             @provider_class.stubs(:filetype).returns(Puppet::Util::FileType.filetype(:ram))
 

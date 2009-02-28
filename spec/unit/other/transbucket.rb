@@ -70,20 +70,20 @@ describe Puppet::TransBucket, " when generating a catalog" do
         @bottom = Puppet::TransBucket.new
         @bottom.type = "fake"
         @bottom.name = "bottom"
-        @bottomobj = Puppet::TransObject.new("bottom", "user")
+        @bottomobj = Puppet::TransObject.new("bottom", "notify")
         @bottom.push @bottomobj
 
         @middle = Puppet::TransBucket.new
         @middle.type = "fake"
         @middle.name = "middle"
-        @middleobj = Puppet::TransObject.new("middle", "user")
+        @middleobj = Puppet::TransObject.new("middle", "notify")
         @middle.push(@middleobj)
         @middle.push(@bottom)
 
         @top = Puppet::TransBucket.new
         @top.type = "fake"
         @top.name = "top"
-        @topobj = Puppet::TransObject.new("top", "user")
+        @topobj = Puppet::TransObject.new("top", "notify")
         @top.push(@topobj)
         @top.push(@middle)
 
@@ -98,7 +98,7 @@ describe Puppet::TransBucket, " when generating a catalog" do
     it "should convert all transportable objects to RAL resources" do
         @catalog = @top.to_catalog
         @users.each do |name|
-            @catalog.vertices.find { |r| r.class.name == :user and r.title == name }.should be_instance_of(Puppet::Type.type(:user))
+            @catalog.vertices.find { |r| r.class.name == :notify and r.title == name }.should be_instance_of(Puppet::Type.type(:notify))
         end
     end
 

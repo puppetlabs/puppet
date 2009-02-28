@@ -22,6 +22,7 @@ end
 
 describe Puppet::Indirector::SslRsa::File, " when choosing a path for a ca key" do
     before do
+        Puppet.settings.stubs(:use)
         @file = Puppet::Indirector::SslRsa::File.new
         @name = :ca
     end
@@ -38,6 +39,7 @@ end
 
 describe Puppet::Indirector::SslRsa::File, " when choosing a path for a non-ca key" do
     before do
+        Puppet.settings.stubs(:use)
         @file = Puppet::Indirector::SslRsa::File.new
         @name = :publickey
     end
@@ -54,6 +56,7 @@ end
 
 describe Puppet::Indirector::SslRsa::File, " when saving" do
     before do
+        Puppet.settings.stubs(:use)
         @file = Puppet::Indirector::SslRsa::File.new
 
         Puppet.settings.stubs(:value).with(:publickeydir).returns("/dir")
@@ -72,6 +75,7 @@ end
 
 describe Puppet::Indirector::SslRsa::File, " when finding a key by name" do
     before do
+        Puppet.settings.stubs(:use)
         @file = Puppet::Indirector::SslRsa::File.new
 
         Puppet.settings.stubs(:value).with(:publickeydir).returns("/dir")
@@ -95,6 +99,7 @@ end
 
 describe Puppet::Indirector::SslRsa::File, " when removing a key" do
     before do
+        Puppet.settings.stubs(:use)
         @file = Puppet::Indirector::SslRsa::File.new
 
         Puppet.settings.stubs(:value).with(:publickeydir).returns("/dir")

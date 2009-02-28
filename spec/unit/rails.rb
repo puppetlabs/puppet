@@ -7,6 +7,7 @@ describe Puppet::Rails, "when initializing any connection" do
     confine "Cannot test without ActiveRecord" => Puppet.features.rails?
 
     before do
+        Puppet.settings.stubs(:use)
         @logger = mock 'logger'
         @logger.stub_everything
         Logger.stubs(:new).returns(@logger)

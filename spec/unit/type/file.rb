@@ -4,6 +4,8 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 describe Puppet::Type.type(:file) do
     before do
+        Puppet.settings.stubs(:use)
+
         @path = Tempfile.new("puppetspec")
         @path.close!()
         @path = @path.path

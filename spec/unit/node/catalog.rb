@@ -794,6 +794,7 @@ describe Puppet::Node::Catalog, " when writing dot files" do
     end
 
     it "should write a dot file based on the passed name" do
+        Puppet.settings.stubs(:use)
         File.expects(:open).with(@file, "w").yields(stub("file", :puts => nil))
         @catalog.expects(:to_dot).with("name" => @name.to_s.capitalize)
         @catalog.host_config = true
