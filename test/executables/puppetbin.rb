@@ -72,7 +72,7 @@ class TestPuppetBin < Test::Unit::TestCase
         end
         File.open(manifest, "w") do |f|
             f.puts "#!#{env} puppet
-            file { '#{path}': ensure => file }"
+            exec { '/bin/touch #{path}': }"
         end
         File.chmod(0755, manifest)
 

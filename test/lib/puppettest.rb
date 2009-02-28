@@ -166,6 +166,9 @@ module PuppetTest
     end
 
     def setup
+        unless ENV["PATH"].split(File::PATH_SEPARATOR).include?("/usr/sbin")
+            ENV["PATH"] += File::PATH_SEPARATOR + "/usr/sbin"
+        end
         @memoryatstart = Puppet::Util.memory
         if defined? @@testcount
             @@testcount += 1

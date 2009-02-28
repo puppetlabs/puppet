@@ -12,12 +12,15 @@ class TestFileBucketExe < Test::Unit::TestCase
     include PuppetTest::ExeTest
 
     def test_local
+        basedir = tempfile()
+        FileUtils.mkdir_p(basedir)
+
         bucket = tempfile
         file = tempfile
         text = "somet ext"
         md5 = Digest::MD5.hexdigest(text)
         File.open(file, "w") { |f| f.print text }
-        out = %x{filebucket --bucket #{bucket} backup #{file}}
+        out = %x{filebucket --confdir #{basedir} --vardir #{basedir} --bucket #{bucket} backup #{file}}
 
         outfile, outmd5 = out.chomp.split(": ")
 
@@ -35,12 +38,12 @@ class TestFileBucketExe < Test::Unit::TestCase
 
         assert_equal(text, newtext, "did not get correct file from md5 sum")
 
-        out = %x{filebucket --bucket #{bucket} get #{md5}}
+        out = %x{filebucket --confdir #{basedir} --vardir #{basedir} --bucket #{bucket} get #{md5}}
         assert_equal(0, $?, "filebucket did not run successfully")
         assert_equal(text, out, "did not get correct text back from filebucket")
 
         File.open(file, "w") { |f| f.puts "some other txt" }
-        out = %x{filebucket --bucket #{bucket} restore #{file} #{md5}}
+        out = %x{filebucket --confdir #{basedir} --vardir #{basedir} --bucket #{bucket} restore #{file} #{md5}}
         assert_equal(0, $?, "filebucket did not run successfully")
         assert_equal(text, File.read(file), "file was not restored")
     end
