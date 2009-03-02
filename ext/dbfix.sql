@@ -35,6 +35,23 @@ FROM param_values AS bad_rows
     good_rows.resource_id = bad_rows.resource_id AND 
     good_rows.max_id <> bad_rows.id;
 
+-- rewrite param_values that points to duplicated param_names
+-- to point to the highest param_name id.
+UPDATE 
+  param_values v 
+  INNER JOIN
+  param_names n
+  ON n.id = v.param_name_id
+  INNER JOIN
+  (
+    SELECT name, MAX(id) as max_id
+    FROM param_names
+    GROUP BY name
+    HAVING count(*) > 1
+  ) nmax ON n.name = nmax.name
+SET
+  v.param_name_id = nmax.max_id;
+
 -- Remove duplicate param_names, and keep the latest one
 DELETE bad_rows.*
 FROM param_names AS bad_rows
@@ -48,12 +65,12 @@ FROM param_names AS bad_rows
     good_rows.name = bad_rows.name AND
     good_rows.max_id <> bad_rows.id;
 
--- Remove duplicate resource_tags, and keep the latest one
+-- Remove duplicate resource_tags, and keep the highest one
 DELETE bad_rows.*
 FROM resource_tags AS bad_rows
   INNER JOIN (
     SELECT resource_id,puppet_tag_id, MAX(id) as max_id
-    FROM param_names
+    FROM resource_tags
     GROUP BY resource_id,puppet_tag_id
     HAVING count(*) > 1
   ) AS good_rows 
@@ -62,7 +79,24 @@ FROM resource_tags AS bad_rows
     good_rows.puppet_tag_id = bad_rows.puppet_tag_id AND
     good_rows.max_id <> bad_rows.id;
 
--- Remove duplicate puppet_tags, and keep the latest one
+-- rewrite resource_tags that points to duplicated puppet_tags
+-- to point to the highest puppet_tags id.
+UPDATE 
+  resource_tags v 
+  INNER JOIN
+  puppet_tags n
+  ON n.id = v.puppet_tag_id
+  INNER JOIN
+  (
+    SELECT name, MAX(id) as max_id
+    FROM puppet_tags
+    GROUP BY name
+    HAVING count(*) > 1
+  ) nmax ON n.name = nmax.name
+SET
+  v.puppet_tag_id = nmax.max_id;
+
+-- Remove duplicate puppet_tags, and keep the highest one
 DELETE bad_rows.*
 FROM puppet_tags AS bad_rows
   INNER JOIN (
