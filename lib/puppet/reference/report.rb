@@ -20,4 +20,5 @@ reports must be comma-separated.  You can also specify ``none`` to disable
 reports entirely.
 
 Puppet provides multiple report handlers that will process client reports:
+
 "
