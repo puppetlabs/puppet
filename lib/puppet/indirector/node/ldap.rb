@@ -81,45 +81,10 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
     def entry2hash(entry)
         result = {}
         result[:name] = entry.dn.split(',')[0].split("=")[1]
-        if pattr = parent_attribute
-            if values = entry.vals(pattr)
-                if values.length > 1
-                    raise Puppet::Error,
-                        "Node entry %s specifies more than one parent: %s" % [entry.dn, values.inspect]
-                end
-                unless values.empty?
-                    result[:parent] = values.shift
-                end
-            end
-        end
-
-        result[:classes] = []
-        class_attributes.each { |attr|
-            if values = entry.vals(attr)
-                values.each do |v| result[:classes] << v end
-            end
-        }
-        result[:classes].uniq!
-
-        result[:stacked] = []
-        stacked_params = stacked_attributes
-        stacked_params.each { |attr|
-            if values = entry.vals(attr)
-                result[:stacked] = result[:stacked] + values
-            end
-        }
-        
-
-        result[:parameters] = entry.to_hash.inject({}) do |hash, ary|
-            unless stacked_params.include?(ary[0]) # don't add our stacked parameters to the main param list
-                if ary[1].length == 1
-                    hash[ary[0]] = ary[1].shift
-                else
-                    hash[ary[0]] = ary[1]
-                end
-            end
-            hash
-        end
+        result[:parent] = get_parent_from_entry(entry) if parent_attribute
+        result[:classes] = get_classes_from_entry(entry)
+        result[:stacked] = get_stacked_values_from_entry(entry)
+        result[:parameters] = get_parameters_from_entry(entry)
 
         result[:environment] = result[:parameters]["environment"] if result[:parameters]["environment"]
 
@@ -223,5 +188,51 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
         end
 
         return info
+    end
+
+    def get_classes_from_entry(entry)
+        result = class_attributes.inject([]) do |array, attr|
+            if values = entry.vals(attr)
+                values.each do |v| array << v end
+            end
+            array
+        end
+        result.uniq
+    end
+
+    def get_parameters_from_entry(entry)
+        stacked_params = stacked_attributes
+        entry.to_hash.inject({}) do |hash, ary|
+            unless stacked_params.include?(ary[0]) # don't add our stacked parameters to the main param list
+                if ary[1].length == 1
+                    hash[ary[0]] = ary[1].shift
+                else
+                    hash[ary[0]] = ary[1]
+                end
+            end
+            hash
+        end
+    end
+
+    def get_parent_from_entry(entry)
+        pattr = parent_attribute
+
+        return nil unless values = entry.vals(pattr)
+
+        if values.length > 1
+            raise Puppet::Error,
+                "Node entry %s specifies more than one parent: %s" % [entry.dn, values.inspect]
+        end
+        return nil if values.empty?
+        return values.shift
+    end
+
+    def get_stacked_values_from_entry(entry)
+        stacked_attributes.inject([]) do |result, attr|
+            if values = entry.vals(attr)
+                result += values
+            end
+            result
+        end
     end
 end
