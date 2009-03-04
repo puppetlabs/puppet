@@ -103,6 +103,8 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
             end
         end
 
+        result[:parameters] = convert_parameters(result[:parameters])
+
         result
     end
 
@@ -141,6 +143,29 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
         node.classes = information[:classes].uniq unless information[:classes].nil? or information[:classes].empty?
         node.parameters = information[:parameters] unless information[:parameters].nil? or information[:parameters].empty?
         node.environment = information[:environment] if information[:environment]
+    end
+
+    def convert_parameters(parameters)
+        result = {}
+        parameters.each do |param, value|
+            if value.is_a?(Array)
+                result[param] = value.collect { |v| convert(v) }
+            else
+                result[param] = convert(value)
+            end
+        end
+        result
+    end
+
+    # Convert any values if necessary.
+    def convert(value)
+        case value
+        when Integer, Fixnum, Bignum; value
+        when "true"; true
+        when "false"; false
+        else
+            value
+        end
     end
 
     # Find information for our parent and merge it into the current info.
