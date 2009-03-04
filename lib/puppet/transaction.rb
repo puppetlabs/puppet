@@ -480,7 +480,7 @@ class Transaction
         @catalog.vertices.each do |resource|
             if provider = resource.provider and provider.class.respond_to?(:prefetch)
                 prefetchers[provider.class] ||= {}
-                prefetchers[provider.class][resource.title] = resource
+                prefetchers[provider.class][resource.name] = resource
             end
         end
 
