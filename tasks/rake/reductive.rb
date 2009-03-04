@@ -455,10 +455,10 @@ class Rake::RedLabProject < Rake::TaskLib
 
     desc "Run all unit tests."
     task :alltests do
-        if FileTest.exists?("test/Rakefile")
-            sh %{cd test; rake}
+        if FileTest.exists?("spec/Rakefile")
+            sh %{cd spec; rake}
         else
-            Dir.chdir("test") do
+            Dir.chdir("spec") do
                 Dir.entries(".").find_all { |f| f =~ /\.rb/ }.each do |f|
                     sh %{ruby #{f}}
                 end
