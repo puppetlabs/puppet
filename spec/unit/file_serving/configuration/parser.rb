@@ -32,10 +32,6 @@ describe Puppet::FileServing::Configuration::Parser do
     describe Puppet::FileServing::Configuration::Parser, " when parsing" do
         include FSConfigurationParserTesting
 
-        before do
-            @parser.stubs(:add_modules_mount)
-        end
-
         it "should allow comments" do
             @filehandle.expects(:each).yields("# this is a comment\n")
             proc { @parser.parse }.should_not raise_error
@@ -66,14 +62,6 @@ describe Puppet::FileServing::Configuration::Parser do
             result = @parser.parse
             result["one"].should equal(mount1)
             result["two"].should equal(mount2)
-        end
-
-        it "should add plugins and modules mounts if they do not exist" do
-            mock_file_content "[one]\npath /foo"
-
-            result = @parser.parse
-            result["plugins"].should_not be_nil
-            result["modules"].should_not be_nil
         end
 
         it "should only allow mount names that are alphanumeric plus dashes" do

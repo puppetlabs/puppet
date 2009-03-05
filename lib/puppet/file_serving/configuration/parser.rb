@@ -46,8 +46,6 @@ class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
             }
         }
 
-        mk_default_mounts
-
         validate()
 
         return @mounts
@@ -81,12 +79,6 @@ class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
                     @count, file)
             end
         }
-    end
-
-    def mk_default_mounts
-        ["plugins", "modules"].each do |name|
-            newmount(name) unless @mounts[name]
-        end
     end
 
     # Create a new mount.

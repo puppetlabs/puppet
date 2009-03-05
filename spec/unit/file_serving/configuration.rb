@@ -94,6 +94,21 @@ describe Puppet::FileServing::Configuration do
             config.send(:readconfig, false)
             config.mounted?("one").should be_true
         end
+
+        it "should add modules and plugins mounts even if the file does not exist" do
+            FileTest.expects(:exists?).returns false # the file doesn't exist
+            config = Puppet::FileServing::Configuration.create
+            config.mounted?("modules").should be_true
+            config.mounted?("plugins").should be_true
+        end
+
+        it "should add modules and plugins mounts even if they are not returned by the parser" do
+            @parser.expects(:parse).returns("one" => mock("mount"))
+            FileTest.expects(:exists?).returns true # the file doesn't exist
+            config = Puppet::FileServing::Configuration.create
+            config.mounted?("modules").should be_true
+            config.mounted?("plugins").should be_true
+        end
     end
 
     describe "when finding the specified mount" do

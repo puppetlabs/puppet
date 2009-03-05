@@ -94,6 +94,11 @@ class Puppet::FileServing::Configuration
 
     private
 
+    def mk_default_mounts
+        @mounts["modules"] ||= Mount::Modules.new("modules")
+        @mounts["plugins"] ||= Mount::Plugins.new("plugins")
+    end
+
     # Read the configuration file.
     def readconfig(check = true)
         config = Puppet[:fileserverconfig]
@@ -114,5 +119,9 @@ class Puppet::FileServing::Configuration
             puts detail.backtrace if Puppet[:trace]
             Puppet.err "Error parsing fileserver configuration: %s; using old configuration" % detail
         end
+
+    ensure
+        # Make sure we've got our plugins and modules.
+        mk_default_mounts
     end
 end
