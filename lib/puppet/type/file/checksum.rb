@@ -204,10 +204,7 @@ Puppet::Type.type(:file).newproperty(:checksum) do
         if currentvalue == :absent
             # if they're copying, then we won't worry about the file
             # not existing yet
-            unless @resource.property(:source)
-                self.warning("File %s does not exist -- cannot checksum" % @resource[:path])
-            end
-            return nil
+            return nil unless @resource.property(:source)
         end
         
         # If the sums are different, then return an event.

@@ -110,11 +110,19 @@ module Puppet
         end
 
         def change_to_s(currentvalue, newvalue)
-            if property = @resource.property(:content) and content = property.retrieve and ! property.insync?(content)
-                return property.change_to_s(content, property.should)
+            return super unless newvalue.to_s == "file"
+
+            return super unless property = @resource.property(:content)
+
+            # We know that content is out of sync if we're here, because
+            # it's essentially equivalent to 'ensure' in the transaction.
+            if source = @resource.parameter(:source)
+                should = source.checksum
             else
-                super(currentvalue, newvalue)
+                should = property.should
             end
+
+            return property.change_to_s(property.retrieve, should)
         end
 
         # Check that we can actually create anything

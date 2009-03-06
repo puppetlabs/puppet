@@ -25,17 +25,44 @@ module Puppet
             This attribute is especially useful when used with
             `PuppetTemplating templating`:trac:."
 
-        def string_as_checksum(string)
-            return "absent" if string == :absent
-            "{md5}" + Digest::MD5.hexdigest(string)
+        # Store a checksum as the value, rather than the actual content.
+        # Simplifies everything.
+        munge do |value|
+            if value == :absent
+                value
+            else
+                @actual_content = value
+                "{#{checksum_type}}" + send(self.checksum_type, value)
+            end
         end
 
-        def should_to_s(should)
-            string_as_checksum(should)
+        def checksum_type
+            if source = resource.parameter(:source)
+                source.checksum =~ /^\{(\w+)\}.+/
+                return $1.to_sym
+            elsif checksum = resource.parameter(:checksum)
+                result = checksum.checktype
+                if result =~ /^\{(\w+)\}.+/
+                    return $1.to_sym
+                else
+                    return result
+                end
+            else
+                return :md5
+            end
         end
 
-        def is_to_s(is)
-            string_as_checksum(is)
+        # If content was specified, return that; else try to return the source content;
+        # else, return nil.
+        def actual_content
+            if defined?(@actual_content) and @actual_content
+                return @actual_content
+            end
+
+            if s = resource.parameter(:source)
+                return s.content
+            end
+            return nil
         end
         
         def content
@@ -58,12 +85,7 @@ module Puppet
                 return super
             elsif source = resource.parameter(:source)
                 fail "Got a remote source with no checksum" unless source.checksum
-                unless sum_method = sumtype(source.checksum)
-                    fail "Could not extract checksum type from source checksum '%s'" % source.checksum
-                end
-
-                newsum = "{%s}" % sum_method + send(sum_method, is)
-                result = (newsum == source.checksum)
+                result = (is == source.checksum)
             else
                 # We've got no content specified, and no source from which to
                 # get content.
@@ -71,7 +93,7 @@ module Puppet
             end
 
             if ! result and Puppet[:show_diff]
-                string_file_diff(@resource[:path], content)
+                string_file_diff(@resource[:path], actual_content)
             end
             return result
         end
@@ -83,7 +105,7 @@ module Puppet
             return nil if stat.ftype == "directory"
 
             begin
-                return File.read(@resource[:path])
+                return "{#{checksum_type}}" + send(checksum_type.to_s + "_file", resource[:path])
             rescue => detail
                 raise Puppet::Error, "Could not read %s: %s" % [@resource.title, detail]
             end
@@ -91,8 +113,8 @@ module Puppet
 
         # Make sure we're also managing the checksum property.
         def should=(value)
-            super
             @resource.newattr(:checksum) unless @resource.parameter(:checksum)
+            super
         end
 
         # Just write our content out to disk.
@@ -102,8 +124,7 @@ module Puppet
             # We're safe not testing for the 'source' if there's no 'should'
             # because we wouldn't have gotten this far if there weren't at least
             # one valid value somewhere.
-            content = self.should || resource.parameter(:source).content
-            @resource.write(content, :content)
+            @resource.write(actual_content, :content)
 
             return return_event
         end

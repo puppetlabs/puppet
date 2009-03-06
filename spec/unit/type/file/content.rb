@@ -13,6 +13,95 @@ describe content do
         content.superclass.must == Puppet::Property
     end
 
+    describe "when determining the checksum type" do
+        it "should use the type specified in the source checksum if a source is set" do
+            source = mock 'source'
+            source.expects(:checksum).returns "{litemd5}eh"
+
+            @resource.expects(:parameter).with(:source).returns source
+
+            @content = content.new(:resource => @resource)
+            @content.checksum_type.should == :litemd5
+        end
+
+        it "should use the type specified by the checksum parameter if no source is set" do
+            checksum = mock 'checksum'
+            checksum.expects(:checktype).returns :litemd5
+
+            @resource.expects(:parameter).with(:source).returns nil
+            @resource.expects(:parameter).with(:checksum).returns checksum
+
+            @content = content.new(:resource => @resource)
+            @content.checksum_type.should == :litemd5
+        end
+        
+        it "should only return the checksum type from the checksum parameter if the parameter returns a whole checksum" do
+            checksum = mock 'checksum'
+            checksum.expects(:checktype).returns "{md5}something"
+
+            @resource.expects(:parameter).with(:source).returns nil
+            @resource.expects(:parameter).with(:checksum).returns checksum
+
+            @content = content.new(:resource => @resource)
+            @content.checksum_type.should == :md5
+        end
+
+        it "should use md5 if neither a source nor a checksum parameter is available" do
+            @content = content.new(:resource => @resource)
+            @content.checksum_type.should == :md5
+        end
+    end
+
+    describe "when determining the actual content to write" do
+        it "should use the set content if available" do
+            @content = content.new(:resource => @resource)
+            @content.should = "ehness"
+            @content.actual_content.should == "ehness"
+        end
+
+        it "should use the content from the source if the source is set" do
+            source = mock 'source'
+            source.expects(:content).returns "scont"
+
+            @resource.expects(:parameter).with(:source).returns source
+
+            @content = content.new(:resource => @resource)
+            @content.actual_content.should == "scont"
+        end
+
+        it "should return nil if no source is available and no content is set" do
+            @content = content.new(:resource => @resource)
+            @content.actual_content.should be_nil
+        end
+    end
+
+    describe "when setting the desired content" do
+        it "should make the actual content available via an attribute" do
+            @content = content.new(:resource => @resource)
+            @content.stubs(:checksum_type).returns "md5"
+            @content.should = "this is some content"
+
+            @content.actual_content.should == "this is some content"
+        end
+
+        it "should store the checksum as the desired content" do
+            @content = content.new(:resource => @resource)
+            digest = Digest::MD5.hexdigest("this is some content")
+
+            @content.stubs(:checksum_type).returns "md5"
+            @content.should = "this is some content"
+
+            @content.should.must == "{md5}#{digest}"
+        end
+
+        it "should not checksum 'absent'" do
+            @content = content.new(:resource => @resource)
+            @content.should = :absent
+
+            @content.should.must == :absent
+        end
+    end
+
     describe "when retrieving the current content" do
         it "should return :absent if the file does not exist" do
             @content = content.new(:resource => @resource)
@@ -21,9 +110,7 @@ describe content do
             @content.retrieve.should == :absent
         end
 
-        it "should not manage content on non-files" do
-            pending "Haven't decided how this should behave"
-
+        it "should not manage content on directories" do
             @content = content.new(:resource => @resource)
 
             stat = mock 'stat', :ftype => "directory"
@@ -32,16 +119,18 @@ describe content do
             @content.retrieve.should be_nil
         end
 
-        it "should return the current content of the file if it exists and is a normal file" do
+        it "should return the checksum of the file if it exists and is a normal file" do
             @content = content.new(:resource => @resource)
+            @content.stubs(:checksum_type).returns "md5"
 
             stat = mock 'stat', :ftype => "file"
             @resource.expects(:stat).returns stat
 
             @resource.expects(:[]).with(:path).returns "/my/file"
-            File.expects(:read).with("/my/file").returns "some content"
 
-            @content.retrieve.should == "some content"
+            @content.expects(:md5_file).with("/my/file").returns "mysum"
+
+            @content.retrieve.should == "{md5}mysum"
         end
     end
 
@@ -51,7 +140,7 @@ describe content do
             @resource.stubs(:replace?).returns true
             @resource.stubs(:should_be_file?).returns true
             @content = content.new(:resource => @resource)
-            @content.should = "something"
+            @content.stubs(:checksum_type).returns "md5"
         end
 
         it "should return true if the resource shouldn't be a regular file" do
@@ -79,9 +168,9 @@ describe content do
                 @content.should_not be_insync("other content")
             end
 
-            it "should return true if the current contents are the same as the desired content" do
+            it "should return true if the sum for the current contents is the same as the sum for the desired content" do
                 @content.should = "some content"
-                @content.must be_insync("some content")
+                @content.must be_insync("{md5}" + Digest::MD5.hexdigest("some content"))
             end
 
             describe "and the content is specified via a remote source" do
@@ -89,15 +178,12 @@ describe content do
                     @metadata = stub 'metadata'
                     @source = stub 'source', :metadata => @metadata
                     @resource.stubs(:parameter).with(:source).returns @source
-
-                    @content.should = nil
                 end
 
                 it "should use checksums to compare remote content, rather than downloading the content" do
-                    @content.expects(:md5).with("some content").returns "whatever"
                     @source.stubs(:checksum).returns "{md5}whatever"
 
-                    @content.insync?("some content")
+                    @content.insync?("{md5}eh")
                 end
 
                 it "should return false if the current content is different from the remote content" do
@@ -107,10 +193,9 @@ describe content do
                 end
 
                 it "should return true if the current content is the same as the remote content" do
-                    sum = @content.md5("some content")
-                    @source.stubs(:checksum).returns("{md5}%s" % sum)
+                    @source.stubs(:checksum).returns("{md5}something")
 
-                    @content.must be_insync("some content")
+                    @content.must be_insync("{md5}something")
                 end
             end
         end
@@ -141,54 +226,28 @@ describe content do
     describe "when changing the content" do
         before do
             @content = content.new(:resource => @resource)
+            @content.should = "some content"
 
             @resource.stubs(:[]).with(:path).returns "/boo"
+            @resource.stubs(:stat).returns "eh"
         end
 
         it "should use the file's :write method to write the content" do
-            pending "not switched from :source yet"
-            @resource.expects(:write).with("foobar", :content, 123)
+            @resource.expects(:write).with("some content", :content)
 
             @content.sync
         end
 
         it "should return :file_changed if the file already existed" do
-            pending "not switched from :source yet"
+            @resource.expects(:stat).returns "something"
             @resource.stubs(:write)
-            FileTest.expects(:exist?).with("/boo").returns true
             @content.sync.should == :file_changed
         end
 
-        it "should return :file_created if the file already existed" do
-            pending "not switched from :source yet"
+        it "should return :file_created if the file did not exist" do
+            @resource.expects(:stat).returns nil
             @resource.stubs(:write)
-            FileTest.expects(:exist?).with("/boo").returns false
             @content.sync.should == :file_created
-        end
-    end
-
-    describe "when logging changes" do
-        before do
-            @resource = stub 'resource', :line => "foo", :file => "bar", :replace? => true
-            @resource.stubs(:[]).returns "foo"
-            @resource.stubs(:[]).with(:path).returns "/my/file"
-            @content = content.new :resource => @resource
-        end
-
-        it "should not include current contents" do
-            @content.change_to_s("current_content", "desired").should_not be_include("current_content")
-        end
-
-        it "should not include desired contents" do
-            @content.change_to_s("current", "desired_content").should_not be_include("desired_content")
-        end
-
-        it "should not include the content when converting current content to a string" do
-            @content.is_to_s("my_content").should_not be_include("my_content")
-        end
-
-        it "should not include the content when converting desired content to a string" do
-            @content.should_to_s("my_content").should_not be_include("my_content")
         end
     end
 end
