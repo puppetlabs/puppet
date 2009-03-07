@@ -36,6 +36,10 @@ describe list_class do
             @property.is_to_s(["foo","bar"]).should == "foo,bar"
         end
 
+        it "should be able to correctly convert ':absent' to a string" do
+            @property.is_to_s(:absent).should == "absent"
+        end
+
         describe "when adding should to current" do
             it "should add the arrays when current is an array" do
                 @property.add_should_with_current(["foo"], ["bar"]).should == ["foo", "bar"]

@@ -10,7 +10,11 @@ module Puppet
             end
 
             def is_to_s(currentvalue)
-                currentvalue.join(delimiter)
+                if currentvalue == :absent
+                    return "absent"
+                else
+                    return currentvalue.join(delimiter)
+                end
             end
 
             def membership
