@@ -73,12 +73,12 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init do
         end
     end
 
-    def start
-        service(@resource[:name], "start")
+    def startcmd
+        [command(:service), @resource[:name], "start"]
     end
 
-    def stop
-        service(@resource[:name], "stop")
+    def stopcmd
+        [command(:service), @resource[:name], "stop"]
     end
 
 end
