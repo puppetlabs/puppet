@@ -119,6 +119,21 @@ describe content do
             @content.retrieve.should be_nil
         end
 
+        it "should always return the checksum as a string" do
+            @content = content.new(:resource => @resource)
+            @content.stubs(:checksum_type).returns "mtime"
+
+            stat = mock 'stat', :ftype => "file"
+            @resource.expects(:stat).returns stat
+
+            @resource.expects(:[]).with(:path).returns "/my/file"
+
+            time = Time.now
+            @content.expects(:mtime_file).with("/my/file").returns time
+
+            @content.retrieve.should == "{mtime}%s" % time
+        end
+
         it "should return the checksum of the file if it exists and is a normal file" do
             @content = content.new(:resource => @resource)
             @content.stubs(:checksum_type).returns "md5"

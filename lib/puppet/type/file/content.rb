@@ -105,7 +105,7 @@ module Puppet
             return nil if stat.ftype == "directory"
 
             begin
-                return "{#{checksum_type}}" + send(checksum_type.to_s + "_file", resource[:path])
+                return "{#{checksum_type}}" + send(checksum_type.to_s + "_file", resource[:path]).to_s
             rescue => detail
                 raise Puppet::Error, "Could not read %s: %s" % [@resource.title, detail]
             end
