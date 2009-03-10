@@ -253,10 +253,8 @@ class Transaction
             # We have to dup the label here, else we modify the original edge label,
             # which affects whether a given event will match on the next run, which is,
             # of course, bad.
-            edge = orig_edge.class.new(orig_edge.source, orig_edge.target)
-            label = orig_edge.label.dup
-            label[:event] = events.collect { |e| e.name }
-            edge.label = label
+            edge = orig_edge.class.new(orig_edge.source, orig_edge.target, orig_edge.label)
+            edge.event = events.collect { |e| e.name }
             set_trigger(edge)
         end
 

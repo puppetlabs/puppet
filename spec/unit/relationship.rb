@@ -19,6 +19,20 @@ describe Puppet::Relationship do
         @edge.should respond_to(:target)
     end
 
+    it "should have a :callback attribute" do
+        @edge.callback = :foo
+        @edge.callback.should == :foo
+    end
+
+    it "should have an :event attribute" do
+        @edge.event = :NONE
+        @edge.event.should == :NONE
+    end
+
+    it "should require a callback if a non-NONE event is specified" do
+        proc { @edge.event = :something }.should raise_error(ArgumentError)
+    end
+
     it "should have a :label attribute" do
         @edge.should respond_to(:label)
     end
@@ -27,11 +41,22 @@ describe Puppet::Relationship do
         @edge = Puppet::Relationship.new("a", "b")
         @edge.ref.should == "a => b"
     end
+
+    it "should be able to produce a label as a hash with its event and callback" do
+        @edge.callback = :foo
+        @edge.event = :bar
+
+        @edge.label.should == {:callback => :foo, :event => :bar}
+    end
+
+    it "should work if nil options are provided" do
+        lambda { Puppet::Relationship.new("a", "b", nil) }.should_not raise_error
+    end
 end
 
 describe Puppet::Relationship, " when initializing" do
     before do
-        @edge = Puppet::Relationship.new(:a, :b, :testing => :foo)
+        @edge = Puppet::Relationship.new(:a, :b)
     end
 
     it "should use the first argument as the source" do
@@ -42,38 +67,10 @@ describe Puppet::Relationship, " when initializing" do
         @edge.target.should == :b
     end
 
-    it "should use the third argument as the label" do
-        @edge.label.should == {:testing => :foo}
-    end
-
-    it "should require a callback if a non-NONE event is specified" do
-        proc { Puppet::Relationship.new(:a, :b, :event => :something) }.should raise_error(ArgumentError)
-    end
-
-    it "should require the label to be a hash" do
-        proc { Puppet::Relationship.new(:a, :b, :event) }.should raise_error(ArgumentError)
-    end
-end
-
-describe Puppet::Relationship, " when interpreting the label" do
-    it "should default to an event of nil" do
-        @edge = Puppet::Relationship.new(:a, :b)
-        @edge.event.should be_nil
-    end
-
-    it "should expose a provided event via the :event method" do
-        @edge = Puppet::Relationship.new(:a, :b, :event => :something, :callback => :whatever)
-        @edge.event.should == :something
-    end
-
-    it "should default to a nil callback" do
-        @edge = Puppet::Relationship.new(:a, :b)
-        @edge.callback.should be_nil
-    end
-
-    it "should expose a provided callback via the :callback method" do
-        @edge = Puppet::Relationship.new(:a, :b, :callback => :testing)
-        @edge.callback.should == :testing
+    it "should set the rest of the arguments as the event and callback" do
+        @edge = Puppet::Relationship.new(:a, :b, :callback => :foo, :event => :bar)
+        @edge.callback.should == :foo
+        @edge.event.should == :bar
     end
 end
 

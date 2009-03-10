@@ -107,14 +107,14 @@ describe Puppet::SimpleGraph do
         end
 
         it "should provide a method to add an edge by specifying the two vertices and a label" do
-            @graph.add_edge(:one, :two, :stuff => :awesome)
+            @graph.add_edge(:one, :two, :callback => :awesome)
             @graph.edge?(:one, :two).should be_true
         end
 
         it "should provide a method for retrieving an edge label" do
-            edge = Puppet::Relationship.new(:one, :two, :stuff => :awesome)
+            edge = Puppet::Relationship.new(:one, :two, :callback => :awesome)
             @graph.add_edge(edge)
-            @graph.edge_label(:one, :two).should == {:stuff => :awesome}
+            @graph.edge_label(:one, :two).should == {:callback => :awesome}
         end
 
         it "should provide a method for retrieving an edge" do
@@ -236,9 +236,9 @@ describe Puppet::SimpleGraph do
         end
         
         it "should retain labels on edges" do
-            @graph.add_edge(:one, :two, :stuff => :awesome)
+            @graph.add_edge(:one, :two, :callback => :awesome)
             edge = @graph.reversal.edge(:two, :one)
-            edge.label.should == {:stuff => :awesome}
+            edge.label.should == {:callback => :awesome}
         end
     end
 

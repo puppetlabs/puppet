@@ -10,40 +10,26 @@
 # It used to be a subclass of GRATR::Edge, but that class has weird hash
 # overrides that dramatically slow down the graphing.
 class Puppet::Relationship
-    attr_accessor :source, :target, :label
+    attr_accessor :source, :target, :callback
 
-    # Return the callback
-    def callback
-        if label
-            label[:callback]
-        else
-            nil
-        end
-    end
+    attr_reader :event
     
-    # Return our event.
-    def event
-        if label
-            label[:event]
-        else
-            nil
+    def event=(event)
+        if event != :NONE and ! callback
+            raise ArgumentError, "You must pass a callback for non-NONE events"
         end
+        @event = event
     end
-    
-    def initialize(source, target, label = {})
-        if label
-            unless label.is_a?(Hash)
-                raise ArgumentError, "Relationship labels must be a hash"
-            end
-        
-            if label[:event] and label[:event] != :NONE and ! label[:callback]
-                raise ArgumentError, "You must pass a callback for non-NONE events"
-            end
-        else
-            label = {}
-        end
 
-        @source, @target, @label = source, target, label
+    def initialize(source, target, options = {})
+        @source, @target = source, target
+
+        options ||= {}
+        [:callback, :event].each do |option|
+            if value = options[option]
+                send(option.to_s + "=", value)
+            end
+        end
     end
     
     # Does the passed event match our event?  This is where the meaning
@@ -56,6 +42,13 @@ class Puppet::Relationship
         else
             return false
         end
+    end
+
+    def label
+        result = {}
+        result[:callback] = callback if callback
+        result[:event] = event if event
+        result
     end
     
     def ref
