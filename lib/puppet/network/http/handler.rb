@@ -193,6 +193,8 @@ module Puppet::Network::HTTP::Handler
             else
                 value = true if value == "true"
                 value = false if value == "false"
+                value = Integer(value) if value =~ /^\d+$/
+                value = value.to_f if value =~ /^\d+\.\d+$/
             end
             result[param.to_sym] = value
             result

@@ -194,6 +194,16 @@ describe Puppet::Indirector::REST do
             @searcher.query_string(@request).should == "?one=#{escaping}"
         end
 
+        it "should convert to a string all option values that are integers" do
+            @request.stubs(:options).returns(:one => 50)
+            @searcher.query_string(@request).should == "?one=50"
+        end
+
+        it "should convert to a string all option values that are floating point numbers" do
+            @request.stubs(:options).returns(:one => 1.2)
+            @searcher.query_string(@request).should == "?one=1.2"
+        end
+
         it "should convert to a string and URI-escape all option values that are symbols" do
             escaping = URI.escape("sym bol")
             @request.stubs(:options).returns(:one => :"sym bol")

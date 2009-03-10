@@ -94,6 +94,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
             case value
             when nil; next
             when true, false; value = value.to_s
+            when Fixnum, Bignum, Float; value = value # nothing
             when String; value = URI.escape(value)
             when Symbol; value = URI.escape(value.to_s)
             when Array; value = URI.escape(YAML.dump(value))

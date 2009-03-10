@@ -128,6 +128,18 @@ describe "Puppet::Network::HTTP::MongrelREST" do
                 result[:foo].should be_false
             end
 
+            it "should convert integer arguments to Integers" do
+                @request.expects(:params).returns('QUERY_STRING' => 'foo=15')
+                result = @handler.params(@request)
+                result[:foo].should == 15
+            end
+
+            it "should convert floating point arguments to Floats" do
+                @request.expects(:params).returns('QUERY_STRING' => 'foo=1.5')
+                result = @handler.params(@request)
+                result[:foo].should == 1.5
+            end
+
             it "should YAML-load and URI-decode values that are YAML-encoded" do
                 escaping = URI.escape(YAML.dump(%w{one two}))
                 @request.expects(:params).returns('QUERY_STRING' => "foo=#{escaping}")
