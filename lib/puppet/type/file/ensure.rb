@@ -171,7 +171,6 @@ module Puppet
         end
 
         def sync
-            expire
             @resource.remove_existing(self.should)
             if self.should == :absent
                 return :file_removed
