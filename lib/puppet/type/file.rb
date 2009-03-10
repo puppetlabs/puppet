@@ -479,7 +479,7 @@ module Puppet
             options = @original_parameters.merge(:path => full_path, :implicit => true).reject { |param, value| value.nil? }
 
             # These should never be passed to our children.
-            [:parent, :ensure, :recurse, :target, :alias].each do |param|
+            [:parent, :ensure, :recurse, :target, :alias, :source].each do |param|
                 options.delete(param) if options.include?(param)
             end
 

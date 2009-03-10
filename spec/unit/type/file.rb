@@ -598,7 +598,7 @@ describe Puppet::Type.type(:file) do
                 @file.newchild("my/path")
             end
 
-            {:recurse => true, :target => "/foo/bar", :ensure => :present, :alias => "yay"}.each do |param, value|
+            {:recurse => true, :target => "/foo/bar", :ensure => :present, :alias => "yay", :source => "/foo/bar"}.each do |param, value|
                 it "should not pass on #{param} to the sub resource" do
                     @file = Puppet::Type::File.new(:name => @path, param => value, :catalog => @catalog)
 
