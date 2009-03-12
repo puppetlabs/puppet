@@ -358,7 +358,7 @@ class TestSnippets < Test::Unit::TestCase
         }.each { |count, str|
             path = "/tmp/singlequote%s" % count
             assert_file(path)
-            assert_equal(str, @catalog.resource(:file, path).should(:content))
+            assert_equal(str, @catalog.resource(:file, path).parameter(:content).actual_content)
         }
     end
 
@@ -403,7 +403,7 @@ class TestSnippets < Test::Unit::TestCase
         path = "/tmp/multisubtest"
         assert_file(path)
         file = @catalog.resource(:file, path)
-        assert_equal("sub2", file.should(:content), "sub2 did not override content")
+        assert_equal("{md5}5fbef65269a99bddc2106251dd89b1dc", file.should(:content), "sub2 did not override content")
         assert_mode_equal(0755, path)
     end
 

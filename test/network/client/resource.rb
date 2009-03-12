@@ -35,29 +35,20 @@ class TestResourceClient < Test::Unit::TestCase
         client = mkclient()
 
         # Test describing
-        tresource = nil
-        assert_nothing_raised {
-            tresource = client.describe("file", file)
-        }
+        tresource = client.describe("file", file)
 
         assert(tresource, "Did not get response")
 
         assert_instance_of(Puppet::TransObject, tresource)
 
-        resource = nil
-        assert_nothing_raised {
-            resource = tresource.to_ral
-        }
+        resource = tresource.to_ral
         assert_events([], resource)
         File.unlink(file)
         assert_events([:file_created], resource)
         File.unlink(file)
 
         # Now test applying
-        result = nil
-        assert_nothing_raised {
-            result = client.apply(tresource)
-        }
+        result = client.apply(tresource)
         assert(FileTest.exists?(file), "File was not created on apply")
     end
 end
