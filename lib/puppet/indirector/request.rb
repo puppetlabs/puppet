@@ -9,12 +9,19 @@ class Puppet::Indirector::Request
 
     attr_accessor :server, :port, :uri, :protocol
 
-    attr_reader :environment, :indirection_name
+    attr_reader :indirection_name
 
     # Is this an authenticated request?
     def authenticated?
         # Double negative, so we just get true or false
         ! ! authenticated
+    end
+
+    def environment
+        unless defined?(@environment) and @environment
+            @environment = Puppet::Node::Environment.new()
+        end
+        @environment
     end
 
     def environment=(env)

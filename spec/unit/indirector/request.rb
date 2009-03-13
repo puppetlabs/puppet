@@ -195,6 +195,10 @@ describe Puppet::Indirector::Request do
         Puppet::Indirector::Request.new(:myind, :find, "my key", :environment => env).environment.should equal(env)
     end
 
+    it "should use the default environment when none is provided" do
+        Puppet::Indirector::Request.new(:myind, :find, "my key" ).environment.should equal(Puppet::Node::Environment.new)
+    end
+
     describe "when building a query string from its options" do
         before do
             @request = Puppet::Indirector::Request.new(:myind, :find, "my key")
