@@ -129,6 +129,22 @@ describe Puppet::Property do
         it "should default to :first array_matching" do
             @class.array_matching.should == :first
         end
+
+        it "should unmunge the returned value if :array_matching is set to :first" do
+            @property.class.unmunge do |v| v.to_sym end
+            @class.array_matching = :first
+            @property.should = %w{one two}
+
+            @property.should.must == :one
+        end
+
+        it "should unmunge all the returned values if :array_matching is set to :all" do
+            @property.class.unmunge do |v| v.to_sym end
+            @class.array_matching = :all
+            @property.should = %w{one two}
+
+            @property.should.must == [:one, :two]
+        end
     end
 
     describe "when validating values" do

@@ -46,6 +46,16 @@ describe Puppet::Parameter do
             @parameter.value.should == "bar"
         end
 
+        it "should unmunge the value when accessing the actual value" do
+            @parameter.class.unmunge do |value| value.to_sym end
+            @parameter.value = "foo"
+            @parameter.value.should == :foo
+        end
+
+        it "should return the actual value by default when unmunging" do
+            @parameter.unmunge("bar").should == "bar"
+        end
+
         it "should return any set value" do
             @parameter.value = "foo"
             @parameter.value.should == "foo"

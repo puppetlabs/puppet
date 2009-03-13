@@ -286,6 +286,13 @@ class Puppet::Parameter
             define_method(:unsafe_munge, &block)
         end
 
+        # Does the parameter supports reverse munge?
+        # This will be called when something wants to access the parameter
+        # in a canonical form different to what the storage form is.
+        def unmunge(&block)
+            define_method(:unmunge, &block)
+        end
+
         # Mark whether we're the namevar.
         def isnamevar
             @isnamevar = true
@@ -446,6 +453,11 @@ class Puppet::Parameter
         self.class.value_collection.munge(value)
     end
 
+    # no unmunge by default
+    def unmunge(value)
+        value
+    end
+
     # A wrapper around our munging that makes sure we raise useful exceptions.
     def munge(value)
         begin
@@ -482,7 +494,9 @@ class Puppet::Parameter
         @resource = nil
     end
 
-    attr_reader :value
+    def value
+        unmunge(@value)
+    end
 
     # Store the value provided.  All of the checking should possibly be
     # late-binding (e.g., users might not exist when the value is assigned

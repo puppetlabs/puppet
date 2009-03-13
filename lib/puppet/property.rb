@@ -332,9 +332,9 @@ class Puppet::Property < Puppet::Parameter
                     [self.class.name, @resource.name]
             end
             if match_all?
-                return @should
+                return @should.collect { |val| self.unmunge(val) }
             else
-                return @should[0]
+                return self.unmunge(@should[0])
             end
         else
             return nil
