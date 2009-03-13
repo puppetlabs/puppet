@@ -2,11 +2,11 @@ require 'net/http'
 require 'uri'
 
 require 'puppet/network/http_pool'
-require 'puppet/network/http/handler'
+require 'puppet/network/http/api/v1'
 
 # Access objects via REST
 class Puppet::Indirector::REST < Puppet::Indirector::Terminus
-    include Puppet::Network::HTTP::Handler 
+    include Puppet::Network::HTTP::API::V1 
 
     class << self
         attr_reader :server_setting, :port_setting
@@ -64,9 +64,6 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     end
 
     def find(request)
-        p model
-        p indirection
-        p indirection.model
         deserialize network(request).get(indirection2uri(request), headers)
     end
     

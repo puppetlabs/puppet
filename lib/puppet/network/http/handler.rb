@@ -1,22 +1,10 @@
 module Puppet::Network::HTTP
 end
 
-module Puppet::Network::HTTP::Handler
+require 'puppet/network/http/api/v1'
 
-    # How we map http methods and the indirection name in the URI
-    # to an indirection method.
-    METHOD_MAP = {
-        "GET" => {
-            :plural => :search,
-            :singular => :find
-        },
-        "PUT" => {
-            :singular => :save
-        },
-        "DELETE" => {
-            :singular => :destroy
-        }
-    }
+module Puppet::Network::HTTP::Handler
+    include Puppet::Network::HTTP::API::V1
 
     attr_reader :model, :server, :handler
 
@@ -54,49 +42,8 @@ module Puppet::Network::HTTP::Handler
 
         send("do_%s" % indirection_request.method, indirection_request, request, response)
     rescue Exception => e
+        puts e.backtrace
         return do_exception(response, e)
-    end
-
-    def uri2indirection(http_method, uri, params)
-        environment, indirection, key = uri.split("/", 4)[1..-1] # the first field is always nil because of the leading slash
-
-        raise ArgumentError, "The environment must be purely alphanumeric, not '%s'" % environment unless environment =~ /^\w+$/
-        raise ArgumentError, "The indirection name must be purely alphanumeric, not '%s'" % indirection unless indirection =~ /^\w+$/
-
-        method = indirection_method(http_method, indirection)
-
-        params[:environment] = environment
-
-        raise ArgumentError, "No request key specified in %s" % uri if key == "" or key.nil?
-
-        key = URI.unescape(key)
-
-        Puppet::Indirector::Request.new(indirection, method, key, params)
-    end
-
-    def indirection2uri(request)
-        indirection = request.method == :search ? request.indirection_name.to_s + "s" : request.indirection_name.to_s
-        "/#{request.environment.to_s}/#{indirection}/#{request.escaped_key}#{request.query_string}"
-    end
-
-    def indirection_method(http_method, indirection)
-        unless METHOD_MAP[http_method]
-            raise ArgumentError, "No support for http method %s" % http_method
-        end
-
-        unless method = METHOD_MAP[http_method][plurality(indirection)]
-            raise ArgumentError, "No support for plural %s operations" % http_method
-        end
-
-        return method
-    end
-
-    def plurality(indirection)
-        result = (indirection == handler.to_s + "s") ? :plural : :singular
-
-        indirection.sub!(/s$/, '') if result
-
-        result
     end
 
     # Set the response up, with the body and status.

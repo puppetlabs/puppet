@@ -46,8 +46,8 @@ describe Puppet::Indirector::REST do
         @searcher.stubs(:model).returns @model
     end
 
-    it "should include the Http Handler module" do
-        Puppet::Indirector::REST.ancestors.should be_include(Puppet::Network::HTTP::Handler)
+    it "should include the v1 REST API module" do
+        Puppet::Indirector::REST.ancestors.should be_include(Puppet::Network::HTTP::API::V1)
     end
 
     it "should have a method for specifying what setting a subclass should use to retrieve its server" do
