@@ -19,6 +19,10 @@ describe Puppet::Node::Environment do
         Puppet::Node::Environment.new(:one).should equal(Puppet::Node::Environment.new("one"))
     end
 
+    it "should return its name when converted to a string" do
+        Puppet::Node::Environment.new(:one).to_s.should == "one"
+    end
+
     it "should consider its module path to be the environment-specific modulepath setting" do
         FileTest.stubs(:directory?).returns true
         env = Puppet::Node::Environment.new("testing")

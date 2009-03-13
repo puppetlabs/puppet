@@ -2,6 +2,22 @@ module Puppet::Network::HTTP
 end
 
 module Puppet::Network::HTTP::Handler
+
+    # How we map http methods and the indirection name in the URI
+    # to an indirection method.
+    METHOD_MAP = {
+        "GET" => {
+            :plural => :search,
+            :singular => :find
+        },
+        "PUT" => {
+            :singular => :save
+        },
+        "DELETE" => {
+            :singular => :destroy
+        }
+    }
+
     attr_reader :model, :server, :handler
 
     # Retrieve the accept header from the http request.
@@ -41,6 +57,36 @@ module Puppet::Network::HTTP::Handler
         raise ArgumentError, "Did not understand HTTP #{http_method(request)} request for '#{path(request)}'"
     rescue Exception => e
         return do_exception(response, e)
+    end
+
+    def uri2indirection(http_method, uri, params)
+        environment, indirection, key = uri.split("/", 4)[1..-1] # the first field is always nil because of the leading slash
+
+        raise ArgumentError, "The environment must be purely alphanumeric, not '%s'" % environment unless environment =~ /^\w+$/
+        raise ArgumentError, "The indirection name must be purely alphanumeric, not '%s'" % indirection unless indirection =~ /^\w+$/
+
+        plurality = (indirection == handler.to_s + "s") ? :plural : :singular
+
+        unless METHOD_MAP[http_method]
+            raise ArgumentError, "No support for http method %s" % http_method
+        end
+
+        unless method = METHOD_MAP[http_method][plurality]
+            raise ArgumentError, "No support for plural %s operations" % http_method
+        end
+
+        indirection.sub!(/s$/, '') if plurality == :plural
+
+        params[:environment] = environment
+
+        key = URI.unescape(key)
+
+        Puppet::Indirector::Request.new(indirection, method, key, params)
+    end
+
+    def indirection2uri(request)
+        indirection = request.method == :search ? request.indirection_name.to_s + "s" : request.indirection_name.to_s
+        "/#{request.environment.to_s}/#{indirection}/#{request.escaped_key}#{request.query_string}"
     end
 
     # Are we interacting with a singular instance?

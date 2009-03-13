@@ -61,4 +61,8 @@ class Puppet::Node::Environment
         end
         result
     end
+
+    def to_s
+        name.to_s
+    end
 end
