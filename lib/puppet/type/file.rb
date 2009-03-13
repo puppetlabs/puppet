@@ -32,6 +32,18 @@ module Puppet
                     raise Puppet::Error, "File paths must be fully qualified, not '%s'" % value
                 end
             end
+
+            # convert the current path in an index into the collection and the last 
+            # path name. The aim is to use less storage for all common paths in a hierarchy
+            munge do |value|
+                path, name = File.split(value)
+                { :index => Puppet::FileCollection.collection.index(path), :name => name }
+            end
+
+            # and the reverse
+            unmunge do |value|
+                File.join( Puppet::FileCollection.collection.path(value[:index]), value[:name] )
+            end
         end
 
         newparam(:backup) do
