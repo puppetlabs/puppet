@@ -36,10 +36,6 @@ class Puppet::Indirector::Request
         URI.escape(key)
     end
 
-    def indirection_name=(name)
-        @indirection_name = name.to_sym
-    end
-
     # LAK:NOTE This is a messy interface to the cache, and it's only
     # used by the Configurer class.  I decided it was better to implement
     # it now and refactor later, when we have a better design, than
@@ -89,6 +85,16 @@ class Puppet::Indirector::Request
     # Look up the indirection based on the name provided.
     def indirection
         Puppet::Indirector::Indirection.instance(indirection_name)
+    end
+
+    def indirection_name=(name)
+        @indirection_name = name.to_sym
+    end
+
+
+    def model
+        raise ArgumentError, "Could not find indirection '%s'" % indirection_name unless i = indirection
+        i.model
     end
 
     # Should we allow use of the cached object?

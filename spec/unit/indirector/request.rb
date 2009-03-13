@@ -158,6 +158,23 @@ describe Puppet::Indirector::Request do
         request.indirection.should equal(ind)
     end
 
+    it "should use its indirection to look up the appropriate model" do
+        ind = mock 'indirection'
+        Puppet::Indirector::Indirection.expects(:instance).with(:myind).returns ind
+        request = Puppet::Indirector::Request.new(:myind, :method, :key)
+
+        ind.expects(:model).returns "mymodel"
+
+        request.model.should == "mymodel"
+    end
+
+    it "should fail intelligently when asked to find a model but the indirection cannot be found" do
+        Puppet::Indirector::Indirection.expects(:instance).with(:myind).returns nil
+        request = Puppet::Indirector::Request.new(:myind, :method, :key)
+
+        lambda { request.model }.should raise_error(ArgumentError)
+    end
+
     it "should have a method for determining if the request is plural or singular" do
         Puppet::Indirector::Request.new(:myind, :method, :key).should respond_to(:plural?)
     end
