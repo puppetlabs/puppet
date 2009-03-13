@@ -62,14 +62,14 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     end
 
     def find(request)
-        deserialize network(request).get("/#{indirection.name}/#{request.escaped_key}#{request.query_string}", headers)
+        deserialize network(request).get("/#{environment}/#{indirection.name}/#{request.escaped_key}#{request.query_string}", headers)
     end
     
     def search(request)
         if request.key
-            path = "/#{indirection.name}s/#{request.escaped_key}#{request.query_string}"
+            path = "/#{environment}/#{indirection.name}s/#{request.escaped_key}#{request.query_string}"
         else
-            path = "/#{indirection.name}s#{request.query_string}"
+            path = "/#{environment}/#{indirection.name}s#{request.query_string}"
         end
         unless result = deserialize(network(request).get(path, headers), true)
             return []
@@ -79,11 +79,17 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     
     def destroy(request)
         raise ArgumentError, "DELETE does not accept options" unless request.options.empty?
-        deserialize network(request).delete("/#{indirection.name}/#{request.escaped_key}", headers)
+        deserialize network(request).delete("/#{environment}/#{indirection.name}/#{request.escaped_key}", headers)
     end
     
     def save(request)
         raise ArgumentError, "PUT does not accept options" unless request.options.empty?
-        deserialize network(request).put("/#{indirection.name}/", request.instance.render, headers)
+        deserialize network(request).put("/#{environment}/#{indirection.name}/", request.instance.render, headers)
+    end
+
+    private
+
+    def environment
+        Puppet::Node::Environment.new
     end
 end

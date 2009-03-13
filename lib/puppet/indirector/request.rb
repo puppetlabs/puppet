@@ -5,9 +5,11 @@ require 'puppet/indirector'
 # Indirection call, and as a a result also handles REST calls.  It's somewhat
 # analogous to an HTTP Request object, except tuned for our Indirector.
 class Puppet::Indirector::Request
-    attr_accessor :indirection_name, :key, :method, :options, :instance, :node, :ip, :authenticated, :ignore_cache, :ignore_terminus
+    attr_accessor :key, :method, :options, :instance, :node, :ip, :authenticated, :ignore_cache, :ignore_terminus
 
     attr_accessor :server, :port, :uri, :protocol
+
+    attr_reader :environment, :indirection_name
 
     # Is this an authenticated request?
     def authenticated?
@@ -15,8 +17,20 @@ class Puppet::Indirector::Request
         ! ! authenticated
     end
 
+    def environment=(env)
+        @environment = if env.is_a?(Puppet::Node::Environment)
+            env
+        else
+            Puppet::Node::Environment.new(env)
+        end
+    end
+
     def escaped_key
         URI.escape(key)
+    end
+
+    def indirection_name=(name)
+        @indirection_name = name.to_sym
     end
 
     # LAK:NOTE This is a messy interface to the cache, and it's only
@@ -36,7 +50,8 @@ class Puppet::Indirector::Request
         options ||= {}
         raise ArgumentError, "Request options must be a hash, not %s" % options.class unless options.is_a?(Hash)
 
-        @indirection_name, @method = indirection_name, method
+        self.indirection_name = indirection_name
+        self.method = method
 
         @options = options.inject({}) do |result, ary|
             param, value = ary

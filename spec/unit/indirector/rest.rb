@@ -168,8 +168,8 @@ describe Puppet::Indirector::REST do
             @searcher.find(@request).should == 'myobject'
         end        
 
-        it "should use the indirection name and escaped request key to create the path" do
-            should_path = "/%s/%s" % [@indirection.name.to_s, "foo"]
+        it "should use the environment, indirection name, and escaped request key to create the path" do
+            should_path = "/%s/%s/%s" % [Puppet::Node::Environment.new, @indirection.name.to_s, "foo"]
             @connection.expects(:get).with { |path, args| path == should_path }.returns(@response)
             @searcher.find(@request)
         end
@@ -221,15 +221,15 @@ describe Puppet::Indirector::REST do
             @searcher.search(@request).should == 'myobject'
         end        
 
-        it "should use the plural indirection name as the path if there is no request key" do
-            should_path = "/%ss" % [@indirection.name.to_s]
+        it "should use the environment and the plural indirection name as the path if there is no request key" do
+            should_path = "/%s/%ss" % [Puppet::Node::Environment.new, @indirection.name.to_s]
             @request.stubs(:key).returns nil
             @connection.expects(:get).with { |path, args| path == should_path }.returns(@response)
             @searcher.search(@request)
         end
 
-        it "should use the plural indirection name and escaped request key to create the path if the request key is set" do
-            should_path = "/%ss/%s" % [@indirection.name.to_s, "foo"]
+        it "should use the envrironment, the plural indirection name, and the escaped request key to create the path if the request key is set" do
+            should_path = "/%s/%ss/%s" % [Puppet::Node::Environment.new, @indirection.name.to_s, "foo"]
             @connection.expects(:get).with { |path, args| path == should_path }.returns(@response)
             @searcher.search(@request)
         end
@@ -286,8 +286,8 @@ describe Puppet::Indirector::REST do
             @searcher.destroy(@request).should == 'myobject'
         end        
 
-        it "should use the indirection name and escaped request key to create the path" do
-            should_path = "/%s/%s" % [@indirection.name.to_s, "foo"]
+        it "should use the environment, the indirection name, and the escaped request key to create the path" do
+            should_path = "/%s/%s/%s" % [Puppet::Node::Environment.new, @indirection.name.to_s, "foo"]
             @connection.expects(:delete).with { |path, args| path == should_path }.returns(@response)
             @searcher.destroy(@request)
         end
@@ -337,8 +337,9 @@ describe Puppet::Indirector::REST do
             lambda { @searcher.save(@request) }.should raise_error(ArgumentError)
         end
 
-        it "should use the indirection name as the path for the request" do
-            @connection.expects(:put).with { |path, data, args| path == "/#{@indirection.name.to_s}/" }.returns @response
+        it "should use the environment and the indirection name as the path for the request" do
+            path = "/%s/%s/" % [Puppet::Node::Environment.new, @indirection.name]
+            @connection.expects(:put).with { |path, data, args| path == path }.returns @response
 
             @searcher.save(@request)
         end

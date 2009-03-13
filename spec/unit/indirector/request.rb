@@ -9,6 +9,10 @@ describe Puppet::Indirector::Request do
             lambda { Puppet::Indirector::Request.new }.should raise_error(ArgumentError)
         end
 
+        it "should always convert the indirection name to a symbol" do
+            Puppet::Indirector::Request.new("ind", :method, "mykey").indirection_name.should == :ind
+        end
+
         it "should use provided value as the key if it is a string" do
             Puppet::Indirector::Request.new(:ind, :method, "mykey").key.should == "mykey"
         end
@@ -176,6 +180,19 @@ describe Puppet::Indirector::Request do
 
     it "should be able to return the URI-escaped key" do
         Puppet::Indirector::Request.new(:myind, :find, "my key").escaped_key.should == URI.escape("my key")
+    end
+
+    it "should have an environment accessor" do
+        Puppet::Indirector::Request.new(:myind, :find, "my key", :environment => "foo").should respond_to(:environment)
+    end
+
+    it "should set its environment to an environment instance when a string is specified as its environment" do
+        Puppet::Indirector::Request.new(:myind, :find, "my key", :environment => "foo").environment.should == Puppet::Node::Environment.new("foo")
+    end
+
+    it "should use any passed in environment instances as its environment" do
+        env = Puppet::Node::Environment.new("foo")
+        Puppet::Indirector::Request.new(:myind, :find, "my key", :environment => env).environment.should equal(env)
     end
 
     describe "when building a query string from its options" do
