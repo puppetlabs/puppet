@@ -50,11 +50,9 @@ module Puppet::Network::HTTP::Handler
 
     # handle an HTTP request
     def process(request, response)
-        return do_find(request, response)       if get?(request)    and singular?(request)
-        return do_search(request, response)     if get?(request)    and plural?(request)
-        return do_destroy(request, response)    if delete?(request) and singular?(request)
-        return do_save(request, response)       if put?(request)    and singular?(request)
-        raise ArgumentError, "Did not understand HTTP #{http_method(request)} request for '#{path(request)}'"
+        indirection_request = uri2indirection(path(request), params(request), http_method(request))
+
+        send("do_%s" % indirection_request.method, indirection_request, request, response)
     rescue Exception => e
         return do_exception(response, e)
     end
@@ -65,19 +63,11 @@ module Puppet::Network::HTTP::Handler
         raise ArgumentError, "The environment must be purely alphanumeric, not '%s'" % environment unless environment =~ /^\w+$/
         raise ArgumentError, "The indirection name must be purely alphanumeric, not '%s'" % indirection unless indirection =~ /^\w+$/
 
-        plurality = (indirection == handler.to_s + "s") ? :plural : :singular
-
-        unless METHOD_MAP[http_method]
-            raise ArgumentError, "No support for http method %s" % http_method
-        end
-
-        unless method = METHOD_MAP[http_method][plurality]
-            raise ArgumentError, "No support for plural %s operations" % http_method
-        end
-
-        indirection.sub!(/s$/, '') if plurality == :plural
+        method = indirection_method(http_method, indirection)
 
         params[:environment] = environment
+
+        raise ArgumentError, "No request key specified in %s" % uri if key == "" or key.nil?
 
         key = URI.unescape(key)
 
@@ -89,14 +79,24 @@ module Puppet::Network::HTTP::Handler
         "/#{request.environment.to_s}/#{indirection}/#{request.escaped_key}#{request.query_string}"
     end
 
-    # Are we interacting with a singular instance?
-    def singular?(request)
-        %r{/#{handler.to_s}$}.match(path(request))
+    def indirection_method(http_method, indirection)
+        unless METHOD_MAP[http_method]
+            raise ArgumentError, "No support for http method %s" % http_method
+        end
+
+        unless method = METHOD_MAP[http_method][plurality(indirection)]
+            raise ArgumentError, "No support for plural %s operations" % http_method
+        end
+
+        return method
     end
 
-    # Are we interacting with multiple instances?
-    def plural?(request)
-        %r{/#{handler.to_s}s$}.match(path(request))
+    def plurality(indirection)
+        result = (indirection == handler.to_s + "s") ? :plural : :singular
+
+        indirection.sub!(/s$/, '') if result
+
+        result
     end
 
     # Set the response up, with the body and status.
@@ -119,12 +119,9 @@ module Puppet::Network::HTTP::Handler
     end
 
     # Execute our find.
-    def do_find(request, response)
-        key = request_key(request) || raise(ArgumentError, "Could not locate lookup key in request path [#{path(request)}]")
-        key = URI.unescape(key)
-        args = params(request)
-        unless result = model.find(key, args)
-            return do_exception(response, "Could not find %s %s" % [model.name, key], 404)
+    def do_find(indirection_request, request, response)
+        unless result = model.find(indirection_request.key, indirection_request.options)
+            return do_exception(response, "Could not find %s %s" % [model.name, indirection_request.key], 404)
         end
 
         # The encoding of the result must include the format to use,
@@ -137,16 +134,11 @@ module Puppet::Network::HTTP::Handler
     end
 
     # Execute our search.
-    def do_search(request, response)
-        args = params(request)
-        if key = request_key(request)
-            key = URI.unescape(key)
-            result = model.search(key, args)
-        else
-            result = model.search(args)
-        end
+    def do_search(indirection_request, request, response)
+        result = model.search(indirection_request.key, indirection_request.options)
+
         if result.nil? or (result.is_a?(Array) and result.empty?)
-            return do_exception(response, "Could not find instances in %s with '%s'" % [model.name, args.inspect], 404)
+            return do_exception(response, "Could not find instances in %s with '%s'" % [model.name, indirection_request.options.inspect], 404)
         end
 
         format = format_to_use(request)
@@ -156,11 +148,8 @@ module Puppet::Network::HTTP::Handler
     end
 
     # Execute our destroy.
-    def do_destroy(request, response)
-        key = request_key(request) || raise(ArgumentError, "Could not locate lookup key in request path [#{path(request)}]")
-        key = URI.unescape(key)
-        args = params(request)
-        result = model.destroy(key, args)
+    def do_destroy(indirection_request, request, response)
+        result = model.destroy(indirection_request.key, indirection_request.options)
 
         set_content_type(response, "yaml")
 
@@ -168,15 +157,14 @@ module Puppet::Network::HTTP::Handler
     end
 
     # Execute our save.
-    def do_save(request, response)
+    def do_save(indirection_request, request, response)
         data = body(request).to_s
         raise ArgumentError, "No data to save" if !data or data.empty?
-        args = params(request)
 
         format = format_to_use(request)
 
         obj = model.convert_from(format_to_use(request), data)
-        result = save_object(obj, args)
+        result = save_object(indirection_request, obj)
 
         set_content_type(response, "yaml")
 
@@ -187,8 +175,8 @@ module Puppet::Network::HTTP::Handler
 
     # LAK:NOTE This has to be here for testing; it's a stub-point so
     # we keep infinite recursion from happening.
-    def save_object(object, args)
-        object.save(args)
+    def save_object(ind_request, object)
+        object.save(ind_request.options)
     end
 
     def find_model_for_handler(handler)

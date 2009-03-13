@@ -2,9 +2,11 @@ require 'net/http'
 require 'uri'
 
 require 'puppet/network/http_pool'
+require 'puppet/network/http/handler'
 
 # Access objects via REST
 class Puppet::Indirector::REST < Puppet::Indirector::Terminus
+    include Puppet::Network::HTTP::Handler 
 
     class << self
         attr_reader :server_setting, :port_setting
@@ -62,16 +64,14 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     end
 
     def find(request)
-        deserialize network(request).get("/#{environment}/#{indirection.name}/#{request.escaped_key}#{request.query_string}", headers)
+        p model
+        p indirection
+        p indirection.model
+        deserialize network(request).get(indirection2uri(request), headers)
     end
     
     def search(request)
-        if request.key
-            path = "/#{environment}/#{indirection.name}s/#{request.escaped_key}#{request.query_string}"
-        else
-            path = "/#{environment}/#{indirection.name}s#{request.query_string}"
-        end
-        unless result = deserialize(network(request).get(path, headers), true)
+        unless result = deserialize(network(request).get(indirection2uri(request), headers), true)
             return []
         end
         return result
@@ -79,12 +79,12 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     
     def destroy(request)
         raise ArgumentError, "DELETE does not accept options" unless request.options.empty?
-        deserialize network(request).delete("/#{environment}/#{indirection.name}/#{request.escaped_key}", headers)
+        deserialize network(request).delete(indirection2uri(request), headers)
     end
     
     def save(request)
         raise ArgumentError, "PUT does not accept options" unless request.options.empty?
-        deserialize network(request).put("/#{environment}/#{indirection.name}/", request.instance.render, headers)
+        deserialize network(request).put(indirection2uri(request), request.instance.render, headers)
     end
 
     private

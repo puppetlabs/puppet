@@ -58,6 +58,11 @@ describe Puppet::Network::HTTP::Handler do
             @handler.uri2indirection("GET", "/env/foo/bee/baz/bomb", {}).key.should == "bee/baz/bomb"
         end
 
+        it "should fail if no indirection key is specified" do
+            lambda { @handler.uri2indirection("GET", "/env/foo/", {}) }.should raise_error(ArgumentError)
+            lambda { @handler.uri2indirection("GET", "/env/foo", {}) }.should raise_error(ArgumentError)
+        end
+
         it "should choose 'find' as the indirection method if the http method is a GET and the indirection name is singular" do
             @handler.uri2indirection("GET", "/env/foo/bar", {}).method.should == :find
         end
@@ -168,148 +173,40 @@ describe Puppet::Network::HTTP::Handler do
             @handler.stubs(:accept_header   ).returns "format_one,format_two"
             @handler.stubs(:set_content_type).returns "my_result"
             @handler.stubs(:set_response    ).returns "my_result"
-            @handler.stubs(:path            ).returns "/my_handler"
-            @handler.stubs(:request_key     ).returns "my_result"
+            @handler.stubs(:path            ).returns "/my_handler/my_result"
+            @handler.stubs(:http_method     ).returns("GET")
             @handler.stubs(:params          ).returns({})
             @handler.stubs(:content_type    ).returns("text/plain")
         end
 
-        it "should consider the request singular if the path is equal to '/' plus the handler name" do
-            @handler.expects(:path).with(@request).returns "/foo"
-            @handler.expects(:handler).returns "foo"
+        it "should create an indirection request from the path, parameters, and http method" do
+            @handler.expects(:path).with(@request).returns "mypath"
+            @handler.expects(:http_method).with(@request).returns "mymethod"
+            @handler.expects(:params).with(@request).returns "myparams"
 
-            @handler.should be_singular(@request)
+            @handler.expects(:uri2indirection).with("mypath", "myparams", "mymethod").returns stub("request", :method => :find)
+
+            @handler.stubs(:do_find)
+
+            @handler.process(@request, @response)
         end
 
-        it "should not consider the request singular unless the path is equal to '/' plus the handler name" do
-            @handler.expects(:path).with(@request).returns "/foo"
-            @handler.expects(:handler).returns "bar"
+        it "should call the 'do' method associated with the indirection method" do
+            request = stub 'request'
+            @handler.expects(:uri2indirection).returns request
 
-            @handler.should_not be_singular(@request)
-        end
+            request.expects(:method).returns "mymethod"
 
-        it "should consider the request plural if the path is equal to '/' plus the handler name plus 's'" do
-            @handler.expects(:path).with(@request).returns "/foos"
-            @handler.expects(:handler).returns "foo"
+            @handler.expects(:do_mymethod).with(request, @request, @response)
 
-            @handler.should be_plural(@request)
-        end
-
-        it "should not consider the request plural unless the path is equal to '/' plus the handler name plus 's'" do
-            @handler.expects(:path).with(@request).returns "/foos"
-            @handler.expects(:handler).returns "bar"
-
-            @handler.should_not be_plural(@request)
-        end
-
-        it "should call the model find method if the request represents a singular HTTP GET" do
-            @handler.expects(:http_method).returns('GET')
-            @handler.expects(:singular?).returns(true)
-
-            @handler.expects(:do_find).with(@request, @response)
             @handler.process(@request, @response)
         end
 
         it "should serialize a controller exception when an exception is thrown while finding the model instance" do
-            @handler.expects(:http_method).returns('GET')
-            @handler.expects(:singular?).returns(true)
+            @handler.expects(:uri2indirection).returns stub("request", :method => :find)
 
             @handler.expects(:do_find).raises(ArgumentError, "The exception")
             @handler.expects(:set_response).with { |response, body, status| body == "The exception" and status == 400 }
-            @handler.process(@request, @response)
-        end
-
-        it "should call the model search method if the request represents a plural HTTP GET" do
-            @handler.stubs(:http_method).returns('GET')
-            @handler.stubs(:singular?).returns(false)
-            @handler.stubs(:plural?).returns(true)
-
-            @handler.expects(:do_search).with(@request, @response)
-            @handler.process(@request, @response)
-        end
-
-        it "should serialize a controller exception when an exception is thrown by search" do
-            @handler.stubs(:http_method).returns('GET')
-            @handler.stubs(:singular?).returns(false)
-            @handler.stubs(:plural?).returns(true)
-
-            @model_class.expects(:search).raises(ArgumentError)
-            @handler.expects(:set_response).with { |response, data, status| status == 400 }
-            @handler.process(@request, @response)
-        end
-
-        it "should call the model destroy method if the request represents an HTTP DELETE" do
-            @handler.stubs(:http_method).returns('DELETE')
-            @handler.stubs(:singular?).returns(true)
-            @handler.stubs(:plural?).returns(false)
-
-            @handler.expects(:do_destroy).with(@request, @response)
-
-            @handler.process(@request, @response)
-        end
-
-        it "should serialize a controller exception when an exception is thrown by destroy" do
-            @handler.stubs(:http_method).returns('DELETE')
-            @handler.stubs(:singular?).returns(true)
-            @handler.stubs(:plural?).returns(false)
-
-            @handler.expects(:do_destroy).with(@request, @response).raises(ArgumentError, "The exception")
-            @handler.expects(:set_response).with { |response, body, status| body == "The exception" and status == 400 }
-
-            @handler.process(@request, @response)
-        end
-
-        it "should call the model save method if the request represents an HTTP PUT" do
-            @handler.stubs(:http_method).returns('PUT')
-            @handler.stubs(:singular?).returns(true)
-
-            @handler.expects(:do_save).with(@request, @response)
-
-            @handler.process(@request, @response)
-        end
-
-        it "should serialize a controller exception when an exception is thrown by save" do
-            @handler.stubs(:http_method).returns('PUT')
-            @handler.stubs(:singular?).returns(true)
-            @handler.stubs(:body).raises(ArgumentError)
-
-            @handler.expects(:set_response).with { |response, body, status| status == 400 }
-            @handler.process(@request, @response)
-        end
-
-        it "should fail if the HTTP method isn't supported" do
-            @handler.stubs(:http_method).returns('POST')
-            @handler.stubs(:singular?).returns(true)
-            @handler.stubs(:plural?).returns(false)
-
-            @handler.expects(:set_response).with { |response, body, status| status == 400 }
-            @handler.process(@request, @response)
-        end
-
-        it "should fail if delete request's pluralization is wrong" do
-            @handler.stubs(:http_method).returns('DELETE')
-            @handler.stubs(:singular?).returns(false)
-            @handler.stubs(:plural?).returns(true)
-
-            @handler.expects(:set_response).with { |response, body, status| status == 400 }
-            @handler.process(@request, @response)
-        end
-
-        it "should fail if put request's pluralization is wrong" do
-            @handler.stubs(:http_method).returns('PUT')
-            @handler.stubs(:singular?).returns(false)
-            @handler.stubs(:plural?).returns(true)
-
-            @handler.expects(:set_response).with { |response, body, status| status == 400 }
-            @handler.process(@request, @response)
-        end
-
-        it "should fail if the request is for an unknown path" do
-            @handler.stubs(:http_method).returns('GET')
-            @handler.expects(:singular?).returns false
-            @handler.expects(:plural?).returns false
-
-            @handler.expects(:set_response).with { |response, body, status| status == 400 }
             @handler.process(@request, @response)
         end
 
@@ -320,52 +217,43 @@ describe Puppet::Network::HTTP::Handler do
 
         describe "when finding a model instance" do
             before do
-                @handler.stubs(:http_method).returns('GET')
-                @handler.stubs(:path).returns('/my_handler')
-                @handler.stubs(:singular?).returns(true)
-                @handler.stubs(:request_key).returns('key')
+                @irequest = stub 'indirection_request', :method => :find, :indirection_name => "my_handler", :options => {}, :key => "my_result"
+
                 @model_class.stubs(:find).returns @result
 
                 @format = stub 'format', :suitable? => true
                 Puppet::Network::FormatHandler.stubs(:format).returns @format
             end
 
-            it "should fail if the key is not specified" do
-                @handler.stubs(:request_key).returns(nil)
-
-                lambda { @handler.do_find(@request, @response) }.should raise_error(ArgumentError)
-            end
-
             it "should use the escaped request key" do
-                @handler.stubs(:request_key).returns URI.escape("my key")
                 @model_class.expects(:find).with do |key, args|
-                    key == "my key"
+                    key == "my_result"
                 end.returns @result
-                @handler.do_find(@request, @response)
+                @handler.do_find(@irequest, @request, @response)
             end
 
             it "should use a common method for determining the request parameters" do
-                @handler.stubs(:params).returns(:foo => :baz, :bar => :xyzzy)
+                @irequest.stubs(:options).returns(:foo => :baz, :bar => :xyzzy)
                 @model_class.expects(:find).with do |key, args|
                     args[:foo] == :baz and args[:bar] == :xyzzy
                 end.returns @result
-                @handler.do_find(@request, @response)
+                @handler.do_find(@irequest, @request, @response)
             end
 
             it "should set the content type to the first format specified in the accept header" do
                 @handler.expects(:accept_header).with(@request).returns "one,two"
                 @handler.expects(:set_content_type).with(@response, "one")
-                @handler.do_find(@request, @response)
+                @handler.do_find(@irequest, @request, @response)
             end
 
             it "should fail if no accept header is provided" do
                 @handler.expects(:accept_header).with(@request).returns nil
-                lambda { @handler.do_find(@request, @response) }.should raise_error(ArgumentError)
+                lambda { @handler.do_find(@irequest, @request, @response) }.should raise_error(ArgumentError)
             end
 
             it "should fail if the accept header does not contain a valid format" do
                 @handler.expects(:accept_header).with(@request).returns ""
-                lambda { @handler.do_find(@request, @response) }.should raise_error(RuntimeError)
+                lambda { @handler.do_find(@irequest, @request, @response) }.should raise_error(RuntimeError)
             end
 
             it "should not use an unsuitable format" do
@@ -377,19 +265,19 @@ describe Puppet::Network::HTTP::Handler do
 
                 @handler.expects(:set_content_type).with(@response, "bar") # the suitable one
 
-                @handler.do_find(@request, @response)
+                @handler.do_find(@irequest, @request, @response)
             end
 
             it "should render the result using the first format specified in the accept header" do
                 @handler.expects(:accept_header).with(@request).returns "one,two"
                 @result.expects(:render).with("one")
 
-                @handler.do_find(@request, @response)
+                @handler.do_find(@irequest, @request, @response)
             end
 
             it "should use the default status when a model find call succeeds" do
                 @handler.expects(:set_response).with { |response, body, status| status.nil? }
-                @handler.do_find(@request, @response)
+                @handler.do_find(@irequest, @request, @response)
             end
 
             it "should return a serialized object when a model find call succeeds" do
@@ -398,14 +286,14 @@ describe Puppet::Network::HTTP::Handler do
 
                 @handler.expects(:set_response).with { |response, body, status| body == "my_rendered_object" }
                 @model_class.stubs(:find).returns(@model_instance)
-                @handler.do_find(@request, @response)
+                @handler.do_find(@irequest, @request, @response)
             end
 
             it "should return a 404 when no model instance can be found" do
                 @model_class.stubs(:name).returns "my name"
                 @handler.expects(:set_response).with { |response, body, status| status == 404 }
                 @model_class.stubs(:find).returns(nil)
-                @handler.do_find(@request, @response)
+                @handler.do_find(@irequest, @request, @response)
             end
 
             it "should serialize the result in with the appropriate format" do
@@ -414,17 +302,13 @@ describe Puppet::Network::HTTP::Handler do
                 @handler.expects(:format_to_use).returns "one"
                 @model_instance.expects(:render).with("one").returns "my_rendered_object"
                 @model_class.stubs(:find).returns(@model_instance)
-                @handler.do_find(@request, @response)
+                @handler.do_find(@irequest, @request, @response)
             end
         end
 
         describe "when searching for model instances" do
             before do
-                @handler.stubs(:http_method).returns('GET')
-                @handler.stubs(:path).returns('/my_handlers')
-                @handler.stubs(:singular?).returns(false)
-                @handler.stubs(:plural?).returns(true)
-                @handler.stubs(:request_key).returns('key')
+                @irequest = stub 'indirection_request', :method => :find, :indirection_name => "my_handler", :options => {}, :key => "key"
 
                 @result1 = mock 'result1'
                 @result2 = mock 'results'
@@ -438,35 +322,23 @@ describe Puppet::Network::HTTP::Handler do
             end
 
             it "should use a common method for determining the request parameters" do
-                @handler.stubs(:params).returns(:foo => :baz, :bar => :xyzzy)
+                @irequest.stubs(:options).returns(:foo => :baz, :bar => :xyzzy)
                 @model_class.expects(:search).with do |key, args|
                     args[:foo] == :baz and args[:bar] == :xyzzy
                 end.returns @result
-                @handler.do_search(@request, @response)
-            end
-
-            it "should use an escaped request key if one is provided" do
-                @handler.expects(:request_key).with(@request).returns URI.escape("foo bar")
-                @model_class.expects(:search).with { |key, args| key == "foo bar" }.returns @result
-                @handler.do_search(@request, @response)
-            end
-
-            it "should work with no request key if none is provided" do
-                @handler.expects(:request_key).with(@request).returns nil
-                @model_class.expects(:search).with { |args| args.is_a?(Hash) }.returns @result
-                @handler.do_search(@request, @response)
+                @handler.do_search(@irequest, @request, @response)
             end
 
             it "should use the default status when a model search call succeeds" do
                 @model_class.stubs(:search).returns(@result)
-                @handler.do_search(@request, @response)
+                @handler.do_search(@irequest, @request, @response)
             end
 
             it "should set the content type to the first format returned by the accept header" do
                 @handler.expects(:accept_header).with(@request).returns "one,two"
                 @handler.expects(:set_content_type).with(@response, "one")
 
-                @handler.do_search(@request, @response)
+                @handler.do_search(@irequest, @request, @response)
             end
 
             it "should return a list of serialized objects when a model search call succeeds" do
@@ -477,59 +349,51 @@ describe Puppet::Network::HTTP::Handler do
                 @model_class.expects(:render_multiple).with("one", @result).returns "my rendered instances"
 
                 @handler.expects(:set_response).with { |response, data| data == "my rendered instances" }
-                @handler.do_search(@request, @response)
+                @handler.do_search(@irequest, @request, @response)
             end
 
             it "should return a 404 when searching returns an empty array" do
                 @model_class.stubs(:name).returns "my name"
                 @handler.expects(:set_response).with { |response, body, status| status == 404 }
                 @model_class.stubs(:search).returns([])
-                @handler.do_search(@request, @response)
+                @handler.do_search(@irequest, @request, @response)
             end
 
             it "should return a 404 when searching returns nil" do
                 @model_class.stubs(:name).returns "my name"
                 @handler.expects(:set_response).with { |response, body, status| status == 404 }
                 @model_class.stubs(:search).returns([])
-                @handler.do_search(@request, @response)
+                @handler.do_search(@irequest, @request, @response)
             end
         end
 
         describe "when destroying a model instance" do
             before do
-                @handler.stubs(:http_method).returns('DELETE')
-                @handler.stubs(:path).returns('/my_handler/key')
-                @handler.stubs(:singular?).returns(true)
-                @handler.stubs(:request_key).returns('key')
+                @irequest = stub 'indirection_request', :method => :destroy, :indirection_name => "my_handler", :options => {}, :key => "key"
 
                 @result = stub 'result', :render => "the result"
                 @model_class.stubs(:destroy).returns @result
             end
 
-            it "should fail to destroy model if key is not specified" do
-                @handler.expects(:request_key).returns nil
-                lambda { @handler.do_destroy(@request, @response) }.should raise_error(ArgumentError)
-            end
-
             it "should use the escaped request key to destroy the instance in the model" do
-                @handler.expects(:request_key).returns URI.escape("foo bar")
+                @irequest.expects(:key).returns "foo bar"
                 @model_class.expects(:destroy).with do |key, args|
                     key == "foo bar"
                 end
-                @handler.do_destroy(@request, @response)
+                @handler.do_destroy(@irequest, @request, @response)
             end
 
             it "should use a common method for determining the request parameters" do
-                @handler.stubs(:params).returns(:foo => :baz, :bar => :xyzzy)
+                @irequest.stubs(:options).returns(:foo => :baz, :bar => :xyzzy)
                 @model_class.expects(:destroy).with do |key, args|
                     args[:foo] == :baz and args[:bar] == :xyzzy
                 end
-                @handler.do_destroy(@request, @response)
+                @handler.do_destroy(@irequest, @request, @response)
             end
 
             it "should use the default status code a model destroy call succeeds" do
                 @handler.expects(:set_response).with { |response, body, status| status.nil? }
-                @handler.do_destroy(@request, @response)
+                @handler.do_destroy(@irequest, @request, @response)
             end
 
             it "should return a yaml-encoded result when a model destroy call succeeds" do
@@ -538,16 +402,13 @@ describe Puppet::Network::HTTP::Handler do
 
                 @handler.expects(:set_response).with { |response, body, status| body == "the result" }
 
-                @handler.do_destroy(@request, @response)
+                @handler.do_destroy(@irequest, @request, @response)
             end
         end
 
         describe "when saving a model instance" do
             before do
-                @handler.stubs(:http_method).returns('PUT')
-                @handler.stubs(:path).returns('/my_handler/key')
-                @handler.stubs(:singular?).returns(true)
-                @handler.stubs(:request_key).returns('key')
+                @irequest = stub 'indirection_request', :method => :save, :indirection_name => "my_handler", :options => {}, :key => "key"
                 @handler.stubs(:body).returns('my stuff')
 
                 @result = stub 'result', :render => "the result"
@@ -563,37 +424,37 @@ describe Puppet::Network::HTTP::Handler do
                 @handler.expects(:body).returns "my body"
                 @model_class.expects(:convert_from).with { |format, body| body == "my body" }.returns @model_instance
 
-                @handler.do_save(@request, @response)
+                @handler.do_save(@irequest, @request, @response)
             end
 
             it "should fail to save model if data is not specified" do
                 @handler.stubs(:body).returns('')
 
-                lambda { @handler.do_save(@request, @response) }.should raise_error(ArgumentError)
+                lambda { @handler.do_save(@irequest, @request, @response) }.should raise_error(ArgumentError)
             end
 
             it "should use a common method for determining the request parameters" do
-                @handler.stubs(:params).returns(:foo => :baz, :bar => :xyzzy)
+                @irequest.stubs(:options).returns(:foo => :baz, :bar => :xyzzy)
                 @model_instance.expects(:save).with do |args|
                     args[:foo] == :baz and args[:bar] == :xyzzy
                 end
-                @handler.do_save(@request, @response)
+                @handler.do_save(@irequest, @request, @response)
             end
 
             it "should use the default status when a model save call succeeds" do
                 @handler.expects(:set_response).with { |response, body, status| status.nil? }
-                @handler.do_save(@request, @response)
+                @handler.do_save(@irequest, @request, @response)
             end
 
             it "should return the yaml-serialized result when a model save call succeeds" do
                 @model_instance.stubs(:save).returns(@model_instance)
                 @model_instance.expects(:to_yaml).returns('foo')
-                @handler.do_save(@request, @response)
+                @handler.do_save(@irequest, @request, @response)
             end
 
             it "should set the content to yaml" do
                 @handler.expects(:set_content_type).with(@response, "yaml")
-                @handler.do_save(@request, @response)
+                @handler.do_save(@irequest, @request, @response)
             end
         end
     end
