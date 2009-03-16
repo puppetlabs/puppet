@@ -1,4 +1,6 @@
 0.24.8
+    Fixed #2077 - ralsh user broken on OSX
+
     Fixed #2000 - No default specified for checksum
 
     Fixed #2026 - Red Hat ignoring stop method

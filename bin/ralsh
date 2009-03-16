@@ -88,6 +88,7 @@
 
 require 'getoptlong'
 require 'puppet'
+require 'facter'
 
 options = [
     [ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
@@ -98,6 +99,9 @@ options = [
     [ "--edit",             "-e",                   GetoptLong::NO_ARGUMENT ],
     [ "--help",             "-h",                   GetoptLong::NO_ARGUMENT ]
 ]
+
+# Load facts from Facter
+Facter.loadfacts
 
 # Add all of the config parameters as valid options.
 Puppet.settings.addargs(options)
