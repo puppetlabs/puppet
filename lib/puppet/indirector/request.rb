@@ -11,6 +11,8 @@ class Puppet::Indirector::Request
 
     attr_reader :indirection_name
 
+    OPTION_ATTRIBUTES = [:ip, :node, :authenticated, :ignore_terminus, :ignore_cache, :instance, :environment]
+
     # Is this an authenticated request?
     def authenticated?
         # Double negative, so we just get true or false
@@ -56,15 +58,9 @@ class Puppet::Indirector::Request
         self.indirection_name = indirection_name
         self.method = method
 
-        @options = options.inject({}) do |result, ary|
-            param, value = ary
-            if respond_to?(param.to_s + "=")
-                send(param.to_s + "=", value)
-            else
-                result[param] = value
-            end
-            result
-        end
+        set_attributes(options)
+
+        @options = options.inject({}) { |hash, ary| hash[ary[0].to_sym] = ary[1]; hash }
 
         if key.is_a?(String) or key.is_a?(Symbol)
             # If the request key is a URI, then we need to treat it specially,
@@ -130,12 +126,32 @@ class Puppet::Indirector::Request
         end.join("&")
     end
 
+    def to_hash
+        result = options.dup
+
+        OPTION_ATTRIBUTES.each do |attribute|
+            if value = send(attribute)
+                result[attribute] = value
+            end
+        end
+        result
+    end
+
     def to_s
         return uri if uri
         return "/%s/%s" % [indirection_name, key]
     end
 
     private
+
+    def set_attributes(options)
+        OPTION_ATTRIBUTES.each do |attribute|
+            if options.include?(attribute)
+                send(attribute.to_s + "=", options[attribute])
+                options.delete(attribute)
+            end
+        end
+    end
 
     # Parse the key as a URI, setting attributes appropriately.
     def set_uri_key(key)

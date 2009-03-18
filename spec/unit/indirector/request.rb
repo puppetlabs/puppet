@@ -80,6 +80,14 @@ describe Puppet::Indirector::Request do
             Puppet::Indirector::Request.new(:ind, :method, :key, :foo => "bar").options.should be_instance_of(Hash)
         end
 
+        it "should treat options other than :ip, :node, and :authenticated as options rather than attributes" do
+            Puppet::Indirector::Request.new(:ind, :method, :key, :server => "bar").options[:server].should == "bar"
+        end
+
+        it "should normalize options to use symbols as keys" do
+            Puppet::Indirector::Request.new(:ind, :method, :key, "foo" => "bar").options[:foo].should == "bar"
+        end
+
         describe "and the request key is a URI" do
             describe "and the URI is a 'file' URI" do
                 before do
@@ -214,6 +222,14 @@ describe Puppet::Indirector::Request do
 
     it "should use the default environment when none is provided" do
         Puppet::Indirector::Request.new(:myind, :find, "my key" ).environment.should equal(Puppet::Node::Environment.new)
+    end
+
+    it "should support converting its options to a hash" do
+        Puppet::Indirector::Request.new(:myind, :find, "my key" ).should respond_to(:to_hash)
+    end
+
+    it "should include all of its attributes when its options are converted to a hash" do
+        Puppet::Indirector::Request.new(:myind, :find, "my key", :node => 'foo').to_hash[:node].should == 'foo'
     end
 
     describe "when building a query string from its options" do
