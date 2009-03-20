@@ -208,7 +208,7 @@ class Rake::RedLabProject < Rake::TaskLib
         end
 
         @defaulttask = :alltests
-        @publishdir = "/opt/rl/docroots/reductivelabs.com/htdocs/downloads"
+        @publishdir = ENV['DOWNLOAD_DIR'] || "/opt/rl/docroots/reductivelabs.com/htdocs/downloads"
         @pkgpublishdir = "#{@publishdir}/#{@name}"
 
         @email = "dev@reductivelabs.com"
@@ -248,7 +248,9 @@ class Rake::RedLabProject < Rake::TaskLib
             # Publish the html.
             task :publish => [:package, :html] do
                 puts Dir.getwd
-                sh %{cp -r html #{self.pkgpublishdir}/apidocs}
+                apidocsdir = "#{@pkgpublishdir}/apidocs"
+                File.makedirs(apidocsdir)
+                sh %{cp -r html #{apidocsdir}}
             end
         else
             warn "No rdoc; skipping html"
