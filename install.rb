@@ -170,7 +170,7 @@ def prepare_installation
     opts.on('--[no-]ri', 'Prevents the creation of RI output.', 'Default off on mswin32.') do |onri|
       InstallOptions.ri = onri
     end
-    opts.on('--[no-]man', 'Presents the creation of man pages.', 'Default on.') do |onman|
+    opts.on('--[no-]man', 'Prevents the creation of man pages.', 'Default on.') do |onman|
     InstallOptions.man = onman
     end
     opts.on('--[no-]tests', 'Prevents the execution of unit tests.', 'Default on.') do |ontest|
