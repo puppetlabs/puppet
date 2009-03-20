@@ -1,4 +1,8 @@
 0.25.0
+    Fixed #198 - Puppet man pages added
+
+    Moved puppetd, puppetmasterd, puppetrun, puppetca from bin to sbin
+
     Fixed #2071 - Updated LDAP schema
 
     Fixed #1849 - Ruby 1.9 portability: `when' doesn't like colons, replace with semicolons
