@@ -46,7 +46,7 @@ describe "Certificate REST Terminus" do
         # passed through REST; otherwise we'd be stubbing 'find', which would cause an immediate
         # return.
         @mock_model = stub('faked model', :name => "certificate")
-        Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:model).returns(@mock_model)                
+        Puppet::Indirector::Request.any_instance.stubs(:model).returns(@mock_model)                
     end
 
     after do

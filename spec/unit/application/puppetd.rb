@@ -398,12 +398,6 @@ describe "puppetd" do
                 @puppetd.setup_listen
             end
 
-            it "should create a server with facts REST handler" do
-                Puppet::Network::Server.expects(:new).with { |args| args[:handlers] == [:facts] }
-
-                @puppetd.setup_listen
-            end
-
             it "should use puppet default port" do
                 Puppet.stubs(:[]).with(:puppetport).returns(:port)
 

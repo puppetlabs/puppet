@@ -21,28 +21,13 @@ describe Puppet::Network::HTTP::Handler do
     end
 
     describe "when initializing" do
-        before do
-            Puppet::Indirector::Indirection.stubs(:model).returns "eh"
-        end
-
         it "should fail when no server type has been provided" do
-            lambda { @handler.initialize_for_puppet :handler => "foo" }.should raise_error(ArgumentError)
+            lambda { @handler.initialize_for_puppet }.should raise_error(ArgumentError)
         end
 
-        it "should fail when no handler has been provided" do
-            lambda { @handler.initialize_for_puppet :server => "foo" }.should raise_error(ArgumentError)
-        end
-
-        it "should set the handler and server type" do
-            @handler.initialize_for_puppet :server => "foo", :handler => "bar"
+        it "should set server type" do
+            @handler.initialize_for_puppet("foo")
             @handler.server.should == "foo"
-            @handler.handler.should == "bar"
-        end
-
-        it "should use the indirector to find the appropriate model" do
-            Puppet::Indirector::Indirection.expects(:model).with("bar").returns "mymodel"
-            @handler.initialize_for_puppet :server => "foo", :handler => "bar"
-            @handler.model.should == "mymodel"
         end
     end
 
@@ -58,9 +43,6 @@ describe Puppet::Network::HTTP::Handler do
             @model_class = stub('indirected model class')
 
             @result = stub 'result', :render => "mytext"
-
-            @handler.stubs(:model).returns @model_class
-            @handler.stubs(:handler).returns :my_handler
 
             stub_server_interface
         end
@@ -82,7 +64,7 @@ describe Puppet::Network::HTTP::Handler do
             @handler.expects(:http_method).with(@request).returns "mymethod"
             @handler.expects(:params).with(@request).returns "myparams"
 
-            @handler.expects(:uri2indirection).with("mypath", "myparams", "mymethod").returns stub("request", :method => :find)
+            @handler.expects(:uri2indirection).with("mymethod", "mypath", "myparams").returns stub("request", :method => :find)
 
             @handler.stubs(:do_find)
 
@@ -115,12 +97,18 @@ describe Puppet::Network::HTTP::Handler do
 
         describe "when finding a model instance" do
             before do
-                @irequest = stub 'indirection_request', :method => :find, :indirection_name => "my_handler", :options => {}, :key => "my_result"
+                @irequest = stub 'indirection_request', :method => :find, :indirection_name => "my_handler", :to_hash => {}, :key => "my_result", :model => @model_class
 
                 @model_class.stubs(:find).returns @result
 
                 @format = stub 'format', :suitable? => true
                 Puppet::Network::FormatHandler.stubs(:format).returns @format
+            end
+
+            it "should use the indirection request to find the model class" do
+                @irequest.expects(:model).returns @model_class
+
+                @handler.do_find(@irequest, @request, @response)
             end
 
             it "should use the escaped request key" do
@@ -131,7 +119,7 @@ describe Puppet::Network::HTTP::Handler do
             end
 
             it "should use a common method for determining the request parameters" do
-                @irequest.stubs(:options).returns(:foo => :baz, :bar => :xyzzy)
+                @irequest.stubs(:to_hash).returns(:foo => :baz, :bar => :xyzzy)
                 @model_class.expects(:find).with do |key, args|
                     args[:foo] == :baz and args[:bar] == :xyzzy
                 end.returns @result
@@ -206,7 +194,7 @@ describe Puppet::Network::HTTP::Handler do
 
         describe "when searching for model instances" do
             before do
-                @irequest = stub 'indirection_request', :method => :find, :indirection_name => "my_handler", :options => {}, :key => "key"
+                @irequest = stub 'indirection_request', :method => :find, :indirection_name => "my_handler", :to_hash => {}, :key => "key", :model => @model_class
 
                 @result1 = mock 'result1'
                 @result2 = mock 'results'
@@ -219,8 +207,14 @@ describe Puppet::Network::HTTP::Handler do
                 Puppet::Network::FormatHandler.stubs(:format).returns @format
             end
 
+            it "should use the indirection request to find the model" do
+                @irequest.expects(:model).returns @model_class
+
+                @handler.do_search(@irequest, @request, @response)
+            end
+
             it "should use a common method for determining the request parameters" do
-                @irequest.stubs(:options).returns(:foo => :baz, :bar => :xyzzy)
+                @irequest.stubs(:to_hash).returns(:foo => :baz, :bar => :xyzzy)
                 @model_class.expects(:search).with do |key, args|
                     args[:foo] == :baz and args[:bar] == :xyzzy
                 end.returns @result
@@ -267,10 +261,16 @@ describe Puppet::Network::HTTP::Handler do
 
         describe "when destroying a model instance" do
             before do
-                @irequest = stub 'indirection_request', :method => :destroy, :indirection_name => "my_handler", :options => {}, :key => "key"
+                @irequest = stub 'indirection_request', :method => :destroy, :indirection_name => "my_handler", :to_hash => {}, :key => "key", :model => @model_class
 
                 @result = stub 'result', :render => "the result"
                 @model_class.stubs(:destroy).returns @result
+            end
+
+            it "should use the indirection request to find the model" do
+                @irequest.expects(:model).returns @model_class
+
+                @handler.do_destroy(@irequest, @request, @response)
             end
 
             it "should use the escaped request key to destroy the instance in the model" do
@@ -282,7 +282,7 @@ describe Puppet::Network::HTTP::Handler do
             end
 
             it "should use a common method for determining the request parameters" do
-                @irequest.stubs(:options).returns(:foo => :baz, :bar => :xyzzy)
+                @irequest.stubs(:to_hash).returns(:foo => :baz, :bar => :xyzzy)
                 @model_class.expects(:destroy).with do |key, args|
                     args[:foo] == :baz and args[:bar] == :xyzzy
                 end
@@ -306,7 +306,7 @@ describe Puppet::Network::HTTP::Handler do
 
         describe "when saving a model instance" do
             before do
-                @irequest = stub 'indirection_request', :method => :save, :indirection_name => "my_handler", :options => {}, :key => "key"
+                @irequest = stub 'indirection_request', :method => :save, :indirection_name => "my_handler", :to_hash => {}, :key => "key", :model => @model_class
                 @handler.stubs(:body).returns('my stuff')
 
                 @result = stub 'result', :render => "the result"
@@ -316,6 +316,12 @@ describe Puppet::Network::HTTP::Handler do
 
                 @format = stub 'format', :suitable? => true
                 Puppet::Network::FormatHandler.stubs(:format).returns @format
+            end
+
+            it "should use the indirection request to find the model" do
+                @irequest.expects(:model).returns @model_class
+
+                @handler.do_save(@irequest, @request, @response)
             end
 
             it "should use the 'body' hook to retrieve the body of the request" do
@@ -332,7 +338,7 @@ describe Puppet::Network::HTTP::Handler do
             end
 
             it "should use a common method for determining the request parameters" do
-                @irequest.stubs(:options).returns(:foo => :baz, :bar => :xyzzy)
+                @irequest.stubs(:to_hash).returns(:foo => :baz, :bar => :xyzzy)
                 @model_instance.expects(:save).with do |args|
                     args[:foo] == :baz and args[:bar] == :xyzzy
                 end

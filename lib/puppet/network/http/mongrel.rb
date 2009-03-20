@@ -8,14 +8,12 @@ class Puppet::Network::HTTP::Mongrel
     end
     
     def listen(args = {})
-        raise ArgumentError, ":handlers must be specified." if !args[:handlers] or args[:handlers].empty?
         raise ArgumentError, ":protocols must be specified." if !args[:protocols] or args[:protocols].empty?
         raise ArgumentError, ":address must be specified." unless args[:address]
         raise ArgumentError, ":port must be specified." unless args[:port]
         raise "Mongrel server is already listening" if listening?
 
         @protocols = args[:protocols]
-        @handlers = args[:handlers]
         @xmlrpc_handlers = args[:xmlrpc_handlers]
         @server = Mongrel::HttpServer.new(args[:address], args[:port]) 
         setup_handlers
@@ -38,14 +36,9 @@ class Puppet::Network::HTTP::Mongrel
   private
   
     def setup_handlers
-        @protocols.each do |protocol|
-            next if protocol == :xmlrpc
-            klass = class_for_protocol(protocol)
-            @handlers.each do |handler|
-                @server.register('/' + handler.to_s, klass.new(:server => @server, :handler => handler))
-                @server.register('/' + handler.to_s + 's', klass.new(:server => @server, :handler => handler))
-            end
-        end
+        # Register our REST support at /
+        klass = class_for_protocol(:rest)
+        @server.register('/', klass.new(:server => @server))
 
         if @protocols.include?(:xmlrpc) and ! @xmlrpc_handlers.empty?
             setup_xmlrpc_handlers

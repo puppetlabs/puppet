@@ -31,19 +31,12 @@ describe "Puppet::Network::HTTP::Mongrel", "when turning on listening" do
         @mock_puppet_mongrel = mock('puppet_mongrel')
         Puppet::Network::HTTPServer::Mongrel.stubs(:new).returns(@mock_puppet_mongrel)
 
-        @listen_params = { :address => "127.0.0.1", :port => 31337,
-            :handlers => [ :node, :catalog ], :protocols => [ :rest, :xmlrpc ],
-            :xmlrpc_handlers => [ :status, :fileserver ]
-        }
+        @listen_params = { :address => "127.0.0.1", :port => 31337, :protocols => [ :rest, :xmlrpc ], :xmlrpc_handlers => [ :status, :fileserver ] }
     end
     
     it "should fail if already listening" do
         @server.listen(@listen_params)
         Proc.new { @server.listen(@listen_params) }.should raise_error(RuntimeError)
-    end
-    
-    it "should require at least one handler" do
-        Proc.new { @server.listen(@listen_params.delete_if {|k,v| :handlers == k}) }.should raise_error(ArgumentError)
     end
     
     it "should require at least one protocol" do
@@ -75,12 +68,10 @@ describe "Puppet::Network::HTTP::Mongrel", "when turning on listening" do
     end
 
     describe "when providing REST services" do
-        it "should instantiate a handler for each protocol+handler pair to configure web server routing" do
-            @listen_params[:protocols].each do |protocol|
-                @listen_params[:handlers].each do |handler|
-                    @mock_mongrel.expects(:register)
-                end
-            end
+        it "should instantiate a handler at / for handling REST calls" do
+            Puppet::Network::HTTP::MongrelREST.expects(:new).returns "myhandler"
+            @mock_mongrel.expects(:register).with("/", "myhandler")
+
             @server.listen(@listen_params)        
         end
         
@@ -106,10 +97,6 @@ describe "Puppet::Network::HTTP::Mongrel", "when turning on listening" do
 
             @server.listen(@listen_params.merge(:xmlrpc_handlers => [:status, :master]))
         end
-    end
-    
-    it "should fail if services from an unknown protocol are requested" do
-        Proc.new { @server.listen(@listen_params.merge(:protocols => [ :foo ]))}.should raise_error(ArgumentError)
     end
 end
 

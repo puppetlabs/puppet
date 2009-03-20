@@ -55,14 +55,11 @@ Puppet::Application.new(:puppetmasterd) do
 
         xmlrpc_handlers = [:Status, :FileServer, :Master, :Report, :Filebucket]
 
-        # Just set up serving to all of the indirected classes.
-        rest_handlers = Puppet::Indirector::Indirection.instances
-
         if Puppet[:ca]
             xmlrpc_handlers << :CA
         end
 
-        @daemon.server = Puppet::Network::Server.new(:handlers => rest_handlers, :xmlrpc_handlers => xmlrpc_handlers)
+        @daemon.server = Puppet::Network::Server.new(:xmlrpc_handlers => xmlrpc_handlers)
 
         # Make sure we've got a localhost ssl cert
         Puppet::SSL::Host.localhost

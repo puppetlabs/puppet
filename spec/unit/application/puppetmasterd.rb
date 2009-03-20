@@ -289,13 +289,6 @@ describe "PuppetMaster" do
                 @puppetmasterd.main
             end
 
-            it "should create the server with the right REST handlers" do
-                Puppet::Indirector::Indirection.stubs(:instances).returns("handlers")
-                Puppet::Network::Server.expects(:new).with { |args| args[:handlers] == "handlers"}
-
-                @puppetmasterd.main
-            end
-
             it "should generate a SSL cert for localhost" do
                 Puppet::SSL::Host.expects(:localhost)
 

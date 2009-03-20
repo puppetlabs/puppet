@@ -177,7 +177,7 @@ Puppet::Application.new(:puppetd) do
 
         require 'puppet/network/server'
         # No REST handlers yet.
-        server = Puppet::Network::Server.new(:handlers => [:facts], :xmlrpc_handlers => handlers, :port => Puppet[:puppetport])
+        server = Puppet::Network::Server.new(:xmlrpc_handlers => handlers, :port => Puppet[:puppetport])
 
         @daemon.server = server
     end

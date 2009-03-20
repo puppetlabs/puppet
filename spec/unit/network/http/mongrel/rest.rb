@@ -48,19 +48,9 @@ describe "Puppet::Network::HTTP::MongrelREST" do
                 @handler.http_method(@request).should == "mymethod"
             end
 
-            it "should use the first part of the request path as the path" do
+            it "should return the request path as the path" do
                 @params.expects(:[]).with(Mongrel::Const::REQUEST_PATH).returns "/foo/bar"
-                @handler.path(@request).should == "/foo"
-            end
-
-            it "should use the remainder of the request path as the request key" do
-                @params.expects(:[]).with(Mongrel::Const::REQUEST_PATH).returns "/foo/bar/baz"
-                @handler.request_key(@request).should == "bar/baz"
-            end
-
-            it "should return nil as the request key if no second field is present" do
-                @params.expects(:[]).with(Mongrel::Const::REQUEST_PATH).returns "/foo"
-                @handler.request_key(@request).should be_nil
+                @handler.path(@request).should == "/foo/bar"
             end
 
             it "should return the request body as the body" do

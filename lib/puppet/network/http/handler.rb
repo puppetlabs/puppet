@@ -6,7 +6,7 @@ require 'puppet/network/http/api/v1'
 module Puppet::Network::HTTP::Handler
     include Puppet::Network::HTTP::API::V1
 
-    attr_reader :model, :server, :handler
+    attr_reader :server, :handler
 
     # Retrieve the accept header from the http request.
     def accept_header(request)
@@ -30,19 +30,16 @@ module Puppet::Network::HTTP::Handler
         raise "No specified acceptable formats (%s) are functional on this machine" % header
     end
 
-    def initialize_for_puppet(args = {})
-        raise ArgumentError unless @server = args[:server]
-        raise ArgumentError unless @handler = args[:handler]
-        @model = find_model_for_handler(@handler)
+    def initialize_for_puppet(server)
+        @server = server
     end
 
     # handle an HTTP request
     def process(request, response)
-        indirection_request = uri2indirection(path(request), params(request), http_method(request))
+        indirection_request = uri2indirection(http_method(request), path(request), params(request))
 
         send("do_%s" % indirection_request.method, indirection_request, request, response)
     rescue Exception => e
-        puts e.backtrace
         return do_exception(response, e)
     end
 
@@ -67,8 +64,8 @@ module Puppet::Network::HTTP::Handler
 
     # Execute our find.
     def do_find(indirection_request, request, response)
-        unless result = model.find(indirection_request.key, indirection_request.options)
-            return do_exception(response, "Could not find %s %s" % [model.name, indirection_request.key], 404)
+        unless result = indirection_request.model.find(indirection_request.key, indirection_request.to_hash)
+            return do_exception(response, "Could not find %s %s" % [indirection_request.indirection_name, indirection_request.key], 404)
         end
 
         # The encoding of the result must include the format to use,
@@ -82,21 +79,21 @@ module Puppet::Network::HTTP::Handler
 
     # Execute our search.
     def do_search(indirection_request, request, response)
-        result = model.search(indirection_request.key, indirection_request.options)
+        result = indirection_request.model.search(indirection_request.key, indirection_request.to_hash)
 
         if result.nil? or (result.is_a?(Array) and result.empty?)
-            return do_exception(response, "Could not find instances in %s with '%s'" % [model.name, indirection_request.options.inspect], 404)
+            return do_exception(response, "Could not find instances in %s with '%s'" % [indirection_request.indirection_name, indirection_request.to_hash.inspect], 404)
         end
 
         format = format_to_use(request)
         set_content_type(response, format)
 
-        set_response(response, model.render_multiple(format, result))
+        set_response(response, indirection_request.model.render_multiple(format, result))
     end
 
     # Execute our destroy.
     def do_destroy(indirection_request, request, response)
-        result = model.destroy(indirection_request.key, indirection_request.options)
+        result = indirection_request.model.destroy(indirection_request.key, indirection_request.to_hash)
 
         set_content_type(response, "yaml")
 
@@ -110,7 +107,7 @@ module Puppet::Network::HTTP::Handler
 
         format = format_to_use(request)
 
-        obj = model.convert_from(format_to_use(request), data)
+        obj = indirection_request.model.convert_from(format_to_use(request), data)
         result = save_object(indirection_request, obj)
 
         set_content_type(response, "yaml")
@@ -123,12 +120,7 @@ module Puppet::Network::HTTP::Handler
     # LAK:NOTE This has to be here for testing; it's a stub-point so
     # we keep infinite recursion from happening.
     def save_object(ind_request, object)
-        object.save(ind_request.options)
-    end
-
-    def find_model_for_handler(handler)
-        Puppet::Indirector::Indirection.model(handler) || 
-            raise(ArgumentError, "Cannot locate indirection [#{handler}].")
+        object.save(ind_request.to_hash)
     end
 
     def get?(request)

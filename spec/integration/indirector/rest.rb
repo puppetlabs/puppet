@@ -75,7 +75,7 @@ describe Puppet::Indirector::REST do
             # passed through REST; otherwise we'd be stubbing 'find', which would cause an immediate
             # return.
             @mock_model = stub('faked model', :name => "foo")
-            Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:model).returns(@mock_model)                
+            Puppet::Indirector::Request.any_instance.stubs(:model).returns(@mock_model)                
         end
     
         describe "when finding a model instance over REST" do
@@ -117,7 +117,7 @@ describe Puppet::Indirector::REST do
             describe "when no matching model instance can be found" do
                 before :each do
                     @mock_model = stub('faked model', :name => "foo", :find => nil)
-                    Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:model).returns(@mock_model)
+                    Puppet::Indirector::Request.any_instance.stubs(:model).returns(@mock_model)
                 end
             
                 it "should return nil" do
@@ -129,7 +129,7 @@ describe Puppet::Indirector::REST do
                 before :each do
                     @mock_model = stub('faked model', :name => "foo")
                     @mock_model.stubs(:find).raises(RuntimeError)
-                    Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:model).returns(@mock_model)                
+                    Puppet::Indirector::Request.any_instance.stubs(:model).returns(@mock_model)                
                 end
             
                 it "should raise an exception" do
@@ -177,7 +177,7 @@ describe Puppet::Indirector::REST do
             describe "when no matching model instance can be found" do
                 before :each do
                     @mock_model = stub('faked model', :name => "foo", :find => nil)
-                    Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:model).returns(@mock_model)
+                    Puppet::Indirector::Request.any_instance.stubs(:model).returns(@mock_model)
                 end
             
                 it "should return nil" do
@@ -189,7 +189,7 @@ describe Puppet::Indirector::REST do
                 before :each do
                     @mock_model = stub('faked model')
                     @mock_model.stubs(:find).raises(RuntimeError)
-                    Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:model).returns(@mock_model)                
+                    Puppet::Indirector::Request.any_instance.stubs(:model).returns(@mock_model)                
                 end
             
                 it "should raise an exception" do
@@ -305,7 +305,7 @@ describe Puppet::Indirector::REST do
             # passed through REST; otherwise we'd be stubbing 'find', which would cause an immediate
             # return.
             @mock_model = stub('faked model', :name => "foo")
-            Puppet::Network::HTTP::MongrelREST.any_instance.stubs(:model).returns(@mock_model)                
+            Puppet::Indirector::Request.any_instance.stubs(:model).returns(@mock_model)                
         end
 
         after do

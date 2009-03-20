@@ -20,18 +20,12 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
         WEBrick::HTTPServer.stubs(:new).returns(@mock_webrick)
         @server = Puppet::Network::HTTP::WEBrick.new
         [:setup_logger, :setup_ssl].each {|meth| @server.stubs(meth).returns({})} # the empty hash is required because of how we're merging
-        @listen_params = { :address => "127.0.0.1", :port => 31337,
-            :handlers => [ :node, :catalog ], :xmlrpc_handlers => [], :protocols => [ :rest ]
-        }
+        @listen_params = { :address => "127.0.0.1", :port => 31337, :xmlrpc_handlers => [], :protocols => [ :rest ] }
     end
 
     it "should fail if already listening" do
         @server.listen(@listen_params)
         Proc.new { @server.listen(@listen_params) }.should raise_error(RuntimeError)
-    end
-
-    it "should require at least one handler" do
-        Proc.new { @server.listen(@listen_params.delete_if {|k,v| :handlers == k}) }.should raise_error(ArgumentError)
     end
 
     it "should require at least one protocol" do
@@ -84,18 +78,11 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
     end
 
     describe "when the REST protocol is requested" do
-        it "should use a WEBrick + REST class to configure WEBrick" do
-            Puppet::Network::HTTP::WEBrick.expects(:class_for_protocol).with(:rest).at_least_once
-            @server.listen(@listen_params.merge(:protocols => [:rest]))
-        end
+        it "should register the REST handler at /" do
+            # We don't care about the options here.
+            @mock_webrick.expects(:mount).with { |path, klass, options| path == "/" and klass == Puppet::Network::HTTP::WEBrickREST }
 
-        it "should instantiate a handler for each protocol+handler pair to configure web server routing" do
-            @listen_params[:protocols].each do |protocol|
-                @listen_params[:handlers].each do |handler|
-                    @mock_webrick.expects(:mount)
-                end
-            end
-            @server.listen(@listen_params)        
+            @server.listen(@listen_params.merge(:protocols => [:rest]))
         end
     end
 
@@ -149,10 +136,6 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
 
             @server.listen(@listen_params.merge(:protocols => [:xmlrpc], :xmlrpc_handlers => [:master, :fileserver]))
         end
-    end
-
-    it "should fail if services from an unknown protocol are requested" do
-        Proc.new { @server.listen(@listen_params.merge(:protocols => [ :foo ]))}.should raise_error
     end
 end
 

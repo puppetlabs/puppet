@@ -19,13 +19,11 @@ class Puppet::Network::HTTP::WEBrick
     end
     
     def listen(args = {})
-        raise ArgumentError, ":handlers must be specified." if !args[:handlers] or args[:handlers].empty?
         raise ArgumentError, ":protocols must be specified." if !args[:protocols] or args[:protocols].empty?
         raise ArgumentError, ":address must be specified." unless args[:address]
         raise ArgumentError, ":port must be specified." unless args[:port]
         
         @protocols = args[:protocols]
-        @handlers = args[:handlers]        
         @xmlrpc_handlers = args[:xmlrpc_handlers]        
 
         arguments = {:BindAddress => args[:address], :Port => args[:port]}
@@ -115,14 +113,8 @@ class Puppet::Network::HTTP::WEBrick
     
     def setup_handlers
         # Set up the new-style protocols.
-        @protocols.each do |protocol|
-            next if protocol == :xmlrpc
-            klass = self.class.class_for_protocol(protocol)
-            @handlers.each do |handler|
-                @server.mount('/' + handler.to_s, klass, handler)
-                @server.mount('/' + handler.to_s + 's', klass, handler)
-            end
-        end
+        klass = self.class.class_for_protocol(:rest)
+        @server.mount('/', klass, :this_value_is_apparently_necessary_but_unused)
 
         # And then set up xmlrpc, if configured.
         if @protocols.include?(:xmlrpc) and ! @xmlrpc_handlers.empty?
