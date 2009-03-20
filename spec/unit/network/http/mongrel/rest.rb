@@ -137,6 +137,16 @@ describe "Puppet::Network::HTTP::MongrelREST" do
                 result[:foo].should == %w{one two}
             end
 
+            it "should not allow the client to set the node via the query string" do
+                @request.stubs(:params).returns('QUERY_STRING' => "node=foo")
+                @handler.params(@request)[:node].should be_nil
+            end
+
+            it "should not allow the client to set the IP address via the query string" do
+                @request.stubs(:params).returns('QUERY_STRING' => "ip=foo")
+                @handler.params(@request)[:ip].should be_nil
+            end
+
             it "should pass the client's ip address to model find" do
                 @request.stubs(:params).returns("REMOTE_ADDR" => "ipaddress")
                 @handler.params(@request)[:ip].should == "ipaddress"

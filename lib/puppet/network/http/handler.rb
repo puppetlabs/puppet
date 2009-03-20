@@ -160,6 +160,12 @@ module Puppet::Network::HTTP::Handler
     def decode_params(params)
         params.inject({}) do |result, ary|
             param, value = ary
+            param = param.to_sym
+
+            # These shouldn't be allowed to be set by clients
+            # in the query string, for security reasons.
+            next result if param == :node
+            next result if param == :ip
             value = URI.unescape(value)
             if value =~ /^---/
                 value = YAML.load(value)
@@ -169,7 +175,7 @@ module Puppet::Network::HTTP::Handler
                 value = Integer(value) if value =~ /^\d+$/
                 value = value.to_f if value =~ /^\d+\.\d+$/
             end
-            result[param.to_sym] = value
+            result[param] = value
             result
         end
     end

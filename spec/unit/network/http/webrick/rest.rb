@@ -106,6 +106,16 @@ describe Puppet::Network::HTTP::WEBrickREST do
                 result[:foo].should == %w{one two}
             end
 
+            it "should not allow clients to set the node via the request parameters" do
+                @request.stubs(:query).returns("node" => "foo")
+                @handler.params(@request)[:node].should be_nil
+            end
+
+            it "should not allow clients to set the IP via the request parameters" do
+                @request.stubs(:query).returns("ip" => "foo")
+                @handler.params(@request)[:ip].should_not == "foo"
+            end
+
             it "should pass the client's ip address to model find" do
                 @request.stubs(:peeraddr).returns(%w{noidea dunno hostname ipaddress})
                 @handler.params(@request)[:ip].should == "ipaddress"
