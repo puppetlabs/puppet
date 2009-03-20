@@ -124,9 +124,10 @@ class TypeDoc
     # List details about attributes
     def format_attrs(type, attrs)
         docs = {}
-        type.eachattr do |obj, kind|
-            if attrs.include?(kind) && obj.name != :provider
-                docs[obj.name] = obj.doc
+        type.allattrs.each do |name|
+            kind = type.attrtype(name)
+            if attrs.include?(kind) && name != :provider
+                docs[name] = type.attrclass(name).doc
             end
         end
 
@@ -146,9 +147,10 @@ class TypeDoc
     # List the names of attributes
     def list_attrs(type, attrs)
         params = []
-        type.eachattr do |obj, kind|
-            if attrs.include?(kind) && obj.name != :provider
-                params << obj.name.to_s
+        type.allattrs.each do |name|
+            kind = type.attrtype(name)
+            if attrs.include?(kind) && name != :provider
+                params << name.to_s
             end
         end
         puts @format.wrap(params.sort.join(", "), :indent => 4)
