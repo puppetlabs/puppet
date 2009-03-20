@@ -28,6 +28,7 @@ project = Rake::RedLabProject.new("puppet") do |p|
         'test/**/*',
         'spec/**/*',
         'bin/**/*',
+        'sbin/**/*',
         'ext/**/*',
         'examples/**/*',
         'conf/**/*',
@@ -44,10 +45,17 @@ if project.has?(:gem)
 
         task.require_path = 'lib'                         # Use these for libraries.
 
-        task.bindir = "bin"                               # Use these for applications.
-        task.executables = ["puppet", "puppetd", "puppetmasterd", "puppetdoc",
-                         "puppetca", "puppetrun", "ralsh"]
-        task.default_executable = "puppet"
+        task.bindir = "."                                 # Use these for applications.
+        task.executables = [
+            "bin/puppet",
+            "bin/puppetdoc",
+            "bin/ralsh",
+            "sbin/puppetca",
+            "sbin/puppetd",
+            "sbin/puppetmasterd",
+            "sbin/puppetrun",
+        ]
+        task.default_executable = "bin/puppet"
 
         #### Documentation and testing.
 
