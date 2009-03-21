@@ -31,6 +31,20 @@ module Puppet
 
         newproperty(:target) do
             desc "The file in which to store the SSH key."
+
+            defaultto :absent
+
+            def should
+                if defined? @should and @should[0] != :absent
+                    return super
+                end
+
+                if user = resource[:user]
+                    return File.expand_path("~%s/.ssh/authorized_keys" % user)
+                end
+
+                return nil
+            end
         end
 
         newproperty(:options, :array_matching => :all) do
