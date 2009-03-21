@@ -1,5 +1,9 @@
 0.24.8
     Fixed #2077 - ralsh user broken on OSX
+    
+    Fixed #2004 - ssh_authorized_key fails if no target is defined
+
+    Fixed #1629 - incorrect permissions on ssh_authorized_keys created files
 
     Fixed #2000 - No default specified for checksum
 
