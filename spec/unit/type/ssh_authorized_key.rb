@@ -89,14 +89,37 @@ describe ssh_authorized_key do
         @class.attrtype(:target).should == :property
     end
 
-    it "should raise an error when neither user nor target is given" do
-        proc do
-            @class.create(
-              :name   => "Test",
-              :key    => "AAA",
-              :type   => "ssh-rsa",
-              :ensure => :present)
-        end.should raise_error(Puppet::Error)
+    describe "when neither user nor target is specified" do
+        it "should raise an error" do
+            proc do
+                @class.create(
+                  :name   => "Test",
+                  :key    => "AAA",
+                  :type   => "ssh-rsa",
+                  :ensure => :present)
+            end.should raise_error(Puppet::Error)
+        end
+    end
+
+    describe "when both target and user are specified" do
+        it "should use target" do
+            resource = @class.create(
+                :name => "Test",
+                :user => "root",
+                :target => "/tmp/blah")
+            resource.should(:target).should == "/tmp/blah"
+        end
+    end
+
+
+    describe "when user is specified" do
+        it "should determine target" do
+            resource = @class.create(
+                :name   => "Test",
+                :user   => "root")
+            target = File.expand_path("~root/.ssh/authorized_keys")
+            resource.should(:target).should == target
+        end
     end
 
     after do
