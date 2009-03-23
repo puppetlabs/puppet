@@ -128,11 +128,20 @@ module Puppet
                 when :remote: :remote
                 when Integer, Fixnum, Bignum:
                     self.warning "Setting recursion depth with the recurse parameter is now deprecated, please use recurselimit"
+
+                    # recurse == 0 means no recursion
+                    return false if value == 0
+
                     resource[:recurselimit] = value
                     true
                 when /^\d+$/:
                     self.warning "Setting recursion depth with the recurse parameter is now deprecated, please use recurselimit"
-                    resource[:recurselimit] = Integer(value)
+                    value = Integer(value)
+
+                    # recurse == 0 means no recursion
+                    return false if value == 0
+
+                    resource[:recurselimit] = value
                     true
                 else
                     raise ArgumentError, "Invalid recurse value %s" % value.inspect
