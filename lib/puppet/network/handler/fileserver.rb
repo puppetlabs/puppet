@@ -672,7 +672,11 @@ class Puppet::Network::Handler
             def reclist(abspath, recurse, ignore)
                 require 'puppet/file_serving'
                 require 'puppet/file_serving/fileset'
-                args = { :recurse => recurse, :links => :follow }
+                if recurse.is_a?(Fixnum)
+                    args = { :recurse => true, :recurselimit => recurse, :links => :follow }
+                else
+                    args = { :recurse => recurse, :links => :follow }
+                end
                 args[:ignore] = ignore if ignore
                 fs = Puppet::FileServing::Fileset.new(abspath, args)
                 ary = fs.files.collect do |file|
