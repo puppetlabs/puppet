@@ -5,6 +5,7 @@ require File.dirname(__FILE__) + '/../spec_helper'
 require 'puppet/defaults'
 
 describe "Puppet defaults" do
+        include Puppet::Util::Execution
     after { Puppet.settings.clear }
 
     describe "when setting the :factpath" do
@@ -43,5 +44,13 @@ describe "Puppet defaults" do
 
     it "should default to yaml as the catalog format" do
         Puppet.settings[:catalog_format].should == "yaml"
+    end
+
+    it "should add /usr/sbin and /sbin to the path if they're not there" do
+        withenv("PATH" => "/usr/bin:/usr/local/bin") do
+            Puppet.settings[:path] = "none" # this causes it to ignore the setting
+            ENV["PATH"].split(File::PATH_SEPARATOR).should be_include("/usr/sbin")
+            ENV["PATH"].split(File::PATH_SEPARATOR).should be_include("/sbin")
+        end
     end
 end

@@ -95,8 +95,17 @@ module Puppet
         :path => {:default => "none",
             :desc => "The shell search path.  Defaults to whatever is inherited
                 from the parent process.",
+            :call_on_define => true, # Call our hook with the default value, so we always get the libdir set.
             :hook => proc do |value|
                 ENV["PATH"] = value unless value == "none"
+
+                paths = ENV["PATH"].split(File::PATH_SEPARATOR)
+                %w{/usr/sbin /sbin}.each do |path|
+                    unless paths.include?(path)
+                        ENV["PATH"] += File::PATH_SEPARATOR + path
+                    end
+                end
+                value
             end
         },
         :libdir => {:default => "$vardir/lib",
