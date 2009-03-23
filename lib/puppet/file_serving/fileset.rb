@@ -67,7 +67,7 @@ class Puppet::FileServing::Fileset
         @ignore = []
         @links = :manage
         @recurse = false
-        @recurselimit = 0 # infinite recursion
+        @recurselimit = :infinite
 
         if options.is_a?(Puppet::Indirector::Request)
             initialize_from_request(options)
@@ -90,7 +90,7 @@ class Puppet::FileServing::Fileset
     # place for all of the logic around recursion.
     def recurse?(depth)
         # recurse if told to, and infinite recursion or current depth not at the limit
-        self.recurse and (self.recurselimit == 0 or depth <= self.recurselimit)
+        self.recurse and (self.recurselimit == :infinite or depth <= self.recurselimit)
     end
 
     def initialize_from_hash(options)

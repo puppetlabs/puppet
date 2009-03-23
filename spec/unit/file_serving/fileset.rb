@@ -51,9 +51,9 @@ describe Puppet::FileServing::Fileset, " when initializing" do
         Puppet::FileServing::Fileset.new("/some/file").recurse.should == false
     end
 
-    it "should default to 0 (infinite) for recurselimit" do
+    it "should default to :infinite for recurselimit" do
         File.expects(:lstat).with("/some/file").returns stub("stat")
-        Puppet::FileServing::Fileset.new("/some/file").recurselimit.should == 0
+        Puppet::FileServing::Fileset.new("/some/file").recurselimit.should == :infinite
     end
 
     it "should default to an empty ignore list" do
@@ -117,7 +117,7 @@ describe Puppet::FileServing::Fileset, " when determining whether to recurse" do
 
     it "should always recurse if :recurse is set to 'true' and with infinite recursion" do
         @fileset.recurse = true
-        @fileset.recurselimit = 0
+        @fileset.recurselimit = :infinite
         @fileset.recurse?(0).should be_true
     end
 
