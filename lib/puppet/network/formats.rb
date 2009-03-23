@@ -131,7 +131,7 @@ Puppet::Network::FormatHandler.create(:marshal, :mime => "text/marshal") do
     end
 end
 
-Puppet::Network::FormatHandler.create(:s, :mime => "text/plain")
+Puppet::Network::FormatHandler.create(:s, :mime => "text/plain", :extension => "txt")
 
 # A very low-weight format so it'll never get chosen automatically.
 Puppet::Network::FormatHandler.create(:raw, :mime => "application/x-raw", :weight => 1) do

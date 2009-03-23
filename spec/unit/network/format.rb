@@ -123,6 +123,13 @@ describe Puppet::Network::Format do
             Puppet::Network::Format.new(:foo, :weight => 1).weight.should == 1
         end
 
+        it "should default to its extension being equal to its name" do
+            Puppet::Network::Format.new(:foo).extension.should == "foo"
+        end
+
+        it "should support overriding the extension" do
+            Puppet::Network::Format.new(:foo, :extension => "bar").extension.should == "bar"
+        end
         [:intern_method, :intern_multiple_method, :render_multiple_method, :render_method].each do |method|
             it "should allow assignment of the #{method}" do
                 Puppet::Network::Format.new(:foo, method => :foo).send(method).should == :foo

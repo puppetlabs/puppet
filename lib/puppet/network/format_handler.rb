@@ -51,6 +51,13 @@ module Puppet::Network::FormatHandler
         @formats[name.to_s.downcase.intern]
     end
 
+    def self.format_by_extension(ext)
+        @formats.each do |name, format|
+            return format if format.extension == ext
+        end
+        return nil
+    end
+
     # Provide a list of all formats.
     def self.formats
         @formats.keys

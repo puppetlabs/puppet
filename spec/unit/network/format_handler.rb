@@ -204,6 +204,15 @@ describe Puppet::Network::FormatHandler do
             Puppet::Network::FormatHandler.format(:by_name).should equal(format)
         end
 
+        it "should be able to retrieve a format by extension" do
+            format = Puppet::Network::FormatHandler.create(:by_extension, :extension => "foo")
+            Puppet::Network::FormatHandler.format_by_extension("foo").should equal(format)
+        end
+
+        it "should return nil if asked to return a format by an unknown extension" do
+            Puppet::Network::FormatHandler.format_by_extension("yayness").should be_nil
+        end
+
         it "should be able to retrieve formats by name irrespective of case and class" do
             format = Puppet::Network::FormatHandler.create(:by_name)
             Puppet::Network::FormatHandler.format(:By_Name).should equal(format)
