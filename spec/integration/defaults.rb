@@ -48,6 +48,14 @@ describe "Puppet defaults" do
         Puppet.settings[:yamldir].should_not == Puppet.settings[:clientyamldir]
     end
 
+    it "should have a client_datadir setting" do
+        Puppet.settings[:client_datadir].should_not be_nil
+    end
+
+    it "should have different values for the server_datadir and client_datadir" do
+        Puppet.settings[:server_datadir].should_not == Puppet.settings[:client_datadir]
+    end
+
     # See #1232
     it "should not specify a user or group for the clientyamldir" do
         Puppet.settings.setting(:clientyamldir).owner.should be_nil
