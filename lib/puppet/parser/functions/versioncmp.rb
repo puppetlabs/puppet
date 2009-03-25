@@ -1,6 +1,6 @@
 require 'puppet/util/package'
 
-Puppet::Parser::Functions::newfunction(:versioncmp,  :doc => "Compares two versions.") do |args|
+Puppet::Parser::Functions::newfunction(:versioncmp, :type => :rvalue, :doc => "Compares two versions.") do |args|
 
     unless args.length == 2
         raise Puppet::ParseError, "versioncmp should have 2 arguments"
