@@ -289,6 +289,10 @@ class Puppet::Parser::Resource
             if v.is_a?(Puppet::Parser::Resource::Reference)
                 v = Puppet::Resource::Reference.new(v.type, v.title)
             elsif v.is_a?(Array)
+                # flatten resource references arrays
+                if v.flatten.find { |av| av.is_a?(Puppet::Parser::Resource::Reference) }
+                    v = v.flatten
+                end
                 v = v.collect do |av|
                     if av.is_a?(Puppet::Parser::Resource::Reference)
                         av = Puppet::Resource::Reference.new(av.type, av.title)

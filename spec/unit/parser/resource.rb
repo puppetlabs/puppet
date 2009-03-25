@@ -425,5 +425,13 @@ describe Puppet::Parser::Resource do
             result = @parser_resource.to_resource
             result[:fee].should == ["a", Puppet::Resource::Reference.new(:file, "/my/file")]
         end
+
+        it "should convert any parser resource references to Puppet::Resource::Reference instances even if they are in an array of array, and even deeper" do
+            ref1 = Puppet::Parser::Resource::Reference.new(:title => "/my/file1", :type => "file")
+            ref2 = Puppet::Parser::Resource::Reference.new(:title => "/my/file2", :type => "file")
+            @parser_resource = mkresource :source => @source, :params => {:foo => "bar", :fee => ["a", [ref1,ref2]]}
+            result = @parser_resource.to_resource
+            result[:fee].should == ["a", Puppet::Resource::Reference.new(:file, "/my/file1"), Puppet::Resource::Reference.new(:file, "/my/file2")]
+        end
     end
 end
