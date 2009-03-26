@@ -15,6 +15,8 @@ describe Puppet::SSL::CertificateRequest do
         @dir = file.path
         file.delete
 
+        Dir.mkdir(@dir)
+
         Puppet.settings.clear
 
         Puppet.settings[:confdir] = @dir
