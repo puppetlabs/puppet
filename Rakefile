@@ -163,6 +163,9 @@ namespace :ci do
     ENV['CI_REPORTS'] = 'results'
   end
 
+  desc "Run all CI tests"
+  task :all => [:unit, :spec]
+
   desc "Run CI Unit tests"
   task :unit => [:prep, 'ci:setup:testunit'] do
      sh "cd test; rake test; exit 0"
