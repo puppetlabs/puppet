@@ -1,7 +1,6 @@
 module Puppet::Parser::Functions
     newfunction(:regsubst, :type => :rvalue,
-		:doc => "\
-	Perform regexp replacement on a string.
+		:doc => "Perform regexp replacement on a string.
 
 	Parameters (in order):
 
@@ -55,9 +54,8 @@ module Puppet::Parser::Functions
 
 	Put angle brackets around each octet in the node's IP address: ::
 
-	    $x = regsubst($ipaddress, '([0-9]+)', '<\\\\1>', 'G')
-	") \
-    do |args|
+	    $x = regsubst($ipaddress, '([0-9]+)', '<\\\\1>', 'G')") \
+        do |args|
 	flag_mapping = {
 	    "E" => Regexp::EXTENDED,
 	    "I" => Regexp::IGNORECASE,
