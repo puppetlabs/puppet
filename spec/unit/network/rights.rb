@@ -9,7 +9,7 @@ describe Puppet::Network::Rights do
         @right = Puppet::Network::Rights.new
     end
 
-    [:allow, :deny].each do |m|
+    [:allow, :deny, :restrict_method, :restrict_environment].each do |m|
         it "should have a #{m} method" do
             @right.should respond_to(m)
         end
@@ -391,23 +391,46 @@ describe Puppet::Network::Rights do
             lambda { @acl.restrict_method(:save) }.should raise_error
         end
 
+        it "should allow setting an environment filters" do
+            Puppet::Node::Environment.stubs(:new).with(:environment).returns(:env)
+
+            @acl.restrict_environment(:environment)
+
+            @acl.environment.should == [:env]
+        end
+
         describe "when checking right authorization" do
-            it "should return :dunno if this right doesn't apply" do
+            it "should return :dunno if this right is not restricted to the given method" do
                 @acl.restrict_method(:destroy)
 
                 @acl.allowed?("me","127.0.0.1", :save).should == :dunno
             end
 
+            it "should return allow/deny if this right is restricted to the given method" do
+                @acl.restrict_method(:save)
+                @acl.allow("127.0.0.1")
+
+                @acl.allowed?("me","127.0.0.1", :save).should be_true
+            end
+
+            it "should return :dunno if this right is not restricted to the given environment" do
+                Puppet::Node::Environment.stubs(:new).returns(:production)
+
+                @acl.restrict_environment(:production)
+
+                @acl.allowed?("me","127.0.0.1", :save, :development).should == :dunno
+            end
+
             it "should interpolate allow/deny patterns with the given match" do
                 @acl.expects(:interpolate).with(:match)
 
-                @acl.allowed?("me","127.0.0.1", :save, :match)
+                @acl.allowed?("me","127.0.0.1", :save, nil, :match)
             end
 
             it "should reset interpolation after the match" do
                 @acl.expects(:reset_interpolation)
 
-                @acl.allowed?("me","127.0.0.1", :save, :match)
+                @acl.allowed?("me","127.0.0.1", :save, nil, :match)
             end
 
             # mocha doesn't allow testing super...

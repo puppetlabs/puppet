@@ -230,6 +230,29 @@ describe Puppet::Network::AuthConfig do
             lambda { @authconfig.read }.should raise_error
         end
 
+        it "should inform the current ACL if we get the 'environment' directive" do
+            acl = stub 'acl', :info
+            acl.stubs(:acl_type).returns(:regex)
+
+            @fd.stubs(:each).multiple_yields('path /certificates', 'environment production,development')
+            @rights.stubs(:newright).with("/certificates", 1).returns(acl)
+
+            acl.expects(:restrict_environment).with('production')
+            acl.expects(:restrict_environment).with('development')
+
+            @authconfig.read
+        end
+
+        it "should raise an error if the 'environment' directive is used in a right different than a path/regex one" do
+            acl = stub 'acl', :info
+            acl.stubs(:acl_type).returns(:regex)
+
+            @fd.stubs(:each).multiple_yields('[puppetca]', 'environment env')
+            @rights.stubs(:newright).with("puppetca", 1).returns(acl)
+
+            lambda { @authconfig.read }.should raise_error
+        end
+
     end
 
 end

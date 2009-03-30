@@ -25,7 +25,7 @@ module Puppet
         # check wether this request is allowed in our ACL
         def allowed?(request)
             read()
-            return @rights.allowed?(build_uri(request), request.node, request.ip, request.method)
+            return @rights.allowed?(build_uri(request), request.node, request.ip, request.method, request.environment)
         end
 
         def initialize(file = nil, parsenow = true)

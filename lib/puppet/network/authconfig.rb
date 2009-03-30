@@ -112,7 +112,7 @@ module Puppet
                             end
                             name.chomp!
                             right = newrights.newright(name, count)
-                        when /^\s*(allow|deny|method)\s+(.+)$/
+                        when /^\s*(allow|deny|method|environment)\s+(.+)$/
                             parse_right_directive(right, $1, $2, count)
                         else
                             raise ConfigurationError, "Invalid line %s: %s" % [count, line]
@@ -150,7 +150,12 @@ module Puppet
                 unless right.acl_type == :regex
                     raise ConfigurationError, "'method' directive not allowed in namespace ACL at line %s of %s" % [count, @config]
                 end
-                modify_right(right, :restrict_method, value, "allowing method %s access", count)
+                modify_right(right, :restrict_method, value, "allowing 'method' %s", count)
+            when "environment"
+                unless right.acl_type == :regex
+                    raise ConfigurationError, "'environment' directive not allowed in namespace ACL at line %s of %s" % [count, @config]
+                end
+                modify_right(right, :restrict_environment, value, "adding environment %s", count)
             else
                 raise ConfigurationError,
                     "Invalid argument '%s' at line %s" % [var, count]

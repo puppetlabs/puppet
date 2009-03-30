@@ -8,23 +8,13 @@ class Puppet::Network::Rights
 
     # We basically just proxy directly to our rights.  Each Right stores
     # its own auth abilities.
-    [:allow, :deny].each do |method|
+    [:allow, :deny, :restrict_method, :restrict_environment].each do |method|
         define_method(method) do |name, *args|
             if obj = self[name]
                 obj.send(method, *args)
             else
                 raise ArgumentError, "Unknown right '%s'" % name
             end
-        end
-    end
-
-    # this method is used to add a new allowed +method+ to +name+
-    # method applies only to path rights
-    def restrict_method(name, *args)
-        if right = self[name]
-            right.restrict_method(*args)
-        else
-            raise ArgumentError, "'%s' right is not allowing method specification" % name
         end
     end
 
@@ -99,7 +89,7 @@ class Puppet::Network::Rights
     # A right.
     class Right < Puppet::Network::AuthStore
         attr_accessor :name, :key, :acl_type, :line
-        attr_accessor :methods, :length
+        attr_accessor :methods, :environment
 
         ALL = [:save, :destroy, :find, :search]
 
@@ -107,8 +97,10 @@ class Puppet::Network::Rights
 
         def initialize(name, line)
             @methods = []
+            @environment = []
             @name = name
             @line = line || 0
+
             case name
             when Symbol
                 @acl_type = :name
@@ -148,8 +140,9 @@ class Puppet::Network::Rights
         # if this right is too restrictive (ie we don't match this access method)
         # then return :dunno so that upper layers have a chance to try another right
         # tailored to the given method
-        def allowed?(name, ip, method = nil, match = nil)
+        def allowed?(name, ip, method = nil, environment = nil, match = nil)
             return :dunno if acl_type == :regex and not @methods.include?(method)
+            return :dunno if acl_type == :regex and @environment.size > 0 and not @environment.include?(environment)
 
             if acl_type == :regex and match # make sure any capture are replaced
                 interpolate(match)
@@ -181,6 +174,15 @@ class Puppet::Network::Rights
             end
 
             @methods << m
+        end
+
+        def restrict_environment(env)
+            env = Puppet::Node::Environment.new(env)
+            if @environment.include?(env)
+                raise ArgumentError, "'%s' is already in the '%s' ACL" % [env, name]
+            end
+
+            @environment << env
         end
 
         def match?(key)

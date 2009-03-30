@@ -16,7 +16,8 @@ describe Puppet::Network::RestAuthConfig do
         @acl = stub_everything 'rights'
         @authconfig.rights = @acl
 
-        @request = stub 'request', :indirection_name => "path", :key => "to/resource", :ip => "127.0.0.1", :node => "me", :method => :save
+        @request = stub 'request', :indirection_name => "path", :key => "to/resource", :ip => "127.0.0.1", 
+                                   :node => "me", :method => :save, :environment => :env
     end
 
     it "should use the puppet default rest authorization file" do
@@ -32,7 +33,7 @@ describe Puppet::Network::RestAuthConfig do
     end
 
     it "should ask for authorization to the ACL subsystem" do
-        @acl.expects(:allowed?).with("/path/to/resource", "me", "127.0.0.1", :save)
+        @acl.expects(:allowed?).with("/path/to/resource", "me", "127.0.0.1", :save, :env)
 
         @authconfig.allowed?(@request)
     end
