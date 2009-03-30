@@ -1,10 +1,16 @@
 require 'puppet/network/authstore'
+require 'puppet/error'
+
+module Puppet::Network
+
+# this exception is thrown when a request is not authenticated
+class AuthorizationError < Puppet::Error; end
 
 # Define a set of rights and who has access to them.
 # There are two types of rights:
 #  * named rights (ie a common string)
 #  * path based rights (which are matched on a longest prefix basis)
-class Puppet::Network::Rights
+class Rights
 
     # We basically just proxy directly to our rights.  Each Right stores
     # its own auth abilities.
@@ -18,31 +24,57 @@ class Puppet::Network::Rights
         end
     end
 
+    # Check that name is allowed or not
     def allowed?(name, *args)
+        begin
+            fail_on_deny(name, *args)
+        rescue AuthorizationError
+            return false
+        rescue ArgumentError
+            # the namespace contract says we should raise this error
+            # if we didn't find the right acl
+            raise
+        end
+        return true
+    end
+
+    def fail_on_deny(name, args = {})
         res = :nomatch
         right = @rights.find do |acl|
+            found = false
             # an acl can return :dunno, which means "I'm not qualified to answer your question, 
             # please ask someone else". This is used when for instance an acl matches, but not for the
             # current rest method, where we might think some other acl might be more specific.
             if match = acl.match?(name)
-                args << match
-                if (res = acl.allowed?(*args)) != :dunno
-                    return res
+                args[:match] = match
+                if (res = acl.allowed?(args[:node], args[:ip], args)) != :dunno
+                    # return early if we're allowed
+                    return if res
+                    # we matched, select this acl
+                    found = true
                 end
             end
-            false
+            found
         end
 
-        # if allowed or denied, tell it to the world
-        return res unless res == :nomatch
+        # if we end here, then that means we either didn't match
+        # or failed, in any case will throw an error to the outside world
+        if name =~ /^\//
+            # we're a patch ACL, let's fail
+            msg = "%s access to %s [%s]" % [ (args[:node].nil? ? args[:ip] : "#{args[:node]}(#{args[:ip]})"), name, args[:method] ]
 
-        # there were no rights allowing/denying name
-        # if name is not a path, let's throw
-        raise ArgumentError, "Unknown namespace right '%s'" % name unless name =~ /^\//
-
-        # but if this was a path, we implement a deny all policy by default
-        # on unknown rights.
-        return false
+            error = AuthorizationError.new("Forbidden request: " + msg)
+            if right
+                error.file = right.file
+                error.line = right.line
+            end
+            Puppet.warning("Denying access: " + error.to_s)
+        else
+            # there were no rights allowing/denying name
+            # if name is not a path, let's throw
+            error = ArgumentError.new "Unknown namespace right '%s'" % name
+        end
+        raise error
     end
 
     def initialize()
@@ -62,8 +94,8 @@ class Puppet::Network::Rights
     end
 
     # Define a new right to which access can be provided.
-    def newright(name, line=nil)
-        add_right( Right.new(name, line) )
+    def newright(name, line=nil, file=nil)
+        add_right( Right.new(name, line, file) )
     end
 
     private
@@ -88,18 +120,21 @@ class Puppet::Network::Rights
 
     # A right.
     class Right < Puppet::Network::AuthStore
-        attr_accessor :name, :key, :acl_type, :line
+        include Puppet::FileCollection::Lookup
+
+        attr_accessor :name, :key, :acl_type
         attr_accessor :methods, :environment
 
         ALL = [:save, :destroy, :find, :search]
 
         Puppet::Util.logmethods(self, true)
 
-        def initialize(name, line)
+        def initialize(name, line, file)
             @methods = []
             @environment = []
             @name = name
             @line = line || 0
+            @file = file
 
             case name
             when Symbol
@@ -140,18 +175,16 @@ class Puppet::Network::Rights
         # if this right is too restrictive (ie we don't match this access method)
         # then return :dunno so that upper layers have a chance to try another right
         # tailored to the given method
-        def allowed?(name, ip, method = nil, environment = nil, match = nil)
-            return :dunno if acl_type == :regex and not @methods.include?(method)
-            return :dunno if acl_type == :regex and @environment.size > 0 and not @environment.include?(environment)
+        def allowed?(name, ip, args)
+            return :dunno if acl_type == :regex and not @methods.include?(args[:method])
+            return :dunno if acl_type == :regex and @environment.size > 0 and not @environment.include?(args[:environment])
 
-            if acl_type == :regex and match # make sure any capture are replaced
-                interpolate(match)
-            end
-
-            res = super(name,ip)
-
-            if acl_type == :regex
-                reset_interpolation
+            begin
+                # make sure any capture are replaced if needed
+                interpolate(args[:match]) if acl_type == :regex and args[:match]
+                res = super(name,ip)
+            ensure
+                reset_interpolation if acl_type == :regex
             end
             res
         end
@@ -222,4 +255,4 @@ class Puppet::Network::Rights
     end
 
 end
-
+end

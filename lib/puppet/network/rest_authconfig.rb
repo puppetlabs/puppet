@@ -23,9 +23,16 @@ module Puppet
         end
 
         # check wether this request is allowed in our ACL
+        # raise an Puppet::Network::AuthorizedError if the request
+        # is denied.
         def allowed?(request)
             read()
-            return @rights.allowed?(build_uri(request), request.node, request.ip, request.method, request.environment)
+
+            @rights.fail_on_deny(build_uri(request),
+                                    :node => request.node,
+                                    :ip => request.ip,
+                                    :method => request.method,
+                                    :environment => request.environment)
         end
 
         def initialize(file = nil, parsenow = true)

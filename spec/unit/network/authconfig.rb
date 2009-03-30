@@ -114,7 +114,7 @@ describe Puppet::Network::AuthConfig do
         it "should increment line number even on commented lines" do
             @fd.stubs(:each).multiple_yields('  # comment','[puppetca]')
 
-            @rights.expects(:newright).with('[puppetca]', 2)
+            @rights.expects(:newright).with('[puppetca]', 2, 'dummy')
 
             @authconfig.read
         end
@@ -130,7 +130,7 @@ describe Puppet::Network::AuthConfig do
         it "should increment line number even on blank lines" do
             @fd.stubs(:each).multiple_yields('  ','[puppetca]')
 
-            @rights.expects(:newright).with('[puppetca]', 2)
+            @rights.expects(:newright).with('[puppetca]', 2, 'dummy')
 
             @authconfig.read
         end
@@ -146,7 +146,7 @@ describe Puppet::Network::AuthConfig do
         it "should not throw an error if the current path right already exist" do
             @fd.stubs(:each).yields('path /hello')
 
-            @rights.stubs(:newright).with("/hello",1)
+            @rights.stubs(:newright).with("/hello",1, 'dummy')
             @rights.stubs(:include?).with("/hello").returns(true)
 
             lambda { @authconfig.read }.should_not raise_error
@@ -155,7 +155,7 @@ describe Puppet::Network::AuthConfig do
         it "should create a new right for found namespaces" do
             @fd.stubs(:each).yields('[puppetca]')
 
-            @rights.expects(:newright).with("[puppetca]", 1)
+            @rights.expects(:newright).with("[puppetca]", 1, 'dummy')
 
             @authconfig.read
         end
@@ -163,8 +163,8 @@ describe Puppet::Network::AuthConfig do
         it "should create a new right for each found namespace line" do
             @fd.stubs(:each).multiple_yields('[puppetca]', '[fileserver]')
 
-            @rights.expects(:newright).with("[puppetca]", 1)
-            @rights.expects(:newright).with("[fileserver]", 2)
+            @rights.expects(:newright).with("[puppetca]", 1, 'dummy')
+            @rights.expects(:newright).with("[fileserver]", 2, 'dummy')
 
             @authconfig.read
         end
@@ -172,7 +172,7 @@ describe Puppet::Network::AuthConfig do
         it "should create a new right for each found path line" do
             @fd.stubs(:each).multiple_yields('path /certificates')
 
-            @rights.expects(:newright).with("/certificates", 1)
+            @rights.expects(:newright).with("/certificates", 1, 'dummy')
 
             @authconfig.read
         end
@@ -180,7 +180,7 @@ describe Puppet::Network::AuthConfig do
         it "should create a new right for each found regex line" do
             @fd.stubs(:each).multiple_yields('path ~ .rb$')
 
-            @rights.expects(:newright).with("~ .rb$", 1)
+            @rights.expects(:newright).with("~ .rb$", 1, 'dummy')
 
             @authconfig.read
         end
@@ -189,7 +189,7 @@ describe Puppet::Network::AuthConfig do
             acl = stub 'acl', :info
 
             @fd.stubs(:each).multiple_yields('[puppetca]', 'allow 127.0.0.1')
-            @rights.stubs(:newright).with("[puppetca]", 1).returns(acl)
+            @rights.stubs(:newright).with("[puppetca]", 1, 'dummy').returns(acl)
 
             acl.expects(:allow).with('127.0.0.1')
 
@@ -200,7 +200,7 @@ describe Puppet::Network::AuthConfig do
             acl = stub 'acl', :info
 
             @fd.stubs(:each).multiple_yields('[puppetca]', 'deny 127.0.0.1')
-            @rights.stubs(:newright).with("[puppetca]", 1).returns(acl)
+            @rights.stubs(:newright).with("[puppetca]", 1, 'dummy').returns(acl)
 
             acl.expects(:deny).with('127.0.0.1')
 
@@ -212,7 +212,7 @@ describe Puppet::Network::AuthConfig do
             acl.stubs(:acl_type).returns(:regex)
 
             @fd.stubs(:each).multiple_yields('path /certificates', 'method search,find')
-            @rights.stubs(:newright).with("/certificates", 1).returns(acl)
+            @rights.stubs(:newright).with("/certificates", 1, 'dummy').returns(acl)
 
             acl.expects(:restrict_method).with('search')
             acl.expects(:restrict_method).with('find')
@@ -225,7 +225,7 @@ describe Puppet::Network::AuthConfig do
             acl.stubs(:acl_type).returns(:regex)
 
             @fd.stubs(:each).multiple_yields('[puppetca]', 'method search,find')
-            @rights.stubs(:newright).with("puppetca", 1).returns(acl)
+            @rights.stubs(:newright).with("puppetca", 1, 'dummy').returns(acl)
 
             lambda { @authconfig.read }.should raise_error
         end
@@ -235,7 +235,7 @@ describe Puppet::Network::AuthConfig do
             acl.stubs(:acl_type).returns(:regex)
 
             @fd.stubs(:each).multiple_yields('path /certificates', 'environment production,development')
-            @rights.stubs(:newright).with("/certificates", 1).returns(acl)
+            @rights.stubs(:newright).with("/certificates", 1, 'dummy').returns(acl)
 
             acl.expects(:restrict_environment).with('production')
             acl.expects(:restrict_environment).with('development')
@@ -248,7 +248,7 @@ describe Puppet::Network::AuthConfig do
             acl.stubs(:acl_type).returns(:regex)
 
             @fd.stubs(:each).multiple_yields('[puppetca]', 'environment env')
-            @rights.stubs(:newright).with("puppetca", 1).returns(acl)
+            @rights.stubs(:newright).with("puppetca", 1, 'dummy').returns(acl)
 
             lambda { @authconfig.read }.should raise_error
         end

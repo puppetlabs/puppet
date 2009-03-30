@@ -2,11 +2,9 @@ require 'puppet/network/client_request'
 require 'puppet/network/rest_authconfig'
 
 module Puppet::Network
-    # Most of our subclassing is just so that we can get
-    # access to information from the request object, like
-    # the client name and IP address.
-    class InvalidClientRequest < Puppet::Error; end
+
     module RestAuthorization
+
 
         # Create our config object if necessary. If there's no configuration file
         # we install our defaults
@@ -20,28 +18,25 @@ module Puppet::Network
 
         # Verify that our client has access.  We allow untrusted access to
         # certificates terminus but no others.
-        def authorized?(request)
-            msg = "%s client %s access to %s [%s]" %
-                   [ request.authenticated? ? "authenticated" : "unauthenticated",
-                    (request.node.nil? ? request.ip : "#{request.node}(#{request.ip})"),
-                    request.indirection_name, request.method ]
-
+        def check_authorization(request)
             if request.authenticated?
-                res = authenticated_authorized?(request, msg )
+                authenticated_authorized?(request)
             else
-                res = unauthenticated_authorized?(request, msg)
+                unless unauthenticated_authorized?(request)
+                    msg = "%s access to %s [%s]" % [ (request.node.nil? ? request.ip : "#{request.node}(#{request.ip})"), request.indirection_name, request.method ]
+                    Puppet.warning("Denying access: " + msg)
+                    raise AuthorizationError.new( "Forbidden request:" + msg )
+                end
             end
-            Puppet.notice((res ? "Allowing " : "Denying ") + msg)
-            return res
         end
 
         # delegate to our authorization file
-        def authenticated_authorized?(request, msg)
+        def authenticated_authorized?(request)
             authconfig.allowed?(request)
         end
 
         # allow only certificate requests when not authenticated
-        def unauthenticated_authorized?(request, msg)
+        def unauthenticated_authorized?(request)
             request.indirection_name == :certificate or request.indirection_name == :certificate_request
         end
     end

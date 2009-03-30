@@ -53,7 +53,7 @@ describe "Certificate Request REST Terminus" do
         @mock_model = stub('faked model', :name => "certificate request")
         Puppet::Indirector::Request.any_instance.stubs(:model).returns(@mock_model)
 
-        Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:authorized?).returns(true)
+        Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:check_authorization).returns(true)
     end
 
     after do

@@ -18,6 +18,7 @@ describe Puppet::Network::RestAuthorization do
         @request = stub_everything 'request'
         @request.stubs(:method).returns(:find)
         @request.stubs(:node).returns("node")
+        @request.stubs(:ip).returns("ip")
     end
 
     describe "when testing request authorization" do
@@ -29,14 +30,14 @@ describe Puppet::Network::RestAuthorization do
             [ :certificate, :certificate_request].each do |indirection|
                 it "should allow #{indirection}" do
                     @request.stubs(:indirection_name).returns(indirection)
-                    @auth.authorized?(@request).should be_true
+                    lambda { @auth.check_authorization(@request) }.should_not raise_error Puppet::Network::AuthorizationError
                 end
             end
 
             [ :facts, :file_metadata, :file_content, :catalog, :report, :checksum, :runner ].each do |indirection|
                 it "should not allow #{indirection}" do
                     @request.stubs(:indirection_name).returns(indirection)
-                    @auth.authorized?(@request).should be_false
+                    lambda { @auth.check_authorization(@request) }.should raise_error Puppet::Network::AuthorizationError
                 end
             end
         end
@@ -47,9 +48,21 @@ describe Puppet::Network::RestAuthorization do
             end
 
             it "should delegate to the current rest authconfig" do
-                @authconfig.expects(:allowed?).with(@request)
+                @authconfig.expects(:allowed?).with(@request).returns(true)
 
-                @auth.authorized?(@request)
+                @auth.check_authorization(@request)
+            end
+
+            it "should raise an AuthorizationError if authconfig raises an AuthorizationError" do
+                @authconfig.expects(:allowed?).with(@request).raises(Puppet::Network::AuthorizationError.new("forbidden"))
+
+                lambda { @auth.check_authorization(@request) }.should raise_error Puppet::Network::AuthorizationError
+            end
+
+            it "should not raise an AuthorizationError if request is allowed" do
+                @authconfig.expects(:allowed?).with(@request).returns(true)
+
+                lambda { @auth.check_authorization(@request) }.should_not raise_error Puppet::Network::AuthorizationError
             end
         end
     end

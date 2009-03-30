@@ -3,6 +3,7 @@ end
 
 require 'puppet/network/http/api/v1'
 require 'puppet/network/rest_authorization'
+require 'puppet/network/rights'
 
 module Puppet::Network::HTTP::Handler
     include Puppet::Network::HTTP::API::V1
@@ -40,11 +41,9 @@ module Puppet::Network::HTTP::Handler
     def process(request, response)
         indirection_request = uri2indirection(http_method(request), path(request), params(request))
 
-        if authorized?(indirection_request)
-            send("do_%s" % indirection_request.method, indirection_request, request, response)
-        else
-            return do_exception(response, "Request forbidden by configuration %s %s" % [indirection_request.indirection_name, indirection_request.key], 403)
-        end
+        check_authorization(indirection_request)
+
+        send("do_%s" % indirection_request.method, indirection_request, request, response)
     rescue Exception => e
         return do_exception(response, e)
     end
@@ -60,6 +59,11 @@ module Puppet::Network::HTTP::Handler
     end
 
     def do_exception(response, exception, status=400)
+        if exception.is_a?(Puppet::Network::AuthorizationError)
+            # make sure we return the correct status code
+            # for authorization issues
+            status = 403 if status == 400
+        end
         if exception.is_a?(Exception)
             puts exception.backtrace if Puppet[:trace]
             Puppet.err(exception)

@@ -49,7 +49,7 @@ describe Puppet::Network::HTTP::Handler do
 
             @result = stub 'result', :render => "mytext"
 
-            @handler.stubs(:authorized?).returns(true)
+            @handler.stubs(:check_authorization)
 
             stub_server_interface
         end
@@ -97,7 +97,7 @@ describe Puppet::Network::HTTP::Handler do
 
             @handler.expects(:do_mymethod).with(request, @request, @response)
 
-            @handler.expects(:authorized?).with(request).returns(true)
+            @handler.expects(:check_authorization).with(request)
 
             @handler.process(@request, @response)
         end
@@ -108,9 +108,9 @@ describe Puppet::Network::HTTP::Handler do
 
             @handler.expects(:do_mymethod).never
 
-            @handler.expects(:authorized?).with(request).returns(false)
+            @handler.expects(:check_authorization).with(request).raises(Puppet::Network::AuthorizationError.new("forbindden"))
 
-            @handler.expects(:set_response)#.with { |response, body, status| status == 403 }
+            @handler.expects(:set_response).with { |response, body, status| status == 403 }
 
             @handler.process(@request, @response)
         end

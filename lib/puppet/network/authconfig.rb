@@ -32,9 +32,8 @@ module Puppet
                 return @rights[name].allowed?(request.name, request.ip)
             elsif @rights.include?(namespace)
                 return @rights[namespace].allowed?(request.name, request.ip)
-            else
-                return false
             end
+            false
         end
 
         # Does the file exist?  Puppetmasterd does not require it, but
@@ -111,7 +110,7 @@ module Puppet
                                 name = $3
                             end
                             name.chomp!
-                            right = newrights.newright(name, count)
+                            right = newrights.newright(name, count, @file)
                         when /^\s*(allow|deny|method|environment)\s+(.+)$/
                             parse_right_directive(right, $1, $2, count)
                         else

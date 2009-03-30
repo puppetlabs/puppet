@@ -78,7 +78,7 @@ describe Puppet::Indirector::REST do
             Puppet::Indirector::Request.any_instance.stubs(:model).returns(@mock_model)
 
             # do not trigger the authorization layer
-            Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:authorized?).returns(true)
+            Puppet::Network::HTTP::WEBrickREST.any_instance.stubs(:check_authorization).returns(true)
         end
     
         describe "when finding a model instance over REST" do
@@ -311,7 +311,7 @@ describe Puppet::Indirector::REST do
             Puppet::Indirector::Request.any_instance.stubs(:model).returns(@mock_model)
 
             # do not trigger the authorization layer
-            Puppet::Network::HTTP::MongrelREST.any_instance.stubs(:authorized?).returns(true)
+            Puppet::Network::HTTP::MongrelREST.any_instance.stubs(:check_authorization).returns(true)
         end
 
         after do
