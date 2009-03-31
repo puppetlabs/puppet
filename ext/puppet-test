@@ -53,6 +53,11 @@
 # list::
 #   List all available tests.
 #
+# node::
+#  Specify the node to use.  This is useful for looking up cached yaml data
+#  in your :clientyaml directory, and forcing a specific host's configuration to
+#  get compiled.
+#
 # pause::
 #  Pause before starting test (useful for testing with dtrace).
 #
@@ -216,7 +221,7 @@ end
 
 Suite.new :local_catalog, "Local catalog handling" do
     def prepare
-        @node = Puppet::Node.find(Puppet[:certname])
+        @node = Puppet::Node.find($options[:nodes][0])
     end
 
     newtest :compile, "Compiled catalog" do
@@ -233,15 +238,10 @@ Suite.new :remote_catalog, "Remote catalog handling" do
             fail "Could not read client certificate"
         end
 
-        # Use the facts from the cache, to skip the time it takes
-        # to load them.
-        @client.dostorage
-        @facts = Puppet::Util::Storage.cache(:configuration)[:facts] || {}
-
-        if @facts.empty?
-            if tmp = Puppet::Node::Facts.find("me")
-                @facts = tmp.values
-            end
+        if tmp = Puppet::Node::Facts.find($options[:nodes][0])
+            @facts = tmp.values
+        else
+            raise "Could not find facts for %s" % $optins[:nodes][0]
         end
 
         if host = $options[:fqdn]
@@ -374,6 +374,7 @@ $cmdargs = [
 	[ "--test",      "-t",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--pause",	 "-p",			GetoptLong::NO_ARGUMENT ],
 	[ "--repeat",    "-r",			GetoptLong::REQUIRED_ARGUMENT ],
+	[ "--node",      "-n",			GetoptLong::REQUIRED_ARGUMENT ],
 	[ "--debug",	 "-d",			GetoptLong::NO_ARGUMENT ],
 	[ "--help",		 "-h",			GetoptLong::NO_ARGUMENT ],
 	[ "--list",	     "-l",			GetoptLong::NO_ARGUMENT ],
@@ -385,11 +386,16 @@ $cmdargs = [
 Puppet.settings.addargs($cmdargs)
 Puppet::Util::Log.newdestination(:console)
 
+Puppet::Node.terminus_class = :plain
+Puppet::Node.cache_class = :yaml
+Puppet::Node::Facts.terminus_class = :facter
+Puppet::Node::Facts.cache_class = :yaml
+
 result = GetoptLong.new(*$cmdargs)
 
 $args = {}
 
-$options = {:repeat => 1, :fork => 0, :pause => false}
+$options = {:repeat => 1, :fork => 0, :pause => false, :nodes => []}
 
 begin
     explicit_waitforcert = false
@@ -443,6 +449,8 @@ begin
                 $options[:file] = arg
             when "--pause"
                 $options[:pause] = true
+            when "--node"
+                $options[:nodes] << arg
             when "--list"
                 Suite.suites.sort { |a,b| a.to_s <=> b.to_s }.each do |suite_name|
                     suite = Suite[suite_name]
@@ -463,6 +471,8 @@ end
 # Now parse the config
 Puppet.parse_config
 
+$options[:nodes] << Puppet.settings[:certname] if $options[:nodes].empty?
+
 $args[:Server] = Puppet[:server]
 
 unless $options[:test]
@@ -481,5 +491,3 @@ Suite.run($options[:test])
 if $options[:fork] > 0
     Process.waitall
 end
-
-# $Id$
