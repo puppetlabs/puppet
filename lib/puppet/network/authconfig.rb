@@ -44,7 +44,7 @@ module Puppet
         end
 
         def initialize(file = nil, parsenow = true)
-            @file ||= Puppet[:authconfig]
+            @file = file || Puppet[:authconfig]
 
             unless @file
                 raise Puppet::DevError, "No authconfig file defined"
@@ -99,44 +99,21 @@ module Puppet
                     count = 1
                     f.each { |line|
                         case line
-                        when /^\s*#/; next # skip comments
-                        when /^\s*$/; next # skip blank lines
-                        when /\[([\w.]+)\]/ # "namespace" or "namespace.method"
-                            name = $1
-                            if newrights.include?(name)
-                                raise FileServerError, "%s is already set at %s" %
-                                    [newrights[name], name]
+                        when /^\s*#/ # skip comments
+                            count += 1
+                            next
+                        when /^\s*$/  # skip blank lines
+                            count += 1
+                            next
+                        when /^(?:(\[[\w.]+\])|(path)\s+((?:~\s+)?[^ ]+))\s*$/ # "namespace" or "namespace.method" or "path /path" or "path ~ regex"
+                             name = $1
+                            if $2 == "path"
+                                name = $3
                             end
-                            newrights.newright(name)
-                            right = newrights[name]
-                        when /^\s*(\w+)\s+(.+)$/
-                            var = $1
-                            value = $2
-                            case var
-                            when "allow"
-                                value.split(/\s*,\s*/).each { |val|
-                                    begin
-                                        right.info "allowing %s access" % val
-                                        right.allow(val)
-                                    rescue AuthStoreError => detail
-                                        raise ConfigurationError, "%s at line %s of %s" %
-                                            [detail.to_s, count, @config]
-                                    end
-                                }
-                            when "deny"
-                                value.split(/\s*,\s*/).each { |val|
-                                    begin
-                                        right.info "denying %s access" % val
-                                        right.deny(val)
-                                    rescue AuthStoreError => detail
-                                        raise ConfigurationError, "%s at line %s of %s" %
-                                            [detail.to_s, count, @config]
-                                    end
-                                }
-                            else
-                                raise ConfigurationError,
-                                    "Invalid argument '%s' at line %s" % [var, count]
-                            end
+                            name.chomp!
+                            right = newrights.newright(name, count)
+                        when /^\s*(allow|deny|method)\s+(.+)$/
+                            parse_right_directive(right, $1, $2, count)
                         else
                             raise ConfigurationError, "Invalid line %s: %s" % [count, line]
                         end
@@ -162,6 +139,35 @@ module Puppet
             }
             @rights = newrights
         end
+
+        def parse_right_directive(right, var, value, count)
+            case var
+            when "allow"
+                modify_right(right, :allow, value, "allowing %s access", count)
+            when "deny"
+                modify_right(right, :deny, value, "denying %s access", count)
+            when "method"
+                unless right.acl_type == :regex
+                    raise ConfigurationError, "'method' directive not allowed in namespace ACL at line %s of %s" % [count, @config]
+                end
+                modify_right(right, :restrict_method, value, "allowing method %s access", count)
+            else
+                raise ConfigurationError,
+                    "Invalid argument '%s' at line %s" % [var, count]
+            end
+        end
+
+        def modify_right(right, method, value, msg, count)
+            value.split(/\s*,\s*/).each do |val|
+                begin
+                    right.info msg % val
+                    right.send(method, val)
+                rescue AuthStoreError => detail
+                    raise ConfigurationError, "%s at line %s of %s" % [detail.to_s, count, @file]
+                end
+            end
+        end
+
     end
 end
 
