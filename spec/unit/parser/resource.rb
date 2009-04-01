@@ -180,41 +180,22 @@ describe Puppet::Parser::Resource do
             @resource["noop"].should == "false"
         end
 
+        it "should not copy relationship metaparams" do
+            @scope.setvar("require", "bar")
+
+            @resource.class.publicize_methods(:add_metaparams)  { @resource.add_metaparams }
+
+            @resource["require"].should be_nil
+        end
+
         it "should copy all metaparams that it finds" do
-            @scope.setvar("require", "container")
-            @scope.setvar("notify", "container")
+            @scope.setvar("noop", "foo")
+            @scope.setvar("schedule", "bar")
 
             @resource.class.publicize_methods(:add_metaparams)  { @resource.add_metaparams }
 
-            @resource["require"].should == "container"
-            @resource["notify"].should == "container"
-        end
-
-        it "should stack relationship metaparams from its container if it already has them" do
-            @resource.set_parameter("require", "resource")
-            @scope.setvar("require", "container")
-
-            @resource.class.publicize_methods(:add_metaparams)  { @resource.add_metaparams }
-
-            @resource["require"].sort.should == %w{container resource}
-        end
-
-        it "should not stack relationship metaparams that are set to 'undef'" do
-            @resource.set_parameter("require", :undef)
-            @scope.setvar("require", "container")
-
-            @resource.class.publicize_methods(:add_metaparams)  { @resource.add_metaparams }
-
-            @resource["require"].should == :undef
-        end
-
-        it "should flatten the array resulting from stacking relationship metaparams" do
-            @resource.set_parameter("require", ["resource1", "resource2"])
-            @scope.setvar("require", %w{container1 container2})
-
-            @resource.class.publicize_methods(:add_metaparams)  { @resource.add_metaparams }
-
-            @resource["require"].sort.should == %w{container1 container2 resource1 resource2}
+            @resource["noop"].should == "foo"
+            @resource["schedule"].should == "bar"
         end
 
         it "should add any tags from the scope resource" do

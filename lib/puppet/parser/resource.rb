@@ -357,20 +357,16 @@ class Puppet::Parser::Resource
     # from any parent scope, and there's currently no way to turn that off.
     def add_metaparams
         Puppet::Type.eachmetaparam do |name|
+            next if self.class.relationship_parameter?(name)
             # Skip metaparams that we already have defined, unless they're relationship metaparams.
             # LAK:NOTE Relationship metaparams get treated specially -- we stack them, instead of
             # overriding.
-            next if @params[name] and not self.class.relationship_parameter?(name)
-            next if @params[name] and @params[name].value == :undef
+            next if @params[name]
 
             # Skip metaparams for which we get no value.
             next unless val = scope.lookupvar(name.to_s, false) and val != :undefined
 
-            # The default case: just set the value
             set_parameter(name, val) and next unless @params[name]
-
-            # For relationship params, though, join the values (a la #446).
-            @params[name].value = [@params[name].value, val].flatten
         end
     end
 
