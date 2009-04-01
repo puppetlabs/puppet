@@ -1,58 +1,79 @@
 require 'puppet/indirector/terminus'
 
-# An empty terminus type, meant to just return empty objects.
+# Store instances as files, usually serialized using some format.
 class Puppet::Indirector::File < Puppet::Indirector::Terminus
+    # Where do we store our data?
+    def data_directory
+        name = Puppet[:name] == "puppetmasterd" ? :server_datadir : :client_datadir
+
+        File.join(Puppet.settings[name], self.class.indirection_name.to_s)
+    end
+
+    def file_format(path)
+        path =~ /\.(\w+)$/ and return $1
+    end
+
+    def file_path(request)
+        File.join(data_directory, request.key + "." + serialization_format)
+    end
+
+    def latest_path(request)
+        files = Dir.glob(File.join(data_directory, request.key + ".*"))
+        return nil if files.empty?
+
+        # Return the newest file.
+        files.sort { |a, b| File.stat(b).mtime <=> File.stat(a).mtime }[0]
+    end
+
+    def serialization_format
+        model.default_format
+    end
+
     # Remove files on disk.
     def destroy(request)
-        if respond_to?(:path)
-            path = path(request.key)
-        else
-            path = request.key
-        end
-        raise Puppet::Error.new("File %s does not exist; cannot destroy" % [request.key]) unless File.exist?(path)
-
-        Puppet.notice "Removing file %s %s at '%s'" % [model, request.key, path]
         begin
-            File.unlink(path)
+            removed = false
+            Dir.glob(File.join(data_directory, request.key.to_s + ".*")).each do |file|
+                removed = true
+                File.unlink(file)
+            end
         rescue => detail
-            raise Puppet::Error, "Could not remove %s: %s" % [request.key, detail]
+            raise Puppet::Error, "Could not remove #{request.key}: #{detail}"
         end
+
+        raise Puppet::Error, "Could not find files for #{request.key} to remove" unless removed
     end
 
     # Return a model instance for a given file on disk.
     def find(request)
-        if respond_to?(:path)
-            path = path(request.key)
-        else
-            path = request.key
-        end
+        return nil unless path = latest_path(request)
+        format = file_format(path)
 
-        return nil unless File.exist?(path)
+        raise ArgumentError, "File format #{format} is not supported by #{self.class.indirection_name}" unless model.support_format?(format)
 
         begin
-            content = File.read(path)
+            return model.convert_from(format, File.read(path))
         rescue => detail
-            raise Puppet::Error, "Could not retrieve path %s: %s" % [path, detail]
+            raise Puppet::Error, "Could not convert path #{path} into a #{self.class.indirection_name}: #{detail}"
         end
-
-        return model.new(content)
     end
 
     # Save a new file to disk.
     def save(request)
-        if respond_to?(:path)
-            path = path(request.key)
-        else
-            path = request.key
-        end
+        path = file_path(request)
+
         dir = File.dirname(path)
 
-        raise Puppet::Error.new("Cannot save %s; parent directory %s does not exist" % [request.key, dir]) unless File.directory?(dir)
+        raise Puppet::Error.new("Cannot save #{request.key}; parent directory #{dir} does not exist") unless File.directory?(dir)
 
         begin
-            File.open(path, "w") { |f| f.print request.instance.content }
+            File.open(path, "w") { |f| f.print request.instance.render(serialization_format) }
         rescue => detail
-            raise Puppet::Error, "Could not write %s: %s" % [request.key, detail]
+            raise Puppet::Error, "Could not write #{request.key}: #{detail}" % [request.key, detail]
         end
+    end
+
+    def path(key)
+        key
     end
 end

@@ -27,10 +27,10 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
     end
 
     describe Puppet::Indirector::Yaml, " when choosing file location" do
-        it "should use the yamldir if the process name is 'puppetmasterd'" do
+        it "should use the server_datadir if the process name is 'puppetmasterd'" do
             Puppet.settings.expects(:value).with(:name).returns "puppetmasterd"
-            Puppet.settings.expects(:value).with(:yamldir).returns "/main/yaml/dir"
-            @store.path(:me).should =~ %r{^/main/yaml/dir}
+            Puppet.settings.expects(:value).with(:server_datadir).returns "/server/data/dir"
+            @store.path(:me).should =~ %r{^/server/data/dir}
         end
 
         it "should use the client yamldir if the process name is not 'puppetmasterd'" do
