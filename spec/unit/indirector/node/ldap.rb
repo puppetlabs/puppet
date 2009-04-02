@@ -91,6 +91,26 @@ describe Puppet::Node::Ldap do
                 @searcher.entry2hash(@entry)[:parameters]["foo"].should == "one"
             end
 
+            it "should convert 'true' values to the boolean 'true'" do
+                @entry.stubs(:to_hash).returns({"one" => ["true"]})
+                @searcher.entry2hash(@entry)[:parameters]["one"].should == true
+            end
+
+            it "should convert 'false' values to the boolean 'false'" do
+                @entry.stubs(:to_hash).returns({"one" => ["false"]})
+                @searcher.entry2hash(@entry)[:parameters]["one"].should == false
+            end
+
+            it "should convert 'true' values to the boolean 'true' inside an array" do
+                @entry.stubs(:to_hash).returns({"one" => ["true", "other"]})
+                @searcher.entry2hash(@entry)[:parameters]["one"].should == [true, "other"]
+            end
+
+            it "should convert 'false' values to the boolean 'false' inside an array" do
+                @entry.stubs(:to_hash).returns({"one" => ["false", "other"]})
+                @searcher.entry2hash(@entry)[:parameters]["one"].should == [false, "other"]
+            end
+
             it "should add the parent's name if present" do
                 @entry.stubs(:vals).with("parentnode").returns(%w{foo})
                 @searcher.entry2hash(@entry)[:parent].should == "foo"

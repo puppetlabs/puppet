@@ -320,14 +320,14 @@ class DirectoryService < Puppet::Provider::NameService
     def self.get_password(guid)
         password_hash = nil
         password_hash_file = "#{@@password_hash_dir}/#{guid}"
-        if File.exists?(password_hash_file)
+        if File.exists?(password_hash_file) and File.file?(password_hash_file)
             if not File.readable?(password_hash_file)
                 raise Puppet::Error("Could not read password hash file at #{password_hash_file} for #{@resource[:name]}")
             end
             f = File.new(password_hash_file)
             password_hash = f.read
             f.close
-          end
+        end
         password_hash
     end
 

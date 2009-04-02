@@ -19,10 +19,10 @@
 
 Puppet::Type.newtype(:augeas) do
     include Puppet::Util
-    
+
     feature :parse_commands, "Parse the command string"
     feature :need_to_run?, "If the command should run"
-    feature :execute_changes, "Actually make the changes"    
+    feature :execute_changes, "Actually make the changes"
 
     @doc = "Apply the changes (single or array of changes) to the filesystem
         via the augeas tool.
@@ -59,7 +59,7 @@ Puppet::Type.newtype(:augeas) do
 
     newparam (:context) do
         desc "Optional context path. This value is pre-pended to the paths of all changes"
-        defaultto ""        
+        defaultto ""
     end
 
     newparam (:onlyif) do
@@ -81,7 +81,7 @@ Puppet::Type.newtype(:augeas) do
                AN_ARRAY is in the form ['a string', 'another']"
         defaultto ""
     end
-    
+
 
     newparam(:changes) do
         desc "The changes which should be applied to the filesystem. This
@@ -92,14 +92,13 @@ Puppet::Type.newtype(:augeas) do
           rm [PATH]              Removes the node at location PATH
           remove [PATH]          Synonym for rm
           clear [PATH]           Keeps the node at PATH, but removes the value.
-          ins [LABEL] [WHERE] [PATH]             
+          ins [LABEL] [WHERE] [PATH]
                                  Inserts an empty node LABEL either [WHERE={before|after}] PATH.
-          insert [LABEL] [WHERE] [PATH]  
+          insert [LABEL] [WHERE] [PATH]
                                  Synonym for ins
-
         If the parameter 'context' is set that value is prepended to PATH"
 
-        munge do |value|    
+        munge do |value|
             provider.parse_commands(value)
         end
     end
@@ -115,6 +114,13 @@ Puppet::Type.newtype(:augeas) do
         defaultto ""
     end
 
+    newparam(:force) do
+        desc "Optional command to force the augeas type to execute even if it thinks changes
+        will not be made. This does not overide the only setting. If onlyif is set, then the
+        foce setting will not override that result"
+
+        defaultto false
+    end
 
     newparam(:type_check) do
         desc "Set to true if augeas should perform typechecking. Optional, defaults to false"
@@ -122,7 +128,7 @@ Puppet::Type.newtype(:augeas) do
 
         defaultto :false
     end
-    
+
     # This is the acutal meat of the code. It forces
     # augeas to be run and fails or not based on the augeas return
     # code.
@@ -131,12 +137,12 @@ Puppet::Type.newtype(:augeas) do
         desc "The expected return code from the augeas command. Should not be set"
 
         defaultto 0
-        
+
         # Make output a bit prettier
         def change_to_s(currentvalue, newvalue)
             return "executed successfully"
-        end        
-        
+        end
+
         # if the onlyif resource is provided, then the value is parsed.
         # a return value of 0 will stop exection becuase it matches the
         # default value.
@@ -146,12 +152,12 @@ Puppet::Type.newtype(:augeas) do
             else
                 0
             end
-        end            
+        end
 
         # Actually execute the command.
         def sync
             @resource.provider.execute_changes()
         end
-    end    
+    end
 
 end

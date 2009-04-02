@@ -11,11 +11,13 @@ Puppet::Type.type(:file).newproperty(:checksum) do
         like Tripwire without managing the file contents in any way.  You can
         specify that a file's checksum should be monitored and then subscribe to
         the file from another object and receive events to signify
-        checksum changes, for instance.  
-     
+        checksum changes, for instance.
+        
         There are a number of checksum types available including MD5 hashing (and
         an md5lite variation that only hashes the first 500 characters of the 
-        file."
+        file.
+   
+        The default checksum parameter, if checksums are enabled, is md5."
 
     @event = :file_changed
 
@@ -39,11 +41,6 @@ Puppet::Type.type(:file).newproperty(:checksum) do
     # {md5}......
     newvalue(/^\{#{str}\}/) do
         handlesum()
-    end
-
-    newvalue(:nosum) do
-        # nothing
-        :nochange
     end
 
     # If they pass us a sum type, behave normally, but if they pass
@@ -132,35 +129,6 @@ Puppet::Type.type(:file).newproperty(:checksum) do
 
     def currentsum
         cache(checktype())
-    end
-
-    # Retrieve the cached sum
-    def getcachedsum
-        hash = nil
-        unless hash = @resource.cached(:checksums) 
-            hash = {}
-            @resource.cache(:checksums, hash)
-        end
-
-        sumtype = self.should
-
-        if hash.include?(sumtype)
-            #self.notice "Found checksum %s for %s" %
-            #    [hash[sumtype] ,@resource[:path]]
-            sum = hash[sumtype]
-
-            unless sum =~ /^\{\w+\}/
-                sum = "{%s}%s" % [sumtype, sum]
-            end
-            return sum
-        elsif hash.empty?
-            #self.notice "Could not find sum of type %s" % sumtype
-            return :nosum
-        else
-            #self.notice "Found checksum for %s but not of type %s" %
-            #    [@resource[:path],sumtype]
-            return :nosum
-        end
     end
 
     # Calculate the sum from disk.

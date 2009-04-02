@@ -5,6 +5,7 @@ require File.dirname(__FILE__) + '/../spec_helper'
 require 'puppet/defaults'
 
 describe "Puppet defaults" do
+        include Puppet::Util::Execution
     after { Puppet.settings.clear }
 
     describe "when setting the :factpath" do
@@ -81,6 +82,14 @@ describe "Puppet defaults" do
     [:modulepath, :pluginpath, :factpath].each do |setting|
         it "should configure '#{setting}' not to be a file setting, so multi-directory settings are acceptable" do
             Puppet.settings.element(setting).should be_instance_of(Puppet::Util::Settings::CElement)
+        end
+    end
+
+    it "should add /usr/sbin and /sbin to the path if they're not there" do
+        withenv("PATH" => "/usr/bin:/usr/local/bin") do
+            Puppet.settings[:path] = "none" # this causes it to ignore the setting
+            ENV["PATH"].split(File::PATH_SEPARATOR).should be_include("/usr/sbin")
+            ENV["PATH"].split(File::PATH_SEPARATOR).should be_include("/sbin")
         end
     end
 end

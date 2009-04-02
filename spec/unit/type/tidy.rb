@@ -2,12 +2,25 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-describe Puppet::Type.type(:tidy) do
+tidy = Puppet::Type.type(:tidy)
+
+describe tidy do
+    before do
+        Puppet.settings.stubs(:use)
+    end
+
     it "should use :lstat when stating a file" do
         tidy = Puppet::Type.type(:tidy).new :path => "/foo/bar", :age => "1d"
         stat = mock 'stat'
         File.expects(:lstat).with("/foo/bar").returns stat
         tidy.stat("/foo/bar").should == stat
+    end
+    
+    it "should be in sync if the targeted file does not exist" do
+        File.expects(:lstat).with("/tmp/foonesslaters").raises Errno::ENOENT
+        @tidy = tidy.create :path => "/tmp/foonesslaters", :age => "100d"
+
+        @tidy.property(:ensure).must be_insync({})
     end
 
     [:age, :size, :path, :matches, :type, :recurse, :rmdirs].each do |param|

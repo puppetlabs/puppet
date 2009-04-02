@@ -1,9 +1,13 @@
+require 'puppet/file_collection/lookup'
+
  # The parameters we stick in Resources.
 class Puppet::Parser::Resource::Param
-    attr_accessor :name, :value, :source, :line, :file, :add
+    attr_accessor :name, :value, :source, :add
     include Puppet::Util
     include Puppet::Util::Errors
     include Puppet::Util::MethodHelper
+
+    include Puppet::FileCollection::Lookup
 
     def initialize(hash)
         set_options(hash)

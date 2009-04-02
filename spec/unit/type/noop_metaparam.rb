@@ -6,6 +6,7 @@ require 'puppet/type'
 
 describe Puppet::Type.type(:file).attrclass(:noop) do
     before do
+        Puppet.settings.stubs(:use)
         @file = Puppet::Type.newfile :path => "/what/ever"
     end
 

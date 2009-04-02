@@ -4,13 +4,17 @@ class Puppet::Parser::Resource
     require 'puppet/parser/resource/param'
     require 'puppet/parser/resource/reference'
     require 'puppet/util/tagging'
+    require 'puppet/file_collection/lookup'
+
+    include Puppet::FileCollection::Lookup
+
     include Puppet::Util
     include Puppet::Util::MethodHelper
     include Puppet::Util::Errors
     include Puppet::Util::Logging
     include Puppet::Util::Tagging
 
-    attr_accessor :source, :line, :file, :scope, :rails_id
+    attr_accessor :source, :scope, :rails_id
     attr_accessor :virtual, :override, :translated
 
     attr_reader :exported, :evaluated, :params

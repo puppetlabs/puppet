@@ -9,6 +9,7 @@ require 'puppet/checksum'
 
 describe Puppet::Checksum, " when using the file terminus" do
     before do
+        Puppet.settings.stubs(:use)
         Puppet::Checksum.terminus_class = :file
         @content = "this is some content"
         @sum = Puppet::Checksum.new(@content)

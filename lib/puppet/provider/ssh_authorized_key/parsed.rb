@@ -36,13 +36,34 @@ Puppet::Type.type(:ssh_authorized_key).provide(:parsed,
         :rts      => /^\s+/,
         :match    => /^(?:(.+) )?(\d+) (\d+) (\d+)(?: (.+))?$/
 
-    def prefetch
-        # This was done in the type class but path expansion was failing for
-        # not yet existing users, the only workaround I found was to move that
-        # in the provider.
-        @resource[:target] = target
+    def target
+        @resource.should(:target)
+    end
 
-        super
+    def user
+        @resource.should(:user)
+    end
+
+    def dir_perm
+        # Determine correct permission for created directory and file
+        # we can afford more restrictive permissions when the user is known
+        if target
+            if user
+                0700
+            else
+                0755
+            end
+        end
+    end
+
+    def file_perm
+        if target
+            if user
+                0600
+            else
+                0644
+            end
+        end
     end
 
     def target

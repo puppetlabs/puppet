@@ -40,8 +40,8 @@ class Puppet::Parser::AST
                     :type => r.type,
                     :title => r.title,
                     :params => params,
-                    :file => @file,
-                    :line => @line,
+                    :file => file,
+                    :line => line,
                     :source => scope.source,
                     :scope => scope
                 )
