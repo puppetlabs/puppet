@@ -209,6 +209,7 @@ describe provider_class do
             augeas_stub = stub("augeas", :match => ["set", "of", "values"])
             augeas_stub.stubs("close")
             provider = provider_class.new(resource)
+            provider.aug= augeas_stub
             provider.stubs(:get_augeas_version).returns("0.3.5")
             provider.need_to_run?.should == true
         end

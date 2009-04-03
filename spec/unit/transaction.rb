@@ -6,7 +6,7 @@ require 'puppet/transaction'
 
 describe Puppet::Transaction do
     it "should match resources by name, not title, when prefetching" do
-        @catalog = Puppet::Node::Catalog.new
+        @catalog = Puppet::Resource::Catalog.new
         @transaction = Puppet::Transaction.new(@catalog)
 
         # Have both a title and name

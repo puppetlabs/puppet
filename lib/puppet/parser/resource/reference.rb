@@ -1,5 +1,5 @@
 # A reference to a resource.  Mostly just the type and title.
-require 'puppet/resource_reference'
+require 'puppet/resource/reference'
 require 'puppet/file_collection/lookup'
 
 # A reference to a resource.  Mostly just the type and title.

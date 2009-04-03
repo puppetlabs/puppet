@@ -10,19 +10,12 @@ describe tidy do
     end
 
     it "should use :lstat when stating a file" do
-        tidy = Puppet::Type.type(:tidy).new :path => "/foo/bar", :age => "1d"
+        resource = tidy.new :path => "/foo/bar", :age => "1d"
         stat = mock 'stat'
         File.expects(:lstat).with("/foo/bar").returns stat
-        tidy.stat("/foo/bar").should == stat
+        resource.stat("/foo/bar").should == stat
     end
     
-    it "should be in sync if the targeted file does not exist" do
-        File.expects(:lstat).with("/tmp/foonesslaters").raises Errno::ENOENT
-        @tidy = tidy.create :path => "/tmp/foonesslaters", :age => "100d"
-
-        @tidy.property(:ensure).must be_insync({})
-    end
-
     [:age, :size, :path, :matches, :type, :recurse, :rmdirs].each do |param|
         it "should have a %s parameter" % param do
             Puppet::Type.type(:tidy).attrclass(param).ancestors.should be_include(Puppet::Parameter)

@@ -153,7 +153,7 @@ module Puppet::Util::SELinux
     # Internal helper function to read and parse /proc/mounts
     def read_mounts
         begin
-            mountfh = File.open("/proc/mounts", NONBLOCK)
+            mountfh = File.open("/proc/mounts", File::NONBLOCK)
             mounts = mountfh.read
             mountfh.close
         rescue
