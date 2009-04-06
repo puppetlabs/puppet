@@ -22,6 +22,18 @@ class Puppet::Rails::Host < ActiveRecord::Base
         end
     end
 
+    def self.from_puppet(node)
+        host = find_by_name(node.name) || new(:name => node.name)
+
+        {"ipaddress" => "ip", "environment" => "environment"}.each do |myparam, itsparam|
+            if value = node.send(myparam)
+                host.send(itsparam + "=", value)
+            end
+        end
+
+        host
+    end
+
     # Store our host in the database.
     def self.store(node, resources)
         args = {}
@@ -70,6 +82,8 @@ class Puppet::Rails::Host < ActiveRecord::Base
     end
     
     # returns a hash of fact_names.name => [ fact_values ] for this host.
+    # Note that 'fact_values' is actually a list of the value instances, not
+    # just actual values.
     def get_facts_hash
         fact_values = self.fact_values.find(:all, :include => :fact_name)
         return fact_values.inject({}) do | hash, value |
@@ -202,5 +216,15 @@ class Puppet::Rails::Host < ActiveRecord::Base
         self.last_connect = Time.now
         save
     end
-end
 
+    def to_puppet
+        node = Puppet::Node.new(self.name)
+        {"ip" => "ipaddress", "environment" => "environment"}.each do |myparam, itsparam|
+            if value = send(myparam)
+                node.send(itsparam + "=", value)
+            end
+        end
+
+        node
+    end
+end
