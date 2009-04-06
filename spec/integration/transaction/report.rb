@@ -7,7 +7,10 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 describe Puppet::Transaction::Report do
     describe "when using the indirector" do
-        after { Puppet::Util::Cacher.expire }
+        after do
+            Puppet::Util::Cacher.expire
+            Puppet.settings.stubs(:use)
+        end
 
         it "should be able to delegate to the :processor terminus" do
             Puppet::Transaction::Report.indirection.stubs(:terminus_class).returns :processor

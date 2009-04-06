@@ -2,14 +2,20 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-describe Puppet::Type.type(:tidy) do
-    it "should use :lstat when stating a file" do
-        tidy = Puppet::Type.type(:tidy).new :path => "/foo/bar", :age => "1d"
-        stat = mock 'stat'
-        File.expects(:lstat).with("/foo/bar").returns stat
-        tidy.stat("/foo/bar").should == stat
+tidy = Puppet::Type.type(:tidy)
+
+describe tidy do
+    before do
+        Puppet.settings.stubs(:use)
     end
 
+    it "should use :lstat when stating a file" do
+        resource = tidy.new :path => "/foo/bar", :age => "1d"
+        stat = mock 'stat'
+        File.expects(:lstat).with("/foo/bar").returns stat
+        resource.stat("/foo/bar").should == stat
+    end
+    
     [:age, :size, :path, :matches, :type, :recurse, :rmdirs].each do |param|
         it "should have a %s parameter" % param do
             Puppet::Type.type(:tidy).attrclass(param).ancestors.should be_include(Puppet::Parameter)

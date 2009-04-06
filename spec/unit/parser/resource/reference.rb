@@ -7,6 +7,10 @@ describe Puppet::Parser::Resource::Reference do
         @type = Puppet::Parser::Resource::Reference
     end
 
+    it "should use the file lookup module" do
+        Puppet::Parser::Resource::Reference.ancestors.should be_include(Puppet::FileCollection::Lookup)
+    end
+
     it "should require a type" do
         proc { @type.new(:title => "yay") }.should raise_error(Puppet::DevError)
     end

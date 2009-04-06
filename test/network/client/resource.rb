@@ -42,10 +42,7 @@ class TestResourceClient < Test::Unit::TestCase
         assert_instance_of(Puppet::TransObject, tresource)
 
         resource = tresource.to_ral
-        assert_events([], resource)
-        File.unlink(file)
-        assert_events([:file_created], resource)
-        File.unlink(file)
+        assert_equal(File.stat(file).mode & 007777, resource[:mode], "Did not get mode")
 
         # Now test applying
         result = client.apply(tresource)

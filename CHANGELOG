@@ -22,6 +22,24 @@
     Fixed #1840 - Bug fixes and improvements for Emacs puppet-mode.el
 
 0.24.8
+    Fixed #2077 - ralsh user broken on OSX
+    
+    Fixed #2004 - ssh_authorized_key fails if no target is defined
+
+    Fixed #1629 - incorrect permissions on ssh_authorized_keys created files
+
+    Fixed #2000 - No default specified for checksum
+
+    Fixed #2026 - Red Hat ignoring stop method
+
+    Added ext/dbfix.sql script - fixes common errors in stored configuration databases
+
+    Fixed #1963 - Failing to read /proc/mounts for selinux kills file downloads
+
+    Fixed #2025 - gentoo service provider handle only default init level
+
+    Fixed #1910 - updated logcheck
+
     Fixed #1871 - Sensitive information leaked in log reports
 
     Fixed #1956 - Cleaned up variable names to be more sane, clarified error messages 

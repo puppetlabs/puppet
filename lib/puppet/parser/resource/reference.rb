@@ -1,7 +1,10 @@
+# A reference to a resource.  Mostly just the type and title.
 require 'puppet/resource/reference'
+require 'puppet/file_collection/lookup'
 
 # A reference to a resource.  Mostly just the type and title.
 class Puppet::Parser::Resource::Reference < Puppet::Resource::Reference
+    include Puppet::FileCollection::Lookup
     include Puppet::Util::MethodHelper
     include Puppet::Util::Errors
 

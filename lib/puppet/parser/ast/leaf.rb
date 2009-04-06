@@ -36,7 +36,7 @@ class Puppet::Parser::AST
         # Interpolate the string looking for variables, and then return
         # the result.
         def evaluate(scope)
-            return scope.strinterp(@value, @file, @line)
+            return scope.strinterp(@value, file, line)
         end
     end
 

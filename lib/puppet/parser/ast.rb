@@ -2,6 +2,7 @@
 
 require 'puppet'
 require 'puppet/util/autoload'
+require 'puppet/file_collection/lookup'
 
 # The base class for all of the objects that make up the parse trees.
 # Handles things like file name, line #, and also does the initialization
@@ -10,11 +11,13 @@ class Puppet::Parser::AST
     # Do this so I don't have to type the full path in all of the subclasses
     AST = Puppet::Parser::AST
 
+    include Puppet::FileCollection::Lookup
+
     include Puppet::Util::Errors
     include Puppet::Util::MethodHelper
     include Puppet::Util::Docs
 
-    attr_accessor :line, :file, :parent, :scope
+    attr_accessor :parent, :scope
 
     # don't fetch lexer comment by default
     def use_docs
@@ -82,8 +85,6 @@ class Puppet::Parser::AST
     # method for them.  This is probably pretty inefficient and should
     # likely be changed at some point.
     def initialize(args)
-        @file = nil
-        @line = nil
         set_options(args)
     end
 end

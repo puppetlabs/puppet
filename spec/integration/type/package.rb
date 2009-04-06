@@ -9,7 +9,7 @@ describe Puppet::Type.type(:package), "when choosing a default package provider"
     end
 
     def provider_name(os)
-        {"Debian" => :apt, "Darwin" => :apple, "RedHat" => :up2date, "Fedora" => :yum, "FreeBSD" => :ports, "OpenBSD" => :openbsd, "Solaris" => :sun}[os]
+        {"Ubuntu" => :apt, "Debian" => :apt, "Darwin" => :apple, "RedHat" => :up2date, "Fedora" => :yum, "FreeBSD" => :ports, "OpenBSD" => :openbsd, "Solaris" => :sun}[os]
     end
 
     it "should have a default provider" do
@@ -17,6 +17,9 @@ describe Puppet::Type.type(:package), "when choosing a default package provider"
     end
 
     it "should choose the correct provider each platform" do
-        Puppet::Type.type(:package).defaultprovider.name.should == provider_name(Facter.value(:operatingsystem))
+        unless default_provider = provider_name(Facter.value(:operatingsystem))
+            pending("No default provider specified in this test for %s" % Facter.value(:operatingsystem))
+        end
+        Puppet::Type.type(:package).defaultprovider.name.should == default_provider
     end
 end

@@ -38,7 +38,7 @@ Puppet::Type.type(:service).provide :gentoo, :parent => :init do
         return :false unless line
 
         # If it's enabled then it will print output showing service | runlevel
-        if output =~ /#{@resource[:name]}\s*\|\s*default/
+        if output =~ /#{@resource[:name]}\s*\|\s*(boot|default)/
             return :true
         else
             return :false

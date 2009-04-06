@@ -50,7 +50,8 @@ describe "puppetmasterd" do
 
         args = arguments + addl_args
 
-        output = %x{puppetmasterd #{args}}.chomp
+        bin = File.join(File.dirname(__FILE__), "..", "..", "..", "sbin", "puppetmasterd")
+        output = %x{#{bin} #{args}}.chomp
     end
 
     def stop

@@ -55,7 +55,7 @@ end
 
 desc "Run the full test suite"
 Rake::PuppetTestTask.new :test do |t|
-    t.libs << $test_library_paths
+    t.libs += $test_library_paths
 
     # Add every file as a test file to run
     t.test_files = allfiles
@@ -72,7 +72,8 @@ filemap.each do |dir, files|
     namespace ns do
         files.each do |file|
             Rake::PuppetTestTask.new File.basename(file, '.rb').to_sym do |t|
-                t.libs << $test_library_paths + ['..']
+                t.libs += $test_library_paths + ['..']
+                t.libs << '..'
                 t.test_files = [ file ]
                 t.verbose = true 
             end 
@@ -81,7 +82,7 @@ filemap.each do |dir, files|
 
     # Then create a task that matches the directory itself.
     Rake::PuppetTestTask.new dir do |t|
-       t.libs << $test_library_paths
+       t.libs += $test_library_paths
        if ENV["TESTFILES"]
            t.test_files = ENV["TESTFILES"].split(/\s+/)
        else
