@@ -79,14 +79,14 @@ describe Puppet::Util::Settings do
         end
 
         it "should support a getopt-specific mechanism for turning booleans off" do
-            @settings.handlearg("--no-bool")
+            @settings.handlearg("--no-bool", "")
             @settings[:bool].should == false
         end
 
         it "should support a getopt-specific mechanism for turning booleans on" do
             # Turn it off first
             @settings[:bool] = false
-            @settings.handlearg("--bool")
+            @settings.handlearg("--bool", "")
             @settings[:bool].should == true
         end
 
@@ -99,7 +99,7 @@ describe Puppet::Util::Settings do
 
         it "should not clear other values when setting getopt-specific values" do
             @settings[:myval] = "yay"
-            @settings.handlearg("--no-bool")
+            @settings.handlearg("--no-bool", "")
             @settings[:myval].should == "yay"
         end
 
@@ -115,6 +115,16 @@ describe Puppet::Util::Settings do
 
             @settings[:hooker] = "something"
             values.should == %w{something}
+        end
+
+        it "should call passed blocks when values are set via the command line" do
+            values = []
+            @settings.setdefaults(:section, :hooker => {:default => "yay", :desc => "boo", :hook => lambda { |v| values << v }})
+            values.should == []
+
+            @settings.handlearg("--hooker", "yay")
+
+            values.should == %w{yay}
         end
 
         it "should provide an option to call passed blocks during definition" do
