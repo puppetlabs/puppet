@@ -502,27 +502,6 @@ describe Puppet::Parser::Compiler do
         end
     end
 
-    describe Puppet::Parser::Compiler, "when storing compiled resources" do
-        confine "Cannot test Rails integration without ActiveRecord" => Puppet.features.rails?
-
-        it "should store the resources" do
-            Puppet.features.expects(:rails?).returns(true)
-            Puppet::Rails.expects(:connect)
-
-            @compiler.expects(:resources).returns(:resources)
-
-            @compiler.expects(:store_to_active_record).with(@node, :resources)
-            @compiler.send(:store)
-        end
-
-        it "should store to active_record" do
-            @node.expects(:name).returns("myname")
-            Puppet::Rails::Host.stubs(:transaction).yields
-            Puppet::Rails::Host.expects(:store).with(@node, :resources)
-            @compiler.send(:store_to_active_record, @node, :resources)
-        end
-    end
-
     describe Puppet::Parser::Compiler, "when managing resource overrides" do
 
         before do

@@ -515,10 +515,7 @@ module Puppet
         :graph => [false, "Whether to create dot graph files for the different
             configuration graphs.  These dot files can be interpreted by tools
             like OmniGraffle or dot (which is part of ImageMagick)."],
-        :graphdir => ["$statedir/graphs", "Where to store dot-outputted graphs."],
-        :storeconfigs => [false,
-            "Whether to store each client's configuration.  This
-             requires ActiveRecord from Ruby on Rails."]
+        :graphdir => ["$statedir/graphs", "Where to store dot-outputted graphs."]
     )
 
     # Plugin information.
@@ -678,6 +675,23 @@ module Puppet
             a meaningful default here, although the LDAP libraries might
             have one already set.  Generally, it should be the 'ou=Hosts'
             branch under your main directory."]
+    )
+
+    setdefaults(:puppetmasterd,
+        :storeconfigs => {:default => false, :desc => "Whether to store each client's configuration.  This
+            requires ActiveRecord from Ruby on Rails.",
+            :call_on_define => true, # Call our hook with the default value, so we always get the libdir set.
+            :hook => proc do |value|
+                require 'puppet/node'
+                require 'puppet/node/facts'
+                require 'puppet/resource/catalog'
+                if value
+                    Puppet::Node::Catalog.cache_class = :active_record
+                    Puppet::Node::Facts.cache_class = :active_record
+                    Puppet::Node.cache_class = :active_record
+                end
+            end
+        }
     )
 
     # This doesn't actually work right now.

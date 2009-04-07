@@ -97,10 +97,6 @@ class Puppet::Parser::Compiler
 
         fail_on_unevaluated()
 
-        if Puppet[:storeconfigs]
-            store()
-        end
-
         return @catalog
     end
 
@@ -421,39 +417,6 @@ class Puppet::Parser::Compiler
     def set_node_parameters
         node.parameters.each do |param, value|
             @topscope.setvar(param, value)
-        end
-    end
-
-    # Store the catalog into the database.
-    def store
-        unless Puppet.features.rails?
-            raise Puppet::Error,
-                "storeconfigs is enabled but rails is unavailable"
-        end
-
-        unless ActiveRecord::Base.connected?
-            Puppet::Rails.connect
-        end
-
-        # We used to have hooks here for forking and saving, but I don't
-        # think it's worth retaining at this point.
-        store_to_active_record(@node, resources)
-    end
-
-    # Do the actual storage.
-    def store_to_active_record(node, resources)
-        begin
-            # We store all of the objects, even the collectable ones
-            benchmark(:info, "Stored catalog for #{node.name}") do
-                Puppet::Rails::Host.transaction do
-                    Puppet::Rails::Host.store(node, resources)
-                end
-            end
-        rescue => detail
-            if Puppet[:trace]
-                puts detail.backtrace
-            end
-            Puppet.err "Could not store configs: %s" % detail.to_s
         end
     end
 

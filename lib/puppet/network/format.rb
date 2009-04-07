@@ -1,3 +1,4 @@
+require 'puppet/provider'
 require 'puppet/provider/confiner'
 
 # A simple class for modeling encoding formats for moving
