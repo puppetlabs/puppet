@@ -1,4 +1,5 @@
 require 'puppet/file_collection/lookup'
+require 'puppet/parser/yaml_trimmer'
 
  # The parameters we stick in Resources.
 class Puppet::Parser::Resource::Param
@@ -8,6 +9,7 @@ class Puppet::Parser::Resource::Param
     include Puppet::Util::MethodHelper
 
     include Puppet::FileCollection::Lookup
+    include Puppet::Parser::YamlTrimmer
 
     def initialize(hash)
         set_options(hash)
@@ -16,7 +18,7 @@ class Puppet::Parser::Resource::Param
     end
 
     def inspect
-        "#<#{self.class} @name => #{name}, @value => #{value}, @source => #{source.name}, @line => #{line}>"
+        "#<#{self.class} @name => #{name}, @value => #{value}, @source => #{source.name if source}, @line => #{line}>"
     end
 
     def line_to_i

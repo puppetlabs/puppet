@@ -4,20 +4,21 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 
 require 'puppet/indirector/catalog/active_record'
 
-describe Puppet::Node::Catalog::ActiveRecord do
+describe Puppet::Resource::Catalog::ActiveRecord do
     confine "Missing Rails" => Puppet.features.rails?
 
     before do
         Puppet.features.stubs(:rails?).returns true
-        @terminus = Puppet::Node::Catalog::ActiveRecord.new
+        Puppet::Rails.stubs(:init)
+        @terminus = Puppet::Resource::Catalog::ActiveRecord.new
     end
 
     it "should be a subclass of the ActiveRecord terminus class" do
-        Puppet::Node::Catalog::ActiveRecord.ancestors.should be_include(Puppet::Indirector::ActiveRecord)
+        Puppet::Resource::Catalog::ActiveRecord.ancestors.should be_include(Puppet::Indirector::ActiveRecord)
     end
 
     it "should use Puppet::Rails::Host as its ActiveRecord model" do
-        Puppet::Node::Catalog::ActiveRecord.ar_model.should equal(Puppet::Rails::Host)
+        Puppet::Resource::Catalog::ActiveRecord.ar_model.should equal(Puppet::Rails::Host)
     end
 
     describe "when finding an instance" do
@@ -50,7 +51,7 @@ describe Puppet::Node::Catalog::ActiveRecord do
             Puppet::Rails::Host.expects(:find_by_name).returns host
 
             result = @terminus.find(@request)
-            result.should be_instance_of(Puppet::Node::Catalog)
+            result.should be_instance_of(Puppet::Resource::Catalog)
             result.name.should == "foo"
         end
         
@@ -64,7 +65,7 @@ describe Puppet::Node::Catalog::ActiveRecord do
             host.expects(:resources).returns [res1, res2]
 
             catalog = stub 'catalog'
-            Puppet::Node::Catalog.expects(:new).returns catalog
+            Puppet::Resource::Catalog.expects(:new).returns catalog
 
             catalog.expects(:add_resource).with "trans_res1"
             catalog.expects(:add_resource).with "trans_res2"
@@ -77,7 +78,7 @@ describe Puppet::Node::Catalog::ActiveRecord do
         before do
             @host = stub 'host', :name => "foo", :save => nil, :merge_resources => nil, :last_compile= => nil
             Puppet::Rails::Host.stubs(:find_by_name).returns @host
-            @catalog = Puppet::Node::Catalog.new("foo")
+            @catalog = Puppet::Resource::Catalog.new("foo")
             @request = stub 'request', :key => "foo", :instance => @catalog
         end
 

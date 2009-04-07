@@ -10,6 +10,7 @@ describe Puppet::Node::Facts::ActiveRecord do
 
     before do
         Puppet.features.stubs(:rails?).returns true
+        Puppet::Rails.stubs(:init)
         @terminus = Puppet::Node::Facts::ActiveRecord.new
     end
 

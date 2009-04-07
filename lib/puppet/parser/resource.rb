@@ -5,6 +5,7 @@ class Puppet::Parser::Resource
     require 'puppet/parser/resource/reference'
     require 'puppet/util/tagging'
     require 'puppet/file_collection/lookup'
+    require 'puppet/parser/yaml_trimmer'
 
     include Puppet::FileCollection::Lookup
 
@@ -13,6 +14,7 @@ class Puppet::Parser::Resource
     include Puppet::Util::Errors
     include Puppet::Util::Logging
     include Puppet::Util::Tagging
+    include Puppet::Parser::YamlTrimmer
 
     attr_accessor :source, :scope, :rails_id
     attr_accessor :virtual, :override, :translated
