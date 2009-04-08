@@ -197,6 +197,8 @@ class Puppet::Rails::Host < ActiveRecord::Base
             additions.each do |resource|
                 build_rails_resource_from_parser_resource(resource)
             end
+
+            log_accumulated_marks "Added resources"
         }
     end
 
@@ -208,20 +210,28 @@ class Puppet::Rails::Host < ActiveRecord::Base
 
     # Turn a parser resource into a Rails resource.  
     def build_rails_resource_from_parser_resource(resource)
-        args = Puppet::Rails::Resource.rails_resource_initial_args(resource)
+        db_resource = nil
+        accumulate_benchmark("Added resources", :initialization) {
+            args = Puppet::Rails::Resource.rails_resource_initial_args(resource)
 
-        db_resource = self.resources.build(args)
+            db_resource = self.resources.build(args)
 
-        # Our file= method does the name to id conversion.
-        db_resource.file = resource.file
+            # Our file= method does the name to id conversion.
+            db_resource.file = resource.file
+        }
 
-        resource.eachparam do |param|
-            Puppet::Rails::ParamValue.from_parser_param(param).each do |value_hash|
-                db_resource.param_values.build(value_hash)
+
+        accumulate_benchmark("Added resources", :parameters) {
+            resource.eachparam do |param|
+                Puppet::Rails::ParamValue.from_parser_param(param).each do |value_hash|
+                    db_resource.param_values.build(value_hash)
+                end
             end
-        end
+        }
 
-        resource.tags.each { |tag| db_resource.add_resource_tag(tag) }
+        accumulate_benchmark("Added resources", :tags) {
+            resource.tags.each { |tag| db_resource.add_resource_tag(tag) }
+        }
 
         return db_resource
     end
@@ -231,20 +241,15 @@ class Puppet::Rails::Host < ActiveRecord::Base
         return compiled.values if resources.empty?
 
         # Now for all resources in the catalog but not in the db, we're pretty easy.
-        times = Hash.new(0)
         additions = []
         compiled.each do |ref, resource|
             if db_resource = resources[ref]
-                db_resource.merge_parser_resource(resource).each do |name, time|
-                    times[name] += time
-                end
+                db_resource.merge_parser_resource(resource)
             else
                 additions << resource
             end
         end
-        times.each do |name, time|
-            Puppet.debug("Resource merger(%s) took %0.2f seconds" % [name, time])
-        end
+        log_accumulated_marks "Resource merger"
 
         return additions
     end

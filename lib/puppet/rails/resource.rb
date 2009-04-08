@@ -2,11 +2,13 @@ require 'puppet'
 require 'puppet/rails/param_name'
 require 'puppet/rails/param_value'
 require 'puppet/rails/puppet_tag'
+require 'puppet/rails/benchmark'
 require 'puppet/util/rails/collection_merger'
 
 class Puppet::Rails::Resource < ActiveRecord::Base
     include Puppet::Util::CollectionMerger
     include Puppet::Util::ReferenceSerializer
+    include Puppet::Rails::Benchmark
 
     has_many :param_values, :dependent => :destroy, :class_name => "Puppet::Rails::ParamValue"
     has_many :param_names, :through => :param_values, :class_name => "Puppet::Rails::ParamName"
@@ -79,12 +81,9 @@ class Puppet::Rails::Resource < ActiveRecord::Base
 
     # Make sure this resource is equivalent to the provided Parser resource.
     def merge_parser_resource(resource)
-        times = {}
-        times[:attributes] = Benchmark.realtime { merge_attributes(resource) }
-        times[:parameters] = Benchmark.realtime { merge_parameters(resource) }
-        times[:tags] = Benchmark.realtime { merge_tags(resource) }
-
-        times
+        accumulate_benchmark("Individual resource merger", :attributes) { merge_attributes(resource) }
+        accumulate_benchmark("Individual resource merger", :parameters) { merge_parameters(resource) }
+        accumulate_benchmark("Individual resource merger", :tags) { merge_tags(resource) }
     end
 
     def merge_attributes(resource)
