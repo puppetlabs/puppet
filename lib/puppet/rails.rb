@@ -4,6 +4,7 @@ require 'facter'
 require 'puppet'
 
 module Puppet::Rails
+    TIME_DEBUG = true
 
     def self.connect
         # This global init does not work for testing, because we remove

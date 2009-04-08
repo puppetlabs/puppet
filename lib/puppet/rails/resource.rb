@@ -108,7 +108,6 @@ class Puppet::Rails::Resource < ActiveRecord::Base
         db_params = {}
 
         deletions = []
-        #Puppet::Rails::ParamValue.find_all_params_from_resource(self).each do |value|
         @params_hash.each do |value|
             # First remove any parameters our catalog resource doesn't have at all.
             deletions << value['id'] and next unless catalog_params.include?(value['name'])
@@ -149,7 +148,6 @@ class Puppet::Rails::Resource < ActiveRecord::Base
         in_db = []
         deletions = []
         resource_tags = resource.tags
-        #Puppet::Rails::ResourceTag.find_all_tags_from_resource(self).each do |tag|
         @tags_hash.each do |tag|
             deletions << tag['id'] and next unless resource_tags.include?(tag['name'])
             in_db << tag['name']

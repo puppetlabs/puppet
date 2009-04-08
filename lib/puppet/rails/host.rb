@@ -1,9 +1,12 @@
 require 'puppet/rails/resource'
 require 'puppet/rails/fact_name'
 require 'puppet/rails/source_file'
+require 'puppet/rails/benchmark'
 require 'puppet/util/rails/collection_merger'
 
 class Puppet::Rails::Host < ActiveRecord::Base
+    include Puppet::Rails::Benchmark
+    extend Puppet::Rails::Benchmark
     include Puppet::Util
     include Puppet::Util::CollectionMerger
 
@@ -39,37 +42,41 @@ class Puppet::Rails::Host < ActiveRecord::Base
         args = {}
 
         host = nil
-        transaction do
-            #unless host = find_by_name(name)
-            seconds = Benchmark.realtime {
-                unless host = find_by_name(node.name)
-                    host = new(:name => node.name)
+        railsmark "Stored node" do
+            transaction do
+                #unless host = find_by_name(name)
+
+                sometimes_benchmark("Searched for host")do
+                    unless host = find_by_name(node.name)
+                        host = new(:name => node.name)
+                    end
                 end
-            }
-            Puppet.debug("Searched for host in %0.2f seconds" % seconds)
-            if ip = node.parameters["ipaddress"]
-                host.ip = ip
+                if ip = node.parameters["ipaddress"]
+                    host.ip = ip
+                end
+
+                if env = node.environment
+                    host.environment = env
+                end
+
+                # Store the facts into the database.
+                host.merge_facts(node.parameters)
+
+                sometimes_benchmark("Handled resources") {
+                    host.merge_resources(resources)
+                }
+
+                host.last_compile = Time.now
+
+                sometimes_benchmark("Saved host") {
+                    host.save
+                }
             end
 
-            if env = node.environment
-                host.environment = env
-            end
-
-            # Store the facts into the database.
-            host.merge_facts(node.parameters)
-
-            seconds = Benchmark.realtime {
-                host.merge_resources(resources)
-            }
-            Puppet.debug("Handled resources in %0.2f seconds" % seconds)
-
-            host.last_compile = Time.now
-
-            seconds = Benchmark.realtime {
-                host.save
-            }
-            Puppet.debug("Saved host in %0.2f seconds" % seconds)
         end
+
+        # This only runs if time debugging is enabled.
+        write_benchmarks
 
         return host
     end
@@ -139,20 +146,17 @@ class Puppet::Rails::Host < ActiveRecord::Base
     # Set our resources.
     def merge_resources(list)
         resources_by_id = nil
-        seconds = Benchmark.realtime {
+        sometimes_benchmark("Searched for resources") {
             resources_by_id = find_resources()
         }
-        Puppet.debug("Searched for resources in %0.2f seconds" % seconds)
 
-        seconds = Benchmark.realtime {
+        sometimes_benchmark("Searched for resource params and tags") {
             find_resources_parameters_tags(resources_by_id)
         } if id
-        Puppet.debug("Searched for resource params and tags in %0.2f seconds" % seconds)
 
-        seconds = Benchmark.realtime {
+        sometimes_benchmark("Performed resource comparison") {
             compare_to_catalog(resources_by_id, list)
         }
-        Puppet.debug("Resource comparison took %0.2f seconds" % seconds)
     end
 
     def find_resources
@@ -179,24 +183,21 @@ class Puppet::Rails::Host < ActiveRecord::Base
         end
 
         resources = nil
-        seconds = Benchmark.realtime {
+        sometimes_benchmark("Resource removal") {
             resources = remove_unneeded_resources(compiled, existing)
         }
-        Puppet.debug("Resource removal took %0.2f seconds" % seconds)
 
         # Now for all resources in the catalog but not in the db, we're pretty easy.
         additions = nil
-        seconds = Benchmark.realtime {
+        sometimes_benchmark("Resource merger") {
             additions = perform_resource_merger(compiled, resources)
         }
-        Puppet.debug("Resource merger took %0.2f seconds" % seconds)
 
-        seconds = Benchmark.realtime {
+        sometimes_benchmark("Resource addition") {
             additions.each do |resource|
                 build_rails_resource_from_parser_resource(resource)
             end
         }
-        Puppet.debug("Resource addition took %0.2f seconds" % seconds)
     end
 
     def add_new_resources(additions)
@@ -271,7 +272,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
         end
         # We need to use 'destroy' here, not 'delete', so that all
         # dependent objects get removed, too.
-        Puppet::Rails::Resource.destroy(*deletions) unless deletions.empty?
+        Puppet::Rails::Resource.destroy(deletions) unless deletions.empty?
 
         return resources
     end
