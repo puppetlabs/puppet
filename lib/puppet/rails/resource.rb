@@ -35,7 +35,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     end
 
     def add_resource_tag(tag)
-        pt = Puppet::Rails::PuppetTag.find_or_create_by_name(tag)
+        pt = Puppet::Rails::PuppetTag.accumulate_by_name(tag)
         resource_tags.build(:puppet_tag => pt)
     end
 
@@ -139,7 +139,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
             values = param.value.is_a?(Array) ? param.value : [param.value]
 
             values.each do |v|
-                param_values.build(:value => serialize_value(v), :line => param.line, :param_name => Puppet::Rails::ParamName.find_or_create_by_name(name))
+                param_values.build(:value => serialize_value(v), :line => param.line, :param_name => Puppet::Rails::ParamName.accumulate_by_name(name))
             end
         end
     end

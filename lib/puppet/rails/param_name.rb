@@ -5,6 +5,16 @@ class Puppet::Rails::ParamName < ActiveRecord::Base
     include Puppet::Util::CollectionMerger
     has_many :param_values, :dependent => :destroy 
 
+    def self.accumulate_by_name(name)
+        @name_cache ||= {}
+        if instance = @name_cache[name]
+            return instance
+        end
+        instance = find_or_create_by_name(name)
+        @name_cache[name] = instance
+        instance
+    end
+
     def to_resourceparam(resource, source)
         hash = {}
         hash[:name] = self.name.to_sym
