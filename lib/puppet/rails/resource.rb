@@ -17,24 +17,9 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     belongs_to :source_file
     belongs_to :host
 
-    # Turn a parser resource into a Rails resource.  
-    def self.from_parser_resource(resource)
-        args = rails_resource_initial_args(resource)
-
-        db_resource = create(args)
-
-        # Our file= method does the name to id conversion.
-        db_resource.file = resource.file
-
-        resource.eachparam do |param|
-            Puppet::Rails::ParamValue.from_parser_param(param).each do |value_hash|
-                db_resource.param_values.build(value_hash)
-            end
-        end
-
-        resource.tags.each { |tag| db_resource.add_resource_tag(tag) }
-
-        return db_resource
+    @tags = {}
+    def self.tags
+        @tags
     end
 
     # Determine the basic details on the resource.
@@ -94,9 +79,12 @@ class Puppet::Rails::Resource < ActiveRecord::Base
 
     # Make sure this resource is equivalent to the provided Parser resource.
     def merge_parser_resource(resource)
-        merge_attributes(resource)
-        merge_parameters(resource)
-        merge_tags(resource)
+        times = {}
+        times[:attributes] = Benchmark.realtime { merge_attributes(resource) }
+        times[:parameters] = Benchmark.realtime { merge_parameters(resource) }
+        times[:tags] = Benchmark.realtime { merge_tags(resource) }
+
+        times
     end
 
     def merge_attributes(resource)

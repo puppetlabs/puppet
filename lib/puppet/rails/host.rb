@@ -269,19 +269,11 @@ class Puppet::Rails::Host < ActiveRecord::Base
 
             resources[resource.ref] = resource
         end
-
         # We need to use 'destroy' here, not 'delete', so that all
         # dependent objects get removed, too.
         Puppet::Rails::Resource.destroy(*deletions) unless deletions.empty?
 
-        # Now for all resources in the catalog but not in the db, we're pretty easy.
-        compiled.each do |ref, resource|
-            if db_resource = resources[ref]
-                db_resource.merge_parser_resource(resource)
-            else
-                self.resources << Puppet::Rails::Resource.from_parser_resource(resource)
-            end
-        end
+        return resources
     end
 
     def find_resources_parameters(resources)
