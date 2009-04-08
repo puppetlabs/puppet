@@ -67,7 +67,7 @@ describe Puppet::Node::Facts::ActiveRecord do
 
     describe "when saving an instance" do
         before do
-            @host = stub 'host', :name => "foo", :save => nil, :setfacts => nil
+            @host = stub 'host', :name => "foo", :save => nil, :merge_facts => nil
             Puppet::Rails::Host.stubs(:find_by_name).returns @host
             @facts = Puppet::Node::Facts.new("foo", "one" => "two", "three" => "four")
             @request = stub 'request', :key => "foo", :instance => @facts
@@ -89,7 +89,7 @@ describe Puppet::Node::Facts::ActiveRecord do
 
         it "should set the facts as facts on the Rails host instance" do
             # There is other stuff added to the hash.
-            @host.expects(:setfacts).with { |args| args["one"] == "two" and args["three"] == "four" }
+            @host.expects(:merge_facts).with { |args| args["one"] == "two" and args["three"] == "four" }
 
             @terminus.save(@request)
         end

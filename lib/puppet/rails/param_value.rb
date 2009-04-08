@@ -7,6 +7,32 @@ class Puppet::Rails::ParamValue < ActiveRecord::Base
     belongs_to :param_name
     belongs_to :resource
 
+    # Store a new parameter in a Rails db.
+    def self.from_parser_param(param)
+        values = munge_parser_values(param.value)
+
+        param_name = Puppet::Rails::ParamName.find_or_create_by_name(param.name.to_s)
+        line_number = param.line_to_i()
+        return values.collect do |v|
+            {:value => v, :line => line_number, :param_name => param_name}
+        end
+    end
+
+    # Make sure an array (or possibly not an array) of values is correctly
+    # set up for Rails.  The main thing is that Resource::Reference objects
+    # should stay objects, so they just get serialized.
+    def self.munge_parser_values(value)
+        values = value.is_a?(Array) ? value : [value]
+        values.map do |v|
+            if v.is_a?(Puppet::Parser::Resource::Reference)
+                v
+            else
+                v.to_s
+            end
+        end
+    end
+
+
     def value
         unserialize_value(self[:value])
     end
@@ -18,7 +44,7 @@ class Puppet::Rails::ParamValue < ActiveRecord::Base
     end
 
     def to_label
-      "#{self.param_name.name}"
+        "#{self.param_name.name}"
     end
 
     # returns an array of hash containing all the parameters of a given resource
@@ -42,6 +68,8 @@ class Puppet::Rails::ParamValue < ActiveRecord::Base
         end
         params
     end
-
+    
+    def to_s
+        "%s => %s" % [self.name, self.value]
+    end
 end
-

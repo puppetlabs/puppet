@@ -28,7 +28,7 @@ class Puppet::Node::Facts::ActiveRecord < Puppet::Indirector::ActiveRecord
 
         host = ar_model.find_by_name(facts.name) || ar_model.create(:name => facts.name)
         
-        host.setfacts(facts.values)
+        host.merge_facts(facts.values)
 
         host.save
     end

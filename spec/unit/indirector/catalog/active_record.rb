@@ -75,7 +75,7 @@ describe Puppet::Node::Catalog::ActiveRecord do
 
     describe "when saving an instance" do
         before do
-            @host = stub 'host', :name => "foo", :save => nil, :setresources => nil, :last_compile= => nil
+            @host = stub 'host', :name => "foo", :save => nil, :merge_resources => nil, :last_compile= => nil
             Puppet::Rails::Host.stubs(:find_by_name).returns @host
             @catalog = Puppet::Node::Catalog.new("foo")
             @request = stub 'request', :key => "foo", :instance => @catalog
@@ -97,7 +97,7 @@ describe Puppet::Node::Catalog::ActiveRecord do
 
         it "should set the catalog vertices as resources on the Rails host instance" do
             @catalog.expects(:vertices).returns "foo"
-            @host.expects(:setresources).with("foo")
+            @host.expects(:merge_resources).with("foo")
 
             @terminus.save(@request)
         end

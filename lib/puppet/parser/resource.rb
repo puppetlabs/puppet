@@ -58,6 +58,12 @@ class Puppet::Parser::Resource
         @ref.builtin = bool
     end
 
+    def eachparam
+        @params.each do |name, param|
+            yield param
+        end
+    end
+
     # Retrieve the associated definition and evaluate it.
     def evaluate
         if klass = @ref.definedtype
@@ -167,49 +173,6 @@ class Puppet::Parser::Resource
         end
     end
 
-    # Modify this resource in the Rails database.  Poor design, yo.
-    def modify_rails(db_resource)
-        args = rails_args
-        args.each do |param, value|
-            db_resource[param] = value unless db_resource[param] == value
-        end
-
-        # Handle file specially
-        if (self.file and  
-            (!db_resource.file or db_resource.file != self.file))
-            db_resource.file = self.file
-        end
-        
-        updated_params = @params.reject { |name, param| param.value == :undef }.inject({}) do |hash, ary|
-            hash[ary[0].to_s] = ary[1]
-            hash
-        end
-        
-        db_resource.ar_hash_merge(db_resource.get_params_hash(), updated_params,
-                                  :create => Proc.new { |name, parameter|
-                                      parameter.to_rails(db_resource)
-                                  }, :delete => Proc.new { |values|
-                                      values.each { |value| Puppet::Rails::ParamValue.delete(value['id']) }
-                                  }, :modify => Proc.new { |db, mem|
-                                      mem.modify_rails_values(db)
-                                  })
-        
-        updated_tags = tags.inject({}) { |hash, tag| 
-            hash[tag] = tag
-            hash
-        }
-
-        db_resource.ar_hash_merge(db_resource.get_tag_hash(), 
-                                  updated_tags,
-                                  :create => Proc.new { |name, tag|
-                                      db_resource.add_resource_tag(name)
-                                  }, :delete => Proc.new { |tag|
-                                      Puppet::Rails::ResourceTag.delete(tag['id'])
-                                  }, :modify => Proc.new { |db, mem|
-                                      # nothing here
-                                  })
-    end
-
     # Return the resource name, or the title if no name
     # was specified.
     def name
@@ -262,26 +225,6 @@ class Puppet::Parser::Resource
         end
     end
 
-    # Turn our parser resource into a Rails resource.  
-    def to_rails(host)
-        args = rails_args
-
-        db_resource = host.resources.build(args)
-
-        # Handle file specially
-        db_resource.file = self.file
-
-        db_resource.save
-
-        @params.each { |name, param|
-            next if param.value == :undef
-            param.to_rails(db_resource)
-        }
-        
-        tags.each { |tag| db_resource.add_resource_tag(tag) }
-
-        return db_resource
-    end
 
     # Create a Puppet::Resource instance from this parser resource.
     # We plan, at some point, on not needing to do this conversion, but
@@ -423,17 +366,6 @@ class Puppet::Parser::Resource
         elsif paramcheck?
             self.fail Puppet::ParseError, "Invalid parameter '%s' for type '%s'" %
                     [param, @ref.type]
-        end
-    end
-
-    def rails_args
-        return [:type, :title, :line, :exported].inject({}) do |hash, param|
-            # 'type' isn't a valid column name, so we have to use another name.
-            to = (param == :type) ? :restype : param
-            if value = self.send(param)
-                hash[to] = value
-            end
-            hash
         end
     end
 

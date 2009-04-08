@@ -17,9 +17,41 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     belongs_to :source_file
     belongs_to :host
 
+    # Turn a parser resource into a Rails resource.  
+    def self.from_parser_resource(resource)
+        args = rails_resource_initial_args(resource)
+
+        db_resource = create(args)
+
+        # Our file= method does the name to id conversion.
+        db_resource.file = resource.file
+
+        resource.eachparam do |param|
+            Puppet::Rails::ParamValue.from_parser_param(param).each do |value_hash|
+                db_resource.param_values.build(value_hash)
+            end
+        end
+
+        resource.tags.each { |tag| db_resource.add_resource_tag(tag) }
+
+        return db_resource
+    end
+
+    # Determine the basic details on the resource.
+    def self.rails_resource_initial_args(resource)
+        return [:type, :title, :line, :exported].inject({}) do |hash, param|
+            # 'type' isn't a valid column name, so we have to use another name.
+            to = (param == :type) ? :restype : param
+            if value = resource.send(param)
+                hash[to] = value
+            end
+            hash
+        end
+    end
+
     def add_resource_tag(tag)
-        pt = Puppet::Rails::PuppetTag.find_or_create_by_name(tag, :include => :puppet_tag)
-        resource_tags.create(:puppet_tag => pt)
+        pt = Puppet::Rails::PuppetTag.find_or_create_by_name(tag)
+        resource_tags.build(:puppet_tag => pt)
     end
 
     def file
@@ -56,30 +88,95 @@ class Puppet::Rails::Resource < ActiveRecord::Base
         @tags_hash = hash
     end
 
-    # returns a hash of param_names.name => [param_values]
-    def get_params_hash(values = nil)
-        values ||= @params_hash || Puppet::Rails::ParamValue.find_all_params_from_resource(self)
-        if values.size == 0
-            return {}
-        end
-        values.inject({}) do |hash, value|
-            hash[value['name']] ||= []
-            hash[value['name']] << value
-            hash
-        end
-    end
-
-    def get_tag_hash(tags = nil)
-        tags ||= @tags_hash || Puppet::Rails::ResourceTag.find_all_tags_from_resource(self)
-        return tags.inject({}) do |hash, tag|
-            # We have to store the tag object, not just the tag name.
-            hash[tag['name']] = tag
-            hash
-        end
-    end
-
     def [](param)
         return super || parameter(param)
+    end
+
+    # Make sure this resource is equivalent to the provided Parser resource.
+    def merge_parser_resource(resource)
+        merge_attributes(resource)
+        merge_parameters(resource)
+        merge_tags(resource)
+    end
+
+    def merge_attributes(resource)
+        args = self.class.rails_resource_initial_args(resource)
+        args.each do |param, value|
+            self[param] = value unless resource[param] == value
+        end
+
+        # Handle file specially
+        if (resource.file and  (!resource.file or self.file != resource.file))
+            self.file = resource.file
+        end
+    end
+
+    def merge_parameters(resource)
+        catalog_params = {}
+        resource.eachparam do |param|
+            catalog_params[param.name.to_s] = param
+        end
+
+        db_params = {}
+
+        deletions = []
+        #Puppet::Rails::ParamValue.find_all_params_from_resource(self).each do |value|
+        @params_hash.each do |value|
+            # First remove any parameters our catalog resource doesn't have at all.
+            deletions << value['id'] and next unless catalog_params.include?(value['name'])
+
+            # Now store them for later testing.
+            db_params[value['name']] ||= []
+            db_params[value['name']] << value
+        end
+
+        # Now get rid of any parameters whose value list is different.
+        # This might be extra work in cases where an array has added or lost
+        # a single value, but in the most common case (a single value has changed)
+        # this makes sense.
+        db_params.each do |name, value_hashes|
+            values = value_hashes.collect { |v| v['value'] }
+
+            unless value_compare(catalog_params[name].value, values)
+                value_hashes.each { |v| deletions << v['id'] }
+            end
+        end
+
+        # Perform our deletions.
+        Puppet::Rails::ParamValue.delete(deletions) unless deletions.empty?
+
+        # Lastly, add any new parameters.
+        catalog_params.each do |name, param|
+            next if db_params.include?(name)
+            values = param.value.is_a?(Array) ? param.value : [param.value]
+
+            values.each do |v|
+                param_values.build(:value => serialize_value(v), :line => param.line, :param_name => Puppet::Rails::ParamName.find_or_create_by_name(name))
+            end
+        end
+    end
+        
+    # Make sure the tag list is correct.
+    def merge_tags(resource)
+        in_db = []
+        deletions = []
+        resource_tags = resource.tags
+        #Puppet::Rails::ResourceTag.find_all_tags_from_resource(self).each do |tag|
+        @tags_hash.each do |tag|
+            deletions << tag['id'] and next unless resource_tags.include?(tag['name'])
+            in_db << tag['name']
+        end
+        Puppet::Rails::ResourceTag.delete(deletions) unless deletions.empty?
+
+        (resource_tags - in_db).each do |tag|
+            add_resource_tag(tag)
+        end
+    end
+
+    def value_compare(v,db_value)
+        v = [v] unless v.is_a?(Array)
+
+        v == db_value
     end
 
     def name
@@ -88,7 +185,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
 
     def parameter(param)
         if pn = param_names.find_by_name(param)
-            if pv = param_values.find(:first, :conditions => [ 'param_name_id = ?', pn]                                                            )
+            if pv = param_values.find(:first, :conditions => [ 'param_name_id = ?', pn])
                 return pv.value
             else
                 return nil
@@ -110,6 +207,15 @@ class Puppet::Rails::Resource < ActiveRecord::Base
 
     def ref
         "%s[%s]" % [self[:restype].split("::").collect { |s| s.capitalize }.join("::"), self.title.to_s]
+    end
+
+    # Returns a hash of parameter names and values, no ActiveRecord instances.
+    def to_hash
+        Puppet::Rails::ParamValue.find_all_params_from_resource(self).inject({}) do |hash, value|
+            hash[value['name']] ||= []
+            hash[value['name']] << value.value
+            hash
+        end
     end
 
     # Convert our object to a resource.  Do not retain whether the object
