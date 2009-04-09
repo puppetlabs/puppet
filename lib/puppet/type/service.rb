@@ -180,6 +180,10 @@ module Puppet
             newvalues(:true, :false)
         end
 
+        newparam(:manifest) do
+            desc "Specify a command to config a service, or a path to a manifest to do so."
+        end
+
         # Basically just a synonym for restarting.  Used to respond
         # to events.
         def refresh

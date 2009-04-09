@@ -31,17 +31,20 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
     * restart
     * status
 
+    If a service has ensure => \"running\", it will link /path/to/daemon to
+    /path/to/service, which will automatically enable the service.
+
+    If a service has ensure => \"stopped\", it will only down the service, not
+    remove the /path/to/service link.
 
   """
 
-    commands :svc  => "/usr/bin/svc"
-    commands :svstat => "/usr/bin/svstat"
+    commands :svc  => "/usr/bin/svc", :svstat => "/usr/bin/svstat"
 
     class << self
         attr_writer :defpath
         
-        # this is necessary to autodetect a valid resource
-        # default path, since there is no standard for such directory.
+        # Determine the daemon path.
         def defpath
             unless defined?(@defpath) and @defpath
                 ["/var/lib/service", "/etc"].each do |path|
@@ -109,56 +112,72 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
         File.join(resource[:path], resource[:name])
     end
     
-    def restartcmd
-        [ command(:svc), "-t", self.service]
-    end
-
-    # The start command does nothing, service are automatically started
-    # when enabled by svscan. But, forces an enable if necessary
-    def start
-        # to start make sure the sevice is enabled
-        self.enable
-        # start is then automatic
-    end
-
     def status
         begin
-            output = svstat self.service
-            return :running if output =~ /\bup\b/
+            output = svstat self.service 
+            if output =~ /:\s+up \(/
+                return :running
+            end
         rescue Puppet::ExecutionFailure => detail
             raise Puppet::Error.new( "Could not get status for service %s: %s" % [ resource.ref, detail] )
         end
         return :stopped
     end
 
-    # unfortunately it is not possible
-    # to stop without disabling the service
-    def stop
-        self.disable
+    def startcmd
+        self.enable if ! FileTest.symlink?(self.service)
+        [command(:svc), "-u", self.service ]
     end
 
-    # disable by stopping the service
-    # and removing the symlink so that svscan
-    # doesn't restart our service behind our back
-    def disable
-        # should stop the service
-        # stop the log subservice if any
-        log = File.join(self.service, "log")
-        texecute("stop log", [ command(:svc) , '-dx', log] ) if FileTest.directory?(log)
-        
-        # stop the main resource
-        texecute("stop", [command(:svc), '-dx', self.service] )
+    def stopcmd
+        [command(:svc), "-d", self.service ]
+    end
 
-        # unlink the daemon symlink to disable it
-        File.unlink(self.service) if FileTest.symlink?(self.service)
+    def restartcmd
+        [ command(:svc), "-t", self.service]
+    end
+
+    def setupservice
+        begin
+            if resource[:manifest]
+                Puppet.notice "Configuring %s" % resource[:name]
+                command = [ resource[:manifest], resource[:name] ]
+                #texecute("setupservice", command)
+                rv = system("#{command}")
+            end
+        rescue Puppet::ExecutionFailure => detail
+            raise Puppet::Error.new( "Cannot config %s to enable it: %s" % [ self.service, detail ] )
+        end
     end
 
     def enabled?
-        FileTest.symlink?(self.service)
+        case self.status
+        when :running:
+            return :true
+        else
+            return :false
+        end
     end
 
     def enable
-        File.symlink(self.daemon, self.service) if ! FileTest.symlink?(self.service)
+        begin
+        if ! FileTest.directory?(self.daemon)
+            Puppet.notice "No daemon dir, calling setupservice for %s" % resource[:name]
+            self.setupservice
+        end
+        if self.daemon
+            if ! FileTest.symlink?(self.service)
+                Puppet.notice "Enabling %s: linking %s -> %s" % [ self.service, self.daemon, self.service ]
+                File.symlink(self.daemon, self.service)
+            end
+        end
+        rescue Puppet::ExecutionFailure => detail
+            raise Puppet::Error.new( "No daemon directory found for %s" % self.service )
+        end
+    end
+
+    def disable
+        self.stop
     end
 end
 
