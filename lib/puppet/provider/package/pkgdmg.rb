@@ -26,6 +26,7 @@
 # in /var/db/.puppet_pkgdmg_installed_<name>
 
 require 'puppet/provider/package'
+require 'facter/util/plist'
 
 Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Package do
     desc "Package management based on Apple's Installer.app and DiskUtility.app.  This package works by checking the contents of a DMG image for Apple pkg or mpkg files. Any number of pkg or mpkg files may exist in the root directory of the DMG file system. Sub directories are not checked for packages.  See `the wiki docs </trac/puppet/wiki/DmgPackages>` for more detail."
@@ -67,10 +68,9 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
     
     def self.installpkgdmg(source, name)
         unless source =~ /\.dmg$/i
-            self.fail "Mac OS X PKG DMG's must specificy a source string ending in .dmg"
+            raise Puppet::Error.new("Mac OS X PKG DMG's must specificy a source string ending in .dmg")
         end
         require 'open-uri'
-        require 'facter/util/plist'
         cached_source = source
         if %r{\A[A-Za-z][A-Za-z0-9+\-\.]*://} =~ cached_source
             cached_source = "/tmp/#{name}"
@@ -84,27 +84,34 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
         end
         
         begin
-            open(cached_source) do |dmg|
+            File.open(cached_source) do |dmg|
                 xml_str = hdiutil "mount", "-plist", "-nobrowse", "-readonly", "-noidme", "-mountrandom", "/tmp", dmg.path
-                # JJM THIS IS A HORRIBLE HACK (Well, actually it's not so bad...)
-                mounts = xml_str.scan(/<string>(\/tmp.*?)<\/string>/)[0]
+                hdiutil_info = Plist::parse_xml(xml_str)
+                unless hdiutil_info.has_key?("system-entities")
+                    raise Puppet::Error.new("No disk entities returned by mount at %s" % dmg.path)
+                end
+                mounts = hdiutil_info["system-entities"].collect { |entity|
+                    entity["mount-point"]
+                }.compact
                 begin
-                    mounts.each do |fspath|
-                        Dir.entries(fspath).select { |f|
+                    mounts.each do |mountpoint|
+                        Dir.entries(mountpoint).select { |f|
                             f =~ /\.m{0,1}pkg$/i
-                            }.each do |pkg|
-                                installpkg("#{fspath}/#{pkg}", name, source)
-                            end
-                    end # mounts.each do
+                        }.each do |pkg|
+                            installpkg("#{mountpoint}/#{pkg}", name, source)
+                        end
+                    end
                 ensure
-                    hdiutil "eject", mounts[0]
-                end # begin
-            end # open() do
+                    mounts.each do |mountpoint|
+                        hdiutil "eject", mountpoint
+                    end
+                end
+            end
         ensure
             # JJM Remove the file if open-uri didn't already do so.
             File.unlink(cached_source) if File.exist?(cached_source)
-        end # begin
-    end # def self.installpkgdmg
+        end
+    end
 
     def query
         if FileTest.exists?("/var/db/.puppet_pkgdmg_installed_#{@resource[:name]}")
@@ -117,10 +124,10 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
     def install
         source = nil
         unless source = @resource[:source]
-            self.fail "Mac OS X PKG DMG's must specify a package source."
+            raise Puppet::Error.new("Mac OS X PKG DMG's must specify a package source.")
         end
         unless name = @resource[:name]
-            self.fail "Mac OS X PKG DMG's must specify a package name."
+            raise Puppet::Error.new("Mac OS X PKG DMG's must specify a package name.")
         end
         self.class.installpkgdmg(source,name)
     end
