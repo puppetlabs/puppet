@@ -58,7 +58,9 @@ Puppet::Type.newtype(:augeas) do
     end
 
     newparam (:context) do
-        desc "Optional context path. This value is pre-pended to the paths of all changes"
+        desc "Optional context path. This value is pre-pended to the paths of all changes if the
+              path is relative. So a path specified as /files/foo will not be prepended with the
+              context whild files/foo will be prepended"
         defaultto ""
     end
 
@@ -69,7 +71,8 @@ Puppet::Type.newtype(:augeas) do
                get [AUGEAS_PATH] [COMPARATOR] [STRING]
                match [MATCH_PATH] size [COMPARATOR] [INT]
                match [MATCH_PATH] include [STRING]
-               match [MATCH_PATH] == [AN_ARRAY]
+               match [MATCH_PATH] eq [AN_ARRAY]
+               match [MATCH_PATH] noteq [AN_ARRAY]               
 
              where::
 
@@ -97,10 +100,6 @@ Puppet::Type.newtype(:augeas) do
           insert [LABEL] [WHERE] [PATH]
                                  Synonym for ins
         If the parameter 'context' is set that value is prepended to PATH"
-
-        munge do |value|
-            provider.parse_commands(value)
-        end
     end
 
 

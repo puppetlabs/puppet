@@ -18,6 +18,7 @@
 # Author: Bryan Kearney <bkearney@redhat.com>
 
 require 'augeas' if Puppet.features.augeas?
+require 'strscan'
 
 Puppet::Type.type(:augeas).provide(:augeas) do
     include Puppet::Util
@@ -29,6 +30,22 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     SAVE_NOOP = "noop"
     SAVE_OVERWRITE = "overwrite"
 
+    COMMANDS = {
+      "set" => [ :path, :string ],
+      "rm" => [ :path ],
+      "clear" => [ :path ],
+      "insert" => [ :string, :string, :path ],
+      "get" => [ :path, :comparator, :string ],
+      "match" => [ :path, :glob ],
+      "size" => [:comparator, :int],
+      "include" => [:string],
+      "eq" => [:glob],
+      "noteq" => [:glob]
+    }
+
+    COMMANDS["ins"] = COMMANDS["insert"]
+    COMMANDS["remove"] = COMMANDS["rm"]    
+
     attr_accessor :aug
 
     # Extracts an 2 dimensional array of commands which are in the
@@ -38,42 +55,76 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     # - A string with many commands per line
     # - An array of strings.
     def parse_commands(data)
-        commands = Array.new()
-        if data.is_a?(String)
-            data.each_line do |line|
-                cmd_array = Array.new()
-                single = line.index("'")
-                double = line.index('"')
-                tokens = nil
-                delim = " "
-                if ((single != nil) or (double != nil))
-                    single = 99999 if single == nil
-                    double = 99999 if double == nil
-                    delim = '"' if double < single
-                    delim = "'" if single < double
-                end
-                tokens = line.split(delim)
-                # If the length of tokens is 2, thn that means the pattern was
-                # command file "some text", therefore we need to re-split
-                # the first line
-                if tokens.length == 2
-                    tokens = (tokens[0].split(" ")) << tokens[1]
-                end
-                cmd = tokens.shift().strip()
-                delim = "" if delim == " "
-                file = tokens.shift().strip()
-                other = tokens.join(" ").strip()
-                cmd_array << cmd if !cmd.nil?
-                cmd_array << file if !file.nil?
-                cmd_array << other if other != ""
-                commands << cmd_array
-            end
-        elsif data.is_a?(Array)
-            data.each do |datum|
-                commands.concat(parse_commands(datum))
-            end
+        context = resource[:context]
+        # Add a trailing / if it is not there
+        if (context.length > 0)
+            context << "/" if context[-1, 1] != "/"
         end
-        return commands
+
+        if data.is_a?(String)
+            s = data
+            data = []
+            s.each_line { |line| data << line }
+        end
+        args = []
+        data.each do |line|
+            argline = []
+            sc = StringScanner.new(line)
+            cmd = sc.scan(/\w+/)
+            formals = COMMANDS[cmd]
+            fail("Unknown command #{cmd}") unless formals
+            argline << cmd
+            narg = 0
+            formals.each do |f|
+                sc.skip(/\s+/)
+                narg += 1
+                if f == :path
+                    start = sc.pos
+                    nbracket = 0
+                    begin
+                        sc.skip(/[^\]\[\s]+/)
+                        ch = sc.getch
+                        nbracket += 1 if ch == "["
+                        nbracket -= 1 if ch == "]"
+                        fail("unmatched [") if nbracket < 0
+                    end until nbracket == 0 && (sc.eos? || ch =~ /\s/)
+                        len = sc.pos - start
+                        len -= 1 unless sc.eos?
+                    unless p = sc.string[start, len]
+                        fail("missing path argument #{narg} for #{cmd}")
+                    end
+                    if p[0,1] != "$" && p[0,1] != "/"
+                        argline << context + p
+                    else
+                        argline << p
+                    end
+                elsif f == :string
+                    delim = sc.peek(1)
+                    if delim == "'" || delim == "\""
+                        sc.getch
+                        argline << sc.scan(/([^\\#{delim}]|(\\.))*/)
+                        sc.getch
+                    else
+                        argline << sc.scan(/[^\s]+/)
+                    end
+                    unless argline[-1]
+                        fail(raise Exception, "missing string argument #{narg} for #{cmd}")
+                    end
+                elsif f == :comparator
+                    argline << sc.scan(/(==|!=|=~|<|<=|>|>=)/)
+                    unless argline[-1]
+                        puts sc.rest() 
+                        fail(raise Exception, "invalid comparator for command #{cmd}")
+                    end
+                elsif f == :int
+                    argline << sc.scan(/\d+/).to_i
+                elsif f== :glob
+                    argline << sc.rest()
+                end
+            end
+            args << argline
+        end
+        return args
     end
 
 
@@ -137,10 +188,13 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         return_value = false
 
         #validate and tear apart the command
-        fail("Invalid command: #{cmd_array.join(" ")}") if cmd_array.length < 4
+        fail("Invalid command: #{cmd_array.join(" ")}") if cmd_array.length < 3
         cmd = cmd_array.shift()
         path = cmd_array.shift()
-        verb = cmd_array.shift()
+
+        # Need to break apart the clause
+        clause_array = parse_commands(cmd_array.shift())[0]
+        verb = clause_array.shift()
 
         #Get the values from augeas
         result = @aug.match(path) || ''
@@ -148,21 +202,29 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         unless (result.nil?)
             case verb
                 when "size":
-                    fail("Invalid command: #{cmd_array.join(" ")}") if cmd_array.length != 2
-                    comparator = cmd_array.shift()
-                    arg = cmd_array.shift().to_i
+                    fail("Invalid command: #{cmd_array.join(" ")}") if clause_array.length != 2
+                    comparator = clause_array.shift()
+                    arg = clause_array.shift()
                     return_value = true if (result.size.send(comparator, arg))
                 when "include":
-                    arg = cmd_array.join(" ")
+                    arg = clause_array.shift()
                     return_value = true if result.include?(arg)
-                when "==":
+                when "eq":
                     begin
-                        arg = cmd_array.join(" ")
+                        arg = clause_array.shift()
                         new_array = eval arg
                         return_value = true if result == new_array
                     rescue
                         fail("Invalid array in command: #{cmd_array.join(" ")}")
                     end
+                when "noteq":
+                    begin
+                        arg = clause_array.shift()
+                        new_array = eval arg
+                        return_value = true if result != new_array
+                    rescue
+                        fail("Invalid array in command: #{cmd_array.join(" ")}")
+                    end                    
             end
         end
         return_value
@@ -188,11 +250,9 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         self.open_augeas()
         filter = resource[:onlyif]
         unless (filter == "")
-            cmd_array = filter.split
+            cmd_array = parse_commands(filter)[0]
             command = cmd_array[0];
-            cmd_array[1]= File.join(resource[:context], cmd_array[1])
             begin
-                data = nil
                 case command
                     when "get" then return_value = process_get(cmd_array)
                     when "match" then return_value = process_match(cmd_array)
@@ -244,35 +304,26 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
     # Actually execute the augeas changes.
     def do_execute_changes
-        commands = resource[:changes].clone()
-        context = resource[:context]
+        commands = parse_commands(resource[:changes])
         commands.each do |cmd_array|
-            cmd_array = cmd_array.clone()
             fail("invalid command #{cmd_array.join[" "]}") if cmd_array.length < 2
             command = cmd_array[0]
             cmd_array.shift()
             begin
                 case command
                     when "set":
-                        cmd_array[0]=File.join(context, cmd_array[0])
                         debug("sending command '#{command}' with params #{cmd_array.inspect}")
                         @aug.set(cmd_array[0], cmd_array[1])
                     when "rm", "remove":
-                        cmd_array[0]=File.join(context, cmd_array[0])
                         debug("sending command '#{command}' with params #{cmd_array.inspect}")
                         @aug.rm(cmd_array[0])
                     when "clear":
-                        cmd_array[0]=File.join(context, cmd_array[0])
                         debug("sending command '#{command}' with params #{cmd_array.inspect}")
                         @aug.clear(cmd_array[0])
                     when "insert", "ins"
-                        ext_array = cmd_array[1].split(" ") ;
-                        if cmd_array.size < 2 or ext_array.size < 2
-                            fail("ins requires 3 parameters")
-                        end
                         label = cmd_array[0]
-                        where = ext_array[0]
-                        path = File.join(context, ext_array[1])
+                        where = cmd_array[1]
+                        path = cmd_array[2]
                         case where
                             when "before": before = true
                             when "after": before = false
