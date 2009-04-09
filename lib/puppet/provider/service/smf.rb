@@ -6,6 +6,9 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
     only support for starting and stopping services, which also enables and
     disables them, respectively.
 
+    By specifying manifest => \"/path/to/service.xml\", the SMF manifest will
+    be imported if it does not exist.
+
   "
 
     defaultfor :operatingsystem => :solaris
@@ -13,6 +16,21 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
     confine :operatingsystem => :solaris
 
     commands :adm => "/usr/sbin/svcadm", :svcs => "/usr/bin/svcs"
+    commands :svccfg => "/usr/sbin/svccfg"
+
+    def setupservice
+        begin
+            if resource[:manifest]
+                [command(:svcs), "-l", @resource[:name]]
+                if $?.exitstatus == 1
+                    Puppet.notice "Importing %s for %s" % [ @resource[:manifest], @resource[:name] ]
+                    svccfg :import, resource[:manifest]
+                end
+            end
+        rescue Puppet::ExecutionFailure => detail
+            raise Puppet::Error.new( "Cannot config %s to enable it: %s" % [ self.service, detail ] )
+         end
+    end
 
     def enable
         self.start
@@ -36,6 +54,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
     end
 
     def startcmd
+        self.setupservice
         [command(:adm), :enable, @resource[:name]]
     end
 
@@ -44,6 +63,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
             super
             return
         end
+
         begin
             output = svcs "-l", @resource[:name]
         rescue Puppet::ExecutionFailure
