@@ -10,10 +10,10 @@ class Puppet::Rails::Host < ActiveRecord::Base
     include Puppet::Util
     include Puppet::Util::CollectionMerger
 
-    has_many :fact_values, :dependent => :destroy
-    has_many :fact_names, :through => :fact_values
+    has_many :fact_values, :dependent => :destroy, :class_name => "Puppet::Rails::FactValue"
+    has_many :fact_names, :through => :fact_values, :class_name => "Puppet::Rails::FactName"
     belongs_to :source_file
-    has_many :resources, :dependent => :destroy
+    has_many :resources, :dependent => :destroy, :class_name => "Puppet::Rails::Resource"
 
     # If the host already exists, get rid of its objects
     def self.clean(host)
