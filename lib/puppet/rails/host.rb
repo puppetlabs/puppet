@@ -233,6 +233,8 @@ class Puppet::Rails::Host < ActiveRecord::Base
             resource.tags.each { |tag| db_resource.add_resource_tag(tag) }
         }
 
+        db_resource.save
+
         return db_resource
     end
 
