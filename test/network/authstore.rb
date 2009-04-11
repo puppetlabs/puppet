@@ -266,6 +266,51 @@ class TestAuthStore < Test::Unit::TestCase
         assert(@store.allowed?("host.madstop.com", "192.168.0.1"),
             "More specific allowal by ip failed")
     end
+
+    def test_dynamic_backreferences
+        @store.allow("$1.madstop.com")
+
+        assert_nothing_raised { @store.interpolate([nil, "host"]) }
+        assert(@store.allowed?("host.madstop.com", "192.168.0.1"), "interpolation failed")
+        assert_nothing_raised { @store.reset_interpolation }
+    end
+
+    def test_dynamic_ip
+        @store.allow("192.168.0.$1")
+
+        assert_nothing_raised { @store.interpolate([nil, "12"]) }
+        assert(@store.allowed?("host.madstop.com", "192.168.0.12"), "interpolation failed")
+        assert_nothing_raised { @store.reset_interpolation }
+    end
+
+    def test_multiple_dynamic_backreferences
+        @store.allow("$1.$2")
+
+        assert_nothing_raised { @store.interpolate([nil, "host", "madstop.com"]) }
+        assert(@store.allowed?("host.madstop.com", "192.168.0.1"), "interpolation failed")
+        assert_nothing_raised { @store.reset_interpolation }
+    end
+
+    def test_multithreaded_allow_with_dynamic_backreferences
+        @store.allow("$1.madstop.com")
+
+        threads = []
+        9.times { |a|
+            threads << Thread.new {
+                9.times { |b|
+                    Thread.pass
+                    @store.interpolate([nil, "a#{b}", "madstop.com"])
+                    Thread.pass
+                    assert( @store.allowed?("a#{b}.madstop.com", "192.168.0.1") )
+                    Thread.pass
+                    @store.reset_interpolation
+                    Thread.pass
+                }
+            }
+        }
+        threads.each { |th| th.join }
+    end
+
 end
 
 class TestAuthStoreDeclaration < PuppetTest::TestCase
@@ -292,7 +337,9 @@ class TestAuthStoreDeclaration < PuppetTest::TestCase
             "billy.Hostname.COM" => [:domain, %w{com hostname billy}, nil],
             "billy-jean.Hostname.COM" => [:domain, %w{com hostname billy-jean}, nil],
             "*.hostname.COM" => [:domain, %w{com hostname}, 2],
-            "*.hostname.COM" => [:domain, %w{com hostname}, 2]
+            "*.hostname.COM" => [:domain, %w{com hostname}, 2],
+            "$1.hostname.COM" => [:dynamic, %w{com hostname $1}, nil],
+            "192.168.$1.$2" => [:dynamic, %w{$2 $1 168 192}, nil]
         }.each do |input, output|
 
             # Create a new decl each time, so values aren't cached.

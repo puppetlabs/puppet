@@ -45,7 +45,7 @@ module Puppet
                 return true
             end
 
-            if decl = @declarations.find { |d| d.match?(name, ip) }
+            if decl = declarations.find { |d| d.match?(name, ip) }
                 return decl.result
             end
 
@@ -72,7 +72,28 @@ module Puppet
             "authstore"
         end
 
+        def interpolate(match)
+            declarations = @declarations.collect do |ace|
+                ace.interpolate(match)
+            end
+            declarations.sort!
+            Thread.current[:declarations] = declarations
+        end
+
+        def reset_interpolation
+            Thread.current[:declarations] = nil
+        end
+
         private
+
+        # returns our ACEs list, but if we have a modification of it
+        # in our current thread, let's return it
+        # this is used if we want to override the this purely immutable list
+        # by a modified version in a multithread safe way.
+        def declarations
+            return Thread.current[:declarations] if Thread.current[:declarations]
+            @declarations
+        end
 
         # Store the results of a pattern into our hash.  Basically just
         # converts the pattern and sticks it into the hash.
@@ -193,6 +214,21 @@ module Puppet
                 @type = type
             end
 
+            # interpolate a pattern to replace any
+            # backreferences by the given match
+            # for instance if our pattern is $1.reductivelabs.com
+            # and we're called with a MatchData whose capture 1 is puppet
+            # we'll return a pattern of puppet.reductivelabs.com
+            def interpolate(match)
+                return self if @name == :ip
+
+                clone = dup
+                clone.pattern = clone.pattern.reverse.collect do |p|
+                    p.gsub(/\$(\d)/) { |m| match[$1.to_i] }
+                end.join(".")
+                clone
+            end
+
             private
 
             # Returns nil if both values are true or both are false, returns
@@ -277,6 +313,9 @@ module Puppet
                     @pattern = munge_name(value)
                     @pattern.pop # take off the '*'
                     @length = @pattern.length
+                when /\$\d+/ # a backreference pattern ala $1.reductivelabs.com or 192.168.0.$1 or $1.$2
+                    @name = :dynamic
+                    @pattern = munge_name(value)
                 else
                     # Else, use the IPAddr class to determine if we've got a
                     # valid IP address.
