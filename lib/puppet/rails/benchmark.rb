@@ -15,7 +15,7 @@ module Puppet::Rails::Benchmark
         result
     end
 
-    def sometimes_benchmark(message)
+    def debug_benchmark(message)
         unless Puppet::Rails::TIME_DEBUG
             return yield
         end

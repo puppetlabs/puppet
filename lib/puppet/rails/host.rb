@@ -46,7 +46,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
             transaction do
                 #unless host = find_by_name(name)
 
-                sometimes_benchmark("Searched for host")do
+                debug_benchmark("Searched for host")do
                     unless host = find_by_name(node.name)
                         host = new(:name => node.name)
                     end
@@ -62,13 +62,13 @@ class Puppet::Rails::Host < ActiveRecord::Base
                 # Store the facts into the database.
                 host.merge_facts(node.parameters)
 
-                sometimes_benchmark("Handled resources") {
+                debug_benchmark("Handled resources") {
                     host.merge_resources(resources)
                 }
 
                 host.last_compile = Time.now
 
-                sometimes_benchmark("Saved host") {
+                debug_benchmark("Saved host") {
                     host.save
                 }
             end
@@ -146,15 +146,15 @@ class Puppet::Rails::Host < ActiveRecord::Base
     # Set our resources.
     def merge_resources(list)
         resources_by_id = nil
-        sometimes_benchmark("Searched for resources") {
+        debug_benchmark("Searched for resources") {
             resources_by_id = find_resources()
         }
 
-        sometimes_benchmark("Searched for resource params and tags") {
+        debug_benchmark("Searched for resource params and tags") {
             find_resources_parameters_tags(resources_by_id)
         } if id
 
-        sometimes_benchmark("Performed resource comparison") {
+        debug_benchmark("Performed resource comparison") {
             compare_to_catalog(resources_by_id, list)
         }
     end
@@ -183,17 +183,17 @@ class Puppet::Rails::Host < ActiveRecord::Base
         end
 
         resources = nil
-        sometimes_benchmark("Resource removal") {
+        debug_benchmark("Resource removal") {
             resources = remove_unneeded_resources(compiled, existing)
         }
 
         # Now for all resources in the catalog but not in the db, we're pretty easy.
         additions = nil
-        sometimes_benchmark("Resource merger") {
+        debug_benchmark("Resource merger") {
             additions = perform_resource_merger(compiled, resources)
         }
 
-        sometimes_benchmark("Resource addition") {
+        debug_benchmark("Resource addition") {
             additions.each do |resource|
                 build_rails_resource_from_parser_resource(resource)
             end
