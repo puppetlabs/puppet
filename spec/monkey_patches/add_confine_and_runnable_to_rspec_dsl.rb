@@ -19,7 +19,7 @@ module Spec
                         warn "Skipping unsuitable example group %s: %s" % [example_group.description, example_group.messages.join(", ")]
                         next
                     end
-                    success = success & example_group.run
+                    success = success & example_group.run(@options)
                 end
                 return success
             ensure

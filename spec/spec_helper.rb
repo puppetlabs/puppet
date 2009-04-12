@@ -17,6 +17,7 @@ end
 require 'puppettest'
 require 'puppettest/runnable_test'
 require 'mocha'
+gem 'rspec', '=1.2.2'
 require 'spec'
 
 # load any monkey-patches
