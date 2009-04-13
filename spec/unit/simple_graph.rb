@@ -197,6 +197,15 @@ describe Puppet::SimpleGraph do
         it "should support returning an array of matching edges" do
             @graph.adjacent(:two, :type => :edges).should == [@two_three]
         end
+
+        # Bug #2111
+        it "should not consider a vertex adjacent just because it was asked about previously" do
+            @graph = Puppet::SimpleGraph.new
+            @graph.add_vertex("a")
+            @graph.add_vertex("b")
+            @graph.edge?("a", "b")
+            @graph.adjacent("a").should == []
+        end
     end
 
     describe "when clearing" do

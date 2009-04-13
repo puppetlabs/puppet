@@ -29,7 +29,7 @@ class Puppet::SimpleGraph
 
             return @adjacencies[direction].values.flatten if options[:type] == :edges
 
-            return @adjacencies[direction].keys
+            return @adjacencies[direction].keys.reject { |vertex| @adjacencies[direction][vertex].empty? }
         end
 
         # Add an edge to our list.
