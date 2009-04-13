@@ -422,14 +422,6 @@ class Puppet::SimpleGraph
       system('dotty', dotfile)
     end
 
-    # Just walk the tree and pass each edge.
-    def walk(source, direction, &block)
-        adjacent(source, :direction => direction).each do |target|
-            yield source, target
-            walk(target, direction, &block)
-        end
-    end
-
     # Use +dot+ to create a graphical representation of the graph.  Returns the
     # filename of the graphics file.
     def write_to_graphic_file (fmt='png', dotfile='graph')
