@@ -1,4 +1,5 @@
 require 'puppet'
+require 'puppet/daemon'
 require 'puppet/application'
 require 'puppet/node/catalog'
 require 'puppet/indirector/catalog/queue'
@@ -30,7 +31,18 @@ class Puppet::Util::Settings::CElement
     end
 end
 
+class Puppet::Util::Settings::CBoolean
+    def optparse_args
+        if short
+            ["--[no-]#{name}", "-#{short}", desc, :NONE ]
+        else
+            ["--[no-]#{name}", desc, :NONE]
+        end
+    end
+end
+
 Puppet::Application.new(:puppetqd) do
+    extend Puppet::Daemon
 
     should_parse_config
 
@@ -59,8 +71,12 @@ Puppet::Application.new(:puppetqd) do
             # Once you have a Puppet::Node::Catalog instance, calling save() on it should suffice
             # to put it through to the database via its active_record indirector (which is determined
             # by the terminus_class = :active_record setting above)
+            Puppet.notice "Processing queued catalog for %s" % catalog.name
             catalog.save
         end
+        daemonize if Puppet[:daemonize]
+
+        while true do sleep 1000 end
     end
 
     # This is the main application entry point.
@@ -70,7 +86,7 @@ Puppet::Application.new(:puppetqd) do
     def run
         run_preinit
         parse_options
-        Puppet.settings.parse(Puppet[:config]) if should_parse_config?
+        Puppet.settings.parse(Puppet[:config]) if should_parse_config? and File.exist?(Puppet[:config])
         run_setup
         run_command
     end
