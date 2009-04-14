@@ -162,7 +162,8 @@ module Puppet
             "The minimum time to wait (in seconds) between checking for updates in
             configuration files.  This timeout determines how quickly Puppet checks whether
             a file (such as manifests or templates) has changed on disk."
-        ]
+        ],
+        :queue_type => ["stomp", "Which type of queue to use for asynchronous processing."]
     )
 
     hostname = Facter["hostname"].value

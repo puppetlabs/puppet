@@ -26,7 +26,6 @@ describe Puppet::Util::Queue do
     before :each do
         @class = Class.new do
             extend mod
-            self.queue_type_default = :default
         end
     end
 
@@ -80,16 +79,10 @@ describe Puppet::Util::Queue do
     end
 
     context 'when determining client type' do
-        it 'returns client class based on queue_type_default' do
-            Puppet.settings.stubs(:value).returns(nil)
-            @class.client_class.should == client_classes[:default]
-            @class.client.class.should == client_classes[:default]
-        end
-
-        it 'prefers settings variable for client class when specified' do
-            Puppet.settings.stubs(:value).with(:queue_client).returns(:setup)
-            @class.client_class.should == client_classes[:setup]
-            @class.client.class.should == client_classes[:setup]
+        it 'returns client class based on the :queue_type setting' do
+            Puppet.settings.expects(:value).with(:queue_type).returns(:myqueue)
+            Puppet::Util::Queue.expects(:queue_type_to_class).with(:myqueue).returns "eh"
+            @class.client_class.should == "eh"
         end
     end
 end

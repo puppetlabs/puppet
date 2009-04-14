@@ -20,7 +20,6 @@ require 'yaml'
 # creation is automatic and not a concern).
 class Puppet::Indirector::Queue < Puppet::Indirector::Terminus
     extend ::Puppet::Util::Queue
-    self.queue_type_default = :stomp
 
     # Queue has no idiomatic "find"
     def find(request)

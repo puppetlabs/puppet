@@ -23,9 +23,6 @@ require 'puppet/util/instance_loader'
 #   class Queue::Fue
 #       # mix it in at the class object level rather than instance level
 #       extend ::Puppet::Util::Queue
-#
-#       # specify the default client type to use.
-#       self.queue_type_default = :special_magical_type
 #   end
 #
 # Queue::Fue instances can get a message queue client through the registry through the mixed-in method
@@ -38,7 +35,6 @@ require 'puppet/util/instance_loader'
 # * _queue_ names are simple names independent of the message broker or client library.  No "/queue/" prefixes like in Stomp::Client.
 module Puppet::Util::Queue
     extend Puppet::Util::InstanceLoader
-    attr_accessor :queue_type_default
     instance_load :queue_clients, 'puppet/util/queue'
 
     # Adds a new class/queue-type pair to the registry.  The _type_ argument is optional; if not provided,
@@ -84,13 +80,11 @@ module Puppet::Util::Queue
     end
 
     # The class object for the client to be used, determined by queue configuration
-    # settings and known queue client types.
-    # Looked to the <tt>:queue_client</tt> configuration entry in the running application for
-    # the default queue type to use, and fails over to +queue_type_default+ if the configuration
-    # information is not present.
+    # settings.
+    # Looks to the <tt>:queue_type</tt> configuration entry in the running application for
+    # the default queue type to use.
     def client_class
-         Puppet::Util::Queue.queue_type_to_class(Puppet[:queue_client] || queue_type_default)
-        # Puppet::Util::Queue.queue_type_to_class(Puppet[:queue_client] || :stomp)
+        Puppet::Util::Queue.queue_type_to_class(Puppet[:queue_type])
     end
 
     # Returns (instantiating as necessary) the singleton queue client instance, according to the

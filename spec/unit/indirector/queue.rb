@@ -46,7 +46,7 @@ describe Puppet::Indirector::Queue do
         @subject.name = :me
 
         Puppet.settings.stubs(:value).returns("bogus setting data")
-        Puppet.settings.stubs(:value).with(:queue_client).returns(:test_client)
+        Puppet.settings.stubs(:value).with(:queue_type).returns(:test_client)
         Puppet::Util::Queue.stubs(:queue_type_to_class).with(:test_client).returns(Puppet::Indirector::Queue::TestClient)
         Puppet::Indirector::Queue::TestClient.reset
 
