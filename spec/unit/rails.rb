@@ -13,6 +13,7 @@ describe Puppet::Rails, "when initializing any connection" do
         Logger.stubs(:new).returns(@logger)
 
         ActiveRecord::Base.stubs(:logger).returns(@logger)
+        ActiveRecord::Base.stubs(:connected?).returns(false)
     end
 
     it "should use settings" do
