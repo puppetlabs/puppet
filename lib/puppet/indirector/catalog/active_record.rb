@@ -26,9 +26,11 @@ class Puppet::Resource::Catalog::ActiveRecord < Puppet::Indirector::ActiveRecord
 
         host = ar_model.find_by_name(catalog.name) || ar_model.create(:name => catalog.name)
 
-        host.merge_resources(catalog.vertices)
-        host.last_compile = Time.now
+        host.railsmark "Saved catalog to database" do
+            host.merge_resources(catalog.vertices)
+            host.last_compile = Time.now
 
-        host.save
+            host.save
+        end
     end
 end
