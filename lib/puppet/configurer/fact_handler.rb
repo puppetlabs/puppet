@@ -10,9 +10,7 @@ module Puppet::Configurer::FactHandler
         Puppet[:factsync]
     end
 
-    def upload_facts
-        # XXX down = Puppet[:downcasefacts]
-
+    def find_facts
         reload_facter()
 
         # This works because puppetd configures Facts to use 'facter' for
@@ -22,8 +20,20 @@ module Puppet::Configurer::FactHandler
             Puppet::Node::Facts.find(Puppet[:certname])
         rescue => detail
             puts detail.backtrace if Puppet[:trace]
-            Puppet.err("Could not retrieve local facts: %s" % detail)
+            raise Puppet::Error, "Could not retrieve local facts: %s" % detail
         end
+    end
+
+    def facts_for_uploading
+        facts = find_facts
+        #format = facts.class.default_format
+
+        # Hard-code yaml, because I couldn't get marshal to work.
+        format = :yaml
+
+        text = facts.render(format)
+
+        return {:facts_format => format, :facts => URI.escape(text)}
     end
 
     # Retrieve facts from the central server.

@@ -222,7 +222,6 @@ Puppet::Application.new(:puppetd) do
         Puppet::Resource::Catalog.cache_class = :yaml
 
         Puppet::Node::Facts.terminus_class = :facter
-        Puppet::Node::Facts.cache_class = :rest
 
         # We need tomake the client either way, we just don't start it
         # if --no-client is set.

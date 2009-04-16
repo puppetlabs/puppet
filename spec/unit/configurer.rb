@@ -25,6 +25,7 @@ describe Puppet::Configurer, "when executing a catalog run" do
     before do
         Puppet.settings.stubs(:use).returns(true)
         @agent = Puppet::Configurer.new
+        @agent.stubs(:facts_for_uploading).returns({})
     end
 
     it "should prepare for the run" do
@@ -70,6 +71,7 @@ describe Puppet::Configurer, "when retrieving a catalog" do
     before do
         Puppet.settings.stubs(:use).returns(true)
         @agent = Puppet::Configurer.new
+        @agent.stubs(:facts_for_uploading).returns({})
 
         @catalog = Puppet::Resource::Catalog.new
 
@@ -86,6 +88,13 @@ describe Puppet::Configurer, "when retrieving a catalog" do
         Facter.stubs(:value).returns "eh"
         Facter.expects(:value).with("hostname").returns "myhost"
         Puppet::Resource::Catalog.expects(:find).with { |name, options| name == "myhost" }.returns @catalog
+
+        @agent.retrieve_catalog
+    end
+
+    it "should pass the prepared facts and the facts format as arguments when retrieving the catalog" do
+        @agent.expects(:facts_for_uploading).returns(:facts => "myfacts", :facts_format => :foo)
+        Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:facts] == "myfacts" and options[:facts_format] == :foo }.returns @catalog
 
         @agent.retrieve_catalog
     end
@@ -177,7 +186,6 @@ describe Puppet::Configurer, "when preparing for a run" do
         Puppet.settings.stubs(:use).returns(true)
         @agent = Puppet::Configurer.new
         @agent.stubs(:dostorage)
-        @agent.stubs(:upload_facts)
         @facts = {"one" => "two", "three" => "four"}
     end
 
@@ -198,12 +206,6 @@ describe Puppet::Configurer, "when preparing for a run" do
         @agent.stubs(:dostorage)
         @agent.expects(:download_plugins)
 
-        @agent.prepare
-    end
-
-    it "should upload facts to use for catalog retrieval" do
-        @agent.stubs(:dostorage)
-        @agent.expects(:upload_facts)
         @agent.prepare
     end
 end

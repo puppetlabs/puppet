@@ -75,8 +75,6 @@ class Puppet::Configurer
         download_plugins()
 
         download_fact_plugins()
-
-        upload_facts()
     end
 
     # Get the remote catalog, yo.  Returns nil if no catalog can be found.
@@ -84,11 +82,16 @@ class Puppet::Configurer
         name = Facter.value("hostname")
         catalog_class = Puppet::Resource::Catalog
 
+        # This is a bit complicated.  We need the serialized and escaped facts,
+        # and we need to know which format they're encoded in.  Thus, we
+        # get a hash with both of these pieces of information.
+        fact_options = facts_for_uploading()
+
         # First try it with no cache, then with the cache.
         result = nil
         begin
             duration = thinmark do
-                result = catalog_class.find(name, :ignore_cache => true)
+                result = catalog_class.find(name, fact_options.merge(:ignore_cache => true))
             end
         rescue => detail
             puts detail.backtrace if Puppet[:trace]
@@ -98,7 +101,7 @@ class Puppet::Configurer
         unless result
             begin
                 duration = thinmark do
-                    result = catalog_class.find(name, :ignore_terminus => true)
+                    result = catalog_class.find(name, fact_options.merge(:ignore_terminus => true))
                 end
             rescue => detail
                 puts detail.backtrace if Puppet[:trace]

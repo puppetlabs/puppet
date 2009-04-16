@@ -12,17 +12,25 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
     attr_accessor :code
 
+    def extract_facts_from_request(request)
+        return unless text_facts = request.options[:facts]
+        raise ArgumentError, "Facts but no fact format provided for %s" % request.name unless format = request.options[:facts_format]
+
+        # If the facts were encoded as yaml, then the param reconstitution system
+        # in Network::HTTP::Handler will automagically deserialize the value.
+        if text_facts.is_a?(Puppet::Node::Facts)
+            facts = text_facts
+        else
+            facts = Puppet::Node::Facts.convert_from(format, text_facts)
+        end
+        facts.save
+    end
+
     # Compile a node's catalog.
     def find(request)
-        unless node = request.options[:use_node]
-            # If the request is authenticated, then the 'node' info will
-            # be available; if not, then we use the passed-in key.  We rely
-            # on our authorization system to determine whether this is allowed.
-            name = request.node || request.key
-            unless node = find_node(name)
-                raise ArgumentError, "Could not find node '%s'; cannot compile" % name
-            end
-        end
+        extract_facts_from_request(request)
+
+        node = node_from_request(request)
 
         if catalog = compile(node)
             return catalog
@@ -100,6 +108,24 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         add_node_data(node)
 
         node
+    end
+
+    # Extract the node from the request, or use the request
+    # to find the node.
+    def node_from_request(request)
+        if node = request.options[:use_node]
+            return node
+        end
+
+        # If the request is authenticated, then the 'node' info will
+        # be available; if not, then we use the passed-in key.  We rely
+        # on our authorization system to determine whether this is allowed.
+        name = request.node || request.key
+        if node = find_node(name)
+            return node
+        end
+
+        raise ArgumentError, "Could not find node '%s'; cannot compile" % name
     end
 
     # Initialize our server fact hash; we add these to each client, and they

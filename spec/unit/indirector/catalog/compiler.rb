@@ -110,6 +110,12 @@ describe Puppet::Resource::Catalog::Compiler do
             @compiler.find(@request)
         end
 
+        it "should extract and save any facts from the request" do
+            @compiler.expects(:extract_facts_from_request).with(@request)
+            @compiler.interpreter.stubs(:compile)
+            @compiler.find(@request)
+        end
+
         it "should return the results of compiling as the catalog" do
             Puppet::Node.stubs(:find).returns(@node)
             config = mock 'config'
@@ -127,6 +133,48 @@ describe Puppet::Resource::Catalog::Compiler do
             end
             @compiler.interpreter.stubs(:compile).with(@node)
             @compiler.find(@request)
+        end
+    end
+
+    describe "when extracting facts from the request" do
+        before do
+            @compiler = Puppet::Resource::Catalog::Compiler.new
+            @request = stub 'request', :options => {}
+
+            @facts = stub 'facts', :save => nil
+        end
+
+        it "should do nothing if no facts are provided" do
+            Puppet::Node::Facts.expects(:convert_from).never
+            @request.options[:facts] = nil
+
+            @compiler.extract_facts_from_request(@request)
+        end
+
+        it "should use the Facts class to deserialize the provided facts" do
+            @request.options[:facts_format] = "foo"
+            @request.options[:facts] = "bar"
+            Puppet::Node::Facts.expects(:convert_from).returns @facts
+
+            @compiler.extract_facts_from_request(@request)
+        end
+
+        it "should use the provided fact format" do
+            @request.options[:facts_format] = "foo"
+            @request.options[:facts] = "bar"
+            Puppet::Node::Facts.expects(:convert_from).with { |format, text| format == "foo" }.returns @facts
+
+            @compiler.extract_facts_from_request(@request)
+        end
+
+        it "should convert the facts into a fact instance and save it" do
+            @request.options[:facts_format] = "foo"
+            @request.options[:facts] = "bar"
+            Puppet::Node::Facts.expects(:convert_from).returns @facts
+
+            @facts.expects(:save)
+
+            @compiler.extract_facts_from_request(@request)
         end
     end
 

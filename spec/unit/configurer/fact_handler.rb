@@ -52,29 +52,59 @@ describe Puppet::Configurer::FactHandler do
         @facthandler.download_fact_plugins
     end
 
-    it "should have a method for uploading facts" do
-        @facthandler.should respond_to(:upload_facts)
+    it "should have a method for retrieving facts" do
+        @facthandler.should respond_to(:find_facts)
     end
 
-    it "should reload Facter and find local facts when asked to upload facts" do
+    it "should use the Facts class with the :certname to find the facts" do
+        Puppet.settings.expects(:value).with(:certname).returns "foo"
+        Puppet::Node::Facts.expects(:find).with("foo").returns "myfacts"
+        @facthandler.stubs(:reload_facter)
+        @facthandler.find_facts.should == "myfacts"
+    end
+
+    it "should reload Facter and find local facts when asked to find facts" do
         @facthandler.expects(:reload_facter)
 
         Puppet.settings.expects(:value).with(:certname).returns "myhost"
         Puppet::Node::Facts.expects(:find).with("myhost")
 
-        @facthandler.upload_facts
+        @facthandler.find_facts
     end
 
-    it "should not fail if uploading facts fails" do
+    it "should fail if finding facts fails" do
         @facthandler.stubs(:reload_facter)
 
         Puppet.settings.stubs(:value).with(:trace).returns false
         Puppet.settings.stubs(:value).with(:certname).returns "myhost"
         Puppet::Node::Facts.expects(:find).raises RuntimeError
 
-        Puppet.expects(:err)
+        lambda { @facthandler.find_facts }.should raise_error(Puppet::Error)
+    end
 
-        lambda { @facthandler.upload_facts }.should_not raise_error
+    it "should have a method to prepare the facts for uploading" do
+        @facthandler.should respond_to(:facts_for_uploading)
+    end
+
+    # I couldn't get marshal to work for this, only yaml, so we hard-code yaml.
+    it "should serialize and URI escape the fact values for uploading" do
+        facts = stub 'facts'
+        facts.expects(:render).returns "my text"
+        text = URI.escape("my text")
+
+        @facthandler.expects(:find_facts).returns facts
+
+        @facthandler.facts_for_uploading.should == {:facts_format => :yaml, :facts => text}
+    end
+
+    it "should hard-code yaml as the serialization" do
+        facts = stub 'facts'
+        facts.expects(:render).with(:yaml).returns "my text"
+        text = URI.escape("my text")
+
+        @facthandler.expects(:find_facts).returns facts
+
+        @facthandler.facts_for_uploading
     end
 
     describe "when reloading Facter" do

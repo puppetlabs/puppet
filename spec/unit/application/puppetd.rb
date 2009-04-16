@@ -20,7 +20,6 @@ describe "puppetd" do
         Puppet::Node.stubs(:terminus_class=)
         Puppet::Node.stubs(:cache_class=)
         Puppet::Node::Facts.stubs(:terminus_class=)
-        Puppet::Node::Facts.stubs(:cache_class=)
     end
 
     it "should ask Puppet::Application to parse Puppet configuration file" do
@@ -164,7 +163,6 @@ describe "puppetd" do
             Puppet::Resource::Catalog.stubs(:terminus_class=)
             Puppet::Resource::Catalog.stubs(:cache_class=)
             Puppet::Node::Facts.stubs(:terminus_class=)
-            Puppet::Node::Facts.stubs(:cache_class=)
             @host = stub_everything 'host'
             Puppet::SSL::Host.stubs(:new).returns(@host)
             Puppet.stubs(:settraps)
@@ -293,12 +291,6 @@ describe "puppetd" do
 
         it "should tell the facts to use facter" do
             Puppet::Node::Facts.expects(:terminus_class=).with(:facter)
-
-            @puppetd.run_setup
-        end
-
-        it "should tell the facts cache facts through REST" do
-            Puppet::Node::Facts.expects(:cache_class=).with(:rest)
 
             @puppetd.run_setup
         end
