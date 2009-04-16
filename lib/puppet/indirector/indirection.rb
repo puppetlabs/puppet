@@ -185,14 +185,12 @@ class Puppet::Indirector::Indirection
         request = request(:find, key, *args)
         terminus = prepare(request)
 
-        # See if our instance is in the cache and up to date.
-        if cache? and ! request.ignore_cache? and cached = cache.find(request)
-            if cached.expired?
-                Puppet.info "Not using expired %s for %s from cache; expired at %s" % [self.name, request.key, cached.expiration]
-            else
-                Puppet.debug "Using cached %s for %s" % [self.name, request.key]
-                return cached
+        begin
+            if result = find_in_cache(request)
+                return result
             end
+        rescue => detail
+            Puppet.err "Cached %s for %s failed: %s" % [self.name, request.key, detail]
         end
 
         # Otherwise, return the result from the terminus, caching if appropriate.
@@ -207,6 +205,18 @@ class Puppet::Indirector::Indirection
         end
 
         return nil
+    end
+
+    def find_in_cache(request)
+        # See if our instance is in the cache and up to date.
+        return nil unless cache? and ! request.ignore_cache? and cached = cache.find(request)
+        if cached.expired?
+            Puppet.info "Not using expired %s for %s from cache; expired at %s" % [self.name, request.key, cached.expiration]
+            return nil
+        end
+
+        Puppet.debug "Using cached %s for %s" % [self.name, request.key]
+        return cached
     end
 
     # Remove something via the terminus.

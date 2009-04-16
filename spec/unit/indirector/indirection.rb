@@ -295,6 +295,21 @@ describe Puppet::Indirector::Indirection do
                     @indirection.find("/my/key").should equal(@instance)
                 end
 
+                it "should not fail if the cache fails" do
+                    @terminus.stubs(:find).returns @instance
+
+                    @cache.expects(:find).raises ArgumentError
+                    @cache.stubs(:save)
+                    lambda { @indirection.find("/my/key") }.should_not raise_error
+                end
+
+                it "should look in the main terminus if the cache fails" do
+                    @terminus.expects(:find).returns @instance
+                    @cache.expects(:find).raises ArgumentError
+                    @cache.stubs(:save)
+                    @indirection.find("/my/key").should equal(@instance)
+                end
+
                 it "should send a debug log if it is using the cached object" do
                     Puppet.expects(:debug)
                     @cache.stubs(:find).returns @instance
