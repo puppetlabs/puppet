@@ -146,7 +146,7 @@ describe Puppet::Indirector::Indirection do
             @terminus_class = mock 'terminus_class'
             @terminus = mock 'terminus'
             @terminus_class.stubs(:new).returns(@terminus)
-            @cache = mock 'cache'
+            @cache = stub 'cache', :name => "mycache"
             @cache_class = mock 'cache_class'
             Puppet::Indirector::Terminus.stubs(:terminus_class).with(:test, :cache_terminus).returns(@cache_class)
             Puppet::Indirector::Terminus.stubs(:terminus_class).with(:test, :test_terminus).returns(@terminus_class)
