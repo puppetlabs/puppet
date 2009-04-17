@@ -8,7 +8,9 @@ Puppet::Application.new(:puppet) do
     should_parse_config
 
     option("--debug","-d")
-    option("--execute EXECUTE","-e")
+    option("--execute EXECUTE","-e") do |arg|
+        options[:code] = arg
+    end
     option("--loadclasses","-L")
     option("--verbose","-v")
     option("--use-nodes")

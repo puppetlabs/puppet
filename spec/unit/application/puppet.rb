@@ -11,7 +11,7 @@ describe "Puppet" do
         Puppet::Util::Log.stubs(:level=)
     end
 
-    [:debug,:execute,:loadclasses,:verbose,:use_nodes,:detailed_exitcodes].each do |option|
+    [:debug,:loadclasses,:verbose,:use_nodes,:detailed_exitcodes].each do |option|
         it "should declare handle_#{option} method" do
             @puppet.should respond_to("handle_#{option}".to_sym)
         end
@@ -20,6 +20,11 @@ describe "Puppet" do
             @puppet.options.expects(:[]=).with(option, 'arg')
             @puppet.send("handle_#{option}".to_sym, 'arg')
         end
+    end
+
+    it "should set the code to the provided code when :execute is used" do
+        @puppet.options.expects(:[]=).with(:code, 'arg')
+        @puppet.send("handle_execute".to_sym, 'arg')
     end
 
     it "should ask Puppet::Application to parse Puppet configuration file" do
