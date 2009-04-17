@@ -61,7 +61,7 @@ describe Puppet::Type do
                 Puppet::Type.type(:mount).new(resource).title.should == "User[foo]"
             end
 
-            [:line, :file, :catalog, :implicit].each do |param|
+            [:line, :file, :catalog].each do |param|
                 it "should copy '#{param}' from the resource if present" do
                     resource = Puppet::Resource.new(:mount, "/foo")
                     resource.send(param.to_s + "=", "foo")
@@ -112,7 +112,7 @@ describe Puppet::Type do
                 @type.stubs(:namevar).returns :myname
             end
 
-            [:catalog, :implicit].each do |param|
+            [:catalog].each do |param|
                 it "should extract '#{param}' from the hash if present" do
                     Puppet::Type.type(:mount).new(:name => "/yay", param => "foo").send(param).should == "foo"
                 end
@@ -220,7 +220,7 @@ describe Puppet::Type do
             lambda { @type.hash2resource(:myname => "foo", :name => 'bar') }.should raise_error(Puppet::Error)
         end
 
-        [:catalog, :implicit].each do |attr|
+        [:catalog].each do |attr|
             it "should use any provided #{attr}" do
                 @type.hash2resource(:name => "foo", attr => "eh").send(attr).should == "eh"
             end

@@ -350,50 +350,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
             proc { @catalog.add_resource(@dupe) }.should raise_error(Puppet::Resource::Catalog::DuplicateResourceError)
         end
 
-        it "should ignore implicit resources that conflict with existing resources" do
-            @catalog.add_resource(@one)
-
-            @dupe.implicit = true
-
-            yielded = []
-            @catalog.add_resource(@dupe) { |r| yielded << r }
-            yielded.should be_empty
-        end
-
-        it "should not set the catalog for ignored implicit resources" do
-            @catalog.add_resource(@one)
-
-            @dupe.implicit = true
-
-            @catalog.add_resource(@dupe)
-            @dupe.catalog.should be_nil
-        end
-
-        it "should log when implicit resources are ignored" do
-            @catalog.add_resource(@one)
-
-            @dupe.implicit = true
-
-            @dupe.expects(:debug)
-            @catalog.add_resource(@dupe)
-        end
-
-        it "should replace implicit resources if a conflicting explicit resource is added" do
-            @catalog.add_resource(@one)
-            @one.implicit = true
-
-            proc { @catalog.add_resource(@dupe) }.should_not raise_error
-            @catalog.resource(:notify, "one").should equal(@dupe)
-        end
-
-        it "should log when implicit resources are removed from the catalog" do
-            @catalog.add_resource(@one)
-            @one.implicit = true
-
-            @one.expects(:debug)
-            @catalog.add_resource(@dupe)
-        end
-
         it "should not store objects that do not respond to :ref" do
             proc { @catalog.add_resource("thing") }.should raise_error(ArgumentError)
         end

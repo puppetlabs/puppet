@@ -17,6 +17,40 @@ describe Puppet::Transaction do
 
         @transaction.prefetch
     end
+
+    describe "when generating resources" do
+        it "should finish all resources" do
+            generator = stub 'generator', :depthfirst? => true
+            resource = stub 'resource'
+
+            @catalog = Puppet::Resource::Catalog.new
+            @transaction = Puppet::Transaction.new(@catalog)
+
+            generator.expects(:generate).returns [resource]
+
+            @catalog.expects(:add_resource).yields(resource)
+
+            resource.expects(:finish)
+
+            @transaction.generate_additional_resources(generator, :generate)
+        end
+
+        it "should skip generated resources that conflict with existing resources" do
+            generator = mock 'generator'
+            resource = stub 'resource'
+
+            @catalog = Puppet::Resource::Catalog.new
+            @transaction = Puppet::Transaction.new(@catalog)
+
+            generator.expects(:generate).returns [resource]
+
+            @catalog.expects(:add_resource).raises(Puppet::Resource::Catalog::DuplicateResourceError.new("foo"))
+
+            resource.expects(:finish).never
+
+            @transaction.generate_additional_resources(generator, :generate)
+        end
+    end
 end
 
 describe Puppet::Transaction, " when determining tags" do

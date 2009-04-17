@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + '/../spec_helper'
 require 'puppet/resource'
 
 describe Puppet::Resource do
-    [:catalog, :file, :line, :implicit].each do |attr|
+    [:catalog, :file, :line].each do |attr|
         it "should have an #{attr} attribute" do
             resource = Puppet::Resource.new("file", "/my/file")
             resource.should respond_to(attr)

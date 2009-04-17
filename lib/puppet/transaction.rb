@@ -343,9 +343,15 @@ class Transaction
         made = [made] unless made.is_a?(Array)
         made.uniq!
         made.each do |res|
-            @catalog.add_resource(res) { |r| r.finish }
+            begin
+                @catalog.add_resource(res) do |r|
+                    r.finish
+                    make_parent_child_relationship(resource, [r])
+                end
+            rescue Puppet::Resource::Catalog::DuplicateResourceError
+                next
+            end
         end
-        make_parent_child_relationship(resource, made)
         made
     end
 

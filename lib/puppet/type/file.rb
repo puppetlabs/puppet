@@ -516,7 +516,7 @@ module Puppet
             # or so.  Unfortunately, we don't have a straightforward way to manage
             # the different lifetimes of this data, so we kludge it like this.
             # The right-side hash wins in the merge.
-            options = @original_parameters.merge(:path => full_path, :implicit => true).reject { |param, value| value.nil? }
+            options = @original_parameters.merge(:path => full_path).reject { |param, value| value.nil? }
 
             # These should never be passed to our children.
             [:parent, :ensure, :recurse, :recurselimit, :target, :alias, :source].each do |param|

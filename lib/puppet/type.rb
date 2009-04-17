@@ -617,10 +617,6 @@ class Type
 
     public
 
-    ###############################
-    # Code related to the closure-like behaviour of the resource classes.
-    attr_accessor :implicit
-
     # Is this type's name isomorphic with the object?  That is, if the
     # name conflicts, does it necessarily mean that the objects conflict?
     # Defaults to true.
@@ -629,14 +625,6 @@ class Type
             return @isomorphic
         else
             return true
-        end
-    end
-
-    def implicit?
-        if defined? @implicit and @implicit
-            return true
-        else
-            return false
         end
     end
 
@@ -1056,7 +1044,7 @@ class Type
 
         # Now create our resource.
         resource = Puppet::Resource.new(self.name, title)
-        [:catalog, :implicit].each do |attribute|
+        [:catalog].each do |attribute|
             if value = hash[attribute]
                 hash.delete(attribute)
                 resource.send(attribute.to_s + "=", value)
@@ -1914,7 +1902,7 @@ class Type
             self.title = resource.ref
         end
 
-        [:file, :line, :catalog, :implicit].each do |getter|
+        [:file, :line, :catalog].each do |getter|
             setter = getter.to_s + "="
             if val = resource.send(getter)
                 self.send(setter, val)
@@ -2012,13 +2000,7 @@ class Type
         return nil unless catalog
 
         unless defined?(@parent)
-            # This is kinda weird.
-            if implicit?
-                parents = catalog.relationship_graph.adjacent(self, :direction => :in)
-            else
-                parents = catalog.adjacent(self, :direction => :in)
-            end
-            if parents
+            if parents = catalog.adjacent(self, :direction => :in)
                 # We should never have more than one parent, so let's just ignore
                 # it if we happen to.
                 @parent = parents.shift

@@ -609,10 +609,6 @@ describe Puppet::Type.type(:file) do
         end
 
         describe "and making a new child resource" do
-            it "should create an implicit resource using the provided relative path joined with the file's path" do
-                @file.newchild("my/path").should be_implicit
-            end
-
             it "should not copy the parent resource's parent" do
                 Puppet::Type.type(:file).expects(:new).with { |options| ! options.include?(:parent) }
                 @file.newchild("my/path")

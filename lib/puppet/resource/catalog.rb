@@ -65,7 +65,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
             unless resource.respond_to?(:ref)
                 raise ArgumentError, "Can only add objects that respond to :ref, not instances of %s" % resource.class
             end
-        end.find_all { |resource| fail_or_skip_unless_unique(resource) }.each do |resource|
+        end.each { |resource| fail_unless_unique(resource) }.each do |resource|
             ref = resource.ref
 
             @transient_resources << resource if applying?
@@ -430,20 +430,9 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     end
 
     # Verify that the given resource isn't defined elsewhere.
-    def fail_or_skip_unless_unique(resource)
+    def fail_unless_unique(resource)
         # Short-curcuit the common case, 
-        return resource unless existing_resource = @resource_table[resource.ref]
-
-        if resource.implicit?
-            resource.debug "Generated resource conflicts with explicit resource; ignoring generated resource"
-            return nil
-        elsif old = resource(resource.ref) and old.implicit?
-            # The existing resource is implicit; remove it and replace it with
-            # the new one.
-            old.debug "Replacing with new resource"
-            remove_resource(old)
-            return resource
-        end
+        return unless existing_resource = @resource_table[resource.ref]
 
         # If we've gotten this far, it's a real conflict
 
