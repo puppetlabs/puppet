@@ -21,34 +21,37 @@ describe Puppet::Network::FormatHandler do
     end
 
     it "should include all supported formats" do
-        one = stub 'supported', :supported? => true, :name => "one", :weight => 1
-        two = stub 'supported', :supported? => false, :name => "two", :weight => 1
-        three = stub 'supported', :supported? => true, :name => "three", :weight => 1
-        four = stub 'supported', :supported? => false, :name => "four", :weight => 1
-        Puppet::Network::FormatHandler.stubs(:formats).returns %w{one two three four}
-        Puppet::Network::FormatHandler.stubs(:format).with("one").returns one
-        Puppet::Network::FormatHandler.stubs(:format).with("two").returns two
-        Puppet::Network::FormatHandler.stubs(:format).with("three").returns three
-        Puppet::Network::FormatHandler.stubs(:format).with("four").returns four
-        FormatTester.supported_formats.sort.should == %w{one three}.sort
+        one = stub 'supported', :supported? => true, :name => :one, :weight => 1
+        two = stub 'supported', :supported? => false, :name => :two, :weight => 1
+        three = stub 'supported', :supported? => true, :name => :three, :weight => 1
+        four = stub 'supported', :supported? => false, :name => :four, :weight => 1
+        Puppet::Network::FormatHandler.stubs(:formats).returns [:one, :two, :three, :four]
+        Puppet::Network::FormatHandler.stubs(:format).with(:one).returns one
+        Puppet::Network::FormatHandler.stubs(:format).with(:two).returns two
+        Puppet::Network::FormatHandler.stubs(:format).with(:three).returns three
+        Puppet::Network::FormatHandler.stubs(:format).with(:four).returns four
+        result = FormatTester.supported_formats
+        result.length.should == 2
+        result.should be_include(:one)
+        result.should be_include(:three)
     end
 
     it "should return the supported formats in decreasing order of weight" do
-        one = stub 'supported', :supported? => true, :name => "one", :weight => 1
-        two = stub 'supported', :supported? => true, :name => "two", :weight => 6
-        three = stub 'supported', :supported? => true, :name => "three", :weight => 2
-        four = stub 'supported', :supported? => true, :name => "four", :weight => 8
-        Puppet::Network::FormatHandler.stubs(:formats).returns %w{one two three four}
-        Puppet::Network::FormatHandler.stubs(:format).with("one").returns one
-        Puppet::Network::FormatHandler.stubs(:format).with("two").returns two
-        Puppet::Network::FormatHandler.stubs(:format).with("three").returns three
-        Puppet::Network::FormatHandler.stubs(:format).with("four").returns four
-        FormatTester.supported_formats.should == %w{four two three one}
+        one = stub 'supported', :supported? => true, :name => :one, :weight => 1
+        two = stub 'supported', :supported? => true, :name => :two, :weight => 6
+        three = stub 'supported', :supported? => true, :name => :three, :weight => 2
+        four = stub 'supported', :supported? => true, :name => :four, :weight => 8
+        Puppet::Network::FormatHandler.stubs(:formats).returns [:one, :two, :three, :four]
+        Puppet::Network::FormatHandler.stubs(:format).with(:one).returns one
+        Puppet::Network::FormatHandler.stubs(:format).with(:two).returns two
+        Puppet::Network::FormatHandler.stubs(:format).with(:three).returns three
+        Puppet::Network::FormatHandler.stubs(:format).with(:four).returns four
+        FormatTester.supported_formats.should == [:four, :two, :three, :one]
     end
 
     it "should return the first format as the default format" do
-        FormatTester.expects(:supported_formats).returns %w{one two}
-        FormatTester.default_format.should == "one"
+        FormatTester.expects(:supported_formats).returns [:one, :two]
+        FormatTester.default_format.should == :one
     end
 
     it "should be able to use a protected format for better logging on errors" do
