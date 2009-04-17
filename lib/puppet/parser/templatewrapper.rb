@@ -1,5 +1,7 @@
 # A simple wrapper for templates, so they don't have full access to
 # the scope objects.
+require 'puppet/parser/files'
+
 class Puppet::Parser::TemplateWrapper
     attr_accessor :scope, :file, :string
     include Puppet::Util
@@ -63,7 +65,7 @@ class Puppet::Parser::TemplateWrapper
     end
 
     def file=(filename)
-        @file = Puppet::Module::find_template(filename, scope.compiler.environment)
+        @file = Puppet::Parser::Files.find_template(filename, scope.compiler.environment)
 
         unless FileTest.exists?(file)
             raise Puppet::ParseError,
@@ -113,4 +115,3 @@ class Puppet::Parser::TemplateWrapper
         "template[%s]" % (file ? file : "inline")
     end
 end
-

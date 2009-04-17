@@ -8,7 +8,7 @@ describe Puppet::Parser::TemplateWrapper do
         parser = stub('parser', :watch_file => true)
         @scope = stub('scope', :compiler => compiler, :parser => parser, :to_hash => {})
         @file = "fake_template"
-        Puppet::Module.stubs(:find_template).returns("/tmp/fake_template")
+        Puppet::Parser::Files.stubs(:find_template).returns("/tmp/fake_template")
         FileTest.stubs(:exists?).returns("true")
         File.stubs(:read).with("/tmp/fake_template").returns("template content")
         @tw = Puppet::Parser::TemplateWrapper.new(@scope)
@@ -21,7 +21,7 @@ describe Puppet::Parser::TemplateWrapper do
     end
 
     it "should check template file existance and read its content" do
-        Puppet::Module.expects(:find_template).with("fake_template", "foo").returns("/tmp/fake_template")
+        Puppet::Parser::Files.expects(:find_template).with("fake_template", "foo").returns("/tmp/fake_template")
         FileTest.expects(:exists?).with("/tmp/fake_template").returns(true)
         File.expects(:read).with("/tmp/fake_template").returns("template content")
 

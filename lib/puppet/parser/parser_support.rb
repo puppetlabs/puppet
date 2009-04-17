@@ -2,6 +2,7 @@
 # tired of rebuilding the parser.rb file all the time.
 class Puppet::Parser::Parser
     require 'puppet/parser/functions'
+    require 'puppet/parser/files'
 
     ASTSet = Struct.new(:classes, :definitions, :nodes)
 
@@ -183,7 +184,7 @@ class Puppet::Parser::Parser
                "in file #{@lexer.file} at line #{@lexer.line}"
             )
         end
-        files = Puppet::Module::find_manifests(pat, :cwd => dir, :environment => @environment)
+        files = Puppet::Parser::Files.find_manifests(pat, :cwd => dir, :environment => @environment)
         if files.size == 0
             raise Puppet::ImportError.new("No file(s) found for import " +
                                           "of '#{pat}'")
