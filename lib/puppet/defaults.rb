@@ -485,9 +485,11 @@ module Puppet
             authority requests.  It's a separate server because it cannot
             and does not need to horizontally scale."],
         :ca_port => ["$masterport", "The port to use for the certificate authority."],
-        :catalog_format => ["yaml", "What format to use to dump the catalog.  Only supports
-            'marshal' and 'yaml'.  Only matters on the client, since it asks the server
-            for a specific format."],
+        :preferred_serialization_format => ["yaml", "The preferred means of serializing
+            ruby instances for passing over the wire.  This won't guarantee that all
+            instances will be serialized using this method, since not all classes
+            can be guaranteed to support this format, but it will be used for all
+            classes that support it."],
         :puppetdlockfile => [ "$statedir/puppetdlock",
             "A lock file to temporarily stop puppetd from doing anything."],
         :usecacheonfailure => [true,

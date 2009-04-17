@@ -96,10 +96,23 @@ module Puppet::Network::FormatHandler
         end
 
         def supported_formats
-            format_handler.formats.collect { |f| format_handler.format(f) }.find_all { |f| f.supported?(self) }.collect { |f| f.name }.sort do |a, b| 
+            result = format_handler.formats.collect { |f| format_handler.format(f) }.find_all { |f| f.supported?(self) }.collect { |f| f.name }.sort do |a, b| 
                 # It's an inverse sort -- higher weight formats go first.
                 format_handler.format(b).weight <=> format_handler.format(a).weight
             end
+
+            put_preferred_format_first(result)
+        end
+
+        private
+
+        def put_preferred_format_first(list)
+            preferred_format = Puppet.settings[:preferred_serialization_format].to_sym
+            if list.include?(preferred_format)
+                list.delete(preferred_format)
+                list.unshift(preferred_format)
+            end
+            list
         end
     end
 

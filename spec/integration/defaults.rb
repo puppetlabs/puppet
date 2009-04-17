@@ -49,10 +49,6 @@ describe "Puppet defaults" do
         Puppet.settings.element(:rundir).group.should be_nil
     end
 
-    it "should default to yaml as the catalog format" do
-        Puppet.settings[:catalog_format].should == "yaml"
-    end
-
     it "should default to 0.0.0.0 for its bind address and 'webrick' for its server type" do
         Puppet.settings[:servertype] = "webrick"
         Puppet.settings[:bindaddress].should == "0.0.0.0"

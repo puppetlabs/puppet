@@ -49,6 +49,17 @@ describe Puppet::Network::FormatHandler do
         FormatTester.supported_formats.should == [:four, :two, :three, :one]
     end
 
+    it "should always put the preferred serialization format first if it is supported" do
+        one = stub 'supported', :supported? => true, :name => :one, :weight => 1
+        two = stub 'supported', :supported? => true, :name => :two, :weight => 6
+
+        Puppet.settings.expects(:value).with(:preferred_serialization_format).returns :one
+        Puppet::Network::FormatHandler.stubs(:formats).returns [:one, :two]
+        Puppet::Network::FormatHandler.stubs(:format).with(:one).returns one
+        Puppet::Network::FormatHandler.stubs(:format).with(:two).returns two
+        FormatTester.supported_formats.should == [:one, :two]
+    end
+
     it "should return the first format as the default format" do
         FormatTester.expects(:supported_formats).returns [:one, :two]
         FormatTester.default_format.should == :one
