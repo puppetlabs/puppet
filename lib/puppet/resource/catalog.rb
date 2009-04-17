@@ -135,6 +135,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         begin
             transaction.evaluate
         rescue Puppet::Error => detail
+            puts detail.backtrace if Puppet[:trace]
             Puppet.err "Could not apply complete catalog: %s" % detail
         rescue => detail
             puts detail.backtrace if Puppet[:trace]
