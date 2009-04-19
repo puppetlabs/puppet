@@ -168,16 +168,25 @@ describe Puppet::Node, "when generating the list of names to search through" do
 
     describe "and :node_name is set to 'cert'" do
         before do
+            Puppet.settings.stubs(:value).with(:strict_hostname_checking).returns false
             Puppet.settings.stubs(:value).with(:node_name).returns "cert"
         end
 
         it "should use the passed-in key as the first value" do
             @node.names[0].should == "foo.domain.com"
         end
+
+        describe "and strict hostname checking is enabled" do
+            it "should only use the passed-in key" do
+                Puppet.settings.expects(:value).with(:strict_hostname_checking).returns true
+                @node.names.should == ["foo.domain.com"]
+            end
+        end
     end
 
     describe "and :node_name is set to 'facter'" do
         before do
+            Puppet.settings.stubs(:value).with(:strict_hostname_checking).returns false
             Puppet.settings.stubs(:value).with(:node_name).returns "facter"
         end
 

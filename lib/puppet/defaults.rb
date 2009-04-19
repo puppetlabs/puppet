@@ -416,7 +416,10 @@ module Puppet
         },
         :rrdgraph => [false, "Whether RRD information should be graphed."],
         :rrdinterval => ["$runinterval", "How often RRD should expect data.
-            This should match how often the hosts report back to the server."]
+            This should match how often the hosts report back to the server."],
+        :strict_hostname_checking => [false, "Whether to only search for the complete
+            hostname as it is in the certificate when searching for node information
+            in the catalogs."]
     )
 
     self.setdefaults(:puppetd,

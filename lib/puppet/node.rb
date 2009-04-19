@@ -79,6 +79,10 @@ class Puppet::Node
     # Calculate the list of names we might use for looking
     # up our node.  This is only used for AST nodes.
     def names
+        if Puppet.settings[:strict_hostname_checking]
+            return [name]
+        end
+
         names = []
 
         # First, get the fqdn
