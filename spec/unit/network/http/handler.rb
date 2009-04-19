@@ -395,4 +395,24 @@ describe Puppet::Network::HTTP::Handler do
             end
         end
     end
+
+    describe "when resolving node" do
+        it "should use a look-up from the ip address" do
+            Resolv.expects(:getname).with("1.2.3.4").returns("host.domain.com")
+
+            @handler.resolve_node(:ip => "1.2.3.4")
+        end
+
+        it "should return the look-up result" do
+            Resolv.stubs(:getname).with("1.2.3.4").returns("host.domain.com")
+
+            @handler.resolve_node(:ip => "1.2.3.4").should == "host.domain.com"
+        end
+
+        it "should return the ip address if resolving fails" do
+            Resolv.stubs(:getname).with("1.2.3.4").raises(RuntimeError, "no such host")
+
+            @handler.resolve_node(:ip => "1.2.3.4").should == "1.2.3.4"
+        end
+    end
 end

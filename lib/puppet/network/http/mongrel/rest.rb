@@ -71,6 +71,7 @@ class Puppet::Network::HTTP::MongrelREST < Mongrel::HttpHandler
             result[:node] = dn_matchdata[1].to_str
             result[:authenticated] = (params[Puppet[:ssl_client_verify_header]] == 'SUCCESS')
         else
+            result[:node] = resolve_node(result)
             result[:authenticated] = false
         end
 

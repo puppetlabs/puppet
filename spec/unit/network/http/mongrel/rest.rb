@@ -194,11 +194,12 @@ describe "Puppet::Network::HTTP::MongrelREST" do
                 @handler.params(@request)[:authenticated].should be_false
             end
 
-            it "should not pass a node name to model method if no certificate information is present" do
+            it "should resolve the node name with an ip address look-up if no certificate is present" do
                 Puppet.settings.stubs(:value).returns "eh"
                 Puppet.settings.expects(:value).with(:ssl_client_header).returns "myheader"
                 @request.stubs(:params).returns("myheader" => nil)
-                @handler.params(@request).should_not be_include(:node)
+                @handler.expects(:resolve_node).returns("host.domain.com")
+                @handler.params(@request)[:node].should == "host.domain.com"
             end
         end
     end

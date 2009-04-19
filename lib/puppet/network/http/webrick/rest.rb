@@ -1,4 +1,5 @@
 require 'puppet/network/http/handler'
+require 'resolv'
 
 class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
 
@@ -66,6 +67,8 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
         if cert = request.client_cert and nameary = cert.subject.to_a.find { |ary| ary[0] == "CN" }
             result[:node] = nameary[1]
             result[:authenticated] = true
+        else
+            result[:node] = resolve_node(result)
         end
 
         result

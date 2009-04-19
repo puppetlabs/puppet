@@ -108,6 +108,8 @@ describe Puppet::Network::HTTP::WEBrickREST do
 
             it "should not allow clients to set the node via the request parameters" do
                 @request.stubs(:query).returns("node" => "foo")
+                @handler.stubs(:resolve_node)
+
                 @handler.params(@request)[:node].should be_nil
             end
 
@@ -138,9 +140,12 @@ describe Puppet::Network::HTTP::WEBrickREST do
                 @handler.params(@request)[:node].should == "host.domain.com"
             end
 
-            it "should not pass a node name to model method if no certificate is present" do
+            it "should resolve the node name with an ip address look-up if no certificate is present" do
                 @request.stubs(:client_cert).returns nil
-                @handler.params(@request).should_not be_include(:node)
+
+                @handler.expects(:resolve_node).returns(:resolved_node)
+
+                @handler.params(@request)[:node].should == :resolved_node
             end
         end
     end
