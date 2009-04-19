@@ -18,7 +18,7 @@ require 'puppettest'
 require 'puppettest/runnable_test'
 require 'mocha'
 gem 'rspec', '=1.2.2'
-require 'spec'
+require 'spec/autorun'
 
 # load any monkey-patches
 Dir["#{dir}/monkey_patches/*.rb"].map { |file| require file }
