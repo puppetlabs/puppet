@@ -5,15 +5,17 @@ module Puppet
 
         attr_accessor :rights
 
-        DEFAULT_ACL = {
-            :facts =>   { :acl => "/facts", :method => [:save, :find] },
-            :catalog => { :acl => "/catalog", :method => :find },
+        DEFAULT_ACL = [
+            { :acl => "~ ^\/catalog\/([^\/]+)$", :method => :find, :allow => '$1', :authenticated => true },
             # this one will allow all file access, and thus delegate
             # to fileserver.conf
-            :file =>    { :acl => "/file" },
-            :cert =>    { :acl => "/certificate", :method => :find },
-            :reports => { :acl => "/report", :method => :save }
-        }
+            { :acl => "/file" },
+            { :acl => "/certificate_revocation_list/ca", :method => :find, :authenticated => true },
+            { :acl => "/report", :method => :save, :authenticated => true },
+            { :acl => "/certificate/ca", :method => :find, :authenticated => false },
+            { :acl => "/certificate/", :method => :find, :authenticated => false },
+            { :acl => "/certificate_request", :method => [:find, :save], :authenticated => false },
+        ]
 
         def self.main
             add_acl = @main.nil?
@@ -28,11 +30,15 @@ module Puppet
         def allowed?(request)
             read()
 
+            # we're splitting the request in part because
+            # fail_on_deny could as well be called in the XMLRPC context
+            # with a ClientRequest.
             @rights.fail_on_deny(build_uri(request),
                                     :node => request.node,
                                     :ip => request.ip,
                                     :method => request.method,
-                                    :environment => request.environment)
+                                    :environment => request.environment,
+                                    :authenticated => request.authenticated)
         end
 
         def initialize(file = nil, parsenow = true)
@@ -50,26 +56,30 @@ module Puppet
 
         # force regular ACLs to be present
         def insert_default_acl
-            DEFAULT_ACL.each do |name, acl|
+            DEFAULT_ACL.each do |acl|
                 unless rights[acl[:acl]]
-                    Puppet.warning "Inserting default '#{acl[:acl]}' acl because none were found in '%s'" % ( @file || "no file configured")
-                    mk_acl(acl[:acl], acl[:method])
+                    Puppet.warning "Inserting default '#{acl[:acl]}'(%s) acl because none were found in '%s'" % [acl[:authenticated] ? "auth" : "non-auth" , ( !exists? ? "no auth.conf file configured" : @file)]
+                    mk_acl(acl)
                 end
             end
             # queue an empty (ie deny all) right for every other path
             # actually this is not strictly necessary as the rights system
             # denies not explicitely allowed paths
-            rights.newright("/") unless rights["/"]
+            unless rights["/"]
+                rights.newright("/")
+                rights.restrict_authenticated("/", :any)
+            end
         end
 
-        def mk_acl(path, method = nil)
-            @rights.newright(path)
-            @rights.allow(path, "*")
+        def mk_acl(acl)
+            @rights.newright(acl[:acl])
+            @rights.allow(acl[:acl], acl[:allow] || "*")
 
-            if method
+            if method = acl[:method]
                 method = [method] unless method.is_a?(Array)
-                method.each { |m| @rights.restrict_method(path, m) }
+                method.each { |m| @rights.restrict_method(acl[:acl], m) }
             end
+            @rights.restrict_authenticated(acl[:acl], acl[:authenticated]) unless acl[:authenticated].nil?
         end
 
         def build_uri(request)
