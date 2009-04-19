@@ -67,8 +67,8 @@ filemap.each do |dir, files|
     # First create a separate task for each file in the namespace.
     namespace ns do
         files.each do |file|
-            Spec::Rake::SpecTask.new(file) do |t|
-                t.spec_files = File.basename(file, '.rb')
+            Spec::Rake::SpecTask.new(File.basename(file, '.rb').to_sym) do |t|
+                t.spec_files = [ file ]
                 t.libs = libs
                 t.spec_opts = ['--options', 'spec.opts']
             end
