@@ -4,43 +4,6 @@ require 'puppet/application'
 require 'puppet/node/catalog'
 require 'puppet/indirector/catalog/queue'
 
-
-# BACKPORT - this method should be removed when merged into master.
-class Puppet::Util::Settings
-    # Generate the list of valid arguments, in a format that OptionParser can
-    # understand, and add them to the passed option list.
-    def optparse_addargs(options)
-        # Add all of the config parameters as valid options.
-        self.each { |name, element|
-            options << element.optparse_args
-        }
-
-        return options
-    end
-end
-
-# BACKPORT - this method should be removed when merged into master.
-class Puppet::Util::Settings::CElement
-    # get the arguments in OptionParser format
-    def optparse_args
-        if short
-            ["--#{name}", "-#{short}", desc, :REQUIRED]
-        else
-            ["--#{name}", desc, :REQUIRED]
-        end
-    end
-end
-
-class Puppet::Util::Settings::CBoolean
-    def optparse_args
-        if short
-            ["--[no-]#{name}", "-#{short}", desc, :NONE ]
-        else
-            ["--[no-]#{name}", desc, :NONE]
-        end
-    end
-end
-
 Puppet::Application.new(:puppetqd) do
     extend Puppet::Daemon
 
@@ -77,18 +40,6 @@ Puppet::Application.new(:puppetqd) do
         daemonize if Puppet[:daemonize]
 
         while true do sleep 1000 end
-    end
-
-    # This is the main application entry point.
-    # BACKPORT - this method should be removed when merged into master.
-    # This method had to be added because Puppet.settings.parse takes no
-    # arguments in master but requires an argument in 0.24.x.
-    def run
-        run_preinit
-        parse_options
-        Puppet.settings.parse(Puppet[:config]) if should_parse_config? and File.exist?(Puppet[:config])
-        run_setup
-        run_command
     end
 
     # Handle the logging settings.
