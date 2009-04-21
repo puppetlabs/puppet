@@ -156,12 +156,14 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
             Puppet.settings.write(self.class.ca_setting) { |f| yield f }
         elsif file_location
             Puppet.settings.write(self.class.file_setting) { |f| yield f }
-        else
+        elsif setting = self.class.directory_setting
             begin
-                File.open(path, "w") { |f| yield f }
+                Puppet.settings.writesub(setting, path) { |f| yield f }
             rescue => detail
-                raise Puppet::Error, "Could not write %s: %s" % [path, detail]
+                raise Puppet::Error, "Could not write %s to %s: %s" % [path, setting, detail]
             end
+        else
+            raise Puppet::DevError, "You must provide a setting to determine where the files are stored"
         end
     end
 end

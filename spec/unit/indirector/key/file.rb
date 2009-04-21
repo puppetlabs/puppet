@@ -70,11 +70,11 @@ describe Puppet::SSL::Key::File do
         end
 
         it "should save the public key when saving the private key" do
-            File.stubs(:open).with(@private_key_path, "w")
+            Puppet.settings.stubs(:writesub)
 
             fh = mock 'filehandle'
 
-            File.expects(:open).with(@public_key_path, "w").yields fh
+            Puppet.settings.expects(:writesub).with(:publickeydir, @public_key_path).yields fh
             @public_key.expects(:to_pem).returns "my pem"
 
             fh.expects(:print).with "my pem"

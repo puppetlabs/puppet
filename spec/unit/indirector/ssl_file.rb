@@ -173,11 +173,11 @@ describe Puppet::Indirector::SslFile do
             end
 
             describe "and a directory setting is set" do
-                it "should open the file in write mode" do
+                it "should use the Settings class to write the file" do
                     @searcher.class.store_in @setting
                     fh = mock 'filehandle'
                     fh.stubs :print
-                    File.expects(:open).with(@certpath, "w").yields(fh)
+                    Puppet.settings.expects(:writesub).with(@setting, @certpath).yields fh
 
                     @searcher.save(@request)
                 end

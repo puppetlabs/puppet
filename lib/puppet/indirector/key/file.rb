@@ -34,9 +34,9 @@ class Puppet::SSL::Key::File < Puppet::Indirector::SslFile
         super
 
         begin
-            File.open(public_key_path(request.key), "w") { |f| f.print request.instance.content.public_key.to_pem }
+            Puppet.settings.writesub(:publickeydir, public_key_path(request.key)) { |f| f.print request.instance.content.public_key.to_pem }
         rescue => detail
-            raise Puppet::Error, "Could not write %s: %s" % [key, detail]
+            raise Puppet::Error, "Could not write %s: %s" % [request.key, detail]
         end
     end
 end
