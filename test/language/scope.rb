@@ -288,6 +288,7 @@ class TestScope < Test::Unit::TestCase
     end
 
     def test_tagfunction
+        Puppet::Parser::Functions.function(:tag)
         scope = mkscope
         resource = mock 'resource'
         scope.resource = resource
@@ -324,6 +325,7 @@ class TestScope < Test::Unit::TestCase
     end
 
     def test_definedfunction
+        Puppet::Parser::Functions.function(:defined)
         parser = mkparser
         %w{one two}.each do |name|
             parser.newdefine name
