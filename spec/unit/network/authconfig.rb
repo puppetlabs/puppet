@@ -253,6 +253,40 @@ describe Puppet::Network::AuthConfig do
             lambda { @authconfig.read }.should raise_error
         end
 
+        it "should inform the current ACL if we get the 'auth' directive" do
+            acl = stub 'acl', :info
+            acl.stubs(:acl_type).returns(:regex)
+
+            @fd.stubs(:each).multiple_yields('path /certificates', 'auth yes')
+            @rights.stubs(:newright).with("/certificates", 1, 'dummy').returns(acl)
+
+            acl.expects(:restrict_authenticated).with('yes')
+
+            @authconfig.read
+        end
+
+        it "should also allow the longest 'authenticated' directive" do
+            acl = stub 'acl', :info
+            acl.stubs(:acl_type).returns(:regex)
+
+            @fd.stubs(:each).multiple_yields('path /certificates', 'authenticated yes')
+            @rights.stubs(:newright).with("/certificates", 1, 'dummy').returns(acl)
+
+            acl.expects(:restrict_authenticated).with('yes')
+
+            @authconfig.read
+        end
+
+        it "should raise an error if the 'auth' directive is used in a right different than a path/regex one" do
+            acl = stub 'acl', :info
+            acl.stubs(:acl_type).returns(:regex)
+
+            @fd.stubs(:each).multiple_yields('[puppetca]', 'auth yes')
+            @rights.stubs(:newright).with("puppetca", 1, 'dummy').returns(acl)
+
+            lambda { @authconfig.read }.should raise_error
+        end
+
     end
 
 end

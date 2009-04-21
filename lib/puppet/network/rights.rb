@@ -14,7 +14,7 @@ class Rights
 
     # We basically just proxy directly to our rights.  Each Right stores
     # its own auth abilities.
-    [:allow, :deny, :restrict_method, :restrict_environment].each do |method|
+    [:allow, :deny, :restrict_method, :restrict_environment, :restrict_authenticated].each do |method|
         define_method(method) do |name, *args|
             if obj = self[name]
                 obj.send(method, *args)
@@ -27,7 +27,7 @@ class Rights
     # Check that name is allowed or not
     def allowed?(name, *args)
         begin
-            fail_on_deny(name, *args)
+            fail_on_deny(name, :node => args[0], :ip => args[1])
         rescue AuthorizationError
             return false
         rescue ArgumentError
@@ -59,9 +59,11 @@ class Rights
 
         # if we end here, then that means we either didn't match
         # or failed, in any case will throw an error to the outside world
-        if name =~ /^\//
+        if name =~ /^\// or right
             # we're a patch ACL, let's fail
             msg = "%s access to %s [%s]" % [ (args[:node].nil? ? args[:ip] : "#{args[:node]}(#{args[:ip]})"), name, args[:method] ]
+
+            msg += " authenticated " if args[:authenticated]
 
             error = AuthorizationError.new("Forbidden request: " + msg)
             if right
@@ -123,7 +125,7 @@ class Rights
         include Puppet::FileCollection::Lookup
 
         attr_accessor :name, :key, :acl_type
-        attr_accessor :methods, :environment
+        attr_accessor :methods, :environment, :authentication
 
         ALL = [:save, :destroy, :find, :search]
 
@@ -132,6 +134,7 @@ class Rights
         def initialize(name, line, file)
             @methods = []
             @environment = []
+            @authentication = true # defaults to authenticated
             @name = name
             @line = line || 0
             @file = file
@@ -175,9 +178,10 @@ class Rights
         # if this right is too restrictive (ie we don't match this access method)
         # then return :dunno so that upper layers have a chance to try another right
         # tailored to the given method
-        def allowed?(name, ip, args)
+        def allowed?(name, ip, args = {})
             return :dunno if acl_type == :regex and not @methods.include?(args[:method])
             return :dunno if acl_type == :regex and @environment.size > 0 and not @environment.include?(args[:environment])
+            return :dunno if acl_type == :regex and not @authentication.nil? and args[:authenticated] != @authentication
 
             begin
                 # make sure any capture are replaced if needed
@@ -218,6 +222,20 @@ class Rights
             @environment << env
         end
 
+        def restrict_authenticated(authentication)
+            case authentication
+            when "yes", "on", "true", true
+                authentication = true
+            when "no", "off", "false", false
+                authentication = false
+            when "all","any", :all, :any
+                authentication = nil
+            else
+                raise ArgumentError, "'%s' incorrect authenticated value: %s" % [name, authentication]
+            end
+            @authentication = authentication
+        end
+
         def match?(key)
             # if we are a namespace compare directly
             return self.key == namespace_to_key(key) if acl_type == :name
@@ -249,7 +267,7 @@ class Rights
 
         def ==(name)
             return self.key == namespace_to_key(name) if acl_type == :name
-            return self.name == name
+            return self.name == name.gsub(/^~\s+/,'')
         end
 
     end

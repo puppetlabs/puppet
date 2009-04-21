@@ -111,7 +111,7 @@ module Puppet
                             end
                             name.chomp!
                             right = newrights.newright(name, count, @file)
-                        when /^\s*(allow|deny|method|environment)\s+(.+)$/
+                        when /^\s*(allow|deny|method|environment|auth(?:enticated)?)\s+(.+)$/
                             parse_right_directive(right, $1, $2, count)
                         else
                             raise ConfigurationError, "Invalid line %s: %s" % [count, line]
@@ -155,6 +155,11 @@ module Puppet
                     raise ConfigurationError, "'environment' directive not allowed in namespace ACL at line %s of %s" % [count, @config]
                 end
                 modify_right(right, :restrict_environment, value, "adding environment %s", count)
+            when /auth(?:enticated)?/
+                unless right.acl_type == :regex
+                    raise ConfigurationError, "'authenticated' directive not allowed in namespace ACL at line %s of %s" % [count, @config]
+                end
+                modify_right(right, :restrict_authenticated, value, "adding authentication %s", count)
             else
                 raise ConfigurationError,
                     "Invalid argument '%s' at line %s" % [var, count]

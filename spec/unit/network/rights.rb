@@ -9,7 +9,7 @@ describe Puppet::Network::Rights do
         @right = Puppet::Network::Rights.new
     end
 
-    [:allow, :deny, :restrict_method, :restrict_environment].each do |m|
+    [:allow, :deny, :restrict_method, :restrict_environment, :restrict_authenticated].each do |m|
         it "should have a #{m} method" do
             @right.should respond_to(m)
         end
@@ -94,6 +94,12 @@ describe Puppet::Network::Rights do
             @right[".rb$"].should_not be_nil
         end
 
+        it "should be able to lookup the regex by its full name" do
+            @right.newright("~ .rb$")
+
+            @right["~ .rb$"].should_not be_nil
+        end
+
         it "should create an ACL of type Puppet::Network::AuthStore" do
             @right.newright("~ .rb$").should be_a_kind_of(Puppet::Network::AuthStore)
         end
@@ -150,9 +156,9 @@ describe Puppet::Network::Rights do
         end
 
         it "should delegate to fail_on_deny" do
-            @right.expects(:fail_on_deny).with("namespace", :args)
+            @right.expects(:fail_on_deny).with("namespace", :node => "host.domain.com", :ip => "127.0.0.1")
 
-            @right.allowed?("namespace", :args)
+            @right.allowed?("namespace", "host.domain.com", "127.0.0.1")
         end
 
         it "should return true if fail_on_deny doesn't fail" do
@@ -397,6 +403,10 @@ describe Puppet::Network::Rights do
             @acl.methods.should == Puppet::Network::Rights::Right::ALL
         end
 
+        it "should allow only authenticated request by default" do
+            @acl.authentication.should be_true
+        end
+
         it "should allow modification of the methods filters" do
             @acl.restrict_method(:save)
 
@@ -424,6 +434,30 @@ describe Puppet::Network::Rights do
             @acl.environment.should == [:env]
         end
 
+        ["on", "yes", "true", true].each do |auth|
+            it "should allow filtering on authenticated requests with '#{auth}'" do
+                @acl.restrict_authenticated(auth)
+
+                @acl.authentication.should be_true
+            end
+        end
+
+        ["off", "no", "false", false].each do |auth|
+            it "should allow filtering on unauthenticated requests with '#{auth}'" do
+                @acl.restrict_authenticated(auth)
+
+                @acl.authentication.should be_false
+            end
+        end
+
+        ["all", "any", :all, :any].each do |auth|
+            it "should not use request authenticated state filtering with '#{auth}'" do
+                @acl.restrict_authenticated(auth)
+
+                @acl.authentication.should be_nil
+            end
+        end
+
         describe "when checking right authorization" do
             it "should return :dunno if this right is not restricted to the given method" do
                 @acl.restrict_method(:destroy)
@@ -446,16 +480,29 @@ describe Puppet::Network::Rights do
                 @acl.allowed?("me","127.0.0.1", { :method => :save, :environment => :development }).should == :dunno
             end
 
+            it "should return :dunno if this right is not restricted to the given request authentication state" do
+                @acl.restrict_authenticated(true)
+
+                @acl.allowed?("me","127.0.0.1", { :method => :save, :authenticated => false }).should == :dunno
+            end
+
+            it "should return allow/deny if this right is restricted to the given request authentication state" do
+                @acl.restrict_authenticated(false)
+                @acl.allow("127.0.0.1")
+
+                @acl.allowed?("me","127.0.0.1", { :authenticated => false }).should be_true
+            end
+
             it "should interpolate allow/deny patterns with the given match" do
                 @acl.expects(:interpolate).with(:match)
 
-                @acl.allowed?("me","127.0.0.1", :method => :save, :match => :match)
+                @acl.allowed?("me","127.0.0.1", { :method => :save, :match => :match, :authenticated => true })
             end
 
             it "should reset interpolation after the match" do
                 @acl.expects(:reset_interpolation)
 
-                @acl.allowed?("me","127.0.0.1", :method => :save, :match => :match)
+                @acl.allowed?("me","127.0.0.1", { :method => :save, :match => :match, :authenticated => true })
             end
 
             # mocha doesn't allow testing super...
