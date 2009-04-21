@@ -416,6 +416,20 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         super
     end
 
+    def to_yaml_properties
+        result = instance_variables
+
+        # There's a ruby bug that hits us without this:
+        # http://rubyforge.org/tracker/?group_id=426&atid=1698&func=detail&aid=8886
+        # We need our resources to show up in as values in a hash
+        # before they show up as keys, because otherwise
+        # the loading fails.
+        result.delete "@resource_table"
+        result.unshift "@resource_table"
+
+        result
+    end
+
     private
 
     def cleanup
