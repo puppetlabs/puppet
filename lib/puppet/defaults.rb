@@ -395,6 +395,11 @@ module Puppet
             :group => "$group",
             :desc => "Where FileBucket files are stored."
         },
+        :rest_authconfig => [ "$confdir/auth.conf",
+            "The configuration file that defines the rights to the different
+            rest indirections.  This can be used as a fine-grained
+            authorization system for ``puppetmasterd``."
+        ],
         :ca => [true, "Wether the master should function as a certificate authority."],
         :modulepath => {:default => "$confdir/modules:/usr/share/puppet/modules",
            :desc => "The search path for modules as a colon-separated list of

@@ -2,9 +2,11 @@ module Puppet::Network::HTTP
 end
 
 require 'puppet/network/http/api/v1'
+require 'puppet/network/rest_authorization'
 
 module Puppet::Network::HTTP::Handler
     include Puppet::Network::HTTP::API::V1
+    include Puppet::Network::RestAuthorization
 
     attr_reader :server, :handler
 
@@ -38,7 +40,11 @@ module Puppet::Network::HTTP::Handler
     def process(request, response)
         indirection_request = uri2indirection(http_method(request), path(request), params(request))
 
-        send("do_%s" % indirection_request.method, indirection_request, request, response)
+        if authorized?(indirection_request)
+            send("do_%s" % indirection_request.method, indirection_request, request, response)
+        else
+            return do_exception(response, "Request forbidden by configuration %s %s" % [indirection_request.indirection_name, indirection_request.key], 403)
+        end
     rescue Exception => e
         return do_exception(response, e)
     end

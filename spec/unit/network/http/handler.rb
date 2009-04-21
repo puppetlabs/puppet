@@ -2,6 +2,7 @@
 
 require File.dirname(__FILE__) + '/../../../spec_helper'
 require 'puppet/network/http/handler'
+require 'puppet/network/rest_authorization'
 
 class HttpHandled
     include Puppet::Network::HTTP::Handler
@@ -14,6 +15,10 @@ describe Puppet::Network::HTTP::Handler do
     
     it "should include the v1 REST API" do
         Puppet::Network::HTTP::Handler.ancestors.should be_include(Puppet::Network::HTTP::API::V1)
+    end
+
+    it "should include the Rest Authorization system" do
+        Puppet::Network::HTTP::Handler.ancestors.should be_include(Puppet::Network::RestAuthorization)
     end
 
     it "should have a method for initializing" do
@@ -43,6 +48,8 @@ describe Puppet::Network::HTTP::Handler do
             @model_class = stub('indirected model class')
 
             @result = stub 'result', :render => "mytext"
+
+            @handler.stubs(:authorized?).returns(true)
 
             stub_server_interface
         end
@@ -78,6 +85,32 @@ describe Puppet::Network::HTTP::Handler do
             request.expects(:method).returns "mymethod"
 
             @handler.expects(:do_mymethod).with(request, @request, @response)
+
+            @handler.process(@request, @response)
+        end
+
+        it "should delegate authorization to the RestAuthorization layer" do
+            request = stub 'request'
+            @handler.expects(:uri2indirection).returns request
+
+            request.expects(:method).returns "mymethod"
+
+            @handler.expects(:do_mymethod).with(request, @request, @response)
+
+            @handler.expects(:authorized?).with(request).returns(true)
+
+            @handler.process(@request, @response)
+        end
+
+        it "should return 403 if the request is not authorized" do
+            request = stub 'request'
+            @handler.expects(:uri2indirection).returns request
+
+            @handler.expects(:do_mymethod).never
+
+            @handler.expects(:authorized?).with(request).returns(false)
+
+            @handler.expects(:set_response)#.with { |response, body, status| status == 403 }
 
             @handler.process(@request, @response)
         end
