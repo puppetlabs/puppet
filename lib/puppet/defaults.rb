@@ -175,7 +175,7 @@ module Puppet
                     Puppet.settings[:storeconfigs] = true
 
                     # But then we modify the configuration
-                    Puppet::Node::Catalog.cache_class = :queue
+                    Puppet::Resource::Catalog.cache_class = :queue
                 else
                     raise "Cannot disable asynchronous storeconfigs in a running process"
                 end
@@ -704,7 +704,7 @@ module Puppet
                 require 'puppet/node/facts'
                 require 'puppet/resource/catalog'
                 if value
-                    Puppet::Node::Catalog.cache_class = :active_record unless Puppet.settings[:async_storeconfigs]
+                    Puppet::Resource::Catalog.cache_class = :active_record unless Puppet.settings[:async_storeconfigs]
                     Puppet::Node::Facts.cache_class = :active_record
                     Puppet::Node.cache_class = :active_record
                 end

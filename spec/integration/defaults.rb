@@ -92,4 +92,61 @@ describe "Puppet defaults" do
             ENV["PATH"].split(File::PATH_SEPARATOR).should be_include("/sbin")
         end
     end
+
+    describe "when enabling storeconfigs" do
+        before do
+            Puppet::Resource::Catalog.stubs(:cache_class=)
+            Puppet::Node::Facts.stubs(:cache_class=)
+            Puppet::Node.stubs(:cache_class=)
+        end
+
+        it "should set the Catalog cache class to :active_record" do
+            Puppet::Resource::Catalog.expects(:cache_class=).with(:active_record)
+            Puppet.settings[:storeconfigs] = true
+        end
+
+        it "should not set the Catalog cache class to :active_record if asynchronous storeconfigs is enabled" do
+            Puppet::Resource::Catalog.expects(:cache_class=).with(:active_record).never
+            Puppet.settings.expects(:value).with(:async_storeconfigs).returns true
+            Puppet.settings[:storeconfigs] = true
+        end
+
+        it "should set the Facts cache class to :active_record" do
+            Puppet::Node::Facts.expects(:cache_class=).with(:active_record)
+            Puppet.settings[:storeconfigs] = true
+        end
+
+        it "should set the Node cache class to :active_record" do
+            Puppet::Node.expects(:cache_class=).with(:active_record)
+            Puppet.settings[:storeconfigs] = true
+        end
+    end
+
+    describe "when enabling asynchronous storeconfigs" do
+        before do
+            Puppet::Resource::Catalog.stubs(:cache_class=)
+            Puppet::Node::Facts.stubs(:cache_class=)
+            Puppet::Node.stubs(:cache_class=)
+        end
+
+        it "should set storeconfigs to true" do
+            Puppet.settings[:async_storeconfigs] = true
+            Puppet.settings[:storeconfigs].should be_true
+        end
+
+        it "should set the Catalog cache class to :queue" do
+            Puppet::Resource::Catalog.expects(:cache_class=).with(:queue)
+            Puppet.settings[:async_storeconfigs] = true
+        end
+
+        it "should set the Facts cache class to :active_record" do
+            Puppet::Node::Facts.expects(:cache_class=).with(:active_record)
+            Puppet.settings[:storeconfigs] = true
+        end
+
+        it "should set the Node cache class to :active_record" do
+            Puppet::Node.expects(:cache_class=).with(:active_record)
+            Puppet.settings[:storeconfigs] = true
+        end
+    end
 end
