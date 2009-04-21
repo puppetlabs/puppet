@@ -364,10 +364,21 @@ class Puppet::SimpleGraph
     end
 
     # Just walk the tree and pass each edge.
-    def walk(source, direction, &block)
-        adjacent(source, :direction => direction).each do |target|
-            yield source, target
-            walk(target, direction, &block)
+    def walk(source, direction)
+        # Use an iterative, breadth-first traversal of the graph. One could do
+        # this recursively, but Ruby's slow function calls and even slower
+        # recursion make the shorter, recursive algorithm cost-prohibitive.
+        stack = [source]
+        seen = Set.new
+        until stack.empty?
+            node = stack.shift
+            next if seen.member? node
+            connected = adjacent(node, :direction => direction)
+            connected.each do |target|
+                yield node, target
+            end
+            stack.concat(connected)
+            seen << node
         end
     end
 
