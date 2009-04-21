@@ -141,6 +141,7 @@ describe Puppet::SimpleGraph do
             @graph.add_edge(one)
             @graph.add_edge(two)
             edges = @graph.edges
+            edges.should be_instance_of(Array)
             edges.length.should == 2
             edges.should include(one)
             edges.should include(two)

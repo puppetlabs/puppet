@@ -27,7 +27,9 @@ class Puppet::SimpleGraph
             direction = options[:direction] || :out
             options[:type] ||= :vertices
 
-            return @adjacencies[direction].values.flatten if options[:type] == :edges
+            if options[:type] == :edges
+                return send(direction.to_s + "_edges")
+            end
 
             return @adjacencies[direction].keys.reject { |vertex| @adjacencies[direction][vertex].empty? }
         end
@@ -39,7 +41,7 @@ class Puppet::SimpleGraph
 
         # Return all known edges.
         def edges
-            [:in, :out].collect { |dir| @adjacencies[dir].values }.flatten
+            in_edges + out_edges
         end
 
         # Test whether we share an edge with a given vertex.
@@ -57,7 +59,7 @@ class Puppet::SimpleGraph
             # as expensive as just getting the edge list, so I've decided
             # to only add this method.
             define_method("%s_edges" % direction) do
-                @adjacencies[direction].values.flatten
+                @adjacencies[direction].values.inject([]) { |total, adjacent| total += adjacent.to_a; total }
             end
         end
 
@@ -93,14 +95,14 @@ class Puppet::SimpleGraph
 
         # Look up the adjacencies for a given vertex.
         def vertex_adjacencies(direction, vertex)
-            @adjacencies[direction][vertex] ||= []
+            @adjacencies[direction][vertex] ||= Set.new
             @adjacencies[direction][vertex]
         end
     end
 
     def initialize
         @vertices = {}
-        @edges = []
+        @edges = Set.new
     end
 
     # Clear our graph.
@@ -224,6 +226,7 @@ class Puppet::SimpleGraph
     def remove_vertex!(vertex)
         return nil unless vertex?(vertex)
         @vertices[vertex].edges.each { |edge| remove_edge!(edge) }
+        @edges.subtract(@vertices[vertex].edges)
         @vertices[vertex].clear
         @vertices.delete(vertex)
     end
@@ -273,7 +276,7 @@ class Puppet::SimpleGraph
     end
 
     def edges
-        @edges.dup
+        @edges.to_a
     end
 
     # Remove an edge from our graph.
@@ -281,10 +284,7 @@ class Puppet::SimpleGraph
         @vertices[edge.source].remove_edge(:out, edge)
         @vertices[edge.target].remove_edge(:in, edge)
         
-        # Here we are looking for an exact edge, so we don't want to use ==, because
-        # it's too darn expensive (in testing, deleting 3000 edges went from 6 seconds to
-        # 0.05 seconds with this change).
-        @edges.each_with_index { |test_edge, index| @edges.delete_at(index) and break if edge.equal?(test_edge) }
+        @edges.delete(edge)
         nil
     end
 
