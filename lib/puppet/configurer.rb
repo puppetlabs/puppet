@@ -79,7 +79,7 @@ class Puppet::Configurer
 
     # Get the remote catalog, yo.  Returns nil if no catalog can be found.
     def retrieve_catalog
-        name = Facter.value("hostname")
+        name = Puppet[:certname]
         catalog_class = Puppet::Resource::Catalog
 
         # This is a bit complicated.  We need the serialized and escaped facts,

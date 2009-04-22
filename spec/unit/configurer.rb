@@ -84,10 +84,10 @@ describe Puppet::Configurer, "when retrieving a catalog" do
         @agent.retrieve_catalog
     end
 
-    it "should use its Facter name to retrieve the catalog" do
+    it "should use its certname to retrieve the catalog" do
         Facter.stubs(:value).returns "eh"
-        Facter.expects(:value).with("hostname").returns "myhost"
-        Puppet::Resource::Catalog.expects(:find).with { |name, options| name == "myhost" }.returns @catalog
+        Puppet.expects(:[]).with(:certname).returns "myhost.domain.com"
+        Puppet::Resource::Catalog.expects(:find).with { |name, options| name == "myhost.domain.com" }.returns @catalog
 
         @agent.retrieve_catalog
     end
