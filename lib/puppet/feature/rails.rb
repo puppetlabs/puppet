@@ -28,24 +28,11 @@ Puppet.features.add(:rails) do
         end
     end
 
-    # If we couldn't find it the normal way, try using a Gem.
-    unless defined? ActiveRecord
-        begin
-            require 'rubygems'
-            require 'rails'
-        rescue LoadError
-            # Nothing
-        end
+    unless defined?(::ActiveRecord) and ::ActiveRecord::VERSION::MAJOR == 2 and ::ActiveRecord::VERSION::MINOR == 3
+        Puppet.err "ActiveRecord 2.3 required for StoreConfigs"
+        raise "ActiveRecord 2.3 required for StoreConfigs"
     end
 
-    # We check a fairly specific class, so that we can be sure that we've
-    # loaded a new enough version of AR that will support the features we
-    # actually use.
-    if defined? ActiveRecord::Associations::BelongsToPolymorphicAssociation
-        require 'puppet/rails'
-        true
-    else
-        false
-    end
+    true
 end
 
