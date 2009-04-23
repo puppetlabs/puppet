@@ -94,6 +94,8 @@ describe "Puppet defaults" do
             Puppet::Resource::Catalog.stubs(:cache_class=)
             Puppet::Node::Facts.stubs(:cache_class=)
             Puppet::Node.stubs(:cache_class=)
+
+            Puppet.features.stubs(:rails?).returns true
         end
 
         it "should set the Catalog cache class to :active_record" do
@@ -115,6 +117,11 @@ describe "Puppet defaults" do
         it "should set the Node cache class to :active_record" do
             Puppet::Node.expects(:cache_class=).with(:active_record)
             Puppet.settings[:storeconfigs] = true
+        end
+
+        it "should fail if rails is not available" do
+            Puppet.features.stubs(:rails?).returns false
+            lambda { Puppet.settings[:storeconfigs] = true }.should raise_error
         end
     end
 
