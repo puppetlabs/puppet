@@ -100,8 +100,8 @@ class Puppet::Rails::Resource < ActiveRecord::Base
 
     def merge_parameters(resource)
         catalog_params = {}
-        resource.eachparam do |param|
-            catalog_params[param.name.to_s] = param
+        resource.each do |param, value|
+            catalog_params[param.to_s] = value
         end
 
         db_params = {}
@@ -123,7 +123,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
         db_params.each do |name, value_hashes|
             values = value_hashes.collect { |v| v['value'] }
 
-            unless value_compare(catalog_params[name].value, values)
+            unless value_compare(catalog_params[name], values)
                 value_hashes.each { |v| deletions << v['id'] }
             end
         end
@@ -132,12 +132,12 @@ class Puppet::Rails::Resource < ActiveRecord::Base
         Puppet::Rails::ParamValue.delete(deletions) unless deletions.empty?
 
         # Lastly, add any new parameters.
-        catalog_params.each do |name, param|
+        catalog_params.each do |name, value|
             next if db_params.include?(name)
-            values = param.value.is_a?(Array) ? param.value : [param.value]
+            values = value.is_a?(Array) ? value : [value]
 
             values.each do |v|
-                param_values.build(:value => serialize_value(v), :line => param.line, :param_name => Puppet::Rails::ParamName.accumulate_by_name(name))
+                param_values.build(:value => serialize_value(v), :line => resource.line, :param_name => Puppet::Rails::ParamName.accumulate_by_name(name))
             end
         end
     end

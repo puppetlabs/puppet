@@ -222,8 +222,8 @@ class Puppet::Rails::Host < ActiveRecord::Base
 
 
         accumulate_benchmark("Added resources", :parameters) {
-            resource.eachparam do |param|
-                Puppet::Rails::ParamValue.from_parser_param(param).each do |value_hash|
+            resource.each do |param, value|
+                Puppet::Rails::ParamValue.from_parser_param(param, value).each do |value_hash|
                     db_resource.param_values.build(value_hash)
                 end
             end

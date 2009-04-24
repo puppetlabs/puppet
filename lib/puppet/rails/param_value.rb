@@ -8,13 +8,12 @@ class Puppet::Rails::ParamValue < ActiveRecord::Base
     belongs_to :resource
 
     # Store a new parameter in a Rails db.
-    def self.from_parser_param(param)
-        values = munge_parser_values(param.value)
+    def self.from_parser_param(param, values)
+        values = munge_parser_values(values)
 
-        param_name = Puppet::Rails::ParamName.find_or_create_by_name(param.name.to_s)
-        line_number = param.line_to_i()
+        param_name = Puppet::Rails::ParamName.find_or_create_by_name(param.to_s)
         return values.collect do |v|
-            {:value => v, :line => line_number, :param_name => param_name}
+            {:value => v, :param_name => param_name}
         end
     end
 
@@ -24,7 +23,7 @@ class Puppet::Rails::ParamValue < ActiveRecord::Base
     def self.munge_parser_values(value)
         values = value.is_a?(Array) ? value : [value]
         values.map do |v|
-            if v.is_a?(Puppet::Parser::Resource::Reference)
+            if v.is_a?(Puppet::Resource::Reference)
                 v
             else
                 v.to_s
