@@ -22,7 +22,6 @@ module Puppet::Rails
             ActiveRecord::Base.logger.level = Logger::DEBUG
         end
 
-        ActiveRecord::Base.allow_concurrency = true
         ActiveRecord::Base.verify_active_connections!
 
         begin

@@ -39,16 +39,9 @@ describe Puppet::Rails, "when initializing any connection" do
         ActiveRecord::Base.stubs(:logger).returns(logger)
         logger.expects(:level=).with(Logger::DEBUG)
 
-        ActiveRecord::Base.stubs(:allow_concurrency=)
         ActiveRecord::Base.stubs(:verify_active_connections!)
         ActiveRecord::Base.stubs(:establish_connection)
         Puppet::Rails.stubs(:database_arguments)
-        
-        Puppet::Rails.connect
-    end
-    
-    it "should set ActiveRecord::Base.allow_concurrency" do
-        ActiveRecord::Base.expects(:allow_concurrency=).with(true)
         
         Puppet::Rails.connect
     end
