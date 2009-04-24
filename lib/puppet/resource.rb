@@ -7,7 +7,7 @@ require 'puppet/resource/reference'
 class Puppet::Resource
     include Puppet::Util::Tagging
     include Enumerable
-    attr_accessor :type, :title, :file, :line, :catalog
+    attr_accessor :type, :title, :file, :line, :catalog, :exported
 
     # Proxy these methods to the parameters hash.  It's likely they'll
     # be overridden at some point, but this works for now.
@@ -42,6 +42,10 @@ class Puppet::Resource
     # Iterate over each param/value pair, as required for Enumerable.
     def each
         @parameters.each { |p,v| yield p, v }
+    end
+
+    def exported?
+        exported
     end
 
     # Create our resource.

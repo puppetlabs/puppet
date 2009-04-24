@@ -82,6 +82,13 @@ describe Puppet::Resource do
         Puppet::Resource.ancestors.should be_include(Puppet::Util::Tagging)
     end
 
+    it "should have an 'exported' attribute" do
+        resource = Puppet::Resource.new("file", "/f")
+        resource.exported = true
+        resource.exported.should == true
+        resource.should be_exported
+    end
+
     describe "when managing parameters" do
         before do
             @resource = Puppet::Resource.new("file", "/my/file")
