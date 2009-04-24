@@ -17,10 +17,6 @@ class Puppet::Parser::Resource::Param
         @name = symbolize(@name)
     end
 
-    def inspect
-        "#<#{self.class} @name => #{name}, @value => #{value}, @source => #{source.name if source}, @line => #{line}>"
-    end
-
     def line_to_i
         return line ? Integer(line) : nil
     end
