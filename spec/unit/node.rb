@@ -147,23 +147,26 @@ describe Puppet::Node, "when generating the list of names to search through" do
         @node.names.should be_instance_of(Array)
     end
 
-    it "should have the node's fqdn as the second name" do
-        @node.names[1].should == "yay.domain.com"
+    describe "and the node name is fully qualified" do
+        it "should contain an entry for each part of the node name" do
+            @node.names.should be_include("foo.domain.com")
+            @node.names.should be_include("foo.domain")
+            @node.names.should be_include("foo")
+        end
     end
 
-    it "should set the fqdn to the node's 'fqdn' fact if it is available" do
-        @node.parameters["fqdn"] = "boo.domain.com"
-        @node.names[1].should == "boo.domain.com"
+    it "should include the node's fqdn" do
+        @node.names.should be_include("yay.domain.com")
     end
 
-    it "should set the fqdn to the node's hostname and domain if no fqdn is available" do
-        @node.names[1].should == "yay.domain.com"
+    it "should combine and include the node's hostname and domain if no fqdn is available" do
+        @node.names.should be_include("yay.domain.com")
     end
 
     it "should contain an entry for each name available by stripping a segment of the fqdn" do
         @node.parameters["fqdn"] = "foo.deep.sub.domain.com"
-        @node.names[2].should == "foo.deep.sub.domain"
-        @node.names[3].should == "foo.deep.sub"
+        @node.names.should be_include("foo.deep.sub.domain")
+        @node.names.should be_include("foo.deep.sub")
     end
 
     describe "and :node_name is set to 'cert'" do

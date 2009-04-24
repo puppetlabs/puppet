@@ -85,6 +85,10 @@ class Puppet::Node
 
         names = []
 
+        if name.include?(".")
+            names += split_name(name)
+        end
+
         # First, get the fqdn
         unless fqdn = parameters["fqdn"]
             if parameters["hostname"] and parameters["domain"]
@@ -97,12 +101,7 @@ class Puppet::Node
         # Now that we (might) have the fqdn, add each piece to the name
         # list to search, in order of longest to shortest.
         if fqdn
-            list = fqdn.split(".")
-            tmp = []
-            list.each_with_index do |short, i|
-                tmp << list[0..i].join(".")
-            end
-            names += tmp.reverse
+            names += split_name(fqdn)
         end
 
         # And make sure the node name is first, since that's the most
@@ -115,5 +114,14 @@ class Puppet::Node
             names.unshift parameters["hostname"]
         end
         names.uniq
+    end
+
+    def split_name(name)
+        list = name.split(".")
+        tmp = []
+        list.each_with_index do |short, i|
+            tmp << list[0..i].join(".")
+        end
+        tmp.reverse
     end
 end
