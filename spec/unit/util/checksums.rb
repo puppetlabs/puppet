@@ -50,7 +50,7 @@ describe Puppet::Util::Checksums do
                 file = "/path/to/my/file"
 
                 fh = mock 'filehandle'
-                fh.expects(:read).with(512).times(3).returns("firstline").then.returns("secondline").then.returns(nil)
+                fh.expects(:read).with(4096).times(3).returns("firstline").then.returns("secondline").then.returns(nil)
                 #fh.expects(:read).with(512).returns("secondline")
                 #fh.expects(:read).with(512).returns(nil)
 

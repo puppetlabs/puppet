@@ -72,8 +72,9 @@ module Puppet::Util::Checksums
 
     # Perform an incremental checksum on a file.
     def checksum_file(digest, filename, lite = false)
+        buffer = lite ? 512 : 4096
         File.open(filename, 'r') do |file|
-            while content = file.read(512)
+            while content = file.read(buffer)
                 digest << content
                 break if lite
             end
