@@ -31,6 +31,13 @@ describe Puppet::SimpleGraph do
         proc { @graph.to_dot_graph }.should_not raise_error
     end
 
+    it "should always put its edges first when printing yaml" do
+        @graph = Puppet::SimpleGraph.new
+        @graph.add_edge(:one, :two)
+        p @graph.to_yaml_properties
+        @graph.to_yaml_properties[0].should == "@edges"
+    end
+
     describe "when managing vertices" do
         before do
             @graph = Puppet::SimpleGraph.new
