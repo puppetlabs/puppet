@@ -102,7 +102,7 @@ class Puppet::SimpleGraph
 
     def initialize
         @vertices = {}
-        @edges = Set.new
+        @edges = []
     end
 
     # Clear our graph.
@@ -226,7 +226,7 @@ class Puppet::SimpleGraph
     def remove_vertex!(vertex)
         return nil unless vertex?(vertex)
         @vertices[vertex].edges.each { |edge| remove_edge!(edge) }
-        @edges.subtract(@vertices[vertex].edges)
+        @edges -= @vertices[vertex].edges
         @vertices[vertex].clear
         @vertices.delete(vertex)
     end
@@ -276,7 +276,7 @@ class Puppet::SimpleGraph
     end
 
     def edges
-        @edges.to_a
+        @edges.dup
     end
 
     # Remove an edge from our graph.
