@@ -50,6 +50,7 @@ if project.has?(:gem)
             "bin/puppet",
             "bin/puppetdoc",
             "bin/ralsh",
+            "sbin/puppetqd",
             "sbin/puppetca",
             "sbin/puppetd",
             "sbin/puppetmasterd",
