@@ -71,7 +71,7 @@ describe Puppet::Network::Format do
         end
 
         it "should default to its required methods being the individual and multiple methods for rendering and interning" do
-            Puppet::Network::Format.new(:foo).required_methods.should ==  [:intern_method, :intern_multiple_method, :render_multiple_method, :render_method] 
+            Puppet::Network::Format.new(:foo).required_methods.sort { |a,b| a.to_s <=> b.to_s }.should ==  [:intern_method, :intern_multiple_method, :render_multiple_method, :render_method].sort { |a,b| a.to_s <=> b.to_s }
         end
 
         it "should consider a class supported if the provided class has all required methods present" do
@@ -121,6 +121,12 @@ describe Puppet::Network::Format do
 
         it "should be able to override its weight at initialization" do
             Puppet::Network::Format.new(:foo, :weight => 1).weight.should == 1
+        end
+
+        [:intern_method, :intern_multiple_method, :render_multiple_method, :render_method].each do |method|
+            it "should allow assignment of the #{method}" do
+                Puppet::Network::Format.new(:foo, method => :foo).send(method).should == :foo
+            end
         end
     end
 

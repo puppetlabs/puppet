@@ -6,38 +6,46 @@ require 'puppet/provider/confiner'
 class Puppet::Network::Format
     include Puppet::Provider::Confiner
 
-    attr_reader :name, :mime, :weight, :required_methods
+    attr_reader :name, :mime
+    attr_accessor :intern_method, :render_method, :intern_multiple_method, :render_multiple_method, :weight, :required_methods
+
+    def init_attribute(name, default)
+        if value = @options[name]
+            @options.delete(name)
+        else
+            value = default
+        end
+        self.send(name.to_s + "=", value)
+    end
 
     def initialize(name, options = {}, &block)
         @name = name.to_s.downcase.intern
 
+        @options = options
+
         # This must be done early the values can be used to set required_methods
         define_method_names()
 
-        if mime = options[:mime]
-            self.mime = mime
-            options.delete(:mime)
-        else
-            self.mime = "text/%s" % name
+        method_list = {
+            :intern_method => "from_%s" % name,
+            :intern_multiple_method => "from_multiple_%s" % name,
+            :render_multiple_method => "to_multiple_%s" % name,
+            :render_method => "to_%s" % name
+        }
+
+        init_attribute(:mime, "text/%s" % name)
+        init_attribute(:weight, 5)
+        init_attribute(:required_methods, method_list.keys)
+
+        method_list.each do |method, value|
+            init_attribute(method, value)
         end
 
-        if weight = options[:weight]
-            @weight = weight
-            options.delete(:weight)
-        else
-            @weight = 5
+        unless @options.empty?
+            raise ArgumentError, "Unsupported option(s) %s" % @options.keys
         end
 
-        if methods = options[:required_methods]
-            @required_methods = methods
-            options.delete(:required_methods)
-        else
-            @required_methods = [:intern_method, :intern_multiple_method, :render_multiple_method, :render_method]
-        end
-
-        unless options.empty?
-            raise ArgumentError, "Unsupported option(s) %s" % options.keys
-        end
+        @options = nil
 
         instance_eval(&block) if block_given?
     end
@@ -86,8 +94,6 @@ class Puppet::Network::Format
     end
 
     private
-
-    attr_reader :intern_method, :render_method, :intern_multiple_method, :render_multiple_method
 
     def define_method_names
         @intern_method = "from_%s" % name
