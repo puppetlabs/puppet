@@ -35,3 +35,7 @@ Puppet.features.add(:rails) do
     end
 end
 
+# We have JSON available
+# This is stupid - Rails breaks json compatibility if we load json before
+# rails, therefore we load rails and then json.  Dumb, mother-dumb.
+Puppet.features.add(:json, :libs => ["json"])

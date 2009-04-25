@@ -28,4 +28,3 @@ Puppet.features.add(:augeas, :libs => ["augeas"])
 
 # We have RRD available
 Puppet.features.add(:rrd, :libs => ["RRDtool"])
-
