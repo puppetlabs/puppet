@@ -70,8 +70,35 @@ describe Puppet::Network::Format do
             @format.should be_supported(FormatRenderer)
         end
 
-        it "should not consider a class to be supported unless it has the individual and multiple methods for rendering and interning" do
-            Puppet::Network::Format.new(:yaml).should_not be_supported(String)
+        it "should default to its required methods being the individual and multiple methods for rendering and interning" do
+            Puppet::Network::Format.new(:foo).required_methods.should ==  [:intern_method, :intern_multiple_method, :render_multiple_method, :render_method] 
+        end
+
+        it "should consider a class supported if the provided class has all required methods present" do
+            format = Puppet::Network::Format.new(:foo)
+            [:intern_method, :intern_multiple_method, :render_multiple_method, :render_method].each do |method|
+                format.expects(:required_method_present?).with { |name, klass, type| name == method and klass == String }.returns true
+            end
+
+            format.should be_required_methods_present(String)
+        end
+
+        it "should consider a class not supported if any required methods are missing from the provided class" do
+            format = Puppet::Network::Format.new(:foo)
+            format.stubs(:required_method_present?).returns true
+            format.expects(:required_method_present?).with { |name, *args| name == :intern_method }.returns false
+            format.should_not be_required_methods_present(String)
+        end
+
+        it "should be able to specify the methods required for support" do
+            Puppet::Network::Format.new(:foo, :required_methods => [:render_method, :intern_method]).required_methods.should == [:render_method, :intern_method]
+        end
+
+        it "should only test for required methods if specific methods are specified as required" do
+            format = Puppet::Network::Format.new(:foo, :required_methods => [:intern_method])
+            format.expects(:required_method_present?).with { |name, klass, type| name == :intern_method }
+
+            format.required_methods_present?(String)
         end
 
         it "should not consider a class supported unless the format is suitable" do
