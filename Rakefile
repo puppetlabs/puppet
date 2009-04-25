@@ -160,31 +160,18 @@ task :unit do
     sh "cd test; rake"
 end
 
-namespace :ci do
+require 'rubygems'
+gem 'ci_reporter'
+require 'ci/reporter/rake/rspec'
+require 'ci/reporter/rake/test_unit'
+ENV['CI_REPORTS'] = 'results'
 
-  desc "Run the CI prep tasks"
-  task :prep do
-    require 'rubygems'
-    gem 'ci_reporter'
-    require 'ci/reporter/rake/rspec'
-    require 'ci/reporter/rake/test_unit'
-    ENV['CI_REPORTS'] = 'results'
-  end
+desc "Run CI Unit tests"
+task :ci_unit => ['ci:setup:testunit', :unit]
 
-  desc "Run all CI tests"
-  task :all => [:unit, :spec]
+desc "Run CI RSpec tests"
+task :ci_spec => ['ci:setup:rspec', :spec]
 
-  desc "Run CI Unit tests"
-  task :unit => [:prep, 'ci:setup:testunit'] do
-     sh "cd test; rake test; exit 0"
-  end
-
-  desc "Run CI RSpec tests"
-  task :spec => [:prep, 'ci:setup:rspec'] do
-     sh "cd spec; rake all; exit 0"
-  end
-
-end
 
 desc "Send patch information to the puppet-dev list"
 task :mail_patches do
