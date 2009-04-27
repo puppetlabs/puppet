@@ -3,6 +3,7 @@
 
 require 'puppet/external/dot'
 require 'puppet/relationship'
+require 'set'
 
 # A hopefully-faster graph class to replace the use of GRATR.
 class Puppet::SimpleGraph
