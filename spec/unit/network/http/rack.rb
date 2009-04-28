@@ -25,6 +25,19 @@ describe "Puppet::Network::HTTP::Rack" do
             Puppet::Network::HTTP::Rack.new({:protocols => [:rest]})
         end
 
+        describe "with XMLRPC enabled" do
+
+            it "should require XMLRPC handlers" do
+                Proc.new { Puppet::Network::HTTP::Rack.new({:protocols => [:xmlrpc]}) }.should raise_error(ArgumentError)
+            end
+
+            it "should create a RackXMLRPC instance" do
+                Puppet::Network::HTTP::RackXMLRPC.expects(:new)
+                Puppet::Network::HTTP::Rack.new({:protocols => [:xmlrpc], :xmlrpc_handlers => [:Status]})
+            end
+
+        end
+
     end
 
     describe "when called" do
@@ -63,6 +76,24 @@ describe "Puppet::Network::HTTP::Rack" do
         it "should finish() the Response" do
             Rack::Response.any_instance.expects(:finish).once
             @app.call(@env) # can't lint when finish is a stub
+        end
+
+    end
+
+    describe "when serving XMLRPC" do
+
+        before :all do
+            @app = Puppet::Network::HTTP::Rack.new({:protocols => [:rest, :xmlrpc], :xmlrpc_handlers => [:Status]})
+            @linted = Rack::Lint.new(@app)
+        end
+
+        before :each do
+            @env = Rack::MockRequest.env_for('/RPC2', :method => 'POST')
+        end
+
+        it "should use RackXMLRPC to serve /RPC2 requests" do
+            Puppet::Network::HTTP::RackXMLRPC.any_instance.expects(:process).once
+            @linted.call(@env)
         end
 
     end
