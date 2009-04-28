@@ -1,0 +1,70 @@
+
+PUPPETMASTER AS A RACK APPLICATION
+==================================
+
+puppetmaster can now be hosted as a standard Rack application. A proper 
+config.ru is provided for this.
+
+For more details about rack, see http://rack.rubyforge.org/ .
+
+Getting started
+===============
+
+You'll need rack installed, version 1.0.0. Older versions are known not
+to work.
+
+
+WEBrick
+-------
+
+WEBrick is currently not supported as a Rack host. You'll be better off 
+just running puppetmasterd directly.
+
+
+Mongrel
+-------
+
+If you like Mongrel, and want to replicate wiki:UsingMongrel, you could 
+probably start your backend mongrels this way:
+
+cd ext/rack
+for port in `seq 18140 18150`; do
+  rackup --server mongrel --port $port &
+done
+
+rackup is part of the rack gem. Make sure it's in your path.
+
+
+
+Apache with Passenger (aka mod_rails)
+-------------------------------------
+
+Make sure puppetmasterd ran at least once, so the SSL certificates
+got set up.
+
+Requirements:
+  Passenger version 2.2.2 or newer [1]
+  Rack version 1.0.0
+  Apache 2.x
+  SSL Module loaded
+
+Apache configuration snippet is in files/apache2.conf. You need to 
+edit it to reflect your servername.
+
+Required puppet.conf settings:
+  [puppetmasterd]
+    ssl_client_header = SSL_CLIENT_S_DN
+    ssl_client_verify_header = SSL_CLIENT_VERIFY
+
+To set up most of the boring stuff, you can use this command:
+  puppet --verbose --modulepath ./ext ext/rack/manifest.pp
+Or use manifest.pp as a starting point for your own module.
+
+Note: Passenger will not let applications run as root or the Apache user, 
+instead an implicit setuid will be done, to the user whom owns 
+config.ru. Therefore, config.ru shall be owned by the puppet user.
+
+
+[1] http://www.modrails.com/install.html
+
+

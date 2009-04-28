@@ -2,6 +2,7 @@ require 'puppet'
 require 'puppet/application'
 require 'puppet/daemon'
 require 'puppet/network/server'
+require 'puppet/network/http/rack' if Puppet.features.rack?
 
 Puppet::Application.new(:puppetmasterd) do
 
@@ -9,6 +10,9 @@ Puppet::Application.new(:puppetmasterd) do
 
     option("--debug", "-d")
     option("--verbose", "-v")
+
+    # internal option, only to be used by ext/rack/config.ru
+    option("--rack")
 
     option("--logdest",  "-l") do |arg|
         begin
@@ -59,8 +63,6 @@ Puppet::Application.new(:puppetmasterd) do
             xmlrpc_handlers << :CA
         end
 
-        @daemon.server = Puppet::Network::Server.new(:xmlrpc_handlers => xmlrpc_handlers)
-
         # Make sure we've got a localhost ssl cert
         Puppet::SSL::Host.localhost
 
@@ -80,11 +82,21 @@ Puppet::Application.new(:puppetmasterd) do
             end
         end
 
-        @daemon.daemonize if Puppet[:daemonize]
+        unless options[:rack]
+            @daemon.server = Puppet::Network::Server.new(:xmlrpc_handlers => xmlrpc_handlers)
+            @daemon.daemonize if Puppet[:daemonize]
+        else
+            require 'puppet/network/http/rack'
+            @app = Puppet::Network::HTTP::Rack.new(:xmlrpc_handlers => xmlrpc_handlers, :protocols => [:rest, :xmlrpc])
+        end
 
         Puppet.notice "Starting Puppet server version %s" % [Puppet.version]
 
-        @daemon.start
+        unless options[:rack]
+            @daemon.start
+        else
+            return @app
+        end
     end
 
     setup do
@@ -96,7 +108,7 @@ Puppet::Application.new(:puppetmasterd) do
                 Puppet::Util::Log.level = :info
             end
 
-            unless Puppet[:daemonize]
+            unless Puppet[:daemonize] or options[:rack]
                 Puppet::Util::Log.newdestination(:console)
                 options[:setdest] = true
             end

@@ -131,6 +131,14 @@ describe "PuppetMaster" do
             @puppetmasterd.run_setup
         end
 
+        it "should set syslog as the log destination if --rack" do
+            @puppetmasterd.options.stubs(:[]).with(:rack).returns(:true)
+
+            Puppet::Log.expects(:newdestination).with(:syslog)
+
+            @puppetmasterd.run_setup
+        end
+
         it "should print puppet config if asked to in Puppet config" do
             @puppetmasterd.stubs(:exit)
             Puppet.settings.stubs(:print_configs?).returns(true)
@@ -255,6 +263,8 @@ describe "PuppetMaster" do
                 @puppetmasterd.run_preinit
                 @server = stub_everything 'server'
                 Puppet::Network::Server.stubs(:new).returns(@server)
+                @app = stub_everything 'app'
+                Puppet::Network::HTTP::Rack.stubs(:new).returns(@app)
                 Puppet::SSL::Host.stubs(:localhost)
                 Puppet::SSL::CertificateAuthority.stubs(:ca?)
                 Process.stubs(:uid).returns(1000)
@@ -323,6 +333,37 @@ describe "PuppetMaster" do
                 @daemon.expects(:start)
 
                 @puppetmasterd.main
+            end
+
+            describe "with --rack" do
+                confine "Rack is not available" => Puppet.features.rack?
+
+                it "it should create the app with REST and XMLRPC support" do
+                    @puppetmasterd.options.stubs(:[]).with(:rack).returns(:true)
+
+                    Puppet::Network::HTTP::Rack.expects(:new).with { |args|
+                        args[:xmlrpc_handlers] == [:Status, :FileServer, :Master, :Report, :Filebucket] and
+                        args[:protocols] == [:rest, :xmlrpc]
+                    }
+
+                    @puppetmasterd.main
+                end
+
+                it "it should not start a daemon" do
+                    @puppetmasterd.options.stubs(:[]).with(:rack).returns(:true)
+
+                    @daemon.expects(:start).never
+
+                    @puppetmasterd.main
+                end
+
+                it "it should return the app" do
+                    @puppetmasterd.options.stubs(:[]).with(:rack).returns(:true)
+
+                    app = @puppetmasterd.main
+                    app.should equal(@app)
+                end
+
             end
 
         end
