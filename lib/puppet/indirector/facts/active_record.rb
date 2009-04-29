@@ -1,5 +1,6 @@
 require 'puppet/rails/fact_name'
 require 'puppet/rails/fact_value'
+require 'puppet/rails/host'
 require 'puppet/indirector/active_record'
 
 class Puppet::Node::Facts::ActiveRecord < Puppet::Indirector::ActiveRecord
