@@ -1159,7 +1159,7 @@ class TestFile < Test::Unit::TestCase
 
         wh = mock 'writehandle', :print => nil
         rh = mock 'readhandle'
-        rh.expects(:read).with(512).times(2).returns("other").then.returns(nil)
+        rh.expects(:read).with(4096).times(2).returns("other").then.returns(nil)
         File.expects(:open).with { |*args| args[0] == tmpfile and args[1] != "r" }.yields(wh)
         File.expects(:open).with { |*args| args[0] == tmpfile and args[1] == "r" }.yields(rh)
 

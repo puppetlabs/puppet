@@ -404,7 +404,7 @@ class TestScope < Test::Unit::TestCase
         end
     end
 
-    if defined? ActiveRecord
+    if defined? ::ActiveRecord
     # Verify that we can both store and collect an object in the same
     # run, whether it's in the same scope as a collection or a different
     # scope.

@@ -8,7 +8,7 @@ require 'puppettest'
 require 'puppettest/railstesting'
 
 # Don't do any tests w/out this class
-if defined? ActiveRecord::Base
+if defined? ::ActiveRecord::Base
 class TestRailsParameter < Test::Unit::TestCase
     include PuppetTest::RailsTesting
     
