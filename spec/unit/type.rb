@@ -42,6 +42,32 @@ describe Puppet::Type do
         Puppet::Type.type(:mount).new(:name => "foo").parameter(:noop).should be_nil
     end
 
+    it "should have a method for adding tags" do
+        Puppet::Type.type(:mount).new(:name => "foo").should respond_to(:tags)
+    end
+
+    it "should use the tagging module" do
+        Puppet::Type.type(:mount).ancestors.should be_include(Puppet::Util::Tagging)
+    end
+
+    it "should delegate to the tagging module when tags are added" do
+        resource = Puppet::Type.type(:mount).new(:name => "foo")
+        resource.stubs(:tag).with(:mount)
+
+        resource.expects(:tag).with(:tag1, :tag2)
+
+        resource.tags = [:tag1,:tag2]
+    end
+
+    it "should add the current type as tag" do
+        resource = Puppet::Type.type(:mount).new(:name => "foo")
+        resource.stubs(:tag)
+
+        resource.expects(:tag).with(:mount)
+
+        resource.tags = [:tag1,:tag2]
+    end
+
     describe "when initializing" do
         describe "and passed a TransObject" do
             it "should fail" do

@@ -372,11 +372,13 @@ class TestType < Test::Unit::TestCase
     def test_tags
         obj = Puppet::Type.type(:file).new(:path => tempfile())
 
-        tags = [:some, :test, :tags]
+        tags = ["some", "test", "tags"]
 
         obj.tags = tags
 
-        assert_equal(tags + [:file], obj.tags)
+        # tags can be stored in an unordered set, so we sort
+        # them for the assert_equal to work
+        assert_equal((tags << "file").sort, obj.tags.sort)
     end
 
     def disabled_test_list
