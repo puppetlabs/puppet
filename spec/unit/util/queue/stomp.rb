@@ -4,6 +4,8 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 require 'puppet/util/queue'
 
 describe Puppet::Util::Queue do
+    confine "Missing Stomp" => Puppet.features.stomp?
+
     it 'should load :stomp client appropriately' do
         Puppet.settings.stubs(:value).returns 'faux_queue_source'
         Puppet::Util::Queue.queue_type_to_class(:stomp).name.should == 'Puppet::Util::Queue::Stomp'
@@ -11,6 +13,8 @@ describe Puppet::Util::Queue do
 end
 
 describe 'Puppet::Util::Queue::Stomp' do
+    confine "Missing Stomp" => Puppet.features.stomp?
+
     before :all do
         class Stomp::Client
             include Mocha::Standalone
