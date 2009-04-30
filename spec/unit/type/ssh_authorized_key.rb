@@ -121,4 +121,13 @@ describe ssh_authorized_key do
             resource.should(:target).should == target
         end
     end
+
+    describe "when calling validate" do
+        it "should not crash on a non-existant user" do
+            resource = @class.create(
+                :name   => "Test",
+                :user   => "ihopesuchuserdoesnotexist")
+            proc { resource.validate }.should_not raise_error
+        end
+    end
 end

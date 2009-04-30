@@ -39,11 +39,14 @@ module Puppet
                     return super
                 end
 
-                if user = resource[:user]
-                    return File.expand_path("~%s/.ssh/authorized_keys" % user)
-                end
+                return nil unless user = resource[:user]
 
-                return nil
+                begin
+                    return File.expand_path("~%s/.ssh/authorized_keys" % user)
+                rescue
+                    Puppet.debug "The required user is not yet present on the system"
+                    return nil
+                end
             end
         end
 
@@ -77,9 +80,14 @@ module Puppet
         end
 
         validate do
-            unless should(:target) or should(:user)
-                raise Puppet::Error, "Attribute 'user' or 'target' is mandatory"
-            end
+            # Go ahead if target attribute is defined
+            return if @parameters[:target].shouldorig[0] != :absent
+
+            # Go ahead if user attribute is defined
+            return if @parameters.include?(:user)
+
+            # If neither target nor user is defined, this is an error
+            raise Puppet::Error, "Attribute 'user' or 'target' is mandatory"
         end
     end
 end
