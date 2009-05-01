@@ -7,8 +7,9 @@ require 'puppet/util/file_locking'
 describe Puppet::Util::FileLocking do
     it "should be able to keep file corruption from happening when there are multiple writers" do
         file = Tempfile.new("puppetspec")
+        filepath = file.path
         file.close!()
-        file = file.path
+        file = filepath
         data = {:a => :b, :c => "A string", :d => "another string", :e => %w{an array of strings}}
         File.open(file, "w") { |f| f.puts YAML.dump(data) }
 
