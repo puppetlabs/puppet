@@ -12,17 +12,30 @@ Puppet::Network::FormatHandler.create(:yaml, :mime => "text/yaml") do
     end
 
     def render(instance)
-        instance.to_yaml
+        yaml = instance.to_yaml
+
+        yaml = fixup(yaml) unless yaml.nil?
+        yaml
     end
 
     # Yaml monkey-patches Array, so this works.
     def render_multiple(instances)
-        instances.to_yaml
+        yaml = instances.to_yaml
+
+        yaml = fixup(yaml) unless yaml.nil?
+        yaml
     end
 
     # Everything's supported
     def supported?(klass)
         true
+    end
+
+    # fixup invalid yaml as per:
+    # http://redmine.ruby-lang.org/issues/show/1331
+    def fixup(yaml)
+        yaml.gsub!(/((?:&id\d+\s+)?!ruby\/object:.*?)\s*\?/) { "? #{$1}" }
+        yaml
     end
 end
 

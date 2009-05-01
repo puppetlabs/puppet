@@ -801,10 +801,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
         it "should be able to be dumped to yaml" do
             YAML.dump(@catalog).should be_instance_of(String)
         end
-
-        it "should always have its resource table first in its yaml property list" do
-            @catalog.to_yaml_properties[0].should == "@resource_table"
-        end
     end
 
     describe "when converting from yaml" do
