@@ -409,6 +409,9 @@ class TestScope < Test::Unit::TestCase
     # run, whether it's in the same scope as a collection or a different
     # scope.
     def test_storeandcollect
+        catalog_cache_class = Puppet::Resource::Catalog.indirection.cache_class
+        facts_cache_class = Puppet::Node::Facts.indirection.cache_class
+        node_cache_class = Puppet::Node.indirection.cache_class
         Puppet[:storeconfigs] = true
         Puppet::Rails.init
         sleep 1
@@ -442,6 +445,10 @@ Host <<||>>"
                 assert(flat.find{|o| o.name == name }, "Did not find #{name}")
             end
         }
+        Puppet[:storeconfigs] = false
+        Puppet::Resource::Catalog.cache_class =  catalog_cache_class
+        Puppet::Node::Facts.cache_class = facts_cache_class
+        Puppet::Node.cache_class = node_cache_class
     end
     else
         $stderr.puts "No ActiveRecord -- skipping collection tests"
