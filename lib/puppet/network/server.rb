@@ -55,11 +55,14 @@ class Puppet::Network::Server
     end
 
     def initialize(args = {})
+        valid_args = [:handlers, :xmlrpc_handlers, :port]
+        bad_args = args.keys.find_all { |p| ! valid_args.include?(p) }.collect { |p| p.to_s }.join(",")
+        raise ArgumentError, "Invalid argument(s) %s" % bad_args unless bad_args == ""
         @server_type = Puppet[:servertype] or raise "No servertype configuration found."  # e.g.,  WEBrick, Mongrel, etc.
         http_server_class || raise(ArgumentError, "Could not determine HTTP Server class for server type [#{@server_type}]")
 
-        @address = args[:address] || Puppet[:bindaddress] || raise(ArgumentError, "Must specify :address or configure Puppet :bindaddress.")
         @port = args[:port] || Puppet[:masterport] || raise(ArgumentError, "Must specify :port or configure Puppet :masterport")
+        @address = determine_bind_address()
 
         @protocols = [ :rest, :xmlrpc ]
         @listening = false
@@ -157,5 +160,10 @@ class Puppet::Network::Server
     def http_server_class_by_type(kind)
         Puppet::Network::HTTP.server_class_by_type(kind)
     end
-end
 
+    def determine_bind_address
+        tmp = Puppet[:bindaddress]
+        return tmp if tmp != ""
+        return server_type.to_s == "webrick" ? "0.0.0.0" : "127.0.0.1"
+    end
+end

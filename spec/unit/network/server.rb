@@ -12,21 +12,23 @@ describe Puppet::Network::Server do
         Puppet.settings.stubs(:use)
         Puppet.settings.stubs(:value).with(:name).returns("me")
         Puppet.settings.stubs(:value).with(:servertype).returns(:suparserver)
+        Puppet.settings.stubs(:value).with(:bindaddress).returns("")
+        Puppet.settings.stubs(:value).with(:masterport).returns(8140)
         Puppet::Network::HTTP.stubs(:server_class_by_type).returns(@mock_http_server_class)
         Puppet.settings.stubs(:value).with(:servertype).returns(:suparserver)
-        @server = Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337)
+        @server = Puppet::Network::Server.new(:port => 31337)
     end
 
     describe "when initializing" do
         before do
             Puppet::Indirector::Indirection.stubs(:model).returns mock('indirection')
             Puppet::Network::Handler.stubs(:handler).returns mock('xmlrpc_handler')
+            Puppet.settings.stubs(:value).with(:bindaddress).returns("")
+            Puppet.settings.stubs(:value).with(:masterport).returns('')
         end
 
-        it "should allow specifying a listening address" do
-            Puppet.settings.stubs(:value).with(:masterport).returns('')
-            @server = Puppet::Network::Server.new(:address => "127.0.0.1")
-            @server.address.should == "127.0.0.1"
+        it 'should fail if an unknown option is provided' do
+            lambda { Puppet::Network::Server.new(:foo => 31337) }.should raise_error(ArgumentError)
         end
 
         it "should allow specifying a listening port" do
@@ -35,11 +37,25 @@ describe Puppet::Network::Server do
             @server.port.should == 31337
         end
 
-        it "should use the Puppet configurator to find a default listening address" do
+        it "should use the :bindaddress setting to determine the default listening address" do
             Puppet.settings.stubs(:value).with(:masterport).returns('')
             Puppet.settings.expects(:value).with(:bindaddress).returns("10.0.0.1")
             @server = Puppet::Network::Server.new
             @server.address.should == "10.0.0.1"
+        end
+
+        it "should set the bind address to '127.0.0.1' if the default address is an empty string and the server type is mongrel" do
+            Puppet.settings.stubs(:value).with(:servertype).returns("mongrel")
+            Puppet.settings.expects(:value).with(:bindaddress).returns("")
+            @server = Puppet::Network::Server.new
+            @server.address.should == '127.0.0.1'
+        end
+
+        it "should set the bind address to '0.0.0.0' if the default address is an empty string and the server type is webrick" do
+            Puppet.settings.stubs(:value).with(:servertype).returns("webrick")
+            Puppet.settings.expects(:value).with(:bindaddress).returns("")
+            @server = Puppet::Network::Server.new
+            @server.address.should == '0.0.0.0'
         end
 
         it "should use the Puppet configurator to find a default listening port" do
@@ -47,12 +63,6 @@ describe Puppet::Network::Server do
             Puppet.settings.expects(:value).with(:masterport).returns(6667)
             @server = Puppet::Network::Server.new
             @server.port.should == 6667
-        end
-
-        it "should fail to initialize if no listening address can be found" do
-            Puppet.settings.stubs(:value).with(:masterport).returns(6667)
-            Puppet.settings.stubs(:value).with(:bindaddress).returns(nil)
-            lambda { Puppet::Network::Server.new }.should raise_error(ArgumentError)
         end
 
         it "should fail to initialize if no listening port can be found" do
@@ -63,49 +73,49 @@ describe Puppet::Network::Server do
 
         it "should use the Puppet configurator to determine which HTTP server will be used to provide access to clients" do
             Puppet.settings.expects(:value).with(:servertype).returns(:suparserver)
-            @server = Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337)
+            @server = Puppet::Network::Server.new(:port => 31337)
             @server.server_type.should == :suparserver
         end
 
         it "should fail to initialize if there is no HTTP server known to the Puppet configurator" do
             Puppet.settings.expects(:value).with(:servertype).returns(nil)
-            lambda { Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337) }.should raise_error
+            lambda { Puppet::Network::Server.new(:port => 31337) }.should raise_error
         end
 
         it "should ask the Puppet::Network::HTTP class to fetch the proper HTTP server class" do
             Puppet::Network::HTTP.expects(:server_class_by_type).with(:suparserver).returns(@mock_http_server_class)
-            @server = Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337)
+            @server = Puppet::Network::Server.new(:port => 31337)
         end
 
         it "should fail if the HTTP server class is unknown" do
             Puppet::Network::HTTP.stubs(:server_class_by_type).returns(nil)
-            lambda { Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337) }.should raise_error(ArgumentError)
+            lambda { Puppet::Network::Server.new(:port => 31337) }.should raise_error(ArgumentError)
         end
 
         it "should allow registering REST handlers" do
-            @server = Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337, :handlers => [ :foo, :bar, :baz])
+            @server = Puppet::Network::Server.new(:port => 31337, :handlers => [ :foo, :bar, :baz])
             lambda { @server.unregister(:foo, :bar, :baz) }.should_not raise_error
         end
 
         it "should allow registering XMLRPC handlers" do
-            @server = Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337, :xmlrpc_handlers => [ :foo, :bar, :baz])
+            @server = Puppet::Network::Server.new(:port => 31337, :xmlrpc_handlers => [ :foo, :bar, :baz])
             lambda { @server.unregister_xmlrpc(:foo, :bar, :baz) }.should_not raise_error
         end
 
         it "should not be listening after initialization" do
-            Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337).should_not be_listening
+            Puppet::Network::Server.new(:port => 31337).should_not be_listening
         end
 
         it "should use the :main setting section" do
-            Puppet.settings.expects(:use).with { |args| args.include?(:main) }
-            @server = Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337, :xmlrpc_handlers => [ :foo, :bar, :baz])
+            Puppet.settings.expects(:use).with { |*args| args.include?(:main) }
+            @server = Puppet::Network::Server.new(:port => 31337, :xmlrpc_handlers => [ :foo, :bar, :baz])
         end
 
         it "should use the Puppet[:name] setting section" do
             Puppet.settings.expects(:value).with(:name).returns "me"
-            Puppet.settings.expects(:use).with { |args| args.include?("me") }
+            Puppet.settings.expects(:use).with { |*args| args.include?("me") }
 
-            @server = Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337, :xmlrpc_handlers => [ :foo, :bar, :baz])
+            @server = Puppet::Network::Server.new(:port => 31337, :xmlrpc_handlers => [ :foo, :bar, :baz])
         end
     end
 
@@ -322,7 +332,7 @@ describe Puppet::Network::Server do
     it "should allow for multiple configurations, each handling different indirections" do
         Puppet::Indirector::Indirection.stubs(:model).returns mock('indirection')
 
-        @server2 = Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337)
+        @server2 = Puppet::Network::Server.new(:port => 31337)
         @server.register(:foo, :bar)
         @server2.register(:foo, :xyzzy)
         @server.unregister(:foo, :bar)
@@ -443,7 +453,7 @@ describe Puppet::Network::Server do
             Puppet::Indirector::Indirection.stubs(:model).returns mock('indirection')
             Puppet::Network::Handler.stubs(:handler).returns mock('xmlrpc_handler')
 
-            @server = Puppet::Network::Server.new(:address => "127.0.0.1", :port => 31337, :handlers => [:node], :xmlrpc_handlers => [:master])
+            @server = Puppet::Network::Server.new(:port => 31337, :handlers => [:node], :xmlrpc_handlers => [:master])
             @mock_http_server = mock('http server')
             @mock_http_server.stubs(:listen)
         end

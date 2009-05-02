@@ -49,24 +49,8 @@ describe "Puppet defaults" do
         Puppet.settings.element(:rundir).group.should be_nil
     end
 
-    it "should default to 0.0.0.0 for its bind address and 'webrick' for its server type" do
-        Puppet.settings[:servertype] = "webrick"
-        Puppet.settings[:bindaddress].should == "0.0.0.0"
-    end
-
-    it "should default to 0.0.0.0 for its bind address if the server is webrick" do
-        Puppet.settings[:servertype] = "webrick"
-        Puppet.settings[:bindaddress].should == "0.0.0.0"
-    end
-
-    it "should default to 127.0.0.1 for its bind address if the server is mongrel" do
-        Puppet.settings[:servertype] = "mongrel"
-        Puppet.settings[:bindaddress].should == "127.0.0.1"
-    end
-
-    it "should allow specification of a different bind address" do
-        Puppet.settings[:bindaddress] = "192.168.0.1"
-        Puppet.settings[:bindaddress].should == "192.168.0.1"
+    it "should use a bind address of ''" do
+        Puppet.settings[:bindaddress].should == ""
     end
 
     [:factdest, :pluginpath].each do |setting|
