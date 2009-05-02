@@ -531,12 +531,4 @@ describe Puppet::Network::Server do
             lambda { @server.unregister(:foo) }.should raise_error(RuntimeError) 
         end
     end
-
-
-    describe Class.new, "put these somewhere" do
-        it "should have the ability to use a class-level from_ hook (from_yaml, from_text, etc.) that can be called, based on content-type header, to allow for different deserializations of an object" 
-        it "should allow from_* on the inbound :data packet (look at its content_type) when doing a PUT/.new.save"
-        it "should prepend a rest version number on the path (w00t)"
-        it "should ... on server side, .save should from_yaml, then foo.save(args) instead of just Foo.new.save(args)"
-    end
 end
