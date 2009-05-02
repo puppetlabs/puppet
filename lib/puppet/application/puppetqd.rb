@@ -5,11 +5,14 @@ require 'puppet/resource/catalog'
 require 'puppet/indirector/catalog/queue'
 
 Puppet::Application.new(:puppetqd) do
-    extend Puppet::Daemon
-
     should_parse_config
 
+    attr_accessor :daemon
+
     preinit do
+        @daemon = Puppet::Daemon.new
+        @daemon.argv = ARGV.dup
+
         # Do an initial trap, so that cancels don't get a stack trace.
         trap(:INT) do
             $stderr.puts "Cancelling startup"
@@ -22,8 +25,6 @@ Puppet::Application.new(:puppetqd) do
         }.each do |opt,val|
             options[opt] = val
         end
-
-        @args = {}
     end
 
     option("--debug","-d")
@@ -37,9 +38,8 @@ Puppet::Application.new(:puppetqd) do
             Puppet.notice "Processing queued catalog for %s" % catalog.name
             catalog.save
         end
-        daemonize if Puppet[:daemonize]
 
-        while true do sleep 1000 end
+        sleep_forever()
     end
 
     # Handle the logging settings.
@@ -51,10 +51,6 @@ Puppet::Application.new(:puppetqd) do
             else
                 Puppet::Util::Log.level = :info
             end
-        end
-
-        unless options[:setdest]
-            Puppet::Util::Log.newdestination(:syslog)
         end
     end
 
@@ -70,5 +66,11 @@ Puppet::Application.new(:puppetqd) do
         end
 
         Puppet::Resource::Catalog.terminus_class = :active_record
+
+        daemon.daemonize if Puppet[:daemonize]
+    end
+
+    def sleep_forever
+        while true do sleep 1000 end
     end
 end
