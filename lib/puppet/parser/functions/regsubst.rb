@@ -1,7 +1,9 @@
 module Puppet::Parser::Functions
     newfunction(:regsubst, :type => :rvalue,
 		:doc => "
-                Perform regexp replacement on a string. Parameters (in order):
+                Perform regexp replacement on a string. 
+
+- **Parameters** (in order):
 
 :str:  The string to operate on.
 
@@ -23,7 +25,7 @@ module Puppet::Parser::Functions
      - **S**         SJIS
      - **U**         UTF-8
 
-**Examples**
+- **Examples**
 
 Get the third octet from the node's IP address::
 
