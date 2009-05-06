@@ -14,6 +14,21 @@ class Puppet::Relationship
 
     attr_reader :event
 
+    def self.from_json(json)
+        source = json["source"]
+        target = json["target"]
+
+        args = {}
+        if event = json["event"]
+            args[:event] = event
+        end
+        if callback = json["callback"]
+            args[:callback] = callback
+        end
+
+        new(source, target, args)
+    end
+    
     def event=(event)
         if event != :NONE and ! callback
             raise ArgumentError, "You must pass a callback for non-NONE events"
@@ -55,8 +70,24 @@ class Puppet::Relationship
         "%s => %s" % [source, target]
     end
 
+    def to_json(*args)
+        data = {
+            'source' => source.to_s,
+            'target' => target.to_s
+        }
+
+        ["event", "callback"].each do |attr|
+            next unless value = send(attr)
+            data[attr] = value
+        end
+
+        {
+            'json_class' => self.class.to_s,
+            'data' => data
+        }.to_json(*args)
+    end
+
     def to_s
         ref
     end
 end
-

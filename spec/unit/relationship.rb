@@ -144,3 +144,104 @@ describe Puppet::Relationship, " when matching edges with a non-standard event" 
         @edge.should be_match(:random)
     end
 end
+
+describe Puppet::Relationship, "when converting to json" do
+    confine "Missing 'json' library" => Puppet.features.json?
+
+    before do
+        @edge = Puppet::Relationship.new(:a, :b, :event => :random, :callback => :whatever)
+    end
+
+    def json_output_should
+        @edge.class.expects(:json_create).with { |hash| yield hash }
+    end
+
+    # LAK:NOTE For all of these tests, we convert back to the edge so we can
+    # trap the actual data structure then.
+    it "should set the 'json_class' to Puppet::Relationship" do
+        json_output_should { |hash| hash['json_class'] == "Puppet::Relationship" }
+
+        JSON.parse @edge.to_json
+    end
+
+    it "should store the stringified source as the source in the data" do
+        json_output_should { |hash| hash['data']['source'] == "a" }
+
+        JSON.parse @edge.to_json
+    end
+
+    it "should store the stringified target as the target in the data" do
+        json_output_should { |hash| hash['data']['target'] == "b" }
+
+        JSON.parse @edge.to_json
+    end
+
+    it "should store the jsonified event as the event in the data" do
+        @edge.event = :random
+        json_output_should { |hash| hash['data']['event'] == "random" }
+
+        JSON.parse @edge.to_json
+    end
+
+    it "should not store an event when none is set" do
+        @edge.event = nil
+        json_output_should { |hash| hash['data']['event'].nil? }
+
+        JSON.parse @edge.to_json
+    end
+
+    it "should store the jsonified callback as the callback in the data" do
+        @edge.callback = "whatever"
+        json_output_should { |hash| hash['data']['callback'] == "whatever" }
+
+        JSON.parse @edge.to_json
+    end
+
+    it "should not store a callback when none is set in the edge" do
+        @edge.callback = nil
+        json_output_should { |hash| hash['data']['callback'].nil? }
+
+        JSON.parse @edge.to_json
+    end
+end
+
+describe Puppet::Relationship, "when converting from json" do
+    confine "Missing 'json' library" => Puppet.features.json?
+
+    before do
+        @event = "random"
+        @callback = "whatever"
+        @data = {
+            "source" => "mysource",
+            "target" => "mytarget",
+            "event" => @event,
+            "callback" => @callback
+        }
+        @json = {
+            "json_class" => "Puppet::Relationship",
+            "data" => @data
+        }
+    end
+
+    def json_result_should
+        Puppet::Relationship.expects(:new).with { |*args| yield args }
+    end
+
+    # LAK:NOTE For all of these tests, we convert back to the edge so we can
+    # trap the actual data structure then.
+    it "should pass the source in as the first argument" do
+        Puppet::Relationship.from_json("source" => "mysource", "target" => "mytarget").source.should == "mysource"
+    end
+
+    it "should pass the target in as the second argument" do
+        Puppet::Relationship.from_json("source" => "mysource", "target" => "mytarget").target.should == "mytarget"
+    end
+
+    it "should pass the event as an argument if it's provided" do
+        Puppet::Relationship.from_json("source" => "mysource", "target" => "mytarget", "event" => "myevent", "callback" => "eh").event.should == "myevent"
+    end
+
+    it "should pass the callback as an argument if it's provided" do
+        Puppet::Relationship.from_json("source" => "mysource", "target" => "mytarget", "callback" => "mycallback").callback.should == "mycallback"
+    end
+end
