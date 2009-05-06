@@ -82,8 +82,14 @@ describe Puppet::Configurer::Downloader do
         end
 
         it "should support providing an 'ignore' parameter" do
-            Puppet::Type.type(:file).expects(:new).with { |opts| opts[:ignore] == ".svn" }
+            Puppet::Type.type(:file).expects(:new).with { |opts| opts[:ignore] == [".svn"] }
             @dler = Puppet::Configurer::Downloader.new("foo", "path", "source", ".svn")
+            @dler.file
+        end
+
+        it "should split the 'ignore' parameter on whitespace" do
+            Puppet::Type.type(:file).expects(:new).with { |opts| opts[:ignore] == %w{.svn CVS} }
+            @dler = Puppet::Configurer::Downloader.new("foo", "path", "source", ".svn CVS")
             @dler.file
         end
     end

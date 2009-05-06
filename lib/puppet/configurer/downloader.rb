@@ -56,7 +56,7 @@ class Puppet::Configurer::Downloader
 
     def file
         args = default_arguments.merge(:path => path, :source => source)
-        args[:ignore] = ignore if ignore
+        args[:ignore] = ignore.split if ignore
         Puppet::Type.type(:file).new(args)
     end
 
