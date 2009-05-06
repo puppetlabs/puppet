@@ -4,6 +4,28 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/network/formats'
 
+class JsonTest
+    attr_accessor :string
+    def ==(other)
+        string == other.string
+    end
+
+    def self.from_json(data)
+        new(data)
+    end
+
+    def initialize(string)
+        @string = string
+    end
+
+    def to_json(*args)
+        {
+            'json_class' => self.class.name,
+            'data' => @string
+        }.to_json(*args)
+    end
+end
+
 describe "Puppet Network Format" do
     it "should include a yaml format" do
         Puppet::Network::FormatHandler.format(:yaml).should_not be_nil
@@ -148,6 +170,80 @@ describe "Puppet Network Format" do
 
         it "should have a weight of 1" do
             @format.weight.should == 1
+        end
+    end
+
+    it "should include a json format" do
+        Puppet::Network::FormatHandler.format(:json).should_not be_nil
+    end
+
+    describe "json" do
+        confine "Missing 'json' library" => Puppet.features.json?
+
+        before do
+            @json = Puppet::Network::FormatHandler.format(:json)
+        end
+
+        it "should have its mime type set to text/json" do
+            Puppet::Network::FormatHandler.format(:json).mime.should == "text/json"
+        end
+
+        it "should require the :render_method" do
+            Puppet::Network::FormatHandler.format(:json).required_methods.should be_include(:render_method)
+        end
+
+        it "should require the :intern_method" do
+            Puppet::Network::FormatHandler.format(:json).required_methods.should be_include(:intern_method)
+        end
+
+        it "should have a weight of 10" do
+            @json.weight.should == 10
+        end
+
+        describe "when supported" do
+            it "should render by calling 'to_json' on the instance" do
+                instance = JsonTest.new("foo")
+                instance.expects(:to_json).returns "foo"
+                @json.render(instance).should == "foo"
+            end
+
+            it "should render multiple instances by calling 'to_json' on the array" do
+                instances = [mock('instance')]
+
+                instances.expects(:to_json).returns "foo"
+
+                @json.render_multiple(instances).should == "foo"
+            end
+
+            it "should intern by calling 'JSON.parse' on the text and then using from_json to convert the data into an instance" do
+                text = "foo"
+                JSON.expects(:parse).with("foo").returns("json_class" => "JsonTest", "data" => "foo")
+                JsonTest.expects(:from_json).with("foo").returns "parsed_json"
+                @json.intern(JsonTest, text).should == "parsed_json"
+            end
+
+            it "should not render twice if 'JSON.parse' creates the appropriate instance" do
+                text = "foo"
+                instance = JsonTest.new("foo")
+                JSON.expects(:parse).with("foo").returns(instance)
+                JsonTest.expects(:from_json).never
+                @json.intern(JsonTest, text).should equal(instance)
+            end
+
+            it "should intern by calling 'JSON.parse' on the text and then using from_json to convert the actual into an instance if the json has no class/data separation" do
+                text = "foo"
+                JSON.expects(:parse).with("foo").returns("foo")
+                JsonTest.expects(:from_json).with("foo").returns "parsed_json"
+                @json.intern(JsonTest, text).should == "parsed_json"
+            end
+
+            it "should intern multiples by parsing the text and using 'class.intern' on each resulting data structure" do
+                text = "foo"
+                JSON.expects(:parse).with("foo").returns ["bar", "baz"]
+                JsonTest.expects(:from_json).with("bar").returns "BAR"
+                JsonTest.expects(:from_json).with("baz").returns "BAZ"
+                @json.intern_multiple(JsonTest, text).should == %w{BAR BAZ}
+            end
         end
     end
 end

@@ -88,3 +88,36 @@ Puppet::Network::FormatHandler.create(:raw, :mime => "application/x-raw", :weigh
         true
     end
 end
+
+Puppet::Network::FormatHandler.create(:json, :mime => "text/json", :weight => 10, :required_methods => [:render_method, :intern_method]) do
+    confine :true => Puppet.features.json?
+
+    def intern(klass, text)
+        data_to_instance(klass, JSON.parse(text))
+    end
+
+    def intern_multiple(klass, text)
+        JSON.parse(text).collect do |data|
+            data_to_instance(klass, data)
+        end
+    end
+
+    # JSON monkey-patches Array, so this works.
+    def render_multiple(instances)
+        instances.to_json
+    end
+
+    # If they pass class information, we want to ignore it.  By default,
+    # we'll include class information but we won't rely on it - we don't
+    # want class names to be required because we then can't change our
+    # internal class names, which is bad.
+    def data_to_instance(klass, data)
+        if data.is_a?(Hash) and d = data['data']
+            data = d
+        end
+        if data.is_a?(klass)
+            return data
+        end
+        klass.from_json(data)
+    end
+end

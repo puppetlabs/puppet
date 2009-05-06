@@ -117,7 +117,7 @@ class Puppet::Network::Format
 
         return true if has_method
 
-        Puppet.debug "Format %s not supported for %s; %s" % [name, klass, message]
+        Puppet.debug "Format %s not supported for %s; %s" % [self.name, klass, message]
         return false
     end
 end
