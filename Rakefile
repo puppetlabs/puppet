@@ -1,139 +1,45 @@
 # Rakefile for Puppet -*- ruby -*-
 
-$LOAD_PATH << File.join(File.dirname(__FILE__), 'tasks')
+require './lib/puppet.rb'
+require 'rake'
+require 'rake/packagetask'
+require 'rake/gempackagetask'
 
-$: << File.expand_path(File.join(File.dirname(__FILE__), 'lib'))
+FILES = FileList[
+    '[A-Z]*',
+    'bin/**/*',
+    'sbin/**/*',
+    'lib/**/*',
+    'conf/**/*',
+    'man/**/*',
+    'examples/**/*',
+    'ext/**/*'
+]
 
-begin
-    require 'rake/reductive'
-rescue LoadError
-    $stderr.puts "You must have the Reductive build library in your RUBYLIB; see http://github.com/lak/reductive-build/tree/master."
-    exit(14)
+spec = Gem::Specification.new do |spec|
+    spec.platform = Gem::Platform::RUBY
+    spec.name = 'puppet'
+    spec.files = FILES.to_a
+    spec.version = Puppet::PUPPETVERSION
+    spec.summary = 'Puppet, an automated configuration management tool'
+    spec.author = 'Reductive Labs'
+    spec.email = 'puppet@reductivelabs.com'
+    spec.homepage = 'http://reductivelabs.com'
+    spec.rubyforge_project = 'puppet'
+    spec.has_rdoc = true
+    spec.rdoc_options <<
+        '--title' <<  'Puppet - Configuration Management' <<
+        '--main' << 'README' <<
+        '--line-numbers'
 end
 
-TESTHOSTS = %w{rh3a fedora1 centos1 freebsd1 culain}
-
-project = Rake::RedLabProject.new("puppet") do |p|
-    p.summary = "System Automation and Configuration Management Software"
-    p.description = "Puppet is a declarative language for expressing system
-        configuration, a client and server for distributing it, and a library
-        for realizing the configuration."
-
-    p.filelist = [
-        'install.rb',
-        '[A-Z]*',
-        'lib/puppet.rb',
-        'lib/puppet/**/*.rb',
-        'lib/puppet/**/*.py',
-        'test/**/*',
-        'spec/**/*',
-        'bin/**/*',
-        'sbin/**/*',
-        'ext/**/*',
-        'examples/**/*',
-        'conf/**/*',
-        'man/**/*'
-    ]
-    p.filelist.exclude("bin/pi")
-
-    p.add_dependency('facter', '1.1.0')
+Rake::PackageTask.new("puppet", Puppet::PUPPETVERSION) do |pkg|
+    pkg.package_dir = 'pkg'
+    pkg.need_tar_gz = true
+    pkg.package_files = FILES.to_a
 end
 
-if project.has?(:gem)
-    # Make our gem task.  This actually just fills out the spec.
-    project.mkgemtask do |task|
-
-        task.require_path = 'lib'                         # Use these for libraries.
-
-        task.bindir = "."                                 # Use these for applications.
-        task.executables = [
-            "bin/puppet",
-            "bin/puppetdoc",
-            "bin/ralsh",
-            "sbin/puppetqd",
-            "sbin/puppetca",
-            "sbin/puppetd",
-            "sbin/puppetmasterd",
-            "sbin/puppetrun",
-        ]
-        task.default_executable = "bin/puppet"
-
-        #### Documentation and testing.
-
-        task.has_rdoc = true
-        #s.extra_rdoc_files = rd.rdoc_files.reject { |fn| fn =~ /\.rb$/ }.to_a
-        task.rdoc_options <<
-            '--title' <<  'Puppet - Configuration Management' <<
-            '--main' << 'README' <<
-            '--line-numbers'
-        task.test_file = "test/Rakefile"
-        task.author = "Luke Kanies"
-    end
-end
-
-rule(/_is_runnable$/) do |t|
-    available = false
-    executable = t.name.sub(/_is_runnable$/, '')
-    ENV['PATH'].split(':').each do |elem|
-        available = true if File.executable? File.join(elem, executable)
-    end
-    
-    unless available
-        puts "You do not have #{executable} available in your path"
-        exit 1
-    end
-end
-
-task :check_build_deps => 'dpkg-checkbuilddeps_is_runnable' do
-    system("dpkg-checkbuilddeps") || exit(1)
-end
-
-task :debian_packages => [ "debian", :check_build_deps, :fakeroot_is_runnable ] do
-    system("fakeroot debian/rules clean") || exit(1)
-    system("fakeroot debian/rules binary") || exit(1)
-end
-
-
-def dailyfile(package)
-    "#{downdir}/#{package}/#{package}-daily-#{stamp}.tgz"
-end
-
-def daily(package)
-    edir = "/tmp/daily-export"
-    Dir.mkdir edir
-    Dir.chdir(edir) do
-        sh %{git clone git://reductivelabs.com/#{package} #{package} >/dev/null}
-        sh %{tar cf - #{package} | gzip -c > #{dailyfile(package)}}
-    end
-    FileUtils.rm_rf(edir)
-end
-
-def downdir
-    ENV['DOWNLOAD_DIR'] || "/opt/rl/docroots/reductivelabs.com/htdocs/downloads"
-end
-
-def stamp
-    [Time.now.year, Time.now.month, Time.now.day].collect { |i| i.to_s}.join
-end
-
-pdaily = dailyfile("puppet")
-fdaily = dailyfile("facter")
-
-file pdaily do
-    daily("puppet")
-end
-
-file fdaily do
-    daily("facter")
-end
-
-task :daily => [pdaily, fdaily]
-
-task :dailyclean do
-    Dir.glob("#{downdir}/*/*daily*.tgz").each do |file|
-        puts "Removing %s" % file
-        File.unlink(file)
-    end
+Rake::GemPackageTask.new(spec) do |pkg|
 end
 
 task :tracdocs do
@@ -150,9 +56,8 @@ task :spec do
     require 'spec/rake/spectask'
     # require 'rcov'
     Spec::Rake::SpecTask.new do |t|
-         #   t.rcov = true
-         t.spec_opts = ['--format','s', '--loadby','mtime']
-         t.spec_files = FileList['spec/**/*.rb']
+        t.spec_opts = ['--format','s', '--loadby','mtime'] 
+        t.spec_files = FileList['spec/**/*.rb']
     end
 end
 
@@ -210,20 +115,16 @@ task :mail_patches do
     sh "rm 00*.patch"
 end
 
-    desc "Create a changelog based on your git commits."
-    task :changelog do
- 
-      CHANGELOG_DIR = "#{Dir.pwd}"
- 
-      mkdir(CHANGELOG_DIR) unless File.directory?(CHANGELOG_DIR)
- 
-      change_body=`git log --pretty=format:'%aD%n%an <%ae>%n%s%n'`
-
-      File.open(File.join(CHANGELOG_DIR, "CHANGELOG.git"), 'w') do |f|
+desc "Create a changelog based on your git commits."
+task :changelog do
+    CHANGELOG_DIR = "#{Dir.pwd}"
+    mkdir(CHANGELOG_DIR) unless File.directory?(CHANGELOG_DIR)
+    change_body=`git log --pretty=format:'%aD%n%an <%ae>%n%s%n'`
+    File.open(File.join(CHANGELOG_DIR, "CHANGELOG.git"), 'w') do |f|
         f << change_body 
-      end
- 
-      # Changelog commit
-      `git add #{CHANGELOG_DIR}/CHANGELOG.git`
-      `git commit -m "Update CHANGELOG.git"`
     end
+ 
+    # Changelog commit
+    `git add #{CHANGELOG_DIR}/CHANGELOG.git`
+    `git commit -m "Update CHANGELOG.git"`
+end
