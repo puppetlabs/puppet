@@ -560,7 +560,7 @@ module Puppet
              be used here."],
         :pluginsync => [false,
             "Whether plugins should be synced with the central server."],
-        :pluginsignore => [".svn CVS",
+        :pluginsignore => [".svn CVS .git",
             "What files to ignore when pulling down plugins."]
     )
 
