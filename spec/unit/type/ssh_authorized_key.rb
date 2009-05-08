@@ -120,7 +120,14 @@ describe ssh_authorized_key do
             target = File.expand_path("~root/.ssh/authorized_keys")
             resource.should(:target).should == target
         end
-    end
+
+        # Bug #2124 - ssh_authorized_key always changes target if target is not defined
+        it "should not raise spurious change events" do
+            resource = @class.new(:name => "Test", :user => "root")
+            target = File.expand_path("~root/.ssh/authorized_keys")
+            resource.property(:target).insync?(target).should == true
+        end
+   end
 
     describe "when calling validate" do
         it "should not crash on a non-existant user" do

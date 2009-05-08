@@ -48,6 +48,10 @@ module Puppet
                     return nil
                 end
             end
+
+            def insync?(is)
+                is == should
+            end
         end
 
         newproperty(:options, :array_matching => :all) do
