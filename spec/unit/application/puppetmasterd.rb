@@ -264,7 +264,6 @@ describe "PuppetMaster" do
                 @server = stub_everything 'server'
                 Puppet::Network::Server.stubs(:new).returns(@server)
                 @app = stub_everything 'app'
-                Puppet::Network::HTTP::Rack.stubs(:new).returns(@app)
                 Puppet::SSL::Host.stubs(:localhost)
                 Puppet::SSL::CertificateAuthority.stubs(:ca?)
                 Process.stubs(:uid).returns(1000)
@@ -337,6 +336,11 @@ describe "PuppetMaster" do
 
             describe "with --rack" do
                 confine "Rack is not available" => Puppet.features.rack?
+
+                before do
+                    require 'puppet/network/http/rack'
+                    Puppet::Network::HTTP::Rack.stubs(:new).returns(@app)
+                end
 
                 it "it should create the app with REST and XMLRPC support" do
                     @puppetmasterd.options.stubs(:[]).with(:rack).returns(:true)
