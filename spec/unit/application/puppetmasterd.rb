@@ -75,6 +75,16 @@ describe "PuppetMaster" do
     end
 
     describe "when applying options" do
+        before do
+            @old_argv = ARGV.dup
+            ARGV.clear
+        end
+
+        after do
+            ARGV.clear
+            @old_argv.each { |a| ARGV << a }
+        end
+
         it "should set the log destination with --logdest" do
             Puppet::Log.expects(:newdestination).with("console")
 
@@ -85,6 +95,14 @@ describe "PuppetMaster" do
             @puppetmasterd.options.expects(:[]=).with(:setdest,true)
 
             @puppetmasterd.handle_logdest("console")
+        end
+
+        it "should parse the log destination from ARGV" do
+            ARGV << "--logdest" << "/my/file"
+
+            Puppet::Util::Log.expects(:newdestination).with("/my/file")
+
+            @puppetmasterd.parse_options
         end
     end
 

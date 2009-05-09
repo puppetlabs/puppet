@@ -14,7 +14,7 @@ Puppet::Application.new(:puppetmasterd) do
     # internal option, only to be used by ext/rack/config.ru
     option("--rack")
 
-    option("--logdest",  "-l") do |arg|
+    option("--logdest DEST",  "-l DEST") do |arg|
         begin
             Puppet::Util::Log.newdestination(arg)
             options[:setdest] = true

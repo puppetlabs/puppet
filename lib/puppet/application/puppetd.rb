@@ -65,7 +65,7 @@ Puppet::Application.new(:puppetd) do
         options[:waitforcert] = 0 unless @explicit_waitforcert
     end
 
-    option("--logdest", "-l") do |arg|
+    option("--logdest DEST", "-l DEST") do |arg|
         begin
             Puppet::Util::Log.newdestination(arg)
             options[:setdest] = true

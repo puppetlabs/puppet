@@ -76,6 +76,15 @@ describe "puppetd" do
     end
 
     describe "when handling options" do
+        before do
+            @old_argv = ARGV.dup
+            ARGV.clear
+        end
+
+        after do
+            ARGV.clear
+            @old_argv.each { |a| ARGV << a }
+        end
 
         [:centrallogging, :disable, :enable, :debug, :fqdn, :test, :verbose].each do |option|
             it "should declare handle_#{option} method" do
@@ -128,6 +137,14 @@ describe "puppetd" do
             @puppetd.options.expects(:[]=).with(:setdest,true)
 
             @puppetd.handle_logdest("console")
+        end
+
+        it "should parse the log destination from ARGV" do
+            ARGV << "--logdest" << "/my/file"
+
+            Puppet::Util::Log.expects(:newdestination).with("/my/file")
+
+            @puppetd.parse_options
         end
 
         it "should store the waitforcert options with --waitforcert" do
