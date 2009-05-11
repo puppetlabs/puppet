@@ -1,8 +1,8 @@
 #!/usr/bin/env ruby
 
 require File.dirname(__FILE__) + '/../../../../spec_helper'
-require 'puppet/network/http/rack'
-require 'puppet/network/http/rack/xmlrpc'
+require 'puppet/network/http/rack' if Puppet.features.rack?
+require 'puppet/network/http/rack/xmlrpc' if Puppet.features.rack?
 
 describe "Puppet::Network::HTTP::RackXMLRPC" do
     confine "Rack is not available" => Puppet.features.rack?
