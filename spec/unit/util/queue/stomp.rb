@@ -45,6 +45,11 @@ describe 'Puppet::Util::Queue::Stomp' do
             lambda { Puppet::Util::Queue::Stomp.new }.should raise_error(ArgumentError)
         end
 
+        it "should fail somewhat helpfully if the Stomp client cannot be created" do
+            Stomp::Client.expects(:new).raises RuntimeError
+            lambda { Puppet::Util::Queue::Stomp.new }.should raise_error(ArgumentError)
+        end
+
         list = %w{user password host port}
         {"user" => "myuser", "password" => "mypass", "host" => "foohost", "port" => 42}.each do |name, value|
             it "should use the #{name} from the queue source as the queueing #{name}" do
