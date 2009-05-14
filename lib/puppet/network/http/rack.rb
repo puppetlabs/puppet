@@ -1,5 +1,4 @@
 
-require 'rack'
 require 'puppet/network/http'
 require 'puppet/network/http/rack/rest'
 require 'puppet/network/http/rack/xmlrpc'
