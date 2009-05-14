@@ -32,7 +32,7 @@ describe "Certificate REST Terminus" do
         ca = Puppet::SSL::CertificateAuthority.new
         ca.generate(Puppet[:certname]) unless Puppet::SSL::Certificate.find(Puppet[:certname])
 
-        @params = { :address => "127.0.0.1", :port => 34343, :handlers => [ :certificate_revocation_list ] }
+        @params = { :port => 34343, :handlers => [ :certificate_revocation_list ] }
         @server = Puppet::Network::Server.new(@params)
         @server.listen
 

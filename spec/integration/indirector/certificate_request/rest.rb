@@ -40,7 +40,7 @@ describe "Certificate Request REST Terminus" do
         Puppet::SSL::Host.ca_location = :none
         Puppet::SSL::Host.destroy("foo.madstop.com")
 
-        @params = { :address => "127.0.0.1", :port => 34343, :handlers => [ :certificate_request ] }
+        @params = { :port => 34343, :handlers => [ :certificate_request ] }
         @server = Puppet::Network::Server.new(@params)
         @server.listen
 

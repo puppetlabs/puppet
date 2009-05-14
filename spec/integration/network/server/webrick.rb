@@ -9,7 +9,8 @@ describe Puppet::Network::Server do
     describe "when using webrick" do
         before :each do
             Puppet[:servertype] = 'webrick'
-            @params = { :address => "127.0.0.1", :port => 34343, :handlers => [ :node ], :xmlrpc_handlers => [ :status ] }
+            Puppet[:server] = '127.0.0.1'
+            @params = { :port => 34343, :handlers => [ :node ], :xmlrpc_handlers => [ :status ] }
 
             # Get a safe temporary file
             @tmpfile = Tempfile.new("webrick_integration_testing")
@@ -44,6 +45,21 @@ describe Puppet::Network::Server do
                 @server = Puppet::Network::Server.new(@params.merge(:port => 34343))            
                 @server.listen
                 lambda { TCPSocket.new('127.0.0.1', 34343) }.should_not raise_error            
+            end
+
+            it "should default to '0.0.0.0' as its bind address" do
+                @server = Puppet::Network::Server.new(@params.merge(:port => 34343))            
+                @server.stubs(:unlisten) # we're breaking listening internally, so we have to keep it from unlistening
+                @server.send(:http_server).expects(:listen).with { |args| args[:address] == "0.0.0.0" }
+                @server.listen
+            end
+
+            it "should use any specified bind address" do
+                Puppet[:bindaddress] = "127.0.0.1"
+                @server = Puppet::Network::Server.new(@params.merge(:port => 34343))            
+                @server.stubs(:unlisten) # we're breaking listening internally, so we have to keep it from unlistening
+                @server.send(:http_server).expects(:listen).with { |args| args[:address] == "127.0.0.1" }
+                @server.listen
             end
 
             it "should not allow multiple servers to listen on the same address and port" do

@@ -35,7 +35,7 @@ describe "Report REST Terminus" do
 
         @host = Puppet::SSL::Host.new(Puppet[:certname])
 
-        @params = { :address => "127.0.0.1", :port => 34343, :handlers => [ :report ] }
+        @params = { :port => 34343, :handlers => [ :report ] }
         @server = Puppet::Network::Server.new(@params)
         @server.listen
 

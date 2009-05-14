@@ -32,9 +32,6 @@ end
 
 describe Puppet::Indirector::REST do
     before do
-        Puppet[:masterport] = 34343
-        Puppet[:server] = "localhost"
-
         # Get a safe temporary file
         @tmpfile = Tempfile.new("webrick_integration_testing")
         @dir = @tmpfile.path + "_dir"
@@ -67,7 +64,7 @@ describe Puppet::Indirector::REST do
             ca = Puppet::SSL::CertificateAuthority.new
             ca.generate(Puppet[:certname]) unless Puppet::SSL::Certificate.find(Puppet[:certname])
 
-            @params = { :address => "127.0.0.1", :port => 34343, :handlers => [ :test_indirected_foo ], :xmlrpc_handlers => [ :status ] }
+            @params = { :port => 34343, :handlers => [ :test_indirected_foo ], :xmlrpc_handlers => [ :status ] }
             @server = Puppet::Network::Server.new(@params)
             @server.listen
 
@@ -293,7 +290,7 @@ describe Puppet::Indirector::REST do
         
         before :each do
             Puppet[:servertype] = 'mongrel'
-            @params = { :address => "127.0.0.1", :port => 34343, :handlers => [ :test_indirected_foo ] }
+            @params = { :port => 34343, :handlers => [ :test_indirected_foo ] }
 
             # Make sure we never get a cert, since mongrel can't speak ssl
             Puppet::SSL::Certificate.stubs(:find).returns nil

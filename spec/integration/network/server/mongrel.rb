@@ -10,9 +10,12 @@ describe Puppet::Network::Server do
         
         before :each do
             Puppet[:servertype] = 'mongrel'
-            @params = { :address => "127.0.0.1", :port => 34346, :handlers => [ :node ] }
+            Puppet[:server] = '127.0.0.1'
+            @params = { :port => 34346, :handlers => [ :node ] }
             @server = Puppet::Network::Server.new(@params)            
         end
+
+        after { Puppet.settings.clear }
 
         describe "before listening" do
             it "should not be reachable at the specified address and port" do
@@ -24,6 +27,21 @@ describe Puppet::Network::Server do
             it "should be reachable on the specified address and port" do
                 @server.listen
                 lambda { TCPSocket.new('127.0.0.1', 34346) }.should_not raise_error            
+            end
+
+            it "should default to '127.0.0.1' as its bind address" do
+                @server = Puppet::Network::Server.new(@params.merge(:port => 34343))            
+                @server.stubs(:unlisten) # we're breaking listening internally, so we have to keep it from unlistening
+                @server.send(:http_server).expects(:listen).with { |args| args[:address] == "127.0.0.1" }
+                @server.listen
+            end
+
+            it "should use any specified bind address" do
+                Puppet[:bindaddress] = "0.0.0.0"
+                @server = Puppet::Network::Server.new(@params.merge(:port => 34343))            
+                @server.stubs(:unlisten) # we're breaking listening internally, so we have to keep it from unlistening
+                @server.send(:http_server).expects(:listen).with { |args| args[:address] == "0.0.0.0" }
+                @server.listen
             end
 
             it "should not allow multiple servers to listen on the same address and port" do
