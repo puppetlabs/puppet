@@ -30,11 +30,9 @@ class Puppet::Node::Environment
     end
 
     def module(name)
-        Puppet::Module.each_module(modulepath) do |mod|
-            return mod if mod.name == name
-        end
-
-        return nil
+        mod = Puppet::Module.new(name, self)
+        return nil unless mod.exist?
+        return mod
     end
 
     def modulepath

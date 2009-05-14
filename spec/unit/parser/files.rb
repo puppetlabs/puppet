@@ -149,10 +149,6 @@ describe Puppet::Parser::Files do
     end
 
     describe "when searching for manifests in a found module" do
-        before do
-            @module = Puppet::Module.new("mymod", "/one")
-        end
-
         it "should return the manifests from the first found module" do
             mod = mock 'module'
             Puppet::Node::Environment.new.expects(:module).with("mymod").returns mod
@@ -165,28 +161,6 @@ describe Puppet::Parser::Files do
             Puppet::Node::Environment.new("myenv").expects(:module).with("mymod").returns mod
             mod.expects(:match_manifests).with("init.pp").returns(%w{/one/mymod/manifests/init.pp})
             Puppet::Parser::Files.find_manifests("mymod/init.pp", :environment => "myenv").should == ["/one/mymod/manifests/init.pp"]
-        end
-
-        it "should return all manifests matching the glob pattern" do
-            File.stubs(:directory?).returns(true)
-            Dir.expects(:glob).with("/one/manifests/yay/*.pp").returns(%w{/one /two})
-
-            @module.match_manifests("yay/*.pp").should == %w{/one /two}
-        end
-
-        it "should not return directories" do
-            Dir.expects(:glob).with("/one/manifests/yay/*.pp").returns(%w{/one /two})
-
-            FileTest.expects(:directory?).with("/one").returns false
-            FileTest.expects(:directory?).with("/two").returns true
-
-            @module.match_manifests("yay/*.pp").should == %w{/one}
-        end
-
-        it "should default to the 'init.pp' file in the manifests directory" do
-            Dir.expects(:glob).with("/one/manifests/init.pp").returns(%w{/init.pp})
-
-            @module.match_manifests(nil).should == %w{/init.pp}
         end
 
         after { Puppet.settings.clear }

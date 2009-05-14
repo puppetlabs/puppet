@@ -16,16 +16,16 @@ module Puppet::Parser::Files
     def find_manifests(start, options = {})
         cwd = options[:cwd] || Dir.getwd
         module_name, pattern = split_file_path(start)
-        if module_name and mod = Puppet::Module.find(module_name, options[:environment])
+        if mod = Puppet::Module.find(module_name, options[:environment])
             return mod.match_manifests(pattern)
-        else
-            abspat = File::expand_path(start, cwd)
-            files = Dir.glob(abspat).reject { |f| FileTest.directory?(f) }
-            if files.size == 0
-                files = Dir.glob(abspat + ".pp").reject { |f| FileTest.directory?(f) }
-            end
-            return files
         end
+
+        abspat = File::expand_path(start, cwd)
+        files = Dir.glob(abspat).reject { |f| FileTest.directory?(f) }
+        if files.size == 0
+            files = Dir.glob(abspat + ".pp").reject { |f| FileTest.directory?(f) }
+        end
+        return files
     end
 
     # Find the concrete file denoted by +file+. If +file+ is absolute,

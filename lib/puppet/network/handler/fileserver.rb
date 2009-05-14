@@ -254,8 +254,8 @@ class Puppet::Network::Handler
             end
 
             # And use the environment to look up the module.
-            if mod = Puppet::Node::Environment.new(env).module(module_name)
-                return @mounts[MODULES].copy(mod.name, mod.files)
+            if mod = Puppet::Node::Environment.new(env).module(module_name) and mod.files?
+                return @mounts[MODULES].copy(mod.name, mod.file_directory)
             else
                 return nil
             end
@@ -744,7 +744,7 @@ class Puppet::Network::Handler
 
             private
             def valid_modules(client)
-                Puppet::Node::Environment.new.modules.find_all { |mod| mod.plugins? }
+                Puppet::Node::Environment.new.modules.find_all { |mod| mod.exist? }
             end
             
             def add_to_filetree(f, filetree)

@@ -1222,7 +1222,7 @@ file { "/tmp/yayness":
 
         # We use an exception to cut short the processing to simplify our stubbing
         #Puppet::Module.expects(:find_manifests).with("test", {:cwd => ".", :environment => "something"}).raises(Puppet::ParseError)
-        Puppet::Module.expects(:find_manifests).with("test", {:cwd => ".", :environment => "something"}).returns([])
+        Puppet::Parser::Files.expects(:find_manifests).with("test", {:cwd => ".", :environment => "something"}).returns([])
 
         assert_raise(Puppet::ImportError) do
             parser.import("test") 

@@ -94,28 +94,24 @@ describe Puppet::Node::Environment do
             env.modules.should == %w{mod1 mod2}
         end
 
-        it "should be able to return an individual module by matching the module name" do
+        it "should be able to return an individual module that exists in its module path" do
             env = Puppet::Node::Environment.new("testing")
-            module_path = %w{/one /two}.join(File::PATH_SEPARATOR)
-            env.expects(:modulepath).returns module_path
 
-            one = stub 'one', :name => 'one'
-            two = stub 'two', :name => 'two'
-            Puppet::Module.expects(:each_module).with(module_path).multiple_yields(one, two)
+            mod = mock 'module'
+            Puppet::Module.expects(:new).with("one", env).returns mod
+            mod.expects(:exist?).returns true
 
-            env.module("two").should equal(two)
+            env.module("one").should equal(mod)
         end
 
-        it "should return nil if asked for a module that is not in its path" do
+        it "should return nil if asked for a module that does not exist in its path" do
             env = Puppet::Node::Environment.new("testing")
-            module_path = %w{/one /two}.join(File::PATH_SEPARATOR)
-            env.expects(:modulepath).returns module_path
 
-            one = stub 'one', :name => 'one'
-            two = stub 'two', :name => 'two'
-            Puppet::Module.expects(:each_module).with(module_path).multiple_yields(one, two)
+            mod = mock 'module'
+            Puppet::Module.expects(:new).with("one", env).returns mod
+            mod.expects(:exist?).returns false
 
-            env.module("three").should be_nil
+            env.module("one").should be_nil
         end
     end
 end

@@ -25,7 +25,7 @@ class Puppet::Module
 
                 yielded[name] = true
 
-                yield Puppet::Module.new(name, module_path)
+                yield Puppet::Module.new(name)
             end
         end
     end
@@ -41,49 +41,91 @@ class Puppet::Module
     # absolute, or if there is no module whose name is the first component
     # of +path+, return +nil+
     def self.find(modname, environment = nil)
+        return nil unless modname
         Puppet::Node::Environment.new(environment).module(modname)
     end
 
-    attr_reader :name, :path
-    def initialize(name, path)
+    attr_reader :name, :environment
+    def initialize(name, environment = nil)
         @name = name
-        @path = path
+        if environment.is_a?(Puppet::Node::Environment)
+            @environment = environment
+        else
+            @environment = Puppet::Node::Environment.new(environment)
+        end
     end
 
     FILETYPES.each do |type|
-        # Create a method for returning the full path to a given
-        # file type's directory.
-        define_method(type.to_s) do
-            File.join(path, type.to_s)
+        # A boolean method to let external callers determine if
+        # we have files of a given type.
+        define_method(type +'?') do
+            return false unless path
+            return false unless FileTest.exist?(subpath(type))
+            return true
         end
 
-        # Create a boolean method for testing whether our module has
-        # files of a given type.
-        define_method(type.to_s + "?") do
-            FileTest.exist?(send(type))
-        end
-
-        # Finally, a method for returning an individual file
+        # A method for returning a given file of a given type.
+        # e.g., file = mod.manifest("my/manifest.pp")
+        #
+        # If the file name is nil, then the base directory for the
+        # file type is passed; this is used for fileserving.
         define_method(type.to_s.sub(/s$/, '')) do |file|
+            return nil unless path
+
+            # If 'file' is nil then they're asking for the base path.
+            # This is used for things like fileserving.
             if file
-                path = File.join(send(type), file)
+                full_path = File.join(subpath(type), file)
             else
-                path = send(type)
+                full_path = subpath(type)
             end
-            return nil unless FileTest.exist?(path)
-            return path
+
+            return nil unless FileTest.exist?(full_path)
+            return full_path
         end
+    end
+
+    def exist?
+        ! path.nil?
+    end
+
+    # Find the first 'files' directory.  This is used by the XMLRPC fileserver.
+    def file_directory
+        subpath("files")
     end
 
     # Return the list of manifests matching the given glob pattern,
     # defaulting to 'init.pp' for empty modules.
     def match_manifests(rest)
+        return find_init_manifest unless rest # Use init.pp
+
         rest ||= "init.pp"
         p = File::join(path, MANIFESTS, rest)
-        files = Dir.glob(p).reject { |f| FileTest.directory?(f) }
-        if files.size == 0
-            files = Dir.glob(p + ".pp")
+        result = Dir.glob(p).reject { |f| FileTest.directory?(f) }
+        if result.size == 0 and rest !~ /\.pp$/
+            result = Dir.glob(p + ".pp")
         end
-        return files
+        result.flatten.compact
+    end
+
+    # Find this module in the modulepath.
+    def path
+        self.class.modulepath.collect { |path| File.join(path, name) }.find { |d| FileTest.exist?(d) }
+    end
+
+    # Find all plugin directories.  This is used by the Plugins fileserving mount.
+    def plugin_directory
+        subpath("plugins")
+    end
+
+    private
+
+    def find_init_manifest
+        return [] unless file = manifest("init.pp")
+        return [file]
+    end
+
+    def subpath(type)
+        File.join(path, type)
     end
 end

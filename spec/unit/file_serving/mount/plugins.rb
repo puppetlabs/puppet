@@ -61,8 +61,8 @@ describe Puppet::FileServing::Mount::Plugins, "when searching for files" do
     end
 
     it "should return the plugin paths for each module that has plugins" do
-        one = stub 'module', :plugins? => true, :plugins => "/one"
-        two = stub 'module', :plugins? => true, :plugins => "/two"
+        one = stub 'module', :plugins? => true, :plugin_directory => "/one"
+        two = stub 'module', :plugins? => true, :plugin_directory => "/two"
 
         @environment.expects(:modules).returns [one, two]
         @mount.search("foo/bar").should == %w{/one /two}

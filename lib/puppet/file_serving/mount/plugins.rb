@@ -16,7 +16,7 @@ class Puppet::FileServing::Mount::Plugins < Puppet::FileServing::Mount
     def search(relative_path, options = {})
         # We currently only support one kind of search on plugins - return
         # them all.
-        paths = environment(options[:node]).modules.find_all { |mod|  mod.plugins? }.collect { |mod| mod.plugins }
+        paths = environment(options[:node]).modules.find_all { |mod|  mod.plugins? }.collect { |mod| mod.plugin_directory }
         return nil if paths.empty?
         return paths
     end

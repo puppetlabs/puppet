@@ -3,40 +3,137 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 
 describe Puppet::Module do
+    it "should have a class method that returns a named module from a given environment" do
+        env = mock 'module'
+        env.expects(:module).with("mymod").returns "yep"
+        Puppet::Node::Environment.expects(:new).with("myenv").returns env
+
+        Puppet::Module.find("mymod", "myenv").should == "yep"
+    end
+
+    it "should return nil if asked for a named module that doesn't exist" do
+        env = mock 'module'
+        env.expects(:module).with("mymod").returns nil
+        Puppet::Node::Environment.expects(:new).with("myenv").returns env
+
+        Puppet::Module.find("mymod", "myenv").should be_nil
+    end
+
+    it "should return nil if asked for a module whose name is 'nil'" do
+        Puppet::Module.find(nil, "myenv").should be_nil
+    end
+
+    it "should require a name at initialization" do
+        lambda { Puppet::Module.new }.should raise_error(ArgumentError)
+    end
+
+    it "should convert an environment name into an Environment instance" do
+        Puppet::Module.new("foo", "prod").environment.should be_instance_of(Puppet::Node::Environment)
+    end
+
+    it "should accept an environment at initialization" do
+        Puppet::Module.new("foo", :prod).environment.name.should == :prod
+    end
+
+    it "should use the default environment if none is provided" do
+        env = Puppet::Node::Environment.new
+        Puppet::Module.new("foo").environment.should equal(env)
+    end
+
+    it "should use any provided Environment instance" do
+        env = Puppet::Node::Environment.new
+        Puppet::Module.new("foo", env).environment.should equal(env)
+    end
+
+    it "should return the path to the first found instance in its module paths as its path" do
+        mod = Puppet::Module.new("foo")
+        paths = %w{/a /b /c}
+        Puppet::Module.stubs(:modulepath).returns paths
+
+        FileTest.expects(:exist?).with("/a/foo").returns false
+        FileTest.expects(:exist?).with("/b/foo").returns true
+        FileTest.expects(:exist?).with("/c/foo").never
+
+        mod.path.should == "/b/foo"
+    end
+
+    it "should be considered existent if it exists in at least one module path" do
+        mod = Puppet::Module.new("foo")
+        mod.expects(:path).returns "/a/foo"
+        mod.should be_exist
+    end
+
+    it "should be considered nonexistent if it does not exist in any of the module paths" do
+        mod = Puppet::Module.new("foo")
+        mod.expects(:path).returns nil
+        mod.should_not be_exist
+    end
+
     [:plugins, :templates, :files, :manifests].each do |filetype|
-        it "should be able to indicate whether it has #{filetype}" do
-            Puppet::Module.new("foo", "/foo/bar").should respond_to(filetype.to_s + "?")
-        end
-
-        it "should correctly detect when it has #{filetype}" do
-            FileTest.expects(:exist?).with("/foo/bar/#{filetype}").returns true
-            Puppet::Module.new("foo", "/foo/bar").send(filetype.to_s + "?").should be_true
-        end
-
-        it "should correctly detect when it does not have #{filetype}" do
-            FileTest.expects(:exist?).with("/foo/bar/#{filetype}").returns false
-            Puppet::Module.new("foo", "/foo/bar").send(filetype.to_s + "?").should be_false
-        end
-
-        it "should have a method for returning the full path to the #{filetype}" do
-            Puppet::Module.new("foo", "/foo/bar").send(filetype.to_s).should == File.join("/foo/bar", filetype.to_s)
-        end
-
         it "should be able to return individual #{filetype}" do
-            path = File.join("/foo/bar", filetype.to_s, "my/file")
+            mod = Puppet::Module.new("foo")
+            mod.stubs(:path).returns "/a/foo"
+            path = File.join("/a/foo", filetype.to_s, "my/file")
             FileTest.expects(:exist?).with(path).returns true
-            Puppet::Module.new("foo", "/foo/bar").send(filetype.to_s.sub(/s$/, ''), "my/file").should == path
+            mod.send(filetype.to_s.sub(/s$/, ''), "my/file").should == path
+        end
+
+        it "should consider #{filetype} to be present if their base directory exists" do
+            mod = Puppet::Module.new("foo")
+            mod.stubs(:path).returns "/a/foo"
+            path = File.join("/a/foo", filetype.to_s)
+            FileTest.expects(:exist?).with(path).returns true
+            mod.send(filetype.to_s + "?").should be_true
+        end
+
+        it "should consider #{filetype} to be absent if their base directory does not exist" do
+            mod = Puppet::Module.new("foo")
+            mod.stubs(:path).returns "/a/foo"
+            path = File.join("/a/foo", filetype.to_s)
+            FileTest.expects(:exist?).with(path).returns false
+            mod.send(filetype.to_s + "?").should be_false
+        end
+
+        it "should consider #{filetype} to be absent if the module base directory does not exist" do
+            mod = Puppet::Module.new("foo")
+            mod.stubs(:path).returns nil
+            mod.send(filetype.to_s + "?").should be_false
         end
 
         it "should return nil if asked to return individual #{filetype} that don't exist" do
-            FileTest.expects(:exist?).with(File.join("/foo/bar", filetype.to_s, "my/file")).returns false
-            Puppet::Module.new("foo", "/foo/bar").send(filetype.to_s.sub(/s$/, ''), "my/file").should be_nil
+            mod = Puppet::Module.new("foo")
+            mod.stubs(:path).returns "/a/foo"
+            path = File.join("/a/foo", filetype.to_s, "my/file")
+            FileTest.expects(:exist?).with(path).returns false
+            mod.send(filetype.to_s.sub(/s$/, ''), "my/file").should be_nil
+        end
+
+        it "should return nil when asked for individual #{filetype} if the module does not exist" do
+            mod = Puppet::Module.new("foo")
+            mod.stubs(:path).returns nil
+            mod.send(filetype.to_s.sub(/s$/, ''), "my/file").should be_nil
         end
 
         it "should return the base directory if asked for a nil path" do
-            path = File.join("/foo/bar", filetype.to_s)
-            FileTest.expects(:exist?).with(path).returns true
-            Puppet::Module.new("foo", "/foo/bar").send(filetype.to_s.sub(/s$/, ''), nil).should == path
+            mod = Puppet::Module.new("foo")
+            mod.stubs(:path).returns "/a/foo"
+            base = File.join("/a/foo", filetype.to_s)
+            FileTest.expects(:exist?).with(base).returns true
+            mod.send(filetype.to_s.sub(/s$/, ''), nil).should == base
+        end
+    end
+
+    %w{plugins files}.each do |type|
+        short = type.sub(/s$/, '')
+        it "should be able to return the #{short} directory" do
+            Puppet::Module.new("foo").should respond_to(short + "_directory")
+        end
+
+        it "should return the path to the #{short} directory" do
+            mod = Puppet::Module.new("foo")
+            mod.stubs(:path).returns "/a/foo"
+
+            mod.send(short + "_directory").should == "/a/foo/#{type}"
         end
     end
 end
@@ -99,8 +196,8 @@ describe Puppet::Module, "when yielding each module in a list of directories" do
         one = mock 'one'
         two = mock 'two'
 
-        Puppet::Module.expects(:new).with("f1", "/one/f1").returns one
-        Puppet::Module.expects(:new).with("f2", "/one/f2").returns two
+        Puppet::Module.expects(:new).with("f1").returns one
+        Puppet::Module.expects(:new).with("f2").returns two
 
         result = []
         Puppet::Module.each_module("/one") do |mod|
@@ -116,8 +213,8 @@ describe Puppet::Module, "when yielding each module in a list of directories" do
 
         one = mock 'one'
 
-        Puppet::Module.expects(:new).with("f1", "/one/f1").returns one
-        Puppet::Module.expects(:new).with("f1", "/two/f1").never
+        Puppet::Module.expects(:new).with("f1").returns one
+        Puppet::Module.expects(:new).with("f1").never
 
         result = []
         Puppet::Module.each_module("/one", "/two") do |mod|
@@ -146,27 +243,48 @@ describe Puppet::Module, " when building its search path" do
     end
 end
 
-describe Puppet::Module, " when searching for modules" do
-    it "should use the current environment to find the specified module if no environment is provided" do
-        env = mock 'env'
-        env.expects(:module).with("foo").returns "yay"
-        Puppet::Node::Environment.expects(:new).with(nil).returns env
-
-        Puppet::Module.find("foo").should == "yay"
+describe Puppet::Module, "when finding matching manifests" do
+    before do
+        @mod = Puppet::Module.new("mymod")
+        @mod.stubs(:path).returns "/a"
     end
 
-    it "should use the specified environment to find the specified module if an environment is provided" do
-        env = mock 'env'
-        env.expects(:module).with("foo").returns "yay"
-        Puppet::Node::Environment.expects(:new).with("myenv").returns env
+    it "should return all manifests matching the glob pattern" do
+        Dir.expects(:glob).with("/a/manifests/yay/*.pp").returns(%w{foo bar})
 
-        Puppet::Module.find("foo", "myenv").should == "yay"
+        @mod.match_manifests("yay/*.pp").should == %w{foo bar}
     end
-end
 
-describe Puppet::Module, " when returning files" do
-    it "should return the path to the module's 'files' directory" do
-        mod = Puppet::Module.send(:new, "mymod", "/my/mod")
-        mod.files.should == "/my/mod/files"
+    it "should not return directories" do
+        Dir.expects(:glob).with("/a/manifests/yay/*.pp").returns(%w{foo bar})
+
+        FileTest.expects(:directory?).with("foo").returns false
+        FileTest.expects(:directory?).with("bar").returns true
+        @mod.match_manifests("yay/*.pp").should == %w{foo}
+    end
+
+    it "should default to the 'init.pp' file if no glob pattern is specified" do
+        FileTest.stubs(:exist?).returns true
+
+        @mod.match_manifests(nil).should == %w{/a/manifests/init.pp}
+    end
+
+    it "should return all manifests matching the glob pattern in all existing paths" do
+        Dir.expects(:glob).with("/a/manifests/yay/*.pp").returns(%w{a b})
+
+        @mod.match_manifests("yay/*.pp").should == %w{a b}
+    end
+
+    it "should match the glob pattern plus '.pp' if no results are found" do
+        Dir.expects(:glob).with("/a/manifests/yay/foo").returns([])
+        Dir.expects(:glob).with("/a/manifests/yay/foo.pp").returns(%w{yay})
+
+        @mod.match_manifests("yay/foo").should == %w{yay}
+    end
+
+    it "should return an empty array if no manifests matched" do
+        Dir.expects(:glob).with("/a/manifests/yay/*.pp").returns([])
+
+        @mod.match_manifests("yay/*.pp").should == []
     end
 end
