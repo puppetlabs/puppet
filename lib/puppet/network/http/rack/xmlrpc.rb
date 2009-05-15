@@ -32,7 +32,7 @@ class Puppet::Network::HTTP::RackXMLRPC < Puppet::Network::HTTP::RackHttpHandler
         # get auth/certificate data
         client_request = build_client_request(request)
 
-        response_body = @xmlrpc_server.process(request.body, client_request)
+        response_body = @xmlrpc_server.process(request.body.read(), client_request)
 
         response.status = 200
         response['Content-Type'] =  'text/xml; charset=utf-8'
