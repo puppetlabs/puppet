@@ -71,10 +71,16 @@ describe Puppet::Util::Autoload do
         end
 
         it "should skip files that it knows are missing" do
-            @autoload.expects(:missing_file?).returns true
+            @autoload.expects(:named_file_missing?).with("foo").returns true
             @autoload.expects(:eachdir).never
 
             @autoload.load("foo")
+        end
+
+        it "should register that files are missing if they cannot be found" do
+            @autoload.load("foo")
+
+            @autoload.should be_named_file_missing("foo")
         end
     end
 

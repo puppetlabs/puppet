@@ -73,6 +73,8 @@ class Puppet::Util::Autoload
     # Load a single plugin by name.  We use 'load' here so we can reload a
     # given plugin.
     def load(name)
+        return false if named_file_missing?(name)
+
         path = name.to_s + ".rb"
 
         searchpath.each do |dir|
@@ -92,10 +94,10 @@ class Puppet::Util::Autoload
                         puts detail.backtrace
                     end
                 end
-                return false
+                return named_file_is_missing(name)
             end
         end
-        return false
+        return named_file_is_missing(name)
     end
 
     # Mark the named object as loaded.  Note that this supports unqualified
