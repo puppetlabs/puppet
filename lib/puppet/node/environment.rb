@@ -1,6 +1,14 @@
+require 'puppet/util/cacher'
+
+# Just define it, so this class has fewer load dependencies.
+class Puppet::Node
+end
+
 # Model the environment that a node can operate in.  This class just
 # provides a simple wrapper for the functionality around environments.
 class Puppet::Node::Environment
+    include Puppet::Util::Cacher
+
     @seen = {}
 
     # Return an existing environment instance, or create a new one.
@@ -16,6 +24,11 @@ class Puppet::Node::Environment
         obj = self.allocate
         obj.send :initialize, symbol
         @seen[symbol] = obj
+    end
+
+    # This is only used for testing.
+    def self.clear
+        @seen.clear
     end
 
     attr_reader :name
@@ -35,7 +48,9 @@ class Puppet::Node::Environment
         return mod
     end
 
-    def modulepath
+    # Cache the modulepath, so that we aren't searching through
+    # all known directories all the time.
+    cached_attr(:modulepath, :ttl => Puppet[:filetimeout]) do
         dirs = self[:modulepath].split(File::PATH_SEPARATOR)
         if ENV["PUPPETLIB"]
             dirs = ENV["PUPPETLIB"].split(File::PATH_SEPARATOR) + dirs
@@ -52,7 +67,8 @@ class Puppet::Node::Environment
     end
 
     # Return all modules from this environment.
-    def modules
+    # Cache the list, because it can be expensive to create.
+    cached_attr(:modules, :ttl => Puppet[:filetimeout]) do
         result = []
         Puppet::Module.each_module(modulepath) do |mod|
             result << mod
