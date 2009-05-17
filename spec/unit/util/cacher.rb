@@ -44,7 +44,7 @@ describe Puppet::Util::Cacher do
     end
 
     it "should support defining cached attributes" do
-        CacheTest.private_methods.should be_include("cached_attr")
+        CacheTest.methods.should be_include("cached_attr")
     end
 
     it "should default to the Cacher module as its expirer" do
@@ -119,6 +119,58 @@ describe Puppet::Util::Cacher do
             @object.instance_cache = "foo"
             @expirer.expire
             @object.instance_cache.should_not == "foo"
+        end
+
+        it "should allow specification of a ttl for cached attributes" do
+            klass = Class.new do
+                include Puppet::Util::Cacher 
+            end
+
+            klass.cached_attr(:myattr, :ttl => 5)  { Time.now }
+
+            klass.attr_ttl(:myattr).should == 5
+        end
+
+        it "should allow specification of a ttl as a string" do
+            klass = Class.new do
+                include Puppet::Util::Cacher 
+            end
+
+            klass.cached_attr(:myattr, :ttl => "5")  { Time.now }
+
+            klass.attr_ttl(:myattr).should == 5
+        end
+
+        it "should fail helpfully if the ttl cannot be converted to an integer" do
+            klass = Class.new do
+                include Puppet::Util::Cacher 
+            end
+
+            lambda { klass.cached_attr(:myattr, :ttl => "yep")  { Time.now } }.should raise_error(ArgumentError)
+        end
+
+        it "should automatically expire cached attributes whose ttl has expired, even if no expirer is present" do
+            klass = Class.new do
+                def self.to_s
+                    "CacheTestClass"
+                end
+                include Puppet::Util::Cacher 
+                attr_accessor :value
+            end
+
+            klass.cached_attr(:myattr, :ttl => 5)  { self.value += 1; self.value }
+
+            now = Time.now
+            later = Time.now + 15
+
+            instance = klass.new
+            instance.value = 0
+            instance.myattr.should == 1
+
+            Time.expects(:now).returns later
+
+            # This call should get the new Time value, which should expire the old value
+            instance.myattr.should == 2
         end
     end
 end

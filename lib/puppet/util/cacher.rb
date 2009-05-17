@@ -36,11 +36,9 @@ module Puppet::Util::Cacher
 
     # Methods that can get added to a class.
     module ClassMethods
-        private
-
         # Provide a means of defining an attribute whose value will be cached.
         # Must provide a block capable of defining the value if it's flushed..
-        def cached_attr(name, &block)
+        def cached_attr(name, options = {}, &block)
             init_method = "init_" + name.to_s
             define_method(init_method, &block)
 
@@ -53,6 +51,20 @@ module Puppet::Util::Cacher
                 cache_timestamp
                 value_cache[name] = value
             end
+
+            if ttl = options[:ttl]
+                set_attr_ttl(name, ttl)
+            end
+        end
+
+        def attr_ttl(name)
+            return nil unless @attr_ttls
+            @attr_ttls[name]
+        end
+
+        def set_attr_ttl(name, value)
+            @attr_ttls ||= {}
+            @attr_ttls[name] = Integer(value)
         end
     end
 
@@ -84,14 +96,32 @@ module Puppet::Util::Cacher
 
         def cached_value(name)
             # Allow a nil expirer, in which case we regenerate the value every time.
-            if expirer.nil? or expirer.expired?(cache_timestamp)
+            if expired_by_expirer?(name)
                 value_cache.clear
                 @cache_timestamp = Time.now
+            elsif expired_by_ttl?(name)
+                value_cache.delete(name)
             end
             unless value_cache.include?(name)
                 value_cache[name] = send("init_%s" % name)
             end
             value_cache[name]
+        end
+
+        def expired_by_expirer?(name)
+            if expirer.nil?
+                return true unless self.class.attr_ttl(name)
+            end
+            return expirer.expired?(cache_timestamp)
+        end
+
+        def expired_by_ttl?(name)
+            return false unless ttl = self.class.attr_ttl(name)
+
+            @ttl_timestamps ||= {}
+            @ttl_timestamps[name] ||= Time.now
+
+            return (Time.now - @ttl_timestamps[name]) > ttl
         end
 
         def value_cache
