@@ -93,16 +93,6 @@ TestAutoload.newthing(:#{name.to_s})
         end
     end
 
-    # Make sure that autoload dynamically modifies $: with the libdir as
-    # appropriate.
-    def test_searchpath
-        dir = Puppet[:libdir]
-
-        loader = Puppet::Util::Autoload.new(self, "testing")
-
-        assert(loader.send(:searchpath).include?(dir), "searchpath does not include the libdir")
-    end
-
     # This tests #1027, which was caused by using the unqualified
     # path for requires, which was initially done so that the kernel
     # would keep track of which files got loaded.
@@ -112,7 +102,7 @@ TestAutoload.newthing(:#{name.to_s})
 
         basedir = "/some/dir"
         dir = File.join(basedir, loadname)
-        loader.expects(:eachdir).yields(dir)
+        loader.expects(:searchpath).returns(dir)
 
         subname = "instance"
 
@@ -122,24 +112,5 @@ TestAutoload.newthing(:#{name.to_s})
 
         Kernel.expects(:require).with(file)
         loader.loadall
-    end
-
-    def test_searchpath_includes_plugin_dirs
-        moddir = "/what/ever"
-        libdir = "/other/dir"
-        Puppet.settings.stubs(:value).with(:modulepath).returns(moddir)
-        Puppet.settings.stubs(:value).with(:libdir).returns(libdir)
-
-        loadname = "testing"
-        loader = Puppet::Util::Autoload.new(self.class, loadname)
-
-        # Currently, include both plugins and libs.
-        paths = %w{plugins lib}.inject({}) { |hash, d| hash[d] = File.join(moddir, "testing", d); FileTest.stubs(:directory?).with(hash[d]).returns(true); hash  }
-        Dir.expects(:glob).with("#{moddir}/*/{plugins,lib}").returns(paths.values)
-
-        searchpath = loader.searchpath
-        paths.each do |dir, path|
-            assert(searchpath.include?(path), "search path did not include path for %s" % dir)
-        end
     end
 end

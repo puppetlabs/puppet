@@ -1,9 +1,11 @@
 require 'puppet/util/warnings'
+require 'puppet/util/cacher'
 
 # Autoload paths, either based on names or all at once.
 class Puppet::Util::Autoload
     include Puppet::Util
     include Puppet::Util::Warnings
+    include Puppet::Util::Cacher
 
     @autoloaders = {}
     @loaded = []
@@ -70,9 +72,9 @@ class Puppet::Util::Autoload
     def load(name)
         path = name.to_s + ".rb"
 
-        eachdir do |dir|
+        searchpath.each do |dir|
             file = File.join(dir, path)
-            next unless FileTest.exists?(file)
+            next unless FileTest.exist?(file)
             begin
                 Kernel.load file, @wrap
                 name = symbolize(name)
@@ -108,7 +110,7 @@ class Puppet::Util::Autoload
     # so that already-loaded files don't get reloaded unnecessarily.
     def loadall
         # Load every instance of everything we can find.
-        eachdir do |dir|
+        searchpath.each do |dir|
             Dir.glob("#{dir}/*.rb").each do |file|
                 name = File.basename(file).sub(".rb", '').intern
                 next if loaded?(name)
@@ -125,22 +127,25 @@ class Puppet::Util::Autoload
         end
     end
 
-    # Yield each subdir in turn.
-    def eachdir
-        searchpath.each do |dir|
-            subdir = File.join(dir, @path)
-            yield subdir if FileTest.directory?(subdir)
+    # The list of directories to search through for loadable plugins.
+    # We have to hard-code the ttl because this library is used by
+    # so many other classes it's hard to get the load-order such that
+    # the defaults load before this.
+    cached_attr(:searchpath, :ttl => 15) do
+        search_directories.collect { |d| File.join(d, @path) }.find_all { |d| FileTest.directory?(d) }
+    end
+
+    def module_directories
+        Puppet.settings.value(:modulepath, Puppet[:environment]).find_all do |dir|
+            FileTest.directory?(dir)
+        end.collect do |dir|
+            Dir.entries(dir)
+        end.flatten.collect { |d| [File.join(d, "plugins"), File.join(d, "lib")] }.flatten.find_all do |d|
+            FileTest.directory?(d)
         end
     end
 
-    # The list of directories to search through for loadable plugins.
-    def searchpath
-        # JJM: Search for optional lib directories in each module bundle.
-        module_lib_dirs = Puppet[:modulepath].split(":").collect do |d|
-            Dir.glob("%s/*/{plugins,lib}" % d).select do |f|
-                FileTest.directory?(f) 
-            end
-        end.flatten
-        [module_lib_dirs, Puppet[:libdir], $:].flatten
+    def search_directories
+        [module_directories, Puppet[:libdir], $:].flatten
     end
 end
