@@ -1,5 +1,6 @@
 require 'puppet/util/queue'
 require 'stomp'
+require 'uri'
 
 # Implements the Ruby Stomp client as a queue type within the Puppet::Indirector::Queue::Client
 # registry, for use with the <tt>:queue</tt> indirection terminus type.
@@ -11,11 +12,20 @@ class Puppet::Util::Queue::Stomp
     attr_accessor :stomp_client
 
     def initialize
-        self.stomp_client = Stomp::Client.new( Puppet[:queue_source] )
+        begin
+            uri = URI.parse(Puppet[:queue_source])
+        rescue => detail
+            raise ArgumentError, "Could not create Stomp client instance - queue source %s is invalid: %s" % [Puppet[:queue_source], detail]
+        end
+        unless uri.scheme == "stomp"
+            raise ArgumentError, "Could not create Stomp client instance - queue source %s is not a Stomp URL: %s" % [Puppet[:queue_source], detail]
+        end
+
+        self.stomp_client = Stomp::Client.new(uri.user, uri.password, uri.host, uri.port, true)
     end
 
     def send_message(target, msg)
-        stomp_client.send(stompify_target(target), msg)
+        stomp_client.send(stompify_target(target), msg, :persistent => true)
     end
 
     def subscribe(target)

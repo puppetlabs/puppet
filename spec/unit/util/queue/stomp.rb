@@ -15,52 +15,107 @@ end
 describe 'Puppet::Util::Queue::Stomp' do
     confine "Missing Stomp" => Puppet.features.stomp?
 
-    before :all do
-        class Stomp::Client
-            include Mocha::Standalone
-            attr_accessor :queue_source
-
-            def send(q, m)
-                'To %s: %s' % [q, m]
-            end
-
-            def subscribe(q)
-                yield(stub(:body => 'subscribe: %s' % q))
-            end
-
-            def initialize(s)
-                self.queue_source = s
-            end
-        end
-    end
-
-    before :each do
-        Puppet.settings.stubs(:value).returns 'faux_queue_source'
-    end
-
-    it 'should make send function like core Ruby instead of stomp client send method' do
-        o = Puppet::Util::Queue::Stomp.new
-        o.expects(:pants).with('foo').once
-        o.send(:pants, 'foo')
+    before do
+        # So we make sure we never create a real client instance.
+        # Otherwise we'll try to connect, and that's bad.
+        Stomp::Client.stubs(:new).returns stub("client")
     end
 
     it 'should be registered with Puppet::Util::Queue as :stomp type' do
         Puppet::Util::Queue.queue_type_to_class(:stomp).should == Puppet::Util::Queue::Stomp
     end
 
-    it 'should initialize using Puppet[:queue_source] for configuration' do
-        o = Puppet::Util::Queue::Stomp.new
-        o.stomp_client.queue_source.should == 'faux_queue_source'
+    describe "when initializing" do
+        it "should create a Stomp client instance" do
+            Stomp::Client.expects(:new).returns stub("stomp_client")
+            Puppet::Util::Queue::Stomp.new
+        end
+
+        it "should provide helpful failures when the queue source is not a valid source" do
+            # Stub rather than expect, so we can include the source in the error
+            Puppet.settings.stubs(:value).with(:queue_source).returns "-----"
+
+            lambda { Puppet::Util::Queue::Stomp.new }.should raise_error(ArgumentError)
+        end
+
+        it "should fail unless the queue source is a stomp URL" do
+            # Stub rather than expect, so we can include the source in the error
+            Puppet.settings.stubs(:value).with(:queue_source).returns "http://foo/bar"
+
+            lambda { Puppet::Util::Queue::Stomp.new }.should raise_error(ArgumentError)
+        end
+
+        list = %w{user password host port}
+        {"user" => "myuser", "password" => "mypass", "host" => "foohost", "port" => 42}.each do |name, value|
+            it "should use the #{name} from the queue source as the queueing #{name}" do
+                Puppet.settings.expects(:value).with(:queue_source).returns "stomp://myuser:mypass@foohost:42/"
+
+                Stomp::Client.expects(:new).with { |*args| args[list.index(name)] == value }
+                Puppet::Util::Queue::Stomp.new
+            end
+        end
+
+        it "should create a reliable client instance" do
+            Puppet.settings.expects(:value).with(:queue_source).returns "stomp://myuser@foohost:42/"
+
+            Stomp::Client.expects(:new).with { |*args| args[4] == true }
+            Puppet::Util::Queue::Stomp.new
+        end
+    end
+
+    describe "when sending a message" do
+        before do
+            @client = stub 'client'
+            Stomp::Client.stubs(:new).returns @client
+            @queue = Puppet::Util::Queue::Stomp.new
+        end
+
+        it "should send it to the queue client instance" do
+            @client.expects(:send).with { |queue, msg, options| msg == "Smite!" }
+            @queue.send_message('fooqueue', 'Smite!')
+        end
+
+        it "should send it to the transformed queue name" do
+            @client.expects(:send).with { |queue, msg, options| queue == "/queue/fooqueue" }
+            @queue.send_message('fooqueue', 'Smite!')
+        end
+
+        it "should send it as a persistent message" do
+            @client.expects(:send).with { |queue, msg, options| options[:persistent] == true }
+            @queue.send_message('fooqueue', 'Smite!')
+        end
+    end
+
+    describe "when subscribing to a queue" do
+        before do
+            @client = stub 'client'
+            Stomp::Client.stubs(:new).returns @client
+            @queue = Puppet::Util::Queue::Stomp.new
+        end
+
+        it "should subscribe via the queue client instance" do
+            @client.expects(:subscribe)
+            @queue.subscribe('fooqueue')
+        end
+
+        it "should subscribe to the transformed queue name" do
+            @client.expects(:subscribe).with("/queue/fooqueue")
+            @queue.subscribe('fooqueue')
+        end
+
+        it "should yield the body of any received message" do
+            message = mock 'message'
+            message.expects(:body).returns "mybody"
+
+            @client.expects(:subscribe).yields(message)
+
+            body = nil
+            @queue.subscribe('fooqueue') { |b| body = b }
+            body.should == "mybody"
+        end
     end
 
     it 'should transform the simple queue name to "/queue/<queue_name>"' do
         Puppet::Util::Queue::Stomp.new.stompify_target('blah').should == '/queue/blah'
     end
-
-    it 'should transform the queue name properly and pass along to superclass for send and subscribe' do
-        o = Puppet::Util::Queue::Stomp.new
-        o.send_message('fooqueue', 'Smite!').should == 'To /queue/fooqueue: Smite!'
-        o.subscribe('moodew') {|obj| obj}.should == 'subscribe: /queue/moodew'
-    end
 end
-
