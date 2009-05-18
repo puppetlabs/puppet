@@ -48,7 +48,7 @@ describe Puppet::Transaction do
 
             resource.expects(:finish).never
 
-            @transaction.generate_additional_resources(generator, :generate)
+            @transaction.generate_additional_resources(generator, :generate).should be_empty
         end
     end
 end

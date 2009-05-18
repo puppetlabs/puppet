@@ -349,6 +349,7 @@ class Transaction
                     make_parent_child_relationship(resource, [r])
                 end
             rescue Puppet::Resource::Catalog::DuplicateResourceError
+                made.delete(res)
                 next
             end
         end

@@ -513,6 +513,14 @@ module Puppet
 
             @stat = nil
         end
+
+        # Configure discovered resources to be purged.
+        def mark_children_for_purging(children)
+            children.each do |name, child|
+                next if child[:source]
+                child[:ensure] = :absent
+            end
+        end
         
         # Create a new file or directory object as a child to the current
         # object.
@@ -579,6 +587,10 @@ module Puppet
             elsif self[:source]
                 recurse_remote(children)
             end
+
+            # If we're purging resources, then delete any resource that isn't on the
+            # remote system.
+            mark_children_for_purging(children) if self.purge?
 
             return children.values.sort { |a, b| a[:path] <=> b[:path] }
         end
@@ -659,20 +671,6 @@ module Puppet
                 children[meta.relative_path][:checksum] = :md5 if meta.ftype == "file"
 
                 children[meta.relative_path].parameter(:source).metadata = meta
-            end
-
-            # If we're purging resources, then delete any resource that isn't on the
-            # remote system.
-            if self.purge?
-                # Make a hash of all of the resources we found remotely -- all we need is the
-                # fast lookup, the values don't matter.
-                remotes = total.inject({}) { |hash, meta| hash[meta.relative_path] = true; hash }
-
-                children.each do |name, child|
-                    unless remotes.include?(name)
-                        child[:ensure] = :absent
-                    end
-                end
             end
 
             children

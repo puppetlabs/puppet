@@ -467,22 +467,6 @@ describe Puppet::Type.type(:file) do
             @file.recurse_remote("first" => @resource)
         end
 
-        describe "and purging is enabled" do
-            before do
-                @file[:purge] = true
-            end
-
-            it "should configure each file not on the remote system to be removed" do
-                @file.stubs(:perform_recursion).returns [@second]
-
-                @resource.expects(:[]=).with(:ensure, :absent)
-
-                @file.expects(:newchild).returns stub('secondfile', :[]= => nil, :parameter => @parameter)
-
-                @file.recurse_remote("first" => @resource)
-            end
-        end
-
         describe "and multiple sources are provided" do
             describe "and :sourceselect is set to :first" do
                 it "should create file instances for the results for the first source to return any values" do
@@ -606,6 +590,36 @@ describe Puppet::Type.type(:file) do
             three = stub 'three', :[] => "/three"
             @file.expects(:recurse_local).returns(:one => one, :two => two, :three => three)
             @file.recurse.should == [one, two, three]
+        end
+
+        describe "and purging is enabled" do
+            before do
+                @file[:purge] = true
+            end
+
+            it "should configure each file to be removed" do
+                local = stub 'local'
+                local.stubs(:[]).with(:source).returns nil # Thus, a local file
+                local.stubs(:[]).with(:path).returns "foo"
+                @file.expects(:recurse_local).returns("local" => local)
+                local.expects(:[]=).with(:ensure, :absent)
+
+                @file.recurse
+            end
+
+            it "should not remove files that exist in the remote repository" do
+                @file["source"] = "/my/file"
+                @file.expects(:recurse_local).returns({})
+
+                remote = stub 'remote'
+                remote.stubs(:[]).with(:source).returns "/whatever" # Thus, a remote file
+                remote.stubs(:[]).with(:path).returns "foo"
+
+                @file.expects(:recurse_remote).with { |hash| hash["remote"] = remote }
+                remote.expects(:[]=).with(:ensure, :absent).never
+
+                @file.recurse
+            end
         end
 
         describe "and making a new child resource" do
