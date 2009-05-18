@@ -22,10 +22,15 @@ describe Puppet::Parser::TemplateWrapper do
 
     it "should check template file existance and read its content" do
         Puppet::Parser::Files.expects(:find_template).with("fake_template", "foo").returns("/tmp/fake_template")
-        FileTest.expects(:exists?).with("/tmp/fake_template").returns(true)
         File.expects(:read).with("/tmp/fake_template").returns("template content")
 
         @tw.file = @file
+    end
+
+    it "should fail if a template cannot be found" do
+        Puppet::Parser::Files.expects(:find_template).with("fake_template", "foo").returns nil
+
+        lambda { @tw.file = @file }.should raise_error(Puppet::ParseError)
     end
 
     it "should turn into a string like template[name] for file based template" do

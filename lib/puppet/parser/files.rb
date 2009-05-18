@@ -41,7 +41,7 @@ module Puppet::Parser::Files
 
         if template_paths = templatepath(environment)
             # If we can find the template in :templatedir, we return that.
-            td_file = template_paths.collect { |path|
+            template_paths.collect { |path|
                 File::join(path, template)
             }.each do |f|
                 return f if FileTest.exist?(f)
@@ -49,11 +49,11 @@ module Puppet::Parser::Files
         end
 
         # check in the default template dir, if there is one
-        unless td_file = find_template_in_module(template, environment)
-            raise Puppet::Error, "No valid template directory found, please check templatedir settings" if template_paths.nil?
-            td_file = File::join(template_paths.first, template)
+        if td_file = find_template_in_module(template, environment)
+            return td_file
         end
-        td_file
+
+        return nil
     end
 
     def find_template_in_module(template, environment = nil)

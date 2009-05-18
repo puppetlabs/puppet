@@ -65,11 +65,8 @@ class Puppet::Parser::TemplateWrapper
     end
 
     def file=(filename)
-        @file = Puppet::Parser::Files.find_template(filename, scope.compiler.environment)
-
-        unless FileTest.exists?(file)
-            raise Puppet::ParseError,
-                "Could not find template %s" % file
+        unless @file = Puppet::Parser::Files.find_template(filename, scope.compiler.environment)
+            raise Puppet::ParseError, "Could not find template '%s'" % filename
         end
 
         # We'll only ever not have a parser in testing, but, eh.
