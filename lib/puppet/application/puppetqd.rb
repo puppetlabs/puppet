@@ -39,7 +39,7 @@ Puppet::Application.new(:puppetqd) do
             catalog.save
         end
 
-        sleep_forever()
+        Thread.list.each { |thread| thread.join }
     end
 
     # Handle the logging settings.
@@ -68,9 +68,5 @@ Puppet::Application.new(:puppetqd) do
         Puppet::Resource::Catalog.terminus_class = :active_record
 
         daemon.daemonize if Puppet[:daemonize]
-    end
-
-    def sleep_forever
-        while true do sleep 1000 end
     end
 end

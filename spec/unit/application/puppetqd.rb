@@ -161,6 +161,7 @@ describe "puppetqd" do
         before :each do
             @puppetqd.stubs(:sleep_forever)
             Puppet::Resource::Catalog::Queue.stubs(:subscribe)
+            Thread.list.each { |t| t.stubs(:join) }
         end
 
         it "should subscribe to the queue" do
@@ -177,8 +178,8 @@ describe "puppetqd" do
             @puppetqd.main
         end
 
-        it "should loop and sleep forever" do
-            @puppetqd.expects(:sleep_forever)
+        it "should join all of the running threads" do
+            Thread.list.each { |t| t.expects(:join) }
             @puppetqd.main
         end
     end
