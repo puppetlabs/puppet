@@ -86,6 +86,12 @@ describe "PuppetCA" do
             lambda { @puppetca.run_setup }.should raise_error(SystemExit)
         end
 
+        it "should set the CA location to 'only'" do
+            Puppet::SSL::Host.expects(:ca_location=).with(:only)
+
+            @puppetca.run_setup
+        end
+
         it "should create a new certificate authority" do
             Puppet::SSL::CertificateAuthority.expects(:new)
 
