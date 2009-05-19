@@ -7,6 +7,7 @@ require 'rake/gempackagetask'
 
 FILES = FileList[
     '[A-Z]*',
+    'install.rb',
     'bin/**/*',
     'sbin/**/*',
     'lib/**/*',
