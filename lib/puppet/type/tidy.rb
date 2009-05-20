@@ -24,16 +24,17 @@ Puppet::Type.newtype(:tidy) do
 	    the list of files to be tidied to those whose basenames match
 	    at least one of the patterns specified. Multiple patterns can
 	    be specified using an array.
-                    
+
+            Example::
+
                     tidy { \"/tmp\":
-		    	age => \"1w\",
-			recurse => false,
+                        age => \"1w\",
+                        recurse => false,
                         matches => [ \"[0-9]pub*.tmp\", \"*.temp\", \"tmpfile?\" ]
                     }
 
-            The example above removes files from \/tmp if they are one week
-	    old or older, are not in a subdirectory and match one of the shell
-	    globs given.
+            This removes files from \/tmp if they are one week old or older,
+            are not in a subdirectory and match one of the shell globs given.
 
             Note that the patterns are matched against the
             basename of each file -- that is, your glob patterns should not

@@ -90,9 +90,15 @@ module Puppet::Util::Docs
         indent = nil
 
         # If we can match an indentation, then just remove that same level of
-        # indent from every line.
-        if text =~ /^(\s+)/
-            indent = $1
+        # indent from every line.  However, ignore any indentation on the
+        # first line, since that can be inconsistent.
+        text = text.lstrip()
+        text.gsub!(/^([\t]+)/) { |s| " "*8*s.length(); } # Expand leading tabs
+        # Find first non-empty line after the first line:
+        line2start = (text =~ /(\n?\s*\n)/)
+        line2start += $1.length
+        if (text[line2start..-1] =~ /^([ ]+)\S/) == 0
+            indent = Regexp.quote($1)
             begin
                 return text.gsub(/^#{indent}/,'')
             rescue => detail

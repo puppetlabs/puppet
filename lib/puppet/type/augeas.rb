@@ -96,6 +96,7 @@ Puppet::Type.newtype(:augeas) do
                                  Inserts an empty node LABEL either [WHERE={before|after}] PATH.
           insert [LABEL] [WHERE] [PATH]
                                  Synonym for ins
+
         If the parameter 'context' is set that value is prepended to PATH"
 
         munge do |value|
