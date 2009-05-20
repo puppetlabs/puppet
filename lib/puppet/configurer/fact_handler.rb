@@ -40,6 +40,9 @@ module Puppet::Configurer::FactHandler
     def download_fact_plugins
         return unless download_fact_plugins?
 
+        # Deprecated prior to 0.25, as of 5/19/2008
+        Puppet.warning "Fact syncing is deprecated as of 0.25 -- use 'pluginsync' instead"
+
         Puppet::Configurer::Downloader.new("fact", Puppet[:factdest], Puppet[:factsource], Puppet[:factsignore]).evaluate
     end
 

@@ -52,6 +52,14 @@ describe Puppet::Configurer::FactHandler do
         @facthandler.download_fact_plugins
     end
 
+    it "should warn about factsync deprecation when factsync is enabled" do
+        Puppet::Configurer::Downloader.stubs(:new).returns mock("downloader", :evaluate => nil)
+
+        @facthandler.expects(:download_fact_plugins?).returns true
+        Puppet.expects(:warning)
+        @facthandler.download_fact_plugins
+    end
+
     it "should have a method for retrieving facts" do
         @facthandler.should respond_to(:find_facts)
     end
