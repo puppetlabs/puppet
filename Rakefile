@@ -14,7 +14,9 @@ FILES = FileList[
     'conf/**/*',
     'man/**/*',
     'examples/**/*',
-    'ext/**/*'
+    'ext/**/*',
+    'test/**/*',
+    'spec/**/*'
 ]
 
 spec = Gem::Specification.new do |spec|
@@ -67,18 +69,24 @@ task :unit do
     sh "cd test; rake"
 end
 
-require 'rubygems'
-gem 'ci_reporter'
-require 'ci/reporter/rake/rspec'
-require 'ci/reporter/rake/test_unit'
-ENV['CI_REPORTS'] = 'results'
+desc "Prep CI RSpec tests"
+task :ci_prep do
+    require 'rubygems'
+    begin
+        gem 'ci_reporter'
+        require 'ci/reporter/rake/rspec'
+        require 'ci/reporter/rake/test_unit'
+        ENV['CI_REPORTS'] = 'results'
+    rescue LoadError 
+       puts 'Missing ci_reporter gem. You must have the ci_reporter gem installed to run the CI spec tests'
+    end 
+end
+
+desc "Run the CI RSpec tests"
+task :ci_spec => [:ci_prep, 'ci:setup:rpsec', :spec]
 
 desc "Run CI Unit tests"
-task :ci_unit => ['ci:setup:testunit', :unit]
-
-desc "Run CI RSpec tests"
-task :ci_spec => ['ci:setup:rspec', :spec]
-
+task :ci_unit => [:ci_prep, 'ci:setup:testunit', :unit]
 
 desc "Send patch information to the puppet-dev list"
 task :mail_patches do
