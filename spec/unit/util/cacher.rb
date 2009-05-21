@@ -149,6 +149,15 @@ describe Puppet::Util::Cacher do
             lambda { klass.cached_attr(:myattr, :ttl => "yep")  { Time.now } }.should raise_error(ArgumentError)
         end
 
+        it "should not check for a ttl expiration if the class does not support that method" do
+            klass = Class.new do
+                extend Puppet::Util::Cacher 
+            end
+
+            klass.metaclass.cached_attr(:myattr) { "eh" }
+            klass.myattr
+        end
+
         it "should automatically expire cached attributes whose ttl has expired, even if no expirer is present" do
             klass = Class.new do
                 def self.to_s

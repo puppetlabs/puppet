@@ -116,6 +116,7 @@ module Puppet::Util::Cacher
         end
 
         def expired_by_ttl?(name)
+            return false unless self.class.respond_to?(:attr_ttl)
             return false unless ttl = self.class.attr_ttl(name)
 
             @ttl_timestamps ||= {}
