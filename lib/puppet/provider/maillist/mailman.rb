@@ -1,10 +1,14 @@
 require 'puppet/provider/parsedfile'
 
 Puppet::Type.type(:maillist).provide(:mailman) do
-    commands :list_lists => "list_lists", :rmlist => "rmlist", :newlist => "newlist"
-
-    # This probably won't work for non-Debian installs, but this path is sure not to be in the PATH.
-    commands :mailman => "/var/lib/mailman/mail/mailman"
+    if [ "CentOS", "RedHat", "Fedora" ].any? { |os|  Facter.value(:operatingsystem) == os } then
+        commands :list_lists => "/usr/lib/mailman/bin/list_lists", :rmlist => "/usr/lib/mailman/bin/rmlist", :newlist => "/usr/lib/mailman/bin/newlist"
+        commands :mailman => "/usr/lib/mailman/mail/mailman"
+    else
+        # This probably won't work for non-Debian installs, but this path is sure not to be in the PATH.
+        commands :list_lists => "list_lists", :rmlist => "rmlist", :newlist => "newlist"
+        commands :mailman => "/var/lib/mailman/mail/mailman"
+    end
 
     mk_resource_methods
 
