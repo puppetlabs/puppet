@@ -202,43 +202,7 @@ class Transaction
         if checkskip and skip?(resource)
             @resourcemetrics[:skipped] += 1
         else
-            @resourcemetrics[:scheduled] += 1
-            
-            changecount = @changes.length
-            
-            # We need to generate first regardless, because the recursive
-            # actions sometimes change how the top resource is applied.
-            children = eval_generate(resource)
-            
-            if children and resource.depthfirst?
-                children.each do |child|
-                    # The child will never be skipped when the parent isn't
-                    events += eval_resource(child, false)
-                end
-            end
-
-            # Perform the actual changes
-            seconds = thinmark do
-                events += apply(resource)
-            end
-
-            if children and ! resource.depthfirst?
-                children.each do |child|
-                    events += eval_resource(child, false)
-                end
-            end
-
-            # A bit of hackery here -- if skipcheck is true, then we're the
-            # top-level resource.  If that's the case, then make sure all of
-            # the changes list this resource as a proxy.  This is really only
-            # necessary for rollback, since we know the generating resource
-            # during forward changes.
-            if children and checkskip
-                @changes[changecount..-1].each { |change| change.proxy = resource }
-            end
-
-            # Keep track of how long we spend in each type of resource
-            @timemetrics[resource.class.name] += seconds
+            events += eval_children_and_apply_resource(resource, checkskip)
         end
 
         # Check to see if there are any events for this resource
@@ -259,6 +223,50 @@ class Transaction
         end
 
         # And return the events for collection
+        events
+    end
+
+    def eval_children_and_apply_resource(resource, checkskip)
+        events = []
+
+        @resourcemetrics[:scheduled] += 1
+        
+        changecount = @changes.length
+        
+        # We need to generate first regardless, because the recursive
+        # actions sometimes change how the top resource is applied.
+        children = eval_generate(resource)
+        
+        if children and resource.depthfirst?
+            children.each do |child|
+                # The child will never be skipped when the parent isn't
+                events += eval_resource(child, false)
+            end
+        end
+
+        # Perform the actual changes
+        seconds = thinmark do
+            events += apply(resource)
+        end
+
+        if children and ! resource.depthfirst?
+            children.each do |child|
+                events += eval_resource(child, false)
+            end
+        end
+
+        # A bit of hackery here -- if skipcheck is true, then we're the
+        # top-level resource.  If that's the case, then make sure all of
+        # the changes list this resource as a proxy.  This is really only
+        # necessary for rollback, since we know the generating resource
+        # during forward changes.
+        if children and checkskip
+            @changes[changecount..-1].each { |change| change.proxy = resource }
+        end
+
+        # Keep track of how long we spend in each type of resource
+        @timemetrics[resource.class.name] += seconds
+
         events
     end
 
