@@ -57,6 +57,7 @@ describe Puppet::Configurer::PluginHandler do
     end
 
     it "should load each downloaded file" do
+        FileTest.stubs(:exist?).returns true
         downloader = mock 'downloader'
 
         Puppet::Configurer::Downloader.expects(:new).returns downloader
@@ -72,12 +73,21 @@ describe Puppet::Configurer::PluginHandler do
     end
 
     it "should load plugins when asked to do so" do
+        FileTest.stubs(:exist?).returns true
         @pluginhandler.expects(:load).with("foo")
 
         @pluginhandler.load_plugin("foo")
     end
 
+    it "should not try to load files that don't exist" do
+        FileTest.expects(:exist?).with("foo").returns true
+        @pluginhandler.expects(:load).never
+
+        @pluginhandler.load_plugin("foo")
+    end
+
     it "should not try to load directories" do
+        FileTest.stubs(:exist?).returns true
         FileTest.expects(:directory?).with("foo").returns true
         @pluginhandler.expects(:load).never
 
@@ -85,6 +95,7 @@ describe Puppet::Configurer::PluginHandler do
     end
 
     it "should warn but not fail if loading a file raises an exception" do
+        FileTest.stubs(:exist?).returns true
         @pluginhandler.expects(:load).with("foo").raises "eh"
 
         Puppet.expects(:err)
@@ -92,6 +103,7 @@ describe Puppet::Configurer::PluginHandler do
     end
 
     it "should warn but not fail if loading a file raises a LoadError" do
+        FileTest.stubs(:exist?).returns true
         @pluginhandler.expects(:load).with("foo").raises LoadError.new("eh")
 
         Puppet.expects(:err)

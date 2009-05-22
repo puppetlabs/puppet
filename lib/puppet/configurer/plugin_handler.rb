@@ -13,6 +13,7 @@ module Puppet::Configurer::PluginHandler
     end
 
     def load_plugin(file)
+        return unless FileTest.exist?(file)
         return if FileTest.directory?(file)
 
         begin
