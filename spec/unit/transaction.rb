@@ -47,6 +47,7 @@ describe Puppet::Transaction do
             @catalog.expects(:add_resource).raises(Puppet::Resource::Catalog::DuplicateResourceError.new("foo"))
 
             resource.expects(:finish).never
+            resource.expects(:info) # log that it's skipped
 
             @transaction.generate_additional_resources(generator, :generate).should be_empty
         end

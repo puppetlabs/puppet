@@ -349,19 +349,18 @@ class Transaction
         end
         return [] unless made
         made = [made] unless made.is_a?(Array)
-        made.uniq!
-        made.each do |res|
+        made.uniq.find_all do |res|
             begin
                 @catalog.add_resource(res) do |r|
                     r.finish
                     make_parent_child_relationship(resource, [r])
                 end
+                true
             rescue Puppet::Resource::Catalog::DuplicateResourceError
-                made.delete(res)
-                next
+                res.info "Duplicate generated resource; skipping"
+                false
             end
         end
-        made
     end
 
     # Collect any dynamically generated resources.  This method is called
