@@ -2,13 +2,10 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
+require 'puppet_spec/files'
+
 describe Puppet::Type.type(:tidy) do
-    def tmpfile(name)
-        source = Tempfile.new(name)
-        path = source.path
-        source.close!
-        path
-    end
+    include PuppetSpec::Files
 
     # Testing #355.
     it "should be able to remove dead links" do

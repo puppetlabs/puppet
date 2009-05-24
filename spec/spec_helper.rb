@@ -1,6 +1,7 @@
 dir = File.expand_path(File.dirname(__FILE__))
 
 $LOAD_PATH.unshift("#{dir}/")
+$LOAD_PATH.unshift("#{dir}/lib") # a spec-specific test lib dir
 $LOAD_PATH.unshift("#{dir}/../lib")
 $LOAD_PATH.unshift("#{dir}/../test/lib")  # Add the old test dir, so that we can still find our local mocha and spec
 
@@ -19,6 +20,10 @@ require 'puppettest/runnable_test'
 require 'mocha'
 gem 'rspec', '=1.2.2'
 require 'spec/autorun'
+
+# So everyone else doesn't have to include this base constant.
+module PuppetSpec
+end
 
 # load any monkey-patches
 Dir["#{dir}/monkey_patches/*.rb"].map { |file| require file }

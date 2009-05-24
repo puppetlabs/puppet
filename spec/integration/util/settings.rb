@@ -2,13 +2,10 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
+require 'puppet_spec/files'
+
 describe Puppet::Util::Settings do
-    def tmpfile(name)
-        source = Tempfile.new(name)
-        path = source.path
-        source.close!
-        path
-    end
+    include PuppetSpec::Files
 
     it "should be able to make needed directories" do
         settings = Puppet::Util::Settings.new

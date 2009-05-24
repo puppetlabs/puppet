@@ -2,13 +2,10 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
+require 'puppet_spec/files'
+
 describe Puppet::Type.type(:file) do
-    def tmpfile(name)
-        source = Tempfile.new(name)
-        path = source.path
-        source.close!
-        path
-    end
+    include PuppetSpec::Files
 
     describe "when recursing" do
         def build_path(dir)
