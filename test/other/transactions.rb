@@ -13,6 +13,8 @@ class TestTransactions < Test::Unit::TestCase
     include PuppetTest::Support::Resources
     include PuppetTest::Support::Utils
     class Fakeprop <Puppet::Property
+        initvars()
+
         attr_accessor :path, :is, :should, :name
         def should_to_s(value)
             value.to_s
@@ -22,6 +24,13 @@ class TestTransactions < Test::Unit::TestCase
         end
         def info(*args)
             false
+        end
+
+        def set(value)
+            # eh
+        end
+
+        def log(msg)
         end
     end
     
@@ -595,7 +604,7 @@ class TestTransactions < Test::Unit::TestCase
         type = mkreducer do
             def evaluate
                 return Puppet::Transaction::Change.new(Fakeprop.new(
-                    :path => :path, :is => :is, :should => :should, :name => self.name, :resource => "a parent"), :is)
+                    :path => :path, :is => "start_value", :should => "desired_value", :name => self.name, :resource => "fake_parent"), :is)
             end
         end
         
@@ -613,7 +622,7 @@ class TestTransactions < Test::Unit::TestCase
         assert(changes.length > 0, "did not get any changes")
         
         changes.each do |change|
-            assert_equal(resource, change.resource, "change did not get proxy set correctly")
+            assert_equal(resource.object_id, change.resource.object_id, "change did not get proxy set correctly")
         end
     end
     
