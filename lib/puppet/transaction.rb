@@ -192,17 +192,17 @@ class Transaction
     end
     
     # Evaluate a single resource.
-    def eval_resource(resource, checkskip = true)
+    def eval_resource(resource)
         events = []
         
         if resource.is_a?(Puppet::Type::Component)
             raise Puppet::DevError, "Got a component to evaluate"
         end
         
-        if checkskip and skip?(resource)
+        if skip?(resource)
             @resourcemetrics[:skipped] += 1
         else
-            events += eval_children_and_apply_resource(resource, checkskip)
+            events += eval_children_and_apply_resource(resource)
         end
 
         # Check to see if there are any events for this resource
@@ -226,7 +226,7 @@ class Transaction
         events
     end
 
-    def eval_children_and_apply_resource(resource, checkskip)
+    def eval_children_and_apply_resource(resource)
         events = []
 
         @resourcemetrics[:scheduled] += 1
@@ -237,7 +237,7 @@ class Transaction
         # actions sometimes change how the top resource is applied.
         children = eval_generate(resource)
         
-        if children and resource.depthfirst?
+        if ! children.empty? and resource.depthfirst?
             children.each do |child|
                 # The child will never be skipped when the parent isn't
                 events += eval_resource(child, false)
@@ -249,9 +249,9 @@ class Transaction
             events += apply(resource)
         end
 
-        if children and ! resource.depthfirst?
+        if ! children.empty? and ! resource.depthfirst?
             children.each do |child|
-                events += eval_resource(child, false)
+                events += eval_resource(child)
             end
         end
 
@@ -260,7 +260,7 @@ class Transaction
         # the changes list this resource as a proxy.  This is really only
         # necessary for rollback, since we know the generating resource
         # during forward changes.
-        if children and checkskip
+        unless children.empty?
             @changes[changecount..-1].each { |change| change.proxy = resource }
         end
 
