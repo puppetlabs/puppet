@@ -6,7 +6,8 @@ module Puppet
         ensurable
 
         newparam(:name) do
-            desc "The SSH key comment."
+            desc "The SSH key comment. This attribute is currently used as a
+            system-wide primary key and therefore has to be unique."
 
             isnamevar
         end
@@ -26,11 +27,15 @@ module Puppet
         end
 
         newproperty(:user) do
-            desc "The user account in which the SSH key should be installed."
+            desc "The user account in which the SSH key should be installed.
+            The resource will automatically depend on this user."
         end
 
         newproperty(:target) do
-            desc "The file in which to store the SSH key."
+            desc "The absolute filename in which to store the SSH key. This
+            property is optional and should only be used in cases where keys
+            are stored in a non-standard location (ie not in
+            ~user/.ssh/authorized_keys)."
 
             defaultto :absent
 
