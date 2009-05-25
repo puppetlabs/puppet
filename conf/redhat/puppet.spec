@@ -1,17 +1,21 @@
+# Augeas and SELinux requirements may be disabled at build time by passing
+# --without augeas and/or --without selinux to rpmbuild or mock
+
 %{!?ruby_sitelibdir: %define ruby_sitelibdir %(ruby -rrbconfig -e 'puts Config::CONFIG["sitelibdir"]')}
 %define confdir conf/redhat
 
 Name:           puppet
-Version:        0.24.7
-Release:        3%{?dist}
+Version:        0.25.0
+Release:        0.1.beta1%{?dist}
 Summary:        A network tool for managing many disparate systems
 License:        GPLv2+
 URL:            http://puppet.reductivelabs.com/
-Source0:        http://reductivelabs.com/downloads/puppet/%{name}-%{version}.tgz
+Source0:        http://reductivelabs.com/downloads/puppet/%{name}-%{version}beta1.tar.gz
 Group:          System Environment/Base
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
+BuildRequires:  facter >= 1.5
 BuildRequires:  ruby >= 1.8.1
 
 %if 0%{?fedora} || 0%{?rhel} >= 5
@@ -22,12 +26,13 @@ Requires:       ruby-shadow
 
 # Pull in libselinux-ruby where it is available
 %if 0%{?fedora} >=9
-Requires:       libselinux-ruby
+%{!?_without_selinux:Requires: libselinux-ruby}
 %endif
 
-Requires:       facter >= 1.1.4
+Requires:       facter >= 1.5
 Requires:       ruby >= 1.8.1
-Requires:       ruby-augeas
+%{!?_without_augeas:Requires: ruby-augeas}
+
 Requires(pre):  shadow-utils
 Requires(post): chkconfig
 Requires(preun): chkconfig
@@ -54,12 +59,9 @@ Provides the central puppet server daemon which provides manifests to clients.
 The server can also function as a certificate authority and file server.
 
 %prep
-%setup -q
+%setup -q -n %{name}-%{version}beta1
 
 %build
-for f in bin/* ; do
-  sed -i -e '1c#!/usr/bin/ruby' $f
-done
 # Fix some rpmlint complaints
 for f in mac_dscl.pp mac_dscl_revert.pp \
          mac_netinfo.pp mac_pkgdmg.pp ; do
@@ -75,24 +77,12 @@ find examples/ -type f | xargs chmod a-x
 
 %install
 rm -rf %{buildroot}
-install -d -m0755 %{buildroot}%{_sbindir}
-install -d -m0755 %{buildroot}%{_bindir}
-install -d -m0755 %{buildroot}%{ruby_sitelibdir}
+ruby install.rb --destdir=%{buildroot} --quick --no-rdoc
+
 install -d -m0755 %{buildroot}%{_sysconfdir}/puppet/manifests
-install -d -m0755 %{buildroot}%{_docdir}/%{name}-%{version}
-install -d -m0755 %{buildroot}%{_mandir}/man8
 install -d -m0755 %{buildroot}%{_localstatedir}/lib/puppet
 install -d -m0755 %{buildroot}%{_localstatedir}/run/puppet
 install -d -m0755 %{buildroot}%{_localstatedir}/log/puppet
-install -Dp -m0755 bin/* %{buildroot}%{_sbindir}
-mv %{buildroot}%{_sbindir}/puppet %{buildroot}%{_bindir}/puppet
-mv %{buildroot}%{_sbindir}/ralsh %{buildroot}%{_bindir}/ralsh
-mv %{buildroot}%{_sbindir}/filebucket %{buildroot}%{_bindir}/filebucket
-mv %{buildroot}%{_sbindir}/puppetrun %{buildroot}%{_bindir}/puppetrun
-mv %{buildroot}%{_sbindir}/puppetdoc %{buildroot}%{_bindir}/puppetdoc
-install -Dp -m0644 lib/puppet.rb %{buildroot}%{ruby_sitelibdir}/puppet.rb
-cp -a lib/puppet %{buildroot}%{ruby_sitelibdir}
-find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -print0 | xargs -0 -r chmod a-x
 install -Dp -m0644 %{confdir}/client.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppet
 install -Dp -m0755 %{confdir}/client.init %{buildroot}%{_initrddir}/puppet
 install -Dp -m0644 %{confdir}/server.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppetmaster
@@ -100,7 +90,7 @@ install -Dp -m0755 %{confdir}/server.init %{buildroot}%{_initrddir}/puppetmaster
 install -Dp -m0644 %{confdir}/fileserver.conf %{buildroot}%{_sysconfdir}/puppet/fileserver.conf
 install -Dp -m0644 %{confdir}/puppet.conf %{buildroot}%{_sysconfdir}/puppet/puppet.conf
 install -Dp -m0644 %{confdir}/logrotate %{buildroot}%{_sysconfdir}/logrotate.d/puppet
-install -Dp -m0644 man/man8/* %{buildroot}%{_mandir}/man8
+
 # We need something for these ghosted files, otherwise rpmbuild
 # will complain loudly. They won't be included in the binary packages
 touch %{buildroot}%{_sysconfdir}/puppet/puppetmasterd.conf
@@ -109,11 +99,11 @@ touch %{buildroot}%{_sysconfdir}/puppet/puppetd.conf
 
 %files
 %defattr(-, root, root, 0755)
+%exclude %{_bindir}/pi
 %{_bindir}/puppet
 %{_bindir}/ralsh
 %{_bindir}/filebucket
 %{_bindir}/puppetdoc
-%exclude %{_mandir}/man8/pi.8.gz
 %{_sbindir}/puppetd
 %{ruby_sitelibdir}/*
 %{_initrddir}/puppet
@@ -128,6 +118,7 @@ touch %{buildroot}%{_sysconfdir}/puppet/puppetd.conf
 %attr(-, puppet, puppet) %{_localstatedir}/run/puppet
 %attr(-, puppet, puppet) %{_localstatedir}/log/puppet
 %attr(-, puppet, puppet) %{_localstatedir}/lib/puppet
+%exclude %{_mandir}/man8/pi.8.gz
 %doc %{_mandir}/man8/puppet.8.gz
 %doc %{_mandir}/man8/puppet.conf.8.gz
 %doc %{_mandir}/man8/puppetd.8.gz
@@ -137,7 +128,8 @@ touch %{buildroot}%{_sysconfdir}/puppet/puppetd.conf
 %files server
 %defattr(-, root, root, 0755)
 %{_sbindir}/puppetmasterd
-%{_bindir}/puppetrun
+%{_sbindir}/puppetrun
+%{_sbindir}/puppetqd
 %{_initrddir}/puppetmaster
 %config(noreplace) %{_sysconfdir}/puppet/fileserver.conf
 %dir %{_sysconfdir}/puppet/manifests
@@ -153,14 +145,13 @@ touch %{buildroot}%{_sysconfdir}/puppet/puppetd.conf
 # Fixed uid/gid were assigned in bz 472073 (Fedora), 471918 (RHEL-5),
 # and 471919 (RHEL-4)
 %pre
-getent group puppet >/dev/null || groupadd -r puppet -g 52
-getent passwd puppet >/dev/null || \
+getent group puppet &>/dev/null || groupadd -r puppet -g 52 &>/dev/null
+getent passwd puppet &>/dev/null || \
 useradd -r -u 52 -g puppet -d %{_localstatedir}/lib/puppet -s /sbin/nologin \
-useradd -r -g puppet -d %{_localstatedir}/lib/puppet -s /sbin/nologin \
-    -c "Puppet" puppet || :
+    -c "Puppet" puppet &>/dev/null || :
 # ensure that old setups have the right puppet home dir
 if [ $1 -gt 1 ] ; then
-  usermod -d %{_localstatedir}/lib/puppet puppet || :
+  usermod -d %{_localstatedir}/lib/puppet puppet &>/dev/null || :
 fi
 
 %post
@@ -195,6 +186,19 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Mon May 04 2009 Todd Zullinger <tmz@pobox.com> - 0.25.0-0.1.beta1
+- Update to 0.25.0beta1
+- Make Augeas and SELinux requirements build time options
+
+* Mon Mar 23 2009 Todd Zullinger <tmz@pobox.com> - 0.24.8-1
+- Update to 0.24.8
+- Quiet output from %%pre
+- Use upstream install script
+- Increase required facter version to >= 1.5
+
+* Tue Dec 16 2008 Todd Zullinger <tmz@pobox.com> - 0.24.7-4
+- Remove redundant useradd from %%pre
+
 * Tue Dec 16 2008 Jeroen van Meeuwen <kanarip@kanarip.com> - 0.24.7-3
 - New upstream version
 - Set a static uid and gid (#472073, #471918, #471919)
