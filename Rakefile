@@ -1,5 +1,7 @@
 # Rakefile for Puppet -*- ruby -*-
 
+$: << File.expand_path('lib')
+
 require './lib/puppet.rb'
 require 'rake'
 require 'rake/packagetask'
@@ -18,6 +20,10 @@ FILES = FileList[
     'test/**/*',
     'spec/**/*'
 ]
+
+task :default do
+    sh %{rake -T}
+end
 
 spec = Gem::Specification.new do |spec|
     spec.platform = Gem::Platform::RUBY
