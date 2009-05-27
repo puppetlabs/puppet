@@ -39,11 +39,7 @@ class Puppet::Indirector::Exec < Puppet::Indirector::Terminus
         begin
             output = execute(external_command)
         rescue Puppet::ExecutionFailure => detail
-            if $?.exitstatus == 1
-                return nil
-            else
-                Puppet.err "Could not retrieve external node information for %s: %s" % [name, detail]
-            end
+            Puppet.err "Failed to find %s via exec: %s" % [name, detail]
             return nil
         end
         

@@ -47,5 +47,10 @@ describe Puppet::Indirector::Exec do
         @searcher.find(@request).should be_nil
     end
 
-    it "should be able to execute commands with multiple arguments"
+    it "should return nil and log an error if there's an execution failure" do
+        @searcher.expects(:execute).with(%w{/echo foo}).raises(Puppet::ExecutionFailure.new("message"))
+
+        Puppet.expects(:err)
+        @searcher.find(@request).should be_nil
+    end
 end
