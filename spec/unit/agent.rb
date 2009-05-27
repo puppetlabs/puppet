@@ -122,6 +122,14 @@ describe Puppet::Agent do
             client.expects(:run).with { @agent.client.should equal(client); true }
             @agent.run
         end
+
+        it "should run the client instance with any arguments passed to it" do
+            client = AgentTestClient.new
+            AgentTestClient.expects(:new).returns client
+
+            client.expects(:run).with("testargs")
+            @agent.run("testargs")
+        end
     end
 
     describe "when splaying" do
