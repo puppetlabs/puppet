@@ -128,8 +128,9 @@ Puppet::Application.new(:puppetrun) do
 
         print "Triggering %s\n" % host
         begin
-            result = client.run(@tags, options[:ignoreschedules], options[:foreground])
+            result = client.run(@tags, options[:ignoreschedules] || false, options[:foreground] || false)
         rescue => detail
+            puts detail.backtrace if Puppet[:trace]
             $stderr.puts "Host %s failed: %s\n" % [host, detail]
             exit(2)
         end
@@ -155,6 +156,8 @@ Puppet::Application.new(:puppetrun) do
         options[:parallel] = 1
         options[:verbose] = true
         options[:fqdn] = true
+        options[:ignoreschedules] = false
+        options[:foreground] = false
 
         @hosts = []
         @classes = []

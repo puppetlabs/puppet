@@ -57,6 +57,18 @@ describe "puppetrun" do
 
             @puppetrun.options[:fqdn].should be_true
         end
+
+        it "should set ignoreschedules to 'false'" do
+            @puppetrun.run_preinit
+
+            @puppetrun.options[:ignoreschedules].should be_false
+        end
+
+        it "should set foreground to 'false'" do
+            @puppetrun.run_preinit
+
+            @puppetrun.options[:foreground].should be_false
+        end
     end
 
     describe "when applying options" do
