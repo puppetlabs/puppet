@@ -397,6 +397,11 @@ describe Puppet::Parser::Resource do
             @parser_resource.to_resource.file.should == "/my/file"
         end
 
+        it "should copy over the 'exported' value" do
+            @parser_resource.exported = true
+            @parser_resource.to_resource.exported.should be_true
+        end
+
         it "should convert any parser resource references to Puppet::Resource::Reference instances" do
             ref = Puppet::Parser::Resource::Reference.new(:title => "/my/file", :type => "file")
             @parser_resource = mkresource :source => @source, :params => {:foo => "bar", :fee => ref}
