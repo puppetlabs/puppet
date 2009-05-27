@@ -282,6 +282,12 @@ describe "puppetd" do
             @puppetd.run_setup
         end
 
+        it "should use :main, :puppetd, and :ssl" do
+            Puppet.settings.expects(:use).with(:main, :puppetd, :ssl)
+
+            @puppetd.run_setup
+        end
+
         it "should install a remote ca location" do
             Puppet::SSL::Host.expects(:ca_location=).with(:remote)
 

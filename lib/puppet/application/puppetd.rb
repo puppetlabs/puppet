@@ -211,6 +211,8 @@ Puppet::Application.new(:puppetd) do
             Puppet::Util::Log.newdestination(logdest)
         end
 
+        Puppet.settings.use :main, :puppetd, :ssl
+
         # We need to specify a ca location for things to work, but
         # until the REST cert transfers are working, it needs to
         # be local.
