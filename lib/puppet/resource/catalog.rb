@@ -190,7 +190,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         resource
     end
 
-    def expired?(ts)
+    def dependent_data_expired?(ts)
         if applying?
             return super
         else

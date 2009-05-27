@@ -10,14 +10,14 @@ describe Puppet::Resource::Catalog, "when compiling" do
     it "should always be expired if it's not applying" do
         @catalog = Puppet::Resource::Catalog.new("host")
         @catalog.expects(:applying?).returns false
-        @catalog.should be_expired(Time.now)
+        @catalog.should be_dependent_data_expired(Time.now)
     end
 
     it "should not be expired if it's applying and the timestamp is late enough" do
         @catalog = Puppet::Resource::Catalog.new("host")
         @catalog.expire
         @catalog.expects(:applying?).returns true
-        @catalog.should_not be_expired(Time.now)
+        @catalog.should_not be_dependent_data_expired(Time.now)
     end
 
     it "should be able to write its list of classes to the class file" do

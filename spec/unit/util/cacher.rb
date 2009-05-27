@@ -21,7 +21,7 @@ describe Puppet::Util::Cacher::Expirer do
     end
 
     it "should be able to test whether a timestamp is expired" do
-        @expirer.should respond_to(:expired?)
+        @expirer.should respond_to(:dependent_data_expired?)
     end
 
     it "should be able to expire all values" do
@@ -29,12 +29,12 @@ describe Puppet::Util::Cacher::Expirer do
     end
 
     it "should consider any value to be valid if it has never been expired" do
-        @expirer.should_not be_expired(Time.now)
+        @expirer.should_not be_dependent_data_expired(Time.now)
     end
 
     it "should consider any value created after expiration to be expired" do
         @expirer.expire
-        @expirer.should be_expired(Time.now - 1)
+        @expirer.should be_dependent_data_expired(Time.now - 1)
     end
 end
 

@@ -9,7 +9,7 @@ module Puppet::Util::Cacher
 
         # Is the provided timestamp earlier than our expiration timestamp?
         # If it is, then the associated value is expired.
-        def expired?(ts)
+        def dependent_data_expired?(ts)
             return false unless timestamp
 
             return timestamp > ts
@@ -112,7 +112,7 @@ module Puppet::Util::Cacher
             if expirer.nil?
                 return true unless self.class.attr_ttl(name)
             end
-            return expirer.expired?(cache_timestamp)
+            return expirer.dependent_data_expired?(cache_timestamp)
         end
 
         def expired_by_ttl?(name)

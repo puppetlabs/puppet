@@ -190,6 +190,7 @@ class Puppet::Indirector::Indirection
                 return result
             end
         rescue => detail
+            puts detail.backtrace if Puppet[:trace]
             Puppet.err "Cached %s for %s failed: %s" % [self.name, request.key, detail]
         end
 
