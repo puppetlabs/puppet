@@ -274,7 +274,7 @@ describe "Puppet" do
 
             it "should generate a report if not noop" do
                 Puppet.stubs(:[]).with(:noop).returns(false)
-                @puppet.options.stubs(:[]).with(:detailed_exits).returns(true)
+                @puppet.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
                 metrics = stub 'metrics', :[] => { :total => 10, :failed => 0}
                 report = stub 'report', :metrics => metrics
                 @transaction.stubs(:report).returns(report)
@@ -282,6 +282,40 @@ describe "Puppet" do
                 @transaction.expects(:generate_report)
 
                 @puppet.main
+            end
+
+            describe "with detailed_exitcodes" do
+                before :each do
+                    Puppet.stubs(:[]).with(:noop).returns(false)
+                    @puppet.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
+                end
+
+                it "should exit with exit code of 2 if changes" do
+                    report = stub 'report', :metrics => { "changes" => {:total => 1}, "resources" => {:failed => 0} }
+                    @transaction.stubs(:generate_report).returns(report)
+                    @transaction.stubs(:report).returns(report)
+                    @puppet.expects(:exit).with(2)
+
+                    @puppet.main
+                end
+
+                it "should exit with exit code of 4 if failures" do
+                    report = stub 'report', :metrics => { "changes" => {:total => 0}, "resources" => {:failed => 1} }
+                    @transaction.stubs(:generate_report).returns(report)
+                    @transaction.stubs(:report).returns(report)
+                    @puppet.expects(:exit).with(4)
+
+                    @puppet.main
+                end
+
+                it "should exit with exit code of 6 if changes and failures" do
+                    report = stub 'report', :metrics => { "changes" => {:total => 1}, "resources" => {:failed => 1} }
+                    @transaction.stubs(:generate_report).returns(report)
+                    @transaction.stubs(:report).returns(report)
+                    @puppet.expects(:exit).with(6)
+
+                    @puppet.main
+                end
             end
 
         end

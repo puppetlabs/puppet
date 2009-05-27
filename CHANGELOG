@@ -1,4 +1,6 @@
 0.25.0
+    Fixed #2280 - Detailed exit codes fix 
+
     Fixed #198 - Puppet man pages added
 
     Moved puppetd, puppetmasterd, puppetrun, puppetca from bin to sbin
