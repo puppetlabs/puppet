@@ -103,6 +103,7 @@ class Puppet::Configurer
                 duration = thinmark do
                     result = catalog_class.find(name, fact_options.merge(:ignore_terminus => true))
                 end
+                Puppet.notice "Using cached catalog"
             rescue => detail
                 puts detail.backtrace if Puppet[:trace]
                 Puppet.err "Could not retrieve catalog from cache: %s" % detail

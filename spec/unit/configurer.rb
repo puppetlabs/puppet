@@ -105,9 +105,11 @@ describe Puppet::Configurer, "when retrieving a catalog" do
         @agent.retrieve_catalog.should == @catalog
     end
 
-    it "should return the cached catalog when no catalog can be retrieved from the server" do
+    it "should log and return the cached catalog when no catalog can be retrieved from the server" do
         Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:ignore_cache] == true }.returns nil
         Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:ignore_terminus] == true }.returns @catalog
+
+        Puppet.expects(:notice)
 
         @agent.retrieve_catalog.should == @catalog
     end
