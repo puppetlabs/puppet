@@ -909,7 +909,7 @@ module Puppet
                 next unless [:mode, :owner, :group, :seluser, :selrole, :seltype, :selrange].include?(thing.name)
 
                 # Make sure we get a new stat objct
-                self.stat(true)
+                expire
                 currentvalue = thing.retrieve
                 unless thing.insync?(currentvalue)
                     thing.sync
