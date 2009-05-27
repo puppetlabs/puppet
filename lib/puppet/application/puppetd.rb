@@ -229,7 +229,7 @@ Puppet::Application.new(:puppetd) do
 
         enable_disable_client(@agent) if options[:enable] or options[:disable]
 
-        @daemon.agent = agent
+        @daemon.agent = agent if options[:client]
 
         # It'd be nice to daemonize later, but we have to daemonize before the
         # waitforcert happens.

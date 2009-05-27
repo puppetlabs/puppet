@@ -327,8 +327,15 @@ describe "puppetd" do
             end
         end
 
-        it "should inform the daemon about our agent" do
+        it "should inform the daemon about our agent if :client is set to 'true'" do
+            @puppetd.options.expects(:[]).with(:client).returns true
             @daemon.expects(:agent=).with(@agent)
+            @puppetd.run_setup
+        end
+
+        it "should not inform the daemon about our agent if :client is set to 'false'" do
+            @puppetd.options[:client] = false
+            @daemon.expects(:agent=).never
             @puppetd.run_setup
         end
 
