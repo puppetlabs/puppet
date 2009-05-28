@@ -93,7 +93,7 @@ describe 'Puppet::Util::Queue::Stomp' do
 
     describe "when subscribing to a queue" do
         before do
-            @client = stub 'client'
+            @client = stub 'client', :acknowledge => true
             Stomp::Client.stubs(:new).returns @client
             @queue = Puppet::Util::Queue::Stomp.new
         end
@@ -104,7 +104,12 @@ describe 'Puppet::Util::Queue::Stomp' do
         end
 
         it "should subscribe to the transformed queue name" do
-            @client.expects(:subscribe).with("/queue/fooqueue")
+            @client.expects(:subscribe).with { |queue, options| queue == "/queue/fooqueue" }
+            @queue.subscribe('fooqueue')
+        end
+
+        it "should specify that its messages should be acknowledged" do
+            @client.expects(:subscribe).with { |queue, options| options[:ack] == :client }
             @queue.subscribe('fooqueue')
         end
 
@@ -117,6 +122,15 @@ describe 'Puppet::Util::Queue::Stomp' do
             body = nil
             @queue.subscribe('fooqueue') { |b| body = b }
             body.should == "mybody"
+        end
+
+        it "should acknowledge all successfully processed messages" do
+            message = stub 'message', :body => "mybode"
+
+            @client.stubs(:subscribe).yields(message)
+            @client.expects(:acknowledge).with(message)
+
+            @queue.subscribe('fooqueue') { |b| "eh" }
         end
     end
 

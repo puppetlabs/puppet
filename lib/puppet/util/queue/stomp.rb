@@ -33,7 +33,10 @@ class Puppet::Util::Queue::Stomp
     end
 
     def subscribe(target)
-        stomp_client.subscribe(stompify_target(target)) {|stomp_message| yield(stomp_message.body)}
+        stomp_client.subscribe(stompify_target(target), :ack => :client) do |stomp_message|
+            yield(stomp_message.body)
+            stomp_client.acknowledge(stomp_message)
+        end
     end
 
     def stompify_target(target)
