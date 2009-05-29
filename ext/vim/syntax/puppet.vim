@@ -1,6 +1,6 @@
 " puppet syntax file
 " Filename:     puppet.vim
-" Language:     puppet configuration file 
+" Language:     puppet configuration file
 " Maintainer:   Luke Kanies <luke@madstop.com>
 " URL:          
 " Last Change: 
@@ -24,33 +24,33 @@ syn match   puppetArgument      "\w\+" contained
 syn match   puppetArgument      "\$\w\+" contained
 syn match   puppetArgument      "'[^']+'" contained
 syn match   puppetArgument      '"[^"]+"' contained
-syn match   puppetDefName     "\w\+" contained
+syn match   puppetDefName       "\w\+" contained
 
-syn match   puppetInstance           "\w\+\s*{" contains=puppetTypeBrace,puppetTypeName,puppetTypeDefault
-syn match   puppetTypeBrace       "{" contained
-syn match   puppetTypeName       "[a-z]\w*" contained
-syn match   puppetTypeDefault    "[A-Z]\w*" contained
+syn match   puppetInstance      "\w\+\s*{" contains=puppetTypeBrace,puppetTypeName,puppetTypeDefault
+syn match   puppetTypeBrace     "{" contained
+syn match   puppetTypeName      "[a-z]\w*" contained
+syn match   puppetTypeDefault   "[A-Z]\w*" contained
 
-syn match   puppetParam           "\w\+\s*=>" contains=puppetTypeRArrow,puppetParamName
-syn match   puppetParamRArrow       "=>" contained
-syn match   puppetParamName       "\w\+" contained
-syn match   puppetVariable           "$\w\+"
-syn match   puppetVariable           "${\w\+}"
-syn match   puppetParen           "("
-syn match   puppetParen           ")"
-syn match   puppetBrace           "{"
-syn match   puppetBrace           "}"
+syn match   puppetParam         "\w\+\s*=>" contains=puppetTypeRArrow,puppetParamName
+syn match   puppetParamRArrow   "=>" contained
+syn match   puppetParamName     "\w\+" contained
+syn match   puppetVariable      "$\w\+"
+syn match   puppetVariable      "${\w\+}"
+syn match   puppetParen         "("
+syn match   puppetParen         ")"
+syn match   puppetBrace         "{"
+syn match   puppetBrace         "}"
 
-syn region  puppetString start=+"+ skip=+\\\\\|\\"+ end=+"+ contains=puppetVariable
+syn region  puppetString        start=+"+ skip=+\\\\\|\\"+ end=+"+ contains=puppetVariable
 
-syn keyword puppetBoolean    true false 
-syn keyword puppetKeyword    import inherits include
-syn keyword puppetControl    case default 
+syn keyword puppetBoolean       true false
+syn keyword puppetKeyword       import inherits include
+syn keyword puppetControl       case default
 
 " comments last overriding everything else
-syn match   puppetComment            "\s*#.*$" contains=puppetTodo
-syn region  puppetComment            start="/\*" end="\*/" contains=puppetTodo extend
-syn keyword puppetTodo               TODO NOTE FIXME XXX contained
+syn match   puppetComment       "\s*#.*$" contains=puppetTodo
+syn region  puppetComment       start="/\*" end="\*/" contains=puppetTodo extend
+syn keyword puppetTodo          TODO NOTE FIXME XXX contained
 
 " Define the default highlighting.
 " For version 5.7 and earlier: only when not done already
