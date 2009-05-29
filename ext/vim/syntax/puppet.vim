@@ -41,6 +41,7 @@ syn match   puppetParen         ")"
 syn match   puppetBrace         "{"
 syn match   puppetBrace         "}"
 
+syn region  puppetString        start=+'+ skip=+\\\\\|\\'+ end=+'+
 syn region  puppetString        start=+"+ skip=+\\\\\|\\"+ end=+"+ contains=puppetVariable
 
 syn keyword puppetBoolean       true false
