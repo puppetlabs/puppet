@@ -118,7 +118,7 @@ module Puppet::Network
 
         def client_info(request)
             params = request.params
-            ip = params["REMOTE_ADDR"]
+            ip = params["HTTP_X_FORWARDED_FOR"] ? params["HTTP_X_FORWARDED_FOR"].split(',').last.strip : params["REMOTE_ADDR"]
             # JJM #906 The following dn.match regular expression is forgiving
             # enough to match the two Distinguished Name string contents
             # coming from Apache, Pound or other reverse SSL proxies.

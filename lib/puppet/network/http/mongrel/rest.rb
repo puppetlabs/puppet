@@ -62,7 +62,7 @@ class Puppet::Network::HTTP::MongrelREST < Mongrel::HttpHandler
     def client_info(request)
         result = {}
         params = request.params
-        result[:ip] = params["REMOTE_ADDR"]
+        result[:ip] = params["HTTP_X_FORWARDED_FOR"] ? params["HTTP_X_FORWARDED_FOR"].split(',').last.strip : params["REMOTE_ADDR"]
 
         # JJM #906 The following dn.match regular expression is forgiving
         # enough to match the two Distinguished Name string contents

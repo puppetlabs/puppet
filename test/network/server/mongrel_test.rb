@@ -29,7 +29,19 @@ class TestMongrelServer < PuppetTest::TestCase
         params[Puppet[:ssl_client_header]] = ""
         params[Puppet[:ssl_client_verify_header]] = "failure"
         info = nil
-        Resolv.expects(:getname).with(ip).returns("host.domain.com").times(3)
+        Resolv.expects(:getname).with(ip).returns("host.domain.com").times(4)
+        assert_nothing_raised("Could not call client_info") do
+            info = mongrel.send(:client_info, obj)
+        end
+        assert(! info.authenticated?, "Client info object was marked valid even though headers were missing")
+        assert_equal(ip, info.ip, "Did not copy over ip correctly")
+
+        assert_equal("host.domain.com", info.name, "Did not copy over hostname correctly")
+
+        # Now pass the X-Forwarded-For header and check it is preferred over REMOTE_ADDR
+        params["REMOTE_ADDR"] = '127.0.0.1'
+        params["HTTP_X_FORWARDED_FOR"] = ip
+        info = nil
         assert_nothing_raised("Could not call client_info") do
             info = mongrel.send(:client_info, obj)
         end
@@ -39,6 +51,8 @@ class TestMongrelServer < PuppetTest::TestCase
         assert_equal("host.domain.com", info.name, "Did not copy over hostname correctly")
 
         # Now add a valid auth header.
+        params["REMOTE_ADDR"] = ip
+        params["HTTP_X_FORWARDED_FOR"] = nil
         params[Puppet[:ssl_client_header]] = "/CN=host.domain.com"
         assert_nothing_raised("Could not call client_info") do
             info = mongrel.send(:client_info, obj)

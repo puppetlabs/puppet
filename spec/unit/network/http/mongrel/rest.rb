@@ -152,6 +152,22 @@ describe "Puppet::Network::HTTP::MongrelREST" do
                 @handler.params(@request)[:ip].should == "ipaddress"
             end
 
+            it "should pass the client's provided X-Forwared-For value as the ip" do
+                @request.stubs(:params).returns("HTTP_X_FORWARDED_FOR" => "ipaddress")
+                @handler.params(@request)[:ip].should == "ipaddress"
+            end
+
+            it "should pass the client's provided X-Forwared-For first value as the ip" do
+                @request.stubs(:params).returns("HTTP_X_FORWARDED_FOR" => "ipproxy1,ipproxy2,ipaddress")
+                @handler.params(@request)[:ip].should == "ipaddress"
+            end
+
+            it "should pass the client's provided X-Forwared-For value as the ip instead of the REMOTE_ADDR" do
+                @request.stubs(:params).returns("REMOTE_ADDR" => "remote_addr")
+                @request.stubs(:params).returns("HTTP_X_FORWARDED_FOR" => "ipaddress")
+                @handler.params(@request)[:ip].should == "ipaddress"
+            end
+
             it "should use the :ssl_client_header to determine the parameter when looking for the certificate" do
                 Puppet.settings.stubs(:value).returns "eh"
                 Puppet.settings.expects(:value).with(:ssl_client_header).returns "myheader"
