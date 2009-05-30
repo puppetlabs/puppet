@@ -184,7 +184,7 @@ class Puppet::SSL::CertificateAuthority
         # it, but with a mode we can't actually read in some cases.  So, use
         # a default before the lock.
         unless FileTest.exist?(Puppet[:serial])
-            serial = 0x0
+            serial = 0x1
         end
 
         Puppet.settings.readwritelock(:serial) { |f|

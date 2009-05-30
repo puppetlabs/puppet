@@ -264,8 +264,8 @@ describe Puppet::SSL::CertificateAuthority do
                 Puppet.settings.stubs(:readwritelock).with(:serial).yields @filehandle
             end
 
-            it "should default to 0x0 for the first serial number" do
-                @ca.next_serial.should == 0x0
+            it "should default to 0x1 for the first serial number" do
+                @ca.next_serial.should == 0x1
             end
 
             it "should return the current content of the serial file" do
@@ -276,7 +276,7 @@ describe Puppet::SSL::CertificateAuthority do
             end
             
             it "should write the next serial number to the serial file as hex" do
-                @filehandle.expects(:<<).with("0001")
+                @filehandle.expects(:<<).with("0002")
 
                 @ca.next_serial
             end
