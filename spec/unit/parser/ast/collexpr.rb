@@ -74,15 +74,17 @@ describe Puppet::Parser::AST::CollExpr do
         end
     end
 
-    it "should check for array member equality if resource parameter is an array for ==" do
+    [:exported,:virtual].each do |mode|
+    it "should check for array member equality if resource parameter is an array for == in mode #{mode}" do
         array = mock 'array', :safeevaluate => "array"
         test1 = mock 'test1'
         test1.expects(:safeevaluate).with(@scope).returns("test1")
 
         resource = mock 'resource'
         resource.expects(:[]).with("array").at_least(1).returns(["test1","test2","test3"])
-        collexpr = ast::CollExpr.new(:test1 => array, :test2 => test1, :oper => "==")
+        collexpr = ast::CollExpr.new(:test1 => array, :test2 => test1, :oper => "==", :form => mode)
         collexpr.evaluate(@scope)[1].call(resource).should be_true
+    end
     end
 
     it "should raise an error for invalid operator" do

@@ -31,7 +31,7 @@ class CollExpr < AST::Branch
             when "and"; code1.call(resource) and code2.call(resource)
             when "or"; code1.call(resource) or code2.call(resource)
             when "=="
-                if resource[str1].is_a?(Array) && form != :exported
+                if resource[str1].is_a?(Array)
                     resource[str1].include?(str2)
                 else
                     resource[str1] == str2
