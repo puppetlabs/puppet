@@ -192,7 +192,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         verb = clause_array.shift
 
         #Get the values from augeas
-        result = @aug.match(path) || ''
+        result = @aug.match(path) || []
         # Now do the work
         case verb
         when "size"
