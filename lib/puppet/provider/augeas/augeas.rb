@@ -168,16 +168,15 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         unless result.nil?
             case comparator
                 when "!="
-                    return_value = true if !(result == arg)
+                    return_value = (result != arg)
                 when "=~"
                     regex = Regexp.new(arg)
-                    loc = result=~ regex
-                    return_value = true if ! loc.nil?
+                    return_value = (result =~ regex)
                 else
-                    return_value = true if (result.send(comparator, arg))
+                    return_value = (result.send(comparator, arg))
             end
         end
-        return_value
+        return !!return_value
     end
 
     # Used by the need_to_run? method to process match filters. Returns
@@ -203,15 +202,15 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                     fail("Invalid command: #{cmd_array.join(" ")}") if clause_array.length != 2
                     comparator = clause_array.shift
                     arg = clause_array.shift
-                    return_value = true if (result.size.send(comparator, arg))
+                    return_value = (result.size.send(comparator, arg))
                 when "include":
                     arg = clause_array.shift
-                    return_value = true if result.include?(arg)
+                    return_value = result.include?(arg)
                 when "eq":
                     begin
                         arg = clause_array.shift
                         new_array = eval arg
-                        return_value = true if result == new_array
+                        return_value = (result == new_array)
                     rescue
                         fail("Invalid array in command: #{cmd_array.join(" ")}")
                     end
@@ -219,13 +218,13 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                     begin
                         arg = clause_array.shift
                         new_array = eval arg
-                        return_value = true if result != new_array
+                        return_value = (result != new_array)
                     rescue
                         fail("Invalid array in command: #{cmd_array.join(" ")}")
                     end
             end
         end
-        return_value
+        return !!return_value
     end
 
     def get_augeas_version
