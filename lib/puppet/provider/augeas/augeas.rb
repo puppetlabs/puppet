@@ -111,13 +111,13 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                 elsif f == :comparator
                     argline << sc.scan(/(==|!=|=~|<|<=|>|>=)/)
                     unless argline[-1]
-                        puts sc.rest()
+                        puts sc.rest
                         fail(raise Exception, "invalid comparator for command #{cmd}")
                     end
                 elsif f == :int
                     argline << sc.scan(/\d+/).to_i
                 elsif f== :glob
-                    argline << sc.rest()
+                    argline << sc.rest
                 end
             end
             args << argline
@@ -127,26 +127,26 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
 
     def open_augeas
-        if (@aug.nil?)
+        unless @aug
             flags = 0
-            (flags = 1 << 2 ) if self.resource[:type_check] == :true
-            root = self.resource[:root]
-            load_path = self.resource[:load_path]
+            flags = 1 << 2 if resource[:type_check] == :true
+            root = resource[:root]
+            load_path = resource[:load_path]
             debug("Opening augeas with root #{root}, lens path #{load_path}, flags #{flags}")
-            @aug = Augeas.open(root, load_path,flags)
+            @aug = Augeas::open(root, load_path,flags)
 
-            if (self.get_augeas_version() >= "0.3.6")
-                debug("Augeas version #{self.get_augeas_version()} is installed")
+            if get_augeas_version >= "0.3.6"
+                debug("Augeas version #{get_augeas_version} is installed")
             end
         end
         @aug
     end
 
     def close_augeas
-        if (!@aug.nil?)
-            @aug.close()
+        if @aug
+            @aug.close
             debug("Closed the augeas connection")
-            @aug = nil;
+            @aug = nil
         end
     end
 
@@ -158,9 +158,9 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
         #validate and tear apart the command
         fail ("Invalid command: #{cmd_array.join(" ")}") if cmd_array.length < 4
-        cmd = cmd_array.shift()
-        path = cmd_array.shift()
-        comparator = cmd_array.shift()
+        cmd = cmd_array.shift
+        path = cmd_array.shift
+        comparator = cmd_array.shift
         arg = cmd_array.join(" ")
 
         #check the value in augeas
@@ -187,29 +187,29 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
         #validate and tear apart the command
         fail("Invalid command: #{cmd_array.join(" ")}") if cmd_array.length < 3
-        cmd = cmd_array.shift()
-        path = cmd_array.shift()
+        cmd = cmd_array.shift
+        path = cmd_array.shift
 
         # Need to break apart the clause
-        clause_array = parse_commands(cmd_array.shift())[0]
-        verb = clause_array.shift()
+        clause_array = parse_commands(cmd_array.shift)[0]
+        verb = clause_array.shift
 
         #Get the values from augeas
         result = @aug.match(path) || ''
         # Now do the work
-        unless (result.nil?)
+        unless result.nil?
             case verb
                 when "size":
                     fail("Invalid command: #{cmd_array.join(" ")}") if clause_array.length != 2
-                    comparator = clause_array.shift()
-                    arg = clause_array.shift()
+                    comparator = clause_array.shift
+                    arg = clause_array.shift
                     return_value = true if (result.size.send(comparator, arg))
                 when "include":
-                    arg = clause_array.shift()
+                    arg = clause_array.shift
                     return_value = true if result.include?(arg)
                 when "eq":
                     begin
-                        arg = clause_array.shift()
+                        arg = clause_array.shift
                         new_array = eval arg
                         return_value = true if result == new_array
                     rescue
@@ -217,7 +217,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                     end
                 when "noteq":
                     begin
-                        arg = clause_array.shift()
+                        arg = clause_array.shift
                         new_array = eval arg
                         return_value = true if result != new_array
                     rescue
@@ -238,16 +238,16 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
     def files_changed?
         saved_files = @aug.match("/augeas/events/saved")
-        return saved_files.size() > 0
+        return saved_files.size > 0
     end
 
     # Determines if augeas acutally needs to run.
     def need_to_run?
         force = resource[:force]
         return_value = true
-        self.open_augeas()
+        open_augeas
         filter = resource[:onlyif]
-        unless (filter == "")
+        unless filter == ""
             cmd_array = parse_commands(filter)[0]
             command = cmd_array[0];
             begin
@@ -260,17 +260,17 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             end
         end
 
-        unless (force)
+        unless force
             # If we have a verison of augeas which is at least 0.3.6 then we
             # can make the changes now, see if changes were made, and
             # actually do the save.
-            if ((return_value) and (self.get_augeas_version() >= "0.3.6"))
+            if return_value and get_augeas_version >= "0.3.6"
                 debug("Will attempt to save and only run if files changed")
-                self.set_augeas_save_mode(SAVE_NOOP)
-                self.do_execute_changes()
-                save_result = @aug.save()
+                set_augeas_save_mode(SAVE_NOOP)
+                do_execute_changes
+                save_result = @aug.save
                 saved_files = @aug.match("/augeas/events/saved")
-                if ((save_result) and (not files_changed?))
+                if save_result and not files_changed?
                     debug("Skipping becuase no files were changed")
                     return_value = false
                 else
@@ -278,24 +278,24 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                 end
             end
         end
-        self.close_augeas()
+        close_augeas
         return return_value
     end
 
     def execute_changes
         # Re-connect to augeas, and re-execute the changes
-        self.open_augeas()
-        if (self.get_augeas_version() >= "0.3.6")
-            self.set_augeas_save_mode(SAVE_OVERWRITE)
+        open_augeas
+        if get_augeas_version >= "0.3.6"
+            set_augeas_save_mode(SAVE_OVERWRITE)
         end
 
-        self.do_execute_changes()
+        do_execute_changes
 
-        success = @aug.save()
-        if (success != true)
+        success = @aug.save
+        if success != true
             fail("Save failed with return code #{success}")
         end
-        self.close_augeas()
+        close_augeas
 
         return :executed
     end
@@ -306,7 +306,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         commands.each do |cmd_array|
             fail("invalid command #{cmd_array.join[" "]}") if cmd_array.length < 2
             command = cmd_array[0]
-            cmd_array.shift()
+            cmd_array.shift
             begin
                 case command
                     when "set"
@@ -327,7 +327,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                             when "after"; before = false
                             else fail("Invalid value '#{where}' for where param")
                         end
-                        debug("sending command '#{command}' with params #{[label, where, path].inspect()}")
+                        debug("sending command '#{command}' with params #{[label, where, path].inspect}")
                         aug.insert(path, label, before)
                     else fail("Command '#{command}' is not supported")
                 end
