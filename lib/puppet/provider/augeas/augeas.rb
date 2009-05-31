@@ -165,16 +165,14 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
         #check the value in augeas
         result = @aug.get(path) || ''
-        unless result.nil?
-            case comparator
-                when "!="
-                    return_value = (result != arg)
-                when "=~"
-                    regex = Regexp.new(arg)
-                    return_value = (result =~ regex)
-                else
-                    return_value = (result.send(comparator, arg))
-            end
+        case comparator
+        when "!="
+            return_value = (result != arg)
+        when "=~"
+            regex = Regexp.new(arg)
+            return_value = (result =~ regex)
+        else
+            return_value = (result.send(comparator, arg))
         end
         return !!return_value
     end
@@ -196,32 +194,30 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         #Get the values from augeas
         result = @aug.match(path) || ''
         # Now do the work
-        unless result.nil?
-            case verb
-                when "size":
-                    fail("Invalid command: #{cmd_array.join(" ")}") if clause_array.length != 2
-                    comparator = clause_array.shift
-                    arg = clause_array.shift
-                    return_value = (result.size.send(comparator, arg))
-                when "include":
-                    arg = clause_array.shift
-                    return_value = result.include?(arg)
-                when "eq":
-                    begin
-                        arg = clause_array.shift
-                        new_array = eval arg
-                        return_value = (result == new_array)
-                    rescue
-                        fail("Invalid array in command: #{cmd_array.join(" ")}")
-                    end
-                when "noteq":
-                    begin
-                        arg = clause_array.shift
-                        new_array = eval arg
-                        return_value = (result != new_array)
-                    rescue
-                        fail("Invalid array in command: #{cmd_array.join(" ")}")
-                    end
+        case verb
+        when "size"
+            fail("Invalid command: #{cmd_array.join(" ")}") if clause_array.length != 2
+            comparator = clause_array.shift
+            arg = clause_array.shift
+            return_value = (result.size.send(comparator, arg))
+        when "include"
+            arg = clause_array.shift
+            return_value = result.include?(arg)
+        when "eq"
+            begin
+                arg = clause_array.shift
+                new_array = eval arg
+                return_value = (result == new_array)
+            rescue
+                fail("Invalid array in command: #{cmd_array.join(" ")}")
+            end
+        when "noteq"
+            begin
+                arg = clause_array.shift
+                new_array = eval arg
+                return_value = (result != new_array)
+            rescue
+                fail("Invalid array in command: #{cmd_array.join(" ")}")
             end
         end
         return !!return_value
