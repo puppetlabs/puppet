@@ -245,57 +245,63 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     def need_to_run?
         force = resource[:force]
         return_value = true
-        open_augeas
-        filter = resource[:onlyif]
-        unless filter == ""
-            cmd_array = parse_commands(filter)[0]
-            command = cmd_array[0];
-            begin
-                case command
+        begin
+            open_augeas
+            filter = resource[:onlyif]
+            unless filter == ""
+                cmd_array = parse_commands(filter)[0]
+                command = cmd_array[0];
+                begin
+                    case command
                     when "get"; return_value = process_get(cmd_array)
                     when "match"; return_value = process_match(cmd_array)
+                    end
+                rescue Exception => e
+                    fail("Error sending command '#{command}' with params #{cmd_array[1..-1].inspect}/#{e.message}")
                 end
-            rescue Exception => e
-                fail("Error sending command '#{command}' with params #{cmd_array[1..-1].inspect}/#{e.message}")
             end
-        end
 
-        unless force
-            # If we have a verison of augeas which is at least 0.3.6 then we
-            # can make the changes now, see if changes were made, and
-            # actually do the save.
-            if return_value and get_augeas_version >= "0.3.6"
-                debug("Will attempt to save and only run if files changed")
-                set_augeas_save_mode(SAVE_NOOP)
-                do_execute_changes
-                save_result = @aug.save
-                saved_files = @aug.match("/augeas/events/saved")
-                if save_result and not files_changed?
-                    debug("Skipping becuase no files were changed")
-                    return_value = false
-                else
-                    debug("Files changed, should execute")
+            unless force
+                # If we have a verison of augeas which is at least 0.3.6 then we
+                # can make the changes now, see if changes were made, and
+                # actually do the save.
+                if return_value and get_augeas_version >= "0.3.6"
+                    debug("Will attempt to save and only run if files changed")
+                    set_augeas_save_mode(SAVE_NOOP)
+                    do_execute_changes
+                    save_result = @aug.save
+                    saved_files = @aug.match("/augeas/events/saved")
+                    if save_result and not files_changed?
+                        debug("Skipping becuase no files were changed")
+                        return_value = false
+                    else
+                        debug("Files changed, should execute")
+                    end
                 end
             end
+        ensure
+            close_augeas
         end
-        close_augeas
         return return_value
     end
 
     def execute_changes
         # Re-connect to augeas, and re-execute the changes
-        open_augeas
-        if get_augeas_version >= "0.3.6"
-            set_augeas_save_mode(SAVE_OVERWRITE)
-        end
+        begin
+            open_augeas
+            if get_augeas_version >= "0.3.6"
+                set_augeas_save_mode(SAVE_OVERWRITE)
+            end
 
-        do_execute_changes
+            do_execute_changes
 
-        success = @aug.save
-        if success != true
-            fail("Save failed with return code #{success}")
+            success = @aug.save
+            if success != true
+                fail("Save failed with return code #{success}")
+            end
+        ensure
+            close_augeas
         end
-        close_augeas
 
         return :executed
     end
