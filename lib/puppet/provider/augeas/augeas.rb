@@ -62,9 +62,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         end
 
         if data.is_a?(String)
-            s = data
-            data = []
-            s.each_line { |line| data << line }
+            data = data.split($/)
         end
         args = []
         data.each do |line|
