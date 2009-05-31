@@ -44,7 +44,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     }
 
     COMMANDS["ins"] = COMMANDS["insert"]
-    COMMANDS["remove"] = COMMANDS["rm"]    
+    COMMANDS["remove"] = COMMANDS["rm"]
 
     attr_accessor :aug
 
@@ -113,7 +113,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                 elsif f == :comparator
                     argline << sc.scan(/(==|!=|=~|<|<=|>|>=)/)
                     unless argline[-1]
-                        puts sc.rest() 
+                        puts sc.rest()
                         fail(raise Exception, "invalid comparator for command #{cmd}")
                     end
                 elsif f == :int
@@ -224,7 +224,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                         return_value = true if result != new_array
                     rescue
                         fail("Invalid array in command: #{cmd_array.join(" ")}")
-                    end                    
+                    end
             end
         end
         return_value
@@ -315,7 +315,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                         debug("sending command '#{command}' with params #{cmd_array.inspect}")
                         aug.set(cmd_array[0], cmd_array[1])
                     when "rm", "remove"
-                        debug("sending command '#{command}' with params #{cmd_array.inspect}")                    
+                        debug("sending command '#{command}' with params #{cmd_array.inspect}")
                         aug.rm(cmd_array[0])
                     when "clear"
                         debug("sending command '#{command}' with params #{cmd_array.inspect}")
