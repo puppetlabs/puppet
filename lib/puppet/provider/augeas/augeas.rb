@@ -128,8 +128,8 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
     def open_augeas
         unless @aug
-            flags = 0
-            flags = 1 << 2 if resource[:type_check] == :true
+            flags = Augeas::NONE
+            flags = Augeas::TYPE_CHECK if resource[:type_check] == :true
             root = resource[:root]
             load_path = resource[:load_path]
             debug("Opening augeas with root #{root}, lens path #{load_path}, flags #{flags}")
