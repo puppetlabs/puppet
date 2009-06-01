@@ -7,7 +7,8 @@ require 'puppet/resource/reference'
 class Puppet::Resource
     include Puppet::Util::Tagging
     include Enumerable
-    attr_accessor :type, :title, :file, :line, :catalog, :exported
+    attr_accessor :file, :line, :catalog, :exported
+    attr_writer :type, :title
 
     # Proxy these methods to the parameters hash.  It's likely they'll
     # be overridden at some point, but this works for now.

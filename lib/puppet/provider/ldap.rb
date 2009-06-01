@@ -38,8 +38,6 @@ class Puppet::Provider::Ldap < Puppet::Provider
         end
     end
 
-    attr_reader :ldap_properties
-
     def manager
         self.class.manager
     end

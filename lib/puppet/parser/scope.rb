@@ -15,9 +15,10 @@ class Puppet::Parser::Scope
 
     include Enumerable
     include Puppet::Util::Errors
-    attr_accessor :parent, :level, :parser, :source, :resource
+    attr_accessor :level, :parser, :source, :resource
     attr_accessor :base, :keyword, :nodescope
     attr_accessor :top, :translated, :compiler
+    attr_writer :parent
 
     # A demeterific shortcut to the catalog.
     def catalog

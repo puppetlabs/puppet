@@ -821,8 +821,6 @@ Generated on #{Time.now}.
         end
         result[:value] = value.sub(/\s*$/, '')
         return result
-
-        return nil
     end
 
     # Convert arguments into booleans, integers, or whatever.

@@ -8,8 +8,8 @@ require 'puppet/resource'
 # A simple class to canonize how we refer to and retrieve
 # resources.
 class Puppet::Resource::Reference
-    attr_reader :type
-    attr_accessor :title, :catalog
+    attr_reader :type, :title
+    attr_accessor :catalog
 
     def ==(other)
         other.respond_to?(:title) and self.type == other.type and self.title == other.title

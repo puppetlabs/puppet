@@ -58,7 +58,7 @@ module Puppet::Util::Cacher
         end
 
         def attr_ttl(name)
-            return nil unless @attr_ttls
+            return nil unless defined?(@attr_ttls) and @attr_ttls
             @attr_ttls[name]
         end
 

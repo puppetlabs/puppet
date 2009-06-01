@@ -3,7 +3,9 @@
 require 'puppet/parser/files'
 
 class Puppet::Parser::TemplateWrapper
-    attr_accessor :scope, :file, :string
+    attr_writer :scope
+    attr_reader :file
+    attr_accessor :string
     include Puppet::Util
     Puppet::Util.logmethods(self)
 

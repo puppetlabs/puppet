@@ -44,19 +44,19 @@ module Puppet::Indirector
          
         # Expire any cached instance.
         def expire(*args)
-            indirection.expire *args
+            indirection.expire(*args)
         end
          
         def find(*args)
-            indirection.find *args
+            indirection.find(*args)
         end
 
         def destroy(*args)
-            indirection.destroy *args
+            indirection.destroy(*args)
         end
 
         def search(*args)
-            indirection.search *args
+            indirection.search(*args)
         end
     end
 

@@ -20,7 +20,7 @@ describe Puppet::Network::RestAuthConfig do
 
     before :each do
         FileTest.stubs(:exists?).returns(true)
-        File.stubs(:stat).returns(stub 'stat', :ctime => :now)
+        File.stubs(:stat).returns(stub('stat', :ctime => :now))
         Time.stubs(:now).returns :now
 
         @authconfig = Puppet::Network::RestAuthConfig.new("dummy", false)

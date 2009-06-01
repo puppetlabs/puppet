@@ -31,13 +31,13 @@ describe Puppet::Network::RestAuthorization do
         it "should raise an AuthorizationError if authconfig raises an AuthorizationError" do
             @authconfig.expects(:allowed?).with(@request).raises(Puppet::Network::AuthorizationError.new("forbidden"))
 
-            lambda { @auth.check_authorization(@request) }.should raise_error Puppet::Network::AuthorizationError
+            lambda { @auth.check_authorization(@request) }.should raise_error(Puppet::Network::AuthorizationError)
         end
 
         it "should not raise an AuthorizationError if request is allowed" do
             @authconfig.expects(:allowed?).with(@request).returns(true)
 
-            lambda { @auth.check_authorization(@request) }.should_not raise_error Puppet::Network::AuthorizationError
+            lambda { @auth.check_authorization(@request) }.should_not raise_error(Puppet::Network::AuthorizationError)
         end
     end
 end
