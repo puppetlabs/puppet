@@ -26,7 +26,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
 
     # Determine the basic details on the resource.
     def self.rails_resource_initial_args(resource)
-        return [:type, :title, :line, :exported].inject({}) do |hash, param|
+        result = [:type, :title, :line].inject({}) do |hash, param|
             # 'type' isn't a valid column name, so we have to use another name.
             to = (param == :type) ? :restype : param
             if value = resource.send(param)
@@ -34,6 +34,12 @@ class Puppet::Rails::Resource < ActiveRecord::Base
             end
             hash
         end
+
+        # We always want a value here, regardless of what the resource has,
+        # so we break it out separately.
+        result[:exported] = resource.exported || false
+
+        result
     end
 
     def add_resource_tag(tag)
@@ -84,12 +90,15 @@ class Puppet::Rails::Resource < ActiveRecord::Base
         accumulate_benchmark("Individual resource merger", :attributes) { merge_attributes(resource) }
         accumulate_benchmark("Individual resource merger", :parameters) { merge_parameters(resource) }
         accumulate_benchmark("Individual resource merger", :tags) { merge_tags(resource) }
+        save()
     end
 
     def merge_attributes(resource)
         args = self.class.rails_resource_initial_args(resource)
         args.each do |param, value|
-            self[param] = value unless resource[param] == value
+            unless resource[param] == value
+                self[param] = value
+            end
         end
 
         # Handle file specially
