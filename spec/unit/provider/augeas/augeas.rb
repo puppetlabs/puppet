@@ -5,16 +5,16 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 provider_class = Puppet::Type.type(:augeas).provider(:augeas)
 
 describe provider_class do
-        
+
     describe "command parsing" do
         before do
-            @resource = stub("resource")          
+            @resource = stub("resource")
             @provider = provider_class.new(@resource)
         end
-        
+
         it "should break apart a single line into three tokens and clean up the context" do
-            @resource.stubs(:[]).returns("/context")          
-            tokens = @provider.parse_commands("set Jar/Jar Binks")      
+            @resource.stubs(:[]).returns("/context")
+            tokens = @provider.parse_commands("set Jar/Jar Binks")
             tokens.size.should == 1
             tokens[0].size.should == 3
             tokens[0][0].should == "set"
@@ -23,8 +23,8 @@ describe provider_class do
         end
 
         it "should break apart a multiple line into six tokens" do
-            @resource.stubs(:[]).returns("")              
-            tokens = @provider.parse_commands("set /Jar/Jar Binks\nrm anakin")           
+            @resource.stubs(:[]).returns("")
+            tokens = @provider.parse_commands("set /Jar/Jar Binks\nrm anakin")
             tokens.size.should == 2
             tokens[0].size.should == 3
             tokens[1].size.should == 2
@@ -36,7 +36,7 @@ describe provider_class do
         end
 
         it "should handle arrays" do
-            @resource.stubs(:[]).returns("/foo/")            
+            @resource.stubs(:[]).returns("/foo/")
             commands = ["set /Jar/Jar Binks", "rm anakin"]
             tokens = @provider.parse_commands(commands)
             tokens.size.should == 2
@@ -61,7 +61,7 @@ describe provider_class do
         #end
 
         it "should accept spaces in the value and single ticks" do
-            @resource.stubs(:[]).returns("/foo/")           
+            @resource.stubs(:[]).returns("/foo/")
             tokens = @provider.parse_commands("set JarJar 'Binks is my copilot'")
             tokens.size.should == 1
             tokens[0].size.should == 3
@@ -71,7 +71,7 @@ describe provider_class do
         end
 
         it "should accept spaces in the value and double ticks" do
-            @resource.stubs(:[]).returns("/foo/") 
+            @resource.stubs(:[]).returns("/foo/")
             tokens = @provider.parse_commands('set /JarJar "Binks is my copilot"')
             tokens.size.should == 1
             tokens[0].size.should == 3
@@ -81,7 +81,7 @@ describe provider_class do
         end
 
         it "should accept mixed ticks" do
-            @resource.stubs(:[]).returns("/foo/") 
+            @resource.stubs(:[]).returns("/foo/")
             tokens = @provider.parse_commands('set JarJar "Some \'Test\'"')
             tokens.size.should == 1
             tokens[0].size.should == 3
@@ -90,35 +90,36 @@ describe provider_class do
             tokens[0][2].should == "Some \'Test\'"
         end
 
-        it "should handle complex rm calls" do
-            @resource.stubs(:[]).returns("/foo/") 
+        it "should handle predicates with literals" do
+            @resource.stubs(:[]).returns("/foo/")
             tokens = @provider.parse_commands("rm */*[module='pam_console.so']")
             tokens.should == [["rm", "/foo/*/*[module='pam_console.so']"]]
         end
 
-        it "should handle insert with xpath queries" do
-            @resource.stubs(:[]).returns("/foo/") 
+        it "should handle whitespace in predicates" do
+            @resource.stubs(:[]).returns("/foo/")
             tokens = @provider.parse_commands("ins 42 before /files/etc/hosts/*/ipaddr[ . = '127.0.0.1' ]")
-            tokens.should == [["ins", "42", "before","/files/etc/hosts/*/ipaddr[ . = '127.0.0.1' ]"]]        
+            tokens.should == [["ins", "42", "before","/files/etc/hosts/*/ipaddr[ . = '127.0.0.1' ]"]]
         end
 
-        it "should handle set with xpath queries" do
-            @resource.stubs(:[]).returns("/foo/") 
-            tokens = @provider.parse_commands("set /files/etc/*/*[ipaddr = '127.0.0.1'] \"foo bar\"")
-            tokens.should == [["set", "/files/etc/*/*[ipaddr = '127.0.0.1']", "foo bar"]]        
-        end
-
-        it "should handle clear with xpath queries" do
-            @resource.stubs(:[]).returns("/foo/") 
+        it "should handle multiple predicates" do
+            @resource.stubs(:[]).returns("/foo/")
             tokens = @provider.parse_commands("clear pam.d/*/*[module = 'system-auth'][type = 'account']")
-            tokens.should == [["clear", "/foo/pam.d/*/*[module = 'system-auth'][type = 'account']"]]       
+            tokens.should == [["clear", "/foo/pam.d/*/*[module = 'system-auth'][type = 'account']"]]
         end
 
-        it "should handle some odd test" do
-            @resource.stubs(:[]).returns("/foo/") 
+        it "should handle nested predicates" do
+            @resource.stubs(:[]).returns("/foo/")
+            args = ["clear", "/foo/pam.d/*/*[module[ ../type = 'type] = 'system-auth'][type[last()] = 'account']"]
+            tokens = @provider.parse_commands(args.join(" "))
+            tokens.should == [ args ]
+        end
+
+        it "should handle escaped doublequotes in doublequoted string" do
+            @resource.stubs(:[]).returns("/foo/")
             tokens = @provider.parse_commands("set /foo \"''\\\"''\"")
-            tokens.should == [[ "set", "/foo", "''\\\"''" ]]       
-        end    
+            tokens.should == [[ "set", "/foo", "''\\\"''" ]]
+        end
 
         it "should allow escaped spaces and brackets in paths" do
             @resource.stubs(:[]).returns("/foo/")
@@ -202,7 +203,7 @@ describe provider_class do
         it "should return true for an array non match with noteq" do
             command = ["match", "fake value", "!= ['this', 'should', 'not', 'match']"]
             @provider.process_match(command).should == true
-        end        
+        end
     end
 
     describe "need to run" do
