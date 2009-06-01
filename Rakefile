@@ -124,7 +124,7 @@ task :mail_patches do
     end
 
     # Now send the mail.
-    sh "git send-email #{compose} --no-chain-reply-to --no-signed-off-by-cc --suppress-from --no-thread --to puppet-dev@googlegroups.com 00*.patch"
+    sh "git send-email #{compose} --no-chain-reply-to --no-signed-off-by-cc --suppress-from --to puppet-dev@googlegroups.com 00*.patch"
 
     # Finally, clean up the patches
     sh "rm 00*.patch"
