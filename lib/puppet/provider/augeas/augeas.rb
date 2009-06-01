@@ -39,8 +39,8 @@ Puppet::Type.type(:augeas).provide(:augeas) do
       "match" => [ :path, :glob ],
       "size" => [:comparator, :int],
       "include" => [:string],
-      "eq" => [:glob],
-      "noteq" => [:glob]
+      "==" => [:glob],
+      "!=" => [:glob]
     }
 
     COMMANDS["ins"] = COMMANDS["insert"]
@@ -68,7 +68,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         data.each do |line|
             argline = []
             sc = StringScanner.new(line)
-            cmd = sc.scan(/\w+/)
+            cmd = sc.scan(/\w+|==|!=/)
             formals = COMMANDS[cmd]
             fail("Unknown command #{cmd}") unless formals
             argline << cmd
@@ -203,7 +203,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         when "include"
             arg = clause_array.shift
             return_value = result.include?(arg)
-        when "eq"
+        when "=="
             begin
                 arg = clause_array.shift
                 new_array = eval arg
@@ -211,7 +211,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             rescue
                 fail("Invalid array in command: #{cmd_array.join(" ")}")
             end
-        when "noteq"
+        when "!="
             begin
                 arg = clause_array.shift
                 new_array = eval arg

@@ -178,22 +178,22 @@ describe provider_class do
         end
 
         it "should return true for an array match" do
-            command = ["match", "fake value", "eq ['set', 'of', 'values']"]
+            command = ["match", "fake value", "== ['set', 'of', 'values']"]
             @provider.process_match(command).should == true
         end
 
         it "should return false for an array non match" do
-            command = ["match", "fake value", "eq ['this', 'should', 'not', 'match']"]
+            command = ["match", "fake value", "== ['this', 'should', 'not', 'match']"]
             @provider.process_match(command).should == false
         end
 
         it "should return false for an array match with noteq" do
-            command = ["match", "fake value", "noteq ['set', 'of', 'values']"]
+            command = ["match", "fake value", "!= ['set', 'of', 'values']"]
             @provider.process_match(command).should == false
         end
 
         it "should return true for an array non match with noteq" do
-            command = ["match", "fake value", "noteq ['this', 'should', 'not', 'match']"]
+            command = ["match", "fake value", "!= ['this', 'should', 'not', 'match']"]
             @provider.process_match(command).should == true
         end        
     end
