@@ -6,7 +6,7 @@ source = Puppet::Type.type(:file).attrclass(:source)
 describe Puppet::Type.type(:file).attrclass(:source) do
     before do
         # Wow that's a messy interface to the resource.
-        @resource = stub 'resource', :[]= => nil, :property => nil, :catalog => stub("catalog", :expired? => false)
+        @resource = stub 'resource', :[]= => nil, :property => nil, :catalog => stub("catalog", :dependent_data_expired? => false)
     end
 
     it "should be a subclass of Parameter" do
@@ -93,7 +93,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         end
 
         it "should expire the metadata appropriately" do
-            expirer = stub 'expired', :expired? => true
+            expirer = stub 'expired', :dependent_data_expired? => true
 
             metadata = stub 'metadata', :source= => nil
             Puppet::FileServing::Metadata.expects(:find).with("/fee/booz").returns metadata
@@ -250,7 +250,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         end
 
         it "should expire the content appropriately" do
-            expirer = stub 'expired', :expired? => true
+            expirer = stub 'expired', :dependent_data_expired? => true
 
             content2 = stub 'content', :content => "secondrun"
             Puppet::FileServing::Content.expects(:find).with("/my/source").times(2).returns(@content).then.returns(content2)
