@@ -80,7 +80,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                     start = sc.pos
                     nbracket = 0
                     begin
-                        sc.skip(/[^\]\[\s]+/)
+                        sc.skip(/([^\]\[\s\\]|\\.)+/)
                         ch = sc.getch
                         nbracket += 1 if ch == "["
                         nbracket -= 1 if ch == "]"

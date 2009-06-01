@@ -119,6 +119,13 @@ describe provider_class do
             tokens = @provider.parse_commands("set /foo \"''\\\"''\"")
             tokens.should == [[ "set", "/foo", "''\\\"''" ]]       
         end    
+
+        it "should allow escaped spaces and brackets in paths" do
+            @resource.stubs(:[]).returns("/foo/")
+            args = [ "set", "/white\\ space/\\[section", "value" ]
+            tokens = @provider.parse_commands(args.join(" \t "))
+            tokens.should == [ args ]
+        end
     end
 
     describe "get filters" do
