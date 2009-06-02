@@ -72,6 +72,16 @@ describe Puppet::Relationship, " when initializing" do
         @edge.callback.should == :foo
         @edge.event.should == :bar
     end
+
+    it "should accept events specified as strings" do
+        @edge = Puppet::Relationship.new(:a, :b, "event" => :NONE)
+        @edge.event.should == :NONE
+    end
+
+    it "should accept callbacks specified as strings" do
+        @edge = Puppet::Relationship.new(:a, :b, "callback" => :foo)
+        @edge.callback.should == :foo
+    end
 end
 
 describe Puppet::Relationship, " when matching edges with no specified event" do
@@ -225,6 +235,10 @@ describe Puppet::Relationship, "when converting from json" do
 
     def json_result_should
         Puppet::Relationship.expects(:new).with { |*args| yield args }
+    end
+
+    it "should be extended with the JSON utility module" do
+        Puppet::Relationship.metaclass.ancestors.should be_include(Puppet::Util::Json)
     end
 
     # LAK:NOTE For all of these tests, we convert back to the edge so we can

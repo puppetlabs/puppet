@@ -4,6 +4,7 @@ require 'puppet/simple_graph'
 require 'puppet/transaction'
 
 require 'puppet/util/cacher'
+require 'puppet/util/json'
 
 require 'puppet/util/tagging'
 
@@ -18,6 +19,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     indirects :catalog, :terminus_class => :compiler
 
     include Puppet::Util::Tagging
+    extend Puppet::Util::Json
     include Puppet::Util::Cacher::Expirer
 
     # The host name this is a catalog for.
@@ -386,6 +388,69 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     # Return an array of all resources.
     def resources
         @resource_table.keys
+    end
+
+    def self.from_json(data)
+        result = new(data['name'])
+
+        if tags = data['tags'] 
+            result.tag(*tags)
+        end
+
+        if version = data['version'] 
+            result.version = version
+        end
+
+        if resources = data['resources']
+            resources.each do |res|
+                resource_from_json(result, res)
+            end
+        end
+
+        if edges = data['edges']
+            edges.each do |edge|
+                edge_from_json(result, edge)
+            end
+        end
+
+        result
+    end
+
+    def self.edge_from_json(result, edge)
+        # If no json_class information was presented, we manually find
+        # the class.
+        edge = Puppet::Relationship.from_json(edge) if edge.is_a?(Hash)
+        unless source = result.resource(edge.source)
+            raise ArgumentError, "Could not convert from json: Could not find relationship source '%s'" % source
+        end
+        edge.source = source
+
+        unless target = result.resource(edge.target)
+            raise ArgumentError, "Could not convert from json: Could not find relationship target '%s'" % target
+        end
+        edge.target = target
+
+        result.add_edge(edge)
+    end
+
+    def self.resource_from_json(result, res)
+        # If no json_class information was presented, we manually find
+        # the class.
+        res = Puppet::Resource.from_json(res) if res.is_a?(Hash)
+        result.add_resource(res)
+    end
+
+    def to_json(*args)
+        {
+            'json_class' => 'Puppet::Resource::Catalog',
+            'data' => {
+                'tags' => tags,
+                'name' => name,
+                'version' => version,
+                'resources' => vertices.to_json(*args),
+                'edges' => edges.to_json(*args)
+            }
+        }.to_json(*args)
     end
 
     # Convert our catalog into a RAL catalog.
