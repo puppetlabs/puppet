@@ -86,5 +86,11 @@ Puppet::Application.new(:puppetqd) do
         Puppet::Resource::Catalog.terminus_class = :active_record
 
         daemon.daemonize if Puppet[:daemonize]
+
+        # We want to make sure that we don't have a cache
+        # class set up, because if storeconfigs is enabled,
+        # we'll get a loop of continually caching the catalog
+        # for storage again.
+        Puppet::Node::Catalog.cache_class = nil
     end
 end
