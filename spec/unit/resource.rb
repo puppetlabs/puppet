@@ -353,4 +353,156 @@ describe Puppet::Resource do
             end
         end
     end
+
+    describe "when converting to json" do
+        confine "Missing 'json' library" => Puppet.features.json?
+
+        def json_output_should
+            @resource.class.expects(:json_create).with { |hash| yield hash }
+        end
+
+        it "should include the json util module" do
+            Puppet::Resource.metaclass.ancestors.should be_include(Puppet::Util::Json)
+        end
+
+        # LAK:NOTE For all of these tests, we convert back to the resource so we can
+        # trap the actual data structure then.
+        it "should set its json_class to 'Puppet::Resource'" do
+            JSON.parse(Puppet::Resource.new("file", "yay").to_json).should be_instance_of(Puppet::Resource)
+        end
+
+        it "should set its type to the provided type" do
+            JSON.parse(Puppet::Resource.new("File", "/foo").to_json).type.should == "File"
+        end
+
+        it "should set its title to the provided title" do
+            JSON.parse(Puppet::Resource.new("File", "/foo").to_json).title.should == "/foo"
+        end
+
+        it "should include all tags from the resource" do
+            resource = Puppet::Resource.new("File", "/foo")
+            resource.tag("yay")
+
+            JSON.parse(resource.to_json).tags.should == resource.tags
+        end
+
+        it "should include the file if one is set" do
+            resource = Puppet::Resource.new("File", "/foo")
+            resource.file = "/my/file"
+
+            JSON.parse(resource.to_json).file.should == "/my/file"
+        end
+
+        it "should include the line if one is set" do
+            resource = Puppet::Resource.new("File", "/foo")
+            resource.line = 50
+
+            JSON.parse(resource.to_json).line.should == 50
+        end
+
+        it "should include the 'exported' value if one is set" do
+            resource = Puppet::Resource.new("File", "/foo")
+            resource.exported = true
+
+            JSON.parse(resource.to_json).exported.should be_true
+        end
+
+        it "should set 'exported' to false if no value is set" do
+            resource = Puppet::Resource.new("File", "/foo")
+
+            JSON.parse(resource.to_json).exported.should be_false
+        end
+
+        it "should set all of its parameters as the 'parameters' entry" do
+            resource = Puppet::Resource.new("File", "/foo")
+            resource[:foo] = %w{bar eh}
+            resource[:fee] = %w{baz}
+
+            result = JSON.parse(resource.to_json)
+            result["foo"].should == %w{bar eh}
+            result["fee"].should == %w{baz}
+        end
+
+        it "should set all parameter values as arrays" do
+            resource = Puppet::Resource.new("File", "/foo")
+            resource[:foo] = "bar"
+            JSON.parse(resource.to_json)["foo"].should == %w{bar}
+        end
+    end
+
+    describe "when converting from json" do
+        confine "Missing 'json' library" => Puppet.features.json?
+
+        def json_result_should
+            Puppet::Resource.expects(:new).with { |hash| yield hash }
+        end
+
+        before do
+            @data = {
+                'type' => "file",
+                'title' => "yay",
+            }
+        end
+
+        it "should set its type to the provided type" do
+            Puppet::Resource.from_json(@data).type.should == "File"
+        end
+
+        it "should set its title to the provided title" do
+            Puppet::Resource.from_json(@data).title.should == "yay"
+        end
+
+        it "should set its title to the provided title" do
+            Puppet::Resource.from_json(@data).title.should == "yay"
+        end
+
+        it "should tag the resource with any provided tags" do
+            @data['tags'] = %w{foo bar}
+            resource = Puppet::Resource.from_json(@data)
+            resource.tags.should be_include("foo")
+            resource.tags.should be_include("bar")
+        end
+
+        it "should set its file to the provided file" do
+            @data['file'] = "/foo/bar"
+            Puppet::Resource.from_json(@data).file.should == "/foo/bar"
+        end
+
+        it "should set its line to the provided line" do
+            @data['line'] = 50
+            Puppet::Resource.from_json(@data).line.should == 50
+        end
+
+        it "should 'exported' to true if set in the json data" do
+            @data['exported'] = true
+            Puppet::Resource.from_json(@data).exported.should be_true
+        end
+
+        it "should 'exported' to false if not set in the json data" do
+            Puppet::Resource.from_json(@data).exported.should be_false
+        end
+
+        it "should fail if no title is provided" do
+            @data.delete('title')
+            lambda { Puppet::Resource.from_json(@data) }.should raise_error(ArgumentError)
+        end
+
+        it "should fail if no type is provided" do
+            @data.delete('type')
+            lambda { Puppet::Resource.from_json(@data) }.should raise_error(ArgumentError)
+        end
+
+        it "should set each of the provided parameters" do
+            @data['parameters'] = {'foo' => %w{one two}, 'fee' => %w{three four}}
+            resource = Puppet::Resource.from_json(@data)
+            resource['foo'].should == %w{one two}
+            resource['fee'].should == %w{three four}
+        end
+
+        it "should convert single-value array parameters to normal values" do
+            @data['parameters'] = {'foo' => %w{one}}
+            resource = Puppet::Resource.from_json(@data)
+            resource['foo'].should == %w{one}
+        end
+    end
 end
