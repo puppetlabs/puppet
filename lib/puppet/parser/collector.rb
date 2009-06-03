@@ -102,7 +102,7 @@ class Puppet::Parser::Collector
         raise Puppet::DevError, "Cannot collect resources for a nil host" unless @scope.host
         host = Puppet::Rails::Host.find_by_name(@scope.host)
 
-        query = {:include => {:param_values => :param_name}}
+        query = {:include => {:param_values => :param_name, :puppet_tags => :resource_tags}}
 
         search = "(exported=? AND restype=?)"
         values = [true, @type]

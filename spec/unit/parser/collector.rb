@@ -502,10 +502,10 @@ describe Puppet::Parser::Collector, "when building its ActiveRecord query for co
         @collector.evaluate
     end
 
-    it "should return parameter names and parameter values when querying ActiveRecord" do
+    it "should return parameter names, parameter values and tags when querying ActiveRecord" do
         Puppet::Rails::Resource.stubs(:find).with { |*arguments|
             options = arguments[3]
-            options[:include] == {:param_values => :param_name}
+            options[:include] == {:param_values => :param_name, :puppet_tags => :resource_tags}
         }.returns([])
 
         @collector.evaluate

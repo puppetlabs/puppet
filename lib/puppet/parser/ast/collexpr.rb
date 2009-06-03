@@ -31,10 +31,14 @@ class CollExpr < AST::Branch
             when "and"; code1.call(resource) and code2.call(resource)
             when "or"; code1.call(resource) or code2.call(resource)
             when "=="
-                if resource[str1].is_a?(Array)
-                    resource[str1].include?(str2)
+                if str1 == "tag"
+                    resource.tagged?(str2)
                 else
-                    resource[str1] == str2
+                    if resource[str1].is_a?(Array)
+                        resource[str1].include?(str2)
+                    else
+                        resource[str1] == str2
+                    end
                 end
             when "!="; resource[str1] != str2
             end
@@ -58,8 +62,11 @@ class CollExpr < AST::Branch
 
         if oper == "=" or oper == "!="
             # Add the rails association info where necessary
-            if str1 == "title"
+            case str1
+            when "title"
                 str = "title #{oper} '#{str2}'"
+            when "tag"
+                str = "puppet_tags.name #{oper} '#{str2}'"
             else
                 str = "param_values.value #{oper} '#{str2}' and " +
                     "param_names.name = '#{str1}'"

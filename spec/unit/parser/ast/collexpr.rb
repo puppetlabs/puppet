@@ -74,6 +74,27 @@ describe Puppet::Parser::AST::CollExpr do
         end
     end
 
+    describe "when evaluating with tags" do
+        before :each do
+            @tag = stub 'tag', :safeevaluate => 'tag'
+            @value = stub 'value', :safeevaluate => 'value'
+
+            @resource = stub 'resource'
+            @resource.stubs(:tagged?).with("value").returns(true)
+        end
+
+        it "should produce a textual representation of the expression" do
+            collexpr = ast::CollExpr.new(:test1 => @tag, :test2 => @value, :oper=>"==")
+            result = collexpr.evaluate(@scope)
+            result[0].should == "puppet_tags.name = 'value'"
+        end
+
+        it "should inspect resource tags if the query term is on tags" do
+            collexpr = ast::CollExpr.new(:test1 => @tag, :test2 => @value, :oper => "==")
+            collexpr.evaluate(@scope)[1].call(@resource).should be_true
+        end
+    end
+
     [:exported,:virtual].each do |mode|
     it "should check for array member equality if resource parameter is an array for == in mode #{mode}" do
         array = mock 'array', :safeevaluate => "array"
