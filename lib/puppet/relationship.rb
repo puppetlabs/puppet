@@ -42,7 +42,7 @@ class Puppet::Relationship
     def initialize(source, target, options = {})
         @source, @target = source, target
 
-        options ||= {}
+        options = (options || {}).inject({}) { |h,a| h[a[0].to_sym] = a[1]; h }
         [:callback, :event].each do |option|
             if value = options[option]
                 send(option.to_s + "=", value)

@@ -1,6 +1,7 @@
 require 'puppet/indirector/terminus'
 require 'puppet/util/queue'
-require 'yaml'
+require 'puppet/util'
+require 'json'
 
 # Implements the <tt>:queue</tt> abstract indirector terminus type, for storing
 # model instances to a message queue, presumably for the purpose of out-of-process
@@ -20,6 +21,12 @@ require 'yaml'
 # creation is automatic and not a concern).
 class Puppet::Indirector::Queue < Puppet::Indirector::Terminus
     extend ::Puppet::Util::Queue
+    include Puppet::Util
+
+    def initialize(*args)
+        super
+        raise ArgumentError, "Queueing requires json support" unless Puppet.features.json?
+    end
 
     # Queue has no idiomatic "find"
     def find(request)
@@ -29,8 +36,11 @@ class Puppet::Indirector::Queue < Puppet::Indirector::Terminus
     # Place the request on the queue
     def save(request)
         begin
-            Puppet.info "Queueing catalog for %s" % request.key
-            client.send_message(queue, render(request.instance))
+            result = nil
+            benchmark :info, "Queued %s for %s" % [indirection.name, request.key] do
+                result = client.send_message(queue, request.instance.render(:json))
+            end
+            result
         rescue => detail
             raise Puppet::Error, "Could not write %s to queue: %s\nInstance::%s\n client : %s" % [request.key, detail,request.instance.to_s,client.to_s]
         end
@@ -49,15 +59,13 @@ class Puppet::Indirector::Queue < Puppet::Indirector::Terminus
         self.class.client
     end
 
-    # Formats the model instance associated with _request_ appropriately for message delivery.
-    # Uses YAML serialization.
-    def render(obj)
-        YAML::dump(obj)
-    end
-
     # converts the _message_ from deserialized format to an actual model instance.
     def self.intern(message)
-        YAML::load(message)
+        result = nil
+        benchmark :info, "Loaded queued %s" % [indirection.name] do
+            result = model.convert_from(:json, message)
+        end
+        result
     end
 
     # Provides queue subscription functionality; for a given indirection, use this method on the terminus
@@ -68,9 +76,8 @@ class Puppet::Indirector::Queue < Puppet::Indirector::Terminus
             begin
                 yield(self.intern(msg))
             rescue => detail
-                # really, this should log the exception rather than raise it all the way up the stack;
-                # we don't want exceptions resulting from a single message bringing down a listener
-                raise Puppet::Error, "Error occured with subscription to queue %s for indirection %s: %s" % [queue, indirection_name, detail]
+                puts detail.backtrace if Puppet[:trace]
+                Puppet.err "Error occured with subscription to queue %s for indirection %s: %s" % [queue, indirection_name, detail]
             end
         end
     end

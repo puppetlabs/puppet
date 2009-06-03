@@ -168,7 +168,7 @@ module Puppet
         :queue_source => ["stomp://localhost:61613/", "Which type of queue to use for asynchronous processing.  If your stomp server requires
             authentication, you can include it in the URI as long as your stomp client library is at least 1.1.1"],
         :async_storeconfigs => {:default => false, :desc => "Whether to use a queueing system to provide asynchronous database integration.
-            Requires that ``puppetqd`` be running.",
+            Requires that ``puppetqd`` be running and that 'JSON' support for ruby be installed.",
             :hook => proc do |value|
                 if value
                     # This reconfigures the terminii for Node, Facts, and Catalog

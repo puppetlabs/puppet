@@ -402,12 +402,14 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         end
 
         if resources = data['resources']
+            resources = JSON.parse(resources) if resources.is_a?(String)
             resources.each do |res|
                 resource_from_json(result, res)
             end
         end
 
         if edges = data['edges']
+            edges = JSON.parse(edges) if edges.is_a?(String)
             edges.each do |edge|
                 edge_from_json(result, edge)
             end
@@ -436,7 +438,10 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     def self.resource_from_json(result, res)
         # If no json_class information was presented, we manually find
         # the class.
-        res = Puppet::Resource.from_json(res) if res.is_a?(Hash)
+        if res.is_a?(Hash)
+            res = res['data'] if res['json_class']
+            res = Puppet::Resource.from_json(res)
+        end
         result.add_resource(res)
     end
 
