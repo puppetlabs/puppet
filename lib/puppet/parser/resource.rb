@@ -139,6 +139,7 @@ class Puppet::Parser::Resource
         if params = options[:params]
             options.delete(:params)
             params.each do |param|
+                tag(*param.value) if param.name == :tag
                 set_parameter(param)
             end
         end

@@ -92,6 +92,13 @@ describe Puppet::Parser::Resource do
             res = Puppet::Parser::Resource.new(@arguments)
             res.ref.should == "Resource[testing]"
         end
+
+        it "should be tagged with user tags" do
+            tags = [ "tag1", "tag2" ]
+            @arguments[:params] = [ param(:tag, tags , :source) ]
+            res = Puppet::Parser::Resource.new(@arguments)
+            (res.tags & tags).should == tags
+        end
     end
 
     describe "when evaluating" do
