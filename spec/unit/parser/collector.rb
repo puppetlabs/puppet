@@ -516,6 +516,8 @@ describe Puppet::Parser::Collector, "when building its ActiveRecord query for co
             options = arguments[3]
             options[:conditions][0].include?("(exported=? AND restype=?)") and options[:conditions][1] == true and options[:conditions][2] == "Mytype"
         }.returns([])
+
+        @collector.evaluate
     end
 
     it "should include the export query if one is provided" do
@@ -524,5 +526,7 @@ describe Puppet::Parser::Collector, "when building its ActiveRecord query for co
             options = arguments[3]
             options[:conditions][0].include?("test = true")
         }.returns([])
+
+        @collector.evaluate
     end
 end
