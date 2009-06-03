@@ -490,7 +490,7 @@ module Puppet
             authority requests.  It's a separate server because it cannot
             and does not need to horizontally scale."],
         :ca_port => ["$masterport", "The port to use for the certificate authority."],
-        :preferred_serialization_format => ["yaml", "The preferred means of serializing
+        :preferred_serialization_format => ["json", "The preferred means of serializing
             ruby instances for passing over the wire.  This won't guarantee that all
             instances will be serialized using this method, since not all classes
             can be guaranteed to support this format, but it will be used for all

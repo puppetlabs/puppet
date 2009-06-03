@@ -68,14 +68,6 @@ class Puppet::Resource
             'json_class' => self.class.name,
             'data' => data
         }
-        #data.each do |key, value|
-        #    puts "Converting %s (%s)" % [key, value.inspect]
-        #    p value
-        #    value.to_json(*args)
-        #    key.to_json(*args)
-        #end
-        #puts "Converted all"
-        #p res
         res.to_json(*args)
     end
 

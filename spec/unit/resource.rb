@@ -452,10 +452,6 @@ describe Puppet::Resource do
             Puppet::Resource.from_json(@data).title.should == "yay"
         end
 
-        it "should set its title to the provided title" do
-            Puppet::Resource.from_json(@data).title.should == "yay"
-        end
-
         it "should tag the resource with any provided tags" do
             @data['tags'] = %w{foo bar}
             resource = Puppet::Resource.from_json(@data)
