@@ -493,8 +493,8 @@ class TestLangFunctions < Test::Unit::TestCase
 
         ffun = ffoo = nil
         assert_nothing_raised("Search path change did not work") do
-            ffun = scope.finddefine("ness")
-            ffoo = scope.finddefine('bar')
+            ffun = scope.find_definition("ness")
+            ffoo = scope.find_definition('bar')
         end
 
         assert(ffun, "Could not find definition in 'fun' namespace")

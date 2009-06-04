@@ -417,16 +417,16 @@ Host <<||>>"
             "Did not add extra namespace correctly")
     end
 
-    def test_findclass_and_finddefine
+    def test_find_hostclass_and_find_definition
         parser = mkparser
 
-        # Make sure our scope calls the parser findclass method with
+        # Make sure our scope calls the parser find_hostclass method with
         # the right namespaces
         scope = mkscope :parser => parser
 
         parser.metaclass.send(:attr_accessor, :last)
 
-        methods = [:findclass, :finddefine]
+        methods = [:find_hostclass, :find_definition]
         methods.each do |m|
             parser.meta_def(m) do |namespace, name|
                 @checked ||= []

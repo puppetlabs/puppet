@@ -10,7 +10,7 @@ Puppet::Parser::Functions::newfunction(:defined, :type => :rvalue, :doc => "Dete
             case val
             when String
                 # For some reason, it doesn't want me to return from here.
-                if Puppet::Type.type(val) or finddefine(val) or findclass(val)
+                if Puppet::Type.type(val) or find_definition(val) or find_hostclass(val)
                     result = true
                     break
                 end

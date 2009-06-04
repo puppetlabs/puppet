@@ -33,6 +33,6 @@ class Puppet::Parser::AST::Node < Puppet::Parser::AST::HostClass
 
     # Search for the object matching our parent class.
     def find_parentclass
-        @parser.findnode(parentclass)
+        @parser.node(parentclass)
     end
 end

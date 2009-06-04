@@ -125,7 +125,7 @@ class TestResource < PuppetTest::TestCase
                 "owner" => varref("name"), "mode" => varref("title"))
 
 
-        klass = parser.findclass("", "")
+        klass = parser.find_hostclass("", "")
         should = {:name => :owner, :title => :mode}
         [
         {:name => "one", :title => "two"},

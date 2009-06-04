@@ -208,7 +208,7 @@ describe Puppet::Parser do
             class test {}
             """)
 
-            ast[:classes]["test"].doc.should == "comment\n"
+            ast.hostclass("test").doc.should == "comment\n"
         end
     end
 

@@ -29,7 +29,7 @@ class TestASTResourceReference < Test::Unit::TestCase
         @parser.newdefine "one::two"
         @parser.newdefine "three"
         twoscope = @scope.newscope(:namespace => "one")
-        assert(twoscope.finddefine("two"), "Could not find 'two' definition")
+        assert(twoscope.find_definition("two"), "Could not find 'two' definition")
         title = "title"
 
         # First try a qualified type

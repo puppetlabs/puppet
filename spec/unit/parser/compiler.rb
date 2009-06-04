@@ -82,7 +82,7 @@ describe Puppet::Parser::Compiler do
         end
 
         it "should detect when ast nodes are present" do
-            @parser.nodes["testing"] = "yay"
+            @parser.expects(:nodes?).returns true
             @compiler.ast_nodes?.should be_true
         end
     end
@@ -142,22 +142,12 @@ describe Puppet::Parser::Compiler do
             @compiler.class.publicize_methods(:evaluate_node_classes) { @compiler.evaluate_node_classes }
         end
 
-        it "should enable ast_nodes if the parser has any nodes" do
-            @parser.expects(:nodes).returns(:one => :yay)
-            @compiler.ast_nodes?.should be_true
-        end
-
-        it "should disable ast_nodes if the parser has no nodes" do
-            @parser.expects(:nodes).returns({})
-            @compiler.ast_nodes?.should be_false
-        end
-
         it "should evaluate the main class if it exists" do
             compile_stub(:evaluate_main)
             main_class = mock 'main_class'
             main_class.expects(:evaluate_code).with { |r| r.is_a?(Puppet::Parser::Resource) }
             @compiler.topscope.expects(:source=).with(main_class)
-            @parser.stubs(:findclass).with("", "").returns(main_class)
+            @parser.stubs(:find_hostclass).with("", "").returns(main_class)
 
             @compiler.compile
         end
@@ -355,7 +345,7 @@ describe Puppet::Parser::Compiler do
 
         it "should tag the catalog with the name of each not-found class" do
             @compiler.catalog.expects(:tag).with("notfound")
-            @scope.expects(:findclass).with("notfound").returns(nil)
+            @scope.expects(:find_hostclass).with("notfound").returns(nil)
             @compiler.evaluate_classes(%w{notfound}, @scope)
         end
     end
@@ -364,7 +354,7 @@ describe Puppet::Parser::Compiler do
 
         before do
             @class = stub 'class', :classname => "my::class"
-            @scope.stubs(:findclass).with("myclass").returns(@class)
+            @scope.stubs(:find_hostclass).with("myclass").returns(@class)
 
             @resource = stub 'resource', :ref => "Class[myclass]"
         end
@@ -413,7 +403,7 @@ describe Puppet::Parser::Compiler do
             @compiler.catalog.stubs(:tag)
 
             @compiler.stubs(:add_resource)
-            @scope.stubs(:findclass).with("notfound").returns(nil)
+            @scope.stubs(:find_hostclass).with("notfound").returns(nil)
 
             Puppet::Parser::Resource.stubs(:new).returns(@resource)
             @class.stubs :evaluate
@@ -435,18 +425,16 @@ describe Puppet::Parser::Compiler do
     describe Puppet::Parser::Compiler, " when evaluating AST nodes with AST nodes present" do
 
         before do
-            @nodes = mock 'node_hash'
-            @compiler.stubs(:ast_nodes?).returns(true)
-            @compiler.parser.stubs(:nodes).returns(@nodes)
+            @compiler.parser.stubs(:nodes?).returns true
 
             # Set some names for our test
             @node.stubs(:names).returns(%w{a b c})
-            @nodes.stubs(:[]).with("a").returns(nil)
-            @nodes.stubs(:[]).with("b").returns(nil)
-            @nodes.stubs(:[]).with("c").returns(nil)
+            @compiler.parser.stubs(:node).with("a").returns(nil)
+            @compiler.parser.stubs(:node).with("b").returns(nil)
+            @compiler.parser.stubs(:node).with("c").returns(nil)
 
             # It should check this last, of course.
-            @nodes.stubs(:[]).with("default").returns(nil)
+            @compiler.parser.stubs(:node).with("default").returns(nil)
         end
 
         it "should fail if the named node cannot be found" do
@@ -455,7 +443,7 @@ describe Puppet::Parser::Compiler do
 
         it "should evaluate the first node class matching the node name" do
             node_class = stub 'node', :classname => "c", :evaluate_code => nil
-            @nodes.stubs(:[]).with("c").returns(node_class)
+            @compiler.parser.stubs(:node).with("c").returns(node_class)
 
             node_resource = stub 'node resource', :ref => "Node[c]", :evaluate => nil
             node_class.expects(:evaluate).returns(node_resource)
@@ -465,7 +453,7 @@ describe Puppet::Parser::Compiler do
 
         it "should match the default node if no matching node can be found" do
             node_class = stub 'node', :classname => "default", :evaluate_code => nil
-            @nodes.stubs(:[]).with("default").returns(node_class)
+            @compiler.parser.stubs(:node).with("default").returns(node_class)
 
             node_resource = stub 'node resource', :ref => "Node[default]", :evaluate => nil
             node_class.expects(:evaluate).returns(node_resource)
@@ -475,7 +463,7 @@ describe Puppet::Parser::Compiler do
 
         it "should evaluate the node resource immediately rather than using lazy evaluation" do
             node_class = stub 'node', :classname => "c"
-            @nodes.stubs(:[]).with("c").returns(node_class)
+            @compiler.parser.stubs(:node).with("c").returns(node_class)
 
             node_resource = stub 'node resource', :ref => "Node[c]"
             node_class.expects(:evaluate).returns(node_resource)
@@ -489,7 +477,7 @@ describe Puppet::Parser::Compiler do
             node_resource = stub 'node resource', :ref => "Node[c]", :evaluate => nil
             node_class = stub 'node', :classname => "c", :evaluate => node_resource
 
-            @nodes.stubs(:[]).with("c").returns(node_class)
+            @compiler.parser.stubs(:node).with("c").returns(node_class)
 
             # The #evaluate method normally does this.
             scope = stub 'scope', :source => "mysource"

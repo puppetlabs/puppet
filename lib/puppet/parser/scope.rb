@@ -82,18 +82,18 @@ class Puppet::Parser::Scope
         @level == 1
     end
 
-    def findclass(name)
+    def find_hostclass(name)
         @namespaces.each do |namespace|
-            if r = parser.findclass(namespace, name)
+            if r = parser.find_hostclass(namespace, name)
                 return r
             end
         end
         return nil
     end
 
-    def finddefine(name)
+    def find_definition(name)
         @namespaces.each do |namespace|
-            if r = parser.finddefine(namespace, name)
+            if r = parser.find_definition(namespace, name)
                 return r
             end
         end
@@ -165,14 +165,14 @@ class Puppet::Parser::Scope
 
     # Look up a defined type.
     def lookuptype(name)
-        finddefine(name) || findclass(name)
+        find_definition(name) || find_hostclass(name)
     end
 
     def lookup_qualified_var(name, usestring)
         parts = name.split(/::/)
         shortname = parts.pop
         klassname = parts.join("::")
-        klass = findclass(klassname)
+        klass = find_hostclass(klassname)
         unless klass
             warning "Could not look up qualified variable '%s'; class %s could not be found" % [name, klassname]
             return usestring ? "" : :undefined

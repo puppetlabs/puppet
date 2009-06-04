@@ -44,7 +44,7 @@ class Puppet::Parser::Compiler
 
     # Do we use nodes found in the code, vs. the external node sources?
     def ast_nodes?
-        parser.nodes.length > 0
+        parser.nodes?
     end
 
     # Store the fact that we've evaluated a class, and store a reference to
@@ -133,7 +133,7 @@ class Puppet::Parser::Compiler
         found = []
         classes.each do |name|
             # If we can find the class, then make a resource that will evaluate it.
-            if klass = scope.findclass(name)
+            if klass = scope.find_hostclass(name)
                 found << name and next if class_scope(klass)
 
                 resource = klass.evaluate(scope)
@@ -217,10 +217,10 @@ class Puppet::Parser::Compiler
         # Now see if we can find the node.
         astnode = nil
         @node.names.each do |name|
-            break if astnode = @parser.nodes[name.to_s.downcase]
+            break if astnode = @parser.node(name.to_s.downcase)
         end
 
-        unless (astnode ||= @parser.nodes["default"])
+        unless (astnode ||= @parser.node("default"))
             raise Puppet::ParseError, "Could not find default node or by name with '%s'" % node.names.join(", ")
         end
 
@@ -298,7 +298,7 @@ class Puppet::Parser::Compiler
 
     # Find and evaluate our main object, if possible.
     def evaluate_main
-        @main = @parser.findclass("", "") || @parser.newclass("")
+        @main = @parser.find_hostclass("", "") || @parser.newclass("")
         @topscope.source = @main
         @main_resource = Puppet::Parser::Resource.new(:type => "class", :title => :main, :scope => @topscope, :source => @main)
         @topscope.resource = @main_resource

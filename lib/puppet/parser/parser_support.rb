@@ -3,16 +3,7 @@
 class Puppet::Parser::Parser
     require 'puppet/parser/functions'
     require 'puppet/parser/files'
-
-    ASTSet = Struct.new(:classes, :definitions, :nodes)
-
-    # Define an accessor method for each table.  We hide the existence of
-    # the struct.
-    [:classes, :definitions, :nodes].each do |name|
-        define_method(name) do
-            @astset.send(name)
-        end
-    end
+    require 'puppet/parser/loaded_code'
 
     AST = Puppet::Parser::AST
 
@@ -106,56 +97,51 @@ class Puppet::Parser::Parser
         end
     end
 
-    # Find a class definition, relative to the current namespace.
-    def findclass(namespace, name)
-        fqfind namespace, name, classes
+    [:hostclass, :definition, :node, :nodes?].each do |method|
+        define_method(method) do |*args|
+            @loaded_code.send(method, *args)
+        end
     end
 
-    # Find a component definition, relative to the current namespace.
-    def finddefine(namespace, name)
-        fqfind namespace, name, definitions
+    def find_hostclass(namespace, name)
+        find_or_load(namespace, name, :hostclass)
     end
 
-    # This is only used when nodes are looking up the code for their
-    # parent nodes.
-    def findnode(name)
-        fqfind "", name, nodes
+    def find_definition(namespace, name)
+        find_or_load(namespace, name, :definition)
     end
 
-    # The recursive method used to actually look these objects up.
-    def fqfind(namespace, name, table)
-        namespace = namespace.downcase
-        name = name.to_s.downcase
-
-        # If our classname is fully qualified or we have no namespace,
-        # just try directly for the class, and return either way.
-        if name =~ /^::/ or namespace == ""
-            classname = name.sub(/^::/, '')
-            self.load(classname) unless table[classname]
-            return table[classname]
+    def find_or_load(namespace, name, type)
+        method = "find_" + type.to_s
+        if result = @loaded_code.send(method, namespace, name)
+            return result
         end
 
-        # Else, build our namespace up piece by piece, checking
-        # for the class in each namespace.
-        ary = namespace.split("::")
+        fullname = (namespace + "::" + name).sub(/^::/, '')
+        self.load(fullname)
 
-        while ary.length > 0
-            newname = (ary + [name]).join("::").sub(/^::/, '')
-            if obj = table[newname] or (self.load(newname) and obj = table[newname])
-                return obj
+        if result = @loaded_code.send(method, namespace, name)
+            return result
+        end
+
+        # Try to load the module init file if we're a qualified
+        # name
+        if fullname.include?("::")
+            module_name = fullname.split("::")[0]
+
+            self.load(module_name)
+
+            if result = @loaded_code.send(method, namespace, name)
+                return result
             end
-
-            # Delete the second to last object, which reduces our namespace by one.
-            ary.pop
         end
 
-        # If we've gotten to this point without finding it, see if the name
-        # exists at the top namespace
-        if obj = table[name] or (self.load(name) and obj = table[name])
-            return obj
-        end
+        # Now try to load the bare name on its own.  This is
+        # appropriate if the class we're looking for is in a
+        # module that's different from our namespace.
+        self.load(name)
 
-        return nil
+        @loaded_code.send(method, namespace, name)
     end
 
     # Import our files.
@@ -191,7 +177,7 @@ class Puppet::Parser::Parser
         end
 
         files.collect { |file|
-            parser = Puppet::Parser::Parser.new(:astset => @astset, :environment => @environment)
+            parser = Puppet::Parser::Parser.new(:loaded_code => @loaded_code, :environment => @environment)
             parser.files = self.files
             Puppet.debug("importing '%s'" % file)
 
@@ -211,7 +197,7 @@ class Puppet::Parser::Parser
     end
 
     def initialize(options = {})
-        @astset = options[:astset] || ASTSet.new({}, {}, {})
+        @loaded_code = options[:loaded_code] || Puppet::Parser::LoadedCode.new
         @environment = options[:environment]
         initvars()
     end
@@ -242,7 +228,7 @@ class Puppet::Parser::Parser
 
         # We don't know whether we're looking for a class or definition, so we have
         # to test for both.
-        return true if classes.include?(classname) || definitions.include?(classname)
+        return true if @loaded_code.hostclass(classname) || @loaded_code.definition(classname)
 
         unless @loaded.include?(filename)
             @loaded << filename
@@ -256,7 +242,7 @@ class Puppet::Parser::Parser
         end
         # We don't know whether we're looking for a class or definition, so we have
         # to test for both.
-        return classes.include?(classname) || definitions.include?(classname)
+        return true if @loaded_code.hostclass(classname) || @loaded_code.definition(classname)
     end
 
     # Split an fq name into a namespace and name
@@ -271,7 +257,7 @@ class Puppet::Parser::Parser
     def newclass(name, options = {})
         name = name.downcase
 
-        if definitions.include?(name)
+        if @loaded_code.definition(name)
             raise Puppet::ParseError, "Cannot redefine class %s as a definition" % name
         end
         code = options[:code]
@@ -279,7 +265,7 @@ class Puppet::Parser::Parser
         doc = options[:doc]
 
         # If the class is already defined, then add code to it.
-        if other = @astset.classes[name]
+        if other = @loaded_code.hostclass(name) || @loaded_code.definition(name)
             # Make sure the parents match
             if parent and other.parentclass and (parent != other.parentclass)
                 error("Class %s is already defined at %s:%s; cannot redefine" % [name, other.file, other.line])
@@ -325,21 +311,21 @@ class Puppet::Parser::Parser
             args[:parentclass] = parent if parent
             args[:doc] = doc
 
-            @astset.classes[name] = ast AST::HostClass, args
+            @loaded_code.add_hostclass(name, ast(AST::HostClass, args))
         end
 
-        return @astset.classes[name]
+        return @loaded_code.hostclass(name)
     end
 
     # Create a new definition.
     def newdefine(name, options = {})
         name = name.downcase
-        if @astset.classes.include?(name)
+        if @loaded_code.hostclass(name)
             raise Puppet::ParseError, "Cannot redefine class %s as a definition" %
                 name
         end
         # Make sure our definition doesn't already exist
-        if other = @astset.definitions[name]
+        if other = @loaded_code.definition(name)
             error("%s is already defined at %s:%s; cannot redefine" % [name, other.file, other.line])
         end
 
@@ -357,7 +343,7 @@ class Puppet::Parser::Parser
             args[param] = options[param] if options[param]
         end
 
-        @astset.definitions[name] = ast AST::Definition, args
+        @loaded_code.add_definition(name, ast(AST::Definition, args))
     end
 
     # Create a new node.  Nodes are special, because they're stored in a global
@@ -367,7 +353,7 @@ class Puppet::Parser::Parser
         doc = lexer.getcomment
         names.collect do |name|
             name = name.to_s.downcase
-            if other = @astset.nodes[name]
+            if other = @loaded_code.node(name)
                 error("Node %s is already defined at %s:%s; cannot redefine" % [other.name, other.file, other.line])
             end
             name = name.to_s if name.is_a?(Symbol)
@@ -382,9 +368,10 @@ class Puppet::Parser::Parser
             if options[:parent]
                 args[:parentclass] = options[:parent]
             end
-            @astset.nodes[name] = ast(AST::Node, args)
-            @astset.nodes[name].classname = name
-            @astset.nodes[name]
+            node = ast(AST::Node, args)
+            node.classname = name
+            @loaded_code.add_node(name, node)
+            node
         end
     end
 
@@ -448,7 +435,7 @@ class Puppet::Parser::Parser
             newclass("", :code => main)
         end
         @version = Time.now.to_i
-        return @astset
+        return @loaded_code
     ensure
         @lexer.clear
     end

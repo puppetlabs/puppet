@@ -65,7 +65,7 @@ module PuppetTest::ParserTesting
     def mkscope(hash = {})
         hash[:parser] ||= mkparser
         compiler ||= mkcompiler(hash[:parser])
-        compiler.topscope.source = (hash[:parser].findclass("", "") || hash[:parser].newclass(""))
+        compiler.topscope.source = (hash[:parser].find_hostclass("", "") || hash[:parser].newclass(""))
 
         unless compiler.topscope.source
             raise "Could not find source for scope"

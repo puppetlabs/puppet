@@ -22,22 +22,22 @@ describe Puppet::Parser::AST::ResourceReference do
     %{ "one::two" "one-two"}.each do |type|
         it "should evaluate correctly reference to define" do
             klass = stub 'klass', :title => "three", :classname => type
-            @scope.stubs(:finddefine).returns(klass)
-
+            @scope.stubs(:find_definition).returns(klass)
+        
             newref("three", type).evaluate(@scope).to_ref.should == Puppet::Parser::Resource::Reference.new( :type => type, :title => "three" ).to_ref
         end
     end
 
     it "should be able to call qualified_class" do
         klass = stub 'klass', :title => "three", :classname => "one"
-        @scope.expects(:findclass).with("one").returns(klass)
-        newref("three","class").qualified_class(@scope,"one").should == "one"
+        @scope.expects(:find_hostclass).with("one").returns(klass)
+        newref("three","class").qualified_class(@scope,"one").should == "one" 
     end
 
     it "should be able to find qualified classes when evaluating" do
         klass = stub 'klass', :title => "one", :classname => "one"
-        @scope.stubs(:findclass).returns(klass)
-
+        @scope.stubs(:find_hostclass).returns(klass)
+        
         evaled = newref("one", "class").evaluate(@scope)
         evaled.type.should == "Class"
         evaled.title.should == "one"

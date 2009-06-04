@@ -40,20 +40,20 @@ class Puppet::Parser::Resource::Reference < Puppet::Resource::Reference
             case self.type
             when "Class" # look for host classes
                 if self.title == :main
-                    tmp = @scope.findclass("")
+                    tmp = @scope.find_hostclass("")
                 else
-                    unless tmp = @scope.parser.classes[self.title]
+                    unless tmp = @scope.parser.hostclass(self.title)
                         fail Puppet::ParseError, "Could not find class '%s'" % self.title
                     end
                 end
             when "Node" # look for node definitions
-                unless tmp = @scope.parser.nodes[self.title]
+                unless tmp = @scope.parser.node(self.title)
                     fail Puppet::ParseError, "Could not find node '%s'" % self.title
                 end
             else # normal definitions
                 # The resource type is capitalized, so we have to downcase.  Really,
                 # we should have a better interface for finding these, but eh.
-                tmp = @scope.parser.definitions[self.type.downcase]
+                tmp = @scope.parser.definition(self.type.downcase)
             end
 
             if tmp

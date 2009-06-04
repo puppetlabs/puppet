@@ -80,7 +80,7 @@ class Puppet::Parser::AST::Definition < Puppet::Parser::AST::Branch
     end
 
     def find_parentclass
-        @parser.findclass(namespace, parentclass)
+        @parser.find_hostclass(namespace, parentclass)
     end
 
     # Set our parent class, with a little check to avoid some potential
