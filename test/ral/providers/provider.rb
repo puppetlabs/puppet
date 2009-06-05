@@ -6,7 +6,7 @@ require 'puppettest'
 require 'facter'
 
 class TestProvider < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
 
     def echo
         echo = Puppet::Util.binary("echo")
@@ -345,7 +345,7 @@ class TestProvider < Test::Unit::TestCase
 end
 
 class TestProviderFeatures < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
 
     def setup
         super

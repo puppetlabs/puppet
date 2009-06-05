@@ -110,19 +110,19 @@ exit 0
 
 %preun
 if [ "$1" = 0 ] ; then
-	/sbin/service puppet stop > /dev/null 2>&1
-	/sbin/chkconfig --del puppet
+    /sbin/service puppet stop > /dev/null 2>&1
+    /sbin/chkconfig --del puppet
 fi
 
 %preun server
 if [ "$1" = 0 ] ; then
-	/sbin/service puppetmaster stop > /dev/null 2>&1
-	/sbin/chkconfig --del puppetmaster
+    /sbin/service puppetmaster stop > /dev/null 2>&1
+    /sbin/chkconfig --del puppetmaster
 fi
 
 %postun server
 if [ "$1" -ge 1 ]; then
-	 /sbin/service puppetmaster try-restart > /dev/null 2>&1
+    /sbin/service puppetmaster try-restart > /dev/null 2>&1
 fi
 
 %clean

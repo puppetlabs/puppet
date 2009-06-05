@@ -9,9 +9,9 @@ require 'puppettest'
 require 'puppettest/parsertesting'
 
 class TestSelector < Test::Unit::TestCase
-	include PuppetTest
-	include PuppetTest::ParserTesting
-	AST = Puppet::Parser::AST
+    include PuppetTest
+    include PuppetTest::ParserTesting
+    AST = Puppet::Parser::AST
     
     def test_evaluate
         scope = mkscope

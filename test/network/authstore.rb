@@ -7,7 +7,7 @@ require 'mocha'
 require 'puppet/network/authstore'
 
 class TestAuthStore < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
     Declaration = Puppet::Network::AuthStore::Declaration
     def mkstore
         store = nil
@@ -124,7 +124,7 @@ class TestAuthStore < Test::Unit::TestCase
             %w{hostname.com 192.168.0.4},
             %w{localhost 192.168.0.1},
             %w{localhost 127.0.0.1}
-            
+
         ].each { |ary|
             assert(@store.allowed?(*ary), "Failed to allow %s" % [ary.join(",")])
         }
@@ -136,7 +136,7 @@ class TestAuthStore < Test::Unit::TestCase
                 "store did not return nil")
         end
         assert_equal([Declaration.new(:allow, "*.host.com")],
-            @store.send(:instance_variable_get, "@declarations"),
+                     @store.send(:instance_variable_get, "@declarations"),
             "Did not store declaration")
 
         # Now add another one and make sure it gets sorted appropriately
@@ -146,8 +146,8 @@ class TestAuthStore < Test::Unit::TestCase
         end
 
         assert_equal([
-            Declaration.new(:allow, "me.host.com"),
-            Declaration.new(:allow, "*.host.com")
+                     Declaration.new(:allow, "me.host.com"),
+                     Declaration.new(:allow, "*.host.com")
         ],
             @store.send(:instance_variable_get, "@declarations"),
             "Did not sort declarations")
@@ -189,7 +189,7 @@ class TestAuthStore < Test::Unit::TestCase
             invalid
             ^invalid!
             inval$id
-        
+
         }.each { |pat|
             assert_raise(Puppet::AuthStoreError,
                 "name '%s' was allowed" % pat) {
@@ -298,14 +298,14 @@ class TestAuthStore < Test::Unit::TestCase
         9.times { |a|
             threads << Thread.new {
                 9.times { |b|
-                    Thread.pass
-                    @store.interpolate([nil, "a#{b}", "madstop.com"])
-                    Thread.pass
-                    assert( @store.allowed?("a#{b}.madstop.com", "192.168.0.1") )
-                    Thread.pass
-                    @store.reset_interpolation
-                    Thread.pass
-                }
+                Thread.pass
+                @store.interpolate([nil, "a#{b}", "madstop.com"])
+                Thread.pass
+                assert( @store.allowed?("a#{b}.madstop.com", "192.168.0.1") )
+                Thread.pass
+                @store.reset_interpolation
+                Thread.pass
+            }
             }
         }
         threads.each { |th| th.join }
@@ -314,7 +314,7 @@ class TestAuthStore < Test::Unit::TestCase
 end
 
 class TestAuthStoreDeclaration < PuppetTest::TestCase
-	include PuppetTest
+    include PuppetTest
     Declaration = Puppet::Network::AuthStore::Declaration
 
     def setup

@@ -9,21 +9,21 @@ require 'puppettest'
 require 'puppet/util/feature'
 
 class TestFeatures < Test::Unit::TestCase
-	include PuppetTest
-	
-	def setup
-	    super
-	    @libdir = tempfile()
+    include PuppetTest
+
+    def setup
+        super
+        @libdir = tempfile()
         Puppet[:libdir] = @libdir
         @path = File.join(@libdir, "features")
-	    @features = Puppet::Util::Feature.new("features")
+        @features = Puppet::Util::Feature.new("features")
     end
-	
-	def test_new
+
+    def test_new
         redirect
-	    assert_nothing_raised do
-	        @features.add(:failer) do
-	            raise ArgumentError, "nopes"
+        assert_nothing_raised do
+            @features.add(:failer) do
+                raise ArgumentError, "nopes"
             end
         end
         

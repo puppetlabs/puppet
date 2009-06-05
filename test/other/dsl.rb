@@ -7,8 +7,8 @@ require 'puppet/dsl'
 require 'puppettest'
 
 class TestDSL < Test::Unit::TestCase
-	include PuppetTest
-	include Puppet::DSL
+    include PuppetTest
+    include Puppet::DSL
 
     def teardown
         super

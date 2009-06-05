@@ -7,7 +7,7 @@ require 'puppet/network/authorization'
 require 'mocha'
 
 class TestAuthConfig < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
 
     # A mock class for authconfig
     class FakeAuth

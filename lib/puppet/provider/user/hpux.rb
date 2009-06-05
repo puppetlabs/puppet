@@ -20,11 +20,11 @@ Puppet::Type.type(:user).provide :hpuxuseradd, :parent => :useradd do
     has_features :manages_homedir, :allows_duplicates
 
     def deletecmd
-	super.insert(1,"-F")
+        super.insert(1,"-F")
     end
 
     def modifycmd(param,value)
-	super.insert(1,"-F")
+        super.insert(1,"-F")
     end
 
 end

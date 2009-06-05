@@ -7,7 +7,7 @@ require 'puppettest'
 
 
 class TestEvents < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
 
     def test_simplesubscribe
         name = tempfile()

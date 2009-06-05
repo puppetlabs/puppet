@@ -43,7 +43,7 @@ def pkg_lists(my):
     # Yum 2.2/2.3 python libraries require a couple of extra function calls to setup package sacks.
     # They also don't have a __version__ attribute
     try:
-	yumver = yum.__version__
+        yumver = yum.__version__
     except AttributeError:
         my.doRepoSetup()
         my.doSackSetup()

@@ -27,24 +27,24 @@ module Nagios
         NAGIOSVERSION
     end
 
-	class Config
-		def Config.import(config)
+    class Config
+        def Config.import(config)
 
-			text = String.new
+            text = String.new
 
-			File.open(config) { |file|
-				file.each { |line|
-					text += line
-				}
-			}
-			parser = Nagios::Parser.new
-			return parser.parse(text)
-		end
-		
-		def Config.each
-			Nagios::Object.objects.each { |object|
-				yield object
-			}
-		end
-	end
+            File.open(config) { |file|
+                file.each { |line|
+                    text += line
+                }
+            }
+            parser = Nagios::Parser.new
+            return parser.parse(text)
+        end
+
+        def Config.each
+            Nagios::Object.objects.each { |object|
+                yield object
+            }
+        end
+    end
 end

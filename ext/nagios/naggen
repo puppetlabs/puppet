@@ -225,10 +225,10 @@ class NagiosWriter
 end
 
 arguments = [
-    [ "--compare",	"-c",			GetoptLong::NO_ARGUMENT ],
-    [ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
-    [ "--verbose",  "-v",			GetoptLong::NO_ARGUMENT ],
-    [ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
+    [ "--compare", "-c", GetoptLong::NO_ARGUMENT ],
+    [ "--debug",   "-d", GetoptLong::NO_ARGUMENT ],
+    [ "--verbose", "-v", GetoptLong::NO_ARGUMENT ],
+    [ "--help",    "-h", GetoptLong::NO_ARGUMENT ]
 ]
 
 Puppet.settings.addargs(arguments)
@@ -237,8 +237,8 @@ result = GetoptLong.new(*arguments)
 
 $options = {}
 result.each { |opt,arg|
-	case opt
-		when "--help"
+    case opt
+        when "--help"
             begin
                 require 'rdoc/usage'
                 RDoc::usage && exit
@@ -264,9 +264,9 @@ result.each { |opt,arg|
             $options[:debug] = true
         when "--debug"
             $options[:debug] = true
-		else
+    else
             Puppet.settings.handlearg(opt, arg)
-	end
+    end
 }
 
 # Read in Puppet settings, so we know how Puppet's configured.

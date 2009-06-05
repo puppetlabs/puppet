@@ -355,24 +355,24 @@ def build_man(bins)
 end
 
 def run_tests(test_list)
-	begin
-		require 'test/unit/ui/console/testrunner'
-		$:.unshift "lib"
-		test_list.each do |test|
-		next if File.directory?(test)
-		require test
-		end
+    begin
+        require 'test/unit/ui/console/testrunner'
+        $:.unshift "lib"
+        test_list.each do |test|
+            next if File.directory?(test)
+            require test
+        end
 
-		tests = []
-		ObjectSpace.each_object { |o| tests << o if o.kind_of?(Class) } 
-		tests.delete_if { |o| !o.ancestors.include?(Test::Unit::TestCase) }
-		tests.delete_if { |o| o == Test::Unit::TestCase }
+        tests = []
+        ObjectSpace.each_object { |o| tests << o if o.kind_of?(Class) }
+        tests.delete_if { |o| !o.ancestors.include?(Test::Unit::TestCase) }
+        tests.delete_if { |o| o == Test::Unit::TestCase }
 
-		tests.each { |test| Test::Unit::UI::Console::TestRunner.run(test) }
-		$:.shift
-	rescue LoadError
-		puts "Missing testrunner library; skipping tests"
-	end
+        tests.each { |test| Test::Unit::UI::Console::TestRunner.run(test) }
+        $:.shift
+    rescue LoadError
+        puts "Missing testrunner library; skipping tests"
+    end
 end
 
 ##

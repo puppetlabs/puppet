@@ -9,11 +9,11 @@ require 'puppettest'
 # 
 # if Puppet::Type.type(:mount).provider(:netinfo).suitable?
 # class TestNetinfoMountProvider < Test::Unit::TestCase
-# 	include PuppetTest
-# 	
-# 	def setup
-# 	    super
-# 	    @mount = Puppet::Type.type(:mount)
+#   include PuppetTest
+#
+#   def setup
+#       super
+#       @mount = Puppet::Type.type(:mount)
 #     end
 #     
 #     if Process.uid == 0 and Facter.value(:hostname) == "midden"
@@ -58,11 +58,11 @@ require 'puppettest'
 #             assert(prov.device != :absent, "Netinfo thinks the root device is missing")
 #         end
 #     end
-# 	
-# 	def test_list
-# 	    list = nil
-# 	    assert_nothing_raised do
-# 	        list = @mount.list
+#
+#   def test_list
+#       list = nil
+#       assert_nothing_raised do
+#           list = @mount.list
 #         end
 #         assert(list.length > 0)
 #         list.each do |obj|

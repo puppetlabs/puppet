@@ -7,7 +7,7 @@ require 'test/unit'
 require 'facter'
 
 class TestHost < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
 
     def setup
         super

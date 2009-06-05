@@ -7,7 +7,7 @@ require 'puppet/util/inifile'
 require 'puppettest'
 
 class TestFileType < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
 
     def setup
         super

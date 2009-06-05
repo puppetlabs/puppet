@@ -1,6 +1,6 @@
 
 /*
 file {
-    "/tmp/multilinecomments": content => "pouet"	
+    "/tmp/multilinecomments": content => "pouet"
 }
 */

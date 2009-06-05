@@ -7,7 +7,7 @@ require 'puppettest'
 require 'puppettest/runnable_test'
 
 class PuppetTest::TestCase < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
     extend PuppetTest::RunnableTest
 
     def self.suite

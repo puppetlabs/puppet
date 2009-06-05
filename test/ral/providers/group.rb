@@ -6,7 +6,7 @@ require 'puppettest'
 require 'etc'
 
 class TestGroupProvider < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
     def setup
         super
         @@tmpgroups = []

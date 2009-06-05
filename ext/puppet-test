@@ -408,21 +408,21 @@ end
 
 
 $cmdargs = [
-	[ "--compile",    "-c",			GetoptLong::NO_ARGUMENT ],
-	[ "--describe",     			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--retrieve",  "-R",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--fork",          			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--fqdn",      "-F",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--suite",     "-s",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--test",      "-t",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--pause",	 "-p",			GetoptLong::NO_ARGUMENT ],
-	[ "--repeat",    "-r",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--node",      "-n",			GetoptLong::REQUIRED_ARGUMENT ],
-	[ "--debug",	 "-d",			GetoptLong::NO_ARGUMENT ],
-	[ "--help",		 "-h",			GetoptLong::NO_ARGUMENT ],
-	[ "--list",	     "-l",			GetoptLong::NO_ARGUMENT ],
-	[ "--verbose",	 "-v",			GetoptLong::NO_ARGUMENT ],
-	[ "--version",	 "-V",			GetoptLong::NO_ARGUMENT ],
+    [ "--compile",  "-c", GetoptLong::NO_ARGUMENT       ],
+    [ "--describe",       GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--retrieve", "-R", GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--fork",           GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--fqdn",     "-F", GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--suite",    "-s", GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--test",     "-t", GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--pause",    "-p", GetoptLong::NO_ARGUMENT       ],
+    [ "--repeat",   "-r", GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--node",     "-n", GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--debug",    "-d", GetoptLong::NO_ARGUMENT       ],
+    [ "--help",     "-h", GetoptLong::NO_ARGUMENT       ],
+    [ "--list",     "-l", GetoptLong::NO_ARGUMENT       ],
+    [ "--verbose",  "-v", GetoptLong::NO_ARGUMENT       ],
+    [ "--version",  "-V", GetoptLong::NO_ARGUMENT       ],
 ]
 
 # Add all of the config parameters as valid $options.

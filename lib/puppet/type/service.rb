@@ -16,7 +16,7 @@ module Puppet
             command matching the service name), but the more information you
             can provide the better behaviour you will get.  Or, you can just
             use a platform that has very good service support.
-	    
+
             Note that if a ``service`` receives an event from another resource,
             the service will get restarted. The actual command to restart the
             service depends on the platform. You can provide a special command

@@ -7,7 +7,7 @@ require 'puppet/util/instance_loader'
 require 'puppettest'
 
 class TestInstanceloader < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
 
     def setup
         super

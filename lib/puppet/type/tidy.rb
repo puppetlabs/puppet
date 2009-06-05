@@ -21,9 +21,9 @@ Puppet::Type.newtype(:tidy) do
 
     newparam(:matches) do
         desc "One or more (shell type) file glob patterns, which restrict
-	    the list of files to be tidied to those whose basenames match
-	    at least one of the patterns specified. Multiple patterns can
-	    be specified using an array.
+            the list of files to be tidied to those whose basenames match
+            at least one of the patterns specified. Multiple patterns can
+            be specified using an array.
 
             Example::
 

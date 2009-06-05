@@ -20,7 +20,7 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
     commands :hdiutil => "/usr/bin/hdiutil"
     commands :curl => "/usr/bin/curl"
     commands :ditto => "/usr/bin/ditto"
-	
+
     # JJM We store a cookie for each installed .app.dmg in /var/db
     def self.instances_by_name
         Dir.entries("/var/db").find_all { |f|
@@ -40,7 +40,7 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
     
     def self.installapp(source, name, orig_source)
       appname = File.basename(source);
-	  ditto "--rsrc", source, "/Applications/#{appname}"
+      ditto "--rsrc", source, "/Applications/#{appname}"
       File.open("/var/db/.puppet_appdmg_installed_#{name}", "w") do |t|
           t.print "name: '#{name}'\n"
           t.print "source: '#{orig_source}'\n"
@@ -77,9 +77,9 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
                         mounts.each do |fspath|
                             Dir.entries(fspath).select { |f|
                                 f =~ /\.app$/i
-                                }.each do |pkg|
-					    			installapp("#{fspath}/#{pkg}", name, source)
-				 			   end
+                            }.each do |pkg|
+                                installapp("#{fspath}/#{pkg}", name, source)
+                            end
                         end # mounts.each do
                     ensure
                         hdiutil "eject", mounts[0]

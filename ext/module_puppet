@@ -52,12 +52,12 @@ require 'puppet/network/client'
 require 'getoptlong'
 
 options = [
-    [ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
-    [ "--help",		"-h",			GetoptLong::NO_ARGUMENT ],
-    [ "--logdest",	"-l",			GetoptLong::REQUIRED_ARGUMENT ],
-    [ "--verbose",  "-v",			GetoptLong::NO_ARGUMENT ],
-    [ "--use-nodes",    			GetoptLong::NO_ARGUMENT ],
-    [ "--version",  "-V",           GetoptLong::NO_ARGUMENT ]
+    [ "--debug",     "-d", GetoptLong::NO_ARGUMENT       ],
+    [ "--help",      "-h", GetoptLong::NO_ARGUMENT       ],
+    [ "--logdest",   "-l", GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--verbose",   "-v", GetoptLong::NO_ARGUMENT       ],
+    [ "--use-nodes",       GetoptLong::NO_ARGUMENT       ],
+    [ "--version",   "-V", GetoptLong::NO_ARGUMENT       ]
 ]
 
 # Add all of the config parameters as valid options.

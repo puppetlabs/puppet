@@ -1397,7 +1397,7 @@ class Type
                         subscribe => File[nagconf]
                     }
                 }
-	 		
+
             Currently the ``exec``, ``mount`` and ``service`` type support
             refreshing.
             "

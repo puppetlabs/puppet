@@ -6,7 +6,7 @@ require 'puppettest'
 require 'etc'
 
 class TestPackageProvider < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
 
     def setup
         super

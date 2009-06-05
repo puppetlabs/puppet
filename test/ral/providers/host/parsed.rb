@@ -8,8 +8,8 @@ require 'puppettest/fileparsing'
 require 'test/unit'
 
 class TestParsedHostProvider < Test::Unit::TestCase
-	include PuppetTest
-	include PuppetTest::FileParsing
+    include PuppetTest
+    include PuppetTest::FileParsing
 
     def setup
         super

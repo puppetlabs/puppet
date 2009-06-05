@@ -6,7 +6,7 @@ require 'puppettest'
 require 'etc'
 
 class TestUser < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
 
     p = Puppet::Type.type(:user).provide :fake, :parent => PuppetTest::FakeProvider do
         @name = :fake

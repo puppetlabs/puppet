@@ -6,8 +6,8 @@ require 'puppettest'
 require 'puppettest/fileparsing'
 
 class TestMailaliasAliasesProvider < Test::Unit::TestCase
-	include PuppetTest
-	include PuppetTest::FileParsing
+    include PuppetTest
+    include PuppetTest::FileParsing
 
     def setup
         super

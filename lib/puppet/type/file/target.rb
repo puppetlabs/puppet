@@ -45,7 +45,7 @@ module Puppet
                     end
                 end
 
-		@resource.send(:property_fix)
+                @resource.send(:property_fix)
 
                 :link_created
             end

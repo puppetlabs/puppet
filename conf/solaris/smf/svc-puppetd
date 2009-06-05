@@ -45,8 +45,8 @@ reload)
 
     kill -HUP `cat $pidfile`
 
-	printf " puppetd"
-	echo ""
+    printf " puppetd"
+    echo ""
     ;;
 status)
     if [ -f $pidfile ]; then

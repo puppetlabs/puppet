@@ -18,7 +18,7 @@ lockfile=/var/lock/subsys/puppetmaster
 . /etc/rc.d/init.d/functions
 
 if [ -f /etc/sysconfig/puppetmaster ]; then
-	. /etc/sysconfig/puppetmaster
+    . /etc/sysconfig/puppetmaster
 fi
 
 PUPPETMASTER_OPTS=""
@@ -30,7 +30,7 @@ elif [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -eq 1 ]; then
 fi
 [ -n "$PUPPETMASTER_LOG" ] && PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} --logdest=${PUPPETMASTER_LOG}"
 PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} \
-	${PUPPETMASTER_EXTRA_OPTS}"
+    ${PUPPETMASTER_EXTRA_OPTS}"
 
 RETVAL=0
 
@@ -38,10 +38,10 @@ prog=puppetmasterd
 PUPPETMASTER=/usr/sbin/$prog
 
 start() {
-	echo -n $"Starting puppetmaster: "
+    echo -n $"Starting puppetmaster: "
 
-	# Confirm the manifest exists
-	if [ -r $PUPPETMASTER_MANIFEST ]; then
+    # Confirm the manifest exists
+    if [ -r $PUPPETMASTER_MANIFEST ]; then
         if [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -gt 1 ]; then
             for ((i=0; i<${#PUPPETMASTER_PORTS[@]}; i++)); do
                 echo -en "\nPort: ${PUPPETMASTER_PORTS[$i]}"
@@ -52,18 +52,18 @@ start() {
             daemon $PUPPETMASTER $PUPPETMASTER_OPTS
             RETVAL=$?
         fi
-	else
-		failure $"Manifest does not exist: $PUPPETMASTER_MANIFEST"
-		echo
-		return 1
-	fi
-	[ $RETVAL -eq 0 ] && touch "$lockfile"
-	echo
-	return $RETVAL
+    else
+        failure $"Manifest does not exist: $PUPPETMASTER_MANIFEST"
+        echo
+        return 1
+    fi
+    [ $RETVAL -eq 0 ] && touch "$lockfile"
+    echo
+    return $RETVAL
 }
 
 stop() {
-	echo -n  $"Stopping puppetmaster: "
+    echo -n  $"Stopping puppetmaster: "
     if [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -gt 1 ]; then
         for ((i=0; i<${#PUPPETMASTER_PORTS[@]}; i++)); do
             echo -en "\nPort: ${PUPPETMASTER_PORTS[$i]}"
@@ -74,9 +74,9 @@ stop() {
        killproc $PUPPETMASTER
        RETVAL=$?
     fi
-	echo
-	[ $RETVAL -eq 0 ] && rm -f "$lockfile"
-	return $RETVAL
+    echo
+    [ $RETVAL -eq 0 ] && rm -f "$lockfile"
+    return $RETVAL
 }
 
 restart() {
@@ -97,7 +97,7 @@ puppetmaster_status() {
             ret=$?; [ $ret != 0 ] && RETVAL=$ret
         done 
     else
-	    status $PUPPETMASTER
+        status $PUPPETMASTER
         RETVAL=$?
     fi
     return $RETVAL
@@ -105,26 +105,26 @@ puppetmaster_status() {
 
 case "$1" in
   start)
-	start
-	;;
-  stop) 
-	stop
-	;;
-  restart|reload|force-reload)
+      start
+    ;;
+    stop)
+        stop
+    ;;
+    restart|reload|force-reload)
         restart
-	;;
-  condrestart)
-	[ -f "$lockfile" ] && restart
-	;;
-  status)
-    puppetmaster_status
-	;;
-  genconfig)
-	genconfig
-	;;
-  *)
-	echo $"Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart|genconfig}"
-	exit 1
+    ;;
+    condrestart)
+        [ -f "$lockfile" ] && restart
+    ;;
+    status)
+        puppetmaster_status
+    ;;
+    genconfig)
+        genconfig
+    ;;
+    *)
+        echo $"Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart|genconfig}"
+        exit 1
 esac
 
 exit $RETVAL

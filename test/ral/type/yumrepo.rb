@@ -6,7 +6,7 @@ require 'puppettest'
 require 'fileutils'
 
 class TestYumRepo < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
 
     def setup
         super

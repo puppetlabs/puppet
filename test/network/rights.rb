@@ -6,7 +6,7 @@ require 'puppettest'
 require 'puppet/network/rights'
 
 class TestRights < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
 
     def setup
         super

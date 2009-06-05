@@ -8,8 +8,8 @@ require 'puppet'
 require 'puppet/util/fileparsing'
 
 class TestUtilFileParsing < Test::Unit::TestCase
-	include PuppetTest
-	include PuppetTest::FileParsing
+    include PuppetTest
+    include PuppetTest::FileParsing
 
     class FParser
         include Puppet::Util::FileParsing
@@ -598,8 +598,8 @@ billy three four\n"
 end
 
 class TestUtilFileRecord < Test::Unit::TestCase
-	include PuppetTest
-	include PuppetTest::FileParsing
+    include PuppetTest
+    include PuppetTest::FileParsing
 
     Record = Puppet::Util::FileParsing::FileRecord
     def test_new_filerecord

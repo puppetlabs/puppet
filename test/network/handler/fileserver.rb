@@ -6,7 +6,7 @@ require 'puppettest'
 require 'puppet/network/handler/fileserver'
 
 class TestFileServer < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
 
     def mkmount(path = nil)
         mount = nil

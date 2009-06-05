@@ -8,9 +8,9 @@ require File.dirname(__FILE__) + '/../../lib/puppettest'
 require 'puppettest'
 
 class TestResources < Test::Unit::TestCase
-	include PuppetTest
-	
-	def add_purge_lister
+    include PuppetTest
+
+    def add_purge_lister
         # Now define the list method
         class << @purgetype
             def instances
@@ -29,8 +29,8 @@ class TestResources < Test::Unit::TestCase
         end
         obj
     end
-	
-	def mkpurgertype
+
+    def mkpurgertype
         # Create a purgeable type
         $purgemembers = {}
         @purgetype = Puppet::Type.newtype(:purgetest) do
@@ -53,10 +53,10 @@ class TestResources < Test::Unit::TestCase
             Puppet::Type.rmtype(:purgetest)
         end
     end
-	
-	def setup
-	    super
-	    @type = Puppet::Type.type(:resources)
+
+    def setup
+        super
+        @type = Puppet::Type.type(:resources)
     end
 
     def test_purge

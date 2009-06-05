@@ -53,10 +53,10 @@ module PuppetTest
         require 'getoptlong'
 
         result = GetoptLong.new(
-            [ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
-            [ "--resolve",	"-r",			GetoptLong::REQUIRED_ARGUMENT ],
-            [ "-n",			                GetoptLong::REQUIRED_ARGUMENT ],
-            [ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
+            [ "--debug",    "-d", GetoptLong::NO_ARGUMENT       ],
+            [ "--resolve",  "-r", GetoptLong::REQUIRED_ARGUMENT ],
+            [ "-n",               GetoptLong::REQUIRED_ARGUMENT ],
+            [ "--help",     "-h", GetoptLong::NO_ARGUMENT       ]
         )
 
         usage = "USAGE: TESTOPTS='[-n <method> -n <method> ...] [-d]' rake [target] [target] ..."

@@ -85,9 +85,9 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
         end
     end
 
-	#
-	# preseeds answers to dpkg-set-selection from the "responsefile"
-	#
+    #
+    # preseeds answers to dpkg-set-selection from the "responsefile"
+    #
     def run_preseed
         if response = @resource[:responsefile] and FileTest.exist?(response)
             self.info("Preseeding %s to debconf-set-selections" % response)

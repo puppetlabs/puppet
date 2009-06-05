@@ -6,7 +6,7 @@ require 'puppettest'
 require 'puppettest/resourcetesting'
 
 class TestResource < PuppetTest::TestCase
-	include PuppetTest
+    include PuppetTest
     include PuppetTest::ParserTesting
     include PuppetTest::ResourceTesting
     Parser = Puppet::Parser

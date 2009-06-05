@@ -26,6 +26,6 @@ Puppet::Type.type(:package).provide :aptitude, :parent => :apt, :source => :dpkg
 
     def purge
         aptitude '-y', 'purge', @resource[:name]
-	end
+    end
 end
 

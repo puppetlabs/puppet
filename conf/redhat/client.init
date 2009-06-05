@@ -33,28 +33,28 @@ PUPPET_OPTS=""
 ##[ -n "$INIT_VERSION" ] && PUPPET_OPTS="${PUPPET_OPTS} --fullrun"
 
 start() {
-	echo -n $"Starting puppet: "
-        daemon $puppetd ${PUPPET_OPTS} ${PUPPET_EXTRA_OPTS}
-	RETVAL=$?
-	echo
+    echo -n $"Starting puppet: "
+    daemon $puppetd ${PUPPET_OPTS} ${PUPPET_EXTRA_OPTS}
+    RETVAL=$?
+    echo
         [ $RETVAL = 0 ] && touch ${lockfile}
         return $RETVAL
 }
 
 stop() {
-	echo -n $"Stopping puppet: "
-        killproc $puppetd
-	RETVAL=$?
-	echo
-	[ $RETVAL = 0 ] && rm -f ${lockfile} ${pidfile}
+    echo -n $"Stopping puppet: "
+    killproc $puppetd
+    RETVAL=$?
+    echo
+    [ $RETVAL = 0 ] && rm -f ${lockfile} ${pidfile}
 }
 
 reload() {
-	echo -n $"Restarting puppet: "
-        killproc $puppetd -HUP
-	RETVAL=$?
-	echo
-	return $RETVAL
+    echo -n $"Restarting puppet: "
+    killproc $puppetd -HUP
+    RETVAL=$?
+    echo
+    return $RETVAL
 }
 
 restart() {
@@ -63,40 +63,40 @@ restart() {
 }
 
 genconfig() {
-  echo -n $"Generate configuration puppet: "
-  $puppetd ${PUPPET_OPTS} ${PUPPET_EXTRA_OPTS} --genconfig
+    echo -n $"Generate configuration puppet: "
+    $puppetd ${PUPPET_OPTS} ${PUPPET_EXTRA_OPTS} --genconfig
 }
 
 case "$1" in
-  start)
-	start
-	;;
-  stop) 
-	stop
-	;;
-  restart)
-	restart
-	;;
-  reload|force-reload)
+    start)
+        start
+    ;;
+    stop)
+        stop
+    ;;
+    restart)
+        restart
+    ;;
+    reload|force-reload)
         reload
-	;;
-  condrestart|try-restart)
-	[ -f "$pidfile" ] && restart
-	;;
-  status)
+    ;;
+    condrestart|try-restart)
+        [ -f "$pidfile" ] && restart
+    ;;
+    status)
         status -p "$pidfile" $puppetd
         RETVAL=$?
-	;;
-  once)
+    ;;
+    once)
         shift
         $puppetd -o ${PUPPET_OPTS} ${PUPPET_EXTRA_OPTS} $@
         ;;
-  genconfig)
-	genconfig
-	;;
-  *)
-	echo $"Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart|once|genconfig}"
-	exit 1
+    genconfig)
+        genconfig
+    ;;
+    *)
+        echo $"Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart|once|genconfig}"
+        exit 1
 esac
 
 exit $RETVAL

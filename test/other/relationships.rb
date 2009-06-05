@@ -6,10 +6,10 @@ require 'puppet'
 require 'puppettest'
 
 class TestRelationships < Test::Unit::TestCase
-	include PuppetTest
-	def setup
-	    super
-	    Puppet::Type.type(:exec)
+    include PuppetTest
+    def setup
+        super
+        Puppet::Type.type(:exec)
     end
     
     def newfile

@@ -7,7 +7,7 @@ require 'puppet/util/autoload'
 require 'puppettest'
 
 class TestAutoload < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
     @things = []
     def self.newthing(name)
         @things << name

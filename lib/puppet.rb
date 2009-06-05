@@ -71,8 +71,8 @@ module Puppet
         @@settings.setdefaults(section, hash)
     end
 
-	# configuration parameter access and stuff
-	def self.[](param)
+    # configuration parameter access and stuff
+    def self.[](param)
         case param
         when :debug
             if Puppet::Util::Log.level == :debug
@@ -83,12 +83,12 @@ module Puppet
         else
             return @@settings[param]
         end
-	end
+    end
 
-	# configuration parameter access and stuff
-	def self.[]=(param,value)
+    # configuration parameter access and stuff
+    def self.[]=(param,value)
         @@settings[param] = value
-	end
+    end
 
     def self.clear
         @@settings.clear

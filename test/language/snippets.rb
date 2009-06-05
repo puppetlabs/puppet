@@ -10,7 +10,7 @@ require 'puppet/network/handler'
 require 'puppettest'
 
 class TestSnippets < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
 
     def setup
         super

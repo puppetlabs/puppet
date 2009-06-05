@@ -10,8 +10,8 @@ require 'puppet/provider/parsedfile'
 require 'facter'
 
 class TestParsedFile < Test::Unit::TestCase
-	include PuppetTest
-	include PuppetTest::FileParsing
+    include PuppetTest
+    include PuppetTest::FileParsing
 
     Puppet::Type.newtype(:testparsedfiletype) do
         ensurable

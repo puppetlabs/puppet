@@ -64,10 +64,10 @@ module PuppetTest::Support::Utils
     def set_mygroup
         # retrieve the user name
         group = %x{groups}.chomp.split(/ /)[0]
-	unless group
-	    raise "Could not find group to set in @mygroup"
-	end
-	@mygroup = group
+        unless group
+            raise "Could not find group to set in @mygroup"
+        end
+        @mygroup = group
     end
 
     def run_events(type, trans, events, msg)

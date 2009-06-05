@@ -4,7 +4,7 @@ module Puppet
         @doc = "Manages mounted filesystems, including putting mount
             information into the mount table. The actual behavior depends 
             on the value of the 'ensure' parameter.
-	    
+
             Note that if a ``mount`` receives an event from another resource,
             it will try to remount the filesystems if ``ensure`` is set to ``mounted``."
 

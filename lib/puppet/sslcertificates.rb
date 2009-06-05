@@ -93,7 +93,7 @@ module Puppet::SSLCertificates
 
         ex << ef.create_extension("keyUsage", key_usage.join(",")) if key_usage
         ex << ef.create_extension("extendedKeyUsage", ext_key_usage.join(",")) if ext_key_usage
-	    ex << ef.create_extension("subjectAltName", subject_alt_name.join(",")) if ! subject_alt_name.empty?
+        ex << ef.create_extension("subjectAltName", subject_alt_name.join(",")) if ! subject_alt_name.empty?
 
         #if @ca_config[:cdp_location] then
         #  ex << ef.create_extension("crlDistributionPoints",

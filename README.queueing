@@ -56,7 +56,7 @@ tested with two of the most popular services - StompServer and ActiveMQ.
 
 + StompServer
 
-	http://rubyforge.org/projects/stompserver/
+    http://rubyforge.org/projects/stompserver/
 
 StompServer is a lightweight queueing service written in Ruby which is
 suitable for testing or low volume puppet usage. Works well when both
@@ -67,7 +67,7 @@ Just install the stompserver gem and run 'stompserver'.
 
 + Apache ActiveMQ
 
-	http://activemq.apache.org
+    http://activemq.apache.org
 
 Considered by many to be the most popular message service in use today,
 ActiveMQ has hundreds of features for scaling, persistence and so on.
@@ -76,7 +76,7 @@ Although installation is fairly simple, the configuration can seem quite
 intimidating, but for our use a one line change to the  standard configuration
 is all that is required and is explained at:
 
-	http://activemq.apache.org/stomp.html
+    http://activemq.apache.org/stomp.html
 
 Other customization of the internal workings of ActiveMQ, if any, will depend
 on your needs and deployment. A quick skimming of the ActiveMQ documentation

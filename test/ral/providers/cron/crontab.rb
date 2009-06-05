@@ -7,8 +7,8 @@ require 'mocha'
 require 'puppettest/fileparsing'
 
 class TestCronParsedProvider < Test::Unit::TestCase
-	include PuppetTest
-	include PuppetTest::FileParsing
+    include PuppetTest
+    include PuppetTest::FileParsing
 
 
     FIELDS = {

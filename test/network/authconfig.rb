@@ -7,7 +7,7 @@ require 'puppettest'
 require 'puppet/network/authconfig'
 
 class TestAuthConfig < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
 
     def request(call, client, ip)
         r = Puppet::Network::ClientRequest.new(client, ip, false)

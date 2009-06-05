@@ -76,11 +76,11 @@ require 'getoptlong'
 include Find
 
 result = GetoptLong.new(
-    [ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
-    [ "--verbose",	"-v",			GetoptLong::NO_ARGUMENT ],
-    [ "-n",			                GetoptLong::REQUIRED_ARGUMENT ],
-    [ "--files",    "-f",           GetoptLong::NO_ARGUMENT ],
-    [ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
+    [ "--debug",    "-d", GetoptLong::NO_ARGUMENT       ],
+    [ "--verbose",  "-v", GetoptLong::NO_ARGUMENT       ],
+    [ "-n",               GetoptLong::REQUIRED_ARGUMENT ],
+    [ "--files",    "-f", GetoptLong::NO_ARGUMENT       ],
+    [ "--help",     "-h", GetoptLong::NO_ARGUMENT       ]
 )
 
 usage = "USAGE: %s [--help] suite" % $0

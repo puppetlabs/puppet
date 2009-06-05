@@ -36,15 +36,15 @@ pidfile=/var/run/puppet/puppetmasterd.pid
 [ -f /etc/rc.status ] && . /etc/rc.status
 
 if [ -f /etc/sysconfig/puppetmaster ]; then
-	. /etc/sysconfig/puppetmaster
+    . /etc/sysconfig/puppetmaster
 fi
 
 [ -z "$PUPPETMASTER_MANIFEST" ] && PUPPETMASTER_MANIFEST=/etc/puppet/manifests/site.pp
 [ -z "$PUPPETMASTER_LOG" ] && PUPPETMASTER_LOG="/var/log/puppet/puppetmaster.log"
 PUPPETMASTER_OPTS="
-	--manifest=$PUPPETMASTER_MANIFEST \
-	--logdest=${PUPPETMASTER_LOG} \
-	${PUPPETMASTER_EXTRA_OPTS}"
+    --manifest=$PUPPETMASTER_MANIFEST \
+    --logdest=${PUPPETMASTER_LOG} \
+    ${PUPPETMASTER_EXTRA_OPTS}"
 PUPPET_OPTS=""
 [ -n "${PUPPET_SERVER}" ] && PUPPET_OPTS="--server=${PUPPET_SERVER}"
 [ -n "$PUPPET_LOG" ] && PUPPET_OPTS="${PUPPET_OPTS} --logdest=${PUPPET_LOG}"
@@ -54,10 +54,10 @@ prog=puppetmasterd
 PUPPETMASTER=/usr/sbin/$prog
 
 start() {
-	echo -n $"Starting puppetmaster: "
+    echo -n $"Starting puppetmaster: "
 
-	echo
-	return $RETVAL
+    echo
+    return $RETVAL
 }
 # First reset status of this service
 rc_reset
@@ -84,13 +84,13 @@ case "$1" in
 
         # startproc should return 0, even if service is
         # already running to match LSB spec.
-	# Confirm the manifest exists
-	if [ -r $PUPPETMASTER_MANIFEST ]; then
-		startproc $PUPPETMASTER $PUPPETMASTER_OPTS && touch "$lockfile"
-	else
-		rc_failed 
-		echo "Manifest does not exist: $PUPPETMASTER_MANIFEST"
-	fi
+        # Confirm the manifest exists
+        if [ -r $PUPPETMASTER_MANIFEST ]; then
+            startproc $PUPPETMASTER $PUPPETMASTER_OPTS && touch "$lockfile"
+        else
+            rc_failed
+            echo "Manifest does not exist: $PUPPETMASTER_MANIFEST"
+        fi
         # Remember status and be verbose
         rc_status -v
         ;;
@@ -136,8 +136,8 @@ case "$1" in
         ## signalling, do nothing (!)
 
         # If it supports signalling:
-	echo -n "Reload puppet services."
-	killproc -HUP  $PUPPETMASTER
+        echo -n "Reload puppet services."
+        killproc -HUP  $PUPPETMASTER
         rc_status -v
         ;;
     status)

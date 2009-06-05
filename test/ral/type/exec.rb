@@ -5,7 +5,7 @@ require File.dirname(__FILE__) + '/../../lib/puppettest'
 require 'puppettest'
 
 class TestExec < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
     def test_execution
         command = nil
         output = nil

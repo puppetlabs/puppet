@@ -8,8 +8,8 @@ require 'puppet/util/settings'
 require 'puppettest/parsertesting'
 
 class TestSettings < Test::Unit::TestCase
-	include PuppetTest
-	include PuppetTest::ParserTesting
+    include PuppetTest
+    include PuppetTest::ParserTesting
     CElement = Puppet::Util::Settings::CElement
     CBoolean = Puppet::Util::Settings::CBoolean
 

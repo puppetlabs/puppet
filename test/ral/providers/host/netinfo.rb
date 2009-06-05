@@ -9,18 +9,18 @@ require 'puppettest'
 
 if Puppet::Type.type(:host).provider(:netinfo).suitable?
 class TestNetinfoHostProvider < Test::Unit::TestCase
-	include PuppetTest
-	
-	def setup
-	    super
-	    @host = Puppet::Type.type(:host)
-	    @provider = @host.provider(:netinfo)
+    include PuppetTest
+
+    def setup
+        super
+        @host = Puppet::Type.type(:host)
+        @provider = @host.provider(:netinfo)
     end
 
-	def test_list
-	    list = nil
-	    assert_nothing_raised do
-	        list = @provider.instances
+    def test_list
+        list = nil
+        assert_nothing_raised do
+            list = @provider.instances
         end
         assert(list.length > 0)
         list.each do |prov|

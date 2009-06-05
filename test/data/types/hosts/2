@@ -1,6 +1,6 @@
-127.0.0.1		localhost
-192.168.0.3		culain.madstop.com	culain
-192.168.0.100		yaytest
+127.0.0.1               localhost
+192.168.0.3             culain.madstop.com      culain
+192.168.0.100           yaytest
 
 # The following lines are desirable for IPv6 capable hosts
 # (added automatically by netbase upgrade)

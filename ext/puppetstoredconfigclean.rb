@@ -11,36 +11,36 @@ require 'getoptlong'
 config = '/etc/puppet/puppet.conf'
 
 def printusage(error_code)
-	puts "Usage: #{$0} [ list of hostnames as stored in hosts table ]"
-	puts "\n Options:"
-	puts "--config <puppet config file>"
-	exit(error_code)
+    puts "Usage: #{$0} [ list of hostnames as stored in hosts table ]"
+    puts "\n Options:"
+    puts "--config <puppet config file>"
+    exit(error_code)
 end
 
 opts = GetoptLong.new(
-        [ "--config",     "-c",   GetoptLong::REQUIRED_ARGUMENT ],	
+        [ "--config",     "-c",   GetoptLong::REQUIRED_ARGUMENT ],
         [ "--help",        "-h",   GetoptLong::NO_ARGUMENT ],
         [ "--usage",       "-u",   GetoptLong::NO_ARGUMENT ],
         [ "--version",     "-v",   GetoptLong::NO_ARGUMENT ]
 )
 
 begin
-	opts.each do |opt, arg|
-    	case opt
-        	when "--config"
-				config = arg
+    opts.each do |opt, arg|
+        case opt
+        when "--config"
+            config = arg
 
-            when "--help"
-            	printusage(0)
+        when "--help"
+            printusage(0)
 
-            when "--usage"
-            	printusage(0)
+        when "--usage"
+            printusage(0)
 
-            when "--version"
-        		puts "%s" % Puppet.version
-				exit
-		end
-	end
+        when "--version"
+            puts "%s" % Puppet.version
+            exit
+        end
+    end
 rescue GetoptLong::InvalidOption => detail
     $stderr.puts "Try '#{$0} --help'"
     exit(1)

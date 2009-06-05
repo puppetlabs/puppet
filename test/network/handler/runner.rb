@@ -6,7 +6,7 @@ require 'puppettest'
 require 'puppet/network/handler/runner'
 
 class TestHandlerRunner < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
 
     def test_it_calls_agent_runner
         runner = mock 'runner'

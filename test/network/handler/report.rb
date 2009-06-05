@@ -7,11 +7,11 @@ require 'puppet/network/handler/report'
 require 'puppettest/reporttesting'
 
 class TestReportServer < Test::Unit::TestCase
-	include PuppetTest
-	include PuppetTest::Reporttesting
+    include PuppetTest
+    include PuppetTest::Reporttesting
 
     Report = Puppet::Network::Handler.report
-	Puppet::Util.logmethods(self)
+    Puppet::Util.logmethods(self)
 
     def mkserver
         server = nil

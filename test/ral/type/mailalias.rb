@@ -6,7 +6,7 @@ require 'puppettest'
 require 'mocha'
 
 class TestMailAlias < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
 
     def setup
         super

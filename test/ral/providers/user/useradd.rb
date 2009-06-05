@@ -8,12 +8,12 @@ class UserAddProviderTest < PuppetTest::TestCase
     confine "useradd user provider missing" =>
         Puppet::Type.type(:user).provider(:useradd).suitable?
 
-	def setup
+    def setup
         super
-		@type = Puppet::Type.type(:user)
-		@provider = Puppet::Type.type(:user).provider(:useradd)
+        @type = Puppet::Type.type(:user)
+        @provider = Puppet::Type.type(:user).provider(:useradd)
         @home = tempfile
-		@vals = {:name => 'faff',
+        @vals = {:name => 'faff',
             :provider => :useradd,
             :ensure => :present,
             :uid => 5000,
@@ -22,10 +22,10 @@ class UserAddProviderTest < PuppetTest::TestCase
             :comment => "yayness",
             :groups => %w{one two}
         }
-	end
+    end
 
     def setup_user
-		@user = @type.new(@vals)
+        @user = @type.new(@vals)
 
         @vals.each do |name, val|
             next unless @user.class.validproperty?(name)
@@ -39,9 +39,9 @@ class UserAddProviderTest < PuppetTest::TestCase
                 "useradd provider is missing %s" % feature)
         end
     end
-	
-	def test_create
-		user = setup_user
+
+    def test_create
+        user = setup_user
 
         @vals.each do |name, val|
             next unless user.class.validproperty?(name)
@@ -50,7 +50,7 @@ class UserAddProviderTest < PuppetTest::TestCase
         user.expects(:allowdupe?).returns(false)
         user.expects(:managehome?).returns(false)
 
-		user.provider.expects(:execute).with do |params|
+        user.provider.expects(:execute).with do |params|
             command = params.shift
             assert_equal(@provider.command(:add), command,
                 "Got incorrect command")
@@ -78,9 +78,9 @@ class UserAddProviderTest < PuppetTest::TestCase
 
             true
         end
-		
+
         user.provider.create
-	end
+    end
 
     # Make sure we add the right flags when managing home
     def test_managehome
@@ -95,7 +95,7 @@ class UserAddProviderTest < PuppetTest::TestCase
         # First run
         @user.expects(:managehome?).returns(true)
 
-		@user.provider.expects(:execute).with do |params|
+        @user.provider.expects(:execute).with do |params|
             assert_equal(params[0], @provider.command(:add),
                 "useradd was not called")
             assert(params.include?("-m"),
@@ -116,7 +116,7 @@ class UserAddProviderTest < PuppetTest::TestCase
         # First run
         @user.expects(:managehome?).returns(false)
 
-		@user.provider.expects(:execute).with do |params|
+        @user.provider.expects(:execute).with do |params|
             assert_equal(params[0], @provider.command(:add),
                 "useradd was not called")
             if %w{Fedora RedHat}.include?(Facter.value(:operatingsystem))
@@ -144,7 +144,7 @@ class UserAddProviderTest < PuppetTest::TestCase
         # First run
         @user.expects(:allowdupe?).returns(true)
 
-		@user.provider.expects(:execute).with do |params|
+        @user.provider.expects(:execute).with do |params|
             assert_equal(params[0], @provider.command(:add),
                 "useradd was not called")
             assert(params.include?("-o"),
@@ -163,7 +163,7 @@ class UserAddProviderTest < PuppetTest::TestCase
         # First run
         @user.expects(:allowdupe?).returns(false)
 
-		@user.provider.expects(:execute).with do |params|
+        @user.provider.expects(:execute).with do |params|
             assert_equal(params[0], @provider.command(:add),
                 "useradd was not called")
             assert(! params.include?("-o"),
@@ -182,7 +182,7 @@ class UserAddProviderTest < PuppetTest::TestCase
         @vals[:password] = "somethingorother"
         setup_user
 
-		@user.provider.expects(:execute).with do |params|
+        @user.provider.expects(:execute).with do |params|
             assert_equal(params[0], @provider.command(:add),
                 "useradd was not called")
             params.shift
@@ -204,7 +204,7 @@ class UserAddProviderTest < PuppetTest::TestCase
         setup_user
         @vals[:password] = "somethingelse"
 
-		@user.provider.expects(:execute).with do |params|
+        @user.provider.expects(:execute).with do |params|
             assert_equal(params[0], @provider.command(:modify),
                 "usermod was not called")
 

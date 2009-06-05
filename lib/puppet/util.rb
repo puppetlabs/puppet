@@ -320,7 +320,7 @@ module Util
                 exit!(1)
             end # begin; rescue
         end # if child_pid
- 	
+
         # read output in if required
         if ! arguments[:squelch]
 

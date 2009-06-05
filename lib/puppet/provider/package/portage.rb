@@ -100,7 +100,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
             case packages.size
                 when 0
-		    not_found_value = "%s/%s" % [@resource[:category] ? @resource[:category] : "<unspecified category>", @resource[:name]]
+                    not_found_value = "%s/%s" % [@resource[:category] ? @resource[:category] : "<unspecified category>", @resource[:name]]
                     raise Puppet::Error.new("No package found with the specified name [#{not_found_value}]")
                 when 1
                     return packages[0]

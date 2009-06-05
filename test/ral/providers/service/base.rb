@@ -8,32 +8,32 @@ require File.dirname(__FILE__) + '/../../../lib/puppettest'
 require 'puppettest'
 
 class TestBaseServiceProvider < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
 
-	def test_base
-	    running = tempfile()
-	    
-	    commands = {}
-	    %w{touch rm test}.each do |c|
-    	    path = %x{which #{c}}.chomp
-    	    if path == ""
-    	        $stderr.puts "Cannot find '#{c}'; cannot test base service provider"
-    	        return
+    def test_base
+        running = tempfile()
+
+        commands = {}
+        %w{touch rm test}.each do |c|
+            path = %x{which #{c}}.chomp
+            if path == ""
+                $stderr.puts "Cannot find '#{c}'; cannot test base service provider"
+                return
             end
             commands[c.to_sym] = path
         end
-	    service = Puppet::Type.type(:service).new(
-	        :name => "yaytest", :provider => :base,
-	        :start => "%s %s" % [commands[:touch], running],
-	        :status => "%s -f %s" % [commands[:test], running],
-	        :stop => "%s %s" % [commands[:rm], running]
-	    )
-	    
-	    provider = service.provider
-	    assert(provider, "did not get base provider")
-	    
-	    assert_nothing_raised do
-	        provider.start
+        service = Puppet::Type.type(:service).new(
+            :name => "yaytest", :provider => :base,
+            :start => "%s %s" % [commands[:touch], running],
+            :status => "%s -f %s" % [commands[:test], running],
+            :stop => "%s %s" % [commands[:rm], running]
+        )
+
+        provider = service.provider
+        assert(provider, "did not get base provider")
+
+        assert_nothing_raised do
+            provider.start
         end
         assert(FileTest.exists?(running), "start was not called correctly")
         assert_nothing_raised do
@@ -51,16 +51,16 @@ class TestBaseServiceProvider < Test::Unit::TestCase
     # Testing #454
     def test_that_failures_propagate
         nope = "/no/such/command"
-	    service = Puppet::Type.type(:service).new(
-	        :name => "yaytest", :provider => :base,
-	        :start => nope,
-	        :status => nope,
-	        :stop => nope,
-	        :restart => nope
-	    )
+        service = Puppet::Type.type(:service).new(
+            :name => "yaytest", :provider => :base,
+            :start => nope,
+            :status => nope,
+            :stop => nope,
+            :restart => nope
+        )
 
-	    provider = service.provider
-	    assert(provider, "did not get base provider")
+        provider = service.provider
+        assert(provider, "did not get base provider")
 
         # We can't fail well when status is messed up, because we depend on the return code
         # of the command for data.

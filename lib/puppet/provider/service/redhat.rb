@@ -37,7 +37,7 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init do
         if output =~ /.* off$/
             return :false
         end
-	
+
         return :true
     end
 

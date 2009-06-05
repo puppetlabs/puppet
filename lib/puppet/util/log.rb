@@ -253,21 +253,21 @@ class Puppet::Util::Log
     newdesttype :console do
                 
         
-        RED 	= {:console => "[0;31m", :html => "FFA0A0"}
-        GREEN 	= {:console => "[0;32m", :html => "00CD00"}
-        YELLOW 	= {:console => "[0;33m", :html => "FFFF60"}
-        BLUE 	= {:console => "[0;34m", :html => "80A0FF"}
-        PURPLE 	= {:console => "[0;35m", :html => "FFA500"}
-        CYAN 	= {:console => "[0;36m", :html => "40FFFF"}
-        WHITE	= {:console => "[0;37m", :html => "FFFFFF"}
-        HRED	= {:console => "[1;31m", :html => "FFA0A0"}
-        HGREEN 	= {:console => "[1;32m", :html => "00CD00"}
-        HYELLOW	= {:console => "[1;33m", :html => "FFFF60"}
-        HBLUE 	= {:console => "[1;34m", :html => "80A0FF"}
-        HPURPLE	= {:console => "[1;35m", :html => "FFA500"}
-        HCYAN 	= {:console => "[1;36m", :html => "40FFFF"}
-        HWHITE	= {:console => "[1;37m", :html => "FFFFFF"}
-        RESET 	= {:console => "[0m", :html => ""}
+        RED     = {:console => "[0;31m", :html => "FFA0A0"}
+        GREEN   = {:console => "[0;32m", :html => "00CD00"}
+        YELLOW  = {:console => "[0;33m", :html => "FFFF60"}
+        BLUE    = {:console => "[0;34m", :html => "80A0FF"}
+        PURPLE  = {:console => "[0;35m", :html => "FFA500"}
+        CYAN    = {:console => "[0;36m", :html => "40FFFF"}
+        WHITE   = {:console => "[0;37m", :html => "FFFFFF"}
+        HRED    = {:console => "[1;31m", :html => "FFA0A0"}
+        HGREEN  = {:console => "[1;32m", :html => "00CD00"}
+        HYELLOW = {:console => "[1;33m", :html => "FFFF60"}
+        HBLUE   = {:console => "[1;34m", :html => "80A0FF"}
+        HPURPLE = {:console => "[1;35m", :html => "FFA500"}
+        HCYAN   = {:console => "[1;36m", :html => "40FFFF"}
+        HWHITE  = {:console => "[1;37m", :html => "FFFFFF"}
+        RESET   = {:console => "[0m",    :html => ""      }
 
         @@colormap = {
             :debug => WHITE,

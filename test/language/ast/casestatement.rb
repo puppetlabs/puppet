@@ -9,21 +9,21 @@ require 'puppettest'
 require 'puppettest/parsertesting'
 
 class TestCaseStatement < Test::Unit::TestCase
-	include PuppetTest
-	include PuppetTest::ParserTesting
-	AST = Puppet::Parser::AST
-	
-	class ActiveAST < FakeAST
-	    def self.clear
-	        $evaluated = []
+    include PuppetTest
+    include PuppetTest::ParserTesting
+    AST = Puppet::Parser::AST
+
+    class ActiveAST < FakeAST
+        def self.clear
+            $evaluated = []
         end
-	    def evaluate
-	        $evaluated ||= []
-	        $evaluated << @evaluate
+        def evaluate
+            $evaluated ||= []
+            $evaluated << @evaluate
         end
     end
-	
-	def test_evaluate
+
+    def test_evaluate
         ast = nil
         scope = mkscope
         param = nameobj("MyParam")

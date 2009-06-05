@@ -9,8 +9,8 @@ require 'puppettest'
 require 'puppettest/reporttesting'
 
 class TestReports < Test::Unit::TestCase
-	include PuppetTest
-	include PuppetTest::Reporttesting
+    include PuppetTest
+    include PuppetTest::Reporttesting
 
     def mkreport
         # First do some work

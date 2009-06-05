@@ -7,7 +7,7 @@ require 'puppettest'
 # Test cron job creation, modification, and destruction
 
 class TestCron < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
 
     def setup
         super

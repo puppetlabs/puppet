@@ -9,9 +9,9 @@ require 'puppettest'
 require 'puppettest/parsertesting'
 
 class TestASTResourceReference < Test::Unit::TestCase
-	include PuppetTest
-	include PuppetTest::ParserTesting
-	AST = Puppet::Parser::AST
+    include PuppetTest
+    include PuppetTest::ParserTesting
+    AST = Puppet::Parser::AST
     
     def newref(type, title)
         AST::ResourceReference.new(:type => type, :title => AST::String.new(:value => title))

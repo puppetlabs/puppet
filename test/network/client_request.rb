@@ -7,7 +7,7 @@ require 'puppettest'
 require 'puppet/network/client_request'
 
 class TestClientRequest < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
 
     def test_initialize
         req = nil

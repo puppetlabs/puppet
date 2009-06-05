@@ -1,6 +1,6 @@
 module Puppet::Parser::Functions
     newfunction(:regsubst, :type => :rvalue,
-		:doc => "
+                :doc => "
                 Perform regexp replacement on a string. 
 
 - **Parameters** (in order):
@@ -36,36 +36,36 @@ Put angle brackets around each octet in the node's IP address::
     $x = regsubst($ipaddress, '([0-9]+)', '<\\1>', 'G')
 ") \
         do |args|
-	flag_mapping = {
-	    "E" => Regexp::EXTENDED,
-	    "I" => Regexp::IGNORECASE,
-	    "M" => Regexp::MULTILINE,
-	}
-	if args.length < 3  or  args.length > 5
-	    raise Puppet::ParseError, ("regsub(): wrong number of arguments" +
-				       " (#{args.length}; min 3, max 5)")
-	end
-	str, regexp, replacement, flags, lang = args
-	reflags = 0
-	global = false
-	(flags or "").each_byte do |f|
-	    f = f.chr
-	    if f == "G"
-		global = true
-	    else
-		fvalue = flag_mapping[f]
-		if !fvalue
-		    raise Puppet::ParseError, "regsub(): bad flag `#{f}'"
-		end
-		reflags |= fvalue
-	    end
-	end
-	re = Regexp.compile(regexp, reflags, lang)
-	if global
-	    result = str.gsub(re, replacement)
-	else
-	    result = str.sub(re, replacement)
-	end
-	return result
+        flag_mapping = {
+            "E" => Regexp::EXTENDED,
+            "I" => Regexp::IGNORECASE,
+            "M" => Regexp::MULTILINE,
+        }
+        if args.length < 3  or  args.length > 5
+            raise Puppet::ParseError, ("regsub(): wrong number of arguments" +
+                                       " (#{args.length}; min 3, max 5)")
+        end
+        str, regexp, replacement, flags, lang = args
+        reflags = 0
+        global = false
+        (flags or "").each_byte do |f|
+            f = f.chr
+            if f == "G"
+                global = true
+            else
+                fvalue = flag_mapping[f]
+                if !fvalue
+                    raise Puppet::ParseError, "regsub(): bad flag `#{f}'"
+                end
+                reflags |= fvalue
+            end
+        end
+        re = Regexp.compile(regexp, reflags, lang)
+        if global
+            result = str.gsub(re, replacement)
+        else
+            result = str.sub(re, replacement)
+        end
+        return result
     end
 end

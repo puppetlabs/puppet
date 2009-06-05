@@ -38,20 +38,20 @@ end
 debug = false
 
 result = GetoptLong.new(
-	[ "--debug",	"-d",			GetoptLong::NO_ARGUMENT ],
-	[ "--help",		"-h",			GetoptLong::NO_ARGUMENT ]
+    [ "--debug", "-d", GetoptLong::NO_ARGUMENT ],
+    [ "--help",  "-h", GetoptLong::NO_ARGUMENT ]
 )
 
 result.each { |opt,arg|
-	case opt
-		when "--help"
-			puts "There is no help yet"
-			exit
-		when "--debug"
-			debug = true
-		else
-			raise "Invalid option '#{opt}'"
-	end
+    case opt
+    when "--help"
+        puts "There is no help yet"
+        exit
+    when "--debug"
+        debug = true
+    else
+        raise "Invalid option '#{opt}'"
+    end
 }
 
 trap(:INT) {
@@ -59,7 +59,7 @@ trap(:INT) {
 }
 
 unless debug
-	daemonize()
+    daemonize()
 end
 
 # Sleep for no more than two minutes

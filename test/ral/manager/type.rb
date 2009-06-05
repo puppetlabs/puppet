@@ -6,7 +6,7 @@ require 'puppettest'
 require 'mocha'
 
 class TestType < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
     def test_typemethods
         Puppet::Type.eachtype { |type|
             name = nil

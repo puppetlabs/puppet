@@ -9,9 +9,9 @@ require 'puppettest'
 require 'puppettest/parsertesting'
 
 class TestVariable < Test::Unit::TestCase
-	include PuppetTest
-	include PuppetTest::ParserTesting
-	AST = Puppet::Parser::AST
+    include PuppetTest
+    include PuppetTest::ParserTesting
+    AST = Puppet::Parser::AST
     
     def setup
         super

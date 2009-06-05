@@ -6,7 +6,7 @@ require 'puppettest'
 require 'mocha'
 
 class TestServiceType < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
 
     # #199
     def test_no_refresh_when_starting

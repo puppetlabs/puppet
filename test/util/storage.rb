@@ -6,7 +6,7 @@ require 'puppet'
 require 'puppettest'
 
 class TestStorage < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
 
     def mkfile
         path = tempfile()

@@ -6,7 +6,7 @@ require 'puppettest'
 require 'facter'
 
 class TestSSHKey < Test::Unit::TestCase
-	include PuppetTest
+    include PuppetTest
     def setup
         super
         # god i'm lazy
