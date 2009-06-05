@@ -91,6 +91,6 @@ Puppet::Application.new(:puppetqd) do
         # class set up, because if storeconfigs is enabled,
         # we'll get a loop of continually caching the catalog
         # for storage again.
-        Puppet::Node::Catalog.cache_class = nil
+        Puppet::Resource::Catalog.cache_class = nil
     end
 end
