@@ -3,7 +3,7 @@ Puppet::Type.type(:user).provide :hpuxuseradd, :parent => :useradd do
 
     defaultfor :operatingsystem => "hp-ux"
     confine :operatingsystem => "hp-ux"
-    
+
     commands :modify => "/usr/sam/lbin/usermod.sam", :delete => "/usr/sam/lbin/userdel.sam", :add => "/usr/sbin/useradd"
     options :comment, :method => :gecos
     options :groups, :flag => "-G"

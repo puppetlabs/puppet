@@ -4,7 +4,7 @@ class AddEnvironmentToHost < ActiveRecord::Migration
             add_column :hosts, :environment, :string
         end
     end
-    
+
     def self.down
         if ActiveRecord::Base.connection.columns(:hosts).collect {|c| c.name}.include?("environment")
             remove_column :hosts, :environment

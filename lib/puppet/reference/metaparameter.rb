@@ -6,7 +6,7 @@ metaparameter = Puppet::Util::Reference.newreference :metaparameter, :doc => "Al
         next if type.name == :puppet
         next if type.name == :component
         types[type.name] = type
-    }   
+    }
 
    str = %{
 Metaparameters
@@ -23,7 +23,7 @@ Available Metaparameters
         params = []
         Puppet::Type.eachmetaparam { |param|
             params << param
-        }   
+        }
 
         params.sort { |a,b|
             a.to_s <=> b.to_s
@@ -37,12 +37,12 @@ Available Metaparameters
             #puts "</dd>"
 
             #puts ""
-        }   
+        }
     rescue => detail
         puts detail.backtrace
         puts "incorrect metaparams: %s" % detail
         exit(1)
     end
-    
-    str 
+
+    str
 end

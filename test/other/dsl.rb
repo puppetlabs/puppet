@@ -75,7 +75,7 @@ class TestDSL < Test::Unit::TestCase
     def test_evaluate
         parent = child = nil
         parenteval = childeval = nil
-        
+
         assert_nothing_raised do
             parent = aspect :parent do
                 if parenteval

@@ -1,5 +1,5 @@
 # rdot.rb
-# 
+#
 #
 # This is a modified version of dot.rb from Dave Thomas's rdoc project.  I [Horst Duchene]
 # renamed it to rdot.rb to avoid collision with an installed rdoc/dot.
@@ -7,19 +7,19 @@
 # It also supports undirected edges.
 
 module DOT
-    
+
     # These glogal vars are used to make nice graph source.
 
     $tab  = '    '
     $tab2 = $tab * 2
-    
+
     # if we don't like 4 spaces, we can change it any time
 
     def change_tab (t)
         $tab  = t
         $tab2 = t * 2
     end
-    
+
     # options for node declaration
 
     NODE_OPTS = [
@@ -56,7 +56,7 @@ module DOT
         'bgcolor',
         'rank'
     ]
-    
+
     # options for edge declaration
 
     EDGE_OPTS = [
@@ -96,7 +96,7 @@ module DOT
         # maintained for backward compatibility or rdot internal
         'id'
     ]
-    
+
     # options for graph declaration
 
     GRAPH_OPTS = [
@@ -111,7 +111,7 @@ module DOT
         'rank', 'rankdir', 'ranksep', 'ratio',
         'size'
     ]
-    
+
     # a root class for any element in dot notation
 
     class DOTSimpleElement
@@ -126,7 +126,7 @@ module DOT
             @name
         end
     end
-    
+
     # an element that has options ( node, edge, or graph )
 
     class DOTElement < DOTSimpleElement
@@ -159,8 +159,8 @@ module DOT
         #end
 
     end
-    
-    
+
+
     # This is used when we build nodes that have shape=record
     # ports don't have options :)
 
@@ -177,7 +177,7 @@ module DOT
             ( @name && @name != "" ? "<#{@name}>" : "" ) + "#{@label}"
         end
     end
-    
+
     # node element
 
     class DOTNode < DOTElement
@@ -300,7 +300,7 @@ module DOT
             @from = params['from'] ? params['from'] : nil
             @to   = params['to'] ? params['to'] : nil
         end
-       
+
         def edge_link
             '--'
         end
@@ -315,7 +315,7 @@ module DOT
         end
 
     end # class DOTEdge
-          
+
     class DOTDirectedEdge < DOTEdge
 
         def edge_link

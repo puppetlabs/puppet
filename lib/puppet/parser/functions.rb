@@ -120,7 +120,7 @@ module Functions
             return false
         end
     end
-  
+
     # Runs a newfunction to create a function for each of the log levels
 
     Puppet::Util::Log.levels.each do |level|

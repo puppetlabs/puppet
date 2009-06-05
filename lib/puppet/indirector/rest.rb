@@ -6,7 +6,7 @@ require 'puppet/network/http/api/v1'
 
 # Access objects via REST
 class Puppet::Indirector::REST < Puppet::Indirector::Terminus
-    include Puppet::Network::HTTP::API::V1 
+    include Puppet::Network::HTTP::API::V1
 
     class << self
         attr_reader :server_setting, :port_setting
@@ -58,7 +58,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     def headers
         {"Accept" => model.supported_formats.join(", ")}
     end
-  
+
     def network(request)
         Puppet::Network::HttpPool.http_instance(request.server || self.class.server, request.port || self.class.port)
     end
@@ -66,19 +66,19 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     def find(request)
         deserialize network(request).get(indirection2uri(request), headers)
     end
-    
+
     def search(request)
         unless result = deserialize(network(request).get(indirection2uri(request), headers), true)
             return []
         end
         return result
     end
-    
+
     def destroy(request)
         raise ArgumentError, "DELETE does not accept options" unless request.options.empty?
         deserialize network(request).delete(indirection2uri(request), headers)
     end
-    
+
     def save(request)
         raise ArgumentError, "PUT does not accept options" unless request.options.empty?
         deserialize network(request).put(indirection2uri(request), request.instance.render, headers)

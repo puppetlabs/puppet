@@ -31,7 +31,7 @@ class Puppet::SSLCertificates::CA
                         [file, detail]
                 end
             end
-            
+
         end
     end
 
@@ -39,7 +39,7 @@ class Puppet::SSLCertificates::CA
         File.join(Puppet[:csrdir], [hostname.downcase, "pem"].join("."))
     end
 
-    # this stores signed certs in a directory unrelated to 
+    # this stores signed certs in a directory unrelated to
     # normal client certs
     def host2certfile(hostname)
         File.join(Puppet[:signeddir], [hostname.downcase, "pem"].join("."))
@@ -142,15 +142,15 @@ class Puppet::SSLCertificates::CA
         }
     end
 
-    # List signed certificates.  This returns a list of hostnames, not actual 
-    # files -- the names can be converted to full paths with host2csrfile. 
-    def list_signed 
-        return Dir.entries(Puppet[:signeddir]).find_all { |file| 
-            file =~ /\.pem$/ 
-        }.collect { |file| 
-            file.sub(/\.pem$/, '') 
-        } 
-    end 
+    # List signed certificates.  This returns a list of hostnames, not actual
+    # files -- the names can be converted to full paths with host2csrfile.
+    def list_signed
+        return Dir.entries(Puppet[:signeddir]).find_all { |file|
+            file =~ /\.pem$/
+        }.collect { |file|
+            file.sub(/\.pem$/, '')
+        }
+    end
 
     # Create the root certificate.
     def mkrootcert
@@ -207,7 +207,7 @@ class Puppet::SSLCertificates::CA
         @crl.add_revoked(revoked)
         store_crl
     end
-    
+
     # Take the Puppet config and store it locally.
     def setconfig(hash)
         @config = {}
@@ -306,7 +306,7 @@ class Puppet::SSLCertificates::CA
         end
     end
 
-    # TTL for new certificates in seconds. If config param :ca_ttl is set, 
+    # TTL for new certificates in seconds. If config param :ca_ttl is set,
     # use that, otherwise use :ca_days for backwards compatibility
     def ttl
         days = @config[:ca_days]
@@ -337,7 +337,7 @@ class Puppet::SSLCertificates::CA
             end
         end
     end
-    
+
     private
     def init_crl
         if FileTest.exists?(@config[:cacrl])
@@ -355,7 +355,7 @@ class Puppet::SSLCertificates::CA
             @crl
         end
     end
-        
+
     def store_crl
         # Increment the crlNumber
         e = @crl.extensions.find { |e| e.oid == 'crlNumber' }

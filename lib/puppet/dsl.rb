@@ -1,5 +1,5 @@
 # Just quick mess-around to see what a DSL would look like.
-# 
+#
 # This is what the executable could look like:
 ##!/usr/bin/env ruby
 #
@@ -28,22 +28,22 @@
 #
 # require 'puppet'
 # require 'puppet/dsl'
-# 
+#
 # include Puppet::DSL
 # init()
-# 
+#
 # aspect :webserver do
 #     file "/tmp/testone", :content => "yaytest"
-# 
+#
 #     exec "testing", :command => "/bin/echo this is a test"
 # end
-# 
+#
 # aspect :other, :inherits => :webserver do
 #     file "/tmp/testone", :mode => "755"
 # end
-# 
+#
 # acquire :other
-# 
+#
 # apply
 
 require 'puppet'

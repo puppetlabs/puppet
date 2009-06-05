@@ -209,7 +209,7 @@ describe Puppet::Indirector::Indirection do
                 @indirection.request(:funtest, "yayness").should equal(request)
             end
         end
-      
+
         describe "and looking for a model instance" do
             before { @method = :find }
 
@@ -425,7 +425,7 @@ describe Puppet::Indirector::Indirection do
                 end
             end
         end
-        
+
         describe "and removing a model instance" do
             before { @method = :destroy }
 
@@ -580,7 +580,7 @@ describe Puppet::Indirector::Indirection do
             @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test)
             Puppet::Indirector::Indirection.instance(:test).should equal(@indirection)
         end
-        
+
         it "should return nil when the named indirection has not been created" do
             Puppet::Indirector::Indirection.instance(:test).should be_nil
         end
@@ -590,7 +590,7 @@ describe Puppet::Indirector::Indirection do
             @indirection = Puppet::Indirector::Indirection.new(mock_model, :test)
             Puppet::Indirector::Indirection.model(:test).should equal(mock_model)
         end
-        
+
         it "should return nil when no model matches the requested name" do
             Puppet::Indirector::Indirection.model(:test).should be_nil
         end
@@ -776,10 +776,10 @@ describe Puppet::Indirector::Indirection do
 
         describe "and saving" do
         end
-        
+
         describe "and finding" do
         end
-        
+
         after :each do
             @indirection.delete
         end

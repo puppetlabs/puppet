@@ -33,15 +33,15 @@ module Puppet
             will use the local filesystem.  This makes it easy to use the same
             configuration in both local and centralized forms.
 
-            Currently, only the ``puppet`` scheme is supported for source 
-            URL's. Puppet will connect to the file server running on 
-            ``server`` to retrieve the contents of the file. If the 
-            ``server`` part is empty, the behavior of the command-line 
+            Currently, only the ``puppet`` scheme is supported for source
+            URL's. Puppet will connect to the file server running on
+            ``server`` to retrieve the contents of the file. If the
+            ``server`` part is empty, the behavior of the command-line
             interpreter (``puppet``) and the client demon (``puppetd``) differs
             slightly: ``puppet`` will look such a file up on the module path
-            on the local host, whereas ``puppetd`` will connect to the 
+            on the local host, whereas ``puppetd`` will connect to the
             puppet server that it received the manifest from.
-     
+
             See the `FileServingConfiguration fileserver configuration documentation`:trac: for information on how to configure
             and use file services within Puppet.
 
@@ -56,9 +56,9 @@ module Puppet
                         \"/nfs/files/file\"
                     ]
                 }
-            
+
             This will use the first found file as the source.
-            
+
             You cannot currently copy links using this mechanism; set ``links``
             to ``follow`` if any remote sources are links.
             "
@@ -77,12 +77,12 @@ module Puppet
                 end
             end
         end
-            
+
         munge do |sources|
             sources = [sources] unless sources.is_a?(Array)
             sources.collect { |source| source.sub(/\/$/, '') }
         end
-        
+
         def change_to_s(currentvalue, newvalue)
             # newvalue = "{md5}" + @metadata.checksum
             if @resource.property(:ensure).retrieve == :absent
@@ -91,7 +91,7 @@ module Puppet
                 return "replacing from source %s with contents %s" % [metadata.source, metadata.checksum]
             end
         end
-        
+
         def checksum
             if metadata
                 metadata.checksum
@@ -167,7 +167,7 @@ module Puppet
 
             checks = (pinparams + [:ensure])
             checks.delete(:checksum)
-            
+
             resource[:check] = checks
             resource[:checksum] = :md5 unless resource.property(:checksum)
         end

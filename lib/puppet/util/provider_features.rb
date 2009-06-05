@@ -14,7 +14,7 @@ module Puppet::Util::ProviderFeatures
 
         # Are all of the requirements met?
         def available?(obj)
-            if self.methods 
+            if self.methods
                 if methods_available?(obj)
                     return true
                 else
@@ -126,8 +126,8 @@ module Puppet::Util::ProviderFeatures
             # Create a method that will list all functional features.
             @feature_module.send(:define_method, :features) do
                 return false unless defined?(features)
-                features.keys.find_all { |n| feature?(n) }.sort { |a,b| 
-                    a.to_s <=> b.to_s 
+                features.keys.find_all { |n| feature?(n) }.sort { |a,b|
+                    a.to_s <=> b.to_s
                 }
             end
 

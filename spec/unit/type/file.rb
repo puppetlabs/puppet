@@ -443,7 +443,7 @@ describe Puppet::Type.type(:file) do
         it "should store the metadata in the source property for each resource so the source does not have to requery the metadata" do
             @file.stubs(:perform_recursion).returns [@first]
             @resource.expects(:parameter).with(:source).returns @parameter
-            
+
             @parameter.expects(:metadata=).with(@first)
 
             @file.recurse_remote("first" => @resource)
@@ -463,7 +463,7 @@ describe Puppet::Type.type(:file) do
             @file.stubs(:perform_recursion).returns [@first]
 
             @file.parameter(:source).expects(:metadata=).with @first
-            
+
             @file.recurse_remote("first" => @resource)
         end
 

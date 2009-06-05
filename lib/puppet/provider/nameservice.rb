@@ -128,7 +128,7 @@ class Puppet::Provider::NameService < Puppet::Provider
             @ops[property.name] || ("-" + property.name)
         end
     end
-    
+
     # Autogenerate a value.  Mostly used for uid/gid, but also used heavily
     # with netinfo, because netinfo is stupid.
     def autogen(field)
@@ -159,7 +159,7 @@ class Puppet::Provider::NameService < Puppet::Provider
         else
             raise Puppet::DevError, "Invalid resource name %s" % resource
         end
-        
+
         # Make sure we don't use the same value multiple times
         if defined? @@prevauto
             @@prevauto += 1
@@ -244,7 +244,7 @@ class Puppet::Provider::NameService < Puppet::Provider
                 @objectinfo = nil
             end
         end
-        
+
         # Now convert our Etc struct into a hash.
         if @objectinfo
             return info2hash(@objectinfo)

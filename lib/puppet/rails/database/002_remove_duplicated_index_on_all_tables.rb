@@ -4,7 +4,7 @@ class RemoveDuplicatedIndexOnAllTables < ActiveRecord::Migration
             if ActiveRecord::Base.connection.indexes(t).collect {|c| c.columns}.include?("id")
                 remove_index t.to_s, :id
             end
-        end 
+        end
     end
 
     def self.down
@@ -12,6 +12,6 @@ class RemoveDuplicatedIndexOnAllTables < ActiveRecord::Migration
             unless ActiveRecord::Base.connection.indexes(t).collect {|c| c.columns}.include?("id")
                 add_index t.to_s, :id, :integer => true
             end
-        end    
+        end
     end
 end

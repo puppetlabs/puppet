@@ -26,7 +26,7 @@ class Puppet::Util::Feature
             end
             @results[name] = result
         end
-        
+
         meta_def(method) do
             unless @results.include?(name)
                 @results[name] = test(name, options)
@@ -34,14 +34,14 @@ class Puppet::Util::Feature
             @results[name]
         end
     end
-    
+
     # Create a new feature collection.
     def initialize(path)
         @path = path
         @results = {}
         @loader = Puppet::Util::Autoload.new(self, @path)
     end
-    
+
     def load
         @loader.loadall
     end
@@ -66,12 +66,12 @@ class Puppet::Util::Feature
         result = true
         if ary = options[:libs]
             ary = [ary] unless ary.is_a?(Array)
-            
+
             ary.each do |lib|
                 unless lib.is_a?(String)
                     raise ArgumentError, "Libraries must be passed as strings not %s" % lib.class
                 end
-            
+
                 begin
                     require lib
                 rescue Exception

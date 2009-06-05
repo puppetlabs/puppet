@@ -7,7 +7,7 @@ User  { provider => "directoryservice" }
 Group { provider => "directoryservice" }
 
 user {
-    "testgone": 
+    "testgone":
         ensure => absent,
         uid => 550;
     "testhere":

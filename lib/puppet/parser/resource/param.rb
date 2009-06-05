@@ -20,7 +20,7 @@ class Puppet::Parser::Resource::Param
     def line_to_i
         return line ? Integer(line) : nil
     end
-    
+
     def to_s
         "%s => %s" % [self.name, self.value]
     end

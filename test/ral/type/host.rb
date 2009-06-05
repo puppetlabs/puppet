@@ -112,7 +112,7 @@ class TestHost < Test::Unit::TestCase
 
         assert_events([:host_created], host)
 
-        current_values = nil 
+        current_values = nil
         assert_nothing_raised {
             current_values = host.retrieve
         }
@@ -128,13 +128,13 @@ class TestHost < Test::Unit::TestCase
             current_values = host.retrieve
         }
 
-        assert_equal(%w{madstop kirby yayness}, 
+        assert_equal(%w{madstop kirby yayness},
                      current_values[host.property(:alias)])
-        
+
         host[:ensure] = :absent
         assert_events([:host_removed], host)
     end
- 
+
     def test_invalid_ipaddress
         host = mkhost()
 
@@ -195,7 +195,7 @@ class TestHost < Test::Unit::TestCase
         }
     end
 
-    end  
+    end
     def test_aliasisproperty
         assert_equal(:property, @hosttype.attrtype(:alias))
     end

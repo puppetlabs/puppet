@@ -6,7 +6,7 @@ module Puppet
         #munge do |value|
         #    raise Puppet::Error, ":type is read-only"
         #end
-        
+
         def retrieve
             currentvalue = :absent
             if stat = @resource.stat(false)

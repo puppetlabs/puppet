@@ -11,7 +11,7 @@ require 'puppettest/railstesting'
 if defined? ::ActiveRecord::Base
 class TestRailsParameter < Test::Unit::TestCase
     include PuppetTest::RailsTesting
-    
+
     def params
         {"myname" => "myval", "multiple" => %w{one two three}}
     end
@@ -27,9 +27,9 @@ class TestRailsParameter < Test::Unit::TestCase
         host = Puppet::Rails::Host.new(:name => "myhost")
 
         host.save
-        
+
         resource = host.resources.create(
-            :title => "/tmp/to_resource", 
+            :title => "/tmp/to_resource",
             :restype => "file",
             :exported => true)
 

@@ -21,10 +21,10 @@ module Puppet
             the service will get restarted. The actual command to restart the
             service depends on the platform. You can provide a special command
             for restarting with the ``restart`` attribute."
-        
+
         feature :refreshable, "The provider can restart the service.",
             :methods => [:restart]
-        
+
         feature :enableable, "The provider can enable and disable the service",
             :methods => [:disable, :enable, :enabled?]
 
@@ -95,7 +95,7 @@ module Puppet
                 manually whether the service you are running has such a
                 command (or you can specify a specific command using the
                 ``status`` parameter).
-                
+
                 If you do not specify anything, then the service name will be
                 looked for in the process table."
 
@@ -113,7 +113,7 @@ module Puppet
 
             munge do |value|
                 value = [value] unless value.is_a?(Array)
-                # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
+                # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
                 # It affects stand-alone blocks, too.
                 paths = value.flatten.collect { |p| x = p.split(":") }.flatten.find_all do |path|
                     if FileTest.directory?(path)
@@ -139,10 +139,10 @@ module Puppet
                 support init scripts, and is also used for determining service
                 status on those service whose init scripts do not include a status
                 command.
-                
+
                 If this is left unspecified and is needed to check the status
                 of a service, then the service name will be used instead.
-                
+
                 The pattern can be a simple string or any legal Ruby pattern."
 
             defaultto { @resource[:binary] || @resource[:name] }

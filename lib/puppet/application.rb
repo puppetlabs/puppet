@@ -14,14 +14,14 @@ require 'optparse'
 # The executable uses the application object like this:
 #      Puppet::Application[:example].run
 #
-# 
+#
 # Puppet::Application.new(:example) do
-# 
+#
 #     preinit do
 #         # perform some pre initialization
 #         @all = false
 #     end
-# 
+#
 #     # dispatch is called to know to what command to call
 #     dispatch do
 #         ARGV.shift
@@ -30,15 +30,15 @@ require 'optparse'
 #     option("--arg ARGUMENT") do |v|
 #         @args << v
 #     end
-# 
+#
 #     option("--debug", "-d") do |v|
 #         @debug = v
 #     end
-# 
+#
 #     option("--all", "-a:) do |v|
 #         @all = v
 #     end
-#     
+#
 #     unknown do |opt,arg|
 #         # last chance to manage an option
 #         ...
@@ -49,11 +49,11 @@ require 'optparse'
 #     command(:read) do
 #         # read action
 #     end
-# 
+#
 #     command(:write) do
 #         # writeaction
 #     end
-# 
+#
 # end
 #
 # === Preinit
@@ -62,7 +62,7 @@ require 'optparse'
 #
 # === Options
 # Puppet::Application uses +OptionParser+ to manage the application options.
-# Options are defined with the +option+ method to which are passed various 
+# Options are defined with the +option+ method to which are passed various
 # arguments, including the long option, the short option, a description...
 # Refer to +OptionParser+ documentation for the exact format.
 # * If the option method is given a block, this one will be called whenever
@@ -142,7 +142,7 @@ class Puppet::Application
         end
     end
 
-    # used to declare accessor in a more natural way in the 
+    # used to declare accessor in a more natural way in the
     # various applications
     def attr_accessor(*args)
         args.each do |arg|
@@ -186,7 +186,7 @@ class Puppet::Application
 
     # initialize default application behaviour
     def init_default
-        setup do 
+        setup do
             default_setup
         end
 

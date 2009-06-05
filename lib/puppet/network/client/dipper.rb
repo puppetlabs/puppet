@@ -2,7 +2,7 @@
 class Puppet::Network::Client::Dipper < Puppet::Network::Client
     @handler = Puppet::Network::Handler.handler(:filebucket)
     @drivername = :Bucket
-    
+
     attr_accessor :name
 
     # Create our bucket client

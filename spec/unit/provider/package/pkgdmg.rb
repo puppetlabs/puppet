@@ -8,11 +8,11 @@ describe provider do
     before do
         @resource = stub 'resource', :[] => "dummypkgdmg"
         @provider = provider.new(@resource)
-        
+
         @fakemountpoint = "/tmp/dmg.foo"
         @fakehdiutilinfo = {"system-entities" => [{"mount-point" => @fakemountpoint}] }
         @fakehdiutilplist = Plist::Emit.dump(@fakehdiutilinfo)
-        
+
         @hdiutilmountargs = ["mount", "-plist", "-nobrowse", "-readonly",
                              "-noidme", "-mountrandom", "/tmp"]
     end
@@ -20,17 +20,17 @@ describe provider do
     it "should not be versionable" do
         provider.versionable?.should be_false
     end
-    
+
     it "should not be uninstallable" do
         provider.uninstallable?.should be_false
     end
-    
+
     describe "when installing it should fail when" do
         it "no source is specified" do
             @resource.stubs(:[]).with(:source).returns nil
             lambda { @provider.install }.should raise_error(Puppet::Error)
         end
-    
+
         it "no name is specified" do
             @resource.stubs(:[]).with(:name).returns nil
             lambda { @provider.install }.should raise_error(Puppet::Error)
@@ -40,13 +40,13 @@ describe provider do
             @resource.stubs(:[]).with(:source).returns "notendingindotdmg"
             lambda { @provider.install }.should raise_error(Puppet::Error)
         end
-        
+
         it "a disk image with no system entities is mounted" do
             @provider.stubs(:[]).with(:hdiutil).returns ""
             lambda { @provider.install }.should raise_error(Puppet::Error)
         end
     end
-    
+
     # These tests shouldn't be this messy. The pkgdmg provider needs work...
     describe "when installing" do
         before do
@@ -55,14 +55,14 @@ describe provider do
             @resource.stubs(:[]).with(:source).returns "foo.dmg"
             File.stubs(:open).yields fh
         end
-        
+
         it "should call hdiutil to mount and eject the disk image" do
             Dir.stubs(:entries).returns []
             @provider.class.expects(:hdiutil).with("eject", @fakemountpoint).returns 0
             @provider.class.expects(:hdiutil).with("mount", "-plist", "-nobrowse", "-readonly", "-noidme", "-mountrandom", "/tmp", nil).returns @fakehdiutilplist
             @provider.install
         end
-        
+
         it "should call installpkg if a pkg/mpkg is found on the dmg" do
             Dir.stubs(:entries).returns ["foo.pkg"]
             @provider.class.stubs(:hdiutil).returns @fakehdiutilplist

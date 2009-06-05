@@ -8,7 +8,7 @@
 #
 # = Usage
 #
-#   puppetdoc [-a|--all] [-h|--help] [-o|--outputdir <rdoc outputdir>] [-m|--mode <text|pdf|trac|rdoc>] 
+#   puppetdoc [-a|--all] [-h|--help] [-o|--outputdir <rdoc outputdir>] [-m|--mode <text|pdf|trac|rdoc>]
 #             [-r|--reference <[type]|configuration|..>] [manifest-file]
 #
 # = Description
@@ -19,7 +19,7 @@
 # available on the Reductive Labs web site.
 #
 # In 'rdoc' mode, this command generates an html RDoc hierarchy describing the manifests that
-# are in 'manifestdir' and 'modulepath' configuration directives. 
+# are in 'manifestdir' and 'modulepath' configuration directives.
 # The generated documentation directory is doc by default but can be changed with the 'outputdir' option.
 #
 # If the command is started with 'manifest-file' command-line arguments, puppetdoc generate a single

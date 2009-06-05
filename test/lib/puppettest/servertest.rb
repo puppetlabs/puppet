@@ -63,7 +63,7 @@ module PuppetTest::ServerTest
         @@tmppids << spid
 
         # give the server a chance to do its thing
-        sleep 1 
+        sleep 1
         return spid
     end
 

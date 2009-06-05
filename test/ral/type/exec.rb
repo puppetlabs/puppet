@@ -240,7 +240,7 @@ class TestExec < Test::Unit::TestCase
         )
 
         catalog = mk_catalog(file, baseobj, ofile, exec, cat)
-        
+
         rels = nil
         assert_nothing_raised do
             rels = exec.autorequire
@@ -312,7 +312,7 @@ class TestExec < Test::Unit::TestCase
         # Verify that we can execute commands as a special user
         def mknverify(file, user, group = nil, id = true)
             File.umask(0022)
-                
+
             args = {
                 :command => "touch %s" % file,
                 :path => "/usr/bin:/bin:/usr/sbin:/sbin",
@@ -541,7 +541,7 @@ class TestExec < Test::Unit::TestCase
 
         assert_raise(ArgumentError, "Missing command did not raise error") {
             exec.run("/bin/nosuchthingexists")
-        } 
+        }
     end
 
     def test_envparam
@@ -583,7 +583,7 @@ and stuff"
         }
         assert_equal("A B\n", output)
     end
-    
+
     def test_environmentparam
         exec = Puppet::Type.newexec(
             :command => "echo $environmenttest",
@@ -627,13 +627,13 @@ and stuff"
     def test_timeout
         exec = Puppet::Type.type(:exec).new(:command => "sleep 1", :path => ENV["PATH"], :timeout => "0.2")
         time = Time.now
-        
+
         assert_raise(Timeout::Error) {
             exec.run("sleep 1")
         }
         Puppet.info "%s seconds, vs a timeout of %s" % [Time.now.to_f - time.to_f, exec[:timeout]]
-        
-        
+
+
         assert_apply(exec)
     end
 

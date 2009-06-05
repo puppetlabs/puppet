@@ -239,11 +239,11 @@ div.method-source-code pre { color: #ffdead; overflow: hidden; }
 
 
 #####################################################################
-### H E A D E R   T E M P L A T E  
+### H E A D E R   T E M P L A T E
 #####################################################################
 
 XHTML_PREAMBLE = %{<?xml version="1.0" encoding="%charset%"?>
-<!DOCTYPE html 
+<!DOCTYPE html
      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 }
@@ -271,7 +271,7 @@ HEADER = XHTML_PREAMBLE + %{
       return false;
 
     elemStyle = elem.style;
-    
+
     if ( elemStyle.display != "block" ) {
       elemStyle.display = "block"
     } else {
@@ -280,10 +280,10 @@ HEADER = XHTML_PREAMBLE + %{
 
     return true;
   }
-  
+
   // Make codeblocks hidden by default
   document.writeln( "<style type=\\"text/css\\">div.method-source-code { display: none }</style>" )
-  
+
   // ]]>
   </script>
 
@@ -516,7 +516,7 @@ IF:sectitle
 IF:seccomment
       <div class="section-comment">
         %seccomment%
-      </div>      
+      </div>
 ENDIF:seccomment
 ENDIF:sectitle
 END:sections
@@ -608,7 +608,7 @@ IF:sectitle
 IF:seccomment
       <div class="section-comment">
         %seccomment%
-      </div>      
+      </div>
 ENDIF:seccomment
 ENDIF:sectitle
 
@@ -720,7 +720,7 @@ END:attributes
       </div>
     </div>
 ENDIF:attributes
-      
+
 
 
     <!-- if method_list -->
@@ -755,7 +755,7 @@ IF:sourcecode
           </a>
 ENDIF:sourcecode
         </div>
-      
+
         <div class="method-description">
 IF:m_desc
           %m_desc%
@@ -797,7 +797,7 @@ START:params
 END:params
 ENDIF:params
         </div>
-      
+
         <div class="method-description">
 IF:m_desc
           %m_desc%
@@ -935,7 +935,7 @@ METHOD_INDEX = FILE_INDEX
 COMBO_INDEX = XHTML_PREAMBLE + %{
 <!--
 
-    %classes_title% &amp; %defines_title% 
+    %classes_title% &amp; %defines_title%
 
   -->
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
@@ -950,7 +950,7 @@ COMBO_INDEX = XHTML_PREAMBLE + %{
       parent.docwin.location.href = url;
   }
   //--></SCRIPT>
-  
+
 </head>
 <body>
 <div id="index">
@@ -1019,7 +1019,7 @@ ENDIF:plugins
 }
 
 INDEX = %{<?xml version="1.0" encoding="%charset%"?>
-<!DOCTYPE html 
+<!DOCTYPE html
      PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN"
      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">
 

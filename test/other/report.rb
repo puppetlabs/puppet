@@ -80,7 +80,7 @@ class TestReports < Test::Unit::TestCase
     def test_store_report
         # Create a bunch of log messages in an array.
         report = Puppet::Transaction::Report.new
-        
+
         # We have to reuse reporting here because of something going on in the
         # server/report.rb file
         Puppet.settings.use(:main, :puppetmasterd)
@@ -143,31 +143,31 @@ class TestReports < Test::Unit::TestCase
     else
     $stderr.puts "Install RRD for metric reporting tests"
     end
-    
+
     def test_tagmail_parsing
         report = Object.new
         report.extend(Puppet::Reports.report(:tagmail))
-        
+
         passers = File.join(datadir, "reports", "tagmail_passers.conf")
         assert(FileTest.exists?(passers), "no passers file %s" % passers)
-        
+
         File.readlines(passers).each do |line|
             assert_nothing_raised("Could not parse %s" % line.inspect) do
                 report.parse(line)
             end
         end
-        
+
         # Now make sure the failers fail
         failers = File.join(datadir, "reports", "tagmail_failers.conf")
         assert(FileTest.exists?(failers), "no failers file %s" % failers)
-        
+
         File.readlines(failers).each do |line|
             assert_raise(ArgumentError, "Parsed %s" % line.inspect) do
                 report.parse(line)
             end
         end
     end
-    
+
     def test_tagmail_parsing_results
         report = Object.new
         report.extend(Puppet::Reports.report(:tagmail))
@@ -179,27 +179,27 @@ class TestReports < Test::Unit::TestCase
             "tag, !other: abuse@domain.com" => [%w{abuse@domain.com}, %w{tag}, %w{other}],
             "tag, !other, one, !two: abuse@domain.com" => [%w{abuse@domain.com}, %w{tag one}, %w{other two}],
             "tag: abuse@domain.com, other@domain.com" => [%w{abuse@domain.com other@domain.com}, %w{tag}, []]
-            
+
         }.each do |line, results|
             assert_nothing_raised("Failed to parse %s" % line.inspect) do
                 assert_equal(results, report.parse(line).shift, "line %s returned incorrect results %s" % [line.inspect, results.inspect])
             end
         end
     end
-    
+
     def test_tagmail_matching
         report = Puppet::Transaction::Report.new
         Puppet::Util::Log.close
         [%w{one}, %w{one two}, %w{one two three}, %w{one two three four}].each do |tags|
             log = Puppet::Util::Log.new(:level => :notice, :message => tags.join(" "), :tags => tags)
-            
+
             report << log
         end
-        
+
         list = report.logs.collect { |l| l.to_report }
-        
+
         report.extend(Puppet::Reports.report(:tagmail))
-        
+
         {
             [%w{abuse@domain.com}, %w{all}, []] => list,
             [%w{abuse@domain.com}, %w{all}, %w{three}] => list[0..1],
@@ -212,7 +212,7 @@ class TestReports < Test::Unit::TestCase
             assert_nothing_raised("Could not match with %s" % args.inspect) do
                 results = report.match([args])
             end
-            
+
             if expected
                 assert_equal([args[0], expected.join("\n")], results[0], "did get correct results for %s" % args.inspect)
             else

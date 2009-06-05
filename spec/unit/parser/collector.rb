@@ -496,7 +496,7 @@ describe Puppet::Parser::Collector, "when building its ActiveRecord query for co
 
         Puppet::Rails::Resource.stubs(:find).with { |*arguments|
             options = arguments[3]
-            options[:conditions][0] =~ /^host_id != \?/ and options[:conditions][1] == 5 
+            options[:conditions][0] =~ /^host_id != \?/ and options[:conditions][1] == 5
         }.returns([])
 
         @collector.evaluate

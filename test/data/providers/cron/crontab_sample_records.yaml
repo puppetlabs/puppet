@@ -1,272 +1,272 @@
---- 
-:longcommment: 
+---
+:longcommment:
   :text: "# This is a comment"
-  :record: 
+  :record:
     :line: "# This is a comment"
     :record_type: :comment
-:special: 
+:special:
   :text: "@hourly /bin/date"
-  :record: 
+  :record:
     :special: hourly
     :command: /bin/date
     :record_type: :freebsd_special
-:long_name: 
+:long_name:
   :text: "# Puppet Name: long_name"
-  :record: 
+  :record:
     :line: "# Puppet Name: long_name"
     :name: long_name
     :record_type: :comment
-:multiple_minutes: 
+:multiple_minutes:
   :text: 5,15 * * * * /bin/date
-  :record: 
-    :minute: 
+  :record:
+    :minute:
     - "5"
     - "15"
     :command: /bin/date
     :record_type: :crontab
-:environment: 
+:environment:
   :text: ONE=TWO
-  :record: 
+  :record:
     :line: ONE=TWO
     :record_type: :environment
-:empty: 
+:empty:
   :text: ""
-  :record: 
+  :record:
     :line: ""
     :record_type: :blank
-:simple: 
+:simple:
   :text: "* * * * * /bin/date"
-  :record: 
+  :record:
     :command: /bin/date
     :record_type: :crontab
-:whitespace: 
+:whitespace:
   :text: "   "
-  :record: 
+  :record:
     :line: "   "
     :record_type: :blank
-:minute_and_hour: 
+:minute_and_hour:
   :text: 5 15 * * * /bin/date
-  :record: 
-    :minute: 
+  :record:
+    :minute:
     - "5"
-    :hour: 
+    :hour:
     - "15"
     :command: /bin/date
     :record_type: :crontab
-:lowercase_environment: 
+:lowercase_environment:
   :text: a=b
-  :record: 
+  :record:
     :line: a=b
     :record_type: :environment
-:special_with_spaces: 
+:special_with_spaces:
   :text: "@daily /bin/echo testing"
-  :record: 
+  :record:
     :special: daily
     :command: /bin/echo testing
     :record_type: :freebsd_special
-:tabs: 
+:tabs:
   :text: !binary |
     CQ==
 
-  :record: 
+  :record:
     :line: !binary |
       CQ==
 
     :record_type: :blank
-:multiple_minute_and_hour: 
+:multiple_minute_and_hour:
   :text: 5,10 15,20 * * * /bin/date
-  :record: 
-    :minute: 
+  :record:
+    :minute:
     - "5"
     - "10"
-    :hour: 
+    :hour:
     - "15"
     - "20"
     :command: /bin/date
     :record_type: :crontab
-:name: 
+:name:
   :text: "# Puppet Name: testing"
-  :record: 
+  :record:
     :line: "# Puppet Name: testing"
     :name: testing
     :record_type: :comment
-:another_env: 
+:another_env:
   :text: Testing=True
-  :record: 
+  :record:
     :line: Testing=True
     :record_type: :environment
-:shortcomment: 
+:shortcomment:
   :text: "#"
-  :record: 
+  :record:
     :line: "#"
     :record_type: :comment
-:spaces_in_command: 
+:spaces_in_command:
   :text: "* * * * * /bin/echo testing"
-  :record: 
+  :record:
     :command: /bin/echo testing
     :record_type: :crontab
-:fourth_env: 
+:fourth_env:
   :text: True=False
-  :record: 
+  :record:
     :line: True=False
     :record_type: :environment
-:simple_with_minute: 
+:simple_with_minute:
   :text: 5 * * * * /bin/date
-  :record: 
-    :minute: 
+  :record:
+    :minute:
     - "5"
     :command: /bin/date
     :record_type: :crontab
-:spaces_in_command_with_times: 
+:spaces_in_command_with_times:
   :text: 5,10 15,20 * * * /bin/echo testing
-  :record: 
-    :minute: 
+  :record:
+    :minute:
     - "5"
     - "10"
-    :hour: 
+    :hour:
     - "15"
     - "20"
     :command: /bin/echo testing
     :record_type: :crontab
-:name_with_spaces: 
+:name_with_spaces:
   :text: "# Puppet Name: another name"
-  :record: 
+  :record:
     :line: "# Puppet Name: another name"
     :name: another name
     :record_type: :comment
---- 
-:longcommment: 
+---
+:longcommment:
   :text: "# This is a comment"
-  :record: 
+  :record:
     :line: "# This is a comment"
     :record_type: :comment
-:special: 
+:special:
   :text: "@hourly /bin/date"
-  :record: 
+  :record:
     :special: hourly
     :command: /bin/date
     :record_type: :freebsd_special
-:long_name: 
+:long_name:
   :text: "# Puppet Name: long_name"
-  :record: 
+  :record:
     :line: "# Puppet Name: long_name"
     :name: long_name
     :record_type: :comment
-:multiple_minutes: 
+:multiple_minutes:
   :text: 5,15 * * * * /bin/date
-  :record: 
-    :minute: 
+  :record:
+    :minute:
     - "5"
     - "15"
     :command: /bin/date
     :record_type: :crontab
-:environment: 
+:environment:
   :text: ONE=TWO
-  :record: 
+  :record:
     :line: ONE=TWO
     :record_type: :environment
-:empty: 
+:empty:
   :text: ""
-  :record: 
+  :record:
     :line: ""
     :record_type: :blank
-:simple: 
+:simple:
   :text: "* * * * * /bin/date"
-  :record: 
+  :record:
     :command: /bin/date
     :record_type: :crontab
-:whitespace: 
+:whitespace:
   :text: "   "
-  :record: 
+  :record:
     :line: "   "
     :record_type: :blank
-:minute_and_hour: 
+:minute_and_hour:
   :text: 5 15 * * * /bin/date
-  :record: 
-    :minute: 
+  :record:
+    :minute:
     - "5"
-    :hour: 
+    :hour:
     - "15"
     :command: /bin/date
     :record_type: :crontab
-:lowercase_environment: 
+:lowercase_environment:
   :text: a=b
-  :record: 
+  :record:
     :line: a=b
     :record_type: :environment
-:special_with_spaces: 
+:special_with_spaces:
   :text: "@daily /bin/echo testing"
-  :record: 
+  :record:
     :special: daily
     :command: /bin/echo testing
     :record_type: :freebsd_special
-:tabs: 
+:tabs:
   :text: !binary |
     CQ==
 
-  :record: 
+  :record:
     :line: !binary |
       CQ==
 
     :record_type: :blank
-:multiple_minute_and_hour: 
+:multiple_minute_and_hour:
   :text: 5,10 15,20 * * * /bin/date
-  :record: 
-    :minute: 
+  :record:
+    :minute:
     - "5"
     - "10"
-    :hour: 
+    :hour:
     - "15"
     - "20"
     :command: /bin/date
     :record_type: :crontab
-:name: 
+:name:
   :text: "# Puppet Name: testing"
-  :record: 
+  :record:
     :line: "# Puppet Name: testing"
     :name: testing
     :record_type: :comment
-:another_env: 
+:another_env:
   :text: Testing=True
-  :record: 
+  :record:
     :line: Testing=True
     :record_type: :environment
-:shortcomment: 
+:shortcomment:
   :text: "#"
-  :record: 
+  :record:
     :line: "#"
     :record_type: :comment
-:spaces_in_command: 
+:spaces_in_command:
   :text: "* * * * * /bin/echo testing"
-  :record: 
+  :record:
     :command: /bin/echo testing
     :record_type: :crontab
-:fourth_env: 
+:fourth_env:
   :text: True=False
-  :record: 
+  :record:
     :line: True=False
     :record_type: :environment
-:simple_with_minute: 
+:simple_with_minute:
   :text: 5 * * * * /bin/date
-  :record: 
-    :minute: 
+  :record:
+    :minute:
     - "5"
     :command: /bin/date
     :record_type: :crontab
-:spaces_in_command_with_times: 
+:spaces_in_command_with_times:
   :text: 5,10 15,20 * * * /bin/echo testing
-  :record: 
-    :minute: 
+  :record:
+    :minute:
     - "5"
     - "10"
-    :hour: 
+    :hour:
     - "15"
     - "20"
     :command: /bin/echo testing
     :record_type: :crontab
-:name_with_spaces: 
+:name_with_spaces:
   :text: "# Puppet Name: another name"
-  :record: 
+  :record:
     :line: "# Puppet Name: another name"
     :name: another name
     :record_type: :comment

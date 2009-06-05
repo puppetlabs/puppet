@@ -50,7 +50,7 @@ class TestSnippets < Test::Unit::TestCase
     def snippet(name)
         File.join(self.class.snippetdir, name)
     end
-    
+
     def file2ast(file)
         parser = Puppet::Parser::Parser.new()
         parser.file = file
@@ -142,7 +142,7 @@ class TestSnippets < Test::Unit::TestCase
     def disabled_test_defaults
         Puppet::Type.eachtype { |type|
             next if type.name == :puppet or type.name == :component
-            
+
             rands = randeach(type)
 
             name = type.name.to_s.capitalize
@@ -417,7 +417,7 @@ class TestSnippets < Test::Unit::TestCase
             assert_file("/tmp/virtualtest#{num}")
         end
     end
-    
+
     def snippet_componentrequire
         %w{1 2}.each do |num|
             assert_file("/tmp/testing_component_requires#{num}",
@@ -470,7 +470,7 @@ class TestSnippets < Test::Unit::TestCase
         assert_file("/tmp/multipleclassone", "one")
         assert_file("/tmp/multipleclasstwo", "two")
     end
-    
+
     def snippet_multilinecomments
         assert_not_file("/tmp/multilinecomments","Did create a commented resource");
     end

@@ -161,7 +161,7 @@ class TypeDoc
             a.to_s <=> b.to_s
         }.each { |prov|
             puts "\n- **%s**" % prov
-            puts @format.wrap(type.provider(prov).doc, 
+            puts @format.wrap(type.provider(prov).doc,
                               :indent => 4, :scrub => true)
         }
     end

@@ -45,7 +45,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
         end
         return :false
     end
-    
+
     def syncversion= (dosync)
         begin
             execoutput("#{command(:semodule)} --upgrade #{selmod_name_to_filename}")
@@ -115,13 +115,13 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
 
         # At last!  the version
 
-        v = selmod_readnext(mod) 
+        v = selmod_readnext(mod)
 
         self.debug "file version #{v}"
         return v
     end
 
-    def selmodversion_loaded 
+    def selmodversion_loaded
         lines = ()
         begin
             execpipe("#{command(:semodule)} --list") do |output|

@@ -12,7 +12,7 @@ class Puppet::SSL::CertificateFactory
     }
 
     attr_reader :name, :cert_type, :csr, :issuer, :serial
-    
+
     def initialize(cert_type, csr, issuer, serial)
         @cert_type, @csr, @issuer, @serial = cert_type, csr, issuer, serial
 
@@ -77,7 +77,7 @@ class Puppet::SSL::CertificateFactory
         @extensions << @ef.create_extension("authorityKeyIdentifier", "keyid:always,issuer:always") if @cert_type == :ca
     end
 
-    # TTL for new certificates in seconds. If config param :ca_ttl is set, 
+    # TTL for new certificates in seconds. If config param :ca_ttl is set,
     # use that, otherwise use :ca_days for backwards compatibility
     def ttl
         ttl = Puppet.settings[:ca_ttl]

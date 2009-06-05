@@ -11,7 +11,7 @@ class TestRelationships < Test::Unit::TestCase
         super
         Puppet::Type.type(:exec)
     end
-    
+
     def newfile
         assert_nothing_raised() {
             return Puppet::Type.type(:file).new(
@@ -20,7 +20,7 @@ class TestRelationships < Test::Unit::TestCase
             )
         }
     end
-    
+
     def check_relationship(sources, targets, out, refresher)
         if out
             deps = sources.builddepends
@@ -31,17 +31,17 @@ class TestRelationships < Test::Unit::TestCase
         end
         assert_instance_of(Array, deps)
         assert(! deps.empty?, "Did not receive any relationships")
-        
+
         deps.each do |edge|
             assert_instance_of(Puppet::Relationship, edge)
         end
-        
+
         sources.each do |source|
             targets.each do |target|
                 edge = deps.find { |e| e.source == source and e.target == target }
                 assert(edge, "Could not find edge for %s => %s" %
                     [source.ref, target.ref])
-        
+
                 if refresher
                     assert_equal(:ALL_EVENTS, edge.event)
                     assert_equal(:refresh, edge.callback)
@@ -56,12 +56,12 @@ class TestRelationships < Test::Unit::TestCase
     def test_autorequire
         # We know that execs autorequire their cwd, so we'll use that
         path = tempfile()
-        
+
         file = Puppet::Type.type(:file).new(:title => "myfile", :path => path,
             :ensure => :directory)
         exec = Puppet::Type.newexec(:title => "myexec", :cwd => path,
             :command => "/bin/echo")
-        
+
         catalog = mk_catalog(file, exec)
         reqs = nil
         assert_nothing_raised do
@@ -70,18 +70,18 @@ class TestRelationships < Test::Unit::TestCase
         assert_instance_of(Puppet::Relationship, reqs[0], "Did not return a relationship edge")
         assert_equal(file, reqs[0].source, "Did not set the autorequire source correctly")
         assert_equal(exec, reqs[0].target, "Did not set the autorequire target correctly")
-        
-        # Now make sure that these relationships are added to the 
+
+        # Now make sure that these relationships are added to the
         # relationship graph
         catalog.apply do |trans|
             assert(catalog.relationship_graph.edge?(file, exec), "autorequire edge was not created")
         end
     end
-    
+
     # Testing #411.  It was a problem with builddepends.
     def test_missing_deps
         file = Puppet::Type.type(:file).new :path => tempfile, :require => Puppet::Resource::Reference.new("file", "/no/such/file")
-        
+
         assert_raise(Puppet::Error) do
             file.builddepends
         end

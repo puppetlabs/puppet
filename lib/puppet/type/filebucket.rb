@@ -9,16 +9,16 @@ module Puppet
             can later be used to retrieve the file if restoration becomes
             necessary.  A filebucket does not do any work itself; instead,
             it can be specified as the value of *backup* in a **file** object.
-            
+
             Currently, filebuckets are only useful for manual retrieval of
             accidentally removed files (e.g., you look in the log for the md5
             sum and retrieve the file with that sum from the filebucket), but
             when transactions are fully supported filebuckets will be used to
             undo transactions.
-            
+
             You will normally want to define a single filebucket for your
             whole network and then use that as the default backup location::
-            
+
                 # Define the bucket
                 filebucket { main: server => puppet }
 
@@ -74,7 +74,7 @@ module Puppet
         def mkbucket
             if self[:server]
                 begin
-                    @bucket = Puppet::Network::Client.client(:Dipper).new( 
+                    @bucket = Puppet::Network::Client.client(:Dipper).new(
                         :Server => self[:server],
                         :Port => self[:port]
                     )

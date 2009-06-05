@@ -75,8 +75,8 @@ filemap.each do |dir, files|
                 t.libs += $test_library_paths + ['..']
                 t.libs << '..'
                 t.test_files = [ file ]
-                t.verbose = true 
-            end 
+                t.verbose = true
+            end
         end
     end
 

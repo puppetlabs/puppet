@@ -96,7 +96,7 @@ describe Puppet::SSL::CertificateFactory do
             @factory.result
         end
     end
-    
+
     describe "when building extensions" do
         it "should have tests"
     end

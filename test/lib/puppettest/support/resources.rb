@@ -7,14 +7,14 @@ module PuppetTest::Support::Resources
     def tree_resource(name)
         Puppet::Type.type(:file).new :title => name, :path => "/tmp/#{name}", :mode => 0755
     end
-    
+
     def tree_container(name)
         Puppet::Type::Component.create :name => name, :type => "yay"
     end
-    
+
     def treenode(config, name, *resources)
         comp = tree_container name
-        resources.each do |resource| 
+        resources.each do |resource|
             if resource.is_a?(String)
                 resource = tree_resource(resource)
             end
@@ -23,7 +23,7 @@ module PuppetTest::Support::Resources
         end
         return comp
     end
-    
+
     def mktree
         catalog = Puppet::Resource::Catalog.new do |config|
             one = treenode(config, "one", "a", "b")
@@ -31,7 +31,7 @@ module PuppetTest::Support::Resources
             middle = treenode(config, "middle", "e", "f", two)
             top = treenode(config, "top", "g", "h", middle, one)
         end
-        
+
         return catalog
     end
 end

@@ -39,7 +39,7 @@ Puppet::Type.type(:user).provide :netinfo, :parent => Puppet::Provider::NameServ
     # user mgmt systems will need to override this method.
     def groups
         warnonce "The NetInfo provider is deprecated; use directoryservice instead"
-        
+
         groups = []
 
         user = @resource[:name]
@@ -64,7 +64,7 @@ Puppet::Type.type(:user).provide :netinfo, :parent => Puppet::Provider::NameServ
     # of the groups and add us to them.
     def groups=(groups)
         warnonce "The NetInfo provider is deprecated; use directoryservice instead"
-        
+
         case groups
         when Fixnum
             groups = [groups.to_s]

@@ -10,7 +10,7 @@ require 'fileutils'
 class TestFileIgnoreSources < Test::Unit::TestCase
     include PuppetTest::Support::Utils
     include PuppetTest::FileTesting
-   
+
     def setup
         super
         begin
@@ -56,33 +56,33 @@ class TestFileIgnoreSources < Test::Unit::TestCase
 
         #create source files
 
-        File.open(File.join(frompath,sourcefile1), 
+        File.open(File.join(frompath,sourcefile1),
           File::WRONLY|File::CREAT|File::APPEND) { |of|
             of.puts "yayness"
         }
-      
-        File.open(File.join(frompath,sourcefile2), 
+
+        File.open(File.join(frompath,sourcefile2),
           File::WRONLY|File::CREAT|File::APPEND) { |of|
             of.puts "even yayer"
         }
-      
+
 
         #makes Puppet file Object
         assert_nothing_raised {
             tofile = Puppet::Type.type(:file).new(
                 :name => topath,
                 :source => frompath,
-                :recurse => true,                             
-                :ignore => "sourcefile2"                            
+                :recurse => true,
+                :ignore => "sourcefile2"
             )
         }
 
         config = mk_catalog(tofile)
         config.apply
-  
-      
+
+
         #topath should exist as a directory with sourcedir as a directory
-       
+
         #This file should exist
         assert(FileTest.exists?(File.join(topath,sourcefile1)))
 
@@ -104,7 +104,7 @@ class TestFileIgnoreSources < Test::Unit::TestCase
 
         frompath = File.join(path,sourcedir)
         FileUtils.mkdir_p frompath
-        
+
         FileUtils.mkdir_p(File.join(frompath, subdir))
         FileUtils.mkdir_p(File.join(frompath, subdir2))
         dir =  Dir.glob(File.join(path,"**/*"))
@@ -117,18 +117,18 @@ class TestFileIgnoreSources < Test::Unit::TestCase
         trans = nil
 
         #create source files
-               
-        dir.each { |dir|       
-            File.open(File.join(dir,sourcefile1), 
+
+        dir.each { |dir|
+            File.open(File.join(dir,sourcefile1),
              File::WRONLY|File::CREAT|File::APPEND) { |of|
                 of.puts "yayness"
             }
-      
-            File.open(File.join(dir,sourcefile2), 
+
+            File.open(File.join(dir,sourcefile2),
              File::WRONLY|File::CREAT|File::APPEND) { |of|
               of.puts "even yayer"
             }
-      
+
         }
 
         #makes Puppet file Object
@@ -136,16 +136,16 @@ class TestFileIgnoreSources < Test::Unit::TestCase
             tofile = Puppet::Type.type(:file).new(
                 :name => topath,
                 :source => frompath,
-                :recurse => true,                             
-                :ignore => "*2"                            
+                :recurse => true,
+                :ignore => "*2"
             )
         }
 
         config = mk_catalog(tofile)
         config.apply
-              
+
         #topath should exist as a directory with sourcedir as a directory
-       
+
         #This file should exist
         assert(FileTest.exists?(File.join(topath,sourcefile1)))
         assert(FileTest.exists?(File.join(topath,subdir)))
@@ -172,7 +172,7 @@ class TestFileIgnoreSources < Test::Unit::TestCase
 
         frompath = File.join(path,sourcedir)
         FileUtils.mkdir_p frompath
-        
+
         FileUtils.mkdir_p(File.join(frompath, subdir))
         FileUtils.mkdir_p(File.join(frompath, subdir2))
         FileUtils.mkdir_p(File.join(frompath, subdir3))
@@ -186,20 +186,20 @@ class TestFileIgnoreSources < Test::Unit::TestCase
         trans = nil
 
         #create source files
-       
 
-    
-        sourcedir.each { |dir|       
-            File.open(File.join(dir,sourcefile1), 
+
+
+        sourcedir.each { |dir|
+            File.open(File.join(dir,sourcefile1),
              File::WRONLY|File::CREAT|File::APPEND) { |of|
                 of.puts "yayness"
             }
-      
-            File.open(File.join(dir,sourcefile2), 
+
+            File.open(File.join(dir,sourcefile2),
              File::WRONLY|File::CREAT|File::APPEND) { |of|
               of.puts "even yayer"
             }
-      
+
         }
 
 
@@ -209,8 +209,8 @@ class TestFileIgnoreSources < Test::Unit::TestCase
                 :name => topath,
                 :source => frompath,
                 :recurse => true,
-                :ignore => ["*2", "an*"]                            
-               # :ignore => ["*2", "an*", "nomatch"]                            
+                :ignore => ["*2", "an*"]
+               # :ignore => ["*2", "an*", "nomatch"]
             )
         }
 
@@ -224,7 +224,7 @@ class TestFileIgnoreSources < Test::Unit::TestCase
         assert(FileTest.exists?(File.join(topath,sourcefile1)), "file1 not in destdir")
         assert(FileTest.exists?(File.join(topath,subdir)), "subdir1 not in destdir")
         assert(FileTest.exists?(File.join(File.join(topath,subdir),sourcefile1)), "file1 not in subdir")
-        # proper files in source 
+        # proper files in source
         assert(FileTest.exists?(File.join(frompath,subdir)), "subdir not in source")
         assert(FileTest.exists?(File.join(frompath,subdir2)), "subdir2 not in source")
         assert(FileTest.exists?(File.join(frompath,subdir3)), "subdir3 not in source")

@@ -82,7 +82,7 @@ module Puppet::Network
                 if detail.message.include?(str)
                     Puppet.warning "Certificate validation failed; consider using the certname configuration option"
                 end
-            end 
+            end
             raise XMLRPCClientError, "Certificates were not trusted: %s" % detail
         end
 
@@ -90,7 +90,7 @@ module Puppet::Network
             if detail.message.to_s =~ /^Wrong size\. Was \d+, should be \d+$/
                 Puppet.warning "XMLRPC returned wrong size.  Retrying."
                 return :retry
-            end    
+            end
             Puppet.err "Could not call %s.%s: %s" % [namespace, method, detail.inspect]
             error = XMLRPCClientError.new(detail.to_s)
             error.set_backtrace detail.backtrace
@@ -107,7 +107,7 @@ module Puppet::Network
                 if detail.message.include?(str)
                     Puppet.warning "Certificate validation failed; consider using the certname configuration option"
                 end
-            end 
+            end
             raise XMLRPCClientError, "Certificates were not trusted: %s" % detail
         end
 
@@ -185,7 +185,7 @@ module Puppet::Network
             )
             @http = Puppet::Network::HttpPool.http_instance(@host, @port)
         end
- 
+
         # Get rid of our existing connection, replacing it with a new one.
         # This should only happen if we lose our connection somehow (e.g., an EPIPE)
         # or we've just downloaded certs and we need to create new http instances
@@ -197,7 +197,7 @@ module Puppet::Network
             @http = nil
             self.http # force a new one
         end
-        
+
         def start
             begin
                 @http.start unless @http.started?

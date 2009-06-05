@@ -114,7 +114,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
             bucket.expects(:type=).with("Class")
             bucket.expects(:name=).with(:main)
             main.stubs(:builtin?).returns(false)
-            
+
             Puppet::TransBucket.expects(:new).returns bucket
 
             config.extract_to_transportable.should equal(bucket)
@@ -380,7 +380,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
             @catalog.make_default_resources
             @catalog.resource(:schedule, "daily").should_not be_nil
         end
-        
+
         it "should optionally support an initialization block and should finalize after such blocks" do
             @one.expects :finish
             @two.expects :finish
@@ -539,7 +539,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
             @transaction.expects :cleanup
             @catalog.apply
         end
-    
+
         it "should return the transaction" do
             @catalog.apply.should equal(@transaction)
         end
@@ -549,7 +549,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
                 trans.should equal(@transaction)
             end
         end
-    
+
         it "should default to not being a host catalog" do
             @catalog.host_config.should be_nil
         end
@@ -589,7 +589,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
             @transaction.stubs(:addtimes)
             file = Puppet::Type.type(:file).new(:name => "/yay", :ensure => :file)
             @catalog.apply do |trans|
-                @catalog.add_resource file 
+                @catalog.add_resource file
                 @catalog.resource("File[/yay]").should_not be_nil
             end
             @catalog.resource("File[/yay]").should be_nil
@@ -644,7 +644,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
             before do
                 @catalog.host_config = false
             end
-        
+
             it "should never send reports" do
                 Puppet[:report] = true
                 Puppet[:summarize] = true

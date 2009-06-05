@@ -1,4 +1,4 @@
---- 
+---
 - |
   # comment 1
   # Puppet Name: name2
@@ -9,7 +9,7 @@
 - - :record_type: :comment
     :line: "# comment 1"
   - :command: command4
-    :environment: 
+    :environment:
     - env3=val
     :name: name2
     :record_type: :crontab

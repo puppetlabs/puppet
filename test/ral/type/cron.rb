@@ -152,7 +152,7 @@ class TestCron < Test::Unit::TestCase
             cron = mkcron(name)
             catalog = mk_catalog(name, cron)
             trans = assert_events([:cron_created], catalog, name)
-            
+
             cron.provider.class.prefetch
             cron = nil
 
@@ -342,7 +342,7 @@ class TestCron < Test::Unit::TestCase
       unless param =~ /=$/
         param = "%s=" % param
       end
-    
+
       cron.provider.send(param, value)
     end
 

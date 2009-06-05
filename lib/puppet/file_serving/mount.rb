@@ -15,7 +15,7 @@ class Puppet::FileServing::Mount < Puppet::Network::AuthStore
     include Puppet::Util::Logging
 
     attr_reader :name
-    
+
     # Determine the environment to use, if any.
     def environment(node_name)
         if node_name and node = Puppet::Node.find(node_name)

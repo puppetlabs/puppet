@@ -3,7 +3,7 @@ require 'puppet'
 
 # A class for handling metrics.  This is currently ridiculously hackish.
 class Puppet::Util::Metric
-    
+
     attr_accessor :type, :name, :value, :label
     attr_writer :values
 
@@ -32,7 +32,7 @@ class Puppet::Util::Metric
         start ||= Time.now.to_i - 5
 
         @rrd = RRDtool.new(self.path)
-        args = [] 
+        args = []
 
         values.each { |value|
             # the 7200 is the heartbeat -- this means that any data that isn't
@@ -81,7 +81,7 @@ class Puppet::Util::Metric
             args << defs
             args << lines
             args.flatten!
-            if range 
+            if range
                 args.push("--start",range[0],"--end",range[1])
             else
                 args.push("--start", Time.now.to_i - time, "--end", Time.now.to_i)
@@ -147,7 +147,7 @@ class Puppet::Util::Metric
     end
 
     private
-    
+
     # Convert a name into a label.
     def labelize(name)
         name.to_s.capitalize.gsub("_", " ")

@@ -16,7 +16,7 @@ module Puppet::Network
             @authconfig
         end
 
-        # Verify that our client has access.  
+        # Verify that our client has access.
         def check_authorization(request)
             authconfig.allowed?(request)
         end

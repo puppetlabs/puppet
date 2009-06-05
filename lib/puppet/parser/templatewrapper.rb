@@ -91,7 +91,7 @@ class Puppet::Parser::TemplateWrapper
         # current object, making it possible to access them without conflict
         # to the regular methods.
         benchmark(:debug, "Bound template variables for #{template_source}") do
-            scope.to_hash.each { |name, value| 
+            scope.to_hash.each { |name, value|
                 if name.kind_of?(String)
                     realname = name.gsub(/[^\w]/, "_")
                 else

@@ -4,14 +4,14 @@ module Generators
 
     # This module holds all the classes needed to generate the HTML documentation
     # of a bunch of puppet manifests.
-    # 
-    # It works by traversing all the code objects defined by the Puppet RDoc::Parser 
+    #
+    # It works by traversing all the code objects defined by the Puppet RDoc::Parser
     # and produces HTML counterparts objects that in turns are used by RDoc template engine
     # to produce the final HTML.
-    # 
+    #
     # It is also responsible of creating the whole directory hierarchy, and various index
     # files.
-    # 
+    #
     # It is to be noted that the whole system is built on top of ruby RDoc. As such there
     # is an implicit mapping of puppet entities to ruby entitites:
     #
@@ -20,7 +20,7 @@ module Generators
     #         Module          Module
     #         Class           Class
     #         Definition      Method
-    #         Resource        
+    #         Resource
     #         Node
     #         Plugin
     #         Fact

@@ -126,7 +126,7 @@ Puppet::Type.type(:cron).provide(:crontab,
                 next if (record[field] == resource.value(field))
                 #Puppet.info "Did not match %s: %s vs %s" %
                 #    [field, resource.value(field).inspect, record[field].inspect]
-                matched = false 
+                matched = false
                 break
             end
             return resource if matched
@@ -145,7 +145,7 @@ Puppet::Type.type(:cron).provide(:crontab,
                 if record[:name]
                     name = record[:name]
                     record[:skip] = true
-                    
+
                     # Start collecting env values
                     envs = []
                 end
@@ -185,7 +185,7 @@ Puppet::Type.type(:cron).provide(:crontab,
         # on my machine).  This is my attempt to fix it so the TZ lines don't
         # multiply.
         if text =~ /(^TZ=.+\n)/
-            tz = $1 
+            tz = $1
             text.sub!(tz, '')
             text = tz + text
         end

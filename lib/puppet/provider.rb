@@ -31,7 +31,7 @@ class Puppet::Provider
     # LAK 2007-05-09: Keep the model stuff around for backward compatibility
     attr_reader :model
     attr_accessor :resource
-    
+
     def self.command(name)
         name = symbolize(name)
 
@@ -123,7 +123,7 @@ class Puppet::Provider
                 # will catch it, if so.
                 return execute(cmd)
             end
-            
+
             # And then define an instance method that just calls the class method.
             # We need both, so both instances and classes can easily run the commands.
             unless method_defined? name

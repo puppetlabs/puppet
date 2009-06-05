@@ -3,21 +3,21 @@ Puppet::Reports.register_report(:rrdgraph) do
         must have the Ruby RRDtool library installed to use this report, which
         you can get from `the RubyRRDTool RubyForge page`_.  This package may also
         be available as ``ruby-rrd`` or ``rrdtool-ruby`` in your distribution's package
-        management system.  The library and/or package will both require the binary 
+        management system.  The library and/or package will both require the binary
         ``rrdtool`` package from your distribution to be installed.
 
         .. _the RubyRRDTool RubyForge page: http://rubyforge.org/projects/rubyrrdtool/
-        
+
         This report will create, manage, and graph RRD database files for each
         of the metrics generated during transactions, and it will create a
         few simple html files to display the reporting host's graphs.  At this
         point, it will not create a common index file to display links to
         all hosts.
-        
+
         All RRD files and graphs get created in the ``rrddir`` directory.  If
         you want to serve these publicly, you should be able to just alias that
         directory in a web server.
-    
+
         If you really know what you're doing, you can tune the ``rrdinterval``,
         which defaults to the ``runinterval``."
 

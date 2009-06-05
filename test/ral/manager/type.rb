@@ -278,7 +278,7 @@ class TestType < Test::Unit::TestCase
     # Make sure the title is sufficiently differentiated from the namevar.
     def test_title_at_creation_with_hash
         file = nil
-        fileclass = Puppet::Type.type(:file) 
+        fileclass = Puppet::Type.type(:file)
 
         path = tempfile()
         assert_nothing_raised do
@@ -415,7 +415,7 @@ class TestType < Test::Unit::TestCase
         exec = Puppet::Type.newexec(:title => "yay", :command => "/bin/echo yay")
         assert_equal("Exec[yay]", exec.ref)
     end
-    
+
     def test_path
         config = mk_catalog
 
@@ -434,33 +434,33 @@ class TestType < Test::Unit::TestCase
             end
             res
         end
-        
+
         exec = mk.call(1, {})
-        
+
         assert_equal("/Exec[exec1]", exec.path)
-        
+
         comp = Puppet::Type.newcomponent :title => "My[component]", :type => "Yay"
         config.add_resource comp
-        
+
         exec = mk.call(2, :parent => comp)
-        
+
         assert_equal("/My[component]/Exec[exec2]", exec.path)
-        
+
         comp = Puppet::Type.newcomponent :name => "Other[thing]"
         config.add_resource comp
         exec = mk.call(3, :parent => comp)
         assert_equal("/Other[thing]/Exec[exec3]", exec.path)
-        
+
         comp = Puppet::Type.newcomponent :type => "server", :name => "server"
         config.add_resource comp
         exec = mk.call(4, :parent => comp)
         assert_equal("/server/Exec[exec4]", exec.path)
-        
+
         comp = Puppet::Type.newcomponent :type => "whatever", :name => "class[main]"
         config.add_resource comp
         exec = mk.call(5, :parent => comp)
         assert_equal("//Exec[exec5]", exec.path)
-        
+
         newcomp = Puppet::Type.newcomponent :type => "yay", :name => "Good[bad]"
         config.add_resource newcomp
         config.add_edge comp, newcomp

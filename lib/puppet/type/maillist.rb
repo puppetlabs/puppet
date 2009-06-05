@@ -2,7 +2,7 @@ module Puppet
     newtype(:maillist) do
         @doc = "Manage email lists.  This resource type currently can only create
             and remove lists, it cannot reconfigure them."
-        
+
         ensurable do
             defaultvalues
 

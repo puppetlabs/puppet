@@ -385,24 +385,24 @@ class TestFile < Test::Unit::TestCase
             Puppet::Type.allclear
         }
     end
-    
+
     def test_recurse?
         file = Puppet::Type.type(:file).new :path => tempfile
-        
+
         # Make sure we default to false
         assert(! file.recurse?, "Recurse defaulted to true")
-        
+
         [true, "true", 10, "inf", "remote"].each do |value|
             file[:recurse] = value
             assert(file.recurse?, "%s did not cause recursion" % value)
         end
-        
+
         [false, "false", 0].each do |value|
             file[:recurse] = value
             assert(! file.recurse?, "%s caused recursion" % value)
         end
     end
-    
+
     def test_recursion
         basedir = tempfile()
         subdir = File.join(basedir, "subdir")
@@ -420,23 +420,23 @@ class TestFile < Test::Unit::TestCase
             }
             config = mk_catalog dir
             transaction = Puppet::Transaction.new(config)
-            
+
             children = nil
 
             assert_nothing_raised {
                 children = transaction.eval_generate(dir)
             }
-            
+
             assert_equal([subdir], children.collect {|c| c.title },
                 "Incorrect generated children")
-            
-            # Remove our subdir resource, 
+
+            # Remove our subdir resource,
             subdir_resource = config.resource(:file, subdir)
             config.remove_resource(subdir_resource)
 
             # Create the test file
             File.open(tmpfile, "w") { |f| f.puts "yayness" }
-            
+
             assert_nothing_raised {
                 children = transaction.eval_generate(dir)
             }
@@ -444,7 +444,7 @@ class TestFile < Test::Unit::TestCase
             # And make sure we get both resources back.
             assert_equal([subdir, tmpfile].sort, children.collect {|c| c.title }.sort,
                 "Incorrect generated children when recurse == %s" % value.inspect)
-            
+
             File.unlink(tmpfile)
         end
     end
@@ -678,7 +678,7 @@ class TestFile < Test::Unit::TestCase
 
     def test_backupmodes
         File.umask(0022)
-        
+
         file = tempfile()
         newfile = tempfile()
 
@@ -793,7 +793,7 @@ class TestFile < Test::Unit::TestCase
             )
             comp = mk_catalog(user, group, home)
         }
-        
+
         # Now make sure we get a relationship for each of these
         rels = nil
         assert_nothing_raised { rels = home.autorequire }
@@ -932,23 +932,23 @@ class TestFile < Test::Unit::TestCase
             end
         end
     end
-    
+
     if Process.uid == 0
     # Testing #364.
     def test_writing_in_directories_with_no_write_access
         # Make a directory that our user does not have access to
         dir = tempfile()
         Dir.mkdir(dir)
-        
+
         # Get a fake user
         user = nonrootuser
         # and group
         group = nonrootgroup
-        
+
         # First try putting a file in there
         path = File.join(dir, "file")
         file = Puppet::Type.newfile :path => path, :owner => user.name, :group => group.name, :content => "testing"
-        
+
         # Make sure we can create it
         assert_apply(file)
         assert(FileTest.exists?(path), "File did not get created")
@@ -957,7 +957,7 @@ class TestFile < Test::Unit::TestCase
         assert_equal(group.gid, File.stat(path).gid, "File has the wrong group")
 
         assert_equal("testing", File.read(path), "file has the wrong content")
-        
+
         # Now make a dir
         subpath = File.join(dir, "subdir")
         subdir = Puppet::Type.newfile :path => subpath, :owner => user.name, :group => group.name, :ensure => :directory
@@ -971,7 +971,7 @@ class TestFile < Test::Unit::TestCase
         assert_equal("testing", File.read(path), "file has the wrong content")
     end
     end
-    
+
     # #366
     def test_replace_aliases
         file = Puppet::Type.newfile :path => tempfile()
@@ -980,14 +980,14 @@ class TestFile < Test::Unit::TestCase
         file[:replace] = :no
         assert_equal(:false, file[:replace], ":replace did not alias :false to :no")
     end
-    
+
     def test_backup
         path = tempfile()
         file = Puppet::Type.newfile :path => path, :content => "yay"
 
         catalog = mk_catalog(file)
         catalog.finalize # adds the default resources.
-        
+
         [false, :false, "false"].each do |val|
             assert_nothing_raised do
                 file[:backup] = val
@@ -1000,32 +1000,32 @@ class TestFile < Test::Unit::TestCase
             end
             assert_equal(".puppet-bak", file[:backup], "%s did not translate" % val.inspect)
         end
-        
+
         # Now try a non-bucket string
         assert_nothing_raised do
             file[:backup] = ".bak"
         end
         assert_equal(".bak", file[:backup], ".bak did not translate")
-        
+
         # Now try a non-existent bucket
         assert_nothing_raised do
             file[:backup] = "main"
         end
         assert_equal("main", file[:backup], "bucket name was not retained")
         assert_equal("main", file.bucket, "file's bucket was not set")
-        
+
         # And then an existing bucket
         obj = Puppet::Type.type(:filebucket).new :name => "testing"
         catalog.add_resource(obj)
         bucket = obj.bucket
-        
+
         assert_nothing_raised do
             file[:backup] = "testing"
         end
         assert_equal("testing", file[:backup], "backup value was reset")
         assert_equal(obj.bucket, file.bucket, "file's bucket was not set")
     end
-    
+
     def test_pathbuilder
         dir = tempfile()
         Dir.mkdir(dir)
@@ -1034,25 +1034,25 @@ class TestFile < Test::Unit::TestCase
         obj = Puppet::Type.newfile :path => dir, :recurse => true, :mode => 0755
         catalog = mk_catalog obj
         transaction = Puppet::Transaction.new(catalog)
-        
+
         assert_equal("/%s" % obj.ref, obj.path)
-        
+
         list = transaction.eval_generate(obj)
         fileobj = catalog.resource(:file, file)
         assert(fileobj, "did not generate file object")
         assert_equal("/%s" % fileobj.ref, fileobj.path, "did not generate correct subfile path")
     end
-    
+
     # Testing #403
     def test_removal_with_content_set
         path = tempfile()
         File.open(path, "w") { |f| f.puts "yay" }
         file = Puppet::Type.newfile(:name => path, :ensure => :absent, :content => "foo")
-        
+
         assert_apply(file)
         assert(! FileTest.exists?(path), "File was not removed")
     end
-    
+
     # Testing #438
     def test_creating_properties_conflict
         file = tempfile()
@@ -1114,7 +1114,7 @@ class TestFile < Test::Unit::TestCase
             else
                 raise "invalid attr %s" % attr
             end
-            
+
             # Run it again
             run.call(file, "after modification with %s" % attr)
 

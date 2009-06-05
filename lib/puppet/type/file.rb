@@ -17,7 +17,7 @@ module Puppet
             retrieving entire files from remote servers.  As Puppet matures, it
             expected that the ``file`` resource will be used less and less to
             manage content, and instead native resources will be used to do so.
-            
+
             If you find that you are often copying files in from a central
             location, rather than using native resources, please contact
             Reductive Labs and we can hopefully work with you to develop a
@@ -33,7 +33,7 @@ module Puppet
                 end
             end
 
-            # convert the current path in an index into the collection and the last 
+            # convert the current path in an index into the collection and the last
             # path name. The aim is to use less storage for all common paths in a hierarchy
             munge do |value|
                 path, name = File.split(value)
@@ -58,11 +58,11 @@ module Puppet
                 the same directory with that value as the extension of the
                 backup. Setting ``backup => false`` disables all backups of the
                 file in question.
-                
+
                 Puppet automatically creates a local filebucket named ``puppet`` and
                 defaults to backing up there.  To use a server-based filebucket,
                 you must specify one in your configuration::
-                    
+
                     filebucket { main:
                         server => puppet
                     }
@@ -88,7 +88,7 @@ module Puppet
                 "
 
             defaultto { "puppet" }
-            
+
             munge do |value|
                 # I don't really know how this is happening.
                 value = value.shift if value.is_a?(Array)
@@ -228,7 +228,7 @@ module Puppet
                 this will destroy data.  Only use this option for generated
                 files unless you really know what you are doing.  This option only
                 makes sense when recursively managing directories.
-                
+
                 Note that when using ``purge`` with ``source``, Puppet will purge any files
                 that are not on the remote system."
 
@@ -249,7 +249,7 @@ module Puppet
 
             newvalues(:first, :all)
         end
-        
+
         attr_accessor :bucket
 
         # Autorequire any parent directories.
@@ -277,7 +277,7 @@ module Puppet
                 end
             end
         end
-        
+
         CREATORS = [:content, :source, :target]
 
         validate do
@@ -300,7 +300,7 @@ module Puppet
                 self.warning "Possible error: recurselimit is set but not recurse, no recursion will happen"
             end
         end
-        
+
         def self.[](path)
             return nil unless path
             super(path.gsub(/\/+/, '/').sub(/\/$/, ''))
@@ -381,7 +381,7 @@ module Puppet
             end
             super
         end
-        
+
         # Create any children via recursion or whatever.
         def eval_generate
             return [] unless self.recurse?
@@ -499,7 +499,7 @@ module Puppet
                 return false
             end
         end
-        
+
         def initialize(hash)
             # Used for caching clients
             @clients = {}
@@ -508,7 +508,7 @@ module Puppet
 
             # Get rid of any duplicate slashes, and remove any trailing slashes.
             @title = @title.gsub(/\/+/, "/")
-            
+
             @title.sub!(/\/$/, "") unless @title == "/"
 
             @stat = nil
@@ -521,7 +521,7 @@ module Puppet
                 child[:ensure] = :absent
             end
         end
-        
+
         # Create a new file or directory object as a child to the current
         # object.
         def newchild(path)
@@ -567,7 +567,7 @@ module Puppet
                 return [self.ref]
             end
         end
-        
+
         # Should we be purging?
         def purge?
             @parameters.include?(:purge) and (self[:purge] == :true or self[:purge] == "true")
@@ -715,7 +715,7 @@ module Puppet
             self.fail "Could not back up; will not replace" unless handlebackup
 
             unless should.to_s == "link"
-                return if s.ftype.to_s == should.to_s 
+                return if s.ftype.to_s == should.to_s
             end
 
             case s.ftype

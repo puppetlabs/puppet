@@ -117,7 +117,7 @@ class Puppet::SimpleGraph
     def dependents(resource)
         tree_from_vertex(resource).keys
     end
-    
+
     # Which resources depend upon the given resource.
     def dependencies(resource)
         # Cache the reversal graph, because it's somewhat expensive
@@ -142,7 +142,7 @@ class Puppet::SimpleGraph
         l = tree.keys.find_all { |c| adjacent(c, :direction => direction).empty? }
         return l
     end
-    
+
     # Collect all of the edges that the passed events match.  Returns
     # an array of edges.
     def matching_edges(events, base = nil)
@@ -284,7 +284,7 @@ class Puppet::SimpleGraph
     def remove_edge!(edge)
         @vertices[edge.source].remove_edge(:out, edge)
         @vertices[edge.target].remove_edge(:in, edge)
-        
+
         @edges.delete(edge)
         nil
     end
@@ -302,9 +302,9 @@ class Puppet::SimpleGraph
     def setup_vertex(vertex)
         @vertices[vertex] = VertexWrapper.new(vertex)
     end
- 
+
     public
-    
+
 #    # For some reason, unconnected vertices do not show up in
 #    # this graph.
 #    def to_jpg(path, name)
@@ -313,11 +313,11 @@ class Puppet::SimpleGraph
 #            induced_subgraph(gv).write_to_graphic_file('jpg', name)
 #        end
 #    end
-    
+
     # Take container information from another graph and use it
     # to replace any container vertices with their respective leaves.
     # This creates direct relationships where there were previously
-    # indirect relationships through the containers. 
+    # indirect relationships through the containers.
     def splice!(other, type)
         # We have to get the container list via a topological sort on the
         # configuration graph, because otherwise containers that contain
@@ -335,7 +335,7 @@ class Puppet::SimpleGraph
                 remove_vertex!(container)
                 next
             end
-            
+
             # First create new edges for each of the :in edges
             [:in, :out].each do |dir|
                 edges = adjacent(container, :direction => dir, :type => :edges)
@@ -386,7 +386,7 @@ class Puppet::SimpleGraph
         walk(start, direction) do |parent, child|
             predecessor[child] = parent
         end
-        predecessor       
+        predecessor
     end
 
     # LAK:FIXME This is just a paste of the GRATR code with slight modifications.
@@ -419,7 +419,7 @@ class Puppet::SimpleGraph
       end
       graph
     end
-    
+
     # Output the dot format as a string
     def to_dot (params={}) to_dot_graph(params).to_s; end
 
@@ -435,9 +435,9 @@ class Puppet::SimpleGraph
     def write_to_graphic_file (fmt='png', dotfile='graph')
       src = dotfile + '.dot'
       dot = dotfile + '.' + fmt
-      
+
       File.open(src, 'w') {|f| f << self.to_dot << "\n"}
-      
+
       system( "dot -T#{fmt} #{src} -o #{dot}" )
       dot
     end

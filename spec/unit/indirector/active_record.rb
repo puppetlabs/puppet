@@ -47,7 +47,7 @@ describe Puppet::Indirector::ActiveRecord do
 
             @terminus.find(@request)
         end
-        
+
         it "should return nil if no instance is found" do
             @ar_model.expects(:find_by_name).with(@name).returns nil
             @terminus.find(@request).should be_nil

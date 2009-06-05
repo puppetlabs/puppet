@@ -15,7 +15,7 @@ module PuppetTest
     def assert_uid_gid(uid, gid, filename)
         flunk "Must be uid 0 to run these tests" unless Process.uid == 0
 
-        fork do 
+        fork do
             Puppet::Util::SUIDManager.gid = gid
             Puppet::Util::SUIDManager.uid = uid
             # FIXME: use the tempfile method from puppettest.rb
@@ -30,7 +30,7 @@ module PuppetTest
 
         f = File.open(filename, "r")
 
-        a = f.readlines 
+        a = f.readlines
         assert_equal(uid, a[0].chomp.to_i, "UID was incorrect")
         assert_equal(gid, a[1].chomp.to_i, "GID was incorrect")
         FileUtils.rm(filename)

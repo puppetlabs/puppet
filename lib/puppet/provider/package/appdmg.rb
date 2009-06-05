@@ -7,7 +7,7 @@
 # and are easier to manage.
 #
 # Note: the 'apple' Provider checks for the package name
-# in /L/Receipts.  Since we possibly install multiple apps's from 
+# in /L/Receipts.  Since we possibly install multiple apps's from
 # a single source, we treat the source .app.dmg file as the package name.
 # As a result, we store installed .app.dmg file names
 # in /var/db/.puppet_appdmg_installed_<name>
@@ -37,7 +37,7 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
             new(:name => name, :provider => :appdmg, :ensure => :installed)
         end
     end
-    
+
     def self.installapp(source, name, orig_source)
       appname = File.basename(source);
       ditto "--rsrc", source, "/Applications/#{appname}"
@@ -64,7 +64,7 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
                 cached_source = source
             end
         end
-        
+
         begin
             open(cached_source) do |dmg|
                 xml_str = hdiutil "mount", "-plist", "-nobrowse", "-readonly", "-mountrandom", "/tmp", dmg.path

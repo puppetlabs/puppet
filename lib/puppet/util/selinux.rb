@@ -122,7 +122,7 @@ module Puppet::Util::SELinux
         else
             context = value
         end
-       
+
         retval = Selinux.lsetfilecon(file, context)
         if retval == 0
             return true
@@ -179,12 +179,12 @@ module Puppet::Util::SELinux
         unless mnts = read_mounts()
             return nil
         end
-       
+
         # For a given file:
-        # Check if the filename is in the data structure; 
+        # Check if the filename is in the data structure;
         #   return the fstype if it is.
         # Just in case: return something if you're down to "/" or ""
-        # Remove the last slash and everything after it, 
+        # Remove the last slash and everything after it,
         #   and repeat with that as the file for the next loop through.
         ary = file.split('/')
         while not ary.empty? do

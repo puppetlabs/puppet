@@ -48,7 +48,7 @@ class Puppet::FileServing::Base
     def links=(value)
         value = value.to_sym
         value = :manage if value == :ignore
-        raise(ArgumentError, ":links can only be set to :manage or :follow") unless [:manage, :follow].include?(value) 
+        raise(ArgumentError, ":links can only be set to :manage or :follow") unless [:manage, :follow].include?(value)
         @links = value
     end
 

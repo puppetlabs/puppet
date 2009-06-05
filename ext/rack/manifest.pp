@@ -30,7 +30,7 @@ package { ["rack", "passenger"]:
 service { "apache2":
 }
 
-case $lsbdistid { 
+case $lsbdistid {
   "Debian": {
     package { ["apache2-mpm-worker", "apache2-threaded-dev", "apache2"]:
       ensure => installed,

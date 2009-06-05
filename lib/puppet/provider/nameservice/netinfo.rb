@@ -46,14 +46,14 @@ class NetInfo < Puppet::Provider::NameService
             noautogen
         end
     end
-    
+
     def self.instances
         warnonce "The NetInfo provider is deprecated; use directoryservice instead"
         report(@resource_type.validproperties).collect do |hash|
             self.new(hash)
         end
     end
-    
+
     # Convert a NetInfo line into a hash of data.
     def self.line2hash(line, params)
         values = line.split(/\t/)
@@ -69,20 +69,20 @@ class NetInfo < Puppet::Provider::NameService
         end
         hash
     end
-    
+
     # What field the value is stored under.
     def self.netinfokey(name)
         name = symbolize(name)
         self.option(name, :key) || name
     end
-    
+
     # Retrieve the data, yo.
     # FIXME This should retrieve as much information as possible,
     # rather than retrieving it one at a time.
     def self.report(*params)
         dir = self.netinfodir()
         cmd = [command(:nireport), "/", "/%s" % dir]
-        
+
         params.flatten!
 
         # We require the name in order to know if we match.  There's no
@@ -111,7 +111,7 @@ class NetInfo < Puppet::Provider::NameService
             line2hash(line, params)
         }
     end
-    
+
     # How to add an object.
     def addcmd
         creatorcmd("-create")
@@ -128,7 +128,7 @@ class NetInfo < Puppet::Provider::NameService
     def deletecmd
         creatorcmd("-destroy")
     end
-    
+
     def destroy
         delete()
     end
@@ -203,7 +203,7 @@ class NetInfo < Puppet::Provider::NameService
     def netinfokey(name)
         self.class.netinfokey(name)
     end
-    
+
     # Get a report for a single resource, not the whole table
     def single_report(*properties)
         warnonce "The NetInfo provider is deprecated; use directoryservice instead"

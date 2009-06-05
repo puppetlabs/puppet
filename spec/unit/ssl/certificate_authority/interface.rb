@@ -107,7 +107,7 @@ describe Puppet::SSL::CertificateAuthority::Interface do
 
             it "should call :generate on the CA for each host specified" do
                 @applier = @class.new(:generate, %w{host1 host2})
-                
+
                 @ca.expects(:generate).with("host1")
                 @ca.expects(:generate).with("host2")
 

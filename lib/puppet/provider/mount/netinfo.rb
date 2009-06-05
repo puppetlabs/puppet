@@ -9,21 +9,21 @@ require 'puppet/provider/mount'
 #         not to work currently."
 #     commands :nireport => "nireport", :niutil => "niutil"
 #     commands :mountcmd => "mount", :umount => "umount", :df => "df"
-# 
+#
 #     options :device, :key => "name"
 #     options :name, :key => "dir"
 #     options :dump, :key => "dump_freq"
 #     options :pass, :key => "passno"
 #     options :fstype, :key => "vfstype"
 #     options :options, :key => "opts"
-# 
+#
 #     defaultfor :operatingsystem => :darwin
-#     
+#
 #     def initialize(resource)
 #         warning "The NetInfo mount provider is highly experimental.  Use at your own risk."
 #         super
 #     end
-#     
+#
 #     def mount
 #         cmd = []
 #         if opts = @resource.should(:options)

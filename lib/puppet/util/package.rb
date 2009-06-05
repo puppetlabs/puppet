@@ -11,10 +11,10 @@ module Puppet::Util::Package
             b = bx.shift
 
             if( a == b )                 then next
-            elsif (a == '-' && b == '-') then next 
+            elsif (a == '-' && b == '-') then next
             elsif (a == '-')             then return -1
             elsif (b == '-')             then return 1
-            elsif (a == '.' && b == '.') then next 
+            elsif (a == '.' && b == '.') then next
             elsif (a == '.' )            then return -1
             elsif (b == '.' )            then return 1
             elsif (a =~ /^\d+$/ && b =~ /^\d+$/) then
@@ -22,12 +22,12 @@ module Puppet::Util::Package
                     return a.to_s.upcase <=> b.to_s.upcase
                 end
                 return a.to_i <=> b.to_i
-            else 
+            else
                 return a.upcase <=> b.upcase
             end
         end
         return version_a <=> version_b;
     end
-    
+
     module_function :versioncmp
 end

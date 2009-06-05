@@ -4,7 +4,7 @@ module RDoc
 
     # This modules contains various class that are used to hold information
     # about the various Puppet language structures we found while parsing.
-    # 
+    #
     # Those will be mapped to their html counterparts which are defined in
     # PuppetGenerator.
 

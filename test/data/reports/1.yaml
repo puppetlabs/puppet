@@ -1,12 +1,12 @@
---- !ruby/object:Puppet::Transaction::Report 
+--- !ruby/object:Puppet::Transaction::Report
 host: culain.madstop.com
-logs: 
-- !ruby/object:Puppet::Log 
+logs:
+- !ruby/object:Puppet::Log
   level: :notice
   message: executed successfully
   objectsource: true
   source: //culain.madstop.com/puppetserver/exec=/bin/echo testing/returns
-  tags: 
+  tags:
   - :puppetserver
   - :puppetserver
   - :basenode
@@ -15,12 +15,12 @@ logs:
   - :exec
   - :returns
   time: 2006-09-21 13:06:59.867782 -05:00
-- !ruby/object:Puppet::Log 
+- !ruby/object:Puppet::Log
   level: :notice
   message: ensure changed 'stopped' to 'running'
   objectsource: true
   source: //culain.madstop.com/mailserver/service=spamassassin/ensure
-  tags: 
+  tags:
   - :mailserver
   - :mailserver
   - :basenode
@@ -29,12 +29,12 @@ logs:
   - :service
   - :ensure
   time: 2006-09-21 13:07:01.336511 -05:00
-- !ruby/object:Puppet::Log 
+- !ruby/object:Puppet::Log
   level: :notice
   message: ensure changed 'stopped' to 'running'
   objectsource: true
   source: //culain.madstop.com/mailserver/service=courier-imap-ssl/ensure
-  tags: 
+  tags:
   - :mailserver
   - :mailserver
   - :basenode
@@ -43,12 +43,12 @@ logs:
   - :service
   - :ensure
   time: 2006-09-21 13:07:01.573506 -05:00
-- !ruby/object:Puppet::Log 
+- !ruby/object:Puppet::Log
   level: :notice
   message: ensure changed 'stopped' to 'running'
   objectsource: true
   source: //culain.madstop.com/mailserver/service=courier-authdaemon/ensure
-  tags: 
+  tags:
   - :mailserver
   - :mailserver
   - :basenode
@@ -57,28 +57,28 @@ logs:
   - :service
   - :ensure
   time: 2006-09-21 13:07:01.680440 -05:00
-metrics: 
-  time: !ruby/object:Puppet::Metric 
+metrics:
+  time: !ruby/object:Puppet::Metric
     label: Time
     name: time
-    values: 
+    values:
     - - :config_retrieval
       - Config retrieval
       - 2.26467204093933
     - - :total
       - Total
       - 21.7894113063812
-  changes: !ruby/object:Puppet::Metric 
+  changes: !ruby/object:Puppet::Metric
     label: Changes
     name: changes
-    values: 
+    values:
     - - :total
       - Total
       - 4
-  objects: !ruby/object:Puppet::Metric 
+  objects: !ruby/object:Puppet::Metric
     label: Objects
     name: objects
-    values: 
+    values:
     - - :scheduled
       - Scheduled
       - 78

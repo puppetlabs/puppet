@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# == Synopsis 
+# == Synopsis
 #
 # Test individual client performance.  Can compile configurations, describe
 # files, or retrieve files.
@@ -309,7 +309,7 @@ Suite.new :rails, "Rails Interactions" do
         Puppet::Rails.init
         @facts = Facter.to_hash
 
-        if num = ENV["RESOURCECOUNT"] 
+        if num = ENV["RESOURCECOUNT"]
             @resources = Integer(num)
         else
             @resources = 10

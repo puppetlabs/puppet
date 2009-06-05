@@ -135,10 +135,10 @@ describe Puppet::Parser::Lexer::TOKENS do
         :LBRACE => '{',
         :RBRACE => '}',
         :LPAREN => '(',
-        :RPAREN => ')', 
+        :RPAREN => ')',
         :EQUALS => '=',
         :ISEQUAL => '==',
-        :GREATEREQUAL => '>=', 
+        :GREATEREQUAL => '>=',
         :GREATERTHAN => '>',
         :LESSTHAN => '<',
         :LESSEQUAL => '<=',
@@ -551,7 +551,7 @@ describe "Puppet::Parser::Lexer in the old tests" do
 
     it "should correctly parse names with numerals" do
        string = %w{1name name1 11names names11}
-    
+
        string.each { |t|
             @lexer.string = t
             @lexer.fullscan.should == [[:NAME,t],[false,false]]

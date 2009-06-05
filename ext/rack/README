@@ -2,7 +2,7 @@
 PUPPETMASTER AS A RACK APPLICATION
 ==================================
 
-puppetmaster can now be hosted as a standard Rack application. A proper 
+puppetmaster can now be hosted as a standard Rack application. A proper
 config.ru is provided for this.
 
 For more details about rack, see http://rack.rubyforge.org/ .
@@ -17,14 +17,14 @@ to work.
 WEBrick
 -------
 
-WEBrick is currently not supported as a Rack host. You'll be better off 
+WEBrick is currently not supported as a Rack host. You'll be better off
 just running puppetmasterd directly.
 
 
 Mongrel
 -------
 
-If you like Mongrel, and want to replicate wiki:UsingMongrel, you could 
+If you like Mongrel, and want to replicate wiki:UsingMongrel, you could
 probably start your backend mongrels this way:
 
 cd ext/rack
@@ -48,7 +48,7 @@ Requirements:
   Apache 2.x
   SSL Module loaded
 
-Apache configuration snippet is in files/apache2.conf. You need to 
+Apache configuration snippet is in files/apache2.conf. You need to
 edit it to reflect your servername.
 
 Required puppet.conf settings:
@@ -60,8 +60,8 @@ To set up most of the boring stuff, you can use this command:
   puppet --verbose --modulepath ./ext ext/rack/manifest.pp
 Or use manifest.pp as a starting point for your own module.
 
-Note: Passenger will not let applications run as root or the Apache user, 
-instead an implicit setuid will be done, to the user whom owns 
+Note: Passenger will not let applications run as root or the Apache user,
+instead an implicit setuid will be done, to the user whom owns
 config.ru. Therefore, config.ru shall be owned by the puppet user.
 
 

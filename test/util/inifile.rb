@@ -13,7 +13,7 @@ class TestFileType < Test::Unit::TestCase
         super
         @file = Puppet::Util::IniConfig::File.new
     end
-    
+
     def teardown
         @file = nil
         super
@@ -43,7 +43,7 @@ class TestFileType < Test::Unit::TestCase
             @file.read(fsub)
         }
         main = get_section('main')
-        assert_entries(main, 
+        assert_entries(main,
                        { 'key1' => 'main.value1', 'key2' => 'main.value2' })
         sub1 = get_section('sub1')
         assert_entries(sub1, { 'key1' => 'sub1 value1' })
@@ -106,9 +106,9 @@ class TestFileType < Test::Unit::TestCase
     end
 
     def assert_entries(section, hash)
-        hash.each do |k, v| 
-            assert_equal(v, section[k], 
-                        "Expected <#{v}> for #{section.name}[#{k}] " + 
+        hash.each do |k, v|
+            assert_equal(v, section[k],
+                        "Expected <#{v}> for #{section.name}[#{k}] " +
                          "but got <#{section[k]}>")
         end
     end

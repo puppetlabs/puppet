@@ -8,7 +8,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     commands :dpkg => "/usr/bin/dpkg"
     commands :dpkg_deb => "/usr/bin/dpkg-deb"
     commands :dpkgquery => "/usr/bin/dpkg-query"
-    
+
     def self.instances
         packages = []
 
@@ -62,7 +62,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
         unless file = @resource[:source]
             raise ArgumentError, "You cannot install dpkg packages without a source"
         end
-        
+
         args = []
 
         if @resource[:configfiles] == :keep

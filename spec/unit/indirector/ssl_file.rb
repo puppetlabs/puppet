@@ -62,7 +62,7 @@ describe Puppet::Indirector::SslFile do
             Puppet::SSL::Host.expects(:ca_name).returns "amaca"
             @searcher.should be_ca("amaca")
         end
-        
+
         describe "when choosing the location for certificates" do
             it "should set them at the ca setting's path if a ca setting is available and the name resolves to the CA name" do
                 @file_class.store_in nil

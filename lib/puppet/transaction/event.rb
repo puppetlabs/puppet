@@ -8,7 +8,7 @@ require 'puppet/util/errors'
 class Puppet::Transaction::Event
     include Puppet::Util::MethodHelper
     include Puppet::Util::Errors
-    
+
     attr_reader :name, :source
 
     def initialize(name, source)

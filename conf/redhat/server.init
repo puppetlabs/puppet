@@ -26,7 +26,7 @@ PUPPETMASTER_OPTS=""
 if [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -gt 1 ]; then
     PUPPETMASTER_OPTS="$PUPPETMASTER_OPTS --servertype=mongrel"
 elif [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -eq 1 ]; then
-    PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} --masterport=${PUPPETMASTER_PORTS[0]}" 
+    PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} --masterport=${PUPPETMASTER_PORTS[0]}"
 fi
 [ -n "$PUPPETMASTER_LOG" ] && PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} --logdest=${PUPPETMASTER_LOG}"
 PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} \
@@ -67,7 +67,7 @@ stop() {
     if [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -gt 1 ]; then
         for ((i=0; i<${#PUPPETMASTER_PORTS[@]}; i++)); do
             echo -en "\nPort: ${PUPPETMASTER_PORTS[$i]}"
-            killproc -p /var/run/puppet/puppetmaster.${PUPPETMASTER_PORTS[$i]}.pid puppetmaster 
+            killproc -p /var/run/puppet/puppetmaster.${PUPPETMASTER_PORTS[$i]}.pid puppetmaster
             ret=$?; [ $ret != 0 ] && RETVAL=$ret
         done
     else
@@ -93,9 +93,9 @@ puppetmaster_status() {
     if [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -gt 1 ]; then
         for ((i=0; i<${#PUPPETMASTER_PORTS[@]}; i++)); do
             echo -en "Port ${PUPPETMASTER_PORTS[$i]}: "
-            status -p /var/run/puppet/puppetmaster.${PUPPETMASTER_PORTS[$i]}.pid puppetmaster 
+            status -p /var/run/puppet/puppetmaster.${PUPPETMASTER_PORTS[$i]}.pid puppetmaster
             ret=$?; [ $ret != 0 ] && RETVAL=$ret
-        done 
+        done
     else
         status $PUPPETMASTER
         RETVAL=$?

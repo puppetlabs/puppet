@@ -22,11 +22,11 @@ class TestCA < Test::Unit::TestCase
     def mkca
         Puppet::SSLCertificates::CA.new
     end
-    
+
     def test_clean
         dirs = [:csrdir, :signeddir, :publickeydir, :privatekeydir, :certdir]
         ca = mkca
-        
+
         hosts.each do |host|
             files = []
             dirs.each do |dir|
@@ -46,7 +46,7 @@ class TestCA < Test::Unit::TestCase
             end
         end
     end
-    
+
     def test_host2Xfile
         ca = mkca
         hosts.each do |host|
@@ -60,7 +60,7 @@ class TestCA < Test::Unit::TestCase
             end
         end
     end
-    
+
     def test_list
         ca = mkca
         # Make a fake csr
@@ -71,7 +71,7 @@ class TestCA < Test::Unit::TestCase
             File.open(file, "w") { |f| f.puts "yay" }
             list << host.downcase
         end
-        
+
         assert_equal(list.sort, ca.list.sort, "list was not correct")
     end
 

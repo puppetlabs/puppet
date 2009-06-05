@@ -128,7 +128,7 @@ describe Puppet::Type do
             it "should use the name from the hash as the title if no explicit title is provided" do
                 Puppet::Type.type(:mount).new(:name => "/yay").title.should == "/yay"
             end
-            
+
             it "should use the Resource Type's namevar to determine how to find the name in the hash" do
                 Puppet::Type.type(:file).new(:path => "/yay").title.should == "/yay"
             end
@@ -233,7 +233,7 @@ describe Puppet::Type do
         it "should use the name from the hash as the title if no explicit title is provided" do
             @type.hash2resource(:name => "foo").title.should == "foo"
         end
-        
+
         it "should use the Resource Type's namevar to determine how to find the name in the hash" do
             @type.stubs(:namevar).returns :myname
 

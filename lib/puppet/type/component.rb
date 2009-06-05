@@ -34,7 +34,7 @@ Puppet::Type.newtype(:component) do
             catalog.alias(self, ref)
         end
     end
-    
+
     # Component paths are special because they function as containers.
     def pathbuilder
         if reference.type == "Class"

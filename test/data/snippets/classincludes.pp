@@ -12,6 +12,6 @@ class sub2 inherits base {
     file { "/tmp/classincludes3": ensure => file, mode => 755 }
 }
 
-$sub = "sub2" 
+$sub = "sub2"
 
 include sub1, $sub

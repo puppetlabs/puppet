@@ -20,7 +20,7 @@ class TestFileSources < Test::Unit::TestCase
         end
         @file = Puppet::Type.type(:file)
         Puppet[:filetimeout] = -1
-        Puppet::Util::SUIDManager.stubs(:asuser).yields 
+        Puppet::Util::SUIDManager.stubs(:asuser).yields
         Facter.stubs(:to_hash).returns({})
     end
 
@@ -28,7 +28,7 @@ class TestFileSources < Test::Unit::TestCase
         super
         Puppet::Network::HttpPool.clear_http_instances
     end
-    
+
     def use_storage
         begin
             initstorage
@@ -41,14 +41,14 @@ class TestFileSources < Test::Unit::TestCase
         Puppet::Util::Storage.init
         Puppet::Util::Storage.load
     end
-    
+
     # Make a simple recursive tree.
     def mk_sourcetree
         source = tempfile()
         sourcefile = File.join(source, "file")
         Dir.mkdir source
         File.open(sourcefile, "w") { |f| f.puts "yay" }
-        
+
         dest = tempfile()
         destfile = File.join(dest, "file")
         return source, dest, sourcefile, destfile
@@ -131,7 +131,7 @@ class TestFileSources < Test::Unit::TestCase
 
         # and make sure they're still equal
         assert_trees_equal(fromdir,todir)
-        
+
         # Now try it with the directory being read-only
         File.chmod(0111, todir)
         recursive_source_test(fromdir, todir)
@@ -144,7 +144,7 @@ class TestFileSources < Test::Unit::TestCase
         fromdir, todir, one, two = run_complex_sources
 
         assert(FileTest.exists?(todir))
-        
+
         # Modify a dest file
         File.open(two, "w") { |f| f.puts "something else" }
 
@@ -199,7 +199,7 @@ class TestFileSources < Test::Unit::TestCase
                 :mode => 0755
             )
         }
-        
+
         assert_apply(rootobj)
         assert_equal(0755, filemode(file1))
 
@@ -269,9 +269,9 @@ class TestFileSources < Test::Unit::TestCase
             :name => name
         )
 
-        assert_raise Puppet::Error do 
+        assert_raise Puppet::Error do
             file.retrieve
-        end 
+        end
 
         comp = mk_catalog(file)
         comp.apply
@@ -299,7 +299,7 @@ class TestFileSources < Test::Unit::TestCase
 
         currentvalue = file.retrieve
 
-        assert(currentvalue[file.property(:checksum)], 
+        assert(currentvalue[file.property(:checksum)],
                "File does not have a checksum property")
 
         assert_equal(0, file.evaluate.length, "File produced changes")
@@ -307,7 +307,7 @@ class TestFileSources < Test::Unit::TestCase
 
     def test_sourcepaths
         files = []
-        3.times { 
+        3.times {
             files << tempfile()
         }
 
@@ -489,7 +489,7 @@ class TestFileSources < Test::Unit::TestCase
         assert(FileTest.exists?(file3), "File from source 1 was not copied")
         assert_equal("0", File.read(file3), "file3 got wrong contents")
     end
-    
+
     def test_recursive_sourceselect
         dest = tempfile()
         source1 = tempfile()
@@ -506,15 +506,15 @@ class TestFileSources < Test::Unit::TestCase
             File.open(file, "w") { |f| f.puts "yaysecond-%s" % i}
             files << file
         end
-        
+
         obj = Puppet::Type.newfile(:path => dest, :source => [source1, source2], :sourceselect => :all, :recurse => true)
-        
+
         assert_apply(obj)
-        
+
         ["file0", "file1", "second-file0", "second-file1", "subdir/file2", "subdir/second-file2", "subdir/file3", "subdir/second-file3"].each do |file|
             path = File.join(dest, file)
             assert(FileTest.exists?(path), "did not create %s" % file)
-            
+
             assert_equal("yay%s\n" % File.basename(file).sub("file", ''), File.read(path), "file was not copied correctly")
         end
     end

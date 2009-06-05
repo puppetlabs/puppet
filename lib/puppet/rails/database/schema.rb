@@ -27,7 +27,7 @@ class Puppet::Rails::Schema
                     add_index :resources, [:title, :restype]
                 end
 
-                create_table :source_files do |t| 
+                create_table :source_files do |t|
                     t.column :filename, :string
                     t.column :path, :string
                     t.column :updated_at, :datetime
@@ -44,7 +44,7 @@ class Puppet::Rails::Schema
                 add_index :resource_tags, :resource_id, :integer => true
                 add_index :resource_tags, :puppet_tag_id, :integer => true
 
-                create_table :puppet_tags do |t| 
+                create_table :puppet_tags do |t|
                     t.column :name, :string
                     t.column :updated_at, :datetime
                     t.column :created_at, :datetime
@@ -66,20 +66,20 @@ class Puppet::Rails::Schema
                 add_index :hosts, :source_file_id, :integer => true
                 add_index :hosts, :name
 
-                create_table :fact_names do |t| 
+                create_table :fact_names do |t|
                     t.column :name, :string, :null => false
                     t.column :updated_at, :datetime
                     t.column :created_at, :datetime
                 end
                 add_index :fact_names, :name
 
-                create_table :fact_values do |t| 
+                create_table :fact_values do |t|
                     t.column :value, :text, :null => false
                     t.column :fact_name_id, :integer, :null => false
                     t.column :host_id, :integer, :null => false
                     t.column :updated_at, :datetime
                     t.column :created_at, :datetime
-                end 
+                end
                 add_index :fact_values, :fact_name_id, :integer => true
                 add_index :fact_values, :host_id, :integer => true
 
@@ -93,14 +93,14 @@ class Puppet::Rails::Schema
                 end
                 add_index :param_values, :param_name_id, :integer => true
                 add_index :param_values, :resource_id, :integer => true
-         
-                create_table :param_names do |t| 
+
+                create_table :param_names do |t|
                     t.column :name, :string, :null => false
                     t.column :updated_at, :datetime
                     t.column :created_at, :datetime
                 end
                 add_index :param_names, :name
-            end 
+            end
         end
     ensure
         $stdout.close

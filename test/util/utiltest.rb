@@ -119,7 +119,7 @@ class TestPuppetUtil < Test::Unit::TestCase
 
         assert_equal(nil, ret)
     end
-    
+
     def test_execute
         command = tempfile()
         File.open(command, "w") { |f|
@@ -131,13 +131,13 @@ class TestPuppetUtil < Test::Unit::TestCase
             output = Puppet::Util.execute([command, "yaytest", "funtest"])
         end
         assert_equal("yaytest\nfuntest\n", output)
-        
+
         # Now try it with a single quote
         assert_nothing_raised do
             output = Puppet::Util.execute([command, "yay'test", "funtest"])
         end
         assert_equal("yay'test\nfuntest\n", output)
-        
+
         # Now make sure we can squelch output (#565)
         assert_nothing_raised do
             output = Puppet::Util.execute([command, "yay'test", "funtest"], :squelch => true)
@@ -148,12 +148,12 @@ class TestPuppetUtil < Test::Unit::TestCase
         assert_raise(Puppet::ExecutionFailure) do
             out = Puppet::Util.execute(["touch", "/no/such/file/could/exist"])
         end
-        
+
         # And that we can tell it not to fail
         assert_nothing_raised() do
             out = Puppet::Util.execute(["touch", "/no/such/file/could/exist"], :failonfail => false)
         end
-        
+
         if Process.uid == 0
             # Make sure we correctly set our uid and gid
             user = nonrootuser
@@ -164,13 +164,13 @@ class TestPuppetUtil < Test::Unit::TestCase
             end
             assert(FileTest.exists?(file), "file was not created")
             assert_equal(user.uid, File.stat(file).uid, "uid was not set correctly")
-            
+
             # We can't really check the gid, because it just behaves too
             # inconsistently everywhere.
             # assert_equal(group.gid, File.stat(file).gid,
             #    "gid was not set correctly")
         end
-        
+
         # (#565) Test the case of patricide.
         patricidecommand = tempfile()
         File.open(patricidecommand, "w") { |f|
@@ -202,7 +202,7 @@ class TestPuppetUtil < Test::Unit::TestCase
           ENV["LC_MESSAGES"] = orig_lc_messages
           ENV["LANGUAGE"] = orig_lc_messages
       end
-      
+
       # Mmm, we love gettext(3)
       ENV["LANG"] = "en_US"
       ENV["LC_ALL"] = "en_US"
@@ -213,12 +213,12 @@ class TestPuppetUtil < Test::Unit::TestCase
         assert_equal('C',
                      Puppet::Util.execute(['ruby', '-e', "print ENV['#{env}']"]),
                      "Environment var #{env} wasn't set to 'C'")
-        
+
         assert_equal 'en_US', ENV[env], "Environment var #{env} not set back correctly"
       end
 
     end
-    
+
     # Check whether execute() accepts strings in addition to arrays.
     def test_string_exec
         cmd = "/bin/echo howdy"

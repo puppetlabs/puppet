@@ -12,7 +12,7 @@ class TestVariable < Test::Unit::TestCase
     include PuppetTest
     include PuppetTest::ParserTesting
     AST = Puppet::Parser::AST
-    
+
     def setup
         super
         @interp = mkinterp

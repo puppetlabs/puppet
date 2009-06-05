@@ -3,7 +3,7 @@
 # Plug-in type for handling k5login files
 
 Puppet::Type.newtype(:k5login) do
-    @doc = "Manage the .k5login file for a user.  Specify the full path to 
+    @doc = "Manage the .k5login file for a user.  Specify the full path to
         the .k5login file as the name and an array of principals as the
         property principals."
 
@@ -33,7 +33,7 @@ Puppet::Type.newtype(:k5login) do
     end
 
     provide(:k5login) do
-        desc "The k5login provider is the only provider for the k5login 
+        desc "The k5login provider is the only provider for the k5login
             type."
 
         # Does this file exist?

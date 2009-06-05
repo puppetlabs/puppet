@@ -84,7 +84,7 @@ class TestSUIDManager < Test::Unit::TestCase
                                                ).returns('output')
 
 
-            output = Puppet::Util::SUIDManager.run_and_capture 'yay', 
+            output = Puppet::Util::SUIDManager.run_and_capture 'yay',
                                                                @user.uid,
                                                                @user.gid
 

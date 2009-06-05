@@ -195,7 +195,7 @@ class TestLog < Test::Unit::TestCase
         Puppet.warning "A test"
         assert(File.read(file) =~ /A test/,
             "File did not flush")
-        # Rename the file 
+        # Rename the file
         newfile = file + ".old"
         File.rename(file, newfile)
 

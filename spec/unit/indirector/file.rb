@@ -24,7 +24,7 @@ describe Puppet::Indirector::File do
 
         @request = stub 'request', :key => @path
     end
-  
+
     describe Puppet::Indirector::File, " when finding files" do
 
         it "should provide a method to return file contents at a specified path" do

@@ -67,7 +67,7 @@ class TestYumRepo < Test::Unit::TestCase
     def test_absent
         copy_datafiles
         baseurl = 'http://example.com/'
-        devel = make_repo("development", 
+        devel = make_repo("development",
                           { :mirrorlist => 'absent',
                             :baseurl => baseurl })
         devel.retrieve
@@ -97,7 +97,7 @@ class TestYumRepo < Test::Unit::TestCase
             FileUtils::copy(src, dst)
         }
     end
-    
+
     CREATE_EXP = <<'EOF'
 [base]
 name=Fedora Core $releasever - $basearch - Base
@@ -110,4 +110,4 @@ proxy_username=username
 proxy_password=password
 EOF
 
-end        
+end

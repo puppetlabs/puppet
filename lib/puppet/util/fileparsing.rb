@@ -169,7 +169,7 @@ module Puppet::Util::FileParsing
                 fields = []
                 ret = {}
                 record.fields.zip(match.captures).each do |field, value|
-                    if value == record.absent 
+                    if value == record.absent
                         ret[field] = :absent
                     else
                         ret[field] = value
@@ -223,7 +223,7 @@ module Puppet::Util::FileParsing
     # Split text into separate lines using the record separator.
     def lines(text)
         # Remove any trailing separators, and then split based on them
-        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
+        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
         x = text.sub(/#{self.line_separator}\Q/,'').split(self.line_separator)
     end
 

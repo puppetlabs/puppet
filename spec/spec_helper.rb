@@ -6,7 +6,7 @@ $LOAD_PATH.unshift("#{dir}/../lib")
 $LOAD_PATH.unshift("#{dir}/../test/lib")  # Add the old test dir, so that we can still find our local mocha and spec
 
 # include any gems in vendor/gems
-Dir["#{dir}/../vendor/gems/**"].each do |path| 
+Dir["#{dir}/../vendor/gems/**"].each do |path|
     libpath = File.join(path, "lib")
     if File.directory?(libpath)
         $LOAD_PATH.unshift(libpath)

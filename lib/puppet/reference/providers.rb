@@ -80,7 +80,7 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
                     end
                 end
                 notes << details
-                
+
                 count += 1
             end
 

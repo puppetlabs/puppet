@@ -55,7 +55,7 @@ describe Puppet::Configurer, "when executing a catalog run" do
         catalog.expects(:apply).with(:one => true)
         @agent.run :one => true
     end
-    
+
     it "should benchmark how long it takes to apply the catalog" do
         @agent.expects(:benchmark).with(:notice, "Finished catalog run")
 

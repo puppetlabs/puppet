@@ -16,7 +16,7 @@ class Transaction
 
     # The list of events generated in this transaction.
     attr_reader :events
-    
+
     include Puppet::Util
 
     # Add some additional times for reporting
@@ -35,7 +35,7 @@ class Transaction
         if resource.purging? and resource.deleting?
             if deps = relationship_graph.dependents(resource) and ! deps.empty? and deps.detect { |d| ! d.deleting? }
                 resource.warning "%s still depend%s on me -- not purging" %
-                    [deps.collect { |r| r.ref }.join(","), deps.length > 1 ? "":"s"] 
+                    [deps.collect { |r| r.ref }.join(","), deps.length > 1 ? "":"s"]
                 return false
             end
         end
@@ -91,7 +91,7 @@ class Transaction
             if resource.respond_to?(:flush)
                 resource.flush
             end
-            
+
             # And set a trigger for refreshing this resource if it's a
             # self-refresher
             if resource.self_refresh? and ! resource.deleting?
@@ -149,7 +149,7 @@ class Transaction
             change.property.resource
         }.uniq
     end
-    
+
     # Do any necessary cleanup.  If we don't get rid of the graphs, the
     # contained resources might never get cleaned up.
     def cleanup
@@ -162,7 +162,7 @@ class Transaction
     # child resource.
     def make_parent_child_relationship(resource, children)
         depthfirst = resource.depthfirst?
-        
+
         children.each do |gen_child|
             if depthfirst
                 edge = [gen_child, resource]
@@ -190,15 +190,15 @@ class Transaction
     def eval_generate(resource)
         generate_additional_resources(resource, :eval_generate)
     end
-    
+
     # Evaluate a single resource.
     def eval_resource(resource)
         events = []
-        
+
         if resource.is_a?(Puppet::Type::Component)
             raise Puppet::DevError, "Got a component to evaluate"
         end
-        
+
         if skip?(resource)
             @resourcemetrics[:skipped] += 1
         else
@@ -230,13 +230,13 @@ class Transaction
         events = []
 
         @resourcemetrics[:scheduled] += 1
-        
+
         changecount = @changes.length
-        
+
         # We need to generate first regardless, because the recursive
         # actions sometimes change how the top resource is applied.
         children = eval_generate(resource)
-        
+
         if ! children.empty? and resource.depthfirst?
             children.each do |child|
                 # The child will never be skipped when the parent isn't
@@ -278,7 +278,7 @@ class Transaction
 
         # Start logging.
         Puppet::Util::Log.newdestination(@report)
-        
+
         prepare()
 
         begin
@@ -333,10 +333,10 @@ class Transaction
                 skip = true
             end
         end
-        
+
         return skip
     end
-    
+
     # A general method for recursively generating new resources from a
     # resource.
     def generate_additional_resources(resource, method)
@@ -481,7 +481,7 @@ class Transaction
             end
         end
     end
-    
+
     # Prepare to evaluate the resources in a transaction.
     def prepare
         # Now add any dynamically generated resources
@@ -490,7 +490,7 @@ class Transaction
         # Then prefetch.  It's important that we generate and then prefetch,
         # so that any generated resources also get prefetched.
         prefetch()
-        
+
         # This will throw an error if there are cycles in the graph.
         @sorted_resources = relationship_graph.topsort
     end
@@ -498,7 +498,7 @@ class Transaction
     def relationship_graph
         catalog.relationship_graph
     end
-    
+
     # Send off the transaction report.
     def send_report
         begin
@@ -515,7 +515,7 @@ class Transaction
         if Puppet[:summarize]
             puts report.summary
         end
-        
+
         if Puppet[:report]
             begin
                 report.save()
@@ -550,7 +550,7 @@ class Transaction
                 # this still could get hairy; what if file contents changed,
                 # but a chmod failed?  how would i handle that error? dern
             end
-            
+
             # FIXME This won't work right now.
             relationship_graph.matching_edges(events).each do |edge|
                 @targets[edge.target] << edge
@@ -565,7 +565,7 @@ class Transaction
             events
         }.flatten.reject { |e| e.nil? }
     end
-    
+
     # Is the resource currently scheduled?
     def scheduled?(resource)
         self.ignoreschedules or resource.scheduled?
@@ -582,7 +582,7 @@ class Transaction
         end
         @targets[edge.target] << edge
     end
-    
+
     # Should this resource be skipped?
     def skip?(resource)
         skip = false
@@ -597,7 +597,7 @@ class Transaction
         end
         return true
     end
-    
+
     # The tags we should be checking.
     def tags
         unless defined? @tags
@@ -608,7 +608,7 @@ class Transaction
                 @tags = tags.split(/\s*,\s*/)
             end
         end
-        
+
         @tags
     end
 
@@ -616,13 +616,13 @@ class Transaction
         tags = [tags] unless tags.is_a?(Array)
         @tags = tags
     end
-    
+
     # Is this resource tagged appropriately?
     def missing_tags?(resource)
         return false if self.ignore_tags? or tags.empty?
         return true unless resource.tagged?(tags)
     end
-    
+
     # Are there any edges that target this resource?
     def targeted?(resource)
         # The default value is a new array so we have to test the length of it.
@@ -665,7 +665,7 @@ class Transaction
                     [callback, subs.length]
             end
             resource.notice message
-            
+
             # At this point, just log failures, don't try to react
             # to them in any way.
             begin

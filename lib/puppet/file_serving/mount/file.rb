@@ -79,7 +79,7 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
     # Create a map for a specific node.
     def clientmap(node)
         {
-            "h" => node.sub(/\..*$/, ""), 
+            "h" => node.sub(/\..*$/, ""),
             "H" => node,
             "d" => node.sub(/[^.]+\./, "") # domain name
         }
@@ -101,7 +101,7 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
 
         path.gsub(/%(.)/) do |v|
             key = $1
-            if key == "%" 
+            if key == "%"
                 "%"
             else
                 map[key] || v

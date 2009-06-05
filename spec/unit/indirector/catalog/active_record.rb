@@ -54,7 +54,7 @@ describe Puppet::Resource::Catalog::ActiveRecord do
             result.should be_instance_of(Puppet::Resource::Catalog)
             result.name.should == "foo"
         end
-        
+
         it "should set each of the host's resources as a transportable resource within the catalog" do
             host = stub 'host', :name => "foo"
             Puppet::Rails::Host.expects(:find_by_name).returns host

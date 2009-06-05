@@ -19,10 +19,10 @@ case $ovar {
     }
     "booness", "yayness": {
         case $var {
-            "nep": { 
+            "nep": {
                  file { "/tmp/noexistsfile": mode => 644, ensure => file }
             }
-            "value": { 
+            "value": {
                  file { "/tmp/existsfile2": mode => 755, ensure => file }
             }
         }

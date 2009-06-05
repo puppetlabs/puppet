@@ -93,7 +93,7 @@ describe Puppet::Transaction::Change do
                     @change.stubs :event
                     @change.forward
                 end
-                
+
                 it "should produce a :noop event and return" do
                     @property.stub_everything
 

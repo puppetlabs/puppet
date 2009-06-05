@@ -2,7 +2,7 @@ module Puppet
     # We want the mount to refresh when it changes.
     newtype(:mount, :self_refresh => true) do
         @doc = "Manages mounted filesystems, including putting mount
-            information into the mount table. The actual behavior depends 
+            information into the mount table. The actual behavior depends
             on the value of the 'ensure' parameter.
 
             Note that if a ``mount`` receives an event from another resource,
@@ -10,7 +10,7 @@ module Puppet
 
         feature :refreshable, "The provider can remount the filesystem.",
             :methods => [:remount]
-        
+
         # Use the normal parent class, because we actually want to
         # call code when sync() is called.
         newproperty(:ensure) do
@@ -44,7 +44,7 @@ module Puppet
             newvalue(:mounted, :event => :mount_mounted) do
                 # Create the mount point if it does not already exist.
                 current_value = self.retrieve
-                provider.create if current_value.nil? or current_value == :absent 
+                provider.create if current_value.nil? or current_value == :absent
 
                 syncothers()
 
@@ -54,7 +54,7 @@ module Puppet
 
             def retrieve
                 # We need to special case :mounted; if we're absent, we still
-                # want 
+                # want
                 curval = super()
                 if curval == :absent
                     return curval
@@ -179,12 +179,12 @@ module Puppet
                 super
             end
         end
-        
+
         newparam(:remounts) do
             desc "Whether the mount can be remounted  ``mount -o remount``.  If
                 this is false, then the filesystem will be unmounted and remounted
                 manually, which is prone to failure."
-            
+
             newvalues(:true, :false)
             defaultto do
                 case Facter.value(:operatingsystem)

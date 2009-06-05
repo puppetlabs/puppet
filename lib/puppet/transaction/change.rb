@@ -5,7 +5,7 @@ require 'puppet/transaction/event'
 # including calling 'sync' on the properties and producing events.
 class Puppet::Transaction::Change
     attr_accessor :is, :should, :path, :property, :changed, :proxy
-    
+
     # Switch the goals of the property, thus running the change in reverse.
     def backward
         @is, @should = @should, @is
@@ -14,7 +14,7 @@ class Puppet::Transaction::Change
         @property.info "Reversing %s" % self
         return self.go
     end
-    
+
     def changed?
         self.changed
     end
@@ -28,7 +28,7 @@ class Puppet::Transaction::Change
 
             name = @property.event(should)
         end
-        
+
         Puppet::Transaction::Event.new(name, self.resource)
     end
 
@@ -61,7 +61,7 @@ class Puppet::Transaction::Change
         else
             events = [events]
         end
-        
+
         return events.collect { |name|
             @report = @property.log(@property.change_to_s(@is, @should))
             event(name)
@@ -71,12 +71,12 @@ class Puppet::Transaction::Change
     def forward
         return self.go
     end
-    
+
     # Is our property noop?  This is used for generating special events.
     def noop?
         return @property.noop
     end
-    
+
     # The resource that generated this change.  This is used for handling events,
     # and the proxy resource is used for generated resources, since we can't
     # send an event to a resource we don't have a direct relationship.  If we

@@ -253,7 +253,7 @@ class Puppet::SSL::Host
 
         if time < 1
             puts "Exiting; no certificate found and waitforcert is disabled"
-            exit(1) 
+            exit(1)
         end
 
         while true do

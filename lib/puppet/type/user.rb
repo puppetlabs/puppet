@@ -9,7 +9,7 @@ module Puppet
         @doc = "Manage users.  This type is mostly built to manage system
             users, so it is lacking some features useful for managing normal
             users.
-            
+
             This resource type uses the prescribed native tools for creating
             groups and generally uses POSIX APIs for retrieving information
             about them.  It does not directly modify /etc/passwd or anything."

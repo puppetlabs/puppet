@@ -345,7 +345,7 @@ class TestUser < Test::Unit::TestCase
             )
             comp = mk_catalog(user, group, home, ogroup)
         }
-        
+
         rels = nil
         assert_nothing_raised() { rels = user.autorequire }
 
@@ -401,12 +401,12 @@ class TestUser < Test::Unit::TestCase
         user[:ensure] = :absent
         assert_apply(user)
     end
-    
+
     # Testing #455
     def test_autorequire_with_no_group_should
         user = Puppet::Type.type(:user).new(:name => "yaytest", :check => :all)
         catalog = mk_catalog(user)
-        
+
         assert_nothing_raised do
             user.autorequire
         end

@@ -90,7 +90,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
                 command << uri.path
             when 'puppet'
                 # we don't support puppet:// URLs (yet)
-                raise Puppet::Error.new("puppet:// URLs are not supported as gem sources")              
+                raise Puppet::Error.new("puppet:// URLs are not supported as gem sources")
             else
                 # interpret it as a gem repository
                 command << "--source" << "#{source}" << resource[:name]

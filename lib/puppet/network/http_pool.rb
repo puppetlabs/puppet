@@ -10,7 +10,7 @@ module Puppet::Network::HttpPool
         include Puppet::Util::Cacher
 
         private
-        
+
         cached_attr(:http_cache) { Hash.new }
     end
 

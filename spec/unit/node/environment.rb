@@ -13,11 +13,11 @@ describe Puppet::Node::Environment do
     it "should include the Cacher module" do
         Puppet::Node::Environment.ancestors.should be_include(Puppet::Util::Cacher)
     end
-    
+
     it "should use the filetimeout for the ttl for the modulepath" do
         Puppet::Node::Environment.attr_ttl(:modulepath).should == Integer(Puppet[:filetimeout])
     end
-    
+
     it "should use the filetimeout for the ttl for the module list" do
         Puppet::Node::Environment.attr_ttl(:modules).should == Integer(Puppet[:filetimeout])
     end

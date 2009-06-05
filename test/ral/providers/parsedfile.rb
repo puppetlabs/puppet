@@ -587,14 +587,14 @@ class TestParsedFile < Test::Unit::TestCase
             bills_values = bill.retrieve
         end
 
-        assert(bills_values[bill.property(:one)], 
+        assert(bills_values[bill.property(:one)],
                "Bill does not have a value for 'one'")
-        assert(bills_values[bill.property(:one)], 
+        assert(bills_values[bill.property(:one)],
                "Bill does not have a value for 'one' on second try")
         assert_nothing_raised do
             bill.retrieve
         end
-        assert(bills_values[bill.property(:one)], 
+        assert(bills_values[bill.property(:one)],
                "bill's value for 'one' disappeared")
     end
 

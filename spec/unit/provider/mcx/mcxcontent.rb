@@ -3,8 +3,8 @@
 # Copyright (C) 2008 Jeffrey J McCune.
 
 # This program and entire repository is free software; you can
-# redistribute it and/or modify it under the terms of the GNU 
-# General Public License as published by the Free Software 
+# redistribute it and/or modify it under the terms of the GNU
+# General Public License as published by the Free Software
 # Foundation; either version 2 of the License, or any later version.
 
 # This program is distributed in the hope that it will be useful,
@@ -74,11 +74,11 @@ describe provider_class do
         it "should execute external command dscl from :create" do
             @provider.class.expects(:dscl).returns('').once
             @provider.create
-        end 
+        end
         it "should execute external command dscl from :destroy" do
             @provider.class.expects(:dscl).with('localhost', '-mcxdelete', @ds_path).returns('').once
             @provider.destroy
-        end 
+        end
         it "should execute external command dscl from :exists?" do
             @provider.class.expects(:dscl).with('localhost', '-mcxexport', @ds_path).returns('').once
             @provider.exists?

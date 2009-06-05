@@ -30,7 +30,7 @@ require 'facter/util/plist'
 
 Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Package do
     desc "Package management based on Apple's Installer.app and DiskUtility.app.  This package works by checking the contents of a DMG image for Apple pkg or mpkg files. Any number of pkg or mpkg files may exist in the root directory of the DMG file system. Sub directories are not checked for packages.  See `the wiki docs </trac/puppet/wiki/DmgPackages>` for more detail."
-  
+
     confine :exists => "/Library/Receipts"
     commands :installer => "/usr/sbin/installer"
     commands :hdiutil => "/usr/bin/hdiutil"
@@ -65,7 +65,7 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
           t.print "source: '#{orig_source}'\n"
       end
     end
-    
+
     def self.installpkgdmg(source, name)
         unless source =~ /\.dmg$/i
             raise Puppet::Error.new("Mac OS X PKG DMG's must specificy a source string ending in .dmg")
@@ -82,7 +82,7 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
                 cached_source = source
             end
         end
-        
+
         begin
             File.open(cached_source) do |dmg|
                 xml_str = hdiutil "mount", "-plist", "-nobrowse", "-readonly", "-noidme", "-mountrandom", "/tmp", dmg.path

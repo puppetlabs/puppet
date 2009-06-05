@@ -144,7 +144,7 @@ class TestTypeAttributes < Test::Unit::TestCase
         type.newparam(:name) {}
         type.newparam(:one) {}
         type.newproperty(:two) {}
-        
+
         aliases = {
             :three => :one,
             :four => :two

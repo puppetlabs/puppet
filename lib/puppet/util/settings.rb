@@ -168,7 +168,7 @@ class Puppet::Util::Settings
     def initialize
         @config = {}
         @shortnames = {}
-        
+
         @created = []
         @searchpath = nil
 
@@ -332,7 +332,7 @@ class Puppet::Util::Settings
         parse_file(file).each do |area, values|
             @values[area] = values
         end
-        
+
         # Determine our environment, if we have one.
         if @config[:environment]
             env = self.value(:environment).to_sym
@@ -616,7 +616,7 @@ Generated on #{Time.now}.
                     if transaction.any_failed?
                         report = transaction.report
                         failures = report.logs.find_all { |log| log.level == :err }
-                        raise "Got %s failure(s) while initializing: %s" % [failures.length, failures.collect { |l| l.to_s }.join("; ")] 
+                        raise "Got %s failure(s) while initializing: %s" % [failures.length, failures.collect { |l| l.to_s }.join("; ")]
                     end
                 end
             end
@@ -663,7 +663,7 @@ Generated on #{Time.now}.
             end
             throw :foundval, nil
         end
-        
+
         # If we didn't get a value, use the default
         val = @config[param].default if val.nil?
 
@@ -759,7 +759,7 @@ Generated on #{Time.now}.
 
         return obj
     end
-    
+
     # Create the transportable objects for users and groups.
     def add_user_resources(catalog, sections)
         return unless Puppet.features.root?

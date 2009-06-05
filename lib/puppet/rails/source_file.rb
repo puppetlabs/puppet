@@ -4,5 +4,5 @@ class Puppet::Rails::SourceFile < ActiveRecord::Base
 
     def to_label
       "#{self.filename}"
-    end  
+    end
 end

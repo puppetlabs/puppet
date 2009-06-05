@@ -36,7 +36,7 @@ class Puppet::Parser::Interpreter
     # create our interpreter
     def initialize
         # The class won't always be defined during testing.
-        if Puppet[:storeconfigs] 
+        if Puppet[:storeconfigs]
             if Puppet.features.rails?
                 Puppet::Rails.init
             else

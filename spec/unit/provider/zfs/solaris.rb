@@ -43,15 +43,15 @@ describe provider_class do
             @provider.delete
         end
     end
-   
+
     describe "when calling exist?" do
         it "should call zfs with :list" do
             #return stuff because we have to slice and dice it
             @provider.expects(:zfs).with(:list).returns("NAME USED AVAIL REFER MOUNTPOINT\nmyzfs 100K 27.4M /myzfs")
             @provider.exists?
         end
-        
-        it "should return true if returned values match the name" do 
+
+        it "should return true if returned values match the name" do
             @provider.stubs(:zfs).with(:list).returns("NAME USED AVAIL REFER MOUNTPOINT\n#{@resource[:name]} 100K 27.4M /myzfs")
             @provider.exists?.should == true
         end
@@ -60,7 +60,7 @@ describe provider_class do
             @provider.stubs(:zfs).with(:list).returns("no soup for you")
             @provider.exists?.should == false
         end
-            
+
     end
 
     [:mountpoint, :compression, :copies, :quota, :reservation, :sharenfs, :snapdir].each do |prop|

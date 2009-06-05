@@ -24,7 +24,7 @@ class TestMailaliasAliasesProvider < Test::Unit::TestCase
         @provider.clear
         super
     end
-    
+
     def mkalias(name = "me")
         if defined? @pcount
             @pcount += 1

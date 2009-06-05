@@ -2,8 +2,8 @@
 # Copyright (C) 2008 Jeffrey J McCune.
 
 # This program and entire repository is free software; you can
-# redistribute it and/or modify it under the terms of the GNU 
-# General Public License as published by the Free Software 
+# redistribute it and/or modify it under the terms of the GNU
+# General Public License as published by the Free Software
 # Foundation; either version 2 of the License, or any later version.
 
 # This program is distributed in the hope that it will be useful,
@@ -66,7 +66,7 @@ Puppet::Type.type(:mcx).provide :mcxcontent, :parent => Puppet::Provider do
                 content = mcxexport(ds_type, ds_name)
                 if content.empty?
                     Puppet.debug "/#{TypeMap[ds_type]}/#{ds_name} has no MCX data."
-                else 
+                else
                     # This node has MCX data.
                     rsrc = self.new(:name => "/#{TypeMap[ds_type]}/#{ds_name}",
                                  :ds_type => ds_type,

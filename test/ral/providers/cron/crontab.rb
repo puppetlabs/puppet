@@ -21,7 +21,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
 
     # These are potentially multi-line records; there's no one-to-one map, but they model
     # a full cron job.  These tests assume individual record types will always be correctly
-    # parsed, so all they 
+    # parsed, so all they
     def sample_crons
         unless defined? @sample_crons
             @sample_crons = YAML.load(File.read(File.join(@crondir, "crontab_collections.yaml")))
@@ -221,7 +221,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
             assert_nothing_raised("could not load %s" % file) do
                 str, args = YAML.load(File.read(file))
             end
-            
+
             # Stupid old yaml
             args.each do |hash|
                 hash.each do |param, value|
@@ -298,7 +298,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
         assert_equal("# Puppet Name: #{name}\n30 * * * * date > /dev/null", str,
             "Cron did not generate correctly")
     end
-    
+
     # Test that comments are correctly retained
     def test_retain_comments
         str = "# this is a comment\n#and another comment\n"
@@ -380,7 +380,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
         setme
 
         target = @provider.target_object(@me)
-        
+
         [
             "* * * * * /some/command",
             "0,30 * * * * /some/command",
@@ -522,7 +522,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
         setme
 
         target = @provider.target_object(@me)
-        
+
         [
             "@daily /some/command",
             "@daily /some/command more"

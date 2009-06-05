@@ -67,7 +67,7 @@ class Puppet::Rails::ParamValue < ActiveRecord::Base
         end
         params
     end
-    
+
     def to_s
         "%s => %s" % [self.name, self.value]
     end

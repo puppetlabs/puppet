@@ -251,7 +251,7 @@ describe Puppet::SimpleGraph do
             @graph.vertex?(:one).should be_true
             @graph.vertex?(:two).should be_true
         end
-        
+
         it "should retain labels on edges" do
             @graph.add_edge(:one, :two, :callback => :awesome)
             edge = @graph.reversal.edge(:two, :one)
@@ -377,7 +377,7 @@ describe Puppet::SimpleGraph do
     describe "when determining dependencies" do
         before do
             @graph = Puppet::SimpleGraph.new
-            
+
             @graph.add_edge("a", "b")
             @graph.add_edge("a", "c")
             @graph.add_edge("b", "d")
@@ -402,7 +402,7 @@ describe Puppet::SimpleGraph do
         it "should find single dependencies" do
             @graph.dependencies("c").sort.should == %w{a}
         end
-        
+
         it "should return an empty array when there are no dependencies" do
             @graph.dependencies("a").sort.should == []
         end
@@ -417,16 +417,16 @@ describe Puppet::SimpleGraph do
         def each
             @children.each do |c| yield c end
         end
-        
+
         def initialize(name, ary)
             @name = name
             @children = ary
         end
-        
+
         def push(*ary)
             ary.each { |c| @children.push(c)}
         end
-        
+
         def to_s
             @name
         end

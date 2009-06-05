@@ -7,7 +7,7 @@ Puppet::Type.type(:group).provide :ldap, :parent => Puppet::Provider::Ldap do
     ldap-related settings, including ``ldapbase``.  You will also almost
     definitely need settings for ``ldapuser`` and ``ldappassword``, so that
     your clients can write to ldap.
-        
+
     Note that this provider will automatically generate a GID for you if you do
     not specify one, but it is a potentially expensive operation, as it
     iterates across all existing groups to pick the appropriate next one.
@@ -24,7 +24,7 @@ Puppet::Type.type(:group).provide :ldap, :parent => Puppet::Provider::Ldap do
 
     # Find the next gid after the current largest gid.
     provider = self
-    manager.generates(:gidNumber).with do 
+    manager.generates(:gidNumber).with do
         largest = 500
         if existing = provider.manager.search
                 existing.each do |hash|

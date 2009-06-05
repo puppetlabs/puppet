@@ -164,7 +164,7 @@ Puppet::Application.new(:puppetd) do
         # to clients. In the meantime, we just disable CRL checking if
         # the CRL file doesn't exist
         unless File::exist?(Puppet[:cacrl])
-            Puppet[:cacrl] = 'false' 
+            Puppet[:cacrl] = 'false'
         end
 
         handlers = nil
@@ -199,7 +199,7 @@ Puppet::Application.new(:puppetd) do
         args[:Server] = Puppet[:server]
         if options[:fqdn]
             args[:FQDN] = options[:fqdn]
-            Puppet[:certname] = options[:fqdn] 
+            Puppet[:certname] = options[:fqdn]
         end
 
         if options[:centrallogs]

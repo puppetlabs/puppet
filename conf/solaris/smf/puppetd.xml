@@ -20,7 +20,7 @@
                 type='path'>
         <service_fmri value='file:///etc/puppet/puppet.conf'/>
     </dependency>
-        
+
     <dependency name='loopback'
                 grouping='require_all'
                 restart_on='error'

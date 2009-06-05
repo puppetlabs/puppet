@@ -4,7 +4,7 @@ class Puppet::Rails::ResourceTag < ActiveRecord::Base
 
     def to_label
       "#{self.puppet_tag.name}"
-    end  
+    end
 
     # returns an array of hash containing tags of resource
     def self.find_all_tags_from_resource(db_resource)

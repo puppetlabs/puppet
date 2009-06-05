@@ -165,7 +165,7 @@ module Puppet::Network::HTTP::Handler
 
     def path(request)
         raise NotImplementedError
-    end    
+    end
 
     def request_key(request)
         raise NotImplementedError

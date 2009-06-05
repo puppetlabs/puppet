@@ -55,7 +55,7 @@ module Puppet
             newvalue(:absent, :event => :package_removed) do
                 provider.uninstall
             end
-            
+
             newvalue(:purged, :event => :package_purged, :required_features => :purgeable) do
                 provider.purge
             end
@@ -115,7 +115,7 @@ module Puppet
                     when :latest
                         # Short-circuit packages that are not present
                         return false if is == :absent or is == :purged
- 
+
                         # Don't run 'latest' more than about every 5 minutes
                         if @latest and ((Time.now.to_i - @lateststamp) / 60) < 5
                             #self.debug "Skipping latest check"
@@ -202,7 +202,7 @@ module Puppet
                     alias => openssh,
                     require => Package[openssl]
                 }
-            
+
             "
             isnamevar
         end

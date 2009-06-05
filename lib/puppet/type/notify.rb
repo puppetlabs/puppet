@@ -12,7 +12,7 @@ module Puppet
                 case @resource["withpath"]
                 when :true
                     send(@resource[:loglevel], self.should)
-                else  
+                else
                     Puppet.send(@resource[:loglevel], self.should)
                 end
                 return
@@ -29,11 +29,11 @@ module Puppet
             defaultto { @resource[:name] }
         end
 
-        newparam(:withpath) do 
+        newparam(:withpath) do
             desc "Whether to not to show the full object path."
             defaultto :false
 
-            newvalues(:true, :false) 
+            newvalues(:true, :false)
         end
 
         newparam(:name) do

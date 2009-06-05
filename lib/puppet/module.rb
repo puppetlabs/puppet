@@ -29,7 +29,7 @@ class Puppet::Module
             end
         end
     end
-    
+
     # Return an array of paths by splitting the +modulepath+ config
     # parameter. Only consider paths that are absolute and existing
     # directories

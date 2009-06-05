@@ -2,7 +2,7 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-describe Puppet::Util::Settings do 
+describe Puppet::Util::Settings do
     describe "when specifying defaults" do
         before do
             @settings = Puppet::Util::Settings.new
@@ -521,7 +521,7 @@ describe Puppet::Util::Settings do
 
             # Now replace the value
             text = "[main]\none = disk-replace\n"
-            
+
             # This is kinda ridiculous - the reason it parses twice is that
             # it goes to parse again when we ask for the value, because the
             # mock always says it should get reparsed.

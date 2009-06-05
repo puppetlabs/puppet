@@ -274,7 +274,7 @@ describe Puppet::SSL::CertificateAuthority do
 
                 @ca.next_serial.should == 2
             end
-            
+
             it "should write the next serial number to the serial file as hex" do
                 @filehandle.expects(:<<).with("0002")
 
@@ -552,7 +552,7 @@ describe Puppet::SSL::CertificateAuthority do
 
             @ca.waiting?.should == %w{one two}
         end
-        
+
         it "should delegate removing hosts to the Host class" do
             Puppet::SSL::Host.expects(:destroy).with("myhost")
 

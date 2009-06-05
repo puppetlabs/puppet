@@ -111,7 +111,7 @@ class Puppet::Indirector::Terminus
         # Return all terminus classes for a given indirection.
         def terminus_classes(indirection_name)
             setup_instance_loading indirection_name
-            
+
             # Load them all.
             instance_loader(indirection_name).loadall
 
@@ -137,15 +137,15 @@ class Puppet::Indirector::Terminus
             raise Puppet::DevError, "Cannot create instances of abstract terminus types"
         end
     end
-    
+
     def model
         self.class.model
     end
-    
+
     def name
         self.class.name
     end
-    
+
     def terminus_type
         self.class.terminus_type
     end

@@ -1,6 +1,6 @@
-Puppet::Parser::Functions::newfunction(:fqdn_rand, :type => :rvalue, :doc => 
-    "Generates random numbers based on the node's fqdn. The first argument 
-    sets the range.  The second argument specifies a number to add to the 
+Puppet::Parser::Functions::newfunction(:fqdn_rand, :type => :rvalue, :doc =>
+    "Generates random numbers based on the node's fqdn. The first argument
+    sets the range.  The second argument specifies a number to add to the
     seed and is optional.") do |args|
         require 'md5'
         max = args[0]

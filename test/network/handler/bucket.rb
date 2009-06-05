@@ -106,7 +106,7 @@ class TestBucket < Test::Unit::TestCase
         end
 
         %w{
-            who bash sh uname /etc/passwd /etc/syslog.conf /etc/hosts 
+            who bash sh uname /etc/passwd /etc/syslog.conf /etc/hosts
         }.each { |file|
             # if it's fully qualified, just add it
             if file =~ /^\//
@@ -251,7 +251,7 @@ class TestBucket < Test::Unit::TestCase
         dir = File.join(@bucket, dirs, md5)
         filedir, contents, paths = bucket.class.paths(@bucket, md5)
 
-        assert_equal(dir, filedir, "did not use a deeper file structure") 
+        assert_equal(dir, filedir, "did not use a deeper file structure")
         assert_equal(File.join(dir, "contents"), contents,
             "content path is not the deeper version")
         assert_equal(File.join(dir, "paths"), paths,

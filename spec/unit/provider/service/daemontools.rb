@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# 
+#
 # Unit testing for the Daemontools service Provider
 #
 # author Brice Figureau
@@ -32,7 +32,7 @@ describe provider_class do
 
         @provider.stubs(:resource).returns @resource
     end
-    
+
     it "should have a restartcmd method" do
         @provider.should respond_to(:restartcmd)
     end

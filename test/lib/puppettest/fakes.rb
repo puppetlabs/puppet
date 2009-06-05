@@ -153,7 +153,7 @@ module PuppetTest
             end
 
             return ret
-        end 
+        end
 
         def store(hash)
             hash.each do |n, v|

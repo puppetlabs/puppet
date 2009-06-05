@@ -8,7 +8,7 @@ Puppet::Type.type(:package).provide :freebsd, :parent => :openbsd do
     commands :pkginfo => "/usr/sbin/pkg_info",
              :pkgadd => "/usr/sbin/pkg_add",
              :pkgdelete => "/usr/sbin/pkg_delete"
-    
+
     confine :operatingsystem => :freebsd
 
     def self.listcmd

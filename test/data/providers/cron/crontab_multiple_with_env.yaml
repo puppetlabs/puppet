@@ -1,4 +1,4 @@
---- 
+---
 - |
   # comment 1
   # Puppet Name: name2
@@ -13,19 +13,19 @@
 - - :record_type: :comment
     :line: "# comment 1"
   - :command: command4
-    :environment: 
+    :environment:
     - env3=val
     :name: name2
     :record_type: :crontab
   - :command: command5
-    :environment: 
+    :environment:
     - env3=val
     - env4=other
     :name: name with spaces
     :record_type: :crontab
   - :record_type: :comment
     :line: "# comment 5"
---- 
+---
 - |
   # comment 1
   # Puppet Name: name2
@@ -40,12 +40,12 @@
 - - :record_type: :comment
     :line: "# comment 1"
   - :command: command4
-    :environment: 
+    :environment:
     - env3=val
     :name: name2
     :record_type: :crontab
   - :command: command5
-    :environment: 
+    :environment:
     - env3=val
     - env4=other
     :name: name with spaces

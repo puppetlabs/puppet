@@ -15,7 +15,7 @@ describe tidy do
         File.expects(:lstat).with("/foo/bar").returns stat
         resource.stat("/foo/bar").should == stat
     end
-    
+
     [:age, :size, :path, :matches, :type, :recurse, :rmdirs].each do |param|
         it "should have a %s parameter" % param do
             Puppet::Type.type(:tidy).attrclass(param).ancestors.should be_include(Puppet::Parameter)

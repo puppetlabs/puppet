@@ -1,5 +1,5 @@
 -- MySQL DB consistency check/fix
--- 
+--
 -- Usage:
 -- cat dbfix.sql | mysql -u user -p puppet
 --
@@ -13,11 +13,11 @@ FROM resources AS bad_rows
     FROM resources
     GROUP BY title,restype,host_id
     HAVING count(*) > 1
-  ) AS good_rows 
-  ON 
-    good_rows.title = bad_rows.title AND 
-    good_rows.restype = bad_rows.restype AND 
-    good_rows.host_id = bad_rows.host_id AND 
+  ) AS good_rows
+  ON
+    good_rows.title = bad_rows.title AND
+    good_rows.restype = bad_rows.restype AND
+    good_rows.host_id = bad_rows.host_id AND
     good_rows.max_id <> bad_rows.id;
 
 -- Remove duplicate param_values, and keep the latest one
@@ -28,17 +28,17 @@ FROM param_values AS bad_rows
     FROM param_values
     GROUP BY value,param_name_id,resource_id
     HAVING count(*) > 1
-  ) AS good_rows 
-  ON 
-    good_rows.value = bad_rows.value AND 
-    good_rows.param_name_id = bad_rows.param_name_id AND 
-    good_rows.resource_id = bad_rows.resource_id AND 
+  ) AS good_rows
+  ON
+    good_rows.value = bad_rows.value AND
+    good_rows.param_name_id = bad_rows.param_name_id AND
+    good_rows.resource_id = bad_rows.resource_id AND
     good_rows.max_id <> bad_rows.id;
 
 -- rewrite param_values that points to duplicated param_names
 -- to point to the highest param_name id.
-UPDATE 
-  param_values v 
+UPDATE
+  param_values v
   INNER JOIN
   param_names n
   ON n.id = v.param_name_id
@@ -60,8 +60,8 @@ FROM param_names AS bad_rows
     FROM param_names
     GROUP BY name
     HAVING count(*) > 1
-  ) AS good_rows 
-  ON 
+  ) AS good_rows
+  ON
     good_rows.name = bad_rows.name AND
     good_rows.max_id <> bad_rows.id;
 
@@ -73,16 +73,16 @@ FROM resource_tags AS bad_rows
     FROM resource_tags
     GROUP BY resource_id,puppet_tag_id
     HAVING count(*) > 1
-  ) AS good_rows 
-  ON 
+  ) AS good_rows
+  ON
     good_rows.resource_id = bad_rows.resource_id AND
     good_rows.puppet_tag_id = bad_rows.puppet_tag_id AND
     good_rows.max_id <> bad_rows.id;
 
 -- rewrite resource_tags that points to duplicated puppet_tags
 -- to point to the highest puppet_tags id.
-UPDATE 
-  resource_tags v 
+UPDATE
+  resource_tags v
   INNER JOIN
   puppet_tags n
   ON n.id = v.puppet_tag_id
@@ -104,8 +104,8 @@ FROM puppet_tags AS bad_rows
     FROM puppet_tags
     GROUP BY name
     HAVING count(*) > 1
-  ) AS good_rows 
-  ON 
+  ) AS good_rows
+  ON
     good_rows.name = bad_rows.name AND
     good_rows.max_id <> bad_rows.id;
 

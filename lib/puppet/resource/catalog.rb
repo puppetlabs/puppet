@@ -92,7 +92,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
 
     # Create an alias for a resource.
     def alias(resource, name)
-        #set $1 
+        #set $1
         resource.ref =~ /^(.+)\[/
 
         newref = "%s[%s]" % [$1 || resource.class.name, name]
@@ -148,7 +148,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         end
 
         yield transaction if block_given?
-        
+
         transaction.send_report if host_config and (Puppet[:report] or Puppet[:summarize])
 
         return transaction
@@ -162,7 +162,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     def applying?
         @applying
     end
-    
+
     def clear(remove_resources = true)
         super()
         # We have to do this so that the resources clean themselves up.
@@ -271,7 +271,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         make_default_resources
 
         @resource_table.values.each { |resource| resource.finish }
-        
+
         write_graph(:resources)
     end
 
@@ -304,13 +304,13 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
 
         # First create the default scheduling objects
         Puppet::Type.type(:schedule).mkdefaultschedules.each { |res| add_resource(res) unless resource(res.ref) }
-        
+
         # And filebuckets
         if bucket = Puppet::Type.type(:filebucket).mkdefaultbucket
             add_resource(bucket) unless resource(bucket.ref)
         end
     end
-    
+
     # Create a graph of all of the relationships in our catalog.
     def relationship_graph
         unless defined? @relationship_graph and @relationship_graph
@@ -320,7 +320,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
             # spitting out the messages.  If this is not set,
             # then we get into an infinite loop.
             @relationship_graph = Puppet::SimpleGraph.new
-            
+
             # First create the dependency graph
             self.vertices.each do |vertex|
                 @relationship_graph.add_vertex vertex
@@ -328,7 +328,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
                     @relationship_graph.add_edge(edge)
                 end
             end
-            
+
             # Lastly, add in any autorequires
             @relationship_graph.vertices.each do |vertex|
                 vertex.autorequire(self).each do |edge|
@@ -343,7 +343,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
                 end
             end
             @relationship_graph.write_graph(:relationships) if host_config?
-            
+
             # Then splice in the container information
             @relationship_graph.splice!(self, Puppet::Type::Component)
 
@@ -432,7 +432,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
 
     # Verify that the given resource isn't defined elsewhere.
     def fail_unless_unique(resource)
-        # Short-curcuit the common case, 
+        # Short-curcuit the common case,
         return unless existing_resource = @resource_table[resource.ref]
 
         # If we've gotten this far, it's a real conflict

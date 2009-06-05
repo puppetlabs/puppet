@@ -46,7 +46,7 @@ File.open(Puppet[:authconfig]).each do |line|
 end
 
 # be a daemon
-sock = TCPServer.new(port) 
+sock = TCPServer.new(port)
 ssls = OpenSSL::SSL::SSLServer.new(sock, ctx)
 
 loop do

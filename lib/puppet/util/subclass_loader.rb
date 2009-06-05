@@ -31,7 +31,7 @@ module Puppet::Util::SubclassLoader
         # that we're defining a class method here, not an instance.
         meta_def(name) do |subname|
             subname = subname.to_s.downcase
-        
+
             unless c = @subclasses.find { |c| c.name.to_s.downcase == subname }
                 loader.load(subname)
                 c = @subclasses.find { |c| c.name.to_s.downcase == subname }

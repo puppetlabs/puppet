@@ -8,7 +8,7 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init do
     "
 
     commands :chkconfig => "/sbin/chkconfig", :service => "/sbin/service"
- 
+
     defaultfor :operatingsystem => [:redhat, :fedora, :suse, :centos, :sles, :oel, :ovm]
 
     def self.defpath
@@ -51,7 +51,7 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init do
                 [self.name, detail]
         end
     end
- 
+
     def restart
         if @resource[:hasrestart] == :true
             service(@resource[:name], "restart")

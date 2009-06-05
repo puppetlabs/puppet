@@ -7,13 +7,13 @@
 # Last Updated: 2008-07-31
 #
 # Copyright 2008 Google Inc.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #      http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ PREFLIGHT="preflight"
 
 
 function find_installer() {
-  # we walk up three directories to make this executable from the root, 
+  # we walk up three directories to make this executable from the root,
   # root/conf or root/conf/osx
   if [ -f "./${INSTALLRB}" ]; then
     installer="$(pwd)/${INSTALLRB}"
@@ -63,7 +63,7 @@ function prepare_package() {
   # to look at for package creation and substitue the version strings out.
   # Major/Minor versions can only be integers, so we have "0" and "245" for
   # puppet version 0.24.5
-  # Note too that for 10.5 compatibility this Info.plist *must* be set to 
+  # Note too that for 10.5 compatibility this Info.plist *must* be set to
   # follow symlinks.
   VER1=$(echo ${puppet_version} | awk -F "." '{print $1}')
   VER2=$(echo ${puppet_version} | awk -F "." '{print $2}')
@@ -74,12 +74,12 @@ function prepare_package() {
   sed -i '' "s/{SHORTVERSION}/${puppet_version}/g" "${pkgtemp}/${PROTO_PLIST}"
   sed -i '' "s/{MAJORVERSION}/${major_version}/g" "${pkgtemp}/${PROTO_PLIST}"
   sed -i '' "s/{MINORVERSION}/${minor_version}/g" "${pkgtemp}/${PROTO_PLIST}"
-  
+
   # We need to create a preflight script to remove traces of previous
   # puppet installs due to limitations in Apple's pkg format.
   mkdir "${pkgtemp}/scripts"
   cp "${puppet_root}/conf/osx/${PREFLIGHT}" "${pkgtemp}/scripts"
-  
+
   # substitute in the sitelibdir specified above on the assumption that this
   # is where any previous puppet install exists that should be cleaned out.
   sed -i '' "s|{SITELIBDIR}|${SITELIBDIR}|g" "${pkgtemp}/scripts/${PREFLIGHT}"
@@ -123,44 +123,44 @@ function main() {
   fi
 
   find_installer
-  
+
   if [ ! "${installer}" ]; then
     echo "Unable to find ${INSTALLRB}"
     cleanup_and_exit 1
   fi
 
   find_puppet_root
-  
+
   if [ ! "${puppet_root}" ]; then
     echo "Unable to find puppet repository root."
     cleanup_and_exit 1
   fi
-  
+
   pkgroot=$(mktemp -d -t puppetpkg)
-  
+
   if [ ! "${pkgroot}" ]; then
     echo "Unable to create temporary package root."
     cleanup_and_exit 1
   fi
-  
+
   pkgtemp=$(mktemp -d -t puppettmp)
-  
+
   if [ ! "${pkgtemp}" ]; then
     echo "Unable to create temporary package root."
     cleanup_and_exit 1
   fi
-  
+
   install_puppet
   get_puppet_version
-  
+
   if [ ! "${puppet_version}" ]; then
     echo "Unable to retrieve puppet version"
     cleanup_and_exit 1
   fi
-  
+
   prepare_package
   create_package
-  
+
   cleanup_and_exit 0
 }
 

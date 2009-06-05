@@ -12,7 +12,7 @@ describe Puppet::Network::HTTP::Handler do
     before do
         @handler = HttpHandled.new
     end
-    
+
     it "should include the v1 REST API" do
         Puppet::Network::HTTP::Handler.ancestors.should be_include(Puppet::Network::HTTP::API::V1)
     end

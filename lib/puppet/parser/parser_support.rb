@@ -476,7 +476,7 @@ class Puppet::Parser::Parser
     private
 
     def check_and_add_to_watched_files(filename)
-        unless @files.include?(filename)    
+        unless @files.include?(filename)
             @files[filename] = Puppet::Util::LoadedFile.new(filename)
             return true
         else

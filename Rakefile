@@ -54,7 +54,7 @@ end
 task :tracdocs do
     require 'puppet'
     require 'puppet/util/reference'
-    Puppet::Util::Reference.references.each do |ref| 
+    Puppet::Util::Reference.references.each do |ref|
         sh "puppetdoc -m trac -r #{ref.to_s}"
     end
 end
@@ -65,7 +65,7 @@ task :spec do
     require 'spec/rake/spectask'
     # require 'rcov'
     Spec::Rake::SpecTask.new do |t|
-        t.spec_opts = ['--format','s', '--loadby','mtime'] 
+        t.spec_opts = ['--format','s', '--loadby','mtime']
         t.spec_files = FileList['spec/**/*.rb']
     end
 end
@@ -83,9 +83,9 @@ task :ci_prep do
         require 'ci/reporter/rake/rspec'
         require 'ci/reporter/rake/test_unit'
         ENV['CI_REPORTS'] = 'results'
-    rescue LoadError 
+    rescue LoadError
        puts 'Missing ci_reporter gem. You must have the ci_reporter gem installed to run the CI spec tests'
-    end 
+    end
 end
 
 desc "Run the CI RSpec tests"
@@ -104,7 +104,7 @@ task :mail_patches do
         raise "Could not get branch from 'git status'"
     end
     branch = $1
-    
+
     unless branch =~ %r{^([^\/]+)/([^\/]+)/([^\/]+)$}
         raise "Branch name does not follow <type>/<parent>/<name> model; cannot autodetect parent branch"
     end
@@ -136,9 +136,9 @@ task :changelog do
     mkdir(CHANGELOG_DIR) unless File.directory?(CHANGELOG_DIR)
     change_body=`git log --pretty=format:'%aD%n%an <%ae>%n%s%n'`
     File.open(File.join(CHANGELOG_DIR, "CHANGELOG.git"), 'w') do |f|
-        f << change_body 
+        f << change_body
     end
- 
+
     # Changelog commit
     `git add #{CHANGELOG_DIR}/CHANGELOG.git`
     `git commit -m "Update CHANGELOG.git"`

@@ -7,12 +7,12 @@ require 'socket'
 describe Puppet::Network::Server do
     describe "when using mongrel" do
         confine "Mongrel is not available" => Puppet.features.mongrel?
-        
+
         before :each do
             Puppet[:servertype] = 'mongrel'
             Puppet[:server] = '127.0.0.1'
             @params = { :port => 34346, :handlers => [ :node ] }
-            @server = Puppet::Network::Server.new(@params)            
+            @server = Puppet::Network::Server.new(@params)
         end
 
         after { Puppet.settings.clear }
@@ -26,11 +26,11 @@ describe Puppet::Network::Server do
         describe "when listening" do
             it "should be reachable on the specified address and port" do
                 @server.listen
-                lambda { TCPSocket.new('127.0.0.1', 34346) }.should_not raise_error            
+                lambda { TCPSocket.new('127.0.0.1', 34346) }.should_not raise_error
             end
 
             it "should default to '127.0.0.1' as its bind address" do
-                @server = Puppet::Network::Server.new(@params.merge(:port => 34343))            
+                @server = Puppet::Network::Server.new(@params.merge(:port => 34343))
                 @server.stubs(:unlisten) # we're breaking listening internally, so we have to keep it from unlistening
                 @server.send(:http_server).expects(:listen).with { |args| args[:address] == "127.0.0.1" }
                 @server.listen
@@ -38,7 +38,7 @@ describe Puppet::Network::Server do
 
             it "should use any specified bind address" do
                 Puppet[:bindaddress] = "0.0.0.0"
-                @server = Puppet::Network::Server.new(@params.merge(:port => 34343))            
+                @server = Puppet::Network::Server.new(@params.merge(:port => 34343))
                 @server.stubs(:unlisten) # we're breaking listening internally, so we have to keep it from unlistening
                 @server.send(:http_server).expects(:listen).with { |args| args[:address] == "0.0.0.0" }
                 @server.listen
@@ -50,17 +50,17 @@ describe Puppet::Network::Server do
                 lambda { @server2.listen }.should raise_error
             end
         end
-        
+
         describe "after unlistening" do
             it "should not be reachable on the port and address assigned" do
                 @server.listen
                 @server.unlisten
-                lambda { TCPSocket.new('127.0.0.1', 34346) }.should raise_error(Errno::ECONNREFUSED)                
+                lambda { TCPSocket.new('127.0.0.1', 34346) }.should raise_error(Errno::ECONNREFUSED)
             end
         end
-            
+
         after :each do
             @server.unlisten if @server.listening?
-        end    
+        end
     end
 end

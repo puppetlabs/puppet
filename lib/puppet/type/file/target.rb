@@ -55,7 +55,7 @@ module Puppet
             if [:nochange, :notlink].include?(self.should) or @resource.recurse?
                 return true
             elsif ! @resource.replace? and File.exists?(@resource[:path])
-                return true 
+                return true
             else
                 return super(currentvalue)
             end

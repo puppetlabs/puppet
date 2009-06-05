@@ -49,7 +49,7 @@ describe Puppet::Util::SELinux do
         it "should match a path on / to ext3" do
             find_fs('/etc/puppet/testfile').should == "ext3"
         end
-        
+
         it "should match a path on /mnt/nfs to nfs" do
             find_fs('/mnt/nfs/testfile/foobar').should == "nfs"
         end
@@ -112,7 +112,7 @@ describe Puppet::Util::SELinux do
             self.expects(:find_fs).with("/foo").returns "nfs"
             get_selinux_default_context("/foo").should be_nil
         end
-            
+
     end
 
     describe "parse_selinux_context" do

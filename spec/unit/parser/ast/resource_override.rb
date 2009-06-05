@@ -31,19 +31,19 @@ describe Puppet::Parser::AST::ResourceOverride do
     it "should return the overriden resource directly when called with one item" do
         klass = stub 'klass', :title => "title", :type => "one"
         object = mock 'object', :safeevaluate => klass
-        override = ast::ResourceOverride.new(:object => object , :params => @params).evaluate(@scope)        
+        override = ast::ResourceOverride.new(:object => object , :params => @params).evaluate(@scope)
         override.should be_an_instance_of(Puppet::Parser::Resource)
         override.title.should == "title"
-        override.type.should == "One" 
+        override.type.should == "One"
     end
 
     it "should return an array of overriden resources when called with an array of titles" do
         klass1 = stub 'klass1', :title => "title1", :type => "one"
         klass2 = stub 'klass2', :title => "title2", :type => "one"
-        
+
         object = mock 'object', :safeevaluate => [klass1,klass2]
-        
-        override = ast::ResourceOverride.new(:object => object , :params => @params).evaluate(@scope)        
+
+        override = ast::ResourceOverride.new(:object => object , :params => @params).evaluate(@scope)
         override.should have(2).elements
         override.each {|o| o.should be_an_instance_of(Puppet::Parser::Resource) }
     end

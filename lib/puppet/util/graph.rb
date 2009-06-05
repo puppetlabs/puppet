@@ -13,11 +13,11 @@ module Puppet::Util::Graph
         # Allow our calling function to send in a graph, so that we
         # can call this recursively with one graph.
         graph ||= Puppet::SimpleGraph.new
-        
+
         self.each do |child|
             unless block_given? and ! yield(child)
                 graph.add_edge(self, child)
-                
+
                 if child.respond_to?(:to_graph)
                     child.to_graph(graph, &block)
                 end
@@ -25,7 +25,7 @@ module Puppet::Util::Graph
         end
 
         # Do a topsort, which will throw an exception if the graph is cyclic.
-        
+
         graph
     end
 end

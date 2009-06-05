@@ -18,7 +18,7 @@ module Puppet
             include Puppet::SSLCertificates::Support
 
             # Read the CA cert and CRL and populate an OpenSSL::X509::Store
-            # with them, with flags appropriate for checking client 
+            # with them, with flags appropriate for checking client
             # certificates for revocation
             def x509store
                 if Puppet[:cacrl] == 'false'

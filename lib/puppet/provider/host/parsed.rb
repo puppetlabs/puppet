@@ -14,8 +14,8 @@ Puppet::Type.type(:host).provide(:parsed,
 ) do
     confine :exists => hosts
 
-    text_line :comment, :match => /^#/ 
-    text_line :blank, :match => /^\s*$/ 
+    text_line :comment, :match => /^#/
+    text_line :blank, :match => /^\s*$/
 
     record_line :parsed, :fields => %w{ip name alias},
         :optional => %w{alias},

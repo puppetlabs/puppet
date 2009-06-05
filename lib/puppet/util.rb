@@ -9,7 +9,7 @@ module Puppet
     end
 module Util
     require 'benchmark'
-    
+
     # These are all for backward compatibility -- these are methods that used
     # to be in Puppet::Util but have been moved into external modules.
     require 'puppet/util/posix'
@@ -37,8 +37,8 @@ module Util
             end
             unless Puppet::Util::SUIDManager.gid == group
                 begin
-                    Puppet::Util::SUIDManager.egid = group 
-                    Puppet::Util::SUIDManager.gid = group 
+                    Puppet::Util::SUIDManager.egid = group
+                    Puppet::Util::SUIDManager.gid = group
                 rescue => detail
                     Puppet.warning "could not change to group %s: %s" %
                         [group.inspect, detail]
@@ -58,8 +58,8 @@ module Util
             end
             unless Puppet::Util::SUIDManager.uid == user
                 begin
-                    Puppet::Util::SUIDManager.uid = user 
-                    Puppet::Util::SUIDManager.euid = user 
+                    Puppet::Util::SUIDManager.uid = user
+                    Puppet::Util::SUIDManager.euid = user
                 rescue
                     $stderr.puts "could not change to user %s" % user
                     exit(74)
@@ -255,14 +255,14 @@ module Util
         else
             Puppet.debug "Executing '%s'" % str
         end
-        
+
         if arguments[:uid]
             arguments[:uid] = Puppet::Util::SUIDManager.convert_xid(:uid, arguments[:uid])
         end
         if arguments[:gid]
             arguments[:gid] = Puppet::Util::SUIDManager.convert_xid(:gid, arguments[:gid])
         end
-        
+
         @@os ||= Facter.value(:operatingsystem)
         output = nil
         child_pid, child_status = nil
@@ -300,7 +300,7 @@ module Util
                 $stdout.reopen(output_file)
                 $stderr.reopen(error_file)
 
-                3.upto(256){|fd| IO::new(fd).close rescue nil} 
+                3.upto(256){|fd| IO::new(fd).close rescue nil}
                 if arguments[:gid]
                     Process.egid = arguments[:gid]
                     Process.gid = arguments[:gid] unless @@os == "Darwin"

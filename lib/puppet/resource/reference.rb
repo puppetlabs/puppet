@@ -37,7 +37,7 @@ class Puppet::Resource::Reference
             # Don't override whatever was done by setting the title.
             self.type ||= argtype
         end
-        
+
         @builtin_type = nil
     end
 
@@ -63,7 +63,7 @@ class Puppet::Resource::Reference
         if value.nil? or value.to_s.downcase == "component"
             @type = "Class"
         else
-            # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
+            # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
             x = @type = value.to_s.split("::").collect { |s| s.capitalize }.join("::")
         end
     end

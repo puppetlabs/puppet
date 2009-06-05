@@ -36,7 +36,7 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm, :source => :rpm do
         cmd = %w{-q -y}
 
         cmd << 'install' << str
-        
+
         aptget(*cmd)
     end
 

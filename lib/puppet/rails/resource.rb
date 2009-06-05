@@ -150,7 +150,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
             end
         end
     end
-        
+
     # Make sure the tag list is correct.
     def merge_tags(resource)
         in_db = []

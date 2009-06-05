@@ -84,13 +84,13 @@ class Puppet::Rails::Host < ActiveRecord::Base
     # Return the value of a fact.
     def fact(name)
         if fv = self.fact_values.find(:all, :include => :fact_name,
-                                      :conditions => "fact_names.name = '#{name}'") 
+                                      :conditions => "fact_names.name = '#{name}'")
             return fv
         else
             return nil
         end
     end
-    
+
     # returns a hash of fact_names.name => [ fact_values ] for this host.
     # Note that 'fact_values' is actually a list of the value instances, not
     # just actual values.
@@ -102,7 +102,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
             hash
         end
     end
-    
+
 
     # This is *very* similar to the merge_parameters method
     # of Puppet::Rails::Resource.
@@ -208,7 +208,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
         end
     end
 
-    # Turn a parser resource into a Rails resource.  
+    # Turn a parser resource into a Rails resource.
     def build_rails_resource_from_parser_resource(resource)
         db_resource = nil
         accumulate_benchmark("Added resources", :initialization) {

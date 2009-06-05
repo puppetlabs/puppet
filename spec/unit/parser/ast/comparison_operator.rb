@@ -14,7 +14,7 @@ describe Puppet::Parser::AST::ComparisonOperator do
         lval.expects(:safeevaluate).with(@scope)
         rval = stub "rval"
         rval.expects(:safeevaluate).with(@scope)
-        
+
         operator = Puppet::Parser::AST::ComparisonOperator.new :lval => lval, :operator => "==", :rval => rval
         operator.evaluate(@scope)
     end
@@ -22,18 +22,18 @@ describe Puppet::Parser::AST::ComparisonOperator do
     it "should convert arguments strings to numbers if they are" do
         Puppet::Parser::Scope.expects(:number?).with("1").returns(1)
         Puppet::Parser::Scope.expects(:number?).with("2").returns(2)
-        
+
         operator = Puppet::Parser::AST::ComparisonOperator.new :lval => @one, :operator => "==", :rval => @two
         operator.evaluate(@scope)
     end
-    
+
     %w{< > <= >= ==}.each do |oper|
         it "should use string comparison #{oper} if operands are strings" do
             lval = stub 'one', :safeevaluate => "one"
             rval = stub 'two', :safeevaluate => "two"
             Puppet::Parser::Scope.stubs(:number?).with("one").returns(nil)
             Puppet::Parser::Scope.stubs(:number?).with("two").returns(nil)
-    
+
             operator = Puppet::Parser::AST::ComparisonOperator.new :lval => lval, :operator => oper, :rval => rval
             operator.evaluate(@scope).should == "one".send(oper,"two")
         end
@@ -44,11 +44,11 @@ describe Puppet::Parser::AST::ComparisonOperator do
         rval = stub 'two', :safeevaluate => "2"
         Puppet::Parser::Scope.stubs(:number?).with("one").returns(nil)
         Puppet::Parser::Scope.stubs(:number?).with("2").returns(2)
-        
+
         operator = Puppet::Parser::AST::ComparisonOperator.new :lval => lval, :operator => ">", :rval => rval
         lambda { operator.evaluate(@scope) }.should raise_error(ArgumentError)
     end
-    
+
     it "should fail for an unknown operator" do
         lambda { operator = Puppet::Parser::AST::ComparisonOperator.new :lval => @one, :operator => "or", :rval => @two }.should raise_error
     end
@@ -56,7 +56,7 @@ describe Puppet::Parser::AST::ComparisonOperator do
     %w{< > <= >= ==}.each do |oper|
        it "should return the result of using '#{oper}' to compare the left and right sides" do
            operator = Puppet::Parser::AST::ComparisonOperator.new :lval => @one, :operator => oper, :rval => @two
-           
+
            operator.evaluate(@scope).should == 1.send(oper,2)
        end
     end
@@ -73,7 +73,7 @@ describe Puppet::Parser::AST::ComparisonOperator do
 
         @scope.expects(:lookupvar).with("one").returns(1)
         @scope.expects(:lookupvar).with("two").returns(2)
-        
+
         operator = Puppet::Parser::AST::ComparisonOperator.new :lval => one, :operator => "<", :rval => two
         operator.evaluate(@scope).should == true
     end
@@ -84,7 +84,7 @@ describe Puppet::Parser::AST::ComparisonOperator do
            ten = stub 'one', :safeevaluate => "10"
            nine = stub 'two', :safeevaluate => "9"
            operator = Puppet::Parser::AST::ComparisonOperator.new :lval => ten, :operator => oper, :rval => nine
-           
+
            operator.evaluate(@scope).should == 10.send(oper,9)
        end
     end

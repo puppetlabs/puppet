@@ -5,7 +5,7 @@ require 'puppet/util/instance_loader'
 # Implements a message queue client type plugin registry for use by the indirector facility.
 # Client modules for speaking a particular protocol (e.g. Stomp::Client for Stomp message
 # brokers, Memcached for Starling and Sparrow, etc.) register themselves with this module.
-# 
+#
 # Client classes are expected to live under the Puppet::Util::Queue namespace and corresponding
 # directory; the attempted use of a client via its typename (see below) will cause Puppet::Util::Queue
 # to attempt to load the corresponding plugin if it is not yet loaded.  The client class registers itself
@@ -43,7 +43,7 @@ module Puppet::Util::Queue
     #
     #   # register with default name +:you+
     #   register_queue_type(Foo::You)
-    #   
+    #
     #   # register with explicit queue type name +:myself+
     #   register_queue_type(Foo::Me, :myself)
     #

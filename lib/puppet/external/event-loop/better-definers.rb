@@ -172,7 +172,7 @@ class Module
     def define_methods (*names, &body)
         names.each { |name| define_method(name, &body) }
     end
-  
+
     def define_private_methods (*names, &body)
         define_methods(*names, &body)
         names.each { |name| private name }
@@ -280,7 +280,7 @@ if __FILE__ == $0
             assert_equal @y.baz, 321
             assert_equal @y.quux, 654
         end
-    
+
         def test_define_soft_aliases
             @X.define_method(:foo) { 123 }
             @X.define_method(:baz) { 321 }

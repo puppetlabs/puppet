@@ -17,7 +17,7 @@ describe Puppet::Parser::AST::BooleanOperator do
         lval.expects(:safeevaluate).with(@scope).returns("true")
         rval = stub "rval", :safeevaluate => false
         rval.expects(:safeevaluate).never
-        
+
         operator = ast::BooleanOperator.new :rval => rval, :operator => "or", :lval => lval
         operator.evaluate(@scope)
     end

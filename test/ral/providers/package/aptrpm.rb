@@ -12,7 +12,7 @@ class AptrpmPackageProviderTest < PuppetTest::TestCase
         super
         @type = Puppet::Type.type(:package)
     end
-    
+
     def test_install
         pkg = @type.new :name => 'faff',
                            :provider => :aptrpm,
@@ -38,10 +38,10 @@ class AptrpmPackageProviderTest < PuppetTest::TestCase
                          "install",
                          'faff'
                     ).returns(0)
-        
+
         pkg.evaluate.each { |state| state.forward }
     end
-    
+
     def test_uninstall
         pkg = @type.new :name => 'faff', :provider => :aptrpm, :ensure => :absent
 
@@ -65,7 +65,7 @@ class AptrpmPackageProviderTest < PuppetTest::TestCase
                         'remove',
                         'faff'
                     ).returns(0)
-        
+
         pkg.evaluate.each { |state| state.forward }
     end
 

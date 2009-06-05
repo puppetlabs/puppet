@@ -95,7 +95,7 @@ module Puppet::Util::ClassGen
                 end
                 @name = name
             end
-        else 
+        else
             options[:parent] ||= self
             evalmethod = :class_eval
             # Create the class, with the correct name.

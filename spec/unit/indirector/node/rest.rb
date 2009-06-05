@@ -8,6 +8,6 @@ describe Puppet::Node::Rest do
     before do
         @searcher = Puppet::Node::Rest.new
     end
-    
-    
+
+
 end

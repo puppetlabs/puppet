@@ -16,7 +16,7 @@ module Puppet
         [:allow, :deny].each do |method|
             define_method(method) do |*args|
                 @rights.send(method, *args)
-            end         
+            end
         end
 
         # Here we add a little bit of semantics.  They can set auth on a whole
@@ -77,7 +77,7 @@ module Puppet
                     else
                         return
                     end
-                else    
+                else
                     Puppet.notice "%s and %s" % [@configtimeout, @configstatted]
                 end
             end

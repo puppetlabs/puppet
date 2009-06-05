@@ -21,7 +21,7 @@ module Puppet
                         content => $str
                     }
                 }
-            
+
             This attribute is especially useful when used with
             `PuppetTemplating templating`:trac:."
 
@@ -64,7 +64,7 @@ module Puppet
             end
             return nil
         end
-        
+
         def content
             self.should || (s = resource.parameter(:source) and s.content)
         end
@@ -120,7 +120,7 @@ module Puppet
         # Just write our content out to disk.
         def sync
             return_event = @resource.stat ? :file_changed : :file_created
-            
+
             # We're safe not testing for the 'source' if there's no 'should'
             # because we wouldn't have gotten this far if there weren't at least
             # one valid value somewhere.

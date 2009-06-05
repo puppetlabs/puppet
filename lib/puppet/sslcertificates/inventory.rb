@@ -4,7 +4,7 @@ module Puppet::SSLCertificates
     module Inventory
 
         # Add CERT to the inventory of issued certs in '$cadir/inventory.txt'
-        # If no inventory exists yet, build an inventory and list all the 
+        # If no inventory exists yet, build an inventory and list all the
         # certificates that have been signed so far
         def self.add(cert)
             inited = false
@@ -30,8 +30,8 @@ module Puppet::SSLCertificates
 
         def self.format(cert)
             iso = '%Y-%m-%dT%H:%M:%S%Z'
-            return "0x%04x %s %s %s" % [cert.serial,  
-                                        cert.not_before.strftime(iso), 
+            return "0x%04x %s %s %s" % [cert.serial,
+                                        cert.not_before.strftime(iso),
                                         cert.not_after.strftime(iso),
                                         cert.subject]
         end

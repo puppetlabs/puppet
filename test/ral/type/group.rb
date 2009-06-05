@@ -129,7 +129,7 @@ class TestGroup < Test::Unit::TestCase
                 current_values = gobj.retrieve
             }
 
-            assert(current_values[gobj.property(:gid)], 
+            assert(current_values[gobj.property(:gid)],
                    "Failed to retrieve gid")
         }
     end

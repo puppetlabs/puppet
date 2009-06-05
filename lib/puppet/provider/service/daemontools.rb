@@ -11,7 +11,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
     * /etc/service
     * /var/lib/svscan
 
-    The daemon directory should be placed in a directory that can be 
+    The daemon directory should be placed in a directory that can be
     by default in:
 
     * /var/lib/service
@@ -43,7 +43,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
 
     class << self
         attr_writer :defpath
-        
+
         # Determine the daemon path.
         def defpath
             unless defined?(@defpath) and @defpath
@@ -111,10 +111,10 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
     def daemon
         File.join(resource[:path], resource[:name])
     end
-    
+
     def status
         begin
-            output = svstat self.service 
+            output = svstat self.service
             if output =~ /:\s+up \(/
                 return :running
             end

@@ -36,7 +36,7 @@
 #   '--clean', or '--list'.
 #
 # clean::
-#    Remove all files related to a host from puppetca's storage. This is 
+#    Remove all files related to a host from puppetca's storage. This is
 #    useful when rebuilding hosts, since new certificate signing requests
 #    will only be honored if puppetca does not have a copy of a signed
 #    certificate for that host. The certificate of the host remains valid.
@@ -54,7 +54,7 @@
 #   Print this help message
 #
 # list::
-#   List outstanding certificate requests.  If '--all' is specified, 
+#   List outstanding certificate requests.  If '--all' is specified,
 #   signed certificates are also listed, prefixed by '+'.
 #
 # print::

@@ -47,7 +47,7 @@ class TestBaseServiceProvider < Test::Unit::TestCase
             assert_equal(:stopped, provider.status, "status was not returned correctly")
         end
     end
-    
+
     # Testing #454
     def test_that_failures_propagate
         nope = "/no/such/command"

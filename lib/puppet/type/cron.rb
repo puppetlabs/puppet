@@ -3,20 +3,20 @@ require 'facter'
 require 'puppet/util/filetype'
 
 Puppet::Type.newtype(:cron) do
-    @doc = "Installs and manages cron jobs.  All fields except the command 
+    @doc = "Installs and manages cron jobs.  All fields except the command
         and the user are optional, although specifying no periodic
         fields would result in the command being executed every
         minute.  While the name of the cron job is not part of the actual
         job, it is used by Puppet to store and retrieve it.
-        
+
         If you specify a cron job that matches an existing job in every way
         except name, then the jobs will be considered equivalent and the
         new name will be permanently associated with that job.  Once this
         association is made and synced to disk, you can then manage the job
         normally (e.g., change the schedule of the job).
-        
+
         Example::
-            
+
             cron { logrotate:
                 command => \"/usr/sbin/logrotate\",
                 user => root,
@@ -89,7 +89,7 @@ Puppet::Type.newtype(:cron) do
         # or the first three letters of the word.
         def alphacheck(value, ary)
             tmp = value.downcase
-            
+
             # If they specified a shortened version of the name, then see
             # if we can lengthen it (e.g., mon => monday).
             if tmp.length == 3
@@ -211,16 +211,16 @@ Puppet::Type.newtype(:cron) do
             best to always provide a fully qualified command.  The user's
             profile is not sourced when the command is run, so if the
             user's environment is desired it should be sourced manually.
-            
+
             All cron parameters support ``absent`` as a value; this will
             remove any existing values for that field."
 
-        def retrieve 
+        def retrieve
           return_value = super
           if return_value && return_value.is_a?(Array)
             return_value = return_value[0]
           end
-            
+
           return return_value
         end
 
@@ -302,7 +302,7 @@ Puppet::Type.newtype(:cron) do
             job.  If you already have cron jobs with environment settings,
             then Puppet will keep those settings in the same place in the file,
             but will not associate them with a specific job.
-            
+
             Settings should be specified exactly as they should appear in
             the crontab, e.g., ``PATH=/bin:/usr/bin:/usr/sbin``."
 
@@ -322,7 +322,7 @@ Puppet::Type.newtype(:cron) do
         end
 
         def is_to_s(newvalue)
-            if newvalue 
+            if newvalue
                 if newvalue.is_a?(Array)
                     newvalue.join(",")
                 else
@@ -363,7 +363,7 @@ Puppet::Type.newtype(:cron) do
         desc "The user to run the command as.  This user must
             be allowed to run cron jobs, which is not currently checked by
             Puppet.
-            
+
             The user defaults to whomever Puppet is running as."
 
         defaultto { Etc.getpwuid(Process.uid).name || "root" }

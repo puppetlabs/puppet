@@ -95,7 +95,7 @@ describe Puppet::Util::Storage do
                 @path = transient.path()
                 transient.close!()
             end
-            
+
             it "should not fail to load()" do
                 FileTest.exists?(@path).should be_false()
                 Puppet[:statedir] = @path
@@ -109,10 +109,10 @@ describe Puppet::Util::Storage do
 
                 Puppet::Util::Storage.cache(:yayness)
                 Puppet::Util::Storage.state().should == {:yayness=>{}}
-                
+
                 Puppet[:statefile] = @path
                 proc { Puppet::Util::Storage.load() }.should_not raise_error()
-                
+
                 Puppet::Util::Storage.state().should == {:yayness=>{}}
             end
         end
@@ -140,7 +140,7 @@ describe Puppet::Util::Storage do
                 proc { Puppet::Util::Storage.load() }.should_not raise_error()
                 Puppet::Util::Storage.state().should == test_yaml
             end
-            
+
             it "should initialize with a clear internal state if the state file does not contain valid YAML" do
                 @state_file.write(:booness)
                 @state_file.flush()
@@ -184,7 +184,7 @@ describe Puppet::Util::Storage do
                 proc { Puppet::Util::Storage.load() }.should_not raise_error()
                 Puppet::Util::Storage.state().should == test_yaml
             end
-            
+
             after(:each) do
                 @state_file.close!()
                 Puppet[:statefile] = @saved_statefile

@@ -31,13 +31,13 @@ module Puppet::Rails
                 puts detail.backtrace
             end
             raise Puppet::Error, "Could not connect to database: %s" % detail
-        end 
+        end
     end
 
     # The arguments for initializing the database connection.
     def self.database_arguments
         adapter = Puppet[:dbadapter]
-        
+
         args = {:adapter => adapter, :log_level => Puppet[:rails_loglevel]}
 
         case adapter
@@ -48,7 +48,7 @@ module Puppet::Rails
             args[:username] = Puppet[:dbuser] unless Puppet[:dbuser].empty?
             args[:password] = Puppet[:dbpassword] unless Puppet[:dbpassword].empty?
             args[:database] = Puppet[:dbname]
-            
+
             socket          = Puppet[:dbsocket]
             args[:socket]   = socket unless socket.empty?
         else
@@ -93,7 +93,7 @@ module Puppet::Rails
 
         unless ActiveRecord::Base.connection.tables.include?("resources")
             raise Puppet::Error, "Database has problems, can't migrate."
-        end    
+        end
 
         Puppet.notice "Migrating"
 
@@ -122,9 +122,9 @@ module Puppet::Rails
                puts detail.backtrace
             end
             raise Puppet::Error, "Could not connect to database: %s" % detail
-        end 
+        end
 
-        ActiveRecord::Base.connection.tables.each do |t| 
+        ActiveRecord::Base.connection.tables.each do |t|
             ActiveRecord::Base.connection.drop_table t
         end
     end

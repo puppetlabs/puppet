@@ -4,7 +4,7 @@ module Puppet
             about how schedules are currently implemented in Puppet is that they
             can only be used to stop a resource from being applied, they never
             guarantee that it is applied.
-            
+
             Every time Puppet applies its configuration, it will collect the
             list of resources whose schedule does not eliminate them from
             running right then, but there is currently no system in place to
@@ -12,12 +12,12 @@ module Puppet
             specify a very  restrictive schedule and Puppet happens to run at a
             time within that schedule, then the resources will get applied;
             otherwise, that work may never get done.
-            
+
             Thus, it behooves you to use wider scheduling (e.g., over a couple of
             hours) combined with periods and repetitions.  For instance, if you
             wanted to restrict certain resources to only running once, between
             the hours of two and 4 AM, then you would use this schedule::
-                
+
                 schedule { maint:
                     range => \"2 - 4\",
                     period => daily,
@@ -29,7 +29,7 @@ module Puppet
             get applied again between 2 and 4 because they will have already
             run once that day, and they won't get applied outside that schedule
             because they will be outside the scheduled range.
-            
+
             Puppet automatically creates a schedule for each valid period with the
             same name as that period (e.g., hourly and daily).  Additionally,
             a schedule named *puppet* is created and used as the default,
@@ -46,7 +46,7 @@ module Puppet
         newparam(:name) do
             desc "The name of the schedule.  This name is used to retrieve the
                 schedule when assigning it to an object::
-                    
+
                     schedule { daily:
                         period => daily,
                         range => [2, 4]
@@ -55,7 +55,7 @@ module Puppet
                     exec { \"/usr/bin/apt-get update\":
                         schedule => daily
                     }
-                
+
                 "
             isnamevar
         end
@@ -70,7 +70,7 @@ module Puppet
                     schedule { maintenance:
                         range => \"1:30 - 4:30\"
                     }
-                
+
                 This is mostly useful for restricting certain resources to being
                 applied in maintenance windows or during off-peak hours."
 
@@ -169,7 +169,7 @@ module Puppet
                         ary = limits[1].to_a
                         ary[3] += 1
                         limits[1] = Time.local(*ary)
-                            
+
                         #self.devfail("Lower limit is above higher limit: %s" %
                         #    limits.inspect
                         #)
@@ -224,7 +224,7 @@ module Puppet
                 internal factors might prevent it from actually running that
                 often (e.g., long-running Puppet runs will squash conflictingly
                 scheduled runs).
-                
+
                 See the ``periodmatch`` attribute for tuning whether to match
                 times by their distance apart or by their specific value."
 

@@ -133,7 +133,7 @@ describe Puppet::Daemon do
 
             sync = mock 'sync'
             Puppet::Util.expects(:sync).with("me").returns sync
-            
+
             sync.expects(:synchronize).with(Sync::EX)
             @daemon.create_pidfile
         end
@@ -170,7 +170,7 @@ describe Puppet::Daemon do
 
             sync = mock 'sync'
             Puppet::Util.expects(:sync).with("me").returns sync
-            
+
             sync.expects(:synchronize).with(Sync::EX)
             @daemon.remove_pidfile
         end

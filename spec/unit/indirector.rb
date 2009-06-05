@@ -36,7 +36,7 @@ describe Puppet::Indirector, "when registering an indirection" do
         @indirection = @thingie.indirects(:test)
         @indirection.should be_instance_of(Puppet::Indirector::Indirection)
     end
-    
+
     it "should not allow a model to register under multiple names" do
         # Keep track of the indirection instance so we can delete it on cleanup
         @indirection = @thingie.indirects :first

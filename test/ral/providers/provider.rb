@@ -453,7 +453,7 @@ class TestProviderFeatures < Test::Unit::TestCase
             define_method(:one) {}
             define_method(:two) {}
         end
-        
+
         # Another with the numbers and a declaration
         @type.provide(:both) do
             define_method(:one) {}
@@ -461,7 +461,7 @@ class TestProviderFeatures < Test::Unit::TestCase
 
             has_feature :alpha
         end
-        
+
         # And just the declaration
         @type.provide(:letters) do
             has_feature :alpha
@@ -484,7 +484,7 @@ class TestProviderFeatures < Test::Unit::TestCase
             features.sort! { |a,b| a.to_s <=> b.to_s }
             assert_equal(features, provider.features, "Got incorrect feature list for provider instance %s" % name)
             assert_equal(features, provider_class.features, "Got incorrect feature list for provider class %s" % name)
-            features.each do |feat| 
+            features.each do |feat|
                 assert(provider.feature?(feat), "Provider instance %s did not have feature %s" % [name, feat])
                 assert(provider_class.feature?(feat), "Provider class %s did not have feature %s" % [name, feat])
             end

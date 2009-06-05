@@ -6,7 +6,7 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
         including ``ldapbase``.  You will also almost definitely need settings
         for ``ldapuser`` and ``ldappassword``, so that your clients can write
         to ldap.
-        
+
         Note that this provider will automatically generate a UID for you if
         you do not specify one, but it is a potentially expensive operation,
         as it iterates across all existing users to pick the appropriate next
@@ -33,7 +33,7 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
 
     # Find the next uid after the current largest uid.
     provider = self
-    manager.generates(:uidNumber).with do 
+    manager.generates(:uidNumber).with do
         largest = 500
         if existing = provider.manager.search
             existing.each do |hash|

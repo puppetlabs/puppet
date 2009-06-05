@@ -26,7 +26,7 @@ describe Puppet::Parser::Files do
             mod.expects(:template).returns("/one/mymod/templates/mytemplate")
             Puppet::Parser::Files.find_template("mymod/mytemplate").should == "/one/mymod/templates/mytemplate"
         end
-        
+
         it "should return the file in the templatedir if it exists" do
             Puppet.settings.expects(:value).with(:templatedir, nil).returns("/my/templates")
             Puppet[:modulepath] = "/one:/two"

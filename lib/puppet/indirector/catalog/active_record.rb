@@ -12,7 +12,7 @@ class Puppet::Resource::Catalog::ActiveRecord < Puppet::Indirector::ActiveRecord
         return nil unless host = ar_model.find_by_name(request.key)
 
         catalog = Puppet::Resource::Catalog.new(host.name)
-        
+
         host.resources.each do |resource|
             catalog.add_resource resource.to_transportable
         end

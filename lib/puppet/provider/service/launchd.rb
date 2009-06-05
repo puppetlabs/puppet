@@ -2,29 +2,29 @@ require 'facter/util/plist'
 
 Puppet::Type.type(:service).provide :launchd, :parent => :base do
     desc "launchd service management framework.
-    
+
     This provider manages launchd jobs, the default service framework for
     Mac OS X, that has also been open sourced by Apple for possible use on
     other platforms.
-    
+
     See:
      * http://developer.apple.com/macosx/launchd.html
      * http://launchd.macosforge.org/
-     
+
     This provider reads plists out of the following directories:
      * /System/Library/LaunchDaemons
      * /System/Library/LaunchAgents
      * /Library/LaunchDaemons
      * /Library/LaunchAgents
-     
+
     and builds up a list of services based upon each plists \"Label\" entry.
-     
+
     This provider supports:
      * ensure => running/stopped,
      * enable => true/false
      * status
      * restart
-    
+
     Here is how the Puppet states correspond to launchd states:
      * stopped => job unloaded
      * started => job loaded
@@ -37,12 +37,12 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     "
 
     commands :launchctl => "/bin/launchctl"
-    
+
     defaultfor :operatingsystem => :darwin
     confine :operatingsystem => :darwin
-    
+
     has_feature :enableable
-    
+
     Launchd_Paths = ["/Library/LaunchAgents",
                      "/Library/LaunchDaemons",
                      "/System/Library/LaunchAgents",
@@ -129,7 +129,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
         job_path, job_plist = plist_from_label(resource[:name])
         did_enable_job = false
         cmds = []
-        cmds << :launchctl << :load 
+        cmds << :launchctl << :load
         if self.enabled? == :false  # launchctl won't load disabled jobs
             cmds << "-w"
             did_enable_job = true
@@ -143,7 +143,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
         # As load -w clears the Disabled flag, we need to add it in after
         if did_enable_job and resource[:enable] == :false
             self.disable
-        end 
+        end
     end
 
 
@@ -151,7 +151,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
         job_path, job_plist = plist_from_label(resource[:name])
         did_disable_job = false
         cmds = []
-        cmds << :launchctl << :unload 
+        cmds << :launchctl << :unload
         if self.enabled? == :true # keepalive jobs can't be stopped without disabling
             cmds << "-w"
             did_disable_job = true

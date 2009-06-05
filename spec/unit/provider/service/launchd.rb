@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# 
+#
 # Unit testing for the launchd service provider
 #
 
@@ -14,7 +14,7 @@ describe provider_class do
     before :each do
         # Create a mock resource
         @resource = stub 'resource'
-        
+
         @provider = provider_class.new
         @joblabel = "com.foo.food"
         @jobplist = {}
@@ -30,7 +30,7 @@ describe provider_class do
 
         # stub out the provider methods that actually touch the filesystem
         # or execute commands
-        @provider.stubs(:plist_from_label).returns([@joblabel, @jobplist])    
+        @provider.stubs(:plist_from_label).returns([@joblabel, @jobplist])
         @provider.stubs(:execute).returns("")
         @provider.stubs(:resource).returns @resource
     end
@@ -38,28 +38,28 @@ describe provider_class do
     it "should have a start method for #{@provider.object_id}" do
         @provider.should respond_to(:start)
     end
-    
+
     it "should have a stop method" do
         @provider.should respond_to(:stop)
     end
-    
+
     it "should have an enabled? method" do
         @provider.should respond_to(:enabled?)
     end
-    
+
     it "should have an enable method" do
         @provider.should respond_to(:enable)
     end
-    
+
     it "should have a disable method" do
         @provider.should respond_to(:disable)
     end
-    
+
     it "should have a status method" do
         @provider.should respond_to(:status)
     end
-    
-    
+
+
     describe "when checking status" do
         it "should call the external command 'launchctl list' once" do
             @provider.expects(:launchctl).with(:list).returns("rotating-strawberry-madonnas")
@@ -74,7 +74,7 @@ describe provider_class do
             @provider.status.should == :running
         end
     end
-    
+
     describe "when starting the service" do
         it "should look for the relevant plist once" do
             @provider.expects(:plist_from_label).once
@@ -97,7 +97,7 @@ describe provider_class do
             @provider.start
         end
     end
-    
+
     describe "when stopping the service" do
         it "should look for the relevant plist once" do
             @provider.expects(:plist_from_label).once
@@ -120,7 +120,7 @@ describe provider_class do
             @provider.stop
         end
     end
-    
+
     describe "when enabling the service" do
         it "should look for the relevant plist once" do
             @provider.expects(:plist_from_label).once
@@ -131,12 +131,12 @@ describe provider_class do
             @provider.stop
         end
     end
-    
+
     describe "when disabling the service" do
         it "should look for the relevant plist once" do
             @provider.expects(:plist_from_label).once
             @provider.stop
         end
     end
-    
+
  end

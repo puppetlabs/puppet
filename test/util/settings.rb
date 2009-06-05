@@ -205,7 +205,7 @@ yay = /a/path
 
         file = tempfile()
         File.open(file, "w") { |f| f.puts text }
-        
+
         result = nil
         assert_nothing_raised {
             result = @config.send(:parse_file, file)
@@ -348,7 +348,7 @@ yay = /a/path
     # already stored in a config
     def test_writingfiles
         File.umask(0022)
-      
+
         path = tempfile()
         mode = 0644
 
@@ -374,7 +374,7 @@ yay = /a/path
 
         assert_equal(mode, filemode(path), "Modes are not equal")
 
-        # OS X is broken in how it chgrps files 
+        # OS X is broken in how it chgrps files
         if Puppet::Util::SUIDManager.uid == 0
             assert_equal(user.uid, File.stat(path).uid, "UIDS are not equal")
 
@@ -388,7 +388,7 @@ yay = /a/path
 
     def test_mkdir
         File.umask(0022)
-        
+
         path = tempfile()
         mode = 0755
 
@@ -413,7 +413,7 @@ yay = /a/path
         assert_equal(mode, filemode(path), "Modes are not equal")
 
 
-        # OS X and *BSD is broken in how it chgrps files 
+        # OS X and *BSD is broken in how it chgrps files
         if Puppet::Util::SUIDManager.uid == 0
             assert_equal(user.uid, File.stat(path).uid, "UIDS are not equal")
 
@@ -448,7 +448,7 @@ yay = /a/path
 
     def test_configs_replace_in_url
         config = mkconfig
-        
+
         config.setdefaults(:mysection, :name => ["yayness", "yay"])
         config.setdefaults(:mysection, :url => ["http://$name/rahness", "yay"])
 
@@ -610,15 +610,15 @@ yay = /a/path
 #        assert(! yay.find { |o| o.class.name == :group and o.name == "root" },
 #            "Found root group")
     end
-    
+
     # #415
     def test_remove_trailing_spaces
         config = mkconfig()
         file = tempfile()
         File.open(file, "w") { |f| f.puts "rah = something " }
-        
+
         config.setdefaults(:yay, :config => [file, "eh"], :rah => ["testing", "a desc"])
-        
+
         assert_nothing_raised { config.parse }
         assert_equal("something", config[:rah], "did not remove trailing whitespace in parsing")
     end
@@ -701,7 +701,7 @@ yay = /a/path
     def test_get_getopt_args
         element = CElement.new :name => "foo", :desc => "anything", :settings => Puppet::Util::Settings.new
         assert_equal([["--foo", GetoptLong::REQUIRED_ARGUMENT]], element.getopt_args, "Did not produce appropriate getopt args")
-        
+
         element.short = "n"
         assert_equal([["--foo", "-n", GetoptLong::REQUIRED_ARGUMENT]], element.getopt_args, "Did not produce appropriate getopt args")
 

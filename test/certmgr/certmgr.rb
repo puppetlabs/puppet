@@ -164,7 +164,7 @@ class TestCertMgr < Test::Unit::TestCase
         assert_equal($?,0)
         assert_equal(File.join(Puppet[:certdir], "signedcertest.pem: OK\n"), output)
     end
- 
+
 
     def test_interactiveca
         ca = nil
@@ -224,14 +224,14 @@ class TestCertMgr < Test::Unit::TestCase
         ca = mkCA()
         h1 = mksignedcert(ca, "host1.example.com")
         h2 = mksignedcert(ca, "host2.example.com")
-        
+
         assert(ca.cert.verify(ca.cert.public_key))
         assert(h1.verify(ca.cert.public_key))
         assert(h2.verify(ca.cert.public_key))
 
         crl = ca.crl
         assert_not_nil(crl)
-        
+
         store = mkStore(ca)
         assert( store.verify(ca.cert))
         assert( store.verify(h1, [ca.cert]))
@@ -252,7 +252,7 @@ class TestCertMgr < Test::Unit::TestCase
         assert( store.verify(ca.cert), "Could not verify CA certs after reloading certs.")
         assert(!store.verify(h1, [ca.cert]), "Incorrectly verified revoked cert.")
         assert( store.verify(h2, [ca.cert]), "Could not verify certs with reloaded CA.")
-        
+
         ca.revoke(h2.serial)
         assert_equal(1, ca.crl.extensions.size)
 

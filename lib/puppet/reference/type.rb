@@ -17,7 +17,7 @@ Resource Types
   This is the parameter that gets assigned when a string is provided before
   the colon in a type declaration.  In general, only developers will need to
   worry about which parameter is the ``namevar``.
-  
+
   In the following code::
 
       file { "/etc/passwd":

@@ -42,7 +42,7 @@ module Puppet::Network::XMLRPC
         # we need to pass a ClientRequest object to process() so we can do
         # authorization.  It's the only way to stay thread-safe.
         def service(request, response)
-            if @valid_ip 
+            if @valid_ip
                 raise WEBrick::HTTPStatus::Forbidden unless @valid_ip.any? { |ip| request.peeraddr[3] =~ ip }
             end
 
@@ -51,9 +51,9 @@ module Puppet::Network::XMLRPC
                     "unsupported method `#{request.request_method}'."
             end
 
-            if parse_content_type(request['Content-type']).first != "text/xml" 
+            if parse_content_type(request['Content-type']).first != "text/xml"
                 raise WEBrick::HTTPStatus::BadRequest
-            end 
+            end
 
             length = (request['Content-length'] || 0).to_i
 
@@ -66,14 +66,14 @@ module Puppet::Network::XMLRPC
             end
 
             resp = process(data, client_request(request))
-            if resp.nil? or resp.size <= 0  
+            if resp.nil? or resp.size <= 0
                 raise WEBrick::HTTPStatus::InternalServerError
             end
 
             response.status = 200
             response['Content-Length'] = resp.size
             response['Content-Type']   = "text/xml; charset=utf-8"
-            response.body = resp 
+            response.body = resp
         end
 
         private
@@ -97,7 +97,7 @@ module Puppet::Network::XMLRPC
             if cert = request.client_cert
                 nameary = cert.subject.to_a.find { |ary|
                     ary[0] == "CN"
-                }   
+                }
 
                 if nameary.nil?
                     Puppet.warning "Could not retrieve server name from cert"

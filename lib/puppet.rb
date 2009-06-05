@@ -59,7 +59,7 @@ module Puppet
     # I keep wanting to use Puppet.error
     # XXX this isn't actually working right now
     alias :error :err
-    
+
     # The feature collection
     @features = Puppet::Util::Feature.new('puppet/feature')
 

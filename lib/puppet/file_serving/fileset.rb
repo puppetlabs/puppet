@@ -111,14 +111,14 @@ class Puppet::FileServing::Fileset
             elsif request.options.include?(param.to_s)
                 value = request.options[param.to_s]
             end
-            next if value.nil? 
+            next if value.nil?
             value = true if value == "true"
             value = false if value == "false"
             value = Integer(value) if value.is_a?(String) and value =~ /^\d+$/
             send(param.to_s + "=", value)
         end
     end
-    
+
     private
 
     # Pull the recursion logic into one place.  It's moderately hairy, and this

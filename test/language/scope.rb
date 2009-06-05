@@ -96,7 +96,7 @@ class TestScope < Test::Unit::TestCase
         scope.setvar("var", "yep")
         assert_equal("yep", scope.lookupvar("var"), "did not retrieve value correctly")
 
-        # Now test the parent lookups 
+        # Now test the parent lookups
         subscope = mkscope :parser => parser
         subscope.parent = scope
         assert_equal("", subscope.lookupvar("nope"), "scope did not default to string with parent")
@@ -216,7 +216,7 @@ class TestScope < Test::Unit::TestCase
         assert_equal(top, sub.parent, "Did not find parent scope correctly")
         assert_equal(top, sub.parent, "Did not find parent scope on second call")
     end
-    
+
     def test_strinterp
         # Make and evaluate our classes so the qualified lookups work
         parser = mkparser

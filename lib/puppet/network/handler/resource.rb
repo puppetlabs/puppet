@@ -7,7 +7,7 @@ class Puppet::Network::Handler
         desc "An interface for interacting with client-based resources that can
         be used for querying or managing remote machines without using Puppet's
         central server tools.
-        
+
         The ``describe`` and ``list`` methods return TransBuckets containing
         TransObject instances (``describe`` returns a single TransBucket),
         and the ``apply`` method accepts a TransBucket of TransObjects and
@@ -44,7 +44,7 @@ class Puppet::Network::Handler
             # And then apply the catalog.  This way we're reusing all
             # the code in there.  It should probably just be separated out, though.
             transaction = catalog.apply
-            
+
             # And then clean up
             catalog.clear(true)
 
@@ -173,14 +173,14 @@ class Puppet::Network::Handler
         end
 
         # Deal with ignore parameters.
-        def handleignore(children, path, ignore)            
-            ignore.each { |ignore|                
+        def handleignore(children, path, ignore)
+            ignore.each { |ignore|
                 Dir.glob(File.join(path,ignore), File::FNM_DOTMATCH) { |match|
                     children.delete(File.basename(match))
-                }                
+                }
             }
             return children
-        end  
+        end
 
         def to_s
             "resource"

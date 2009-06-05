@@ -7,9 +7,9 @@ describe Puppet::Parser::AST::CollExpr do
     ast = Puppet::Parser::AST
 
     before :each do
-        @scope = Puppet::Parser::Scope.new()        
+        @scope = Puppet::Parser::Scope.new()
     end
-    
+
     describe "when evaluating with two operands" do
         before :each do
             @test1 = mock 'test1'
@@ -31,14 +31,14 @@ describe Puppet::Parser::AST::CollExpr do
         end
 
         it "should propagate expression type and form to child if expression themselves" do
-            [@test1, @test2].each do |t| 
+            [@test1, @test2].each do |t|
                 t.expects(:is_a?).returns(true)
                 t.expects(:form).returns(false)
                 t.expects(:type).returns(false)
                 t.expects(:type=)
                 t.expects(:form=)
             end
-        
+
             collexpr = ast::CollExpr.new(:test1 => @test1, :test2 => @test2, :oper=>"==", :form => true, :type => true)
             result = collexpr.evaluate(@scope)
         end
@@ -48,7 +48,7 @@ describe Puppet::Parser::AST::CollExpr do
                 @resource = mock 'resource'
                 @resource.expects(:[]).with("test1").at_least(1).returns("test2")
             end
-        
+
             it "should evaluate like the original expression for ==" do
                 collexpr = ast::CollExpr.new(:test1 => @test1, :test2 => @test2, :oper => "==")
                 collexpr.evaluate(@scope)[1].call(@resource).should === (@resource["test1"] == "test2")
@@ -73,7 +73,7 @@ describe Puppet::Parser::AST::CollExpr do
             end
         end
     end
-    
+
     it "should check for array member equality if resource parameter is an array for ==" do
         array = mock 'array', :safeevaluate => "array"
         test1 = mock 'test1'

@@ -64,7 +64,7 @@ class Puppet::Parameter
             end
 
             private
-            
+
             # A standard way of converting all of our values, so we're always
             # comparing apples to apples.
             def convert(value)
@@ -130,7 +130,7 @@ class Puppet::Parameter
             if value = @strings.find { |v| v.match?(test_value) }
                 return value
             end
-            
+
             # Then look for a regex match
             @regexes.find { |v| v.match?(test_value) }
         end
@@ -158,7 +158,7 @@ class Puppet::Parameter
         # * <tt>:event</tt>: The event that should be returned when this value is set.
         # * <tt>:call</tt>: When to call any associated block.  The default value
         #   is ``instead``, which means to call the value instead of calling the
-        #   provider.  You can also specify ``before`` or ``after``, which will 
+        #   provider.  You can also specify ``before`` or ``after``, which will
         #   call both the block and the provider, according to the order you specify
         #   (the ``first`` refers to when the block is called, not the provider).
         def newvalue(name, options = {}, &block)

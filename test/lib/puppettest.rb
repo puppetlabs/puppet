@@ -8,7 +8,7 @@ $LOAD_PATH.unshift(mainlib) unless $LOAD_PATH.include?(mainlib)
 require 'puppet'
 
 # include any gems in vendor/gems
-Dir["#{mainlib}/../vendor/gems/**"].each do |path| 
+Dir["#{mainlib}/../vendor/gems/**"].each do |path|
     libpath = File.join(path, "lib")
     if File.directory?(libpath)
         $LOAD_PATH.unshift(libpath)
@@ -138,7 +138,7 @@ module PuppetTest
 
         ENV["RUBYLIB"] = curlibs.join(":")
     end
-    
+
     def logcollector
         collector = []
         Puppet::Util::Log.newdestination(collector)
@@ -217,7 +217,7 @@ module PuppetTest
             end
             Puppet::Util::Log.level = :debug
             #$VERBOSE = 1
-        #else    
+        #else
         #    Puppet::Util::Log.close
         #    Puppet::Util::Log.newdestination(@logs)
         #    Puppet[:httplog] = tempfile()
@@ -240,7 +240,7 @@ module PuppetTest
         @@tmpfiles << f
         return f
     end
-    
+
     def textmate?
         if ENV["TM_FILENAME"]
             return true

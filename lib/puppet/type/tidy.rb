@@ -68,7 +68,7 @@ Puppet::Type.newtype(:tidy) do
             the specified time.  You can choose seconds, minutes,
             hours, days, or weeks by specifying the first letter of any
             of those words (e.g., '1w').
-        
+
             Specifying 0 will remove all files."
 
         @@ageconvertors = {
@@ -91,7 +91,7 @@ Puppet::Type.newtype(:tidy) do
         def tidy?(path, stat)
             # If the file's older than we allow, we should get rid of it.
             if (Time.now.to_i - stat.send(resource[:type]).to_i) > value
-                return true 
+                return true
             else
                 return false
             end
@@ -137,7 +137,7 @@ Puppet::Type.newtype(:tidy) do
                 self.fail "Invalid size unit '%s'" % unit
             end
         end
-        
+
         def tidy?(path, stat)
             if stat.size > value
                 return true
@@ -145,7 +145,7 @@ Puppet::Type.newtype(:tidy) do
                 return false
             end
         end
-        
+
         munge do |size|
             case size
             when /^([0-9]+)(\w)\w*$/
@@ -164,7 +164,7 @@ Puppet::Type.newtype(:tidy) do
 
     newparam(:type) do
         desc "Set the mechanism for determining age."
-        
+
         newvalues(:atime, :mtime, :ctime)
 
         defaultto :atime
@@ -200,7 +200,7 @@ Puppet::Type.newtype(:tidy) do
 
         newvalues :true, :false
     end
-    
+
     # Erase PFile's validate method
     validate do
     end
@@ -219,7 +219,7 @@ Puppet::Type.newtype(:tidy) do
             self[:backup] = false
         end
     end
-    
+
     # Make a file resource to remove a given file.
     def mkfile(path)
         # Force deletion, so directories actually get deleted.
@@ -228,13 +228,13 @@ Puppet::Type.newtype(:tidy) do
 
     def retrieve
         # Our ensure property knows how to retrieve everything for us.
-        if obj = @parameters[:ensure] 
+        if obj = @parameters[:ensure]
             return obj.retrieve
         else
             return {}
         end
     end
-    
+
     # Hack things a bit so we only ever check the ensure property.
     def properties
         []
@@ -267,7 +267,7 @@ Puppet::Type.newtype(:tidy) do
         files_by_name.keys.sort { |a,b| b <=> b }.each do |path|
             dir = File.dirname(path)
             next unless resource = files_by_name[dir]
-            if resource[:require] 
+            if resource[:require]
                 resource[:require] << Puppet::Resource::Reference.new(:file, path)
             else
                 resource[:require] = [Puppet::Resource::Reference.new(:file, path)]

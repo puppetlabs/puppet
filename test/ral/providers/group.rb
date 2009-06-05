@@ -237,7 +237,7 @@ class TestGroupProvider < Test::Unit::TestCase
     else
         $stderr.puts "Not running as root; skipping group creation tests."
     end
-    
+
     def test_autogen
         provider = nil
         group = Puppet::Type.type(:group).new(:name => nonrootgroup.name)

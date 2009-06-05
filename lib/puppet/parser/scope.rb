@@ -49,7 +49,7 @@ class Puppet::Parser::Scope
         unless value.is_a?(Fixnum) or value.is_a?(Bignum) or value.is_a?(Float) or value.is_a?(String)
             return nil
         end
-        
+
         if value.is_a?(String)
             if value =~ /^-?\d+(:?\.\d+|(:?\.\d+)?e\d+)$/
                 return value.to_f
@@ -198,7 +198,7 @@ class Puppet::Parser::Scope
             else
                 return @symtable[name]
             end
-        elsif self.parent 
+        elsif self.parent
             return parent.lookupvar(name, usestring)
         elsif usestring
             return ""
@@ -215,12 +215,12 @@ class Puppet::Parser::Scope
             target = parent.to_hash(recursive)
         end
         target ||= Hash.new
-        @symtable.keys.each { |name| 
+        @symtable.keys.each { |name|
             value = @symtable[name]
             if value == :undef then
                 target.delete(name)
             else
-                target[name] = value 
+                target[name] = value
             end
         }
         return target
@@ -301,7 +301,7 @@ class Puppet::Parser::Scope
             end
             raise error
         end
-        
+
         unless append
             @symtable[name] = value
         else # append case
@@ -322,7 +322,7 @@ class Puppet::Parser::Scope
         ss = StringScanner.new(string)
         out = ""
         while not ss.eos?
-            if ss.scan(/^\$\{((\w*::)*\w+)\}|^\$((\w*::)*\w+)/) 
+            if ss.scan(/^\$\{((\w*::)*\w+)\}|^\$((\w*::)*\w+)/)
                 # If it matches the backslash, then just retun the dollar sign.
                 if ss.matched == '\\$'
                     out << '$'
@@ -357,7 +357,7 @@ class Puppet::Parser::Scope
                 out << '$'
             elsif ss.scan(/^\\\n/) # an escaped carriage return
                 next
-            else 
+            else
                 tmp = ss.scan(/[^\\$]+/)
                 # Puppet.debug("Got other: pos:%d; m:%s" % [ss.pos, tmp])
                 unless tmp

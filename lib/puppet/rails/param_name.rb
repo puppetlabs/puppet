@@ -4,7 +4,7 @@ require 'puppet/util/rails/cache_accumulator'
 
 class Puppet::Rails::ParamName < ActiveRecord::Base
     include Puppet::Util::CollectionMerger
-    has_many :param_values, :dependent => :destroy 
+    has_many :param_values, :dependent => :destroy
 
     include Puppet::Util::CacheAccumulator
     accumulates :name

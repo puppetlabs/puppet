@@ -5,7 +5,7 @@
 # something has changed are written back to disk
 # Great care is taken to preserve comments and blank lines from the original
 # files
-# 
+#
 # The parsing tries to stay close to python's ConfigParser
 
 require 'puppet/util/filetype'
@@ -79,7 +79,7 @@ module Puppet::Util::IniConfig
             return text
         end
 
-        private 
+        private
         def find_entry(key)
             @entries.each do |entry|
                 if entry.is_a?(Array) && entry[0] == key
@@ -88,7 +88,7 @@ module Puppet::Util::IniConfig
             end
             return nil
         end
-        
+
     end
 
     # A logical .ini-file that can be spread across several physical
@@ -113,7 +113,7 @@ module Puppet::Util::IniConfig
             text.each_line do |l|
                 line += 1
                 if l.strip.empty? || "#;".include?(l[0,1]) ||
-                        (l.split(nil, 2)[0].downcase == "rem" && 
+                        (l.split(nil, 2)[0].downcase == "rem" &&
                          l[0,1].downcase == "r")
                     # Whitespace or comment
                     if section.nil?
@@ -146,7 +146,7 @@ module Puppet::Util::IniConfig
         end
 
         # Store all modifications made to sections in this file back
-        # to the physical files. If no modifications were made to 
+        # to the physical files. If no modifications were made to
         # a physical file, nothing is written
         def store
             @files.each do |file, lines|

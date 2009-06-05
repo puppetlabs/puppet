@@ -22,7 +22,7 @@ class TestParsedSSHKey < Test::Unit::TestCase
         @provider.clear
         super
     end
-    
+
     def mkkey(name = "host.domain.com")
         if defined? @pcount
             @pcount += 1
@@ -52,39 +52,39 @@ class TestParsedSSHKey < Test::Unit::TestCase
             fakedataparse(file)
         }
     end
-    
+
     def test_simplekey
         @provider.filetype = :ram
         file = @provider.default_target
-        
+
         key = nil
         assert_nothing_raised do
             key = mkkey
         end
-        
+
         assert(key, "did not create key")
-        
+
         assert_nothing_raised do
             key.flush
         end
-        
+
         assert(key.alias, "No alias set for key")
-        
+
         hash = key.property_hash.dup
         text = @provider.target_object(file).read
         names = [key.name, key.alias].flatten.join(",")
-        
+
         assert_equal("#{names} #{key.type} #{key.key}\n", text)
-        
+
         assert_nothing_raised do
             @provider.prefetch
         end
-        
+
         hash.each do |p, v|
             next unless key.respond_to?(p)
             assert_equal(v, key.send(p), "%s did not match" % p)
         end
-        
+
         assert(key.name !~ /,/, "Aliases were not split out during parsing")
     end
 

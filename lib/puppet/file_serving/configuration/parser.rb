@@ -55,7 +55,7 @@ class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
 
     # Allow a given pattern access to a mount.
     def allow(mount, value)
-        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
+        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
         x = value.split(/\s*,\s*/).each { |val|
             begin
                 mount.info "allowing %s access" % val
@@ -69,7 +69,7 @@ class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
 
     # Deny a given pattern access to a mount.
     def deny(mount, value)
-        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
+        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
         x = value.split(/\s*,\s*/).each { |val|
             begin
                 mount.info "denying %s access" % val

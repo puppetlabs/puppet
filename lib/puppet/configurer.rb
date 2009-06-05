@@ -58,7 +58,7 @@ class Puppet::Configurer
             end
         end
     end
-    
+
     # Just so we can specify that we are "the" instance.
     def initialize
         Puppet.settings.use(:main, :ssl, :puppetd)
@@ -124,7 +124,7 @@ class Puppet::Configurer
         return catalog
     end
 
-    # The code that actually runs the catalog.  
+    # The code that actually runs the catalog.
     # This just passes any options on to the catalog,
     # which accepts :tags and :ignoreschedules.
     def run(options = {})

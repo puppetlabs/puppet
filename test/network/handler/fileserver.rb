@@ -50,7 +50,7 @@ class TestFileServer < Test::Unit::TestCase
                 File.open(name, "w") { |f|
                     f.puts rand(100)
                 }
-                
+
                 name
             }
 
@@ -463,7 +463,7 @@ class TestFileServer < Test::Unit::TestCase
 
         File.open(conffile, "w") { |f|
             f.print "# a test config file
- 
+
 [thing]
     path #{basedir}/thing
     allow 192.168.0.*
@@ -481,7 +481,7 @@ class TestFileServer < Test::Unit::TestCase
 
 "
         }
-        
+
 
         # create a server with the file
         assert_nothing_raised {
@@ -593,7 +593,7 @@ class TestFileServer < Test::Unit::TestCase
             File.open(conffile, "w") { |f|
                 f.print text
             }
-            
+
 
             # create a server with the file
             server = nil
@@ -614,7 +614,7 @@ class TestFileServer < Test::Unit::TestCase
             File.open(conffile, "w") { |f|
                 f.print text
             }
-            
+
 
             # create a server with the file
             server = nil
@@ -638,13 +638,13 @@ class TestFileServer < Test::Unit::TestCase
         files = mktestfiles(dir)
         File.open(conffile, "w") { |f|
             f.print "# a test config file
- 
+
 [thing]
     path #{dir}
     allow test1.domain.com
 "
         }
-        
+
         # Reset the timeout, so we reload faster
         Puppet[:filetimeout] = 0.5
 
@@ -671,13 +671,13 @@ class TestFileServer < Test::Unit::TestCase
         sleep 1
         File.open(conffile, "w") { |f|
             f.print "# a test config file
- 
+
 [thing]
     path #{dir}
     allow test2.domain.com
 "
         }
-        
+
         assert_raise(Puppet::AuthorizationError, "List allowed invalid host") {
             list = server.list("/thing/", :manage, false, false,
                 "test1.domain.com", "127.0.0.1")
@@ -773,12 +773,12 @@ class TestFileServer < Test::Unit::TestCase
             client1_hostdir => "client1\n",
             client2_fqdndir => client2 + "\n"
         }
-        [fsdir, hostdir, fqdndir, 
+        [fsdir, hostdir, fqdndir,
          client1_hostdir, client2_fqdndir].each { |d|  Dir.mkdir(d) }
-        
+
         [client1_hostdir, client2_fqdndir].each do |d|
-            File.open(File.join(d, "file.txt"), "w") do |f| 
-                f.print contents[d] 
+            File.open(File.join(d, "file.txt"), "w") do |f|
+                f.print contents[d]
             end
         end
         conffile = tempfile()
@@ -946,7 +946,7 @@ allow *
              result = check.call(client, pat, repl)
          end
 
-        # Now, check that they use Facter info 
+        # Now, check that they use Facter info
         Puppet.notice "The following messages are normal"
         client = nil
         Facter.stubs(:value).with(:ipaddress).returns("127.0.0.1")

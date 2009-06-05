@@ -11,7 +11,7 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
    * /var/service
    * /etc/service
 
-  The daemon directory should be placed in a directory that can be 
+  The daemon directory should be placed in a directory that can be
   by default in:
 
    * /etc/sv

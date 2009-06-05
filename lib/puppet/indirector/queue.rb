@@ -10,7 +10,7 @@ require 'yaml'
 # and specifies a default queue type of <tt>:stomp</tt>, appropriate for use with a variety of message brokers.
 #
 # It's up to the queue client type to instantiate itself correctly based on Puppet configuration information.
-# 
+#
 # A single queue client is maintained for the abstract terminus, meaning that you can only use one type
 # of queue client, one message broker solution, etc., with the indirection mechanism.
 #

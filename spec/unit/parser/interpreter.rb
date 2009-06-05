@@ -98,7 +98,7 @@ describe Puppet::Parser::Interpreter do
 
                 @interp.expects(:create_parser).with(:myenv).raises(Puppet::Error, "Could not parse")
 
-                lambda { @interp.parser(:myenv) }.should raise_error(Puppet::Error) 
+                lambda { @interp.parser(:myenv) }.should raise_error(Puppet::Error)
             end
         end
     end

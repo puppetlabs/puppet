@@ -143,7 +143,7 @@ describe Puppet::Type.type(:file) do
                 @catalog.resource(:file, File.join(@dest, "two")).should be_instance_of(@file.class)
             end
         end
-        
+
         it "should have an edge to each resource in the relationship graph" do
             @catalog.apply do |trans|
                 one = @catalog.resource(:file, File.join(@dest, "one"))

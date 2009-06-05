@@ -344,7 +344,7 @@ end
 
         currentvalues = zone.retrieve
 
-        assert_equal(:absent, currentvalues[zone.property(:ensure)], 
+        assert_equal(:absent, currentvalues[zone.property(:ensure)],
                      "Zone is not absent")
     end
 
@@ -411,7 +411,7 @@ end
 
         currentvalues = zone.retrieve
 
-        assert_equal(:absent, currentvalues[zone.property(:ensure)], 
+        assert_equal(:absent, currentvalues[zone.property(:ensure)],
                      "Zone is not absent")
     end
 end

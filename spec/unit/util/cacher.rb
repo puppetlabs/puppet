@@ -123,7 +123,7 @@ describe Puppet::Util::Cacher do
 
         it "should allow specification of a ttl for cached attributes" do
             klass = Class.new do
-                include Puppet::Util::Cacher 
+                include Puppet::Util::Cacher
             end
 
             klass.cached_attr(:myattr, :ttl => 5)  { Time.now }
@@ -133,7 +133,7 @@ describe Puppet::Util::Cacher do
 
         it "should allow specification of a ttl as a string" do
             klass = Class.new do
-                include Puppet::Util::Cacher 
+                include Puppet::Util::Cacher
             end
 
             klass.cached_attr(:myattr, :ttl => "5")  { Time.now }
@@ -143,7 +143,7 @@ describe Puppet::Util::Cacher do
 
         it "should fail helpfully if the ttl cannot be converted to an integer" do
             klass = Class.new do
-                include Puppet::Util::Cacher 
+                include Puppet::Util::Cacher
             end
 
             lambda { klass.cached_attr(:myattr, :ttl => "yep")  { Time.now } }.should raise_error(ArgumentError)
@@ -151,7 +151,7 @@ describe Puppet::Util::Cacher do
 
         it "should not check for a ttl expiration if the class does not support that method" do
             klass = Class.new do
-                extend Puppet::Util::Cacher 
+                extend Puppet::Util::Cacher
             end
 
             klass.metaclass.cached_attr(:myattr) { "eh" }
@@ -163,7 +163,7 @@ describe Puppet::Util::Cacher do
                 def self.to_s
                     "CacheTestClass"
                 end
-                include Puppet::Util::Cacher 
+                include Puppet::Util::Cacher
                 attr_accessor :value
             end
 

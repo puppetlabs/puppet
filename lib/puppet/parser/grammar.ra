@@ -471,10 +471,10 @@ else:             # nothing
 # Unlike yacc/bison, it seems racc
 # gives tons of shift/reduce warnings
 # with the following syntax:
-# 
+#
 # expression: ...
 #            | expression arithop expressio { ... }
-#            
+#
 # arithop: PLUS | MINUS | DIVIDE | TIMES ...
 #
 # So I had to develop the expression by adding one rule
@@ -525,10 +525,10 @@ expression:   rvalue
 }
             | expression AND expression {
     result = ast AST::BooleanOperator, :operator => val[1], :lval => val[0], :rval => val[2]
-}            
+}
             | expression OR expression {
     result = ast AST::BooleanOperator, :operator => val[1], :lval => val[0], :rval => val[2]
-}            
+}
             | LPAREN expression RPAREN {
     result = val[1]
 }
@@ -578,9 +578,9 @@ selector:     selectlhand QMARK svalues {
 }
 
 svalues:      selectval
-            | LBRACE sintvalues endcomma RBRACE { 
+            | LBRACE sintvalues endcomma RBRACE {
     @lexer.commentpop
-    result = val[1] 
+    result = val[1]
 }
 
 sintvalues:   selectval
@@ -670,7 +670,7 @@ classname:       NAME
 
 # Multiple hostnames, as used for node names.  These are all literal
 # strings, not AST objects.
-hostnames:    hostname 
+hostnames:    hostname
   | hostnames COMMA hostname {
     result = val[0]
     result = [result] unless result.is_a?(Array)

@@ -10,7 +10,7 @@ describe Puppet::Parser::AST::Minus do
     it "should evaluate its argument" do
         value = stub "value"
         value.expects(:safeevaluate).with(@scope).returns(123)
-        
+
         operator = Puppet::Parser::AST::Minus.new :value => value
         operator.evaluate(@scope)
     end

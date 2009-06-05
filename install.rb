@@ -51,10 +51,10 @@ begin
     if $haverdoc
        rst2man = %x{which rst2man.py}
        $haveman = true
-    else 
+    else
        $haveman = false
     end
-rescue 
+rescue
     puts "Missing rst2man; skipping man page creation"
     $haveman = false
 end
@@ -233,19 +233,19 @@ def prepare_installation
     Config::CONFIG['bindir'] = "/usr/bin"
     Config::CONFIG['sbindir'] = "/usr/sbin"
   end
-  
+
   if not InstallOptions.bindir.nil?
     bindir = InstallOptions.bindir
   else
     bindir = Config::CONFIG['bindir']
   end
-  
+
   if not InstallOptions.sbindir.nil?
     sbindir = InstallOptions.sbindir
   else
     sbindir = Config::CONFIG['sbindir']
   end
-  
+
   if not InstallOptions.sitelibdir.nil?
     sitelibdir = InstallOptions.sitelibdir
   else
@@ -259,11 +259,11 @@ def prepare_installation
       end
     end
   end
-  
+
   if not InstallOptions.mandir.nil?
     mandir = InstallOptions.mandir
   else
-    mandir = Config::CONFIG['mandir'] 
+    mandir = Config::CONFIG['mandir']
   end
 
   # To be deprecated once people move over to using --destdir option
@@ -342,13 +342,13 @@ def build_man(bins)
         File.unlink("./puppet.conf.rst")
 
         # Create binary man pages
-        bins.each do |bin| 
+        bins.each do |bin|
           b = bin.gsub( "bin/", "")
           %x{#{bin} --help > ./#{b}.rst}
           %x{#{rst2man} ./#{b}.rst ./man/man8/#{b}.8}
           File.unlink("./#{b}.rst")
         end
-    rescue SystemCallError 
+    rescue SystemCallError
         $stderr.puts "Couldn't build man pages: " + $!
         $stderr.puts "Continuing with install..."
     end
@@ -388,7 +388,7 @@ def install_binfile(from, op_file, target)
       break
     end
   end
-  
+
   fail "Cannot find a temporary directory" unless tmp_dir
   tmp_file = File.join(tmp_dir, '_tmp')
   ruby = File.join(Config::CONFIG['bindir'], Config::CONFIG['ruby_install_name'])

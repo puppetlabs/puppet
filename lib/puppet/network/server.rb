@@ -83,7 +83,7 @@ class Puppet::Network::Server
             @routes[name.to_sym] = true
         end
     end
-  
+
     # Unregister Indirector handlers.
     def unregister(*indirections)
         raise "Cannot unregister indirections while server is listening." if listening?
@@ -92,7 +92,7 @@ class Puppet::Network::Server
         indirections.flatten.each do |i|
             raise(ArgumentError, "Indirection [%s] is unknown." % i) unless @routes[i.to_sym]
         end
-        
+
         indirections.flatten.each do |i|
             @routes.delete(i.to_sym)
         end
@@ -106,7 +106,7 @@ class Puppet::Network::Server
             @xmlrpc_routes[name.to_sym] = true
         end
     end
-  
+
     # Unregister xmlrpc handlers.
     def unregister_xmlrpc(*namespaces)
         raise "Cannot unregister xmlrpc handlers while server is listening." if listening?
@@ -115,7 +115,7 @@ class Puppet::Network::Server
         namespaces.flatten.each do |i|
             raise(ArgumentError, "XMLRPC handler '%s' is unknown." % i) unless @xmlrpc_routes[i.to_sym]
         end
-        
+
         namespaces.flatten.each do |i|
             @xmlrpc_routes.delete(i.to_sym)
         end
@@ -124,19 +124,19 @@ class Puppet::Network::Server
     def listening?
         @listening
     end
-  
+
     def listen
         raise "Cannot listen -- already listening." if listening?
         @listening = true
         http_server.listen(:address => address, :port => port, :handlers => @routes.keys, :xmlrpc_handlers => @xmlrpc_routes.keys, :protocols => protocols)
     end
-  
+
     def unlisten
         raise "Cannot unlisten -- not currently listening." unless listening?
-        http_server.unlisten   
+        http_server.unlisten
         @listening = false
     end
-    
+
     def http_server_class
         http_server_class_by_type(@server_type)
     end
@@ -152,11 +152,11 @@ class Puppet::Network::Server
     end
 
   private
-  
+
     def http_server
         @http_server ||= http_server_class.new
     end
-    
+
     def http_server_class_by_type(kind)
         Puppet::Network::HTTP.server_class_by_type(kind)
     end

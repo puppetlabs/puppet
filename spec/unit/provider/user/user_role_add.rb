@@ -239,7 +239,7 @@ describe provider_class do
             File.stubs(:rename)
             @provider.password=("hashedpassword")
         end
-        
+
         it "should rename the /etc/shadow_tmp to /etc/shadow" do
             File.stubs(:open).with("/etc/shadow", "r")
             File.expects(:rename).with("/etc/shadow_tmp", "/etc/shadow")

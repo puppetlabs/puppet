@@ -132,7 +132,7 @@ def resolve(dir)
     if dir.include?(File::SEPARATOR)
         basedir = dir.split(File::SEPARATOR)[0]
         if dirs.include?(basedir)
-            dirs.delete(basedir) 
+            dirs.delete(basedir)
             dirs << basedir
         end
     end
@@ -236,6 +236,6 @@ end
 #    load file unless file =~ /^-/
 #end
 #
-#runner = Test::Unit::AutoRunner.new(false) 
+#runner = Test::Unit::AutoRunner.new(false)
 #runner.process_args
 #runner.run

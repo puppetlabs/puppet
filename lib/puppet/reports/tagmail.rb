@@ -8,12 +8,12 @@ Puppet::Reports.register_report(:tagmail) do
         based on the tags in the log messages.  See the
         `UsingTags tag documentation`:trac: for more information
         on tags.
-        
+
         To use this report, you must create a ``tagmail.conf`` (in the location
         specified by ``tagmap``).  This is a simple file that maps tags to
         email addresses:  Any log messages in the report that match the specified
         tags will be sent to the specified email addresses.
-        
+
         Tags must be comma-separated, and they can be negated so that messages
         only match when they do not have that tag.  The tags are separated from
         the email addresses by a colon, and the email addresses should also
@@ -29,9 +29,9 @@ Puppet::Reports.register_report(:tagmail) do
         This will send all messages to ``me@domain.com``, and all messages from
         webservers that are not also from mailservers to ``httpadmins@domain.com``.
 
-        If you are using anti-spam controls, such as grey-listing, on your mail 
-        server you should whitelist the sending email (controlled by ``reportform`` 
-        configuration option) to ensure your email is not discarded as spam.  
+        If you are using anti-spam controls, such as grey-listing, on your mail
+        server you should whitelist the sending email (controlled by ``reportform``
+        configuration option) to ensure your email is not discarded as spam.
         "
 
 
@@ -65,10 +65,10 @@ Puppet::Reports.register_report(:tagmail) do
                 reports << [emails, messages.collect { |m| m.to_report }.join("\n")]
             end
         end
-        
+
         return reports
     end
-    
+
     # Load the config file
     def parse(text)
         taglists = []
@@ -114,13 +114,13 @@ Puppet::Reports.register_report(:tagmail) do
         end
 
         taglists = parse(File.read(Puppet[:tagmap]))
-        
+
         # Now find any appropriately tagged messages.
         reports = match(taglists)
 
         send(reports)
     end
-    
+
     # Send the email reports.
     def send(reports)
         pid = fork do
@@ -136,7 +136,7 @@ Puppet::Reports.register_report(:tagmail) do
                               p.puts "Date: " + Time.now.rfc2822
                               p.puts
                               p.puts messages
-                            end 
+                            end
                         end
                     end
                 rescue => detail

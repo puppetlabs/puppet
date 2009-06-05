@@ -3,7 +3,7 @@ Puppet::Type.type(:package).provide :fink, :parent => :dpkg, :source => :dpkg do
     include Puppet::Util::Package
 
     desc "Package management via ``fink``."
-    
+
     commands :fink => "/sw/bin/fink"
     commands :aptget => "/sw/bin/apt-get"
     commands :aptcache => "/sw/bin/apt-cache"
@@ -40,7 +40,7 @@ Puppet::Type.type(:package).provide :fink, :parent => :dpkg, :source => :dpkg do
         keep = ""
 
         cmd << :install << str
-        
+
         finkcmd(cmd)
     end
 
@@ -64,7 +64,7 @@ Puppet::Type.type(:package).provide :fink, :parent => :dpkg, :source => :dpkg do
             self.info("Preseeding %s to debconf-set-selections" % response)
 
             preseed response
-        else 
+        else
             self.info "No responsefile specified or non existant, not preseeding anything"
         end
     end

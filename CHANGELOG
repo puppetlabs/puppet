@@ -1,5 +1,5 @@
 0.25.0
-    Fixed #2280 - Detailed exit codes fix 
+    Fixed #2280 - Detailed exit codes fix
 
     Fixed #198 - Puppet man pages added
 
@@ -25,7 +25,7 @@
 
 0.24.8
     Fixed #2077 - ralsh user broken on OSX
-    
+
     Fixed #2004 - ssh_authorized_key fails if no target is defined
 
     Fixed #1629 - incorrect permissions on ssh_authorized_keys created files
@@ -44,9 +44,9 @@
 
     Fixed #1871 - Sensitive information leaked in log reports
 
-    Fixed #1956 - Cleaned up variable names to be more sane, clarified error messages 
+    Fixed #1956 - Cleaned up variable names to be more sane, clarified error messages
     and fixed incorrect use of 'value' variable rather than 'member'.
-    
+
     Fixed #1831 - Added sprintf function
 
     Fixed #1830 - Added regsubst function
@@ -55,7 +55,7 @@
 
     Fixing #1948 and #1953 - augeas ins bug: wrong number of arguments (1 for 3)
 
-    Fixing #944 - changing error message from warning to info - connection recycled 
+    Fixing #944 - changing error message from warning to info - connection recycled
 
     Fixed #961 - puppetd creating too many/not closing TCP connections
 
@@ -70,7 +70,7 @@
     Fixed #1884 - Exported resources are marked as unexported when collected on the exporting host
 
     Fixed #1922 - Functions squash all arguments into a single hash
-    
+
     Fixed #1538 - Yumrepo sets permissions wrongly on files in /etc/yum.repos.d
 
     Fixed #1936 - Added /* */ support to the vim file
@@ -78,7 +78,7 @@
     Fixed #1541 -  nagios objects write files to clientbucket on every change
 
     Fixed #1542 - cannot purge nagios objects
- 
+
     Fixing #1912 - gid still works with no 'should' value fixing ralsh issues
 
     Fixing the Rakefile to use 'git format-patch'
@@ -93,8 +93,8 @@
 
     Updated Red Hat spec file 0.24.7
 
-    Fixed #1920 - Shadow password corruption 
- 
+    Fixed #1920 - Shadow password corruption
+
 0.24.7
     Fixed #1804 - Added VDev and MultiVDev properties to the ZPool type
 
@@ -156,14 +156,14 @@
 
     Fixed #1711 - fileserver test fails due to incorrect mocking
 
-    Fixed #1751 - Mac OS X DirectoryService nameservice provider support for 
-    plist output and password hash fil 
-   
-    Fixed #1752 - Add an optional argument to Puppet::Util.execute to determine 
+    Fixed #1751 - Mac OS X DirectoryService nameservice provider support for
+    plist output and password hash fil
+
+    Fixed #1752 - Add an optional argument to Puppet::Util.execute to determine
     whether stderr and stdout are combined in the output
-    
+
     Added versionable feature to the RPM provider
-    
+
     Fixed #1668 - puppetca can't clean unsigned certs
 
     Moved RRD feature from util/metric.rb to feature/base.rb
@@ -200,7 +200,7 @@
 
     Updated Red Hat spec file for 0.24.6
 
-    Removed conf/debian directory - Debian packaging information 
+    Removed conf/debian directory - Debian packaging information
     now maintained downstream
 
     Added augeas type
@@ -211,7 +211,7 @@
     Added multiline comment support
 
 0.24.6
-    Adding support to the user type for: profiles, auths, project, 
+    Adding support to the user type for: profiles, auths, project,
     key/value pairs (extension to Solaris RBAC support added in
     0.24.6)
 
@@ -223,21 +223,21 @@
 
     Fixed #1655 - Provider::Confine::Variable tests are broken
 
-    Fixed #1646 - service puppet status does not work as non-root 
+    Fixed #1646 - service puppet status does not work as non-root
     on redhat system
 
     Fixed #1649 - Updated OSX package cleanup
-  
+
     Fixed #1647 - puppetdoc -r providers now working again
 
     Fixed #1639 - uninitialized constant Puppet::Type::User::ProviderUseradd
 
-    Fixed #1637 - With an inexistant (global) templatedir, modules 
+    Fixed #1637 - With an inexistant (global) templatedir, modules
     can't access their templates
 
     Fixed #1202 - Collection attribute matching doesn't parse arrays
 
-    Fixed #1473 - Puppetd stops with error after puppetmasterd 
+    Fixed #1473 - Puppetd stops with error after puppetmasterd
     is unavailable
 
     Fixed #1354 - yum provider problems with RHEL 3
@@ -249,21 +249,21 @@
     Fixing #947 - pluginsync no longer fails poorly when no plugins exist
 
     Fixed #981 - Removed 'Adding aliases' info message
-    
+
     Fixing #1089 - Log messages are now tagged with the log level,
     making it easier to match messages in the 'tagmail' report.
-    
+
     Fixing #1098 - Multiline strings now correctly increment the line count
 
     Fixing #1614 - Environments no longer have to be listed out
 
-    Fixed #1628 - Changed node search to use certname rather than Facter 
+    Fixed #1628 - Changed node search to use certname rather than Facter
     hostname
-    
-    Fixed #1613 - The client environment will be substituted when looking 
+
+    Fixed #1613 - The client environment will be substituted when looking
     up settings.
 
-    Updated puppet binary documentation 
+    Updated puppet binary documentation
 
     Feature #1624 - Added RBAC roles to solaris user provider
 
@@ -292,13 +292,13 @@
     Fixed #791 - You should now be able to create and find a user/group in one transaction.
 
     Fixed #1610 - Raise "Filebucketed" messages to Notice priority
-    
+
     FIxed #1530 - ssh_authorized_keys provider does not crash anymore on SSH type 1 keys
 
     Added a number of confines to package providers
 
-    Fixed #1609 - Added confines for the Gentoo, FreeBSD and 
-    SMF (Solaris) service providers 
+    Fixed #1609 - Added confines for the Gentoo, FreeBSD and
+    SMF (Solaris) service providers
 
     Fixed #1608 - Added ubuntu to defaultfor for apt provider
 
@@ -306,14 +306,14 @@
     provider
 
     Fixed #1045 - Multiple metaparams all get added to resources.
-    
-    Fixed #1472 -- defined, exported resources in the current compile 
+
+    Fixed #1472 -- defined, exported resources in the current compile
     now get expanded correctly.
 
     Fixed #1595 - Internally, Property#retrieve is no longer called
     when no 'should' value is available for a resource.
 
-    Fixed #1588 - Fixed puppetca --clean --all 
+    Fixed #1588 - Fixed puppetca --clean --all
 
     Fixed #1584 - Added support for appended variables
 
@@ -324,7 +324,7 @@
     Fixed #1579 and #1580 - errors in the Puppet RPM spec file
 
     Fixed #1572 -- file purging now fails if remote sources do not exist.
-    
+
     Fixed #1521 -- ldap user and password are now used with the default connection.
 
     Fixed issues with file descriptors leaking into subprocesses
@@ -338,7 +338,7 @@
     Adjusted hpuxuseradd user provider to confine to HP-UX and fixed HP-UX user provider path regression
 
     Fixed debug messages in package type - thanks to Todd Zullinger for this fix
-    
+
     Fixed #1566 - changed password property of the user type
 
     Fixed debug messages in package type
@@ -362,10 +362,10 @@
     Fixed #1526 - Fixed leak in template
 
     Fixed #1506 - Removed storeconfig duplicate indexes
-    
+
     Fixed #1457 - case insensitive match for error
-    
-    Fixed #1488 - Moved individual functions out of functions.rb into 
+
+    Fixed #1488 - Moved individual functions out of functions.rb into
     lib/puppet/parser/functions directory.  New functions should be create     in this directory.
 
     Fixed #1508 - Added HP-UX package provider
@@ -377,7 +377,7 @@
     Add the -P/--ping option to puppetrun, fixes #1501
 
     Fixed #1394 - Added stored configuration clearing script to /ext
-    
+
     Fixed #1442 - replaced use of Facter for report titling with certname
 
     Fixed $1456 - add proxy configuration capability to yum repo
@@ -390,7 +390,7 @@
 
     Expose all puppet variables as instance member variables of the template wrapper.
     This helps resolve redmine #1427, by providing a safe mechanism to access variables.
-    
+
      * Implement Puppet::Parser::Scope#to_hash, which returns a hash containing all the
        variable bindings in the current and, optionally, parent scope.
      * Use that to set instance member variables into Puppet::Parser::Templatewrapper
@@ -403,17 +403,17 @@
     interpolation, not both, to avoid issues where a #{} interpolated value
     contains a % character.
 
-    Feature #1476: Allow specification of --bindir --sbindir --sitelibdir --mandir --destdir 
+    Feature #1476: Allow specification of --bindir --sbindir --sitelibdir --mandir --destdir
     in installation
-    
+
     Added feature #1241 : Improve performance of group lookups
 
-    Fixed bug #1448: Puppet CA incorrectly writes out all certs to inventory .txt on each 
+    Fixed bug #1448: Puppet CA incorrectly writes out all certs to inventory .txt on each
     certificate signing
 
-    Fixing puppetlast to make it work with 0.24.5 / 0.25.  Made puppetlast work on 0.24.5 
+    Fixing puppetlast to make it work with 0.24.5 / 0.25.  Made puppetlast work on 0.24.5
     by using the YAML indirector
- 
+
 0.24.5
     You can now select the encoding format when transferring the catalog,
     with 'yaml' still being the default but 'marshal' being an option.
@@ -433,12 +433,12 @@
 
     Updated /spec/unit/rails.rb test
 
-    Fix #1426 - services on redhat are restarted again and status is 
+    Fix #1426 - services on redhat are restarted again and status is
     called from the Red Hat provider
 
     Fixed #1414 - Return code from waitpid now right shifted 8 bits
 
-    Fixed #174 - a native type type for managing ssh authorized_keys 
+    Fixed #174 - a native type type for managing ssh authorized_keys
     files is available.
 
     Further moves from the examples directory and ext directory
@@ -448,14 +448,14 @@
     Moved debian to conf and updated examples directory
 
     Fixed #1368 - updated Red Hat init scripts
- 
+
     Added message referencing ReductiveLabs build library
 
     Fixed #1396 - Added sha1 function from DavidS to core
-    
+
     Fixed #1399 - the ldap user provider now knows it can manage
     passwords.
-    
+
     Fixed #1272 - if you provide a group name as the gid to an ldap
     user, the name will be converted to a gid.  Note that this only
     looks up ldap groups, at this point; if you want to set an ldap
@@ -468,7 +468,7 @@
 
     Fixed 1240 - puppet will function more like puppetd if graphing
     or reporting are enabled.
-    
+
     Fixed #1231 - Exceptions during initialization should now be clearer.
 
     Fixed #1006 - puppetrun --class works again.  I added the class
@@ -484,9 +484,9 @@
     Fixed #1367 - Updated Rakefile for new daily builds
 
     Fixed #1370 - removed test/util/loadedfile.rb tests
-    
+
     Fixed #1221 - aliases to titles now work for resources.
-    
+
     Fixed #1012 - templates in the templatedir are preferred to module templates.
 
     Fixed #707 - special '@reboot'-style cron jobs work again.
@@ -495,14 +495,14 @@
 
     Fixed #1369 - the init service provider now supports HP-UX.
 
-    Removed support for the 'node_name' setting in LDAP and external node 
+    Removed support for the 'node_name' setting in LDAP and external node
     lookups.
 
     Also removed support for 'default' nodes in external nodes.
     LDAP nodes now use the certificate name, the short name, and 'default',
     but external nodes just use the certificate name and any custom terminus
     types will use just the certificate name.
-    
+
     Fixing #1168 (for 0.24.x) -- automatically downcasing the fqdn.
     Also requiring that passed in certnames be downcased; the setting
     system isn't currently flexible enough to automatically downcase
@@ -520,7 +520,7 @@
     The Master handler previously provided the support for the :node_name
     setting, and that functionality has now been moved into the Node
     class.  At the same time, the names to search through have been
-    changed somewhat:  Previously, the certificate name and the 
+    changed somewhat:  Previously, the certificate name and the
     hostname were both used for searching, but now, the cert name
     is always searched first (unless node_name == facter), but only
     the Facter hostname, domain, and fqdn are used otherwise.  We no
@@ -530,28 +530,28 @@
 
     Adding support for settings within the existing Facter provider confines.
 
-    Moving all confine code out of the Provider class, and fixing #1197. 
-    Created a Confiner module for the Provider class methods, enhanced 
-    the interface between it and the Confine class to make sure binary 
+    Moving all confine code out of the Provider class, and fixing #1197.
+    Created a Confiner module for the Provider class methods, enhanced
+    the interface between it and the Confine class to make sure binary
     paths are searched for fresh each time.
 
     Modified the 'factpath' setting to automatically configure
     Facter to load facts there if a new enough version of
     Facter is used.
 
-    Crontab provider: fix a parse error when a line begins with a space 
+    Crontab provider: fix a parse error when a line begins with a space
     character (fixes #1216)
 
-    Instead of deleting the init scripts (with --del) we should simply 
-    disable it with chkconfig service off, and respectfully do the same 
+    Instead of deleting the init scripts (with --del) we should simply
+    disable it with chkconfig service off, and respectfully do the same
     for enable => true;
- 
+
     Added ldap providers for users and groups.
 
     Added support for the --all option to puppetca --clean.  If
     puppetca --clean --all is issued then all client certificates
     are removed.
- 
+
     Resources now return the 'should' value for properties from
     the [] accessor method (they previously threw an exception when
     this method was used with properties).  This shouldn't have any
@@ -617,7 +617,7 @@
     that it can cause corruption, especially in file serving (but
     it's client-side corruption).
 
-    Applying patch by Ryan McBride to fix OpenBSD package 
+    Applying patch by Ryan McBride to fix OpenBSD package
     matching.  The actual problem was caused by the fix to #1001.
 
     Found all instances of methods where split() is used without
@@ -867,7 +867,7 @@
     the bootproto (#762).
 
     You now must specify an environment and you are required to specify
-    the valid environments for your site. (#911) 
+    the valid environments for your site. (#911)
 
     Certificates now always specify a subjectAltName, but it defaults
     to '*', meaning that it doesn't require DNS names to match.  You
@@ -998,7 +998,7 @@
     exactly the feature asked for, but I could not find a
     way to directly copy ActiveRecord's concept of an environment.
 
-    External node sources can now return undefined classes (#687). 
+    External node sources can now return undefined classes (#687).
 
     Puppet clients now have http proxy support (#701).
 
@@ -1051,7 +1051,7 @@
 
         Only ONE node source can be used -- you can use LDAP, code, or
         an external node program, but not more than one.
-    
+
         LDAP node support has two changes:  First, the "ldapattrs" attribute is
         now used for setting the attributes to retrieve from the server (in
         addition to required attriutes), and second, all retrieved attributes
@@ -1066,8 +1066,8 @@
         handle that on its own.
 
     Reworked the database schema used to store configurations with the
-    storeconfigs option.  
-    
+    storeconfigs option.
+
     Replaced the obsolete RRD ruby library with the maintained
     RubyRRDtool library (which requires rrdtool2) (#659).
 
@@ -1140,7 +1140,7 @@
     fail on cycles.
 
     Added a 'dynamicfacts' configuration option; any facts in that
-    comma-separated list will be ignored when comparing facts to 
+    comma-separated list will be ignored when comparing facts to
     see if they have changed and thus whether a recompile is necessary.
 
     Renamed some poorly named internal variables:
@@ -1312,7 +1312,7 @@
     Fixing a bug related to link recursion that caused link directories
     to always be considered out of sync.
 
-    The bind address for puppetmasterd can now be specified with 
+    The bind address for puppetmasterd can now be specified with
     --bindaddress.
 
     Added (probably experimental) mongrel support.  At this point you're
@@ -1492,7 +1492,7 @@
     Correctly handling spaces in file sources.
 
     Moved documentation into svn tree.
-    
+
 0.18.0
     Added support for a "default" node.
 
@@ -1690,7 +1690,7 @@
 
 0.9.4
     Small fix to wrap the StatusServer class in the checks for required classes.
-    
+
 0.9.3
     Fixed some significant bugs in cron job management.
 

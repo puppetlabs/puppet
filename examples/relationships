@@ -28,7 +28,7 @@ define sleeper {
 
 files { }
 
-sleeper { 
+sleeper {
     require => files["yay"],
     schedule => true
 }

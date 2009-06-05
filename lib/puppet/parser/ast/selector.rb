@@ -17,9 +17,9 @@ class Puppet::Parser::AST
 
             # Get our parameter.
             paramvalue = @param.safeevaluate(scope)
-            
+
             sensitive = Puppet[:casesensitive]
-            
+
             if ! sensitive and paramvalue.respond_to?(:downcase)
                 paramvalue = paramvalue.downcase
             end

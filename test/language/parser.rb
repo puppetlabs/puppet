@@ -308,7 +308,7 @@ class TestParser < Test::Unit::TestCase
             f.puts %{
 node nodeA, nodeB {
     file { "#{other}": ensure => file }
-    
+
 }
 }
         end
@@ -403,7 +403,7 @@ file { "/tmp/yayness":
         }
         sub = parser.classes["container::deep::sub"]
         assert(sub, "Could not find sub")
-        
+
         # Now try it with a parent class being a fq class
         assert_nothing_raised {
             parser.parse "class container::one inherits container::deep::sub {}"
@@ -411,7 +411,7 @@ file { "/tmp/yayness":
         sub = parser.classes["container::one"]
         assert(sub, "Could not find one")
         assert_equal("container::deep::sub", sub.parentclass)
-        
+
         # Finally, try including a qualified class
         assert_nothing_raised("Could not include fully qualified class") {
             parser.parse "include container::deep::sub"
@@ -635,7 +635,7 @@ file { "/tmp/yayness":
         assert(code.length == 1, "Did not get the file")
         assert_instance_of(Puppet::TransObject, code[0])
     end
-    
+
     def test_fully_qualified_definitions
         parser = mkparser
 
@@ -643,7 +643,7 @@ file { "/tmp/yayness":
             parser.parse %{define one::two { }}
         }
         assert(parser.definitions["one::two"], "Could not find one::two with no namespace")
-        
+
         # Now try using the definition
         assert_nothing_raised("Could not parse fully-qualified definition usage") {
             parser.parse %{one::two { yayness: }}
@@ -792,7 +792,7 @@ file { "/tmp/yayness":
     def test_parse
         parser = mkparser
 
-        str = "file { '/tmp/yay': ensure => file }\nclass yay {}\nnode foo {}\ndefine bar {}\n" 
+        str = "file { '/tmp/yay': ensure => file }\nclass yay {}\nnode foo {}\ndefine bar {}\n"
         result = nil
         assert_nothing_raised("Could not parse") do
             result = parser.parse(str)
@@ -1004,7 +1004,7 @@ file { "/tmp/yayness":
             end
         end
     end
-    
+
     # Now make sure we get appropriate behaviour with parent class conflicts.
     def test_newclass_parentage
         parser = mkparser
@@ -1199,17 +1199,17 @@ file { "/tmp/yayness":
         assert_instance_of(AST::Definition, klass, "Did not autoload definition from its own file")
         assert_equal("mymod::mydefine", klass.classname, "Incorrect definition was returned")
     end
-    
+
     # Make sure class, node, and define methods are case-insensitive
     def test_structure_case_insensitivity
         parser = mkparser
-        
+
         result = nil
         assert_nothing_raised do
             result = parser.newclass "Yayness"
         end
         assert_equal(result, parser.findclass("", "yayNess"))
-        
+
         assert_nothing_raised do
             result = parser.newdefine "FunTest"
         end
@@ -1225,7 +1225,7 @@ file { "/tmp/yayness":
         Puppet::Parser::Files.expects(:find_manifests).with("test", {:cwd => ".", :environment => "something"}).returns([])
 
         assert_raise(Puppet::ImportError) do
-            parser.import("test") 
+            parser.import("test")
         end
     end
 

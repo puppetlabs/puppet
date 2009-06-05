@@ -157,7 +157,7 @@ describe Puppet::Network::Handler::FileServer do
         it "should list a file within a directory when given the file path with recursion" do
             @mount.list("facter/fact.rb", true, "false").should == [["/", "file"], ["/", "file"]]
          end
-        
+
         it "should return a merged view of all plugins for all modules" do
             list = @mount.list("facter",true,false)
             list.should == [["/", "directory"], ["/fact.rb", "file"], ["/", "directory"], ["/fact.rb", "file"]]

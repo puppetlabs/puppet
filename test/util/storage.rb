@@ -74,7 +74,7 @@ class TestStorage < Test::Unit::TestCase
         assert_same Hash, state.class
         assert_equal 0, state.size
     end
-    
+
     def test_caching
         hash = nil
         one = Puppet::Type.type(:exec).new :title => "/bin/echo one"
@@ -83,7 +83,7 @@ class TestStorage < Test::Unit::TestCase
                 hash = Puppet::Util::Storage.cache(object)
             end
             assert_equal({}, hash, "Did not get empty hash back for %s" % object)
-        
+
             hash[:testing] = true
             assert_nothing_raised do
                 hash = Puppet::Util::Storage.cache(object)

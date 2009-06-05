@@ -14,7 +14,7 @@ module PuppetTest::ParserTesting
         def evaluated?
             defined? @evaluated and @evaluated
         end
-        
+
         def evaluate(*args)
             @evaluated = true
             return @evaluate
@@ -25,7 +25,7 @@ module PuppetTest::ParserTesting
                 @evaluate = val
             end
         end
-        
+
         def reset
             @evaluated = nil
         end
@@ -34,7 +34,7 @@ module PuppetTest::ParserTesting
             evaluate()
         end
     end
-    
+
     def astarray(*args)
         AST::ASTArray.new(
             :children => args

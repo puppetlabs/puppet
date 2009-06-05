@@ -19,7 +19,7 @@ class Puppet::Parser::AST
             # Make a new array, so we don't have to deal with the details of
             # flattening and such
             items = []
-            
+
             # First clean out any AST::ASTArrays
             @children.each { |child|
                 if child.instance_of?(AST::ASTArray)

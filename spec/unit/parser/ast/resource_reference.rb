@@ -23,7 +23,7 @@ describe Puppet::Parser::AST::ResourceReference do
         it "should evaluate correctly reference to define" do
             klass = stub 'klass', :title => "three", :classname => type
             @scope.stubs(:finddefine).returns(klass)
-        
+
             newref("three", type).evaluate(@scope).to_ref.should == Puppet::Parser::Resource::Reference.new( :type => type, :title => "three" ).to_ref
         end
     end
@@ -31,13 +31,13 @@ describe Puppet::Parser::AST::ResourceReference do
     it "should be able to call qualified_class" do
         klass = stub 'klass', :title => "three", :classname => "one"
         @scope.expects(:findclass).with("one").returns(klass)
-        newref("three","class").qualified_class(@scope,"one").should == "one" 
+        newref("three","class").qualified_class(@scope,"one").should == "one"
     end
 
     it "should be able to find qualified classes when evaluating" do
         klass = stub 'klass', :title => "one", :classname => "one"
         @scope.stubs(:findclass).returns(klass)
-        
+
         evaled = newref("one", "class").evaluate(@scope)
         evaled.type.should == "Class"
         evaled.title.should == "one"
@@ -47,7 +47,7 @@ describe Puppet::Parser::AST::ResourceReference do
         titles = mock 'titles', :safeevaluate => ["title1","title2"]
         ref = ast::ResourceReference.new( :title => titles, :type => "Resource" )
         ref.stubs(:qualified_type).with(@scope).returns("Resource")
-        
+
         ref.evaluate(@scope).should have(2).elements
     end
 
@@ -56,7 +56,7 @@ describe Puppet::Parser::AST::ResourceReference do
         ref = ast::ResourceReference.new( :title => titles, :type => "Class" )
         ref.expects(:qualified_class).with(@scope,"title1").returns("class")
         ref.expects(:qualified_class).with(@scope,"title2").returns("class")
-        
+
         ref.evaluate(@scope)
     end
 

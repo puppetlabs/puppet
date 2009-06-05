@@ -1,7 +1,7 @@
 module Puppet::Parser::Functions
     newfunction(:regsubst, :type => :rvalue,
                 :doc => "
-                Perform regexp replacement on a string. 
+                Perform regexp replacement on a string.
 
 - **Parameters** (in order):
 
@@ -19,7 +19,7 @@ module Puppet::Parser::Functions
     - **G**         Global replacement; all occurrences of the regexp in the string will be replaced.  Without this, only the first occurrence will be replaced.
 
 :lang:  Optional.  How to handle multibyte characters.  A single-character string with the following values:
-     
+
      - **N**         None
      - **E**         EUC
      - **S**         SJIS

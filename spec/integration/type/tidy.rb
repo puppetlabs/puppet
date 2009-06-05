@@ -14,7 +14,7 @@ describe Puppet::Type.type(:tidy) do
         target = tmpfile("no_such_file_tidy_link_testing")
         Dir.mkdir(dir)
         File.symlink(target, link)
-        
+
         tidy = Puppet::Type.type(:tidy).new :path => dir, :recurse => true
 
         catalog = Puppet::Resource::Catalog.new

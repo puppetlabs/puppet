@@ -64,7 +64,7 @@ def shell_out():
                 return WEXITSTATUS(rc)
         else:
             # Exit code is None (0), no updates waiting so don't both parsing output
-            return 0 
+            return 0
 
         # Yum prints a line of hyphens (old versions) or a blank line between
         # headers and package data, so skip everything before them

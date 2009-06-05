@@ -121,7 +121,7 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
             raise Puppet::Error, "Sun packages must specify a package source"
         end
         cmd = []
-        
+
         if @resource[:adminfile]
             cmd << "-a" << @resource[:adminfile]
         end

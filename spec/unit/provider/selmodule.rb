@@ -16,7 +16,7 @@ describe provider_class do
         @provider = provider_class.new(@resource)
     end
 
-    describe "exists? method" do 
+    describe "exists? method" do
         it "should find a module if it is already loaded" do
             @provider.expects(:command).with(:semodule).returns "/usr/sbin/semodule"
             @provider.expects(:execpipe).with("/usr/sbin/semodule --list").yields ["bar\t1.2.3\n", "foo\t4.4.4\n", "bang\t1.0.0\n"]
@@ -45,7 +45,7 @@ describe provider_class do
 
     describe "syncversion" do
         it "should return :true if loaded and file modules are in sync" do
-            @provider.expects(:selmodversion_loaded).returns "1.5.0" 
+            @provider.expects(:selmodversion_loaded).returns "1.5.0"
             @provider.expects(:selmodversion_file).returns "1.5.0"
             @provider.syncversion.should == :true
         end

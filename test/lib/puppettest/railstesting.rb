@@ -26,7 +26,7 @@ module PuppetTest::RailsTesting
     def railsresource(type = "file", title = "/tmp/testing", params = {})
         railsteardown
         railsinit
-        
+
         # We need a host for resources
         #host = Puppet::Rails::Host.new(:name => Facter.value("hostname"))
 
@@ -39,12 +39,12 @@ module PuppetTest::RailsTesting
         facts = Facter.to_hash
 
         # Now try storing our crap
-        host = nil 
+        host = nil
         node = mknode(facts["hostname"])
         node.parameters = facts
         assert_nothing_raised {
             host = Puppet::Rails::Host.store(node, resources)
-        }        
+        }
 
         # Now save the whole thing
         host.save

@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# == Synopsis 
+# == Synopsis
 #
 # Retrieve serialized records from a queue and process them in order.
 #

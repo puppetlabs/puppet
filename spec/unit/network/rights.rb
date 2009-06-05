@@ -508,9 +508,9 @@ describe Puppet::Network::Rights do
             # mocha doesn't allow testing super...
             # it "should delegate to the AuthStore for the result" do
             #     @acl.method(:save)
-            # 
+            #
             #     @acl.expects(:allowed?).with("me","127.0.0.1")
-            # 
+            #
             #     @acl.allowed?("me","127.0.0.1", :save)
             # end
         end

@@ -12,7 +12,7 @@ describe Puppet::Node::Ldap do
     describe "when searching for a single node" do
         before :each do
             @searcher = Puppet::Node::Ldap.new
-            
+
             @name = "mynode.domain.com"
             @node = stub 'node', :name => @name, :name= => nil
             @node.stub_everything

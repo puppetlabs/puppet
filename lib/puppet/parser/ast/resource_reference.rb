@@ -25,7 +25,7 @@ class Puppet::Parser::AST
         def evaluate(scope)
             title = @title.safeevaluate(scope)
             title = [title] unless title.is_a?(Array)
-            
+
             if @type.to_s.downcase == "class"
                 resource_type = "class"
                 title = title.collect { |t| qualified_class(scope, t) }

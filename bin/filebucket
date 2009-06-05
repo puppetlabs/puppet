@@ -45,7 +45,7 @@
 #   /etc/passwd: 429b225650b912a2ee067b0a4cf1e949
 #   $ filebucket restore /tmp/passwd 429b225650b912a2ee067b0a4cf1e949
 #   $
-# 
+#
 # = Options
 #
 # Note that any configuration parameter that's valid in the configuration file

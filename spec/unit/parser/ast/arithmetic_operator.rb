@@ -17,7 +17,7 @@ describe Puppet::Parser::AST::ArithmeticOperator do
         lval.expects(:safeevaluate).with(@scope).returns(1)
         rval = stub "rval"
         rval.expects(:safeevaluate).with(@scope).returns(2)
-        
+
         operator = ast::ArithmeticOperator.new :rval => rval, :operator => "+", :lval => lval
         operator.evaluate(@scope)
     end
@@ -65,7 +65,7 @@ describe Puppet::Parser::AST::ArithmeticOperator do
         @scope.expects(:lookupvar).with("two").returns(2)
         one = ast::Variable.new( :value => "one" )
         two = ast::Variable.new( :value => "two" )
-        
+
         operator = ast::ArithmeticOperator.new :lval => one, :operator => "+", :rval => two
         operator.evaluate(@scope).should == 3
     end

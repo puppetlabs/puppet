@@ -98,9 +98,9 @@ class Puppet::SSLCertificates::Certificate
         @encrypt = hash[:encrypt] || false
         @replace = hash[:replace] || false
         @issuer = hash[:issuer] || nil
-        
+
         if hash.include?(:type)
-            case hash[:type] 
+            case hash[:type]
             when :ca, :client, :server; @type = hash[:type]
             else
                 raise "Invalid Cert type %s" % hash[:type]
@@ -168,7 +168,7 @@ class Puppet::SSLCertificates::Certificate
 #                case p
 #                when 0; Puppet.info "key info: ."  # BN_generate_prime
 #                when 1; Puppet.info "key info: +"  # BN_generate_prime
-#                when 2; Puppet.info "key info: *"  # searching good prime,  
+#                when 2; Puppet.info "key info: *"  # searching good prime,
 #                                          # n = #of try,
 #                                          # but also data from BN_generate_prime
 #                when 3; Puppet.info "key info: \n" # found good prime, n==0 - p, n==1 - q,

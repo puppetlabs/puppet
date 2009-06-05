@@ -42,9 +42,9 @@ module PuppetTest::Certificates
             cert = Puppet::SSLCertificates::Certificate.new(:name => hostname)
             cert.mkcsr
         }
-        
+
         return cert
-    end 
+    end
 
     def mksignedcert(ca = nil, hostname = nil)
         ca ||= mkCA()

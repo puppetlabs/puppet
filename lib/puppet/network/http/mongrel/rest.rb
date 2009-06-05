@@ -30,7 +30,7 @@ class Puppet::Network::HTTP::MongrelREST < Mongrel::HttpHandler
 
     # what path was requested?
     def path(request)
-        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
+        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
         #x = '/' + request.params[Mongrel::Const::REQUEST_PATH]
         request.params[Mongrel::Const::REQUEST_PATH]
     end

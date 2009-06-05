@@ -13,7 +13,7 @@ class Puppet::Relationship
     attr_accessor :source, :target, :callback
 
     attr_reader :event
-    
+
     def event=(event)
         if event != :NONE and ! callback
             raise ArgumentError, "You must pass a callback for non-NONE events"
@@ -31,9 +31,9 @@ class Puppet::Relationship
             end
         end
     end
-    
+
     # Does the passed event match our event?  This is where the meaning
-    # of :NONE comes from. 
+    # of :NONE comes from.
     def match?(event)
         if self.event.nil? or event == :NONE or self.event == :NONE
             return false
@@ -50,7 +50,7 @@ class Puppet::Relationship
         result[:event] = event if event
         result
     end
-    
+
     def ref
         "%s => %s" % [source, target]
     end

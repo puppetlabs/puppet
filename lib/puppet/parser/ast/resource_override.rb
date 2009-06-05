@@ -34,7 +34,7 @@ class Puppet::Parser::AST
             # Now we just create a normal resource, but we call a very different
             # method on the scope.
             resource = [resource] unless resource.is_a?(Array)
-            
+
             resource = resource.collect do |r|
                 res = Puppet::Parser::Resource.new(
                     :type => r.type,

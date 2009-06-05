@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# == Synopsis 
+# == Synopsis
 #
 # Retrieve the client configuration from the central puppet server and apply
 # it to the local host.

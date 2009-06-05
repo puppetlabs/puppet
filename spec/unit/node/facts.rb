@@ -36,7 +36,7 @@ describe Puppet::Node::Facts, "when indirecting" do
         Puppet.settings.expects(:value).with(:downcasefacts).returns true
 
         @facts.values["one"] = "Two"
-        
+
         @facts.downcase_if_necessary
         @facts.values["one"].should == "two"
     end

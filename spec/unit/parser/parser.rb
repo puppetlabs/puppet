@@ -40,7 +40,7 @@ describe Puppet::Parser do
         end
 
         it "boolean operation, it should create the correct ast objects" do
-            ast::BooleanOperator.expects(:new).with { 
+            ast::BooleanOperator.expects(:new).with {
                 |h| h[:rval].is_a?(ast::Boolean) and h[:lval].is_a?(ast::Boolean) and h[:operator]=="or"
             }
             @parser.parse("if true or true { $var = 1 }")
@@ -48,7 +48,7 @@ describe Puppet::Parser do
         end
 
         it "comparison operation, it should create the correct ast objects" do
-             ast::ComparisonOperator.expects(:new).with { 
+             ast::ComparisonOperator.expects(:new).with {
                  |h| h[:lval].is_a?(ast::Name) and h[:rval].is_a?(ast::Name) and h[:operator]=="<"
              }
              @parser.parse("if 1 < 2 { $var = 1 }")
@@ -60,10 +60,10 @@ describe Puppet::Parser do
     describe Puppet::Parser, "when parsing if complex expressions" do
          it "should create a correct ast tree" do
              aststub = stub_everything 'ast'
-             ast::ComparisonOperator.expects(:new).with { 
+             ast::ComparisonOperator.expects(:new).with {
                  |h| h[:rval].is_a?(ast::Name) and h[:lval].is_a?(ast::Name) and h[:operator]==">"
              }.returns(aststub)
-             ast::ComparisonOperator.expects(:new).with { 
+             ast::ComparisonOperator.expects(:new).with {
                  |h| h[:rval].is_a?(ast::Name) and h[:lval].is_a?(ast::Name) and h[:operator]=="=="
              }.returns(aststub)
              ast::BooleanOperator.expects(:new).with {
@@ -79,7 +79,7 @@ describe Puppet::Parser do
     end
 
     describe Puppet::Parser, "when parsing resource references" do
-        
+
         it "should not raise syntax errors" do
             lambda { @parser.parse('exec { test: param => File["a"] }') }.should_not raise_error
         end
@@ -87,18 +87,18 @@ describe Puppet::Parser do
         it "should not raise syntax errors with multiple references" do
             lambda { @parser.parse('exec { test: param => File["a","b"] }') }.should_not raise_error
         end
-        
+
         it "should create an ast::ResourceReference" do
             ast::Resource.stubs(:new)
-            ast::ResourceReference.expects(:new).with { |arg| 
+            ast::ResourceReference.expects(:new).with { |arg|
                 arg[:line]==1 and arg[:type]=="File" and arg[:title].is_a?(ast::ASTArray)
             }
             @parser.parse('exec { test: command => File["a","b"] }')
         end
     end
-     
+
     describe Puppet::Parser, "when parsing resource overrides" do
-        
+
         it "should not raise syntax errors" do
             lambda { @parser.parse('Resource["title"] { param => value }') }.should_not raise_error
         end
@@ -108,14 +108,14 @@ describe Puppet::Parser do
         end
 
         it "should create an ast::ResourceOverride" do
-            ast::ResourceOverride.expects(:new).with { |arg| 
+            ast::ResourceOverride.expects(:new).with { |arg|
                 arg[:line]==1 and arg[:object].is_a?(ast::ResourceReference) and arg[:params].is_a?(ast::ResourceParam)
             }
             @parser.parse('Resource["title1","title2"] { param => value }')
         end
-        
+
     end
-     
+
     describe Puppet::Parser, "when parsing if statements" do
 
         it "should not raise errors with empty if" do
@@ -172,7 +172,7 @@ describe Puppet::Parser do
             lambda { @parser.parse("$a = [1,2,]") }.should_not raise_error
         end
     end
-            
+
     describe Puppet::Parser, "when instantiating class of same name" do
 
         before :each do

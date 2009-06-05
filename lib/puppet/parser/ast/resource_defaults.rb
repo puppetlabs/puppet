@@ -2,7 +2,7 @@ require 'puppet/parser/ast/branch'
 
 class Puppet::Parser::AST
     # A statement syntactically similar to an ResourceDef, but uses a
-    # capitalized object type and cannot have a name.  
+    # capitalized object type and cannot have a name.
     class ResourceDefaults < AST::Branch
         attr_accessor :type, :params
 

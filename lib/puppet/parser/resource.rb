@@ -285,7 +285,7 @@ class Puppet::Parser::Resource
     def to_ral
         to_resource.to_ral
     end
-    
+
     private
 
     # Add default values from our definition.
@@ -360,7 +360,7 @@ class Puppet::Parser::Resource
     def paramcheck(param)
         param = param.to_s
         # Now make sure it's a valid argument to our class.  These checks
-        # are organized in order of commonhood -- most types, it's a valid 
+        # are organized in order of commonhood -- most types, it's a valid
         # argument and paramcheck is enabled.
         if @ref.typeclass.validattr?(param)
             true

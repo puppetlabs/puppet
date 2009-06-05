@@ -26,7 +26,7 @@ describe provider_class do
         @provider.expects(:execpipe).with("/usr/sbin/setsebool  foo off")
         @provider.value = :off
     end
-     
+
     it "should call execpipe with -P when updating persistent boolean setting" do
         @resource.stubs(:[]).with(:persistent).returns :true
         @provider.expects(:command).with(:setsebool).returns "/usr/sbin/setsebool"

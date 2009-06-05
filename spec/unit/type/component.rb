@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
- 
+
 require File.dirname(__FILE__) + '/../../spec_helper'
 
 component = Puppet::Type.type(:component)

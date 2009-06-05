@@ -65,7 +65,7 @@ class TestWebrickServer < Test::Unit::TestCase
         }
         assert_equal(1, retval)
     end
-    
+
     def mk_status_client
         client = nil
 

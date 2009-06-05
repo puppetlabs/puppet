@@ -41,7 +41,7 @@ class AptitudePackageProviderTest < PuppetTest::TestCase
                       ).returns(0)
 
         pkg.evaluate.each { |state|
-                    state.forward 
+                    state.forward
           }
     end
 

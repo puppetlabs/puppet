@@ -54,7 +54,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
 
     # Use a setting to determine our path.
     def path(name)
-        if ca?(name) and ca_location 
+        if ca?(name) and ca_location
             ca_location
         elsif collection_directory
             File.join(collection_directory, name.to_s + ".pem")

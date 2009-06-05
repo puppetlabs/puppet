@@ -18,7 +18,7 @@ Puppet::Type.type(:group).provide :directoryservice, :parent => Puppet::Provider
     desc "Group management using DirectoryService on OS X.
 
     "
-        
+
     commands :dscl => "/usr/bin/dscl"
     confine :operatingsystem => :darwin
     defaultfor :operatingsystem => :darwin

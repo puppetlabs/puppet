@@ -129,7 +129,7 @@ class Puppet::Network::Handler # :nodoc:
             File.open(bfile) { |of|
                 contents = of.read
             }
-            
+
             if client
                 return Base64.encode64(contents)
             else

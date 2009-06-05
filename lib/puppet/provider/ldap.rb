@@ -97,7 +97,7 @@ class Puppet::Provider::Ldap < Puppet::Provider
             result
         end
 
-        # Make a duplicate, so that we have a copy for comparison 
+        # Make a duplicate, so that we have a copy for comparison
         # at the end.
         @ldap_properties = @property_hash.dup
     end

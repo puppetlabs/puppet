@@ -29,14 +29,14 @@ module Puppet::Util::SUIDManager
         begin
             self.egid = convert_xid :gid, new_gid if new_gid
             self.euid = convert_xid :uid, new_uid if new_uid
-  
+
             yield
         ensure
             self.euid, self.egid = old_euid, old_egid
         end
     end
     module_function :asuser
-    
+
     # Make sure the passed argument is a number.
     def convert_xid(type, id)
         map = {:gid => :group, :uid => :user}

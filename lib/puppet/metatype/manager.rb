@@ -19,7 +19,7 @@ module Manager
         @types.each do |name, type|
             # Only consider types that have names
             #if ! type.parameters.empty? or ! type.validproperties.empty?
-                yield type 
+                yield type
             #end
         end
     end
@@ -94,14 +94,14 @@ module Manager
 
         klass
     end
-    
+
     # Remove an existing defined type.  Largely used for testing.
     def rmtype(name)
         # Then create the class.
         klass = rmclass(name,
             :hash => @types
         )
-        
+
         if respond_to?("new" + name.to_s)
             metaclass.send(:remove_method, "new" + name.to_s)
         end

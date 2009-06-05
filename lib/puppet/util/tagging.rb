@@ -16,7 +16,7 @@ module Puppet::Util::Tagging
             @tags << tag unless @tags.include?(tag)
         end
 
-        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com] 
+        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
         qualified.collect { |name| x = name.split("::") }.flatten.each { |tag| @tags << tag unless @tags.include?(tag) }
     end
 

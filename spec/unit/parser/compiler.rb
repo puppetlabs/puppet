@@ -187,7 +187,7 @@ describe Puppet::Parser::Compiler do
 
             @compiler.add_resource(@scope, resource)
             resource.expects(:evaluate).never
-        
+
             @compiler.compile
         end
 
@@ -198,7 +198,7 @@ describe Puppet::Parser::Compiler do
 
             # We have to now mark the resource as evaluated
             resource.expects(:evaluate).with { |*whatever| resource.evaluated = true }
-        
+
             @compiler.compile
         end
 
@@ -206,7 +206,7 @@ describe Puppet::Parser::Compiler do
             resource = stub 'already_evaluated', :ref => "File[testing]", :builtin? => false, :evaluated? => true, :virtual? => false
             @compiler.add_resource(@scope, resource)
             resource.expects(:evaluate).never
-        
+
             @compiler.compile
         end
 
@@ -220,7 +220,7 @@ describe Puppet::Parser::Compiler do
             resource.expects(:evaluate).with { |*whatever| resource.evaluated = true; @compiler.add_resource(@scope, resource2) }
             resource2.expects(:evaluate).with { |*whatever| resource2.evaluated = true }
 
-        
+
             @compiler.compile
         end
 
@@ -296,7 +296,7 @@ describe Puppet::Parser::Compiler do
             @compiler.add_resource(@scope, resource)
 
             resource.expects(:evaluate).never
-        
+
             @compiler.compile
         end
     end
@@ -307,7 +307,7 @@ describe Puppet::Parser::Compiler do
             2.times { |i|
                 coll = mock 'coll%s' % i
                 @compiler.add_collection(coll)
-            
+
                 # This is the hard part -- we have to emulate the fact that
                 # collections delete themselves if they are done evaluating.
                 coll.expects(:evaluate).with do

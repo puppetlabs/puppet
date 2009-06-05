@@ -127,7 +127,7 @@ class TestPackageProvider < Test::Unit::TestCase
                 return
             end
         end
-        
+
         if cleancmd = hash[:cleanup]
             hash.delete(:cleanup)
         end

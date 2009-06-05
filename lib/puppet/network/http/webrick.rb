@@ -12,19 +12,19 @@ class Puppet::Network::HTTP::WEBrick
         @listening = false
         @mutex = Mutex.new
     end
-    
+
     def self.class_for_protocol(protocol)
         return Puppet::Network::HTTP::WEBrickREST if protocol.to_sym == :rest
         raise "Unknown protocol [#{protocol}]."
     end
-    
+
     def listen(args = {})
         raise ArgumentError, ":protocols must be specified." if !args[:protocols] or args[:protocols].empty?
         raise ArgumentError, ":address must be specified." unless args[:address]
         raise ArgumentError, ":port must be specified." unless args[:port]
-        
+
         @protocols = args[:protocols]
-        @xmlrpc_handlers = args[:xmlrpc_handlers]        
+        @xmlrpc_handlers = args[:xmlrpc_handlers]
 
         arguments = {:BindAddress => args[:address], :Port => args[:port]}
         arguments.merge!(setup_logger)
@@ -35,12 +35,12 @@ class Puppet::Network::HTTP::WEBrick
         setup_handlers
 
         @mutex.synchronize do
-            raise "WEBrick server is already listening" if @listening        
+            raise "WEBrick server is already listening" if @listening
             @listening = true
             @thread = Thread.new { @server.start }
         end
     end
-    
+
     def unlisten
         @mutex.synchronize do
             raise "WEBrick server is not listening" unless @listening
@@ -50,7 +50,7 @@ class Puppet::Network::HTTP::WEBrick
             @listening = false
         end
     end
-    
+
     def listening?
         @mutex.synchronize do
             @listening
@@ -110,7 +110,7 @@ class Puppet::Network::HTTP::WEBrick
     end
 
   private
-    
+
     def setup_handlers
         # Set up the new-style protocols.
         klass = self.class.class_for_protocol(:rest)

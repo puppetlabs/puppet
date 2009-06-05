@@ -48,7 +48,7 @@ Puppet::Type.newtype(:selmodule) do
             [self[:selmodulepath]]
         else
             ["#{self[:selmoduledir]}/#{self[:name]}.pp"]
-        end       
+        end
     end
 end
 

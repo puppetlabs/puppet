@@ -46,7 +46,7 @@ module Puppet
             Note that if an ``exec`` receives an event from another resource,
             it will get executed again (or execute the command specified in
             ``refresh``, if there is one).
-            
+
             There is a strong tendency to use ``exec`` to do whatever work Puppet
             can't already do; while this is obviously acceptable (and unavoidable)
             in the short term, it is highly recommended to migrate work from ``exec``
@@ -114,8 +114,8 @@ module Puppet
                 end
 
                 if log = @resource[:logoutput]
-                    case log 
-                    when :true 
+                    case log
+                    when :true
                         log = @resource[:loglevel]
                     when :on_failure
                         if status.exitstatus.to_s != self.should.to_s
@@ -200,7 +200,7 @@ module Puppet
                 if dir.is_a?(Array)
                     dir = dir[0]
                 end
-                
+
                 dir
             end
         end
@@ -249,13 +249,13 @@ module Puppet
                 end
             end
         end
-        
+
         newparam(:timeout) do
             desc "The maximum time the command should take.  If the command takes
                 longer than the timeout, the command is considered to have failed
                 and will be stopped.  Use any negative number to disable the timeout.
                 The time is specified in seconds."
-            
+
             munge do |value|
                 value = value.shift if value.is_a?(Array)
                 if value.is_a?(String)
@@ -267,7 +267,7 @@ module Puppet
                     value
                 end
             end
-            
+
             defaultto 300
         end
 
@@ -276,7 +276,7 @@ module Puppet
                 refresh mechanism for when a dependent object is changed.  It only
                 makes sense to use this option when this command depends on some
                 other object; it is useful for triggering an action::
-                    
+
                     # Pull down the main aliases file
                     file { \"/etc/aliases\":
                         source => \"puppet://server/module/aliases\"
@@ -288,7 +288,7 @@ module Puppet
                         subscribe => File[\"/etc/aliases\"],
                         refreshonly => true
                     }
-                
+
                 Note that only ``subscribe`` and ``notify`` can trigger actions, not ``require``,
                 so it only makes sense to use ``refreshonly`` with ``subscribe`` or ``notify``."
 
@@ -306,7 +306,7 @@ module Puppet
             end
         end
 
-        newcheck(:creates) do 
+        newcheck(:creates) do
             desc "A file that this command creates.  If this
                 parameter is provided, then the command will only be run
                 if the specified file does not exist::
@@ -316,10 +316,10 @@ module Puppet
                         creates => \"/var/tmp/myfile\",
                         path => [\"/usr/bin\", \"/usr/sbin\"]
                     }
-                
+
                 "
 
-            # FIXME if they try to set this and fail, then we should probably 
+            # FIXME if they try to set this and fail, then we should probably
             # fail the entire exec, right?
             validate do |files|
                 files = [files] unless files.is_a? Array
@@ -343,7 +343,7 @@ module Puppet
         newcheck(:unless) do
             desc "If this parameter is set, then this ``exec`` will run unless
                 the command returns 0.  For example::
-                    
+
                     exec { \"/bin/echo root >> /usr/lib/cron/cron.allow\":
                         path => \"/usr/bin:/usr/sbin:/bin\",
                         unless => \"grep root /usr/lib/cron/cron.allow 2>/dev/null\"
@@ -380,7 +380,7 @@ module Puppet
         newcheck(:onlyif) do
             desc "If this parameter is set, then this ``exec`` will only run if
                 the command returns 0.  For example::
-                    
+
                     exec { \"logrotate\":
                         path => \"/usr/bin:/usr/sbin:/bin\",
                         onlyif => \"test `du /var/log/messages | cut -f1` -gt 100000\"

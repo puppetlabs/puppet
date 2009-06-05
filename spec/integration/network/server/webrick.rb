@@ -42,13 +42,13 @@ describe Puppet::Network::Server do
 
         describe "when listening" do
             it "should be reachable on the specified address and port" do
-                @server = Puppet::Network::Server.new(@params.merge(:port => 34343))            
+                @server = Puppet::Network::Server.new(@params.merge(:port => 34343))
                 @server.listen
-                lambda { TCPSocket.new('127.0.0.1', 34343) }.should_not raise_error            
+                lambda { TCPSocket.new('127.0.0.1', 34343) }.should_not raise_error
             end
 
             it "should default to '0.0.0.0' as its bind address" do
-                @server = Puppet::Network::Server.new(@params.merge(:port => 34343))            
+                @server = Puppet::Network::Server.new(@params.merge(:port => 34343))
                 @server.stubs(:unlisten) # we're breaking listening internally, so we have to keep it from unlistening
                 @server.send(:http_server).expects(:listen).with { |args| args[:address] == "0.0.0.0" }
                 @server.listen
@@ -56,14 +56,14 @@ describe Puppet::Network::Server do
 
             it "should use any specified bind address" do
                 Puppet[:bindaddress] = "127.0.0.1"
-                @server = Puppet::Network::Server.new(@params.merge(:port => 34343))            
+                @server = Puppet::Network::Server.new(@params.merge(:port => 34343))
                 @server.stubs(:unlisten) # we're breaking listening internally, so we have to keep it from unlistening
                 @server.send(:http_server).expects(:listen).with { |args| args[:address] == "127.0.0.1" }
                 @server.listen
             end
 
             it "should not allow multiple servers to listen on the same address and port" do
-                @server = Puppet::Network::Server.new(@params.merge(:port => 34343))            
+                @server = Puppet::Network::Server.new(@params.merge(:port => 34343))
                 @server.listen
                 @server2 = Puppet::Network::Server.new(@params.merge(:port => 34343))
                 lambda { @server2.listen }.should raise_error
@@ -76,10 +76,10 @@ describe Puppet::Network::Server do
 
         describe "after unlistening" do
             it "should not be reachable on the port and address assigned" do
-                @server = Puppet::Network::Server.new(@params.merge(:port => 34343))      
+                @server = Puppet::Network::Server.new(@params.merge(:port => 34343))
                 @server.listen
                 @server.unlisten
-                lambda { TCPSocket.new('127.0.0.1', 34343) }.should raise_error(Errno::ECONNREFUSED)        
+                lambda { TCPSocket.new('127.0.0.1', 34343) }.should raise_error(Errno::ECONNREFUSED)
             end
         end
     end

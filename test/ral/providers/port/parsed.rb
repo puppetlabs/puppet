@@ -24,7 +24,7 @@ require 'puppettest'
 #        @provider.clear
 #        super
 #    end
-#    
+#
 #    # Generate a line from a hash.  The line might include '\n'.
 #    def genline(hash)
 #        line = [hash[:name], "#{hash[:number]}/%s"].join("\t\t")
@@ -60,7 +60,7 @@ require 'puppettest'
 #            assert_equal("53", dns[:number], "dns number is wrong")
 #
 #            text = nil
-#            assert_nothing_raised("failed to generate %s" % file) do 
+#            assert_nothing_raised("failed to generate %s" % file) do
 #                text = @provider.to_file(@provider.target_records(file))
 #            end
 #
@@ -68,7 +68,7 @@ require 'puppettest'
 #            newlines = text.chomp.split "\n"
 #            regex = /^(\S+)\s+(\d+)\/(\w+)/
 #            oldlines.zip(newlines).each do |old, new|
-#                if omatch = regex.match(old) 
+#                if omatch = regex.match(old)
 #                    assert(newmatch = regex.match(new),
 #                        "Lines were not equivalent: %s vs %s" %
 #                        [old.inspect, new.inspect]

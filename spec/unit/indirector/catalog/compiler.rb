@@ -189,7 +189,7 @@ describe Puppet::Resource::Catalog::Compiler do
         end
 
         it "should look node information up via the Node class with the provided key" do
-            @node.stubs :merge 
+            @node.stubs :merge
             Puppet::Node.expects(:find).with(@name).returns(@node)
             @compiler.find(@request)
         end

@@ -68,7 +68,7 @@ describe Puppet::Network::Server do
         it "should fail to initialize if no listening port can be found" do
             Puppet.settings.stubs(:value).with(:bindaddress).returns("127.0.0.1")
             Puppet.settings.stubs(:value).with(:masterport).returns(nil)
-            lambda { Puppet::Network::Server.new }.should raise_error(ArgumentError)        
+            lambda { Puppet::Network::Server.new }.should raise_error(ArgumentError)
         end
 
         it "should use the Puppet configurator to determine which HTTP server will be used to provide access to clients" do
@@ -164,7 +164,7 @@ describe Puppet::Network::Server do
 
             sync = mock 'sync'
             Puppet::Util.expects(:sync).with("me").returns sync
-            
+
             sync.expects(:synchronize).with(Sync::EX)
             @server.create_pidfile
         end
@@ -201,7 +201,7 @@ describe Puppet::Network::Server do
 
             sync = mock 'sync'
             Puppet::Util.expects(:sync).with("me").returns sync
-            
+
             sync.expects(:synchronize).with(Sync::EX)
             @server.remove_pidfile
         end
@@ -265,7 +265,7 @@ describe Puppet::Network::Server do
 
         it "should allow the use of indirection names to specify which indirections are to be no longer accessible to clients" do
             @server.register(:foo)
-            lambda { @server.unregister(:foo) }.should_not raise_error    
+            lambda { @server.unregister(:foo) }.should_not raise_error
         end
 
         it "should leave other indirections accessible to clients when turning off indirections" do
@@ -292,7 +292,7 @@ describe Puppet::Network::Server do
 
         it "should disable client access immediately when turning off indirections" do
             @server.register(:foo, :bar)
-            @server.unregister(:foo)    
+            @server.unregister(:foo)
             lambda { @server.unregister(:foo) }.should raise_error(ArgumentError)
         end
 
@@ -339,7 +339,7 @@ describe Puppet::Network::Server do
         @server2.unregister(:foo, :xyzzy)
         lambda { @server.unregister(:xyzzy) }.should raise_error(ArgumentError)
         lambda { @server2.unregister(:bar) }.should raise_error(ArgumentError)
-    end  
+    end
 
     describe "when managing xmlrpc registrations" do
         before do
@@ -392,7 +392,7 @@ describe Puppet::Network::Server do
 
         it "should disable client access immediately when turning off namespaces" do
             @server.register_xmlrpc(:foo, :bar)
-            @server.unregister_xmlrpc(:foo)    
+            @server.unregister_xmlrpc(:foo)
             lambda { @server.unregister_xmlrpc(:foo) }.should raise_error(ArgumentError)
         end
 
@@ -414,7 +414,7 @@ describe Puppet::Network::Server do
 
         it "should indicate that it is not listening" do
             @server.should_not be_listening
-        end  
+        end
 
         it "should not allow listening to be turned off" do
             lambda { @server.unlisten }.should raise_error(RuntimeError)
@@ -461,7 +461,7 @@ describe Puppet::Network::Server do
         it "should fetch an instance of an HTTP server" do
             @server.stubs(:http_server_class).returns(@mock_http_server_class)
             @mock_http_server_class.expects(:new).returns(@mock_http_server)
-            @server.listen        
+            @server.listen
         end
 
         it "should cause the HTTP server to listen" do
@@ -507,7 +507,7 @@ describe Puppet::Network::Server do
             @mock_http_server.expects(:listen).with do |args|
                args[:protocols] == [ :rest, :xmlrpc ]
             end
-            @server.listen      
+            @server.listen
         end
     end
 
@@ -528,7 +528,7 @@ describe Puppet::Network::Server do
             Puppet::Indirector::Indirection.stubs(:model).returns mock('indirection')
 
             @server.register(:foo)
-            lambda { @server.unregister(:foo) }.should raise_error(RuntimeError) 
+            lambda { @server.unregister(:foo) }.should raise_error(RuntimeError)
         end
     end
 end

@@ -231,9 +231,9 @@ class Nagios::Base
 
     # This is probably a bad idea.
     def name=(value)
-        unless self.class.namevar.to_s == "name" 
-            send(self.class.namevar.to_s + "=", value) 
-        end    
+        unless self.class.namevar.to_s == "name"
+            send(self.class.namevar.to_s + "=", value)
+        end
     end
 
     def namevar

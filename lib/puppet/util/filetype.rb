@@ -111,9 +111,9 @@ class Puppet::Util::FileType
         # Overwrite the file.
         def write(text)
             require "tempfile"
-            tf = Tempfile.new("puppet") 
-            tf.print text; tf.flush 
-            FileUtils.cp(tf.path, @path) 
+            tf = Tempfile.new("puppet")
+            tf.print text; tf.flush
+            FileUtils.cp(tf.path, @path)
             tf.close
             # If SELinux is present, we need to ensure the file has its expected context
             set_selinux_default_context(@path)
@@ -217,7 +217,7 @@ class Puppet::Util::FileType
                 raise Puppet::Error, "User %s not authorized to use cron" % @path if output.include?("you are not authorized to use cron")
                 return output
             rescue => detail
-                raise Puppet::Error, "Could not read crontab for %s: %s" % [@path, detail] 
+                raise Puppet::Error, "Could not read crontab for %s: %s" % [@path, detail]
             end
         end
 

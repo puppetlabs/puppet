@@ -56,7 +56,7 @@ describe Puppet::Util::CacheAccumulator do
         name = 'foo'
         @test_class.expects(:find_or_create_by_name).with(name).returns(@test_class.new(name)).once
         @alt_class.expects(:find_or_create_by_name).with(name).returns(@alt_class.new(name)).once
-        
+
         [@test_class, @alt_class].each do |klass|
             klass.accumulate_by_name(name).name.should == name
             klass.accumulate_by_name(name).class.should == klass

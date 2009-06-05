@@ -17,7 +17,7 @@ class Puppet::Parser::AST
 
             retvalue = nil
             found = false
-            
+
             # Iterate across the options looking for a match.
             default = nil
             @options.each { |option|

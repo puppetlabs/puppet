@@ -107,14 +107,14 @@ class TestEvents < Test::Unit::TestCase
         execs = [exec1, exec2, exec3]
 
         config = mk_catalog(exec1,exec2,exec3)
-        
+
         trans = Puppet::Transaction.new(config)
         execs.each do |e| assert(config.vertex?(e), "%s is not in graph" % e.title) end
         trans.prepare
         execs.each do |e| assert(config.vertex?(e), "%s is not in relgraph" % e.title) end
         reverse = trans.relationship_graph.reversal
         execs.each do |e| assert(reverse.vertex?(e), "%s is not in reversed graph" % e.title) end
-        
+
         config.apply
 
         assert(FileTest.exists?(file), "File does not exist")

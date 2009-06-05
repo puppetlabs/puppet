@@ -52,7 +52,7 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
     def path(name)
         File.join(base, self.class.indirection_name.to_s, name.to_s + ".yaml")
     end
-    
+
     # Do a glob on the yaml directory, loading each file found
     def search(request)
       Dir.glob(File.join(base, self.class.indirection_name.to_s, request.key)).collect { |f| YAML.load_file(f) }

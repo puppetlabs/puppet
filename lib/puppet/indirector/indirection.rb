@@ -23,14 +23,14 @@ class Puppet::Indirector::Indirection
     def self.instances
         @@indirections.collect { |i| i.name }
     end
-    
+
     # Find an indirected model by name.  This is provided so that Terminus classes
     # can specifically hook up with the indirections they are associated with.
     def self.model(name)
         return nil unless match = @@indirections.find { |i| i.name == name }
         match.model
     end
-    
+
     attr_accessor :name, :model
 
     # Create and return our cache terminus.
@@ -126,7 +126,7 @@ class Puppet::Indirector::Indirection
         unless terminus_name ||= terminus_class
             raise Puppet::DevError, "No terminus specified for %s; cannot redirect" % self.name
         end
-        
+
         return termini[terminus_name] ||= make_terminus(terminus_name)
     end
 

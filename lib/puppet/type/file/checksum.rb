@@ -12,11 +12,11 @@ Puppet::Type.type(:file).newproperty(:checksum) do
         specify that a file's checksum should be monitored and then subscribe to
         the file from another object and receive events to signify
         checksum changes, for instance.
-        
+
         There are a number of checksum types available including MD5 hashing (and
-        an md5lite variation that only hashes the first 500 characters of the 
+        an md5lite variation that only hashes the first 500 characters of the
         file.
-   
+
         The default checksum parameter, if checksums are enabled, is md5."
 
     @event = :file_changed
@@ -74,7 +74,7 @@ Puppet::Type.type(:file).newproperty(:checksum) do
         type = :mtime if type == :timestamp
         type = :ctime if type == :time
 
-        unless state = @resource.cached(:checksums) 
+        unless state = @resource.cached(:checksums)
             self.debug "Initializing checksum hash"
             state = {}
             @resource.cache(:checksums, state)
@@ -174,7 +174,7 @@ Puppet::Type.type(:file).newproperty(:checksum) do
             # not existing yet
             return nil unless @resource.property(:source)
         end
-        
+
         # If the sums are different, then return an event.
         if self.updatesum(currentvalue)
             return :file_changed
@@ -193,7 +193,7 @@ Puppet::Type.type(:file).newproperty(:checksum) do
             return true
         end
     end
-    
+
     # Even though they can specify multiple checksums, the insync?
     # mechanism can really only test against one, so we'll just retrieve
     # the first specified sum type.
@@ -220,7 +220,7 @@ Puppet::Type.type(:file).newproperty(:checksum) do
         # out of sync.  We don't want to generate an event the first
         # time we get a sum.
         self.updatesum(currentvalue) unless cache(checktype())
-        
+
         # @resource.debug "checksum state is %s" % self.is
         return currentvalue
     end

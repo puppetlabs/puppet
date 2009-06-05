@@ -2,9 +2,9 @@
 " Filename:     puppet.vim
 " Language:     puppet configuration file
 " Maintainer:   Luke Kanies <luke@madstop.com>
-" URL:          
-" Last Change: 
-" Version:      
+" URL:
+" Last Change:
+" Version:
 "
 
 " Copied from the cfengine, ruby, and perl syntax files

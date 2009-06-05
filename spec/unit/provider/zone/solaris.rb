@@ -25,7 +25,7 @@ describe provider_class do
             @provider.expects(:zoneadm)
             @provider.install
         end
-        
+
         it "should just install if there are no install args" do
             @resource.stubs(:[]).with(:install_args).returns(nil)
             @provider.expects(:zoneadm).with(:install)

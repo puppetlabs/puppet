@@ -1,5 +1,5 @@
 module Puppet::Util::Execution
-    module_function 
+    module_function
 
     # Run some code with a specific environment.  Resets the environment back to
     # what it was at the end of the code.

@@ -53,7 +53,7 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd, :source => :fre
 
         name, version = $1, $2
 
-        if match == "=" or match == ">" 
+        if match == "=" or match == ">"
             # we're up to date or more recent
             return version
         end

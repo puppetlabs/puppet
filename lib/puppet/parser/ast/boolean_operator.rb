@@ -16,7 +16,7 @@ class Puppet::Parser::AST
         def evaluate(scope)
             # evaluate the first operand, should return a boolean value
             lval = @lval.safeevaluate(scope)
-            
+
             # return result
             # lazy evaluate right operand
             case @operator
@@ -27,8 +27,8 @@ class Puppet::Parser::AST
                 else # false and false == false
                     false
                 end
-            when "or"; 
-                if Puppet::Parser::Scope.true?(lval) 
+            when "or";
+                if Puppet::Parser::Scope.true?(lval)
                     true
                 else
                     rval = @rval.safeevaluate(scope)

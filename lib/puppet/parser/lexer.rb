@@ -281,11 +281,11 @@ class Puppet::Parser::Lexer
         # I tried optimizing based on the first char, but it had
         # a slightly negative affect and was a good bit more complicated.
         TOKENS.regex_tokens.each do |token|
-            next unless match_length = @scanner.match?(token.regex) 
-            
+            next unless match_length = @scanner.match?(token.regex)
+
             # We've found a longer match
             if match_length > length
-                value = @scanner.scan(token.regex) 
+                value = @scanner.scan(token.regex)
                 length = value.length
                 matched_token = token
             end

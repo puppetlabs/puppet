@@ -169,7 +169,7 @@ describe Puppet::Agent do
             @agent.should be_splayed
         end
     end
-    
+
     describe "when stopping" do
         it "should do nothing if already stopping" do
             @agent.expects(:stopping?).returns true

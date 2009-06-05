@@ -31,20 +31,20 @@ class TestNetinfoHostProvider < Test::Unit::TestCase
 
         assert(list.detect { |provider| provider.name == "localhost"}, "Could not find localhost")
     end
-    
+
     if Process.uid == 0
     def test_simple
         localhost = nil
         assert_nothing_raised do
             localhost = @host.create :name => "localhost", :check => [:ip], :provider => :netinfo
         end
-        
+
         assert_nothing_raised do
             localhost.retrieve
         end
-        
+
         prov = localhost.provider
-        
+
         assert_nothing_raised do
             assert(prov.ip, "Did not find value for ip")
             assert(prov.ip != :absent, "Netinfo thinks the localhost is missing")

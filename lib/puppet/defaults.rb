@@ -39,7 +39,7 @@ module Puppet
         logopts = ["$vardir/log", "The Puppet log directory."]
     end
     setdefaults(:main, :logdir => logopts)
-    
+
     # This name hackery is necessary so that the rundir is set reasonably during
     # unit tests.
     if Process.uid == 0 and %w{puppetd puppetmasterd}.include?(self.name)
@@ -60,7 +60,7 @@ module Puppet
                 this directory can be removed without causing harm (although it
                 might result in spurious service restarts)."
         },
-        :rundir => { 
+        :rundir => {
             :default => rundir,
             :mode => 01777,
             :desc => "Where Puppet PID files are kept."
@@ -192,7 +192,7 @@ module Puppet
     end
 
     Puppet.setdefaults(:main,
-        # We have to downcase the fqdn, because the current ssl stuff (as oppsed to in master) doesn't have good facilities for 
+        # We have to downcase the fqdn, because the current ssl stuff (as oppsed to in master) doesn't have good facilities for
         # manipulating naming.
         :certname => {:default => fqdn.downcase, :desc => "The name to use when handling certificates.  Defaults
             to the fully qualified domain name.",
@@ -320,13 +320,13 @@ module Puppet
                 autosigns any key request, and is a very bad idea), false (which
                 never autosigns any key request), and the path to a file, which
                 uses that configuration file to determine which keys to sign."},
-        :ca_days => ["", "How long a certificate should be valid. 
+        :ca_days => ["", "How long a certificate should be valid.
                  This parameter is deprecated, use ca_ttl instead"],
-        :ca_ttl => ["5y", "The default TTL for new certificates; valid values 
-                must be an integer, optionally followed by one of the units 
-                'y' (years of 365 days), 'd' (days), 'h' (hours), or 
+        :ca_ttl => ["5y", "The default TTL for new certificates; valid values
+                must be an integer, optionally followed by one of the units
+                'y' (years of 365 days), 'd' (days), 'h' (hours), or
                 's' (seconds). The unit defaults to seconds. If this parameter
-                is set, ca_days is ignored. Examples are '3600' (one hour) 
+                is set, ca_days is ignored. Examples are '3600' (one hour)
                 and '1825d', which is the same as '5y' (5 years) "],
         :ca_md => ["md5", "The type of hash used in certificates."],
         :req_bits => [2048, "The bit length of the certificates."],
@@ -382,11 +382,11 @@ module Puppet
         },
         :masterport => [8140, "Which port puppetmasterd listens on."],
         :parseonly => [false, "Just check the syntax of the manifests."],
-        :node_name => ["cert", "How the puppetmaster determines the client's identity 
-           and sets the 'hostname', 'fqdn' and 'domain' facts for use in the manifest, 
-           in particular for determining which 'node' statement applies to the client. 
-           Possible values are 'cert' (use the subject's CN in the client's 
-           certificate) and 'facter' (use the hostname that the client 
+        :node_name => ["cert", "How the puppetmaster determines the client's identity
+           and sets the 'hostname', 'fqdn' and 'domain' facts for use in the manifest,
+           in particular for determining which 'node' statement applies to the client.
+           Possible values are 'cert' (use the subject's CN in the client's
+           certificate) and 'facter' (use the hostname that the client
            reported in its facts)"],
         :bucketdir => {
             :default => "$vardir/bucket",
@@ -642,7 +642,7 @@ module Puppet
         :typecheck => [true, "Whether to validate types during parsing."],
         :paramcheck => [true, "Whether to validate parameters during parsing."]
     )
-    
+
     setdefaults(:main,
         :casesensitive => [false,
             "Whether matching in case statements and selectors

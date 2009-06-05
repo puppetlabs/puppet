@@ -673,7 +673,7 @@ describe Puppet::SSL::Host do
             @host.expects(:exit).with(1).raises(SystemExit)
             lambda { @host.wait_for_cert(0) }.should raise_error(SystemExit)
         end
-        
+
         it "should exit if the wait time is 0 and it can neither find nor retrieve a certificate" do
             @host.stubs(:certificate).returns nil
             @host.expects(:generate)

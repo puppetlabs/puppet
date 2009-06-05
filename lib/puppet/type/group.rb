@@ -5,13 +5,13 @@ require 'facter'
 module Puppet
     newtype(:group) do
         @doc = "Manage groups. On most platforms this can only create groups.
-            Group membership must be managed on individual users.  
-            
+            Group membership must be managed on individual users.
+
             On some platforms such as OS X, group membership is managed as an
-            attribute of the group, not the user record. Providers must have 
+            attribute of the group, not the user record. Providers must have
             the feature 'manages_members' to manage the 'members' property of
             a group record."
-        
+
         feature :manages_members,
             "For directories where membership is an attribute of groups not users."
 
@@ -67,18 +67,18 @@ module Puppet
                 return gid
             end
         end
-        
+
         newproperty(:members, :array_matching => :all, :required_features => :manages_members) do
             desc "The members of the group. For directory services where group
             membership is stored in the group objects, not the users."
-            
+
             def change_to_s(currentvalue, newvalue)
                 currentvalue = currentvalue.join(",") if currentvalue != :absent
                 newvalue = newvalue.join(",")
                 super(currentvalue, newvalue)
             end
         end
-        
+
         newparam(:auth_membership) do
             desc "whether the provider is authoritative for group membership."
             defaultto true
@@ -95,7 +95,7 @@ module Puppet
         newparam(:allowdupe, :boolean => true) do
             desc "Whether to allow duplicate GIDs.  This option does not work on
                 FreeBSD (contract to the ``pw`` man page)."
-                
+
             newvalues(:true, :false)
 
             defaultto false

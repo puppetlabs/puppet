@@ -34,7 +34,7 @@ describe content do
             @content = content.new(:resource => @resource)
             @content.checksum_type.should == :litemd5
         end
-        
+
         it "should only return the checksum type from the checksum parameter if the parameter returns a whole checksum" do
             checksum = mock 'checksum'
             checksum.expects(:checktype).returns "{md5}something"

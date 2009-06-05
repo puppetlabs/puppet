@@ -1,11 +1,11 @@
 Puppet
 ======
 
-Puppet, an automated administrative engine for your Linux and Unix systems, performs 
-administrative tasks (such as adding users, installing packages, and updating server 
+Puppet, an automated administrative engine for your Linux and Unix systems, performs
+administrative tasks (such as adding users, installing packages, and updating server
 configurations) based on a centralized specification.
 
-Documentation (and detailed install instructions) can be found 
+Documentation (and detailed install instructions) can be found
 online at the `Puppet Wiki`_.
 
 Installation
@@ -32,7 +32,7 @@ Generally, you need the following things installed:
   the library.
 
 * Facter => 1.1.1
-  You can get this from your package management system or the `Facter site`_ 
+  You can get this from your package management system or the `Facter site`_
 
 .. _Puppet Wiki: http://reductivelabs.com/trac/puppet/wiki/DocumentationStart
 .. _Facter site: http://reductivelabs.com/projects/facter

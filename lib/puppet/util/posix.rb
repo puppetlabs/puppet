@@ -28,7 +28,7 @@ module Puppet::Util::POSIX
     end
 
     # A degenerate method of retrieving name/id mappings.  The job of this method is
-    # to retrieve all objects of a certain type, search for a specific entry 
+    # to retrieve all objects of a certain type, search for a specific entry
     # and then return a given field from that entry.
     def search_posix_field(type, field, id)
         idmethod = idfield(type)
@@ -57,7 +57,7 @@ module Puppet::Util::POSIX
         end
         return nil
     end
-    
+
     # Determine what the field name is for users and groups.
     def idfield(space)
         case Puppet::Util.symbolize(space)
@@ -67,7 +67,7 @@ module Puppet::Util::POSIX
             raise ArgumentError.new("Can only handle users and groups")
         end
     end
-    
+
     # Determine what the method is to get users and groups by id
     def methodbyid(space)
         case Puppet::Util.symbolize(space)
@@ -77,7 +77,7 @@ module Puppet::Util::POSIX
             raise ArgumentError.new("Can only handle users and groups")
         end
     end
-    
+
     # Determine what the method is to get users and groups by name
     def methodbyname(space)
         case Puppet::Util.symbolize(space)
@@ -87,7 +87,7 @@ module Puppet::Util::POSIX
             raise ArgumentError.new("Can only handle users and groups")
         end
     end
-    
+
     # Get the GID of a given group, provided either a GID or a name
     def gid(group)
         begin

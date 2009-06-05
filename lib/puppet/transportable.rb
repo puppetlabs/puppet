@@ -66,7 +66,7 @@ module Puppet
         end
 
         def to_manifest
-            "%s { '%s':\n%s\n}" % 
+            "%s { '%s':\n%s\n}" %
                 [self.type.to_s, self.name,
                  @params.collect { |p, v|
                      if v.is_a? Array
@@ -209,7 +209,7 @@ module Puppet
                     end
                 end
             end
-                
+
             begin
                 delver.call(self)
                 catalog.finalize
@@ -218,7 +218,7 @@ module Puppet
                 catalog.clear if (clear_on_failure)
                 raise
             end
-            
+
             return catalog
         end
 

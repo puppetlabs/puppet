@@ -21,7 +21,7 @@ class Puppet::Parser::AST
             # convert to number if operands are number
             lval = Puppet::Parser::Scope.number?(lval) || lval
             rval = Puppet::Parser::Scope.number?(rval) || rval
-            
+
             # return result
             unless @operator == '!='
                 lval.send(@operator,rval)

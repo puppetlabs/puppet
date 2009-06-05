@@ -72,7 +72,7 @@ class TestUtilFileParsing < Test::Unit::TestCase
 
         # Make sure it matches
         assert_nothing_raised do
-            assert_equal({:record_type => :comment, :line => comment}, 
+            assert_equal({:record_type => :comment, :line => comment},
                  @parser.parse_line(comment))
         end
 
@@ -88,13 +88,13 @@ class TestUtilFileParsing < Test::Unit::TestCase
 
         # The comment should still match
         assert_nothing_raised do
-            assert_equal({:record_type => :comment, :line => comment}, 
+            assert_equal({:record_type => :comment, :line => comment},
                  @parser.parse_line(comment))
         end
 
         # As should our new line type
         assert_nothing_raised do
-            assert_equal({:record_type => :blank, :line => ""}, 
+            assert_equal({:record_type => :blank, :line => ""},
                  @parser.parse_line(""))
         end
 
@@ -141,12 +141,12 @@ class TestUtilFileParsing < Test::Unit::TestCase
         end
 
         assert_nothing_raised("Did not parse old comment") do
-            assert_equal({:record_type => :comment, :line => comment}, 
+            assert_equal({:record_type => :comment, :line => comment},
                  @parser.parse_line(comment))
         end
         comment = '" another type of comment'
         assert_nothing_raised("Did not parse new comment") do
-            assert_equal({:record_type => :comment2, :line => comment}, 
+            assert_equal({:record_type => :comment2, :line => comment},
                  @parser.parse_line(comment))
         end
 
@@ -318,7 +318,7 @@ class TestUtilFileParsing < Test::Unit::TestCase
             # Check parsing first
             result = @parser.parse_line(start)
             [:one, :two].each do |param|
-                assert_equal(record[param], result[param], 
+                assert_equal(record[param], result[param],
                     "Did not correctly parse %s" % start.inspect)
             end
 

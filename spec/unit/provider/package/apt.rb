@@ -98,40 +98,40 @@ Version table:
         it "should use 'apt-get install' with the package name if no version is asked for" do
             @resource.expects(:[]).with(:ensure).returns :installed
             @provider.expects(:aptget).with { |*command| command[-1] == "asdf" and command[-2] == :install }
-            
+
             @provider.install
         end
 
         it "should specify the package version if one is asked for" do
             @resource.expects(:[]).with(:ensure).returns "1.0"
             @provider.expects(:aptget).with { |*command| command[-1] == "asdf=1.0" }
-            
+
             @provider.install
         end
 
         it "should do a quiet install" do
             @provider.expects(:aptget).with { |*command| command.include?("-q") }
-            
+
             @provider.install
         end
 
         it "should default to 'yes' for all questions" do
             @provider.expects(:aptget).with { |*command| command.include?("-y") }
-            
+
             @provider.install
         end
 
         it "should keep config files if asked" do
             @resource.expects(:[]).with(:configfiles).returns :keep
             @provider.expects(:aptget).with { |*command| command.include?("DPkg::Options::=--force-confold") }
-            
+
             @provider.install
         end
 
         it "should replace config files if asked" do
             @resource.expects(:[]).with(:configfiles).returns :replace
             @provider.expects(:aptget).with { |*command| command.include?("DPkg::Options::=--force-confnew") }
-            
+
             @provider.install
         end
     end

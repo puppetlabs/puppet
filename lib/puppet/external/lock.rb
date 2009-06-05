@@ -36,7 +36,7 @@ class File
         flush
         flock(LOCK_UN)
     end
-  
+
     # Get a shared (i.e., read) lock on the file, and yield to the block.
     # If the lock is not available, wait for it without blocking other ruby
     # threads.

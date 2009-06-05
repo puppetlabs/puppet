@@ -16,7 +16,7 @@ end
 describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
     before do
         @mock_webrick = stub('webrick', :[] => {})
-        [:mount, :start, :shutdown].each {|meth| @mock_webrick.stubs(meth)}        
+        [:mount, :start, :shutdown].each {|meth| @mock_webrick.stubs(meth)}
         WEBrick::HTTPServer.stubs(:new).returns(@mock_webrick)
         @server = Puppet::Network::HTTP::WEBrick.new
         [:setup_logger, :setup_ssl].each {|meth| @server.stubs(meth).returns({})} # the empty hash is required because of how we're merging
@@ -37,7 +37,7 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
     end
 
     it "should require a listening port to be specified" do
-        Proc.new { @server.listen(@listen_params.delete_if {|k,v| :port == k})}.should raise_error(ArgumentError)        
+        Proc.new { @server.listen(@listen_params.delete_if {|k,v| :port == k})}.should raise_error(ArgumentError)
     end
 
     it "should order a webrick server to start" do
@@ -146,7 +146,7 @@ describe Puppet::Network::HTTP::WEBrick, "when looking up the class to handle a 
     end
 
     it "should accept a protocol" do
-        lambda { Puppet::Network::HTTP::WEBrick.class_for_protocol("bob") }.should_not raise_error(ArgumentError)        
+        lambda { Puppet::Network::HTTP::WEBrick.class_for_protocol("bob") }.should_not raise_error(ArgumentError)
     end
 
     it "should use a WEBrick + REST class when a REST protocol is specified" do
@@ -163,7 +163,7 @@ describe Puppet::Network::HTTP::WEBrick, "when turning off listening" do
         @mock_webrick = stub('webrick', :[] => {})
         [:mount, :start, :shutdown].each {|meth| @mock_webrick.stubs(meth)}
         WEBrick::HTTPServer.stubs(:new).returns(@mock_webrick)
-        @server = Puppet::Network::HTTP::WEBrick.new        
+        @server = Puppet::Network::HTTP::WEBrick.new
         [:setup_logger, :setup_ssl].each {|meth| @server.stubs(meth).returns({})} # the empty hash is required because of how we're merging
         @listen_params = { :address => "127.0.0.1", :port => 31337, :handlers => [ :node, :catalog ], :protocols => [ :rest ] }
     end
@@ -188,7 +188,7 @@ end
 describe Puppet::Network::HTTP::WEBrick do
     before do
         @mock_webrick = stub('webrick', :[] => {})
-        [:mount, :start, :shutdown].each {|meth| @mock_webrick.stubs(meth)}        
+        [:mount, :start, :shutdown].each {|meth| @mock_webrick.stubs(meth)}
         WEBrick::HTTPServer.stubs(:new).returns(@mock_webrick)
         @server = Puppet::Network::HTTP::WEBrick.new
     end
