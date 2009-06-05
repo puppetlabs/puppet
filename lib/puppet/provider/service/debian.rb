@@ -6,7 +6,7 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
     The only difference is that this supports service enabling and disabling
     via ``update-rc.d``.
 
-  "
+    "
 
     commands :update => "/usr/sbin/update-rc.d"
     defaultfor :operatingsystem => [:debian, :ubuntu]

@@ -5,7 +5,7 @@ Puppet::Type.type(:service).provide :gentoo, :parent => :init do
 
     Uses ``rc-update`` for service enabling and disabling.
 
-  "
+    "
 
     commands :update => "/sbin/rc-update"
 

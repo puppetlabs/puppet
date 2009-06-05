@@ -5,7 +5,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
 
     The default for most platforms
 
-  "
+    "
 
     commands :add => "groupadd", :delete => "groupdel", :modify => "groupmod"
 

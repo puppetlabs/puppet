@@ -8,7 +8,7 @@ require 'puppet/provider/nameservice/netinfo'
 Puppet::Type.type(:group).provide :netinfo, :parent => Puppet::Provider::NameService::NetInfo do
     desc "Group management using NetInfo.
 
-  "
+    "
     commands :nireport => "nireport", :niutil => "niutil"
 
 end

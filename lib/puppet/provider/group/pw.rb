@@ -5,7 +5,7 @@ Puppet::Type.type(:group).provide :pw, :parent => Puppet::Provider::NameService:
 
     Only works on FreeBSD.
 
-  "
+    "
 
     commands :pw => "/usr/sbin/pw"
     defaultfor :operatingsystem => :freebsd

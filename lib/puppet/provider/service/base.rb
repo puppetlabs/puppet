@@ -7,7 +7,7 @@ Puppet::Type.type(:service).provide :base do
     service.  It is preferable to specify start, stop, and status commands,
     akin to how you would do so using ``init``.
 
-  "
+    "
 
     commands :kill => "kill"
 

@@ -9,7 +9,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
     By specifying manifest => \"/path/to/service.xml\", the SMF manifest will
     be imported if it does not exist.
 
-  "
+    "
 
     defaultfor :operatingsystem => :solaris
 
@@ -29,7 +29,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
             end
         rescue Puppet::ExecutionFailure => detail
             raise Puppet::Error.new( "Cannot config %s to enable it: %s" % [ self.service, detail ] )
-         end
+        end
     end
 
     def enable

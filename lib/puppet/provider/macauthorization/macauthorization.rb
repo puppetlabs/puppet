@@ -7,7 +7,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
 
     desc "Manage Mac OS X authorization database rules and rights.
 
-  "
+    "
 
     commands :security => "/usr/bin/security"
     commands :sw_vers => "/usr/bin/sw_vers"

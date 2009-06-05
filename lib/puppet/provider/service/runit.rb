@@ -54,16 +54,16 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
 
     # find the service dir on this node
     def servicedir
-      unless defined?(@servicedir) and @servicedir
-        ["/service", "/etc/service","/var/service"].each do |path|
-            if FileTest.exist?(path)
-                @servicedir = path
-                break
+        unless defined?(@servicedir) and @servicedir
+            ["/service", "/etc/service","/var/service"].each do |path|
+                if FileTest.exist?(path)
+                    @servicedir = path
+                    break
+                end
             end
+            raise "Could not find service directory" unless @servicedir
         end
-        raise "Could not find service directory" unless @servicedir
-      end
-      @servicedir
+        @servicedir
     end
 
     def restartcmd

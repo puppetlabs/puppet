@@ -23,16 +23,16 @@ Puppet::Type.type(:mcx).provide :mcxcontent, :parent => Puppet::Provider do
 
     desc "MCX Settings management using DirectoryService on OS X.
 
-  This provider manages the entire MCXSettings attribute available
-  to some directory services nodes.  This management is 'all or nothing'
-  in that discrete application domain key value pairs are not managed
-  by this provider.
+    This provider manages the entire MCXSettings attribute available
+    to some directory services nodes.  This management is 'all or nothing'
+    in that discrete application domain key value pairs are not managed
+    by this provider.
 
-  It is recommended to use WorkGroup Manager to configure Users, Groups,
-  Computers, or ComputerLists, then use 'ralsh mcx' to generate a puppet
-  manifest from the resulting configuration.
+    It is recommended to use WorkGroup Manager to configure Users, Groups,
+    Computers, or ComputerLists, then use 'ralsh mcx' to generate a puppet
+    manifest from the resulting configuration.
 
-  Original Author: Jeff McCune (mccune.jeff@gmail.com)
+    Original Author: Jeff McCune (mccune.jeff@gmail.com)
 
 "
 

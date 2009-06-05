@@ -37,7 +37,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
     If a service has ensure => \"stopped\", it will only down the service, not
     remove the /path/to/service link.
 
-  """
+    """
 
     commands :svc  => "/usr/bin/svc", :svstat => "/usr/bin/svstat"
 
@@ -87,16 +87,16 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
 
     # find the service dir on this node
     def servicedir
-      unless defined?(@servicedir) and @servicedir
-        ["/service", "/etc/service","/var/lib/svscan"].each do |path|
-            if FileTest.exist?(path)
-                @servicedir = path
-                break
+        unless defined?(@servicedir) and @servicedir
+            ["/service", "/etc/service","/var/lib/svscan"].each do |path|
+                if FileTest.exist?(path)
+                    @servicedir = path
+                    break
+                end
             end
+            raise "Could not find service directory" unless @servicedir
         end
-        raise "Could not find service directory" unless @servicedir
-      end
-      @servicedir
+        @servicedir
     end
 
     # returns the full path of this service when enabled

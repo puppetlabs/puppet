@@ -9,17 +9,17 @@ require 'puppettest/fileparsing'
 provider_class = Puppet::Type.type(:mailalias).provider(:aliases)
 
 describe provider_class do
-  include PuppetTest
-  include PuppetTest::FileParsing
+    include PuppetTest
+    include PuppetTest::FileParsing
 
-  before :each do
-    @provider = provider_class
-  end
+    before :each do
+        @provider = provider_class
+    end
 
-  # #1560
-  it "should be able to parse each example" do
-    fakedata("data/providers/mailalias/aliases").each { |file|
-      fakedataparse(file)
-    }
-  end
+    # #1560
+    it "should be able to parse each example" do
+        fakedata("data/providers/mailalias/aliases").each { |file|
+            fakedataparse(file)
+        }
+    end
 end

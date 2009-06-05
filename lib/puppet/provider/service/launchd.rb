@@ -34,7 +34,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     Note that this allows you to do something launchctl can't do, which is to
     be in a state of \"stopped/enabled\ or \"running/disabled\".
 
-  "
+    "
 
     commands :launchctl => "/bin/launchctl"
     
@@ -52,31 +52,31 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     # returns a label => path map for either all jobs, or just a single
     # job if the label is specified
     def self.jobsearch(label=nil)
-       label_to_path_map = {}
-       Launchd_Paths.each do |path|
-           if FileTest.exists?(path)
-               Dir.entries(path).each do |f|
-                   next if f =~ /^\..*$/
-                   next if FileTest.directory?(f)
-                   fullpath = File.join(path, f)
-                   job = Plist::parse_xml(fullpath)
-                   if job and job.has_key?("Label")
-                       if job["Label"] == label
-                           return { label => fullpath }
-                       else
-                           label_to_path_map[job["Label"]] = fullpath
-                       end
-                   end
-               end
-           end
-       end
-       
-       # if we didn't find the job above and we should have, error.
-       if label
-           raise Puppet::Error.new("Unable to find launchd plist for job: #{label}")
-       end
-       # if returning all jobs
-       label_to_path_map
+        label_to_path_map = {}
+        Launchd_Paths.each do |path|
+            if FileTest.exists?(path)
+                Dir.entries(path).each do |f|
+                    next if f =~ /^\..*$/
+                    next if FileTest.directory?(f)
+                    fullpath = File.join(path, f)
+                    job = Plist::parse_xml(fullpath)
+                    if job and job.has_key?("Label")
+                        if job["Label"] == label
+                            return { label => fullpath }
+                        else
+                            label_to_path_map[job["Label"]] = fullpath
+                        end
+                    end
+                end
+            end
+        end
+
+        # if we didn't find the job above and we should have, error.
+        if label
+            raise Puppet::Error.new("Unable to find launchd plist for job: #{label}")
+        end
+        # if returning all jobs
+        label_to_path_map
     end
 
 
