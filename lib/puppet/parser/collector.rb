@@ -102,12 +102,19 @@ class Puppet::Parser::Collector
         raise Puppet::DevError, "Cannot collect resources for a nil host" unless @scope.host
         host = Puppet::Rails::Host.find_by_name(@scope.host)
 
-        query = {:include => {:param_values => :param_name, :puppet_tags => :resource_tags}}
+        query = {:include => {:param_values => :param_name}}
 
         search = "(exported=? AND restype=?)"
         values = [true, @type]
 
         search += " AND (%s)" % @equery if @equery
+
+        # this is a small performance optimisation
+        # the tag mechanism involves 3 more joins, which are
+        # needed only if we query on tags.
+        if search =~ /puppet_tags/
+            query[:include][:puppet_tags] = :resource_tags
+        end
 
         # We're going to collect objects from rails, but we don't want any
         # objects from this host.

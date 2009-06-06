@@ -505,7 +505,17 @@ describe Puppet::Parser::Collector, "when building its ActiveRecord query for co
         @collector.evaluate.should == [@resource]
     end
 
-    it "should return parameter names, parameter values and tags when querying ActiveRecord" do
+    it "should return parameter names, parameter values when querying ActiveRecord" do
+        Puppet::Rails::Resource.stubs(:find).with { |*arguments|
+            options = arguments[3]
+            options[:include] == {:param_values => :param_name}
+        }.returns([@resource])
+
+        @collector.evaluate.should == [@resource]
+    end
+
+    it "should return tags when querying ActiveRecord with a tag exported query" do
+        @collector.equery = "puppet_tags.name = test"
         Puppet::Rails::Resource.stubs(:find).with { |*arguments|
             options = arguments[3]
             options[:include] == {:param_values => :param_name, :puppet_tags => :resource_tags}
