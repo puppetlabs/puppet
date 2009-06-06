@@ -139,7 +139,6 @@ class Puppet::Parser::Resource
         if params = options[:params]
             options.delete(:params)
             params.each do |param|
-                tag(*param.value) if param.name == :tag
                 set_parameter(param)
             end
         end
@@ -204,6 +203,8 @@ class Puppet::Parser::Resource
     end
 
     # Define a parameter in our resource.
+    # if we ever receive a parameter named 'tag', set
+    # the resource tags with its value.
     def set_parameter(param, value = nil)
         if value
             param = Puppet::Parser::Resource::Param.new(
@@ -212,6 +213,8 @@ class Puppet::Parser::Resource
         elsif ! param.is_a?(Puppet::Parser::Resource::Param)
             raise ArgumentError, "Must pass a parameter or all necessary values"
         end
+
+        tag(*param.value) if param.name == :tag
 
         # And store it in our parameter hash.
         @params[param.name] = param
@@ -327,7 +330,7 @@ class Puppet::Parser::Resource
     def override_parameter(param)
         # This can happen if the override is defining a new parameter, rather
         # than replacing an existing one.
-        (@params[param.name] = param and return) unless current = @params[param.name]
+        (set_parameter(param) and return) unless current = @params[param.name]
 
         # The parameter is already set.  Fail if they're not allowed to override it.
         unless param.source.child_of?(current.source)
@@ -353,7 +356,7 @@ class Puppet::Parser::Resource
         # so that the source is registered correctly for later overrides.
         param.value = [current.value, param.value].flatten if param.add
 
-        @params[param.name] = param
+        set_parameter(param)
     end
 
     # Verify that all passed parameters are valid.  This throws an error if

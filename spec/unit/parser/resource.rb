@@ -332,6 +332,16 @@ describe Puppet::Parser::Resource do
             @resource[:testing].should == %w{other testing}
         end
 
+        it "should promote tag overrides to real tags" do
+            @source.stubs(:child_of?).returns true
+            param = Puppet::Parser::Resource::Param.new(:name => :tag, :value => "testing", :source => @resource.source)
+
+            @override.set_parameter(param)
+
+            @resource.merge(@override)
+
+            @resource.tagged?("testing").should be_true
+        end
 
     end
 
