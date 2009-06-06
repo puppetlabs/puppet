@@ -476,7 +476,10 @@ describe Puppet::Parser::Collector, "when building its ActiveRecord query for co
         @equery = nil
         @vquery = proc { |r| true }
 
+        @resource = stub_everything 'collected'
+
         @collector = Puppet::Parser::Collector.new(@scope, @resource_type, @equery, @vquery, :exported)
+        @collector.stubs(:exported_resource).with(@resource).returns(@resource)
         @compiler.stubs(:resources).returns([])
 
         ActiveRecord::Base.stubs(:connected?).returns(false)
@@ -497,36 +500,36 @@ describe Puppet::Parser::Collector, "when building its ActiveRecord query for co
         Puppet::Rails::Resource.stubs(:find).with { |*arguments|
             options = arguments[3]
             options[:conditions][0] =~ /^host_id != \?/ and options[:conditions][1] == 5
-        }.returns([])
+        }.returns([@resource])
 
-        @collector.evaluate
+        @collector.evaluate.should == [@resource]
     end
 
     it "should return parameter names, parameter values and tags when querying ActiveRecord" do
         Puppet::Rails::Resource.stubs(:find).with { |*arguments|
             options = arguments[3]
             options[:include] == {:param_values => :param_name, :puppet_tags => :resource_tags}
-        }.returns([])
+        }.returns([@resource])
 
-        @collector.evaluate
+        @collector.evaluate.should == [@resource]
     end
 
     it "should only search for exported resources with the matching type" do
         Puppet::Rails::Resource.stubs(:find).with { |*arguments|
             options = arguments[3]
             options[:conditions][0].include?("(exported=? AND restype=?)") and options[:conditions][1] == true and options[:conditions][2] == "Mytype"
-        }.returns([])
+        }.returns([@resource])
 
-        @collector.evaluate
+        @collector.evaluate.should == [@resource]
     end
 
     it "should include the export query if one is provided" do
-        @collector = Puppet::Parser::Collector.new(@scope, @resource_type, "test = true", @vquery, :exported)
+        @collector.equery = "test = true"
         Puppet::Rails::Resource.stubs(:find).with { |*arguments|
             options = arguments[3]
             options[:conditions][0].include?("test = true")
-        }.returns([])
+        }.returns([@resource])
 
-        @collector.evaluate
+        @collector.evaluate.should == [@resource]
     end
 end
