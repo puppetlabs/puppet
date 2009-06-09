@@ -127,6 +127,12 @@ describe provider_class do
             tokens = @provider.parse_commands(args.join(" \t "))
             tokens.should == [ args ]
         end
+
+        it "should remove trailing slashes" do
+            @resource.stubs(:[]).returns("/foo/")
+            tokens = @provider.parse_commands("set foo/ bar")
+            tokens.should == [[ "set", "/foo/foo", "bar" ]]
+        end
     end
 
     describe "get filters" do

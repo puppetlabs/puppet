@@ -91,6 +91,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                     unless p = sc.string[start, len]
                         fail("missing path argument #{narg} for #{cmd}")
                     end
+                    p.chomp!("/")
                     if p[0,1] != "$" && p[0,1] != "/"
                         argline << context + p
                     else
