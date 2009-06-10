@@ -107,13 +107,13 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                         argline << sc.scan(/[^\s]+/)
                     end
                     unless argline[-1]
-                        fail(raise Exception, "missing string argument #{narg} for #{cmd}")
+                        fail("missing string argument #{narg} for #{cmd}")
                     end
                 elsif f == :comparator
                     argline << sc.scan(/(==|!=|=~|<|<=|>|>=)/)
                     unless argline[-1]
                         puts sc.rest
-                        fail(raise Exception, "invalid comparator for command #{cmd}")
+                        fail("invalid comparator for command #{cmd}")
                     end
                 elsif f == :int
                     argline << sc.scan(/\d+/).to_i
