@@ -5,13 +5,41 @@
 #
 # Print help about puppet types on the console. Run with '-h' to get detailed
 # help.
+# = Usage
 #
+#   pi [-h|--help] [-p|--providers] [-l|--list] [-m|--meta] 
+#
+# = Description
+#
+# Prints details of Puppet types, providers and metaparameters on the console.
+#
+# = Options
+#
+# help::
+#   Print this help text
+#
+# providers::
+#   Describe providers in detail
+#
+# list::
+#   List all types
+#
+# meta::
+#   List all metaparameters
+#
+# = Example
+#
+#   pi --list
+#
+# = Author
+#
+# Luke Kanies
+#
+# = Copyright
+#
+# Copyright (c) 2005 Reductive Labs, LLC
+# Licensed under the GNU Public License
 
-# FIXME: (1) Formatting could be a lot prettier
-#        (2) The command line options are kinda screwy; unclear how best to
-#            present the various pieces of info to user
-
-require 'puppet/application'
 require 'puppet/application/pi'
 
 Puppet::Application[:pi].run

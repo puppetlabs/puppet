@@ -175,21 +175,11 @@ class TypeDoc
 
 end
 
-Puppet::Application.new(:pi,"#{$0} [options] [type]") do
-    @opt_parser.separator("  Print documentation for puppet types and their parameters")
+Puppet::Application.new(:pi) do
 
-    should_not_parse_config
-
-    option("--short", "-s", "Only list parameters without detail") do |arg|
-        options[:parameters] = false
-    end
-
-    option("--providers","-p", "Describe providers in detail")
-    option("--list", "-l", "List all types")
-    option("--meta","-m", "Include metaparams")
-    option("--help","-h") do |v|
-        puts @opt_parser
-    end
+    option("--providers","-p")
+    option("--list", "-l")
+    option("--meta","-m")
 
     preinit do
         options[:parameters] = true
