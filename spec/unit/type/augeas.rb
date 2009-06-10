@@ -88,13 +88,6 @@ describe augeas do
     end
 
     describe "provider interaction" do
-        it "should munge the changes" do
-            provider = stub("provider", :parse_commands => "Jar Jar Binks")
-            resource = stub('resource', :resource => nil, :provider => provider, :line => nil, :file => nil)
-            changes = augeas.attrclass(:changes).new(:resource => resource)
-            changes.value= "Testing 123"
-            changes.value.should == "Jar Jar Binks"
-        end
 
         it "should return 0 if it does not need to run" do
             provider = stub("provider", :need_to_run? => false)
