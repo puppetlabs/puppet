@@ -174,10 +174,12 @@ class Puppet::Parser::Scope
         klassname = parts.join("::")
         klass = findclass(klassname)
         unless klass
-            raise Puppet::ParseError, "Could not find class %s" % klassname
+            warning "Could not look up qualified variable '%s'; class %s could not be found" % [name, klassname]
+            return usestring ? "" : :undefined
         end
         unless kscope = compiler.class_scope(klass)
-            raise Puppet::ParseError, "Class %s has not been evaluated so its variables cannot be referenced" % klass.classname
+            warning "Could not look up qualified variable '%s'; class %s has not been evaluated" % [name, klassname]
+            return usestring ? "" : :undefined
         end
         return kscope.lookupvar(shortname, usestring)
     end

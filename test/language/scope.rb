@@ -83,56 +83,6 @@ class TestScope < Test::Unit::TestCase
                      "botscope values shadow parent scope values")
     end
 
-    def test_lookupvar
-        parser = mkparser
-        scope = mkscope :parser => parser
-
-        # first do the plain lookups
-        assert_equal("", scope.lookupvar("var"), "scope did not default to string")
-        assert_equal("", scope.lookupvar("var", true), "scope ignored usestring setting")
-        assert_equal(:undefined, scope.lookupvar("var", false), "scope ignored usestring setting when false")
-
-        # Now set the var
-        scope.setvar("var", "yep")
-        assert_equal("yep", scope.lookupvar("var"), "did not retrieve value correctly")
-
-        # Now test the parent lookups
-        subscope = mkscope :parser => parser
-        subscope.parent = scope
-        assert_equal("", subscope.lookupvar("nope"), "scope did not default to string with parent")
-        assert_equal("", subscope.lookupvar("nope", true), "scope ignored usestring setting with parent")
-        assert_equal(:undefined, subscope.lookupvar("nope", false), "scope ignored usestring setting when false with parent")
-
-        assert_equal("yep", subscope.lookupvar("var"), "did not retrieve value correctly from parent")
-
-        # Now override the value in the subscope
-        subscope.setvar("var", "sub")
-        assert_equal("sub", subscope.lookupvar("var"), "did not retrieve overridden value correctly")
-
-        # Make sure we punt when the var is qualified.  Specify the usestring value, so we know it propagates.
-        scope.expects(:lookup_qualified_var).with("one::two", false).returns(:punted)
-        assert_equal(:punted, scope.lookupvar("one::two", false), "did not return the value of lookup_qualified_var")
-    end
-
-    def test_lookup_qualified_var
-        parser = mkparser
-        scope = mkscope :parser => parser
-
-        scopes = {}
-        classes = ["", "one", "one::two", "one::two::three"].each do |name|
-            klass = parser.newclass(name)
-            Puppet::Parser::Resource.new(:type => "class", :title => name, :scope => scope, :source => mock('source')).evaluate
-            scopes[name] = scope.compiler.class_scope(klass)
-        end
-
-        classes.each do |name|
-            var = [name, "var"].join("::")
-            scopes[name].expects(:lookupvar).with("var", false).returns(name)
-
-            assert_equal(name, scope.send(:lookup_qualified_var, var, false), "did not get correct value from lookupvar")
-        end
-    end
-
     def test_declarative
         # set to declarative
         top = mkscope
