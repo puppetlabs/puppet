@@ -15,7 +15,7 @@ describe Puppet::Parser::Scope do
         it "should default to an empty string" do
             @scope.lookupvar("var").should == ""
         end
-        
+
         it "should return an string when asked for a string" do
             @scope.lookupvar("var", true).should == ""
         end
@@ -109,7 +109,7 @@ describe Puppet::Parser::Scope do
         end
     end
 
-    describe Puppet::Parser::Scope, "when setvar is called with append=true" do
+    describe "when setvar is called with append=true" do
         it "should raise error if the variable is already defined in this scope" do
             @scope.setvar("var","1",nil,nil,false)
             lambda { @scope.setvar("var","1",nil,nil,true) }.should raise_error(Puppet::ParseError)
@@ -134,8 +134,7 @@ describe Puppet::Parser::Scope do
 
     end
 
-    describe Puppet::Parser::Scope, "when calling number?" do
-
+    describe "when calling number?" do
         it "should return nil if called with anything not a number" do
             Puppet::Parser::Scope.number?([2]).should be_nil
         end
