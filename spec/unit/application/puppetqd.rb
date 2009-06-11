@@ -174,7 +174,7 @@ describe "puppetqd" do
             catalog.expects(:save)
 
             Puppet::Resource::Catalog::Queue.expects(:subscribe).yields(catalog)
-            Puppet.expects(:notice)
+            Puppet.expects(:notice).times(2)
             @puppetqd.main
         end
 
