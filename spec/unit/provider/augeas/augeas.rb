@@ -35,6 +35,19 @@ describe provider_class do
             tokens[1][1].should == "anakin"
         end
 
+        it "should strip whitespace and ignore blank lines" do
+            @resource.stubs(:[]).returns("")
+            tokens = @provider.parse_commands("  set /Jar/Jar Binks \t\n  \n\n  rm anakin ")
+            tokens.size.should == 2
+            tokens[0].size.should == 3
+            tokens[1].size.should == 2
+            tokens[0][0].should == "set"
+            tokens[0][1].should == "/Jar/Jar"
+            tokens[0][2].should == "Binks"
+            tokens[1][0].should == "rm"
+            tokens[1][1].should == "anakin"
+        end
+
         it "should handle arrays" do
             @resource.stubs(:[]).returns("/foo/")
             commands = ["set /Jar/Jar Binks", "rm anakin"]
