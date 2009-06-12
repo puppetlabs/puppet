@@ -7,7 +7,7 @@
 #
 # = Usage
 #
-#   puppet [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
+#   puppet [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose] [-e|--execute]
 #               [--detailed-exitcodes] [-l|--logdest <file>] <file>
 #
 # = Description
@@ -48,6 +48,9 @@
 #   Where to send messages.  Choose between syslog, the console, and a log file.
 #   Defaults to sending messages to the console.
 #
+# execute::  
+#   Execute a specific piece of Puppet code 
+#  
 # verbose::
 #   Print extra information.
 #
