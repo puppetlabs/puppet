@@ -19,7 +19,7 @@
 #   Print this help text
 #
 # providers::
-#   Describe providers in detail
+#   Describe providers in detail for each type
 #
 # list::
 #   List all types
@@ -30,6 +30,7 @@
 # = Example
 #
 #   pi --list
+#   pi file --providers
 #
 # = Author
 #

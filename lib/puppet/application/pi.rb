@@ -175,7 +175,13 @@ class TypeDoc
 
 end
 
-Puppet::Application.new(:pi) do
+Puppet::Application.new(:pi,"#{$0} [options] [type]") do
+
+    should_not_parse_config
+
+    option("--short", "-s", "Only list parameters without detail") do |arg|
+        options[:parameters] = false
+    end
 
     option("--providers","-p")
     option("--list", "-l")
