@@ -45,10 +45,12 @@ describe Puppet::Module do
         Puppet::Module.new("foo", env).environment.should equal(env)
     end
 
-    it "should return the path to the first found instance in its module paths as its path" do
+    it "should return the path to the first found instance in its environment's module paths as its path" do
         mod = Puppet::Module.new("foo")
-        paths = %w{/a /b /c}
-        Puppet::Module.stubs(:modulepath).returns paths
+        env = mock 'environment'
+        mod.stubs(:environment).returns env
+
+        env.expects(:modulepath).returns %w{/a /b /c}
 
         FileTest.expects(:exist?).with("/a/foo").returns false
         FileTest.expects(:exist?).with("/b/foo").returns true
