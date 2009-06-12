@@ -102,7 +102,7 @@ class TypeDoc
             list_attrs(type, [:property, :param])
         end
 
-        if opts[:metaparams]
+        if opts[:meta]
             puts @format.header("Meta Parameters")
             if opts[:parameters]
                 format_attrs(type, [:meta])

@@ -7,7 +7,7 @@
 # help.
 # = Usage
 #
-#   pi [-h|--help] [-p|--providers] [-l|--list] [-m|--meta] 
+#   pi [-h|--help] [-s|--short] [-p|--providers] [-l|--list] [-m|--meta] 
 #
 # = Description
 #
@@ -27,14 +27,18 @@
 # meta::
 #   List all metaparameters
 #
+# short::
+#   List only parameters without detail 
+#
 # = Example
 #
 #   pi --list
 #   pi file --providers
+#   pi user -s -m
 #
 # = Author
 #
-# Luke Kanies
+# David Lutterkort
 #
 # = Copyright
 #
