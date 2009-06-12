@@ -417,7 +417,10 @@ class Puppet::Parser::Lexer
 
             final_token, value = munge_token(matched_token, value)
 
-            next unless final_token
+            unless final_token
+                skip()
+                next
+            end
 
             if match = @@pairs[value] and final_token.name != :DQUOTE and final_token.name != :SQUOTE
                 @expected << match

@@ -472,6 +472,10 @@ describe Puppet::Parser::Lexer, "when lexing comments" do
         @lexer.getcomment.should == "2\n"
     end
 
+    it "should skip whitespace before lexing the next token after a non-token" do
+        @lexer.string = "/* 1\n\n */ \ntest"
+        @lexer.fullscan.include?([:NAME, "test"]).should be_true
+    end
 end
 
 # FIXME: We need to rewrite all of these tests, but I just don't want to take the time right now.
