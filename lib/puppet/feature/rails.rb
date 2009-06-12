@@ -9,7 +9,7 @@ Puppet.features.add(:rails) do
     begin
         require 'active_record'
     rescue LoadError => detail
-        if Facter["operatingsystem"].value == "Debian" and FileTest.exists?("/usr/share/rails")
+        if FileTest.exists?("/usr/share/rails")
             count = 0
             Dir.entries("/usr/share/rails").each do |dir|
                 libdir = File.join("/usr/share/rails", dir, "lib")
