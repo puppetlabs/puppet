@@ -331,12 +331,17 @@ class Puppet::Parser::Scope
         ss = StringScanner.new(string)
         out = ""
         while not ss.eos?
-            if ss.scan(/^\$\{((\w*::)*\w+)\}|^\$((\w*::)*\w+)/)
+            if ss.scan(/^\$\{((\w*::)*\w+|[0-9]+)\}|^\$([0-9])|^\$((\w*::)*\w+)/)
                 # If it matches the backslash, then just retun the dollar sign.
                 if ss.matched == '\\$'
                     out << '$'
                 else # look the variable up
-                    out << lookupvar(ss[1] || ss[3]).to_s || ""
+                    # make sure $0-$9 are lookupable only if ephemeral
+                    var = ss[1] || ss[3] || ss[4]
+                    if var and var =~ /^[0-9]+$/ and not ephemeral?(var)
+                        next
+                    end
+                    out << lookupvar(var).to_s || ""
                 end
             elsif ss.scan(/^\\(.)/)
                 # Puppet.debug("Got escape: pos:%d; m:%s" % [ss.pos, ss.matched])

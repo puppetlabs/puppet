@@ -223,6 +223,36 @@ describe Puppet::Parser::Scope do
         end
     end
 
+    describe "when interpolating string" do
+        (0..9).each do |n|
+            it "should allow $#{n} to match" do
+                @scope.setvar(n.to_s, "value", :ephemeral => true)
+
+                @scope.strinterp("$#{n}").should == "value"
+            end
+        end
+
+        (0..9).each do |n|
+            it "should not allow $#{n} to match if not ephemeral" do
+                @scope.setvar(n.to_s, "value", :ephemeral => false)
+
+                @scope.strinterp("$#{n}").should_not == "value"
+            end
+        end
+
+        it "should not allow $10 to match" do
+            @scope.setvar("10", "value", :ephemeral => true)
+
+            @scope.strinterp('==$10==').should_not == "==value=="
+        end
+
+        it "should not allow ${10} to match" do
+            @scope.setvar("10", "value", :ephemeral => true)
+
+            @scope.strinterp('==${10}==').should == "==value=="
+        end
+    end
+
     describe "when setting ephemeral vars from matches" do
         before :each do
             @match = stub 'match', :is_a? => true
