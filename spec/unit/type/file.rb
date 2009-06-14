@@ -662,4 +662,46 @@ describe Puppet::Type.type(:file) do
             end
         end
     end
+
+    describe "when setting the backup" do
+        it "should default to 'puppet'" do
+            Puppet::Type::File.new(:name => "/my/file")[:backup].should == "puppet"
+        end
+
+        it "should allow setting backup to 'false'" do
+            Puppet::Type::File.new(:name => "/my/file", :backup => false)[:backup].should be_false
+        end
+
+        it "should set the backup to '.puppet-bak' if it is set to true" do
+            Puppet::Type::File.new(:name => "/my/file", :backup => true)[:backup].should == ".puppet-bak"
+        end
+
+        it "should support any other backup extension" do
+            Puppet::Type::File.new(:name => "/my/file", :backup => ".bak")[:backup].should == ".bak"
+        end
+
+        it "should set the file bucket when backup is set to a string matching the name of a filebucket in the catalog" do
+            catalog = Puppet::Resource::Catalog.new
+            bucket_resource = Puppet::Type.type(:filebucket).new :name => "foo", :path => "/my/file/bucket"
+            catalog.add_resource bucket_resource
+
+            file = Puppet::Type::File.new(:name => "/my/file")
+            catalog.add_resource file
+
+            file[:backup] = "foo"
+            file.bucket.should == bucket_resource.bucket
+        end
+
+        it "should find filebuckets added to the catalog after the file resource was created" do
+            catalog = Puppet::Resource::Catalog.new
+
+            file = Puppet::Type::File.new(:name => "/my/file", :backup => "foo")
+            catalog.add_resource file
+
+            bucket_resource = Puppet::Type.type(:filebucket).new :name => "foo", :path => "/my/file/bucket"
+            catalog.add_resource bucket_resource
+
+            file.bucket.should == bucket_resource.bucket
+        end
+    end
 end
