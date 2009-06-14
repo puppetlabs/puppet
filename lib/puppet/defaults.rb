@@ -131,7 +131,7 @@ module Puppet
             ``puppetmasterd``) this provides the default environment for nodes
             we know nothing about."
         },
-        :diff_args => ["", "Which arguments to pass to the diff command when printing differences between files."],
+        :diff_args => ["-u", "Which arguments to pass to the diff command when printing differences between files."],
         :diff => ["diff", "Which diff command to use when printing differences between files."],
         :show_diff => [false, "Whether to print a contextual diff when files are being replaced.  The diff
             is printed on stdout, so this option is meaningless unless you are running Puppet interactively.
