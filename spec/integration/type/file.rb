@@ -33,7 +33,7 @@ describe Puppet::Type.type(:file) do
         it "should be able to recurse over a nonexistent file" do
             @path = tmpfile("file_integration_tests")
 
-            @file = Puppet::Type::File.new(:name => @path, :mode => 0644, :recurse => true)
+            @file = Puppet::Type::File.new(:name => @path, :mode => 0644, :recurse => true, :backup => false)
 
             @catalog = Puppet::Resource::Catalog.new
             @catalog.add_resource @file
@@ -46,7 +46,7 @@ describe Puppet::Type.type(:file) do
 
             build_path(@path)
 
-            @file = Puppet::Type::File.new(:name => @path, :mode => 0644, :recurse => true)
+            @file = Puppet::Type::File.new(:name => @path, :mode => 0644, :recurse => true, :backup => false)
 
             @catalog = Puppet::Resource::Catalog.new
             @catalog.add_resource @file
@@ -69,7 +69,7 @@ describe Puppet::Type.type(:file) do
 
             dest = tmpfile("file_link_integration_dest")
 
-            @file = Puppet::Type::File.new(:name => dest, :target => source, :recurse => true, :ensure => :link)
+            @file = Puppet::Type::File.new(:name => dest, :target => source, :recurse => true, :ensure => :link, :backup => false)
 
             @catalog = Puppet::Resource::Catalog.new
             @catalog.add_resource @file
@@ -96,7 +96,7 @@ describe Puppet::Type.type(:file) do
 
             dest = tmpfile("file_source_integration_dest")
 
-            @file = Puppet::Type::File.new(:name => dest, :source => source, :recurse => true)
+            @file = Puppet::Type::File.new(:name => dest, :source => source, :recurse => true, :backup => false)
 
             @catalog = Puppet::Resource::Catalog.new
             @catalog.add_resource @file
@@ -131,7 +131,7 @@ describe Puppet::Type.type(:file) do
             File.open(s1, "w") { |f| f.puts "uno" }
             File.open(s2, "w") { |f| f.puts "dos" }
 
-            @file = Puppet::Type::File.new(:name => @dest, :source => @source, :recurse => true)
+            @file = Puppet::Type::File.new(:name => @dest, :source => @source, :recurse => true, :backup => false)
 
             @catalog = Puppet::Resource::Catalog.new
             @catalog.add_resource @file
@@ -197,7 +197,7 @@ describe Puppet::Type.type(:file) do
 
             File.open(source, "w") { |f| f.print "foo" }
 
-            file = Puppet::Type::File.new(:name => dest, :source => source)
+            file = Puppet::Type::File.new(:name => dest, :source => source, :backup => false)
 
             catalog = Puppet::Resource::Catalog.new
             catalog.add_resource file
@@ -269,7 +269,8 @@ describe Puppet::Type.type(:file) do
         file = Puppet::Type.type(:file).new(
             :name => dest,
             :ensure => :absent,
-            :source => source
+            :source => source,
+            :backup => false
         )
 
         catalog = Puppet::Resource::Catalog.new

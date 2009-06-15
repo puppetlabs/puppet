@@ -7,10 +7,10 @@ require 'puppet/transaction'
 describe Puppet::Transaction do
     it "should not apply generated resources if the parent resource fails" do
         catalog = Puppet::Resource::Catalog.new
-        resource = Puppet::Type.type(:file).new :path => "/foo/bar"
+        resource = Puppet::Type.type(:file).new :path => "/foo/bar", :backup => false
         catalog.add_resource resource
 
-        child_resource = Puppet::Type.type(:file).new :path => "/foo/bar/baz"
+        child_resource = Puppet::Type.type(:file).new :path => "/foo/bar/baz", :backup => false
 
         resource.expects(:eval_generate).returns([child_resource])
 

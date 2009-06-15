@@ -87,7 +87,7 @@ module Puppet
                 filebucketed files.
                 "
 
-            defaultto { "puppet" }
+            defaultto "puppet"
 
             munge do |value|
                 # I don't really know how this is happening.
@@ -98,27 +98,10 @@ module Puppet
                     false
                 when true, "true", ".puppet-bak", :true
                     ".puppet-bak"
-                when /^\./
-                    value
                 when String
-                    # We can't depend on looking this up right now,
-                    # we have to do it after all of the objects
-                    # have been instantiated.
-                    if resource.catalog and bucketobj = resource.catalog.resource(:filebucket, value)
-                        @resource.bucket = bucketobj.bucket
-                        bucketobj.title
-                    else
-                        # Set it to the string; finish() turns it into a
-                        # filebucket.
-                        @resource.bucket = value
-                        value
-                    end
-                when Puppet::Network::Client.client(:Dipper)
-                    @resource.bucket = value
-                    value.name
+                    value
                 else
-                    self.fail "Invalid backup type %s" %
-                        value.inspect
+                    self.fail "Invalid backup type %s" % value.inspect
                 end
             end
         end
@@ -250,8 +233,6 @@ module Puppet
             newvalues(:first, :all)
         end
 
-        attr_accessor :bucket
-
         # Autorequire any parent directories.
         autorequire(:file) do
             if self[:path]
@@ -349,6 +330,32 @@ module Puppet
             return asuser
         end
 
+        def bucket
+            return @bucket if defined?(@bucket) and @bucket
+
+            backup = self[:backup]
+            return nil unless backup
+            return nil if backup =~ /^\./
+
+            unless catalog or backup == "puppet"
+                fail "Can not find filebucket for backups without a catalog"
+            end
+
+            unless catalog and filebucket = catalog.resource(:filebucket, backup) or backup == "puppet"
+                fail "Could not find filebucket %s specified in backup" % backup
+            end
+
+            return default_bucket unless filebucket
+
+            @bucket = filebucket.bucket
+
+            return @bucket
+        end
+
+        def default_bucket
+            Puppet::Type.type(:filebucket).mkdefaultbucket.bucket
+        end
+
         # Does the file currently exist?  Just checks for whether
         # we have a stat
         def exist?
@@ -359,26 +366,7 @@ module Puppet
         # there is one.
         def finish
             # Look up our bucket, if there is one
-            if bucket = self.bucket
-                case bucket
-                when String
-                    if catalog and obj = catalog.resource(:filebucket, bucket)
-                        self.bucket = obj.bucket
-                    elsif bucket == "puppet"
-                        obj = Puppet::Network::Client.client(:Dipper).new(
-                            :Path => Puppet[:clientbucketdir]
-                        )
-                        self.bucket = obj
-                    else
-                        self.fail "Could not find filebucket '%s'" % bucket
-                    end
-                when Puppet::Network::Client.client(:Dipper) # things are hunky-dorey
-                when Puppet::Type::Filebucket # things are hunky-dorey
-                    self.bucket = bucket.bucket
-                else
-                    self.fail "Invalid bucket type %s" % bucket.class
-                end
-            end
+            bucket()
             super
         end
 

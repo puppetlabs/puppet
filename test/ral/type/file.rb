@@ -577,7 +577,8 @@ class TestFile < Test::Unit::TestCase
             file = Puppet::Type.type(:file).new(
                 :name => dest,
                 :checksum => "md5",
-                :content => "This is some content"
+                :content => "This is some content",
+                :backup => false
             )
         }
 
@@ -726,7 +727,8 @@ class TestFile < Test::Unit::TestCase
         assert_nothing_raised {
             file = Puppet::Type.type(:file).new(
                 :ensure => path,
-                :path => link
+                :path => link,
+                :backup => false
             )
         }
 
@@ -981,51 +983,6 @@ class TestFile < Test::Unit::TestCase
         assert_equal(:false, file[:replace], ":replace did not alias :false to :no")
     end
 
-    def test_backup
-        path = tempfile()
-        file = Puppet::Type.newfile :path => path, :content => "yay"
-
-        catalog = mk_catalog(file)
-        catalog.finalize # adds the default resources.
-
-        [false, :false, "false"].each do |val|
-            assert_nothing_raised do
-                file[:backup] = val
-            end
-            assert_equal(false, file[:backup], "%s did not translate" % val.inspect)
-        end
-        [true, :true, "true", ".puppet-bak"].each do |val|
-            assert_nothing_raised do
-                file[:backup] = val
-            end
-            assert_equal(".puppet-bak", file[:backup], "%s did not translate" % val.inspect)
-        end
-
-        # Now try a non-bucket string
-        assert_nothing_raised do
-            file[:backup] = ".bak"
-        end
-        assert_equal(".bak", file[:backup], ".bak did not translate")
-
-        # Now try a non-existent bucket
-        assert_nothing_raised do
-            file[:backup] = "main"
-        end
-        assert_equal("main", file[:backup], "bucket name was not retained")
-        assert_equal("main", file.bucket, "file's bucket was not set")
-
-        # And then an existing bucket
-        obj = Puppet::Type.type(:filebucket).new :name => "testing"
-        catalog.add_resource(obj)
-        bucket = obj.bucket
-
-        assert_nothing_raised do
-            file[:backup] = "testing"
-        end
-        assert_equal("testing", file[:backup], "backup value was reset")
-        assert_equal(obj.bucket, file.bucket, "file's bucket was not set")
-    end
-
     def test_pathbuilder
         dir = tempfile()
         Dir.mkdir(dir)
@@ -1047,7 +1004,7 @@ class TestFile < Test::Unit::TestCase
     def test_removal_with_content_set
         path = tempfile()
         File.open(path, "w") { |f| f.puts "yay" }
-        file = Puppet::Type.newfile(:name => path, :ensure => :absent, :content => "foo")
+        file = Puppet::Type.newfile(:name => path, :ensure => :absent, :content => "foo", :backup => false)
 
         assert_apply(file)
         assert(! FileTest.exists?(path), "File was not removed")
@@ -1123,16 +1080,6 @@ class TestFile < Test::Unit::TestCase
             File.unlink(path)
         end
     end
-    end
-
-    # Make sure we default to the "puppet" filebucket, rather than a string
-    def test_backup_defaults_to_bucket
-        path = tempfile
-        file = Puppet::Type.newfile(:path => path, :content => 'some content')
-        file.finish
-
-        assert_instance_of(Puppet::Network::Client::Dipper, file.bucket,
-            "did not default to a filebucket for backups")
     end
 
     # #567

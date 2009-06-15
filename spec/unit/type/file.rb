@@ -680,7 +680,7 @@ describe Puppet::Type.type(:file) do
             Puppet::Type::File.new(:name => "/my/file", :backup => ".bak")[:backup].should == ".bak"
         end
 
-        it "should set the file bucket when backup is set to a string matching the name of a filebucket in the catalog" do
+        it "should set the filebucket when backup is set to a string matching the name of a filebucket in the catalog" do
             catalog = Puppet::Resource::Catalog.new
             bucket_resource = Puppet::Type.type(:filebucket).new :name => "foo", :path => "/my/file/bucket"
             catalog.add_resource bucket_resource
@@ -702,6 +702,53 @@ describe Puppet::Type.type(:file) do
             catalog.add_resource bucket_resource
 
             file.bucket.should == bucket_resource.bucket
+        end
+
+        it "should have a nil filebucket if backup is false" do
+            catalog = Puppet::Resource::Catalog.new
+            bucket_resource = Puppet::Type.type(:filebucket).new :name => "foo", :path => "/my/file/bucket"
+            catalog.add_resource bucket_resource
+
+            file = Puppet::Type::File.new(:name => "/my/file", :backup => false)
+            catalog.add_resource file
+
+            file.bucket.should be_nil
+        end
+
+        it "should have a nil filebucket if backup is set to a string starting with '.'" do
+            catalog = Puppet::Resource::Catalog.new
+            bucket_resource = Puppet::Type.type(:filebucket).new :name => "foo", :path => "/my/file/bucket"
+            catalog.add_resource bucket_resource
+
+            file = Puppet::Type::File.new(:name => "/my/file", :backup => ".foo")
+            catalog.add_resource file
+
+            file.bucket.should be_nil
+        end
+
+        it "should fail if there's no catalog and backup is not false" do
+            file = Puppet::Type::File.new(:name => "/my/file", :backup => "foo")
+
+            lambda { file.bucket }.should raise_error(Puppet::Error)
+        end
+
+        it "should fail if a non-existent catalog is specified" do
+            file = Puppet::Type::File.new(:name => "/my/file", :backup => "foo")
+            catalog = Puppet::Resource::Catalog.new
+            catalog.add_resource file
+
+            lambda { file.bucket }.should raise_error(Puppet::Error)
+        end
+
+        it "should be able to use the default filebucket without a catalog" do
+            file = Puppet::Type::File.new(:name => "/my/file", :backup => "puppet")
+            file.bucket.should be_instance_of(Puppet::Network::Client::Dipper)
+        end
+
+        it "should look up the filebucket during finish()" do
+            file = Puppet::Type::File.new(:name => "/my/file", :backup => ".foo")
+            file.expects(:bucket)
+            file.finish
         end
     end
 end
