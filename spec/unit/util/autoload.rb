@@ -82,12 +82,21 @@ describe Puppet::Util::Autoload do
 
             @autoload.should be_named_file_missing("foo")
         end
+
+        it "should register loaded files with the main loaded file list so they are not reloaded by ruby" do
+            @autoload.stubs(:file_exist?).returns true
+            Kernel.stubs(:load)
+
+            @autoload.load("myfile")
+
+            $".should be_include("tmp/myfile.rb")
+        end
     end
 
     describe "when loading all files" do
         before do
             @autoload.stubs(:searchpath).returns %w{/a}
-            Dir.stubs(:glob).returns "file.rb"
+            Dir.stubs(:glob).returns "/path/to/file.rb"
         end
 
         [RuntimeError, LoadError, SyntaxError].each do |error|
@@ -96,6 +105,12 @@ describe Puppet::Util::Autoload do
 
                 lambda { @autoload.loadall }.should_not raise_error
             end
+        end
+
+        it "should require the full path to the file" do
+            Kernel.expects(:require).with("/path/to/file.rb")
+
+            @autoload.loadall
         end
     end
 end

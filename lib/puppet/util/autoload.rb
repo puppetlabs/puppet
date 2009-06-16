@@ -42,6 +42,7 @@ class Puppet::Util::Autoload
     # we can load downloaded plugins if they've already been loaded
     # into memory.
     def self.loaded(file)
+        $" << file + ".rb" unless $".include?(file)
         @loaded << file unless @loaded.include?(file)
     end
 
