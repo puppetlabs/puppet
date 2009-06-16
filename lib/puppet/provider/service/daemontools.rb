@@ -129,14 +129,6 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
         [command(:svc), "-u", self.service ]
     end
 
-    def stopcmd
-        [command(:svc), "-d", self.service ]
-    end
-
-    def restartcmd
-        [ command(:svc), "-t", self.service]
-    end
-
     def setupservice
         begin
             if resource[:manifest]
@@ -161,23 +153,49 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
 
     def enable
         begin
-        if ! FileTest.directory?(self.daemon)
-            Puppet.notice "No daemon dir, calling setupservice for %s" % resource[:name]
-            self.setupservice
-        end
-        if self.daemon
-            if ! FileTest.symlink?(self.service)
-                Puppet.notice "Enabling %s: linking %s -> %s" % [ self.service, self.daemon, self.service ]
-                File.symlink(self.daemon, self.service)
+            if ! FileTest.directory?(self.daemon)
+                Puppet.notice "No daemon dir, calling setupservice for %s" % resource[:name]
+                self.setupservice
             end
-        end
+            if self.daemon
+                if ! FileTest.symlink?(self.service)
+                    Puppet.notice "Enabling %s: linking %s -> %s" % [ self.service, self.daemon, self.service ]
+                    File.symlink(self.daemon, self.service)
+                end
+            end
         rescue Puppet::ExecutionFailure => detail
             raise Puppet::Error.new( "No daemon directory found for %s" % self.service )
         end
     end
 
     def disable
+        begin
+            if ! FileTest.directory?(self.daemon)
+                Puppet.notice "No daemon dir, calling setupservice for %s" % resource[:name]
+                self.setupservice
+            end
+            if self.daemon
+                if FileTest.symlink?(self.service)
+                    Puppet.notice "Disabling %s: removing link %s -> %s" % [ self.service, self.daemon, self.service ]
+                    File.unlink(self.service)
+                end
+            end
+        rescue Puppet::ExecutionFailure => detail
+            raise Puppet::Error.new( "No daemon directory found for %s" % self.service )
+        end
         self.stop
     end
-end
 
+    def restart
+        svc "-t", self.service
+    end
+
+    def start
+        enable unless enabled?
+        svc "-u", self.service
+    end
+
+    def stop
+        svc "-d", self.service
+    end
+end

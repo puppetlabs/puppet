@@ -30,11 +30,17 @@ describe provider_class do
         @resource.stubs(:[]).with(:path).returns @daemondir
         @resource.stubs(:ref).returns "Service[myservice]"
 
-        @provider.stubs(:resource).returns @resource
+        @provider.resource = @resource
+
+        @provider.stubs(:command).with(:svc).returns "svc"
+        @provider.stubs(:command).with(:svstat).returns "svstat"
+
+        @provider.stubs(:svc)
+        @provider.stubs(:svstat)
     end
 
-    it "should have a restartcmd method" do
-        @provider.should respond_to(:restartcmd)
+    it "should have a restart method" do
+        @provider.should respond_to(:restart)
     end
 
     it "should have a start method" do
@@ -58,16 +64,37 @@ describe provider_class do
     end
 
     describe "when starting" do
-        it "should call enable" do
+        it "should use 'svc' to start the service" do
+            @provider.stubs(:enabled?).returns true
+            @provider.expects(:svc).with("-u", "/etc/service/myservice")
+
+            @provider.start
+        end
+
+        it "should enable the service if it is not enabled" do
+            @provider.stubs(:svc)
+
+            @provider.expects(:enabled?).returns false
             @provider.expects(:enable)
+
             @provider.start
         end
     end
 
     describe "when stopping" do
-        it "should call disable" do
-            @provider.expects(:disable)
+        it "should use 'svc' to stop the service" do
+            @provider.stubs(:disable)
+            @provider.expects(:svc).with("-d", "/etc/service/myservice")
+
             @provider.stop
+        end
+    end
+
+    describe "when restarting" do
+        it "should use 'svc' to restart the service" do
+            @provider.expects(:svc).with("-t", "/etc/service/myservice")
+
+            @provider.restart
         end
     end
 
@@ -80,21 +107,19 @@ describe provider_class do
     end
 
     describe "when disabling" do
-        it "should stop and then remove the symlink between daemon dir and service dir" do
+        it "should remove the symlink between daemon dir and service dir" do
             FileTest.stubs(:directory?).returns(false)
             FileTest.stubs(:symlink?).returns(true)
-            File.expects(:unlink).with(File.join(@servicedir,"myservice")).returns(0)
+            File.expects(:unlink).with(File.join(@servicedir,"myservice"))
             @provider.stubs(:texecute).returns("")
             @provider.disable
         end
-    end
 
-    describe "when disabling" do
-        it "should also call 'svc -dx /etc/service/myservice'" do
+        it "should stop the service" do
             FileTest.stubs(:directory?).returns(false)
             FileTest.stubs(:symlink?).returns(true)
-            File.expects(:unlink).with(File.join(@servicedir,"myservice")).returns(0)
-            @provider.expects(:texecute).with("stop",  [nil, '-dx', File.join(@servicedir,"myservice")]).returns ""
+            File.stubs(:unlink)
+            @provider.expects(:stop)
             @provider.disable
         end
     end
