@@ -29,6 +29,20 @@ describe Puppet::Module do
         Puppet::Module.find(nil, "myenv").should be_nil
     end
 
+    it "should provide support for logging" do
+        Puppet::Module.ancestors.should be_include(Puppet::Util::Logging)
+    end
+
+    it "should be able to be converted to a string" do
+        Puppet::Module.new("foo").to_s.should == "Module foo"
+    end
+
+    it "should add the path to its string form if the module is found" do
+        mod = Puppet::Module.new("foo")
+        mod.stubs(:path).returns "/a"
+        mod.to_s.should == "Module foo(/a)"
+    end
+
     it "should require a name at initialization" do
         lambda { Puppet::Module.new }.should raise_error(ArgumentError)
     end
@@ -152,7 +166,7 @@ describe Puppet::Module do
         mod.stubs(:path).returns "/a/foo"
         FileTest.expects(:exist?).with("/a/foo/plugins").returns true
 
-        Puppet.expects(:warning)
+        mod.expects(:warning)
 
         mod.plugin_directory.should == "/a/foo/plugins"
     end
