@@ -25,7 +25,12 @@ class Puppet::Network::Client::Dipper < Puppet::Network::Client
         unless local?
             contents = Base64.encode64(contents)
         end
-        return @driver.addfile(contents,file)
+        begin
+            return @driver.addfile(contents,file)
+        rescue => detail
+            puts detail.backtrace if Puppet[:trace]
+            raise Puppet::Error, "Could not back up %s: %s" % [file, detail]
+        end
     end
 
     # Retrieve a file by sum.
