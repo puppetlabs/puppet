@@ -545,12 +545,6 @@ module Puppet
 
     # Plugin information.
     self.setdefaults(:main,
-        :pluginpath => {:default => "$vardir/plugins/",
-            :desc => "Where Puppet should look for plugins.  Multiple directories should
-            be colon-separated, like normal PATH variables.  As of 0.23.1, this
-            option is deprecated; download your custom libraries to the $libdir
-            instead.",
-            :type => :element}, # Don't consider this a file, since it's a colon-separated list.
         :plugindest => ["$libdir",
             "Where Puppet should store plugins that it pulls down from the central
             server."],
