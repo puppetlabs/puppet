@@ -3,6 +3,12 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 
 describe Puppet::Module do
+    before do
+        # This is necessary because of the extra checks we have for the deprecated
+        # 'plugins' directory
+        FileTest.stubs(:exist?).returns false
+    end
+
     it "should have a class method that returns a named module from a given environment" do
         env = mock 'module'
         env.expects(:module).with("mymod").returns "yep"
@@ -72,10 +78,11 @@ describe Puppet::Module do
     end
 
     [:plugins, :templates, :files, :manifests].each do |filetype|
+        dirname = filetype == :plugins ? "lib" : filetype.to_s
         it "should be able to return individual #{filetype}" do
             mod = Puppet::Module.new("foo")
             mod.stubs(:path).returns "/a/foo"
-            path = File.join("/a/foo", filetype.to_s, "my/file")
+            path = File.join("/a/foo", dirname, "my/file")
             FileTest.expects(:exist?).with(path).returns true
             mod.send(filetype.to_s.sub(/s$/, ''), "my/file").should == path
         end
@@ -83,7 +90,7 @@ describe Puppet::Module do
         it "should consider #{filetype} to be present if their base directory exists" do
             mod = Puppet::Module.new("foo")
             mod.stubs(:path).returns "/a/foo"
-            path = File.join("/a/foo", filetype.to_s)
+            path = File.join("/a/foo", dirname)
             FileTest.expects(:exist?).with(path).returns true
             mod.send(filetype.to_s + "?").should be_true
         end
@@ -91,7 +98,7 @@ describe Puppet::Module do
         it "should consider #{filetype} to be absent if their base directory does not exist" do
             mod = Puppet::Module.new("foo")
             mod.stubs(:path).returns "/a/foo"
-            path = File.join("/a/foo", filetype.to_s)
+            path = File.join("/a/foo", dirname)
             FileTest.expects(:exist?).with(path).returns false
             mod.send(filetype.to_s + "?").should be_false
         end
@@ -105,7 +112,7 @@ describe Puppet::Module do
         it "should return nil if asked to return individual #{filetype} that don't exist" do
             mod = Puppet::Module.new("foo")
             mod.stubs(:path).returns "/a/foo"
-            path = File.join("/a/foo", filetype.to_s, "my/file")
+            path = File.join("/a/foo", dirname, "my/file")
             FileTest.expects(:exist?).with(path).returns false
             mod.send(filetype.to_s.sub(/s$/, ''), "my/file").should be_nil
         end
@@ -119,14 +126,15 @@ describe Puppet::Module do
         it "should return the base directory if asked for a nil path" do
             mod = Puppet::Module.new("foo")
             mod.stubs(:path).returns "/a/foo"
-            base = File.join("/a/foo", filetype.to_s)
+            base = File.join("/a/foo", dirname)
             FileTest.expects(:exist?).with(base).returns true
             mod.send(filetype.to_s.sub(/s$/, ''), nil).should == base
         end
     end
 
-    %w{plugins files}.each do |type|
-        short = type.sub(/s$/, '')
+    %w{plugins files}.each do |filetype|
+        short = filetype.sub(/s$/, '')
+        dirname = filetype == "plugins" ? "lib" : filetype.to_s
         it "should be able to return the #{short} directory" do
             Puppet::Module.new("foo").should respond_to(short + "_directory")
         end
@@ -135,8 +143,24 @@ describe Puppet::Module do
             mod = Puppet::Module.new("foo")
             mod.stubs(:path).returns "/a/foo"
 
-            mod.send(short + "_directory").should == "/a/foo/#{type}"
+            mod.send(short + "_directory").should == "/a/foo/#{dirname}"
         end
+    end
+
+    it "should throw a warning if plugins are in a 'plugins' directory rather than a 'lib' directory" do
+        mod = Puppet::Module.new("foo")
+        mod.stubs(:path).returns "/a/foo"
+        FileTest.expects(:exist?).with("/a/foo/plugins").returns true
+
+        Puppet.expects(:warning)
+
+        mod.plugin_directory.should == "/a/foo/plugins"
+    end
+
+    it "should default to 'lib' for the plugins directory" do
+        mod = Puppet::Module.new("foo")
+        mod.stubs(:path).returns "/a/foo"
+        mod.plugin_directory.should == "/a/foo/lib"
     end
 end
 

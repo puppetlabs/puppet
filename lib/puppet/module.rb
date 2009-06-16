@@ -126,6 +126,17 @@ class Puppet::Module
     end
 
     def subpath(type)
-        File.join(path, type)
+        return File.join(path, type) unless type.to_s == "plugins"
+
+        return backward_compatible_plugins_dir
+    end
+
+    def backward_compatible_plugins_dir
+        if dir = File.join(path, "plugins") and FileTest.exist?(dir)
+            Puppet.warning "Module %s uses the deprecated 'plugins' directory for ruby extensions; please move to 'lib'" % name
+            return dir
+        else
+            return File.join(path, "lib")
+        end
     end
 end
