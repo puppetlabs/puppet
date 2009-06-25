@@ -65,41 +65,29 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
         end
 
         begin
-            output = svcs "-l", @resource[:name]
+            state = svcs "-H -o state", @resource[:name]
         rescue Puppet::ExecutionFailure
-            warning "Could not get status on service %s" % self.name
+            info "Could not get status on service %s" % self.name
             return :stopped
         end
 
-        output.split("\n").each { |line|
-            var = nil
-            value = nil
-            if line =~ /^(\w+)\s+(.+)/
-                var = $1
-                value = $2
-            else
-                Puppet.err "Could not match %s" % line.inspect
-                next
-            end
-            case var
-            when "state"
-                case value
-                when "online"
-                    #self.warning "matched running %s" % line.inspect
-                    return :running
-                when "offline", "disabled", "uninitialized"
-                    #self.warning "matched stopped %s" % line.inspect
-                    return :stopped
-                when "legacy_run"
-                    raise Puppet::Error,
-                        "Cannot manage legacy services through SMF"
-                else
-                    raise Puppet::Error,
-                        "Unmanageable state '%s' on service %s" %
-                        [value, self.name]
-                end
-            end
-        }
+
+        case state
+        when "online"
+            #self.warning "matched running %s" % line.inspect
+            return :running
+        when "offline", "disabled", "uninitialized"
+            #self.warning "matched stopped %s" % line.inspect
+            return :stopped
+        when "legacy_run"
+            raise Puppet::Error,
+              "Cannot manage legacy services through SMF"
+        else
+            raise Puppet::Error,
+              "Unmanageable state '%s' on service %s" %
+              [state, self.name]
+        end
+
     end
 
     def stopcmd
