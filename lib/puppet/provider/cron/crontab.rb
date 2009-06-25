@@ -1,7 +1,8 @@
 require 'puppet/provider/parsedfile'
 
 tab = case Facter.value(:operatingsystem)
-    when "Solaris"; suntab
+    when "Solaris"
+        :suntab
     else
         :crontab
     end
