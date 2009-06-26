@@ -89,10 +89,10 @@ task :ci_prep do
 end
 
 desc "Run the CI RSpec tests"
-task :ci_spec => [:ci_prep, 'ci:setup:rpsec', :spec]
+task :ci_spec => [:ci_prep, :spec]
 
 desc "Run CI Unit tests"
-task :ci_unit => [:ci_prep, 'ci:setup:testunit', :unit]
+task :ci_unit => [:ci_prep, :unit]
 
 desc "Send patch information to the puppet-dev list"
 task :mail_patches do
