@@ -91,8 +91,8 @@ module Puppet
                 from the parent process.",
             :call_on_define => true, # Call our hook with the default value, so we always get the libdir set.
             :hook => proc do |value|
+                ENV["PATH"] = "" if ENV["PATH"].nil?
                 ENV["PATH"] = value unless value == "none"
-
                 paths = ENV["PATH"].split(File::PATH_SEPARATOR)
                 %w{/usr/sbin /sbin}.each do |path|
                     unless paths.include?(path)
