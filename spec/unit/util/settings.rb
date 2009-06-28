@@ -104,6 +104,13 @@ describe Puppet::Util::Settings do
             @settings[:bool].should == true
         end
 
+        it "should consider a cli setting with a boolean as an argument to be a boolean" do
+            # Turn it off first
+            @settings[:bool] = false
+            @settings.handlearg("--bool", true)
+            @settings[:bool].should == true
+        end
+
         it "should clear the cache when setting getopt-specific values" do
             @settings.setdefaults :mysection, :one => ["whah", "yay"], :two => ["$one yay", "bah"]
             @settings[:two].should == "whah yay"

@@ -830,6 +830,8 @@ Generated on #{Time.now}.
             when /^false$/i; false
             when /^true$/i; true
             when /^\d+$/i; Integer(value)
+            when true; true
+            when false; false
             else
                 value.gsub(/^["']|["']$/,'').sub(/\s+$/, '')
         end
