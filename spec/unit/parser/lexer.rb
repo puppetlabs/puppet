@@ -490,6 +490,20 @@ describe Puppet::Parser::Lexer, "when lexing comments" do
         @lexer.string = "/* 1\n\n */ \ntest"
         @lexer.fullscan.should be_like([[:NAME, "test"],[false,false]])
     end
+
+    it "should not return comments seen after the current line" do
+        @lexer.string = "# 1\n\n# 2"
+        @lexer.fullscan
+
+        @lexer.getcomment(1).should == ""
+    end
+
+    it "should return a comment seen before the current line" do
+        @lexer.string = "# 1\n# 2"
+        @lexer.fullscan
+
+        @lexer.getcomment(2).should == "1\n2\n"
+    end
 end
 
 # FIXME: We need to rewrite all of these tests, but I just don't want to take the time right now.

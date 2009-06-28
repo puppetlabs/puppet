@@ -50,7 +50,7 @@ class Puppet::Parser::Parser
         end
 
         k = klass.new(hash)
-        k.doc = lexer.getcomment if !k.nil? and k.use_docs and k.doc.empty?
+        k.doc = lexer.getcomment(hash[:line]) if !k.nil? and k.use_docs and k.doc.empty?
         return k
     end
 

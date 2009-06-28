@@ -332,7 +332,7 @@ class Puppet::Parser::Lexer
         @namestack = []
         @indefine = false
         @expected = []
-        @commentstack = ['']
+        @commentstack = [ ['', @line] ]
     end
 
     # Make any necessary changes to the token and/or value.
@@ -348,7 +348,9 @@ class Puppet::Parser::Lexer
         return unless token
 
         if token.accumulate?
-            @commentstack.last << value + "\n"
+            comment = @commentstack.pop
+            comment[0] << value + "\n"
+            @commentstack.push(comment)
         end
 
         return if token.skip
@@ -490,16 +492,20 @@ class Puppet::Parser::Lexer
 
     # returns the content of the currently accumulated content cache
     def commentpop
-        return @commentstack.pop
+        return @commentstack.pop[0]
     end
 
-    def getcomment
-        comment = @commentstack.pop
-        @commentstack.push('')
-        return comment
+    def getcomment(line = nil)
+        comment = @commentstack.last
+        if line.nil? or comment[1] <= line
+            @commentstack.pop
+            @commentstack.push(['', @line])
+            return comment[0]
+        end
+        return ''
     end
 
     def commentpush
-        @commentstack.push('')
+        @commentstack.push(['', @line])
     end
 end
