@@ -249,7 +249,7 @@ module Puppet
 
             # Does the name match our pattern?
             def matchname?(name)
-                name = munge_name(name)
+                name = munge_name(name) unless @name == :opaque
                 return true if self.pattern == name
 
                 # If it's an exact match, then just return false, since the
@@ -324,10 +324,17 @@ module Puppet
                     end
                     begin
                         @pattern = IPAddr.new(value)
+                        @name = :ip
                     rescue ArgumentError => detail
-                        raise AuthStoreError, "Invalid pattern %s" % value
+                        # so nothing matched, let's match as an opaque value
+                        # some sanity checks first
+                        unless value =~ /^[a-zA-Z0-9][-a-zA-Z0-9_.@]*$/
+                            raise AuthStoreError, "Invalid pattern %s" % value
+                        end
+                        @pattern = [value]
+                        @length = nil # force an exact match
+                        @name = :opaque
                     end
-                    @name = :ip
                 end
             end
         end

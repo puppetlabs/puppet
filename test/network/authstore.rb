@@ -53,10 +53,6 @@ class TestAuthStore < Test::Unit::TestCase
         #assert_raise(Puppet::AuthStoreError) {
         #    @store.allow("192.168.674.0")
         #}
-
-        assert_raise(Puppet::AuthStoreError) {
-            @store.allow("192.168.0")
-        }
     end
 
     def test_ipranges
@@ -186,7 +182,6 @@ class TestAuthStore < Test::Unit::TestCase
         }
 
         %w{
-            invalid
             ^invalid!
             inval$id
 
@@ -339,7 +334,8 @@ class TestAuthStoreDeclaration < PuppetTest::TestCase
             "*.hostname.COM" => [:domain, %w{com hostname}, 2],
             "*.hostname.COM" => [:domain, %w{com hostname}, 2],
             "$1.hostname.COM" => [:dynamic, %w{com hostname $1}, nil],
-            "192.168.$1.$2" => [:dynamic, %w{$2 $1 168 192}, nil]
+            "192.168.$1.$2" => [:dynamic, %w{$2 $1 168 192}, nil],
+            "8A5BC90C-B8FD-4CBC-81DA-BAD84D551791" => [:opaque, %w{8A5BC90C-B8FD-4CBC-81DA-BAD84D551791}, nil]
         }.each do |input, output|
 
             # Create a new decl each time, so values aren't cached.
@@ -353,7 +349,7 @@ class TestAuthStoreDeclaration < PuppetTest::TestCase
             end
         end
 
-        %w{192.168 hostname -hostname.com hostname.*}.each do |input|
+        %w{-hostname.com hostname.*}.each do |input|
             assert_raise(Puppet::AuthStoreError, "Did not fail on %s" % input) do
                 @decl.pattern = input
             end
