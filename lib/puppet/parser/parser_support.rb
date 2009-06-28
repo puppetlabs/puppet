@@ -310,6 +310,7 @@ class Puppet::Parser::Parser
             args[:code] = code if code
             args[:parentclass] = parent if parent
             args[:doc] = doc
+            args[:line] = options[:line]
 
             @loaded_code.add_hostclass(name, ast(AST::HostClass, args))
         end
@@ -336,7 +337,8 @@ class Puppet::Parser::Parser
             :code => options[:code],
             :parser => self,
             :classname => name,
-            :doc => options[:doc]
+            :doc => options[:doc],
+            :line => options[:line]
         }
 
         [:code, :arguments].each do |param|
@@ -360,7 +362,8 @@ class Puppet::Parser::Parser
             args = {
                 :name => name,
                 :parser => self,
-                :doc => doc
+                :doc => doc,
+                :line => options[:line]
             }
             if options[:code]
                 args[:code] = options[:code]

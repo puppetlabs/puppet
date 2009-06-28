@@ -353,7 +353,7 @@ class Puppet::Parser::Lexer
 
         return if token.skip
 
-        return token, value
+        return token, { :value => value, :line => @line }
     end
 
     # Go up one in the namespace.
@@ -415,12 +415,14 @@ class Puppet::Parser::Lexer
                 @last_return = false
             end
 
-            final_token, value = munge_token(matched_token, value)
+            final_token, token_value = munge_token(matched_token, value)
 
             unless final_token
                 skip()
                 next
             end
+
+            value = token_value[:value]
 
             if match = @@pairs[value] and final_token.name != :DQUOTE and final_token.name != :SQUOTE
                 @expected << match
@@ -432,7 +434,7 @@ class Puppet::Parser::Lexer
                 commentpush
             end
 
-            yield [final_token.name, value]
+            yield [final_token.name, token_value]
 
             if @previous_token
                 namestack(value) if @previous_token.name == :CLASS

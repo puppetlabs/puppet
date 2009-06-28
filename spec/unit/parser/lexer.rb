@@ -4,6 +4,20 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/parser/lexer'
 
+# This is a special matcher to match easily lexer output
+Spec::Matchers.create :be_like do |ary|
+    match do |result|
+        r = true
+        result.zip(ary) do |a,b|
+            unless a[0] == b[0] and ((a[1].is_a?(Hash) and a[1][:value] == b[1]) or a[1] == b[1])
+                r = false
+                break
+            end
+        end
+        r
+    end
+end
+
 describe Puppet::Parser::Lexer do
     describe "when reading strings" do
         before { @lexer = Puppet::Parser::Lexer.new }
@@ -474,7 +488,7 @@ describe Puppet::Parser::Lexer, "when lexing comments" do
 
     it "should skip whitespace before lexing the next token after a non-token" do
         @lexer.string = "/* 1\n\n */ \ntest"
-        @lexer.fullscan.include?([:NAME, "test"]).should be_true
+        @lexer.fullscan.should be_like([[:NAME, "test"],[false,false]])
     end
 end
 
@@ -491,7 +505,7 @@ describe "Puppet::Parser::Lexer in the old tests" do
         }
         strings.each { |str,ary|
             @lexer.string = str
-            @lexer.fullscan().should == ary
+            @lexer.fullscan().should be_like(ary)
         }
     end
 
@@ -515,7 +529,7 @@ describe "Puppet::Parser::Lexer in the old tests" do
 }
         strings.each { |str,array|
             @lexer.string = str
-            @lexer.fullscan().should == array
+            @lexer.fullscan().should be_like(array)
         }
     end
 
@@ -535,7 +549,7 @@ describe "Puppet::Parser::Lexer in the old tests" do
 
     it "should correctly identify keywords" do
         @lexer.string = "case"
-        @lexer.fullscan.should == [[:CASE, "case"], [false, false]]
+        @lexer.fullscan.should be_like([[:CASE, "case"], [false, false]])
     end
 
     it "should correctly match strings" do
@@ -545,11 +559,11 @@ describe "Puppet::Parser::Lexer in the old tests" do
 
         names.each { |t|
             @lexer.string = t
-            @lexer.fullscan.should == [[:NAME,t],[false,false]]
+            @lexer.fullscan.should be_like([[:NAME,t],[false,false]])
         }
         types.each { |t|
             @lexer.string = t
-            @lexer.fullscan.should == [[:CLASSREF,t],[false,false]]
+            @lexer.fullscan.should be_like([[:CLASSREF,t],[false,false]])
         }
     end
 
@@ -558,7 +572,7 @@ describe "Puppet::Parser::Lexer in the old tests" do
 
        string.each { |t|
             @lexer.string = t
-            @lexer.fullscan.should == [[:NAME,t],[false,false]]
+            @lexer.fullscan.should be_like([[:NAME,t],[false,false]])
        }
     end
 
@@ -575,7 +589,7 @@ describe "Puppet::Parser::Lexer in the old tests" do
 
         @lexer.string = string
 
-        @lexer.fullscan.should == [[:AT, "@"], [:NAME, "type"], [:LBRACE, "{"], [false,false]]
+        @lexer.fullscan.should be_like([[:AT, "@"], [:NAME, "type"], [:LBRACE, "{"], [false,false]])
     end
 
     it "should correctly deal with namespaces" do
@@ -618,7 +632,7 @@ describe "Puppet::Parser::Lexer in the old tests" do
 
             @lexer.scan do |t, s|
                 t.should == :VARIABLE
-                string.sub(/^\$/, '').should == s
+                string.sub(/^\$/, '').should == s[:value]
                 break
             end
         end
@@ -630,7 +644,7 @@ describe "Puppet::Parser::Lexer in the old tests" do
 
         string.each do |foo|
             @lexer.string = foo
-            @lexer.fullscan[0].should == [:CLASSREF, foo]
+            @lexer.fullscan.should be_like([[:CLASSREF, foo],[false,false]])
         end
     end
 

@@ -75,26 +75,30 @@ statement:    resource
 fstatement:   NAME LPAREN funcvalues RPAREN {
     args = aryfy(val[2])
     result = ast AST::Function,
-        :name => val[0],
+        :name => val[0][:value],
+        :line => val[0][:line],
         :arguments => args,
         :ftype => :statement
 }
  | NAME LPAREN funcvalues COMMA RPAREN {
     args = aryfy(val[2])
     result = ast AST::Function,
-        :name => val[0],
+        :name => val[0][:value],
+        :line => val[0][:line],
         :arguments => args,
         :ftype => :statement
 }            | NAME LPAREN RPAREN {
     result = ast AST::Function,
-        :name => val[0],
+        :name => val[0][:value],
+        :line => val[0][:line],
         :arguments => AST::ASTArray.new({}),
         :ftype => :statement
 }
             | NAME funcvalues {
     args = aryfy(val[1])
     result = ast AST::Function,
-        :name => val[0],
+        :name => val[0][:value],
+        :line => val[0][:line],
         :arguments => args,
         :ftype => :statement
 }
@@ -126,7 +130,7 @@ namestring:       name
                 | selector
                 | quotedtext
                 | CLASSNAME {
-                    result = ast AST::Name, :value => val[0]
+                    result = ast AST::Name, :value => val[0][:value]
                 }
 
 resource:       classname LBRACE resourceinstances endsemi RBRACE {
@@ -267,15 +271,16 @@ collstatement:            collexpr
     result.parens = true
 }
 
-colljoin:                 AND | OR
+colljoin:                 AND { result=val[0][:value] }
+                        | OR  { result=val[0][:value] }
 
 collexpr:                 colllval ISEQUAL simplervalue {
-    result = ast AST::CollExpr, :test1 => val[0], :oper => val[1], :test2 => val[2]
+    result = ast AST::CollExpr, :test1 => val[0], :oper => val[1][:value], :test2 => val[2]
     #result = ast AST::CollExpr
     #result.push *val
 }
                         | colllval NOTEQUAL simplervalue {
-    result = ast AST::CollExpr, :test1 => val[0], :oper => val[1], :test2 => val[2]
+    result = ast AST::CollExpr, :test1 => val[0], :oper => val[1][:value], :test2 => val[2]
     #result = ast AST::CollExpr
     #result.push *val
 }
@@ -305,11 +310,11 @@ undef:         UNDEF {
 }
 
 name:         NAME {
-    result = ast AST::Name, :value => val[0]
+    result = ast AST::Name, :value => val[0][:value], :line => val[0][:line]
 }
 
 type:         CLASSREF {
-    result = ast AST::Type, :value => val[0]
+    result = ast AST::Type, :value => val[0][:value], :line => val[0][:line]
 }
 
 resourcename:   quotedtext
@@ -320,17 +325,17 @@ resourcename:   quotedtext
             | array
 
 assignment:     VARIABLE EQUALS expression {
-    if val[0] =~ /::/
+    if val[0][:value] =~ /::/
         raise Puppet::ParseError, "Cannot assign to variables in other namespaces"
     end
     # this is distinct from referencing a variable
-    variable = ast AST::Name, :value => val[0]
-    result = ast AST::VarDef, :name => variable, :value => val[2]
+    variable = ast AST::Name, :value => val[0][:value], :line => val[0][:line]
+    result = ast AST::VarDef, :name => variable, :value => val[2], :line => val[0][:line]
 }
 
 append:     VARIABLE APPENDS expression {
-    variable = ast AST::Name, :value => val[0]
-    result = ast AST::VarDef, :name => variable, :value => val[2], :append => true
+    variable = ast AST::Name, :value => val[0][:value], :line => val[0][:line]
+    result = ast AST::VarDef, :name => variable, :value => val[2], :append => true, :line => val[0][:line]
 }
 
 params:   # nothing
@@ -348,11 +353,11 @@ params:   # nothing
 }
 
 param:        NAME FARROW rvalue {
-    result = ast AST::ResourceParam, :param => val[0], :value => val[2]
+    result = ast AST::ResourceParam, :param => val[0][:value], :line => val[0][:line], :value => val[2]
 }
 
 addparam:     NAME PARROW rvalue {
-    result = ast AST::ResourceParam, :param => val[0], :value => val[2],
+    result = ast AST::ResourceParam, :param => val[0][:value], :line => val[0][:line], :value => val[2],
                                      :add => true
 }
 
@@ -404,29 +409,29 @@ rvalue:       quotedtext
 funcrvalue:   NAME LPAREN funcvalues RPAREN {
     args = aryfy(val[2])
     result = ast AST::Function,
-        :name => val[0],
+        :name => val[0][:value], :line => val[0][:line],
         :arguments => args,
         :ftype => :rvalue
 }           | NAME LPAREN RPAREN {
     result = ast AST::Function,
-        :name => val[0],
+        :name => val[0][:value], :line => val[0][:line],
         :arguments => AST::ASTArray.new({}),
         :ftype => :rvalue
 }
 
 quotedtext: DQTEXT {
-    result = ast AST::String, :value => val[0]
+    result = ast AST::String, :value => val[0][:value], :line => val[0][:line]
 }           | SQTEXT {
-    result = ast AST::FlatString, :value => val[0]
+    result = ast AST::FlatString, :value => val[0][:value], :line => val[0][:line]
 }
 
 boolean:    BOOLEAN {
-    result = ast AST::Boolean, :value => val[0]
+    result = ast AST::Boolean, :value => val[0][:value], :line => val[0][:line]
 }
 
 resourceref: NAME LBRACK rvalues RBRACK {
     Puppet.warning addcontext("Deprecation notice:  Resource references should now be capitalized")
-    result = ast AST::ResourceReference, :type => val[0], :title => val[2]
+    result = ast AST::ResourceReference, :type => val[0][:value], :line => val[0][:line], :title => val[2]
 }               | classref LBRACK rvalues RBRACK {
     result = ast AST::ResourceReference, :type => val[0], :title => val[2]
 }
@@ -482,52 +487,52 @@ else:             # nothing
 
 expression:   rvalue
             | expression PLUS expression {
-    result = ast AST::ArithmeticOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+    result = ast AST::ArithmeticOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
             | expression MINUS expression {
-    result = ast AST::ArithmeticOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+    result = ast AST::ArithmeticOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
             | expression DIV expression {
-    result = ast AST::ArithmeticOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+    result = ast AST::ArithmeticOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
             | expression TIMES expression {
-    result = ast AST::ArithmeticOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+    result = ast AST::ArithmeticOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
             | expression LSHIFT expression {
-    result = ast AST::ArithmeticOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+    result = ast AST::ArithmeticOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
             | expression RSHIFT expression {
-    result = ast AST::ArithmeticOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+    result = ast AST::ArithmeticOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
             | MINUS expression =UMINUS {
     result = ast AST::Minus, :value => val[1]
 }
             | expression NOTEQUAL expression {
-    result = ast AST::ComparisonOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+    result = ast AST::ComparisonOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
             | expression ISEQUAL expression {
-    result = ast AST::ComparisonOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+    result = ast AST::ComparisonOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
             | expression GREATERTHAN expression {
-    result = ast AST::ComparisonOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+    result = ast AST::ComparisonOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
             | expression GREATEREQUAL expression {
-    result = ast AST::ComparisonOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+    result = ast AST::ComparisonOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
             | expression LESSTHAN expression {
-    result = ast AST::ComparisonOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+    result = ast AST::ComparisonOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
             | expression LESSEQUAL expression {
-    result = ast AST::ComparisonOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+    result = ast AST::ComparisonOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
             | NOT expression {
     result = ast AST::Not, :value => val[1]
 }
             | expression AND expression {
-    result = ast AST::BooleanOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+    result = ast AST::BooleanOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
             | expression OR expression {
-    result = ast AST::BooleanOperator, :operator => val[1], :lval => val[0], :rval => val[2]
+    result = ast AST::BooleanOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
             | LPAREN expression RPAREN {
     result = val[1]
@@ -605,7 +610,7 @@ selectlhand:  name
             | boolean
             | undef
             | DEFAULT {
-    result = ast AST::Default, :value => val[0]
+    result = ast AST::Default, :value => val[0][:value], :line => val[0][:line]
 }
 
 # These are only used for importing, and we don't interpolate there.
@@ -626,14 +631,14 @@ import: IMPORT qtexts {
 #definition: DEFINE NAME argumentlist parent LBRACE statements RBRACE {
 definition: DEFINE classname argumentlist LBRACE statements RBRACE {
     @lexer.commentpop
-    newdefine classname(val[1]), :arguments => val[2], :code => val[4]
+    newdefine classname(val[1]), :arguments => val[2], :code => val[4], :line => val[0][:line]
     @lexer.indefine = false
     result = nil
 
 #}           | DEFINE NAME argumentlist parent LBRACE RBRACE {
 }           | DEFINE classname argumentlist LBRACE RBRACE {
     @lexer.commentpop
-    newdefine classname(val[1]), :arguments => val[2]
+    newdefine classname(val[1]), :arguments => val[2], :line => val[0][:line]
     @lexer.indefine = false
     result = nil
 }
@@ -643,30 +648,30 @@ hostclass: CLASS classname classparent LBRACE statements RBRACE {
     @lexer.commentpop
     # Our class gets defined in the parent namespace, not our own.
     @lexer.namepop
-    newclass classname(val[1]), :code => val[4], :parent => val[2]
+    newclass classname(val[1]), :code => val[4], :parent => val[2], :line => val[0][:line]
     result = nil
 }           | CLASS classname classparent LBRACE RBRACE {
     @lexer.commentpop
     # Our class gets defined in the parent namespace, not our own.
     @lexer.namepop
-    newclass classname(val[1]), :parent => val[2]
+    newclass classname(val[1]), :parent => val[2], :line => val[0][:line]
     result = nil
 }
 
 nodedef: NODE hostnames nodeparent LBRACE statements RBRACE {
     @lexer.commentpop
-    newnode val[1], :parent => val[2], :code => val[4]
+    newnode val[1], :parent => val[2], :code => val[4], :line => val[0][:line]
     result = nil
 }       |  NODE hostnames nodeparent LBRACE RBRACE {
     @lexer.commentpop
-    newnode val[1], :parent => val[2]
+    newnode val[1], :parent => val[2], :line => val[0][:line]
     result = nil
 }
 
-classref:       CLASSREF
+classref:       CLASSREF { result = val[0][:value] }
 
-classname:       NAME
-            | CLASSNAME
+classname:       NAME { result = val[0][:value] }
+            | CLASSNAME { result = val[0][:value] }
 
 # Multiple hostnames, as used for node names.  These are all literal
 # strings, not AST objects.
@@ -674,13 +679,13 @@ hostnames:    hostname
   | hostnames COMMA hostname {
     result = val[0]
     result = [result] unless result.is_a?(Array)
-    result << val[2]
+    result << val[2][:value]
 }
 
-hostname: NAME
-        | SQTEXT
-        | DQTEXT
-        | DEFAULT
+hostname: NAME { result = val[0][:value] }
+        | SQTEXT { result = val[0][:value] }
+        | DQTEXT { result = val[0][:value] }
+        | DEFAULT { result = val[0][:value] }
 
 nil:    {
     result = nil
@@ -708,15 +713,15 @@ arguments:    argument
 
 argument:     NAME EQUALS rvalue {
     Puppet.warning addcontext("Deprecation notice: must now include '$' in prototype")
-    result = [val[0], val[2]]
+    result = [val[0][:value], val[2]]
 }
             | NAME {
     Puppet.warning addcontext("Deprecation notice: must now include '$' in prototype")
-    result = [val[0]]
+    result = [val[0][:value]]
 }           | VARIABLE EQUALS rvalue {
-    result = [val[0], val[2]]
+    result = [val[0][:value], val[2]]
 }           | VARIABLE {
-    result = [val[0]]
+    result = [val[0][:value]]
 }
 
 nodeparent:       nil
@@ -732,7 +737,7 @@ classparent:       nil
 classnameordefault: classname | DEFAULT
 
 variable:     VARIABLE {
-    result = ast AST::Variable, :value => val[0]
+    result = ast AST::Variable, :value => val[0][:value], :line => val[0][:line]
 }
 
 array:        LBRACK rvalues RBRACK {
