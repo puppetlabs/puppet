@@ -14,7 +14,7 @@ class Puppet::Util::Reference
     end
 
     def self.modes
-        %w{pdf trac text}
+        %w{pdf trac text markdown}
     end
 
     def self.newreference(name, options = {}, &block)
@@ -57,14 +57,36 @@ class Puppet::Util::Reference
         $stderr.puts output
 
         # Now convert to pdf
-        puts "handling pdf"
         Dir.chdir("/tmp") do
             %x{texi2pdf puppetdoc.tex >/dev/null 2>/dev/null}
         end
 
-        #if FileTest.exists?("/tmp/puppetdoc.pdf")
-        #    FileUtils.mv("/tmp/puppetdoc.pdf", "/export/apache/docroots/reductivelabs.com/htdocs/downloads/puppet/reference.pdf")
-        #end
+    end
+
+    def self.markdown(name, text)
+        puts "Creating markdown for #{name} reference."
+        dir = "/tmp/" + Puppet::PUPPETVERSION
+        FileUtils.mkdir(dir) unless File.directory?(dir) 
+        File.open(dir + "/" + "#{name}.rst", "w") do |f|
+            f.puts text
+        end
+        pandoc = %x{which pandoc}
+        if $? != 0 or pandoc =~ /no /
+            pandoc = %x{which pandoc}
+        end
+        if $? != 0 or pandoc =~ /no /
+            raise "Could not find pandoc"
+        end
+        pandoc.chomp!
+        cmd = %{#{pandoc} -s -r rst -w markdown #{dir}/#{name}.rst -o #{dir}/#{name}.mdwn}
+        output = %x{#{cmd}}
+        unless $? == 0
+            $stderr.puts "Pandoc failed to create #{name} reference."
+            $stderr.puts output
+            exit(1)
+        end
+ 
+        File.unlink(dir + "/" + "#{name}.rst")
     end
 
     def self.references
