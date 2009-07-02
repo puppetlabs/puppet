@@ -182,7 +182,7 @@ module Puppet::Network::HTTP::Handler
     def decode_params(params)
         params.inject({}) do |result, ary|
             param, value = ary
-            next result if param.blank?
+            next result if param.nil? || param.empty?
 
             param = param.to_sym
 
