@@ -15,6 +15,7 @@ class Puppet::Network::HTTP::Rack
         protocols.delete :rest
 
         # Prepare the XMLRPC handler, for backward compatibility (if requested)
+        @xmlrpc_path = '/RPC2'
         if args[:protocols].include?(:xmlrpc)
             raise ArgumentError, "XMLRPC was requested, but no handlers were given" if !args.include?(:xmlrpc_handlers)
 
@@ -36,7 +37,7 @@ class Puppet::Network::HTTP::Rack
         Puppet.debug 'Handling request: %s %s' % [request.request_method, request.fullpath]
 
         # if we shall serve XMLRPC, have /RPC2 go to the xmlrpc handler
-        if @xmlrpc_http_handler and request.path_info.start_with?('/RPC2')
+        if @xmlrpc_http_handler and @xmlrpc_path == request.path_info[0, @xmlrpc_path.size]
             handler = @xmlrpc_http_handler
         else
             # everything else is handled by the new REST handler
