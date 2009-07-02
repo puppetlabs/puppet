@@ -92,6 +92,11 @@ describe "Puppet::Network::HTTP::MongrelREST" do
                 @request.stubs(:params).returns({})
             end
 
+            it "should skip empty parameter values" do
+                @request.expects(:params).returns('QUERY_STRING' => "&=")
+                lambda { @handler.params(@request) }.should_not raise_error
+            end
+
             it "should include the HTTP request parameters, with the keys as symbols" do
                 @request.expects(:params).returns('QUERY_STRING' => 'foo=baz&bar=xyzzy')
                 result = @handler.params(@request)

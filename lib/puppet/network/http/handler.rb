@@ -182,6 +182,8 @@ module Puppet::Network::HTTP::Handler
     def decode_params(params)
         params.inject({}) do |result, ary|
             param, value = ary
+            next result if param.blank?
+
             param = param.to_sym
 
             # These shouldn't be allowed to be set by clients
