@@ -145,6 +145,9 @@ class Puppet::Rails::Host < ActiveRecord::Base
 
     # Set our resources.
     def merge_resources(list)
+        # keep only exported resources in thin_storeconfig mode
+        list = list.select { |r| r.exported? } if Puppet.settings[:thin_storeconfigs]
+
         resources_by_id = nil
         debug_benchmark("Searched for resources") {
             resources_by_id = find_resources()
@@ -160,7 +163,9 @@ class Puppet::Rails::Host < ActiveRecord::Base
     end
 
     def find_resources
-        resources.find(:all, :include => :source_file).inject({}) do | hash, resource |
+        condition = { :exported => true } if Puppet.settings[:thin_storeconfigs]
+
+        resources.find(:all, :include => :source_file, :conditions => condition || {}).inject({}) do | hash, resource |
             hash[resource.id] = resource
             hash
         end

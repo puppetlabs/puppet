@@ -140,4 +140,17 @@ describe "Puppet defaults" do
             Puppet.settings[:storeconfigs] = true
         end
     end
+
+    describe "when enabling thing storeconfigs" do
+        before do
+            Puppet::Resource::Catalog.stubs(:cache_class=)
+            Puppet::Node::Facts.stubs(:cache_class=)
+            Puppet::Node.stubs(:cache_class=)
+        end
+
+        it "should set storeconfigs to true" do
+            Puppet.settings[:thin_storeconfigs] = true
+            Puppet.settings[:storeconfigs].should be_true
+        end
+    end
 end

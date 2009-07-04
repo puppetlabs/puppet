@@ -180,7 +180,15 @@ module Puppet
                     raise "Cannot disable asynchronous storeconfigs in a running process"
                 end
             end
-        }
+        },
+        :thin_storeconfigs => {:default => false, :desc =>
+            "Boolean; wether storeconfigs store in the database only the facts and exported resources.
+            If true, then storeconfigs performance will be higher and still allow exported/collected
+            resources, but other usage external to Puppet might not work",
+            :hook => proc do |value|
+                    Puppet.settings[:storeconfigs] = true if value
+                end
+            }
     )
 
     hostname = Facter["hostname"].value
