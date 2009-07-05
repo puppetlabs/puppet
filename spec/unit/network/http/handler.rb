@@ -57,13 +57,14 @@ describe Puppet::Network::HTTP::Handler do
         # Stub out the interface we require our including classes to
         # implement.
         def stub_server_interface
-            @handler.stubs(:accept_header   ).returns "format_one,format_two"
-            @handler.stubs(:set_content_type).returns "my_result"
-            @handler.stubs(:set_response    ).returns "my_result"
-            @handler.stubs(:path            ).returns "/my_handler/my_result"
-            @handler.stubs(:http_method     ).returns("GET")
-            @handler.stubs(:params          ).returns({})
-            @handler.stubs(:content_type    ).returns("text/plain")
+            @handler.stubs(:accept_header      ).returns "format_one,format_two"
+            @handler.stubs(:content_type_header).returns "text/yaml"
+            @handler.stubs(:set_content_type   ).returns "my_result"
+            @handler.stubs(:set_response       ).returns "my_result"
+            @handler.stubs(:path               ).returns "/my_handler/my_result"
+            @handler.stubs(:http_method        ).returns("GET")
+            @handler.stubs(:params             ).returns({})
+            @handler.stubs(:content_type       ).returns("text/plain")
         end
 
         it "should create an indirection request from the path, parameters, and http method" do
@@ -134,8 +135,11 @@ describe Puppet::Network::HTTP::Handler do
 
                 @model_class.stubs(:find).returns @result
 
-                @format = stub 'format', :suitable? => true
+                @format = stub 'format', :suitable? => true, :mime => "text/format", :name => "format"
                 Puppet::Network::FormatHandler.stubs(:format).returns @format
+
+                @oneformat = stub 'one', :suitable? => true, :mime => "text/one", :name => "one"
+                Puppet::Network::FormatHandler.stubs(:format).with("one").returns @oneformat
             end
 
             it "should use the indirection request to find the model class" do
@@ -161,7 +165,7 @@ describe Puppet::Network::HTTP::Handler do
 
             it "should set the content type to the first format specified in the accept header" do
                 @handler.expects(:accept_header).with(@request).returns "one,two"
-                @handler.expects(:set_content_type).with(@response, "one")
+                @handler.expects(:set_content_type).with(@response, @oneformat)
                 @handler.do_find(@irequest, @request, @response)
             end
 
@@ -182,14 +186,15 @@ describe Puppet::Network::HTTP::Handler do
                 Puppet::Network::FormatHandler.expects(:format).with("foo").returns foo
                 Puppet::Network::FormatHandler.expects(:format).with("bar").returns bar
 
-                @handler.expects(:set_content_type).with(@response, "bar") # the suitable one
+                @handler.expects(:set_content_type).with(@response, bar) # the suitable one
 
                 @handler.do_find(@irequest, @request, @response)
             end
 
             it "should render the result using the first format specified in the accept header" do
+
                 @handler.expects(:accept_header).with(@request).returns "one,two"
-                @result.expects(:render).with("one")
+                @result.expects(:render).with(@oneformat)
 
                 @handler.do_find(@irequest, @request, @response)
             end
@@ -218,8 +223,8 @@ describe Puppet::Network::HTTP::Handler do
             it "should serialize the result in with the appropriate format" do
                 @model_instance = stub('model instance')
 
-                @handler.expects(:format_to_use).returns "one"
-                @model_instance.expects(:render).with("one").returns "my_rendered_object"
+                @handler.expects(:format_to_use).returns(@oneformat)
+                @model_instance.expects(:render).with(@oneformat).returns "my_rendered_object"
                 @model_class.stubs(:find).returns(@model_instance)
                 @handler.do_find(@irequest, @request, @response)
             end
@@ -236,8 +241,11 @@ describe Puppet::Network::HTTP::Handler do
                 @model_class.stubs(:render_multiple).returns "my rendered instances"
                 @model_class.stubs(:search).returns(@result)
 
-                @format = stub 'format', :suitable? => true
+                @format = stub 'format', :suitable? => true, :mime => "text/format", :name => "format"
                 Puppet::Network::FormatHandler.stubs(:format).returns @format
+
+                @oneformat = stub 'one', :suitable? => true, :mime => "text/one", :name => "one"
+                Puppet::Network::FormatHandler.stubs(:format).with("one").returns @oneformat
             end
 
             it "should use the indirection request to find the model" do
@@ -261,7 +269,7 @@ describe Puppet::Network::HTTP::Handler do
 
             it "should set the content type to the first format returned by the accept header" do
                 @handler.expects(:accept_header).with(@request).returns "one,two"
-                @handler.expects(:set_content_type).with(@response, "one")
+                @handler.expects(:set_content_type).with(@response, @oneformat)
 
                 @handler.do_search(@irequest, @request, @response)
             end
@@ -271,7 +279,7 @@ describe Puppet::Network::HTTP::Handler do
 
                 @model_class.stubs(:search).returns(@result)
 
-                @model_class.expects(:render_multiple).with("one", @result).returns "my rendered instances"
+                @model_class.expects(:render_multiple).with(@oneformat, @result).returns "my rendered instances"
 
                 @handler.expects(:set_response).with { |response, data| data == "my rendered instances" }
                 @handler.do_search(@irequest, @request, @response)
@@ -341,14 +349,17 @@ describe Puppet::Network::HTTP::Handler do
             before do
                 @irequest = stub 'indirection_request', :method => :save, :indirection_name => "my_handler", :to_hash => {}, :key => "key", :model => @model_class
                 @handler.stubs(:body).returns('my stuff')
+                @handler.stubs(:content_type_header).returns("text/yaml")
 
                 @result = stub 'result', :render => "the result"
 
                 @model_instance = stub('indirected model instance', :save => true)
                 @model_class.stubs(:convert_from).returns(@model_instance)
 
-                @format = stub 'format', :suitable? => true
+                @format = stub 'format', :suitable? => true, :name => "format", :mime => "text/format"
                 Puppet::Network::FormatHandler.stubs(:format).returns @format
+                @yamlformat = stub 'yaml', :suitable? => true, :name => "yaml", :mime => "text/yaml"
+                Puppet::Network::FormatHandler.stubs(:format).with("yaml").returns @yamlformat
             end
 
             it "should use the indirection request to find the model" do
@@ -390,7 +401,16 @@ describe Puppet::Network::HTTP::Handler do
             end
 
             it "should set the content to yaml" do
-                @handler.expects(:set_content_type).with(@response, "yaml")
+                @handler.expects(:set_content_type).with(@response, @yamlformat)
+                @handler.do_save(@irequest, @request, @response)
+            end
+
+            it "should use the content-type header to know the body format" do
+                @handler.expects(:content_type_header).returns("text/format")
+                Puppet::Network::FormatHandler.stubs(:mime).with("text/format").returns @format
+
+                @model_class.expects(:convert_from).with { |format, body| format == "format" }.returns @model_instance
+
                 @handler.do_save(@irequest, @request, @response)
             end
         end

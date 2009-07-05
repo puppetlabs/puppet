@@ -17,8 +17,14 @@ module Puppet::Network::HTTP::Handler
         raise NotImplementedError
     end
 
-    # Which format to use when serializing our response.  Just picks
-    # the first value in the accept header, at this point.
+    # Retrieve the Content-Type header from the http request.
+    def content_type_header(request)
+        raise NotImplementedError
+    end
+
+    # Which format to use when serializing our response or interpreting the request.  
+    # IF the client provided a Content-Type use this, otherwise use the Accept header
+    # and just pick the first value.
     def format_to_use(request)
         unless header = accept_header(request)
             raise ArgumentError, "An Accept header must be provided to pick the right format"
@@ -28,10 +34,23 @@ module Puppet::Network::HTTP::Handler
         header.split(/,\s*/).each do |name|
             next unless format = Puppet::Network::FormatHandler.format(name)
             next unless format.suitable?
-            return name
+            return format
         end
 
         raise "No specified acceptable formats (%s) are functional on this machine" % header
+    end
+
+    def request_format(request)
+        if header = content_type_header(request)
+            format = Puppet::Network::FormatHandler.mime(header)
+            return format.name.to_s if format.suitable?
+        end
+
+        raise "No Content-Type header was received, it isn't possible to unserialize the request"
+    end
+
+    def format_to_mime(format)
+        format.is_a?(Puppet::Network::Format) ? format.mime : format
     end
 
     def initialize_for_puppet(server)
@@ -106,9 +125,7 @@ module Puppet::Network::HTTP::Handler
     def do_destroy(indirection_request, request, response)
         result = indirection_request.model.destroy(indirection_request.key, indirection_request.to_hash)
 
-        set_content_type(response, "yaml")
-
-        set_response(response, result.to_yaml)
+        return_yaml_response(response, result)
     end
 
     # Execute our save.
@@ -116,14 +133,10 @@ module Puppet::Network::HTTP::Handler
         data = body(request).to_s
         raise ArgumentError, "No data to save" if !data or data.empty?
 
-        format = format_to_use(request)
-
-        obj = indirection_request.model.convert_from(format_to_use(request), data)
+        format = request_format(request)
+        obj = indirection_request.model.convert_from(format, data)
         result = save_object(indirection_request, obj)
-
-        set_content_type(response, "yaml")
-
-        set_response(response, result.to_yaml)
+        return_yaml_response(response, result)
     end
 
     # resolve node name from peer's ip address
@@ -138,6 +151,11 @@ module Puppet::Network::HTTP::Handler
     end
 
   private
+
+    def return_yaml_response(response, body)
+        set_content_type(response, Puppet::Network::FormatHandler.format("yaml"))
+        set_response(response, body.to_yaml)
+    end
 
     # LAK:NOTE This has to be here for testing; it's a stub-point so
     # we keep infinite recursion from happening.

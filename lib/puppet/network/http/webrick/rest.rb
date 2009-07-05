@@ -27,6 +27,10 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
         request["accept"]
     end
 
+    def content_type_header(request)
+        request["content-type"]
+    end
+
     def http_method(request)
         request.request_method
     end
@@ -41,7 +45,7 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
 
     # Set the specified format as the content type of the response.
     def set_content_type(response, format)
-        response["content-type"] = format
+        response["content-type"] = format_to_mime(format)
     end
 
     def set_response(response, result, status = 200)

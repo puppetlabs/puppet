@@ -306,7 +306,7 @@ describe Puppet::Indirector::REST do
             @connection = stub('mock http connection', :put => @response)
             @searcher.stubs(:network).returns(@connection)    # neuter the network connection
 
-            @instance = stub 'instance', :render => "mydata"
+            @instance = stub 'instance', :render => "mydata", :mime => "mime"
             @request = Puppet::Indirector::Request.new(:foo, :save, "foo bar")
             @request.instance = @instance
         end
@@ -347,6 +347,13 @@ describe Puppet::Indirector::REST do
             @connection.expects(:put).with { |path, data, args| args["Accept"] == "supported, formats" }.returns(@response)
 
             @searcher.model.expects(:supported_formats).returns %w{supported formats}
+            @searcher.save(@request)
+        end
+
+        it "should provide a Content-Type header containing the mime-type of the sent object" do
+            @connection.expects(:put).with { |path, data, args| args['Content-Type'] == "mime" }.returns(@response)
+
+            @instance.expects(:mime).returns "mime"
             @searcher.save(@request)
         end
 

@@ -15,6 +15,10 @@ class Puppet::Network::HTTP::MongrelREST < Mongrel::HttpHandler
         request.params[ACCEPT_HEADER]
     end
 
+    def content_type_header(request)
+        request.params["HTTP_CONTENT_TYPE"]
+    end
+
     # which HTTP verb was used in this request
     def http_method(request)
         request.params[Mongrel::Const::REQUEST_METHOD]
@@ -41,7 +45,7 @@ class Puppet::Network::HTTP::MongrelREST < Mongrel::HttpHandler
     end
 
     def set_content_type(response, format)
-        response.header['Content-Type'] = format
+        response.header['Content-Type'] = format_to_mime(format)
     end
 
     # produce the body of the response

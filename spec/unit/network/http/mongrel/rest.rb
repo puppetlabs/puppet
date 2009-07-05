@@ -43,6 +43,11 @@ describe "Puppet::Network::HTTP::MongrelREST" do
                 @handler.accept_header(@request).should == "myaccept"
             end
 
+            it "should return the Content-Type parameter as the Content-Type header" do
+                @params.expects(:[]).with("HTTP_CONTENT_TYPE").returns "mycontent"
+                @handler.content_type_header(@request).should == "mycontent"
+            end
+
             it "should use the REQUEST_METHOD as the http method" do
                 @params.expects(:[]).with(Mongrel::Const::REQUEST_METHOD).returns "mymethod"
                 @handler.http_method(@request).should == "mymethod"

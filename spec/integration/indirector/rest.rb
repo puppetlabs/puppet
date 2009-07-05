@@ -109,7 +109,7 @@ describe Puppet::Indirector::REST do
                 it "should use a supported format" do
                     Puppet::TestIndirectedFoo.expects(:supported_formats).returns ["marshal"]
                     text = Marshal.dump(@model_instance)
-                    @model_instance.expects(:render).with("marshal").returns text
+                    @model_instance.expects(:render).with(Puppet::Network::FormatHandler.format("marshal")).returns text
                     Puppet::TestIndirectedFoo.find('bar')
                 end
             end
@@ -345,8 +345,9 @@ describe Puppet::Indirector::REST do
 
                 it "should use a supported format" do
                     Puppet::TestIndirectedFoo.expects(:supported_formats).returns ["marshal"]
+                    format = stub 'format'
                     text = Marshal.dump(@model_instance)
-                    @model_instance.expects(:render).with("marshal").returns text
+                    @model_instance.expects(:render).with(Puppet::Network::FormatHandler.format("marshal")).returns text
                     Puppet::TestIndirectedFoo.find('bar')
                 end
             end

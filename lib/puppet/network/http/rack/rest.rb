@@ -14,7 +14,7 @@ class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
     end
 
     def set_content_type(response, format)
-        response[ContentType] = format
+        response[ContentType] = format_to_mime(format)
     end
 
     # produce the body of the response
@@ -26,6 +26,11 @@ class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
     # Retrieve the accept header from the http request.
     def accept_header(request)
         request.env[HEADER_ACCEPT]
+    end
+
+    # Retrieve the accept header from the http request.
+    def content_type_header(request)
+        request.env['HTTP_CONTENT_TYPE']
     end
 
     # Return which HTTP verb was used in this request.

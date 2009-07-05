@@ -37,6 +37,11 @@ describe Puppet::Network::HTTP::WEBrickREST do
                 @handler.accept_header(@request).should == "foobar"
             end
 
+            it "should use the 'content-type' request header as the Content-Type header" do
+                @request.expects(:[]).with("content-type").returns "foobar"
+                @handler.content_type_header(@request).should == "foobar"
+            end
+
             it "should use the request method as the http method" do
                 @request.expects(:request_method).returns "FOO"
                 @handler.http_method(@request).should == "FOO"
