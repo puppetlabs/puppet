@@ -173,6 +173,11 @@ Puppet::Type.newtype(:cron) do
                 return value
             end
 
+            # Allow ranges + */2
+            if value =~ /^[0-9]+-[0-9]+\/[0-9]+$/
+                return value
+            end
+
             if value == "*"
                 return value
             end
@@ -268,10 +273,10 @@ Puppet::Type.newtype(:cron) do
         def alpha
             %w{sunday monday tuesday wednesday thursday friday saturday}
         end
-        self.boundaries = [0, 6]
+        self.boundaries = [0, 7]
         desc "The weekday on which to run the command.
-            Optional; if specified, must be between 0 and 6, inclusive, with
-            0 being Sunday, or must be the name of the day (e.g., Tuesday)."
+            Optional; if specified, must be between 0 and 7, inclusive, with
+            0 (or 7) being Sunday, or must be the name of the day (e.g., Tuesday)."
     end
 
     newproperty(:month, :parent => CronParam) do
