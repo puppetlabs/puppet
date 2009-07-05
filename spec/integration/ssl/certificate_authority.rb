@@ -50,13 +50,11 @@ describe Puppet::SSL::CertificateAuthority do
     end
 
     it "should be able to revoke a host certificate" do
-        pending("This test doesn't actually work yet") do
-            @ca.generate("newhost")
+        @ca.generate("newhost")
 
-            @ca.revoke("newhost")
+        @ca.revoke("newhost")
 
-            lambda { @ca.verify("newhost") }.should raise_error
-        end
+        lambda { @ca.verify("newhost") }.should raise_error
     end
 
     it "should have a CRL" do

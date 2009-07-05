@@ -17,6 +17,14 @@ class Puppet::SSL::CertificateAuthority
 
     require 'puppet/ssl/certificate_authority/interface'
 
+    class CertificateVerificationError < RuntimeError
+        attr_accessor :error_code
+
+        def initialize(code)
+            @error_code = code
+        end
+    end
+
     class << self
         include Puppet::Util::Cacher
 
@@ -276,9 +284,10 @@ class Puppet::SSL::CertificateAuthority
         store.add_file Puppet[:cacert]
         store.add_crl crl.content if self.crl
         store.purpose = OpenSSL::X509::PURPOSE_SSL_CLIENT
+        store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
 
         unless store.verify(cert.content)
-            raise "Certificate for %s failed verification" % name
+            raise CertificateVerificationError.new(store.error), store.error_string
         end
     end
 

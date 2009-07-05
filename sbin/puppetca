@@ -55,7 +55,9 @@
 #
 # list::
 #   List outstanding certificate requests.  If '--all' is specified,
-#   signed certificates are also listed, prefixed by '+'.
+#   signed certificates are also listed, prefixed by '+', and revoked
+#   or invalid certificates are prefixed by '-' (the verification outcome
+#   is printed in parenthesis).
 #
 # print::
 #   Print the full-text version of a host's certificate.

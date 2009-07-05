@@ -176,6 +176,7 @@ describe Puppet::SSL::CertificateAuthority::Interface do
             describe "and an empty array was provided" do
                 it "should print a string containing all certificate requests" do
                     @ca.expects(:waiting?).returns %w{host1 host2}
+                    @ca.stubs(:verify)
 
                     @applier = @class.new(:list, [])
 
@@ -189,12 +190,14 @@ describe Puppet::SSL::CertificateAuthority::Interface do
                 it "should print a string containing all certificate requests and certificates" do
                     @ca.expects(:waiting?).returns %w{host1 host2}
                     @ca.expects(:list).returns %w{host3 host4}
+                    @ca.stubs(:verify)
+                    @ca.expects(:verify).with("host3").raises(Puppet::SSL::CertificateAuthority::CertificateVerificationError.new(23), "certificate revoked")
 
                     @applier = @class.new(:list, :all)
 
                     @applier.expects(:puts).with "host1"
                     @applier.expects(:puts).with "host2"
-                    @applier.expects(:puts).with "+ host3"
+                    @applier.expects(:puts).with "- host3 (certificate revoked)"
                     @applier.expects(:puts).with "+ host4"
 
                     @applier.apply(@ca)
@@ -205,6 +208,7 @@ describe Puppet::SSL::CertificateAuthority::Interface do
                 it "should print a string of all named hosts that have a waiting request" do
                     @ca.expects(:waiting?).returns %w{host1 host2}
                     @ca.expects(:list).returns %w{host3 host4}
+                    @ca.stubs(:verify)
 
                     @applier = @class.new(:list, %w{host1 host2 host3 host4})
 

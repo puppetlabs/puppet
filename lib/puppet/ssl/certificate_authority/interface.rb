@@ -60,8 +60,16 @@ class Puppet::SSL::CertificateAuthority::Interface
         end
 
         hosts.uniq.sort.each do |host|
-            if signed.include?(host)
+            invalid = false
+            begin
+                ca.verify(host) unless requests.include?(host)
+            rescue Puppet::SSL::CertificateAuthority::CertificateVerificationError => details
+                invalid = details.to_s
+            end
+            if not invalid and signed.include?(host)
                 puts "+ " + host
+            elsif invalid
+                puts "- " + host + " (" + invalid + ")"
             else
                 puts host
             end

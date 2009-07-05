@@ -585,7 +585,7 @@ describe Puppet::SSL::CertificateAuthority do
 
         describe "and verifying certificates" do
             before do
-                @store = stub 'store', :verify => true, :add_file => nil, :purpose= => nil, :add_crl => true
+                @store = stub 'store', :verify => true, :add_file => nil, :purpose= => nil, :add_crl => true, :flags= => nil
 
                 OpenSSL::X509::Store.stubs(:new).returns @store
 
@@ -627,6 +627,12 @@ describe Puppet::SSL::CertificateAuthority do
             it "should set the store purpose to OpenSSL::X509::PURPOSE_SSL_CLIENT" do
                 Puppet.settings.stubs(:value).with(:cacert).returns "/ca/cert"
                 @store.expects(:add_file).with "/ca/cert"
+
+                @ca.verify("me")
+            end
+
+            it "should set the store flags to check the crl" do
+                @store.expects(:flags=).with OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
 
                 @ca.verify("me")
             end
