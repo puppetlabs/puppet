@@ -17,7 +17,15 @@ Puppet::Type.newtype(:macauthorization) do
         when false, "false", :false
             :false
         else
-            raise Puppet::Error("munge_boolean only takes booleans")
+            fail("munge_boolean only takes booleans")
+        end
+    end
+    
+    def munge_integer(value)
+        begin
+          Integer(value)
+        rescue ArgumentError
+          fail("munge_integer only takes integers")
         end
     end
 
@@ -74,6 +82,9 @@ Puppet::Type.newtype(:macauthorization) do
 
         newvalue(:user)
         newvalue(:'evaluate-mechanisms')
+        newvalue(:allow)
+        newvalue(:deny)
+        newvalue(:rule)
     end
 
     newproperty(:comment) do
@@ -86,15 +97,22 @@ Puppet::Type.newtype(:macauthorization) do
     end
 
     newproperty(:k_of_n) do
-        desc "k-of-n. Built-in rights only show a value of '1' or absent,
-        other values may be acceptable. Undocumented."
+        desc "k-of-n describes how large a subset of rule mechanisms must
+        succeed for successful authentication. If there are 'n' mechanisms,
+        then 'k' (the integer value of this parameter) mechanisms must succeed.
+        The most common setting for this parameter is '1'. If k-of-n is not
+        set, then 'n-of-n' mechanisms must succeed."
+        
+        munge do |value|
+            @resource.munge_integer(value)
+        end
     end
 
     newproperty(:mechanisms, :array_matching => :all) do
         desc "an array of suitable mechanisms."
     end
 
-    newproperty(:rule, :array_match => :all) do
+    newproperty(:rule, :array_matching => :all) do
         desc "The rule(s) that this right refers to."
     end
 
@@ -132,10 +150,17 @@ Puppet::Type.newtype(:macauthorization) do
         authenticate every time, set the timeout to 0. For minimum security,
         remove the timeout attribute so the user authenticates only once per
         session."
+        
+        munge do |value|
+            @resource.munge_integer(value)
+        end
     end
 
     newproperty(:tries) do
         desc "The number of tries allowed."
+        munge do |value|
+            @resource.munge_integer(value)
+        end
     end
 
 end

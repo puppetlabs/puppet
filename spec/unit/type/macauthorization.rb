@@ -13,6 +13,7 @@ describe Puppet::Type.type(:macauthorization), "when checking macauthorization o
         provider_class = macauth_type.provider(macauth_type.providers[0])
         Plist.stubs(:parse_xml).with("/etc/authorization").returns(authplist)
         macauth_type.stubs(:defaultprovider).returns provider_class
+        @resource = macauth_type.new(:name => 'foo')
     end
 
     describe "when validating attributes" do
@@ -70,4 +71,41 @@ describe Puppet::Type.type(:macauthorization), "when checking macauthorization o
 
     end
 
+    [:k_of_n, :timeout, :tries].each do |property|
+        describe "when managing the #{property} property" do
+            it "should convert number-looking strings into actual numbers" do
+                prop = macauth_type.attrclass(property).new(:resource => @resource)
+                prop.should = "300"
+                prop.should.must == 300
+            end
+            it "should support integers as a value" do
+                prop = macauth_type.attrclass(property).new(:resource => @resource)
+                prop.should = 300
+                prop.should.must == 300
+            end
+            it "should raise an error for non-integer values" do
+                prop = macauth_type.attrclass(property).new(:resource => @resource)
+                lambda { prop.should = "foo" }.should raise_error(Puppet::Error)
+            end
+        end
+    end
+
+    [:allow_root, :authenticate_user, :session_owner, :shared].each do |property|
+        describe "when managing the #{property} property" do
+            it "should convert boolean-looking false strings into actual booleans" do
+                prop = macauth_type.attrclass(property).new(:resource => @resource)
+                prop.should = "false"
+                prop.should.must == :false
+            end
+            it "should convert boolean-looking true strings into actual booleans" do
+                prop = macauth_type.attrclass(property).new(:resource => @resource)
+                prop.should = "true"
+                prop.should.must == :true
+            end
+            it "should raise an error for non-boolean values" do
+                prop = macauth_type.attrclass(property).new(:resource => @resource)
+                lambda { prop.should = "foo" }.should raise_error(Puppet::Error)
+            end
+        end
+    end
 end
