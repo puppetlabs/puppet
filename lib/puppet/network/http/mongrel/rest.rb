@@ -41,7 +41,7 @@ class Puppet::Network::HTTP::MongrelREST < Mongrel::HttpHandler
 
     # return the request body
     def body(request)
-        request.body
+        request.body.read
     end
 
     def set_content_type(response, format)

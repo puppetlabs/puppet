@@ -59,7 +59,7 @@ describe "Puppet::Network::HTTP::MongrelREST" do
             end
 
             it "should return the request body as the body" do
-                @request.expects(:body).returns "mybody"
+                @request.expects(:body).returns StringIO.new("mybody")
                 @handler.body(@request).should == "mybody"
             end
 
