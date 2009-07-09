@@ -243,6 +243,14 @@ describe Puppet::Indirector::Indirection do
                 @indirection.find("/my/key")
             end
 
+            it "should filter the result instance if the terminus supports it" do
+                @terminus.stubs(:find).returns(@instance)
+                @terminus.stubs(:respond_to?).with(:filter).returns(true)
+
+                @terminus.expects(:filter).with(@instance)
+
+                @indirection.find("/my/key")
+            end
             describe "when caching is enabled" do
                 before do
                     @indirection.cache_class = :cache_terminus

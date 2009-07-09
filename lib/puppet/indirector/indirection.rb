@@ -202,7 +202,7 @@ class Puppet::Indirector::Indirection
                 cache.save request(:save, result, *args)
             end
 
-            return result
+            return terminus.respond_to?(:filter) ? terminus.filter(result) : result
         end
 
         return nil

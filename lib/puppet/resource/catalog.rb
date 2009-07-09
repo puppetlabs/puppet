@@ -468,6 +468,13 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         to_catalog :to_resource
     end
 
+    # filter out the catalog, applying +block+ to each resource. 
+    # If the block result is false, the resource will
+    # be kept otherwise it will be skipped
+    def filter(&block)
+        to_catalog :to_resource, &block
+    end
+
     # Store the classes in the classfile.
     def write_class_file
         begin
@@ -534,7 +541,8 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
 
         map = {}
         vertices.each do |resource|
-            next if resource.respond_to?(:virtual?) and resource.virtual?
+            next if virtual_not_exported?(resource)
+            next if block_given? and yield resource
 
             #This is hackity hack for 1094
             #Aliases aren't working in the ral catalog because the current instance of the resource
@@ -588,5 +596,9 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         result.tag(*self.tags)
 
         return result
+    end
+
+    def virtual_not_exported?(resource)
+        resource.respond_to?(:virtual?) and resource.virtual? and (resource.respond_to?(:exported?) and not resource.exported?)
     end
 end

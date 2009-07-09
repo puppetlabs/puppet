@@ -295,6 +295,47 @@ describe Puppet::Resource::Catalog, "when compiling" do
         end
     end
 
+    describe "when filtering" do
+        before :each do
+            @original = Puppet::Resource::Catalog.new("mynode")
+            @original.tag(*%w{one two three})
+            @original.add_class *%w{four five six}
+
+            @r1 = stub_everything 'r1', :ref => "File[/a]"
+            @r1.stubs(:respond_to?).with(:ref).returns(true)
+            @r1.stubs(:dup).returns(@r1)
+            @r1.stubs(:is_a?).returns(Puppet::Resource).returns(true)
+
+            @r2 = stub_everything 'r2', :ref => "File[/b]"
+            @r2.stubs(:respond_to?).with(:ref).returns(true)
+            @r2.stubs(:dup).returns(@r2)
+            @r2.stubs(:is_a?).returns(Puppet::Resource).returns(true)
+
+            @resources = [@r1,@r2]
+
+            @original.add_resource(@r1,@r2)
+        end
+
+        it "should transform the catalog to a resource catalog" do
+            @original.expects(:to_catalog).with { |h,b| h == :to_resource }
+
+            @original.filter
+        end
+
+        it "should scan each catalog resource in turn and apply filtering block" do
+            @resources.each { |r| r.expects(:exported?) }
+            @original.filter do |r|
+                r.exported?
+            end
+        end
+
+        it "should filter out resources which produce true when the filter block is evaluated" do
+            @original.filter do |r|
+                r == @r1
+            end.resource("File[/a]").should be_nil
+        end
+    end
+
     describe "when functioning as a resource container" do
         before do
             @catalog = Puppet::Resource::Catalog.new("host")

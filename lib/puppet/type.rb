@@ -1847,6 +1847,9 @@ class Type
     # The catalog that this resource is stored in.
     attr_accessor :catalog
 
+    # is the resource exported
+    attr_accessor :exported
+
     # create a log at specified level
     def log(msg)
         Puppet::Util::Log.create(
@@ -1880,7 +1883,7 @@ class Type
             self.title = resource.ref
         end
 
-        [:file, :line, :catalog].each do |getter|
+        [:file, :line, :catalog, :exported].each do |getter|
             setter = getter.to_s + "="
             if val = resource.send(getter)
                 self.send(setter, val)
@@ -2059,6 +2062,10 @@ class Type
         # FIXME I'm currently ignoring 'parent' and 'path'
 
         return trans
+    end
+
+    def exported?
+        exported
     end
 
 end # Puppet::Type

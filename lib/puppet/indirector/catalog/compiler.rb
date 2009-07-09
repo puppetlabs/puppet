@@ -41,6 +41,12 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         end
     end
 
+    # filter-out a catalog to remove exported resources
+    def filter(catalog)
+        return catalog.filter { |r| r.exported? } if catalog.respond_to?(:filter)
+        catalog
+    end
+
     def initialize
         set_server_facts
     end

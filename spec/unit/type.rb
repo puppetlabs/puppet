@@ -68,6 +68,10 @@ describe Puppet::Type do
         resource.tags = [:tag1,:tag2]
     end
 
+    it "should have a method to know if the resource is exported" do
+        Puppet::Type.type(:mount).new(:name => "foo").should respond_to(:exported?)
+    end
+
     describe "when initializing" do
         describe "and passed a TransObject" do
             it "should fail" do
@@ -87,7 +91,7 @@ describe Puppet::Type do
                 Puppet::Type.type(:mount).new(resource).title.should == "User[foo]"
             end
 
-            [:line, :file, :catalog].each do |param|
+            [:line, :file, :catalog, :exported].each do |param|
                 it "should copy '#{param}' from the resource if present" do
                     resource = Puppet::Resource.new(:mount, "/foo")
                     resource.send(param.to_s + "=", "foo")
