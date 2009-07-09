@@ -141,7 +141,7 @@ describe "Puppet defaults" do
         end
     end
 
-    describe "when enabling thing storeconfigs" do
+    describe "when enabling thin storeconfigs" do
         before do
             Puppet::Resource::Catalog.stubs(:cache_class=)
             Puppet::Node::Facts.stubs(:cache_class=)

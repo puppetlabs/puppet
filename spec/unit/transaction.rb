@@ -55,7 +55,7 @@ describe Puppet::Transaction do
 
     describe "when skipping a resource" do
         before :each do
-            @resource = stub_everything 'res', :exported? => true
+            @resource = stub_everything 'res'
             @catalog = Puppet::Resource::Catalog.new
             @transaction = Puppet::Transaction.new(@catalog)
         end
@@ -76,6 +76,7 @@ describe Puppet::Transaction do
         end
 
         it "should skip exported resource" do
+            @resource.stubs(:exported?).returns true
             @transaction.skip?(@resource).should be_true
         end
     end

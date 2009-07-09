@@ -22,4 +22,17 @@ describe Puppet::Transaction do
 
         transaction.evaluate
     end
+
+    it "should not apply exported resources" do
+        catalog = Puppet::Resource::Catalog.new
+        resource = Puppet::Type.type(:file).new :path => "/foo/bar", :backup => false
+        resource.exported = true
+        catalog.add_resource resource
+
+        transaction = Puppet::Transaction.new(catalog)
+
+        resource.expects(:evaluate).never
+
+        transaction.evaluate
+    end
 end
