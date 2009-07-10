@@ -63,11 +63,18 @@ desc "Run the specs under spec/"
 task :spec do
     require 'spec'
     require 'spec/rake/spectask'
-    # require 'rcov'
+    begin
+        require 'rcov'
+    rescue LoadError
+    end
+
     Spec::Rake::SpecTask.new do |t|
         t.spec_opts = ['--format','s', '--loadby','mtime']
         t.spec_files = FileList['spec/**/*.rb']
-    end
+        if defined?(Rcov)
+            t.rcov = true
+        end
+     end
 end
 
 desc "Run the unit tests"
@@ -89,10 +96,14 @@ task :ci_prep do
 end
 
 desc "Run the CI RSpec tests"
-task :ci_spec => [:ci_prep, 'ci:setup:rspec', :spec]
+task :ci_spec => [:ci_prep, 'ci:setup:rspec'] do
+    sh "cd spec; rake all; exit 0"
+end
 
 desc "Run CI Unit tests"
-task :ci_unit => [:ci_prep, 'ci:setup:testunit', :unit]
+task :ci_unit => [:ci_prep, 'ci:setup:testunit'] do
+    sh "cd test; rake test; exit 0"
+end
 
 desc "Send patch information to the puppet-dev list"
 task :mail_patches do
