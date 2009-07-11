@@ -152,9 +152,15 @@ module Puppet::Util::SELinux
 
     # Internal helper function to read and parse /proc/mounts
     def read_mounts
+        mounts = ""
         begin
-            mountfh = File.open("/proc/mounts", File::NONBLOCK)
-            mounts = mountfh.read
+            mountfh = File.open("/proc/mounts")
+            # We use read_nonblock() in a loop rather than read() to work-around
+            # a linux kernel bug.  See ticket #1963 for details.
+            while true
+                mounts += mountfh.read_nonblock(1024)
+            end
+        rescue EOFError
             mountfh.close
         rescue
             return nil
