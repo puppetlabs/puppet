@@ -128,7 +128,7 @@ describe Puppet::FileServing::Configuration do
             mount.expects(:environment).with("mynode").returns env
 
             config.stubs(:mounts).returns("modules" => mount)
-            Puppet.expects(:warning)
+            Puppet::Util::Warnings.expects(:warn_once)
             config.find_mount("foo", "mynode").should equal(mount)
         end
 
