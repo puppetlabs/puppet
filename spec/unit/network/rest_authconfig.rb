@@ -121,6 +121,11 @@ describe Puppet::Network::RestAuthConfig do
             end
         end
 
+        it "should warn" do
+            Puppet.expects(:warning).at_least_once
+            @authconfig.insert_default_acl
+        end
+
         it "should create a last catch-all deny all rule" do
             @authconfig.stubs(:mk_acl)
             @acl.expects(:newright).with("/")
