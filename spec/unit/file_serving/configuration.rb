@@ -118,7 +118,7 @@ describe Puppet::FileServing::Configuration do
             config.find_mount("one", "mynode").should == "foo"
         end
 
-        it "should modules mount's environment to find a matching module if the named module cannot be found" do
+        it "should use the environment of the module mount to find a matching module if the named module cannot be found" do
             config = Puppet::FileServing::Configuration.create
 
             mod = mock 'module'
@@ -128,6 +128,7 @@ describe Puppet::FileServing::Configuration do
             mount.expects(:environment).with("mynode").returns env
 
             config.stubs(:mounts).returns("modules" => mount)
+            Puppet.expects(:warning)
             config.find_mount("foo", "mynode").should equal(mount)
         end
 
