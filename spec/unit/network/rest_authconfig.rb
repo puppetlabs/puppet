@@ -121,8 +121,8 @@ describe Puppet::Network::RestAuthConfig do
             end
         end
 
-        it "should warn" do
-            Puppet.expects(:warning).at_least_once
+        it "should log at info loglevel" do
+            Puppet.expects(:info).at_least_once
             @authconfig.insert_default_acl
         end
 
