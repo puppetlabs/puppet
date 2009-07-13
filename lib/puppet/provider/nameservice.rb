@@ -130,7 +130,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     end
 
     # Autogenerate a value.  Mostly used for uid/gid, but also used heavily
-    # with netinfo, because netinfo is stupid.
+    # with DirectoryServices, because DirectoryServices is stupid.
     def autogen(field)
         field = symbolize(field)
         id_generators = {:user => :uid, :group => :gid}

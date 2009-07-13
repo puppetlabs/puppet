@@ -14,7 +14,7 @@ class TestMailAlias < Test::Unit::TestCase
 
         @provider = @type.defaultprovider
 
-        # Make sure they aren't using something funky like netinfo
+        # Make sure they are using the parsed provider
         unless @provider.name == :aliases
             @type.defaultprovider = @type.provider(:aliases)
         end

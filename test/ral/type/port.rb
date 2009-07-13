@@ -15,7 +15,7 @@ require 'puppettest'
 #
 #        @provider = @porttype.defaultprovider
 #
-#        # Make sure they aren't using something funky like netinfo
+#        # Make sure they are using the parsed provider
 #        unless @provider.name == :parsed
 #            @porttype.defaultprovider = @porttype.provider(:parsed)
 #        end

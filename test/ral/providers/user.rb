@@ -52,7 +52,6 @@ class TestUserProvider < Test::Unit::TestCase
 
             prov = Puppet::Type.type(:user).defaultprovider
             output = prov.report(param)
-            # output = %x{nireport / /users name #{prov.netinfokey(param)}}
             output.each { |hash|
                 if hash[:name] == user.name
                     val = hash[param]
@@ -307,7 +306,7 @@ class TestUserProvider < Test::Unit::TestCase
             return
         end
 
-        # Stupid netinfo
+        # Stupid DirectoryServices
         if Facter.value(:operatingsystem) == "Darwin"
             assert_raise(ArgumentError, "gid allowed a non-integer value") do
                 user.gid = group.name

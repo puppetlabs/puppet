@@ -64,7 +64,7 @@ The server can also function as a certificate authority and file server.
 %build
 # Fix some rpmlint complaints
 for f in mac_dscl.pp mac_dscl_revert.pp \
-         mac_netinfo.pp mac_pkgdmg.pp ; do
+         mac_pkgdmg.pp ; do
   sed -i -e'1d' examples/$f
   chmod a-x examples/$f
 done

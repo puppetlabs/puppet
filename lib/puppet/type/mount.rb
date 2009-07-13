@@ -154,7 +154,7 @@ module Puppet
 
         newproperty(:target) do
             desc "The file in which to store the mount table.  Only used by
-                those providers that write to disk (i.e., not NetInfo)."
+                those providers that write to disk."
 
             defaultto { if @resource.class.defaultprovider.ancestors.include?(Puppet::Provider::ParsedFile)
                     @resource.class.defaultprovider.default_target

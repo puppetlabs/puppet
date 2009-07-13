@@ -30,14 +30,6 @@ class DirectoryService < Puppet::Provider::NameService
         attr_writer :macosx_version_major
     end
 
-
-    # JJM 2007-07-24: Not yet sure what initvars() does.  I saw it in netinfo.rb
-    # I do know, however, that it makes methods "work"  =)
-    # e.g. addcmd isn't available if this method call isn't present.
-    #
-    # JJM: Also, where this method is defined seems to impact the visibility
-    #   of methods.  If I put initvars after commands, confine and defaultfor,
-    #   then getinfo is called from the parent class, not this class.
     initvars()
 
     commands :dscl => "/usr/bin/dscl"
@@ -333,10 +325,9 @@ class DirectoryService < Puppet::Provider::NameService
 
     def ensure=(ensure_value)
         super
-        # JJM: Modeled after nameservice/netinfo.rb, we need to
-        #   loop over all valid properties for the type we're managing
-        #   and call the method which sets that property value
-        #   Like netinfo, dscl can't create everything at once, afaik.
+        # We need to loop over all valid properties for the type we're
+        # managing and call the method which sets that property value
+        # dscl can't create everything at once unfortunately.
         if ensure_value == :present
             @resource.class.validproperties.each do |name|
                 next if name == :ensure
@@ -491,12 +482,7 @@ class DirectoryService < Puppet::Provider::NameService
     def getinfo(refresh = false)
         # JJM 2007-07-24:
         #      Override the getinfo method, which is also defined in nameservice.rb
-        #      This method returns and sets @infohash, which looks like:
-        #      (NetInfo provider, user type...)
-        #       @infohash = {:comment=>"Jeff McCune", :home=>"/Users/mccune",
-        #       :shell=>"/bin/zsh", :password=>"********", :uid=>502, :gid=>502,
-        #       :name=>"mccune"}
-        #
+        #      This method returns and sets @infohash
         # I'm not re-factoring the name "getinfo" because this method will be
         # most likely called by nameservice.rb, which I didn't write.
         if refresh or (! defined?(@property_value_cache_hash) or ! @property_value_cache_hash)

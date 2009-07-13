@@ -43,27 +43,10 @@ Puppet::Type.type(:user).provide :directoryservice, :parent => Puppet::Provider:
         return @resource[:name].capitalize
     end
 
-    # The list of all groups the user is a member of.  Different
-    # user mgmt systems will need to override this method.
+    # The list of all groups the user is a member of.
     # JJM: FIXME: Override this method...
     def groups
         groups = []
-
-        # user = @resource[:name]
-        # # Retrieve them all from netinfo
-        # open("| #{command(:nireport)} / /groups name users") do |file|
-        #     file.each do |line|
-        #         name, members = line.split(/\s+/)
-        #         next unless members
-        #         next if members =~ /NoValue/
-        #         members = members.split(",")
-        #
-        #         if members.include? user
-        #             groups << name
-        #         end
-        #     end
-        # end
-
         groups.join(",")
     end
 

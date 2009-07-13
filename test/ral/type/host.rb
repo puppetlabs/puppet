@@ -15,7 +15,7 @@ class TestHost < Test::Unit::TestCase
 
         @provider = @hosttype.defaultprovider
 
-        # Make sure they aren't using something funky like netinfo
+        # Make sure they are using the parsed provider
         unless @provider.name == :parsed
             @hosttype.defaultprovider = @hosttype.provider(:parsed)
         end
@@ -63,14 +63,9 @@ class TestHost < Test::Unit::TestCase
         assert_equal(0, list.length, "Found hosts in empty file somehow")
     end
 
-    # Darwin will actually write to netinfo here.
-    if Facter.value(:operatingsystem) != "Darwin" or Process.uid == 0
+
     def test_simplehost
         host = nil
-        # We want to actually use the netinfo provider on darwin
-        if Facter.value(:operatingsystem) == "Darwin"
-            Puppet::Type.type(:host).defaultprovider = nil
-        end
 
         assert_nothing_raised {
             host = Puppet::Type.type(:host).new(
@@ -97,14 +92,7 @@ class TestHost < Test::Unit::TestCase
     end
 
     def test_moddinghost
-        # We want to actually use the netinfo provider on darwin
-        if Facter.value(:operatingsystem) == "Darwin"
-            Puppet::Type.type(:host).defaultprovider = nil
-        end
         host = mkhost()
-        if Facter.value(:operatingsystem) == "Darwin"
-            assert_equal(:netinfo, host[:provider], "Got incorrect provider")
-        end
         cleanup do
             host[:ensure] = :absent
             assert_apply(host)
@@ -195,7 +183,6 @@ class TestHost < Test::Unit::TestCase
         }
     end
 
-    end
     def test_aliasisproperty
         assert_equal(:property, @hosttype.attrtype(:alias))
     end
