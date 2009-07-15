@@ -91,8 +91,8 @@ class Puppet::Provider
         end
     end
 
-    def self.defaultnum
-        @defaults.length
+    def self.specificity
+        (@defaults.length * 100) + ancestors.select { |a| a.is_a? Class }.length
     end
 
     def self.initvars

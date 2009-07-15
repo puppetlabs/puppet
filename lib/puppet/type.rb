@@ -1465,8 +1465,8 @@ class Type
 
             # If we don't have any default we use suitable providers
             defaults = suitable if defaults.empty?
-            max = defaults.collect { |provider| provider.defaultnum }.max
-            defaults = defaults.find_all { |provider| provider.defaultnum == max }
+            max = defaults.collect { |provider| provider.specificity }.max
+            defaults = defaults.find_all { |provider| provider.specificity == max }
 
             retval = nil
             if defaults.length > 1

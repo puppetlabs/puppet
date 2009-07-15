@@ -72,6 +72,23 @@ describe Puppet::Type do
         Puppet::Type.type(:mount).new(:name => "foo").should respond_to(:exported?)
     end
 
+    describe "when choosing a default provider" do
+        it "should choose the provider with the highest specificity" do
+            # Make a fake type
+            type = Puppet::Type.newtype(:defaultprovidertest) do
+                newparam(:name) do end
+            end
+
+            basic = type.provide(:basic) {}
+            greater = type.provide(:greater) {}
+
+            basic.stubs(:specificity).returns 1
+            greater.stubs(:specificity).returns 2
+
+            type.defaultprovider.should equal(greater)
+        end
+    end
+
     describe "when initializing" do
         describe "and passed a TransObject" do
             it "should fail" do

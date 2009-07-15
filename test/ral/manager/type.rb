@@ -307,28 +307,6 @@ class TestType < Test::Unit::TestCase
         assert_equal(path, file[:name], "Did not get correct name")
     end
 
-    # Make sure default providers behave correctly
-    def test_defaultproviders
-        # Make a fake type
-        type = Puppet::Type.newtype(:defaultprovidertest) do
-            newparam(:name) do end
-        end
-
-        basic = type.provide(:basic) do
-            defaultfor :operatingsystem => :somethingelse,
-                :operatingsystemrelease => :yayness
-        end
-
-        assert_equal(basic, type.defaultprovider)
-        type.defaultprovider = nil
-
-        greater = type.provide(:greater) do
-            defaultfor :operatingsystem => Facter.value("operatingsystem")
-        end
-
-        assert_equal(greater, type.defaultprovider)
-    end
-
     # Make sure that we can have multiple non-isomorphic objects with the same name,
     # but not with isomorphic objects.
     def test_isomorphic_names
