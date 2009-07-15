@@ -984,7 +984,7 @@ class Type
 
     # Retrieve all known instances.  Either requires providers or must be overridden.
     def self.instances
-        unless defined?(@providers) and ! @providers.empty?
+        if provider_hash.empty?
             raise Puppet::DevError, "%s has no providers and has not overridden 'instances'" % self.name
         end
 
@@ -1489,26 +1489,35 @@ class Type
         return @defaultprovider
     end
 
+    def self.provider_hash_by_type(type)
+        @provider_hashes ||= {}
+        @provider_hashes[type] ||= {}
+    end
+
+    def self.provider_hash
+        Puppet::Type.provider_hash_by_type(self.name)
+    end
+
     # Retrieve a provider by name.
     def self.provider(name)
         name = Puppet::Util.symbolize(name)
 
         # If we don't have it yet, try loading it.
-        unless @providers.has_key?(name)
+        unless provider_hash.has_key?(name)
             @providerloader.load(name)
         end
-        return @providers[name]
+        return provider_hash[name]
     end
 
     # Just list all of the providers.
     def self.providers
-        @providers.keys
+        provider_hash.keys
     end
 
     def self.validprovider?(name)
         name = Puppet::Util.symbolize(name)
 
-        return (@providers.has_key?(name) && @providers[name].suitable?)
+        return (provider_hash.has_key?(name) && provider_hash[name].suitable?)
     end
 
     # Create a new provider of a type.  This method must be called
@@ -1516,7 +1525,7 @@ class Type
     def self.provide(name, options = {}, &block)
         name = Puppet::Util.symbolize(name)
 
-        if obj = @providers[name]
+        if obj = provider_hash[name]
             Puppet.debug "Reloading %s %s provider" % [name, self.name]
             unprovide(name)
         end
@@ -1544,7 +1553,7 @@ class Type
 
         provider = genclass(name,
             :parent => parent,
-            :hash => @providers,
+            :hash => provider_hash,
             :prefix => "Provider",
             :block => block,
             :include => feature_module,
@@ -1612,9 +1621,9 @@ class Type
     end
 
     def self.unprovide(name)
-        if @providers.has_key? name
+        if provider_hash.has_key? name
             rmclass(name,
-                :hash => @providers,
+                :hash => provider_hash,
                 :prefix => "Provider"
             )
             if @defaultprovider and @defaultprovider.name == name
@@ -1625,10 +1634,10 @@ class Type
 
     # Return an array of all of the suitable providers.
     def self.suitableprovider
-        if @providers.empty?
+        if provider_hash.empty?
             providerloader.loadall
         end
-        @providers.find_all { |name, provider|
+        provider_hash.find_all { |name, provider|
             provider.suitable?
         }.collect { |name, provider|
             provider
@@ -1790,7 +1799,6 @@ class Type
         @objects = Hash.new
         @aliases = Hash.new
 
-        @providers = Hash.new
         @defaults = {}
 
         unless defined? @parameters
