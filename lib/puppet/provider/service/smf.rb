@@ -55,7 +55,12 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
 
     def startcmd
         self.setupservice
-        [command(:adm), :enable, @resource[:name]]
+        case self.status
+        when :stopped
+            [command(:adm), :enable, @resource[:name]]
+        when :maintenance
+            [command(:adm), :clear, @resource[:name]]
+        end
     end
 
     def status
@@ -79,6 +84,8 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
         when "offline", "disabled", "uninitialized"
             #self.warning "matched stopped %s" % line.inspect
             return :stopped
+        when "maintenance"
+            return :maintenance
         when "legacy_run"
             raise Puppet::Error,
               "Cannot manage legacy services through SMF"
