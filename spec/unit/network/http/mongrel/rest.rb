@@ -109,8 +109,8 @@ describe "Puppet::Network::HTTP::MongrelREST" do
                 result[:bar].should == "xyzzy"
             end
 
-            it "should URI-decode the HTTP parameters" do
-                encoding = URI.escape("foo bar")
+            it "should CGI-decode the HTTP parameters" do
+                encoding = CGI.escape("foo bar")
                 @request.expects(:params).returns('QUERY_STRING' => "foo=#{encoding}")
                 result = @handler.params(@request)
                 result[:foo].should == "foo bar"
@@ -141,7 +141,7 @@ describe "Puppet::Network::HTTP::MongrelREST" do
             end
 
             it "should YAML-load and URI-decode values that are YAML-encoded" do
-                escaping = URI.escape(YAML.dump(%w{one two}))
+                escaping = CGI.escape(YAML.dump(%w{one two}))
                 @request.expects(:params).returns('QUERY_STRING' => "foo=#{escaping}")
                 result = @handler.params(@request)
                 result[:foo].should == %w{one two}

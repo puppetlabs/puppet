@@ -208,7 +208,7 @@ module Puppet::Network::HTTP::Handler
             # in the query string, for security reasons.
             next result if param == :node
             next result if param == :ip
-            value = URI.unescape(value)
+            value = CGI.unescape(value)
             if value =~ /^---/
                 value = YAML.load(value)
             else

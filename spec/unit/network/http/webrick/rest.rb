@@ -85,8 +85,8 @@ describe Puppet::Network::HTTP::WEBrickREST do
                 result[:bar].should == "xyzzy"
             end
 
-            it "should URI-decode the HTTP parameters" do
-                encoding = URI.escape("foo bar")
+            it "should CGI-decode the HTTP parameters" do
+                encoding = CGI.escape("foo bar")
                 @request.expects(:query).returns('foo' => encoding)
                 result = @handler.params(@request)
                 result[:foo].should == "foo bar"
@@ -104,8 +104,8 @@ describe Puppet::Network::HTTP::WEBrickREST do
                 result[:foo].should be_false
             end
 
-            it "should YAML-load and URI-decode values that are YAML-encoded" do
-                escaping = URI.escape(YAML.dump(%w{one two}))
+            it "should YAML-load and CGI-decode values that are YAML-encoded" do
+                escaping = CGI.escape(YAML.dump(%w{one two}))
                 @request.expects(:query).returns('foo' => escaping)
                 result = @handler.params(@request)
                 result[:foo].should == %w{one two}

@@ -282,20 +282,20 @@ describe Puppet::Indirector::Request do
             @request.query_string.should == "?one=1.2"
         end
 
-        it "should URI-escape all option values that are strings" do
-            escaping = URI.escape("one two")
+        it "should CGI-escape all option values that are strings" do
+            escaping = CGI.escape("one two")
             @request.stubs(:options).returns(:one => "one two")
             @request.query_string.should == "?one=#{escaping}"
         end
 
-        it "should YAML-dump and URI-escape arrays" do
-            escaping = URI.escape(YAML.dump(%w{one two}))
+        it "should YAML-dump and CGI-escape arrays" do
+            escaping = CGI.escape(YAML.dump(%w{one two}))
             @request.stubs(:options).returns(:one => %w{one two})
             @request.query_string.should == "?one=#{escaping}"
         end
 
-        it "should convert to a string and URI-escape all option values that are symbols" do
-            escaping = URI.escape("sym bol")
+        it "should convert to a string and CGI-escape all option values that are symbols" do
+            escaping = CGI.escape("sym bol")
             @request.stubs(:options).returns(:one => :"sym bol")
             @request.query_string.should == "?one=#{escaping}"
         end

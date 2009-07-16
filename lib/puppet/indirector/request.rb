@@ -1,3 +1,4 @@
+require 'cgi'
 require 'uri'
 require 'puppet/indirector'
 
@@ -115,9 +116,9 @@ class Puppet::Indirector::Request
             when nil; next
             when true, false; value = value.to_s
             when Fixnum, Bignum, Float; value = value # nothing
-            when String; value = URI.escape(value)
-            when Symbol; value = URI.escape(value.to_s)
-            when Array; value = URI.escape(YAML.dump(value))
+            when String; value = CGI.escape(value)
+            when Symbol; value = CGI.escape(value.to_s)
+            when Array; value = CGI.escape(YAML.dump(value))
             else
                 raise ArgumentError, "HTTP REST queries cannot handle values of type '%s'" % value.class
             end
@@ -159,7 +160,7 @@ class Puppet::Indirector::Request
         begin
             uri = URI.parse(URI.escape(key))
         rescue => detail
-            raise ArgumentError, "Could not understand URL %s: %s" % [source, detail.to_s]
+            raise ArgumentError, "Could not understand URL %s: %s" % [key, detail.to_s]
         end
 
         # Just short-circuit these to full paths

@@ -84,8 +84,8 @@ describe "Puppet::Network::HTTP::RackREST" do
                 result[:bar].should == "xyzzy"
             end
 
-            it "should URI-decode the HTTP parameters" do
-                encoding = URI.escape("foo bar")
+            it "should CGI-decode the HTTP parameters" do
+                encoding = CGI.escape("foo bar")
                 req = mk_req("/?foo=#{encoding}")
                 result = @handler.params(req)
                 result[:foo].should == "foo bar"
@@ -115,8 +115,8 @@ describe "Puppet::Network::HTTP::RackREST" do
                 result[:foo].should == 1.5
             end
 
-            it "should YAML-load and URI-decode values that are YAML-encoded" do
-                escaping = URI.escape(YAML.dump(%w{one two}))
+            it "should YAML-load and CGI-decode values that are YAML-encoded" do
+                escaping = CGI.escape(YAML.dump(%w{one two}))
                 req = mk_req("/?foo=#{escaping}")
                 result = @handler.params(req)
                 result[:foo].should == %w{one two}
