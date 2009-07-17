@@ -30,7 +30,7 @@ class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
 
     # Retrieve the accept header from the http request.
     def content_type_header(request)
-        request.env['HTTP_CONTENT_TYPE']
+        request.content_type
     end
 
     # Return which HTTP verb was used in this request.

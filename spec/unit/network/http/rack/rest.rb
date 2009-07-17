@@ -40,8 +40,8 @@ describe "Puppet::Network::HTTP::RackREST" do
                 @handler.accept_header(req).should == "myaccept"
             end
 
-            it "should return the HTTP_CONTENT_TYPE parameter as the content type header" do
-                req = mk_req('/', 'HTTP_CONTENT_TYPE' => 'mycontent')
+            it "should return the CONTENT_TYPE parameter as the content type header" do
+                req = mk_req('/', 'CONTENT_TYPE' => 'mycontent')
                 @handler.content_type_header(req).should == "mycontent"
             end
 
