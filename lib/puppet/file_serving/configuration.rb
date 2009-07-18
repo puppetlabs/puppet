@@ -72,7 +72,7 @@ class Puppet::FileServing::Configuration
 
         raise(ArgumentError, "Cannot find file: Invalid path '%s'" % mount_name) unless mount_name =~ %r{^[-\w]+$}
 
-        return nil unless mount = find_mount(mount_name, request.options[:node])
+        return nil unless mount = find_mount(mount_name, request.node)
         if mount.name == "modules" and mount_name != "modules"
             # yay backward-compatibility
             path = "%s/%s" % [mount_name, path]

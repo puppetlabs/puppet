@@ -241,8 +241,8 @@ describe Puppet::Indirector::FileServer do
             @mount = stub 'mount'
             @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
 
-            @request.options[:node] = "mynode"
-            @request.options[:ipaddress] = "myip"
+            @request.stubs(:node).returns("mynode")
+            @request.stubs(:ip).returns("myip")
             @mount.expects(:allowed?).with("mynode", "myip").returns "something"
 
             @file_server.authorized?(@request).should == "something"

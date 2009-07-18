@@ -150,7 +150,7 @@ describe Puppet::FileServing::Configuration do
             @config = Puppet::FileServing::Configuration.create
             @config.stubs(:find_mount)
 
-            @request = stub 'request', :key => "foo/bar/baz", :options => {}
+            @request = stub 'request', :key => "foo/bar/baz", :options => {}, :node => nil
         end
 
         it "should reread the configuration" do
@@ -179,7 +179,7 @@ describe Puppet::FileServing::Configuration do
 
         it "should use the mount name and node to find the mount" do
             @config.expects(:find_mount).with { |name, node| name == "foo" and node == "mynode" }
-            @request.options[:node] = "mynode"
+            @request.stubs(:node).returns("mynode")
 
             @config.split_path(@request)
         end

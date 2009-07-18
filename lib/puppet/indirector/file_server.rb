@@ -19,7 +19,7 @@ class Puppet::Indirector::FileServer < Puppet::Indirector::Terminus
 
         # If we're not serving this mount, then access is denied.
         return false unless mount
-        return mount.allowed?(request.options[:node], request.options[:ipaddress])
+        return mount.allowed?(request.node, request.ip)
     end
 
     # Find our key using the fileserver.
@@ -30,7 +30,7 @@ class Puppet::Indirector::FileServer < Puppet::Indirector::Terminus
 
         # The mount checks to see if the file exists, and returns nil
         # if not.
-        return nil unless path = mount.find(relative_path, request.options)
+        return nil unless path = mount.find(relative_path, :node => request.node)
         result = model.new(path)
         result.links = request.options[:links] if request.options[:links]
         result.collect
