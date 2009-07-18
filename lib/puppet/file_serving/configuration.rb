@@ -41,7 +41,7 @@ class Puppet::FileServing::Configuration
         end
 
         if mounts["modules"].environment(node).module(mount_name)
-            Puppet::Util::Warnings.warn_once "DEPRECATION NOTICE: Found module '%s' without using the 'modules' mount; please prefix path with 'modules/'" % mount_name
+            Puppet::Util::Warnings.warnonce "DEPRECATION NOTICE: Found module '%s' without using the 'modules' mount; please prefix path with 'modules/'" % mount_name
             return mounts["modules"]
         end
 
