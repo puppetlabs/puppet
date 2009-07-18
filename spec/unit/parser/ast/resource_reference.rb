@@ -60,4 +60,10 @@ describe Puppet::Parser::AST::ResourceReference do
         ref.evaluate(@scope)
     end
 
+    it "should return a correct representation when converting to string" do
+        type = stub 'type', :is_a? => true, :to_s => "file"
+        title = stub 'title', :is_a? => true, :to_s => "[/tmp/a, /tmp/b]"
+
+        ast::ResourceReference.new( :type => type, :title => title ).to_s.should == "File[/tmp/a, /tmp/b]"
+    end
 end

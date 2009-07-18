@@ -62,5 +62,11 @@ describe Puppet::Parser::AST::ASTArray do
         operator.evaluate(@scope).should == [[123]]
     end
 
+    it "should return a valid string with to_s" do
+        a = stub 'a', :is_a? => true, :to_s => "a"
+        b = stub 'b', :is_a? => true, :to_s => "b"
+        array = Puppet::Parser::AST::ASTArray.new :children => [a,b]
 
+        array.to_s.should == "[a, b]"
+    end
 end

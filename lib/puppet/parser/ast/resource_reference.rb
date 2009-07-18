@@ -64,5 +64,13 @@ class Puppet::Parser::AST
             end
             return objtype
         end
+
+        def to_s
+            if title.is_a?(ASTArray)
+                "#{type.to_s.capitalize}#{title}"
+            else
+                "#{type.to_s.capitalize}[#{title}]"
+            end
+        end
     end
 end

@@ -11,7 +11,7 @@ class Puppet::Parser::AST
         end
 
         def to_s
-            return @value
+            return @value.to_s unless @value.nil?
         end
     end
 
@@ -29,6 +29,10 @@ class Puppet::Parser::AST
             end
             @value
         end
+
+        def to_s
+            @value ? "true" : "false"
+        end
     end
 
     # The base string class.
@@ -38,12 +42,20 @@ class Puppet::Parser::AST
         def evaluate(scope)
             return scope.strinterp(@value, file, line)
         end
+
+        def to_s
+            "\"#{@value}\""
+        end
     end
 
     # An uninterpreted string.
     class FlatString < AST::Leaf
         def evaluate(scope)
             return @value
+        end
+
+        def to_s
+            "\"#{@value}\""
         end
     end
 

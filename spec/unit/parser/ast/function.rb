@@ -16,6 +16,12 @@ describe Puppet::Parser::AST::Function do
         end
     end
 
+    it "should return its representation with to_s" do
+        args = stub 'args', :is_a? => true, :to_s => "[a, b]"
+
+        Puppet::Parser::AST::Function.new(:name => "func", :arguments => args).to_s.should == "func(a, b)"
+    end
+
     describe "when evaluating" do
 
         it "should fail if the function doesn't exist" do

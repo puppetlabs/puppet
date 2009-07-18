@@ -47,6 +47,10 @@ class Puppet::Parser::AST
 
             return self
         end
+
+        def to_s
+            "[" + @children.collect { |c| c.to_s }.join(', ') + "]"
+        end
     end
 
     # A simple container class, containing the parameters for an object.

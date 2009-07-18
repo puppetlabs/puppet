@@ -155,8 +155,8 @@ class Parser
             scan_for_vardef(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::ASTArray)
 
             if stmt.is_a?(Puppet::Parser::AST::VarDef)
-                Puppet.debug "rdoc: found constant: %s = %s" % [stmt.name.to_s, value_to_s(stmt.value)]
-                container.add_constant(Constant.new(stmt.name.to_s, value_to_s(stmt.value), stmt.doc))
+                Puppet.debug "rdoc: found constant: %s = %s" % [stmt.name.to_s, stmt.value.to_s]
+                container.add_constant(Constant.new(stmt.name.to_s, stmt.value.to_s, stmt.doc))
             end
         end
     end
@@ -169,20 +169,15 @@ class Parser
 
             if stmt.is_a?(Puppet::Parser::AST::Resource) and !stmt.type.nil?
                 type = stmt.type.split("::").collect { |s| s.capitalize }.join("::")
-                title = value_to_s(stmt.title)
+                title = stmt.title.is_a?(Puppet::Parser::AST::ASTArray) ? stmt.title.to_s.gsub(/\[(.*)\]/,'\1') : stmt.title.to_s
                 Puppet.debug "rdoc: found resource: %s[%s]" % [type,title]
 
                 param = []
                 stmt.params.children.each do |p|
                     res = {}
                     res["name"] = p.param
-                    if !p.value.nil?
-                        if !p.value.is_a?(Puppet::Parser::AST::ASTArray)
-                            res["value"] = "'#{p.value}'"
-                        else
-                            res["value"] = "[%s]" % p.value.children.collect { |v| "'#{v}'" }.join(", ")
-                        end
-                    end
+                    res["value"] = "#{p.value.to_s}" unless p.value.nil?
+
                     param << res
                 end
 
@@ -419,20 +414,6 @@ class Parser
     def remove_private_comments(comment)
         comment.gsub!(/^#--.*?^#\+\+/m, '')
         comment.sub!(/^#--.*/m, '')
-    end
-
-    # convert an AST value to a string
-    def value_to_s(value)
-        value = value.children if value.is_a?(Puppet::Parser::AST::ASTArray)
-        if value.is_a?(Array)
-            "['#{value.join(", ")}']"
-        elsif [:true, true, "true"].include?(value)
-            "true"
-        elsif [:false, false, "false"].include?(value)
-            "false"
-        else
-            value.to_s
-        end
     end
 end
 end

@@ -51,5 +51,10 @@ class Puppet::Parser::AST
              @fname = Puppet::Parser::Functions.function(@name)
             # Lastly, check the parity
         end
+
+        def to_s
+            args = arguments.is_a?(ASTArray) ? arguments.to_s.gsub(/\[(.*)\]/,'\1') : arguments
+            "#{name}(#{args})"
+        end
     end
 end
