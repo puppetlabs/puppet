@@ -12,4 +12,12 @@ describe Puppet::SSL::Certificate::Rest do
     it "should be a sublcass of Puppet::Indirector::REST" do
         Puppet::SSL::Certificate::Rest.superclass.should equal(Puppet::Indirector::REST)
     end
+
+    it "should set server_setting to :ca_server" do
+        Puppet::SSL::Certificate::Rest.server_setting.should == :ca_server
+    end
+
+    it "should set port_setting to :ca_port" do
+        Puppet::SSL::Certificate::Rest.port_setting.should == :ca_port
+    end
 end
