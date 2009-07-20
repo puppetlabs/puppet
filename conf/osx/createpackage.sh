@@ -23,6 +23,7 @@
 
 INSTALLRB="install.rb"
 BINDIR="/usr/bin"
+SBINDIR="/usr/sbin"
 SITELIBDIR="/usr/lib/ruby/site_ruby/1.8"
 PACKAGEMAKER="/Developer/usr/bin/packagemaker"
 PROTO_PLIST="PackageInfo.plist"
@@ -49,7 +50,7 @@ function find_puppet_root() {
 
 function install_puppet() {
   echo "Installing Puppet to ${pkgroot}"
-  "${installer}" --destdir="${pkgroot}" --bindir="${BINDIR}" --sitelibdir="${SITELIBDIR}"
+  "${installer}" --destdir="${pkgroot}" --bindir="${BINDIR}" --sbindir="${SBINDIR}" --sitelibdir="${SITELIBDIR}"
   chown -R root:admin "${pkgroot}"
 }
 
@@ -83,6 +84,10 @@ function prepare_package() {
   # substitute in the sitelibdir specified above on the assumption that this
   # is where any previous puppet install exists that should be cleaned out.
   sed -i '' "s|{SITELIBDIR}|${SITELIBDIR}|g" "${pkgtemp}/scripts/${PREFLIGHT}"
+  # substitute in the bindir sepcified on the assumption that this is where
+  # any old executables that have moved from bindir->sbindir should be
+  # cleaned out from.
+  sed -i '' "s|{BINDIR}|${BINDIR}|g" "${pkgtemp}/scripts/${PREFLIGHT}"
   chmod 0755 "${pkgtemp}/scripts/${PREFLIGHT}"
 }
 
