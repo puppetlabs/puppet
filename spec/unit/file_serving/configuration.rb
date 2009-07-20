@@ -102,6 +102,19 @@ describe Puppet::FileServing::Configuration do
             config.mounted?("plugins").should be_true
         end
 
+        it "should allow all access to modules and plugins if no fileserver.conf exists" do
+            FileTest.expects(:exists?).returns false # the file doesn't exist
+            modules = stub 'modules'
+            Puppet::FileServing::Mount::Modules.stubs(:new).returns(modules)
+            modules.expects(:allow).with('*')
+
+            plugins = stub 'plugins'
+            Puppet::FileServing::Mount::Plugins.stubs(:new).returns(plugins)
+            plugins.expects(:allow).with('*')
+
+            Puppet::FileServing::Configuration.create
+        end
+
         it "should add modules and plugins mounts even if they are not returned by the parser" do
             @parser.expects(:parse).returns("one" => mock("mount"))
             FileTest.expects(:exists?).returns true # the file doesn't exist
