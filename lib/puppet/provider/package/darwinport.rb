@@ -3,8 +3,8 @@ require 'puppet/provider/package'
 Puppet::Type.type(:package).provide :darwinport, :parent => Puppet::Provider::Package do
     desc "Package management using DarwinPorts on OS X."
 
+    confine :operatingsystem => :darwin
     commands :port => "/opt/local/bin/port"
-    confine :operatingsystem => "Darwin"
 
     def self.eachpkgashash
         # list out all of the packages

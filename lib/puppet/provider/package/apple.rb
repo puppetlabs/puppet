@@ -8,10 +8,8 @@ Puppet::Type.type(:package).provide :apple, :parent => Puppet::Provider::Package
         automatically add the ``.pkg`` extension, so leave that off when specifying
         the package name."
 
-    confine :exists => "/Library/Receipts"
+    confine :operatingsystem => :darwin
     commands :installer => "/usr/sbin/installer"
-
-    defaultfor :operatingsystem => :darwin
 
     def self.instances
         instance_by_name.collect do |name|

@@ -16,7 +16,8 @@ require 'puppet/provider/package'
 Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Package) do
     desc "Package management which copies application bundles to a target."
 
-    confine :exists => "/Library/Receipts"
+    confine :operatingsystem => :darwin
+    
     commands :hdiutil => "/usr/bin/hdiutil"
     commands :curl => "/usr/bin/curl"
     commands :ditto => "/usr/bin/ditto"
