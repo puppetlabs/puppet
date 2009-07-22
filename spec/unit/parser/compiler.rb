@@ -35,7 +35,7 @@ describe Puppet::Parser::Compiler do
         @node = Puppet::Node.new "testnode"
         @parser = Puppet::Parser::Parser.new :environment => "development"
 
-        @scope_resource = stub 'scope_resource', :builtin? => true, :finish => nil, :ref => 'Class[main]'
+        @scope_resource = stub 'scope_resource', :builtin? => true, :finish => nil, :ref => 'Class[main]', :type => "class"
         @scope = stub 'scope', :resource => @scope_resource, :source => mock("source")
         @compiler = Puppet::Parser::Compiler.new(@node, @parser)
     end
@@ -173,7 +173,7 @@ describe Puppet::Parser::Compiler do
         end
 
         it "should ignore builtin resources" do
-            resource = stub 'builtin', :ref => "File[testing]", :builtin? => true
+            resource = stub 'builtin', :ref => "File[testing]", :builtin? => true, :type => "file"
 
             @compiler.add_resource(@scope, resource)
             resource.expects(:evaluate).never
@@ -193,7 +193,7 @@ describe Puppet::Parser::Compiler do
         end
 
         it "should not evaluate already-evaluated resources" do
-            resource = stub 'already_evaluated', :ref => "File[testing]", :builtin? => false, :evaluated? => true, :virtual? => false
+            resource = stub 'already_evaluated', :ref => "File[testing]", :builtin? => false, :evaluated? => true, :virtual? => false, :type => "file"
             @compiler.add_resource(@scope, resource)
             resource.expects(:evaluate).never
 
@@ -222,7 +222,7 @@ describe Puppet::Parser::Compiler do
             @compiler.add_resource(@scope, resource)
 
             # And one that does not
-            dnf = stub "dnf", :ref => "File[dnf]"
+            dnf = stub "dnf", :ref => "File[dnf]", :type => "file"
 
             @compiler.add_resource(@scope, dnf)
 
@@ -246,16 +246,16 @@ describe Puppet::Parser::Compiler do
         end
 
         it "should return added resources in add order" do
-            resource1 = stub "1", :ref => "File[yay]"
+            resource1 = stub "1", :ref => "File[yay]", :type => "file"
             @compiler.add_resource(@scope, resource1)
-            resource2 = stub "2", :ref => "File[youpi]"
+            resource2 = stub "2", :ref => "File[youpi]", :type => "file"
             @compiler.add_resource(@scope, resource2)
 
             @compiler.resources.should == [resource1, resource2]
         end
 
         it "should add resources that do not conflict with existing resources" do
-            resource = stub "noconflict", :ref => "File[yay]"
+            resource = CompilerTestResource.new(:file, "yay")
             @compiler.add_resource(@scope, resource)
 
             @compiler.catalog.should be_vertex(resource)
@@ -270,7 +270,7 @@ describe Puppet::Parser::Compiler do
         end
 
         it "should add an edge from the scope resource to the added resource" do
-            resource = stub "noconflict", :ref => "File[yay]"
+            resource = stub "noconflict", :ref => "File[yay]", :type => "file"
             @compiler.add_resource(@scope, resource)
 
             @compiler.catalog.should be_edge(@scope.resource, resource)
@@ -293,19 +293,19 @@ describe Puppet::Parser::Compiler do
         end
 
         it "should have a method for looking up resources" do
-            resource = stub 'resource', :ref => "Yay[foo]"
+            resource = stub 'resource', :ref => "Yay[foo]", :type => "file"
             @compiler.add_resource(@scope, resource)
             @compiler.findresource("Yay[foo]").should equal(resource)
         end
 
         it "should be able to look resources up by type and title" do
-            resource = stub 'resource', :ref => "Yay[foo]"
+            resource = stub 'resource', :ref => "Yay[foo]", :type => "file"
             @compiler.add_resource(@scope, resource)
             @compiler.findresource("Yay", "foo").should equal(resource)
         end
 
         it "should not evaluate virtual defined resources" do
-            resource = stub 'notevaluated', :ref => "File[testing]", :builtin? => false, :evaluated? => false, :virtual? => true
+            resource = stub 'notevaluated', :ref => "File[testing]", :builtin? => false, :evaluated? => false, :virtual? => true, :type => "file"
             @compiler.add_resource(@scope, resource)
 
             resource.expects(:evaluate).never
@@ -379,7 +379,7 @@ describe Puppet::Parser::Compiler do
             @class = stub 'class', :classname => "my::class"
             @scope.stubs(:find_hostclass).with("myclass").returns(@class)
 
-            @resource = stub 'resource', :ref => "Class[myclass]"
+            @resource = stub 'resource', :ref => "Class[myclass]", :type => "file"
         end
 
         it "should evaluate each class" do
@@ -468,7 +468,7 @@ describe Puppet::Parser::Compiler do
             node_class = stub 'node', :classname => "c", :evaluate_code => nil
             @compiler.parser.stubs(:node).with("c").returns(node_class)
 
-            node_resource = stub 'node resource', :ref => "Node[c]", :evaluate => nil
+            node_resource = stub 'node resource', :ref => "Node[c]", :evaluate => nil, :type => "node"
             node_class.expects(:evaluate).returns(node_resource)
 
             @compiler.compile
@@ -478,7 +478,7 @@ describe Puppet::Parser::Compiler do
             node_class = stub 'node', :classname => "default", :evaluate_code => nil
             @compiler.parser.stubs(:node).with("default").returns(node_class)
 
-            node_resource = stub 'node resource', :ref => "Node[default]", :evaluate => nil
+            node_resource = stub 'node resource', :ref => "Node[default]", :evaluate => nil, :type => "node"
             node_class.expects(:evaluate).returns(node_resource)
 
             @compiler.compile
@@ -488,7 +488,7 @@ describe Puppet::Parser::Compiler do
             node_class = stub 'node', :classname => "c"
             @compiler.parser.stubs(:node).with("c").returns(node_class)
 
-            node_resource = stub 'node resource', :ref => "Node[c]"
+            node_resource = stub 'node resource', :ref => "Node[c]", :type => "node"
             node_class.expects(:evaluate).returns(node_resource)
 
             node_resource.expects(:evaluate)
@@ -497,7 +497,7 @@ describe Puppet::Parser::Compiler do
         end
 
         it "should set the node's scope as the top scope" do
-            node_resource = stub 'node resource', :ref => "Node[c]", :evaluate => nil
+            node_resource = stub 'node resource', :ref => "Node[c]", :evaluate => nil, :type => "node"
             node_class = stub 'node', :classname => "c", :evaluate => node_resource
 
             @compiler.parser.stubs(:node).with("c").returns(node_class)
@@ -516,8 +516,8 @@ describe Puppet::Parser::Compiler do
     describe Puppet::Parser::Compiler, "when managing resource overrides" do
 
         before do
-            @override = stub 'override', :ref => "My[ref]"
-            @resource = stub 'resource', :ref => "My[ref]", :builtin? => true
+            @override = stub 'override', :ref => "My[ref]", :type => "my"
+            @resource = stub 'resource', :ref => "My[ref]", :builtin? => true, :type => "my"
         end
 
         it "should be able to store overrides" do
