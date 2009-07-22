@@ -39,7 +39,11 @@ class Puppet::Parser::Compiler
         # And in the resource graph.  At some point, this might supercede
         # the global resource table, but the table is a lot faster
         # so it makes sense to maintain for now.
-        @catalog.add_edge(scope.resource, resource)
+        if resource.type.to_s.downcase == "class" and main = @catalog.resource(:class, :main)
+            @catalog.add_edge(main, resource)
+        else
+            @catalog.add_edge(scope.resource, resource)
+        end
     end
 
     # Do we use nodes found in the code, vs. the external node sources?

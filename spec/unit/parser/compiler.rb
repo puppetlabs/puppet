@@ -269,6 +269,29 @@ describe Puppet::Parser::Compiler do
             lambda { @compiler.add_resource(@scope, file2) }.should raise_error(Puppet::Resource::Catalog::DuplicateResourceError)
         end
 
+        it "should add an edge from the scope resource to the added resource" do
+            resource = stub "noconflict", :ref => "File[yay]"
+            @compiler.add_resource(@scope, resource)
+
+            @compiler.catalog.should be_edge(@scope.resource, resource)
+        end
+
+        it "should add edges from the class resources to the main class" do
+            main = CompilerTestResource.new(:class, :main)
+            @compiler.add_resource(@scope, main)
+            resource = CompilerTestResource.new(:class, "foo")
+            @compiler.add_resource(@scope, resource)
+
+            @compiler.catalog.should be_edge(main, resource)
+        end
+
+        it "should just add edges to the scope resource for the class resources when no main class can be found" do
+            resource = CompilerTestResource.new(:class, "foo")
+            @compiler.add_resource(@scope, resource)
+
+            @compiler.catalog.should be_edge(@scope.resource, resource)
+        end
+
         it "should have a method for looking up resources" do
             resource = stub 'resource', :ref => "Yay[foo]"
             @compiler.add_resource(@scope, resource)
