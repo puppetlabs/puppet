@@ -751,4 +751,15 @@ describe Puppet::Type.type(:file) do
             file.finish
         end
     end
+
+    describe "when writing the file" do
+        it "should propagate failures encountered when renaming the temporary file" do
+            File.stubs(:open)
+
+            File.expects(:rename).raises ArgumentError
+            file = Puppet::Type::File.new(:name => "/my/file", :backup => "puppet")
+
+            lambda { file.write("something", :content) }.should raise_error(Puppet::Error)
+        end
+    end
 end

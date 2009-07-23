@@ -832,7 +832,7 @@ module Puppet
                     fail_if_checksum_is_wrong(path, checksum) if validate
                     File.rename(path, self[:path])
                 rescue => detail
-                    self.err "Could not rename tmp %s for replacing: %s" % [self[:path], detail]
+                    fail "Could not rename temporary file %s to %s : %s" % [path, self[:path], detail]
                 ensure
                     # Make sure the created file gets removed
                     File.unlink(path) if FileTest.exists?(path)
