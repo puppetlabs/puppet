@@ -49,7 +49,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
             end
         else
             # Raise the http error if we didn't get a 'success' of some kind.
-            message = "Server returned %s: %s" % [response.code, response.message]
+            message = "Error %s on SERVER: %s" % [response.code, response.message]
             raise Net::HTTPError.new(message, response)
         end
     end
