@@ -225,11 +225,12 @@ def prepare_installation
   version = [Config::CONFIG["MAJOR"], Config::CONFIG["MINOR"]].join(".")
   libdir = File.join(Config::CONFIG["libdir"], "ruby", version)
 
-  # Mac OS X 10.5 declares bindir and sbindir as
+  # Mac OS X 10.5 and higher declare bindir and sbindir as
   # /System/Library/Frameworks/Ruby.framework/Versions/1.8/usr/bin
   # /System/Library/Frameworks/Ruby.framework/Versions/1.8/usr/sbin
   # which is not generally where people expect executables to be installed
-  if RUBY_PLATFORM == "universal-darwin9.0"
+  # These settings are appropriate defaults for all OS X versions.
+  if RUBY_PLATFORM =~ /^universal-darwin[\d\.]+$/
     Config::CONFIG['bindir'] = "/usr/bin"
     Config::CONFIG['sbindir'] = "/usr/sbin"
   end
