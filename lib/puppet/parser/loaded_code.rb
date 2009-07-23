@@ -65,6 +65,12 @@ class Puppet::Parser::LoadedCode
         find(namespace, name, :definition)
     end
 
+    [:hostclasses, :nodes, :definitions].each do |m|
+        define_method(m) do
+            instance_variable_get("@#{m}").dup
+        end
+    end
+
     private
 
     def find_fully_qualified(name, type)

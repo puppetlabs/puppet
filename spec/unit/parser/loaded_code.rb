@@ -25,6 +25,13 @@ describe Puppet::Parser::LoadedCode do
         it "should return nil when asked for a #{data} that has not been added" do
             Puppet::Parser::LoadedCode.new.send(data, "foo").should be_nil
         end
+
+        it "should be able to retrieve all #{data}s" do
+            plurals = { "hostclass" => "hostclasses", "node" => "nodes", "definition" => "definitions" }
+            loader = Puppet::Parser::LoadedCode.new
+            loader.send("add_" + data , "foo", "bar")
+            loader.send(plurals[data]).should == { "foo" => "bar" }
+        end
     end
 
     describe "when finding a qualified instance" do

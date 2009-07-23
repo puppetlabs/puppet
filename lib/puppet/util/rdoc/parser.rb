@@ -281,7 +281,7 @@ class Parser
     # that contains the documentation
     def parse_elements(container)
         Puppet.debug "rdoc: scanning manifest"
-        @ast[:classes].values.sort { |a,b| a.classname <=> b.classname }.each do |klass|
+        @ast.hostclasses.values.sort { |a,b| a.classname <=> b.classname }.each do |klass|
             name = klass.classname
             if klass.file == @input_file_name
                 unless name.empty?
@@ -294,13 +294,13 @@ class Parser
             end
         end
 
-        @ast[:definitions].each do |name, define|
+        @ast.definitions.each do |name, define|
             if define.file == @input_file_name
                 document_define(name,define,container)
             end
         end
 
-        @ast[:nodes].each do |name, node|
+        @ast.nodes.each do |name, node|
             if node.file == @input_file_name
                 document_node(name,node,container)
             end
