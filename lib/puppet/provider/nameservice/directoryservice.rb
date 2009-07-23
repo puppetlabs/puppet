@@ -108,18 +108,14 @@ class DirectoryService < Puppet::Provider::NameService
             return @macosx_version_major
         end
         begin
-            product_version = Facter.value(:macosx_productversion)
-            if product_version.nil?
-                raise Puppet::Error, "Could not determine OS X version from Facter"
-            end
-            product_version_major = product_version.scan(/(\d+)\.(\d+)./).join(".")
+            product_version_major = Facter.value(:macosx_productversion_major)
             if %w{10.0 10.1 10.2 10.3}.include?(product_version_major)
-                raise Puppet::Error, "%s is not supported by the directoryservice provider" % product_version_major
+                fail("%s is not supported by the directoryservice provider" % product_version_major)
             end
             @macosx_version_major = product_version_major
             return @macosx_version_major
         rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error, "Could not determine OS X version: %s" % detail
+            fail("Could not determine OS X version: %s" % detail)
         end
     end
 
@@ -128,7 +124,7 @@ class DirectoryService < Puppet::Provider::NameService
         begin
             dscl_output = execute(get_exec_preamble("-list"))
         rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error, "Could not get %s list from DirectoryService" % [ @resource_type.name.to_s ]
+           fail("Could not get %s list from DirectoryService" % [ @resource_type.name.to_s ])
         end
         return dscl_output.split("\n")
     end
@@ -228,7 +224,7 @@ class DirectoryService < Puppet::Provider::NameService
         begin
             dscl_output = execute(dscl_vector)
         rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error, "Could not get report.  command execution failed."
+            fail("Could not get report.  command execution failed.")
         end
 
         # Two code paths is ugly, but until we can drop 10.4 support we don't
@@ -283,7 +279,7 @@ class DirectoryService < Puppet::Provider::NameService
         begin
             File.open(password_hash_file, 'w') { |f| f.write(password_hash)}
         rescue Errno::EACCES => detail
-            raise Puppet::Error, "Could not write to password hash file: #{detail}"
+            fail("Could not write to password hash file: #{detail}")
         end
 
         # NBK: For shadow hashes, the user AuthenticationAuthority must contain a value of
@@ -305,7 +301,7 @@ class DirectoryService < Puppet::Provider::NameService
         begin
             dscl_output = execute(dscl_vector)
         rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error, "Could not set AuthenticationAuthority."
+            fail("Could not set AuthenticationAuthority.")
         end
     end
 
@@ -314,7 +310,7 @@ class DirectoryService < Puppet::Provider::NameService
         password_hash_file = "#{@@password_hash_dir}/#{guid}"
         if File.exists?(password_hash_file) and File.file?(password_hash_file)
             if not File.readable?(password_hash_file)
-                raise Puppet::Error("Could not read password hash file at #{password_hash_file} for #{@resource[:name]}")
+                fail("Could not read password hash file at #{password_hash_file} for #{@resource[:name]}")
             end
             f = File.new(password_hash_file)
             password_hash = f.read
@@ -358,7 +354,7 @@ class DirectoryService < Puppet::Provider::NameService
           guid = guid_plist["dsAttrTypeStandard:#{@@ns_to_ds_attribute_map[:guid]}"][0]
           self.class.set_password(@resource.name, guid, passphrase)
       rescue Puppet::ExecutionFailure => detail
-          raise Puppet::Error, "Could not set %s on %s[%s]: %s" % [param, @resource.class.name, @resource.name, detail]
+          fail("Could not set %s on %s[%s]: %s" % [param, @resource.class.name, @resource.name, detail])
       end
     end
 
@@ -389,7 +385,7 @@ class DirectoryService < Puppet::Provider::NameService
             begin
                 execute(exec_arg_vector)
             rescue Puppet::ExecutionFailure => detail
-                raise Puppet::Error, "Could not set %s on %s[%s]: %s" % [param, @resource.class.name, @resource.name, detail]
+                fail("Could not set %s on %s[%s]: %s" % [param, @resource.class.name, @resource.name, detail])
             end
         end
     end
@@ -416,8 +412,8 @@ class DirectoryService < Puppet::Provider::NameService
         begin
           execute(exec_arg_vector)
         rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error, "Could not set GeneratedUID for %s %s: %s" %
-                [@resource.class.name, @resource.name, detail]
+            fail("Could not set GeneratedUID for %s %s: %s" %
+                [@resource.class.name, @resource.name, detail])
         end
 
         if value = @resource.should(:password) and value != ""
@@ -438,8 +434,8 @@ class DirectoryService < Puppet::Provider::NameService
                     begin
                       execute(exec_arg_vector)
                     rescue Puppet::ExecutionFailure => detail
-                        raise Puppet::Error, "Could not create %s %s: %s" %
-                            [@resource.class.name, @resource.name, detail]
+                        fail("Could not create %s %s: %s" %
+                            [@resource.class.name, @resource.name, detail])
                     end
                 end
             end
@@ -453,7 +449,7 @@ class DirectoryService < Puppet::Provider::NameService
                 begin
                      execute(cmd)
                 rescue Puppet::ExecutionFailure => detail
-                     raise Puppet::Error, "Could not remove %s from group: %s, %s" % [member, @resource.name, detail]
+                     fail("Could not remove %s from group: %s, %s" % [member, @resource.name, detail])
                 end
              end
          end
@@ -466,7 +462,7 @@ class DirectoryService < Puppet::Provider::NameService
                begin
                     execute(cmd)
                rescue Puppet::ExecutionFailure => detail
-                    raise Puppet::Error, "Could not add %s to group: %s, %s" % [new_member, @resource.name, detail]
+                    fail("Could not add %s to group: %s, %s" % [new_member, @resource.name, detail])
                end
            end
         end
