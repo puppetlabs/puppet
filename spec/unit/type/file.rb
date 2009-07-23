@@ -12,8 +12,7 @@ describe Puppet::Type.type(:file) do
         @path = pathname
         @file = Puppet::Type::File.new(:name => @path)
 
-        @catalog = mock 'catalog'
-        @catalog.stub_everything
+        @catalog = Puppet::Resource::Catalog.new
         @file.catalog = @catalog
     end
 
@@ -108,7 +107,6 @@ describe Puppet::Type.type(:file) do
                 :path => @link,
                 :mode => "755"
             )
-            @catalog = Puppet::Resource::Catalog.new
             @catalog.add_resource @resource
         end
 
@@ -513,9 +511,6 @@ describe Puppet::Type.type(:file) do
 
     describe "when returning resources with :eval_generate" do
         before do
-            @catalog = mock 'catalog'
-            @catalog.stub_everything
-
             @graph = stub 'graph', :add_edge => nil
             @catalog.stubs(:relationship_graph).returns @graph
 

@@ -580,7 +580,35 @@ module Puppet
             # remote system.
             mark_children_for_purging(children) if self.purge?
 
-            return children.values.sort { |a, b| a[:path] <=> b[:path] }
+            result = children.values.sort { |a, b| a[:path] <=> b[:path] }
+            remove_less_specific_files(result)
+        end
+
+        # This is to fix bug #2296, where two files recurse over the same
+        # set of files.  It's a rare case, and when it does happen you're
+        # not likely to have many actual conflicts, which is good, because
+        # this is a pretty inefficient implementation.
+        def remove_less_specific_files(files)
+            # We sort the paths so we can short-circuit some tests.
+            mypath = self[:path]
+            other_paths = catalog.vertices.find_all do |r|
+                r.is_a?(self.class) and r[:path][0..(mypath.length - 1)] == mypath
+            end.collect { |r| r[:path] }.sort { |a, b| a.length <=> b.length } - [self[:path]]
+
+            return files if other_paths.empty?
+
+            remove = []
+            files.each do |file|
+                path = file[:path]
+                other_paths.each do |p|
+                    if path[0..(p.length - 1)] == p
+                        remove << file
+                        break
+                    end
+                end
+            end
+
+            files - remove
         end
 
         # A simple method for determining whether we should be recursing.

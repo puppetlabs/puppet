@@ -115,6 +115,27 @@ describe Puppet::Type.type(:file) do
                 File.lstat(newpath).ftype.should == "file"
             end
         end
+
+        it "should not recursively manage files managed by a more specific explicit file" do
+            dir = tmpfile("file_source_integration_source")
+
+            subdir = File.join(dir, "subdir")
+            file = File.join(subdir, "file")
+
+            FileUtils.mkdir_p(subdir)
+            File.open(file, "w") { |f| f.puts "" }
+
+            base = Puppet::Type::File.new(:name => dir, :recurse => true, :backup => false, :mode => "755")
+            sub = Puppet::Type::File.new(:name => subdir, :recurse => true, :backup => false, :mode => "644")
+
+            @catalog = Puppet::Resource::Catalog.new
+            @catalog.add_resource base
+            @catalog.add_resource sub
+
+            @catalog.apply
+
+            (File.stat(file).mode & 007777).should == 0644
+        end
     end
 
     describe "when generating resources" do
