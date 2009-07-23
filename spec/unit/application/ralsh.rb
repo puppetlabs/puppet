@@ -206,12 +206,12 @@ describe "ralsh" do
                     ARGV.stubs(:shift).returns("type").then.returns('name')
                     ARGV.stubs(:length).returns(1).then.returns(1).then.returns(0)
                     @object = stub_everything 'object', :to_trans => stub_everything('transportable')
-                    @type.stubs(:create).returns(@object)
+                    @type.stubs(:new).returns(@object)
                     @object.stubs(:retrieve)
                 end
 
-                it "should retrieve a specific instace" do
-                    @type.expects(:create).returns(@object)
+                it "should retrieve a specific instance" do
+                    @type.expects(:new).returns(@object)
                     @object.expects(:retrieve)
 
                     @ralsh.main
