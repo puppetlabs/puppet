@@ -14,6 +14,10 @@ Puppet::Application.new(:puppetmasterd) do
     # internal option, only to be used by ext/rack/config.ru
     option("--rack")
 
+    option("--compile host",  "-c host") do |arg|
+        options[:node] = arg
+    end
+
     option("--logdest DEST",  "-l DEST") do |arg|
         begin
             Puppet::Util::Log.newdestination(arg)
@@ -38,7 +42,29 @@ Puppet::Application.new(:puppetmasterd) do
     end
 
     dispatch do
-        return Puppet[:parseonly] ? :parseonly : :main
+        if options[:node]
+            :compile
+        elsif Puppet[:parseonly]
+            :parseonly
+        else
+            :main
+        end
+    end
+
+    command(:compile) do
+        Puppet::Util::Log.newdestination :console
+        raise ArgumentError, "Cannot render compiled catalogs without json support" unless Puppet.features.json?
+        begin
+            unless catalog = Puppet::Resource::Catalog.find(options[:node])
+                raise "Could not compile catalog for %s" % options[:node] 
+            end
+
+            $stdout.puts catalog.render(:json)
+        rescue => detail
+            $stderr.puts detail
+            exit(30)
+        end
+        exit(0)
     end
 
     command(:parseonly) do

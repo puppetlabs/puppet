@@ -32,6 +32,10 @@ describe "PuppetMaster" do
         @puppetmasterd.should respond_to(:parseonly)
     end
 
+    it "should declare a compile command" do
+        @puppetmasterd.should respond_to(:compile)
+    end
+
     it "should declare a preinit block" do
         @puppetmasterd.should respond_to(:run_preinit)
     end
@@ -237,8 +241,14 @@ describe "PuppetMaster" do
             @puppetmasterd.get_command.should == :parseonly
         end
 
+        it "should dispatch to compile if called with --compile" do
+            @puppetmasterd.options[:node] = "foo"
+            @puppetmasterd.get_command.should == :compile
+        end
+
         it "should dispatch to main if parseonly is not set" do
             Puppet.stubs(:[]).with(:parseonly).returns(false)
+            @puppetmasterd.options[:node] = nil
 
             @puppetmasterd.get_command.should == :main
         end
@@ -274,6 +284,59 @@ describe "PuppetMaster" do
                 @puppetmasterd.parseonly
             end
 
+        end
+
+        describe "the compile command" do
+            before do
+                Puppet.stubs(:[]).with(:environment)
+                Puppet.stubs(:[]).with(:manifest).returns("site.pp")
+                @interpreter = stub_everything
+                Puppet.stubs(:err)
+                @puppetmasterd.stubs(:exit)
+                Puppet::Parser::Interpreter.stubs(:new).returns(@interpreter)
+                Puppet.features.stubs(:json?).returns true
+            end
+
+            it "should fail if json isn't available" do
+                Puppet.features.expects(:json?).returns false
+                lambda { @puppetmasterd.compile }.should raise_error
+            end
+
+            it "should compile a catalog for the specified node" do
+                @puppetmasterd.options[:node] = "foo"
+                Puppet::Resource::Catalog.expects(:find).with("foo").returns Puppet::Resource::Catalog.new
+                $stdout.stubs(:puts)
+
+                @puppetmasterd.compile
+            end
+
+            it "should render the catalog to json and print the output" do
+                @puppetmasterd.options[:node] = "foo"
+                catalog = Puppet::Resource::Catalog.new
+                catalog.expects(:render).with(:json).returns "myjson"
+                Puppet::Resource::Catalog.expects(:find).returns catalog
+
+                $stdout.expects(:puts).with("myjson")
+                @puppetmasterd.compile
+            end
+
+            it "should exit with error code 30 if no catalog can be found" do
+                @puppetmasterd.options[:node] = "foo"
+                Puppet::Resource::Catalog.expects(:find).returns nil
+                @puppetmasterd.expects(:exit).with(30)
+                $stderr.expects(:puts)
+
+                @puppetmasterd.compile
+            end
+
+            it "should exit with error code 30 if there's a failure" do
+                @puppetmasterd.options[:node] = "foo"
+                Puppet::Resource::Catalog.expects(:find).raises ArgumentError
+                @puppetmasterd.expects(:exit).with(30)
+                $stderr.expects(:puts)
+
+                @puppetmasterd.compile
+            end
         end
 
         describe "the main command" do
