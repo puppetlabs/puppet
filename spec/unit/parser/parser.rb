@@ -34,7 +34,7 @@ describe Puppet::Parser do
 
     end
 
-    describe Puppet::Parser, "when parsing 'if'" do
+    describe "when parsing 'if'" do
         it "not, it should create the correct ast objects" do
             ast::Not.expects(:new).with { |h| h[:value].is_a?(ast::Boolean) }
             @parser.parse("if ! true { $var = 1 }")
@@ -58,7 +58,7 @@ describe Puppet::Parser do
 
     end
 
-    describe Puppet::Parser, "when parsing if complex expressions" do
+    describe "when parsing if complex expressions" do
          it "should create a correct ast tree" do
              aststub = stub_everything 'ast'
              ast::ComparisonOperator.expects(:new).with {
@@ -79,7 +79,7 @@ describe Puppet::Parser do
 
     end
 
-    describe Puppet::Parser, "when parsing resource references" do
+    describe "when parsing resource references" do
 
         it "should not raise syntax errors" do
             lambda { @parser.parse('exec { test: param => File["a"] }') }.should_not raise_error
@@ -98,7 +98,7 @@ describe Puppet::Parser do
         end
     end
 
-    describe Puppet::Parser, "when parsing resource overrides" do
+    describe "when parsing resource overrides" do
 
         it "should not raise syntax errors" do
             lambda { @parser.parse('Resource["title"] { param => value }') }.should_not raise_error
@@ -117,7 +117,7 @@ describe Puppet::Parser do
 
     end
 
-    describe Puppet::Parser, "when parsing if statements" do
+    describe "when parsing if statements" do
 
         it "should not raise errors with empty if" do
             lambda { @parser.parse("if true { }") }.should_not raise_error
@@ -143,7 +143,7 @@ describe Puppet::Parser do
 
     end
 
-    describe Puppet::Parser, "when parsing function calls" do
+    describe "when parsing function calls" do
 
         it "should not raise errors with no arguments" do
             lambda { @parser.parse("tag()") }.should_not raise_error
@@ -167,14 +167,14 @@ describe Puppet::Parser do
 
     end
 
-    describe Puppet::Parser, "when parsing arrays with trailing comma" do
+    describe "when parsing arrays with trailing comma" do
 
         it "should not raise errors with a trailing comma" do
             lambda { @parser.parse("$a = [1,2,]") }.should_not raise_error
         end
     end
 
-    describe Puppet::Parser, "when instantiating class of same name" do
+    describe "when instantiating class of same name" do
 
         before :each do
             @one = stub 'one', :is_a? => true
@@ -202,7 +202,7 @@ describe Puppet::Parser do
         end
     end
 
-    describe Puppet::Parser, "when parsing comments before statement" do
+    describe "when parsing comments before statement" do
         it "should associate the documentation to the statement AST node" do
             ast = @parser.parse("""
             # comment
@@ -213,7 +213,7 @@ describe Puppet::Parser do
         end
     end
 
-    describe Puppet::Parser, "when building ast nodes" do
+    describe "when building ast nodes" do
         it "should get lexer comments if ast node declares use_docs" do
             lexer = stub 'lexer'
             ast = mock 'ast', :nil? => false, :use_docs => true, :doc => ""
