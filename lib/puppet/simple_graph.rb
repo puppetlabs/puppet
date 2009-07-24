@@ -209,7 +209,7 @@ class Puppet::SimpleGraph
         # If we have any vertices left with non-zero in-degrees, then we've found a cycle.
         if cycles = degree.find_all { |vertex, edges| edges.length > 0 } and cycles.length > 0
             message = cycles.collect { |vertex, edges| edges.collect { |e| e.to_s }.join(", ") }.join(", ")
-            raise Puppet::Error, "Found dependency cycles in the following relationships: %s" % message
+            raise Puppet::Error, "Found dependency cycles in the following relationships: %s; try using the '--graph' option and open the '.dot' files in OmniGraffle or GraphViz" % message
         end
 
         return result
