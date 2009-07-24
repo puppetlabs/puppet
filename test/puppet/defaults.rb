@@ -11,7 +11,7 @@ class TestPuppetDefaults < Test::Unit::TestCase
     @@dirs = %w{rrddir confdir vardir logdir statedir}
     @@files = %w{statefile manifest masterlog}
     @@normals = %w{puppetport masterport server}
-    @@booleans = %w{rrdgraph noop}
+    @@booleans = %w{noop}
 
     def testVersion
         assert( Puppet.version =~ /^[0-9]+(\.[0-9]+)*/, "got invalid version number %s" % Puppet.version )

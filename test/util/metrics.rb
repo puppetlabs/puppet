@@ -49,11 +49,6 @@ class TestMetric < PuppetTest::TestCase
         }
     end
 
-    def setup
-        super
-        Puppet[:rrdgraph] = true
-    end
-
     def test_fakedata
         report = Puppet::Transaction::Report.new
         time = Time.now.to_i

@@ -508,10 +508,6 @@ class Transaction
             return
         end
 
-        if Puppet[:rrdgraph] == true
-            report.graph()
-        end
-
         if Puppet[:summarize]
             puts report.summary
         end
