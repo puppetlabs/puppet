@@ -281,6 +281,8 @@ class Transaction
 
         prepare()
 
+        Puppet.info "Applying configuration version '%s'" % catalog.version if catalog.version
+
         begin
             allevents = @sorted_resources.collect { |resource|
                 if resource.is_a?(Puppet::Type::Component)
