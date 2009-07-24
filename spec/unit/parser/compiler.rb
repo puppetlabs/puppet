@@ -82,6 +82,10 @@ describe Puppet::Parser::Compiler do
             @parser.expects(:nodes?).returns true
             @compiler.ast_nodes?.should be_true
         end
+
+        it "should copy the parser version to the catalog" do
+            @compiler.catalog.version.should == @parser.version
+        end
     end
 
     describe "when managing scopes" do

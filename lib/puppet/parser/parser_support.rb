@@ -437,7 +437,6 @@ class Puppet::Parser::Parser
             # Store the results as the top-level class.
             newclass("", :code => main)
         end
-        @version = Time.now.to_i
         return @loaded_code
     ensure
         @lexer.clear
@@ -454,6 +453,17 @@ class Puppet::Parser::Parser
 
     def string=(string)
         @lexer.string = string
+    end
+
+    def version
+        return @version if defined?(@version)
+
+        if Puppet[:config_version] == ""
+            @version = Time.now.to_i
+            return @version
+        end
+
+        @version = %x{#{Puppet[:config_version]}}.chomp
     end
 
     # Add a new file to be checked when we're checking to see if we should be

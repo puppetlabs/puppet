@@ -153,4 +153,8 @@ describe "Puppet defaults" do
             Puppet.settings[:storeconfigs].should be_true
         end
     end
+
+    it "should have a setting for determining the configuration version and should default to an empty string" do
+        Puppet.settings[:config_version].should == ""
+    end
 end

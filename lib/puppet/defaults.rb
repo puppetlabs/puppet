@@ -188,7 +188,11 @@ module Puppet
             :hook => proc do |value|
                     Puppet.settings[:storeconfigs] = true if value
                 end
-            }
+            },
+        :config_version => ["", "How to determine the configuration version.  By default, it will be the
+            time that the configuration is parsed, but you can provide a shell script to override how the
+            version is determined.  The output of this script will be added to every log message in the
+            reports, allowing you to correlate changes on your hosts to the source version on the server."]
     )
 
     hostname = Facter["hostname"].value

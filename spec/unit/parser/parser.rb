@@ -313,4 +313,19 @@ describe Puppet::Parser do
         end
     end
 
+    describe "when determining the configuration version" do
+        it "should default to the current time" do
+            time = Time.now
+
+            Time.stubs(:now).returns time
+            @parser.version.should == time.to_i
+        end
+
+        it "should use the output of the config_version setting if one is provided" do
+            Puppet.settings.stubs(:[]).with(:config_version).returns("/my/foo")
+
+            @parser.expects(:`).with("/my/foo").returns "output\n"
+            @parser.version.should == "output"
+        end
+    end
  end
