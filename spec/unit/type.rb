@@ -72,6 +72,19 @@ describe Puppet::Type do
         Puppet::Type.type(:mount).new(:name => "foo").should respond_to(:exported?)
     end
 
+    it "should consider its version to be its catalog version" do
+        resource = Puppet::Type.type(:mount).new(:name => "foo")
+        catalog = Puppet::Resource::Catalog.new
+        catalog.version = 50
+        catalog.add_resource resource
+
+        resource.version.should == 50
+    end
+
+    it "should consider its version to be zero if it has no catalog" do
+        Puppet::Type.type(:mount).new(:name => "foo").version.should == 0
+    end
+
     describe "when choosing a default provider" do
         it "should choose the provider with the highest specificity" do
             # Make a fake type

@@ -111,5 +111,34 @@ describe Puppet::Util::Log do
             report.should be_include(log.source)
             report.should be_include(log.time.to_s)
         end
+
+        describe "when setting the source" do
+            it "should tag itself with any tags the source has" do
+                source = Puppet::Type.type(:file).new :path => "/foo/bar"
+                log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => source)
+                source.tags.each do |tag|
+                    log.tags.should be_include(tag)
+                end
+            end
+
+            it "should copy over any file and line information" do
+                source = Puppet::Type.type(:file).new :path => "/foo/bar"
+                source.file = "/my/file"
+                source.line = 50
+                log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => source)
+                log.file.should == "/my/file"
+                log.line.should == 50
+            end
+
+            it "should copy over any version information" do
+                catalog = Puppet::Resource::Catalog.new
+                catalog.version = 25
+                source = Puppet::Type.type(:file).new :path => "/foo/bar"
+                catalog.add_resource source
+
+                log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => source)
+                log.version.should == 25
+            end
+        end
     end
 end

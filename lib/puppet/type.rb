@@ -594,6 +594,11 @@ class Type
         end
     end
 
+    def version
+        return 0 unless catalog
+        catalog.version
+    end
+
     # Meta-parameter methods:  These methods deal with the results
     # of specifying metaparameters
 

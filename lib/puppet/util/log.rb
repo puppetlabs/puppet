@@ -475,7 +475,7 @@ class Puppet::Util::Log
         @levels.include?(level)
     end
 
-    attr_accessor :level, :message, :time, :remote
+    attr_accessor :level, :message, :time, :remote, :file, :line, :version
     attr_reader :source
 
     def initialize(args)
@@ -521,6 +521,11 @@ class Puppet::Util::Log
         end
         if source.respond_to?(:tags)
             source.tags.each { |t| tag(t) }
+        end
+
+        [:file, :line, :version].each do |param|
+            next unless source.respond_to?(param)
+            send(param.to_s + "=", source.send(param))
         end
     end
 
