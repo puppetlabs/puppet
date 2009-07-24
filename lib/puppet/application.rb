@@ -210,11 +210,11 @@ class Puppet::Application
 
     # This is the main application entry point
     def run
-        run_preinit
-        parse_options
-        Puppet.settings.parse if should_parse_config?
-        run_setup
-        run_command
+        exit_on_fail("initialize") { run_preinit }
+        exit_on_fail("parse options") { parse_options }
+        exit_on_fail("parse configuration file") { Puppet.settings.parse } if should_parse_config?
+        exit_on_fail("prepare for execution") { run_setup }
+        exit_on_fail("run") { run_command }
     end
 
     def main
@@ -299,4 +299,15 @@ class Puppet::Application
         end
     end
 
+    private
+
+    def exit_on_fail(message, code = 1)
+        begin
+            yield
+        rescue RuntimeError, NotImplementedError => detail
+            puts detail.backtrace if Puppet[:trace]
+            $stderr.puts "Could not %s: %s" % [message, detail]
+            exit(code)
+        end
+    end
 end

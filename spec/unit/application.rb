@@ -261,22 +261,25 @@ describe Puppet::Application do
             @app.run
         end
 
-        it "should raise an error if no command can be called" do
-            lambda { @app.run }.should raise_error(NotImplementedError)
+        it "should warn and exit if no command can be called" do
+            $stderr.expects(:puts)
+            @app.expects(:exit).with(1)
+            @app.run
         end
 
         it "should raise an error if dispatch returns no command" do
             @app.stubs(:get_command).returns(nil)
-
-            lambda { @app.run }.should raise_error(NotImplementedError)
+            $stderr.expects(:puts)
+            @app.expects(:exit).with(1)
+            @app.run
         end
 
         it "should raise an error if dispatch returns an invalid command" do
             @app.stubs(:get_command).returns(:this_function_doesnt_exist)
-
-            lambda { @app.run }.should raise_error(NotImplementedError)
+            $stderr.expects(:puts)
+            @app.expects(:exit).with(1)
+            @app.run
         end
-
     end
 
     describe "when metaprogramming" do
