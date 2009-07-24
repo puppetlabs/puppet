@@ -662,7 +662,7 @@ module Puppet
     setdefaults(:ldap,
         :ldapnodes => [false,
             "Whether to search for node configurations in LDAP.  See
-            http://reductivelabs.com/puppet/trac/wiki/LdapNodes/ for more information."],
+            http://reductivelabs.com/trac/puppet/wiki/LDAPNodes for more information."],
         :ldapssl => [false,
             "Whether SSL should be used when searching for nodes.
             Defaults to false because SSL usually requires certificates
