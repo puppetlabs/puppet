@@ -9,7 +9,7 @@ describe Puppet::Type.type(:package), "when choosing a default package provider"
     end
 
     def provider_name(os)
-        {"Ubuntu" => :apt, "Debian" => :apt, "Darwin" => :apple, "RedHat" => :up2date, "Fedora" => :yum, "FreeBSD" => :ports, "OpenBSD" => :openbsd, "Solaris" => :sun}[os]
+        {"Ubuntu" => :apt, "Debian" => :apt, "Darwin" => :pkgdmg, "RedHat" => :up2date, "Fedora" => :yum, "FreeBSD" => :ports, "OpenBSD" => :openbsd, "Solaris" => :sun}[os]
     end
 
     it "should have a default provider" do
