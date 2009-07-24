@@ -40,34 +40,31 @@ describe Puppet::Parser::Compiler do
         @compiler = Puppet::Parser::Compiler.new(@node, @parser)
     end
 
-    describe Puppet::Parser::Compiler do
-
-        it "should be able to store references to class scopes" do
-            lambda { @compiler.class_set "myname", "myscope" }.should_not raise_error
-        end
-
-        it "should be able to retrieve class scopes by name" do
-            @compiler.class_set "myname", "myscope"
-            @compiler.class_scope("myname").should == "myscope"
-        end
-
-        it "should be able to retrieve class scopes by object" do
-            klass = mock 'ast_class'
-            klass.expects(:classname).returns("myname")
-            @compiler.class_set "myname", "myscope"
-            @compiler.class_scope(klass).should == "myscope"
-        end
-
-        it "should be able to return a class list containing all set classes" do
-            @compiler.class_set "", "empty"
-            @compiler.class_set "one", "yep"
-            @compiler.class_set "two", "nope"
-
-            @compiler.classlist.sort.should == %w{one two}.sort
-        end
+    it "should be able to store references to class scopes" do
+        lambda { @compiler.class_set "myname", "myscope" }.should_not raise_error
     end
 
-    describe Puppet::Parser::Compiler, " when initializing" do
+    it "should be able to retrieve class scopes by name" do
+        @compiler.class_set "myname", "myscope"
+        @compiler.class_scope("myname").should == "myscope"
+    end
+
+    it "should be able to retrieve class scopes by object" do
+        klass = mock 'ast_class'
+        klass.expects(:classname).returns("myname")
+        @compiler.class_set "myname", "myscope"
+        @compiler.class_scope(klass).should == "myscope"
+    end
+
+    it "should be able to return a class list containing all set classes" do
+        @compiler.class_set "", "empty"
+        @compiler.class_set "one", "yep"
+        @compiler.class_set "two", "nope"
+
+        @compiler.classlist.sort.should == %w{one two}.sort
+    end
+
+    describe "when initializing" do
 
         it "should set its node attribute" do
             @compiler.node.should equal(@node)
@@ -87,7 +84,7 @@ describe Puppet::Parser::Compiler do
         end
     end
 
-    describe Puppet::Parser::Compiler, "when managing scopes" do
+    describe "when managing scopes" do
 
         it "should create a top scope" do
             @compiler.topscope.should be_instance_of(Puppet::Parser::Scope)
@@ -109,7 +106,7 @@ describe Puppet::Parser::Compiler do
         end
     end
 
-    describe Puppet::Parser::Compiler, " when compiling" do
+    describe "when compiling" do
 
         def compile_methods
             [:set_node_parameters, :evaluate_main, :evaluate_ast_node, :evaluate_node_classes, :evaluate_generators, :fail_on_unevaluated,
@@ -314,7 +311,7 @@ describe Puppet::Parser::Compiler do
         end
     end
 
-    describe Puppet::Parser::Compiler, " when evaluating collections" do
+    describe "when evaluating collections" do
 
         it "should evaluate each collection" do
             2.times { |i|
@@ -359,7 +356,7 @@ describe Puppet::Parser::Compiler do
         end
     end
 
-    describe Puppet::Parser::Compiler, "when told to evaluate missing classes" do
+    describe "when told to evaluate missing classes" do
 
         it "should fail if there's no source listed for the scope" do
             scope = stub 'scope', :source => nil
@@ -373,7 +370,7 @@ describe Puppet::Parser::Compiler do
         end
     end
 
-    describe Puppet::Parser::Compiler, " when evaluating found classes" do
+    describe "when evaluating found classes" do
 
         before do
             @class = stub 'class', :classname => "my::class"
@@ -434,7 +431,7 @@ describe Puppet::Parser::Compiler do
         end
     end
 
-    describe Puppet::Parser::Compiler, " when evaluating AST nodes with no AST nodes present" do
+    describe "when evaluating AST nodes with no AST nodes present" do
 
         it "should do nothing" do
             @compiler.expects(:ast_nodes?).returns(false)
@@ -445,7 +442,7 @@ describe Puppet::Parser::Compiler do
         end
     end
 
-    describe Puppet::Parser::Compiler, " when evaluating AST nodes with AST nodes present" do
+    describe "when evaluating AST nodes with AST nodes present" do
 
         before do
             @compiler.parser.stubs(:nodes?).returns true
@@ -513,7 +510,7 @@ describe Puppet::Parser::Compiler do
         end
     end
 
-    describe Puppet::Parser::Compiler, "when managing resource overrides" do
+    describe "when managing resource overrides" do
 
         before do
             @override = stub 'override', :ref => "My[ref]", :type => "my"
@@ -554,7 +551,7 @@ describe Puppet::Parser::Compiler do
     end
 
     # #620 - Nodes and classes should conflict, else classes don't get evaluated
-    describe Puppet::Parser::Compiler, "when evaluating nodes and classes with the same name (#620)" do
+    describe "when evaluating nodes and classes with the same name (#620)" do
 
         before do
             @node = stub :nodescope? => true
