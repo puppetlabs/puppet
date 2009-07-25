@@ -79,6 +79,12 @@ module Puppet
 
         # Determine if the group is valid, and if so, return the GID
         def validgroup?(value)
+            begin
+                number = Integer(value)
+                return number
+            rescue ArgumentError
+                number = nil
+            end
             if number = gid(value)
                 return number
             else
