@@ -91,6 +91,16 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
         [ command(:sv), "stop", self.service]
     end
 
+    # relay to the startcmd
+    def start
+        enable unless enabled?
+        ucommand( :start )
+    end
+
+    def startcmd
+        [ command(:sv), "start", self.service]
+    end
+
     # disable by removing the symlink so that runit
     # doesn't restart our service behind our back
     # note that runit doesn't need to perform a stop

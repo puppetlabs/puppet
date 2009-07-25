@@ -30,6 +30,8 @@ describe provider_class do
         @resource.stubs(:[]).with(:path).returns @daemondir
         @resource.stubs(:ref).returns "Service[myservice]"
 
+        @provider.stubs(:sv)
+
         @provider.stubs(:resource).returns @resource
     end
 
@@ -58,8 +60,18 @@ describe provider_class do
     end
 
     describe "when starting" do
-        it "should call enable" do
+        it "should enable the service if it is not enabled" do
+            @provider.stubs(:sv)
+            @provider.stubs(:ucommand)
+
+            @provider.expects(:enabled?).returns false
             @provider.expects(:enable)
+
+            @provider.start
+        end
+
+        it "should execute external command 'sv start /etc/service/myservice'" do
+            @provider.expects(:ucommand).with(:start).returns("")
             @provider.start
         end
     end
