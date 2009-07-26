@@ -111,24 +111,24 @@ describe Puppet::Parser::Scope do
 
     describe "when setvar is called with append=true" do
         it "should raise error if the variable is already defined in this scope" do
-            @scope.setvar("var","1",nil,nil,false)
-            lambda { @scope.setvar("var","1",nil,nil,true) }.should raise_error(Puppet::ParseError)
+            @scope.setvar("var","1", :append => false)
+            lambda { @scope.setvar("var","1", :append => true) }.should raise_error(Puppet::ParseError)
         end
 
         it "it should lookup current variable value" do
             @scope.expects(:lookupvar).with("var").returns("2")
-            @scope.setvar("var","1",nil,nil,true)
+            @scope.setvar("var","1", :append => true)
         end
 
         it "it should store the concatenated string '42'" do
-            @topscope.setvar("var","4",nil,nil,false)
-            @scope.setvar("var","2",nil,nil,true)
+            @topscope.setvar("var","4", :append => false)
+            @scope.setvar("var","2", :append => true)
             @scope.lookupvar("var").should == "42"
         end
 
         it "it should store the concatenated array [4,2]" do
-            @topscope.setvar("var",[4],nil,nil,false)
-            @scope.setvar("var",[2],nil,nil,true)
+            @topscope.setvar("var",[4], :append => false)
+            @scope.setvar("var",[2], :append => true)
             @scope.lookupvar("var").should == [4,2]
         end
 
@@ -193,6 +193,60 @@ describe Puppet::Parser::Scope do
 
         it "should return nil on malformed hexadecimal numbers" do
             Puppet::Parser::Scope.number?("0x89g").should be_nil
+        end
+    end
+
+    describe "when using ephemeral variables" do
+        it "should store the variable value" do
+            @scope.setvar("1", :value, :ephemeral => true)
+
+            @scope.lookupvar("1").should == :value
+        end
+
+        it "should remove the variable value when unset_ephemeral_var is called" do
+            @scope.setvar("1", :value, :ephemeral => true)
+            @scope.stubs(:parent).returns(nil)
+
+            @scope.unset_ephemeral_var
+
+            @scope.lookupvar("1", false).should == :undefined
+        end
+
+        it "should not remove classic variables when unset_ephemeral_var is called" do
+            @scope.setvar("myvar", :value1)
+            @scope.setvar("1", :value2, :ephemeral => true)
+            @scope.stubs(:parent).returns(nil)
+
+            @scope.unset_ephemeral_var
+
+            @scope.lookupvar("myvar", false).should == :value1
+        end
+    end
+
+    describe "when setting ephemeral vars from matches" do
+        before :each do
+            @match = stub 'match', :is_a? => true
+            @match.stubs(:[]).with(0).returns("this is a string")
+            @match.stubs(:captures).returns([])
+            @scope.stubs(:setvar)
+        end
+
+        it "should accept only MatchData" do
+            lambda { @scope.ephemeral_from("match") }.should raise_error
+        end
+
+        it "should set $0 with the full match" do
+            @scope.expects(:setvar).with { |*arg| arg[0] == "0" and arg[1] == "this is a string" and arg[2][:ephemeral] }
+
+            @scope.ephemeral_from(@match)
+        end
+
+        it "should set every capture as ephemeral var" do
+            @match.stubs(:captures).returns([:capture1,:capture2])
+            @scope.expects(:setvar).with { |*arg| arg[0] == "1" and arg[1] == :capture1 and arg[2][:ephemeral] }
+            @scope.expects(:setvar).with { |*arg| arg[0] == "2" and arg[1] == :capture2 and arg[2][:ephemeral] }
+
+            @scope.ephemeral_from(@match)
         end
     end
 end

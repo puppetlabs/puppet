@@ -128,6 +128,11 @@ class Puppet::Parser::Scope
         # The symbol table for this scope.  This is where we store variables.
         @symtable = {}
 
+        # the ephemeral symbol tables
+        # those should not persist long, and are used for the moment only
+        # for $0..$xy capture variables of regexes
+        @ephemeral = {}
+
         # All of the defaults set for types.  It's a hash of hashes,
         # with the first key being the type, then the second key being
         # the parameter.
@@ -189,16 +194,17 @@ class Puppet::Parser::Scope
     # Look up a variable.  The simplest value search we do.  Default to returning
     # an empty string for missing values, but support returning a constant.
     def lookupvar(name, usestring = true)
+        table = ephemeral?(name) ? @ephemeral : @symtable
         # If the variable is qualified, then find the specified scope and look the variable up there instead.
         if name =~ /::/
             return lookup_qualified_var(name, usestring)
         end
-        # We can't use "if @symtable[name]" here because the value might be false
-        if @symtable.include?(name)
-            if usestring and @symtable[name] == :undef
+        # We can't use "if table[name]" here because the value might be false
+        if table.include?(name)
+            if usestring and table[name] == :undef
                 return ""
             else
-                return @symtable[name]
+                return table[name]
             end
         elsif self.parent
             return parent.lookupvar(name, usestring)
@@ -286,34 +292,35 @@ class Puppet::Parser::Scope
     # Set a variable in the current scope.  This will override settings
     # in scopes above, but will not allow variables in the current scope
     # to be reassigned.
-    def setvar(name,value, file = nil, line = nil, append = false)
+    def setvar(name,value, options = {})
+        table = options[:ephemeral] ? @ephemeral : @symtable
         #Puppet.debug "Setting %s to '%s' at level %s mode append %s" %
         #    [name.inspect,value,self.level, append]
-        if @symtable.include?(name)
-            unless append
+        if table.include?(name)
+            unless options[:append]
                 error = Puppet::ParseError.new("Cannot reassign variable %s" % name)
             else
                 error = Puppet::ParseError.new("Cannot append, variable %s is defined in this scope" % name)
             end
-            if file
-                error.file = file
+            if options[:file]
+                error.file = options[:file]
             end
-            if line
-                error.line = line
+            if options[:line]
+                error.line = options[:line]
             end
             raise error
         end
 
-        unless append
-            @symtable[name] = value
+        unless options[:append]
+            table[name] = value
         else # append case
             # lookup the value in the scope if it exists and insert the var
-            @symtable[name] = lookupvar(name)
+            table[name] = lookupvar(name)
             # concatenate if string, append if array, nothing for other types
             if value.is_a?(Array)
-                @symtable[name] += value
+                table[name] += value
             else
-                @symtable[name] << value
+                table[name] << value
             end
         end
     end
@@ -391,8 +398,26 @@ class Puppet::Parser::Scope
 
     # Undefine a variable; only used for testing.
     def unsetvar(var)
-        if @symtable.include?(var)
-            @symtable.delete(var)
+        table = ephemeral?(var) ? @ephemeral : @table
+        if table.include?(var)
+            table.delete(var)
+        end
+    end
+
+    def unset_ephemeral_var
+        @ephemeral = {}
+    end
+
+    def ephemeral?(name)
+        @ephemeral.include?(name)
+    end
+
+    def ephemeral_from(match, file = nil, line = nil)
+        raise(ArgumentError,"Invalid regex match data") unless match.is_a?(MatchData)
+
+        setvar("0", match[0], :file => file, :line => line, :ephemeral => true)
+        match.captures.each_with_index do |m,i|
+            setvar("#{i+1}", m, :file => file, :line => line, :ephemeral => true)
         end
     end
 end
