@@ -178,6 +178,8 @@ describe Puppet::Parser::Lexer::TOKENS do
         :TIMES => '*',
         :LSHIFT => '<<',
         :RSHIFT => '>>',
+        :MATCH => '=~',
+        :NOMATCH => '!~',
     }.each do |name, string|
         it "should have a token named #{name.to_s}" do
             Puppet::Parser::Lexer::TOKENS[name].should_not be_nil
@@ -448,6 +450,18 @@ describe Puppet::Parser::Lexer::TOKENS[:VARIABLE] do
 
     it "should return the VARIABLE token and the variable name stripped of the '$'" do
         @token.convert(stub("lexer"), "$myval").should == [Puppet::Parser::Lexer::TOKENS[:VARIABLE], "myval"]
+    end
+end
+
+describe Puppet::Parser::Lexer::TOKENS[:REGEX] do
+    before { @token = Puppet::Parser::Lexer::TOKENS[:REGEX] }
+
+    it "should match against any expression enclosed in //" do
+        @token.regex.should =~ '/this is a regex/'
+    end
+
+    it "should return the REGEX token and a Regexp" do
+        @token.convert(stub("lexer"), "/myregex/").should == [Puppet::Parser::Lexer::TOKENS[:REGEX], Regexp.new(/myregex/)]
     end
 end
 

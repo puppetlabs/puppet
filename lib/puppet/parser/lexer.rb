@@ -134,6 +134,8 @@ class Puppet::Parser::Lexer
         '*' => :TIMES,
         '<<' => :LSHIFT,
         '>>' => :RSHIFT,
+        '=~' => :MATCH,
+        '!~' => :NOMATCH,
         %r{([a-z][-\w]*)?(::[a-z][-\w]*)+} => :CLASSNAME, # Require '::' in the class name, else we'd compete with NAME
         %r{((::){0,1}[A-Z][-\w]*)+} => :CLASSREF
     )
@@ -167,6 +169,11 @@ class Puppet::Parser::Lexer
         value.sub!(/^\/\* ?/,'')
         value.sub!(/ ?\*\/$/,'')
         [self,value]
+    end
+
+    TOKENS.add_token :REGEX, %r{/(.*?)/} do |lexer, value|
+        value.sub!(/^\/(.*?)\/$/,"\\1")
+        [self, Regexp.new(value)]
     end
 
     TOKENS.add_token :RETURN, "\n", :skip => true, :incr_line => true, :skip_text => true
