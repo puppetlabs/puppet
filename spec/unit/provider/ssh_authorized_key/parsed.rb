@@ -120,7 +120,7 @@ describe provider_class do
             end
 
             it "should chmod the key file to 0600" do
-                File.chmod(0600, File.expand_path("~nobody/.ssh/authorized_keys"))
+                File.expects(:chmod).with(0600, File.expand_path("~nobody/.ssh/authorized_keys"))
                 @provider.flush
             end
         end
@@ -184,7 +184,7 @@ describe provider_class do
             end
 
             it "should chmod the key file to 0600" do
-                File.chmod(0600, File.expand_path("~nobody/.ssh/authorized_keys"))
+                File.expects(:chmod).with(0600, File.expand_path("~nobody/.ssh/authorized_keys"))
                 @provider.flush
             end
         end
