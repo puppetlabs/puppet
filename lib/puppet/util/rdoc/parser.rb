@@ -41,6 +41,18 @@ class Parser
 
     private
 
+    # Due to a bug in RDoc, we need to roll our own find_module_named
+    # The issue is that RDoc tries harder by asking the parent for a class/module
+    # of the name. But by doing so, it can mistakenly use a module of same name
+    # but from which we are not descendant.
+    def find_object_named(container, name)
+        return container if container.name == name
+        container.each_classmodule do |m|
+            return m if m.name == name
+        end
+        nil
+    end
+
     # walk down the namespace and lookup/create container as needed
     def get_class_or_module(container, name)
 
@@ -54,7 +66,7 @@ class Parser
         final_name = names.pop
         names.each do |name|
             prev_container = container
-            container = container.find_module_named(name)
+            container = find_object_named(container, name)
             unless container
                 container = prev_container.add_module(PuppetClass, name)
             end
@@ -297,7 +309,7 @@ class Parser
 
         @ast.nodes.each do |name, node|
             if node.file == @input_file_name
-                document_node(name,node,container)
+                document_node(name.to_s,node,container)
             end
         end
     end
