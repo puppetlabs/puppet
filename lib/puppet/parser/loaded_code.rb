@@ -18,7 +18,15 @@ class Puppet::Parser::LoadedCode
     end
 
     def node(name)
-        @nodes[check_name(name)]
+        name = check_name(name)
+        unless node = @nodes[name]
+            @nodes.each do |nodename, n|
+                if nodename.regex? and nodename.match(name)
+                    return n
+                end
+            end
+        end
+        node
     end
 
     def nodes?

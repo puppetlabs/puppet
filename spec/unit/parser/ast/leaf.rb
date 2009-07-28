@@ -5,6 +5,8 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 describe Puppet::Parser::AST::Leaf do
     before :each do
         @scope = stub 'scope'
+        @value = stub 'value'
+        @leaf = Puppet::Parser::AST::Leaf.new(:value => @value)
     end
 
     it "should have a evaluate_match method" do
@@ -12,11 +14,6 @@ describe Puppet::Parser::AST::Leaf do
     end
 
     describe "when evaluate_match is called" do
-        before :each do
-            @value = stub 'value'
-            @leaf = Puppet::Parser::AST::Leaf.new(:value => @value)
-        end
-
         it "should evaluate itself" do
             @leaf.expects(:safeevaluate).with(@scope)
 
@@ -44,6 +41,16 @@ describe Puppet::Parser::AST::Leaf do
             value.expects(:to_s)
             Puppet::Parser::AST::Leaf.new( :value => value ).to_s
         end
+    end
+
+    it "should have a match method" do
+        @leaf.should respond_to(:match)
+    end
+
+    it "should delegate match to ==" do
+        @value.expects(:==).with("value")
+
+        @leaf.match("value")
     end
 end
 
@@ -131,6 +138,15 @@ describe Puppet::Parser::AST::Regex do
 
         val.to_s
     end
+
+    it "should delegate match to the underlying regexp match method" do
+        regex = Regexp.new("/ab/")
+        val = Puppet::Parser::AST::Regex.new :value => regex
+
+        regex.expects(:match).with("value")
+
+        val.match("value")
+    end
 end
 
 describe Puppet::Parser::AST::HostName do
@@ -144,6 +160,10 @@ describe Puppet::Parser::AST::HostName do
 
     it "should raise an error if hostname is not valid" do
         lambda { Puppet::Parser::AST::HostName.new( :value => "not an hostname!" ) }.should raise_error
+    end
+
+    it "should not raise an error if hostname is a regex" do
+        lambda { Puppet::Parser::AST::HostName.new( :value => Puppet::Parser::AST::Regex.new(:value => "/test/") ) }.should_not raise_error
     end
 
     it "should stringify the value" do
@@ -175,6 +195,11 @@ describe Puppet::Parser::AST::HostName do
         host.to_classname.should == "klassname"
     end
 
+    it "should return a string usable as classname when calling to_classname" do
+        host = Puppet::Parser::AST::HostName.new( :value => Puppet::Parser::AST::Regex.new(:value => "/^this-is not@a classname$/") )
+        host.to_classname.should == "this-isnotaclassname"
+    end
+
     it "should delegate eql? to the underlying value if it is an HostName" do
         @value.expects(:eql?).with("value")
         @host.eql?("value")
@@ -189,5 +214,10 @@ describe Puppet::Parser::AST::HostName do
     it "should delegate hash to the underlying value" do
         @value.expects(:hash)
         @host.hash
+    end
+
+    it "should return true when regex? is called and value is a Regex" do
+        @value.expects(:is_a?).with(Puppet::Parser::AST::Regex).returns(true)
+        @host.regex?.should be_true
     end
 end

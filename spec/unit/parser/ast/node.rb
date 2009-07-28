@@ -12,6 +12,26 @@ describe Puppet::Parser::AST::Node do
         @scope = @compiler.topscope
     end
 
+    describe "when calling get_classname" do
+        it "should return current node name if name is a Regex" do
+            name = stub 'name', :regex? => true
+            node = @parser.newnode("node").shift
+            node.stubs(:name).returns(name)
+
+            @scope.expects(:host).returns("testnode")
+
+            node.get_classname(@scope).should == "testnode"
+        end
+
+        it "should return the current node classname if name is not a Regex" do
+            name = stub 'name', :regex? => false
+            node = @parser.newnode("node").shift
+            node.stubs(:name).returns(name)
+
+            node.get_classname(@scope).should == "node"
+        end
+    end
+
     describe Puppet::Parser::AST::Node, "when evaluating" do
 
         before do

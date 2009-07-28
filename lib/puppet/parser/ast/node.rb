@@ -17,6 +17,15 @@ class Puppet::Parser::AST::Node < Puppet::Parser::AST::HostClass
         ""
     end
 
+    # in Regex mode, our classname can't be our Regex.
+    # so we use the currently connected client as our
+    # classname, mimicing exactly what would have happened
+    # if there was a specific node definition for this node.
+    def get_classname(scope)
+        return scope.host if name.regex?
+        classname
+    end
+
     # Make sure node scopes are marked as such.
     def subscope(*args)
         scope = super

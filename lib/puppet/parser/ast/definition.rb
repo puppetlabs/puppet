@@ -24,9 +24,13 @@ class Puppet::Parser::AST::Definition < Puppet::Parser::AST::Branch
         false
     end
 
+    def get_classname(scope)
+        self.classname
+    end
+
     # Create a resource that knows how to evaluate our actual code.
     def evaluate(scope)
-        resource = Puppet::Parser::Resource.new(:type => self.class.name, :title => self.classname, :scope => scope, :source => scope.source)
+        resource = Puppet::Parser::Resource.new(:type => self.class.name, :title => get_classname(scope), :scope => scope, :source => scope.source)
 
         scope.catalog.tag(*resource.tags)
 

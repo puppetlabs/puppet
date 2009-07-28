@@ -129,10 +129,18 @@ describe Puppet::Parser::LoadedCode do
     end
 
     describe "when finding nodes" do
+        before :each do
+            @loader = Puppet::Parser::LoadedCode.new
+
+            @nodename1 = stub 'nodename1', :is_a? => true
+            @node1 = stub 'node1'
+            @nodename2 = stub 'nodename2', :is_a? => true
+            @node2 = stub 'node2'
+        end
         it "should create an HostName if nodename is a string" do
             Puppet::Parser::AST::HostName.expects(:new).with(:value => "foo")
-            loader = Puppet::Parser::LoadedCode.new
-            loader.node("foo")
+
+            @loader.node("foo")
         end
 
         it "should not create an HostName if nodename is an HostName" do
@@ -140,17 +148,50 @@ describe Puppet::Parser::LoadedCode do
 
             Puppet::Parser::AST::HostName.expects(:new).with(:value => "foo").never
 
-            loader = Puppet::Parser::LoadedCode.new
-            loader.node(name)
+            @loader.node(name)
         end
 
         it "should be able to find nobe by HostName" do
             namein = Puppet::Parser::AST::HostName.new(:value => "foo")
             nameout = Puppet::Parser::AST::HostName.new(:value => "foo")
-            loader = Puppet::Parser::LoadedCode.new
 
-            loader.add_node(namein, "bar")
-            loader.node(nameout) == "bar"
+            @loader.add_node(namein, "bar")
+            @loader.node(nameout) == "bar"
+        end
+
+        it "should return the first matching regex nodename" do
+            @nodename1.stubs(:regex?).returns(true)
+            @nodename1.expects(:match).returns(true)
+            @nodename2.stubs(:regex?).returns(false)
+
+            @loader.add_node(@nodename1, @node1)
+            @loader.add_node(@nodename2, @node2)
+
+            @loader.node("test").should == @node1
+        end
+
+        it "should not scan non-regex node" do
+            @nodename1.stubs(:regex?).returns(true)
+            @nodename1.stubs(:match).returns(false)
+            @nodename2.stubs(:regex?).returns(false)
+            @nodename2.expects(:match).never
+
+            @loader.add_node(@nodename1,@node1)
+            @loader.add_node(@nodename2,@node2)
+
+            @loader.node("test")
+        end
+
+        it "should prefer non-regex nodes to regex nodes" do
+            @nodename1.stubs(:regex?).returns(false)
+            @nodename1.expects(:match).never
+            @nodename2.stubs(:regex?).returns(true)
+            @nodename2.expects(:match).never
+
+            @loader.add_node(@nodename1,@node1)
+            @loader.add_node(@nodename2,@node2)
+
+            @loader.node(@nodename1)
         end
     end
 end

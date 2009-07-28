@@ -19,6 +19,10 @@ class Puppet::Parser::AST
             obj == value
         end
 
+        def match(value)
+            @value == value
+        end
+
         def to_s
             return @value.to_s unless @value.nil?
         end
@@ -85,12 +89,12 @@ class Puppet::Parser::AST
     # undef values; equiv to nil
     class Undef < AST::Leaf; end
 
-    # Host names, either fully qualified or just the short name
+    # Host names, either fully qualified or just the short name, or even a regex
     class HostName < AST::Leaf
         def initialize(hash)
             super
 
-            @value = @value.to_s.downcase
+            @value = @value.to_s.downcase unless @value.is_a?(Regex)
             if @value =~ /[^-\w.]/
                 raise Puppet::DevError,
                     "'%s' is not a valid hostname" % @value
@@ -98,7 +102,9 @@ class Puppet::Parser::AST
         end
 
         def to_classname
-            return @value
+            classname = @value.to_s.downcase
+            classname.gsub!(/[^-a-zA-Z0-9:.]/,'') if regex?
+            classname
         end
 
         # implementing eql? and hash so that when an HostName is stored
@@ -110,6 +116,19 @@ class Puppet::Parser::AST
 
         def hash
             return @value.hash
+        end
+
+        def match(value)
+            value = value.value if value.is_a?(HostName)
+            return @value.match(value)
+        end
+
+        def regex?
+            @value.is_a?(Regex)
+        end
+
+        def to_s
+            @value.to_s
         end
     end
 
@@ -151,6 +170,10 @@ class Puppet::Parser::AST
                 scope.ephemeral_from(matched, options[:file], options[:line])
             end
             matched
+        end
+
+        def match(value)
+            @value.match(value)
         end
 
         def to_s

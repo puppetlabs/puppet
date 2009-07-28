@@ -29,6 +29,24 @@ describe Puppet::Parser::AST::Definition, "when evaluating" do
         @definition.evaluate_code(@resource)
     end
 
+    it "should have a get_classname method" do
+        @definition.should respond_to :get_classname
+    end
+
+    it "should return the current classname with get_classname" do
+        @definition.expects(:classname)
+
+        @definition.get_classname(@scope)
+    end
+
+    describe "when evaluating" do
+        it "should create a resource whose title comes from get_classname" do
+            @definition.expects(:get_classname).returns("classname")
+
+            @definition.evaluate(@scope)
+        end
+    end
+
 #    it "should copy its namespace to the scope"
 #
 #    it "should mark the scope virtual if the resource is virtual"

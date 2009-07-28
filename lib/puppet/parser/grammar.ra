@@ -699,6 +699,7 @@ hostname: NAME { result = val[0][:value] }
         | SQTEXT { result = val[0][:value] }
         | DQTEXT { result = val[0][:value] }
         | DEFAULT { result = val[0][:value] }
+        | regex
 
 nil:    {
     result = nil
