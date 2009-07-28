@@ -255,8 +255,6 @@ class Parser
         # split define name by :: to find the complete module hierarchy
         container, name = get_class_or_module(container,name)
 
-        return if container.find_local_symbol(name)
-
         # build up declaration
         declaration = ""
         define.arguments.each do |arg,value|
