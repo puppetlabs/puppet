@@ -7,7 +7,8 @@ describe Puppet::Parser do
     ast = Puppet::Parser::AST
 
     before :each do
-        @parser = Puppet::Parser::Parser.new :environment => "development"
+        @loaded_code = Puppet::Parser::LoadedCode.new
+        @parser = Puppet::Parser::Parser.new :environment => "development", :loaded_code => @loaded_code
         @true_ast = Puppet::Parser::AST::Boolean.new :value => true
     end
 
@@ -225,4 +226,91 @@ describe Puppet::Parser do
             @parser.ast(Puppet::Parser::AST::Definition)
         end
     end
+
+    describe "when creating a node" do
+        before :each do
+            @lexer = stub 'lexer'
+            @lexer.stubs(:getcomment)
+            @parser.stubs(:lexer).returns(@lexer)
+            @node = stub_everything 'node'
+            @parser.stubs(:ast).returns(@node)
+            @parser.stubs(:node).returns(nil)
+
+            @nodename = stub 'nodename', :is_a? => false, :to_classname => "node"
+            @nodename.stubs(:is_a?).with(Puppet::Parser::AST::HostName).returns(true)
+        end
+
+        it "should get the lexer stacked comments" do
+            @lexer.expects(:getcomment)
+
+            @parser.newnode(@nodename)
+        end
+
+        it "should create an HostName if needed" do
+            Puppet::Parser::AST::HostName.expects(:new).with(:value => "node").returns(@nodename)
+
+            @parser.newnode("node")
+        end
+
+        it "should raise an error if the node already exists" do
+            @loaded_code.stubs(:node).with(@nodename).returns(@node)
+
+            lambda { @parser.newnode(@nodename) }.should raise_error
+        end
+
+        it "should store the created node in the loaded code" do
+            @loaded_code.expects(:add_node).with(@nodename, @node)
+
+            @parser.newnode(@nodename)
+        end
+
+        it "should create the node with code if provided" do
+            @parser.stubs(:ast).with { |*args| args[1][:code] == :code }.returns(@node)
+
+            @parser.newnode(@nodename, :code => :code)
+        end
+
+        it "should create the node with a parentclass if provided" do
+            @parser.stubs(:ast).with { |*args| args[1][:parent] == :parent }.returns(@node)
+
+            @parser.newnode(@nodename, :parent => :parent)
+        end
+
+        it "should set the node classname from the HostName" do
+            @nodename.stubs(:to_classname).returns(:classname)
+
+            @node.expects(:classname=).with(:classname)
+
+            @parser.newnode(@nodename)
+        end
+
+        it "should return an array of nodes" do
+            @parser.newnode(@nodename).should == [@node]
+        end
+    end
+
+    describe "when retrieving a specific node" do
+        it "should delegate to the loaded_code node" do
+            @loaded_code.expects(:node).with("node")
+
+            @parser.node("node")
+        end
+    end
+
+    describe "when retrieving a specific class" do
+        it "should delegate to the loaded code" do
+            @loaded_code.expects(:hostclass).with("class")
+
+            @parser.hostclass("class")
+        end
+    end
+
+    describe "when retrieving a specific definitions" do
+        it "should delegate to the loaded code" do
+            @loaded_code.expects(:definition).with("define")
+
+            @parser.definition("define")
+        end
+    end
+
  end

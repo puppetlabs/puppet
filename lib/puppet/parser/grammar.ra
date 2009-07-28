@@ -684,11 +684,15 @@ classname:       NAME { result = val[0][:value] }
 
 # Multiple hostnames, as used for node names.  These are all literal
 # strings, not AST objects.
-hostnames:    hostname
-  | hostnames COMMA hostname {
+hostnames:    nodename
+  | hostnames COMMA nodename {
     result = val[0]
     result = [result] unless result.is_a?(Array)
-    result << val[2][:value]
+    result << val[2]
+}
+
+nodename: hostname {
+    result = ast AST::HostName, :value => val[0]
 }
 
 hostname: NAME { result = val[0][:value] }

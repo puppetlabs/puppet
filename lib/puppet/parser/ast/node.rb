@@ -11,11 +11,6 @@ class Puppet::Parser::AST::Node < Puppet::Parser::AST::HostClass
     def initialize(options)
         @parentclass = nil
         super
-
-        # Do some validation on the node name
-        if @name =~ /[^-\w.]/
-            raise Puppet::ParseError, "Invalid node name %s" % @name
-        end
     end
 
     def namespace

@@ -354,7 +354,7 @@ class Puppet::Parser::Parser
         names = [names] unless names.instance_of?(Array)
         doc = lexer.getcomment
         names.collect do |name|
-            name = name.to_s.downcase
+            name = AST::HostName.new :value => name unless name.is_a?(AST::HostName)
             if other = @loaded_code.node(name)
                 error("Node %s is already defined at %s:%s; cannot redefine" % [other.name, other.file, other.line])
             end
@@ -372,7 +372,7 @@ class Puppet::Parser::Parser
                 args[:parentclass] = options[:parent]
             end
             node = ast(AST::Node, args)
-            node.classname = name
+            node.classname = name.to_classname
             @loaded_code.add_node(name, node)
             node
         end

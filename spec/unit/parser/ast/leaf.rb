@@ -136,7 +136,9 @@ end
 describe Puppet::Parser::AST::HostName do
     before :each do
         @scope = stub 'scope'
-        @value = stub 'value', :is_a? => true, :=~ => true
+        @value = stub 'value', :=~ => false
+        @value.stubs(:to_s).returns(@value)
+        @value.stubs(:downcase).returns(@value)
         @host = Puppet::Parser::AST::HostName.new( :value => @value)
     end
 
@@ -144,7 +146,48 @@ describe Puppet::Parser::AST::HostName do
         lambda { Puppet::Parser::AST::HostName.new( :value => "not an hostname!" ) }.should raise_error
     end
 
+    it "should stringify the value" do
+        value = stub 'value', :=~ => false
+
+        value.expects(:to_s).returns("test")
+
+        Puppet::Parser::AST::HostName.new(:value => value)
+    end
+
+    it "should downcase the value" do
+        value = stub 'value', :=~ => false
+        value.stubs(:to_s).returns("UPCASED")
+        host = Puppet::Parser::AST::HostName.new(:value => value)
+
+        host.value == "upcased"
+    end
+
     it "should evaluate to its value" do
         @host.evaluate(@scope).should == @value
+    end
+
+    it "should implement to_classname" do
+        @host.should respond_to(:to_classname)
+    end
+
+    it "should return the downcased nodename as classname" do
+        host = Puppet::Parser::AST::HostName.new( :value => "KLASSNAME" )
+        host.to_classname.should == "klassname"
+    end
+
+    it "should delegate eql? to the underlying value if it is an HostName" do
+        @value.expects(:eql?).with("value")
+        @host.eql?("value")
+    end
+
+    it "should delegate eql? to the underlying value if it is not an HostName" do
+        value = stub 'compared', :is_a? => true, :value => "value"
+        @value.expects(:eql?).with("value")
+        @host.eql?(value)
+    end
+
+    it "should delegate hash to the underlying value" do
+        @value.expects(:hash)
+        @host.hash
     end
 end

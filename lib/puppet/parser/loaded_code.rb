@@ -14,11 +14,11 @@ class Puppet::Parser::LoadedCode
     end
 
     def add_node(name, code)
-        @nodes[munge_name(name)] = code
+        @nodes[check_name(name)] = code
     end
 
     def node(name)
-        @nodes[munge_name(name)]
+        @nodes[check_name(name)]
     end
 
     def nodes?
@@ -87,5 +87,14 @@ class Puppet::Parser::LoadedCode
 
     def munge_name(name)
         name.to_s.downcase
+    end
+
+    # Check that the given (node) name is an HostName instance
+    # We're doing this so that hashing of node in the @nodes hash
+    # is consistent (see AST::HostName#hash and AST::HostName#eql?)
+    # and that the @nodes hash still keep its O(1) get/put properties.
+    def check_name(name)
+        name = Puppet::Parser::AST::HostName.new(:value => name) unless name.is_a?(Puppet::Parser::AST::HostName)
+        name
     end
 end

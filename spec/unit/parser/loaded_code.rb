@@ -37,49 +37,49 @@ describe Puppet::Parser::LoadedCode do
     describe "when finding a qualified instance" do
         it "should return any found instance if the instance name is fully qualified" do
             loader = Puppet::Parser::LoadedCode.new
-            loader.add_node "foo::bar", "yay"
-            loader.find("namespace", "::foo::bar", :node).should == "yay"
+            loader.add_hostclass "foo::bar", "yay"
+            loader.find("namespace", "::foo::bar", :hostclass).should == "yay"
         end
 
         it "should return nil if the instance name is fully qualified and no such instance exists" do
             loader = Puppet::Parser::LoadedCode.new
-            loader.find("namespace", "::foo::bar", :node).should be_nil
+            loader.find("namespace", "::foo::bar", :hostclass).should be_nil
         end
 
         it "should return the partially qualified object if it exists in the provided namespace" do
             loader = Puppet::Parser::LoadedCode.new
-            loader.add_node "foo::bar::baz", "yay"
-            loader.find("foo", "bar::baz", :node).should == "yay"
+            loader.add_hostclass "foo::bar::baz", "yay"
+            loader.find("foo", "bar::baz", :hostclass).should == "yay"
         end
 
         it "should return the unqualified object if it exists in the provided namespace" do
             loader = Puppet::Parser::LoadedCode.new
-            loader.add_node "foo::bar", "yay"
-            loader.find("foo", "bar", :node).should == "yay"
+            loader.add_hostclass "foo::bar", "yay"
+            loader.find("foo", "bar", :hostclass).should == "yay"
         end
 
         it "should return the unqualified object if it exists in the parent namespace" do
             loader = Puppet::Parser::LoadedCode.new
-            loader.add_node "foo::bar", "yay"
-            loader.find("foo::bar::baz", "bar", :node).should == "yay"
+            loader.add_hostclass "foo::bar", "yay"
+            loader.find("foo::bar::baz", "bar", :hostclass).should == "yay"
         end
 
         it "should should return the partially qualified object if it exists in the parent namespace" do
             loader = Puppet::Parser::LoadedCode.new
-            loader.add_node "foo::bar::baz", "yay"
-            loader.find("foo::bar", "bar::baz", :node).should == "yay"
+            loader.add_hostclass "foo::bar::baz", "yay"
+            loader.find("foo::bar", "bar::baz", :hostclass).should == "yay"
         end
 
         it "should return the qualified object if it exists in the root namespace" do
             loader = Puppet::Parser::LoadedCode.new
-            loader.add_node "foo::bar::baz", "yay"
-            loader.find("foo::bar", "foo::bar::baz", :node).should == "yay"
+            loader.add_hostclass "foo::bar::baz", "yay"
+            loader.find("foo::bar", "foo::bar::baz", :hostclass).should == "yay"
         end
 
         it "should return nil if the object cannot be found" do
             loader = Puppet::Parser::LoadedCode.new
-            loader.add_node "foo::bar::baz", "yay"
-            loader.find("foo::bar", "eh", :node).should be_nil
+            loader.add_hostclass "foo::bar::baz", "yay"
+            loader.find("foo::bar", "eh", :hostclass).should be_nil
         end
     end
 
@@ -109,5 +109,48 @@ describe Puppet::Parser::LoadedCode do
 
     it "should indicate whether no nodes are defined" do
         Puppet::Parser::LoadedCode.new.should_not be_nodes
+    end
+
+    describe "when adding nodes" do
+        it "should create an HostName if nodename is a string" do
+            Puppet::Parser::AST::HostName.expects(:new).with(:value => "foo")
+            loader = Puppet::Parser::LoadedCode.new
+            loader.add_node("foo", "bar")
+        end
+
+        it "should not create an HostName if nodename is an HostName" do
+            name = Puppet::Parser::AST::HostName.new(:value => "foo")
+
+            Puppet::Parser::AST::HostName.expects(:new).with(:value => "foo").never
+
+            loader = Puppet::Parser::LoadedCode.new
+            loader.add_node(name, "bar")
+        end
+    end
+
+    describe "when finding nodes" do
+        it "should create an HostName if nodename is a string" do
+            Puppet::Parser::AST::HostName.expects(:new).with(:value => "foo")
+            loader = Puppet::Parser::LoadedCode.new
+            loader.node("foo")
+        end
+
+        it "should not create an HostName if nodename is an HostName" do
+            name = Puppet::Parser::AST::HostName.new(:value => "foo")
+
+            Puppet::Parser::AST::HostName.expects(:new).with(:value => "foo").never
+
+            loader = Puppet::Parser::LoadedCode.new
+            loader.node(name)
+        end
+
+        it "should be able to find nobe by HostName" do
+            namein = Puppet::Parser::AST::HostName.new(:value => "foo")
+            nameout = Puppet::Parser::AST::HostName.new(:value => "foo")
+            loader = Puppet::Parser::LoadedCode.new
+
+            loader.add_node(namein, "bar")
+            loader.node(nameout) == "bar"
+        end
     end
 end

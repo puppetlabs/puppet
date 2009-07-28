@@ -18,7 +18,7 @@ module PuppetTest::Support::Collection
                 query = nil
 
                 assert_nothing_raised("Could not parse '#{str}'") do
-                    query = parser.parse(code).classes[""].code[0].query
+                    query = parser.parse(code).hostclass("").code[0].query
                 end
 
                 yield str, res, query
