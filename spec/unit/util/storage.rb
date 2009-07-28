@@ -12,6 +12,10 @@ describe Puppet::Util::Storage do
         Puppet[:statedir] = Dir.tmpdir()
     end
 
+    after(:all) do
+        Puppet.settings.clear
+    end
+
     before(:each) do
         Puppet::Util::Storage.clear()
     end
