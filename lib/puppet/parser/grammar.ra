@@ -620,6 +620,7 @@ selectlhand:  name
             | DEFAULT {
     result = ast AST::Default, :value => val[0][:value], :line => val[0][:line]
 }
+            | regex
 
 # These are only used for importing, and we don't interpolate there.
 qtexts:       quotedtext { result = [val[0].value] }

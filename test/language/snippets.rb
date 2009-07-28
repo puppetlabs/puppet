@@ -237,6 +237,7 @@ class TestSnippets < Test::Unit::TestCase
             /tmp/existsfile3
             /tmp/existsfile4
             /tmp/existsfile5
+            /tmp/existsfile6
         }
 
         paths.each { |path|
@@ -281,7 +282,7 @@ class TestSnippets < Test::Unit::TestCase
     end
 
     def snippet_selectorvalues
-        nums = %w{1 2 3 4 5}
+        nums = %w{1 2 3 4 5 6 7}
         files = nums.collect { |n|
             "/tmp/selectorvalues%s" % n
         }

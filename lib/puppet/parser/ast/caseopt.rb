@@ -51,6 +51,16 @@ class Puppet::Parser::AST
             end
         end
 
+        def eachopt
+            if @value.is_a?(AST::ASTArray)
+                @value.each { |subval|
+                    yield subval
+                }
+            else
+                yield @value
+            end
+        end
+
         # Evaluate the actual statements; this only gets called if
         # our option matched.
         def evaluate(scope)

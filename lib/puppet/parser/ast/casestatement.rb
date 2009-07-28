@@ -20,36 +20,21 @@ class Puppet::Parser::AST
 
             # Iterate across the options looking for a match.
             default = nil
-            @options.each { |option|
-                option.eachvalue(scope) { |opval|
-                    opval = opval.downcase if ! sensitive and opval.respond_to?(:downcase)
-                    if opval == value
-                        found = true
-                        break
-                    end
-                }
-
-                if found
-                    # we found a matching option
-                    retvalue = option.safeevaluate(scope)
-                    break
+            @options.each do |option|
+                option.eachopt do |opt|
+                    return option.safeevaluate(scope) if opt.evaluate_match(value, scope, :file => file, :line => line, :sensitive => sensitive)
                 end
 
-                if option.default?
-                    default = option
-                end
-            }
+                default = option if option.default?
+            end
 
             # Unless we found something, look for the default.
-            unless found
-                if default
-                    retvalue = default.safeevaluate(scope)
-                else
-                    Puppet.debug "No true answers and no default"
-                    retvalue = nil
-                end
-            end
-            return retvalue
+            return default.safeevaluate(scope) if default
+
+            Puppet.debug "No true answers and no default"
+            return nil
+        ensure
+            scope.unset_ephemeral_var
         end
 
         def each

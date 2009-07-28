@@ -33,6 +33,11 @@ module PuppetTest::ParserTesting
         def safeevaluate(*args)
             evaluate()
         end
+
+        def evaluate_match(othervalue, scope, options={})
+            value = evaluate()
+            othervalue == value
+        end
     end
 
     def astarray(*args)

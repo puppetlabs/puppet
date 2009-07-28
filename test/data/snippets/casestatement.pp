@@ -56,3 +56,10 @@ case $yay {
     default: { file { "/tmp/existsfile5": mode => 711, ensure => file } }
 
 }
+
+$regexvar = "exists regex"
+case $regexvar {
+    "no match": { file { "/tmp/existsfile6": mode => 644, ensure => file } }
+    /(.*) regex$/: { file { "/tmp/${1}file6": mode => 755, ensure => file } }
+    default: { file { "/tmp/existsfile6": mode => 711, ensure => file } }
+}

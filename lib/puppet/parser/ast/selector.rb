@@ -12,17 +12,12 @@ class Puppet::Parser::AST
 
         # Find the value that corresponds with the test.
         def evaluate(scope)
-            retvalue = nil
-            found = nil
-
             # Get our parameter.
             paramvalue = @param.safeevaluate(scope)
 
             sensitive = Puppet[:casesensitive]
 
-            if ! sensitive and paramvalue.respond_to?(:downcase)
-                paramvalue = paramvalue.downcase
-            end
+            paramvalue = paramvalue.downcase if not sensitive and paramvalue.respond_to?(:downcase)
 
             default = nil
 
@@ -31,33 +26,20 @@ class Puppet::Parser::AST
             end
 
             # Then look for a match in the options.
-            @values.each { |obj|
-                param = obj.param.safeevaluate(scope)
-                if ! sensitive && param.respond_to?(:downcase)
-                    param = param.downcase
-                end
-                if param == paramvalue
-                    # we found a matching option
-                    retvalue = obj.value.safeevaluate(scope)
-                    found = true
-                    break
-                elsif obj.param.is_a?(Default)
-                    # Store the default, in case it's necessary.
-                    default = obj
-                end
-            }
+            @values.each do |obj|
+                # short circuit asap if we have a match
+                return obj.value.safeevaluate(scope) if obj.param.evaluate_match(paramvalue, scope, :file => file, :line => line, :sensitive => sensitive)
 
-            # Unless we found something, look for the default.
-            unless found
-                if default
-                    retvalue = default.value.safeevaluate(scope)
-                else
-                    self.fail Puppet::ParseError,
-                        "No matching value for selector param '%s'" % paramvalue
-                end
+                # Store the default, in case it's necessary.
+                default = obj if obj.param.is_a?(Default)
             end
 
-            return retvalue
+            # Unless we found something, look for the default.
+            return default.value.safeevaluate(scope) if default
+
+            self.fail Puppet::ParseError, "No matching value for selector param '%s'" % paramvalue
+        ensure
+            scope.unset_ephemeral_var
         end
     end
 end
