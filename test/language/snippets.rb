@@ -481,6 +481,10 @@ class TestSnippets < Test::Unit::TestCase
         assert_mode_equal(0600, path)
     end
 
+    def snippet_ifexpression
+        assert_file("/tmp/testiftest","if test");
+    end
+
     # Iterate across each of the snippets and create a test.
     Dir.entries(snippetdir).sort.each { |file|
         next if file =~ /^\./

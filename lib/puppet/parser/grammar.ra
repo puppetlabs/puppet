@@ -488,6 +488,12 @@ else:             # nothing
 # per operator :-(
 
 expression:   rvalue
+            | expression MATCH regex {
+    result = ast AST::MatchOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
+}
+            | expression NOMATCH regex {
+    result = ast AST::MatchOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
+}
             | expression PLUS expression {
     result = ast AST::ArithmeticOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }

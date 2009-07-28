@@ -15,6 +15,7 @@ class TestAST < Test::Unit::TestCase
     include PuppetTest::Support::Collection
 
     def test_if
+        scope = mkscope
         astif = nil
         astelse = nil
         fakeelse = FakeAST.new(:else)
@@ -35,14 +36,14 @@ class TestAST < Test::Unit::TestCase
         # We initialized it to true, so we should get that first
         ret = nil
         assert_nothing_raised {
-            ret = astif.evaluate("yay")
+            ret = astif.evaluate(scope)
         }
         assert_equal(:if, ret)
 
         # Now set it to false and check that
         faketest.evaluate = false
         assert_nothing_raised {
-            ret = astif.evaluate("yay")
+            ret = astif.evaluate(scope)
         }
         assert_equal(:else, ret)
     end

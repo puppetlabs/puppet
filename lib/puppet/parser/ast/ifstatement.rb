@@ -18,14 +18,19 @@ class Puppet::Parser::AST
         def evaluate(scope)
             value = @test.safeevaluate(scope)
 
-            if Puppet::Parser::Scope.true?(value)
-                return @statements.safeevaluate(scope)
-            else
-                if defined? @else
-                    return @else.safeevaluate(scope)
+            # let's emulate a new scope for each branches
+            begin
+                if Puppet::Parser::Scope.true?(value)
+                    return @statements.safeevaluate(scope)
                 else
-                    return nil
+                    if defined? @else
+                        return @else.safeevaluate(scope)
+                    else
+                        return nil
+                    end
                 end
+            ensure
+                scope.unset_ephemeral_var
             end
         end
     end
