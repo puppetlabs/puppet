@@ -765,6 +765,10 @@ comma:        FARROW
 endcomma:     # nothing
             | COMMA { result = nil }
 
+regex:        REGEX {
+    result = ast AST::Regex, :value => val[0][:value]
+}
+
 end
 ---- header ----
 require 'puppet'

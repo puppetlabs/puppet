@@ -10,6 +10,15 @@ class Puppet::Parser::AST
             return @value
         end
 
+        # evaluate ourselves, and match
+        def evaluate_match(value, scope, options = {})
+            obj = self.safeevaluate(scope)
+            if ! options[:sensitive] && obj.respond_to?(:downcase)
+                obj = obj.downcase
+            end
+            obj == value
+        end
+
         def to_s
             return @value.to_s unless @value.nil?
         end
@@ -97,6 +106,39 @@ class Puppet::Parser::AST
             parsewrap do
                 return scope.lookupvar(@value)
             end
+        end
+    end
+
+    class Regex < AST::Leaf
+        def initialize(hash)
+            super
+            @value = Regexp.new(@value) unless @value.is_a?(Regexp)
+        end
+
+        # we're returning self here to wrap the regexp and to be used in places
+        # where a string would have been used, without modifying any client code.
+        # For instance, in many places we have the following code snippet:
+        #  val = @val.safeevaluate(@scope)
+        #  if val.match(otherval)
+        #      ...
+        #  end
+        # this way, we don't have to modify this test specifically for handling
+        # regexes.
+        def evaluate(scope)
+            return self
+        end
+
+        def evaluate_match(value, scope, options = {})
+            value = value.is_a?(String) ? value : value.to_s
+
+            if matched = @value.match(value)
+                scope.ephemeral_from(matched, options[:file], options[:line])
+            end
+            matched
+        end
+
+        def to_s
+            return "/#{@value.source}/"
         end
     end
 end
