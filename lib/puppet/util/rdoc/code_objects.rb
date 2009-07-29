@@ -102,6 +102,10 @@ module RDoc
         def is_module?
             false
         end
+
+        def superclass=(superclass)
+            @superclass = superclass
+        end
     end
 
     # PuppetNode holds a puppet node

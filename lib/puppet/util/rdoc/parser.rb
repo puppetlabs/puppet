@@ -68,7 +68,7 @@ class Parser
             prev_container = container
             container = find_object_named(container, name)
             unless container
-                container = prev_container.add_module(PuppetClass, name)
+                container = prev_container.add_class(PuppetClass, name, nil)
             end
         end
         return [container, final_name]
@@ -210,6 +210,10 @@ class Parser
         comment = klass.doc
         look_for_directives_in(container, comment) unless comment.empty?
         cls = container.add_class(PuppetClass, name, superclass)
+        # it is possible we already encountered this class, while parsing some namespaces
+        # from other classes of other files. But at that time we couldn't know this class superclass
+        # so, now we know it and force it.
+        cls.superclass = superclass
         cls.record_location(@top_level)
 
         # scan class code for include
