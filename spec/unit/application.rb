@@ -36,6 +36,105 @@ describe Puppet::Application do
         @app.get_command.should == :main
     end
 
+    describe 'when invoking clear!' do
+        before :each do
+            Puppet::Application.run_status = :stop_requested
+            Puppet::Application.clear!
+        end
+
+        it 'should have nil run_status' do
+            Puppet::Application.run_status.should be_nil
+        end
+
+        it 'should return false for restart_requested?' do
+            Puppet::Application.restart_requested?.should be_false
+        end
+
+        it 'should return false for stop_requested?' do
+            Puppet::Application.stop_requested?.should be_false
+        end
+
+        it 'should return false for interrupted?' do
+            Puppet::Application.interrupted?.should be_false
+        end
+
+        it 'should return true for clear?' do
+            Puppet::Application.clear?.should be_true
+        end
+    end
+
+    describe 'after invoking stop!' do
+        before :each do
+            Puppet::Application.run_status = nil
+            Puppet::Application.stop!
+        end
+
+        after :each do
+            Puppet::Application.run_status = nil
+        end
+
+        it 'should have run_status of :stop_requested' do
+            Puppet::Application.run_status.should == :stop_requested
+        end
+
+        it 'should return true for stop_requested?' do
+            Puppet::Application.stop_requested?.should be_true
+        end
+
+        it 'should return false for restart_requested?' do
+            Puppet::Application.restart_requested?.should be_false
+        end
+
+        it 'should return true for interrupted?' do
+            Puppet::Application.interrupted?.should be_true
+        end
+
+        it 'should return false for clear?' do
+            Puppet::Application.clear?.should be_false
+        end
+    end
+
+    describe 'when invoking restart!' do
+        before :each do
+            Puppet::Application.run_status = nil
+            Puppet::Application.restart!
+        end
+
+        after :each do
+            Puppet::Application.run_status = nil
+        end
+
+        it 'should have run_status of :restart_requested' do
+            Puppet::Application.run_status.should == :restart_requested
+        end
+
+        it 'should return true for restart_requested?' do
+            Puppet::Application.restart_requested?.should be_true
+        end
+
+        it 'should return false for stop_requested?' do
+            Puppet::Application.stop_requested?.should be_false
+        end
+
+        it 'should return true for interrupted?' do
+            Puppet::Application.interrupted?.should be_true
+        end
+
+        it 'should return false for clear?' do
+            Puppet::Application.clear?.should be_false
+        end
+    end
+
+    describe 'when working with class-level run status properties' do
+        it 'should set run status and predicate appropriately on stop!' do
+        end
+
+        it 'should set run status and predicate appropriately on restart!' do
+        end
+
+
+    end
+
     describe "when parsing command-line options" do
 
         before :each do
