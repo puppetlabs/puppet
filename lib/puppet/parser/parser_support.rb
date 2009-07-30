@@ -112,36 +112,22 @@ class Puppet::Parser::Parser
     end
 
     def find_or_load(namespace, name, type)
-        method = "find_" + type.to_s
-        if result = @loaded_code.send(method, namespace, name)
-            return result
-        end
-
+        method = "find_#{type}"
         fullname = (namespace + "::" + name).sub(/^::/, '')
-        self.load(fullname)
+        names_to_try = [fullname]
 
-        if result = @loaded_code.send(method, namespace, name)
-            return result
-        end
+        # Try to load the module init file if we're a qualified name
+        names_to_try << fullname.split("::")[0] if fullname.include?("::")
 
-        # Try to load the module init file if we're a qualified
-        # name
-        if fullname.include?("::")
-            module_name = fullname.split("::")[0]
-
-            self.load(module_name)
-
-            if result = @loaded_code.send(method, namespace, name)
-                return result
-            end
-        end
-
-        # Now try to load the bare name on its own.  This is
-        # appropriate if the class we're looking for is in a
+        # Otherwise try to load the bare name on its own.  This
+        # is appropriate if the class we're looking for is in a
         # module that's different from our namespace.
-        self.load(name)
+        names_to_try << name
 
-        @loaded_code.send(method, namespace, name)
+        until (result = @loaded_code.send(method, namespace, name)) or names_to_try.empty? do
+            self.load(names_to_try.shift)
+        end
+        return result
     end
 
     # Import our files.
@@ -207,42 +193,67 @@ class Puppet::Parser::Parser
         @lexer = Puppet::Parser::Lexer.new()
         @files = {}
         @loaded = []
+        @loading = {}
+        @loading.extend(MonitorMixin)
+        class << @loading
+            def done_with(item)
+                synchronize do 
+                    delete(item)[:busy].signal if self.has_key?(item) and self[item][:loader] == Thread.current
+                end
+            end
+            def owner_of(item)
+                synchronize do
+                    if !self.has_key? item
+                        self[item] = { :loader => Thread.current, :busy => self.new_cond}
+                        :nobody
+                      elsif self[item][:loader] == Thread.current
+                        :this_thread
+                      else
+                        flag = self[item][:busy]
+                        flag.wait
+                        flag.signal
+                        :another_thread
+                    end
+                end
+            end
+        end
+    end
+
+    # Utility method factored out of load
+    def able_to_import?(classname,item,msg)
+        unless @loaded.include?(item)
+            begin
+              case @loading.owner_of(item)
+              when :this_thread
+                  return
+              when :another_thread
+                  return able_to_import?(classname,item,msg)
+              when :nobody
+                  import(item)
+                  Puppet.info "Autoloaded #{msg}"
+                  @loaded << item
+              end
+            rescue Puppet::ImportError => detail
+                # We couldn't load the item
+            ensure
+                @loading.done_with(item)
+            end
+        end
+        # We don't know whether we're looking for a class or definition, so we have
+        # to test for both.
+        return @loaded_code.hostclass(classname) || @loaded_code.definition(classname)
     end
 
     # Try to load a class, since we could not find it.
     def load(classname)
         return false if classname == ""
         filename = classname.gsub("::", File::SEPARATOR)
-
-        # First try to load the top-level module
         mod = filename.scan(/^[\w-]+/).shift
-        unless @loaded.include?(mod)
-            @loaded << mod
-            begin
-                import(mod)
-                Puppet.info "Autoloaded module %s" % mod
-            rescue Puppet::ImportError => detail
-                # We couldn't load the module
-            end
-        end
 
-        # We don't know whether we're looking for a class or definition, so we have
-        # to test for both.
-        return true if @loaded_code.hostclass(classname) || @loaded_code.definition(classname)
-
-        unless @loaded.include?(filename)
-            @loaded << filename
-            # Then the individual file
-            begin
-                import(filename)
-                Puppet.info "Autoloaded file %s from module %s" % [filename, mod]
-            rescue Puppet::ImportError => detail
-                # We couldn't load the file
-            end
-        end
-        # We don't know whether we're looking for a class or definition, so we have
-        # to test for both.
-        return true if @loaded_code.hostclass(classname) || @loaded_code.definition(classname)
+        # First try to load the top-level module then the individual file
+        [[mod,     "module %s"              %            mod ],
+         [filename,"file %s from module %s" % [filename, mod]]
+        ].any? { |item,description| able_to_import?(classname,item,description) }
     end
 
     # Split an fq name into a namespace and name

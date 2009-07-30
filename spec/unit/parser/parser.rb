@@ -328,4 +328,74 @@ describe Puppet::Parser do
             @parser.version.should == "output"
         end
     end
- end
+
+    describe Puppet::Parser,"when looking up definitions" do
+        it "should check for them by name" do
+            @parser.stubs(:find_or_load).with("namespace","name",:definition).returns(:this_value)
+            @parser.find_definition("namespace","name").should == :this_value
+        end
+    end
+
+    describe Puppet::Parser,"when looking up hostclasses" do
+        it "should check for them by name" do
+            @parser.stubs(:find_or_load).with("namespace","name",:hostclass).returns(:this_value)
+            @parser.find_hostclass("namespace","name").should == :this_value
+        end
+    end
+
+    describe Puppet::Parser,"when looking up names" do
+        before :each do
+            @loaded_code = mock 'loaded code'
+            @loaded_code.stubs(:find_my_type).with('Loaded_namespace',  'Loaded_name').returns(true)
+            @loaded_code.stubs(:find_my_type).with('Bogus_namespace',   'Bogus_name' ).returns(false)
+            @parser = Puppet::Parser::Parser.new :environment => "development",:loaded_code => @loaded_code
+        end
+
+        describe "that are already loaded" do
+            it "should not try to load anything" do
+                @parser.expects(:load).never
+                @parser.find_or_load("Loaded_namespace","Loaded_name",:my_type)
+            end
+            it "should return true" do
+                @parser.find_or_load("Loaded_namespace","Loaded_name",:my_type).should == true
+            end
+        end
+
+        describe "that aren't already loaded" do
+            it "should first attempt to load them with the fully qualified name" do
+                @loaded_code.stubs(:find_my_type).with("Foo_namespace","Foo_name").returns(false,true,true)
+                @parser.expects(:load).with("Foo_namespace::Foo_name").returns(true).then.raises(Exception)
+                @parser.find_or_load("Foo_namespace","Foo_name",:my_type).should == true
+            end
+
+            it "should next attempt to load them with the namespace" do
+                @loaded_code.stubs(:find_my_type).with("Foo_namespace","Foo_name").returns(false,false,true,true)
+                @parser.expects(:load).with("Foo_namespace::Foo_name").returns(false).then.raises(Exception)
+                @parser.expects(:load).with("Foo_namespace").returns(true).then.raises(Exception)
+                @parser.find_or_load("Foo_namespace","Foo_name",:my_type).should == true
+            end
+
+            it "should return false if the name isn't found" do
+                @parser.stubs(:load).returns(false)
+                @parser.find_or_load("Bogus_namespace","Bogus_name",:my_type).should == false
+            end
+        end
+    end
+
+    describe Puppet::Parser,"when loading classnames" do
+        before :each do
+            @loaded_code = mock 'loaded code'
+            @parser = Puppet::Parser::Parser.new :environment => "development",:loaded_code => @loaded_code
+        end
+
+        it "should just return false if the classname is empty" do
+            @parser.expects(:import).never
+            @parser.load("").should == false
+        end
+
+        it "should just return true if the item is loaded" do
+            pending "Need to access internal state (@parser's @loaded) to force this"
+            @parser.load("").should == false
+        end
+    end
+end
