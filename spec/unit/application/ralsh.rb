@@ -47,6 +47,11 @@ describe "ralsh" do
 
             @ralsh.extra_params.should == []
         end
+
+        it "should load Facter facts" do
+          Facter.expects(:loadfacts).once
+          @ralsh.run_preinit
+        end
     end
 
     describe "when handling options" do

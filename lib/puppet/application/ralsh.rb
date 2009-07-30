@@ -1,5 +1,6 @@
 require 'puppet'
 require 'puppet/application'
+require 'facter'
 
 Puppet::Application.new(:ralsh) do
 
@@ -10,6 +11,7 @@ Puppet::Application.new(:ralsh) do
     preinit do
         @extra_params = []
         @host = nil
+        Facter.loadfacts
     end
 
     option("--debug","-d")
