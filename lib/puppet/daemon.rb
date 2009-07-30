@@ -1,6 +1,7 @@
 require 'puppet'
 require 'puppet/util/pidlock'
 require 'puppet/external/event-loop'
+require 'puppet/application'
 
 # A module that handles operations common to all daemons.  This is included
 # into the Server and Client base classes.
@@ -83,11 +84,8 @@ class Puppet::Daemon
     end
 
     def restart
-        if agent and agent.running?
-            agent.configure_delayed_restart
-        else
-            reexec
-        end
+        Puppet::Application.restart!
+        reexec unless agent and agent.running?
     end
 
     def reopen_logs
@@ -107,9 +105,9 @@ class Puppet::Daemon
 
     # Stop everything
     def stop(args = {:exit => true})
-        server.stop if server
+        Puppet::Application.stop!
 
-        agent.stop if agent
+        server.stop if server
 
         remove_pidfile()
 

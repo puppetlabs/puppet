@@ -3,6 +3,13 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 require 'puppet/daemon'
 
+def without_warnings
+    flag = $VERBOSE
+    $VERBOSE = nil
+    yield
+    $VERBOSE = flag
+end
+
 describe Puppet::Daemon do
     before do
         @daemon = Puppet::Daemon.new
@@ -86,6 +93,14 @@ describe Puppet::Daemon do
             @daemon.stubs(:remove_pidfile)
             @daemon.stubs(:exit)
             Puppet::Util::Log.stubs(:close_all)
+            # to make the global safe to mock, set it to a subclass of itself,
+            # then restore it in an after pass
+            without_warnings { Puppet::Application = Class.new(Puppet::Application) }
+        end
+
+        after do
+            # restore from the superclass so we lose the stub garbage
+            without_warnings { Puppet::Application = Puppet::Application.superclass }
         end
 
         it "should stop its server if one is configured" do
@@ -96,11 +111,8 @@ describe Puppet::Daemon do
             @daemon.stop
         end
 
-        it "should stop its agent if one is configured" do
-            agent = mock 'agent'
-            agent.expects(:stop)
-            @daemon.stubs(:agent).returns agent
-
+        it 'should request a stop from Puppet::Application' do
+            Puppet::Application.expects(:stop!)
             @daemon.stop
         end
 
@@ -236,6 +248,20 @@ describe Puppet::Daemon do
     end
 
     describe "when restarting" do
+        before do
+            without_warnings { Puppet::Application = Class.new(Puppet::Application) }
+        end
+
+        after do
+            without_warnings { Puppet::Application = Puppet::Application.superclass }
+        end
+
+        it 'should set Puppet::Application.restart!' do
+            Puppet::Application.expects(:restart!)
+            @daemon.stubs(:reexec)
+            @daemon.restart
+        end
+
         it "should reexec itself if no agent is available" do
             @daemon.expects(:reexec)
 
@@ -247,17 +273,6 @@ describe Puppet::Daemon do
             agent.expects(:running?).returns false
             @daemon.stubs(:agent).returns agent
             @daemon.expects(:reexec)
-
-            @daemon.restart
-        end
-
-        it "should configure the agent for later restart if the agent is running" do
-            agent = mock 'agent'
-            agent.expects(:running?).returns true
-            @daemon.stubs(:agent).returns agent
-            @daemon.expects(:reexec).never
-
-            agent.expects(:configure_delayed_restart)
 
             @daemon.restart
         end
