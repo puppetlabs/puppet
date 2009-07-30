@@ -1,5 +1,6 @@
 require 'sync'
 require 'puppet/external/event-loop'
+require 'puppet/application'
 
 # A general class for triggering a run of another
 # class.
@@ -9,12 +10,7 @@ class Puppet::Agent
 
     require 'puppet/agent/runner'
 
-    attr_reader :client_class, :client, :needing_restart, :splayed
-    attr_accessor :stopping
-
-    def configure_delayed_restart
-        @needing_restart = true
-    end
+    attr_reader :client_class, :client, :splayed
 
     # Just so we can specify that we are "the" instance.
     def initialize(client_class)
@@ -28,13 +24,7 @@ class Puppet::Agent
     end
 
     def needing_restart?
-        @needing_restart
-    end
-
-    def restart
-        configure_delayed_restart and return if running?
-        Process.kill(:HUP, $$)
-        @needing_restart = false
+        Puppet::Application.restart_requested?
     end
 
     # Perform a run with our client.
@@ -43,45 +33,25 @@ class Puppet::Agent
             Puppet.notice "Run of %s already in progress; skipping" % client_class
             return
         end
-        if stopping?
-            Puppet.notice "In shutdown progress; skipping run"
-            return
-        end
-        splay
         result = nil
-        with_client do |client|
-            begin
-                sync.synchronize { lock { result = client.run(*args) } }
-            rescue SystemExit,NoMemoryError
-                raise
-            rescue Exception => detail
-                puts detail.backtrace if Puppet[:trace]
-                Puppet.err "Could not run %s: %s" % [client_class, detail]
+        block_run = Puppet::Application.controlled_run do
+            splay
+            with_client do |client|
+                begin
+                    sync.synchronize { lock { result = client.run(*args) } }
+                rescue => detail
+                    puts detail.backtrace if Puppet[:trace]
+                    Puppet.err "Could not run %s: %s" % [client_class, detail]
+                end
             end
+            true
         end
+        Puppet.notice "Shutdown/restart in progress; skipping run" unless block_run
         result
     end
 
-    def stop
-        if self.stopping?
-            Puppet.notice "Already in shutdown"
-            return
-        end
-        self.stopping = true
-        if client and client.respond_to?(:stop)
-            begin
-                client.stop
-            rescue
-                puts detail.backtrace if Puppet[:trace]
-                Puppet.err "Could not stop %s: %s" % [client_class, detail]
-            end
-        end
-    ensure
-        self.stopping = false
-    end
-
     def stopping?
-        stopping
+        Puppet::Application.stop_requested?
     end
 
     # Have we splayed already?

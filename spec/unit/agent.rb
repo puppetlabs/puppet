@@ -15,12 +15,35 @@ class AgentTestClient
     end
 end
 
+def without_warnings
+    flag = $VERBOSE
+    $VERBOSE = nil
+    yield
+    $VERBOSE = flag
+end
+
 describe Puppet::Agent do
     before do
         @agent = Puppet::Agent.new(AgentTestClient)
 
         # So we don't actually try to hit the filesystem.
         @agent.stubs(:lock).yields
+
+        # make Puppet::Application safe for stubbing; restore in an :after block; silence warnings for this.
+        without_warnings { Puppet::Application = Class.new(Puppet::Application) }
+        Puppet::Application.stubs(:clear?).returns(true)
+        Puppet::Application.class_eval do
+            class << self
+                def controlled_run(&block)
+                    block.call
+                end
+            end
+        end
+    end
+
+    after do
+        # restore Puppet::Application from stub-safe subclass, and silence warnings
+        without_warnings { Puppet::Application = Puppet::Application.superclass }
     end
 
     it "should set its client class at initialization" do
@@ -73,9 +96,10 @@ describe Puppet::Agent do
             @agent.run
         end
 
-        it "should do nothing if it is in the process of stopping" do
-            @agent.expects(:stopping?).returns true
-            AgentTestClient.expects(:new).never
+        it "should use Puppet::Application.controlled_run to manage process state behavior" do
+            calls = sequence('calls')
+            Puppet::Application.expects(:controlled_run).yields().in_sequence(calls)
+            AgentTestClient.expects(:new).once.in_sequence(calls)
             @agent.run
         end
 
@@ -170,27 +194,56 @@ describe Puppet::Agent do
         end
     end
 
-    describe "when stopping" do
-        it "should do nothing if already stopping" do
-            @agent.expects(:stopping?).returns true
-            @agent.stop
+    describe "when checking execution state" do
+        describe 'with regular run status' do
+            before :each do
+                Puppet::Application.stubs(:restart_requested?).returns(false)
+                Puppet::Application.stubs(:stop_requested?).returns(false)
+                Puppet::Application.stubs(:interrupted?).returns(false)
+                Puppet::Application.stubs(:clear?).returns(true)
+            end
+
+            it 'should be false for :stopping?' do
+                @agent.stopping?.should be_false
+            end
+
+            it 'should be false for :needing_restart?' do
+                @agent.needing_restart?.should be_false
+            end
         end
 
-        it "should stop the client if one is available and it responds to 'stop'" do
-            client = AgentTestClient.new
+        describe 'with a stop requested' do
+            before :each do
+                Puppet::Application.stubs(:clear?).returns(false)
+                Puppet::Application.stubs(:restart_requested?).returns(false)
+                Puppet::Application.stubs(:stop_requested?).returns(true)
+                Puppet::Application.stubs(:interrupted?).returns(true)
+            end
 
-            @agent.stubs(:client).returns client
-            client.expects(:stop)
-            @agent.stop
+            it 'should be true for :stopping?' do
+                @agent.stopping?.should be_true
+            end
+
+            it 'should be false for :needing_restart?' do
+                @agent.needing_restart?.should be_false
+            end
         end
 
-        it "should mark itself as stopping while waiting for the client to stop" do
-            client = AgentTestClient.new
+        describe 'with a restart requested' do
+            before :each do
+                Puppet::Application.stubs(:clear?).returns(false)
+                Puppet::Application.stubs(:restart_requested?).returns(true)
+                Puppet::Application.stubs(:stop_requested?).returns(false)
+                Puppet::Application.stubs(:interrupted?).returns(true)
+            end
 
-            @agent.stubs(:client).returns client
-            client.expects(:stop).with { @agent.should be_stopping; true }
+            it 'should be false for :stopping?' do
+                @agent.stopping?.should be_false
+            end
 
-            @agent.stop
+            it 'should be true for :needing_restart?' do
+                @agent.needing_restart?.should be_true
+            end
         end
     end
 
@@ -223,37 +276,6 @@ describe Puppet::Agent do
             @agent.expects(:run)
 
             @agent.start
-        end
-    end
-
-    describe "when restarting" do
-        it "should configure itself for a delayed restart if currently running" do
-            @agent.expects(:running?).returns true
-
-            @agent.restart
-
-            @agent.should be_needing_restart
-        end
-
-        it "should hup itself if not running" do
-            @agent.expects(:running?).returns false
-
-            Process.expects(:kill).with(:HUP, $$)
-
-            @agent.restart
-        end
-
-        it "should turn off the needing_restart switch" do
-            @agent.expects(:running?).times(2).returns(true).then.returns false
-
-            Process.stubs(:kill)
-
-            # First call sets up the switch
-            @agent.restart
-
-            # Second call should disable it
-            @agent.restart
-            @agent.should_not be_needing_restart
         end
     end
 end
