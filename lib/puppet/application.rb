@@ -160,6 +160,18 @@ class Puppet::Application
         def clear?
             run_status.nil?
         end
+
+        # Only executes the given block if the run status of Puppet::Application is clear (no restarts, stops,
+        # etc. requested).
+        # Upon block execution, checks the run status again; if a restart has been requested during the block's
+        # execution, then controlled_run will send a new HUP signal to the current process.
+        # Thus, long-running background processes can potentially finish their work before a restart.
+        def controlled_run(&block)
+            return unless clear?
+            result = block.call
+            Process.kill(:HUP, $$) if restart_requested?
+            result
+        end
     end
 
     attr_reader :options, :opt_parser

@@ -125,14 +125,42 @@ describe Puppet::Application do
         end
     end
 
-    describe 'when working with class-level run status properties' do
-        it 'should set run status and predicate appropriately on stop!' do
+    describe 'when performing a controlled_run' do
+        it 'should not execute block if not :clear?' do
+            Puppet::Application.run_status = :stop_requested
+            target = mock 'target'
+            target.expects(:some_method).never
+            Puppet::Application.controlled_run do
+                target.some_method
+            end
         end
 
-        it 'should set run status and predicate appropriately on restart!' do
+        it 'should execute block if :clear?' do
+            Puppet::Application.run_status = nil
+            target = mock 'target'
+            target.expects(:some_method).once
+            Puppet::Application.controlled_run do
+                target.some_method
+            end
         end
 
+        it 'should signal process with HUP after block if restart requested during block execution' do
+            Puppet::Application.run_status = nil
+            target = mock 'target'
+            target.expects(:some_method).once
+            old_handler = trap('HUP') { target.some_method }
+            begin
+                Puppet::Application.controlled_run do
+                    Puppet::Application.run_status = :restart_requested
+                end
+            ensure
+                trap('HUP', old_handler)
+            end
+        end
 
+        after :each do
+            Puppet::Application.run_status = nil
+        end
     end
 
     describe "when parsing command-line options" do
