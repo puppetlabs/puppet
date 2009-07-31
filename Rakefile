@@ -97,8 +97,8 @@ task :ci_prep do
 end
 
 desc "Run the CI RSpec tests"
-task :ci_spec => [:ci_prep, 'ci:setup:rspec'] do
-    sh "cd spec; rake all; exit 0"
+task :ci_spec => [:ci_prep, 'ci:setup:rspec', :spec] do
+    sh "exit 0"
 end
 
 desc "Run CI Unit tests"
