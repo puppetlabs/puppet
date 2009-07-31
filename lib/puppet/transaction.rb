@@ -3,6 +3,7 @@
 
 require 'puppet'
 require 'puppet/util/tagging'
+require 'puppet/application'
 
 class Puppet::Transaction
     require 'puppet/transaction/change'
@@ -25,6 +26,11 @@ class Puppet::Transaction
 
     include Puppet::Util
     include Puppet::Util::Tagging
+
+    # Wraps application run state check to flag need to interrupt processing
+    def stop_processing?
+        Puppet::Application.stop_requested?
+    end
 
     # Add some additional times for reporting
     def add_times(hash)
@@ -135,6 +141,7 @@ class Puppet::Transaction
 
         begin
             @sorted_resources.each do |resource|
+                next if stop_processing?
                 if resource.is_a?(Puppet::Type::Component)
                     Puppet.warning "Somehow left a component in the relationship graph"
                     next

@@ -4,6 +4,13 @@ require File.dirname(__FILE__) + '/../spec_helper'
 
 require 'puppet/transaction'
 
+def without_warnings
+    flag = $VERBOSE
+    $VERBOSE = nil
+    yield
+    $VERBOSE = flag
+end
+
 describe Puppet::Transaction do
     before do
         @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
@@ -292,6 +299,49 @@ describe Puppet::Transaction do
         @transaction.resource_status(names[0]).changed = true
 
         @transaction.changed?.should == [@catalog.resource(names[0])]
+    end
+
+    describe 'when checking application run state' do
+        before do
+            without_warnings { Puppet::Application = Class.new(Puppet::Application) }
+            @catalog = Puppet::Resource::Catalog.new
+            @transaction = Puppet::Transaction.new(@catalog)
+        end
+
+        after do
+            without_warnings { Puppet::Application = Puppet::Application.superclass }
+        end
+
+        it 'should return true for :stop_processing? if Puppet::Application.stop_requested? is true' do
+            Puppet::Application.stubs(:stop_requested?).returns(true)
+            @transaction.stop_processing?.should be_true
+        end
+
+        it 'should return false for :stop_processing? if Puppet::Application.stop_requested? is false' do
+            Puppet::Application.stubs(:stop_requested?).returns(false)
+            @transaction.stop_processing?.should be_false
+        end
+
+        describe 'within an evaluate call' do
+            before do
+                @resource = stub 'resource', :ref => 'some_ref'
+                @catalog.add_resource @resource
+                @transaction.stubs(:prepare)
+                @transaction.sorted_resources = [@resource]
+            end
+
+            it 'should stop processing if :stop_processing? is true' do
+                @transaction.expects(:stop_processing?).returns(true)
+                @transaction.expects(:eval_resource).never
+                @transaction.evaluate
+            end
+
+            it 'should continue processing if :stop_processing? is false' do
+                @transaction.expects(:stop_processing?).returns(false)
+                @transaction.expects(:eval_resource).returns(nil)
+                @transaction.evaluate
+            end
+        end
     end
 end
 
