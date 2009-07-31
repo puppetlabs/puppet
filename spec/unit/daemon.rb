@@ -279,6 +279,11 @@ describe Puppet::Daemon do
     end
 
     describe "when reexecing it self" do
+        before do
+            @daemon.stubs(:exec)
+            @daemon.stubs(:stop)
+        end
+
         it "should fail if no argv values are available" do
             @daemon.expects(:argv).returns nil
             lambda { @daemon.reexec }.should raise_error(Puppet::DevError)
@@ -288,7 +293,6 @@ describe Puppet::Daemon do
             @daemon.argv = %w{foo}
             @daemon.expects(:stop).with(:exit => false)
 
-            @daemon.stubs(:exec)
             @daemon.reexec
         end
 
