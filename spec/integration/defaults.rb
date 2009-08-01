@@ -157,4 +157,33 @@ describe "Puppet defaults" do
     it "should have a setting for determining the configuration version and should default to an empty string" do
         Puppet.settings[:config_version].should == ""
     end
+    
+    describe "when enabling reports" do
+        it "should use the default server value when report server is unspecified" do
+            Puppet.settings[:server] = "server"
+            Puppet.settings[:report_server].should == "server"
+        end
+        
+        it "should use the default masterport value when report port is unspecified" do
+            Puppet.settings[:masterport] = "1234"
+            Puppet.settings[:report_port].should == "1234"
+        end
+
+        it "should set report_server when reportserver is set" do
+            Puppet.settings[:reportserver] = "reportserver"
+            Puppet.settings[:report_server].should == "reportserver"
+        end
+        
+        it "should use report_port when set" do
+            Puppet.settings[:masterport] = "1234"
+            Puppet.settings[:report_port] = "5678"
+            Puppet.settings[:report_port].should == "5678"
+        end
+        
+        it "should prefer report_server over reportserver" do
+            Puppet.settings[:reportserver] = "reportserver"
+            Puppet.settings[:report_server] = "report_server"
+            Puppet.settings[:report_server].should == "report_server"
+        end
+    end
 end

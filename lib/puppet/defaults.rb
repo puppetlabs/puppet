@@ -542,8 +542,21 @@ module Puppet
             before considering it a failure.  This can help reduce flapping if too
             many clients contact the server at one time."
         ],
-        :reportserver => ["$server",
-            "The server to which to send transaction reports."
+        :reportserver => {
+            :default => "$server",
+            :call_on_define => false,
+            :desc => "(Deprecated for 'report_server') The server to which to send transaction reports.",
+            :hook => proc do |value|
+              if value
+                Puppet.settings[:report_server] = value
+              end
+            end   
+        },
+        :report_server => ["$server",
+          "The server to which to send transaction reports."
+        ],
+        :report_port => ["$masterport",
+          "The port to communicate with the report_server."
         ],
         :report => [false,
             "Whether to send reports after every transaction."
