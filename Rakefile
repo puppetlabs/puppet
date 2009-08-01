@@ -1,6 +1,9 @@
 # Rakefile for Puppet -*- ruby -*-
 
 $: << File.expand_path('lib')
+$LOAD_PATH << File.join(File.dirname(__FILE__), 'tasks')
+
+Dir['tasks/**/*.rake'].each { |t| load t }
 
 require './lib/puppet.rb'
 require 'rake'
@@ -51,14 +54,6 @@ end
 Rake::GemPackageTask.new(spec) do |pkg|
 end
 
-task :tracdocs do
-    require 'puppet'
-    require 'puppet/util/reference'
-    Puppet::Util::Reference.references.each do |ref|
-        sh "puppetdoc -m trac -r #{ref.to_s}"
-    end
-end
-
 desc "Run the specs under spec/"
 task :spec do
     require 'spec'
@@ -81,77 +76,4 @@ end
 desc "Run the unit tests"
 task :unit do
     sh "cd test; rake"
-end
-
-desc "Prep CI RSpec tests"
-task :ci_prep do
-    require 'rubygems'
-    begin
-        gem 'ci_reporter'
-        require 'ci/reporter/rake/rspec'
-        require 'ci/reporter/rake/test_unit'
-        ENV['CI_REPORTS'] = 'results'
-    rescue LoadError
-       puts 'Missing ci_reporter gem. You must have the ci_reporter gem installed to run the CI spec tests'
-    end
-end
-
-desc "Run the CI RSpec tests"
-task :ci_spec => [:ci_prep, 'ci:setup:rspec', :spec] do
-    sh "exit 0"
-end
-
-desc "Run CI Unit tests"
-task :ci_unit => [:ci_prep, 'ci:setup:testunit'] do
-    sh "cd test; rake test; exit 0"
-end
-
-desc "Send patch information to the puppet-dev list"
-task :mail_patches do
-    if Dir.glob("00*.patch").length > 0
-        raise "Patches already exist matching '00*.patch'; clean up first"
-    end
-
-    unless %x{git status} =~ /On branch (.+)/
-        raise "Could not get branch from 'git status'"
-    end
-    branch = $1
-
-    unless branch =~ %r{^([^\/]+)/([^\/]+)/([^\/]+)$}
-        raise "Branch name does not follow <type>/<parent>/<name> model; cannot autodetect parent branch"
-    end
-
-    type, parent, name = $1, $2, $3
-
-    # Create all of the patches
-    sh "git format-patch -C -M -s -n --subject-prefix='PATCH/puppet' #{parent}..HEAD"
-
-    # And then mail them out.
-
-    # If we've got more than one patch, add --compose
-    if Dir.glob("00*.patch").length > 1
-        compose = "--compose"
-    else
-        compose = ""
-    end
-
-    # Now send the mail.
-    sh "git send-email #{compose} --no-signed-off-by-cc --suppress-from --to puppet-dev@googlegroups.com 00*.patch"
-
-    # Finally, clean up the patches
-    sh "rm 00*.patch"
-end
-
-desc "Create a changelog based on your git commits."
-task :changelog do
-    CHANGELOG_DIR = "#{Dir.pwd}"
-    mkdir(CHANGELOG_DIR) unless File.directory?(CHANGELOG_DIR)
-    change_body=`git log --pretty=format:'%aD%n%an <%ae>%n%s%n'`
-    File.open(File.join(CHANGELOG_DIR, "CHANGELOG.git"), 'w') do |f|
-        f << change_body
-    end
-
-    # Changelog commit
-    `git add #{CHANGELOG_DIR}/CHANGELOG.git`
-    `git commit -m "Update CHANGELOG.git"`
 end
