@@ -89,3 +89,16 @@ describe Puppet::Type.type(:exec), " when logoutput=>on_failure is set," do
         @execer.refresh
     end
 end
+
+describe Puppet::Type.type(:exec) do
+    it "should be able to autorequire files mentioned in the command" do
+        catalog = Puppet::Resource::Catalog.new
+        catalog.add_resource Puppet::Type.type(:file).new(:name => "/bin/true")
+        @execer = Puppet::Type.type(:exec).new(:name => "/bin/true")
+        catalog.add_resource @execer
+
+        rels = @execer.autorequire
+        rels[0].should be_instance_of(Puppet::Relationship)
+        rels[0].target.should equal(@execer)
+    end
+end
