@@ -112,42 +112,25 @@ describe "Puppet" do
             lambda { @puppet.run_setup }.should raise_error(SystemExit)
         end
 
-        it "should set the code to run from --code" do
-            @puppet.options.stubs(:[]).with(:code).returns("code to run")
-            Puppet.expects(:[]=).with(:code,"code to run")
-
-            @puppet.run_setup
-        end
-
-        it "should set the code to run from STDIN if no arguments" do
-            ARGV.stubs(:length).returns(0)
-            STDIN.stubs(:read).returns("code to run")
-
-            Puppet.expects(:[]=).with(:code,"code to run")
-
-            @puppet.run_setup
-        end
-
-        it "should set the manifest if some files are passed on command line" do
-            ARGV.stubs(:length).returns(1)
-            ARGV.stubs(:shift).returns("site.pp")
-
-            Puppet.expects(:[]=).with(:manifest,"site.pp")
-
-            @puppet.run_setup
-        end
-
     end
 
     describe "when executing" do
 
         it "should dispatch to parseonly if parseonly is set" do
+            @puppet.stubs(:options).returns({})
             Puppet.stubs(:[]).with(:parseonly).returns(true)
 
             @puppet.get_command.should == :parseonly
         end
 
+        it "should dispatch to 'apply' if it was called with 'apply'" do
+            @puppet.options[:catalog] = "foo"
+
+            @puppet.get_command.should == :apply
+        end
+
         it "should dispatch to main if parseonly is not set" do
+            @puppet.stubs(:options).returns({})
             Puppet.stubs(:[]).with(:parseonly).returns(false)
 
             @puppet.get_command.should == :main
@@ -203,10 +186,37 @@ describe "Puppet" do
                 @catalog.stubs(:to_ral).returns(@catalog)
                 Puppet::Resource::Catalog.stubs(:find).returns(@catalog)
 
+                STDIN.stubs(:read)
+
                 @transaction = stub_everything 'transaction'
                 @catalog.stubs(:apply).returns(@transaction)
 
                 @puppet.stubs(:exit)
+            end
+
+            it "should set the code to run from --code" do
+                @puppet.options.stubs(:[]).with(:code).returns("code to run")
+                Puppet.expects(:[]=).with(:code,"code to run")
+
+                @puppet.main
+            end
+
+            it "should set the code to run from STDIN if no arguments" do
+                ARGV.stubs(:length).returns(0)
+                STDIN.stubs(:read).returns("code to run")
+
+                Puppet.expects(:[]=).with(:code,"code to run")
+
+                @puppet.main
+            end
+
+            it "should set the manifest if some files are passed on command line" do
+                ARGV.stubs(:length).returns(1)
+                ARGV.stubs(:shift).returns("site.pp")
+
+                Puppet.expects(:[]=).with(:manifest,"site.pp")
+
+                @puppet.main
             end
 
             it "should collect the node facts" do
@@ -319,6 +329,74 @@ describe "Puppet" do
             end
 
         end
-    end
 
+        describe "the 'apply' command" do
+            before do
+                #Puppet::Resource::Catalog.stubs(:json_create).returns Puppet::Resource::Catalog.new
+                JSON.stubs(:parse).returns Puppet::Resource::Catalog.new
+            end
+
+            it "should read the catalog in from disk if a file name is provided" do
+                @puppet.options[:catalog] = "/my/catalog.json"
+
+                File.expects(:read).with("/my/catalog.json").returns "something"
+
+                @puppet.apply
+            end
+
+            it "should read the catalog in from stdin if '-' is provided" do
+                @puppet.options[:catalog] = "-"
+
+                $stdin.expects(:read).returns "something"
+
+                @puppet.apply
+            end
+
+            it "should deserialize the catalog from json" do
+                @puppet.options[:catalog] = "/my/catalog.json"
+
+                File.expects(:read).returns "something"
+                JSON.expects(:parse).with("something").returns Puppet::Resource::Catalog.new
+
+                @puppet.apply
+            end
+
+            it "should fail helpfully if deserializing fails" do
+                @puppet.options[:catalog] = "/my/catalog.json"
+
+                File.expects(:read).returns "something"
+                JSON.expects(:parse).raises ArgumentError
+
+                lambda { @puppet.apply }.should raise_error(Puppet::Error)
+            end
+
+            it "should convert plain data structures into a catalog if deserialization does not do so" do
+                @puppet.options[:catalog] = "/my/catalog.json"
+
+                File.expects(:read).returns "something"
+                JSON.expects(:parse).with("something").returns({:foo => "bar"})
+                Puppet::Resource::Catalog.expects(:json_create).with({:foo => "bar"}).returns(Puppet::Resource::Catalog.new)
+
+                @puppet.apply
+            end
+
+            it "should convert the catalog to a RAL catalog and use a Configurer instance to apply it" do
+                @puppet.options[:catalog] = "/my/catalog.json"
+
+                File.expects(:read).returns "something"
+
+                catalog = Puppet::Resource::Catalog.new
+                JSON.expects(:parse).returns catalog
+
+                catalog.expects(:to_ral).returns "mycatalog"
+
+                configurer = stub 'configurer'
+                Puppet::Configurer.expects(:new).returns configurer
+
+                configurer.expects(:run).with(:catalog => "mycatalog")
+
+                @puppet.apply
+            end
+        end
+    end
 end

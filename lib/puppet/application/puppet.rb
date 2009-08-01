@@ -16,6 +16,10 @@ Puppet::Application.new(:puppet) do
     option("--use-nodes")
     option("--detailed-exitcodes")
 
+    option("--apply catalog",  "-a catalog") do |arg|
+        options[:catalog] = arg
+    end
+
     option("--logdest LOGDEST", "-l") do |arg|
         begin
             Puppet::Util::Log.newdestination(arg)
@@ -26,7 +30,37 @@ Puppet::Application.new(:puppet) do
     end
 
     dispatch do
-        return Puppet[:parseonly] ? :parseonly : :main
+        if options[:catalog]
+            :apply
+        elsif Puppet[:parseonly]
+            :parseonly
+        else
+            :main
+        end
+    end
+
+    command(:apply) do
+        require 'puppet/configurer'
+
+        if options[:catalog] == "-"
+            text = $stdin.read
+        else
+            text = File.read(options[:catalog])
+        end
+
+        begin
+            catalog = JSON.parse(text)
+            unless catalog.is_a?(Puppet::Resource::Catalog)
+                catalog = Puppet::Resource::Catalog.json_create(catalog)
+            end
+        rescue => detail
+            raise Puppet::Error, "Could not deserialize catalog from json: %s" % detail
+        end
+
+        catalog = catalog.to_ral
+
+        configurer = Puppet::Configurer.new
+        configurer.run :catalog => catalog
     end
 
     command(:parseonly) do
@@ -40,6 +74,13 @@ Puppet::Application.new(:puppet) do
     end
 
     command(:main) do
+        # Set our code or file to use.
+        if options[:code] or ARGV.length == 0
+            Puppet[:code] = options[:code] || STDIN.read
+        else
+            Puppet[:manifest] = ARGV.shift
+        end
+
         # Collect our facts.
         facts = Puppet::Node::Facts.find(Puppet[:certname])
 
@@ -125,13 +166,6 @@ Puppet::Application.new(:puppet) do
             Puppet::Util::Log.level = :debug
         elsif options[:verbose]
             Puppet::Util::Log.level = :info
-        end
-
-        # Set our code or file to use.
-        if options[:code] or ARGV.length == 0
-            Puppet[:code] = options[:code] || STDIN.read
-        else
-            Puppet[:manifest] = ARGV.shift
         end
     end
 end

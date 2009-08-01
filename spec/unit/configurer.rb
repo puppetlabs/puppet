@@ -57,6 +57,14 @@ describe Puppet::Configurer, "when executing a catalog run" do
         @agent.run :one => true
     end
 
+    it "should accept a catalog and use it instead of retrieving a different one" do
+        catalog = stub 'catalog', :retrieval_duration= => nil
+        @agent.expects(:retrieve_catalog).never
+
+        catalog.expects(:apply).with(:one => true)
+        @agent.run :one => true, :catalog => catalog
+    end
+
     it "should benchmark how long it takes to apply the catalog" do
         @agent.expects(:benchmark).with(:notice, "Finished catalog run")
 

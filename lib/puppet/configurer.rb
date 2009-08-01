@@ -130,7 +130,9 @@ class Puppet::Configurer
     def run(options = {})
         prepare()
 
-        unless catalog = retrieve_catalog
+        if catalog = options[:catalog]
+            options.delete(:catalog)
+        elsif ! catalog = retrieve_catalog
             Puppet.err "Could not retrieve catalog; skipping run"
             return
         end
