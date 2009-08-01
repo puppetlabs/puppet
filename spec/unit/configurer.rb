@@ -26,6 +26,7 @@ describe Puppet::Configurer, "when executing a catalog run" do
         Puppet.settings.stubs(:use).returns(true)
         @agent = Puppet::Configurer.new
         @agent.stubs(:facts_for_uploading).returns({})
+        @agent.stubs(:retrieve_catalog).returns Puppet::Resource::Catalog.new
     end
 
     it "should prepare for the run" do
