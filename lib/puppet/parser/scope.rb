@@ -403,7 +403,7 @@ class Puppet::Parser::Scope
 
     # Undefine a variable; only used for testing.
     def unsetvar(var)
-        table = ephemeral?(var) ? @ephemeral : @table
+        table = ephemeral?(var) ? @ephemeral : @symtable
         if table.include?(var)
             table.delete(var)
         end

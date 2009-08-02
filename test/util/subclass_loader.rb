@@ -31,13 +31,6 @@ class TestPuppetUtilSubclassLoader < Test::Unit::TestCase
     end
 
     def test_subclass_loading
-        # Make sure we don't get a failure but that we also get nothing back
-        assert_nothing_raised do
-            assert_nil(LoadTest.faker(:fake),
-                "Got something back from a missing subclass")
-            assert_nil(LoadTest.fake,
-                "Got something back from missing subclass method")
-        end
         # Make a fake client
         mk_subclass("fake", "puppet/fakeloaders", "TestPuppetUtilSubclassLoader::LoadTest")
 
