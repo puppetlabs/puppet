@@ -107,7 +107,6 @@ class UserAddProviderTest < PuppetTest::TestCase
         end
 
         @user.provider.create
-        @user.class.clear
 
         # Start again, this time with manages_home off
         @vals[:managehome] = false
@@ -154,7 +153,6 @@ class UserAddProviderTest < PuppetTest::TestCase
         end
 
         @user.provider.create
-        @user.class.clear
 
         # Start again, this time with manages_home off
         @vals[:allowdupe] = false
@@ -198,7 +196,6 @@ class UserAddProviderTest < PuppetTest::TestCase
         end
 
         @user.provider.create
-        @user.class.clear
 
         # Now mark the user made, and make sure the right command is called
         setup_user
