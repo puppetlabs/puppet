@@ -63,23 +63,29 @@ class Puppet::Util::Feature
     # someone asks for the feature, so we don't unnecessarily load
     # files.
     def test(name, options)
-        result = true
-        if ary = options[:libs]
-            ary = [ary] unless ary.is_a?(Array)
+        return true unless ary = options[:libs]
+        ary = [ary] unless ary.is_a?(Array)
 
-            ary.each do |lib|
-                unless lib.is_a?(String)
-                    raise ArgumentError, "Libraries must be passed as strings not %s" % lib.class
-                end
-
-                begin
-                    require lib
-                rescue Exception
-                    Puppet.debug "Failed to load library '%s' for feature '%s'" % [lib, name]
-                    result = false
-                end
-            end
+        ary.each do |lib|
+            load_library(lib)
         end
-        result
+
+        # We loaded all of the required libraries
+        return true
+    end
+
+    private
+
+    def load_library(lib)
+        unless lib.is_a?(String)
+            raise ArgumentError, "Libraries must be passed as strings not %s" % lib.class
+        end
+
+        begin
+            require lib
+        rescue Exception
+            Puppet.debug "Failed to load library '%s' for feature '%s'" % [lib, name]
+            result = false
+        end
     end
 end
