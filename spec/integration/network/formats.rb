@@ -7,7 +7,7 @@ require 'puppet/network/formats'
 class JsonIntTest
     attr_accessor :string
     def ==(other)
-        string == other.string
+        other.class == self.class and string == other.string
     end
 
     def self.from_json(data)
@@ -24,6 +24,11 @@ class JsonIntTest
             'data' => [@string]
         }.to_json(*args)
     end
+
+    def self.canonical_order(s)
+        s.gsub(/\{"data":\[(.*?)\],"json_class":"JsonIntTest"\}/,'{"json_class":"JsonIntTest","data":[\1]}')
+    end
+
 end
 
 describe Puppet::Network::FormatHandler.format(:s) do
@@ -58,15 +63,24 @@ describe Puppet::Network::FormatHandler.format(:json) do
 
         it "should be able to render an instance to json" do
             instance = JsonIntTest.new("foo")
+            JsonIntTest.canonical_order(@json.render(instance)).should == JsonIntTest.canonical_order('{"json_class":"JsonIntTest","data":["foo"]}' )
+        end
 
-            @json.render(instance).should == '{"json_class":"JsonIntTest","data":["foo"]}'
+        it "should be able to render arrays to json" do
+            @json.render([1,2]).should == '[1,2]'
+        end
+
+        it "should be able to render arrays containing hashes to json" do
+            @json.render([{"one"=>1},{"two"=>2}]).should == '[{"one":1},{"two":2}]'
         end
 
         it "should be able to render multiple instances to json" do
+            Puppet.features.add(:json, :libs => ["json"])
+
             one = JsonIntTest.new("one")
             two = JsonIntTest.new("two")
 
-            @json.render([one, two]).should == '[{"json_class":"JsonIntTest","data":["one"]},{"json_class":"JsonIntTest","data":["two"]}]'
+            JsonIntTest.canonical_order(@json.render([one,two])).should == JsonIntTest.canonical_order('[{"json_class":"JsonIntTest","data":["one"]},{"json_class":"JsonIntTest","data":["two"]}]')
         end
 
         it "should be able to intern json into an instance" do
