@@ -30,7 +30,7 @@ describe Puppet::Parser::AST::Definition, "when evaluating" do
     end
 
     it "should have a get_classname method" do
-        @definition.should respond_to :get_classname
+        @definition.should respond_to(:get_classname)
     end
 
     it "should return the current classname with get_classname" do
