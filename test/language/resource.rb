@@ -39,9 +39,8 @@ class TestResource < PuppetTest::TestCase
         params = res.instance_variable_get("@params")
 
         # First test the simple case:  It's already a parameter
-        param = mock('param')
+        param = stub('param', :name => "pname")
         param.expects(:is_a?).with(Resource::Param).returns(true)
-        param.expects(:name).returns("pname")
         res.send(:set_parameter, param)
         assert_equal(param, params["pname"], "Parameter was not added to hash")
 
