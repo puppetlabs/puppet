@@ -34,9 +34,10 @@ module Puppet
         end
 
         newparam(:server) do
-            desc "The server providing the filebucket.  If this is
-                not specified, then the bucket is local and *path* must be
-                specified."
+            desc "The server providing the remote filebucket.  If this is not
+                  specified then *path* is checked. If it is set, then the
+                  bucket is local.  Otherwise the puppetmaster server specified
+                  in the config or at the commandline is used."
         end
 
         newparam(:port) do
@@ -48,8 +49,8 @@ module Puppet
 
         newparam(:path) do
             desc "The path to the local filebucket.  If this is
-                not specified, then the bucket is remote and *server* must be
-                specified."
+                unset, then the bucket is remote.  The parameter *server* must
+                can be specified to set the remote server."
 
             defaultto { Puppet[:clientbucketdir] }
         end
@@ -72,30 +73,37 @@ module Puppet
         end
 
         def mkbucket
+            # Default is a local filebucket, if no server is given.
+            # If the default path has been removed, too, then
+            # the puppetmaster is used as default server
+
+            type = "local"
             if self[:server]
-                begin
-                    @bucket = Puppet::Network::Client.client(:Dipper).new(
-                        :Server => self[:server],
-                        :Port => self[:port]
-                    )
-                rescue => detail
-                    self.fail(
-                        "Could not create remote filebucket: %s" % detail
-                    )
-                end
-            else
-                begin
+                type = "remote"
+                server = self[:server]
+            elsif not self[:path]
+                type = "remote"
+                server = Puppet[:server]
+            end
+
+            begin
+                if type == "local"
                     @bucket = Puppet::Network::Client.client(:Dipper).new(
                         :Path => self[:path]
                     )
-                rescue => detail
-                    if Puppet[:trace]
-                        puts detail.backtrace
-                    end
-                    self.fail(
-                        "Could not create local filebucket: %s" % detail
+                else
+                    @bucket = Puppet::Network::Client.client(:Dipper).new(
+                        :Server => server,
+                        :Port => self[:port]
                     )
                 end
+            rescue => detail
+                if Puppet[:trace]
+                    puts detail.backtrace
+                end
+                self.fail(
+                    "Could not create %s filebucket: %s" % [type, detail]
+                )
             end
 
             @bucket.name = self.name

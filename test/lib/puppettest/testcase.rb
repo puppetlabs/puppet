@@ -5,6 +5,7 @@
 
 require 'puppettest'
 require 'puppettest/runnable_test'
+require 'test/unit'
 
 class PuppetTest::TestCase < Test::Unit::TestCase
     include PuppetTest
