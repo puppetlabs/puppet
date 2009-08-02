@@ -171,7 +171,7 @@ class TestCron < Test::Unit::TestCase
             :weekday => {
                 :valid => [ 0, 3, 6, "1", "tue", "wed",
                     "Wed", "MOnday", "SaTurday" ],
-                :invalid => [ -1, 7, "13", "tues", "teusday", "thurs" ]
+                :invalid => [ -1, 8, "13", "tues", "teusday", "thurs" ]
             },
             :hour => {
                 :valid => [ 0, 21, 23 ],
