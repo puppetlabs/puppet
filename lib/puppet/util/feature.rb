@@ -67,7 +67,7 @@ class Puppet::Util::Feature
         ary = [ary] unless ary.is_a?(Array)
 
         ary.each do |lib|
-            load_library(lib)
+            return false unless load_library(lib, name)
         end
 
         # We loaded all of the required libraries
@@ -76,7 +76,7 @@ class Puppet::Util::Feature
 
     private
 
-    def load_library(lib)
+    def load_library(lib, name)
         unless lib.is_a?(String)
             raise ArgumentError, "Libraries must be passed as strings not %s" % lib.class
         end
@@ -85,7 +85,8 @@ class Puppet::Util::Feature
             require lib
         rescue Exception
             Puppet.debug "Failed to load library '%s' for feature '%s'" % [lib, name]
-            result = false
+            return false
         end
+        return true
     end
 end

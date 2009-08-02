@@ -60,10 +60,12 @@ describe Puppet::Util::Feature do
         @features.should be_myfeature
     end
 
-    it "should consider a feature to be absent if any of its libraries are absent" do
+    it "should log and consider a feature to be absent if any of its libraries are absent" do
         @features.add(:myfeature, :libs => %w{foo bar})
-        @features.expects(:require).with("foo")
-        @features.expects(:require).with("bar").raises(LoadError)
+        @features.expects(:require).with("foo").raises(LoadError)
+        @features.stubs(:require).with("bar")
+
+        Puppet.expects(:debug)
 
         @features.should_not be_myfeature
     end
