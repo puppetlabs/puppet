@@ -38,13 +38,14 @@ module Puppet
                   specified then *path* is checked. If it is set, then the
                   bucket is local.  Otherwise the puppetmaster server specified
                   in the config or at the commandline is used."
+            defaultto { Puppet[:server] }
         end
 
         newparam(:port) do
             desc "The port on which the remote server is listening.
                 Defaults to the normal Puppet port, %s." % Puppet[:masterport]
 
-            defaultto Puppet[:masterport]
+            defaultto { Puppet[:masterport] }
         end
 
         newparam(:path) do
@@ -60,17 +61,12 @@ module Puppet
             new(:name => "puppet", :path => Puppet[:clientbucketdir])
         end
 
-        def self.instances
-            []
-        end
-
         def bucket
-            unless defined? @bucket
-                mkbucket()
-            end
-
-            @bucket
+            mkbucket() unless defined? @bucket
+            return @bucket
         end
+
+        private
 
         def mkbucket
             # Default is a local filebucket, if no server is given.
@@ -78,32 +74,19 @@ module Puppet
             # the puppetmaster is used as default server
 
             type = "local"
-            if self[:server]
-                type = "remote"
-                server = self[:server]
-            elsif not self[:path]
-                type = "remote"
-                server = Puppet[:server]
+            args = {}
+            if self[:path]
+                args[:Path] = self[:path]
+            else
+                args[:Server] = self[:server]
+                args[:Port] = self[:port]
             end
 
             begin
-                if type == "local"
-                    @bucket = Puppet::Network::Client.client(:Dipper).new(
-                        :Path => self[:path]
-                    )
-                else
-                    @bucket = Puppet::Network::Client.client(:Dipper).new(
-                        :Server => server,
-                        :Port => self[:port]
-                    )
-                end
+                @bucket = Puppet::Network::Client.client(:Dipper).new(args)
             rescue => detail
-                if Puppet[:trace]
-                    puts detail.backtrace
-                end
-                self.fail(
-                    "Could not create %s filebucket: %s" % [type, detail]
-                )
+                puts detail.backtrace if Puppet[:trace]
+                self.fail("Could not create %s filebucket: %s" % [type, detail])
             end
 
             @bucket.name = self.name
