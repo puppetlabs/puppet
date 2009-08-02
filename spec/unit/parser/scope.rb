@@ -279,4 +279,18 @@ describe Puppet::Parser::Scope do
             @scope.ephemeral_from(@match)
         end
     end
+
+    describe "when unsetting variables" do
+        it "should be able to unset normal variables" do
+            @scope.setvar("foo", "bar")
+            @scope.unsetvar("foo")
+            @scope.lookupvar("foo").should == ""
+        end
+
+        it "should be able to unset ephemeral variables" do
+            @scope.setvar("foo", "bar", :ephemeral => true)
+            @scope.unsetvar("foo")
+            @scope.lookupvar("foo").should == ""
+        end
+    end
 end
