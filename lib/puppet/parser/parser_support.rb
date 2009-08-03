@@ -4,6 +4,7 @@ class Puppet::Parser::Parser
     require 'puppet/parser/functions'
     require 'puppet/parser/files'
     require 'puppet/parser/loaded_code'
+    require 'monitor'
 
     AST = Puppet::Parser::AST
 
