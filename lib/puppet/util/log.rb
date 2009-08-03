@@ -515,17 +515,9 @@ class Puppet::Util::Log
         # We can't just check for whether it responds to :path, because
         # plenty of providers respond to that in their normal function.
         if (source.is_a?(Puppet::Type) or source.is_a?(Puppet::Parameter)) and source.respond_to?(:path)
-            @source = source.path
+            set_source_from_ral(source)
         else
             @source = source.to_s
-        end
-        if source.respond_to?(:tags)
-            source.tags.each { |t| tag(t) }
-        end
-
-        [:file, :line, :version].each do |param|
-            next unless source.respond_to?(param)
-            send(param.to_s + "=", source.send(param))
         end
     end
 
@@ -535,6 +527,19 @@ class Puppet::Util::Log
 
     def to_s
         return @message
+    end
+
+    private
+
+    def set_source_from_ral(source)
+        @source = source.path
+
+        source.tags.each { |t| tag(t) }
+
+        [:file, :line, :version].each do |param|
+            next unless source.respond_to?(param) and value = source.send(param)
+            send(param.to_s + "=", value)
+        end
     end
 end
 
