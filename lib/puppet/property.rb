@@ -370,19 +370,6 @@ class Puppet::Property < Puppet::Parameter
         end
     end
 
-    # The properties need to return tags so that logs correctly collect them.
-    def tags
-        unless defined? @tags
-            @tags = []
-            # This might not be true in testing
-            if @resource.respond_to? :tags
-                @tags = @resource.tags
-            end
-            @tags << self.name.to_s
-        end
-        @tags
-    end
-
     def to_s
         return "%s(%s)" % [@resource.name,self.name]
     end

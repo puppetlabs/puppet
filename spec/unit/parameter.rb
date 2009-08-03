@@ -6,7 +6,9 @@ require 'puppet/parameter'
 
 describe Puppet::Parameter do
     before do
-        @class = Class.new(Puppet::Parameter)
+        @class = Class.new(Puppet::Parameter) do
+            @name = :foo
+        end
         @class.initvars
         @resource = mock 'resource'
         @resource.stub_everything
@@ -28,6 +30,18 @@ describe Puppet::Parameter do
         catalog = mock 'catalog'
         @resource.stubs(:catalog).returns catalog
         @parameter.expirer.should equal(catalog)
+    end
+
+    [:line, :file, :version].each do |data|
+        it "should return its resource's #{data} as its #{data}" do
+            @resource.expects(data).returns "foo"
+            @parameter.send(data).should == "foo"
+        end
+    end
+
+    it "should return the resource's tags plus its name as its tags" do
+        @resource.expects(:tags).returns %w{one two}
+        @parameter.tags.should == %w{one two foo}
     end
 
     describe "when returning the value" do

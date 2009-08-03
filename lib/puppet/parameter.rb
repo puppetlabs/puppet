@@ -359,6 +359,12 @@ class Puppet::Parameter
     # LAK 2007-05-09: Keep the @parent around for backward compatibility.
     attr_accessor :parent
 
+    [:line, :file, :version].each do |param|
+        define_method(param) do
+            resource.send(param)
+        end
+    end
+
     def devfail(msg)
         self.fail(Puppet::DevError, msg)
     end
@@ -511,6 +517,19 @@ class Puppet::Parameter
     # case we return the resource object itself.
     def provider
         @resource.provider
+    end
+
+    # The properties need to return tags so that logs correctly collect them.
+    def tags
+        unless defined? @tags
+            @tags = []
+            # This might not be true in testing
+            if @resource.respond_to? :tags
+                @tags = @resource.tags
+            end
+            @tags << self.name.to_s
+        end
+        @tags
     end
 
     def to_s

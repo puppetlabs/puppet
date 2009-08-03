@@ -30,11 +30,6 @@ describe Puppet::Property do
         @class.value_option(:foo, :event).should == :whatever
     end
 
-    it "should return the resource's tags plus its name as its tags" do
-        @resource.expects(:tags).returns %w{one two}
-        @property.tags.should == %w{one two foo}
-    end
-
     it "should be able to specify required features" do
         @class.should respond_to(:required_features=)
     end
