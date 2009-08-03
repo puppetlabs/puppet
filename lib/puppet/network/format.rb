@@ -109,10 +109,10 @@ class Puppet::Network::Format
 
         if type == :class
             has_method = klass.respond_to?(method)
-            message = "class does not respond to %s" % method
+            message = "has not implemented method '%s'" % method
         else
             has_method = klass.instance_methods.include?(method)
-            message = "class instances do not respond to %s" % method
+            message = "has not implemented instance method  '%s'" % method
         end
 
         return true if has_method
