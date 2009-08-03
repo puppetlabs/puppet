@@ -3,12 +3,13 @@ module Puppet::Util::Backups
 
     # Deal with backups.
     def perform_backup(file = nil)
-        # let the path be specified
-        file ||= self[:path]
-        return true unless FileTest.exists?(file)  
         # if they specifically don't want a backup, then just say
         # we're good
         return true unless self[:backup]
+
+        # let the path be specified
+        file ||= self[:path]
+        return true unless FileTest.exists?(file)  
 
         return perform_backup_with_bucket(file) if self.bucket
         return perform_backup_with_backuplocal(file, self[:backup]) 
@@ -23,8 +24,7 @@ module Puppet::Util::Backups
             # we don't need to backup directories when recurse is on
             return true if self[:recurse]
             info "Recursively backing up to filebucket"
-            Find.find(self[:path]) { |f| backup_file_with_filebucket(f) if
-                File.file?(f) }
+            Find.find(self[:path]) { |f| backup_file_with_filebucket(f) if File.file?(f) }
         when "file"; backup_file_with_filebucket(file)
         when "link"; return true
         end
@@ -33,9 +33,9 @@ module Puppet::Util::Backups
     def perform_backup_with_backuplocal(fileobj, backup)
         file = (fileobj.class == String) ? fileobj : fileobj.name
         newfile = file + backup
-        if FileTest.exists?(newfile)
-            remove_backup(newfile)
-        end
+
+        remove_backup(newfile)
+
         begin
             bfile = file + backup
 
@@ -47,8 +47,7 @@ module Puppet::Util::Backups
         rescue => detail
             # since they said they want a backup, let's error out
             # if we couldn't make one
-            self.fail "Could not back %s up: %s" %
-                [file, detail.message]
+            self.fail "Could not back %s up: %s" % [file, detail.message]
         end
     end
 
@@ -58,23 +57,24 @@ module Puppet::Util::Backups
         else
             method = :stat
         end
-        old = File.send(method, newfile).ftype
 
-        if old == "directory"
-            raise Puppet::Error,
-            "Will not remove directory backup %s; use a filebucket" %
-                newfile
+        begin
+            stat = File.send(method, newfile)
+        rescue Errno::ENOENT
+            return
         end
 
-        info "Removing old backup of type %s" %
-            File.send(method, newfile).ftype
+        if stat.ftype == "directory"
+            raise Puppet::Error, "Will not remove directory backup %s; use a filebucket" % newfile
+        end
+
+        info "Removing old backup of type %s" % stat.ftype
 
         begin
             File.unlink(newfile)
         rescue => detail
             puts detail.backtrace if Puppet[:trace]
-            self.err "Could not remove old backup: %s" % detail
-            return false
+            self.fail "Could not remove old backup: %s" % detail
         end
     end
 
