@@ -1071,7 +1071,6 @@ file { "/tmp/yayness":
                 end
             end
         end
-        system("find %s" % mandir)
     end
 
     # #596 - make sure classes and definitions load automatically if they're in modules, so we don't have to manually load each one.
