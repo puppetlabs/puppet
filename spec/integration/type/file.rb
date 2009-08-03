@@ -7,6 +7,112 @@ require 'puppet_spec/files'
 describe Puppet::Type.type(:file) do
     include PuppetSpec::Files
 
+    describe "when writing files" do
+        it "should backup files to a filebucket when one is configured" do
+            bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
+            file = Puppet::Type.type(:file).new :path => tmpfile("bucket_backs"), :backup => "mybucket", :content => "foo"
+            catalog = Puppet::Resource::Catalog.new
+            catalog.add_resource file, bucket
+
+            File.open(file[:path], "w") { |f| f.puts "bar" }
+
+            md5 = Digest::MD5.hexdigest(File.read(file[:path]))
+
+            catalog.apply
+
+            bucket.bucket.getfile(md5).should == "bar\n"
+        end
+
+        it "should backup files in the local directory when a backup string is provided" do
+            file = Puppet::Type.type(:file).new :path => tmpfile("bucket_backs"), :backup => ".bak", :content => "foo"
+            catalog = Puppet::Resource::Catalog.new
+            catalog.add_resource file
+
+            File.open(file[:path], "w") { |f| f.puts "bar" }
+
+            catalog.apply
+
+            backup = file[:path] + ".bak"
+            FileTest.should be_exist(backup)
+            File.read(backup).should == "bar\n"
+        end
+
+        it "should fail if no backup can be performed" do
+            dir = tmpfile("backups")
+            Dir.mkdir(dir)
+            path = File.join(dir, "testfile")
+            file = Puppet::Type.type(:file).new :path => path, :backup => ".bak", :content => "foo"
+            catalog = Puppet::Resource::Catalog.new
+            catalog.add_resource file
+
+            File.open(file[:path], "w") { |f| f.puts "bar" }
+
+            File.chmod(0111, dir) # make it non-writeable
+
+            catalog.apply
+
+            File.read(file[:path]).should == "bar\n"
+        end
+
+        it "should not backup symlinks" do
+            link = tmpfile("link")
+            dest1 = tmpfile("dest1")
+            dest2 = tmpfile("dest2")
+            bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
+            file = Puppet::Type.type(:file).new :path => link, :target => dest2, :ensure => :link, :backup => "mybucket"
+            catalog = Puppet::Resource::Catalog.new
+            catalog.add_resource file, bucket
+
+            File.open(dest1, "w") { |f| f.puts "whatever" }
+            File.symlink(dest1, link)
+
+            md5 = Digest::MD5.hexdigest(File.read(file[:path]))
+
+            catalog.apply
+
+            File.readlink(link).should == dest2
+            Find.find(bucket[:path]) { |f| File.file?(f) }.should be_nil
+        end
+
+        it "should backup directories to the local filesystem by copying the whole directory" do
+            file = Puppet::Type.type(:file).new :path => tmpfile("bucket_backs"), :backup => ".bak", :content => "foo"
+            catalog = Puppet::Resource::Catalog.new
+            catalog.add_resource file
+
+            Dir.mkdir(file[:path])
+            otherfile = File.join(file[:path], "foo")
+            File.open(otherfile, "w") { |f| f.print "yay" }
+
+            catalog.apply
+
+            backup = file[:path] + ".bak"
+            FileTest.should be_directory(backup)
+            File.read(File.join(backup, "foo")).should == "yay"
+        end
+
+        it "should backup directories to filebuckets by backing up each file separately" do
+            bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
+            file = Puppet::Type.type(:file).new :path => tmpfile("bucket_backs"), :backup => "mybucket", :content => "foo"
+            catalog = Puppet::Resource::Catalog.new
+            catalog.add_resource file, bucket
+
+            Dir.mkdir(file[:path])
+            foofile = File.join(file[:path], "foo")
+            barfile = File.join(file[:path], "bar")
+            File.open(foofile, "w") { |f| f.print "fooyay" }
+            File.open(barfile, "w") { |f| f.print "baryay" }
+
+
+            foomd5 = Digest::MD5.hexdigest(File.read(foofile))
+            barmd5 = Digest::MD5.hexdigest(File.read(barfile))
+
+            catalog.apply
+
+            bucket.bucket.getfile(foomd5).should == "fooyay"
+            bucket.bucket.getfile(barmd5).should == "baryay"
+        end
+    end
+
     describe "when recursing" do
         def build_path(dir)
             Dir.mkdir(dir)
