@@ -139,13 +139,6 @@ describe Puppet::Util::Log do
                 log.file.should == "/my/file"
                 log.line.should == 50
             end
-
-            it "should not fail when RAL objects don't actually support all of the metadata" do
-                file = Puppet::Type.type(:file).new :path => "/foo/bar", :ensure => :file
-                source = file.property(:ensure)
-                log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => source)
-                log.file.should be_nil
-            end
         end
 
         describe "when setting the source as a non-RAL object" do

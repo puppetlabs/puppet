@@ -537,7 +537,7 @@ class Puppet::Util::Log
         source.tags.each { |t| tag(t) }
 
         [:file, :line, :version].each do |param|
-            next unless source.respond_to?(param) and value = source.send(param)
+            next unless value = source.send(param)
             send(param.to_s + "=", value)
         end
     end
