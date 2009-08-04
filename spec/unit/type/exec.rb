@@ -3,11 +3,11 @@
 require File.dirname(__FILE__) + '/../../spec_helper'
 
 module ExecModuleTesting
-    def create_resource(command, output, exitstatus)
+    def create_resource(command, output, exitstatus, returns = [0])
         @user_name = 'some_user_name'
         @group_name = 'some_group_name'
         Puppet.features.stubs(:root?).returns(true)
-        @execer = Puppet::Type.type(:exec).new(:name => command, :path => %w{/usr/bin /bin}, :user => @user_name, :group => @group_name)
+        @execer = Puppet::Type.type(:exec).new(:name => command, :path => %w{/usr/bin /bin}, :user => @user_name, :group => @group_name, :returns => returns)
 
         status = stub "process"
         status.stubs(:exitstatus).returns(exitstatus)
@@ -42,6 +42,18 @@ describe Puppet::Type.type(:exec), " when execing" do
         command = "false"
         create_resource(command, "", 1)
 
+        proc { @execer.refresh }.should raise_error(Puppet::Error)
+    end
+    
+    it "should not report a failure if the exit status is specified in a returns array" do
+        command = "false"
+        create_resource(command, "", 1, [0,1])
+        proc { @execer.refresh }.should_not raise_error(Puppet::Error)
+    end
+    
+    it "should report a failure if the exit status is not specified in a returns array" do
+        command = "false"
+        create_resource(command, "", 1, [0,100])
         proc { @execer.refresh }.should raise_error(Puppet::Error)
     end
 

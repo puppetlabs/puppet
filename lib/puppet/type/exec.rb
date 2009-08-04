@@ -70,7 +70,7 @@ module Puppet
             @checks.keys
         end
 
-        newproperty(:returns) do |property|
+        newproperty(:returns, :array_matching => :all) do |property|
             include Puppet::Util::Execution
             munge do |value|
                 value.to_s
@@ -79,8 +79,9 @@ module Puppet
             defaultto "0"
 
             attr_reader :output
-            desc "The expected return code.  An error will be returned if the
-                executed command returns something else.  Defaults to 0."
+            desc "The expected return code(s).  An error will be returned if the
+                executed command returns something else.  Defaults to 0. Can be
+                specified as an array of acceptable return codes or a single value."
 
             # Make output a bit prettier
             def change_to_s(currentvalue, newvalue)
@@ -131,9 +132,9 @@ module Puppet
                     end
                 end
 
-                if status.exitstatus.to_s != self.should.to_s
-                    self.fail("%s returned %s instead of %s" %
-                        [self.resource[:command], status.exitstatus, self.should.to_s])
+                unless self.should.include?(status.exitstatus.to_s)
+                    self.fail("%s returned %s instead of one of [%s]" %
+                        [self.resource[:command], status.exitstatus, self.should.join(",")])
                 end
 
                 return event
