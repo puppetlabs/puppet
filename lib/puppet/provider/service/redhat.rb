@@ -52,18 +52,18 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init do
         end
     end
 
-    def restartcmd
+    def restart
         if @resource[:hasrestart] == :true
-           [command(:service), @resource[:name], "restart"]
+            service(@resource[:name], "restart")
         else
             super
         end
     end
 
-    def statuscmd
+    def status
         if @resource[:hasstatus] == :true
             begin
-                [command(:service), @resource[:name], "status"]
+                service(@resource[:name], "status")
                 return :running
             rescue
                 return :stopped
