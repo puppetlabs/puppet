@@ -20,4 +20,4 @@
 ^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetd\[[0-9]+\]: Ignoring cache$
 ^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetd\[[0-9]+\]: Ignoring --listen on onetime run$
 ^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetd\[[0-9]+\]: Retrieving plugins$
-
+^\w{3} [ :0-9]{11} [._[:alnum:]-]+ puppetmasterd\[[0-9]+\]: Reopening log files$
