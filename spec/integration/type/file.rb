@@ -7,10 +7,6 @@ require 'puppet_spec/files'
 describe Puppet::Type.type(:file) do
     include PuppetSpec::Files
 
-    before do
-        Puppet::Util::Log.newdestination :console
-    end
-
     describe "when writing files" do
         it "should backup files to a filebucket when one is configured" do
             bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
