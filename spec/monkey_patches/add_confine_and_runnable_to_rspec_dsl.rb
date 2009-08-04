@@ -20,6 +20,7 @@ module Spec
                         next
                     end
                     success = success & example_group.run(@options)
+                    Puppet.settings.clear
                 end
                 return success
             ensure
