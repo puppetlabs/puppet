@@ -89,7 +89,7 @@ genconfig() {
   $PUPPETMASTER $PUPPETMASTER_OPTS --genconfig
 }
 
-puppetmaster_status() {
+rh_status() {
     if [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -gt 1 ]; then
         for ((i=0; i<${#PUPPETMASTER_PORTS[@]}; i++)); do
             echo -en "Port ${PUPPETMASTER_PORTS[$i]}: "
@@ -103,6 +103,10 @@ puppetmaster_status() {
     return $RETVAL
 }
 
+rh_status_q() {
+        rh_status >/dev/null 2>&1
+}
+
 case "$1" in
   start)
       start
@@ -114,10 +118,11 @@ case "$1" in
         restart
     ;;
     condrestart)
-        [ -f "$lockfile" ] && restart
+        rh_status_q || exit 0
+        restart
     ;;
     status)
-        puppetmaster_status
+        rh_status
     ;;
     genconfig)
         genconfig

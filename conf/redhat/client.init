@@ -67,6 +67,10 @@ rh_status() {
     status $statusopts $puppetd
 }
 
+rh_status_q() {
+    rh_status >/dev/null 2>&1
+}
+
 genconfig() {
     echo -n $"Generate configuration puppet: "
     $puppetd ${PUPPET_OPTS} ${PUPPET_EXTRA_OPTS} --genconfig
@@ -86,7 +90,8 @@ case "$1" in
         reload
     ;;
     condrestart|try-restart)
-        [ -f "$pidfile" ] && restart
+        rh_status_q || exit 0
+        restart
     ;;
     status)
         rh_status
