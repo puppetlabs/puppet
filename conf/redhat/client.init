@@ -62,6 +62,11 @@ restart() {
     start
 }
 
+rh_status() {
+    status | grep -q -- '-p' 2>/dev/null && statusopts="-p $pidfile"
+    status $statusopts $puppetd
+}
+
 genconfig() {
     echo -n $"Generate configuration puppet: "
     $puppetd ${PUPPET_OPTS} ${PUPPET_EXTRA_OPTS} --genconfig
@@ -84,8 +89,7 @@ case "$1" in
         [ -f "$pidfile" ] && restart
     ;;
     status)
-        status -p "$pidfile" $puppetd
-        RETVAL=$?
+        rh_status
     ;;
     once)
         shift
