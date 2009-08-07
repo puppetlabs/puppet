@@ -1855,6 +1855,9 @@ class Type
     # is the resource exported
     attr_accessor :exported
 
+    # is the resource virtual (it should not :-))
+    attr_accessor :virtual
+
     # create a log at specified level
     def log(msg)
         Puppet::Util::Log.create(
@@ -1888,7 +1891,7 @@ class Type
             self.title = resource.ref
         end
 
-        [:file, :line, :catalog, :exported].each do |getter|
+        [:file, :line, :catalog, :exported, :virtual].each do |getter|
             setter = getter.to_s + "="
             if val = resource.send(getter)
                 self.send(setter, val)
@@ -2069,8 +2072,10 @@ class Type
         return trans
     end
 
-    def exported?
-        exported
+    %w{exported virtual}.each do |m|
+        define_method(m+"?") do
+            self.send(m)
+        end
     end
 
 end # Puppet::Type

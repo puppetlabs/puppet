@@ -43,7 +43,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
     # filter-out a catalog to remove exported resources
     def filter(catalog)
-        return catalog.filter { |r| r.exported? } if catalog.respond_to?(:filter)
+        return catalog.filter { |r| r.virtual? } if catalog.respond_to?(:filter)
         catalog
     end
 

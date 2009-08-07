@@ -590,8 +590,8 @@ class Transaction
             resource.debug "Not scheduled"
         elsif failed_dependencies?(resource)
             resource.warning "Skipping because of failed dependencies"
-        elsif resource.exported?
-            resource.debug "Skipping because exported"
+        elsif resource.virtual?
+            resource.debug "Skipping because virtual"
         else
             return false
         end

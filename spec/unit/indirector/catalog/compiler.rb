@@ -236,8 +236,8 @@ describe Puppet::Resource::Catalog::Compiler do
             @compiler.filter(@catalog)
         end
 
-        it "should filter out exported resources" do
-            resource = mock 'resource', :exported? => true
+        it "should filter out virtual resources" do
+            resource = mock 'resource', :virtual? => true
             @catalog.stubs(:filter).yields(resource)
 
             @compiler.filter(@catalog)

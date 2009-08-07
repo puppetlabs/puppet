@@ -9,7 +9,7 @@ class Puppet::Resource
     include Puppet::Util::Tagging
     extend Puppet::Util::Json
     include Enumerable
-    attr_accessor :file, :line, :catalog, :exported
+    attr_accessor :file, :line, :catalog, :exported, :virtual
     attr_writer :type, :title
 
     ATTRIBUTES = [:file, :line, :exported]
@@ -106,8 +106,10 @@ class Puppet::Resource
         @parameters.each { |p,v| yield p, v }
     end
 
-    def exported?
-        exported
+    %w{exported virtual}.each do |m|
+        define_method(m+"?") do
+            self.send(m)
+        end
     end
 
     # Create our resource.

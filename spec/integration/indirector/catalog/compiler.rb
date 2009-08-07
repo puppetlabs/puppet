@@ -11,7 +11,7 @@ describe Puppet::Resource::Catalog::Compiler do
         @catalog = Puppet::Resource::Catalog.new
 
         @one = Puppet::Resource.new(:file, "/one")
-        @one.exported = true
+        @one.virtual = true
 
         @two = Puppet::Resource.new(:file, "/two")
         @catalog.add_resource(@one, @two)

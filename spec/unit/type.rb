@@ -72,6 +72,10 @@ describe Puppet::Type do
         Puppet::Type.type(:mount).new(:name => "foo").should respond_to(:exported?)
     end
 
+    it "should have a method to know if the resource is virtual" do
+        Puppet::Type.type(:mount).new(:name => "foo").should respond_to(:virtual?)
+    end
+
     it "should consider its version to be its catalog version" do
         resource = Puppet::Type.type(:mount).new(:name => "foo")
         catalog = Puppet::Resource::Catalog.new
@@ -121,7 +125,7 @@ describe Puppet::Type do
                 Puppet::Type.type(:mount).new(resource).title.should == "User[foo]"
             end
 
-            [:line, :file, :catalog, :exported].each do |param|
+            [:line, :file, :catalog, :exported, :virtual].each do |param|
                 it "should copy '#{param}' from the resource if present" do
                     resource = Puppet::Resource.new(:mount, "/foo")
                     resource.send(param.to_s + "=", "foo")

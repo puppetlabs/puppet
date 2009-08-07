@@ -576,8 +576,11 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         message = convert.to_s.gsub "_", " "
         edges.each do |edge|
             # Skip edges between virtual resources.
-            next if edge.source.respond_to?(:virtual?) and edge.source.virtual?
-            next if edge.target.respond_to?(:virtual?) and edge.target.virtual?
+            next if virtual_not_exported?(edge.source)
+            next if block_given? and yield edge.source
+
+            next if virtual_not_exported?(edge.target)
+            next if block_given? and yield edge.target
 
             unless source = map[edge.source.ref]
                 raise Puppet::DevError, "Could not find resource %s when converting %s resources" % [edge.source.ref, message]

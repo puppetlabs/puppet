@@ -75,8 +75,8 @@ describe Puppet::Transaction do
             @transaction.skip?(@resource).should be_true
         end
 
-        it "should skip exported resource" do
-            @resource.stubs(:exported?).returns true
+        it "should skip virtual resource" do
+            @resource.stubs(:virtual?).returns true
             @transaction.skip?(@resource).should be_true
         end
     end

@@ -323,9 +323,9 @@ describe Puppet::Resource::Catalog, "when compiling" do
         end
 
         it "should scan each catalog resource in turn and apply filtering block" do
-            @resources.each { |r| r.expects(:exported?) }
+            @resources.each { |r| r.expects(:test?) }
             @original.filter do |r|
-                r.exported?
+                r.test?
             end
         end
 
@@ -333,6 +333,13 @@ describe Puppet::Resource::Catalog, "when compiling" do
             @original.filter do |r|
                 r == @r1
             end.resource("File[/a]").should be_nil
+        end
+
+        it "should not consider edges against resources that were filtered out" do
+            @original.add_edge(@r1,@r2)
+            @original.filter do |r|
+                r == @r1
+            end.edge(@r1,@r2).should be_empty
         end
     end
 
