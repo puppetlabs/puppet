@@ -51,7 +51,7 @@ syn match   puppetParamDigits   "[0-9]\+"
 " match 'template' in 'content => template("...")'
 syn match   puppetParam         "\w\+\s*[=+]>\s*\w\+\s*(" contains=puppetFunction,puppetParamName
 syn keyword puppetFunction      debug info notice warning err alert emerg crit
-syn keyword puppetFunction      sprintf template fail tagged include generate search file tag versioncmp fqdn_rand realize split defined regsubst sha1 inline_template
+syn keyword puppetFunction      sprintf template fail tagged include generate search file tag versioncmp fqdn_rand realize split defined regsubst sha1 inline_template contained
 
 syn match   puppetVariable      "$\w\+"
 syn match   puppetVariable      "${\w\+}"
