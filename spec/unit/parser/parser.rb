@@ -346,32 +346,40 @@ describe Puppet::Parser do
     describe Puppet::Parser,"when looking up names" do
         before :each do
             @loaded_code = mock 'loaded code'
-            @loaded_code.stubs(:find_my_type).with('Loaded_namespace',  'Loaded_name').returns(true)
-            @loaded_code.stubs(:find_my_type).with('Bogus_namespace',   'Bogus_name' ).returns(false)
+            @loaded_code.stubs(:find_my_type).with('loaded_namespace',  'loaded_name').returns(true)
+            @loaded_code.stubs(:find_my_type).with('bogus_namespace',   'bogus_name' ).returns(false)
             @parser = Puppet::Parser::Parser.new :environment => "development",:loaded_code => @loaded_code
         end
 
         describe "that are already loaded" do
             it "should not try to load anything" do
                 @parser.expects(:load).never
-                @parser.find_or_load("Loaded_namespace","Loaded_name",:my_type)
+                @parser.find_or_load("loaded_namespace","loaded_name",:my_type)
             end
             it "should return true" do
-                @parser.find_or_load("Loaded_namespace","Loaded_name",:my_type).should == true
+                @parser.find_or_load("loaded_namespace","loaded_name",:my_type).should == true
             end
         end
 
         describe "that aren't already loaded" do
-            it "should first attempt to load them with the fully qualified name" do
-                @loaded_code.stubs(:find_my_type).with("Foo_namespace","Foo_name").returns(false,true,true)
-                @parser.expects(:load).with("Foo_namespace::Foo_name").returns(true).then.raises(Exception)
+            it "should first attempt to load them with the all lowercase fully qualified name" do
+                @loaded_code.stubs(:find_my_type).with("foo_namespace","foo_name").returns(false,true,true)
+                @parser.expects(:load).with("foo_namespace::foo_name").returns(true).then.raises(Exception)
                 @parser.find_or_load("Foo_namespace","Foo_name",:my_type).should == true
             end
 
-            it "should next attempt to load them with the namespace" do
-                @loaded_code.stubs(:find_my_type).with("Foo_namespace","Foo_name").returns(false,false,true,true)
-                @parser.expects(:load).with("Foo_namespace::Foo_name").returns(false).then.raises(Exception)
-                @parser.expects(:load).with("Foo_namespace").returns(true).then.raises(Exception)
+            it "should next attempt to load them with the all lowercase namespace" do
+                @loaded_code.stubs(:find_my_type).with("foo_namespace","foo_name").returns(false,false,true,true)
+                @parser.expects(:load).with("foo_namespace::foo_name").returns(false).then.raises(Exception)
+                @parser.expects(:load).with("foo_namespace"          ).returns(true ).then.raises(Exception)
+                @parser.find_or_load("Foo_namespace","Foo_name",:my_type).should == true
+            end
+
+            it "should finally attempt to load them with the all lowercase unqualified name" do
+                @loaded_code.stubs(:find_my_type).with("foo_namespace","foo_name").returns(false,false,false,true,true)
+                @parser.expects(:load).with("foo_namespace::foo_name").returns(false).then.raises(Exception)
+                @parser.expects(:load).with("foo_namespace"          ).returns(false).then.raises(Exception)
+                @parser.expects(:load).with(               "foo_name").returns(true ).then.raises(Exception)
                 @parser.find_or_load("Foo_namespace","Foo_name",:my_type).should == true
             end
 

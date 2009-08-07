@@ -114,6 +114,8 @@ class Puppet::Parser::Parser
 
     def find_or_load(namespace, name, type)
         method = "find_#{type}"
+        namespace = namespace.downcase
+        name      = name.downcase
         fullname = (namespace + "::" + name).sub(/^::/, '')
         names_to_try = [fullname]
 

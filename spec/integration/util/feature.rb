@@ -25,7 +25,7 @@ describe Puppet::Util::Feature do
         $features.should be_able_to_load
     end
 
-
+    # TODO: Make this a spec test or remove it.
     def test_dynamic_loading
         $features = @features
         cleanup { $features = nil }

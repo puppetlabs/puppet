@@ -24,27 +24,28 @@ require 'puppet_spec/files'
 describe Puppet::Util::Autoload do
     include PuppetSpec::Files
 
-    def mkfile(name, path)
+    def with_file(name, *path)
+        path = File.join(*path)
         # Now create a file to load
-        File.open(path, "w") do |f|
-            f.puts %{
-AutoloadIntegrator.newthing(:#{name.to_s})
+        File.open(path, "w") { |f|
+            f.puts "\nAutoloadIntegrator.newthing(:#{name.to_s})\n"
             }
-        end
+        yield
+        File.delete(path)
     end
 
-    def mk_loader(name, path)
+    def with_loader(name, path)
         dir = tmpfile(name + path)
         $: << dir
-
         Dir.mkdir(dir)
-
         rbdir = File.join(dir, path.to_s)
-
         Dir.mkdir(rbdir)
-
         loader = Puppet::Util::Autoload.new(name, path)
-        return rbdir, loader
+        yield rbdir, loader
+        Dir.rmdir(rbdir)
+        Dir.rmdir(dir)
+        $:.pop
+        AutoloadIntegrator.clear
     end
 
     it "should make instances available by the loading class" do
@@ -57,35 +58,51 @@ AutoloadIntegrator.newthing(:#{name.to_s})
     end
 
     it "should load and return true when it successfully loads a file" do
-        dir, loader = mk_loader("foo", "bar")
-        path = File.join(dir, "mything.rb")
-        mkfile(:mything, path)
-        loader.load(:mything).should be_true
-        loader.should be_loaded(:mything)
-        AutoloadIntegrator.should be_thing(:mything)
+        with_loader("foo", "bar") { |dir,loader|
+            with_file(:mything, dir, "mything.rb") {
+                loader.load(:mything).should be_true
+                loader.should be_loaded(:mything)
+                AutoloadIntegrator.should be_thing(:mything)
+            }
+        }
+    end
+
+    it "should successfully load a file with a mixed case name" do
+        on_disk = "MyThing.rb"
+        in_code = :mything
+        with_loader("foo", "bar") { |dir,loader|
+            with_file(in_code, dir, on_disk) {
+                loader.load(in_code).should be_true
+                loader.should be_loaded(in_code)
+                AutoloadIntegrator.should be_thing(in_code)
+            }
+        }
     end
 
     it "should consider a file loaded when asked for the name without an extension" do
-        dir, loader = mk_loader("foo", "bar")
-        path = File.join(dir, "noext.rb")
-        mkfile(:noext, path)
-        loader.load(:noext)
-        loader.should be_loaded(:noext)
+        with_loader("foo", "bar") { |dir,loader|
+            with_file(:noext, dir, "noext.rb") {
+                loader.load(:noext)
+                loader.should be_loaded(:noext)
+            }
+        }
     end
 
     it "should consider a file loaded when asked for the name with an extension" do
-        dir, loader = mk_loader("foo", "bar")
-        path = File.join(dir, "withext.rb")
-        mkfile(:noext, path)
-        loader.load(:withext)
-        loader.should be_loaded("withext.rb")
+        with_loader("foo", "bar") { |dir,loader|
+            with_file(:noext, dir, "withext.rb") {
+                loader.load(:withext)
+                loader.should be_loaded("withext.rb")
+            }
+        }
     end
 
     it "should register the fact that the instance is loaded with the Autoload base class" do
-        dir, loader = mk_loader("foo", "bar")
-        path = File.join(dir, "baseload.rb")
-        mkfile(:baseload, path)
-        loader.load(:baseload)
-        Puppet::Util::Autoload.should be_loaded("bar/withext.rb")
+        with_loader("foo", "bar") { |dir,loader|
+            with_file(:baseload, dir, "baseload.rb") {
+                loader.load(:baseload)
+                Puppet::Util::Autoload.should be_loaded("bar/withext.rb")
+            }
+        }
     end
 end

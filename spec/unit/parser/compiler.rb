@@ -423,6 +423,16 @@ describe Puppet::Parser::Compiler do
             @compiler.evaluate_classes(%w{myclass}, @scope, false)
         end
 
+        it "should skip classes previously evaluated with different capitalization" do
+            @compiler.catalog.stubs(:tag)
+            @scope.stubs(:find_hostclass).with("MyClass").returns(@class)
+            @compiler.expects(:class_scope).with(@class).returns("something")
+            @compiler.expects(:add_resource).never
+            @resource.expects(:evaluate).never
+            Puppet::Parser::Resource.expects(:new).never
+            @compiler.evaluate_classes(%w{MyClass}, @scope, false)
+        end
+
         it "should return the list of found classes" do
             @compiler.catalog.stubs(:tag)
 
