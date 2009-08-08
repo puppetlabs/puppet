@@ -31,6 +31,21 @@ describe Puppet::Util::Autoload::FileCache do
             @cacher.should_not be_file_exist("/my/file")
         end
 
+        it "should consider a file as absent if the directory is absent" do
+            File.expects(:lstat).with("/my/file").raises Errno::ENOTDIR
+            @cacher.should_not be_file_exist("/my/file")
+        end
+
+        it "should consider a file as absent permissions are missing" do
+            File.expects(:lstat).with("/my/file").raises Errno::EACCES
+            @cacher.should_not be_file_exist("/my/file")
+        end
+
+        it "should raise non-fs exceptions" do
+            File.expects(:lstat).with("/my/file").raises ArgumentError
+            lambda { @cacher.file_exist?("/my/file") }.should raise_error(ArgumentError)
+        end
+
         it "should consider a file as present if its lstat succeeds" do
             File.expects(:lstat).with("/my/file").returns mock("stat")
             @cacher.should be_file_exist("/my/file")
@@ -85,6 +100,21 @@ describe Puppet::Util::Autoload::FileCache do
         it "should consider a directory as absent if its lstat fails" do
             File.expects(:lstat).with("/my/file").raises Errno::ENOENT
             @cacher.should_not be_directory_exist("/my/file")
+        end
+
+        it "should consider a file as absent if the directory is absent" do
+            File.expects(:lstat).with("/my/file").raises Errno::ENOTDIR
+            @cacher.should_not be_directory_exist("/my/file")
+        end
+
+        it "should consider a file as absent permissions are missing" do
+            File.expects(:lstat).with("/my/file").raises Errno::EACCES
+            @cacher.should_not be_directory_exist("/my/file")
+        end
+
+        it "should raise non-fs exceptions" do
+            File.expects(:lstat).with("/my/file").raises ArgumentError
+            lambda { @cacher.directory_exist?("/my/file") }.should raise_error(ArgumentError)
         end
 
         it "should consider a directory as present if its lstat succeeds and the stat is of a directory" do

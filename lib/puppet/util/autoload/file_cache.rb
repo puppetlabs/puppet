@@ -23,7 +23,7 @@ module Puppet::Util::Autoload::FileCache
         cache = cached_data?(path, :directory?)
         return cache unless cache.nil?
 
-        begin
+        protect(path) do
             stat = File.lstat(path)
             if stat.directory?
                 found_file(path, stat)
@@ -32,9 +32,6 @@ module Puppet::Util::Autoload::FileCache
                 missing_file(path)
                 return false
             end
-        rescue Errno::ENOENT
-            missing_file(path)
-            return false
         end
     end
 
@@ -42,13 +39,10 @@ module Puppet::Util::Autoload::FileCache
         cache = cached_data?(path)
         return cache unless cache.nil?
 
-        begin
+        protect(path) do
             stat = File.lstat(path)
             found_file(path, stat)
             return true
-        rescue Errno::ENOENT
-            missing_file(path)
-            return false
         end
     end
 
@@ -107,5 +101,15 @@ module Puppet::Util::Autoload::FileCache
 
     def data_expired?(time)
         Time.now - time > 15
+    end
+
+    def protect(path)
+        begin
+            yield
+        rescue => detail
+            raise unless detail.class.to_s.include?("Errno")
+            missing_file(path)
+            return false
+        end
     end
 end
