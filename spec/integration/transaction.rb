@@ -23,7 +23,20 @@ describe Puppet::Transaction do
         transaction.evaluate
     end
 
-    it "should not apply exported resources" do
+    it "should not apply virtual resources" do
+        catalog = Puppet::Resource::Catalog.new
+        resource = Puppet::Type.type(:file).new :path => "/foo/bar", :backup => false
+        resource.virtual = true
+        catalog.add_resource resource
+
+        transaction = Puppet::Transaction.new(catalog)
+
+        resource.expects(:evaluate).never
+
+        transaction.evaluate
+    end
+
+    it "should apply exported resources" do
         catalog = Puppet::Resource::Catalog.new
         resource = Puppet::Type.type(:file).new :path => "/foo/bar", :backup => false
         resource.exported = true
@@ -35,4 +48,19 @@ describe Puppet::Transaction do
 
         transaction.evaluate
     end
+
+    it "should not apply virtual exported resources" do
+        catalog = Puppet::Resource::Catalog.new
+        resource = Puppet::Type.type(:file).new :path => "/foo/bar", :backup => false
+        resource.exported = true
+        resource.virtual = true
+        catalog.add_resource resource
+
+        transaction = Puppet::Transaction.new(catalog)
+
+        resource.expects(:evaluate).never
+
+        transaction.evaluate
+    end
+
 end
