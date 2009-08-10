@@ -27,6 +27,8 @@ class FooExampleData
 end
 
 describe Puppet::Indirector::Queue do
+    confine "JSON library is missing; cannot test queueing" => Puppet.features.json?
+
     before :each do
         @model = mock 'model'
         @indirection = stub 'indirection', :name => :my_queue, :register_terminus_type => nil, :model => @model

@@ -47,7 +47,11 @@ end
 
 describe Puppet::Network::FormatHandler.format(:json) do
     describe "when json is absent" do
-        confine "'json' library is prsent" => (! Puppet.features.json?)
+        confine "'json' library is present" => (! Puppet.features.json?)
+
+        before do
+            @json = Puppet::Network::FormatHandler.format(:json)
+        end
 
         it "should not be suitable" do
             @json.should_not be_suitable

@@ -6,8 +6,11 @@
 require File.dirname(__FILE__) + '/../../spec_helper'
 
 describe Puppet::Resource::Catalog do
-    it "should support json" do
-        Puppet::Resource::Catalog.supported_formats.should be_include(:json)
+    describe "when json is available" do
+        confine "JSON library is missing" => Puppet.features.json?
+        it "should support json" do
+            Puppet::Resource::Catalog.supported_formats.should be_include(:json)
+        end
     end
 
     describe "when using the indirector" do

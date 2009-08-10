@@ -118,6 +118,7 @@ describe "Puppet defaults" do
             Puppet::Resource::Catalog.stubs(:cache_class=)
             Puppet::Node::Facts.stubs(:cache_class=)
             Puppet::Node.stubs(:cache_class=)
+            Puppet.features.stubs(:rails?).returns true
         end
 
         it "should set storeconfigs to true" do
@@ -146,6 +147,7 @@ describe "Puppet defaults" do
             Puppet::Resource::Catalog.stubs(:cache_class=)
             Puppet::Node::Facts.stubs(:cache_class=)
             Puppet::Node.stubs(:cache_class=)
+            Puppet.features.stubs(:rails?).returns true
         end
 
         it "should set storeconfigs to true" do

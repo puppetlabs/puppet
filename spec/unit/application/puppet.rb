@@ -331,6 +331,8 @@ describe "Puppet" do
         end
 
         describe "the 'apply' command" do
+            confine "JSON library is missing; cannot test applying catalogs" => Puppet.features.json?
+
             before do
                 #Puppet::Resource::Catalog.stubs(:json_create).returns Puppet::Resource::Catalog.new
                 JSON.stubs(:parse).returns Puppet::Resource::Catalog.new
