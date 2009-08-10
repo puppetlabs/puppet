@@ -4,10 +4,12 @@ Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f
 
 require 'puppet/resource/catalog'
 
-Puppet::Resource::Catalog.indirection.terminus(:queue)
 
-describe Puppet::Resource::Catalog::Queue do
+describe "Puppet::Resource::Catalog::Queue" do
+    confine "Missing json support; cannot test queue" => Puppet.features.json?
+
     before do
+        Puppet::Resource::Catalog.indirection.terminus(:queue)
         @catalog = Puppet::Resource::Catalog.new
 
         @one = Puppet::Resource.new(:file, "/one")

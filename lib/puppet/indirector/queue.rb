@@ -1,7 +1,6 @@
 require 'puppet/indirector/terminus'
 require 'puppet/util/queue'
 require 'puppet/util'
-require 'json'
 
 # Implements the <tt>:queue</tt> abstract indirector terminus type, for storing
 # model instances to a message queue, presumably for the purpose of out-of-process
