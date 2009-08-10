@@ -3,10 +3,12 @@
 require File.dirname(__FILE__) + '/../../../spec_helper'
 
 require 'puppet/node'
-require 'puppet/indirector/node/active_record'
 
-describe Puppet::Node::ActiveRecord do
+describe "Puppet::Node::ActiveRecord" do
     confine "Missing Rails" => Puppet.features.rails?
+    before do 
+        require 'puppet/indirector/node/active_record'
+    end
 
     it "should be a subclass of the ActiveRecord terminus class" do
         Puppet::Node::ActiveRecord.ancestors.should be_include(Puppet::Indirector::ActiveRecord)

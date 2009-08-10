@@ -3,12 +3,12 @@
 require File.dirname(__FILE__) + '/../../../spec_helper'
 
 require 'puppet/node/facts'
-require 'puppet/indirector/facts/active_record'
 
-describe Puppet::Node::Facts::ActiveRecord do
+describe "Puppet::Node::Facts::ActiveRecord" do
     confine "Missing Rails" => Puppet.features.rails?
 
     before do
+        require 'puppet/indirector/facts/active_record'
         Puppet.features.stubs(:rails?).returns true
         Puppet::Rails.stubs(:init)
         @terminus = Puppet::Node::Facts::ActiveRecord.new

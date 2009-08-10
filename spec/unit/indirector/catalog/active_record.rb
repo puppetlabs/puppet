@@ -2,12 +2,12 @@
 
 require File.dirname(__FILE__) + '/../../../spec_helper'
 
-require 'puppet/indirector/catalog/active_record'
 
-describe Puppet::Resource::Catalog::ActiveRecord do
+describe "Puppet::Resource::Catalog::ActiveRecord" do
     confine "Missing Rails" => Puppet.features.rails?
 
     before do
+        require 'puppet/indirector/catalog/active_record'
         Puppet.features.stubs(:rails?).returns true
         Puppet::Rails.stubs(:init)
         @terminus = Puppet::Resource::Catalog::ActiveRecord.new
