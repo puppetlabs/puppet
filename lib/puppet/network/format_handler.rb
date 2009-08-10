@@ -81,9 +81,10 @@ module Puppet::Network::FormatHandler
             out = format
         when %r{\w+/\w+}
             out = mime(format)
-        when
+        else
             out = format(format)
         end
+        raise ArgumentError, "No format match the given format name or mime-type (%s)" % format if out.nil?
         out.name
     end
 

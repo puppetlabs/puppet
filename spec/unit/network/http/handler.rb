@@ -129,6 +129,16 @@ describe Puppet::Network::HTTP::Handler do
             @handler.do_exception(@response, "A test", 404)
         end
 
+        it "should raise an error if the request is formatted in an unknown format" do
+            @handler.stubs(:content_type_header).returns "unknown format"
+            lambda { @handler.request_format(@request) }.should raise_error
+        end
+
+        it "should still find the correct format if content type contains charset information" do
+            @handler.stubs(:content_type_header).returns "text/plain; charset=UTF-8"
+            @handler.request_format(@request).should == "s"
+        end
+
         describe "when finding a model instance" do
             before do
                 @irequest = stub 'indirection_request', :method => :find, :indirection_name => "my_handler", :to_hash => {}, :key => "my_result", :model => @model_class

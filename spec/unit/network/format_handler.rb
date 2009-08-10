@@ -87,6 +87,11 @@ describe Puppet::Network::FormatHandler do
         lambda { Puppet::Network::FormatHandler.protected_format(:myformat).render("foo") }.should raise_error(Puppet::Network::FormatHandler::FormatError)
     end
 
+    it "should raise an error if we couldn't find a format by name or mime-type" do
+        Puppet::Network::FormatHandler.stubs(:format).with(:myformat).returns nil
+        lambda { Puppet::Network::FormatHandler.protected_format(:myformat) }.should raise_error
+    end
+
     describe "when using formats" do
         before do
             @format = mock 'format'

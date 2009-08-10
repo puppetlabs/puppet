@@ -41,11 +41,13 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
                 raise "No content type in http response; cannot parse"
             end
 
+            content_type = response['content-type'].gsub(/\s*;.*$/,'') # strip any appended charset
+
             # Convert the response to a deserialized object.
             if multiple
-                model.convert_from_multiple(response['content-type'], response.body)
+                model.convert_from_multiple(content_type, response.body)
             else
-                model.convert_from(response['content-type'], response.body)
+                model.convert_from(content_type, response.body)
             end
         else
             # Raise the http error if we didn't get a 'success' of some kind.

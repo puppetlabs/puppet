@@ -42,7 +42,9 @@ module Puppet::Network::HTTP::Handler
 
     def request_format(request)
         if header = content_type_header(request)
+            header.gsub!(/\s*;.*$/,'') # strip any charset
             format = Puppet::Network::FormatHandler.mime(header)
+            raise "Client sent a mime-type (%s) that doesn't correspond to a format we support" % header if format.nil?
             return format.name.to_s if format.suitable?
         end
 

@@ -121,6 +121,17 @@ describe Puppet::Indirector::REST do
 
             @searcher.deserialize(response, true).should == "myobjects"
         end
+
+        it "should strip the content-type header to keep only the mime-type" do
+            @model.expects(:convert_from).with("text/plain", "mydata").returns "myobject"
+
+            response = mock 'response'
+            response.stubs(:[]).with("content-type").returns "text/plain; charset=utf-8"
+            response.stubs(:body).returns "mydata"
+            response.stubs(:code).returns "200"
+
+            @searcher.deserialize(response)
+        end
     end
 
     describe "when creating an HTTP client" do
