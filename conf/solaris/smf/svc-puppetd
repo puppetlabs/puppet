@@ -10,7 +10,7 @@
 prefix=/opt/csw
 exec_prefix=/opt/csw
 sysconfdir=/opt/csw/etc
-sbindir=/opt/csw/bin
+sbindir=/opt/csw/sbin
 
 pidfile=/var/puppet/run/puppetd.pid
 
@@ -21,7 +21,7 @@ start)
 
     printf "Starting Puppet client services:"
 
-    /opt/csw/bin/puppetd
+    /opt/csw/sbin/puppetd
 
     printf " puppetd"
     echo ""

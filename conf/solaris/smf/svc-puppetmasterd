@@ -17,7 +17,7 @@ start)
 
     printf "Starting Puppet server services:"
 
-    /opt/csw/bin/puppetmasterd
+    /opt/csw/sbin/puppetmasterd
 
     printf " puppetmaster"
     echo ""
