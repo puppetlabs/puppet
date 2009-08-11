@@ -118,14 +118,14 @@ describe list_class do
             end
         end
 
-        describe "when calling insync?" do
+       describe "when calling insync?" do
             it "should return true unless @should is defined and not nil" do
-                @property.insync?("foo") == true
+                @property.must be_insync("foo")
             end
 
             it "should return true unless the passed in values is not nil" do
                 @property.should = "foo"
-                @property.insync?(nil) == true
+                @property.must be_insync(nil)
             end
 
             it "should call prepare_is_for_comparison with value passed in and should" do
@@ -135,16 +135,22 @@ describe list_class do
                 @property.insync?("bar")
             end
 
-            it "should return true if prepared value == should value" do
+            it "should return true if 'is' value is array of comma delimited should values" do
                 @property.should = "bar,foo"
                 @property.expects(:inclusive?).returns(true)
-                @property.insync?(["bar","foo"]).must == true
+                @property.must be_insync(["bar","foo"])
+            end
+
+            it "should return true if 'is' value is :absent and should value is empty string" do
+                @property.should = ""
+                @property.expects(:inclusive?).returns(true)
+                @property.must be_insync([])
             end
 
             it "should return false if prepared value != should value" do
                 @property.should = "bar,baz,foo"
                 @property.expects(:inclusive?).returns(true)
-                @property.insync?(["bar","foo"]).must == false
+                @property.must_not be_insync(["bar","foo"])
             end
         end
 

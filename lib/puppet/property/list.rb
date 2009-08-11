@@ -65,10 +65,10 @@ module Puppet
             end
 
             def prepare_is_for_comparison(is)
-                if is.is_a? Array
-                    is = dearrayify(is)
+                if is == :absent
+                    is = []
                 end
-                is
+                dearrayify(is)
             end
 
             def insync?(is)
