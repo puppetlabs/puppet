@@ -51,7 +51,7 @@ module Puppet::Network::HttpPool
     # Use cert information from a Puppet client to set up the http object.
     def self.cert_setup(http)
         # Just no-op if we don't have certs.
-        return false unless FileTest.exist?(Puppet[:hostcert]) # ssl_host.certificate
+        return false unless FileTest.exist?(Puppet[:hostcert]) and FileTest.exist?(Puppet[:localcacert])
 
         http.cert_store = ssl_host.ssl_store
         http.ca_file = Puppet[:localcacert]
@@ -60,7 +60,7 @@ module Puppet::Network::HttpPool
         http.key = ssl_host.key.content
     end
 
-    # Retrieve a cached http instance of caching is enabled, else return
+    # Retrieve a cached http instance if caching is enabled, else return
     # a new one.
     def self.http_instance(host, port, reset = false)
         # We overwrite the uninitialized @http here with a cached one.
@@ -95,11 +95,7 @@ module Puppet::Network::HttpPool
         http.read_timeout = Puppet[:configtimeout]
         http.open_timeout = Puppet[:configtimeout]
         # JJM Configurable fix for #896.
-        if Puppet[:http_enable_post_connection_check]
-            http.enable_post_connection_check = true
-        else
-            http.enable_post_connection_check = false
-        end
+        http.enable_post_connection_check = Puppet[:http_enable_post_connection_check]
 
         cert_setup(http)
 
