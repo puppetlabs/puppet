@@ -70,7 +70,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
         end
 
         begin
-            state = svcs "-H -o state", @resource[:name]
+            state = svcs("-H", "-o", "state", @resource[:name]).chomp
         rescue Puppet::ExecutionFailure
             info "Could not get status on service %s" % self.name
             return :stopped
