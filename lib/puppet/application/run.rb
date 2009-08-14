@@ -4,7 +4,7 @@ require 'puppet/application'
 Puppet.warning "RubyGems not installed" unless Puppet.features.rubygems?
 Puppet.warning "Failed to load ruby LDAP library. LDAP functionality will not be available" unless Puppet.features.ldap?
 
-Puppet::Application.new(:puppetrun) do
+Puppet::Application.new(:run) do
 
     should_not_parse_config
 

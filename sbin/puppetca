@@ -107,5 +107,5 @@
 # Copyright (c) 2005 Reductive Labs, LLC
 # Licensed under the GNU Public License
 
-require 'puppet/application/puppetca'
-Puppet::Application[:puppetca].run
+require 'puppet/application/ca'
+Puppet::Application[:ca].run

@@ -5,7 +5,7 @@ require 'puppet/daemon'
 require 'puppet/configurer'
 require 'puppet/network/client'
 
-Puppet::Application.new(:puppetd) do
+Puppet::Application.new(:agent) do
 
     should_parse_config
 

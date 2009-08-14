@@ -2,7 +2,7 @@ require 'puppet'
 require 'puppet/application'
 require 'puppet/ssl/certificate_authority'
 
-Puppet::Application.new(:puppetca) do
+Puppet::Application.new(:ca) do
 
     should_parse_config
 

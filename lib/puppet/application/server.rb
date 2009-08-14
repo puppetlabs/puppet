@@ -4,7 +4,7 @@ require 'puppet/daemon'
 require 'puppet/network/server'
 require 'puppet/network/http/rack' if Puppet.features.rack?
 
-Puppet::Application.new(:puppetmasterd) do
+Puppet::Application.new(:server) do
 
     should_parse_config
 

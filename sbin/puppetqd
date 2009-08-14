@@ -49,5 +49,5 @@
 # Copyright (c) 2009 Reductive Labs, LLC
 # Licensed under the GNU Public License
 
-require 'puppet/application/puppetqd'
-Puppet::Application[:puppetqd].run
+require 'puppet/application/queue'
+Puppet::Application[:queue].run

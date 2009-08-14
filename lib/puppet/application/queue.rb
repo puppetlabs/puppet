@@ -5,7 +5,7 @@ require 'puppet/resource/catalog'
 require 'puppet/indirector/catalog/queue'
 require 'puppet/util'
 
-Puppet::Application.new(:puppetqd) do
+Puppet::Application.new(:queue) do
     extend Puppet::Util
     should_parse_config
 

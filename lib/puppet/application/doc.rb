@@ -7,7 +7,7 @@ require 'puppet/util/rdoc'
 $tab = "    "
 Reference = Puppet::Util::Reference
 
-Puppet::Application.new(:puppetdoc) do
+Puppet::Application.new(:doc) do
 
     should_not_parse_config
 

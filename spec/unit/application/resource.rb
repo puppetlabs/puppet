@@ -2,55 +2,55 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-require 'puppet/application/ralsh'
+require 'puppet/application/resource'
 
-describe "ralsh" do
+describe "resource" do
     before :each do
-        @ralsh = Puppet::Application[:ralsh]
+        @resource = Puppet::Application[:resource]
         Puppet::Util::Log.stubs(:newdestination)
         Puppet::Util::Log.stubs(:level=)
     end
 
     it "should ask Puppet::Application to not parse Puppet configuration file" do
-        @ralsh.should_parse_config?.should be_false
+        @resource.should_parse_config?.should be_false
     end
 
     it "should declare a main command" do
-        @ralsh.should respond_to(:main)
+        @resource.should respond_to(:main)
     end
 
     it "should declare a host option" do
-        @ralsh.should respond_to(:handle_host)
+        @resource.should respond_to(:handle_host)
     end
 
     it "should declare a types option" do
-        @ralsh.should respond_to(:handle_types)
+        @resource.should respond_to(:handle_types)
     end
 
     it "should declare a param option" do
-        @ralsh.should respond_to(:handle_param)
+        @resource.should respond_to(:handle_param)
     end
 
     it "should declare a preinit block" do
-        @ralsh.should respond_to(:run_preinit)
+        @resource.should respond_to(:run_preinit)
     end
 
     describe "in preinit" do
         it "should set hosts to nil" do
-            @ralsh.run_preinit
+            @resource.run_preinit
 
-            @ralsh.host.should be_nil
+            @resource.host.should be_nil
         end
 
         it "should init extra_params to empty array" do
-            @ralsh.run_preinit
+            @resource.run_preinit
 
-            @ralsh.extra_params.should == []
+            @resource.extra_params.should == []
         end
 
         it "should load Facter facts" do
           Facter.expects(:loadfacts).once
-          @ralsh.run_preinit
+          @resource.run_preinit
         end
     end
 
@@ -58,19 +58,19 @@ describe "ralsh" do
 
         [:debug, :verbose, :edit].each do |option|
             it "should declare handle_#{option} method" do
-                @ralsh.should respond_to("handle_#{option}".to_sym)
+                @resource.should respond_to("handle_#{option}".to_sym)
             end
 
             it "should store argument value when calling handle_#{option}" do
-                @ralsh.options.expects(:[]=).with(option, 'arg')
-                @ralsh.send("handle_#{option}".to_sym, 'arg')
+                @resource.options.expects(:[]=).with(option, 'arg')
+                @resource.send("handle_#{option}".to_sym, 'arg')
             end
         end
 
         it "should set options[:host] to given host" do
-            @ralsh.handle_host(:whatever)
+            @resource.handle_host(:whatever)
 
-            @ralsh.host.should == :whatever
+            @resource.host.should == :whatever
         end
 
         it "should load an display all types with types option" do
@@ -78,17 +78,17 @@ describe "ralsh" do
             type2 = stub_everything 'type2', :name => :type2
             Puppet::Type.stubs(:loadall)
             Puppet::Type.stubs(:eachtype).multiple_yields(type1,type2)
-            @ralsh.stubs(:exit)
+            @resource.stubs(:exit)
 
-            @ralsh.expects(:puts).with(['type1','type2'])
-            @ralsh.handle_types(nil)
+            @resource.expects(:puts).with(['type1','type2'])
+            @resource.handle_types(nil)
         end
 
         it "should add param to extra_params list" do
-            @ralsh.extra_params = [ :param1 ]
-            @ralsh.handle_param("whatever")
+            @resource.extra_params = [ :param1 ]
+            @resource.handle_param("whatever")
 
-            @ralsh.extra_params.should == [ :param1, :whatever ]
+            @resource.extra_params.should == [ :param1, :whatever ]
         end
     end
 
@@ -103,30 +103,30 @@ describe "ralsh" do
         it "should set console as the log destination" do
             Puppet::Log.expects(:newdestination).with(:console)
 
-            @ralsh.run_setup
+            @resource.run_setup
         end
 
         it "should set log level to debug if --debug was passed" do
-            @ralsh.options.stubs(:[]).with(:debug).returns(true)
+            @resource.options.stubs(:[]).with(:debug).returns(true)
 
             Puppet::Log.expects(:level=).with(:debug)
 
-            @ralsh.run_setup
+            @resource.run_setup
         end
 
         it "should set log level to info if --verbose was passed" do
-            @ralsh.options.stubs(:[]).with(:debug).returns(false)
-            @ralsh.options.stubs(:[]).with(:verbose).returns(true)
+            @resource.options.stubs(:[]).with(:debug).returns(false)
+            @resource.options.stubs(:[]).with(:verbose).returns(true)
 
             Puppet::Log.expects(:level=).with(:info)
 
-            @ralsh.run_setup
+            @resource.run_setup
         end
 
         it "should Parse puppet config" do
             Puppet.expects(:parse_config)
 
-            @ralsh.run_setup
+            @resource.run_setup
         end
     end
 
@@ -158,27 +158,27 @@ describe "ralsh" do
 
         it "should raise an error if no type is given" do
             push_args
-            lambda { @ralsh.main }.should raise_error
+            lambda { @resource.main }.should raise_error
             pop_args
         end
 
         it "should raise an error when editing a remote host" do
-            @ralsh.options.stubs(:[]).with(:edit).returns(true)
-            @ralsh.host = 'host'
+            @resource.options.stubs(:[]).with(:edit).returns(true)
+            @resource.host = 'host'
 
-            lambda { @ralsh.main }.should raise_error
+            lambda { @resource.main }.should raise_error
         end
 
         it "should raise an error if the type is not found" do
             Puppet::Type.stubs(:type).returns(nil)
 
-            lambda { @ralsh.main }.should raise_error
+            lambda { @resource.main }.should raise_error
         end
 
         describe "with a host" do
             before :each do
-                @ralsh.stubs(:puts)
-                @ralsh.host = 'host'
+                @resource.stubs(:puts)
+                @resource.host = 'host'
                 @client = stub_everything 'client'
                 @client.stubs(:read_cert).returns(true)
                 @client.stubs(:instances).returns([])
@@ -187,39 +187,39 @@ describe "ralsh" do
 
             it "should connect to it" do
                 Puppet::Network::Client.resource.expects(:new).with { |h| h[:Server] == 'host' }.returns(@client)
-                @ralsh.main
+                @resource.main
             end
 
             it "should raise an error if there are no certs" do
                 @client.stubs(:read_cert).returns(nil)
 
-                lambda { @ralsh.main }.should raise_error
+                lambda { @resource.main }.should raise_error
             end
 
             it "should retrieve all the instances if there is no name" do
                 @client.expects(:instances).returns([])
 
-                @ralsh.main
+                @resource.main
             end
 
             it "should describe the given resource" do
                 push_args('type','name')
                 @client.expects(:describe).returns(stub_everything)
-                @ralsh.main
+                @resource.main
                 pop_args
             end
         end
 
         describe "without a host" do
             before :each do
-                @ralsh.stubs(:puts)
-                @ralsh.host = nil
+                @resource.stubs(:puts)
+                @resource.host = nil
             end
 
             it "should retrieve all the instances if there is no name" do
                 @type.expects(:instances).returns([])
 
-                @ralsh.main
+                @resource.main
             end
 
             describe 'but with a given name' do
@@ -236,7 +236,6 @@ describe "ralsh" do
                     pending
                 end
 
-
                 it "should create a stub instance if it doesn't exist" do
                     pending
                 end
@@ -245,7 +244,7 @@ describe "ralsh" do
                     push_args('type','name','param=temp')
                     pending
                     @object.expects(:[]=).with('param','temp')
-                    @ralsh.main
+                    @resource.main
                     pop_args
                 end
             end

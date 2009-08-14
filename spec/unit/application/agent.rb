@@ -2,12 +2,12 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-require 'puppet/application/puppetd'
+require 'puppet/application/agent'
 require 'puppet/network/server'
 
-describe "puppetd" do
+describe Puppet::Application[:agent] do
     before :each do
-        @puppetd = Puppet::Application[:puppetd]
+        @puppetd = Puppet::Application[:agent]
         @puppetd.stubs(:puts)
         @daemon = stub_everything 'daemon'
         Puppet::Daemon.stubs(:new).returns(@daemon)

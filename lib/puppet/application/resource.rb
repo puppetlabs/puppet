@@ -2,7 +2,7 @@ require 'puppet'
 require 'puppet/application'
 require 'facter'
 
-Puppet::Application.new(:ralsh) do
+Puppet::Application.new(:resource) do
 
     should_not_parse_config
 

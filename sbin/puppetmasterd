@@ -62,5 +62,5 @@
 # Copyright (c) 2005 Reductive Labs, LLC
 # Licensed under the GNU Public License
 
-require 'puppet/application/puppetmasterd'
-Puppet::Application[:puppetmasterd].run
+require 'puppet/application/server'
+Puppet::Application[:server].run

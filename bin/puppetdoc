@@ -61,5 +61,5 @@
 # Copyright (c) 2005-2007 Reductive Labs, LLC
 # Licensed under the GNU Public License
 
-require 'puppet/application/puppetdoc'
-Puppet::Application[:puppetdoc].run
+require 'puppet/application/doc'
+Puppet::Application[:doc].run
