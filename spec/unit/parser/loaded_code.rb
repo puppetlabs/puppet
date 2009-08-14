@@ -151,7 +151,7 @@ describe Puppet::Parser::LoadedCode do
             @loader.node(name)
         end
 
-        it "should be able to find nobe by HostName" do
+        it "should be able to find node by HostName" do
             namein = Puppet::Parser::AST::HostName.new(:value => "foo")
             nameout = Puppet::Parser::AST::HostName.new(:value => "foo")
 
