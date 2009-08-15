@@ -249,7 +249,7 @@ module Puppet
 
             # Does the name match our pattern?
             def matchname?(name)
-                name = munge_name(name) unless @name == :opaque
+                name = munge_name(name)
                 return true if self.pattern == name
 
                 # If it's an exact match, then just return false, since the
@@ -272,6 +272,7 @@ module Puppet
             # Convert the name to a common pattern.
             def munge_name(name)
                 # LAK:NOTE http://snurl.com/21zf8  [groups_google_com]
+                # Change to x = name.downcase.split(".",-1).reverse for FQDN support
                 x = name.downcase.split(".").reverse
             end
 
@@ -306,6 +307,7 @@ module Puppet
                         raise AuthStoreError, "Invalid IP address pattern %s" % value
                     end
                 when /^([a-zA-Z][-\w]*\.)+[-\w]+$/ # a full hostname
+                    # Change to /^([a-zA-Z][-\w]*\.)+[-\w]+\.?$/ for FQDN support
                     @name = :domain
                     @pattern = munge_name(value)
                 when /^\*(\.([a-zA-Z][-\w]*)){1,}$/ # *.domain.com
