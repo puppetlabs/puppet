@@ -1,0 +1,100 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+INSTALL=install -Dp
+
+prefix := $(CURDIR)/debian/tmp
+bindir := $(prefix)/usr/bin
+sbindir := $(prefix)/usr/sbin
+libdir := $(prefix)/usr/lib
+localstatedir := $(prefix)/var
+rubylibdir := $(libdir)/ruby/1.8
+sysconfdir := $(prefix)/etc
+pkgconfdir := $(sysconfdir)/puppet
+
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+	CFLAGS += -O0
+else
+	CFLAGS += -O2
+endif
+
+configure: configure-stamp
+configure-stamp:
+	dh_testdir
+	touch configure-stamp
+
+
+build: build-stamp
+build-stamp: configure-stamp 
+	dh_testdir
+	touch build-stamp
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp configure-stamp
+	dh_clean 
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k 
+	dh_installdirs
+
+	# Note sbindir does nothing right now. Leaving in for future
+	# puppet versions where it is respected.
+	$(CURDIR)/install.rb --destdir=debian/tmp --bindir=/usr/bin \
+          --sbindir=/usr/sbin --sitelibdir=/usr/lib/ruby/1.8
+        
+	# strip executable bit from all the non-executable files.
+	find debian/tmp/usr/lib/ruby/1.8 -type f -perm /u+x,g+x,o+x -exec chmod a-x {} \;
+	# fix the permissions on all of the directories
+	find debian/tmp/usr/lib/ruby/1.8 -type d -exec chmod 755 {} \;
+
+	# Vim auto-syntax-highlighting stuff
+	$(INSTALL) -m0644 ext/vim/syntax/puppet.vim				\
+		$(CURDIR)/debian/puppet/usr/share/vim/addons/syntax/
+	$(INSTALL) -m0644 ext/vim/ftdetect/puppet.vim				\
+		$(CURDIR)/debian/puppet/usr/share/vim/addons/ftdetect/
+
+	# Emacs mode
+	$(INSTALL) -m0644 ext/emacs/puppet-mode-init.el			\
+		$(CURDIR)/debian/puppet/etc/emacs/site-start.d/50puppet-mode-init.el
+	$(INSTALL) -m0644 ext/emacs/puppet-mode.el			\
+		$(CURDIR)/debian/puppet/usr/share/emacs/site-lisp/puppet-mode.el
+
+	dh_installexamples examples/*
+
+	# Logcheck rules.  Gee I wish you could specify a file to source
+	# in dh_installlogcheck.
+	ln ext/logcheck/puppet debian/puppet.logcheck.ignore.server
+	dh_installlogcheck
+	rm debian/puppet.logcheck.ignore.server
+
+# Build architecture-dependent files here.
+binary-arch: build install
+
+# Build architecture-independent files here.
+binary-indep: build install
+	dh_testdir
+	dh_testroot
+	dh_install -i
+	dh_installchangelogs -i CHANGELOG
+	dh_installdocs -i
+	dh_installman
+	dh_installinit -ppuppetmaster
+	dh_installinit -ppuppet --error-handler=true -- defaults 21 
+	dh_installlogrotate -i
+	dh_compress -i
+	dh_fixperms -i
+	dh_installdeb -i
+	dh_shlibdeps -i
+	dh_gencontrol -i
+	dh_md5sums -i
+	dh_builddeb -i
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure

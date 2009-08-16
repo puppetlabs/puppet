@@ -1,0 +1,20 @@
+#!/bin/sh -e
+
+case "$1" in
+    purge)
+	rm -rf /var/log/puppet
+	rm -f /etc/puppet/puppetmasterd.conf
+	rm -rf /etc/puppet/ssl
+	;;
+    remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+        ;;
+
+    *)
+        echo "postrm called with unknown argument \`$1'" >&2
+        exit 1
+
+esac
+
+#DEBHELPER#
+
+exit 0
