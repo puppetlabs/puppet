@@ -1,8 +1,20 @@
-puppet (0.24.8-3) UNRELEASED; urgency=low
+puppet (0.25.0-1) unstable; urgency=low
 
+  * New upstream release
+  * Tweak .install files to cope with new use of sbindir from upstream.
+  * Add the new auth.conf config file to the puppetmaster package.
+
+ -- Nigel Kersten <nigel@explanatorygap.net>  Sun, 16 Aug 2009 05:34:17 -0700
+
+puppet (0.24.8-3) unstable; urgency=low
+
+  [ Micah Anderson ]
   * Make logcheck ignore 'Reopening log files' on puppetmaster (Closes: #538721)
 
- -- Micah Anderson <micah@debian.org>  Tue, 04 Aug 2009 16:43:35 -0400
+  [ Nigel Kersten ]
+  * switch from unreleased to unstable. 
+
+ -- Nigel Kersten <nigel@explanatorygap.net>  Sun, 16 Aug 2009 05:33:53 -0700
 
 puppet (0.24.8-2) unstable; urgency=high
 
