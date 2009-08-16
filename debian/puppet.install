@@ -2,6 +2,6 @@ debian/puppet.conf etc/puppet
 debian/tmp/usr/bin/filebucket usr/bin
 debian/tmp/usr/bin/puppet usr/bin
 debian/tmp/usr/bin/puppetdoc usr/bin
-debian/tmp/usr/bin/puppetd usr/sbin
+debian/tmp/usr/sbin/puppetd usr/sbin
 debian/tmp/usr/bin/ralsh usr/bin
 debian/tmp/usr/lib/ruby/1.8/* usr/lib/ruby/1.8
