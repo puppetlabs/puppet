@@ -1,0 +1,11 @@
+/var/log/puppet/*log {
+  missingok
+  create 0644 puppet puppet
+  compress
+  rotate 4
+  
+  postrotate
+    [ -e /etc/init.d/puppetmaster ] && /etc/init.d/puppetmaster restart >/dev/null 2>&1 || true
+    [ -e /etc/init.d/puppet ] && /etc/init.d/puppet reload > /dev/null 2>&1 || true
+  endscript
+}

@@ -1,0 +1,7 @@
+debian/fileserver.conf etc/puppet
+ext/puppetlast usr/bin
+# As of puppet 0.25.0 this will no longer be necessary
+# as sbindir will be used by install.rb
+debian/tmp/usr/bin/puppetmasterd usr/sbin
+debian/tmp/usr/bin/puppetca usr/sbin
+debian/tmp/usr/bin/puppetrun usr/sbin

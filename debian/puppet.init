@@ -1,0 +1,85 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides:          puppet
+# Required-Start:    $network $named $remote_fs $syslog
+# Required-Stop:     $network $named $remote_fs $syslog
+# Should-Start:      puppetmaster
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+### END INIT INFO                                                                                                                                          
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/sbin/puppetd
+DAEMON_OPTS=""
+NAME=puppetd
+DESC="puppet configuration management tool"
+
+test -x $DAEMON || exit 0
+
+[ -r /etc/default/puppet ] && . /etc/default/puppet
+
+. /lib/lsb/init-functions
+
+is_true() {
+    if [ "x$1" = "xtrue" -o "x$1" = "xyes" -o "x$1" = "x0" ] ; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+reload_puppet() {
+	start-stop-daemon --stop --quiet --signal HUP --pidfile /var/run/puppet/$NAME.pid
+}
+
+start_puppet() {
+    if is_true "$START" ; then
+	start-stop-daemon --start --quiet --pidfile /var/run/puppet/$NAME.pid \
+	    --startas $DAEMON -- $DAEMON_OPTS
+    else
+	echo ""
+	echo "puppet not configured to start, please edit /etc/default/puppet to enable"
+    fi
+}
+
+stop_puppet() {
+	start-stop-daemon --stop --quiet --pidfile /var/run/puppet/$NAME.pid
+}
+
+if [ ! -d /var/run/puppet ]; then
+	rm -rf /var/run/puppet
+	mkdir -p /var/run/puppet
+fi
+
+chown puppet:puppet /var/run/puppet
+
+case "$1" in
+    start)
+	log_begin_msg "Starting $DESC"
+	start_puppet
+	log_end_msg 0
+	;;
+    stop)
+	log_begin_msg "Stopping $DESC"
+	stop_puppet
+	log_end_msg 0
+	;;
+    reload)
+    	log_begin_msg "Reloading $DESC"
+    	reload_puppet
+    	log_end_msg 0
+    	;;
+    restart|force-reload)
+	log_begin_msg "Restarting $DESC"
+	stop_puppet
+	sleep 1
+	start_puppet
+	log_end_msg 0
+	;;
+  *)
+	echo "Usage: $0 {start|stop|restart|force-reload|reload}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

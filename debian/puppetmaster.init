@@ -1,0 +1,102 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides:          puppetmaster                                                                                                                          
+# Required-Start:    $network $named $remote_fs $syslog
+# Required-Stop:     $network $named $remote_fs $syslog
+# Default-Start:     2 3 4 5                                                                                                                               
+# Default-Stop:      0 1 6                                                                                                                                 
+### END INIT INFO                 
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/sbin/puppetmasterd
+DAEMON_OPTS=""
+NAME=puppetmasterd
+DESC="puppet configuration management tool master server"
+
+test -x $DAEMON || exit 0
+
+[ -r /etc/default/puppetmaster ] && . /etc/default/puppetmaster
+
+. /lib/lsb/init-functions
+
+if [ ! -d /var/run/puppet ]; then
+	mkdir -p /var/run/puppet
+fi
+
+chown puppet:puppet /var/run/puppet
+
+is_true() {
+    if [ "x$1" = "xtrue" -o "x$1" = "xyes" -o "x$1" = "x0" ] ; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+start_puppetmaster() {
+    if is_true "$START" ; then
+	if [ "$SERVERTYPE" = "mongrel" ]
+	then
+	    DAEMON_OPTS="$DAEMON_OPTS --servertype=mongrel"
+	    NUMSTART=0
+	    STARTPORT=$PORT
+	    while [ $NUMSTART -lt $PUPPETMASTERS ]; do 
+		start-stop-daemon --start --quiet --pidfile=/var/run/puppet/$NAME-$STARTPORT.pid \
+		    --startas $DAEMON -- $DAEMON_OPTS --masterport=$STARTPORT --pidfile=/var/run/puppet/$NAME-$STARTPORT.pid
+		STARTPORT=$(($STARTPORT + 1))
+		NUMSTART=$(($NUMSTART + 1))
+	    done
+	else
+	    start-stop-daemon --start --quiet --pidfile /var/run/puppet/$NAME.pid \
+		--startas $DAEMON -- $DAEMON_OPTS --masterport=$PORT
+	fi
+    else
+	echo ""
+	echo "puppetmaster not configured to start, please edit /etc/default/puppetmaster to enable"
+    fi
+}
+
+stop_puppetmaster() {
+    if [ "$SERVERTYPE" = "mongrel" ]
+    then
+	NUMSTART=0
+	STOPPORT=$PORT
+	while [ $NUMSTART -lt $PUPPETMASTERS ]; do 
+	    start-stop-daemon --stop --quiet --pidfile /var/run/puppet/$NAME-$STOPPORT.pid
+	    rm /var/run/puppet/$NAME-$STOPPORT.pid
+	    STOPPORT=$(($STOPPORT + 1))
+	    NUMSTART=$(($NUMSTART + 1))
+	done
+    else
+	start-stop-daemon --stop --quiet --pidfile /var/run/puppet/$NAME.pid
+    fi
+}
+
+case "$1" in
+    start)
+	log_begin_msg "Starting $DESC"
+	start_puppetmaster
+	log_end_msg $?
+	;;
+    stop)
+	log_begin_msg "Stopping $DESC"
+	stop_puppetmaster
+	log_end_msg $?
+	;;
+    reload)
+  	# Do nothing, as Puppetmaster rechecks its config automatically
+        ;;
+    restart|force-reload)
+	log_begin_msg "Restarting $DESC"
+	stop_puppetmaster
+	sleep 1
+	start_puppetmaster
+	log_end_msg 0
+	;;
+    *)
+	echo "Usage: $0 {start|stop|restart|force-reload}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

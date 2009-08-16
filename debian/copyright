@@ -1,0 +1,18 @@
+This package was debianized by Jamie Wilkinson <jaq@debian.org> on
+Thu, 27 Apr 2006 10:18:04 +1000.
+
+It was downloaded from http://reductivelabs.com/downloads/puppet
+
+Puppet - Automating Configuration Management. 
+Copyright (C) 2005 Reductive Labs LLC
+
+License:
+
+From:
+http://reductivelabs.com/trac/puppet/wiki/FrequentlyAskedQuestions#what-license-is-puppet-released-under 
+
+Puppet is open source and is released under the GNU Public License.
+
+On Debian systems, the complete text of the GNU General
+Public License can be found in `/usr/share/common-licenses/GPL'.
+

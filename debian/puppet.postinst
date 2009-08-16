@@ -1,0 +1,14 @@
+#!/bin/sh -e
+
+if [ "$1" = "configure" ]; then
+	if ! getent passwd puppet > /dev/null; then
+		adduser --quiet --system --group --home /var/lib/puppet  \
+			--gecos "Puppet configuration management daemon" \
+			puppet
+	fi
+	if [ -d /etc/puppet/ssl ] && [ ! -e /var/lib/puppet/ssl ] && grep -q 'ssldir=/var/lib/puppet/ssl' /etc/puppet/puppet.conf; then
+		mv /etc/puppet/ssl /var/lib/puppet/ssl
+	fi
+fi
+
+#DEBHELPER#
