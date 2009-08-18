@@ -43,6 +43,10 @@ describe Puppet::Module do
         mod.to_s.should == "Module foo(/a)"
     end
 
+    it "should fail if its name is not alphanumeric" do
+        lambda { Puppet::Module.new(".something") }.should raise_error(Puppet::Module::InvalidName)
+    end
+
     it "should require a name at initialization" do
         lambda { Puppet::Module.new }.should raise_error(ArgumentError)
     end
@@ -175,93 +179,6 @@ describe Puppet::Module do
         mod = Puppet::Module.new("foo")
         mod.stubs(:path).returns "/a/foo"
         mod.plugin_directory.should == "/a/foo/lib"
-    end
-end
-
-describe Puppet::Module, "when yielding each module in a list of directories" do
-    before do
-        FileTest.stubs(:directory?).returns true
-    end
-
-    it "should search for modules in each directory in the list" do
-        Dir.expects(:entries).with("/one").returns []
-        Dir.expects(:entries).with("/two").returns []
-
-        Puppet::Module.each_module("/one", "/two")
-    end
-
-    it "should accept the list of directories as an array" do
-        Dir.expects(:entries).with("/one").returns []
-        Dir.expects(:entries).with("/two").returns []
-
-        Puppet::Module.each_module(%w{/one /two})
-    end
-
-    it "should accept the list of directories joined by #{File::PATH_SEPARATOR}" do
-        Dir.expects(:entries).with("/one").returns []
-        Dir.expects(:entries).with("/two").returns []
-
-        list = %w{/one /two}.join(File::PATH_SEPARATOR)
-
-        Puppet::Module.each_module(list)
-    end
-
-    it "should not create modules for '.' or '..' in the provided directory list" do
-        Dir.expects(:entries).with("/one").returns(%w{. ..})
-
-        result = []
-        Puppet::Module.each_module("/one") do |mod|
-            result << mod
-        end
-
-        result.should be_empty
-    end
-
-    it "should not create modules for non-directories in the provided directory list" do
-        Dir.expects(:entries).with("/one").returns(%w{notdir})
-
-        FileTest.expects(:directory?).with("/one/notdir").returns false
-
-        result = []
-        Puppet::Module.each_module("/one") do |mod|
-            result << mod
-        end
-
-        result.should be_empty
-    end
-
-    it "should yield each found module" do
-        Dir.expects(:entries).with("/one").returns(%w{f1 f2})
-
-        one = mock 'one'
-        two = mock 'two'
-
-        Puppet::Module.expects(:new).with("f1").returns one
-        Puppet::Module.expects(:new).with("f2").returns two
-
-        result = []
-        Puppet::Module.each_module("/one") do |mod|
-            result << mod
-        end
-
-        result.should == [one, two]
-    end
-
-    it "should not yield a module with the same name as a previously yielded module" do
-        Dir.expects(:entries).with("/one").returns(%w{f1})
-        Dir.expects(:entries).with("/two").returns(%w{f1})
-
-        one = mock 'one'
-
-        Puppet::Module.expects(:new).with("f1").returns one
-        Puppet::Module.expects(:new).with("f1").never
-
-        result = []
-        Puppet::Module.each_module("/one", "/two") do |mod|
-            result << mod
-        end
-
-        result.should == [one]
     end
 end
 

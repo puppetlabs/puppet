@@ -4,34 +4,18 @@ require 'puppet/util/logging'
 class Puppet::Module
     include Puppet::Util::Logging
 
+    class InvalidName < ArgumentError
+        def message
+            "Invalid module name; module names must be alphanumeric (plus '-')"
+        end
+    end
+
     TEMPLATES = "templates"
     FILES = "files"
     MANIFESTS = "manifests"
     PLUGINS = "plugins"
 
     FILETYPES = [MANIFESTS, FILES, TEMPLATES, PLUGINS]
-
-    # Search through a list of paths, yielding each found module in turn.
-    def self.each_module(*paths)
-        paths = paths.flatten.collect { |p| p.split(File::PATH_SEPARATOR) }.flatten
-
-        yielded = {}
-        paths.each do |dir|
-            next unless FileTest.directory?(dir)
-
-            Dir.entries(dir).each do |name|
-                next if name =~ /^\./
-                next if yielded.include?(name)
-
-                module_path = File.join(dir, name)
-                next unless FileTest.directory?(module_path)
-
-                yielded[name] = true
-
-                yield Puppet::Module.new(name)
-            end
-        end
-    end
 
     # Return an array of paths by splitting the +modulepath+ config
     # parameter. Only consider paths that are absolute and existing
@@ -53,6 +37,9 @@ class Puppet::Module
 
     def initialize(name, environment = nil)
         @name = name
+
+        assert_validity()
+
         if environment.is_a?(Puppet::Node::Environment)
             @environment = environment
         else
@@ -151,5 +138,9 @@ class Puppet::Module
         else
             return File.join(path, "lib")
         end
+    end
+
+    def assert_validity
+        raise InvalidName unless name =~ /^[\w-]+$/
     end
 end

@@ -96,21 +96,6 @@ describe Puppet::Node::Environment do
             env["myvar"].should == "myval"
         end
 
-        it "should be able to return its modules" do
-            Puppet::Node::Environment.new("testing").should respond_to(:modules)
-        end
-
-        it "should return each module from the environment-specific module path when asked for its modules" do
-            env = Puppet::Node::Environment.new("testing")
-            module_path = %w{/one /two}.join(File::PATH_SEPARATOR)
-            env.expects(:modulepath).returns module_path
-
-            mods = [Puppet::Module.new('mod1'), Puppet::Module.new("mod2")]
-            Puppet::Module.expects(:each_module).with(module_path).multiple_yields(*mods)
-
-            env.modules.should == mods
-        end
-
         it "should be able to return an individual module that exists in its module path" do
             env = Puppet::Node::Environment.new("testing")
 
@@ -129,6 +114,58 @@ describe Puppet::Node::Environment do
             mod.expects(:exist?).returns false
 
             env.module("one").should be_nil
+        end
+
+        it "should be able to return its modules" do
+            Puppet::Node::Environment.new("testing").should respond_to(:modules)
+        end
+
+        describe ".modules" do
+            it "should return a module named for every directory in each module path" do
+                env = Puppet::Node::Environment.new("testing")
+                env.expects(:modulepath).returns %w{/a /b}
+                Dir.expects(:entries).with("/a").returns %w{foo bar}
+                Dir.expects(:entries).with("/b").returns %w{bee baz}
+
+                env.modules.collect{|mod| mod.name}.sort.should == %w{foo bar bee baz}.sort
+            end
+
+            it "should remove duplicates" do
+                env = Puppet::Node::Environment.new("testing")
+                env.expects(:modulepath).returns %w{/a /b}
+                Dir.expects(:entries).with("/a").returns %w{foo}
+                Dir.expects(:entries).with("/b").returns %w{foo}
+
+                env.modules.collect{|mod| mod.name}.sort.should == %w{foo}
+            end
+
+            it "should ignore invalid modules" do
+                env = Puppet::Node::Environment.new("testing")
+                env.expects(:modulepath).returns %w{/a}
+                Dir.expects(:entries).with("/a").returns %w{foo bar}
+
+                Puppet::Module.expects(:new).with { |name, env| name == "foo" }.returns mock("foomod", :name => "foo")
+                Puppet::Module.expects(:new).with { |name, env| name == "bar" }.raises Puppet::Module::InvalidName
+
+                env.modules.collect{|mod| mod.name}.sort.should == %w{foo}
+            end
+
+            it "should create modules with the correct environment" do
+                env = Puppet::Node::Environment.new("testing")
+                env.expects(:modulepath).returns %w{/a}
+                Dir.expects(:entries).with("/a").returns %w{foo}
+
+                env.modules.should be_all{|mod| mod.environment == "testing" }
+            end
+
+            it "should cache the module list" do
+                env = Puppet::Node::Environment.new("testing")
+                env.expects(:modulepath).once.returns %w{/a}
+                Dir.expects(:entries).once.with("/a").returns %w{foo}
+
+                env.modules
+                env.modules
+            end
         end
     end
 end

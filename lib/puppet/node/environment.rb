@@ -69,12 +69,8 @@ class Puppet::Node::Environment
     # Return all modules from this environment.
     # Cache the list, because it can be expensive to create.
     cached_attr(:modules, :ttl => Puppet[:filetimeout]) do
-        result = []
-        Puppet::Module.each_module(modulepath) do |mod|
-            mod.environment = self
-            result << mod
-        end
-        result
+        module_names = modulepath.collect { |path| Dir.entries(path) }.flatten.uniq
+        module_names.collect { |path| Puppet::Module.new(path, self) rescue nil }.compact
     end
 
     def to_s
