@@ -105,9 +105,10 @@ describe Puppet::Node::Environment do
             module_path = %w{/one /two}.join(File::PATH_SEPARATOR)
             env.expects(:modulepath).returns module_path
 
-            Puppet::Module.expects(:each_module).with(module_path).multiple_yields("mod1", "mod2")
+            mods = [Puppet::Module.new('mod1'), Puppet::Module.new("mod2")]
+            Puppet::Module.expects(:each_module).with(module_path).multiple_yields(*mods)
 
-            env.modules.should == %w{mod1 mod2}
+            env.modules.should == mods
         end
 
         it "should be able to return an individual module that exists in its module path" do

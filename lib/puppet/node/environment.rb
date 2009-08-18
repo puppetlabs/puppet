@@ -71,6 +71,7 @@ class Puppet::Node::Environment
     cached_attr(:modules, :ttl => Puppet[:filetimeout]) do
         result = []
         Puppet::Module.each_module(modulepath) do |mod|
+            mod.environment = self
             result << mod
         end
         result

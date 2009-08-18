@@ -16,15 +16,6 @@ class Puppet::FileServing::Mount < Puppet::Network::AuthStore
 
     attr_reader :name
 
-    # Determine the environment to use, if any.
-    def environment(node_name)
-        if node_name and node = Puppet::Node.find(node_name)
-            Puppet::Node::Environment.new(node.environment)
-        else
-            Puppet::Node::Environment.new
-        end
-    end
-
     def find(path, options)
         raise NotImplementedError
     end

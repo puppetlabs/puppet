@@ -49,6 +49,8 @@ class Puppet::Module
     end
 
     attr_reader :name, :environment
+    attr_writer :environment
+
     def initialize(name, environment = nil)
         @name = name
         if environment.is_a?(Puppet::Node::Environment)

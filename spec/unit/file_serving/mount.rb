@@ -4,26 +4,8 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/file_serving/mount'
 
 describe Puppet::FileServing::Mount do
-    before do
-        @mount = Puppet::FileServing::Mount.new("foo")
-    end
-
-    it "should be able to look up a node's environment" do
-        Puppet::Node.expects(:find).with("mynode").returns mock('node', :environment => "myenv")
-        Puppet::Node::Environment.expects(:new).with("myenv").returns "eh"
-
-        @mount.environment("mynode").should == "eh"
-    end
-
-    it "should use the default environment if no node information is provided" do
-        Puppet::Node.expects(:find).with("mynode").returns nil
-        Puppet::Node::Environment.expects(:new).with(nil).returns "eh"
-
-        @mount.environment("mynode").should == "eh"
-    end
-
     it "should use 'mount[$name]' as its string form" do
-        @mount.to_s.should == "mount[foo]"
+        Puppet::FileServing::Mount.new("foo").to_s.should == "mount[foo]"
     end
 end
 
