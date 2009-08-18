@@ -64,11 +64,4 @@ describe "the include function" do
         @compiler.catalog.edge?(@scope.resource,@compiler.findresource(:class,"includedclass")).should be_true
     end
 
-    it "should find a file with an all lowercase name given a mixed case name" do
-        with_file('includedclass',"class includedclass {}") {
-            @scope.function_include("includedclass")
-            }
-        @compiler.catalog.edge?(@scope.resource,@compiler.findresource(:class,"IncludedClass")).should be_true
-    end
-
 end

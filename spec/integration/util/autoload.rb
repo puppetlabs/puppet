@@ -67,18 +67,6 @@ describe Puppet::Util::Autoload do
         }
     end
 
-    it "should successfully load a file with a mixed case name" do
-        on_disk = "MyThing.rb"
-        in_code = :mything
-        with_loader("foo", "bar") { |dir,loader|
-            with_file(in_code, dir, on_disk) {
-                loader.load(in_code).should be_true
-                loader.should be_loaded(in_code)
-                AutoloadIntegrator.should be_thing(in_code)
-            }
-        }
-    end
-
     it "should consider a file loaded when asked for the name without an extension" do
         with_loader("foo", "bar") { |dir,loader|
             with_file(:noext, dir, "noext.rb") {
