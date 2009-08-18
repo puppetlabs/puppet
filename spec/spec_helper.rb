@@ -36,9 +36,10 @@ Spec::Runner.configure do |config|
 #      setup() if respond_to? :setup
 #  end
 #
-#  config.prepend_after :all do
-#      teardown() if respond_to? :teardown
-#  end
+    config.prepend_after :each do
+        Puppet.settings.clear
+        Puppet::Node::Environment.clear
+    end
 end
 
 # Set the confdir and vardir to gibberish so that tests
