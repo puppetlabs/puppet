@@ -426,7 +426,7 @@ module Puppet
             See http://reductivelabs.com/puppet/trac/wiki/UsingMongrel for more information."],
         # To make sure this directory is created before we try to use it on the server, we need
         # it to be in the server section (#1138).
-        :yamldir => {:default => "$vardir/yaml", :owner => "$user", :group => "$user", :mode => "750",
+        :yamldir => {:default => "$vardir/yaml", :owner => "$user", :group => "$group", :mode => "750",
             :desc => "The directory in which YAML data is stored, usually in a subdirectory."},
         :reports => ["store",
             "The list of reports to generate.  All reports are looked for

@@ -43,6 +43,11 @@ describe "Puppet defaults" do
         Puppet.settings.setting(:clientyamldir).group.should be_nil
     end
 
+    it "should use the service user and group for the yamldir" do
+        Puppet.settings.setting(:yamldir).owner.should == Puppet.settings[:user]
+        Puppet.settings.setting(:yamldir).group.should == Puppet.settings[:group]
+    end
+
     # See #1232
     it "should not specify a user or group for the rundir" do
         Puppet.settings.setting(:rundir).owner.should be_nil
