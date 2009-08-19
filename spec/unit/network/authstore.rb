@@ -22,7 +22,7 @@ describe Puppet::Network::AuthStore::Declaration do
     describe "when the pattern is a numeric IP with a back reference" do
         before :each do
             @ip = '100.101.$1'
-            @declaration = Puppet::Network::AuthStore::Declaration.new(:allow,@ip).interpolate('12.34'.match /(.*)/)
+            @declaration = Puppet::Network::AuthStore::Declaration.new(:allow,@ip).interpolate('12.34'.match(/(.*)/))
         end
         it "should match an IP with the apropriate interpolation" do
             @declaration.should be_match('www.testsite.org',@ip.sub(/\$1/,'12.34'))
