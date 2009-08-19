@@ -10,8 +10,8 @@ require 'puppettest/parsertesting'
 class TestSettings < Test::Unit::TestCase
     include PuppetTest
     include PuppetTest::ParserTesting
-    CElement = Puppet::Util::Settings::CElement
-    CBoolean = Puppet::Util::Settings::CBoolean
+    Setting = Puppet::Util::Settings::Setting
+    BooleanSetting = Puppet::Util::Settings::BooleanSetting
 
     def setup
         super
@@ -462,9 +462,9 @@ yay = /a/path
     end
 
     def test_correct_type_assumptions
-        file = Puppet::Util::Settings::CFile
-        element = Puppet::Util::Settings::CElement
-        bool = Puppet::Util::Settings::CBoolean
+        file = Puppet::Util::Settings::FileSetting
+        element = Puppet::Util::Settings::Setting
+        bool = Puppet::Util::Settings::BooleanSetting
 
         # We have to keep these ordered, unfortunately.
         [
@@ -669,12 +669,12 @@ yay = /a/path
     def test_celement_short_name
         element = nil
         assert_nothing_raised("Could not create celement") do
-            element = CElement.new :short => "n", :desc => "anything", :settings => Puppet::Util::Settings.new
+            element = Setting.new :short => "n", :desc => "anything", :settings => Puppet::Util::Settings.new
         end
         assert_equal("n", element.short, "Short value is not retained")
 
         assert_raise(ArgumentError,"Allowed multicharactered short names.") do
-            element = CElement.new :short => "no", :desc => "anything", :settings => Puppet::Util::Settings.new
+            element = Setting.new :short => "no", :desc => "anything", :settings => Puppet::Util::Settings.new
         end
     end
 
@@ -699,13 +699,13 @@ yay = /a/path
 
     # Tell getopt which arguments are valid
     def test_get_getopt_args
-        element = CElement.new :name => "foo", :desc => "anything", :settings => Puppet::Util::Settings.new
+        element = Setting.new :name => "foo", :desc => "anything", :settings => Puppet::Util::Settings.new
         assert_equal([["--foo", GetoptLong::REQUIRED_ARGUMENT]], element.getopt_args, "Did not produce appropriate getopt args")
 
         element.short = "n"
         assert_equal([["--foo", "-n", GetoptLong::REQUIRED_ARGUMENT]], element.getopt_args, "Did not produce appropriate getopt args")
 
-        element = CBoolean.new :name => "foo", :desc => "anything", :settings => Puppet::Util::Settings.new
+        element = BooleanSetting.new :name => "foo", :desc => "anything", :settings => Puppet::Util::Settings.new
         assert_equal([["--foo", GetoptLong::NO_ARGUMENT], ["--no-foo", GetoptLong::NO_ARGUMENT]],
                      element.getopt_args, "Did not produce appropriate getopt args")
 

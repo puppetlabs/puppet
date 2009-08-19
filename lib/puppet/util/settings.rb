@@ -12,6 +12,10 @@ class Puppet::Util::Settings
     include Enumerable
     include Puppet::Util::Cacher
 
+    require 'puppet/util/settings/setting'
+    require 'puppet/util/settings/file_setting'
+    require 'puppet/util/settings/boolean_setting'
+
     attr_accessor :file
     attr_reader :timer
 
@@ -29,8 +33,8 @@ class Puppet::Util::Settings
     # understand, and add them to the passed option list.
     def addargs(options)
         # Add all of the config parameters as valid options.
-        self.each { |name, element|
-            element.getopt_args.each { |args| options << args }
+        self.each { |name, setting|
+            setting.getopt_args.each { |args| options << args }
         }
 
         return options
@@ -40,8 +44,8 @@ class Puppet::Util::Settings
     # understand, and add them to the passed option list.
     def optparse_addargs(options)
         # Add all of the config parameters as valid options.
-        self.each { |name, element|
-            options << element.optparse_args
+        self.each { |name, setting|
+            options << setting.optparse_args
         }
 
         return options
@@ -50,7 +54,7 @@ class Puppet::Util::Settings
     # Is our parameter a boolean parameter?
     def boolean?(param)
         param = param.to_sym
-        if @config.include?(param) and @config[param].kind_of? CBoolean
+        if @config.include?(param) and @config[param].kind_of? BooleanSetting
             return true
         else
             return false
@@ -128,7 +132,7 @@ class Puppet::Util::Settings
     end
 
     # Return an object by name.
-    def element(param)
+    def setting(param)
         param = param.to_sym
         @config[param]
     end
@@ -193,8 +197,8 @@ class Puppet::Util::Settings
     # They probably deserve their own class, but I don't want to do that until I can refactor environments
     # its a little better than where they were
 
-    # Prints the contents of a config file with the available config elements, or it
-    # prints a single value of a config element.
+    # Prints the contents of a config file with the available config settings, or it
+    # prints a single value of a config setting.
     def print_config_options
         env = value(:environment)
         val = value(:configprint)
@@ -248,7 +252,7 @@ class Puppet::Util::Settings
 
     # Return a given object's file metadata.
     def metadata(param)
-        if obj = @config[param.to_sym] and obj.is_a?(CFile)
+        if obj = @config[param.to_sym] and obj.is_a?(FileSetting)
             return [:owner, :group, :mode].inject({}) do |meta, p|
                 if v = obj.send(p)
                     meta[p] = v
@@ -365,39 +369,39 @@ class Puppet::Util::Settings
         end
     end
 
-    # Create a new element.  The value is passed in because it's used to determine
-    # what kind of element we're creating, but the value itself might be either
+    # Create a new setting.  The value is passed in because it's used to determine
+    # what kind of setting we're creating, but the value itself might be either
     # a default or a value, so we can't actually assign it.
-    def newelement(hash)
+    def newsetting(hash)
         klass = nil
         if hash[:section]
             hash[:section] = hash[:section].to_sym
         end
         if type = hash[:type]
-            unless klass = {:element => CElement, :file => CFile, :boolean => CBoolean}[type]
+            unless klass = {:setting => Setting, :file => FileSetting, :boolean => BooleanSetting}[type]
                 raise ArgumentError, "Invalid setting type '%s'" % type
             end
             hash.delete(:type)
         else
             case hash[:default]
             when true, false, "true", "false"
-                klass = CBoolean
+                klass = BooleanSetting
             when /^\$\w+\//, /^\//
-                klass = CFile
+                klass = FileSetting
             when String, Integer, Float # nothing
-                klass = CElement
+                klass = Setting
             else
                 raise Puppet::Error, "Invalid value '%s' for %s" % [value.inspect, hash[:name]]
             end
         end
         hash[:settings] = self
-        element = klass.new(hash)
+        setting = klass.new(hash)
 
-        return element
+        return setting
     end
 
-    # This has to be private, because it doesn't add the elements to @config
-    private :newelement
+    # This has to be private, because it doesn't add the settings to @config
+    private :newsetting
 
     # Iterate across all of the objects in a given section.
     def persection(section)
@@ -463,15 +467,15 @@ class Puppet::Util::Settings
 
     def set_value(param, value, type)
         param = param.to_sym
-        unless element = @config[param]
+        unless setting = @config[param]
             raise ArgumentError,
                 "Attempt to assign a value to unknown configuration parameter %s" % param.inspect
         end
-        if element.respond_to?(:munge)
-            value = element.munge(value)
+        if setting.respond_to?(:munge)
+            value = setting.munge(value)
         end
-        if element.respond_to?(:handle)
-            element.handle(value)
+        if setting.respond_to?(:handle)
+            setting.handle(value)
         end
         # Reset the name, so it's looked up again.
         if param == :name
@@ -508,7 +512,7 @@ class Puppet::Util::Settings
             if @config.include?(name)
                 raise ArgumentError, "Parameter %s is already defined" % name
             end
-            tryconfig = newelement(hash)
+            tryconfig = newsetting(hash)
             if short = tryconfig.short
                 if other = @shortnames[short]
                     raise ArgumentError, "Parameter %s is already using short name '%s'" % [other.name, short]
@@ -540,7 +544,7 @@ class Puppet::Util::Settings
 
         catalog = Puppet::Resource::Catalog.new("Settings")
 
-        @config.values.find_all { |value| value.is_a?(CFile) }.each do |file|
+        @config.values.find_all { |value| value.is_a?(FileSetting) }.each do |file|
             next unless (sections.nil? or sections.include?(file.section))
             next unless resource = file.to_resource
             next if catalog.resource(resource.ref)
@@ -553,7 +557,7 @@ class Puppet::Util::Settings
         catalog
     end
 
-    # Convert our list of config elements into a configuration file.
+    # Convert our list of config settings into a configuration file.
     def to_config
         str = %{The configuration file for #{Puppet[:name]}.  Note that this file
 is likely to have unused configuration parameters in it; any parameter that's
@@ -753,7 +757,7 @@ Generated on #{Time.now}.
             raise ArgumentError, "Unknown default %s" % default
         end
 
-        unless obj.is_a? CFile
+        unless obj.is_a? FileSetting
             raise ArgumentError, "Default %s is not a file" % default
         end
 
@@ -765,18 +769,18 @@ Generated on #{Time.now}.
         return unless Puppet.features.root?
         return unless self[:mkusers]
 
-        @config.each do |name, element|
-            next unless element.respond_to?(:owner)
-            next unless sections.nil? or sections.include?(element.section)
+        @config.each do |name, setting|
+            next unless setting.respond_to?(:owner)
+            next unless sections.nil? or sections.include?(setting.section)
 
-            if user = element.owner and user != "root" and catalog.resource(:user, user).nil?
+            if user = setting.owner and user != "root" and catalog.resource(:user, user).nil?
                 resource = Puppet::Resource.new(:user, user, :ensure => :present)
                 if self[:group]
                     resource[:gid] = self[:group]
                 end
                 catalog.add_resource resource
             end
-            if group = element.group and ! %w{root wheel}.include?(group) and catalog.resource(:group, group).nil?
+            if group = setting.group and ! %w{root wheel}.include?(group) and catalog.resource(:group, group).nil?
                 catalog.add_resource Puppet::Resource.new(:group, group, :ensure => :present)
             end
         end
@@ -791,7 +795,7 @@ Generated on #{Time.now}.
         end
     end
 
-    # Return all elements that have associated hooks; this is so
+    # Return all settings that have associated hooks; this is so
     # we can call them after parsing the configuration file.
     def settings_with_hooks
         @config.values.find_all { |setting| setting.respond_to?(:handle) }
@@ -913,248 +917,6 @@ Generated on #{Time.now}.
         meta.each do |var, values|
             values.each do |param, value|
                 @config[var].send(param.to_s + "=", value)
-            end
-        end
-    end
-
-    # The base element type.
-    class CElement
-        attr_accessor :name, :section, :default, :setbycli, :call_on_define
-        attr_reader :desc, :short
-
-        def desc=(value)
-            @desc = value.gsub(/^\s*/, '')
-        end
-
-        # get the arguments in getopt format
-        def getopt_args
-            if short
-                [["--#{name}", "-#{short}", GetoptLong::REQUIRED_ARGUMENT]]
-            else
-                [["--#{name}", GetoptLong::REQUIRED_ARGUMENT]]
-            end
-        end
-
-        # get the arguments in OptionParser format
-        def optparse_args
-            if short
-                ["--#{name}", "-#{short}", desc, :REQUIRED]
-            else
-                ["--#{name}", desc, :REQUIRED]
-            end
-        end
-
-        def hook=(block)
-            meta_def :handle, &block
-        end
-
-        # Create the new element.  Pretty much just sets the name.
-        def initialize(args = {})
-            unless @settings = args.delete(:settings)
-                raise ArgumentError.new("You must refer to a settings object")
-            end
-
-            args.each do |param, value|
-                method = param.to_s + "="
-                unless self.respond_to? method
-                    raise ArgumentError, "%s does not accept %s" % [self.class, param]
-                end
-
-                self.send(method, value)
-            end
-
-            unless self.desc
-                raise ArgumentError, "You must provide a description for the %s config option" % self.name
-            end
-        end
-
-        def iscreated
-            @iscreated = true
-        end
-
-        def iscreated?
-            if defined? @iscreated
-                return @iscreated
-            else
-                return false
-            end
-        end
-
-        def set?
-            if defined? @value and ! @value.nil?
-                return true
-            else
-                return false
-            end
-        end
-
-        # short name for the celement
-        def short=(value)
-            if value.to_s.length != 1
-                raise ArgumentError, "Short names can only be one character."
-            end
-            @short = value.to_s
-        end
-
-        # Convert the object to a config statement.
-        def to_config
-            str = @desc.gsub(/^/, "# ") + "\n"
-
-            # Add in a statement about the default.
-            if defined? @default and @default
-                str += "# The default value is '%s'.\n" % @default
-            end
-
-            # If the value has not been overridden, then print it out commented
-            # and unconverted, so it's clear that that's the default and how it
-            # works.
-            value = @settings.value(self.name)
-
-            if value != @default
-                line = "%s = %s" % [@name, value]
-            else
-                line = "# %s = %s" % [@name, @default]
-            end
-
-            str += line + "\n"
-
-            str.gsub(/^/, "    ")
-        end
-
-        # Retrieves the value, or if it's not set, retrieves the default.
-        def value
-            @settings.value(self.name)
-        end
-    end
-
-    # A file.
-    class CFile < CElement
-        attr_writer :owner, :group
-        attr_accessor :mode, :create
-
-        # Should we create files, rather than just directories?
-        def create_files?
-            create
-        end
-
-        def group
-            if defined? @group
-                return @settings.convert(@group)
-            else
-                return nil
-            end
-        end
-
-        def owner
-            if defined? @owner
-                return @settings.convert(@owner)
-            else
-                return nil
-            end
-        end
-
-        # Set the type appropriately.  Yep, a hack.  This supports either naming
-        # the variable 'dir', or adding a slash at the end.
-        def munge(value)
-            # If it's not a fully qualified path...
-            if value.is_a?(String) and value !~ /^\$/ and value !~ /^\// and value != 'false'
-                # Make it one
-                value = File.join(Dir.getwd, value)
-            end
-            if value.to_s =~ /\/$/
-                @type = :directory
-                return value.sub(/\/$/, '')
-            end
-            return value
-        end
-
-        # Return the appropriate type.
-        def type
-            value = @settings.value(self.name)
-            if @name.to_s =~ /dir/
-                return :directory
-            elsif value.to_s =~ /\/$/
-                return :directory
-            elsif value.is_a? String
-                return :file
-            else
-                return nil
-            end
-        end
-
-        # Turn our setting thing into a Puppet::Resource instance.
-        def to_resource
-            return nil unless type = self.type
-
-            path = self.value
-
-            return nil unless path.is_a?(String)
-
-            # Make sure the paths are fully qualified.
-            path = File.join(Dir.getwd, path) unless path =~ /^\//
-
-            return nil unless type == :directory or create_files? or File.exist?(path)
-            return nil if path =~ /^\/dev/
-
-            resource = Puppet::Resource.new(:file, path)
-            resource[:mode] = self.mode if self.mode
-
-            if Puppet.features.root?
-                resource[:owner] = self.owner if self.owner
-                resource[:group] = self.group if self.group
-            end
-
-            resource[:ensure] = type
-            resource[:loglevel] = :debug
-            resource[:backup] = false
-
-            resource.tag(self.section, self.name, "settings")
-
-            resource
-        end
-
-        # Make sure any provided variables look up to something.
-        def validate(value)
-            return true unless value.is_a? String
-            value.scan(/\$(\w+)/) { |name|
-                name = $1
-                unless @settings.include?(name)
-                    raise ArgumentError,
-                        "Settings parameter '%s' is undefined" %
-                        name
-                end
-            }
-        end
-    end
-
-    # A simple boolean.
-    class CBoolean < CElement
-        # get the arguments in getopt format
-        def getopt_args
-            if short
-                [["--#{name}", "-#{short}", GetoptLong::NO_ARGUMENT],
-                 ["--no-#{name}", GetoptLong::NO_ARGUMENT]]
-            else
-                [["--#{name}", GetoptLong::NO_ARGUMENT],
-                 ["--no-#{name}", GetoptLong::NO_ARGUMENT]]
-            end
-        end
-
-        def optparse_args
-            if short
-                ["--[no-]#{name}", "-#{short}", desc, :NONE ]
-            else
-                ["--[no-]#{name}", desc, :NONE]
-            end
-        end
-
-        def munge(value)
-            case value
-            when true, "true"; return true
-            when false, "false"; return false
-            else
-                raise ArgumentError, "Invalid value '%s' for %s" %
-                    [value.inspect, @name]
             end
         end
     end

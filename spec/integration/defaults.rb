@@ -39,14 +39,14 @@ describe "Puppet defaults" do
 
     # See #1232
     it "should not specify a user or group for the clientyamldir" do
-        Puppet.settings.element(:clientyamldir).owner.should be_nil
-        Puppet.settings.element(:clientyamldir).group.should be_nil
+        Puppet.settings.setting(:clientyamldir).owner.should be_nil
+        Puppet.settings.setting(:clientyamldir).group.should be_nil
     end
 
     # See #1232
     it "should not specify a user or group for the rundir" do
-        Puppet.settings.element(:rundir).owner.should be_nil
-        Puppet.settings.element(:rundir).group.should be_nil
+        Puppet.settings.setting(:rundir).owner.should be_nil
+        Puppet.settings.setting(:rundir).group.should be_nil
     end
 
     it "should use a bind address of ''" do
@@ -61,7 +61,7 @@ describe "Puppet defaults" do
 
     [:modulepath, :factpath].each do |setting|
         it "should configure '#{setting}' not to be a file setting, so multi-directory settings are acceptable" do
-            Puppet.settings.element(setting).should be_instance_of(Puppet::Util::Settings::CElement)
+            Puppet.settings.setting(setting).should be_instance_of(Puppet::Util::Settings::Setting)
         end
     end
 

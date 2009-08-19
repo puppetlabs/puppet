@@ -415,7 +415,7 @@ module Puppet
         :ca => [true, "Wether the master should function as a certificate authority."],
         :modulepath => {:default => "$confdir/modules:/usr/share/puppet/modules",
            :desc => "The search path for modules as a colon-separated list of
-            directories.", :type => :element }, # We don't want this to be considered a file, since it's multiple files.
+            directories.", :type => :setting }, # We don't want this to be considered a file, since it's multiple files.
         :ssl_client_header => ["HTTP_X_CLIENT_DN", "The header containing an authenticated
             client's SSL DN.  Only used with Mongrel.  This header must be set by the proxy
             to the authenticated client's SSL DN (e.g., ``/CN=puppet.reductivelabs.com``).
@@ -588,7 +588,7 @@ module Puppet
             :desc => "Where Puppet should look for facts.  Multiple directories should
                 be colon-separated, like normal PATH variables.",
             :call_on_define => true, # Call our hook with the default value, so we always get the value added to facter.
-            :type => :element, # Don't consider it a file, because it could be multiple colon-separated files
+            :type => :setting, # Don't consider it a file, because it could be multiple colon-separated files
             :hook => proc { |value| Facter.search(value) if Facter.respond_to?(:search) }},
         :factdest => ["$vardir/facts/",
             "Where Puppet should store facts that it pulls down from the central
