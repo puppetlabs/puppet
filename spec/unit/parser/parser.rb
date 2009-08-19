@@ -387,6 +387,12 @@ describe Puppet::Parser do
                 @parser.stubs(:load).returns(false)
                 @parser.find_or_load("Bogus_namespace","Bogus_name",:my_type).should == false
             end
+
+            it "should directly look for fully qualified classes" do
+                @loaded_code.stubs(:find_hostclass).with("foo_namespace","::foo_name").returns(false, true)
+                @parser.expects(:load).with("foo_name").returns true
+                @parser.find_or_load("foo_namespace","::foo_name",:hostclass)
+            end
         end
     end
 

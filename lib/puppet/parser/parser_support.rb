@@ -117,15 +117,21 @@ class Puppet::Parser::Parser
         namespace = namespace.downcase
         name      = name.downcase
         fullname = (namespace + "::" + name).sub(/^::/, '')
-        names_to_try = [fullname]
 
-        # Try to load the module init file if we're a qualified name
-        names_to_try << fullname.split("::")[0] if fullname.include?("::")
+        if name =~ /^::/
+            names_to_try = [name.sub(/^::/, '')]
+        else
+            names_to_try = [fullname]
 
-        # Otherwise try to load the bare name on its own.  This
-        # is appropriate if the class we're looking for is in a
-        # module that's different from our namespace.
-        names_to_try << name
+            # Try to load the module init file if we're a qualified name
+            names_to_try << fullname.split("::")[0] if fullname.include?("::")
+
+            # Otherwise try to load the bare name on its own.  This
+            # is appropriate if the class we're looking for is in a
+            # module that's different from our namespace.
+            names_to_try << name
+            names_to_try.compact!
+        end
 
         until (result = @loaded_code.send(method, namespace, name)) or names_to_try.empty? do
             self.load(names_to_try.shift)
@@ -151,6 +157,7 @@ class Puppet::Parser::Parser
 
         # We can't interpolate at this point since we don't have any
         # scopes set up. Warn the user if they use a variable reference
+        raise "Got no file" unless file
         pat = file
         if pat.index("$")
             Puppet.warning(
