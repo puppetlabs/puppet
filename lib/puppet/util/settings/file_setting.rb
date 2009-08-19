@@ -2,7 +2,11 @@ require 'puppet/util/settings/setting'
 
 # A file.
 class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::Setting
-    attr_writer :owner, :group
+    AllowedOwners = %w{root service}
+    AllowedGroups = %w{service}
+
+    class SettingError < StandardError; end
+
     attr_accessor :mode, :create
 
     # Should we create files, rather than just directories?
@@ -10,20 +14,29 @@ class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::Setting
         create
     end
 
-    def group
-        if defined? @group
-            return @settings.convert(@group)
-        else
-            return nil
+    def group=(value)
+        unless AllowedGroups.include?(value)
+            raise SettingError, "Invalid group %s on setting %s. Valid groups are %s." % [value, name, AllowedGroups.join(', ')]
         end
+        @group = value
+    end
+
+    def group
+        return unless defined?(@group) && @group
+        @settings[:group]
+    end
+
+    def owner=(value)
+        unless AllowedOwners.include?(value)
+            raise SettingError, "Invalid owner %s on setting %s. Valid owners are %s." % [value, name, AllowedOwners.join(', ')]
+        end
+        @owner = value
     end
 
     def owner
-        if defined? @owner
-            return @settings.convert(@owner)
-        else
-            return nil
-        end
+        return unless defined?(@owner) && @owner
+        return "root" if @owner == "root"
+        @settings[:user]
     end
 
     # Set the type appropriately.  Yep, a hack.  This supports either naming

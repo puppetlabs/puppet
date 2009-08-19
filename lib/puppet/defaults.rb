@@ -31,8 +31,8 @@ module Puppet
     if name == "puppetmasterd"
         logopts = {:default => "$vardir/log",
             :mode => 0750,
-            :owner => "$user",
-            :group => "$group",
+            :owner => "service",
+            :group => "service",
             :desc => "The Puppet log directory."
         }
     else
@@ -264,31 +264,31 @@ module Puppet
 
     setdefaults(:ca,
         :cadir => {  :default => "$ssldir/ca",
-            :owner => "$user",
-            :group => "$group",
+            :owner => "service",
+            :group => "service",
             :mode => 0770,
             :desc => "The root directory for the certificate authority."
         },
         :cacert => { :default => "$cadir/ca_crt.pem",
-            :owner => "$user",
-            :group => "$group",
+            :owner => "service",
+            :group => "service",
             :mode => 0660,
             :desc => "The CA certificate."
         },
         :cakey => { :default => "$cadir/ca_key.pem",
-            :owner => "$user",
-            :group => "$group",
+            :owner => "service",
+            :group => "service",
             :mode => 0660,
             :desc => "The CA private key."
         },
         :capub => { :default => "$cadir/ca_pub.pem",
-            :owner => "$user",
-            :group => "$group",
+            :owner => "service",
+            :group => "service",
             :desc => "The CA public key."
         },
         :cacrl => { :default => "$cadir/ca_crl.pem",
-            :owner => "$user",
-            :group => "$group",
+            :owner => "service",
+            :group => "service",
             :mode => 0664,
             :desc => "The certificate revocation list (CRL) for the CA. Will be used if present but otherwise ignored.",
             :hook => proc do |value|
@@ -298,31 +298,31 @@ module Puppet
             end
         },
         :caprivatedir => { :default => "$cadir/private",
-            :owner => "$user",
-            :group => "$group",
+            :owner => "service",
+            :group => "service",
             :mode => 0770,
             :desc => "Where the CA stores private certificate information."
         },
         :csrdir => { :default => "$cadir/requests",
-            :owner => "$user",
-            :group => "$group",
+            :owner => "service",
+            :group => "service",
             :desc => "Where the CA stores certificate requests"
         },
         :signeddir => { :default => "$cadir/signed",
-            :owner => "$user",
-            :group => "$group",
+            :owner => "service",
+            :group => "service",
             :mode => 0770,
             :desc => "Where the CA stores signed certificates."
         },
         :capass => { :default => "$caprivatedir/ca.pass",
-            :owner => "$user",
-            :group => "$group",
+            :owner => "service",
+            :group => "service",
             :mode => 0660,
             :desc => "Where the CA stores the password for the private key"
         },
         :serial => { :default => "$cadir/serial",
-            :owner => "$user",
-            :group => "$group",
+            :owner => "service",
+            :group => "service",
             :mode => 0644,
             :desc => "Where the serial number for certificates is stored."
         },
@@ -346,8 +346,8 @@ module Puppet
         :cert_inventory => {
             :default => "$cadir/inventory.txt",
             :mode => 0644,
-            :owner => "$user",
-            :group => "$group",
+            :owner => "service",
+            :group => "service",
             :desc => "A Complete listing of all certificates"
         }
     )
@@ -379,15 +379,15 @@ module Puppet
             by ``puppet``, and should only be set if you're writing your own Puppet
             executable"],
         :masterlog => { :default => "$logdir/puppetmaster.log",
-            :owner => "$user",
-            :group => "$group",
+            :owner => "service",
+            :group => "service",
             :mode => 0660,
             :desc => "Where puppetmasterd logs.  This is generally not used,
                 since syslog is the default log destination."
         },
         :masterhttplog => { :default => "$logdir/masterhttp.log",
-            :owner => "$user",
-            :group => "$group",
+            :owner => "service",
+            :group => "service",
             :mode => 0660,
             :create => true,
             :desc => "Where the puppetmasterd web server logs."
@@ -403,8 +403,8 @@ module Puppet
         :bucketdir => {
             :default => "$vardir/bucket",
             :mode => 0750,
-            :owner => "$user",
-            :group => "$group",
+            :owner => "service",
+            :group => "service",
             :desc => "Where FileBucket files are stored."
         },
         :rest_authconfig => [ "$confdir/auth.conf",
@@ -426,7 +426,7 @@ module Puppet
             See http://reductivelabs.com/puppet/trac/wiki/UsingMongrel for more information."],
         # To make sure this directory is created before we try to use it on the server, we need
         # it to be in the server section (#1138).
-        :yamldir => {:default => "$vardir/yaml", :owner => "$user", :group => "$group", :mode => "750",
+        :yamldir => {:default => "$vardir/yaml", :owner => "service", :group => "service", :mode => "750",
             :desc => "The directory in which YAML data is stored, usually in a subdirectory."},
         :reports => ["store",
             "The list of reports to generate.  All reports are looked for
@@ -435,16 +435,16 @@ module Puppet
         ],
         :reportdir => {:default => "$vardir/reports",
                 :mode => 0750,
-                :owner => "$user",
-                :group => "$group",
+                :owner => "service",
+                :group => "service",
                 :desc => "The directory in which to store reports
                     received from the client.  Each client gets a separate
                     subdirectory."},
         :fileserverconfig => ["$confdir/fileserver.conf",
             "Where the fileserver configuration is stored."],
         :rrddir => {:default => "$vardir/rrd",
-            :owner => "$user",
-            :group => "$group",
+            :owner => "service",
+            :group => "service",
             :desc => "The directory where RRD database files are stored.
                 Directories for each reporting host will be created under
                 this directory."
@@ -617,8 +617,8 @@ module Puppet
     self.setdefaults(:rails,
         :dblocation => { :default => "$statedir/clientconfigs.sqlite3",
             :mode => 0660,
-            :owner => "$user",
-            :group => "$group",
+            :owner => "service",
+            :group => "service",
             :desc => "The database cache for client configurations.  Used for
                 querying within the language."
         },
@@ -635,8 +635,8 @@ module Puppet
             databases are used.  Will be ignored if the value is an empty string."],
         :railslog => {:default => "$logdir/rails.log",
             :mode => 0600,
-            :owner => "$user",
-            :group => "$group",
+            :owner => "service",
+            :group => "service",
             :desc => "Where Rails-specific logs are sent"
         },
         :rails_loglevel => ["info", "The log level for Rails connections.  The value must be

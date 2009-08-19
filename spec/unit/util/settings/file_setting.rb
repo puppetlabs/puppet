@@ -6,8 +6,75 @@ require 'puppet/util/settings'
 require 'puppet/util/settings/file_setting'
 
 describe Puppet::Util::Settings::FileSetting do
+    FileSetting = Puppet::Util::Settings::FileSetting
     it "should be able to be converted into a resource" do
-        Puppet::Util::Settings::FileSetting.new(:settings => mock("settings"), :desc => "eh").should respond_to(:to_resource)
+        FileSetting.new(:settings => mock("settings"), :desc => "eh").should respond_to(:to_resource)
+    end
+
+    describe "when setting the owner" do
+        it "should allow the file to be owned by root" do
+            root_owner = lambda { FileSetting.new(:settings => mock("settings"), :owner => "root", :desc => "a setting") }
+            root_owner.should_not raise_error
+        end
+
+        it "should allow the file to be owned by the service user" do
+            service_owner = lambda { FileSetting.new(:settings => mock("settings"), :owner => "service", :desc => "a setting") }
+            service_owner.should_not raise_error
+        end
+
+        it "should allow the ownership of the file to be unspecified" do
+            no_owner = lambda { FileSetting.new(:settings => mock("settings"), :desc => "a setting") }
+            no_owner.should_not raise_error
+        end
+
+        it "should not allow other owners" do
+            invalid_owner = lambda { FileSetting.new(:settings => mock("settings"), :owner => "invalid", :desc => "a setting") }
+            invalid_owner.should raise_error(FileSetting::SettingError)
+        end
+    end
+
+    describe "when reading the owner" do
+        it "should be root when the setting specifies root" do
+            setting = FileSetting.new(:settings => mock("settings"), :owner => "root", :desc => "a setting") 
+            setting.owner.should == "root"
+        end
+
+        it "should be the owner of the service when the setting specifies service" do
+            setting = FileSetting.new(:settings => mock("settings", :[] => "the_service"), :owner => "service", :desc => "a setting")
+            setting.owner.should == "the_service"
+        end
+
+        it "should be nil when the owner is unspecified" do
+            FileSetting.new(:settings => mock("settings"), :desc => "a setting").owner.should be_nil
+        end
+    end
+
+    describe "when setting the group" do
+        it "should allow the group to be service" do
+            service_group = lambda { FileSetting.new(:settings => mock("settings"), :group => "service", :desc => "a setting") }
+            service_group.should_not raise_error
+        end
+
+        it "should allow the group to be unspecified" do
+            no_group = lambda { FileSetting.new(:settings => mock("settings"), :desc => "a setting") }
+            no_group.should_not raise_error
+        end
+
+        it "should not allow invalid groups" do
+            invalid_group = lambda { FileSetting.new(:settings => mock("settings"), :group => "invalid", :desc => "a setting") }
+            invalid_group.should raise_error(FileSetting::SettingError)
+        end
+    end
+
+    describe "when reading the group" do
+        it "should be service when the setting specifies service" do
+            setting = FileSetting.new(:settings => mock("settings", :[] => "the_service"), :group => "service", :desc => "a setting")
+            setting.group.should == "the_service"
+        end
+
+        it "should be nil when the group is unspecified" do
+            FileSetting.new(:settings => mock("settings"), :desc => "a setting").group.should be_nil
+        end
     end
 
     describe "when being converted to a resource" do
