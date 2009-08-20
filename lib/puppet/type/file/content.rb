@@ -38,17 +38,16 @@ module Puppet
 
         def checksum_type
             if source = resource.parameter(:source)
-                source.checksum =~ /^\{(\w+)\}.+/
-                return $1.to_sym
+                result = source.checksum
             elsif checksum = resource.parameter(:checksum)
                 result = checksum.checktype
-                if result =~ /^\{(\w+)\}.+/
-                    return $1.to_sym
-                else
-                    return result
-                end
             else
                 return :md5
+            end
+            if result =~ /^\{(\w+)\}.+/
+                return $1.to_sym
+            else
+                return result
             end
         end
 
