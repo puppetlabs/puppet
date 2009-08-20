@@ -41,6 +41,12 @@ describe user do
         it "should have a valid provider" do
             user.new(:name => "foo").provider.class.ancestors.should be_include(Puppet::Provider)
         end
+
+        it "should delegate existence questions to its provider" do
+            instance = user.new(:name => "foo")
+            instance.provider.expects(:exists?).returns "eh"
+            instance.exists?.should == "eh"
+        end
     end
 
     properties = [:ensure, :uid, :gid, :home, :comment, :shell, :password, :groups, :roles, :auths, :profiles, :project, :keys]

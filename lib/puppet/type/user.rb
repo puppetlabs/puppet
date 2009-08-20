@@ -245,6 +245,11 @@ module Puppet
             autos
         end
 
+        # Provide an external hook.  Yay breaking out of APIs.
+        def exists?
+            provider.exists?
+        end
+
         def retrieve
             absent = false
             properties().inject({}) { |prophash, property|
