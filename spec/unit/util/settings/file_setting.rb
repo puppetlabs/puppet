@@ -7,8 +7,30 @@ require 'puppet/util/settings/file_setting'
 
 describe Puppet::Util::Settings::FileSetting do
     FileSetting = Puppet::Util::Settings::FileSetting
-    it "should be able to be converted into a resource" do
-        FileSetting.new(:settings => mock("settings"), :desc => "eh").should respond_to(:to_resource)
+
+    describe "when determining whether the service user should be used" do
+        before do
+            @settings = mock 'settings'
+            @settings.stubs(:[]).with(:mkusers).returns false
+            @settings.stubs(:service_user_available?).returns true
+        end
+
+        it "should be true if the service user is available" do
+            @settings.expects(:service_user_available?).returns true
+            setting = FileSetting.new(:settings => @settings, :owner => "root", :desc => "a setting")
+            setting.should be_use_service_user
+        end
+
+        it "should be true if 'mkusers' is set" do
+            @settings.expects(:[]).with(:mkusers).returns true
+            setting = FileSetting.new(:settings => @settings, :owner => "root", :desc => "a setting")
+            setting.should be_use_service_user
+        end
+
+        it "should be false if the service user is not available and 'mkusers' is unset" do
+            setting = FileSetting.new(:settings => @settings, :owner => "root", :desc => "a setting")
+            setting.should be_use_service_user
+        end
     end
 
     describe "when setting the owner" do
@@ -39,9 +61,22 @@ describe Puppet::Util::Settings::FileSetting do
             setting.owner.should == "root"
         end
 
-        it "should be the owner of the service when the setting specifies service" do
-            setting = FileSetting.new(:settings => mock("settings", :[] => "the_service"), :owner => "service", :desc => "a setting")
+        it "should be the owner of the service when the setting specifies service and the service user should be used" do
+            settings = mock("settings")
+            settings.stubs(:[]).returns "the_service"
+
+            setting = FileSetting.new(:settings => settings, :owner => "service", :desc => "a setting")
+            setting.expects(:use_service_user?).returns true
             setting.owner.should == "the_service"
+        end
+
+        it "should be the root when the setting specifies service and the service user should not be used" do
+            settings = mock("settings")
+            settings.stubs(:[]).returns "the_service"
+
+            setting = FileSetting.new(:settings => settings, :owner => "service", :desc => "a setting")
+            setting.expects(:use_service_user?).returns false
+            setting.owner.should == "root"
         end
 
         it "should be nil when the owner is unspecified" do
@@ -75,6 +110,10 @@ describe Puppet::Util::Settings::FileSetting do
         it "should be nil when the group is unspecified" do
             FileSetting.new(:settings => mock("settings"), :desc => "a setting").group.should be_nil
         end
+    end
+
+    it "should be able to be converted into a resource" do
+        FileSetting.new(:settings => mock("settings"), :desc => "eh").should respond_to(:to_resource)
     end
 
     describe "when being converted to a resource" do

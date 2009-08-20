@@ -465,6 +465,16 @@ class Puppet::Util::Settings
         return sectionlist, sections
     end
 
+    def service_user_available?
+        return @service_user_available if defined?(@service_user_available)
+
+        return @service_user_available = false unless user_name = self[:user]
+
+        user = Puppet::Type.type(:user).new :name => self[:user], :check => :ensure
+
+        return @service_user_available = user.exists?
+    end
+
     def set_value(param, value, type)
         param = param.to_sym
         unless setting = @config[param]

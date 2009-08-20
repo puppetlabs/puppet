@@ -35,8 +35,12 @@ class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::Setting
 
     def owner
         return unless defined?(@owner) && @owner
-        return "root" if @owner == "root"
+        return "root" if @owner == "root" or ! use_service_user?
         @settings[:user]
+    end
+
+    def use_service_user?
+        @settings[:mkusers] or @settings.service_user_available?
     end
 
     # Set the type appropriately.  Yep, a hack.  This supports either naming

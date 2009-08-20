@@ -39,7 +39,7 @@ describe Puppet::Util::Settings do
         end
 
         it "should support specifying owner, group, and mode when specifying files" do
-            @settings.setdefaults(:section, :myvalue => {:default => "/some/file", :owner => "blah", :mode => "boo", :group => "yay", :desc => "whatever"})
+            @settings.setdefaults(:section, :myvalue => {:default => "/some/file", :owner => "service", :mode => "boo", :group => "service", :desc => "whatever"})
         end
 
         it "should support specifying a short name" do
@@ -298,7 +298,9 @@ describe Puppet::Util::Settings do
     describe "when parsing its configuration" do
         before do
             @settings = Puppet::Util::Settings.new
+            @settings.stubs(:service_user_available?).returns true
             @file = "/some/file"
+            @settings.setdefaults :section, :user => ["suser", "doc"], :group => ["sgroup", "doc"]
             @settings.setdefaults :section, :config => ["/some/file", "eh"], :one => ["ONE", "a"], :two => ["$one TWO", "b"], :three => ["$one $two THREE", "c"]
             FileTest.stubs(:exist?).returns true
         end
@@ -371,25 +373,25 @@ describe Puppet::Util::Settings do
             @settings.setdefaults :section, :myfile => ["/myfile", "a"]
 
             text = "[main]
-            myfile = /other/file {owner = luke, group = luke, mode = 644}
+            myfile = /other/file {owner = service, group = service, mode = 644}
             "
             @settings.expects(:read_file).returns(text)
             @settings.parse
             @settings[:myfile].should == "/other/file"
-            @settings.metadata(:myfile).should == {:owner => "luke", :group => "luke", :mode => "644"}
+            @settings.metadata(:myfile).should == {:owner => "suser", :group => "sgroup", :mode => "644"}
         end
 
         it "should support specifying a single piece of metadata (owner, group, or mode) in the configuration file" do
             @settings.setdefaults :section, :myfile => ["/myfile", "a"]
 
             text = "[main]
-            myfile = /other/file {owner = luke}
+            myfile = /other/file {owner = service}
             "
             file = "/some/file"
             @settings.expects(:read_file).returns(text)
             @settings.parse
             @settings[:myfile].should == "/other/file"
-            @settings.metadata(:myfile).should == {:owner => "luke"}
+            @settings.metadata(:myfile).should == {:owner => "suser"}
         end
 
         it "should call hooks associated with values set in the configuration file" do
@@ -575,6 +577,7 @@ describe Puppet::Util::Settings do
     describe "when creating a catalog" do
         before do
             @settings = Puppet::Util::Settings.new
+            @settings.stubs(:service_user_available?).returns true
         end
 
         it "should add all file resources to the catalog if no sections have been specified" do
@@ -611,19 +614,19 @@ describe Puppet::Util::Settings do
         describe "when adding users and groups to the catalog" do
             before do
                 Puppet.features.stubs(:root?).returns true
-                @settings.setdefaults :foo, :mkusers => [true, "e"]
-                @settings.setdefaults :other, :otherdir => {:default => "/otherdir", :desc => "a", :owner => "luke", :group => "johnny"}
+                @settings.setdefaults :foo, :mkusers => [true, "e"], :user => ["suser", "doc"], :group => ["sgroup", "doc"]
+                @settings.setdefaults :other, :otherdir => {:default => "/otherdir", :desc => "a", :owner => "service", :group => "service"}
 
                 @catalog = @settings.to_catalog
             end
 
             it "should add each specified user and group to the catalog if :mkusers is a valid setting, is enabled, and we're running as root" do
-                @catalog.resource(:user, "luke").should be_instance_of(Puppet::Resource)
-                @catalog.resource(:group, "johnny").should be_instance_of(Puppet::Resource)
+                @catalog.resource(:user, "suser").should be_instance_of(Puppet::Resource)
+                @catalog.resource(:group, "sgroup").should be_instance_of(Puppet::Resource)
             end
 
             it "should only add users and groups to the catalog from specified sections" do
-                @settings.setdefaults :yay, :yaydir => {:default => "/yaydir", :desc => "a", :owner => "jane", :group => "billy"}
+                @settings.setdefaults :yay, :yaydir => {:default => "/yaydir", :desc => "a", :owner => "service", :group => "service"}
                 catalog = @settings.to_catalog(:other)
                 catalog.resource(:user, "jane").should be_nil
                 catalog.resource(:group, "billy").should be_nil
@@ -633,64 +636,49 @@ describe Puppet::Util::Settings do
                 Puppet.features.stubs(:root?).returns false
 
                 catalog = @settings.to_catalog
-                catalog.resource(:user, "luke").should be_nil
-                catalog.resource(:group, "johnny").should be_nil
+                catalog.resource(:user, "suser").should be_nil
+                catalog.resource(:group, "sgroup").should be_nil
             end
 
             it "should not add users or groups to the catalog if :mkusers is not a valid setting" do
                 Puppet.features.stubs(:root?).returns true
                 settings = Puppet::Util::Settings.new
-                settings.setdefaults :other, :otherdir => {:default => "/otherdir", :desc => "a", :owner => "luke", :group => "johnny"}
+                settings.setdefaults :other, :otherdir => {:default => "/otherdir", :desc => "a", :owner => "service", :group => "service"}
 
                 catalog = settings.to_catalog
-                catalog.resource(:user, "luke").should be_nil
-                catalog.resource(:group, "johnny").should be_nil
+                catalog.resource(:user, "suser").should be_nil
+                catalog.resource(:group, "sgroup").should be_nil
             end
 
             it "should not add users or groups to the catalog if :mkusers is a valid setting but is disabled" do
                 @settings[:mkusers] = false
 
                 catalog = @settings.to_catalog
-                catalog.resource(:user, "luke").should be_nil
-                catalog.resource(:group, "johnny").should be_nil
+                catalog.resource(:user, "suser").should be_nil
+                catalog.resource(:group, "sgroup").should be_nil
             end
 
             it "should not try to add users or groups to the catalog twice" do
-                @settings.setdefaults :yay, :yaydir => {:default => "/yaydir", :desc => "a", :owner => "luke", :group => "johnny"}
+                @settings.setdefaults :yay, :yaydir => {:default => "/yaydir", :desc => "a", :owner => "service", :group => "service"}
 
                 # This would fail if users/groups were added twice
                 lambda { @settings.to_catalog }.should_not raise_error
             end
 
             it "should set :ensure to :present on each created user and group" do
-                @catalog.resource(:user, "luke")[:ensure].should == :present
-                @catalog.resource(:group, "johnny")[:ensure].should == :present
+                @catalog.resource(:user, "suser")[:ensure].should == :present
+                @catalog.resource(:group, "sgroup")[:ensure].should == :present
             end
 
-            it "should set each created user's :gid to the main group if one is available" do
-                @settings.setdefaults :foo, :group => ["yay", 'eh']
-
-                @settings.to_catalog.resource(:user, "luke")[:gid].should == "yay"
-            end
-
-            it "should not set each created user's :gid if no main group is available" do
-                @settings.to_catalog.resource(:user, "luke")[:gid].should be_nil
+            it "should set each created user's :gid to the service group" do
+                @settings.to_catalog.resource(:user, "suser")[:gid].should == "sgroup"
             end
 
             it "should not attempt to manage the root user" do
                 Puppet.features.stubs(:root?).returns true
-                @settings.setdefaults :foo, :foodir => {:default => "/foodir", :desc => "a", :owner => "root", :group => "johnny"}
+                @settings.setdefaults :foo, :foodir => {:default => "/foodir", :desc => "a", :owner => "root", :group => "service"}
 
                 @settings.to_catalog.resource(:user, "root").should be_nil
-            end
-
-            it "should not attempt to manage the wheel or root groups" do
-                @settings.setdefaults :foo, :foodir => {:default => "/foodir", :desc => "a", :owner => "root", :group => "root"}
-                @settings.setdefaults :fee, :feedir => {:default => "/feedir", :desc => "a", :owner => "root", :group => "wheel"}
-
-                catalog = @settings.to_catalog
-                catalog.resource(:group, "root").should be_nil
-                catalog.resource(:group, "wheel").should be_nil
             end
         end
     end
@@ -718,8 +706,10 @@ describe Puppet::Util::Settings do
     describe "when using sections of the configuration to manage the local host" do
         before do
             @settings = Puppet::Util::Settings.new
+            @settings.stubs(:service_user_available?).returns true
             @settings.setdefaults :main, :maindir => ["/maindir", "a"], :seconddir => ["/seconddir", "a"]
-            @settings.setdefaults :other, :otherdir => {:default => "/otherdir", :desc => "a", :owner => "luke", :group => "johnny", :mode => 0755}
+            @settings.setdefaults :main, :user => ["suser", "doc"], :group => ["sgroup", "doc"]
+            @settings.setdefaults :other, :otherdir => {:default => "/otherdir", :desc => "a", :owner => "service", :group => "service", :mode => 0755}
             @settings.setdefaults :third, :thirddir => ["/thirddir", "b"]
             @settings.setdefaults :files, :myfile => {:default => "/myfile", :desc => "a", :mode => 0755}
         end
@@ -729,7 +719,7 @@ describe Puppet::Util::Settings do
         end
 
         it "should provide a method that creates directories with the correct modes" do
-            Puppet::Util::SUIDManager.expects(:asuser).with("luke", "johnny").yields
+            Puppet::Util::SUIDManager.expects(:asuser).with("suser", "sgroup").yields
             Dir.expects(:mkdir).with("/otherdir", 0755)
             @settings.mkdir(:otherdir)
         end
@@ -965,5 +955,37 @@ describe Puppet::Util::Settings do
 
             @settings.set_filetimeout_timer
         end
+    end
+
+    describe "when determining if the service user is available" do
+        it "should return false if there is no user setting" do
+            Puppet::Util::Settings.new.should_not be_service_user_available
+        end
+
+        it "should return false if the user provider says the user is missing" do
+            settings = Puppet::Util::Settings.new
+            settings.setdefaults :main, :user => ["foo", "doc"]
+
+            user = mock 'user'
+            user.expects(:exists?).returns false
+
+            Puppet::Type.type(:user).expects(:new).with { |args| args[:name] == "foo" }.returns user
+
+            settings.should_not be_service_user_available
+        end
+
+        it "should return true if the user provider says the user is present" do
+            settings = Puppet::Util::Settings.new
+            settings.setdefaults :main, :user => ["foo", "doc"]
+
+            user = mock 'user'
+            user.expects(:exists?).returns true
+
+            Puppet::Type.type(:user).expects(:new).with { |args| args[:name] == "foo" }.returns user
+
+            settings.should be_service_user_available
+        end
+
+        it "should cache the result"
     end
 end
