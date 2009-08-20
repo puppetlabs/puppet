@@ -213,50 +213,71 @@ module Puppet
         :certdnsnames => ['', "The DNS names on the Server certificate as a colon-separated list.
             If it's anything other than an empty string, it will be used as an alias in the created
             certificate.  By default, only the server gets an alias set up, and only for 'puppet'."],
-        :certdir => ["$ssldir/certs", "The certificate directory."],
+        :certdir => {
+            :default => "$ssldir/certs",
+            :owner => "service",
+            :desc => "The certificate directory."
+        },
         :ssldir => {
             :default => "$confdir/ssl",
             :mode => 0771,
-            :owner => "root",
+            :owner => "service",
             :desc => "Where SSL certificates are kept."
         },
-        :publickeydir => ["$ssldir/public_keys", "The public key directory."],
-        :requestdir => ["$ssldir/certificate_requests", "Where host certificate requests are stored."],
+        :publickeydir => {
+            :default => "$ssldir/public_keys",
+            :owner => "service",
+            :desc => "The public key directory."
+        },
+        :requestdir => {
+            :default => "$ssldir/certificate_requests",
+            :owner => "service",
+            :desc => "Where host certificate requests are stored."
+        },
         :privatekeydir => { :default => "$ssldir/private_keys",
             :mode => 0750,
+            :owner => "service",
             :desc => "The private key directory."
         },
         :privatedir => { :default => "$ssldir/private",
             :mode => 0750,
+            :owner => "service",
             :desc => "Where the client stores private certificate information."
         },
         :passfile => { :default => "$privatedir/password",
             :mode => 0640,
+            :owner => "service",
             :desc => "Where puppetd stores the password for its private key.
                 Generally unused."
         },
         :hostcsr => { :default => "$ssldir/csr_$certname.pem",
             :mode => 0644,
+            :owner => "service",
             :desc => "Where individual hosts store and look for their certificate requests."
         },
         :hostcert => { :default => "$certdir/$certname.pem",
             :mode => 0644,
+            :owner => "service",
             :desc => "Where individual hosts store and look for their certificates."
         },
         :hostprivkey => { :default => "$privatekeydir/$certname.pem",
             :mode => 0600,
+            :owner => "service",
             :desc => "Where individual hosts store and look for their private key."
         },
         :hostpubkey => { :default => "$publickeydir/$certname.pem",
             :mode => 0644,
+            :owner => "service",
             :desc => "Where individual hosts store and look for their public key."
         },
         :localcacert => { :default => "$certdir/ca.pem",
             :mode => 0644,
+            :owner => "service",
             :desc => "Where each client stores the CA certificate."
         },
         :hostcrl => { :default => "$ssldir/crl.pem",
             :mode => 0644,
+            :owner => "service",
             :desc => "Where the host's certificate revocation list can be found.
                 This is distinct from the certificate authority's CRL."
         }

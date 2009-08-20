@@ -55,6 +55,16 @@ describe "Puppet defaults" do
         Puppet.settings.setting(:rundir).group.should be_nil
     end
 
+    it "should specify that the host private key should be owned by the service user" do
+        Puppet.settings.stubs(:service_user_available?).returns true
+        Puppet.settings.setting(:hostprivkey).owner.should == Puppet.settings[:user]
+    end
+
+    it "should specify that the host certificate should be owned by the service user" do
+        Puppet.settings.stubs(:service_user_available?).returns true
+        Puppet.settings.setting(:hostcert).owner.should == Puppet.settings[:user]
+    end
+
     it "should use a bind address of ''" do
         Puppet.settings[:bindaddress].should == ""
     end
