@@ -64,6 +64,12 @@ Puppet::Application.new(:puppet) do
     end
 
     command(:parseonly) do
+        # Set our code or file to use.
+        if options[:code] or ARGV.length == 0
+            Puppet[:code] = options[:code] || STDIN.read
+        else
+            Puppet[:manifest] = ARGV.shift
+        end
         begin
             Puppet::Parser::Interpreter.new.parser(Puppet[:environment])
         rescue => detail
