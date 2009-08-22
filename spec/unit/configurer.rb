@@ -137,6 +137,16 @@ describe Puppet::Configurer, "when retrieving a catalog" do
         @agent.retrieve_catalog.should == @catalog
     end
 
+    it "should log and return nil if no catalog can be retrieved from the server and :usecacheonfailure is disabled" do
+        Puppet.stubs(:[])
+        Puppet.expects(:[]).with(:usecacheonfailure).returns false
+        Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:ignore_cache] == true }.returns nil
+
+        Puppet.expects(:warning)
+
+        @agent.retrieve_catalog.should be_nil
+    end
+
     it "should return nil if no cached catalog is available and no catalog can be retrieved from the server" do
         Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:ignore_cache] == true }.returns nil
         Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:ignore_terminus] == true }.returns nil

@@ -99,6 +99,11 @@ class Puppet::Configurer
         end
 
         unless result
+            if ! Puppet[:usecacheonfailure]
+                Puppet.warning "Not using cache on failed catalog"
+                return nil
+            end
+
             begin
                 duration = thinmark do
                     result = catalog_class.find(name, fact_options.merge(:ignore_terminus => true))
