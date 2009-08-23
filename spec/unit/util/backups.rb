@@ -2,7 +2,6 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-require 'puppet/type/file'
 require 'puppet/util/backups'
 include PuppetTest
 
@@ -14,14 +13,14 @@ describe Puppet::Util::Backups do
     describe "when backing up a file" do
         it "should noop if the file does not exist" do
             FileTest.expects(:exists?).returns false
-            file = Puppet::Type::File.new(:name => '/no/such/file')
+            file = Puppet::Type.type(:file).new(:name => '/no/such/file')
             file.expects(:bucket).never
 
             file.perform_backup
         end
 
         it "should succeed silently if self[:backup] is false" do
-            file = Puppet::Type::File.new(:name => '/no/such/file', :backup => false)
+            file = Puppet::Type.type(:file).new(:name => '/no/such/file', :backup => false)
             file.expects(:bucket).never
             FileTest.expects(:exists?).never
             file.perform_backup
@@ -32,7 +31,7 @@ describe Puppet::Util::Backups do
 
             File.stubs(:stat).with(path).returns(mock('stat', :ftype => 'file'))
 
-            file = Puppet::Type::File.new(:name => path, :backup => 'foo')
+            file = Puppet::Type.type(:file).new(:name => path, :backup => 'foo')
             bucket = stub('bucket', 'name' => 'foo')
             file.stubs(:bucket).returns bucket
 
@@ -46,7 +45,7 @@ describe Puppet::Util::Backups do
 
             File.stubs(:stat).with(path).returns(mock('stat', :ftype => 'file'))
 
-            file = Puppet::Type::File.new(:name => path, :backup => 'foo')
+            file = Puppet::Type.type(:file).new(:name => path, :backup => 'foo')
             bucket = stub('bucket', 'name' => 'foo')
             file.stubs(:bucket).returns bucket
 
@@ -67,7 +66,7 @@ describe Puppet::Util::Backups do
 
                 FileUtils.stubs(:cp_r)
 
-                file = Puppet::Type::File.new(:name => path, :backup => '.foo')
+                file = Puppet::Type.type(:file).new(:name => path, :backup => '.foo')
                 file.perform_backup
             end
 
@@ -82,7 +81,7 @@ describe Puppet::Util::Backups do
 
                 FileUtils.expects(:cp_r).never
 
-                file = Puppet::Type::File.new(:name => path, :backup => '.foo')
+                file = Puppet::Type.type(:file).new(:name => path, :backup => '.foo')
                 lambda { file.perform_backup }.should raise_error(Puppet::Error)
             end
 
@@ -97,7 +96,7 @@ describe Puppet::Util::Backups do
 
                 FileUtils.stubs(:cp_r)
 
-                file = Puppet::Type::File.new(:name => path, :backup => '.foo')
+                file = Puppet::Type.type(:file).new(:name => path, :backup => '.foo')
                 file.perform_backup
             end
 
@@ -107,7 +106,7 @@ describe Puppet::Util::Backups do
 
                 FileUtils.expects(:cp_r).with(path, path + ".foo", :preserve => true)
 
-                file = Puppet::Type::File.new(:name => path, :backup => '.foo')
+                file = Puppet::Type.type(:file).new(:name => path, :backup => '.foo')
                 file.perform_backup.should be_true
             end
 
@@ -117,7 +116,7 @@ describe Puppet::Util::Backups do
 
                 FileUtils.expects(:cp_r).raises ArgumentError
 
-                file = Puppet::Type::File.new(:name => path, :backup => '.foo')
+                file = Puppet::Type.type(:file).new(:name => path, :backup => '.foo')
                 lambda { file.perform_backup }.should raise_error(Puppet::Error)
             end
         end
@@ -133,7 +132,7 @@ describe Puppet::Util::Backups do
             bucket = stub('bucket', :name => "eh")
             bucket.expects(:backup).with("/my/dir/file").returns true
 
-            file = Puppet::Type::File.new(:name => path, :backup => 'foo')
+            file = Puppet::Type.type(:file).new(:name => path, :backup => 'foo')
             file.stubs(:bucket).returns bucket
 
             File.stubs(:stat).with(path).returns(stub('stat', :ftype => 'directory'))
@@ -147,7 +146,7 @@ describe Puppet::Util::Backups do
             bucket = stub('bucket', :name => "eh")
             bucket.expects(:backup).never
 
-            file = Puppet::Type::File.new(:name => path, :backup => 'foo', :recurse => true)
+            file = Puppet::Type.type(:file).new(:name => path, :backup => 'foo', :recurse => true)
             file.stubs(:bucket).returns bucket
 
             File.stubs(:stat).with(path).returns(stub('stat', :ftype => 'directory'))
