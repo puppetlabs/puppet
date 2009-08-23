@@ -30,7 +30,7 @@ class Puppet::Indirector::FileServer < Puppet::Indirector::Terminus
 
         # The mount checks to see if the file exists, and returns nil
         # if not.
-        return nil unless path = mount.find(relative_path, request.environment)
+        return nil unless path = mount.find(relative_path, request)
         result = model.new(path)
         result.links = request.options[:links] if request.options[:links]
         result.collect
@@ -42,7 +42,7 @@ class Puppet::Indirector::FileServer < Puppet::Indirector::Terminus
     def search(request)
         mount, relative_path = configuration.split_path(request)
 
-        unless mount and paths = mount.search(relative_path, request.environment)
+        unless mount and paths = mount.search(relative_path, request)
             Puppet.info "Could not find filesystem info for file '%s' in environment %s" % [request.key, request.environment]
             return nil
         end

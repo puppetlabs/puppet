@@ -15,7 +15,7 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
         end
     end
 
-    def complete_path(relative_path, node = nil)
+    def complete_path(relative_path, node)
         full_path = path(node)
 
         raise ArgumentError.new("Mounts without paths are not usable") unless full_path
@@ -31,8 +31,8 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
     end
 
     # Return an instance of the appropriate class.
-    def find(short_file, options = {})
-        complete_path(short_file, options[:node])
+    def find(short_file, request)
+        complete_path(short_file, request.node)
     end
 
     # Return the path as appropriate, expanding as necessary.
@@ -63,8 +63,8 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
         @path = path
     end
 
-    def search(path, options = {})
-        return nil unless path = complete_path(path, options[:node])
+    def search(path, request)
+        return nil unless path = complete_path(path, request.node)
         return [path]
     end
 

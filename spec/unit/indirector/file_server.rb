@@ -52,15 +52,15 @@ describe Puppet::Indirector::FileServer do
         it "should use the mount to find the full path" do
             @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
 
-            @mount.expects(:find).with { |key, env| key == "rel/path" }
+            @mount.expects(:find).with { |key, request| key == "rel/path" }
 
             @file_server.find(@request)
         end
 
-        it "should pass the request's environment when finding a file" do
+        it "should pass the request when finding a file" do
             @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
 
-            @mount.expects(:find).with { |key, env| env == @request.environment }
+            @mount.expects(:find).with { |key, request| request == @request }
 
             @file_server.find(@request)
         end
@@ -68,7 +68,7 @@ describe Puppet::Indirector::FileServer do
         it "should return nil if it cannot find a full path" do
             @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
 
-            @mount.expects(:find).with { |key, env| key == "rel/path" }.returns nil
+            @mount.expects(:find).with { |key, request| key == "rel/path" }.returns nil
 
             @file_server.find(@request).should be_nil
         end
@@ -76,7 +76,7 @@ describe Puppet::Indirector::FileServer do
         it "should create an instance with the found path" do
             @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
 
-            @mount.expects(:find).with { |key, env| key == "rel/path" }.returns "/my/file"
+            @mount.expects(:find).with { |key, request| key == "rel/path" }.returns "/my/file"
 
             @model.expects(:new).with("/my/file").returns @instance
 
@@ -87,7 +87,7 @@ describe Puppet::Indirector::FileServer do
             @request.options[:links] = true
             @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
 
-            @mount.expects(:find).with { |key, env| key == "rel/path" }.returns "/my/file"
+            @mount.expects(:find).with { |key, request| key == "rel/path" }.returns "/my/file"
 
             @model.expects(:new).with("/my/file").returns @instance
 
@@ -100,7 +100,7 @@ describe Puppet::Indirector::FileServer do
             @request.options[:links] = true
             @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
 
-            @mount.expects(:find).with { |key, env| key == "rel/path" }.returns "/my/file"
+            @mount.expects(:find).with { |key, request| key == "rel/path" }.returns "/my/file"
 
             @model.expects(:new).with("/my/file").returns @instance
 
@@ -131,15 +131,15 @@ describe Puppet::Indirector::FileServer do
         it "should use the mount to search for the full paths" do
             @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
 
-            @mount.expects(:search).with { |key, env| key == "rel/path" }
+            @mount.expects(:search).with { |key, request| key == "rel/path" }
 
             @file_server.search(@request)
         end
 
-        it "should pass the request's environment" do
+        it "should pass the request" do
             @configuration.stubs(:split_path).returns([@mount, "rel/path"])
 
-            @mount.expects(:search).with { |key, env| env == @request.environment }
+            @mount.expects(:search).with { |key, request| request == @request }
 
             @file_server.search(@request)
         end
@@ -147,7 +147,7 @@ describe Puppet::Indirector::FileServer do
         it "should return nil if searching does not find any full paths" do
             @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
 
-            @mount.expects(:search).with { |key, env| key == "rel/path" }.returns nil
+            @mount.expects(:search).with { |key, request| key == "rel/path" }.returns nil
 
             @file_server.search(@request).should be_nil
         end
@@ -155,7 +155,7 @@ describe Puppet::Indirector::FileServer do
         it "should create a fileset with each returned path and merge them" do
             @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
 
-            @mount.expects(:search).with { |key, env| key == "rel/path" }.returns %w{/one /two}
+            @mount.expects(:search).with { |key, request| key == "rel/path" }.returns %w{/one /two}
 
             FileTest.stubs(:exist?).returns true
 
@@ -172,7 +172,7 @@ describe Puppet::Indirector::FileServer do
         it "should create an instance with each path resulting from the merger of the filesets" do
             @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
 
-            @mount.expects(:search).with { |key, env| key == "rel/path" }.returns []
+            @mount.expects(:search).with { |key, request| key == "rel/path" }.returns []
 
             FileTest.stubs(:exist?).returns true
 
@@ -194,7 +194,7 @@ describe Puppet::Indirector::FileServer do
         it "should set 'links' on the instances if it is set in the request options" do
             @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
 
-            @mount.expects(:search).with { |key, env| key == "rel/path" }.returns []
+            @mount.expects(:search).with { |key, request| key == "rel/path" }.returns []
 
             FileTest.stubs(:exist?).returns true
 

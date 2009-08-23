@@ -32,7 +32,7 @@ class Puppet::FileServing::Configuration
 
     # Find the right mount.  Does some shenanigans to support old-style module
     # mounts.
-    def find_mount(mount_name, node)
+    def find_mount(mount_name, environment)
         # Reparse the configuration if necessary.
         readconfig
 
@@ -40,7 +40,7 @@ class Puppet::FileServing::Configuration
             return mount
         end
 
-        if mounts["modules"].environment(node).module(mount_name)
+        if environment.module(mount_name)
             Puppet::Util::Warnings.warnonce "DEPRECATION NOTICE: Found module '%s' without using the 'modules' mount; please prefix path with 'modules/'" % mount_name
             return mounts["modules"]
         end
@@ -72,7 +72,7 @@ class Puppet::FileServing::Configuration
 
         raise(ArgumentError, "Cannot find file: Invalid path '%s'" % mount_name) unless mount_name =~ %r{^[-\w]+$}
 
-        return nil unless mount = find_mount(mount_name, request.node)
+        return nil unless mount = find_mount(mount_name, request.environment)
         if mount.name == "modules" and mount_name != "modules"
             # yay backward-compatibility
             path = "%s/%s" % [mount_name, path]

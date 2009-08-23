@@ -57,7 +57,7 @@ describe Puppet::Network::AuthStore::Declaration do
             @declaration.should be_match(@host,'200.101.99.98')
         end
         it "should not match a similar PQDN" do
-            pending "FQDN consensus"
+            #pending "FQDN consensus"
             @declaration.should_not be_match(@host[0..-2],'200.101.99.98')
         end
     end

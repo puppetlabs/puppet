@@ -128,21 +128,20 @@ describe Puppet::FileServing::Configuration do
         it "should choose the named mount if one exists" do
             config = Puppet::FileServing::Configuration.create
             config.expects(:mounts).returns("one" => "foo")
-            config.find_mount("one", "mynode").should == "foo"
+            config.find_mount("one", mock('env')).should == "foo"
         end
 
-        it "should use the environment of the module mount to find a matching module if the named module cannot be found" do
+        it "should use the provided environment to find a matching module if the named module cannot be found" do
             config = Puppet::FileServing::Configuration.create
 
             mod = mock 'module'
             env = mock 'environment'
             env.expects(:module).with("foo").returns mod
             mount = mock 'mount'
-            mount.expects(:environment).with("mynode").returns env
 
             config.stubs(:mounts).returns("modules" => mount)
             Puppet::Util::Warnings.expects(:warnonce)
-            config.find_mount("foo", "mynode").should equal(mount)
+            config.find_mount("foo", env).should equal(mount)
         end
 
         it "should return nil if there is no such named mount and no module with the same name exists" do
@@ -150,11 +149,10 @@ describe Puppet::FileServing::Configuration do
 
             env = mock 'environment'
             env.expects(:module).with("foo").returns nil
-            mount = mock 'mount'
-            mount.expects(:environment).with("mynode").returns env
 
+            mount = mock 'mount'
             config.stubs(:mounts).returns("modules" => mount)
-            config.find_mount("foo", "mynode").should be_nil
+            config.find_mount("foo", env).should be_nil
         end
     end
 
@@ -163,7 +161,7 @@ describe Puppet::FileServing::Configuration do
             @config = Puppet::FileServing::Configuration.create
             @config.stubs(:find_mount)
 
-            @request = stub 'request', :key => "foo/bar/baz", :options => {}, :node => nil
+            @request = stub 'request', :key => "foo/bar/baz", :options => {}, :node => nil, :environment => mock("env")
         end
 
         it "should reread the configuration" do
@@ -190,8 +188,8 @@ describe Puppet::FileServing::Configuration do
             lambda { @config.split_path(@request) }.should_not raise_error(ArgumentError)
         end
 
-        it "should use the mount name and node to find the mount" do
-            @config.expects(:find_mount).with { |name, node| name == "foo" and node == "mynode" }
+        it "should use the mount name and environment to find the mount" do
+            @config.expects(:find_mount).with { |name, env| name == "foo" and env == @request.environment }
             @request.stubs(:node).returns("mynode")
 
             @config.split_path(@request)

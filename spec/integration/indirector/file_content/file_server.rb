@@ -19,7 +19,7 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
         @test_class = Puppet::FileServing::Content
     end
 
-    it "should find file content in the environment specified in the request" do
+    it "should find plugin file content in the environment specified in the request" do
         path = tmpfile("file_content_with_env")
 
         Dir.mkdir(path)
@@ -39,5 +39,55 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
         result.length.should == 2
         result[1].should be_instance_of(Puppet::FileServing::Content)
         result[1].content.should == "1\n"
+    end
+
+    it "should find file content in modules" do
+        path = tmpfile("file_content")
+
+        Dir.mkdir(path)
+
+        modpath = File.join(path, "mymod")
+        FileUtils.mkdir_p(File.join(modpath, "files"))
+        file = File.join(modpath, "files", "myfile")
+        File.open(file, "w") { |f| f.puts "1" }
+
+        Puppet.settings[:modulepath] = path
+
+        result = Puppet::FileServing::Content.find("modules/mymod/myfile")
+
+        result.should_not be_nil
+        result.should be_instance_of(Puppet::FileServing::Content)
+        result.content.should == "1\n"
+    end
+
+    it "should find file content in files when node name expansions are used" do
+        Puppet::Util::Cacher.expire
+        FileTest.stubs(:exists?).returns true
+        FileTest.stubs(:exists?).with(Puppet[:fileserverconfig]).returns(true)
+
+        @path = tmpfile("file_server_testing")
+
+        Dir.mkdir(@path)
+        subdir = File.join(@path, "mynode")
+        Dir.mkdir(subdir)
+        File.open(File.join(subdir, "myfile"), "w") { |f| f.puts "1" }
+
+        # Use a real mount, so the integration is a bit deeper.
+        @mount1 = Puppet::FileServing::Configuration::Mount::File.new("one")
+        @mount1.stubs(:allowed?).returns true
+        @mount1.path = File.join(@path, "%h")
+
+        @parser = stub 'parser', :changed? => false
+        @parser.stubs(:parse).returns("one" => @mount1)
+
+        Puppet::FileServing::Configuration::Parser.stubs(:new).returns(@parser)
+
+        path = File.join(@path, "myfile")
+
+        result = Puppet::FileServing::Content.find("one/myfile", :environment => "foo", :node => "mynode")
+
+        result.should_not be_nil
+        result.should be_instance_of(Puppet::FileServing::Content)
+        result.content.should == "1\n"
     end
 end

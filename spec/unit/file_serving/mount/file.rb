@@ -104,17 +104,17 @@ describe Puppet::FileServing::Mount::File, "when determining the complete file p
 
     it "should return nil if the file is absent" do
         FileTest.stubs(:exist?).returns(false)
-        @mount.complete_path("/my/path").should be_nil
+        @mount.complete_path("/my/path", nil).should be_nil
     end
 
     it "should return the file path if the file is present" do
         FileTest.stubs(:exist?).with("/my/path").returns(true)
-        @mount.complete_path("/my/path").should == "/mount/my/path"
+        @mount.complete_path("/my/path", nil).should == "/mount/my/path"
     end
 
     it "should treat a nil file name as the path to the mount itself" do
         FileTest.stubs(:exist?).returns(true)
-        @mount.complete_path(nil).should == "/mount"
+        @mount.complete_path(nil, nil).should == "/mount"
     end
 
     it "should use the client host name if provided in the options" do
@@ -148,12 +148,14 @@ describe Puppet::FileServing::Mount::File, "when finding files" do
         @mount.path = "/mount"
         stub_facter("myhost.mydomain.com")
         @host = "host.domain.com"
+
+        @request = stub 'request', :node => "foo"
     end
 
     it "should return the results of the complete file path" do
         FileTest.stubs(:exist?).returns(false)
         @mount.expects(:complete_path).with("/my/path", "foo").returns "eh"
-        @mount.find("/my/path", :node => "foo").should == "eh"
+        @mount.find("/my/path", @request).should == "eh"
     end
 end
 
@@ -168,17 +170,19 @@ describe Puppet::FileServing::Mount::File, "when searching for files" do
         @mount.path = "/mount"
         stub_facter("myhost.mydomain.com")
         @host = "host.domain.com"
+
+        @request = stub 'request', :node => "foo"
     end
 
     it "should return the results of the complete file path as an array" do
         FileTest.stubs(:exist?).returns(false)
         @mount.expects(:complete_path).with("/my/path", "foo").returns "eh"
-        @mount.search("/my/path", :node => "foo").should == ["eh"]
+        @mount.search("/my/path", @request).should == ["eh"]
     end
 
     it "should return nil if the complete path is nil" do
         FileTest.stubs(:exist?).returns(false)
         @mount.expects(:complete_path).with("/my/path", "foo").returns nil
-        @mount.search("/my/path", :node => "foo").should be_nil
+        @mount.search("/my/path", @request).should be_nil
     end
 end
