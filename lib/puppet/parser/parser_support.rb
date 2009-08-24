@@ -403,7 +403,7 @@ class Puppet::Parser::Parser
         if token == 0 # denotes end of file
             value = 'end of file'
         else
-            value = "'%s'" % value
+            value = "'%s'" % value[:value]
         end
         error = "Syntax error at %s" % [value]
 
