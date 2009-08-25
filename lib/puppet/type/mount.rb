@@ -116,7 +116,7 @@ module Puppet
 
         newproperty(:fstype) do
             desc "The mount type.  Valid values depend on the
-                operating system."
+                operating system.  This is a required option."
         end
 
         newproperty(:options) do
