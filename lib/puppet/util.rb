@@ -278,7 +278,7 @@ module Util
         end
 
         oldverb = $VERBOSE
-        $VERBOSE = false
+        $VERBOSE = nil
         child_pid = Kernel.fork
         $VERBOSE = oldverb
         if child_pid
