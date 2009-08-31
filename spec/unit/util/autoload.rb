@@ -22,9 +22,9 @@ describe Puppet::Util::Autoload do
     describe "when building the search path" do
         it "should collect all of the plugins and lib directories that exist in the current environment's module path" do
             Puppet.settings.expects(:value).with(:environment).returns "foo"
-            Puppet.settings.expects(:value).with(:modulepath, "foo").returns %w{/a /b /c}
-            Dir.expects(:entries).with("/a").returns %w{/a/one /a/two}
-            Dir.expects(:entries).with("/b").returns %w{/b/one /b/two}
+            Puppet.settings.expects(:value).with(:modulepath, :foo).returns "/a:/b:/c"
+            Dir.expects(:entries).with("/a").returns %w{one two}
+            Dir.expects(:entries).with("/b").returns %w{one two}
 
             FileTest.stubs(:directory?).returns false
             FileTest.expects(:directory?).with("/a").returns true
@@ -34,6 +34,20 @@ describe Puppet::Util::Autoload do
             end
 
             @autoload.module_directories.should == %w{/a/one/plugins /a/two/lib /b/one/plugins /b/two/lib}
+        end
+
+        it "should not look for lib directories in directories starting with '.'" do
+            Puppet.settings.expects(:value).with(:environment).returns "foo"
+            Puppet.settings.expects(:value).with(:modulepath, :foo).returns "/a"
+            Dir.expects(:entries).with("/a").returns %w{. ..}
+
+            FileTest.expects(:directory?).with("/a").returns true
+            FileTest.expects(:directory?).with("/a/./lib").never
+            FileTest.expects(:directory?).with("/a/./plugins").never
+            FileTest.expects(:directory?).with("/a/../lib").never
+            FileTest.expects(:directory?).with("/a/../plugins").never
+
+            @autoload.module_directories
         end
 
         it "should include the module directories, the Puppet libdir, and all of the Ruby load directories" do

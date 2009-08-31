@@ -3,6 +3,7 @@
 Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f) : Dir.chdir("..") { s.call(f) } }).call("spec/spec_helper.rb") }
 
 require 'puppet/util/autoload'
+require 'fileutils'
 
 class AutoloadIntegrator
     @things = []
@@ -92,5 +93,22 @@ describe Puppet::Util::Autoload do
                 Puppet::Util::Autoload.should be_loaded("bar/withext.rb")
             }
         }
+    end
+
+    it "should be able to load files directly from modules" do
+        modulepath = tmpfile("autoload_module_testing")
+        libdir = File.join(modulepath, "mymod", "lib", "foo")
+        FileUtils.mkdir_p(libdir)
+
+        file = File.join(libdir, "plugin.rb")
+
+        Puppet[:modulepath] = modulepath
+
+        with_loader("foo", "foo") do |dir, loader|
+            with_file(:plugin, file.split("/")) do
+                loader.load(:plugin)
+                loader.should be_loaded("plugin.rb")
+            end
+        end
     end
 end

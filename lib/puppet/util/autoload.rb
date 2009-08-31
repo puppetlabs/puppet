@@ -142,10 +142,11 @@ class Puppet::Util::Autoload
     end
 
     def module_directories
-        Puppet.settings.value(:modulepath, Puppet[:environment]).find_all do |dir|
-            FileTest.directory?(dir)
-        end.collect do |dir|
-            Dir.entries(dir)
+        # We have to require this late in the process because otherwise we might have
+        # load order issues.
+        require 'puppet/node/environment'
+        Puppet::Node::Environment.new.modulepath.collect do |dir|
+            Dir.entries(dir).reject { |f| f =~ /^\./ }.collect { |f| File.join(dir, f) }
         end.flatten.collect { |d| [File.join(d, "plugins"), File.join(d, "lib")] }.flatten.find_all do |d|
             FileTest.directory?(d)
         end
