@@ -37,6 +37,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     "
 
     commands :launchctl => "/bin/launchctl"
+    commands :sw_vers => "/usr/bin/sw_vers"
 
     defaultfor :operatingsystem => :darwin
     confine :operatingsystem => :darwin
@@ -47,6 +48,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
                      "/Library/LaunchDaemons",
                      "/System/Library/LaunchAgents",
                      "/System/Library/LaunchDaemons",]
+
+    Launchd_Overrides = "/var/db/launchd.db/com.apple.launchd/overrides.plist"
 
 
     # returns a label => path map for either all jobs, or just a single
@@ -84,6 +87,36 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
         jobs = self.jobsearch
         jobs.keys.collect do |job|
             new(:name => job, :provider => :launchd, :path => jobs[job])
+        end
+    end
+    
+    
+    def self.get_macosx_version_major
+        if defined? @macosx_version_major
+            return @macosx_version_major
+        end
+        begin
+            # Make sure we've loaded all of the facts
+            Facter.loadfacts
+
+            if Facter.value(:macosx_productversion_major)
+                product_version_major = Facter.value(:macosx_productversion_major)
+            else
+                # TODO: remove this code chunk once we require Facter 1.5.5 or higher.
+                Puppet.warning("DEPRECATION WARNING: Future versions of the launchd provider will require Facter 1.5.5 or newer.")            
+                product_version = Facter.value(:macosx_productversion)
+                if product_version.nil?
+                    fail("Could not determine OS X version from Facter")
+                end
+                product_version_major = product_version.scan(/(\d+)\.(\d+)./).join(".")
+            end
+            if %w{10.0 10.1 10.2 10.3}.include?(product_version_major)
+                fail("%s is not supported by the launchd provider" % product_version_major)
+            end
+            @macosx_version_major = product_version_major
+            return @macosx_version_major
+        rescue Puppet::ExecutionFailure => detail
+            fail("Could not determine OS X version: %s" % detail)
         end
     end
 
@@ -171,33 +204,72 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
     # launchd jobs are enabled by default. They are only disabled if the key
     # "Disabled" is set to true, but it can also be set to false to enable it.
+    # In 10.6, the Disabled key in the job plist is consulted, but only if there
+    # is no entry in the global overrides plist.
+    # We need to draw a distinction between undefined, true and false for both
+    # locations where the Disabled flag can be defined.
     def enabled?
+        job_plist_disabled = nil
+        overrides_disabled = nil
+        
         job_path, job_plist = plist_from_label(resource[:name])
         if job_plist.has_key?("Disabled")
-            if job_plist["Disabled"]  # inverse of disabled is enabled
-                return :false
+            job_plist_disabled = job_plist["Disabled"]
+        end
+        
+        if self.class.get_macosx_version_major == "10.6":
+            overrides = Plist::parse_xml(Launchd_Overrides)
+        
+            unless overrides.nil?
+                if overrides.has_key?(resource[:name])
+                    if overrides[resource[:name]].has_key?("Disabled")
+                        overrides_disabled = overrides[resource[:name]]["Disabled"]
+                    end
+                end
             end
         end
-        return :true
+        
+        if overrides_disabled.nil?
+            if job_plist_disabled.nil? or job_plist_disabled == false
+                return :true
+            end
+        elsif overrides_disabled == false
+            return :true
+        end
+        return :false
     end
 
 
     # enable and disable are a bit hacky. We write out the plist with the appropriate value
     # rather than dealing with launchctl as it is unable to change the Disabled flag
     # without actually loading/unloading the job.
+    # In 10.6 we need to write out a disabled key to the global overrides plist, in earlier
+    # versions this is stored in the job plist itself.
     def enable
-        job_path, job_plist = plist_from_label(resource[:name])
-        if self.enabled? == :false
-            job_plist.delete("Disabled")
-            Plist::Emit.save_plist(job_plist, job_path)
+        if self.class.get_macosx_version_major == "10.6"
+            overrides = Plist::parse_xml(Launchd_Overrides)
+            overrides[resource[:name]] = { "Disabled" => false }
+            Plist::Emit.save_plist(overrides, Launchd_Overrides)
+        else
+            job_path, job_plist = plist_from_label(resource[:name])
+            if self.enabled? == :false
+                job_plist.delete("Disabled")
+                Plist::Emit.save_plist(job_plist, job_path)
+            end
         end
     end
 
 
     def disable
-        job_path, job_plist = plist_from_label(resource[:name])
-        job_plist["Disabled"] = true
-        Plist::Emit.save_plist(job_plist, job_path)
+        if self.class.get_macosx_version_major == "10.6"
+            overrides = Plist::parse_xml(Launchd_Overrides)
+            overrides[resource[:name]] = { "Disabled" => true }
+            Plist::Emit.save_plist(overrides, Launchd_Overrides)
+        else
+            job_path, job_plist = plist_from_label(resource[:name])
+            job_plist["Disabled"] = true
+            Plist::Emit.save_plist(job_plist, job_path)
+        end
     end
 
 

@@ -33,6 +33,10 @@ describe provider_class do
         @provider.stubs(:plist_from_label).returns([@joblabel, @jobplist])
         @provider.stubs(:execute).returns("")
         @provider.stubs(:resource).returns @resource
+        
+        # We stub this out for the normal case as 10.6 is "special".
+        provider_class.stubs(:get_macosx_version_major).returns("10.5")
+        
     end
 
     it "should have a start method for #{@provider.object_id}" do
@@ -72,6 +76,42 @@ describe provider_class do
         it "should return running if listed in launchctl list output" do
             @provider.stubs(:launchctl).with(:list).returns(@joblabel)
             @provider.status.should == :running
+        end
+    end
+    
+    describe "when checking whether the service is enabled" do
+        it "should return true if the job plist says disabled is false" do
+            @provider.stubs(:plist_from_label).returns(["foo", {"Disabled" => false}])
+            @provider.enabled?.should == :true
+        end
+        it "should return true if the job plist has no disabled key" do
+            @provider.stubs(:plist_from_label).returns(["foo", {}])
+            @provider.enabled?.should == :true
+        end
+        it "should return false if the job plist says disabled is true" do
+            @provider.stubs(:plist_from_label).returns(["foo", {"Disabled" => true}])
+            @provider.enabled?.should == :false
+        end
+    end
+    
+    describe "when checking whether the service is enabled on OS X 10.6" do
+        it "should return true if the job plist says disabled is true and the global overrides says disabled is false" do
+            provider_class.stubs(:get_macosx_version_major).returns("10.6")
+            @provider.stubs(:plist_from_label).returns(["foo", {"Disabled" => true}])
+            Plist.stubs(:parse_xml).returns({@resource[:name] => {"Disabled" => false}})
+            @provider.enabled?.should == :true
+        end
+        it "should return false if the job plist says disabled is false and the global overrides says disabled is true" do
+            provider_class.stubs(:get_macosx_version_major).returns("10.6")
+            @provider.stubs(:plist_from_label).returns(["foo", {"Disabled" => false}])
+            Plist.stubs(:parse_xml).returns({@resource[:name] => {"Disabled" => true}})
+            @provider.enabled?.should == :false
+        end
+        it "should return true if the job plist and the global overrides have no disabled keys" do
+            provider_class.stubs(:get_macosx_version_major).returns("10.6")
+            @provider.stubs(:plist_from_label).returns(["foo", {}])
+            Plist.stubs(:parse_xml).returns({})
+            @provider.enabled?.should == :true
         end
     end
 
@@ -136,6 +176,24 @@ describe provider_class do
         it "should look for the relevant plist once" do
             @provider.expects(:plist_from_label).once
             @provider.stop
+        end
+    end
+    
+    describe "when enabling the service on OS X 10.6" do
+        it "should write to the global launchd overrides file once" do
+            provider_class.stubs(:get_macosx_version_major).returns("10.6")
+            Plist.stubs(:parse_xml).returns({})
+            Plist::Emit.expects(:save_plist).once
+            @provider.enable
+        end
+    end
+    
+    describe "when disabling the service on OS X 10.6" do
+        it "should write to the global launchd overrides file once" do
+            provider_class.stubs(:get_macosx_version_major).returns("10.6")
+            Plist.stubs(:parse_xml).returns({})
+            Plist::Emit.expects(:save_plist).once
+            @provider.enable
         end
     end
 
