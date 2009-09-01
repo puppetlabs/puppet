@@ -119,8 +119,18 @@ class Puppet::Parser::AST
         end
 
         def match(value)
-            value = value.value if value.is_a?(HostName)
-            return @value.match(value)
+            return @value.match(value) unless value.is_a?(HostName)
+
+            if value.regex? and self.regex?
+                # Wow this is some sweet design; maybe a touch of refactoring
+                # in order here.
+                return value.value.value == self.value.value
+            elsif value.regex? # we know if the existing name is not a regex, it won't match a regex
+                return false
+            else
+                # else, we could be either a regex or normal and it doesn't matter
+                return @value.match(value.value)
+            end
         end
 
         def regex?
