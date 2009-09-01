@@ -237,10 +237,10 @@ module Puppet
 
         # Autorequire any parent directories.
         autorequire(:file) do
-            if self[:path]
-                File.dirname(self[:path])
+            basedir = File.dirname(self[:path])
+            if basedir != self[:path]
+                basedir
             else
-                Puppet.err "no path for %s, somehow; cannot setup autorequires" % self.ref
                 nil
             end
         end

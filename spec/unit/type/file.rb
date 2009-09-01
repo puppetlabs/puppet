@@ -71,6 +71,24 @@ describe Puppet::Type.type(:file) do
         @file.must_not be_should_be_file
     end
 
+    it "should autorequire its parent directory" do
+        catalog = Puppet::Resource::Catalog.new
+        file = Puppet::Type::File.new(:name => "/foo/bar")
+        dir = Puppet::Type::File.new(:name => "/foo")
+        catalog.add_resource file
+        catalog.add_resource dir
+        reqs = file.autorequire
+        reqs[0].source.must == dir
+        reqs[0].target.must == file
+    end
+
+    it "should not autorequire its parent dir if its parent dir is itself" do
+        catalog = Puppet::Resource::Catalog.new
+        file = Puppet::Type::File.new(:name => "/")
+        catalog.add_resource file
+        file.autorequire.should be_empty
+    end
+
     describe "when validating attributes" do
         %w{path backup recurse recurselimit source replace force ignore links purge sourceselect}.each do |attr|
             it "should have a '#{attr}' parameter" do
