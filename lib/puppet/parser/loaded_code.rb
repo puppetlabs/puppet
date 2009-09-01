@@ -3,6 +3,9 @@ class Puppet::Parser::LoadedCode
         @hostclasses = {}
         @definitions = {}
         @nodes = {}
+
+        # So we can keep a list and match the first-defined regex
+        @node_list = []
     end
 
     def add_hostclass(name, code)
@@ -14,19 +17,23 @@ class Puppet::Parser::LoadedCode
     end
 
     def add_node(name, code)
-        @nodes[check_name(name)] = code
+        name = check_name(name)
+        @node_list << name unless @node_list.include?(name)
+        @nodes[name] = code
     end
 
     def node(name)
         name = check_name(name)
-        unless node = @nodes[name]
-            @nodes.each do |nodename, n|
-                if nodename.regex? and nodename.match(name)
-                    return n
-                end
-            end
+
+        if node = @nodes[name]
+            return node
         end
-        node
+
+        @node_list.each do |nodename|
+            n = @nodes[nodename]
+            return n if nodename.regex? and nodename.match(name)
+        end
+        nil
     end
 
     def nodes?

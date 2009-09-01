@@ -159,10 +159,11 @@ describe Puppet::Parser::LoadedCode do
             @loader.node(nameout) == "bar"
         end
 
-        it "should return the first matching regex nodename" do
+        it "should return the first matching rgex nodename" do
             @nodename1.stubs(:regex?).returns(true)
-            @nodename1.expects(:match).returns(true)
-            @nodename2.stubs(:regex?).returns(false)
+            @nodename1.stubs(:match).returns(true)
+            @nodename2.stubs(:regex?).returns(true)
+            @nodename2.stubs(:match).returns(true)
 
             @loader.add_node(@nodename1, @node1)
             @loader.add_node(@nodename2, @node2)
