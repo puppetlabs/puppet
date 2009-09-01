@@ -2,20 +2,28 @@
 module Puppet::Util::Warnings
     module_function
 
-    def warnonce(msg)
-        $stampwarnings ||= {}
-        $stampwarnings[self.class] ||= []
-        unless $stampwarnings[self.class].include? msg
-            Puppet.warning msg
-            $stampwarnings[self.class] << msg
-        end
+    def notice_once(msg)
+        Puppet::Util::Warnings.maybe_log(msg, self.class) { Puppet.notice msg }
+    end
 
-        return nil
+
+    def warnonce(msg)
+        Puppet::Util::Warnings.maybe_log(msg, self.class) { Puppet.warning msg }
     end
 
     def clear_warnings()
-        $stampwarnings = {}
+        @stampwarnings = {}
+        return nil
+    end
+
+    protected
+
+    def self.maybe_log(message, klass)
+        @stampwarnings ||= {}
+        @stampwarnings[klass] ||= []
+        return nil if @stampwarnings[klass].include? message
+        yield
+        @stampwarnings[klass] << message
         return nil
     end
 end
-
