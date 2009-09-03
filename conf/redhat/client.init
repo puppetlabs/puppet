@@ -65,6 +65,8 @@ restart() {
 rh_status() {
     status | grep -q -- '-p' 2>/dev/null && statusopts="-p $pidfile"
     status $statusopts $puppetd
+    RETVAL=$?
+    return $RETVAL
 }
 
 rh_status_q() {
