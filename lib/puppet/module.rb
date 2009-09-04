@@ -141,6 +141,6 @@ class Puppet::Module
     end
 
     def assert_validity
-        raise InvalidName unless name =~ /^[\w-]+$/
+        raise InvalidName unless name =~ /^[-\w]+$/
     end
 end

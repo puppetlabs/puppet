@@ -16,10 +16,13 @@ module Puppet::Parser::Files
     def find_manifests(start, options = {})
         cwd = options[:cwd] || Dir.getwd
         module_name, pattern = split_file_path(start)
-        if mod = Puppet::Module.find(module_name, options[:environment])
-            return mod.match_manifests(pattern)
+        begin
+            if mod = Puppet::Module.find(module_name, options[:environment])
+                return mod.match_manifests(pattern)
+            end
+        rescue Puppet::Module::InvalidName
+            # Than that would be a "no."
         end
-
         abspat = File::expand_path(start, cwd)
         files = Dir.glob(abspat).reject { |f| FileTest.directory?(f) }
         if files.size == 0
@@ -79,16 +82,11 @@ module Puppet::Parser::Files
         end
     end
 
-    # Split the path into the module and the rest of the path.
-    # This method can and often does return nil, so anyone calling
-    # it needs to handle that.
+    # Split the path into the module and the rest of the path, or return
+    # nil if the path is empty or absolute (starts with a /).
+    # This method can return nil & anyone calling it needs to handle that.
     def split_file_path(path)
-        if path =~ %r/^#{File::SEPARATOR}/
-            return nil
-        end
-
-        modname, rest = path.split(File::SEPARATOR, 2)
-        return nil if modname.nil? || modname.empty?
-        return modname, rest
+        path.split(File::SEPARATOR, 2) unless path =~ /^(#{File::SEPARATOR}|$)/
     end
+
 end
