@@ -1,0 +1,28 @@
+From 9c4f335261aa48b6a2b82e91d4d6fcd95f030d09 Mon Sep 17 00:00:00 2001
+From: Jeroen van Meeuwen (Fedora Unity) <kanarip@fedoraunity.org>
+Date: Fri, 4 Sep 2009 09:13:19 -0400
+Subject: [PATCH/puppet] Tighten rundir perms (rhbz #495096)
+
+The loose default permissions are not required for Red Hat systems
+installed via rpm packages because the packages create the required
+service user/group.
+---
+ lib/puppet/defaults.rb |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/lib/puppet/defaults.rb b/lib/puppet/defaults.rb
+index 3a0feec..3132830 100644
+--- a/lib/puppet/defaults.rb
++++ b/lib/puppet/defaults.rb
+@@ -62,7 +62,7 @@ module Puppet
+         },
+         :rundir => {
+             :default => rundir,
+-            :mode => 01777,
++            :mode => 0755,
+             :desc => "Where Puppet PID files are kept."
+         },
+         :genconfig => [false,
+-- 
+1.6.4.2
+

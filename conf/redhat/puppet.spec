@@ -6,11 +6,12 @@
 
 Name:           puppet
 Version:        0.25.0
-Release:        0.1.beta1%{?dist}
+Release:        1%{?dist}
 Summary:        A network tool for managing many disparate systems
 License:        GPLv2+
 URL:            http://puppet.reductivelabs.com/
-Source0:        http://reductivelabs.com/downloads/puppet/%{name}-%{version}beta1.tar.gz
+Source0:        http://reductivelabs.com/downloads/puppet/%{name}-%{version}.tar.gz
+Patch0:         rundir-perms.patch
 Group:          System Environment/Base
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -24,9 +25,13 @@ Requires:       ruby(abi) = 1.8
 Requires:       ruby-shadow
 %endif
 
-# Pull in libselinux-ruby where it is available
-%if 0%{?fedora} >=9
+# Pull in ruby selinux bindings where available
+%if 0%{?fedora}
+%if 0%{?fedora} >= 12
+%{!?_without_selinux:Requires: ruby(selinux)}
+%else
 %{!?_without_selinux:Requires: libselinux-ruby}
+%endif
 %endif
 
 Requires:       facter >= 1.5
@@ -59,7 +64,8 @@ Provides the central puppet server daemon which provides manifests to clients.
 The server can also function as a certificate authority and file server.
 
 %prep
-%setup -q -n %{name}-%{version}beta1
+%setup -q
+%patch0 -p1
 
 %build
 # Fix some rpmlint complaints
@@ -71,6 +77,7 @@ done
 for f in external/nagios.rb network/http_server/mongrel.rb relationship.rb; do
   sed -i -e '1d' lib/puppet/$f
 done
+chmod +x ext/puppetstoredconfigclean.rb
 
 find examples/ -type f -empty | xargs rm
 find examples/ -type f | xargs chmod a-x
@@ -82,7 +89,7 @@ ruby install.rb --destdir=%{buildroot} --quick --no-rdoc
 install -d -m0755 %{buildroot}%{_sysconfdir}/puppet/manifests
 install -d -m0755 %{buildroot}%{_localstatedir}/lib/puppet
 install -d -m0755 %{buildroot}%{_localstatedir}/run/puppet
-install -d -m0755 %{buildroot}%{_localstatedir}/log/puppet
+install -d -m0750 %{buildroot}%{_localstatedir}/log/puppet
 install -Dp -m0644 %{confdir}/client.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppet
 install -Dp -m0755 %{confdir}/client.init %{buildroot}%{_initrddir}/puppet
 install -Dp -m0644 %{confdir}/server.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppetmaster
@@ -97,8 +104,26 @@ touch %{buildroot}%{_sysconfdir}/puppet/puppetmasterd.conf
 touch %{buildroot}%{_sysconfdir}/puppet/puppetca.conf
 touch %{buildroot}%{_sysconfdir}/puppet/puppetd.conf
 
+# Install the ext/ directory to %{_datadir}/%{name}
+install -d %{buildroot}%{_datadir}/%{name}
+cp -a ext/ %{buildroot}%{_datadir}/%{name}
+# emacs and vim bits are installed elsewhere
+rm -rf %{buildroot}%{_datadir}/%{name}/ext/{emacs,vim}
+
+# Install emacs mode files
+emacsdir=%{buildroot}%{_datadir}/emacs/site-lisp
+install -Dp -m0644 ext/emacs/puppet-mode.el $emacsdir/puppet-mode.el
+install -Dp -m0644 ext/emacs/puppet-mode-init.el \
+    $emacsdir/site-start.d/puppet-mode-init.el
+
+# Install vim syntax files
+vimdir=%{buildroot}%{_datadir}/vim/vimfiles
+install -Dp -m0644 ext/vim/ftdetect/puppet.vim $vimdir/ftdetect/puppet.vim
+install -Dp -m0644 ext/vim/syntax/puppet.vim $vimdir/syntax/puppet.vim
+
 %files
 %defattr(-, root, root, 0755)
+%doc CHANGELOG COPYING LICENSE README examples
 %exclude %{_bindir}/pi
 %{_bindir}/puppet
 %{_bindir}/ralsh
@@ -111,8 +136,11 @@ touch %{buildroot}%{_sysconfdir}/puppet/puppetd.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/puppet
 %config(noreplace) %{_sysconfdir}/puppet/puppet.conf
 %ghost %config(noreplace,missingok) %{_sysconfdir}/puppet/puppetd.conf
-%doc CHANGELOG COPYING LICENSE README examples
 %config(noreplace) %{_sysconfdir}/logrotate.d/puppet
+# We don't want to require emacs or vim, so we need to own these dirs
+%{_datadir}/emacs
+%{_datadir}/vim
+%{_datadir}/%{name}
 # These need to be owned by puppet so the server can
 # write to them
 %attr(-, puppet, puppet) %{_localstatedir}/run/puppet
@@ -186,6 +214,12 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Fri Sep 04 2009 Todd Zullinger <tmz@pobox.com> - 0.25.0-1
+- Update to 0.25.0
+- Fix permissions on /var/log/puppet (#495096)
+- Install emacs mode and vim syntax files (#491437)
+- Install ext/ directory in %%{_datadir}/%{name} (/usr/share/puppet)
+
 * Mon May 04 2009 Todd Zullinger <tmz@pobox.com> - 0.25.0-0.1.beta1
 - Update to 0.25.0beta1
 - Make Augeas and SELinux requirements build time options
