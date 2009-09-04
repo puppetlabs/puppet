@@ -171,6 +171,11 @@ describe Puppet::Util::Settings do
             @settings[:myval] = "memarg"
             @settings[:myval].should == "cliarg"
         end
+
+        it "should clear the list of environments" do
+            Puppet::Node::Environment.expects(:clear).at_least(1)
+            @settings[:myval] = "memarg"
+        end
     end
 
     describe "when returning values" do

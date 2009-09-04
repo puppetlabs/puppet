@@ -494,7 +494,15 @@ class Puppet::Util::Settings
         @sync.synchronize do # yay, thread-safe
             @values[type][param] = value
             @cache.clear
+
             clearused
+
+            # Clear the list of environments, because they cache, at least, the module path.
+            # We *could* preferentially just clear them if the modulepath is changed,
+            # but we don't really know if, say, the vardir is changed and the modulepath
+            # is defined relative to it. We need the defined? stuff because of loading
+            # order issues.
+            Puppet::Node::Environment.clear if defined?(Puppet::Node) and defined?(Puppet::Node::Environment)
         end
 
         return value
