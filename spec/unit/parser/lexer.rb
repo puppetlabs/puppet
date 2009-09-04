@@ -460,6 +460,20 @@ describe Puppet::Parser::Lexer::TOKENS[:REGEX] do
         @token.regex.should =~ '/this is a regex/'
     end
 
+    describe "when including escaped slashes" do
+        before { @lexer = Puppet::Parser::Lexer.new }
+
+        it "should not consider escaped slashes to be the end of a regex" do
+            @lexer.string = "/this \\/ foo/"
+            tokens = []
+            @lexer.scan do |name, value|
+                tokens << value
+            end
+            tokens[0][:value].should == Regexp.new("this / foo")
+        end
+    end
+
+
     it "should return the REGEX token and a Regexp" do
         @token.convert(stub("lexer"), "/myregex/").should == [Puppet::Parser::Lexer::TOKENS[:REGEX], Regexp.new(/myregex/)]
     end

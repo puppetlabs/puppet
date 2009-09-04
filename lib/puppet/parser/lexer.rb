@@ -171,9 +171,14 @@ class Puppet::Parser::Lexer
         [self,value]
     end
 
-    TOKENS.add_token :REGEX, %r{/(.*?)/} do |lexer, value|
-        value.sub!(/^\/(.*?)\/$/,"\\1")
-        [self, Regexp.new(value)]
+    TOKENS.add_token :REGEX, %r{/[^/]*/} do |lexer, value|
+        # Make sure we haven't matched an escaped /
+        while value[-2..-2] == '\\'
+            other = lexer.scan_until(%r{/})
+            value += other
+        end
+        regex = value.sub(%r{\A/}, "").sub(%r{/\Z}, '').gsub("\\/", "/")
+        [self, Regexp.new(regex)]
     end
 
     TOKENS.add_token :RETURN, "\n", :skip => true, :incr_line => true, :skip_text => true
@@ -470,6 +475,12 @@ class Puppet::Parser::Lexer
     # Skip any skipchars in our remaining string.
     def skip
         @scanner.skip(@skip)
+    end
+
+    # Provide some limited access to the scanner, for those
+    # tokens that need it.
+    def scan_until(regex)
+        @scanner.scan_until(regex)
     end
 
     # we've encountered an opening quote...
