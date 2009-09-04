@@ -67,20 +67,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
 
     # Where is our init script?
     def initscript
-        if defined? @initscript
-            return @initscript
-        else
-            @initscript = self.search(@resource[:name])
-        end
-    end
-
-    def restart
-        if @resource[:hasrestart] == :true
-            command = [self.initscript, :restart]
-            texecute("restart", command)
-        else
-            super
-        end
+        @initscript ||= self.search(@resource[:name])
     end
 
     def search(name)
@@ -115,23 +102,24 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
 
     # The start command is just the init scriptwith 'start'.
     def startcmd
-        [self.initscript, :start]
+        [initscript, :start]
+    end
+
+    # The stop command is just the init script with 'stop'.
+    def stopcmd
+        [initscript, :stop]
+    end
+
+    def restartcmd
+        (@resource[:hasrestart] == :true) && [initscript, :restart]
     end
 
     # If it was specified that the init script has a 'status' command, then
     # we just return that; otherwise, we return false, which causes it to
     # fallback to other mechanisms.
     def statuscmd
-        if @resource[:hasstatus] == :true
-            return [self.initscript, :status]
-        else
-            return false
-        end
+        (@resource[:hasstatus] == :true) && [initscript, :status]
     end
 
-    # The stop command is just the init script with 'stop'.
-    def stopcmd
-        [self.initscript, :stop]
-    end
 end
 

@@ -52,35 +52,16 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init do
         end
     end
 
-    def restart
-        if @resource[:hasrestart] == :true
-            service(@resource[:name], "restart")
-        else
-            super
-        end
-    end
-
-    def status
-        if @resource[:status]
-            super
-        elsif @resource[:hasstatus] == :true
-            begin
-                service(@resource[:name], "status")
-                return :running
-            rescue
-                return :stopped
-            end
-        else
-            super
-        end
+    def initscript
+        raise Puppet::Error, "Do not directly call the init script for '%s'; use 'service' instead" % @resource[:name]
     end
 
     def statuscmd
-        [command(:service), @resource[:name], "status"]
+        (@resource[:hasstatus] == :true) && [command(:service), @resource[:name], "status"]
     end
 
     def restartcmd
-        [command(:service), @resource[:name], "restart"]
+        (@resource[:hasrestart] == :true) && [command(:service), @resource[:name], "restart"]
     end
 
     def startcmd

@@ -19,13 +19,11 @@ Puppet::Type.type(:service).provide :base do
     # parameter.
     def getpid
         unless @resource[:pattern]
-            @resource.fail "Either a stop command or a pattern must be specified"
+            @resource.fail "Either stop/status commands or a pattern must be specified"
         end
         ps = Facter["ps"].value
         unless ps and ps != ""
-            @resource.fail(
-                "You must upgrade Facter to a version that includes 'ps'"
-            )
+            @resource.fail "You must upgrade Facter to a version that includes 'ps'"
         end
         regex = Regexp.new(@resource[:pattern])
         self.debug "Executing '#{ps}'"
@@ -43,12 +41,16 @@ Puppet::Type.type(:service).provide :base do
 
     # How to restart the process.
     def restart
-        if @resource[:restart] or self.respond_to?(:restartcmd)
+        if @resource[:restart] or restartcmd
             ucommand(:restart)
         else
             self.stop
             self.start
         end
+    end
+
+    # There is no default command, which causes other methods to be used  
+    def restartcmd
     end
 
     # Check if the process is running.  Prefer the 'status' parameter,
@@ -57,13 +59,12 @@ Puppet::Type.type(:service).provide :base do
     # happen if, for instance, it has an init script (and thus responds to
     # 'statuscmd') but does not have 'hasstatus' enabled.
     def status
-        if @resource[:status] or (
-            self.respond_to?(:statuscmd) and self.statuscmd
-        )
+        if @resource[:status] or statuscmd
             # Don't fail when the exit status is not 0.
-            output = ucommand(:status, false)
+            ucommand(:status, false)
 
-            if $? == 0
+            # Expicitly calling exitstatus to facilitate testing
+            if $?.exitstatus == 0
                 return :running
             else
                 return :stopped
@@ -76,6 +77,10 @@ Puppet::Type.type(:service).provide :base do
         end
     end
 
+    # There is no default command, which causes other methods to be used  
+    def statuscmd
+    end
+    
     # Run the 'start' parameter command, or the specified 'startcmd'.
     def start
         ucommand(:start)
@@ -98,7 +103,7 @@ Puppet::Type.type(:service).provide :base do
     # for the process in the process table.
     # This method will generally not be overridden by submodules.
     def stop
-        if @resource[:stop] or self.respond_to?(:stopcmd)
+        if @resource[:stop] or stopcmd
             ucommand(:stop)
         else
             pid = getpid
@@ -114,6 +119,10 @@ Puppet::Type.type(:service).provide :base do
             end
             return true
         end
+    end
+    
+    # There is no default command, which causes other methods to be used  
+    def stopcmd
     end
 
     # A simple wrapper so execution failures are a bit more informative.
