@@ -19,7 +19,7 @@ Puppet::Type.type(:zfs).provide(:solaris) do
         zfs *([:create] + add_properties + [@resource[:name]])
     end
 
-    def delete
+    def destroy
         zfs(:destroy, @resource[:name])
     end
 

@@ -12,6 +12,18 @@ describe provider_class do
         @provider = provider_class.new(@resource)
     end
 
+    it "should have a create method" do
+        @provider.should respond_to(:create)
+    end
+
+    it "should have a destroy method" do
+        @provider.should respond_to(:destroy)
+    end
+
+    it "should have an exists? method" do
+        @provider.should respond_to(:exists?)
+    end
+
     describe "when calling add_properties" do
         it "should add -o and the key=value for each properties with a value" do
             @resource.stubs(:[]).with(:quota).returns ""
@@ -37,10 +49,10 @@ describe provider_class do
         end
     end
 
-    describe "when calling delete" do
+    describe "when calling destroy" do
         it "should call zfs with :destroy and this zfs" do
             @provider.expects(:zfs).with(:destroy, @resource[:name])
-            @provider.delete
+            @provider.destroy
         end
     end
 
