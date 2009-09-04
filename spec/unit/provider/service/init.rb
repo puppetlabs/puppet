@@ -9,39 +9,16 @@ provider_class = Puppet::Type.type(:service).provider(:init)
 
 describe provider_class do
 
-    before(:each) do
-        # Create a mock resource
+    before :each do
         @resource = stub 'resource'
-
-        @provider = provider_class.new
-        # A catch all; no parameters set
         @resource.stubs(:[]).returns(nil)
-
-        # But set name, source and path (because we won't run
-        # the thing that will fetch the resource path from the provider)
         @resource.stubs(:[]).with(:name).returns "myservice"
-        @resource.stubs(:[]).with(:ensure).returns :enabled
+#        @resource.stubs(:[]).with(:ensure).returns :enabled
         @resource.stubs(:[]).with(:path).returns ["/service/path","/alt/service/path"]
-        @resource.stubs(:ref).returns "Service[myservice]"
+#        @resource.stubs(:ref).returns "Service[myservice]"
         
-        @provider.stubs(:resource).returns @resource
+        @provider = provider_class.new
         @provider.resource = @resource
-    end
-
-    it "should have a start method" do
-        @provider.should respond_to(:start)
-    end
-
-    it "should have a stop method" do
-        @provider.should respond_to(:stop)
-    end
-
-    it "should have a restart method" do
-        @provider.should respond_to(:restart)
-    end
-
-    it "should have a status method" do
-        @provider.should respond_to(:status)
     end
 
     describe "when serching for the init script" do
@@ -63,17 +40,23 @@ describe provider_class do
             File.stubs(:stat).with("/service/path/myservice").returns true
         end
         
-        describe "when starting" do
-            it "should execute the init script with start" do
-                @provider.expects(:texecute).with(:start, ['/service/path/myservice', :start], true).returns("")
-                @provider.start
+        [:start, :stop, :status, :restart].each do |method|
+            it "should have a #{method} method" do
+                @provider.should respond_to(method)
             end
-        end
+            describe "when running #{method}" do
+            
+                it "should use any provided explicit command" do
+                    @resource.stubs(:[]).with(method).returns "/user/specified/command"
+                    @provider.expects(:execute).with { |command, *args| command == ["/user/specified/command"] }
+                    @provider.send(method)
+                end
 
-        describe "when stopping" do
-            it "should execute the init script with stop" do
-              @provider.expects(:texecute).with(:stop, ['/service/path/myservice', :stop], true).returns("")
-                @provider.stop
+                it "should pass #{method} to the init script when no explicit command is provided" do
+                    @resource.stubs(:[]).with("has#{method}".intern).returns :true
+                    @provider.expects(:execute).with { |command, *args| command ==  ["/service/path/myservice",method]}
+                    @provider.send(method)
+                end            
             end
         end
 
@@ -111,24 +94,12 @@ describe provider_class do
             end
         end
 
-        describe "when restarting" do
-            describe "when hasrestart is :true" do
-                before :each do
-                    @resource.stubs(:[]).with(:hasrestart).returns :true
-                end
-                it "should execute the command" do
-                    @provider.expects(:texecute).with(:restart, ['/service/path/myservice', :restart], true).returns("")
-                    $?.stubs(:exitstatus).returns(0)
-                    @provider.restart
-                end
-            end
-            describe "when hasrestart is not :true" do
-                it "should stop and restart the process" do
-                    @provider.expects(:texecute).with(:stop, ['/service/path/myservice', :stop ], true).returns("")
-                    @provider.expects(:texecute).with(:start,['/service/path/myservice', :start], true).returns("")
-                    $?.stubs(:exitstatus).returns(0)
-                    @provider.restart
-                end
+        describe "when restarting and hasrestart is not :true" do
+            it "should stop and restart the process" do
+                @provider.expects(:texecute).with(:stop, ['/service/path/myservice', :stop ], true).returns("")
+                @provider.expects(:texecute).with(:start,['/service/path/myservice', :start], true).returns("")
+                $?.stubs(:exitstatus).returns(0)
+                @provider.restart
             end
         end
     end
