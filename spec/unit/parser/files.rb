@@ -118,6 +118,17 @@ describe Puppet::Parser::Files do
         after { Puppet.settings.clear }
     end
 
+    describe "when searching for manifests" do
+        it "should ignore invalid modules" do
+            mod = mock 'module'
+            Puppet::Node::Environment.new.expects(:module).with("mymod").raises Puppet::Module::InvalidName
+            Puppet.expects(:value).with(:modulepath).never
+            Dir.stubs(:glob).returns %w{foo}
+
+            Puppet::Parser::Files.find_manifests("mymod/init.pp").should == %w{foo}
+        end
+    end
+
     describe "when searching for manifests when no module is found" do
         before do
             File.stubs(:find).returns(nil)
