@@ -8,6 +8,7 @@ Puppet.features.rubygems?
 Puppet.features.add(:rails) do
     begin
         require 'active_record'
+        require 'active_record/version'
     rescue LoadError => detail
         if FileTest.exists?("/usr/share/rails")
             count = 0
