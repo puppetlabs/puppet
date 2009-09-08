@@ -33,6 +33,7 @@ spec = Gem::Specification.new do |spec|
     spec.name = 'puppet'
     spec.files = FILES.to_a
     spec.version = Puppet::PUPPETVERSION
+    spec.add_dependency('facter', '>= 1.5.1')
     spec.summary = 'Puppet, an automated configuration management tool'
     spec.author = 'Reductive Labs'
     spec.email = 'puppet@reductivelabs.com'
