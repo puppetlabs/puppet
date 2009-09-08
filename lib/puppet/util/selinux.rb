@@ -154,14 +154,21 @@ module Puppet::Util::SELinux
     def read_mounts
         mounts = ""
         begin
-            mountfh = File.open("/proc/mounts")
-            # We use read_nonblock() in a loop rather than read() to work-around
-            # a linux kernel bug.  See ticket #1963 for details.
-            while true
-                mounts += mountfh.read_nonblock(1024)
+            if File.instance_methods.include? "read_nonblock"
+                # If possible we use read_nonblock() in a loop rather than read() to work-
+                # a linux kernel bug.  See ticket #1963 for details.
+                mountfh = File.open("/proc/mounts")
+                mounts += mountfh.read_nonblock(1024) while true
+                end
+            else
+                # Otherwise we shell out and let cat do it for us
+                mountfh = IO.popen("/bin/cat /proc/mounts")
+                mounts = mountfh.read
             end
-        rescue EOFError
+        ensure        
             mountfh.close
+        rescue EOFError
+            # that's expected
         rescue
             return nil
         end
