@@ -50,16 +50,17 @@ class Puppet::Network::HTTP::MongrelREST < Mongrel::HttpHandler
 
     # produce the body of the response
     def set_response(response, result, status = 200)
-        args = [status]
-
         # Set the 'reason' (or 'message', as it's called in Webrick), when
-        # we have a failure.
-        if status >= 300
-            args << false << result
-        end
-
-        response.start(*args) do |head, body|
-            body.write(result)
+        # we have a failure, unless we're on a version of mongrel that doesn't
+        # support this.
+        if status < 300
+            response.start(status) { |head, body| body.write(result) }
+        else
+            begin
+                response.start(status,false,result) { |head, body| body.write(result) }
+            rescue ArgumentError
+	        response.start(status)              { |head, body| body.write(result) }
+            end
         end
     end
 

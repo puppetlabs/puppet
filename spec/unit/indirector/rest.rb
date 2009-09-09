@@ -90,15 +90,37 @@ describe Puppet::Indirector::REST do
             @searcher.deserialize(response).should be_nil
         end
 
-        it "should fail if the response code is not in the 200s" do
-            @model.expects(:convert_from).never
+        [300,400,403,405,500,501,502,503,504].each { |rc|
+            describe "when the response code is #{rc}" do
+                before :each do
+                    @model.expects(:convert_from).never
 
-            response = mock 'response'
-            response.stubs(:code).returns "300"
-            response.stubs(:message).returns "There was a problem"
+                    @response = mock 'response'
+                    @response.stubs(:code).returns rc.to_s
+                    @response.stubs(:message).returns "There was a problem (header)"
+                end
 
-            lambda { @searcher.deserialize(response) }.should raise_error(Net::HTTPError)
-        end
+                it "should fail" do
+                    @response.stubs(:body).returns nil
+                    lambda { @searcher.deserialize(@response) }.should raise_error(Net::HTTPError)
+                end
+
+                it "should take the error message from the body, if present" do
+                    @response.stubs(:body).returns "There was a problem (body)"
+                    lambda { @searcher.deserialize(@response) }.should raise_error(Net::HTTPError,"Error #{rc} on SERVER: There was a problem (body)")
+                end
+
+                it "should take the error message from the response header if the body is empty" do
+                    @response.stubs(:body).returns ""
+                    lambda { @searcher.deserialize(@response) }.should raise_error(Net::HTTPError,"Error #{rc} on SERVER: There was a problem (header)")
+                end
+
+                it "should take the error message from the response header if the body is absent" do
+                    @response.stubs(:body).returns nil
+                    lambda { @searcher.deserialize(@response) }.should raise_error(Net::HTTPError,"Error #{rc} on SERVER: There was a problem (header)")
+                end
+            end
+        }    
 
         it "should return the results of converting from the format specified by the content-type header if the response code is in the 200s" do
             @model.expects(:convert_from).with("myformat", "mydata").returns "myobject"

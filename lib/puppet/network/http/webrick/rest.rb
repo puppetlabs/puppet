@@ -50,11 +50,8 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
 
     def set_response(response, result, status = 200)
         response.status = status
-        if status >= 200 and status < 300
-            response.body = result
-        else
-            response.reason_phrase = result
-        end
+        response.body          = result if status >= 200 and status != 304
+        response.reason_phrase = result if status < 200 or status >= 300
     end
 
     # Retrieve node/cert/ip information from the request object.
