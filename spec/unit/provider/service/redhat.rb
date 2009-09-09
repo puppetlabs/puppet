@@ -16,6 +16,8 @@ describe provider_class do
 
         @provider = provider_class.new
         @provider.resource = @resource
+        FileTest.stubs(:file?).with('/sbin/service').returns true
+        FileTest.stubs(:executable?).with('/sbin/service').returns true
     end
 
     it "should have an enabled? method" do
