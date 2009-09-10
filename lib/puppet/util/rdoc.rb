@@ -49,13 +49,15 @@ module Puppet::Util::RDoc
     # of a manifest
     def output(file, ast)
         astobj = []
-        ast[:nodes].each do |name, k|
+        ast.nodes.each do |name, k|
             astobj << k if k.file == file
         end
-        ast[:classes].each do |name, k|
+
+        ast.hostclasses.each do |name,k|
             astobj << k if k.file == file
         end
-        ast[:definitions].each do |name, k|
+
+        ast.definitions.each do |name, k|
             astobj << k if k.file == file
         end
         astobj.sort! {|a,b| a.line <=> b.line }.each do |k|
