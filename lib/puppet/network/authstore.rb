@@ -220,8 +220,6 @@ module Puppet
             # and we're called with a MatchData whose capture 1 is puppet
             # we'll return a pattern of puppet.reductivelabs.com
             def interpolate(match)
-                return self if @name == :ip
-
                 clone = dup
                 clone.pattern = clone.pattern.reverse.collect do |p|
                     p.gsub(/\$(\d)/) { |m| match[$1.to_i] }
@@ -279,63 +277,41 @@ module Puppet
             # Parse our input pattern and figure out what kind of allowal
             # statement it is.  The output of this is used for later matching.
             def parse(value)
-                case value
-                when /^(\d+\.){1,3}\*$/ # an ip address with a '*' at the end
+                # Use the IPAddr class to determine if we've got a
+                # valid IP address.
+                @length = Integer($1) if value =~ /\/(\d+)$/
+                begin
+                    @pattern = IPAddr.new(value)
                     @name = :ip
-                    match = $1
-                    match.sub!(".", '')
-                    ary = value.split(".")
-
-                    mask = case ary.index(match)
-                    when 0; 8
-                    when 1; 16
-                    when 2; 24
-                    else
-                        raise AuthStoreError, "Invalid IP pattern %s" % value
-                    end
-
-                    @length = mask
-
-                    ary.pop
-                    while ary.length < 4
-                        ary.push("0")
-                    end
-
-                    begin
-                        @pattern = IPAddr.new(ary.join(".") + "/" + mask.to_s)
-                    rescue ArgumentError => detail
-                        raise AuthStoreError, "Invalid IP address pattern %s" % value
-                    end
-                when /^([a-zA-Z][-\w]*\.)+[-\w]+$/ # a full hostname
-                    # Change to /^([a-zA-Z][-\w]*\.)+[-\w]+\.?$/ for FQDN support
-                    @name = :domain
-                    @pattern = munge_name(value)
-                when /^\*(\.([a-zA-Z][-\w]*)){1,}$/ # *.domain.com
-                    @name = :domain
-                    @pattern = munge_name(value)
-                    @pattern.pop # take off the '*'
-                    @length = @pattern.length
-                when /\$\d+/ # a backreference pattern ala $1.reductivelabs.com or 192.168.0.$1 or $1.$2
-                    @name = :dynamic
-                    @pattern = munge_name(value)
-                else
-                    # Else, use the IPAddr class to determine if we've got a
-                    # valid IP address.
-                    if value =~ /\/(\d+)$/
-                        @length = Integer($1)
-                    end
-                    begin
-                        @pattern = IPAddr.new(value)
+                rescue ArgumentError => detail
+                    case value
+                    when /^(\d+\.){1,3}\*$/ # an ip address with a '*' at the end
                         @name = :ip
-                    rescue ArgumentError => detail
-                        # so nothing matched, let's match as an opaque value
-                        # some sanity checks first
-                        unless value =~ /^[a-zA-Z0-9][-a-zA-Z0-9_.@]*$/
-                            raise AuthStoreError, "Invalid pattern %s" % value
+                        segments = value.split(".")[0..-2]
+                        @length = 8*segments.length
+                        begin
+                            @pattern = IPAddr.new((segments+[0,0,0])[0,4].join(".") + "/" + @length.to_s)
+                        rescue ArgumentError => detail
+                            raise AuthStoreError, "Invalid IP address pattern %s" % value
                         end
+                    when /^([a-zA-Z0-9][-\w]*\.)+[-\w]+$/ # a full hostname
+                        # Change to /^([a-zA-Z][-\w]*\.)+[-\w]+\.?$/ for FQDN support
+                        @name = :domain
+                        @pattern = munge_name(value)
+                    when /^\*(\.([a-zA-Z][-\w]*)){1,}$/ # *.domain.com
+                        @name = :domain
+                        @pattern = munge_name(value)
+                        @pattern.pop # take off the '*'
+                        @length = @pattern.length
+                    when /\$\d+/ # a backreference pattern ala $1.reductivelabs.com or 192.168.0.$1 or $1.$2
+                        @name = :dynamic
+                        @pattern = munge_name(value)
+                    when /^[a-zA-Z0-9][-a-zA-Z0-9_.@]*$/
                         @pattern = [value]
                         @length = nil # force an exact match
                         @name = :opaque
+                    else
+                        raise AuthStoreError, "Invalid pattern %s" % value
                     end
                 end
             end
