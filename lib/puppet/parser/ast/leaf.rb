@@ -102,9 +102,7 @@ class Puppet::Parser::AST
         end
 
         def to_classname
-            classname = @value.to_s.downcase
-            classname.gsub!(/[^-a-zA-Z0-9:.]/,'') if regex?
-            classname
+            to_s.downcase.gsub(/[^-a-zA-Z0-9:.]/,'').sub(/^\.+/,'')
         end
 
         # implementing eql? and hash so that when an HostName is stored
