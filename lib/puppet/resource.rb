@@ -55,7 +55,6 @@ class Puppet::Resource
 
             # Don't duplicate the title as the namevar
             next hash if param == namevar and value == title
-            value = [value] unless value.is_a?(Array)
             hash[param] = value
             hash
         end

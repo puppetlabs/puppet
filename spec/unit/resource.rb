@@ -422,12 +422,6 @@ describe Puppet::Resource do
             result["foo"].should == %w{bar eh}
             result["fee"].should == %w{baz}
         end
-
-        it "should set all parameter values as arrays" do
-            resource = Puppet::Resource.new("File", "/foo")
-            resource[:foo] = "bar"
-            JSON.parse(resource.to_json)["foo"].should == %w{bar}
-        end
     end
 
     describe "when converting from json" do
