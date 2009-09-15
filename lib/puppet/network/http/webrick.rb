@@ -31,13 +31,20 @@ class Puppet::Network::HTTP::WEBrick
         arguments.merge!(setup_ssl)
 
         @server = WEBrick::HTTPServer.new(arguments)
+        @server.listeners.each { |l| l.start_immediately = false }
 
         setup_handlers
 
         @mutex.synchronize do
             raise "WEBrick server is already listening" if @listening
             @listening = true
-            @thread = Thread.new { @server.start }
+            @thread = Thread.new {
+                @server.start { |sock|
+                    raise "Client disconnected before connection could be established" unless IO.select([sock],nil,nil,0.1)
+                    sock.accept
+                    @server.run(sock)
+                }
+           }
         end
     end
 
