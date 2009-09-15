@@ -2,7 +2,7 @@
 #
 # author Brice Figureau <brice-puppet@daysofwonder.com>
 Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
-    desc """Runit service management.
+    desc "Runit service management.
 
   This provider manages daemons running supervised by Runit.
   It tries to detect the service directory, with by order of preference:
@@ -31,7 +31,7 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
    * status
 
 
-"""
+"
 
     commands :sv => "/usr/bin/sv"
 
@@ -93,7 +93,7 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
 
     # relay to the startcmd
     def start
-        enable unless enabled?
+        enable unless enabled? == :true
         ucommand( :start )
     end
 

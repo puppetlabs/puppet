@@ -64,13 +64,14 @@ describe provider_class do
             @provider.stubs(:sv)
             @provider.stubs(:ucommand)
 
-            @provider.expects(:enabled?).returns false
+            @provider.expects(:enabled?).returns :false
             @provider.expects(:enable)
 
             @provider.start
         end
 
         it "should execute external command 'sv start /etc/service/myservice'" do
+            @provider.stubs(:enabled?).returns :true
             @provider.expects(:ucommand).with(:start).returns("")
             @provider.start
         end
