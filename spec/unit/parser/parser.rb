@@ -253,7 +253,7 @@ describe Puppet::Parser do
         end
 
         it "should raise an error if the node already exists" do
-            @loaded_code.stubs(:node).with(@nodename).returns(@node)
+            @loaded_code.stubs(:node_exists?).with(@nodename).returns(@node)
 
             lambda { @parser.newnode(@nodename) }.should raise_error
         end

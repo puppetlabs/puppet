@@ -376,7 +376,7 @@ class Puppet::Parser::Parser
         doc = lexer.getcomment
         names.collect do |name|
             name = AST::HostName.new :value => name unless name.is_a?(AST::HostName)
-            if other = @loaded_code.node(name)
+            if other = @loaded_code.node_exists?(name)
                 error("Node %s is already defined at %s:%s; cannot redefine" % [other.name, other.file, other.line])
             end
             name = name.to_s if name.is_a?(Symbol)

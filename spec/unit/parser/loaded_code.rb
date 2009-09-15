@@ -156,7 +156,24 @@ describe Puppet::Parser::LoadedCode do
             nameout = Puppet::Parser::AST::HostName.new(:value => "foo")
 
             @loader.add_node(namein, "bar")
-            @loader.node(nameout) == "bar"
+            @loader.node(nameout).should == "bar"
+        end
+
+        it "should be able to find node by HostName strict equality" do
+            namein = Puppet::Parser::AST::HostName.new(:value => "foo")
+            nameout = Puppet::Parser::AST::HostName.new(:value => "foo")
+
+            @loader.add_node(namein, "bar")
+            @loader.node_exists?(nameout).should == "bar"
+        end
+
+        it "should not use node name matching when finding with strict node HostName" do
+            name1 = Puppet::Parser::AST::HostName.new(:value => "foo")
+            name2 = Puppet::Parser::AST::HostName.new(:value => Puppet::Parser::AST::Regex.new(:value => /foo/))
+
+            @loader.add_node(name1, "bar")
+            @loader.add_node(name2, "baz")
+            @loader.node_exists?(name1).should == "bar"
         end
 
         it "should return the first matching regex nodename" do
