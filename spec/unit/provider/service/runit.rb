@@ -35,6 +35,10 @@ describe provider_class do
         @provider.stubs(:resource).returns @resource
     end
 
+    it "should have a restart method" do
+        @provider.should respond_to(:restart)
+    end
+
     it "should have a restartcmd method" do
         @provider.should respond_to(:restartcmd)
     end
@@ -62,7 +66,6 @@ describe provider_class do
     describe "when starting" do
         it "should enable the service if it is not enabled" do
             @provider.stubs(:sv)
-            @provider.stubs(:ucommand)
 
             @provider.expects(:enabled?).returns :false
             @provider.expects(:enable)
@@ -72,15 +75,22 @@ describe provider_class do
 
         it "should execute external command 'sv start /etc/service/myservice'" do
             @provider.stubs(:enabled?).returns :true
-            @provider.expects(:ucommand).with(:start).returns("")
+            @provider.expects(:sv).with("start", "/etc/service/myservice")
             @provider.start
         end
     end
 
     describe "when stopping" do
         it "should execute external command 'sv stop /etc/service/myservice'" do
-            @provider.expects(:ucommand).with(:stop).returns("")
+            @provider.expects(:sv).with("stop", "/etc/service/myservice")
             @provider.stop
+        end
+    end
+
+    describe "when restarting" do
+        it "should call 'sv restart /etc/service/myservice'" do
+            @provider.expects(:sv).with("restart","/etc/service/myservice")
+            @provider.restart
         end
     end
 
