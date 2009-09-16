@@ -258,9 +258,9 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
             value = self.class.parsed_auth_db[resource_name][native_attribute]
             case value
             when true, "true", :true
-                value = true
+                value = :true
             when false, "false", :false
-                value = false
+                value = :false
             end
 
             @property_hash[attribute] = value
@@ -289,9 +289,9 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
         define_method(field.to_s + "=") do |value|
             case value
             when true, "true", :true
-                @property_hash[field] = true
+                @property_hash[field] = :true
             when false, "false", :false
-                @property_hash[field] = false
+                @property_hash[field] = :false
             else
                 @property_hash[field] = value
             end
