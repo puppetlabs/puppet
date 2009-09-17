@@ -116,7 +116,7 @@ def do_man(man, strip = 'man/')
     om = File.dirname(omf)
     if $haveftools
       File.makedirs(om, true)
-      File.chmod(0644, om)
+      File.chmod(0755, om)
       File.install(mf, omf, 0644, true)
     else
       FileUtils.makedirs(om, {:mode => 0755, :verbose => true})
