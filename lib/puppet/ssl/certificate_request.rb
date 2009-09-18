@@ -29,9 +29,14 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
         # Support either an actual SSL key, or a Puppet key.
         key = key.content if key.is_a?(Puppet::SSL::Key)
 
+        # If we're a CSR for the CA, then use the real certname, rather than the
+        # fake 'ca' name.  This is mostly for backward compatibility with 0.24.x,
+        # but it's also just a good idea.
+        common_name = name == Puppet::SSL::CA_NAME ? Puppet.settings[:ca_name] : name
+
         csr = OpenSSL::X509::Request.new
         csr.version = 0
-        csr.subject = OpenSSL::X509::Name.new([["CN", name]])
+        csr.subject = OpenSSL::X509::Name.new([["CN", common_name]])
         csr.public_key = key.public_key
         csr.sign(key, OpenSSL::Digest::MD5.new)
 

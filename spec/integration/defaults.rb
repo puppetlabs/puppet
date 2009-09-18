@@ -204,4 +204,9 @@ describe "Puppet defaults" do
             Puppet.settings[:report_server].should == "report_server"
         end
     end
+    
+    it "should have a :caname setting that defaults to the cert name" do
+        Puppet.settings[:certname] = "foo"
+        Puppet.settings[:ca_name].should == "foo"
+    end
 end

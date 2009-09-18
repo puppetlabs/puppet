@@ -117,6 +117,21 @@ describe Puppet::SSL::CertificateRequest do
             @instance.generate(@key)
         end
 
+        it "should set the CN to the CSR name when the CSR is not for a CA" do
+            subject = mock 'subject'
+            OpenSSL::X509::Name.expects(:new).with { |subject| subject[0][1] == @instance.name }.returns(subject)
+            @request.expects(:subject=).with(subject)
+            @instance.generate(@key)
+        end
+
+        it "should set the CN to the :ca_name setting when the CSR is for a CA" do
+            subject = mock 'subject'
+            Puppet.settings.expects(:value).with(:ca_name).returns "mycertname"
+            OpenSSL::X509::Name.expects(:new).with { |subject| subject[0][1] == "mycertname" }.returns(subject)
+            @request.expects(:subject=).with(subject)
+            Puppet::SSL::CertificateRequest.new(Puppet::SSL::CA_NAME).generate(@key)
+        end
+
         it "should set the version to 0" do
             @request.expects(:version=).with(0)
             @instance.generate(@key)

@@ -284,6 +284,7 @@ module Puppet
     )
 
     setdefaults(:ca,
+        :ca_name => ["$certname", "The name to use the Certificate Authority certificate."],
         :cadir => {  :default => "$ssldir/ca",
             :owner => "service",
             :group => "service",
