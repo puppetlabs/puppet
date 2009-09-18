@@ -128,7 +128,6 @@ Puppet::Reports.register_report(:tagmail) do
                 begin
                     Net::SMTP.start(Puppet[:smtpserver]) do |smtp|
                         reports.each do |emails, messages|
-                            Puppet.info "Sending report to %s" % emails.join(", ")
                             smtp.open_message_stream(Puppet[:reportfrom], *emails) do |p|
                               p.puts "From: #{Puppet[:reportfrom]}"
                               p.puts "Subject: Puppet Report for %s" % self.host
@@ -149,16 +148,13 @@ Puppet::Reports.register_report(:tagmail) do
             elsif Puppet[:sendmail] != ""
                 begin
                     reports.each do |emails, messages|
-                        Puppet.info "Sending report to %s" % emails.join(", ")
                         # We need to open a separate process for every set of email addresses
-                        sync.synchronize do
-                            IO.popen(Puppet[:sendmail] + " " + emails.join(" "), "w") do |p|
-                                p.puts "From: #{Puppet[:reportfrom]}"
-                                p.puts "Subject: Puppet Report for %s" % self.host
-                                p.puts "To: " + emails.join(", ")
+                        IO.popen(Puppet[:sendmail] + " " + emails.join(" "), "w") do |p|
+                            p.puts "From: #{Puppet[:reportfrom]}"
+                            p.puts "Subject: Puppet Report for %s" % self.host
+                            p.puts "To: " + emails.join(", ")
 
-                                p.puts messages
-                            end
+                            p.puts messages
                         end
                     end
                 rescue => detail
@@ -175,13 +171,6 @@ Puppet::Reports.register_report(:tagmail) do
 
         # Don't bother waiting for the pid to return.
         Process.detach(pid)
-    end
-
-    def sync
-        unless defined?(@sync)
-            @sync = Sync.new
-        end
-        @sync
     end
 end
 
