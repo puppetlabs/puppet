@@ -104,7 +104,7 @@ class Puppet::Network::HTTP::WEBrick
         results[:SSLStartImmediately] = true
         results[:SSLEnable] = true
 
-        unless Puppet::SSL::Certificate.find("ca")
+        unless Puppet::SSL::Certificate.find(Puppet::SSL::CA_NAME)
             raise Puppet::Error, "Could not find CA certificate"
         end
 

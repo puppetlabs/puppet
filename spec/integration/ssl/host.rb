@@ -33,7 +33,7 @@ describe Puppet::SSL::Host do
     }
 
     it "should be considered a CA host if its name is equal to 'ca'" do
-        Puppet::SSL::Host.new("ca").should be_ca
+        Puppet::SSL::Host.new(Puppet::SSL::CA_NAME).should be_ca
     end
 
     describe "when managing its key" do

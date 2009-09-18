@@ -10,6 +10,7 @@ require 'puppet/util/cacher'
 class Puppet::SSL::Host
     # Yay, ruby's strange constant lookups.
     Key = Puppet::SSL::Key
+    CA_NAME = Puppet::SSL::CA_NAME
     Certificate = Puppet::SSL::Certificate
     CertificateRequest = Puppet::SSL::CertificateRequest
     CertificateRevocationList = Puppet::SSL::CertificateRevocationList
@@ -30,7 +31,6 @@ class Puppet::SSL::Host
         end
     end
 
-    CA_NAME = "ca"
     # This is the constant that people will use to mark that a given host is
     # a certificate authority.
     def self.ca_name
@@ -171,7 +171,7 @@ class Puppet::SSL::Host
 
             # get the CA cert first, since it's required for the normal cert
             # to be of any use.
-            return nil unless Certificate.find("ca") unless ca?
+            return nil unless Certificate.find(CA_NAME) unless ca?
             return nil unless @certificate = Certificate.find(name)
 
             unless certificate_matches_key?
@@ -224,7 +224,7 @@ class Puppet::SSL::Host
             @ssl_store.add_file(Puppet[:localcacert])
 
             # If there's a CRL, add it to our store.
-            if crl = Puppet::SSL::CertificateRevocationList.find("ca")
+            if crl = Puppet::SSL::CertificateRevocationList.find(CA_NAME)
                 @ssl_store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
                 @ssl_store.add_crl(crl.content)
             end

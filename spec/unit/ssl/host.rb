@@ -415,7 +415,7 @@ describe Puppet::SSL::Host do
         end
 
         it "should find the CA certificate if it does not have a certificate" do
-            Puppet::SSL::Certificate.expects(:find).with("ca").returns mock("cacert")
+            Puppet::SSL::Certificate.expects(:find).with(Puppet::SSL::CA_NAME).returns mock("cacert")
             Puppet::SSL::Certificate.stubs(:find).with("myname").returns @cert
 
             @host.certificate
@@ -424,13 +424,13 @@ describe Puppet::SSL::Host do
         it "should not find the CA certificate if it is the CA host" do
             @host.expects(:ca?).returns true
             Puppet::SSL::Certificate.stubs(:find)
-            Puppet::SSL::Certificate.expects(:find).with("ca").never
+            Puppet::SSL::Certificate.expects(:find).with(Puppet::SSL::CA_NAME).never
 
             @host.certificate
         end
 
         it "should return nil if it cannot find a CA certificate" do
-            Puppet::SSL::Certificate.expects(:find).with("ca").returns nil
+            Puppet::SSL::Certificate.expects(:find).with(Puppet::SSL::CA_NAME).returns nil
             Puppet::SSL::Certificate.expects(:find).with("myname").never
 
             @host.certificate.should be_nil
@@ -453,7 +453,7 @@ describe Puppet::SSL::Host do
         end
 
         it "should find the certificate in the Certificate class and return the Puppet certificate instance" do
-            Puppet::SSL::Certificate.expects(:find).with("ca").returns mock("cacert")
+            Puppet::SSL::Certificate.expects(:find).with(Puppet::SSL::CA_NAME).returns mock("cacert")
             Puppet::SSL::Certificate.expects(:find).with("myname").returns @cert
 
             @host.certificate.should equal(@cert)
@@ -468,7 +468,7 @@ describe Puppet::SSL::Host do
         end
 
         it "should return any previously found certificate" do
-            Puppet::SSL::Certificate.expects(:find).with("ca").returns mock("cacert")
+            Puppet::SSL::Certificate.expects(:find).with(Puppet::SSL::CA_NAME).returns mock("cacert")
             Puppet::SSL::Certificate.expects(:find).with("myname").returns(@cert).once
 
             @host.certificate.should equal(@cert)
