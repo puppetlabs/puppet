@@ -143,6 +143,7 @@ describe "Puppet" do
                 @interpreter = stub_everything
                 Puppet.stubs(:err)
                 @puppet.stubs(:exit)
+                @puppet.options.stubs(:[]).with(:code).returns "some code"
                 Puppet::Parser::Interpreter.stubs(:new).returns(@interpreter)
             end
 
