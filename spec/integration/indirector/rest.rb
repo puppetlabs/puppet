@@ -11,6 +11,7 @@ class Puppet::TestIndirectedFoo
     indirects :test_indirected_foo, :terminus_setting => :test_indirected_foo_terminus
 
     attr_reader :value
+    attr_accessor :name
 
     def initialize(value = 0)
         @value = value
