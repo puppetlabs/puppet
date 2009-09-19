@@ -3,12 +3,12 @@
 $: << File.expand_path('lib')
 $LOAD_PATH << File.join(File.dirname(__FILE__), 'tasks')
 
-Dir['tasks/**/*.rake'].each { |t| load t }
-
 require './lib/puppet.rb'
 require 'rake'
 require 'rake/packagetask'
 require 'rake/gempackagetask'
+
+Dir['tasks/**/*.rake'].each { |t| load t }
 
 FILES = FileList[
     '[A-Z]*',
@@ -24,36 +24,17 @@ FILES = FileList[
     'spec/**/*'
 ]
 
-task :default do
-    sh %{rake -T}
-end
-
-spec = Gem::Specification.new do |spec|
-    spec.platform = Gem::Platform::RUBY
-    spec.name = 'puppet'
-    spec.files = FILES.to_a
-    spec.version = Puppet::PUPPETVERSION
-    spec.add_dependency('facter', '>= 1.5.1')
-    spec.summary = 'Puppet, an automated configuration management tool'
-    spec.author = 'Reductive Labs'
-    spec.email = 'puppet@reductivelabs.com'
-    spec.homepage = 'http://reductivelabs.com'
-    spec.rubyforge_project = 'puppet'
-    spec.has_rdoc = true
-    spec.rdoc_options <<
-        '--title' <<  'Puppet - Configuration Management' <<
-        '--main' << 'README' <<
-        '--line-numbers'
-end
-
 Rake::PackageTask.new("puppet", Puppet::PUPPETVERSION) do |pkg|
     pkg.package_dir = 'pkg'
     pkg.need_tar_gz = true
     pkg.package_files = FILES.to_a
 end
 
-Rake::GemPackageTask.new(spec) do |pkg|
+task :default do
+    sh %{rake -T}
 end
+
+task :puppetpackages => [:create_gem, :package]
 
 desc "Run the specs under spec/"
 task :spec do
