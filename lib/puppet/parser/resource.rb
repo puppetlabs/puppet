@@ -17,7 +17,7 @@ class Puppet::Parser::Resource
     include Puppet::Parser::YamlTrimmer
 
     attr_accessor :source, :scope, :rails_id
-    attr_accessor :virtual, :override, :translated
+    attr_accessor :virtual, :override, :translated, :catalog
 
     attr_reader :exported, :evaluated, :params
 
@@ -304,21 +304,40 @@ class Puppet::Parser::Resource
         end
     end
 
+    def add_backward_compatible_relationship_param(name)
+        # Skip metaparams for which we get no value.
+        return unless val = scope.lookupvar(name.to_s, false) and val != :undefined
+
+        # The default case: just set the value
+        set_parameter(name, val) and return unless @params[name]
+
+        # For relationship params, though, join the values (a la #446).
+        @params[name].value = [@params[name].value, val].flatten
+    end
+
     # Add any metaparams defined in our scope. This actually adds any metaparams
     # from any parent scope, and there's currently no way to turn that off.
     def add_metaparams
+        compat_mode = metaparam_compatibility_mode?
+
         Puppet::Type.eachmetaparam do |name|
-            next if self.class.relationship_parameter?(name)
-            # Skip metaparams that we already have defined, unless they're relationship metaparams.
-            # LAK:NOTE Relationship metaparams get treated specially -- we stack them, instead of
-            # overriding.
+            if self.class.relationship_parameter?(name)
+                add_backward_compatible_relationship_param(name) if compat_mode
+                next
+            end
+
             next if @params[name]
 
             # Skip metaparams for which we get no value.
             next unless val = scope.lookupvar(name.to_s, false) and val != :undefined
 
-            set_parameter(name, val) and next unless @params[name]
+            set_parameter(name, val)
         end
+    end
+
+    # Unless we're running >= 0.25, we're in compat mode.
+    def metaparam_compatibility_mode?
+        ! (catalog and version = catalog.client_version and version = version.split(".") and version[0] == "0" and version[1].to_i >= 25)
     end
 
     def add_scope_tags

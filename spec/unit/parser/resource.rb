@@ -170,6 +170,24 @@ describe Puppet::Parser::Resource do
             @resource[:owner].should == "other"
         end
 
+        it "should be running in metaparam compatibility mode if running a version below 0.25" do
+            catalog = stub 'catalog', :client_version => "0.24.8"
+            @resource.stubs(:catalog).returns catalog
+            @resource.should be_metaparam_compatibility_mode
+        end
+
+        it "should be running in metaparam compatibility mode if running no client version is available" do
+            catalog = stub 'catalog', :client_version => nil
+            @resource.stubs(:catalog).returns catalog
+            @resource.should be_metaparam_compatibility_mode
+        end
+
+        it "should not be running in metaparam compatibility mode if running a version at or above 0.25" do
+            catalog = stub 'catalog', :client_version => "0.25.0"
+            @resource.stubs(:catalog).returns catalog
+            @resource.should_not be_metaparam_compatibility_mode
+        end
+
         it "should copy metaparams from its scope" do
             @scope.setvar("noop", "true")
 
@@ -187,12 +205,32 @@ describe Puppet::Parser::Resource do
             @resource["noop"].should == "false"
         end
 
-        it "should not copy relationship metaparams" do
+        it "should not copy relationship metaparams when not in metaparam compatibility mode" do
             @scope.setvar("require", "bar")
 
+            @resource.stubs(:metaparam_compatibility_mode?).returns false
             @resource.class.publicize_methods(:add_metaparams)  { @resource.add_metaparams }
 
             @resource["require"].should be_nil
+        end
+
+        it "should copy relationship metaparams when in metaparam compatibility mode" do
+            @scope.setvar("require", "bar")
+
+            @resource.stubs(:metaparam_compatibility_mode?).returns true
+            @resource.class.publicize_methods(:add_metaparams)  { @resource.add_metaparams }
+
+            @resource["require"].should == "bar"
+        end
+
+        it "should stack relationship metaparams when in metaparam compatibility mode" do
+            @resource.set_parameter("require", "foo")
+            @scope.setvar("require", "bar")
+
+            @resource.stubs(:metaparam_compatibility_mode?).returns true
+            @resource.class.publicize_methods(:add_metaparams)  { @resource.add_metaparams }
+
+            @resource["require"].should == ["foo", "bar"]
         end
 
         it "should copy all metaparams that it finds" do
