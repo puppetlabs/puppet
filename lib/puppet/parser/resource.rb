@@ -175,6 +175,11 @@ class Puppet::Parser::Resource
         end
     end
 
+    # Unless we're running >= 0.25, we're in compat mode.
+    def metaparam_compatibility_mode?
+        ! (catalog and version = catalog.client_version and version = version.split(".") and version[0] == "0" and version[1].to_i >= 25)
+    end
+
     # Return the resource name, or the title if no name
     # was specified.
     def name
@@ -333,11 +338,6 @@ class Puppet::Parser::Resource
 
             set_parameter(name, val)
         end
-    end
-
-    # Unless we're running >= 0.25, we're in compat mode.
-    def metaparam_compatibility_mode?
-        ! (catalog and version = catalog.client_version and version = version.split(".") and version[0] == "0" and version[1].to_i >= 25)
     end
 
     def add_scope_tags

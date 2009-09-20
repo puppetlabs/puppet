@@ -23,12 +23,24 @@ class depends on the required class.
        file { '/foo': notify => Service[foo] }
     }
 
+Note that this function only works with clients 0.25 and later, and it will
+fail if used with earlier clients.
+
 ") do |vals|
-        send(:function_include, vals)
+    send(:function_include, vals)
+    if resource.metaparam_compatibility_mode?
+        warning "The 'require' function is only compatible with clients at 0.25 and above; including class but not adding dependency"
+    else
         vals = [vals] unless vals.is_a?(Array)
 
-        # add a relation from ourselves to each required klass
         vals.each do |klass|
-            compiler.catalog.add_edge(resource, findresource(:class, klass))
+            # This is a bit hackish, in some ways, but it's the only way
+            # to configure a dependency that will make it to the client.
+            # The 'obvious' way is just to add an edge in the catalog,
+            # but that is considered a containment edge, not a dependency
+            # edge, so it usually gets lost on the client.
+            ref = Puppet::Parser::Resource::Reference.new(:type => :class, :title => klass)
+            resource.set_parameter(:require, ref)
         end
+    end
 end

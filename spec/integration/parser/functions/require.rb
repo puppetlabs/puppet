@@ -10,6 +10,7 @@ describe "the require function" do
         @compiler = Puppet::Parser::Compiler.new(@node, @parser)
 
         @compiler.send(:evaluate_main)
+        @compiler.catalog.client_version = "0.25"
         @scope = @compiler.topscope
         # preload our functions
         Puppet::Parser::Functions.function(:include)
@@ -20,10 +21,11 @@ describe "the require function" do
         @parser.newclass("requiredclass")
 
         @scope.function_require("requiredclass")
-
-        @compiler.catalog.edge?(@scope.resource,@compiler.findresource(:class,"requiredclass")).should be_true
+        @scope.resource["require"].should_not be_nil
+        ref = @scope.resource["require"]
+        ref.type.should == "Class"
+        ref.title.should == "requiredclass"
     end
-
 end
 
 describe "the include function" do
