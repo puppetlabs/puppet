@@ -35,6 +35,18 @@ describe Puppet::Resource::Catalog, "when compiling" do
         @catalog.write_class_file
     end
 
+    it "should have a client_version attribute" do
+        @catalog = Puppet::Resource::Catalog.new("host")
+        @catalog.client_version = 5
+        @catalog.client_version.should == 5
+    end
+
+    it "should have a server_version attribute" do
+        @catalog = Puppet::Resource::Catalog.new("host")
+        @catalog.server_version = 5
+        @catalog.server_version.should == 5
+    end
+
     describe "when compiling" do
         it "should accept tags" do
             config = Puppet::Resource::Catalog.new("mynode")

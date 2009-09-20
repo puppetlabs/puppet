@@ -131,6 +131,15 @@ describe Puppet::Parser::Compiler do
             @compiler.topscope.lookupvar("c").should == "d"
         end
 
+        it "should set the client and server versions on the catalog" do
+            params = {"clientversion" => "2", "serverversion" => "3"}
+            @node.stubs(:parameters).returns(params)
+            compile_stub(:set_node_parameters)
+            @compiler.compile
+            @compiler.catalog.client_version.should == "2"
+            @compiler.catalog.server_version.should == "3"
+        end
+
         it "should evaluate any existing classes named in the node" do
             classes = %w{one two three four}
             main = stub 'main'

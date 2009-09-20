@@ -46,6 +46,9 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     # whether it is written back out again.
     attr_accessor :from_cache
 
+    # Some metadata to help us compile and generally respond to the current state.
+    attr_accessor :client_version, :server_version
+
     # Add classes to our class list.
     def add_class(*classes)
         classes.each do |klass|

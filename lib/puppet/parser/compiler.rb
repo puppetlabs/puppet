@@ -422,6 +422,10 @@ class Puppet::Parser::Compiler
         node.parameters.each do |param, value|
             @topscope.setvar(param, value)
         end
+
+        # These might be nil.
+        catalog.client_version = node.parameters["clientversion"]
+        catalog.server_version = node.parameters["serverversion"]
     end
 
     # Return an array of all of the unevaluated resources.  These will be definitions,
