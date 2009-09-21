@@ -171,7 +171,7 @@ class Puppet::Parser::Lexer
         [self,value]
     end
 
-    TOKENS.add_token :REGEX, %r{/[^/]*/} do |lexer, value|
+    TOKENS.add_token :REGEX, %r{/[^/\n]*/} do |lexer, value|
         # Make sure we haven't matched an escaped /
         while value[-2..-2] == '\\'
             other = lexer.scan_until(%r{/})

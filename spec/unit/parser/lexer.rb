@@ -460,6 +460,10 @@ describe Puppet::Parser::Lexer::TOKENS[:REGEX] do
         @token.regex.should =~ '/this is a regex/'
     end
 
+    it 'should not match if there is \n in the regex' do
+        @token.regex.should_not =~ "/this is \n a regex/"
+    end
+
     describe "when including escaped slashes" do
         before { @lexer = Puppet::Parser::Lexer.new }
 
