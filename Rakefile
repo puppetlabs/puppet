@@ -50,7 +50,7 @@ task :spec do
         t.spec_files = FileList['spec/**/*.rb']
         if defined?(Rcov)
             t.rcov = true
-            t.rcov_opts = ['--exclude', 'spec/*,test/*,results/*,/usr/lib/*']
+            t.rcov_opts = ['--exclude', 'spec/*,test/*,results/*,/usr/lib/*,/usr/local/lib/*']
         end
      end
 end
