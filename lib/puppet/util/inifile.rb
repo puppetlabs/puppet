@@ -180,6 +180,14 @@ module Puppet::Util::IniConfig
             end
         end
 
+        # Execute BLOCK, passing each file constituting this inifile
+        # as an argument
+        def each_file(&block)
+            @files.keys.each do |file|
+                yield(file)
+            end
+        end
+
         # Return the Section with the given name or nil
         def [](name)
             name = name.to_s
