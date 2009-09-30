@@ -85,33 +85,33 @@ Puppet::Type.newtype(:resources) do
         end
     end
 
+    def able_to_ensure_absent?(resource)
+        begin
+            resource[:ensure] = :absent
+        rescue ArgumentError, Puppet::Error => detail
+            err "The 'ensure' attribute on #{self[:name]} resources does not accept 'absent' as a value"
+            false
+        end
+    end
+
     # Generate any new resources we need to manage.  This is pretty hackish
     # right now, because it only supports purging.
     def generate
         return [] unless self.purge?
-        hascheck = false
-        method =
-        resource_type.instances.find_all do |resource|
-            ! resource.managed?
-        end.find_all do |resource|
-            check(resource)
-        end.each do |resource|
-            begin
-                resource[:ensure] = :absent
-            rescue ArgumentError, Puppet::Error => detail
-                err "The 'ensure' attribute on %s resources does not accept 'absent' as a value" %
-                    [self[:name]]
-                return []
-            end
+        resource_type.instances.
+          reject { |r| managed? }.
+          reject { |r| catalog.resources.include? r.ref }.
+          select { |r| check(r) }.
+          select { |r| able_to_ensure_absent?(r) }.
+          each { |resource|
             @parameters.each do |name, param|
-                next unless param.metaparam?
-                resource[name] = param.value
+                resource[name] = param.value if param.metaparam?
             end
 
             # Mark that we're purging, so transactions can handle relationships
             # correctly
             resource.purging
-        end
+          }
     end
 
     def resource_type
