@@ -226,11 +226,18 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
         # This mainly converts the keys from the puppet attributes to the
         # 'native' ones, but also enforces that the keys are all Strings
         # rather than Symbols so that any merges of the resultant Hash are
-        # sane.
+        # sane. The exception is booleans, where we coerce to a proper bool
+        # if they come in as a symbol.
         newplist = {}
         propertylist.each_pair do |key, value|
             next if key == :ensure     # not part of the auth db schema.
             next if key == :auth_type  # not part of the auth db schema.
+            case value
+            when true, :true
+                value = true
+            when false, :false
+                value = false
+            end
             new_key = key
             if PuppetToNativeAttributeMap.has_key?(key)
                 new_key = PuppetToNativeAttributeMap[key].to_s
@@ -243,7 +250,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     end
 
     def retrieve_value(resource_name, attribute)
-
+        # We set boolean values to symbols when retrieving values
         if not self.class.parsed_auth_db.has_key?(resource_name)
             raise Puppet::Error.new("Cannot find #{resource_name} in auth db")
         end
@@ -257,9 +264,9 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
         if self.class.parsed_auth_db[resource_name].has_key?(native_attribute)
             value = self.class.parsed_auth_db[resource_name][native_attribute]
             case value
-            when true, "true", :true
+            when true, :true
                 value = :true
-            when false, "false", :false
+            when false, :false
                 value = :false
             end
 
@@ -287,14 +294,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
         end
 
         define_method(field.to_s + "=") do |value|
-            case value
-            when true, "true", :true
-                @property_hash[field] = :true
-            when false, "false", :false
-                @property_hash[field] = :false
-            else
-                @property_hash[field] = value
-            end
+            @property_hash[field] = value
         end
     end
 
