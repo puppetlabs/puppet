@@ -76,7 +76,7 @@ describe Puppet::Rails, "when initializing a sqlite3 connection" do
     end
 end
 
-describe Puppet::Rails, "when initializing a mysql or postgresql connection" do
+describe Puppet::Rails, "when initializing a mysql connection" do
     confine "Cannot test without ActiveRecord" => Puppet.features.rails?
 
     it "should provide the adapter, log_level, and host, username, password, and database arguments" do
@@ -115,6 +115,85 @@ describe Puppet::Rails, "when initializing a mysql or postgresql connection" do
             :password => "testpassword",
             :database => "testname",
             :socket => "testsocket"
+        }
+    end
+end
+
+describe Puppet::Rails, "when initializing a postgresql connection" do
+    confine "Cannot test without ActiveRecord" => Puppet.features.rails?
+
+    it "should provide the adapter, log_level, and host, username, password, and database arguments" do
+        Puppet.settings.stubs(:value).with(:dbadapter).returns("postgresql")
+        Puppet.settings.stubs(:value).with(:rails_loglevel).returns("testlevel")
+        Puppet.settings.stubs(:value).with(:dbserver).returns("testserver")
+        Puppet.settings.stubs(:value).with(:dbuser).returns("testuser")
+        Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
+        Puppet.settings.stubs(:value).with(:dbname).returns("testname")
+        Puppet.settings.stubs(:value).with(:dbsocket).returns("")
+
+        Puppet::Rails.database_arguments.should == {
+            :adapter => "postgresql",
+            :log_level => "testlevel",
+            :host => "testserver",
+            :username => "testuser",
+            :password => "testpassword",
+            :database => "testname"
+        }
+    end
+
+    it "should provide the adapter, log_level, and host, username, password, database, and socket arguments" do
+        Puppet.settings.stubs(:value).with(:dbadapter).returns("postgresql")
+        Puppet.settings.stubs(:value).with(:rails_loglevel).returns("testlevel")
+        Puppet.settings.stubs(:value).with(:dbserver).returns("testserver")
+        Puppet.settings.stubs(:value).with(:dbuser).returns("testuser")
+        Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
+        Puppet.settings.stubs(:value).with(:dbname).returns("testname")
+        Puppet.settings.stubs(:value).with(:dbsocket).returns("testsocket")
+
+        Puppet::Rails.database_arguments.should == {
+            :adapter => "postgresql",
+            :log_level => "testlevel",
+            :host => "testserver",
+            :username => "testuser",
+            :password => "testpassword",
+            :database => "testname",
+            :socket => "testsocket"
+        }
+    end
+end
+
+describe Puppet::Rails, "when initializing an Oracle connection" do
+    confine "Cannot test without ActiveRecord" => Puppet.features.rails?
+
+    it "should provide the adapter, log_level, and username, password, and database arguments" do
+        Puppet.settings.stubs(:value).with(:dbadapter).returns("oracle_enhanced")
+        Puppet.settings.stubs(:value).with(:rails_loglevel).returns("testlevel")
+        Puppet.settings.stubs(:value).with(:dbuser).returns("testuser")
+        Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
+        Puppet.settings.stubs(:value).with(:dbname).returns("testname")
+
+        Puppet::Rails.database_arguments.should == {
+            :adapter => "oracle_enhanced",
+            :log_level => "testlevel",
+            :username => "testuser",
+            :password => "testpassword",
+            :database => "testname"
+        }
+    end
+
+    it "should provide the adapter, log_level, and host, username, password, database, and socket arguments" do
+        Puppet.settings.stubs(:value).with(:dbadapter).returns("oracle_enhanced")
+        Puppet.settings.stubs(:value).with(:rails_loglevel).returns("testlevel")
+        Puppet.settings.stubs(:value).with(:dbuser).returns("testuser")
+        Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
+        Puppet.settings.stubs(:value).with(:dbname).returns("testname")
+
+        Puppet::Rails.database_arguments.should == {
+            :adapter => "oracle_enhanced",
+            :log_level => "testlevel",
+            :username => "testuser",
+            :password => "testpassword",
+            :database => "testname",
         }
     end
 end
