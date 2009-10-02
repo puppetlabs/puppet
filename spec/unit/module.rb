@@ -25,6 +25,203 @@ describe Puppet::Module do
         Puppet::Module.find("mymod", "myenv").should be_nil
     end
 
+    it "should support a 'version' attribute" do
+        mod = Puppet::Module.new("mymod")
+        mod.version = 1.09
+        mod.version.should == 1.09
+    end
+
+    it "should support a 'source' attribute" do
+        mod = Puppet::Module.new("mymod")
+        mod.source = "http://foo/bar"
+        mod.source.should == "http://foo/bar"
+    end
+
+    it "should support a 'project_page' attribute" do
+        mod = Puppet::Module.new("mymod")
+        mod.project_page = "http://foo/bar"
+        mod.project_page.should == "http://foo/bar"
+    end
+
+    it "should support an 'author' attribute" do
+        mod = Puppet::Module.new("mymod")
+        mod.author = "Luke Kanies <luke@madstop.com>"
+        mod.author.should == "Luke Kanies <luke@madstop.com>"
+    end
+
+    it "should support a 'license' attribute" do
+        mod = Puppet::Module.new("mymod")
+        mod.license = "GPL2"
+        mod.license.should == "GPL2"
+    end
+
+    it "should support a 'summary' attribute" do
+        mod = Puppet::Module.new("mymod")
+        mod.summary = "GPL2"
+        mod.summary.should == "GPL2"
+    end
+
+    it "should support a 'description' attribute" do
+        mod = Puppet::Module.new("mymod")
+        mod.description = "GPL2"
+        mod.description.should == "GPL2"
+    end
+
+    it "should support specifying a compatible puppet version" do
+        mod = Puppet::Module.new("mymod")
+        mod.puppetversion = "0.25"
+        mod.puppetversion.should == "0.25"
+    end
+
+    it "should validate that the puppet version is compatible" do
+        mod = Puppet::Module.new("mymod")
+        mod.puppetversion = "0.25"
+        Puppet.expects(:version).returns "0.25"
+        mod.validate_puppet_version
+    end
+
+    it "should fail if the specified puppet version is not compatible" do
+        mod = Puppet::Module.new("mymod")
+        mod.puppetversion = "0.25"
+        Puppet.stubs(:version).returns "0.24"
+        lambda { mod.validate_puppet_version }.should raise_error(Puppet::Module::IncompatibleModule)
+    end
+
+    describe "when specifying required modules" do
+        it "should support specifying a required module" do
+            mod = Puppet::Module.new("mymod")
+            mod.requires "foobar"
+        end
+
+        it "should support specifying multiple required modules" do
+            mod = Puppet::Module.new("mymod")
+            mod.requires "foobar"
+            mod.requires "baz"
+        end
+
+        it "should support specifying a required module and version" do
+            mod = Puppet::Module.new("mymod")
+            mod.requires "foobar", 1.0
+        end
+
+        it "should fail when required modules are missing" do
+            mod = Puppet::Module.new("mymod")
+            mod.requires "foobar"
+
+            mod.environment.expects(:module).with("foobar").returns nil
+
+            lambda { mod.validate_dependencies }.should raise_error(Puppet::Module::MissingModule)
+        end
+
+        it "should fail when required modules are present but of the wrong version" do
+            mod = Puppet::Module.new("mymod")
+            mod.requires "foobar", 1.0
+
+            foobar = Puppet::Module.new("foobar")
+            foobar.version = 2.0
+
+            mod.environment.expects(:module).with("foobar").returns foobar
+
+            lambda { mod.validate_dependencies }.should raise_error(Puppet::Module::IncompatibleModule)
+        end
+
+        it "should have valid dependencies when no dependencies have been specified" do
+            mod = Puppet::Module.new("mymod")
+
+            lambda { mod.validate_dependencies }.should_not raise_error
+        end
+
+        it "should fail when some dependencies are present but others aren't" do
+            mod = Puppet::Module.new("mymod")
+            mod.requires "foobar"
+            mod.requires "baz"
+
+            mod.environment.expects(:module).with("foobar").returns Puppet::Module.new("foobar")
+            mod.environment.expects(:module).with("baz").returns nil
+
+            lambda { mod.validate_dependencies }.should raise_error(Puppet::Module::MissingModule)
+        end
+
+        it "should have valid dependencies when all dependencies are met" do
+            mod = Puppet::Module.new("mymod")
+            mod.requires "foobar", 1.0
+            mod.requires "baz"
+
+            foobar = Puppet::Module.new("foobar")
+            foobar.version = 1.0
+
+            baz = Puppet::Module.new("baz")
+
+            mod.environment.expects(:module).with("foobar").returns foobar
+            mod.environment.expects(:module).with("baz").returns baz
+
+            lambda { mod.validate_dependencies }.should_not raise_error
+        end
+
+        it "should validate its dependendencies on initialization" do
+            Puppet::Module.any_instance.expects(:validate_dependencies)
+            Puppet::Module.new("mymod")
+        end
+    end
+
+    describe "when managing supported platforms" do
+        it "should support specifying a supported platform" do
+            mod = Puppet::Module.new("mymod")
+            mod.supports "solaris"
+        end
+
+        it "should support specifying a supported platform and version" do
+            mod = Puppet::Module.new("mymod")
+            mod.supports "solaris", 1.0
+        end
+
+        it "should fail when not running on a supported platform" do
+            pending "Not sure how to send client platform to the module"
+            mod = Puppet::Module.new("mymod")
+            Facter.expects(:value).with("operatingsystem").returns "Solaris"
+
+            mod.supports "hpux"
+
+            lambda { mod.validate_supported_platform }.should raise_error(Puppet::Module::UnsupportedPlatform)
+        end
+
+        it "should fail when supported platforms are present but of the wrong version" do
+            pending "Not sure how to send client platform to the module"
+            mod = Puppet::Module.new("mymod")
+            Facter.expects(:value).with("operatingsystem").returns "Solaris"
+            Facter.expects(:value).with("operatingsystemrelease").returns 2.0
+
+            mod.supports "Solaris", 1.0
+
+            lambda { mod.validate_supported_platform }.should raise_error(Puppet::Module::IncompatiblePlatform)
+        end
+
+        it "should be considered supported when no supported platforms have been specified" do
+            pending "Not sure how to send client platform to the module"
+            mod = Puppet::Module.new("mymod")
+            lambda { mod.validate_supported_platform }.should_not raise_error
+        end
+
+        it "should be considered supported when running on a supported platform" do
+            pending "Not sure how to send client platform to the module"
+            mod = Puppet::Module.new("mymod")
+            Facter.expects(:value).with("operatingsystem").returns "Solaris"
+            Facter.expects(:value).with("operatingsystemrelease").returns 2.0
+
+            mod.supports "Solaris", 1.0
+
+            lambda { mod.validate_supported_platform }.should raise_error(Puppet::Module::IncompatiblePlatform)
+        end
+
+        it "should be considered supported when running on any of multiple supported platforms" do
+            pending "Not sure how to send client platform to the module"
+        end
+
+        it "should validate its platform support on initialization" do
+            pending "Not sure how to send client platform to the module"
+        end
+    end
+
     it "should return nil if asked for a module whose name is 'nil'" do
         Puppet::Module.find(nil, "myenv").should be_nil
     end
@@ -243,5 +440,106 @@ describe Puppet::Module, "when finding matching manifests" do
         Dir.expects(:glob).with("/a/manifests/yay/*.pp").returns([])
 
         @mod.match_manifests("yay/*.pp").should == []
+    end
+end
+
+describe Puppet::Module do
+    before do
+        Puppet::Module.any_instance.stubs(:path).returns "/my/mod/path"
+        @module = Puppet::Module.new("foo")
+    end
+
+    it "should use 'License' in its current path as its metadata file" do
+        @module.license_file.should == "/my/mod/path/License"
+    end
+
+    it "should return nil as its license file when the module has no path" do
+        Puppet::Module.any_instance.stubs(:path).returns nil
+        Puppet::Module.new("foo").license_file.should be_nil
+    end
+
+    it "should cache the license file" do
+        Puppet::Module.any_instance.expects(:path).once.returns nil
+        mod = Puppet::Module.new("foo")
+        mod.license_file.should == mod.license_file
+    end
+
+    it "should use 'metadata.json' in its current path as its metadata file" do
+        @module.metadata_file.should == "/my/mod/path/metadata.json"
+    end
+
+    it "should return nil as its metadata file when the module has no path" do
+        Puppet::Module.any_instance.stubs(:path).returns nil
+        Puppet::Module.new("foo").metadata_file.should be_nil
+    end
+
+    it "should cache the metadata file" do
+        Puppet::Module.any_instance.expects(:path).once.returns nil
+        mod = Puppet::Module.new("foo")
+        mod.metadata_file.should == mod.metadata_file
+    end
+
+    it "should know if it has a metadata file" do
+        FileTest.expects(:exist?).with(@module.metadata_file).returns true
+
+        @module.should be_has_metadata
+    end
+
+    it "should know if it is missing a metadata file" do
+        FileTest.expects(:exist?).with(@module.metadata_file).returns false
+
+        @module.should_not be_has_metadata
+    end
+
+    it "should be able to parse its metadata file" do
+        @module.should respond_to(:load_metadata)
+    end
+
+    it "should parse its metadata file on initialization if it is present" do
+        Puppet::Module.any_instance.expects(:has_metadata?).returns true
+        Puppet::Module.any_instance.expects(:load_metadata)
+
+        Puppet::Module.new("yay")
+    end
+
+    describe "when loading the medatada file" do
+        confine "Cannot test module metadata without json" => Puppet.features.json?
+
+        before do
+            @data = {
+                :license => "GPL2",
+                :author => "luke",
+                :version => "1.0",
+                :source => "http://foo/",
+                :puppetversion => "0.25"
+            }
+            @text = @data.to_json
+
+            @module = Puppet::Module.new("foo")
+            @module.stubs(:metadata_file).returns "/my/file"
+            File.stubs(:read).with("/my/file").returns @text
+        end
+
+        %w{source author version license}.each do |attr|
+            it "should set #{attr} if present in the metadata file" do
+                @module.load_metadata
+                @module.send(attr).should == @data[attr.to_sym]
+            end
+
+            it "should fail if #{attr} is not present in the metadata file" do
+                @data.delete(attr.to_sym)
+                @text = @data.to_json
+                File.stubs(:read).with("/my/file").returns @text
+                lambda { @module.load_metadata }.should raise_error(Puppet::Module::MissingMetadata)
+            end
+        end
+
+        it "should set puppetversion if present in the metadata file" do
+            @module.load_metadata
+            @module.puppetversion.should == @data[:puppetversion]
+        end
+
+
+        it "should fail if the discovered name is different than the metadata name"
     end
 end

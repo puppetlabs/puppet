@@ -2,6 +2,12 @@ require 'puppet/util/logging'
 
 # Support for modules
 class Puppet::Module
+    class MissingModule < Puppet::Error; end
+    class IncompatibleModule < Puppet::Error; end
+    class UnsupportedPlatform < Puppet::Error; end
+    class IncompatiblePlatform < Puppet::Error; end
+    class MissingMetadata < Puppet::Error; end
+
     include Puppet::Util::Logging
 
     class InvalidName < ArgumentError
@@ -35,6 +41,14 @@ class Puppet::Module
     attr_reader :name, :environment
     attr_writer :environment
 
+    attr_accessor :source, :author, :version, :license, :puppetversion, :summary, :description, :project_page
+
+    def has_metadata?
+        return false unless metadata_file
+
+        FileTest.exist?(metadata_file)
+    end
+
     def initialize(name, environment = nil)
         @name = name
 
@@ -45,6 +59,11 @@ class Puppet::Module
         else
             @environment = Puppet::Node::Environment.new(environment)
         end
+
+        load_metadata if has_metadata?
+
+        validate_puppet_version
+        validate_dependencies
     end
 
     FILETYPES.each do |type|
@@ -86,6 +105,25 @@ class Puppet::Module
         subpath("files")
     end
 
+    def license_file
+        return @license_file if defined?(@license_file)
+
+        return @license_file = nil unless path
+        @license_file = File.join(path, "License")
+    end
+
+    def load_metadata
+        data = JSON.parse File.read(metadata_file)
+        [:source, :author, :version, :license, :puppetversion].each do |attr|
+            unless value = data[attr.to_s]
+                unless attr == :puppetversion
+                    raise MissingMetadata, "No #{attr} module metadata provided for #{self.name}"
+                end
+            end
+            send(attr.to_s + "=", value)
+        end
+    end
+
     # Return the list of manifests matching the given glob pattern,
     # defaulting to 'init.pp' for empty modules.
     def match_manifests(rest)
@@ -100,6 +138,13 @@ class Puppet::Module
         result.flatten.compact
     end
 
+    def metadata_file
+        return @metadata_file if defined?(@metadata_file)
+
+        return @metadata_file = nil unless path
+        @metadata_file = File.join(path, "metadata.json")
+    end
+
     # Find this module in the modulepath.
     def path
         environment.modulepath.collect { |path| File.join(path, name) }.find { |d| FileTest.exist?(d) }
@@ -110,12 +155,41 @@ class Puppet::Module
         subpath("plugins")
     end
 
+    def requires(name, version = nil)
+        @requires ||= []
+        @requires << [name, version]
+    end
+
+    def supports(name, version = nil)
+        @supports ||= []
+        @supports << [name, version]
+    end
+
     def to_s
         result = "Module %s" % name
         if path
             result += "(%s)" % path
         end
         result
+    end
+
+    def validate_dependencies
+        return unless defined?(@requires)
+
+        @requires.each do |name, version|
+            unless mod = environment.module(name)
+                raise MissingModule, "Missing module #{name} required by #{self.name}"
+            end
+
+            if version and mod.version != version
+                raise IncompatibleModule, "Required module #{name} is version #{mod.version} but #{self.name} requires #{version}"
+            end
+        end
+    end
+
+    def validate_puppet_version
+        return unless puppetversion and puppetversion != Puppet.version
+        raise IncompatibleModule, "Module #{self.name} is only compatible with Puppet version #{puppetversion}, not #{Puppet.version}"
     end
 
     private
