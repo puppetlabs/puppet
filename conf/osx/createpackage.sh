@@ -38,7 +38,7 @@ function find_installer() {
   elif [ -f "../${INSTALLRB}" ]; then
     installer="$(pwd)/../${INSTALLRB}"
   elif [ -f "../../${INSTALLRB}" ]; then
-    installer="$(pwd)/../${INSTALLRB}"
+    installer="$(pwd)/../../${INSTALLRB}"
   else
     installer=""
   fi
