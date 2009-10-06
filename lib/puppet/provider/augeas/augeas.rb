@@ -133,6 +133,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         unless @aug
             flags = Augeas::NONE
             flags = Augeas::TYPE_CHECK if resource[:type_check] == :true
+            flags |= Augeas::NO_MODL_AUTOLOAD if resource[:incl]
             root = resource[:root]
             load_path = resource[:load_path]
             debug("Opening augeas with root #{root}, lens path #{load_path}, flags #{flags}")
@@ -140,6 +141,12 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
             if get_augeas_version >= "0.3.6"
                 debug("Augeas version #{get_augeas_version} is installed")
+            end
+
+            if resource[:incl]
+                aug.set("/augeas/load/Xfm/lens", resource[:lens])
+                aug.set("/augeas/load/Xfm/incl", resource[:incl])
+                aug.load
             end
         end
         @aug

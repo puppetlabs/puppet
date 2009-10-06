@@ -58,10 +58,15 @@ Puppet::Type.newtype(:augeas) do
     end
 
     newparam (:context) do
-        desc "Optional context path. This value is pre-pended to the paths of all changes if the
-              path is relative. So a path specified as /files/foo will not be prepended with the
-              context whild files/foo will be prepended"
+        desc "Optional context path. This value is prepended to the paths of all changes if the path is relative. If INCL is set, defaults to '/files' + INCL, otherwise the empty string"
         defaultto ""
+        munge do |value|
+            if value.empty? and resource[:incl]
+                "/files" + resource[:incl]
+            else
+                value
+            end
+        end
     end
 
     newparam (:onlyif) do
@@ -127,6 +132,22 @@ Puppet::Type.newtype(:augeas) do
         newvalues(:true, :false)
 
         defaultto :false
+    end
+
+    newparam(:lens) do
+        desc "Use a specific lens, e.g. 'Hosts.lns'. When this parameter is set, you must also set the incl parameter to indicate which file to load. Only that file will be loaded, which greatly speeds up execution of the type"
+    end
+
+    newparam(:incl) do
+        desc "Load only a specific file, e.g. '/etc/hosts'.  When this parameter is set, you must also set the lens parameter to indicate which lens to use."
+    end
+
+    validate do
+        has_lens = !self[:lens].nil?
+        has_incl = !self[:incl].nil?
+        if has_lens != has_incl
+            self.fail "You must specify both the lens and incl parameters, or neither"
+        end
     end
 
     # This is the acutal meat of the code. It forces
