@@ -103,4 +103,18 @@ describe augeas do
             changes.retrieve.should == :need_to_run
         end
     end
+
+    describe "loading specific files" do
+        it "should require lens when incl is used" do
+            lambda { augeas.new(:name => :no_lens, :incl => "/etc/hosts")}.should raise_error(Puppet::Error)
+        end
+
+        it "should require incl when lens is used" do
+            lambda { augeas.new(:name => :no_incl, :lens => "Hosts.lns") }.should raise_error(Puppet::Error)
+        end
+
+        it "should set the context when a specific file is used" do
+            augeas.new(:name => :no_incl, :lens => "Hosts.lns", :incl => "/etc/hosts")[:context].should == "/files/etc/hosts"
+        end
+    end
 end
