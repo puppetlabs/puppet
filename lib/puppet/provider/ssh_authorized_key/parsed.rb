@@ -15,19 +15,13 @@ Puppet::Type.type(:ssh_authorized_key).provide(:parsed,
         :optional => %w{options},
         :rts => /^\s+/,
         :match    => /^(?:(.+) )?(ssh-dss|ssh-rsa) ([^ ]+)(?: (.+))?$/,
-        :post_parse => proc { |record|
-            if record[:options].nil?
-                record[:options] = [:absent]
-            else
-                record[:options] = Puppet::Type::Ssh_authorized_key::ProviderParsed.parse_options(record[:options])
-            end
+        :post_parse => proc { |h|
+            h[:options] ||= [:absent]
+            h[:options] = Puppet::Type::Ssh_authorized_key::ProviderParsed.parse_options(h[:options]) if h[:options].is_a? String
         },
-        :pre_gen => proc { |record|
-            if record[:options].include?(:absent)
-                record[:options] = ""
-            else
-                record[:options] = record[:options].join(',')
-            end
+        :pre_gen => proc { |h|
+            h[:options] = [] if h[:options].include?(:absent)
+            h[:options] = h[:options].join(',')
         }
 
     record_line :key_v1,

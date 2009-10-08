@@ -144,6 +144,7 @@ class Puppet::Property < Puppet::Parameter
         rescue Puppet::Error, Puppet::DevError
             raise
         rescue => detail
+            puts detail.backtrace if Puppet[:trace]
             raise Puppet::DevError, "Could not convert change %s to string: %s" %
                 [self.name, detail]
         end
