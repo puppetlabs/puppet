@@ -4,7 +4,7 @@ require 'puppet/simple_graph'
 require 'puppet/transaction'
 
 require 'puppet/util/cacher'
-require 'puppet/util/json'
+require 'puppet/util/pson'
 
 require 'puppet/util/tagging'
 
@@ -19,7 +19,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     indirects :catalog, :terminus_class => :compiler
 
     include Puppet::Util::Tagging
-    extend Puppet::Util::Json
+    extend Puppet::Util::Pson
     include Puppet::Util::Cacher::Expirer
 
     # The host name this is a catalog for.
@@ -393,7 +393,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         @resource_table.keys
     end
 
-    def self.from_json(data)
+    def self.from_pson(data)
         result = new(data['name'])
 
         if tags = data['tags'] 
@@ -405,60 +405,63 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         end
 
         if resources = data['resources']
-            resources = JSON.parse(resources) if resources.is_a?(String)
+            resources = PSON.parse(resources) if resources.is_a?(String)
             resources.each do |res|
-                resource_from_json(result, res)
+                resource_from_pson(result, res)
             end
         end
 
         if edges = data['edges']
-            edges = JSON.parse(edges) if edges.is_a?(String)
+            edges = PSON.parse(edges) if edges.is_a?(String)
             edges.each do |edge|
-                edge_from_json(result, edge)
+                edge_from_pson(result, edge)
             end
         end
 
         result
     end
 
-    def self.edge_from_json(result, edge)
-        # If no json_class information was presented, we manually find
+    def self.edge_from_pson(result, edge)
+        # If no type information was presented, we manually find
         # the class.
-        edge = Puppet::Relationship.from_json(edge) if edge.is_a?(Hash)
+        edge = Puppet::Relationship.from_pson(edge) if edge.is_a?(Hash)
         unless source = result.resource(edge.source)
-            raise ArgumentError, "Could not convert from json: Could not find relationship source '%s'" % source
+            raise ArgumentError, "Could not convert from pson: Could not find relationship source '%s'" % source
         end
         edge.source = source
 
         unless target = result.resource(edge.target)
-            raise ArgumentError, "Could not convert from json: Could not find relationship target '%s'" % target
+            raise ArgumentError, "Could not convert from pson: Could not find relationship target '%s'" % target
         end
         edge.target = target
 
         result.add_edge(edge)
     end
 
-    def self.resource_from_json(result, res)
-        # If no json_class information was presented, we manually find
-        # the class.
-        if res.is_a?(Hash)
-            res = res['data'] if res['json_class']
-            res = Puppet::Resource.from_json(res)
-        end
+    def self.resource_from_pson(result, res)
+        res = Puppet::Resource.from_pson(res) if res.is_a? Hash
         result.add_resource(res)
     end
 
-    def to_json(*args)
+    PSON.register_document_type('Catalog',self)
+    def to_pson_data_hash
         {
-            'json_class' => 'Puppet::Resource::Catalog',
-            'data' => {
-                'tags' => tags,
-                'name' => name,
-                'version' => version,
-                'resources' => vertices.to_json(*args),
-                'edges' => edges.to_json(*args)
-            }
-        }.to_json(*args)
+            'document_type' => 'Catalog',
+            'data'       => {
+                'tags'      => tags,
+                'name'      => name,
+                'version'   => version,
+                'resources' => vertices.collect { |v| v.to_pson_data_hash },
+                'edges'     => edges.   collect { |e| e.to_pson_data_hash }
+                },
+            'metadata' => {
+                'api_version' => 1
+                }
+       }
+    end
+
+    def to_pson(*args)
+       to_pson_data_hash.to_pson(*args)
     end
 
     # Convert our catalog into a RAL catalog.

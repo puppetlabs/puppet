@@ -332,17 +332,17 @@ describe "Puppet" do
         end
 
         describe "the 'apply' command" do
-            confine "JSON library is missing; cannot test applying catalogs" => Puppet.features.json?
+            confine "PSON library is missing; cannot test applying catalogs" => Puppet.features.pson?
 
             before do
-                #Puppet::Resource::Catalog.stubs(:json_create).returns Puppet::Resource::Catalog.new
-                JSON.stubs(:parse).returns Puppet::Resource::Catalog.new
+                #Puppet::Resource::Catalog.stubs(:pson_create).returns Puppet::Resource::Catalog.new
+                PSON.stubs(:parse).returns Puppet::Resource::Catalog.new
             end
 
             it "should read the catalog in from disk if a file name is provided" do
-                @puppet.options[:catalog] = "/my/catalog.json"
+                @puppet.options[:catalog] = "/my/catalog.pson"
 
-                File.expects(:read).with("/my/catalog.json").returns "something"
+                File.expects(:read).with("/my/catalog.pson").returns "something"
 
                 @puppet.apply
             end
@@ -355,41 +355,41 @@ describe "Puppet" do
                 @puppet.apply
             end
 
-            it "should deserialize the catalog from json" do
-                @puppet.options[:catalog] = "/my/catalog.json"
+            it "should deserialize the catalog from pson" do
+                @puppet.options[:catalog] = "/my/catalog.pson"
 
                 File.expects(:read).returns "something"
-                JSON.expects(:parse).with("something").returns Puppet::Resource::Catalog.new
+                PSON.expects(:parse).with("something").returns Puppet::Resource::Catalog.new
 
                 @puppet.apply
             end
 
             it "should fail helpfully if deserializing fails" do
-                @puppet.options[:catalog] = "/my/catalog.json"
+                @puppet.options[:catalog] = "/my/catalog.pson"
 
                 File.expects(:read).returns "something"
-                JSON.expects(:parse).raises ArgumentError
+                PSON.expects(:parse).raises ArgumentError
 
                 lambda { @puppet.apply }.should raise_error(Puppet::Error)
             end
 
             it "should convert plain data structures into a catalog if deserialization does not do so" do
-                @puppet.options[:catalog] = "/my/catalog.json"
+                @puppet.options[:catalog] = "/my/catalog.pson"
 
                 File.expects(:read).returns "something"
-                JSON.expects(:parse).with("something").returns({:foo => "bar"})
-                Puppet::Resource::Catalog.expects(:json_create).with({:foo => "bar"}).returns(Puppet::Resource::Catalog.new)
+                PSON.expects(:parse).with("something").returns({:foo => "bar"})
+                Puppet::Resource::Catalog.expects(:pson_create).with({:foo => "bar"}).returns(Puppet::Resource::Catalog.new)
 
                 @puppet.apply
             end
 
             it "should convert the catalog to a RAL catalog and use a Configurer instance to apply it" do
-                @puppet.options[:catalog] = "/my/catalog.json"
+                @puppet.options[:catalog] = "/my/catalog.pson"
 
                 File.expects(:read).returns "something"
 
                 catalog = Puppet::Resource::Catalog.new
-                JSON.expects(:parse).returns catalog
+                PSON.expects(:parse).returns catalog
 
                 catalog.expects(:to_ral).returns "mycatalog"
 

@@ -4,13 +4,13 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/network/formats'
 
-class JsonIntTest
+class PsonIntTest
     attr_accessor :string
     def ==(other)
         other.class == self.class and string == other.string
     end
 
-    def self.from_json(data)
+    def self.from_pson(data)
         new(data[0])
     end
 
@@ -18,15 +18,15 @@ class JsonIntTest
         @string = string
     end
 
-    def to_json(*args)
+    def to_pson(*args)
         {
-            'json_class' => self.class.name,
+            'type' => self.class.name,
             'data' => [@string]
-        }.to_json(*args)
+        }.to_pson(*args)
     end
 
     def self.canonical_order(s)
-        s.gsub(/\{"data":\[(.*?)\],"json_class":"JsonIntTest"\}/,'{"json_class":"JsonIntTest","data":[\1]}')
+        s.gsub(/\{"data":\[(.*?)\],"type":"PsonIntTest"\}/,'{"type":"PsonIntTest","data":[\1]}')
     end
 
 end
@@ -45,65 +45,65 @@ describe Puppet::Network::FormatHandler.format(:s) do
     end
 end
 
-describe Puppet::Network::FormatHandler.format(:json) do
-    describe "when json is absent" do
-        confine "'json' library is present" => (! Puppet.features.json?)
+describe Puppet::Network::FormatHandler.format(:pson) do
+    describe "when pson is absent" do
+        confine "'pson' library is present" => (! Puppet.features.pson?)
 
         before do
-            @json = Puppet::Network::FormatHandler.format(:json)
+            @pson = Puppet::Network::FormatHandler.format(:pson)
         end
 
         it "should not be suitable" do
-            @json.should_not be_suitable
+            @pson.should_not be_suitable
         end
     end
 
-    describe "when json is available" do
-        confine "Missing 'json' library" => Puppet.features.json?
+    describe "when pson is available" do
+        confine "Missing 'pson' library" => Puppet.features.pson?
 
         before do
-            @json = Puppet::Network::FormatHandler.format(:json)
+            @pson = Puppet::Network::FormatHandler.format(:pson)
         end
 
-        it "should be able to render an instance to json" do
-            instance = JsonIntTest.new("foo")
-            JsonIntTest.canonical_order(@json.render(instance)).should == JsonIntTest.canonical_order('{"json_class":"JsonIntTest","data":["foo"]}' )
+        it "should be able to render an instance to pson" do
+            instance = PsonIntTest.new("foo")
+            PsonIntTest.canonical_order(@pson.render(instance)).should == PsonIntTest.canonical_order('{"type":"PsonIntTest","data":["foo"]}' )
         end
 
-        it "should be able to render arrays to json" do
-            @json.render([1,2]).should == '[1,2]'
+        it "should be able to render arrays to pson" do
+            @pson.render([1,2]).should == '[1,2]'
         end
 
-        it "should be able to render arrays containing hashes to json" do
-            @json.render([{"one"=>1},{"two"=>2}]).should == '[{"one":1},{"two":2}]'
+        it "should be able to render arrays containing hashes to pson" do
+            @pson.render([{"one"=>1},{"two"=>2}]).should == '[{"one":1},{"two":2}]'
         end
 
-        it "should be able to render multiple instances to json" do
-            Puppet.features.add(:json, :libs => ["json"])
+        it "should be able to render multiple instances to pson" do
+            Puppet.features.add(:pson, :libs => ["pson"])
 
-            one = JsonIntTest.new("one")
-            two = JsonIntTest.new("two")
+            one = PsonIntTest.new("one")
+            two = PsonIntTest.new("two")
 
-            JsonIntTest.canonical_order(@json.render([one,two])).should == JsonIntTest.canonical_order('[{"json_class":"JsonIntTest","data":["one"]},{"json_class":"JsonIntTest","data":["two"]}]')
+            PsonIntTest.canonical_order(@pson.render([one,two])).should == PsonIntTest.canonical_order('[{"type":"PsonIntTest","data":["one"]},{"type":"PsonIntTest","data":["two"]}]')
         end
 
-        it "should be able to intern json into an instance" do
-            @json.intern(JsonIntTest, '{"json_class":"JsonIntTest","data":["foo"]}').should == JsonIntTest.new("foo")
+        it "should be able to intern pson into an instance" do
+            @pson.intern(PsonIntTest, '{"type":"PsonIntTest","data":["foo"]}').should == PsonIntTest.new("foo")
         end
 
-        it "should be able to intern json with no class information into an instance" do
-            @json.intern(JsonIntTest, '["foo"]').should == JsonIntTest.new("foo")
+        it "should be able to intern pson with no class information into an instance" do
+            @pson.intern(PsonIntTest, '["foo"]').should == PsonIntTest.new("foo")
         end
 
-        it "should be able to intern multiple instances from json" do
-            @json.intern_multiple(JsonIntTest, '[{"json_class": "JsonIntTest", "data": ["one"]},{"json_class": "JsonIntTest", "data": ["two"]}]').should == [
-                JsonIntTest.new("one"), JsonIntTest.new("two")
+        it "should be able to intern multiple instances from pson" do
+            @pson.intern_multiple(PsonIntTest, '[{"type": "PsonIntTest", "data": ["one"]},{"type": "PsonIntTest", "data": ["two"]}]').should == [
+                PsonIntTest.new("one"), PsonIntTest.new("two")
             ]
         end
 
-        it "should be able to intern multiple instances from json with no class information" do
-            @json.intern_multiple(JsonIntTest, '[["one"],["two"]]').should == [
-                JsonIntTest.new("one"), JsonIntTest.new("two")
+        it "should be able to intern multiple instances from pson with no class information" do
+            @pson.intern_multiple(PsonIntTest, '[["one"],["two"]]').should == [
+                PsonIntTest.new("one"), PsonIntTest.new("two")
             ]
         end
     end

@@ -9,25 +9,25 @@ end
 class FooExampleData
     attr_accessor :name
 
-    def self.json_create(json)
-        new(json['data'].to_sym)
+    def self.pson_create(pson)
+        new(pson['data'].to_sym)
     end
 
     def initialize(name = nil)
         @name = name if name
     end
 
-    def render(format = :json)
-        to_json
+    def render(format = :pson)
+        to_pson
     end
 
-    def to_json(*args)
-        {:json_class => self.class.to_s, :data => name}.to_json(*args)
+    def to_pson(*args)
+        {:type => self.class.to_s, :data => name}.to_pson(*args)
     end
 end
 
 describe Puppet::Indirector::Queue do
-    confine "JSON library is missing; cannot test queueing" => Puppet.features.json?
+    confine "PSON library is missing; cannot test queueing" => Puppet.features.pson?
 
     before :each do
         @model = mock 'model'
@@ -51,8 +51,8 @@ describe Puppet::Indirector::Queue do
         @request = stub 'request', :key => :me, :instance => @subject
     end
 
-    it "should require JSON" do
-        Puppet.features.expects(:json?).returns false
+    it "should require PSON" do
+        Puppet.features.expects(:pson?).returns false
 
         lambda { @store_class.new }.should raise_error(ArgumentError)
     end
@@ -63,16 +63,16 @@ describe Puppet::Indirector::Queue do
     end
 
     describe "when saving" do
-        it 'should render the instance using json' do
-            @subject.expects(:render).with(:json)
+        it 'should render the instance using pson' do
+            @subject.expects(:render).with(:pson)
             @store.client.stubs(:send_message)
             @store.save(@request)
         end
 
         it "should send the rendered message to the appropriate queue on the client" do
-            @subject.expects(:render).returns "myjson"
+            @subject.expects(:render).returns "mypson"
 
-            @store.client.expects(:send_message).with(:my_queue, "myjson")
+            @store.client.expects(:send_message).with(:my_queue, "mypson")
 
             @store.save(@request)
         end
@@ -89,8 +89,8 @@ describe Puppet::Indirector::Queue do
             @store_class.stubs(:model).returns @model
         end
 
-        it "should use the model's Format support to intern the message from json" do
-            @model.expects(:convert_from).with(:json, "mymessage")
+        it "should use the model's Format support to intern the message from pson" do
+            @model.expects(:convert_from).with(:pson, "mymessage")
 
             @store_class.client.expects(:subscribe).yields("mymessage")
             @store_class.subscribe {|o| o }

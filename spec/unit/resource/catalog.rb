@@ -887,71 +887,70 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 end
 
-describe Puppet::Resource::Catalog, "when converting to json" do
-    confine "Missing 'json' library" => Puppet.features.json?
+describe Puppet::Resource::Catalog, "when converting to pson" do
+    confine "Missing 'pson' library" => Puppet.features.pson?
 
     before do
         @catalog = Puppet::Resource::Catalog.new("myhost")
     end
 
-    def json_output_should
-        @catalog.class.expects(:json_create).with { |hash| yield hash }
+    def pson_output_should
+        @catalog.class.expects(:pson_create).with { |hash| yield hash }.returns(:something)
     end
 
     # LAK:NOTE For all of these tests, we convert back to the resource so we can
     # trap the actual data structure then.
-    it "should set its json_class to 'Puppet::Resource::Catalog'" do
-        json_output_should { |hash| hash['json_class'] == "Puppet::Resource::Catalog" }
+    it "should set its document_type to 'Catalog'" do
+        pson_output_should { |hash| hash['document_type'] == "Catalog" }
 
-        JSON.parse @catalog.to_json
+        PSON.parse @catalog.to_pson
     end
 
     it "should set its data as a hash" do
-        json_output_should { |hash| hash['data'].is_a?(Hash) }
-        JSON.parse @catalog.to_json
+        pson_output_should { |hash| hash['data'].is_a?(Hash) }
+        PSON.parse @catalog.to_pson
     end
 
     [:name, :version, :tags].each do |param|
         it "should set its #{param} to the #{param} of the resource" do
             @catalog.send(param.to_s + "=", "testing") unless @catalog.send(param)
 
-            json_output_should { |hash| hash['data'][param.to_s] == @catalog.send(param) }
-            JSON.parse @catalog.to_json
+            pson_output_should { |hash| hash['data'][param.to_s] == @catalog.send(param) }
+            PSON.parse @catalog.to_pson
         end
     end
 
-    it "should convert its resources to a JSON-encoded array and store it as the 'resources' data" do
-        one = stub 'one', :to_json => '"one_resource"', :ref => "Foo[one]"
-        two = stub 'two', :to_json => '"two_resource"', :ref => "Foo[two]"
+    it "should convert its resources to a PSON-encoded array and store it as the 'resources' data" do
+        one = stub 'one', :to_pson_data_hash => "one_resource", :ref => "Foo[one]"
+        two = stub 'two', :to_pson_data_hash => "two_resource", :ref => "Foo[two]"
 
         @catalog.add_resource(one)
         @catalog.add_resource(two)
 
         # TODO this should really guarantee sort order
-        json_output_should { |hash| JSON.parse(hash['data']['resources']).sort == ["one_resource", "two_resource"].sort }
-        JSON.parse @catalog.to_json
+        PSON.parse(@catalog.to_pson,:create_additions => false)['data']['resources'].sort.should == ["one_resource", "two_resource"].sort
+
     end
 
-    it "should convert its edges to a JSON-encoded array and store it as the 'edges' data" do
-        one = stub 'one', :to_json => '"one_resource"', :ref => 'Foo[one]'
-        two = stub 'two', :to_json => '"two_resource"', :ref => 'Foo[two]'
-        three = stub 'three', :to_json => '"three_resource"', :ref => 'Foo[three]'
+    it "should convert its edges to a PSON-encoded array and store it as the 'edges' data" do
+        one   = stub 'one',   :to_pson_data_hash => "one_resource",   :ref => 'Foo[one]'
+        two   = stub 'two',   :to_pson_data_hash => "two_resource",   :ref => 'Foo[two]'
+        three = stub 'three', :to_pson_data_hash => "three_resource", :ref => 'Foo[three]'
 
         @catalog.add_edge(one, two)
         @catalog.add_edge(two, three)
 
-        @catalog.edge(one, two).expects(:to_json).returns '"one_two_json"'
-        @catalog.edge(two, three).expects(:to_json).returns '"two_three_json"'
+        @catalog.edge(one, two  ).expects(:to_pson_data_hash).returns "one_two_pson"
+        @catalog.edge(two, three).expects(:to_pson_data_hash).returns "two_three_pson"
 
-        json_output_should { |hash| JSON.parse(hash['data']['edges']).sort == %w{one_two_json two_three_json}.sort }
-        JSON.parse @catalog.to_json
+        PSON.parse(@catalog.to_pson,:create_additions => false)['data']['edges'].sort.should == %w{one_two_pson two_three_pson}.sort
     end
 end
 
-describe Puppet::Resource::Catalog, "when converting from json" do
-    confine "Missing 'json' library" => Puppet.features.json?
+describe Puppet::Resource::Catalog, "when converting from pson" do
+    confine "Missing 'pson' library" => Puppet.features.pson?
 
-    def json_result_should
+    def pson_result_should
         Puppet::Resource::Catalog.expects(:new).with { |hash| yield hash }
     end
 
@@ -959,54 +958,54 @@ describe Puppet::Resource::Catalog, "when converting from json" do
         @data = {
             'name' => "myhost"
         }
-        @json = {
-            'json_class' => 'Puppet::Resource::Catalog',
-            'data' => @data
+        @pson = {
+            'document_type' => 'Puppet::Resource::Catalog',
+            'data' => @data,
+            'metadata' => {}
         }
 
         @catalog = Puppet::Resource::Catalog.new("myhost")
         Puppet::Resource::Catalog.stubs(:new).returns @catalog
     end
 
-    it "should be extended with the JSON utility module" do
-        Puppet::Resource::Catalog.metaclass.ancestors.should be_include(Puppet::Util::Json)
+    it "should be extended with the PSON utility module" do
+        Puppet::Resource::Catalog.metaclass.ancestors.should be_include(Puppet::Util::Pson)
     end
 
     it "should create it with the provided name" do
         Puppet::Resource::Catalog.expects(:new).with('myhost').returns @catalog
-        JSON.parse @json.to_json
+        PSON.parse @pson.to_pson
     end
 
     it "should set the provided version on the catalog if one is set" do
         @data['version'] = 50
         @catalog.expects(:version=).with(@data['version'])
 
-        JSON.parse @json.to_json
+        PSON.parse @pson.to_pson
     end
 
     it "should set any provided tags on the catalog" do
         @data['tags'] = %w{one two}
         @catalog.expects(:tag).with("one", "two")
 
-        JSON.parse @json.to_json
+        PSON.parse @pson.to_pson
     end
 
     it 'should convert the resources list into resources and add each of them' do
         @data['resources'] = [Puppet::Resource.new(:file, "/foo"), Puppet::Resource.new(:file, "/bar")]
 
         @catalog.expects(:add_resource).times(2).with { |res| res.type == "File" }
-
-        JSON.parse @json.to_json
+        PSON.parse @pson.to_pson
     end
 
-    it 'should convert resources even if they do not include "json_class" information' do
+    it 'should convert resources even if they do not include "type" information' do
         @data['resources'] = [Puppet::Resource.new(:file, "/foo")]
 
-        @data['resources'][0].expects(:to_json).returns "{\"title\":\"\\/foo\",\"tags\":[\"file\"],\"type\":\"File\"}"
+        @data['resources'][0].expects(:to_pson).returns '{"title":"/foo","tags":["file"],"type":"File"}'
 
         @catalog.expects(:add_resource).with { |res| res.type == "File" }
 
-        JSON.parse @json.to_json
+        PSON.parse @pson.to_pson
     end
 
     it 'should convert the edges list into edges and add each of them' do
@@ -1020,12 +1019,12 @@ describe Puppet::Resource::Catalog, "when converting from json" do
         @catalog.expects(:add_edge).with { |edge| edge.event == "one" }
         @catalog.expects(:add_edge).with { |edge| edge.event == "two" }
 
-        JSON.parse @json.to_json
+        PSON.parse @pson.to_pson
     end
 
-    it "should be able to convert relationships that do not include 'json_class' information" do
+    it "should be able to convert relationships that do not include 'type' information" do
         one = Puppet::Relationship.new("osource", "otarget", :event => "one", :callback => "refresh")
-        one.expects(:to_json).returns "{\"event\":\"one\",\"callback\":\"refresh\",\"source\":\"osource\",\"target\":\"otarget\"}"
+        one.expects(:to_pson).returns "{\"event\":\"one\",\"callback\":\"refresh\",\"source\":\"osource\",\"target\":\"otarget\"}"
 
         @data['edges'] = [one]
 
@@ -1033,7 +1032,7 @@ describe Puppet::Resource::Catalog, "when converting from json" do
 
         @catalog.expects(:add_edge).with { |edge| edge.event == "one" }
 
-        JSON.parse @json.to_json
+        PSON.parse @pson.to_pson
     end
 
     it "should set the source and target for each edge to the actual resource" do
@@ -1046,7 +1045,7 @@ describe Puppet::Resource::Catalog, "when converting from json" do
 
         @catalog.expects(:add_edge).with { |edge| edge.source == "source_resource" and edge.target == "target_resource" }
 
-        JSON.parse @json.to_json
+        PSON.parse @pson.to_pson
     end
 
     it "should fail if the source resource cannot be found" do
@@ -1057,7 +1056,7 @@ describe Puppet::Resource::Catalog, "when converting from json" do
         @catalog.expects(:resource).with("source").returns(nil)
         @catalog.stubs(:resource).with("target").returns("target_resource")
 
-        lambda { JSON.parse @json.to_json }.should raise_error(ArgumentError)
+        lambda { PSON.parse @pson.to_pson }.should raise_error(ArgumentError)
     end
 
     it "should fail if the target resource cannot be found" do
@@ -1068,6 +1067,6 @@ describe Puppet::Resource::Catalog, "when converting from json" do
         @catalog.stubs(:resource).with("source").returns("source_resource")
         @catalog.expects(:resource).with("target").returns(nil)
 
-        lambda { JSON.parse @json.to_json }.should raise_error(ArgumentError)
+        lambda { PSON.parse @pson.to_pson }.should raise_error(ArgumentError)
     end
 end

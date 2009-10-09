@@ -6,10 +6,10 @@
 require File.dirname(__FILE__) + '/../../spec_helper'
 
 describe Puppet::Resource::Catalog do
-    describe "when json is available" do
-        confine "JSON library is missing" => Puppet.features.json?
-        it "should support json" do
-            Puppet::Resource::Catalog.supported_formats.should be_include(:json)
+    describe "when pson is available" do
+        confine "PSON library is missing" => Puppet.features.pson?
+        it "should support pson" do
+            Puppet::Resource::Catalog.supported_formats.should be_include(:pson)
         end
     end
 
