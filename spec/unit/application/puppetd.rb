@@ -205,6 +205,10 @@ describe "puppetd" do
                 @puppetd.options.expects(:[]=).with(:onetime,true)
                 @puppetd.setup_test
             end
+            it "should set options[:detailed_exitcodes] to true" do
+                @puppetd.options.expects(:[]=).with(:detailed_exitcodes,true)
+                @puppetd.setup_test
+            end
             it "should set waitforcert to 0" do
                 @puppetd.options.expects(:[]=).with(:waitforcert,0)
                 @puppetd.setup_test
@@ -453,6 +457,7 @@ describe "puppetd" do
 
             before :each do
                 @puppetd.options.stubs(:[]).with(:client).returns(:client)
+                @puppetd.options.stubs(:[]).with(:detailed_exitcodes).returns(false)
                 @puppetd.stubs(:exit).with(0)
                 Puppet.stubs(:newservice)
             end
@@ -484,6 +489,29 @@ describe "puppetd" do
                 @puppetd.onetime
             end
 
+            describe "and --detailed-exitcodes" do
+                before :each do
+                    @puppetd.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
+                end
+
+                it "should exit with report's computed exit status" do
+                    Puppet.stubs(:[]).with(:noop).returns(false)
+                    report = stub 'report', :exit_status => 666
+                    @agent.stubs(:run).returns(report)
+                    @puppetd.expects(:exit).with(666)
+
+                    @puppetd.onetime
+                end
+
+                it "should always exit with 0 if --noop" do
+                    Puppet.stubs(:[]).with(:noop).returns(true)
+                    report = stub 'report', :exit_status => 666
+                    @agent.stubs(:run).returns(report)
+                    @puppetd.expects(:exit).with(0)
+
+                    @puppetd.onetime
+                end
+            end
         end
 
         describe "without --onetime" do

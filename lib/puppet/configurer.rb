@@ -144,13 +144,17 @@ class Puppet::Configurer
 
         begin
             benchmark(:notice, "Finished catalog run") do
-                catalog.apply(options)
+                transaction = catalog.apply(options)
+                transaction.generate_report
+                report = transaction.report
             end
+            report
         rescue => detail
             puts detail.backtrace if Puppet[:trace]
             Puppet.err "Failed to apply catalog: %s" % detail
+            return
         end
-
+    ensure
         # Now close all of our existing http connections, since there's no
         # reason to leave them lying open.
         Puppet::Network::HttpPool.clear_http_instances

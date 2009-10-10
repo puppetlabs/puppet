@@ -8,7 +8,8 @@
 #
 # = Usage
 #
-#   puppetd  [-D|--daemonize|--no-daemonize] [-d|--debug] [--disable] [--enable]
+#   puppetd  [-D|--daemonize|--no-daemonize] [-d|--debug]
+#       [--detailed-exitcodes] [--disable] [--enable]
 #       [-h|--help] [--fqdn <host name>] [-l|--logdest syslog|<file>|console]
 #       [-o|--onetime] [--serve <handler>] [-t|--test] [--noop]
 #       [-V|--version] [-v|--verbose] [-w|--waitforcert <seconds>]
@@ -70,6 +71,12 @@
 #
 # debug::
 #   Enable full debugging.
+#
+# detailed-exitcodes::
+#   Provide transaction information via exit codes.  If this is enabled, an
+#   exit code of '2' means there were changes, and an exit code of '4' means
+#   that there were failures during the transaction. This option only makes
+#   sense in conjunction with --onetime.
 #
 # disable::
 #   Disable working on the local system.  This puts a lock file in place,

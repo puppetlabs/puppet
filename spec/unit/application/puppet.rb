@@ -283,52 +283,37 @@ describe "Puppet" do
                 @puppet.main
             end
 
-            it "should generate a report if not noop" do
-                Puppet.stubs(:[]).with(:noop).returns(false)
-                @puppet.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
-                metrics = stub 'metrics', :[] => { :total => 10, :failed => 0}
-                report = stub 'report', :metrics => metrics
-                @transaction.stubs(:report).returns(report)
-
-                @transaction.expects(:generate_report)
-
-                @puppet.main
-            end
-
             describe "with detailed_exitcodes" do
-                before :each do
+                it "should exit with report's computed exit status" do
                     Puppet.stubs(:[]).with(:noop).returns(false)
                     @puppet.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
-                end
-
-                it "should exit with exit code of 2 if changes" do
-                    report = stub 'report', :metrics => { "changes" => {:total => 1}, "resources" => {:failed => 0} }
-                    @transaction.stubs(:generate_report).returns(report)
+                    report = stub 'report', :exit_status => 666
                     @transaction.stubs(:report).returns(report)
-                    @puppet.expects(:exit).with(2)
+                    @puppet.expects(:exit).with(666)
 
                     @puppet.main
                 end
 
-                it "should exit with exit code of 4 if failures" do
-                    report = stub 'report', :metrics => { "changes" => {:total => 0}, "resources" => {:failed => 1} }
-                    @transaction.stubs(:generate_report).returns(report)
+                it "should always exit with 0 if option is disabled" do
+                    Puppet.stubs(:[]).with(:noop).returns(false)
+                    @puppet.options.stubs(:[]).with(:detailed_exitcodes).returns(false)
+                    report = stub 'report', :exit_status => 666
                     @transaction.stubs(:report).returns(report)
-                    @puppet.expects(:exit).with(4)
+                    @puppet.expects(:exit).with(0)
 
                     @puppet.main
                 end
 
-                it "should exit with exit code of 6 if changes and failures" do
-                    report = stub 'report', :metrics => { "changes" => {:total => 1}, "resources" => {:failed => 1} }
-                    @transaction.stubs(:generate_report).returns(report)
+                it "should always exit with 0 if --noop" do
+                    Puppet.stubs(:[]).with(:noop).returns(true)
+                    @puppet.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
+                    report = stub 'report', :exit_status => 666
                     @transaction.stubs(:report).returns(report)
-                    @puppet.expects(:exit).with(6)
+                    @puppet.expects(:exit).with(0)
 
                     @puppet.main
                 end
             end
-
         end
 
         describe "the 'apply' command" do

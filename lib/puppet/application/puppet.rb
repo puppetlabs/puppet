@@ -127,13 +127,12 @@ Puppet::Application.new(:puppet) do
             # And apply it
             transaction = catalog.apply
 
-            status = 0
             if not Puppet[:noop] and options[:detailed_exitcodes] then
                 transaction.generate_report
-                status |= 2 if transaction.report.metrics["changes"][:total] > 0
-                status |= 4 if transaction.report.metrics["resources"][:failed] > 0
+                exit(transaction.report.exit_status)
+            else
+                exit(0)
             end
-            exit(status)
         rescue => detail
             if Puppet[:trace]
                 puts detail.backtrace

@@ -83,5 +83,14 @@ class Puppet::Transaction::Report
         end
         return ret
     end
-end
 
+    # Based on the contents of this report's metrics, compute a single number
+    # that represents the report. The resulting number is a bitmask where
+    # individual bits represent the presence of different metrics.
+    def exit_status
+        status = 0
+        status |= 2 if @metrics["changes"][:total] > 0
+        status |= 4 if @metrics["resources"][:failed] > 0
+        return status
+    end
+end

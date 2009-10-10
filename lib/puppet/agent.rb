@@ -48,14 +48,16 @@ class Puppet::Agent
             return
         end
         splay
+        result = nil
         with_client do |client|
             begin
-                sync.synchronize { lock { client.run(*args) } }
+                sync.synchronize { lock { result = client.run(*args) } }
             rescue => detail
                 puts detail.backtrace if Puppet[:trace]
                 Puppet.err "Could not run %s: %s" % [client_class, detail]
             end
         end
+        result
     end
 
     def stop

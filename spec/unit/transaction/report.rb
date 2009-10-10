@@ -38,3 +38,26 @@ describe Puppet::Transaction::Report, " when being indirect" do
         Puppet::Util::Cacher.expire
     end
 end
+
+describe Puppet::Transaction::Report, " when computing exit status" do
+    it "should compute 2 if changes present" do
+        report = Puppet::Transaction::Report.new
+        report.newmetric("changes", {:total => 1})
+        report.newmetric("resources", {:failed => 0})
+        report.exit_status.should == 2
+    end
+
+    it "should compute 4 if failures present" do
+        report = Puppet::Transaction::Report.new
+        report.newmetric("changes", {:total => 0})
+        report.newmetric("resources", {:failed => 1})
+        report.exit_status.should == 4
+    end
+
+    it "should compute 6 if both changes and present" do
+        report = Puppet::Transaction::Report.new
+        report.newmetric("changes", {:total => 1})
+        report.newmetric("resources", {:failed => 1})
+        report.exit_status.should == 6
+    end
+end
