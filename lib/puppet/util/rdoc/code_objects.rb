@@ -88,12 +88,13 @@ module RDoc
     # It is mapped to a HTMLPuppetClass for display
     # It leverages RDoc (ruby) Class
     class PuppetClass < ClassModule
-        attr_accessor :resource_list, :requires
+        attr_accessor :resource_list, :requires, :childs
 
         def initialize(name, superclass)
             super(name,superclass)
             @resource_list = []
             @requires = []
+            @childs = []
         end
 
         def add_resource(resource)
@@ -113,6 +114,10 @@ module RDoc
         # the RDoc add_require method which sees ruby required files.
         def add_require(required)
             add_to(@requires, required)
+        end
+
+        def add_child(child)
+            @childs << child
         end
     end
 

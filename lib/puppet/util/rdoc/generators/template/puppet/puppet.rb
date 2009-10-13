@@ -538,6 +538,7 @@ IF:description
     </div>
 ENDIF:description
 
+
 IF:toc
     <div id="contents-list">
       <h3 class="section-bar">Contents</h3>
@@ -548,6 +549,18 @@ END:toc
      </ul>
 ENDIF:toc
    </div>
+
+<!-- if childs -->
+IF:childs
+       <div id="childs">
+         <h3 class="section-bar">Inherited by</h3>
+         <div id="childs-list">
+START:childs
+           <span class="child-name">HREF:aref:name:</span>
+END:childs
+         </div>
+       </div>
+ENDIF:childs
 
 IF:methods
     <div id="method-list">
