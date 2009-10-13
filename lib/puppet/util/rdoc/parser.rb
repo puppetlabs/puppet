@@ -15,6 +15,8 @@ module RDoc
 class Parser
     extend ParserFactory
 
+    attr_accessor :ast, :input_file_name, :top_level
+
     # parser registration into RDoc
     parse_files_matching(/\.(rb|pp)$/)
 
@@ -38,8 +40,6 @@ class Parser
         scan_top_level(@top_level)
         @top_level
     end
-
-    private
 
     # Due to a bug in RDoc, we need to roll our own find_module_named
     # The issue is that RDoc tries harder by asking the parent for a class/module
@@ -277,8 +277,8 @@ class Parser
 
         # register method into the container
         meth =  AnyMethod.new(declaration, name)
-        container.add_method(meth)
         meth.comment = define.doc
+        container.add_method(meth)
         look_for_directives_in(container, meth.comment) unless meth.comment.empty?
         meth.params = "( " + declaration + " )"
         meth.visibility = :public
@@ -296,7 +296,7 @@ class Parser
                 unless name.empty?
                     document_class(name,klass,container)
                 else # on main class document vardefs
-                    code = klass.code.children unless klass.code.is_a?(Puppet::Parser::AST::ASTArray)
+                    code = klass.code.children if klass.code.is_a?(Puppet::Parser::AST::ASTArray)
                     code ||= klass.code
                     scan_for_vardef(container, code) unless code.nil?
                 end
@@ -337,9 +337,9 @@ class Parser
                     comments += $1 + "\n"
                 elsif line =~ /^[ \t]*Facter.add\(['"](.*?)['"]\)/
                     current_fact = Fact.new($1,{})
-                    container.add_fact(current_fact)
                     look_for_directives_in(container, comments) unless comments.empty?
                     current_fact.comment = comments
+                    container.add_fact(current_fact)
                     current_fact.record_location(@top_level)
                     comments = ""
                     Puppet.debug "rdoc: found custom fact %s" % current_fact.name
