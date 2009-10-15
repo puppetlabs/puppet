@@ -18,7 +18,7 @@ This functions returns a number::
 Example::
 
     if versioncmp('2.6-1', '2.4.5') > 0 {
-        notify('2.6-1 is > than 2.4.5')
+        notice('2.6-1 is > than 2.4.5')
     }
 
 ") do |args|
