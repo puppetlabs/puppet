@@ -88,11 +88,12 @@ module RDoc
     # It is mapped to a HTMLPuppetClass for display
     # It leverages RDoc (ruby) Class
     class PuppetClass < ClassModule
-        attr_accessor :resource_list
+        attr_accessor :resource_list, :requires
 
         def initialize(name, superclass)
             super(name,superclass)
             @resource_list = []
+            @requires = []
         end
 
         def add_resource(resource)
@@ -105,6 +106,13 @@ module RDoc
 
         def superclass=(superclass)
             @superclass = superclass
+        end
+
+        # we're (ab)using the RDoc require system here.
+        # we're adding a required Puppet class, overriding
+        # the RDoc add_require method which sees ruby required files.
+        def add_require(required)
+            add_to(@requires, required)
         end
     end
 

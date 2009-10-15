@@ -147,14 +147,14 @@ class Parser
 
     # create documentation for include statements we can find in +code+
     # and associate it with +container+
-    def scan_for_include(container, code)
+    def scan_for_include_or_require(container, code)
         code.each do |stmt|
-            scan_for_include(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::ASTArray)
+            scan_for_include_or_require(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::ASTArray)
 
-            if stmt.is_a?(Puppet::Parser::AST::Function) and stmt.name == "include"
+            if stmt.is_a?(Puppet::Parser::AST::Function) and ['include','require'].include?(stmt.name)
                 stmt.arguments.each do |included|
-                    Puppet.debug "found include: %s" % included.value
-                    container.add_include(Include.new(included.value, stmt.doc))
+                    Puppet.debug "found #{stmt.name}: #{included.value}"
+                    container.send("add_#{stmt.name}",Include.new(included.value, stmt.doc))
                 end
             end
         end
@@ -220,7 +220,7 @@ class Parser
         code = klass.code.children if klass.code.is_a?(Puppet::Parser::AST::ASTArray)
         code ||= klass.code
         unless code.nil?
-            scan_for_include(cls, code)
+            scan_for_include_or_require(cls, code)
             scan_for_resource(cls, code) if Puppet.settings[:document_all]
         end
 
@@ -241,7 +241,7 @@ class Parser
         code = node.code.children if node.code.is_a?(Puppet::Parser::AST::ASTArray)
         code ||= node.code
         unless code.nil?
-            scan_for_include(n, code)
+            scan_for_include_or_require(n, code)
             scan_for_vardef(n, code)
             scan_for_resource(n, code) if Puppet.settings[:document_all]
         end

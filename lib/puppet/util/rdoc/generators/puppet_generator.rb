@@ -320,6 +320,26 @@ module Generators
 
     end
 
+    # This module is used to generate a referenced full name list of ContextUser
+    module ReferencedListBuilder
+        def build_referenced_list(list)
+            res = []
+            list.each do |i|
+                ref = @context.find_symbol(i.name)
+                ref = ref.viewer if ref
+                name = i.respond_to?(:full_name) ? i.full_name : i.name
+                h_name = CGI.escapeHTML(name)
+                if ref and ref.document_self
+                    path = url(ref.path)
+                    res << { "name" => h_name, "aref" => path }
+                else
+                    res << { "name" => h_name }
+                end
+            end
+            res
+        end
+    end
+
     # This module is used to hold/generate a list of puppet resources
     # this is used in HTMLPuppetClass and HTMLPuppetNode
     module ResourceContainer
@@ -360,7 +380,7 @@ module Generators
     end
 
     class HTMLPuppetClass < HtmlClass
-        include ResourceContainer
+        include ResourceContainer, ReferencedListBuilder
 
         def value_hash
             super
@@ -376,12 +396,20 @@ module Generators
                     secdata["resource_list"] = rdl unless rdl.empty?
                 end
             end
+
+            rl = build_require_list(@context)
+            @values["requires"] = rl unless rl.empty?
+
             @values
+        end
+
+        def build_require_list(context)
+            build_referenced_list(context.requires)
         end
     end
 
     class HTMLPuppetNode < ContextUser
-        include ResourceContainer
+        include ResourceContainer, ReferencedListBuilder
 
         attr_reader :path
 
@@ -451,6 +479,9 @@ module Generators
 
             il = build_include_list(@context)
             @values["includes"] = il unless il.empty?
+
+            rl = build_require_list(@context)
+            @values["requires"] = rl unless rl.empty?
 
             @values["sections"] = @context.sections.map do |section|
 
@@ -552,6 +583,10 @@ module Generators
             end
 
             @values['infiles'] = files
+        end
+
+        def build_require_list(context)
+            build_referenced_list(context.requires)
         end
 
         def <=>(other)
