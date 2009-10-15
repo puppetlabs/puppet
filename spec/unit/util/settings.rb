@@ -718,6 +718,7 @@ describe Puppet::Util::Settings do
         before do
             @settings = Puppet::Util::Settings.new
             @settings.stubs(:service_user_available?).returns true
+            @settings.setdefaults :main, :noop => [false, ""]
             @settings.setdefaults :main, :maindir => ["/maindir", "a"], :seconddir => ["/seconddir", "a"]
             @settings.setdefaults :main, :user => ["suser", "doc"], :group => ["sgroup", "doc"]
             @settings.setdefaults :other, :otherdir => {:default => "/otherdir", :desc => "a", :owner => "service", :group => "service", :mode => 0755}
@@ -998,5 +999,21 @@ describe Puppet::Util::Settings do
         end
 
         it "should cache the result"
+    end
+
+    describe "#without_noop" do
+        before do
+            @settings = Puppet::Util::Settings.new
+            @settings.setdefaults :main, :noop => [true, ""]
+        end
+
+        it "should set noop to false for the duration of the block" do
+            @settings.without_noop { @settings.value(:noop, :cli).should be_false }
+        end
+
+        it "should ensure that noop is returned to its previous value" do
+            @settings.without_noop { raise } rescue nil
+            @settings.value(:noop, :cli).should be_true
+        end
     end
 end

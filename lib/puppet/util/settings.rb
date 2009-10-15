@@ -157,6 +157,14 @@ class Puppet::Util::Settings
         set_value(str, value, :cli)
     end
 
+    def without_noop
+        old_noop = value(:noop,:cli)
+        set_value(:noop, false, :cli)
+        yield
+    ensure
+        set_value(:noop, old_noop, :cli)
+    end
+
     def include?(name)
         name = name.intern if name.is_a? String
         @config.include?(name)
@@ -632,7 +640,7 @@ Generated on #{Time.now}.
                 return
             end
 
-            begin
+            without_noop do
                 catalog.host_config = false
                 catalog.apply do |transaction|
                     if transaction.any_failed?

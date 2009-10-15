@@ -107,4 +107,27 @@ describe "puppetmasterd" do
     end
 
     it "should exit with return code 1 after parsing if --parseonly is set and there are errors"
+
+    describe "when run for the first time" do
+        before do
+            @ssldir = File.join(@dir, 'ssl')
+            FileUtils.rm_r(@ssldir) if File.exists?(@ssldir)
+        end
+
+        describe "with noop" do
+            it "should create its ssl directory" do
+                File.directory?(@ssldir).should be_false
+                start(' --noop')
+                File.directory?(@ssldir).should be_true
+            end
+        end
+
+        describe "without noop" do
+            it "should create its ssl directory" do
+                File.directory?(@ssldir).should be_false
+                start
+                File.directory?(@ssldir).should be_true
+            end
+        end
+    end
 end
