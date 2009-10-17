@@ -653,6 +653,30 @@ Generated on #{Time.now}.
         @config.has_key?(param)
     end
 
+    def uninterpolated_value(param, environment = nil)
+        param = param.to_sym
+        environment = environment.to_sym if environment
+
+        # See if we can find it within our searchable list of values
+        val = catch :foundval do
+            each_source(environment) do |source|
+                # Look for the value.  We have to test the hash for whether
+                # it exists, because the value might be false.
+                @sync.synchronize do
+                    if @values[source].include?(param)
+                        throw :foundval, @values[source][param]
+                    end
+                end
+            end
+            throw :foundval, nil
+        end
+        
+        # If we didn't get a value, use the default
+        val = @config[param].default if val.nil?
+
+        return val
+    end
+
     # Find the correct value using our search path.  Optionally accept an environment
     # in which to search before the other configuration sections.
     def value(param, environment = nil)
@@ -672,22 +696,7 @@ Generated on #{Time.now}.
             return cached
         end
 
-        # See if we can find it within our searchable list of values
-        val = catch :foundval do
-            each_source(environment) do |source|
-                # Look for the value.  We have to test the hash for whether
-                # it exists, because the value might be false.
-                @sync.synchronize do
-                    if @values[source].include?(param)
-                        throw :foundval, @values[source][param]
-                    end
-                end
-            end
-            throw :foundval, nil
-        end
-
-        # If we didn't get a value, use the default
-        val = @config[param].default if val.nil?
+        val = uninterpolated_value(param, environment)
 
         # Convert it if necessary
         val = convert(val, environment)
