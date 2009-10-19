@@ -415,6 +415,9 @@ class Puppet::Parser::Compiler
 
         # local resource array to maintain resource ordering
         @resources = []
+
+        # Make sure any external node classes are in our class list
+        @catalog.add_class(*@node.classes)
     end
 
     # Set the node's parameters into the top-scope as variables.
