@@ -911,7 +911,7 @@ describe Puppet::Resource::Catalog, "when converting to pson" do
         PSON.parse @catalog.to_pson
     end
 
-    [:name, :version, :tags].each do |param|
+    [:name, :version, :tags, :classes].each do |param|
         it "should set its #{param} to the #{param} of the resource" do
             @catalog.send(param.to_s + "=", "testing") unless @catalog.send(param)
 
@@ -979,16 +979,20 @@ describe Puppet::Resource::Catalog, "when converting from pson" do
 
     it "should set the provided version on the catalog if one is set" do
         @data['version'] = 50
-        @catalog.expects(:version=).with(@data['version'])
-
         PSON.parse @pson.to_pson
+        @catalog.version.should == @data['version']
     end
 
     it "should set any provided tags on the catalog" do
         @data['tags'] = %w{one two}
-        @catalog.expects(:tag).with("one", "two")
-
         PSON.parse @pson.to_pson
+        @catalog.tags.should == @data['tags']
+    end
+
+    it "should set any provided classes on the catalog" do
+        @data['classes'] = %w{one two}
+        PSON.parse @pson.to_pson
+        @catalog.classes.should == @data['classes']
     end
 
     it 'should convert the resources list into resources and add each of them' do

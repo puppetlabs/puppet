@@ -418,6 +418,10 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
             end
         end
 
+        if classes = data['classes']
+            result.add_class(*classes)
+        end
+
         result
     end
 
@@ -452,7 +456,8 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
                 'name'      => name,
                 'version'   => version,
                 'resources' => vertices.collect { |v| v.to_pson_data_hash },
-                'edges'     => edges.   collect { |e| e.to_pson_data_hash }
+                'edges'     => edges.   collect { |e| e.to_pson_data_hash },
+                'classes'   => classes
                 },
             'metadata' => {
                 'api_version' => 1
