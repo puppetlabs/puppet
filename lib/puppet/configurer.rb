@@ -93,7 +93,7 @@ class Puppet::Configurer
             duration = thinmark do
                 result = catalog_class.find(name, fact_options.merge(:ignore_cache => true))
             end
-        rescue => detail
+        rescue Exception => detail
             puts detail.backtrace if Puppet[:trace]
             Puppet.err "Could not retrieve catalog from remote server: %s" % detail
         end
