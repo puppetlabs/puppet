@@ -235,12 +235,11 @@ class Puppet::SSL::Host
 
     # Attempt to retrieve a cert, if we don't already have one.
     def wait_for_cert(time)
-        return if certificate
         begin
-            generate
-
             return if certificate
-        rescue StandardError => detail
+            generate
+            return if certificate
+        rescue Exception => detail
             Puppet.err "Could not request certificate: %s" % detail.to_s
             if time < 1
                 puts "Exiting; failed to retrieve certificate and watiforcert is disabled"
