@@ -36,14 +36,6 @@ Puppet::Type.type(:ssh_authorized_key).provide(:parsed,
         :rts      => /^\s+/,
         :match    => /^(?:(.+) )?(\d+) (\d+) (\d+)(?: (.+))?$/
 
-    def target
-        @resource.should(:target)
-    end
-
-    def user
-        @resource.should(:user)
-    end
-
     def dir_perm
         # Determine correct permission for created directory and file
         # we can afford more restrictive permissions when the user is known
@@ -67,37 +59,11 @@ Puppet::Type.type(:ssh_authorized_key).provide(:parsed,
     end
 
     def target
-        if user
-            File.expand_path("~%s/.ssh/authorized_keys" % user)
-        elsif target = @resource.should(:target)
-            target
-        end
+        @resource.should(:target) || File.expand_path("~%s/.ssh/authorized_keys" % user)
     end
 
     def user
         @resource.should(:user)
-    end
-
-    def dir_perm
-        # Determine correct permission for created directory and file
-        # we can afford more restrictive permissions when the user is known
-        if target
-            if user
-                0700
-            else
-                0755
-            end
-        end
-    end
-
-    def file_perm
-        if target
-            if user
-                0600
-            else
-                0644
-            end
-        end
     end
 
     def flush

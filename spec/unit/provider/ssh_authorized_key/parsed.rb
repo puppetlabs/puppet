@@ -95,85 +95,61 @@ describe provider_class do
             File.stubs(:chown)
         end
 
-        describe "and a user has been specified" do
+        describe "and both a user and a target have been specified" do
             before :each do
-                @resource.stubs(:should).with(:user).returns "nobody"
-                target = File.expand_path("~nobody/.ssh/authorized_keys")
+                Puppet::Util.stubs(:uid).with("random_bob").returns 12345
+                @resource.stubs(:should).with(:user).returns "random_bob"
+                target = "/tmp/.ssh_dir/place_to_put_authorized_keys"
                 @resource.stubs(:should).with(:target).returns target
            end
 
             it "should create the directory" do
-                Dir.expects(:mkdir).with(File.expand_path("~nobody/.ssh"), 0700)
+                File.stubs(:exist?).with("/tmp/.ssh_dir").returns false
+                Dir.expects(:mkdir).with("/tmp/.ssh_dir", 0700)
                 @provider.flush
             end
 
             it "should chown the directory to the user" do
-                uid = Puppet::Util.uid("nobody")
-                File.expects(:chown).with(uid, nil, File.expand_path("~nobody/.ssh"))
+                uid = Puppet::Util.uid("random_bob")
+                File.expects(:chown).with(uid, nil, "/tmp/.ssh_dir")
                 @provider.flush
             end
 
             it "should chown the key file to the user" do
-                uid = Puppet::Util.uid("nobody")
-                File.expects(:chown).with(uid, nil, File.expand_path("~nobody/.ssh/authorized_keys"))
+                uid = Puppet::Util.uid("random_bob")
+                File.expects(:chown).with(uid, nil, "/tmp/.ssh_dir/place_to_put_authorized_keys")
                 @provider.flush
             end
 
             it "should chmod the key file to 0600" do
-                File.expects(:chmod).with(0600, File.expand_path("~nobody/.ssh/authorized_keys"))
+                File.expects(:chmod).with(0600, "/tmp/.ssh_dir/place_to_put_authorized_keys")
                 @provider.flush
             end
         end
 
-        describe "and a target has been specified" do
-            before :each do
-                @resource.stubs(:should).with(:user).returns nil
-                @resource.stubs(:should).with(:target).returns "/tmp/.ssh/authorized_keys"
-            end
-
-            it "should make the directory" do
-                Dir.expects(:mkdir).with("/tmp/.ssh", 0755)
-                @provider.flush
-            end
-
-            it "should chmod the key file to 0644" do
-                File.expects(:chmod).with(0644, "/tmp/.ssh/authorized_keys")
-                @provider.flush
-            end
-        end
-
-    end
-end
-
-describe provider_class do
-    before :each do
-        @resource = stub("resource", :name => "foo")
-        @resource.stubs(:[]).returns "foo"
-        @provider = provider_class.new(@resource)
-    end
-
-    describe "when flushing" do
-        before :each do
-            # Stub file and directory operations
-            Dir.stubs(:mkdir)
-            File.stubs(:chmod)
-            File.stubs(:chown)
-        end
-
-        describe "and a user has been specified" do
+        describe "and a user has been specified with no target" do
             before :each do
                 @resource.stubs(:should).with(:user).returns "nobody"
                 @resource.stubs(:should).with(:target).returns nil
+                # 
+                # I'd like to use random_bob here and something like
+                #
+                #    File.stubs(:expand_path).with("~random_bob/.ssh").returns "/users/r/random_bob/.ssh"
+                #
+                # but mocha objects strenuously to stubbing File.expand_path
+                # so I'm left with using nobody.
+                @dir = File.expand_path("~nobody/.ssh")
            end
 
             it "should create the directory" do
-                Dir.expects(:mkdir).with(File.expand_path("~nobody/.ssh"), 0700)
+                File.stubs(:exist?).with(@dir).returns false
+                Dir.expects(:mkdir).with(@dir,0700)
                 @provider.flush
             end
 
             it "should chown the directory to the user" do
                 uid = Puppet::Util.uid("nobody")
-                File.expects(:chown).with(uid, nil, File.expand_path("~nobody/.ssh"))
+                File.expects(:chown).with(uid, nil, @dir)
                 @provider.flush
             end
 
@@ -189,19 +165,20 @@ describe provider_class do
             end
         end
 
-        describe "and a target has been specified" do
+        describe "and a target has been specified with no user" do
             before :each do
                 @resource.stubs(:should).with(:user).returns nil
-                @resource.stubs(:should).with(:target).returns "/tmp/.ssh/authorized_keys"
+                @resource.stubs(:should).with(:target).returns("/tmp/.ssh_dir/place_to_put_authorized_keys")
             end
 
             it "should make the directory" do
-                Dir.expects(:mkdir).with("/tmp/.ssh", 0755)
+                File.stubs(:exist?).with("/tmp/.ssh_dir").returns false
+                Dir.expects(:mkdir).with("/tmp/.ssh_dir", 0755)
                 @provider.flush
             end
 
             it "should chmod the key file to 0644" do
-                File.expects(:chmod).with(0644, "/tmp/.ssh/authorized_keys")
+                File.expects(:chmod).with(0644, "/tmp/.ssh_dir/place_to_put_authorized_keys")
                 @provider.flush
             end
         end
