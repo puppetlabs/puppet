@@ -41,12 +41,12 @@ describe provider_class do
         return text
     end
 
-    it "should be able to parse each example" do
-        fakedata("data/providers/ssh_authorized_key/parsed").each { |file|
+    PuppetTest.fakedata("data/providers/ssh_authorized_key/parsed").each { |file|
+        it "should be able to parse example data in #{file}" do
             puts "Parsing %s" % file
             fakedataparse(file)
-        }
-    end
+        end
+    }
 
     it "should be able to generate a basic authorized_keys file" do
         key = mkkey({
