@@ -498,35 +498,46 @@ describe Puppet::Parser::Collector, "when building its ActiveRecord query for co
         Puppet::Rails::Host.expects(:find_by_name).with(@scope.host).returns(@host)
 
         Puppet::Rails::Resource.stubs(:find).with { |*arguments|
-            options = arguments[3]
+            options = arguments[1]
             options[:conditions][0] =~ /^host_id != \?/ and options[:conditions][1] == 5
         }.returns([@resource])
 
         @collector.evaluate.should == [@resource]
     end
 
-    it "should return parameter names, parameter values when querying ActiveRecord" do
+    it "should join with parameter names, parameter values when querying ActiveRecord" do
+        @collector.equery = "param_names.name = title"
         Puppet::Rails::Resource.stubs(:find).with { |*arguments|
-            options = arguments[3]
-            options[:include] == {:param_values => :param_name}
+            options = arguments[1]
+            options[:joins] == {:param_values => :param_name}
         }.returns([@resource])
 
         @collector.evaluate.should == [@resource]
     end
 
-    it "should return tags when querying ActiveRecord with a tag exported query" do
+    it "should join with tag tables when querying ActiveRecord with a tag exported query" do
         @collector.equery = "puppet_tags.name = test"
         Puppet::Rails::Resource.stubs(:find).with { |*arguments|
-            options = arguments[3]
-            options[:include] == {:param_values => :param_name, :puppet_tags => :resource_tags}
+            options = arguments[1]
+            options[:joins] == {:resource_tags => :puppet_tag}
         }.returns([@resource])
 
         @collector.evaluate.should == [@resource]
+    end
+
+    it "should not join parameters when querying ActiveRecord with a tag exported query" do
+        @collector.equery = "puppet_tags.name = test"
+        Puppet::Rails::Resource.stubs(:find).with { |*arguments|
+            options = arguments[1]
+            options[:joins] == {:param_values => :param_name}
+        }.returns([@resource])
+
+        @collector.evaluate.should be_false
     end
 
     it "should only search for exported resources with the matching type" do
         Puppet::Rails::Resource.stubs(:find).with { |*arguments|
-            options = arguments[3]
+            options = arguments[1]
             options[:conditions][0].include?("(exported=? AND restype=?)") and options[:conditions][1] == true and options[:conditions][2] == "Mytype"
         }.returns([@resource])
 
@@ -536,7 +547,7 @@ describe Puppet::Parser::Collector, "when building its ActiveRecord query for co
     it "should include the export query if one is provided" do
         @collector.equery = "test = true"
         Puppet::Rails::Resource.stubs(:find).with { |*arguments|
-            options = arguments[3]
+            options = arguments[1]
             options[:conditions][0].include?("test = true")
         }.returns([@resource])
 
