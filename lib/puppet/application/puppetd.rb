@@ -164,7 +164,7 @@ Puppet::Application.new(:puppetd) do
         # to clients. In the meantime, we just disable CRL checking if
         # the CRL file doesn't exist
         unless File::exist?(Puppet[:cacrl])
-            Puppet[:cacrl] = 'false'
+            Puppet[:cacrl] = nil
         end
 
         handlers = nil

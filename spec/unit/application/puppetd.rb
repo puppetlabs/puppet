@@ -40,7 +40,7 @@ describe "puppetd" do
 
     describe "in preinit" do
         before :each do
-            @pupetd.stubs(:trap)
+            @puppetd.stubs(:trap)
         end
 
         it "should catch INT" do
@@ -403,6 +403,14 @@ describe "puppetd" do
                 FileTest.stubs(:exists?).with('auth').returns(false)
 
                 @puppetd.expects(:exit)
+
+                @puppetd.setup_listen
+            end
+
+            it "should set :cacrl to nil if no cacrl file" do
+                Puppet.expects(:[]).with(:cacrl).returns('cacrl')
+                File.expects(:exist?).with('cacrl').returns(false)
+                Puppet.expects(:[]=).with(:cacrl,nil)
 
                 @puppetd.setup_listen
             end
