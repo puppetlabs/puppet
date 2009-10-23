@@ -2,7 +2,7 @@
 
 Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f) : Dir.chdir("..") { s.call(f) } }).call("spec/spec_helper.rb") }
 
-require 'puppet/util/file_locking'
+require 'puppet/util/inline_docs'
 
 class InlineDoccer
     include Puppet::Util::InlineDocs

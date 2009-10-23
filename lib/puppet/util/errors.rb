@@ -17,6 +17,18 @@ module Puppet::Util::Errors
         return error
     end
 
+    def error_context
+        if file and line
+            " at #{file}:#{line}"
+        elsif line
+            " at line #{line}"
+        elsif file
+            " in #{file}"
+        else
+            ""
+        end
+    end
+
     # Wrap a call in such a way that we always throw the right exception and keep
     # as much context as possible.
     def exceptwrap(options = {})
