@@ -24,7 +24,7 @@ class Puppet::Indirector::Queue < Puppet::Indirector::Terminus
 
     def initialize(*args)
         super
-        raise ArgumentError, "Queueing requires json support" unless Puppet.features.json?
+        raise ArgumentError, "Queueing requires pson support" unless Puppet.features.pson?
     end
 
     # Queue has no idiomatic "find"
@@ -37,7 +37,7 @@ class Puppet::Indirector::Queue < Puppet::Indirector::Terminus
         begin
             result = nil
             benchmark :info, "Queued %s for %s" % [indirection.name, request.key] do
-                result = client.send_message(queue, request.instance.render(:json))
+                result = client.send_message(queue, request.instance.render(:pson))
             end
             result
         rescue => detail
@@ -62,7 +62,7 @@ class Puppet::Indirector::Queue < Puppet::Indirector::Terminus
     def self.intern(message)
         result = nil
         benchmark :info, "Loaded queued %s" % [indirection.name] do
-            result = model.convert_from(:json, message)
+            result = model.convert_from(:pson, message)
         end
         result
     end

@@ -4,13 +4,13 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/network/formats'
 
-class JsonTest
+class PsonTest
     attr_accessor :string
     def ==(other)
         string == other.string
     end
 
-    def self.from_json(data)
+    def self.from_pson(data)
         new(data)
     end
 
@@ -18,11 +18,11 @@ class JsonTest
         @string = string
     end
 
-    def to_json(*args)
+    def to_pson(*args)
         {
-            'json_class' => self.class.name,
+            'type' => self.class.name,
             'data' => @string
-        }.to_json(*args)
+        }.to_pson(*args)
     end
 end
 
@@ -173,76 +173,76 @@ describe "Puppet Network Format" do
         end
     end
 
-    it "should include a json format" do
-        Puppet::Network::FormatHandler.format(:json).should_not be_nil
+    it "should include a pson format" do
+        Puppet::Network::FormatHandler.format(:pson).should_not be_nil
     end
 
-    describe "json" do
-        confine "Missing 'json' library" => Puppet.features.json?
+    describe "pson" do
+        confine "Missing 'pson' library" => Puppet.features.pson?
 
         before do
-            @json = Puppet::Network::FormatHandler.format(:json)
+            @pson = Puppet::Network::FormatHandler.format(:pson)
         end
 
-        it "should have its mime type set to text/json" do
-            Puppet::Network::FormatHandler.format(:json).mime.should == "text/json"
+        it "should have its mime type set to text/pson" do
+            Puppet::Network::FormatHandler.format(:pson).mime.should == "text/pson"
         end
 
         it "should require the :render_method" do
-            Puppet::Network::FormatHandler.format(:json).required_methods.should be_include(:render_method)
+            Puppet::Network::FormatHandler.format(:pson).required_methods.should be_include(:render_method)
         end
 
         it "should require the :intern_method" do
-            Puppet::Network::FormatHandler.format(:json).required_methods.should be_include(:intern_method)
+            Puppet::Network::FormatHandler.format(:pson).required_methods.should be_include(:intern_method)
         end
 
         it "should have a weight of 10" do
-            @json.weight.should == 10
+            @pson.weight.should == 10
         end
 
         describe "when supported" do
-            it "should render by calling 'to_json' on the instance" do
-                instance = JsonTest.new("foo")
-                instance.expects(:to_json).returns "foo"
-                @json.render(instance).should == "foo"
+            it "should render by calling 'to_pson' on the instance" do
+                instance = PsonTest.new("foo")
+                instance.expects(:to_pson).returns "foo"
+                @pson.render(instance).should == "foo"
             end
 
-            it "should render multiple instances by calling 'to_json' on the array" do
+            it "should render multiple instances by calling 'to_pson' on the array" do
                 instances = [mock('instance')]
 
-                instances.expects(:to_json).returns "foo"
+                instances.expects(:to_pson).returns "foo"
 
-                @json.render_multiple(instances).should == "foo"
+                @pson.render_multiple(instances).should == "foo"
             end
 
-            it "should intern by calling 'JSON.parse' on the text and then using from_json to convert the data into an instance" do
+            it "should intern by calling 'PSON.parse' on the text and then using from_pson to convert the data into an instance" do
                 text = "foo"
-                JSON.expects(:parse).with("foo").returns("json_class" => "JsonTest", "data" => "foo")
-                JsonTest.expects(:from_json).with("foo").returns "parsed_json"
-                @json.intern(JsonTest, text).should == "parsed_json"
+                PSON.expects(:parse).with("foo").returns("type" => "PsonTest", "data" => "foo")
+                PsonTest.expects(:from_pson).with("foo").returns "parsed_pson"
+                @pson.intern(PsonTest, text).should == "parsed_pson"
             end
 
-            it "should not render twice if 'JSON.parse' creates the appropriate instance" do
+            it "should not render twice if 'PSON.parse' creates the appropriate instance" do
                 text = "foo"
-                instance = JsonTest.new("foo")
-                JSON.expects(:parse).with("foo").returns(instance)
-                JsonTest.expects(:from_json).never
-                @json.intern(JsonTest, text).should equal(instance)
+                instance = PsonTest.new("foo")
+                PSON.expects(:parse).with("foo").returns(instance)
+                PsonTest.expects(:from_pson).never
+                @pson.intern(PsonTest, text).should equal(instance)
             end
 
-            it "should intern by calling 'JSON.parse' on the text and then using from_json to convert the actual into an instance if the json has no class/data separation" do
+            it "should intern by calling 'PSON.parse' on the text and then using from_pson to convert the actual into an instance if the pson has no class/data separation" do
                 text = "foo"
-                JSON.expects(:parse).with("foo").returns("foo")
-                JsonTest.expects(:from_json).with("foo").returns "parsed_json"
-                @json.intern(JsonTest, text).should == "parsed_json"
+                PSON.expects(:parse).with("foo").returns("foo")
+                PsonTest.expects(:from_pson).with("foo").returns "parsed_pson"
+                @pson.intern(PsonTest, text).should == "parsed_pson"
             end
 
             it "should intern multiples by parsing the text and using 'class.intern' on each resulting data structure" do
                 text = "foo"
-                JSON.expects(:parse).with("foo").returns ["bar", "baz"]
-                JsonTest.expects(:from_json).with("bar").returns "BAR"
-                JsonTest.expects(:from_json).with("baz").returns "BAZ"
-                @json.intern_multiple(JsonTest, text).should == %w{BAR BAZ}
+                PSON.expects(:parse).with("foo").returns ["bar", "baz"]
+                PsonTest.expects(:from_pson).with("bar").returns "BAR"
+                PsonTest.expects(:from_pson).with("baz").returns "BAZ"
+                @pson.intern_multiple(PsonTest, text).should == %w{BAR BAZ}
             end
         end
     end

@@ -1,35 +1,35 @@
 require 'puppet'
 require 'puppet/util/tagging'
 require 'puppet/resource/reference'
-require 'puppet/util/json'
+require 'puppet/util/pson'
 
 # The simplest resource class.  Eventually it will function as the
 # base class for all resource-like behaviour.
 class Puppet::Resource
     include Puppet::Util::Tagging
-    extend Puppet::Util::Json
+    extend Puppet::Util::Pson
     include Enumerable
     attr_accessor :file, :line, :catalog, :exported, :virtual
     attr_writer :type, :title
 
     ATTRIBUTES = [:file, :line, :exported]
 
-    def self.from_json(json)
-        raise ArgumentError, "No resource type provided in json data" unless type = json['type']
-        raise ArgumentError, "No resource title provided in json data" unless title = json['title']
+    def self.from_pson(pson)
+        raise ArgumentError, "No resource type provided in pson data" unless type = pson['type']
+        raise ArgumentError, "No resource title provided in pson data" unless title = pson['title']
 
         resource = new(type, title)
 
-        if params = json['parameters']
+        if params = pson['parameters']
             params.each { |param, value| resource[param] = value }
         end
 
-        if tags = json['tags']
+        if tags = pson['tags']
             tags.each { |tag| resource.tag(tag) }
         end
 
         ATTRIBUTES.each do |a|
-            if value = json[a.to_s]
+            if value = pson[a.to_s]
                 resource.send(a.to_s + "=", value)
             end
         end
@@ -39,9 +39,7 @@ class Puppet::Resource
         resource
     end
 
-    def to_json(*args)
-        raise "Cannot convert to JSON unless the 'json' library is installed" unless Puppet.features.json?
-
+    def to_pson_data_hash
         data = ([:type, :title, :tags] + ATTRIBUTES).inject({}) do |hash, param|
             next hash unless value = self.send(param)
             hash[param.to_s] = value
@@ -59,15 +57,13 @@ class Puppet::Resource
             hash
         end
 
-        unless params.empty?
-            data["parameters"] = params
-        end
+        data["parameters"] = params unless params.empty?
 
-        res = {
-            'json_class' => self.class.name,
-            'data' => data
-        }
-        res.to_json(*args)
+        data
+    end
+
+    def to_pson(*args)
+        to_pson_data_hash.to_pson(*args)
     end
 
     # Proxy these methods to the parameters hash.  It's likely they'll

@@ -6,26 +6,26 @@
 # subscriptions are permanent associations determining how different
 # objects react to an event
 
-require 'puppet/util/json'
+require 'puppet/util/pson'
 
 # This is Puppet's class for modeling edges in its configuration graph.
 # It used to be a subclass of GRATR::Edge, but that class has weird hash
 # overrides that dramatically slow down the graphing.
 class Puppet::Relationship
-    extend Puppet::Util::Json
+    extend Puppet::Util::Pson
     attr_accessor :source, :target, :callback
 
     attr_reader :event
 
-    def self.from_json(json)
-        source = json["source"]
-        target = json["target"]
+    def self.from_pson(pson)
+        source = pson["source"]
+        target = pson["target"]
 
         args = {}
-        if event = json["event"]
+        if event = pson["event"]
             args[:event] = event
         end
-        if callback = json["callback"]
+        if callback = pson["callback"]
             args[:callback] = callback
         end
 
@@ -73,7 +73,7 @@ class Puppet::Relationship
         "%s => %s" % [source, target]
     end
 
-    def to_json(*args)
+    def to_pson_data_hash
         data = {
             'source' => source.to_s,
             'target' => target.to_s
@@ -83,11 +83,11 @@ class Puppet::Relationship
             next unless value = send(attr)
             data[attr] = value
         end
+        data
+    end
 
-        {
-            'json_class' => self.class.to_s,
-            'data' => data
-        }.to_json(*args)
+    def to_pson(*args)
+        to_pson_data_hash.to_pson(*args)
     end
 
     def to_s

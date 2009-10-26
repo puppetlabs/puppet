@@ -185,19 +185,14 @@ module Util
 
     def binary(bin)
         if bin =~ /^\//
-            if FileTest.file? bin and FileTest.executable? bin
-                return bin
-            else
-                return nil
-            end
+            return bin if FileTest.file? bin and FileTest.executable? bin
         else
-            x = %x{which #{bin} 2>/dev/null}.chomp
-            if x == ""
-                return nil
-            else
-                return x
-            end
+           ENV['PATH'].split(File::PATH_SEPARATOR).each do |dir|
+               dest=File.join(dir, bin)
+               return dest if FileTest.file? dest and FileTest.executable? dest
+           end
         end
+        return nil
     end
     module_function :binary
 

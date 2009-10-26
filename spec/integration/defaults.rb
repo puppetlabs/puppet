@@ -89,8 +89,8 @@ describe "Puppet defaults" do
         end
     end
 
-    it "should default to json for the preferred serialization format" do
-        Puppet.settings.value(:preferred_serialization_format).should == "json"
+    it "should default to pson for the preferred serialization format" do
+        Puppet.settings.value(:preferred_serialization_format).should == "pson"
     end
 
     describe "when enabling storeconfigs" do

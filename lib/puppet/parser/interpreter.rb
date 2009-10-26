@@ -62,7 +62,7 @@ class Puppet::Parser::Interpreter
     def create_parser(environment)
         begin
             parser = Puppet::Parser::Parser.new(:environment => environment)
-            if code = Puppet.settings.value(:code, environment) and code != ""
+            if code = Puppet.settings.uninterpolated_value(:code, environment) and code != ""
                 parser.string = code
             else
                 file = Puppet.settings.value(:manifest, environment)

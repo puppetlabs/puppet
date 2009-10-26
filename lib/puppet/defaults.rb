@@ -168,7 +168,7 @@ module Puppet
         :queue_source => ["stomp://localhost:61613/", "Which type of queue to use for asynchronous processing.  If your stomp server requires
             authentication, you can include it in the URI as long as your stomp client library is at least 1.1.1"],
         :async_storeconfigs => {:default => false, :desc => "Whether to use a queueing system to provide asynchronous database integration.
-            Requires that ``puppetqd`` be running and that 'JSON' support for ruby be installed.",
+            Requires that ``puppetqd`` be running and that 'PSON' support for ruby be installed.",
             :hook => proc do |value|
                 if value
                     # This reconfigures the terminii for Node, Facts, and Catalog
@@ -522,7 +522,7 @@ module Puppet
             authority requests.  It's a separate server because it cannot
             and does not need to horizontally scale."],
         :ca_port => ["$masterport", "The port to use for the certificate authority."],
-        :preferred_serialization_format => ["json", "The preferred means of serializing
+        :preferred_serialization_format => ["pson", "The preferred means of serializing
             ruby instances for passing over the wire.  This won't guarantee that all
             instances will be serialized using this method, since not all classes
             can be guaranteed to support this format, but it will be used for all

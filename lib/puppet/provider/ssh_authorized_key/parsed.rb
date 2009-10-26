@@ -15,19 +15,13 @@ Puppet::Type.type(:ssh_authorized_key).provide(:parsed,
         :optional => %w{options},
         :rts => /^\s+/,
         :match    => /^(?:(.+) )?(ssh-dss|ssh-rsa) ([^ ]+)(?: (.+))?$/,
-        :post_parse => proc { |record|
-            if record[:options].nil?
-                record[:options] = [:absent]
-            else
-                record[:options] = Puppet::Type::Ssh_authorized_key::ProviderParsed.parse_options(record[:options])
-            end
+        :post_parse => proc { |h|
+            h[:options] ||= [:absent]
+            h[:options] = Puppet::Type::Ssh_authorized_key::ProviderParsed.parse_options(h[:options]) if h[:options].is_a? String
         },
-        :pre_gen => proc { |record|
-            if record[:options].include?(:absent)
-                record[:options] = ""
-            else
-                record[:options] = record[:options].join(',')
-            end
+        :pre_gen => proc { |h|
+            h[:options] = [] if h[:options].include?(:absent)
+            h[:options] = h[:options].join(',')
         }
 
     record_line :key_v1,
@@ -36,14 +30,6 @@ Puppet::Type.type(:ssh_authorized_key).provide(:parsed,
         :rts      => /^\s+/,
         :match    => /^(?:(.+) )?(\d+) (\d+) (\d+)(?: (.+))?$/
 
-    def target
-        @resource.should(:target)
-    end
-
-    def user
-        @resource.should(:user)
-    end
-
     def dir_perm
         # Determine correct permission for created directory and file
         # we can afford more restrictive permissions when the user is known
@@ -67,37 +53,11 @@ Puppet::Type.type(:ssh_authorized_key).provide(:parsed,
     end
 
     def target
-        if user
-            File.expand_path("~%s/.ssh/authorized_keys" % user)
-        elsif target = @resource.should(:target)
-            target
-        end
+        @resource.should(:target) || File.expand_path("~%s/.ssh/authorized_keys" % user)
     end
 
     def user
         @resource.should(:user)
-    end
-
-    def dir_perm
-        # Determine correct permission for created directory and file
-        # we can afford more restrictive permissions when the user is known
-        if target
-            if user
-                0700
-            else
-                0755
-            end
-        end
-    end
-
-    def file_perm
-        if target
-            if user
-                0600
-            else
-                0644
-            end
-        end
     end
 
     def flush

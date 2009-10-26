@@ -86,6 +86,16 @@ describe Puppet::Parser::Compiler do
         it "should copy the parser version to the catalog" do
             @compiler.catalog.version.should == @parser.version
         end
+
+        it "should copy any node classes into the class list" do
+            node = Puppet::Node.new("mynode")
+            node.classes = %w{foo bar}
+            compiler = Puppet::Parser::Compiler.new(node, @parser)
+            p compiler.classlist
+
+            compiler.classlist.should include("foo")
+            compiler.classlist.should include("bar")
+        end
     end
 
     describe "when managing scopes" do

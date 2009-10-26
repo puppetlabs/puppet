@@ -11,7 +11,7 @@ end
 module Puppet::Parser; end
 
 class Puppet::Parser::Lexer
-    attr_reader :last, :file
+    attr_reader :last, :file, :lexing_context
 
     attr_accessor :line, :indefine
 
@@ -40,6 +40,11 @@ class Puppet::Parser::Lexer
             else
                 @name.to_s
             end
+        end
+        
+        def acceptable?(context={})
+            # By default tokens are aceeptable in any context
+            true 
         end
     end
 
@@ -171,7 +176,7 @@ class Puppet::Parser::Lexer
         [self,value]
     end
 
-    TOKENS.add_token :REGEX, %r{/[^/\n]*/} do |lexer, value|
+    regex_token = TOKENS.add_token :REGEX, %r{/[^/\n]*/} do |lexer, value|
         # Make sure we haven't matched an escaped /
         while value[-2..-2] == '\\'
             other = lexer.scan_until(%r{/})
@@ -179,6 +184,10 @@ class Puppet::Parser::Lexer
         end
         regex = value.sub(%r{\A/}, "").sub(%r{/\Z}, '').gsub("\\/", "/")
         [self, Regexp.new(regex)]
+    end
+
+    def regex_token.acceptable?(context={})
+        [:NODE,:LBRACE,:RBRACE,:MATCH,:NOMATCH,:COMMA].include? context[:after]
     end
 
     TOKENS.add_token :RETURN, "\n", :skip => true, :incr_line => true, :skip_text => true
@@ -286,36 +295,28 @@ class Puppet::Parser::Lexer
     # Find the next token that matches a regex.  We look for these first.
     def find_regex_token
         @regex += 1
-        matched_token = nil
-        value = ""
-        length = 0
+        best_token = nil
+        best_length = 0
 
         # I tried optimizing based on the first char, but it had
         # a slightly negative affect and was a good bit more complicated.
         TOKENS.regex_tokens.each do |token|
-            next unless match_length = @scanner.match?(token.regex)
-
-            # We've found a longer match
-            if match_length > length
-                value = @scanner.scan(token.regex)
-                length = value.length
-                matched_token = token
+            if length = @scanner.match?(token.regex) and token.acceptable?(lexing_context)
+                # We've found a longer match
+                if length > best_length
+                    best_length = length
+                    best_token = token
+                end
             end
         end
 
-        return matched_token, value
+        return best_token, @scanner.scan(best_token.regex) if best_token
     end
 
     # Find the next token, returning the string and the token.
     def find_token
         @find += 1
-        matched_token, value = find_regex_token
-
-        unless matched_token
-            matched_token, value = find_string_token
-        end
-
-        return matched_token, value
+        find_regex_token || find_string_token
     end
 
     def indefine?
@@ -345,6 +346,7 @@ class Puppet::Parser::Lexer
         @indefine = false
         @expected = []
         @commentstack = [ ['', @line] ]
+        @lexing_context = {:after => nil, :start_of_line => true}
     end
 
     # Make any necessary changes to the token and/or value.
@@ -417,17 +419,11 @@ class Puppet::Parser::Lexer
                 raise "Could not match '%s'" % nword
             end
 
-            if matched_token.name == :RETURN
-                # this matches a blank line
-                if @last_return
-                    # eat the previously accumulated comments
-                    getcomment
-                end
-                # since :RETURN skips, we won't survive to munge_token
-                @last_return = true
-            else
-                @last_return = false
-            end
+            newline = matched_token.name == :RETURN
+
+            # this matches a blank line; eat the previously accumulated comments
+            getcomment if lexing_context[:start_of_line] and newline
+            lexing_context[:start_of_line] = newline
 
             final_token, token_value = munge_token(matched_token, value)
 
@@ -435,6 +431,8 @@ class Puppet::Parser::Lexer
                 skip()
                 next
             end
+
+            lexing_context[:after]         = final_token.name unless newline
 
             value = token_value[:value]
 

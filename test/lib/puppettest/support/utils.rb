@@ -91,22 +91,6 @@ module PuppetTest::Support::Utils
         return trans
     end
 
-    # If there are any fake data files, retrieve them
-    def fakedata(dir)
-        ary = [basedir, "test"]
-        ary += dir.split("/")
-        dir = File.join(ary)
-
-        unless FileTest.exists?(dir)
-            raise Puppet::DevError, "No fakedata dir %s" % dir
-        end
-        files = Dir.entries(dir).reject { |f| f =~ /^\./ }.collect { |f|
-            File.join(dir, f)
-        }
-
-        return files
-    end
-
     def fakefile(name)
         ary = [PuppetTest.basedir, "test"]
         ary += name.split("/")
@@ -169,4 +153,12 @@ end
 
 module PuppetTest
     include PuppetTest::Support::Utils
+
+    def self.fakedata(dir,pat='*')
+        glob = "#{basedir}/test/#{dir}/#{pat}"
+        files = Dir.glob(glob,File::FNM_PATHNAME)
+        raise Puppet::DevError, "No fakedata matching #{glob}" if files.empty?
+        files
+    end
+
 end

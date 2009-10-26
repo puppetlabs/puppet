@@ -464,18 +464,39 @@ describe Puppet::Parser::Lexer::TOKENS[:REGEX] do
         @token.regex.should_not =~ "/this is \n a regex/"
     end
 
-    describe "when including escaped slashes" do
-        before { @lexer = Puppet::Parser::Lexer.new }
-
-        it "should not consider escaped slashes to be the end of a regex" do
-            @lexer.string = "/this \\/ foo/"
+    describe "when scanning" do
+        def tokens_scanned_from(s)
+            lexer = Puppet::Parser::Lexer.new
+            lexer.string = s
             tokens = []
-            @lexer.scan do |name, value|
+            lexer.scan do |name, value|
                 tokens << value
             end
-            tokens[0][:value].should == Regexp.new("this / foo")
+            tokens[0..-2]
         end
-    end
+
+        it "should not consider escaped slashes to be the end of a regex" do
+            tokens_scanned_from("$x =~ /this \\/ foo/").last[:value].should == Regexp.new("this / foo")
+        end
+
+        it "should not lex chained division as a regex" do
+            tokens_scanned_from("$x = $a/$b/$c").any? {|t| t[:value].class == Regexp }.should == false
+        end
+
+        it "should accept a regular expression after NODE" do
+            tokens_scanned_from("node /www.*\.mysite\.org/").last[:value].should == Regexp.new("www.*\.mysite\.org")
+        end
+
+        it "should accept regular expressions in a CASE" do
+            s = %q{case $variable {
+                "something": {$othervar = 4096 / 2}
+                /regex/: {notice("this notably sucks")}
+                }
+            }
+            tokens_scanned_from(s)[12][:value].should == Regexp.new("regex")
+        end
+ 
+   end
 
 
     it "should return the REGEX token and a Regexp" do

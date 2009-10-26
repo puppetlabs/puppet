@@ -484,7 +484,10 @@ class Puppet::Parser::Parser
             return @version
         end
 
-        @version = %x{#{Puppet[:config_version]}}.chomp
+        @version = Puppet::Util.execute([Puppet[:config_version]]).strip
+
+    rescue Puppet::ExecutionFailure => e
+        raise Puppet::ParseError, "Unable to set config_version: #{e.message}"
     end
 
     # Add a new file to be checked when we're checking to see if we should be

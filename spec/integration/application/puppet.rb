@@ -10,16 +10,16 @@ describe "Puppet" do
     include PuppetSpec::Files
 
     describe "when applying provided catalogs" do
-        confine "JSON library is missing; cannot test applying catalogs" => Puppet.features.json?
-        it "should be able to apply catalogs provided in a file in json" do
-            file_to_create = tmpfile("json_catalog")
+        confine "PSON library is missing; cannot test applying catalogs" => Puppet.features.pson?
+        it "should be able to apply catalogs provided in a file in pson" do
+            file_to_create = tmpfile("pson_catalog")
             catalog = Puppet::Resource::Catalog.new
             resource = Puppet::Resource.new(:file, file_to_create, :content => "my stuff")
             catalog.add_resource resource
 
             manifest = tmpfile("manifest")
 
-            File.open(manifest, "w") { |f| f.print catalog.to_json }
+            File.open(manifest, "w") { |f| f.print catalog.to_pson }
 
             puppet = Puppet::Application[:puppet]
             puppet.options[:catalog] = manifest
