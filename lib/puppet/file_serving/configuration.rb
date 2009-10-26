@@ -96,9 +96,9 @@ class Puppet::FileServing::Configuration
 
     def mk_default_mounts
         @mounts["modules"] ||= Mount::Modules.new("modules")
-        @mounts["modules"].allow('*')
+        @mounts["modules"].allow('*') if @mounts["modules"].empty?
         @mounts["plugins"] ||= Mount::Plugins.new("plugins")
-        @mounts["plugins"].allow('*')
+        @mounts["plugins"].allow('*') if @mounts["plugins"].empty?
     end
 
     # Read the configuration file.
