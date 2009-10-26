@@ -407,14 +407,6 @@ describe "puppetd" do
                 @puppetd.setup_listen
             end
 
-            it "should set :cacrl to nil if no cacrl file" do
-                Puppet.expects(:[]).with(:cacrl).returns('cacrl')
-                File.expects(:exist?).with('cacrl').returns(false)
-                Puppet.expects(:[]=).with(:cacrl,nil)
-
-                @puppetd.setup_listen
-            end
-
             it "should create a server to listen on at least the Runner handler" do
                 Puppet::Network::Server.expects(:new).with { |args| args[:xmlrpc_handlers] == [:Runner] }
 

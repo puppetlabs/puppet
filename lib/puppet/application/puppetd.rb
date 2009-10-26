@@ -160,13 +160,6 @@ Puppet::Application.new(:puppetd) do
             exit(14)
         end
 
-        # FIXME: we should really figure out how to distribute the CRL
-        # to clients. In the meantime, we just disable CRL checking if
-        # the CRL file doesn't exist
-        unless File::exist?(Puppet[:cacrl])
-            Puppet[:cacrl] = nil
-        end
-
         handlers = nil
 
         if options[:serve].empty?
