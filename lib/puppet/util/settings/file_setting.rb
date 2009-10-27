@@ -16,7 +16,8 @@ class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::Setting
 
     def group=(value)
         unless AllowedGroups.include?(value)
-            raise SettingError, "Invalid group %s on setting %s. Valid groups are %s." % [value, name, AllowedGroups.join(', ')]
+            identifying_fields = [desc,name,default].compact.join(': ') 
+            raise SettingError, "Internal error: The :group setting for %s must be 'service', not '%s'" % [identifying_fields,value]
         end
         @group = value
     end
@@ -28,7 +29,8 @@ class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::Setting
 
     def owner=(value)
         unless AllowedOwners.include?(value)
-            raise SettingError, "Invalid owner %s on setting %s. Valid owners are %s." % [value, name, AllowedOwners.join(', ')]
+            identifying_fields = [desc,name,default].compact.join(': ') 
+            raise SettingError, "Internal error: The :owner setting for %s must be either 'root' or 'service', not '%s'" % [identifying_fields,value]
         end
         @owner = value
     end

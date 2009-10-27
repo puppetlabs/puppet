@@ -376,7 +376,7 @@ class Puppet::Parser::Parser
         doc = lexer.getcomment
         names.collect do |name|
             name = AST::HostName.new :value => name unless name.is_a?(AST::HostName)
-            if other = @loaded_code.node(name)
+            if other = @loaded_code.node_exists?(name)
                 error("Node %s is already defined at %s:%s; cannot redefine" % [other.name, other.file, other.line])
             end
             name = name.to_s if name.is_a?(Symbol)
@@ -484,7 +484,10 @@ class Puppet::Parser::Parser
             return @version
         end
 
-        @version = %x{#{Puppet[:config_version]}}.chomp
+        @version = Puppet::Util.execute([Puppet[:config_version]]).strip
+
+    rescue Puppet::ExecutionFailure => e
+        raise Puppet::ParseError, "Unable to set config_version: #{e.message}"
     end
 
     # Add a new file to be checked when we're checking to see if we should be

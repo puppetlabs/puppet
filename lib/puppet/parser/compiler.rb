@@ -415,6 +415,9 @@ class Puppet::Parser::Compiler
 
         # local resource array to maintain resource ordering
         @resources = []
+
+        # Make sure any external node classes are in our class list
+        @catalog.add_class(*@node.classes)
     end
 
     # Set the node's parameters into the top-scope as variables.
@@ -422,6 +425,10 @@ class Puppet::Parser::Compiler
         node.parameters.each do |param, value|
             @topscope.setvar(param, value)
         end
+
+        # These might be nil.
+        catalog.client_version = node.parameters["clientversion"]
+        catalog.server_version = node.parameters["serverversion"]
     end
 
     # Return an array of all of the unevaluated resources.  These will be definitions,

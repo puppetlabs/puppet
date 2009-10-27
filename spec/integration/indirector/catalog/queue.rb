@@ -6,7 +6,7 @@ require 'puppet/resource/catalog'
 
 
 describe "Puppet::Resource::Catalog::Queue" do
-    confine "Missing json support; cannot test queue" => Puppet.features.json?
+    confine "Missing pson support; cannot test queue" => Puppet.features.pson?
 
     before do
         Puppet::Resource::Catalog.indirection.terminus(:queue)
@@ -23,13 +23,13 @@ describe "Puppet::Resource::Catalog::Queue" do
 
     after { Puppet.settings.clear }
 
-    it "should render catalogs to json and send them via the queue client when catalogs are saved" do
+    it "should render catalogs to pson and send them via the queue client when catalogs are saved" do
         terminus = Puppet::Resource::Catalog.indirection.terminus(:queue)
 
         client = mock 'client'
         terminus.stubs(:client).returns client
 
-        client.expects(:send_message).with(:catalog, @catalog.to_json)
+        client.expects(:send_message).with(:catalog, @catalog.to_pson)
 
         request = Puppet::Indirector::Request.new(:catalog, :save, "foo", :instance => @catalog)
 
@@ -40,9 +40,9 @@ describe "Puppet::Resource::Catalog::Queue" do
         client = mock 'client'
         Puppet::Resource::Catalog::Queue.stubs(:client).returns client
 
-        json = @catalog.to_json
+        pson = @catalog.to_pson
 
-        client.expects(:subscribe).with(:catalog).yields(json)
+        client.expects(:subscribe).with(:catalog).yields(pson)
 
         Puppet.expects(:err).never
 

@@ -294,11 +294,11 @@ describe "PuppetMaster" do
                 Puppet.stubs(:err)
                 @puppetmasterd.stubs(:exit)
                 Puppet::Parser::Interpreter.stubs(:new).returns(@interpreter)
-                Puppet.features.stubs(:json?).returns true
+                Puppet.features.stubs(:pson?).returns true
             end
 
-            it "should fail if json isn't available" do
-                Puppet.features.expects(:json?).returns false
+            it "should fail if pson isn't available" do
+                Puppet.features.expects(:pson?).returns false
                 lambda { @puppetmasterd.compile }.should raise_error
             end
 
@@ -310,13 +310,13 @@ describe "PuppetMaster" do
                 @puppetmasterd.compile
             end
 
-            it "should render the catalog to json and print the output" do
+            it "should render the catalog to pson and print the output" do
                 @puppetmasterd.options[:node] = "foo"
                 catalog = Puppet::Resource::Catalog.new
-                catalog.expects(:render).with(:json).returns "myjson"
+                catalog.expects(:render).with(:pson).returns "mypson"
                 Puppet::Resource::Catalog.expects(:find).returns catalog
 
-                $stdout.expects(:puts).with("myjson")
+                $stdout.expects(:puts).with("mypson")
                 @puppetmasterd.compile
             end
 

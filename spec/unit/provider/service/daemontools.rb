@@ -65,7 +65,7 @@ describe provider_class do
 
     describe "when starting" do
         it "should use 'svc' to start the service" do
-            @provider.stubs(:enabled?).returns true
+            @provider.stubs(:enabled?).returns :true
             @provider.expects(:svc).with("-u", "/etc/service/myservice")
 
             @provider.start
@@ -74,7 +74,7 @@ describe provider_class do
         it "should enable the service if it is not enabled" do
             @provider.stubs(:svc)
 
-            @provider.expects(:enabled?).returns false
+            @provider.expects(:enabled?).returns :false
             @provider.expects(:enable)
 
             @provider.start
@@ -121,6 +121,23 @@ describe provider_class do
             File.stubs(:unlink)
             @provider.expects(:stop)
             @provider.disable
+        end
+    end
+
+    describe "when checking if the service is enabled?" do
+        it "should return true if it is running" do
+            @provider.stubs(:status).returns(:running)
+
+            @provider.enabled?.should == :true
+        end
+
+        [true, false].each do |t|
+            it "should return #{t} if the symlink exists" do
+                @provider.stubs(:status).returns(:stopped)
+                FileTest.stubs(:symlink?).returns(t)
+
+                @provider.enabled?.should == "#{t}".to_sym
+            end
         end
     end
 

@@ -1,15 +1,9 @@
 Puppet::Parser::Functions::newfunction(:fqdn_rand, :type => :rvalue, :doc =>
     "Generates random numbers based on the node's fqdn. The first argument
-    sets the range.  The second argument specifies a number to add to the
-    seed and is optional.") do |args|
+    sets the range.  Additional (optional) arguments may be used to further 
+    distinguish the seed.") do |args|
         require 'md5'
-        max = args[0]
-        if args[1] then
-             seed = args[1]
-        else
-             seed = 1
-        end
-        fqdn_seed = MD5.new(lookupvar('fqdn')).to_s.hex
-        srand(seed+fqdn_seed)
+        max = args.shift
+        srand MD5.new([lookupvar('fqdn'),args].join(':')).to_s.hex
         rand(max).to_s
 end

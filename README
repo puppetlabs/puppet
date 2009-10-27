@@ -21,7 +21,7 @@ Generally, you need the following things installed:
   running 'ruby -rxmlrpc/client -e "puts :yep"'.  If that errors out, you're missing
   the library.
 
-* Facter => 1.1.1
+* Facter => 1.5.1
   You can get this from < http://reductivelabs.com/projects/facter >
 
 $Id$

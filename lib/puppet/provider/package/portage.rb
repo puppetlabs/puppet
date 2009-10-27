@@ -1,11 +1,12 @@
 require 'puppet/provider/package'
 
 Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Package do
+    include Puppet::Util::Execution
     desc "Provides packaging support for Gentoo's portage system."
 
     has_feature :versionable
 
-    commands :emerge => "/usr/bin/emerge", :eix => "/usr/bin/eix", :update_eix => "/usr/bin/update-eix"
+    commands :emerge => "/usr/bin/emerge", :eix => "/usr/bin/eix", :update_eix => "/usr/bin/eix-update"
 
     confine :operatingsystem => :gentoo
 
@@ -15,13 +16,17 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
         result_format = /(\S+) (\S+) \[(?:([0-9.a-zA-Z]+(?:_(?:alpha|beta|pre|rc|p)[0-9]*)*(?:-r[0-9]*)?)(?:\([^\)]+\))?(?:\[([^\]]+)\])?[ ]*)*\] \[(?:(?:\{M\})?(?:\([~*]+\))?([0-9.a-zA-Z]+(?:_(?:alpha|beta|pre|rc|p)[0-9]*)*(?:-r[0-9]*)?)(?:\(([^\)]+)\))?(?:![mf])*(?:\[([^\]]+)\])?)?\] ([\S]*) (.*)/
         result_fields = [:category, :name, :ensure, :ensure_overlay, :version_available, :slot, :overlay, :vendor, :description]
 
-        search_format = "{installedversionsshort}<category> <name> [<installedversionsshort>] [<best>] <homepage> <description>{}"
+        version_format = "<version>{!last} {}"
+        search_format = "<category> <name> [<installedversions:SPLITVERSIONS>] [<bestversion:SPLITVERSIONS>] <homepage> <description>"
 
         begin
             if !FileUtils.uptodate?("/var/cache/eix", %w(/usr/bin/eix /usr/portage/metadata/timestamp))
                 update_eix
             end
-            search_output = eix "--nocolor", "--format", search_format
+            search_output = nil
+            withenv :SPLITVERSIONS => version_format do
+                search_output = eix "--nocolor", "--pure-packages", "--installed", "--format", search_format
+            end
 
             packages = []
             search_output.each do |search_result|
@@ -74,13 +79,18 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
         search_field = package_name.count('/') > 0 ? "--category-name" : "--name"
         search_value = package_name
-        search_format = "<category> <name> [<installedversionsshort>] [<best>] <homepage> <description>"
+
+        version_format = "<version>{!last} {}"
+        search_format = "<category> <name> [<installedversions:FORMAT_PVERSION>] [<bestversion:FORMAT_PVERSION>] <homepage> <description>"
 
         begin
             if !FileUtils.uptodate?("/var/cache/eix", %w(/usr/bin/eix /usr/portage/metadata/timestamp))
                 update_eix
             end
-            search_output = eix "--nocolor", "--format", search_format, "--exact", search_field, search_value
+            search_output = nil
+            withenv :SPLITVERSIONS => version_format do
+                search_output = eix "--nocolor", "--pure-packages", "--format", search_format, "--exact", search_field, search_value
+            end
 
             packages = []
             search_output.each do |search_result|

@@ -10,7 +10,7 @@ describe Puppet::Parser::Interpreter do
 
     describe "when creating parser instances" do
         it "should create a parser with code if there is code defined in the :code setting" do
-            Puppet.settings.stubs(:value).with(:code, :myenv).returns("mycode")
+            Puppet.settings.stubs(:uninterpolated_value).with(:code, :myenv).returns("mycode")
             @parser.expects(:string=).with("mycode")
             @parser.expects(:parse)
             Puppet::Parser::Parser.expects(:new).with(:environment => :myenv).returns(@parser)
@@ -18,7 +18,7 @@ describe Puppet::Parser::Interpreter do
         end
 
         it "should create a parser with the main manifest when the code setting is an empty string" do
-            Puppet.settings.stubs(:value).with(:code, :myenv).returns("")
+            Puppet.settings.stubs(:uninterpolated_value).with(:code, :myenv).returns("")
             Puppet.settings.stubs(:value).with(:manifest, :myenv).returns("/my/file")
             @parser.expects(:parse)
             @parser.expects(:file=).with("/my/file")

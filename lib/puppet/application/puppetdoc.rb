@@ -79,6 +79,7 @@ Puppet::Application.new(:puppetdoc) do
             if @manifest
                 Puppet::Util::RDoc.manifestdoc(files)
             else
+                options[:outputdir] = "doc" unless options[:outputdir]
                 Puppet::Util::RDoc.rdoc(options[:outputdir], files)
             end
         rescue => detail

@@ -178,9 +178,16 @@ module Puppet
 
         # Store all modifications back to disk
         def self.store
-            file = inifile.store
-            unless file.nil?
-                File.chmod(0644, file)
+            inifile.store
+            unless Puppet[:noop]
+                target_mode = 0644 # FIXME: should be configurable
+                inifile.each_file do |file|
+                    current_mode = File.stat(file).mode & 0777
+                    unless current_mode == target_mode
+                        Puppet::info "changing mode of #{file} from %03o to %03o" % [current_mode, target_mode]
+                        File.chmod(target_mode, file)
+                    end
+                end
             end
         end
 

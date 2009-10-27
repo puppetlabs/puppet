@@ -253,7 +253,7 @@ describe Puppet::Parser do
         end
 
         it "should raise an error if the node already exists" do
-            @loaded_code.stubs(:node).with(@nodename).returns(@node)
+            @loaded_code.stubs(:node_exists?).with(@nodename).returns(@node)
 
             lambda { @parser.newnode(@nodename) }.should raise_error
         end
@@ -324,9 +324,17 @@ describe Puppet::Parser do
         it "should use the output of the config_version setting if one is provided" do
             Puppet.settings.stubs(:[]).with(:config_version).returns("/my/foo")
 
-            @parser.expects(:`).with("/my/foo").returns "output\n"
+            Puppet::Util.expects(:execute).with(["/my/foo"]).returns "output\n"
             @parser.version.should == "output"
         end
+
+        it "should raise a puppet parser error if executing config_version fails" do
+            Puppet.settings.stubs(:[]).with(:config_version).returns("test")
+            Puppet::Util.expects(:execute).raises(Puppet::ExecutionFailure.new("msg"))
+
+            lambda { @parser.version }.should raise_error(Puppet::ParseError)
+        end
+
     end
 
     describe Puppet::Parser,"when looking up definitions" do

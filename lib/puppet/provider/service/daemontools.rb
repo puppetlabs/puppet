@@ -2,7 +2,7 @@
 #
 # author Brice Figureau <brice-puppet@daysofwonder.com>
 Puppet::Type.type(:service).provide :daemontools, :parent => :base do
-    desc """Daemontools service management.
+    desc "Daemontools service management.
 
     This provider manages daemons running supervised by D.J.Bernstein daemontools.
     It tries to detect the service directory, with by order of preference:
@@ -37,7 +37,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
     If a service has ensure => \"stopped\", it will only down the service, not
     remove the /path/to/service link.
 
-    """
+    "
 
     commands :svc  => "/usr/bin/svc", :svstat => "/usr/bin/svstat"
 
@@ -124,11 +124,6 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
         return :stopped
     end
 
-    def startcmd
-        self.enable if ! FileTest.symlink?(self.service)
-        [command(:svc), "-u", self.service ]
-    end
-
     def setupservice
         begin
             if resource[:manifest]
@@ -144,10 +139,12 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
 
     def enabled?
         case self.status
-        when :running:
+        when :running
+            # obviously if the daemon is running then it is enabled
             return :true
         else
-            return :false
+            # the service is enabled if it is linked
+            return FileTest.symlink?(self.service) ? :true : :false
         end
     end
 
@@ -191,7 +188,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
     end
 
     def start
-        enable unless enabled?
+        enable unless enabled? == :true
         svc "-u", self.service
     end
 

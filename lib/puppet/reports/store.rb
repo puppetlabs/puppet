@@ -16,8 +16,8 @@ Puppet::Reports.register_report(:store) do
             "client-#{client}-dir" => { :default => dir,
                 :mode => 0750,
                 :desc => "Client dir for %s" % client,
-                :owner => Puppet[:user],
-                :group => Puppet[:group]
+                :owner => 'service',
+                :group => 'service'
             }
         )
 

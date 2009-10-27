@@ -17,9 +17,9 @@ describe provider_class do
     end
 
     # #1560
-    it "should be able to parse each example" do
-        fakedata("data/providers/mailalias/aliases").each { |file|
+    PuppetTest.fakedata("data/providers/mailalias/aliases").each { |file|
+        it "should be able to parse the examples in #{file}" do
             fakedataparse(file)
-        }
-    end
+        end
+    }
 end

@@ -40,7 +40,7 @@ describe "puppetd" do
 
     describe "in preinit" do
         before :each do
-            @pupetd.stubs(:trap)
+            @puppetd.stubs(:trap)
         end
 
         it "should catch INT" do

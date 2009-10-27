@@ -26,9 +26,9 @@ Puppet::Network::FormatHandler.create(:yaml, :mime => "text/yaml") do
         yaml
     end
 
-    # Everything's supported
+    # Everything's supported unless you're on 1.8.1
     def supported?(klass)
-        true
+        RUBY_VERSION != '1.8.1'
     end
 
     # fixup invalid yaml as per:
@@ -36,6 +36,56 @@ Puppet::Network::FormatHandler.create(:yaml, :mime => "text/yaml") do
     def fixup(yaml)
         yaml.gsub!(/((?:&id\d+\s+)?!ruby\/object:.*?)\s*\?/) { "? #{$1}" }
         yaml
+    end
+end
+
+# This is a "special" format which is used for the moment only when sending facts
+# as REST GET parameters (see Puppet::Configurer::FactHandler).
+# This format combines a yaml serialization, then zlib compression and base64 encoding.
+Puppet::Network::FormatHandler.create(:b64_zlib_yaml, :mime => "text/b64_zlib_yaml") do
+    require 'base64'
+    require 'zlib'
+
+    def intern(klass, text)
+        decode(text)
+    end
+
+    def intern_multiple(klass, text)
+        decode(text)
+    end
+
+    def render(instance)
+        yaml = instance.to_yaml
+
+        yaml = encode(fixup(yaml)) unless yaml.nil?
+        yaml
+    end
+
+    def render_multiple(instances)
+        yaml = instances.to_yaml
+
+        yaml = encode(fixup(yaml)) unless yaml.nil?
+        yaml
+    end
+
+    # Because of yaml issue in ruby 1.8.1...
+    def supported?(klass)
+        RUBY_VERSION != '1.8.1'
+    end
+
+    # fixup invalid yaml as per:
+    # http://redmine.ruby-lang.org/issues/show/1331
+    def fixup(yaml)
+        yaml.gsub!(/((?:&id\d+\s+)?!ruby\/object:.*?)\s*\?/) { "? #{$1}" }
+        yaml
+    end
+
+    def encode(text)
+        Base64.encode64(Zlib::Deflate.deflate(text, Zlib::BEST_COMPRESSION))
+    end
+
+    def decode(yaml)
+        YAML.load(Zlib::Inflate.inflate(Base64.decode64(yaml)))
     end
 end
 
@@ -89,22 +139,22 @@ Puppet::Network::FormatHandler.create(:raw, :mime => "application/x-raw", :weigh
     end
 end
 
-Puppet::Network::FormatHandler.create(:json, :mime => "text/json", :weight => 10, :required_methods => [:render_method, :intern_method]) do
-    confine :true => Puppet.features.json?
+Puppet::Network::FormatHandler.create(:pson, :mime => "text/pson", :weight => 10, :required_methods => [:render_method, :intern_method]) do
+    confine :true => Puppet.features.pson?
 
     def intern(klass, text)
-        data_to_instance(klass, JSON.parse(text))
+        data_to_instance(klass, PSON.parse(text))
     end
 
     def intern_multiple(klass, text)
-        JSON.parse(text).collect do |data|
+        PSON.parse(text).collect do |data|
             data_to_instance(klass, data)
         end
     end
 
-    # JSON monkey-patches Array, so this works.
+    # PSON monkey-patches Array, so this works.
     def render_multiple(instances)
-        instances.to_json
+        instances.to_pson
     end
 
     # If they pass class information, we want to ignore it.  By default,
@@ -118,6 +168,6 @@ Puppet::Network::FormatHandler.create(:json, :mime => "text/json", :weight => 10
         if data.is_a?(klass)
             return data
         end
-        klass.from_json(data)
+        klass.from_pson(data)
     end
 end

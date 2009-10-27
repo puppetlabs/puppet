@@ -5,7 +5,7 @@
 %define confdir conf/redhat
 
 Name:           puppet
-Version:        0.25.0
+Version:        0.25.1
 Release:        1%{?dist}
 Summary:        A network tool for managing many disparate systems
 License:        GPLv2+
@@ -124,17 +124,19 @@ install -Dp -m0644 ext/vim/syntax/puppet.vim $vimdir/syntax/puppet.vim
 %files
 %defattr(-, root, root, 0755)
 %doc CHANGELOG COPYING LICENSE README examples
-%exclude %{_bindir}/pi
+%{_bindir}/pi
 %{_bindir}/puppet
 %{_bindir}/ralsh
 %{_bindir}/filebucket
 %{_bindir}/puppetdoc
+%{_sbindir}/puppetca
 %{_sbindir}/puppetd
 %{ruby_sitelibdir}/*
 %{_initrddir}/puppet
 %dir %{_sysconfdir}/puppet
 %config(noreplace) %{_sysconfdir}/sysconfig/puppet
 %config(noreplace) %{_sysconfdir}/puppet/puppet.conf
+%ghost %config(noreplace,missingok) %{_sysconfdir}/puppet/puppetca.conf
 %ghost %config(noreplace,missingok) %{_sysconfdir}/puppet/puppetd.conf
 %config(noreplace) %{_sysconfdir}/logrotate.d/puppet
 # We don't want to require emacs or vim, so we need to own these dirs
@@ -146,12 +148,13 @@ install -Dp -m0644 ext/vim/syntax/puppet.vim $vimdir/syntax/puppet.vim
 %attr(-, puppet, puppet) %{_localstatedir}/run/puppet
 %attr(-, puppet, puppet) %{_localstatedir}/log/puppet
 %attr(-, puppet, puppet) %{_localstatedir}/lib/puppet
-%exclude %{_mandir}/man8/pi.8.gz
-%doc %{_mandir}/man8/puppet.8.gz
-%doc %{_mandir}/man8/puppet.conf.8.gz
-%doc %{_mandir}/man8/puppetd.8.gz
-%doc %{_mandir}/man8/ralsh.8.gz
-%doc %{_mandir}/man8/puppetdoc.8.gz
+%{_mandir}/man8/pi.8.gz
+%{_mandir}/man8/puppet.8.gz
+%{_mandir}/man8/puppet.conf.8.gz
+%{_mandir}/man8/puppetca.8.gz
+%{_mandir}/man8/puppetd.8.gz
+%{_mandir}/man8/ralsh.8.gz
+%{_mandir}/man8/puppetdoc.8.gz
 
 %files server
 %defattr(-, root, root, 0755)
@@ -162,13 +165,10 @@ install -Dp -m0644 ext/vim/syntax/puppet.vim $vimdir/syntax/puppet.vim
 %config(noreplace) %{_sysconfdir}/puppet/fileserver.conf
 %dir %{_sysconfdir}/puppet/manifests
 %config(noreplace) %{_sysconfdir}/sysconfig/puppetmaster
-%ghost %config(noreplace,missingok) %{_sysconfdir}/puppet/puppetca.conf
 %ghost %config(noreplace,missingok) %{_sysconfdir}/puppet/puppetmasterd.conf
-%{_sbindir}/puppetca
-%doc %{_mandir}/man8/filebucket.8.gz
-%doc %{_mandir}/man8/puppetca.8.gz
-%doc %{_mandir}/man8/puppetmasterd.8.gz
-%doc %{_mandir}/man8/puppetrun.8.gz
+%{_mandir}/man8/filebucket.8.gz
+%{_mandir}/man8/puppetmasterd.8.gz
+%{_mandir}/man8/puppetrun.8.gz
 
 # Fixed uid/gid were assigned in bz 472073 (Fedora), 471918 (RHEL-5),
 # and 471919 (RHEL-4)
@@ -214,6 +214,18 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Tue Oct 20 2009 Todd Zullinger <tmz@pobox.com> - 0.25.1-1
+- Update to 0.25.1
+- Include the pi program and man page (R.I.Pienaar)
+
+* Sat Oct 17 2009 Todd Zullinger <tmz@pobox.com> - 0.25.1-0.2.rc2
+- Update to 0.25.1rc2
+
+* Tue Sep 22 2009 Todd Zullinger <tmz@pobox.com> - 0.25.1-0.1.rc1
+- Update to 0.25.1rc1
+- Move puppetca to puppet package, it has uses on client systems
+- Drop redundant %%doc from manpage %%file listings
+
 * Fri Sep 04 2009 Todd Zullinger <tmz@pobox.com> - 0.25.0-1
 - Update to 0.25.0
 - Fix permissions on /var/log/puppet (#495096)

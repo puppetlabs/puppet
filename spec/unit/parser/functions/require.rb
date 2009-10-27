@@ -7,8 +7,10 @@ describe "the require function" do
     before :each do
         @catalog = stub 'catalog'
         @compiler = stub 'compiler', :catalog => @catalog
+
+        @resource = stub 'resource', :set_parameter => nil, :metaparam_compatibility_mode? => false
         @scope = Puppet::Parser::Scope.new()
-        @scope.stubs(:resource).returns("ourselves")
+        @scope.stubs(:resource).returns @resource
         @scope.stubs(:findresource)
         @scope.stubs(:compiler).returns(@compiler)
     end
@@ -18,19 +20,29 @@ describe "the require function" do
     end
 
     it "should delegate to the 'include' puppet function" do
-        @catalog.stubs(:add_edge)
         @scope.expects(:function_include).with("myclass")
 
         @scope.function_require("myclass")
     end
 
-    it "should add a catalog edge from our parent resource to the included one" do
-        @scope.stubs(:function_include).with("myclass")
-        @scope.stubs(:findresource).with(:class, "myclass").returns("includedclass")
-
-        @catalog.expects(:add_edge).with("ourselves","includedclass")
-
+    it "should set the 'require' prarameter on the resource to a resource reference" do
+        @resource.expects(:set_parameter).with { |name, value| name == :require and value.is_a?(Puppet::Parser::Resource::Reference) }
+        @scope.stubs(:function_include)
         @scope.function_require("myclass")
     end
 
+    it "should verify the 'include' function is loaded" do
+        Puppet::Parser::Functions.expects(:function).with(:include).returns(:function_include)
+        @scope.stubs(:function_include)
+        @scope.function_require("myclass")
+    end
+
+    it "should include the class but not add a dependency if used on a client not at least version 0.25" do
+        @resource.expects(:metaparam_compatibility_mode?).returns true
+        @scope.expects(:warning)
+        @resource.expects(:set_parameter).never
+        @scope.expects(:function_include)
+
+        @scope.function_require("myclass")
+    end
 end

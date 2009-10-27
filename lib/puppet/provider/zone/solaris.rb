@@ -156,11 +156,16 @@ Puppet::Type.type(:zone).provide(:solaris) do
     def start
         # Check the sysidcfg stuff
         if cfg = @resource[:sysidcfg]
-            path = File.join(@resource[:path], "root", "etc", "sysidcfg")
+            zoneetc = File.join(@resource[:path], "root", "etc")
+            sysidcfg = File.join(zoneetc, "sysidcfg")
 
-            unless File.exists?(path)
+            # if the zone root isn't present "ready" the zone
+            # which makes zoneadmd mount the zone root
+            zoneadm :ready unless File.directory?(zoneetc)
+
+            unless File.exists?(sysidcfg)
                 begin
-                    File.open(path, "w", 0600) do |f|
+                    File.open(sysidcfg, "w", 0600) do |f|
                         f.puts cfg
                     end
                 rescue => detail
@@ -191,6 +196,10 @@ Puppet::Type.type(:zone).provide(:solaris) do
         end
 
         main
+    end
+
+    def ready
+        zoneadm :ready
     end
 
     def stop

@@ -53,13 +53,13 @@ Puppet::Application.new(:puppetmasterd) do
 
     command(:compile) do
         Puppet::Util::Log.newdestination :console
-        raise ArgumentError, "Cannot render compiled catalogs without json support" unless Puppet.features.json?
+        raise ArgumentError, "Cannot render compiled catalogs without pson support" unless Puppet.features.pson?
         begin
             unless catalog = Puppet::Resource::Catalog.find(options[:node])
                 raise "Could not compile catalog for %s" % options[:node] 
             end
 
-            $stdout.puts catalog.render(:json)
+            $stdout.puts catalog.render(:pson)
         rescue => detail
             $stderr.puts detail
             exit(30)

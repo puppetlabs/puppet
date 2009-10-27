@@ -34,10 +34,12 @@ describe Puppet::Property do
         @class.should respond_to(:required_features=)
     end
 
-    it "should always convert required features into an array of symbols" do
-        @class.required_features = %w{one two}
-        @class.required_features.should == [:one, :two]
-    end
+    {"one" => [:one],:one => [:one],%w{a} => [:a],[:b] => [:b],%w{one two} => [:one,:two],[:a,:b] => [:a,:b]}.each { |in_value,out_value|
+        it "should always convert required features into an array of symbols (e.g. #{in_value.inspect} --> #{out_value.inspect})" do
+            @class.required_features = in_value
+            @class.required_features.should == out_value
+        end
+    }
 
     it "should be able to shadow metaparameters" do
         @property.must respond_to(:shadow)
@@ -198,6 +200,14 @@ describe Puppet::Property do
             @provider.expects(:satisfies?).with([:a, :b]).returns false
 
             lambda { @property.should = :foo }.should raise_error(Puppet::Error)
+        end
+
+        it "should internally raise an ArgumentError if required features are missing" do
+            @class.newvalue(:foo, :required_features => [:a, :b])
+
+            @provider.expects(:satisfies?).with([:a, :b]).returns false
+
+            lambda { @property.validate_features_per_value :foo }.should raise_error(ArgumentError)
         end
 
         it "should validate that all required features are present for regexes" do

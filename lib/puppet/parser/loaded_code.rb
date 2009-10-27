@@ -36,6 +36,10 @@ class Puppet::Parser::LoadedCode
         nil
     end
 
+    def node_exists?(name)
+        @nodes[check_name(name)]
+    end
+
     def nodes?
         @nodes.length > 0
     end

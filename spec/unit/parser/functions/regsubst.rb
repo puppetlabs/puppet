@@ -28,6 +28,26 @@ describe "the regsubst function" do
             raise_error(Puppet::ParseError))
     end
 
+    it "should raise a ParseError for non-string and non-array target" do
+        lambda { @scope.function_regsubst([4711, "bar", "gazonk"]) }.should(
+            raise_error(Puppet::ParseError))
+    end
+
+    it "should raise a ParseError for array target with non-string element" do
+        lambda { @scope.function_regsubst([["x", ["y"], "z"], "bar", "gazonk"]) }.should(
+            raise_error(Puppet::ParseError))
+    end
+
+    it "should raise a ParseError for a bad regular expression" do
+        lambda { @scope.function_regsubst(["foo", "(bar", "gazonk"]) }.should(
+            raise_error(Puppet::ParseError))
+    end
+
+    it "should raise a ParseError for a non-string regular expression" do
+        lambda { @scope.function_regsubst(["foo", ["bar"], "gazonk"]) }.should(
+            raise_error(Puppet::ParseError))
+    end
+
     it "should handle groups" do
         result = @scope.function_regsubst(
             [ '130.236.254.10',
@@ -79,6 +99,66 @@ describe "the regsubst function" do
         result = @scope.function_regsubst(
             [ '130.236.254.10',
               '([0-9]+)',
+              '<\1>',
+              'G'
+            ])
+        result.should(eql('<130>.<236>.<254>.<10>'))
+    end
+
+    it "should apply on all elements of an array" do
+        data = ['130.236.254.10', 'foo.example.com', 'coconut', '10.20.30.40']
+        result = @scope.function_regsubst([ data, '[.]', '-'])
+        result.should(eql(
+            ['130-236.254.10', 'foo-example.com', 'coconut', '10-20.30.40']))
+    end
+
+    it "should apply global substitutions on all elements of an array" do
+        data = ['130.236.254.10', 'foo.example.com', 'coconut', '10.20.30.40']
+        result = @scope.function_regsubst([ data, '[.]', '-', 'G'])
+        result.should(eql(
+            ['130-236-254-10', 'foo-example-com', 'coconut', '10-20-30-40']))
+    end
+
+    it "should handle groups on all elements of an array" do
+        data = ['130.236.254.10', 'foo.example.com', 'coconut', '10.20.30.40']
+        result = @scope.function_regsubst(
+            [ data,
+              '^([0-9]+)[.]([0-9]+)[.]([0-9]+)[.]([0-9]+)$',
+              '\4-\3-\2-\1'
+            ])
+        result.should(eql(
+            ['10-254-236-130', 'foo.example.com', 'coconut', '40-30-20-10']))
+    end
+
+    it "should handle global substitutions with groups on all elements of an array" do
+        data = ['130.236.254.10', 'foo.example.com', 'coconut', '10.20.30.40']
+        result = @scope.function_regsubst(
+            [ data,
+              '([^.]+)',
+              '<\1>',
+              'G'
+            ])
+        result.should(eql(
+            ['<130>.<236>.<254>.<10>', '<foo>.<example>.<com>',
+             '<coconut>', '<10>.<20>.<30>.<40>']))
+    end
+
+    it "should return an array (not a string) for a single element array parameter" do
+        data = ['130.236.254.10']
+        result = @scope.function_regsubst(
+            [ data,
+              '([^.]+)',
+              '<\1>',
+              'G'
+            ])
+        result.should(eql(['<130>.<236>.<254>.<10>']))
+    end
+
+    it "should return a string (not a one element array) for a simple string parameter" do
+        data = '130.236.254.10'
+        result = @scope.function_regsubst(
+            [ data,
+              '([^.]+)',
               '<\1>',
               'G'
             ])

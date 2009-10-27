@@ -49,12 +49,12 @@ Puppet::Application.new(:puppet) do
         end
 
         begin
-            catalog = JSON.parse(text)
+            catalog = PSON.parse(text)
             unless catalog.is_a?(Puppet::Resource::Catalog)
-                catalog = Puppet::Resource::Catalog.json_create(catalog)
+                catalog = Puppet::Resource::Catalog.pson_create(catalog)
             end
         rescue => detail
-            raise Puppet::Error, "Could not deserialize catalog from json: %s" % detail
+            raise Puppet::Error, "Could not deserialize catalog from pson: %s" % detail
         end
 
         catalog = catalog.to_ral

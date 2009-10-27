@@ -423,9 +423,10 @@ class Nagios::Base
     end
 
     newtype :serviceescalation do
-        setparameters :host_name, :hostgroup_name, :service_description, :contacts,
-            :contact_groups, :first_notification, :last_notification,
-            :notification_interval, :escalation_period, :escalation_options,
+        setparameters :host_name, :hostgroup_name, :servicegroup_name,
+            :service_description, :contacts, :contact_groups,
+            :first_notification, :last_notification, :notification_interval,
+            :escalation_period, :escalation_options,
             :register, :use,
             :_naginator_name
 

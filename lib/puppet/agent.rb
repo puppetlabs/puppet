@@ -122,9 +122,9 @@ class Puppet::Agent
     def with_client
         begin
             @client = client_class.new
-        rescue => details
+        rescue => detail
             puts detail.backtrace if Puppet[:trace]
-            Puppet.err "Could not create instance of %s: %s" % [client_class, details]
+            Puppet.err "Could not create instance of %s: %s" % [client_class, detail]
             return
         end
         yield @client

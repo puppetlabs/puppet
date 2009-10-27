@@ -195,9 +195,24 @@ describe Puppet::Parser::AST::HostName do
         host.to_classname.should == "klassname"
     end
 
+    it "should preserve '_' in to_classname with a string nodename" do
+        host = Puppet::Parser::AST::HostName.new( :value => "node_with_underscore")
+        host.to_classname.should == "node_with_underscore"
+    end
+
+    it "should preserve '_' in to_classname with a regex nodename" do
+        host = Puppet::Parser::AST::HostName.new( :value => Puppet::Parser::AST::Regex.new(:value => "/\dnode_with_underscore\.+/") )
+        host.to_classname.should == "dnode_with_underscore."
+    end
+
     it "should return a string usable as classname when calling to_classname" do
         host = Puppet::Parser::AST::HostName.new( :value => Puppet::Parser::AST::Regex.new(:value => "/^this-is not@a classname$/") )
         host.to_classname.should == "this-isnotaclassname"
+    end
+
+    it "should return a string usable as a tag when calling to_classname" do
+        host = Puppet::Parser::AST::HostName.new( :value => Puppet::Parser::AST::Regex.new(:value => "/.+.reductivelabs\.com/") )
+        host.to_classname.should == "reductivelabs.com"
     end
 
     it "should delegate 'match' to the underlying value if it is an HostName" do

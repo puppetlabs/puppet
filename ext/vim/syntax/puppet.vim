@@ -17,7 +17,7 @@ elseif exists("b:current_syntax")
 endif
 
 " match class/definition/node declarations
-syn region  puppetDefine        start="^\s*\(class\|define\|node\)\s" end="{" contains=puppetDefType,puppetDefName,puppetDefArguments
+syn region  puppetDefine        start="^\s*\(class\|define\|node\)\s" end="{" contains=puppetDefType,puppetDefName,puppetDefArguments,puppetNodeRe
 syn keyword puppetDefType       class define node inherits contained
 syn region  puppetDefArguments  start="(" end=")" contains=puppetArgument
 syn match   puppetArgument      "\w\+" contained
@@ -25,6 +25,7 @@ syn match   puppetArgument      "\$\w\+" contained
 syn match   puppetArgument      "'[^']+'" contained
 syn match   puppetArgument      '"[^"]+"' contained
 syn match   puppetDefName       "\w\+" contained
+syn match   puppetNodeRe        "/.*/" contained
 
 " match 'foo' in 'class foo { ...'
 " match 'foo::bar' in 'class foo::bar { ...'
@@ -60,6 +61,7 @@ syn match   puppetVariable      "${\w\+}"
 " don't match variables if preceded by a backslash.
 syn region  puppetString        start=+'+ skip=+\\\\\|\\'+ end=+'+
 syn region  puppetString        start=+"+ skip=+\\\\\|\\"+ end=+"+ contains=puppetVariable,puppetNotVariable
+syn match   puppetString        "/.*/"
 syn match   puppetNotVariable   "\\$\w\+" contained
 syn match   puppetNotVariable   "\\${\w\+}" contained
 
@@ -97,6 +99,7 @@ if version >= 508 || !exists("did_puppet_syn_inits")
   HiLink puppetControl              Statement
   HiLink puppetDefType              Define
   HiLink puppetDefName              Type
+  HiLink puppetNodeRe               Type
   HiLink puppetTypeName             Statement
   HiLink puppetTypeDefault          Type
   HiLink puppetParamName            Identifier

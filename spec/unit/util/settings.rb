@@ -200,6 +200,12 @@ describe Puppet::Util::Settings do
             @settings[:four].should == "ONE TWO ONE ONE TWO THREE FOUR"
         end
 
+        it "should provide a method for returning uninterpolated values" do
+            @settings[:two] = "$one tw0"
+            @settings.uninterpolated_value(:two).should  == "$one tw0"
+            @settings.uninterpolated_value(:four).should == "$two $three FOUR"
+        end
+
         it "should interpolate set values for other parameters into returned parameter values" do
             @settings[:one] = "on3"
             @settings[:two] = "$one tw0"

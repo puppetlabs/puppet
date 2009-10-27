@@ -28,10 +28,7 @@ module Puppet
         end
 
         def insync?(current)
-            unless Puppet::Util::SUIDManager.uid == 0
-                warning "Cannot manage ownership unless running as root"
-                return true
-            end
+            return true unless should
 
             @should.each do |value|
                 if value =~ /^\d+$/
@@ -44,6 +41,12 @@ module Puppet
 
                 return true if uid == current
             end
+
+            unless Puppet::Util::SUIDManager.uid == 0
+                warnonce "Cannot manage ownership unless running as root"
+                return true
+            end
+
             return false
         end
 

@@ -86,6 +86,16 @@ describe Puppet::Parser::Compiler do
         it "should copy the parser version to the catalog" do
             @compiler.catalog.version.should == @parser.version
         end
+
+        it "should copy any node classes into the class list" do
+            node = Puppet::Node.new("mynode")
+            node.classes = %w{foo bar}
+            compiler = Puppet::Parser::Compiler.new(node, @parser)
+            p compiler.classlist
+
+            compiler.classlist.should include("foo")
+            compiler.classlist.should include("bar")
+        end
     end
 
     describe "when managing scopes" do
@@ -129,6 +139,15 @@ describe Puppet::Parser::Compiler do
             @compiler.compile
             @compiler.topscope.lookupvar("a").should == "b"
             @compiler.topscope.lookupvar("c").should == "d"
+        end
+
+        it "should set the client and server versions on the catalog" do
+            params = {"clientversion" => "2", "serverversion" => "3"}
+            @node.stubs(:parameters).returns(params)
+            compile_stub(:set_node_parameters)
+            @compiler.compile
+            @compiler.catalog.client_version.should == "2"
+            @compiler.catalog.server_version.should == "3"
         end
 
         it "should evaluate any existing classes named in the node" do

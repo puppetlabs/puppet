@@ -64,6 +64,8 @@ describe "Certificate REST Terminus" do
 
         # There's no good '==' method on certs.
         result.content.to_s.should == @host.certificate.content.to_s
-        result.name.should == @host.certificate.name
+
+        # also make sure it uses the provided name, rather than the internal one.
+        result.name.should == "bar"
     end
 end

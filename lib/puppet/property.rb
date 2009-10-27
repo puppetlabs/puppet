@@ -1,4 +1,4 @@
- # The virtual base class for properties, which are the self-contained building
+# The virtual base class for properties, which are the self-contained building
 # blocks for actually doing work on the system.
 
 require 'puppet'
@@ -144,6 +144,7 @@ class Puppet::Property < Puppet::Parameter
         rescue Puppet::Error, Puppet::DevError
             raise
         rescue => detail
+            puts detail.backtrace if Puppet[:trace]
             raise Puppet::DevError, "Could not convert change %s to string: %s" %
                 [self.name, detail]
         end
@@ -384,7 +385,7 @@ class Puppet::Property < Puppet::Parameter
     # Make sure that we've got all of the required features for a given value.
     def validate_features_per_value(value)
         if features = self.class.value_option(self.class.value_name(value), :required_features)
-            raise ArgumentError, "Provider must have features '%s' to set '%s' to '%s'" % [features.collect { |f| f.to_s }.join(", "), self.class.name, value] unless provider.satisfies?(features)
+            raise ArgumentError, "Provider must have features '%s' to set '%s' to '%s'" % [[features].flatten.join(", "), self.class.name, value] unless provider.satisfies?(features)
         end
     end
 
