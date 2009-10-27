@@ -27,8 +27,12 @@ PUPPET_OPTS=""
 [ -n "$PUPPET_LOG" ] && PUPPET_OPTS="${PUPPET_OPTS} --logdest=${PUPPET_LOG}"
 [ -n "$PUPPET_PORT" ] && PUPPET_OPTS="${PUPPET_OPTS} --masterport=${PUPPET_PORT}"
 
-# Determine if we can use the -p option to killproc.  RHEL < 5 can't.
-killproc | grep -q -- '-p' 2>/dev/null && killopts="-p $pidfile"
+# Determine if we can use the -p option to daemon, killproc, and status.
+# RHEL < 5 can't.
+if status | grep -q -- '-p' 2>/dev/null; then
+    daemonopts="--pidfile $pidfile"
+    pidopts="-p $pidfile"
+fi
 
 # Figure out if the system just booted. Let's assume
 # boot doesn't take longer than 5 minutes
@@ -37,7 +41,7 @@ killproc | grep -q -- '-p' 2>/dev/null && killopts="-p $pidfile"
 
 start() {
     echo -n $"Starting puppet: "
-    daemon $puppetd ${PUPPET_OPTS} ${PUPPET_EXTRA_OPTS}
+    daemon $daemonopts $puppetd ${PUPPET_OPTS} ${PUPPET_EXTRA_OPTS}
     RETVAL=$?
     echo
         [ $RETVAL = 0 ] && touch ${lockfile}
@@ -46,7 +50,7 @@ start() {
 
 stop() {
     echo -n $"Stopping puppet: "
-    killproc $killopts $puppetd
+    killproc $pidopts $puppetd
     RETVAL=$?
     echo
     [ $RETVAL = 0 ] && rm -f ${lockfile} ${pidfile}
@@ -54,7 +58,7 @@ stop() {
 
 reload() {
     echo -n $"Restarting puppet: "
-    killproc $killopts $puppetd -HUP
+    killproc $pidopts $puppetd -HUP
     RETVAL=$?
     echo
     return $RETVAL
@@ -66,8 +70,7 @@ restart() {
 }
 
 rh_status() {
-    status | grep -q -- '-p' 2>/dev/null && statusopts="-p $pidfile"
-    status $statusopts $puppetd
+    status $pidopts $puppetd
     RETVAL=$?
     return $RETVAL
 }
