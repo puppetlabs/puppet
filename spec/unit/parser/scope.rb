@@ -43,7 +43,7 @@ describe Puppet::Parser::Scope do
         describe "and the variable is qualified" do
             before do
                 @parser = Puppet::Parser::Parser.new()
-                @compiler = Puppet::Parser::Compiler.new(stub("node", :name => "foonode"), @parser)
+                @compiler = Puppet::Parser::Compiler.new(stub("node", :name => "foonode", :classes => []), @parser)
                 @scope.compiler = @compiler
                 @scope.parser = @parser
             end
