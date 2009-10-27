@@ -1,4 +1,4 @@
-requir 'puppet/indirector/terminus'
+require 'puppet/indirector/terminus'
 require 'puppet/util/ldap/connection'
 
 class Puppet::Indirector::Ldap < Puppet::Indirector::Terminus
