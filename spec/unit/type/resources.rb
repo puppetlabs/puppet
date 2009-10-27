@@ -8,7 +8,7 @@ resources = Puppet::Type.type(:resources)
 describe resources do
     describe "when initializing" do
         it "should fail if the specified resource type does not exist" do
-            Puppet::Type.stubs(:type).with("Resources").returns resources
+            Puppet::Type.stubs(:type).with { |x| x.to_s.downcase == "resources"}.returns resources
             Puppet::Type.expects(:type).with("nosuchtype").returns nil
             lambda { resources.new :name => "nosuchtype" }.should raise_error(Puppet::Error)
         end

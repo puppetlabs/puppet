@@ -40,9 +40,14 @@ describe Puppet::Parser::Resource::Reference do
         ref.to_s.should == "File[/tmp/yay]"
     end
 
-    it "should canonize resource references" do
+    it "should canonize resource reference types" do
         ref = @type.new(:type => "foo::bar", :title => "/tmp/yay")
         ref.to_s.should == "Foo::Bar[/tmp/yay]"
+    end
+
+    it "should canonize resource reference values" do
+        ref = @type.new(:type => "file", :title => "/tmp/yay/")
+        ref.to_s.should == "File[/tmp/yay]"
     end
 end
 

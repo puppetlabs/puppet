@@ -46,6 +46,12 @@ module Puppet
             unmunge do |value|
                 File.join( Puppet::FileCollection.collection.path(value[:index]), value[:name] )
             end
+ 
+            to_canonicalize do |s|
+                # Get rid of any duplicate slashes, and remove any trailing slashes unless 
+                # the title is just a slash, in which case leave it.
+                s.gsub(/\/+/, "/").sub(/(.)\/$/,'\1')
+            end
         end
 
         newparam(:backup) do
@@ -399,11 +405,7 @@ module Puppet
 
             super
 
-            # Get rid of any duplicate slashes, and remove any trailing slashes.
-            @title = @title.gsub(/\/+/, "/")
-
-            @title.sub!(/\/$/, "") unless @title == "/"
-
+            @title = self.class.canonicalize_ref(@title)
             @stat = nil
         end
 

@@ -210,8 +210,8 @@ class Type
     end
 
     # Find the namevar
-    def self.namevar
-        unless defined? @namevar
+    def self.namevar_parameter
+        @namevar_parameter ||= (
             params = @parameters.find_all { |param|
                 param.isnamevar? or param.name == :name
             }
@@ -219,12 +219,19 @@ class Type
             if params.length > 1
                 raise Puppet::DevError, "Found multiple namevars for %s" % self.name
             elsif params.length == 1
-                @namevar = params[0].name
+                params.first
             else
                 raise Puppet::DevError, "No namevar for %s" % self.name
             end
-        end
-        @namevar
+        )
+    end
+
+    def self.namevar
+        @namevar ||= namevar_parameter.name
+    end
+
+    def self.canonicalize_ref(s)
+        namevar_parameter.canonicalize(s)
     end
 
     # Create a new parameter.  Requires a block and a name, stores it in the
