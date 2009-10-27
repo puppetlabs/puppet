@@ -2,7 +2,7 @@ puppet (0.25.1-1) unstable; urgency=low
 
   * New upstream release of 0.25.1
 
- -- Nigel Kersten <nigelk@google.com>  Tue, 27 Oct 2009 10:35:40 -0700
+ -- Nigel Kersten <nigel@explanatorygap.net>  Tue, 27 Oct 2009 10:35:40 -0700
 
 puppet (0.25.0-1) unstable; urgency=low
 
