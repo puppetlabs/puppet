@@ -5,21 +5,17 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/transaction/event'
 
 describe Puppet::Transaction::Event do
-    Event = Puppet::Transaction::Event
-
-    it "should require a name and a source" do
-        lambda { Event.new }.should raise_error(ArgumentError)
+    [:log, :previous_value, :desired_value, :property, :resource, :name, :result].each do |attr|
+        it "should support #{attr}" do
+            event = Puppet::Transaction::Event.new
+            event.send(attr.to_s + "=", "foo")
+            event.send(attr).should == "foo"
+        end
     end
 
-    it "should have a name getter" do
-        Event.new(:foo, "bar").name.should == :foo
-    end
-
-    it "should have a source accessor" do
-        Event.new(:foo, "bar").source.should == "bar"
-    end
-
-    it "should be able to produce a string containing the event name and the source" do
-        Event.new(:event, :source).to_s.should == "source -> event"
+    it "should produce the log when converted to a string" do
+        event = Puppet::Transaction::Event.new
+        event.expects(:log).returns "my log"
+        event.to_s.should == "my log"
     end
 end

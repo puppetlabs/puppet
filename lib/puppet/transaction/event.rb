@@ -1,21 +1,8 @@
 require 'puppet'
-require 'puppet/util/methodhelper'
-require 'puppet/util/errors'
 
-# events are transient packets of information; they result in one or more (or none)
-# subscriptions getting triggered, and then they get cleared
-# eventually, these will be passed on to some central event system
-class Puppet::Transaction::Event
-    include Puppet::Util::MethodHelper
-    include Puppet::Util::Errors
-
-    attr_reader :name, :source
-
-    def initialize(name, source)
-        @name, @source = name, source
-    end
-
+# A simple struct for storing what happens on the system.
+Puppet::Transaction::Event = Struct.new(:name, :resource, :property, :result, :log, :previous_value, :desired_value) do
     def to_s
-        source.to_s + " -> " + name.to_s
+        log
     end
 end
