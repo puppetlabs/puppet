@@ -4,7 +4,7 @@ require 'puppet/transaction/event'
 # Handle all of the work around performing an actual change,
 # including calling 'sync' on the properties and producing events.
 class Puppet::Transaction::Change
-    attr_accessor :is, :should, :path, :property, :changed, :proxy
+    attr_accessor :is, :should, :property, :proxy
 
     # Switch the goals of the property, thus running the change in reverse.
     def backward
@@ -15,26 +15,22 @@ class Puppet::Transaction::Change
         return self.go
     end
 
-    def changed?
-        self.changed
-    end
-
     # Create our event object.
-    def event(name)
-        # default to a simple event type
-        unless name.is_a?(Symbol)
-            @property.warning("Property '%s' returned invalid event '%s'; resetting to default" %
-                [@property.class, name])
+    def event(event_name)
+        event_name ||= property.default_event_name(should)
 
-            name = @property.event(should)
+        # default to a simple event type
+        unless event_name.is_a?(Symbol)
+            @property.warning "Property '#{property.class}' returned invalid event '#{event_name}'; resetting to default"
+
+            event_name = property.default_event_name(should)
         end
 
-        Puppet::Transaction::Event.new(name, self.resource)
+        Puppet::Transaction::Event.new(event_name, resource.ref, property.name, is, should)
     end
 
     def initialize(property, currentvalue)
         @property = property
-        @path = [property.path,"change"].flatten
         @is = currentvalue
 
         @should = property.should
@@ -47,25 +43,30 @@ class Puppet::Transaction::Change
     def go
         if self.noop?
             @property.log "is %s, should be %s (noop)" % [property.is_to_s(@is), property.should_to_s(@should)]
-            return [event(:noop)]
+            return event(:noop)
         end
 
         # The transaction catches any exceptions here.
-        events = @property.sync
-        if events.nil?
-            events = [(@property.name.to_s + "_changed").to_sym]
-        elsif events.is_a?(Array)
-            if events.empty?
-                events = [(@property.name.to_s + "_changed").to_sym]
-            end
-        else
-            events = [events]
-        end
+        event_name = @property.sync
 
-        return events.collect { |name|
-            @report = @property.log(@property.change_to_s(@is, @should))
-            event(name)
-        }
+        # Use the first event only, if multiple are provided.
+        # This might result in the event_name being nil,
+        # which is fine.
+        event_name = event_name.shift if event_name.is_a?(Array)
+
+        event = event(event_name)
+        event.log = @property.notice @property.change_to_s(@is, @should)
+        event.status = "success"
+        event
+    rescue => detail
+        puts detail.backtrace if Puppet[:trace]
+        event = event(nil)
+        event.status = "failure"
+
+        is = property.is_to_s(is)
+        should = property.should_to_s(should)
+        event.log = property.err "change from #{is} to #{should} failed: #{detail}"
+        event
     end
 
     def forward
@@ -79,7 +80,7 @@ class Puppet::Transaction::Change
 
     # The resource that generated this change.  This is used for handling events,
     # and the proxy resource is used for generated resources, since we can't
-    # send an event to a resource we don't have a direct relationship.  If we
+    # send an event to a resource we don't have a direct relationship with.  If we
     # have a proxy resource, then the events will be considered to be from
     # that resource, rather than us, so the graph resolution will still work.
     def resource

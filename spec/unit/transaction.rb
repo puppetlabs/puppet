@@ -47,35 +47,32 @@ describe Puppet::Transaction do
     describe "when applying changes" do
         before do
             @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
-            @transaction.stubs(:queue_events)
+            @transaction.stubs(:queue_event)
 
             @resource = stub 'resource'
             @property = stub 'property', :is_to_s => "is", :should_to_s => "should"
-            @change = stub 'change', :property => @property, :changed= => nil, :forward => nil, :is => "is", :should => "should"
+
+            @event = stub 'event', :status => "success"
+            @change = stub 'change', :property => @property, :changed= => nil, :forward => @event, :is => "is", :should => "should"
         end
 
         it "should apply each change" do
             c1 = stub 'c1', :property => @property, :changed= => nil
-            c1.expects(:forward)
+            c1.expects(:forward).returns @event
             c2 = stub 'c2', :property => @property, :changed= => nil
-            c2.expects(:forward)
+            c2.expects(:forward).returns @event
 
             @transaction.apply_changes(@resource, [c1, c2])
         end
 
         it "should queue the events from each change" do
-            c1 = stub 'c1', :forward => "e1", :property => @property, :changed= => nil
-            c2 = stub 'c2', :forward => "e2", :property => @property, :changed= => nil
+            c1 = stub 'c1', :forward => stub("event1", :status => "success"), :property => @property, :changed= => nil
+            c2 = stub 'c2', :forward => stub("event2", :status => "success"), :property => @property, :changed= => nil
 
-            @transaction.expects(:queue_events).with(["e1"])
-            @transaction.expects(:queue_events).with(["e2"])
+            @transaction.expects(:queue_event).with(@resource, c1.forward)
+            @transaction.expects(:queue_event).with(@resource, c2.forward)
 
             @transaction.apply_changes(@resource, [c1, c2])
-        end
-
-        it "should mark the change as 'changed'" do
-            @change.expects(:changed=).with true
-            @transaction.apply_changes(@resource, [@change])
         end
 
         it "should store the change in the transaction's change list" do
@@ -90,22 +87,17 @@ describe Puppet::Transaction do
 
         describe "and a change fails" do
             before do
-                @change.expects(:forward).raises "a failure"
-                @change.property.stubs(:err)
-            end
-
-            it "should rescue the exception" do
-                lambda { @transaction.apply_changes(@resource, [@change]) }.should_not raise_error
-            end
-
-            it "should log the failure with the change's property" do
-                @change.property.expects(:err)
-                @transaction.apply_changes(@resource, [@change])
+                @event.stubs(:status).returns "failure"
             end
 
             it "should increment the failures" do
                 @transaction.apply_changes(@resource, [@change])
                 @transaction.should be_any_failed
+            end
+
+            it "should queue the event" do
+                @transaction.expects(:queue_event).with(@resource, @event)
+                @transaction.apply_changes(@resource, [@change])
             end
         end
     end
@@ -114,26 +106,18 @@ describe Puppet::Transaction do
         before do
             @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
 
-            @graph = stub 'graph', :matching_edges => []
+            @resource = stub("resource", :self_refresh? => false, :deleting => false)
+
+            @graph = stub 'graph', :matching_edges => [], :resource => @resource
             @transaction.stubs(:relationship_graph).returns @graph
 
-            @resource = stub("resource", :self_refresh? => false, :deleting => false)
             @event = Puppet::Transaction::Event.new(:foo, @resource)
         end
 
         it "should store each event in its event list" do
-            @transaction.queue_events(@event)
+            @transaction.queue_event(@resource, @event)
 
             @transaction.events.should include(@event)
-        end
-
-        it "should use the resource from the first edge as the source of all of the events" do
-            event1 = Puppet::Transaction::Event.new(:foo, @resource)
-            event2 = Puppet::Transaction::Event.new(:foo, stub('resource2', :self_refresh? => false, :deleting? => false))
-
-            @graph.expects(:matching_edges).with { |events, resource| resource == event1.resource }.returns []
-
-            @transaction.queue_events(event1, event2)
         end
 
         it "should queue events for the target and callback of any matching edges" do
@@ -142,10 +126,10 @@ describe Puppet::Transaction do
 
             @graph.expects(:matching_edges).with { |events, resource| events == [@event] }.returns [edge1, edge2]
 
-            @transaction.expects(:queue_events_for_resource).with(@resource, edge1.target, edge1.callback, [@event])
-            @transaction.expects(:queue_events_for_resource).with(@resource, edge2.target, edge2.callback, [@event])
+            @transaction.expects(:queue_event_for_resource).with(@resource, edge1.target, edge1.callback, @event)
+            @transaction.expects(:queue_event_for_resource).with(@resource, edge2.target, edge2.callback, @event)
 
-            @transaction.queue_events(@event)
+            @transaction.queue_event(@resource, @event)
         end
 
         it "should queue events for the changed resource if the resource is self-refreshing and not being deleted" do
@@ -153,9 +137,9 @@ describe Puppet::Transaction do
 
             @resource.expects(:self_refresh?).returns true
             @resource.expects(:deleting?).returns false
-            @transaction.expects(:queue_events_for_resource).with(@resource, @resource, :refresh, [@event])
+            @transaction.expects(:queue_event_for_resource).with(@resource, @resource, :refresh, @event)
 
-            @transaction.queue_events(@event)
+            @transaction.queue_event(@resource, @event)
         end
 
         it "should not queue events for the changed resource if the resource is not self-refreshing" do
@@ -163,9 +147,9 @@ describe Puppet::Transaction do
 
             @resource.expects(:self_refresh?).returns false
             @resource.stubs(:deleting?).returns false
-            @transaction.expects(:queue_events_for_resource).never
+            @transaction.expects(:queue_event_for_resource).never
 
-            @transaction.queue_events(@event)
+            @transaction.queue_event(@resource, @event)
         end
 
         it "should not queue events for the changed resource if the resource is being deleted" do
@@ -173,9 +157,9 @@ describe Puppet::Transaction do
 
             @resource.expects(:self_refresh?).returns true
             @resource.expects(:deleting?).returns true
-            @transaction.expects(:queue_events_for_resource).never
+            @transaction.expects(:queue_event_for_resource).never
 
-            @transaction.queue_events(@event)
+            @transaction.queue_event(@resource, @event)
         end
 
         it "should ignore edges that don't have a callback" do
@@ -183,9 +167,9 @@ describe Puppet::Transaction do
 
             @graph.expects(:matching_edges).returns [edge1]
 
-            @transaction.expects(:queue_events_for_resource).never
+            @transaction.expects(:queue_event_for_resource).never
 
-            @transaction.queue_events(@event)
+            @transaction.queue_event(@resource, @event)
         end
 
         it "should ignore targets that don't respond to the callback" do
@@ -193,9 +177,9 @@ describe Puppet::Transaction do
 
             @graph.expects(:matching_edges).returns [edge1]
 
-            @transaction.expects(:queue_events_for_resource).never
+            @transaction.expects(:queue_event_for_resource).never
 
-            @transaction.queue_events(@event)
+            @transaction.queue_event(@resource, @event)
         end
     end
 
@@ -212,7 +196,7 @@ describe Puppet::Transaction do
             target = stub("target")
 
             2.times do |i|
-                @transaction.queue_events_for_resource(stub("source", :info => nil), target, "callback#{i}", ["event#{i}"])
+                @transaction.queue_event_for_resource(stub("source", :info => nil), target, "callback#{i}", ["event#{i}"])
             end
 
             @transaction.queued_events(target) { |callback, events| }
@@ -223,7 +207,7 @@ describe Puppet::Transaction do
             source = stub 'source'
             source.expects(:info)
 
-            @transaction.queue_events_for_resource(source, target, "callback", ["event"])
+            @transaction.queue_event_for_resource(source, target, "callback", ["event"])
 
             @transaction.queued_events(target) { |callback, events| }
         end
@@ -232,7 +216,7 @@ describe Puppet::Transaction do
     describe "when processing events for a given resource" do
         before do
             @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
-            @transaction.stubs(:queue_events)
+            @transaction.stubs(:queue_event)
 
             @resource = stub 'resource', :notice => nil
             @event = Puppet::Transaction::Event.new(:event, @resource)
@@ -262,8 +246,8 @@ describe Puppet::Transaction do
 
             @resource.stubs(:callback1)
 
-            @transaction.expects(:queue_events).with do |event|
-                event.name == :restarted and event.resource == @resource
+            @transaction.expects(:queue_event).with do |resource, event|
+                event.name == :restarted and resource == @resource
             end
 
             @transaction.process_events(@resource)
@@ -298,7 +282,7 @@ describe Puppet::Transaction do
             end
 
             it "should queue a new noop event" do
-                @transaction.expects(:queue_events).with { |event| event.name == :noop and event.resource == @resource }
+                @transaction.expects(:queue_event).with { |resource, event| event.name == :noop and resource == @resource }
 
                 @transaction.process_events(@resource)
             end
@@ -324,7 +308,7 @@ describe Puppet::Transaction do
             end
 
             it "should not queue a 'restarted' event" do
-                @transaction.expects(:queue_events).never
+                @transaction.expects(:queue_event).never
                 @transaction.process_events(@resource)
             end
 

@@ -409,7 +409,7 @@ class Puppet::Transaction
         end
 
         if restarted
-            queue_events(Puppet::Transaction::Event.new(:restarted, resource))
+            queue_event(resource, Puppet::Transaction::Event.new(:restarted, resource))
 
             @resourcemetrics[:restarted] += 1
         end
@@ -417,12 +417,8 @@ class Puppet::Transaction
 
     # Queue events for other resources to respond to.  All of these events have
     # to be from the same resource.
-    def queue_events(*events)
-        events.flatten!
-
-        @events += events
-
-        resource = events[0].resource
+    def queue_event(resource, event)
+        @events << event
 
         # Collect the targets of any subscriptions to those events.  We pass
         # the parent resource in so it will override the source in the events,
@@ -431,20 +427,20 @@ class Puppet::Transaction
             next unless method = edge.callback
             next unless edge.target.respond_to?(method)
 
-            queue_events_for_resource(resource, edge.target, method, events)
+            queue_event_for_resource(resource, edge.target, method, event)
         end
 
         if resource.self_refresh? and ! resource.deleting?
-            queue_events_for_resource(resource, resource, :refresh, events)
+            queue_event_for_resource(resource, resource, :refresh, event)
         end
     end
 
-    def queue_events_for_resource(source, target, callback, events)
+    def queue_event_for_resource(source, target, callback, event)
         source.info "Scheduling #{callback} of #{target}"
 
         @event_queues[target] ||= {}
         @event_queues[target][callback] ||= []
-        @event_queues[target][callback] += events
+        @event_queues[target][callback] << event
     end
 
     def queued_events(resource)
@@ -461,13 +457,8 @@ class Puppet::Transaction
     # Roll all completed changes back.
     def rollback
         @changes.reverse.collect do |change|
-            # skip changes that were never actually run
-            unless change.changed
-                Puppet.debug "%s was not changed" % change.to_s
-                next
-            end
             begin
-                events = change.backward
+                event = change.backward
             rescue => detail
                 Puppet.err("%s rollback failed: %s" % [change,detail])
                 if Puppet[:trace]
@@ -483,7 +474,7 @@ class Puppet::Transaction
             end
 
             # And queue the events
-            queue_events(events)
+            queue_event(change.resource, event)
 
             # Now check to see if there are any events for this child.
             process_events(change.property.resource)
@@ -542,21 +533,14 @@ class Puppet::Transaction
     def apply_change(resource, change)
         @changes << change
 
-        # use an array, so that changes can return more than one
-        # event if they want
-        events = [change.forward].flatten.reject { |e| e.nil? }
+        event = change.forward
 
-        # Mark that our change happened, so it can be reversed
-        # if we ever get to that point
-        change.changed = true
-        @resourcemetrics[:applied] += 1
-        queue_events(events)
-    rescue => detail
-        puts detail.backtrace if Puppet[:trace]
-        is = change.property.is_to_s(change.is)
-        should = change.property.should_to_s(change.should)
-        change.property.err "change from #{is} to #{should} failed: #{detail}"
-        @failures[resource] += 1
+        if event.status == "success"
+            @resourcemetrics[:applied] += 1
+        else
+            @failures[resource] += 1
+        end
+        queue_event(resource, event)
     end
 
     def process_callback(resource, callback, events)
@@ -577,7 +561,7 @@ class Puppet::Transaction
         resource.notice "Would have triggered '#{callback}' from #{events.length} events"
 
         # And then add an event for it.
-        queue_events(Puppet::Transaction::Event.new(:noop, resource))
+        queue_event(resource, Puppet::Transaction::Event.new(:noop, resource))
         true # so the 'and if' works
     end
 end

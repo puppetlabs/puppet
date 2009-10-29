@@ -152,8 +152,8 @@ class Puppet::Property < Puppet::Parameter
     end
 
     # Figure out which event to return.
-    def event(name, event = nil)
-        if value_event = self.class.value_option(name, :event)
+    def default_event_name(value, event = nil)
+        if value_event = self.class.value_option(value, :event)
             return value_event
         end
 
@@ -315,7 +315,7 @@ class Puppet::Property < Puppet::Parameter
             devfail "Cannot use obsolete :call value '%s' for property '%s'" % [call, self.class.name]
         end
 
-        return event(name, event)
+        return default_event_name(name, event)
     end
 
     # If there's a shadowing metaparam, instantiate it now.
