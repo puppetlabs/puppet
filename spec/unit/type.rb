@@ -98,6 +98,10 @@ describe Puppet::Type do
         resource.source_descriptors.should == {:version=>50, :tags=>["mount", "foo"], :path=>"/Mount[foo]"}
     end
 
+    it "should consider its type to be the name of its class" do
+        Puppet::Type.type(:mount).new(:name => "foo").type.should == :mount
+    end
+
     describe "when choosing a default provider" do
         it "should choose the provider with the highest specificity" do
             # Make a fake type

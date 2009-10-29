@@ -590,6 +590,10 @@ class Type
         rethash
     end
 
+    def type
+        self.class.name
+    end
+
     # Return a specific value for an attribute.
     def value(name)
         name = attr_alias(name)
