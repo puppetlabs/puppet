@@ -48,7 +48,7 @@ module PSON
         case
         when c.empty?             then p
         when p.const_defined?(c)  then p.const_get(c)
-        else                      raise ArgumentError, "can't find const #{path}"
+        else                      raise ArgumentError, "can't find const for unregistered document type #{path}"
         end
       end
     end

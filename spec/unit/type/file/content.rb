@@ -119,6 +119,15 @@ describe content do
             @content.retrieve.should be_nil
         end
 
+        it "should not manage content on links" do
+            @content = content.new(:resource => @resource)
+
+            stat = mock 'stat', :ftype => "link"
+            @resource.expects(:stat).returns stat
+
+            @content.retrieve.should be_nil
+        end
+
         it "should always return the checksum as a string" do
             @content = content.new(:resource => @resource)
             @content.stubs(:checksum_type).returns "mtime"

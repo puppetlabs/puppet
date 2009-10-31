@@ -391,7 +391,7 @@ describe Puppet::Network::Rights do
             end
 
             it "should match as a regex" do
-                @acl.match?("this shoud work.rb").should_not be_nil
+                @acl.match?("this should work.rb").should_not be_nil
             end
 
             it "should return nil if no match" do
