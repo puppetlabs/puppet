@@ -155,10 +155,9 @@ class Puppet::Property < Puppet::Parameter
         end).to_sym
     end
 
-    # Create our event object.
+    # Return a modified form of the resource event.
     def event
-        Puppet::Transaction::Event.new(:name => event_name, :resource => resource.ref, :desired_value => should,
-            :file => file, :line => line, :tags => tags, :property => name, :version => version)
+        resource.event :name => event_name, :desired_value => should, :property => name
     end
 
     attr_reader :shadow

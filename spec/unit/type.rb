@@ -102,6 +102,27 @@ describe Puppet::Type do
         Puppet::Type.type(:mount).new(:name => "foo").type.should == :mount
     end
 
+    describe "when creating an event" do
+        before do
+            @resource = Puppet::Type.type(:mount).new :name => "foo"
+        end
+
+        it "should have the resource's reference as the resource" do
+            @resource.event.resource.should == "Mount[foo]"
+        end
+
+        {:file => "/my/file", :line => 50, :tags => %{foo bar}, :version => 50}.each do |attr, value|
+            it "should set the #{attr}" do
+                @resource.stubs(attr).returns value
+                @resource.event.send(attr).should == value
+            end
+        end
+
+        it "should allow specification of event attributes" do
+            @resource.event(:status => "noop").status.should == "noop"
+        end
+    end
+
     describe "when choosing a default provider" do
         it "should choose the provider with the highest specificity" do
             # Make a fake type

@@ -108,19 +108,24 @@ describe Puppet::Property do
 
     describe "when creating an event" do
         before do
-            @resource = stub 'resource', :ref => "File[/foo]", :file => "/my/file", :line => 50, :tags => %w{foo bar}, :version => 42
+            @event = Puppet::Transaction::Event.new
+
+            # Use a real resource so we can test the event creation integration
+            @resource = Puppet::Type.type(:mount).new :name => "foo"
             @instance = @class.new(:resource => @resource)
             @instance.stubs(:should).returns "myval"
+        end
+
+        it "should use an event from the resource as the base event" do
+            event = Puppet::Transaction::Event.new
+            @resource.expects(:event).returns event
+
+            @instance.event.should equal(event)
         end
 
         it "should have the default event name" do
             @instance.expects(:event_name).returns :my_event
             @instance.event.name.should == :my_event
-        end
-
-        it "should have the resource's reference as the resource" do
-            @resource.stubs(:ref).returns "File[/yay]"
-            @instance.event.resource.should == "File[/yay]"
         end
 
         it "should have the property's name" do
@@ -130,13 +135,6 @@ describe Puppet::Property do
         it "should have the 'should' value set" do
             @instance.stubs(:should).returns "foo"
             @instance.event.desired_value.should == "foo"
-        end
-
-        {:file => "/my/file", :line => 50, :tags => %{foo bar}, :version => 50}.each do |attr, value|
-            it "should set the #{attr}" do
-                @instance.stubs(attr).returns value
-                @instance.event.send(attr).should == value
-            end
         end
     end
 

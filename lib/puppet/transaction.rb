@@ -409,7 +409,7 @@ class Puppet::Transaction
         end
 
         if restarted
-            queue_event(resource, Puppet::Transaction::Event.new(:restarted, resource))
+            queue_event(resource, resource.event(:name => :restarted, :status => "success"))
 
             @resourcemetrics[:restarted] += 1
         end
@@ -544,7 +544,8 @@ class Puppet::Transaction
     end
 
     def process_callback(resource, callback, events)
-        process_noop_events(resource, callback, events) and return false if events.detect { |e| e.name == :noop }
+        # XXX Should it be any event, or all events?
+        process_noop_events(resource, callback, events) and return false unless events.detect { |e| e.status != "noop" }
         resource.send(callback)
 
         resource.notice "Triggered '#{callback}' from #{events.length} events"
@@ -561,7 +562,7 @@ class Puppet::Transaction
         resource.notice "Would have triggered '#{callback}' from #{events.length} events"
 
         # And then add an event for it.
-        queue_event(resource, Puppet::Transaction::Event.new(:noop, resource))
+        queue_event(resource, resource.event(:status => "noop", :name => :noop_restart))
         true # so the 'and if' works
     end
 end
