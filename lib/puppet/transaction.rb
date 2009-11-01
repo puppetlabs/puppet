@@ -7,15 +7,19 @@ require 'puppet/util/tagging'
 class Puppet::Transaction
     require 'puppet/transaction/change'
     require 'puppet/transaction/event'
+    require 'puppet/transaction/event_manager'
 
     attr_accessor :component, :catalog, :ignoreschedules
     attr_accessor :sorted_resources, :configurator
 
-    # The list of events generated in this transaction.
-    attr_reader :events
+    # The report, once generated.
+    attr_reader :report
 
     # Mostly only used for tests
     attr_reader :resourcemetrics, :changes
+
+    # Routes and stores any events and subscriptions.
+    attr_reader :event_manager
 
     include Puppet::Util
     include Puppet::Util::Tagging
@@ -157,7 +161,7 @@ class Puppet::Transaction
         eval_children_and_apply_resource(resource)
 
         # Check to see if there are any events queued for this resource
-        process_events(resource)
+        event_manager.process_events(resource)
     end
 
     def eval_children_and_apply_resource(resource)
@@ -228,6 +232,10 @@ class Puppet::Transaction
         }.flatten.reject { |e| e.nil? }
 
         Puppet.debug "Finishing transaction #{object_id} with #{@changes.length} changes"
+    end
+
+    def events
+        event_manager.events
     end
 
     # Determine whether a given resource has failed.
@@ -345,13 +353,8 @@ class Puppet::Transaction
         # Metrics for distributing times across the different types.
         @timemetrics = Hash.new(0)
 
-        @event_queues = {}
-
         # The changes we're performing
         @changes = []
-
-        # The complete list of events generated.
-        @events = []
 
         # The resources that have failed and the number of failures each.  This
         # is used for skipping resources because of failed dependencies.
@@ -360,6 +363,8 @@ class Puppet::Transaction
         end
 
         @report = Report.new
+
+        @event_manager = Puppet::Transaction::EventManager.new(self)
     end
 
     # Prefetch any providers that support it.  We don't support prefetching
@@ -400,56 +405,6 @@ class Puppet::Transaction
         @sorted_resources = relationship_graph.topsort
     end
 
-    # Respond to any queued events for this resource.
-    def process_events(resource)
-        restarted = false
-        queued_events(resource) do |callback, events|
-            r = process_callback(resource, callback, events)
-            restarted ||= r
-        end
-
-        if restarted
-            queue_event(resource, resource.event(:name => :restarted, :status => "success"))
-
-            @resourcemetrics[:restarted] += 1
-        end
-    end
-
-    # Queue events for other resources to respond to.  All of these events have
-    # to be from the same resource.
-    def queue_event(resource, event)
-        @events << event
-
-        # Collect the targets of any subscriptions to those events.  We pass
-        # the parent resource in so it will override the source in the events,
-        # since eval_generated children can't have direct relationships.
-        relationship_graph.matching_edges(events, resource).each do |edge|
-            next unless method = edge.callback
-            next unless edge.target.respond_to?(method)
-
-            queue_event_for_resource(resource, edge.target, method, event)
-        end
-
-        if resource.self_refresh? and ! resource.deleting?
-            queue_event_for_resource(resource, resource, :refresh, event)
-        end
-    end
-
-    def queue_event_for_resource(source, target, callback, event)
-        source.info "Scheduling #{callback} of #{target}"
-
-        @event_queues[target] ||= {}
-        @event_queues[target][callback] ||= []
-        @event_queues[target][callback] << event
-    end
-
-    def queued_events(resource)
-        return unless callbacks = @event_queues[resource]
-        callbacks.each do |callback, events|
-            yield callback, events
-        end
-    end
-
     def relationship_graph
         catalog.relationship_graph
     end
@@ -474,10 +429,10 @@ class Puppet::Transaction
             end
 
             # And queue the events
-            queue_event(change.resource, event)
+            event_manager.queue_event(change.resource, event)
 
             # Now check to see if there are any events for this child.
-            process_events(change.property.resource)
+            event_manager.process_events(change.property.resource)
         end
     end
 
@@ -540,30 +495,7 @@ class Puppet::Transaction
         else
             @failures[resource] += 1
         end
-        queue_event(resource, event)
-    end
-
-    def process_callback(resource, callback, events)
-        # XXX Should it be any event, or all events?
-        process_noop_events(resource, callback, events) and return false unless events.detect { |e| e.status != "noop" }
-        resource.send(callback)
-
-        resource.notice "Triggered '#{callback}' from #{events.length} events"
-        return true
-    rescue => detail
-        resource.err "Failed to call #{callback}: #{detail}"
-
-        @resourcemetrics[:failed_restarts] += 1
-        puts detail.backtrace if Puppet[:trace]
-        return false
-    end
-
-    def process_noop_events(resource, callback, events)
-        resource.notice "Would have triggered '#{callback}' from #{events.length} events"
-
-        # And then add an event for it.
-        queue_event(resource, resource.event(:status => "noop", :name => :noop_restart))
-        true # so the 'and if' works
+        event_manager.queue_event(resource, event)
     end
 end
 
