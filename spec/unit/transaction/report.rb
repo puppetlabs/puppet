@@ -10,6 +10,11 @@ describe Puppet::Transaction::Report do
         Puppet::Transaction::Report.new.host.should == "myhost"
     end
 
+    it "should return its host name as its name" do
+        r = Puppet::Transaction::Report.new
+        r.name.should == r.host
+    end
+
     describe "when accepting logs" do
         before do
             @report = Puppet::Transaction::Report.new
@@ -23,6 +28,18 @@ describe Puppet::Transaction::Report do
         it "should return self" do
             r = @report << "log"
             r.should equal(@report)
+        end
+    end
+
+    describe "when accepting events" do
+        before do
+            @report = Puppet::Transaction::Report.new
+        end
+
+        it "should add each event to its event list" do
+            event = stub 'event'
+            @report.register_event event
+            @report.events.should be_include(event)
         end
     end
 
