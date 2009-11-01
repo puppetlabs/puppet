@@ -200,6 +200,8 @@ end
 
 # Log to a transaction report.
 Puppet::Util::Log.newdesttype :report do
+    attr_reader :report
+
     match "Puppet::Transaction::Report"
 
     def initialize(report)

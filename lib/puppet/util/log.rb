@@ -35,6 +35,8 @@ class Puppet::Util::Log
     class << self
         include Puppet::Util
         include Puppet::Util::ClassGen
+
+        attr_reader :desttypes
     end
 
     # Reset all logs to basics.  Basically just closes all files and undefs
