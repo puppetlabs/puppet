@@ -44,11 +44,6 @@ class Puppet::Transaction::Report
         @metrics[metric.name] = metric
     end
 
-    # Add a new log message.
-    def newlog(msg)
-        @logs << msg
-    end
-
     # Provide a summary of this report.
     def summary
         ret = ""

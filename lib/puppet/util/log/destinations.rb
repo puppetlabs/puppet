@@ -209,7 +209,7 @@ Puppet::Util::Log.newdesttype :report do
     end
 
     def handle(msg)
-        @report.newlog(msg)
+        @report << msg
     end
 end
 

@@ -17,7 +17,7 @@ describe Puppet::Util::Log.desttypes[:report] do
         report = mock 'report'
         dest = @dest.new(report)
 
-        report.expects(:newlog).with("my log")
+        report.expects(:<<).with("my log")
 
         dest.handle "my log"
     end
