@@ -72,7 +72,6 @@ class Puppet::Transaction::EventManager
     private
 
     def process_callback(resource, callback, events)
-        # XXX Should it be any event, or all events?
         process_noop_events(resource, callback, events) and return false unless events.detect { |e| e.status != "noop" }
         resource.send(callback)
 
