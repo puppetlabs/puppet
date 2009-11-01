@@ -26,11 +26,6 @@ class Puppet::Transaction::Report
     def initialize
         @metrics = {}
         @logs = []
-
-        @records = Hash.new do |hash, key|
-            hash[key] = []
-        end
-
         @host = Puppet[:certname]
     end
 
@@ -52,10 +47,6 @@ class Puppet::Transaction::Report
     # Add a new log message.
     def newlog(msg)
         @logs << msg
-    end
-
-    def record(metric, object)
-        @records[metric] << object
     end
 
     # Provide a summary of this report.
