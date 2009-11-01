@@ -34,7 +34,6 @@ describe Puppet::SimpleGraph do
     it "should always put its edges first when printing yaml" do
         @graph = Puppet::SimpleGraph.new
         @graph.add_edge(:one, :two)
-        p @graph.to_yaml_properties
         @graph.to_yaml_properties[0].should == "@edges"
     end
 
@@ -349,8 +348,8 @@ describe Puppet::SimpleGraph do
     describe "when matching edges" do
         before do
             @graph = Puppet::SimpleGraph.new
-            @event = Puppet::Transaction::Event.new(:yay, "a")
-            @none = Puppet::Transaction::Event.new(:NONE, "a")
+            @event = Puppet::Transaction::Event.new(:name => :yay, :resource => "a")
+            @none = Puppet::Transaction::Event.new(:name => :NONE, :resource => "a")
 
             @edges = {}
             @edges["a/b"] = Puppet::Relationship.new("a", "b", {:event => :yay, :callback => :refresh})
@@ -359,16 +358,16 @@ describe Puppet::SimpleGraph do
         end
 
         it "should match edges whose source matches the source of the event" do
-            @graph.matching_edges([@event]).should == [@edges["a/b"]]
+            @graph.matching_edges(@event).should == [@edges["a/b"]]
         end
 
         it "should match always match nothing when the event is :NONE" do
-            @graph.matching_edges([@none]).should be_empty
+            @graph.matching_edges(@none).should be_empty
         end
 
         it "should match multiple edges" do
             @graph.add_edge(@edges["a/c"])
-            edges = @graph.matching_edges([@event])
+            edges = @graph.matching_edges(@event)
             edges.should be_include(@edges["a/b"])
             edges.should be_include(@edges["a/c"])
         end
