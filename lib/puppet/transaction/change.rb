@@ -16,17 +16,11 @@ class Puppet::Transaction::Change
     end
 
     # Create our event object.
-    def event(event_name)
-        event_name ||= property.default_event_name(should)
-
-        # default to a simple event type
-        unless event_name.is_a?(Symbol)
-            @property.warning "Property '#{property.class}' returned invalid event '#{event_name}'; resetting to default"
-
-            event_name = property.default_event_name(should)
-        end
-
-        Puppet::Transaction::Event.new(event_name, resource.ref, property.name, is, should)
+    def event
+        result = property.event
+        result.previous_value = is
+        result.desired_value = should
+        result
     end
 
     def initialize(property, currentvalue)
@@ -41,32 +35,23 @@ class Puppet::Transaction::Change
     # Perform the actual change.  This method can go either forward or
     # backward, and produces an event.
     def go
-        if self.noop?
-            @property.log "is %s, should be %s (noop)" % [property.is_to_s(@is), property.should_to_s(@should)]
-            return event(:noop)
-        end
+        return noop_event if noop?
 
-        # The transaction catches any exceptions here.
-        event_name = @property.sync
+        property.sync
 
-        # Use the first event only, if multiple are provided.
-        # This might result in the event_name being nil,
-        # which is fine.
-        event_name = event_name.shift if event_name.is_a?(Array)
-
-        event = event(event_name)
-        event.log = @property.notice @property.change_to_s(@is, @should)
-        event.status = "success"
-        event
+        result = event()
+        result.log = property.notice property.change_to_s(is, should)
+        result.status = "success"
+        result
     rescue => detail
         puts detail.backtrace if Puppet[:trace]
-        event = event(nil)
-        event.status = "failure"
+        result = event()
+        result.status = "failure"
 
         is = property.is_to_s(is)
         should = property.should_to_s(should)
-        event.log = property.err "change from #{is} to #{should} failed: #{detail}"
-        event
+        result.log = property.err "change from #{is} to #{should} failed: #{detail}"
+        result
     end
 
     def forward
@@ -89,5 +74,14 @@ class Puppet::Transaction::Change
 
     def to_s
         return "change %s" % @property.change_to_s(@is, @should)
+    end
+
+    private
+
+    def noop_event
+        result = event
+        result.log = property.log "is #{property.is_to_s(is)}, should be #{property.should_to_s(should)} (noop)"
+        result.status = "noop"
+        return result
     end
 end

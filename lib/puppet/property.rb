@@ -152,31 +152,25 @@ class Puppet::Property < Puppet::Parameter
     end
 
     # Figure out which event to return.
-    def default_event_name(value, event = nil)
-        if value_event = self.class.value_option(value, :event)
-            return value_event
-        end
+    def event_name
+        value = self.should
 
-        if event and event.is_a?(Symbol)
-            if event == :nochange
-                return nil
-            else
-                return event
-            end
-        end
+        event_name = self.class.value_option(value, :event) and return event_name
 
-        if self.class.name == :ensure
-            event = case self.should
-            when :present; (@resource.class.name.to_s + "_created").intern
-            when :absent; (@resource.class.name.to_s + "_removed").intern
-            else
-                (@resource.class.name.to_s + "_changed").intern
-            end
+        name == :ensure or return (name.to_s + "_changed").to_sym
+
+        return (resource.type.to_s + case value
+        when :present; "_created"
+        when :absent; "_removed"
         else
-            event = (@resource.class.name.to_s + "_changed").intern
-        end
+            "_changed"
+        end).to_sym
+    end
 
-        return event
+    # Create our event object.
+    def event
+        Puppet::Transaction::Event.new(:name => event_name, :resource => resource.ref, :desired_value => should,
+            :file => file, :line => line, :tags => tags, :property => name, :version => version)
     end
 
     attr_reader :shadow
@@ -314,8 +308,6 @@ class Puppet::Property < Puppet::Parameter
             # do so in the block.
             devfail "Cannot use obsolete :call value '%s' for property '%s'" % [call, self.class.name]
         end
-
-        return default_event_name(name, event)
     end
 
     # If there's a shadowing metaparam, instantiate it now.

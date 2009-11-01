@@ -45,6 +45,101 @@ describe Puppet::Property do
         @property.must respond_to(:shadow)
     end
 
+    describe "when returning the default event name" do
+        before do
+            @resource = stub 'resource'
+            @instance = @class.new(:resource => @resource)
+            @instance.stubs(:should).returns "myval"
+        end
+
+        it "should use the current 'should' value to pick the event name" do
+            @instance.expects(:should).returns "myvalue"
+            @class.expects(:value_option).with('myvalue', :event).returns :event_name
+
+            @instance.event_name
+        end
+
+        it "should return any event defined with the specified value" do
+            @instance.expects(:should).returns :myval
+            @class.expects(:value_option).with(:myval, :event).returns :event_name
+
+            @instance.event_name.should == :event_name
+        end
+
+        describe "and the property is 'ensure'" do
+            before do
+                @instance.stubs(:name).returns :ensure
+                @resource.expects(:type).returns :mytype
+            end
+
+            it "should use <type>_created if the 'should' value is 'present'" do
+                @instance.expects(:should).returns :present
+                @instance.event_name.should == :mytype_created
+            end
+
+            it "should use <type>_removed if the 'should' value is 'absent'" do
+                @instance.expects(:should).returns :absent
+                @instance.event_name.should == :mytype_removed
+            end
+
+            it "should use <type>_changed if the 'should' value is not 'absent' or 'present'" do
+                @instance.expects(:should).returns :foo
+                @instance.event_name.should == :mytype_changed
+            end
+
+            it "should use <type>_changed if the 'should value is nil" do
+                @instance.expects(:should).returns nil
+                @instance.event_name.should == :mytype_changed
+            end
+        end
+
+        it "should use <property>_changed if the property is not 'ensure'" do
+            @instance.stubs(:name).returns :myparam
+            @instance.expects(:should).returns :foo
+            @instance.event_name.should == :myparam_changed
+        end
+
+        it "should use <property>_changed if no 'should' value is set" do
+            @instance.stubs(:name).returns :myparam
+            @instance.expects(:should).returns nil
+            @instance.event_name.should == :myparam_changed
+        end
+    end
+
+    describe "when creating an event" do
+        before do
+            @resource = stub 'resource', :ref => "File[/foo]", :file => "/my/file", :line => 50, :tags => %w{foo bar}, :version => 42
+            @instance = @class.new(:resource => @resource)
+            @instance.stubs(:should).returns "myval"
+        end
+
+        it "should have the default event name" do
+            @instance.expects(:event_name).returns :my_event
+            @instance.event.name.should == :my_event
+        end
+
+        it "should have the resource's reference as the resource" do
+            @resource.stubs(:ref).returns "File[/yay]"
+            @instance.event.resource.should == "File[/yay]"
+        end
+
+        it "should have the property's name" do
+            @instance.event.property.should == @instance.name
+        end
+
+        it "should have the 'should' value set" do
+            @instance.stubs(:should).returns "foo"
+            @instance.event.desired_value.should == "foo"
+        end
+
+        {:file => "/my/file", :line => 50, :tags => %{foo bar}, :version => 50}.each do |attr, value|
+            it "should set the #{attr}" do
+                @instance.stubs(attr).returns value
+                @instance.event.send(attr).should == value
+            end
+        end
+    end
+
     describe "when shadowing metaparameters" do
         before do
             @shadow_class = Class.new(Puppet::Property) do
@@ -273,13 +368,6 @@ describe Puppet::Property do
                 @provider.expects(:foo=).with :bar
                 @property.set(:bar)
             end
-
-            it "should return any specified event" do
-                @class.newvalue(:bar, :event => :whatever)
-                @property.should = :bar
-                @provider.expects(:foo=).with :bar
-                @property.set(:bar).should == :whatever
-            end
         end
 
         describe "that was defined with a block" do
@@ -293,12 +381,6 @@ describe Puppet::Property do
                 @class.newvalue(/./) { self.test }
                 @property.expects(:test)
                 @property.set("foo")
-            end
-
-            it "should return any specified event" do
-                @class.newvalue(:bar, :event => :myevent) {}
-                @property.expects(:set_bar)
-                @property.set(:bar).should == :myevent
             end
         end
     end

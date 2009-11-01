@@ -54,48 +54,23 @@ describe Puppet::Transaction::Change do
         describe "and creating an event" do
             before do
                 @resource = stub 'resource', :ref => "My[resource]"
-                @property.stubs(:resource).returns @resource
-                @property.stubs(:name).returns :myprop
+                @event = stub 'event', :previous_value= => nil, :desired_value= => nil
+                @property.stubs(:event).returns @event
             end
 
-            it "should set the event name to the provided name" do
-                @change.event(:foo).name.should == :foo
-            end
-
-            it "should use the property's default event if the event name is nil" do
-                @property.expects(:default_event_name).with(@change.should).returns :myevent
-                @change.event(nil).name.should == :myevent
-            end
-
-            it "should produce a warning if the event name is not a symbol" do
-                @property.expects(:warning)
-                @property.stubs(:default_event_name).returns :myevent
-                @change.event("a string")
-            end
-
-            it "should use the property to generate the event name if the provided name is not a symbol" do
-                @property.stubs(:warning)
-                @property.expects(:default_event_name).with(@change.should).returns :myevent
-
-                @change.event("a string").name.should == :myevent
-            end
-
-            it "should set the resource to the resource reference" do
-                @change.resource.expects(:ref).returns "Foo[bar]"
-                @change.event(:foo).resource.should == "Foo[bar]"
-            end
-
-            it "should set the property to the property name" do
-                @change.property.expects(:name).returns :myprop
-                @change.event(:foo).property.should == :myprop
+            it "should use the property to create the event" do
+                @property.expects(:event).returns @event
+                @change.event.should equal(@event)
             end
 
             it "should set 'previous_value' from the change's 'is'" do
-                @change.event(:foo).previous_value.should == @change.is
+                @event.expects(:previous_value=).with(@change.is)
+                @change.event
             end
 
             it "should set 'desired_value' from the change's 'should'" do
-                @change.event(:foo).desired_value.should == @change.should
+                @event.expects(:desired_value=).with(@change.should)
+                @change.event
             end
         end
 
@@ -103,7 +78,7 @@ describe Puppet::Transaction::Change do
             before do
                 @event = Puppet::Transaction::Event.new(:myevent)
                 @change.stubs(:noop?).returns false
-                @change.stubs(:event).returns @event
+                @property.stubs(:event).returns @event
 
                 @property.stub_everything
                 @property.stubs(:resource).returns "myresource"
@@ -116,18 +91,19 @@ describe Puppet::Transaction::Change do
                 it "should log that it is in noop" do
                     @property.expects(:is_to_s)
                     @property.expects(:should_to_s)
-                    @property.expects(:log)
+                    @property.expects(:log).returns "my log"
 
-                    @change.stubs :event
+                    @event.expects(:log=).with("my log")
+
                     @change.forward
                 end
 
                 it "should produce a :noop event and return" do
                     @property.stub_everything
 
-                    @change.expects(:event).with(:noop).returns :noop_event
+                    @event.expects(:status=).with("noop")
 
-                    @change.forward.should == :noop_event
+                    @change.forward.should == @event
                 end
             end
 
