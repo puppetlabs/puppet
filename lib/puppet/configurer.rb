@@ -123,6 +123,7 @@ class Puppet::Configurer
     # Convert a plain resource catalog into our full host catalog.
     def convert_catalog(result, duration)
         catalog = result.to_ral
+        catalog.finalize
         catalog.retrieval_duration = duration
         catalog.host_config = true
         catalog.write_class_file
