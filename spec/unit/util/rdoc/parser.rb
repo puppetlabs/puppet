@@ -321,6 +321,12 @@ describe RDoc::Parser do
             @code.stubs(:is_a?).with(Puppet::Parser::AST::ASTArray).returns(true)
         end
 
+        it "should also scan mono-instruction code" do
+            @class.expects(:add_include).with { |i| i.is_a?(RDoc::Include) and i.name == "myclass" and i.comment == "mydoc" }
+
+            @parser.scan_for_include_or_require(@class,create_stmt("include"))
+        end
+
         it "should register recursively includes to the current container" do
             @code.stubs(:children).returns([ create_stmt("include") ])
 
@@ -354,6 +360,12 @@ describe RDoc::Parser do
             @class.expects(:add_constant).with { |i| i.is_a?(RDoc::Constant) and i.name == "myvar" and i.comment == "mydoc" }
             @parser.scan_for_vardef(@class, [ @code ])
         end
+
+        it "should also scan mono-instruction code" do
+            @class.expects(:add_constant).with { |i| i.is_a?(RDoc::Constant) and i.name == "myvar" and i.comment == "mydoc" }
+
+            @parser.scan_for_vardef(@class, @stmt)
+        end
     end
 
     describe "when scanning for resources" do
@@ -374,6 +386,12 @@ describe RDoc::Parser do
 
             @class.expects(:add_resource).with { |i| i.is_a?(RDoc::PuppetResource) and i.title == "myfile" and i.comment == "mydoc" }
             @parser.scan_for_resource(@class, [ @code ])
+        end
+
+        it "should also scan mono-instruction code" do
+            @class.expects(:add_resource).with { |i| i.is_a?(RDoc::PuppetResource) and i.title == "myfile" and i.comment == "mydoc" }
+
+            @parser.scan_for_resource(@class, @stmt)
         end
     end
 
