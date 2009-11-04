@@ -148,6 +148,7 @@ class Parser
     # create documentation for include statements we can find in +code+
     # and associate it with +container+
     def scan_for_include(container, code)
+        code = [code] unless code.is_a?(Array)
         code.each do |stmt|
             scan_for_include(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::ASTArray)
 
@@ -163,6 +164,7 @@ class Parser
     # create documentation for global variables assignements we can find in +code+
     # and associate it with +container+
     def scan_for_vardef(container, code)
+        code = [code] unless code.is_a?(Array)
         code.each do |stmt|
             scan_for_vardef(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::ASTArray)
 
@@ -176,6 +178,7 @@ class Parser
     # create documentation for resources we can find in +code+
     # and associate it with +container+
     def scan_for_resource(container, code)
+        code = [code] unless code.is_a?(Array)
         code.each do |stmt|
             scan_for_resource(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::ASTArray)
 
