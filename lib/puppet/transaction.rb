@@ -58,8 +58,7 @@ class Puppet::Transaction
         end
     end
 
-    # Apply all changes for a resource, returning a list of the events
-    # generated.
+    # Apply all changes for a resource
     def apply(resource)
         begin
             changes = resource.evaluate
@@ -191,11 +190,6 @@ class Puppet::Transaction
             end
         end
 
-        # A bit of hackery here -- if skipcheck is true, then we're the
-        # top-level resource.  If that's the case, then make sure all of
-        # the changes list this resource as a proxy.  This is really only
-        # necessary for rollback, since we know the generating resource
-        # during forward changes.
         unless children.empty?
             @changes[changecount..-1].each { |change| change.proxy = resource }
         end
@@ -326,8 +320,7 @@ class Puppet::Transaction
 
         # Then all of the change-related metrics
         report.newmetric(:changes, :total => @changes.length)
-
-        report.time = Time.now
+        return report
     end
 
     # Should we ignore tags?

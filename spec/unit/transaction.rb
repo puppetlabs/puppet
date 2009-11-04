@@ -218,12 +218,6 @@ describe Puppet::Transaction do
                 @transaction.add_metrics_to_report(@report)
             end
         end
-
-        it "should set the transaction time to the current time" do
-            Time.expects(:now).returns "now"
-            @report.expects(:time=).with("now")
-            @transaction.add_metrics_to_report(@report)
-        end
     end
 
     describe "when prefetching" do

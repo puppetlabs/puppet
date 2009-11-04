@@ -15,6 +15,11 @@ describe Puppet::Transaction::Report do
         r.name.should == r.host
     end
 
+    it "should create an initialization timestamp" do
+        Time.expects(:now).returns "mytime"
+        Puppet::Transaction::Report.new.time.should == "mytime"
+    end
+
     describe "when accepting logs" do
         before do
             @report = Puppet::Transaction::Report.new

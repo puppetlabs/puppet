@@ -28,6 +28,7 @@ class Puppet::Transaction::Report
         @logs = []
         @events = []
         @host = Puppet[:certname]
+        @time = Time.now
     end
 
     def name
