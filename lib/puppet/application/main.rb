@@ -89,7 +89,9 @@ Puppet::Application.new(:main) do
         end
 
         # Collect our facts.
-        facts = Puppet::Node::Facts.find(Puppet[:certname])
+        unless facts = Puppet::Node::Facts.find(Puppet[:certname])
+            raise "Could not find facts for %s" % Puppet[:certname]
+        end
 
         # Find our Node
         unless node = Puppet::Node.find(Puppet[:certname])
