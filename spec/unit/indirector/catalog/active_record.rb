@@ -76,8 +76,11 @@ describe "Puppet::Resource::Catalog::ActiveRecord" do
 
     describe "when saving an instance" do
         before do
-            @host = stub 'host', :name => "foo", :save => nil, :merge_resources => nil, :last_compile= => nil
+            @host = stub 'host', :name => "foo", :save => nil, :merge_resources => nil, :last_compile= => nil, :ip= => nil, :environment= => nil
             @host.stubs(:railsmark).yields
+
+            @node = stub_everything 'node', :parameters => {}
+            Puppet::Node.stubs(:find).returns(@node)
 
             Puppet::Rails::Host.stubs(:find_by_name).returns @host
             @catalog = Puppet::Resource::Catalog.new("foo")
@@ -101,6 +104,22 @@ describe "Puppet::Resource::Catalog::ActiveRecord" do
         it "should set the catalog vertices as resources on the Rails host instance" do
             @catalog.expects(:vertices).returns "foo"
             @host.expects(:merge_resources).with("foo")
+
+            @terminus.save(@request)
+        end
+
+        it "should set host ip if we could find a matching node" do
+            @node.stubs(:parameters).returns({"ipaddress" => "192.168.0.1"})
+
+            @host.expects(:ip=).with '192.168.0.1'
+
+            @terminus.save(@request)
+        end
+
+        it "should set host environment if we could find a matching node" do
+            @node.stubs(:environment).returns("myenv")
+
+            @host.expects(:environment=).with 'myenv'
 
             @terminus.save(@request)
         end
