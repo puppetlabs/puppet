@@ -20,14 +20,14 @@ class Puppet::Parser::AST
             # return result
             # lazy evaluate right operand
             case @operator
-            when "and";
+            when "and"
                 if Puppet::Parser::Scope.true?(lval)
                     rval = @rval.safeevaluate(scope)
                     Puppet::Parser::Scope.true?(rval)
                 else # false and false == false
                     false
                 end
-            when "or";
+            when "or"
                 if Puppet::Parser::Scope.true?(lval)
                     true
                 else
