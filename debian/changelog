@@ -1,6 +1,6 @@
 puppet (0.25.1-2) unstable; urgency=low
 
-  * Add puppetqd executable to puppetmaster package
+  * Add puppetqd executable to puppetmaster package (closes: #554624)
 
  -- Nigel Kersten <nigel@explanatorygap.net>  Thu, 05 Nov 2009 11:23:10 -0800
 
