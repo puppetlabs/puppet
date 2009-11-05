@@ -96,7 +96,7 @@ module Puppet
             return true if ! @resource.replace?
 
             if self.should
-                return super
+                result = super
             elsif source = resource.parameter(:source)
                 fail "Got a remote source with no checksum" unless source.checksum
                 result = (is == source.checksum)

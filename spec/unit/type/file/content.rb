@@ -197,6 +197,26 @@ describe content do
                 @content.must be_insync("{md5}" + Digest::MD5.hexdigest("some content"))
             end
 
+            describe "and Puppet[:show_diff] is set" do
+                before do
+                    Puppet[:show_diff] = true
+                end
+
+                it "should display a diff if the current contents are different from the desired content" do 
+                    @content.should = "some content"
+                    @content.expects(:string_file_diff).once
+
+                    @content.insync?("other content")
+                end
+
+                it "should not display a diff if the sum for the current contents is the same as the sum for the desired content" do 
+                    @content.should = "some content"
+                    @content.expects(:string_file_diff).never
+
+                    @content.insync?("{md5}" + Digest::MD5.hexdigest("some content"))
+                end
+            end
+
             describe "and the content is specified via a remote source" do
                 before do
                     @metadata = stub 'metadata'
