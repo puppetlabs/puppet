@@ -11,6 +11,10 @@
 /bin/rm -Rf "${3}{SITELIBDIR}/puppet"
 /bin/rm -Rf "${3}{SITELIBDIR}/puppet.rb"
 
+# remove old doc files
+
+/bin/rm -Rf "${3}/usr/share/doc/puppet"
+
 # In puppet 0.24.x these executables lived in bindir, but in 0.25.x they
 # have been moved to sbindir. This cleans out old ones before installing.
 /bin/rm -Rf "${3}{BINDIR}/puppetca"

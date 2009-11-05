@@ -54,6 +54,17 @@ function install_puppet() {
   chown -R root:admin "${pkgroot}"
 }
 
+function install_docs() {
+  echo "Installing docs to ${pkgroot}"
+  docdir="${pkgroot}/usr/share/doc/puppet" 
+  mkdir -p "${docdir}"
+  for docfile in CHANGELOG CHANGELOG.old COPYING LICENSE README README.queueing README.rst; do
+    install -m 0644 "${puppet_root}/${docfile}" "${docdir}"
+  done
+  chown -R root:wheel "${docdir}"
+  chmod 0755 "${docdir}"
+}
+
 function get_puppet_version() {
   puppet_version=$(RUBYLIB="${pkgroot}/${SITELIBDIR}:${RUBYLIB}" ruby -e "require 'puppet'; puts Puppet.version")
 }
@@ -156,6 +167,7 @@ function main() {
   fi
 
   install_puppet
+  install_docs
   get_puppet_version
 
   if [ ! "${puppet_version}" ]; then
