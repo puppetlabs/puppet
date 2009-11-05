@@ -29,6 +29,17 @@ describe "Puppet defaults" do
         end
     end
 
+    describe "when setting the :catalog_format" do
+        it "should log a deprecation notice" do
+            Puppet.expects(:warning)
+            Puppet.settings[:catalog_format] = 'marshal'
+        end
+        it "should copy the value to :preferred_serialization_format" do
+            Puppet.settings[:catalog_format] = 'marshal'
+            Puppet.settings[:preferred_serialization_format].should == 'marshal'
+        end
+    end
+
     it "should have a clientyamldir setting" do
         Puppet.settings[:clientyamldir].should_not be_nil
     end
