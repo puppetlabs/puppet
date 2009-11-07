@@ -207,36 +207,40 @@ class Puppet::Util::Log
         @levels.include?(level)
     end
 
-    attr_accessor :level, :message, :time, :remote, :file, :line, :version, :source
+    attr_accessor :time, :remote, :file, :line, :version, :source
+    attr_reader :level, :message
 
     def initialize(args)
-        unless args.include?(:level) && args.include?(:message)
-            raise ArgumentError, "Puppet::Util::Log called incorrectly"
-        end
+        self.level = args[:level]
+        self.message = args[:message]
+        self.source = args[:source] || "Puppet"
 
-        if args[:level].class == String
-            @level = args[:level].intern
-        elsif args[:level].class == Symbol
-            @level = args[:level]
-        else
-            raise ArgumentError, "Level is not a string or symbol: #{args[:level].class}"
-        end
-
-        @message = args[:message].to_s
         @time = Time.now
-
-        raise ArgumentError, "Invalid log level %s" % level unless self.class.validlevel?(level)
 
         if tags = args[:tags]
             tags.each { |t| self.tag(t) }
         end
 
-        self.source = args[:source] || "Puppet"
+        [:file, :line, :version].each do |attr|
+            next unless value = args[attr]
+            send(attr.to_s + "=", value)
+        end
+
+        Log.newmessage(self)
+    end
+    
+    def message=(msg)
+        raise ArgumentError, "Puppet::Util::Log requires a message" unless msg
+        @message = msg.to_s
+    end
+
+    def level=(level)
+        raise ArgumentError, "Puppet::Util::Log requires a log level" unless level
+        @level = level.to_sym
+        raise ArgumentError, "Invalid log level %s" % @level unless self.class.validlevel?(@level)
 
         # Tag myself with my log level
         tag(level)
-
-        Log.newmessage(self)
     end
 
     # If they pass a source in to us, we make sure it is a string, and
@@ -258,11 +262,11 @@ class Puppet::Util::Log
     end
 
     def to_report
-        "%s %s (%s): %s" % [self.time, self.source, self.level, self.to_s]
+        "#{time} #{source} (#{level}): #{to_s}"
     end
 
     def to_s
-        return @message
+        message
     end
 end
 

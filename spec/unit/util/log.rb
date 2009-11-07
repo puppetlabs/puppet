@@ -114,6 +114,13 @@ describe Puppet::Util::Log do
             Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => "foo")
         end
 
+        [:file, :line, :version].each do |attr|
+            it "should use #{attr} if provided" do
+                Puppet::Util::Log.any_instance.expects(attr.to_s + "=").with "foo"
+                Puppet::Util::Log.new(:level => "notice", :message => :foo, attr => "foo")
+            end
+        end
+
         it "should default to 'Puppet' as its source" do
             Puppet::Util::Log.new(:level => "notice", :message => :foo).source.should == "Puppet"
         end
