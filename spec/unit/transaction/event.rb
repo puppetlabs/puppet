@@ -5,7 +5,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/transaction/event'
 
 describe Puppet::Transaction::Event do
-    [:log, :previous_value, :desired_value, :property, :resource, :name, :log, :node, :version, :file, :line, :tags].each do |attr|
+    [:previous_value, :desired_value, :property, :resource, :name, :message, :node, :version, :file, :line, :tags].each do |attr|
         it "should support #{attr}" do
             event = Puppet::Transaction::Event.new
             event.send(attr.to_s + "=", "foo")
@@ -13,10 +13,18 @@ describe Puppet::Transaction::Event do
         end
     end
 
-    it "should produce the log when converted to a string" do
+    it "should always convert the property to a string" do
+        Puppet::Transaction::Event.new(:property => :foo).property.should == "foo"
+    end
+
+    it "should always convert the resource to a string" do
+        Puppet::Transaction::Event.new(:resource => :foo).resource.should == "foo"
+    end
+
+    it "should produce the message when converted to a string" do
         event = Puppet::Transaction::Event.new
-        event.expects(:log).returns "my log"
-        event.to_s.should == "my log"
+        event.expects(:message).returns "my message"
+        event.to_s.should == "my message"
     end
 
     it "should support 'status'" do
@@ -34,9 +42,60 @@ describe Puppet::Transaction::Event do
         Puppet::Transaction::Event.ancestors.should include(Puppet::Util::Tagging)
     end
 
-    it "should be able to send logs"
-
     it "should create a timestamp at its creation time" do
         Puppet::Transaction::Event.new.time.should be_instance_of(Time)
+    end
+
+    describe "when sending logs" do
+        before do
+            Puppet::Util::Log.stubs(:new)
+        end
+
+        it "should set the level to 'notice' if the event status is 'success'" do
+            Puppet::Util::Log.expects(:new).with { |args| args[:level] == :notice }
+            Puppet::Transaction::Event.new(:status => "success").send_log
+        end
+
+        it "should set the level to 'notice' if the event status is 'noop'" do
+            Puppet::Util::Log.expects(:new).with { |args| args[:level] == :notice }
+            Puppet::Transaction::Event.new(:status => "noop").send_log
+        end
+
+        it "should set the level to 'err' if the event status is 'failure'" do
+            Puppet::Util::Log.expects(:new).with { |args| args[:level] == :err }
+            Puppet::Transaction::Event.new(:status => "failure").send_log
+        end
+
+        it "should set the 'message' to the event log" do
+            Puppet::Util::Log.expects(:new).with { |args| args[:message] == "my message" }
+            Puppet::Transaction::Event.new(:message => "my message").send_log
+        end
+
+        it "should set the tags to the event tags" do
+            Puppet::Util::Log.expects(:new).with { |args| args[:tags] == %w{one two} }
+            Puppet::Transaction::Event.new(:tags => %w{one two}).send_log
+        end
+
+        [:file, :line, :version].each do |attr|
+            it "should pass the #{attr}" do
+                Puppet::Util::Log.expects(:new).with { |args| args[attr] == "my val" }
+                Puppet::Transaction::Event.new(attr => "my val").send_log
+            end
+        end
+
+        it "should use the source description as the source if one is set" do
+            Puppet::Util::Log.expects(:new).with { |args| args[:source] == "/my/param" }
+            Puppet::Transaction::Event.new(:source_description => "/my/param", :resource => "Foo[bar]", :property => "foo").send_log
+        end
+
+        it "should use the property as the source if one is available and no source description is set" do
+            Puppet::Util::Log.expects(:new).with { |args| args[:source] == "foo" }
+            Puppet::Transaction::Event.new(:resource => "Foo[bar]", :property => "foo").send_log
+        end
+
+        it "should use the property as the source if one is available and no property or source description is set" do
+            Puppet::Util::Log.expects(:new).with { |args| args[:source] == "Foo[bar]" }
+            Puppet::Transaction::Event.new(:resource => "Foo[bar]").send_log
+        end
     end
 end

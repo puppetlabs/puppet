@@ -77,6 +77,7 @@ describe Puppet::Transaction::Change do
         describe "and executing" do
             before do
                 @event = Puppet::Transaction::Event.new(:myevent)
+                @event.stubs(:send_log)
                 @change.stubs(:noop?).returns false
                 @property.stubs(:event).returns @event
 
@@ -91,9 +92,8 @@ describe Puppet::Transaction::Change do
                 it "should log that it is in noop" do
                     @property.expects(:is_to_s)
                     @property.expects(:should_to_s)
-                    @property.expects(:log).returns "my log"
 
-                    @event.expects(:log=).with("my log")
+                    @event.expects(:message=).with { |msg| msg.include?("should be") }
 
                     @change.forward
                 end
@@ -132,14 +132,14 @@ describe Puppet::Transaction::Change do
             it "should log the change" do
                 @property.expects(:sync).returns [:one]
 
-                @property.expects(:notice).returns "my log"
+                @event.expects(:send_log)
 
                 @change.forward
             end
 
-            it "should set the event's log to the log" do
-                @property.expects(:notice).returns "my log"
-                @change.forward.log.should == "my log"
+            it "should set the event's message to the change log" do
+                @property.expects(:change_to_s).returns "my change"
+                @change.forward.message.should == "my change"
             end
 
             it "should set the event's status to 'success'" do
@@ -150,7 +150,7 @@ describe Puppet::Transaction::Change do
                 before { @property.expects(:sync).raises "an exception" }
 
                 it "should catch the exception and log the err" do
-                    @property.expects(:err)
+                    @event.expects(:send_log)
                     lambda { @change.forward }.should_not raise_error
                 end
 
@@ -159,8 +159,7 @@ describe Puppet::Transaction::Change do
                 end
 
                 it "should set the event log to a failure log" do
-                    @property.expects(:err).returns "my failure"
-                    @change.forward.log.should == "my failure"
+                    @change.forward.message.should be_include("failed")
                 end
             end
 

@@ -136,6 +136,11 @@ describe Puppet::Property do
             @instance.stubs(:should).returns "foo"
             @instance.event.desired_value.should == "foo"
         end
+
+        it "should provide its path as the source description" do
+            @instance.stubs(:path).returns "/my/param"
+            @instance.event.source_description.should == "/my/param"
+        end
     end
 
     describe "when shadowing metaparameters" do

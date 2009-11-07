@@ -157,7 +157,7 @@ class Puppet::Property < Puppet::Parameter
 
     # Return a modified form of the resource event.
     def event
-        resource.event :name => event_name, :desired_value => should, :property => name
+        resource.event :name => event_name, :desired_value => should, :property => name, :source_description => path
     end
 
     attr_reader :shadow
