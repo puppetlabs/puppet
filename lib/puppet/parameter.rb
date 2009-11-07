@@ -331,6 +331,6 @@ class Puppet::Parameter
     end
 
     def to_s
-        s = "Parameter(%s)" % self.name
+        name.to_s
     end
 end

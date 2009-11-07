@@ -22,6 +22,10 @@ describe Puppet::Parameter do
         @class.value_collection.should be_instance_of(Puppet::Parameter::ValueCollection)
     end
 
+    it "should return its name as a string when converted to a string" do
+        @parameter.to_s.should == @parameter.name.to_s
+    end
+
     it "should be able to use cached attributes" do
         Puppet::Parameter.ancestors.should be_include(Puppet::Util::Cacher)
     end

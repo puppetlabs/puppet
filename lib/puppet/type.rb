@@ -487,7 +487,7 @@ class Type
     # Create a transaction event.  Called by Transaction or by
     # a property.
     def event(options = {})
-        Puppet::Transaction::Event.new({:resource => ref, :file => file, :line => line, :tags => tags, :version => version}.merge(options))
+        Puppet::Transaction::Event.new({:resource => self, :file => file, :line => line, :tags => tags, :version => version}.merge(options))
     end
 
     # Let the catalog determine whether a given cached value is
@@ -547,6 +547,10 @@ class Type
     # return the value of a parameter
     def parameter(name)
         @parameters[name.to_sym]
+    end
+
+    def parameters
+        @parameters.dup
     end
 
     # Is the named property defined?

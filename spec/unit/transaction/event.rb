@@ -51,7 +51,14 @@ describe Puppet::Transaction::Event do
             Puppet::Util::Log.stubs(:new)
         end
 
-        it "should set the level to 'notice' if the event status is 'success'" do
+        it "should set the level to the resources's log level if the event status is 'success' and a resource is available" do
+            resource = stub 'resource'
+            resource.expects(:[]).with(:loglevel).returns :myloglevel
+            Puppet::Util::Log.expects(:create).with { |args| args[:level] == :myloglevel }
+            Puppet::Transaction::Event.new(:status => "success", :resource => resource).send_log
+        end
+
+        it "should set the level to 'notice' if the event status is 'success' and no resource is available" do
             Puppet::Util::Log.expects(:new).with { |args| args[:level] == :notice }
             Puppet::Transaction::Event.new(:status => "success").send_log
         end

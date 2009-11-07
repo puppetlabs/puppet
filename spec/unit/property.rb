@@ -15,6 +15,10 @@ describe Puppet::Property do
         @property = @class.new :resource => @resource
     end
 
+    it "should return its name as a string when converted to a string" do
+        @property.to_s.should == @property.name.to_s
+    end
+
     it "should be able to look up the modified name for a given value" do
         @class.newvalue(:foo)
         @class.value_name("foo").should == :foo
@@ -129,7 +133,7 @@ describe Puppet::Property do
         end
 
         it "should have the property's name" do
-            @instance.event.property.should == @instance.name
+            @instance.event.property.should == @instance.name.to_s
         end
 
         it "should have the 'should' value set" do

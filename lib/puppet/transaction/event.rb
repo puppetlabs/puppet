@@ -11,6 +11,7 @@ class Puppet::Transaction::Event
     attr_accessor *ATTRIBUTES
     attr_writer :tags
     attr_accessor :time
+    attr_reader :default_log_level
 
     EVENT_STATUSES = %w{noop success failure}
 
@@ -26,11 +27,14 @@ class Puppet::Transaction::Event
     end
 
     def resource=(res)
+        if res.respond_to?(:[]) and level = res[:loglevel]
+            @default_log_level = level
+        end
         @resource = res.to_s
     end
 
     def send_log
-        super(status == "failure" ? :err : :notice, message)
+        super(log_level, message)
     end
 
     def status=(value)
@@ -43,6 +47,12 @@ class Puppet::Transaction::Event
     end
 
     private
+
+    # If it's a failure, use 'err', else use either the resource's log level (if available)
+    # or 'notice'.
+    def log_level
+        status == "failure" ? :err : (@default_log_level || :notice)
+    end
 
     # Used by the Logging module
     def log_source

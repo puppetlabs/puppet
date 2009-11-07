@@ -111,6 +111,11 @@ describe Puppet::Type do
             @resource.event.resource.should == "Mount[foo]"
         end
 
+        it "should have the resource's log level as the default log level" do
+            @resource[:loglevel] = :warning
+            @resource.event.default_log_level.should == :warning
+        end
+
         {:file => "/my/file", :line => 50, :tags => %{foo bar}, :version => 50}.each do |attr, value|
             it "should set the #{attr}" do
                 @resource.stubs(attr).returns value
