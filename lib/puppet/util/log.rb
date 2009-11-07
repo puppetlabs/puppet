@@ -207,8 +207,7 @@ class Puppet::Util::Log
         @levels.include?(level)
     end
 
-    attr_accessor :level, :message, :time, :remote, :file, :line, :version
-    attr_reader :source
+    attr_accessor :level, :message, :time, :remote, :file, :line, :version, :source
 
     def initialize(args)
         unless args.include?(:level) && args.include?(:message)

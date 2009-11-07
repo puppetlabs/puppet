@@ -205,17 +205,8 @@ class Puppet::Parameter
         set_options(options)
     end
 
-    # Log a message using the resource's log level.
     def log(msg)
-        unless @resource[:loglevel]
-            self.devfail "Parent %s has no loglevel" %
-                @resource.name
-        end
-        Puppet::Util::Log.create(
-            :level => @resource[:loglevel],
-            :message => msg,
-            :source => self
-        )
+        send_log(resource[:loglevel], msg)
     end
 
     # Is this parameter a metaparam?

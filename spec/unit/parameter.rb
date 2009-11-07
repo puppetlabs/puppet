@@ -157,5 +157,12 @@ describe Puppet::Parameter do
             @parameter.munge("bar").should == "bar"
         end
     end
-end
 
+    describe "when logging" do
+        it "should use its resource's log level and the provided message" do
+            @resource.expects(:[]).with(:loglevel).returns :notice
+            @parameter.expects(:send_log).with(:notice, "mymessage")
+            @parameter.log "mymessage"
+        end
+    end
+end
