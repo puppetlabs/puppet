@@ -209,21 +209,26 @@ class Puppet::Transaction
 
         Puppet.info "Applying configuration version '%s'" % catalog.version if catalog.version
 
-        allevents = @sorted_resources.collect { |resource|
-            if resource.is_a?(Puppet::Type::Component)
-                Puppet.warning "Somehow left a component in the relationship graph"
-                next
-            end
-            ret = nil
-            seconds = thinmark do
-                ret = eval_resource(resource)
-            end
+        begin
+            @sorted_resources.each do |resource|
+                if resource.is_a?(Puppet::Type::Component)
+                    Puppet.warning "Somehow left a component in the relationship graph"
+                    next
+                end
+                ret = nil
+                seconds = thinmark do
+                    ret = eval_resource(resource)
+                end
 
-            if Puppet[:evaltrace] and @catalog.host_config?
-                resource.info "Evaluated in %0.2f seconds" % seconds
+                if Puppet[:evaltrace] and @catalog.host_config?
+                    resource.info "Evaluated in %0.2f seconds" % seconds
+                end
+                ret
             end
-            ret
-        }.flatten.reject { |e| e.nil? }
+        ensure
+            # And then close the transaction log.
+            Puppet::Util::Log.close(@report)
+        end
 
         Puppet.debug "Finishing transaction #{object_id} with #{@changes.length} changes"
     end
