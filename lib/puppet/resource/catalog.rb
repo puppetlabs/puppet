@@ -430,12 +430,12 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         # the class.
         edge = Puppet::Relationship.from_pson(edge) if edge.is_a?(Hash)
         unless source = result.resource(edge.source)
-            raise ArgumentError, "Could not convert from pson: Could not find relationship source '%s'" % source
+            raise ArgumentError, "Could not convert from pson: Could not find relationship source #{edge.source.inspect}"
         end
         edge.source = source
 
         unless target = result.resource(edge.target)
-            raise ArgumentError, "Could not convert from pson: Could not find relationship target '%s'" % target
+            raise ArgumentError, "Could not convert from pson: Could not find relationship target #{edge.target.inspect}"
         end
         edge.target = target
 
