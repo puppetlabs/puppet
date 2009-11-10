@@ -271,12 +271,15 @@ class Parser
         declaration = ""
         define.arguments.each do |arg,value|
             declaration << "\$#{arg}"
-            if !value.nil?
+            unless value.nil?
                 declaration << " => "
-                if !value.is_a?(Puppet::Parser::AST::ASTArray)
+                case value
+                when Puppet::Parser::AST::Leaf
                     declaration << "'#{value.value}'"
-                else
+                when Puppet::Parser::AST::ASTArray
                     declaration << "[%s]" % value.children.collect { |v| "'#{v}'" }.join(", ")
+                else
+                    declaration << "#{value.to_s}"
                 end
             end
             declaration << ", "

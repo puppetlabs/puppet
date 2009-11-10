@@ -41,5 +41,9 @@ class Puppet::Parser::AST
         ensure
             scope.unset_ephemeral_var
         end
+
+        def to_s
+            param.to_s + " ? { " + values.collect { |v| v.to_s }.join(', ') + " }"
+        end
     end
 end

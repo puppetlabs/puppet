@@ -151,6 +151,13 @@ describe Puppet::Parser::AST::Selector do
                 @selector.evaluate(@scope)
             end
         end
-
+    end
+    describe "when converting to string" do
+        it "should produce a string version of this selector" do
+            values = Puppet::Parser::AST::ASTArray.new :children => [ Puppet::Parser::AST::ResourceParam.new(:param => "type", :value => "value", :add => false) ]
+            param = Puppet::Parser::AST::Variable.new :value => "myvar"
+            selector = Puppet::Parser::AST::Selector.new :param => param, :values => values
+            selector.to_s.should == "$myvar ? { type => value }"
+        end
     end
 end
