@@ -150,6 +150,10 @@ class Puppet::Parser::AST
                 return scope.lookupvar(@value)
             end
         end
+
+        def to_s
+            "\$#{value}"
+        end
     end
 
     class Regex < AST::Leaf

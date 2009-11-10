@@ -234,6 +234,18 @@ describe RDoc::Parser do
 
             lambda { @parser.document_define("mydef", @define, @class) }.should raise_error(Puppet::ParseError, /in file at line 42/)
         end
+
+        it "should convert all definition parameter to string" do
+            arg = stub 'arg'
+            val = stub 'val'
+
+            @define.stubs(:arguments).returns({arg => val})
+
+            arg.expects(:to_s).returns("arg")
+            val.expects(:to_s).returns("val")
+
+            @parser.document_define("mydef", @define, @class)
+        end
     end
 
     describe "when documenting nodes" do

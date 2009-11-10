@@ -72,6 +72,15 @@ describe Puppet::Parser::AST::String do
     end
 end
 
+describe Puppet::Parser::AST::Variable do
+    describe "when converting to string" do
+        it "should transform its value to a variable" do
+            value = stub 'value', :is_a? => true, :to_s => "myvar"
+            Puppet::Parser::AST::Variable.new( :value => value ).to_s.should == "\$myvar"
+        end
+    end
+end
+
 describe Puppet::Parser::AST::Regex do
     before :each do
         @scope = stub 'scope'
