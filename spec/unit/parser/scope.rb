@@ -64,6 +64,11 @@ describe Puppet::Parser::Scope do
             @scope.lookupvar("var").should == "yep"
         end
 
+        it "should be able to look up hashes" do
+            @scope.setvar("var", {"a" => "b"})
+            @scope.lookupvar("var").should == {"a" => "b"}
+        end
+
         it "should be able to look up variables in parent scopes" do
             @topscope.setvar("var", "parentval")
             @scope.lookupvar("var").should == "parentval"
@@ -167,6 +172,11 @@ describe Puppet::Parser::Scope do
             @scope.lookupvar("var").should == [4,2]
         end
 
+        it "it should store the merged hash {a => b, c => d}" do
+            @topscope.setvar("var",{"a" => "b"}, :append => false)
+            @scope.setvar("var",{"c" => "d"}, :append => true)
+            @scope.lookupvar("var").should == {"a" => "b", "c" => "d"}
+        end
     end
 
     describe "when calling number?" do

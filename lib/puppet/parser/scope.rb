@@ -336,8 +336,11 @@ class Puppet::Parser::Scope
             # lookup the value in the scope if it exists and insert the var
             table[name] = lookupvar(name)
             # concatenate if string, append if array, nothing for other types
-            if value.is_a?(Array)
+            case value
+            when Array
                 table[name] += value
+            when Hash
+                table[name].merge!(value)
             else
                 table[name] << value
             end

@@ -131,6 +131,7 @@ namestring:       name
                 | funcrvalue
                 | selector
                 | quotedtext
+                | hasharrayaccesses
                 | CLASSNAME {
                     result = ast AST::Name, :value => val[0][:value]
                 }
@@ -325,6 +326,7 @@ resourcename:   quotedtext
             | selector
             | variable
             | array
+            | hasharrayaccesses
 
 assignment:     VARIABLE EQUALS expression {
     if val[0][:value] =~ /::/
@@ -403,6 +405,8 @@ rvalue:       quotedtext
             | selector
             | variable
             | array
+            | hash
+            | hasharrayaccesses
             | resourceref
             | funcrvalue
             | undef
@@ -779,6 +783,50 @@ endcomma:     # nothing
 
 regex:        REGEX {
     result = ast AST::Regex, :value => val[0][:value]
+}
+
+hash:        LBRACE hashpairs RBRACE {
+    if val[1].instance_of?(AST::ASTHash)
+        result = val[1]
+    else
+        result = ast AST::ASTHash, { :value => val[1] }
+    end
+}
+            | LBRACE hashpairs COMMA RBRACE {
+    if val[1].instance_of?(AST::ASTHash)
+        result = val[1]
+    else
+        result = ast AST::ASTHash, { :value => val[1] }
+    end
+}           | LBRACE RBRACE {
+    result = ast AST::ASTHash
+}
+
+hashpairs:  hashpair
+            | hashpairs COMMA hashpair {
+    if val[0].instance_of?(AST::ASTHash)
+        result = val[0].merge(val[2])
+    else
+        result = ast AST::ASTHash, :value => val[0]
+        result.merge(val[2])
+    end
+}
+
+hashpair:   key FARROW rvalue {
+    result = ast AST::ASTHash, { :value => { val[0] => val[2] } }
+}
+
+key: NAME { result = val[0][:value] }
+        | SQTEXT { result = val[0][:value] }
+        | DQTEXT { result = val[0][:value] }
+
+hasharrayaccess: VARIABLE LBRACK rvalue RBRACK {
+    result = ast AST::HashOrArrayAccess, :variable => val[0][:value], :key => val[2] 
+}
+
+hasharrayaccesses:    hasharrayaccess
+                    | hasharrayaccess LBRACK rvalue RBRACK {
+    result = ast AST::HashOrArrayAccess, :variable => val[0], :key => val[2] 
 }
 
 end

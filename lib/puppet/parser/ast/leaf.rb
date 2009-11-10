@@ -139,6 +139,27 @@ class Puppet::Parser::AST
         end
     end
 
+    class HashOrArrayAccess < AST::Leaf
+        attr_accessor :variable, :key
+
+        def evaluate(scope)
+            container = variable.respond_to?(:evaluate) ? variable.safeevaluate(scope) : variable
+            object = (container.is_a?(Hash) or container.is_a?(Array)) ? container : scope.lookupvar(container)
+
+            accesskey = key.respond_to?(:evaluate) ? key.safeevaluate(scope) : key
+
+            unless object.is_a?(Hash) or object.is_a?(Array)
+                raise Puppet::ParseError, "#{variable} is not an hash or array when accessing it with #{accesskey}"
+            end
+
+            return object[accesskey]
+        end
+
+        def to_s
+            "\$#{variable.to_s}[#{key.to_s}]"
+        end
+    end
+
     class Regex < AST::Leaf
         def initialize(hash)
             super

@@ -92,6 +92,7 @@ end
 # And include all of the AST subclasses.
 require 'puppet/parser/ast/arithmetic_operator'
 require 'puppet/parser/ast/astarray'
+require 'puppet/parser/ast/asthash'
 require 'puppet/parser/ast/branch'
 require 'puppet/parser/ast/boolean_operator'
 require 'puppet/parser/ast/caseopt'

@@ -486,6 +486,13 @@ class TestSnippets < Test::Unit::TestCase
         assert_file("/tmp/testiftest","if test");
     end
 
+    def snippet_hash
+        assert_file("/tmp/myhashfile1","hash test 1");
+        assert_file("/tmp/myhashfile2","hash test 2");
+        assert_file("/tmp/myhashfile3","hash test 3");
+        assert_file("/tmp/myhashfile4","hash test 4");
+    end
+
     # Iterate across each of the snippets and create a test.
     Dir.entries(snippetdir).sort.each { |file|
         next if file =~ /^\./
