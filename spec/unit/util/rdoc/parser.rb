@@ -213,7 +213,7 @@ describe RDoc::Parser do
 
     describe "when documenting definition" do
         before(:each) do
-            @define = stub_everything 'define', :arguments => [], :doc => "mydoc"
+            @define = stub_everything 'define', :arguments => [], :doc => "mydoc", :file => "file", :line => 42
             @class = stub_everything 'class'
             @parser.stubs(:get_class_or_module).returns([@class, "mydef"])
         end
@@ -228,12 +228,18 @@ describe RDoc::Parser do
 
             @parser.document_define("mydef", @define, @class)
         end
+
+        it "should produce a better error message on unhandled exception" do
+            @class.expects(:add_method).raises(ArgumentError)
+
+            lambda { @parser.document_define("mydef", @define, @class) }.should raise_error(Puppet::ParseError, /in file at line 42/)
+        end
     end
 
     describe "when documenting nodes" do
         before :each do
             @code = stub_everything 'code'
-            @node = stub_everything 'node', :doc => "mydoc", :parentclass => "parent", :code => @code
+            @node = stub_everything 'node', :doc => "mydoc", :parentclass => "parent", :code => @code, :file => "file", :line => 42
             @rdoc_node = stub_everything 'rdocnode'
 
             @class = stub_everything 'class'
@@ -265,12 +271,18 @@ describe RDoc::Parser do
             @parser.expects(:scan_for_resource).with(@rdoc_node, @code)
             @parser.document_node("mynode", @node, @class)
         end
+
+        it "should produce a better error message on unhandled exception" do
+            @class.stubs(:add_node).raises(ArgumentError)
+
+            lambda { @parser.document_node("mynode", @node, @class) }.should raise_error(Puppet::ParseError, /in file at line 42/)
+        end
     end
 
     describe "when documenting classes" do
         before :each do
             @code = stub_everything 'code'
-            @class = stub_everything 'class', :doc => "mydoc", :parentclass => "parent", :code => @code
+            @class = stub_everything 'class', :doc => "mydoc", :parentclass => "parent", :code => @code, :file => "file", :line => 42
             @rdoc_class = stub_everything 'rdoc-class'
 
             @module = stub_everything 'class'
@@ -302,6 +314,12 @@ describe RDoc::Parser do
             Puppet.settings.stubs(:[]).with(:document_all).returns(true)
             @parser.expects(:scan_for_resource).with(@rdoc_class, @code)
             @parser.document_class("mynode", @class, @module)
+        end
+
+        it "should produce a better error message on unhandled exception" do
+            @module.stubs(:add_class).raises(ArgumentError)
+
+            lambda { @parser.document_class("mynode", @class, @module) }.should raise_error(Puppet::ParseError, /in file at line 42/)
         end
     end
 
