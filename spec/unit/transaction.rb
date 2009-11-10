@@ -133,4 +133,14 @@ describe Puppet::Transaction, " when determining tags" do
         @transaction.tags = "one::two"
         @transaction.tags.should == %w{one::two}
     end
+
+    it "should accept a comma-delimited string" do
+        @transaction.tags = "one, two"
+        @transaction.tags.should == %w{one two}
+    end
+
+    it "should accept an empty string" do
+        @transaction.tags = ""
+        @transaction.tags.should == []
+    end
 end
