@@ -2,6 +2,7 @@
 # and performs them
 
 require 'puppet'
+require 'puppet/util/tagging'
 
 module Puppet
 class Transaction
@@ -18,6 +19,7 @@ class Transaction
     attr_reader :events
 
     include Puppet::Util
+    include Puppet::Util::Tagging
 
     # Add some additional times for reporting
     def addtimes(hash)
@@ -601,20 +603,17 @@ class Transaction
     # The tags we should be checking.
     def tags
         unless defined? @tags
-            tags = Puppet[:tags]
-            if tags.nil? or tags == ""
-                @tags = []
-            else
-                @tags = tags.split(/\s*,\s*/)
-            end
+            self.tags = Puppet[:tags]
         end
 
-        @tags
+        super
     end
 
-    def tags=(tags)
-        tags = [tags] unless tags.is_a?(Array)
-        @tags = tags
+    def handle_qualified_tags( qualified )
+        # The default behavior of Puppet::Util::Tagging is
+        # to split qualified tags into parts. That would cause
+        # qualified tags to match too broadly here.
+        return
     end
 
     # Is this resource tagged appropriately?

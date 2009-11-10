@@ -16,8 +16,7 @@ module Puppet::Util::Tagging
             @tags << tag unless @tags.include?(tag)
         end
 
-        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
-        qualified.collect { |name| x = name.split("::") }.flatten.each { |tag| @tags << tag unless @tags.include?(tag) }
+        handle_qualified_tags( qualified )
     end
 
     # Are we tagged with the provided tag?
@@ -32,7 +31,26 @@ module Puppet::Util::Tagging
         @tags.dup
     end
 
+    def tags=(tags)
+        @tags = []
+
+        return if tags.nil? or tags == ""
+
+        if tags.is_a?(String)
+            tags = tags.strip.split(/\s*,\s*/)
+        end
+
+        tags.each do |t|
+            tag(t)
+        end
+    end
+
     private
+
+    def handle_qualified_tags( qualified )
+        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
+        qualified.collect { |name| x = name.split("::") }.flatten.each { |tag| @tags << tag unless @tags.include?(tag) }
+    end
 
     def valid_tag?(tag)
         tag =~ /^\w[-\w:.]*$/
