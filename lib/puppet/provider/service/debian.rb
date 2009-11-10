@@ -29,7 +29,7 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
     def enabled?
         # TODO: Replace system() call when Puppet::Util.execute gives us a way
         # to determine exit status.  http://projects.reductivelabs.com/issues/2538
-        system("/usr/sbin/invoke-rc.d", "--query", @resource[:name], "start")
+        system("/usr/sbin/invoke-rc.d", "--quiet", "--query", @resource[:name], "start")
         
         # 104 is the exit status when you query start an enabled service.
         # 106 is the exit status when the policy layer supplies a fallback action
