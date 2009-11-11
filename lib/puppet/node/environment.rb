@@ -55,6 +55,27 @@ class Puppet::Node::Environment
         if ENV["PUPPETLIB"]
             dirs = ENV["PUPPETLIB"].split(File::PATH_SEPARATOR) + dirs
         end
+        validate_dirs(dirs)
+    end
+
+    # Return all modules from this environment.
+    # Cache the list, because it can be expensive to create.
+    cached_attr(:modules, :ttl => Puppet[:filetimeout]) do
+        module_names = modulepath.collect { |path| Dir.entries(path) }.flatten.uniq
+        module_names.collect { |path| Puppet::Module.new(path, self) rescue nil }.compact
+    end
+
+    # Cache the manifestdir, so that we aren't searching through
+    # all known directories all the time.
+    cached_attr(:manifestdir, :ttl => Puppet[:filetimeout]) do
+        validate_dirs(self[:manifestdir].split(File::PATH_SEPARATOR))
+    end
+
+    def to_s
+        name.to_s
+    end
+
+    def validate_dirs(dirs)
         dirs.collect do |dir|
             if dir !~ /^#{File::SEPARATOR}/
                 File.join(Dir.getwd, dir)
@@ -66,14 +87,4 @@ class Puppet::Node::Environment
         end
     end
 
-    # Return all modules from this environment.
-    # Cache the list, because it can be expensive to create.
-    cached_attr(:modules, :ttl => Puppet[:filetimeout]) do
-        module_names = modulepath.collect { |path| Dir.entries(path) }.flatten.uniq
-        module_names.collect { |path| Puppet::Module.new(path, self) rescue nil }.compact
-    end
-
-    def to_s
-        name.to_s
-    end
 end
