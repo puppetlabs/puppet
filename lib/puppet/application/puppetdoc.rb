@@ -66,8 +66,9 @@ Puppet::Application.new(:puppetdoc) do
         exit_code = 0
         files = []
         unless @manifest
-            files += Puppet[:modulepath].split(':').collect { |p| File.expand_path(p) }
-            files += Puppet[:manifestdir].split(':').collect { |p| File.expand_path(p) }
+            env = Puppet::Node::Environment.new
+            files += env.modulepath
+            files += env.manifestdir
         end
         files += ARGV
         Puppet.info "scanning: %s" % files.inspect
