@@ -353,6 +353,7 @@ class Transaction
         made = [made] unless made.is_a?(Array)
         made.uniq.find_all do |res|
             begin
+                res.tag(*resource.tags)
                 @catalog.add_resource(res) do |r|
                     r.finish
                     make_parent_child_relationship(resource, [r])

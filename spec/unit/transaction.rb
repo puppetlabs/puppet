@@ -51,6 +51,21 @@ describe Puppet::Transaction do
 
             @transaction.generate_additional_resources(generator, :generate).should be_empty
         end
+
+        it "should copy all tags to the newly generated resources" do
+            child = stub 'child'
+            generator = stub 'resource', :tags => ["one", "two"]
+
+            @catalog = Puppet::Resource::Catalog.new
+            @transaction = Puppet::Transaction.new(@catalog)
+
+            generator.stubs(:generate).returns [child]
+            @catalog.stubs(:add_resource)
+
+            child.expects(:tag).with("one", "two")
+
+            @transaction.generate_additional_resources(generator, :generate)
+        end
     end
 
     describe "when skipping a resource" do
