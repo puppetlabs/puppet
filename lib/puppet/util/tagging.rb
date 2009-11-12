@@ -21,8 +21,8 @@ module Puppet::Util::Tagging
     end
 
     # Are we tagged with the provided tag?
-    def tagged?(tag)
-        defined?(@tags) and @tags.include?(tag.to_s)
+    def tagged?(*tags)
+        not ( self.tags & tags.flatten.collect { |t| t.to_s } ).empty?
     end
 
     # Return a copy of the tag list, so someone can't ask for our tags

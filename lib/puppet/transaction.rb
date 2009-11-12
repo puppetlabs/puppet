@@ -620,8 +620,11 @@ class Transaction
 
     # Is this resource tagged appropriately?
     def missing_tags?(resource)
-        return false if self.ignore_tags? or tags.empty?
-        return true unless resource.tagged?(tags)
+        not appropriately_tagged?(resource)
+    end
+
+    def appropriately_tagged?(resource)
+        self.ignore_tags? or tags.empty? or resource.tagged?(*tags)
     end
 
     # Are there any edges that target this resource?
