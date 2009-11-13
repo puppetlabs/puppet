@@ -22,7 +22,7 @@ class Puppet::FileServing::Base
     end
 
     # Return the full path to our file.  Fails if there's no path set.
-    def full_path
+    def full_path(dummy_argument=:work_arround_for_ruby_GC_bug)
         (if relative_path.nil? or relative_path == "" or relative_path == "."
             path
         else

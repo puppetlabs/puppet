@@ -199,7 +199,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
         result
     end
 
-    def ref
+    def ref(dummy_argument=:work_arround_for_ruby_GC_bug)
         "%s[%s]" % [self[:restype].split("::").collect { |s| s.capitalize }.join("::"), self.title.to_s]
     end
 

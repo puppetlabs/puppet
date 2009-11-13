@@ -64,7 +64,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
         @property_hash.clear
     end
 
-    def install
+    def install(dummy_argument=:work_arround_for_ruby_GC_bug)
         if @resource[:install_args]
             zoneadm :install, @resource[:install_args].split(" ")
         else

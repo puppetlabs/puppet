@@ -101,7 +101,7 @@ class Puppet::Parser::AST
             end
         end
 
-        def to_classname
+        def to_classname(dummy_argument=:work_arround_for_ruby_GC_bug)
             to_s.downcase.gsub(/[^-\w:.]/,'').sub(/^\.+/,'')
         end
 

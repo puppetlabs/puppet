@@ -192,7 +192,7 @@ Puppet::Application.new(:puppetdoc) do
         end
     end
 
-    def setup_rdoc
+    def setup_rdoc(dummy_argument=:work_arround_for_ruby_GC_bug)
         # consume the unknown options
         # and feed them as settings
         if @unknown_args.size > 0

@@ -134,7 +134,7 @@ class Puppet::SSLCertificates::CA
 
     # List certificates waiting to be signed.  This returns a list of hostnames, not actual
     # files -- the names can be converted to full paths with host2csrfile.
-    def list
+    def list(dummy_argument=:work_arround_for_ruby_GC_bug)
         return Dir.entries(Puppet[:csrdir]).find_all { |file|
             file =~ /\.pem$/
         }.collect { |file|
@@ -144,7 +144,7 @@ class Puppet::SSLCertificates::CA
 
     # List signed certificates.  This returns a list of hostnames, not actual
     # files -- the names can be converted to full paths with host2csrfile.
-    def list_signed
+    def list_signed(dummy_argument=:work_arround_for_ruby_GC_bug)
         return Dir.entries(Puppet[:signeddir]).find_all { |file|
             file =~ /\.pem$/
         }.collect { |file|
