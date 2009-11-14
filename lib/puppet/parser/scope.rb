@@ -340,6 +340,7 @@ class Puppet::Parser::Scope
             when Array
                 table[name] += value
             when Hash
+                raise ArgumentError, "Trying to append to a hash with something which is not a hash is unsupported" unless value.is_a?(Hash)
                 table[name].merge!(value)
             else
                 table[name] << value
