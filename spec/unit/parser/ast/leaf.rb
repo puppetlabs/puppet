@@ -99,81 +99,102 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
         @scope = stub 'scope'
     end
 
-    it "should evaluate the variable part if necessary" do
-        @scope.stubs(:lookupvar).with("a").returns(["b"])
+    describe "when evaluating" do
+        it "should evaluate the variable part if necessary" do
+            @scope.stubs(:lookupvar).with("a").returns(["b"])
 
-        variable = stub 'variable', :evaluate => "a"
-        access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => variable, :key => 0 )
+            variable = stub 'variable', :evaluate => "a"
+            access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => variable, :key => 0 )
 
-        variable.expects(:safeevaluate).with(@scope).returns("a")
+            variable.expects(:safeevaluate).with(@scope).returns("a")
 
-        access.evaluate(@scope).should == "b"
+            access.evaluate(@scope).should == "b"
+        end
+
+        it "should evaluate the access key part if necessary" do
+            @scope.stubs(:lookupvar).with("a").returns(["b"])
+
+            index = stub 'index', :evaluate => 0
+            access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => index )
+
+            index.expects(:safeevaluate).with(@scope).returns(0)
+
+            access.evaluate(@scope).should == "b"
+        end
+
+        it "should be able to return an array member" do
+            @scope.stubs(:lookupvar).with("a").returns(["val1", "val2", "val3"])
+
+            access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => 1 )
+
+            access.evaluate(@scope).should == "val2"
+        end
+
+        it "should be able to return an hash value" do
+            @scope.stubs(:lookupvar).with("a").returns({ "key1" => "val1", "key2" => "val2", "key3" => "val3" })
+
+            access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key2" )
+
+            access.evaluate(@scope).should == "val2"
+        end
+
+        it "should raise an error if the variable lookup didn't return an hash or an array" do
+            @scope.stubs(:lookupvar).with("a").returns("I'm a string")
+
+            access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key2" )
+
+            lambda { access.evaluate(@scope) }.should raise_error
+        end
+
+        it "should raise an error if the variable wasn't in the scope" do
+            @scope.stubs(:lookupvar).with("a").returns(nil)
+
+            access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key2" )
+
+            lambda { access.evaluate(@scope) }.should raise_error
+        end
+
+        it "should return a correct string representation" do
+            access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key2" )
+            access.to_s.should == '$a[key2]'
+        end
+
+        it "should work with recursive hash access" do
+            @scope.stubs(:lookupvar).with("a").returns({ "key" => { "subkey" => "b" }})
+
+            access1 = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key")
+            access2 = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => access1, :key => "subkey")
+
+            access2.evaluate(@scope).should == 'b'
+        end
+
+        it "should work with interleaved array and hash access" do
+            @scope.stubs(:lookupvar).with("a").returns({ "key" => [ "a" , "b" ]})
+
+            access1 = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key")
+            access2 = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => access1, :key => 1)
+
+            access2.evaluate(@scope).should == 'b'
+        end
     end
 
-    it "should evaluate the access key part if necessary" do
-        @scope.stubs(:lookupvar).with("a").returns(["b"])
+    describe "when assigning" do
+        it "should add a new key and value" do
+            scope = Puppet::Parser::Scope.new
+            scope.setvar("a", { 'a' => 'b' })
 
-        index = stub 'index', :evaluate => 0
-        access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => index )
+            access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "b")
+            access.assign(scope, "c" )
 
-        index.expects(:safeevaluate).with(@scope).returns(0)
+            scope.lookupvar("a").should be_include("b")
+        end
 
-        access.evaluate(@scope).should == "b"
-    end
+        it "should raise an error when trying to overwrite an hash value" do
+            @scope.stubs(:lookupvar).with("a").returns({ "key" => [ "a" , "b" ]})
+            access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key")
 
-    it "should be able to return an array member" do
-        @scope.stubs(:lookupvar).with("a").returns(["val1", "val2", "val3"])
-
-        access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => 1 )
-
-        access.evaluate(@scope).should == "val2"
-    end
-
-    it "should be able to return an hash value" do
-        @scope.stubs(:lookupvar).with("a").returns({ "key1" => "val1", "key2" => "val2", "key3" => "val3" })
-
-        access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key2" )
-
-        access.evaluate(@scope).should == "val2"
-    end
-
-    it "should raise an error if the variable lookup didn't return an hash or an array" do
-        @scope.stubs(:lookupvar).with("a").returns("I'm a string")
-
-        access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key2" )
-
-        lambda { access.evaluate(@scope) }.should raise_error
-    end
-
-    it "should raise an error if the variable wasn't in the scope" do
-        @scope.stubs(:lookupvar).with("a").returns(nil)
-
-        access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key2" )
-
-        lambda { access.evaluate(@scope) }.should raise_error
-    end
-
-    it "should return a correct string representation" do
-        access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key2" )
-        access.to_s.should == '$a[key2]'
-    end
-
-    it "should work with recursive hash access" do
-        @scope.stubs(:lookupvar).with("a").returns({ "key" => { "subkey" => "b" }})
-
-        access1 = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key")
-        access2 = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => access1, :key => "subkey")
-
-        access2.evaluate(@scope).should == 'b'
-    end
-
-    it "should work with interleaved array and hash access" do
-        @scope.stubs(:lookupvar).with("a").returns({ "key" => [ "a" , "b" ]})
-
-        access1 = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key")
-        access2 = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => access1, :key => 1)
-
-        access2.evaluate(@scope).should == 'b'
+            lambda { access.assign(@scope, "test") }.should raise_error
+        end
     end
 end
 

@@ -43,5 +43,18 @@ describe Puppet::Parser::AST::VarDef do
             vardef.evaluate(@scope)
         end
 
+        describe "when dealing with hash" do
+            it "should delegate to the HashOrArrayAccess assign" do
+                access = stub 'name'
+                access.stubs(:is_a?).with(Puppet::Parser::AST::HashOrArrayAccess).returns(true)
+                value = stub 'value', :safeevaluate => "1"
+                vardef = Puppet::Parser::AST::VarDef.new :name => access, :value => value, :file => nil, :line => nil
+
+                access.expects(:assign).with(@scope, '1')
+
+                vardef.evaluate(@scope)
+            end
+        end
+
     end
 end

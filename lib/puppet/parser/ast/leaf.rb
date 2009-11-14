@@ -142,17 +142,36 @@ class Puppet::Parser::AST
     class HashOrArrayAccess < AST::Leaf
         attr_accessor :variable, :key
 
-        def evaluate(scope)
+        def evaluate_container(scope)
             container = variable.respond_to?(:evaluate) ? variable.safeevaluate(scope) : variable
-            object = (container.is_a?(Hash) or container.is_a?(Array)) ? container : scope.lookupvar(container)
+            (container.is_a?(Hash) or container.is_a?(Array)) ? container : scope.lookupvar(container)
+        end
 
-            accesskey = key.respond_to?(:evaluate) ? key.safeevaluate(scope) : key
+        def evaluate_key(scope)
+            key.respond_to?(:evaluate) ? key.safeevaluate(scope) : key
+        end
+
+        def evaluate(scope)
+            object = evaluate_container(scope)
 
             unless object.is_a?(Hash) or object.is_a?(Array)
                 raise Puppet::ParseError, "#{variable} is not an hash or array when accessing it with #{accesskey}"
             end
 
-            return object[accesskey]
+            return object[evaluate_key(scope)]
+        end
+
+        # Assign value to this hashkey or array index
+        def assign(scope, value)
+            object = evaluate_container(scope)
+            accesskey = evaluate_key(scope)
+
+            if object.is_a?(Hash) and object.include?(accesskey)
+                raise Puppet::ParseError, "Assigning to the hash '#{variable}' with an existing key '#{accesskey}' is forbidden"
+            end
+
+            # assign to hash or array
+            object[accesskey] = value
         end
 
         def to_s

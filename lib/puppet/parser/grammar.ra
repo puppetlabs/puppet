@@ -336,6 +336,9 @@ assignment:     VARIABLE EQUALS expression {
     variable = ast AST::Name, :value => val[0][:value], :line => val[0][:line]
     result = ast AST::VarDef, :name => variable, :value => val[2], :line => val[0][:line]
 }
+            | hasharrayaccess EQUALS expression {
+    result = ast AST::VarDef, :name => val[0], :value => val[2]
+}
 
 append:     VARIABLE APPENDS expression {
     variable = ast AST::Name, :value => val[0][:value], :line => val[0][:line]
