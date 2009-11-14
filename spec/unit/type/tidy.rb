@@ -7,6 +7,10 @@ tidy = Puppet::Type.type(:tidy)
 describe tidy do
     before do
         Puppet.settings.stubs(:use)
+
+        # for an unknown reason some of these specs fails when run individually
+        # with a failed expectation on File.lstat in the autoloader.
+        File.stubs(:lstat)
     end
 
     it "should use :lstat when stating a file" do
@@ -161,8 +165,17 @@ describe tidy do
                 Puppet::FileServing::Fileset.stubs(:new).returns @fileset
             end
 
-            it "should use a Fileset for recursion" do
+            it "should use a Fileset for infinite recursion" do
                 Puppet::FileServing::Fileset.expects(:new).with("/what/ever", :recurse => true).returns @fileset
+                @fileset.expects(:files).returns %w{. one two}
+                @tidy.stubs(:tidy?).returns false
+
+                @tidy.generate
+            end
+
+            it "should use a Fileset for limited recursion" do
+                @tidy[:recurse] = 42
+                Puppet::FileServing::Fileset.expects(:new).with("/what/ever", :recurse => true, :recurselimit => 42).returns @fileset
                 @fileset.expects(:files).returns %w{. one two}
                 @tidy.stubs(:tidy?).returns false
 
