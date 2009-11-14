@@ -20,8 +20,8 @@ describe Puppet::Transaction do
 
     describe "when generating resources" do
         it "should finish all resources" do
-            generator = stub 'generator', :depthfirst? => true
-            resource = stub 'resource'
+            generator = stub 'generator', :depthfirst? => true, :tags => []
+            resource = stub 'resource', :tag => nil
 
             @catalog = Puppet::Resource::Catalog.new
             @transaction = Puppet::Transaction.new(@catalog)
@@ -36,8 +36,8 @@ describe Puppet::Transaction do
         end
 
         it "should skip generated resources that conflict with existing resources" do
-            generator = mock 'generator'
-            resource = stub 'resource'
+            generator = mock 'generator', :tags => []
+            resource = stub 'resource', :tag => nil
 
             @catalog = Puppet::Resource::Catalog.new
             @transaction = Puppet::Transaction.new(@catalog)
