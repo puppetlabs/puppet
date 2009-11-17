@@ -42,13 +42,10 @@ module Puppet
                     should = :absent
                 end
                 atype = Puppet::Type.type(:mailalias)
-                return provider.aliases.collect do |name, recipient|
-                    if atype[name]
-                        nil
-                    else
-                        malias = Puppet::Type.type(:mailalias).new(:name => name, :recipient => recipient, :ensure => should)
-                    end
-                end.compact
+
+                provider.aliases.
+                    reject  { |name,recipient| catalog.resource(:mailalias, name) }.
+                    collect { |name,recipient| atype.new(:name => name, :recipient => recipient, :ensure => should) }
             end
         end
     end
