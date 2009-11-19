@@ -14,8 +14,9 @@ Puppet::Type.type(:ssh_authorized_key).provide(:parsed,
         :fields   => %w{options type key name},
         :optional => %w{options},
         :rts => /^\s+/,
-        :match    => /^(?:(.+) )?(ssh-dss|ssh-rsa) ([^ ]+)(?: (.+))?$/,
+        :match    => /^(?:(.+) )?(ssh-dss|ssh-rsa) ([^ ]+) ?(.*)$/,
         :post_parse => proc { |h|
+            h[:name] = "" if h[:name] == :absent
             h[:options] ||= [:absent]
             h[:options] = Puppet::Type::Ssh_authorized_key::ProviderParsed.parse_options(h[:options]) if h[:options].is_a? String
         },
