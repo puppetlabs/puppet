@@ -125,7 +125,7 @@ Puppet::Application.new(:puppetd) do
         Puppet.settings.handlearg("--no-daemonize")
         options[:verbose] = true
         options[:onetime] = true
-        options[:waitforcert] = 0
+        options[:waitforcert] = 0 unless @explicit_waitforcert
     end
 
     # Handle the logging settings.
