@@ -496,26 +496,18 @@ module Puppet
         # not likely to have many actual conflicts, which is good, because
         # this is a pretty inefficient implementation.
         def remove_less_specific_files(files)
-            # We sort the paths so we can short-circuit some tests.
-            mypath = self[:path]
-            other_paths = catalog.vertices.find_all do |r|
-                r.is_a?(self.class) and r[:path][0..(mypath.length - 1)] == mypath
-            end.collect { |r| r[:path] }.sort { |a, b| a.length <=> b.length } - [self[:path]]
+            mypath = self[:path].split(File::Separator)
+            other_paths = catalog.vertices.
+              select  { |r| r.is_a?(self.class) and r[:path] != self[:path] }.
+              collect { |r| r[:path].split(File::Separator) }.
+              select  { |p| p[0,mypath.length]  == mypath }
 
             return files if other_paths.empty?
 
-            remove = []
-            files.each do |file|
-                path = file[:path]
-                other_paths.each do |p|
-                    if path[0..(p.length - 1)] == p
-                        remove << file
-                        break
-                    end
-                end
-            end
-
-            files - remove
+            files.reject { |file|
+                path = file[:path].split(File::Separator)
+                other_paths.any? { |p| path[0,p.length] == p }
+                }
         end
 
         # A simple method for determining whether we should be recursing.

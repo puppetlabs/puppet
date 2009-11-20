@@ -223,7 +223,7 @@ describe Puppet::Type.type(:file) do
         end
 
         it "should not recursively manage files managed by a more specific explicit file" do
-            dir = tmpfile("file_source_integration_source")
+            dir = tmpfile("recursion_vs_explicit_1")
 
             subdir = File.join(dir, "subdir")
             file = File.join(subdir, "file")
@@ -241,6 +241,25 @@ describe Puppet::Type.type(:file) do
             @catalog.apply
 
             (File.stat(file).mode & 007777).should == 0644
+        end
+
+        it "should recursively manage files even if there is an explicit file whose name is a prefix of the managed file" do
+            dir = tmpfile("recursion_vs_explicit_2")
+
+            managed   = File.join(dir, "file")
+            generated = File.join(dir, "file_with_a_name_starting_with_the_word_file")
+
+            FileUtils.mkdir_p(dir)
+            File.open(managed,   "w") { |f| f.puts "" }
+            File.open(generated, "w") { |f| f.puts "" }
+
+            @catalog = Puppet::Resource::Catalog.new
+            @catalog.add_resource Puppet::Type::File.new(:name => dir,     :recurse => true, :backup => false, :mode => "755")
+            @catalog.add_resource Puppet::Type::File.new(:name => managed, :recurse => true, :backup => false, :mode => "644")
+
+            @catalog.apply
+
+            (File.stat(generated).mode & 007777).should == 0755
         end
     end
 
