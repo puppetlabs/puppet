@@ -21,6 +21,7 @@ describe Puppet::Parser::AST::Leaf do
         end
 
         it "should match values by equality" do
+            @value.stubs(:==).returns(false)
             @leaf.stubs(:safeevaluate).with(@scope).returns(@value)
             @value.expects(:==).with("value")
 
@@ -32,6 +33,12 @@ describe Puppet::Parser::AST::Leaf do
             @value.expects(:downcase).returns("value")
 
             @leaf.evaluate_match("value", @scope, :insensitive => true)
+        end
+
+        it "should match undef if value is an empty string" do
+            @leaf.stubs(:safeevaluate).with(@scope).returns("")
+
+            @leaf.evaluate_match(:undef, @scope).should be_true
         end
     end
 
@@ -72,12 +79,18 @@ describe Puppet::Parser::AST::String do
     end
 end
 
-describe Puppet::Parser::AST::Variable do
-    describe "when converting to string" do
-        it "should transform its value to a variable" do
-            value = stub 'value', :is_a? => true, :to_s => "myvar"
-            Puppet::Parser::AST::Variable.new( :value => value ).to_s.should == "\$myvar"
-        end
+describe Puppet::Parser::AST::Undef do
+    before :each do
+        @scope = stub 'scope'
+        @undef = Puppet::Parser::AST::Undef.new(:value => :undef)
+    end
+
+    it "should match undef with undef" do
+        @undef.evaluate_match(:undef, @scope).should be_true
+    end
+
+    it "should not match undef with an empty string" do
+        @undef.evaluate_match("", @scope).should be_false
     end
 end
 
@@ -155,6 +168,30 @@ describe Puppet::Parser::AST::Regex do
         regex.expects(:match).with("value")
 
         val.match("value")
+    end
+end
+
+describe Puppet::Parser::AST::Variable do
+    before :each do
+        @scope = stub 'scope'
+        @var = Puppet::Parser::AST::Variable.new(:value => "myvar")
+    end
+
+    it "should lookup the variable in scope" do
+        @scope.expects(:lookupvar).with("myvar", false).returns(:myvalue)
+        @var.safeevaluate(@scope).should == :myvalue
+    end
+
+    it "should return undef if the variable wasn't set" do
+        @scope.expects(:lookupvar).with("myvar", false).returns(:undefined)
+        @var.safeevaluate(@scope).should == :undef
+    end
+
+    describe "when converting to string" do
+        it "should transform its value to a variable" do
+            value = stub 'value', :is_a? => true, :to_s => "myvar"
+            Puppet::Parser::AST::Variable.new( :value => value ).to_s.should == "\$myvar"
+        end
     end
 end
 

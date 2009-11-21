@@ -16,6 +16,8 @@ class Puppet::Parser::AST
             if ! options[:sensitive] && obj.respond_to?(:downcase)
                 obj = obj.downcase
             end
+            # "" == undef for case/selector/if
+            return true if obj == "" and value == :undef
             obj == value
         end
 
@@ -125,7 +127,10 @@ class Puppet::Parser::AST
         # not include syntactical constructs, like '$' and '{}').
         def evaluate(scope)
             parsewrap do
-                return scope.lookupvar(@value)
+                if (var = scope.lookupvar(@value, false)) == :undefined
+                    var = :undef
+                end
+                var
             end
         end
 
