@@ -1,0 +1,16 @@
+--- sbin/puppetmasterd.orig	2009-11-23 10:38:16.632264990 -0500
++++ sbin/puppetmasterd	2009-11-23 10:38:28.884265155 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env ruby
++#!/usr/bin/ruby
+ 
+ #
+ # = Synopsis
+--- sbin/puppetd.orig	2009-11-23 10:38:23.240265893 -0500
++++ sbin/puppetd	2009-11-23 10:38:35.044265271 -0500
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env ruby
++#!/usr/bin/ruby
+ # == Synopsis
+ #
+ # Retrieve the client configuration from the central puppet server and apply
