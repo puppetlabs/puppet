@@ -52,10 +52,8 @@ class Puppet::Parser::AST
 
     # The base string class.
     class String < AST::Leaf
-        # Interpolate the string looking for variables, and then return
-        # the result.
         def evaluate(scope)
-            return scope.strinterp(@value, file, line)
+            @value
         end
 
         def to_s
@@ -71,6 +69,16 @@ class Puppet::Parser::AST
 
         def to_s
             "\"#{@value}\""
+        end
+    end
+
+    class Concat < AST::Leaf
+        def evaluate(scope)
+            @value.collect { |x| x.evaluate(scope) }.join
+        end
+
+        def to_s
+            "concat(#{@value.join(',')})"
         end
     end
 

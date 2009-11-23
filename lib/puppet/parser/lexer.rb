@@ -11,11 +11,14 @@ end
 module Puppet::Parser; end
 
 class Puppet::Parser::Lexer
-    attr_reader :last, :file, :lexing_context
+    attr_reader :last, :file, :lexing_context, :token_queue
 
     attr_accessor :line, :indefine
 
-    # Our base token class.
+    def lex_error msg
+        raise Puppet::LexError.new(msg)
+    end
+        
     class Token
         attr_accessor :regex, :name, :string, :skip, :incr_line, :skip_text, :accumulate
 
@@ -28,6 +31,7 @@ class Puppet::Parser::Lexer
             end
         end
 
+        # MQR: Why not just alias?
         %w{skip accumulate}.each do |method|
             define_method(method+"?") do
                 self.send(method)
@@ -142,10 +146,13 @@ class Puppet::Parser::Lexer
         '=~' => :MATCH,
         '!~' => :NOMATCH,
         %r{([a-z][-\w]*)?(::[a-z][-\w]*)+} => :CLASSNAME, # Require '::' in the class name, else we'd compete with NAME
-        %r{((::){0,1}[A-Z][-\w]*)+} => :CLASSREF
-    )
-
-    TOKENS.add_tokens "Whatever" => :DQTEXT, "Nomatter" => :SQTEXT, "alsonomatter" => :BOOLEAN
+        %r{((::){0,1}[A-Z][-\w]*)+} => :CLASSREF,
+        "<string>" => :STRING, 
+        "<dqstring up to first interpolation>" => :DQPRE,
+        "<dqstring between two interpolations>" => :DQMID,
+        "<dqstring after final interpolation>" => :DQPOST,
+        "<boolean>" => :BOOLEAN
+        )
 
     TOKENS.add_token :NUMBER, %r{\b(?:0[xX][0-9A-Fa-f]+|0?\d+(?:\.\d+)?(?:[eE]-?\d+)?)\b} do |lexer, value|
         [TOKENS[:NAME], value]
@@ -163,6 +170,9 @@ class Puppet::Parser::Lexer
         end
         [string_token, value]
     end
+    def (TOKENS[:NAME]).acceptable?(context={})
+        ![:DQPRE,:DQMID].include? context[:after]
+    end
 
     TOKENS.add_token :COMMENT, %r{#.*}, :accumulate => true, :skip => true do |lexer,value|
         value.sub!(/# ?/,'')
@@ -176,7 +186,7 @@ class Puppet::Parser::Lexer
         [self,value]
     end
 
-    regex_token = TOKENS.add_token :REGEX, %r{/[^/\n]*/} do |lexer, value|
+    TOKENS.add_token :REGEX, %r{/[^/\n]*/} do |lexer, value|
         # Make sure we haven't matched an escaped /
         while value[-2..-2] == '\\'
             other = lexer.scan_until(%r{/})
@@ -186,26 +196,39 @@ class Puppet::Parser::Lexer
         [self, Regexp.new(regex)]
     end
 
-    def regex_token.acceptable?(context={})
+    def (TOKENS[:REGEX]).acceptable?(context={})
         [:NODE,:LBRACE,:RBRACE,:MATCH,:NOMATCH,:COMMA].include? context[:after]
     end
 
     TOKENS.add_token :RETURN, "\n", :skip => true, :incr_line => true, :skip_text => true
 
     TOKENS.add_token :SQUOTE, "'" do |lexer, value|
-        value = lexer.slurpstring(value)
-        [TOKENS[:SQTEXT], value]
+        [TOKENS[:STRING], lexer.slurpstring(value).first ]
     end
 
-    TOKENS.add_token :DQUOTE, '"' do |lexer, value|
-        value = lexer.slurpstring(value)
-        [TOKENS[:DQTEXT], value]
+    DQ_initial_token_types      = {'$' => :DQPRE,'"' => :STRING}
+    DQ_continuation_token_types = {'$' => :DQMID,'"' => :DQPOST}
+
+    TOKENS.add_token :DQUOTE, /"/ do |lexer, value| 
+         lexer.tokenize_interpolated_string(DQ_initial_token_types)
     end
 
-    TOKENS.add_token :VARIABLE, %r{\$(\w*::)*\w+} do |lexer, value|
-        value = value.sub(/^\$/, '')
-        [self, value]
+    TOKENS.add_token :DQCONT, /\}/ do |lexer, value|
+        lexer.tokenize_interpolated_string(DQ_continuation_token_types)
     end
+    def (TOKENS[:DQCONT]).acceptable?(context={})
+        context[:string_interpolation_depth] > 0
+    end
+
+    TOKENS.add_token :DOLLAR_VAR, %r{\$(\w*::)*\w+} do |lexer, value|
+        [TOKENS[:VARIABLE],value[1..-1]]
+    end
+
+    TOKENS.add_token :VARIABLE, %r{(\w*::)*\w+}
+    def (TOKENS[:VARIABLE]).acceptable?(context={})
+        [:DQPRE,:DQMID].include? context[:after]
+    end
+
 
     TOKENS.sort_tokens
 
@@ -244,9 +267,7 @@ class Puppet::Parser::Lexer
     def expected
         return nil if @expected.empty?
         name = @expected[-1]
-        raise "Could not find expected token %s" % name unless token = TOKENS.lookup(name)
-
-        return token
+        TOKENS.lookup(name) or lex_error "Could not find expected token #{name}"
     end
 
     # scan the whole file
@@ -274,22 +295,19 @@ class Puppet::Parser::Lexer
         }
     end
 
-    def find_string_token
-        matched_token = value = nil
+    def shift_token
+        @token_queue.shift
+    end
 
+    def find_string_token
         # We know our longest string token is three chars, so try each size in turn
         # until we either match or run out of chars.  This way our worst-case is three
-        # tries, where it is otherwise the number of string chars we have.  Also,
+        # tries, where it is otherwise the number of string token we have.  Also,
         # the lookups are optimized hash lookups, instead of regex scans.
-        [3, 2, 1].each do |i|
-            str = @scanner.peek(i)
-            if matched_token = TOKENS.lookup(str)
-                value = @scanner.scan(matched_token.regex)
-                break
-            end
-        end
-
-        return matched_token, value
+        # 
+        s = @scanner.peek(3)
+        token = TOKENS.lookup(s[0,3]) || TOKENS.lookup(s[0,2]) || TOKENS.lookup(s[0,1])
+        [ token, token && @scanner.scan(token.regex) ]
     end
 
     # Find the next token that matches a regex.  We look for these first.
@@ -316,7 +334,7 @@ class Puppet::Parser::Lexer
     # Find the next token, returning the string and the token.
     def find_token
         @find += 1
-        find_regex_token || find_string_token
+        shift_token || find_regex_token || find_string_token
     end
 
     def indefine?
@@ -343,10 +361,15 @@ class Puppet::Parser::Lexer
         @skip = %r{[ \t]+}
 
         @namestack = []
+        @token_queue = []
         @indefine = false
         @expected = []
         @commentstack = [ ['', @line] ]
-        @lexing_context = {:after => nil, :start_of_line => true}
+        @lexing_context = {
+            :after => nil, 
+            :start_of_line => true, 
+            :string_interpolation_depth => 0
+            }
     end
 
     # Make any necessary changes to the token and/or value.
@@ -396,28 +419,17 @@ class Puppet::Parser::Lexer
     # this is the heart of the lexer
     def scan
         #Puppet.debug("entering scan")
-        raise Puppet::LexError.new("Invalid or empty string") unless @scanner
+        lex_error "Invalid or empty string" unless @scanner
 
         # Skip any initial whitespace.
         skip()
 
-        until @scanner.eos? do
+        until token_queue.empty? and @scanner.eos? do
             yielded = false
             matched_token, value = find_token
 
             # error out if we didn't match anything at all
-            if matched_token.nil?
-                nword = nil
-                # Try to pull a 'word' out of the remaining string.
-                if @scanner.rest =~ /^(\S+)/
-                    nword = $1
-                elsif @scanner.rest =~ /^(\s+)/
-                    nword = $1
-                else
-                    nword = @scanner.rest
-                end
-                raise "Could not match '%s'" % nword
-            end
+            lex_error "Could not match #{@scanner.rest[/^(\S+|\s+|.*)/]}" unless matched_token
 
             newline = matched_token.name == :RETURN
 
@@ -433,6 +445,8 @@ class Puppet::Parser::Lexer
             end
 
             lexing_context[:after]         = final_token.name unless newline
+            lexing_context[:string_interpolation_depth] += 1 if final_token.name == :DQPRE
+            lexing_context[:string_interpolation_depth] -= 1 if final_token.name == :DQPOST
 
             value = token_value[:value]
 
@@ -481,24 +495,40 @@ class Puppet::Parser::Lexer
         @scanner.scan_until(regex)
     end
 
-    # we've encountered an opening quote...
+    # we've encountered the start of a string...
     # slurp in the rest of the string and return it
-    def slurpstring(quote)
+    Valid_escapes_in_strings = %w{ \\  $ ' " n t s }+["\n"]
+    def slurpstring(terminators)
         # we search for the next quote that isn't preceded by a
         # backslash; the caret is there to match empty strings
-        str = @scanner.scan_until(/([^\\]|^)#{quote}/)
-        if str.nil?
-            raise Puppet::LexError.new("Unclosed quote after '%s' in '%s'" %
-                [self.last,self.rest])
-        else
-            str.sub!(/#{quote}\Z/,"")
-            str.gsub!(/\\#{quote}/,quote)
+        str = @scanner.scan_until(/([^\\]|^)[#{terminators}]/) or lex_error "Unclosed quote after '#{last}' in '#{rest}'"
+        @line += str.count("\n") # literal carriage returns add to the line count.
+        str.gsub!(/\\(.)/) {
+            case ch=$1
+            when 'n'; "\n"
+            when 't'; "\t"
+            when 's'; " "
+            else
+                if Valid_escapes_in_strings.include? ch
+                    ch
+                else
+                    Puppet.warning "Unrecognised escape sequence '\\#{ch}'#{file && " in file #{file}"}#{line && " at line #{line}"}"
+                     "\\#{ch}"
+                end
+            end
+        }
+        [ str[0..-2],str[-1,1] ]
+    end
+
+    def tokenize_interpolated_string(token_type)
+        value,terminator = slurpstring('"$')
+        token_queue << [TOKENS[token_type[terminator]],value]
+        while terminator == '$' and not @scanner.scan(/\{/)
+            token_queue << [TOKENS[:VARIABLE],@scanner.scan(%r{(\w*::)*\w+|[0-9]})]
+            value,terminator = slurpstring('"$')
+            token_queue << [TOKENS[DQ_continuation_token_types[terminator]],value]
         end
-
-        # Add to our line count for every carriage return in multi-line strings.
-        @line += str.count("\n")
-
-        return str
+        token_queue.shift
     end
 
     # just parse a string, not a whole file

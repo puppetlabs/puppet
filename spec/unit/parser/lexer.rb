@@ -5,18 +5,12 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/parser/lexer'
 
 # This is a special matcher to match easily lexer output
-Spec::Matchers.define :be_like do |ary|
-    match do |result|
-        r = true
-        result.zip(ary) do |a,b|
-            unless a[0] == b[0] and ((a[1].is_a?(Hash) and a[1][:value] == b[1]) or a[1] == b[1])
-                r = false
-                break
-            end
-        end
-        r
+Spec::Matchers.create :be_like do |*expected|
+    match do |actual|
+        expected.zip(actual).all? { |e,a| !e or a[0] == e or (e.is_a? Array and a[0] == e[0] and (a[1] == e[1] or (a[1].is_a?(Hash) and a[1][:value] == e[1]))) }
     end
 end
+__ = nil
 
 describe Puppet::Parser::Lexer do
     describe "when reading strings" do
@@ -217,7 +211,7 @@ describe Puppet::Parser::Lexer::TOKENS do
     end
 
     # These tokens' strings don't matter, just that the tokens exist.
-    [:DQTEXT, :SQTEXT, :BOOLEAN, :NAME, :NUMBER, :COMMENT, :MLCOMMENT, :RETURN, :SQUOTE, :DQUOTE, :VARIABLE].each do |name|
+    [:STRING, :DQPRE, :DQMID, :DQPOST, :BOOLEAN, :NAME, :NUMBER, :COMMENT, :MLCOMMENT, :RETURN, :SQUOTE, :DQUOTE, :VARIABLE].each do |name|
         it "should have a token named #{name.to_s}" do
             Puppet::Parser::Lexer::TOKENS[name].should_not be_nil
         end
@@ -294,7 +288,6 @@ end
 describe Puppet::Parser::Lexer::TOKENS[:NUMBER] do
     before do
         @token = Puppet::Parser::Lexer::TOKENS[:NUMBER]
-#        @regex = Regexp.new('^'+@token.regex.source+'$')
         @regex = @token.regex
     end
 
@@ -401,48 +394,42 @@ describe Puppet::Parser::Lexer::TOKENS[:RETURN] do
     end
 end
 
-describe Puppet::Parser::Lexer::TOKENS[:SQUOTE] do
-    before { @token = Puppet::Parser::Lexer::TOKENS[:SQUOTE] }
-
-    it "should match against single quotes" do
-        @token.regex.should =~ "'"
-    end
-
-    it "should slurp the rest of the quoted string" do
-        lexer = stub("lexer")
-        lexer.expects(:slurpstring).with("myval").returns("otherval")
-        @token.convert(lexer, "myval")
-    end
-
-    it "should return the SQTEXT token with the slurped string" do
-        lexer = stub("lexer")
-        lexer.stubs(:slurpstring).with("myval").returns("otherval")
-        @token.convert(lexer, "myval").should == [Puppet::Parser::Lexer::TOKENS[:SQTEXT], "otherval"]
-    end
+def tokens_scanned_from(s)
+    lexer = Puppet::Parser::Lexer.new
+    lexer.string = s
+    lexer.fullscan[0..-2]
 end
 
-describe Puppet::Parser::Lexer::TOKENS[:DQUOTE] do
-    before { @token = Puppet::Parser::Lexer::TOKENS[:DQUOTE] }
-
-    it "should match against single quotes" do
-        @token.regex.should =~ '"'
-    end
-
-    it "should slurp the rest of the quoted string" do
-        lexer = stub("lexer")
-        lexer.expects(:slurpstring).with("myval").returns("otherval")
-        @token.convert(lexer, "myval")
-    end
-
-    it "should return the DQTEXT token with the slurped string" do
-        lexer = stub("lexer")
-        lexer.stubs(:slurpstring).with("myval").returns("otherval")
-        @token.convert(lexer, "myval").should == [Puppet::Parser::Lexer::TOKENS[:DQTEXT], "otherval"]
-    end
+describe Puppet::Parser::Lexer,"when lexing strings" do
+    {
+        %q['single quoted string')]                                     => [[:STRING,'single quoted string']],
+        %q["double quoted string"]                                      => [[:STRING,'double quoted string']],
+        %q['single quoted string with an escaped "\\'"']                => [[:STRING,'single quoted string with an escaped "\'"']],
+        %q["string with an escaped '\\"'"]                              => [[:STRING,"string with an escaped '\"'"]],
+        %q["string with an escaped '\\$'"]                              => [[:STRING,"string with an escaped '$'"]],
+        %q["string with $v (but no braces)"]                            => [[:DQPRE,"string with "],[:VARIABLE,'v'],[:DQPOST,' (but no braces)']],
+        %q["string with ${v} in braces"]                                => [[:DQPRE,"string with "],[:VARIABLE,'v'],[:DQPOST,' in braces']],
+        %q["string with $v and $v (but no braces)"]                     => [[:DQPRE,"string with "],[:VARIABLE,"v"],[:DQMID," and "],[:VARIABLE,"v"],[:DQPOST," (but no braces)"]],
+        %q["string with ${v} and ${v} in braces"]                       => [[:DQPRE,"string with "],[:VARIABLE,"v"],[:DQMID," and "],[:VARIABLE,"v"],[:DQPOST," in braces"]],
+        %q["string with ${'a nested single quoted string'} inside it."] => [[:DQPRE,"string with "],[:STRING,'a nested single quoted string'],[:DQPOST,' inside it.']],
+        %q["string with ${['an array ',$v2]} in it."]                   => [[:DQPRE,"string with "],:LBRACK,[:STRING,"an array "],:COMMA,[:VARIABLE,"v2"],:RBRACK,[:DQPOST," in it."]],
+        %q{a simple "scanner" test}                                     => [[:NAME,"a"],[:NAME,"simple"], [:STRING,"scanner"],[:NAME,"test"]],
+        %q{a simple 'single quote scanner' test}                        => [[:NAME,"a"],[:NAME,"simple"], [:STRING,"single quote scanner"],[:NAME,"test"]],
+        %q{a harder 'a $b \c"'}                                         => [[:NAME,"a"],[:NAME,"harder"], [:STRING,'a $b \c"']],
+        %q{a harder "scanner test"}                                     => [[:NAME,"a"],[:NAME,"harder"], [:STRING,"scanner test"]],
+        %q{a hardest "scanner \"test\""}                                => [[:NAME,"a"],[:NAME,"hardest"],[:STRING,'scanner "test"']],
+        %Q{a hardestest "scanner \\"test\\"\n"}                         => [[:NAME,"a"],[:NAME,"hardestest"],[:STRING,%Q{scanner "test"\n}]],
+        %q{function("call")}                                            => [[:NAME,"function"],[:LPAREN,"("],[:STRING,'call'],[:RPAREN,")"]],
+        %q["string with ${(3+5)/4} nested math."]                       => [[:DQPRE,"string with "],:LPAREN,[:NAME,"3"],:PLUS,[:NAME,"5"],:RPAREN,:DIV,[:NAME,"4"],[:DQPOST," nested math."]]
+    }.each { |src,expected_result|
+        it "should handle #{src} correctly" do
+            tokens_scanned_from(src).should be_like(*expected_result)
+        end
+    }
 end
 
-describe Puppet::Parser::Lexer::TOKENS[:VARIABLE] do
-    before { @token = Puppet::Parser::Lexer::TOKENS[:VARIABLE] }
+describe Puppet::Parser::Lexer::TOKENS[:DOLLAR_VAR] do
+    before { @token = Puppet::Parser::Lexer::TOKENS[:DOLLAR_VAR] }
 
     it "should match against alpha words prefixed with '$'" do
         @token.regex.should =~ '$this_var'
@@ -465,26 +452,16 @@ describe Puppet::Parser::Lexer::TOKENS[:REGEX] do
     end
 
     describe "when scanning" do
-        def tokens_scanned_from(s)
-            lexer = Puppet::Parser::Lexer.new
-            lexer.string = s
-            tokens = []
-            lexer.scan do |name, value|
-                tokens << value
-            end
-            tokens[0..-2]
-        end
-
         it "should not consider escaped slashes to be the end of a regex" do
-            tokens_scanned_from("$x =~ /this \\/ foo/").last[:value].should == Regexp.new("this / foo")
+            tokens_scanned_from("$x =~ /this \\/ foo/").should be_like(__,__,[:REGEX,%r{this / foo}])
         end
 
         it "should not lex chained division as a regex" do
-            tokens_scanned_from("$x = $a/$b/$c").any? {|t| t[:value].class == Regexp }.should == false
+            tokens_scanned_from("$x = $a/$b/$c").collect { |name, data| name }.should_not be_include( :REGEX )
         end
 
         it "should accept a regular expression after NODE" do
-            tokens_scanned_from("node /www.*\.mysite\.org/").last[:value].should == Regexp.new("www.*\.mysite\.org")
+            tokens_scanned_from("node /www.*\.mysite\.org/").should be_like(__,[:REGEX,Regexp.new("www.*\.mysite\.org")])
         end
 
         it "should accept regular expressions in a CASE" do
@@ -493,7 +470,9 @@ describe Puppet::Parser::Lexer::TOKENS[:REGEX] do
                 /regex/: {notice("this notably sucks")}
                 }
             }
-            tokens_scanned_from(s)[12][:value].should == Regexp.new("regex")
+            tokens_scanned_from(s).should be_like(
+                :CASE,:VARIABLE,:LBRACE,:STRING,:COLON,:LBRACE,:VARIABLE,:EQUALS,:NAME,:DIV,:NAME,:RBRACE,[:REGEX,/regex/],:COLON,:LBRACE,:NAME,:LPAREN,:STRING,:RPAREN,:RBRACE,:RBRACE
+            )
         end
  
    end
@@ -540,8 +519,7 @@ describe Puppet::Parser::Lexer, "when lexing comments" do
     end
 
     it "should skip whitespace before lexing the next token after a non-token" do
-        @lexer.string = "/* 1\n\n */ \ntest"
-        @lexer.fullscan.should be_like([[:NAME, "test"],[false,false]])
+        tokens_scanned_from("/* 1\n\n */ \ntest").should be_like([:NAME, "test"])
     end
 
     it "should not return comments seen after the current line" do
@@ -564,50 +542,17 @@ describe "Puppet::Parser::Lexer in the old tests" do
     before { @lexer = Puppet::Parser::Lexer.new }
 
     it "should do simple lexing" do
-        strings = {
-%q{\\} => [[:BACKSLASH,"\\"],[false,false]],
-%q{simplest scanner test} => [[:NAME,"simplest"],[:NAME,"scanner"],[:NAME,"test"],[false,false]],
-%q{returned scanner test
-} => [[:NAME,"returned"],[:NAME,"scanner"],[:NAME,"test"],[false,false]]
-        }
-        strings.each { |str,ary|
-            @lexer.string = str
-            @lexer.fullscan().should be_like(ary)
-        }
-    end
-
-    it "should correctly lex quoted strings" do
-        strings = {
-%q{a simple "scanner" test
-} => [[:NAME,"a"],[:NAME,"simple"],[:DQTEXT,"scanner"],[:NAME,"test"],[false,false]],
-%q{a simple 'single quote scanner' test
-} => [[:NAME,"a"],[:NAME,"simple"],[:SQTEXT,"single quote scanner"],[:NAME,"test"],[false,false]],
-%q{a harder 'a $b \c"'
-} => [[:NAME,"a"],[:NAME,"harder"],[:SQTEXT,'a $b \c"'],[false,false]],
-%q{a harder "scanner test"
-} => [[:NAME,"a"],[:NAME,"harder"],[:DQTEXT,"scanner test"],[false,false]],
-%q{a hardest "scanner \"test\""
-} => [[:NAME,"a"],[:NAME,"hardest"],[:DQTEXT,'scanner "test"'],[false,false]],
-%q{a hardestest "scanner \"test\"
-"
-} => [[:NAME,"a"],[:NAME,"hardestest"],[:DQTEXT,'scanner "test"
-'],[false,false]],
-%q{function("call")} => [[:NAME,"function"],[:LPAREN,"("],[:DQTEXT,'call'],[:RPAREN,")"],[false,false]]
-}
-        strings.each { |str,array|
-            @lexer.string = str
-            @lexer.fullscan().should be_like(array)
+        {
+            %q{\\}                      => [[:BACKSLASH,"\\"]],
+            %q{simplest scanner test}   => [[:NAME,"simplest"],[:NAME,"scanner"],[:NAME,"test"]],
+            %Q{returned scanner test\n} => [[:NAME,"returned"],[:NAME,"scanner"],[:NAME,"test"]]
+        }.each { |source,expected|
+            tokens_scanned_from(source).should be_like(*expected)
         }
     end
 
     it "should fail usefully" do
-        strings = %w{
-            ^
-        }
-        strings.each { |str|
-            @lexer.string = str
-            lambda { @lexer.fullscan() }.should raise_error(RuntimeError)
-        }
+        lambda { tokens_scanned_from('^') }.should raise_error(RuntimeError)
     end
 
     it "should fail if the string is not set" do
@@ -615,106 +560,64 @@ describe "Puppet::Parser::Lexer in the old tests" do
     end
 
     it "should correctly identify keywords" do
-        @lexer.string = "case"
-        @lexer.fullscan.should be_like([[:CASE, "case"], [false, false]])
+        tokens_scanned_from("case").should be_like([:CASE, "case"])
     end
 
-    it "should correctly match strings" do
-        names = %w{this is a bunch of names}
-        types = %w{Many Different Words A Word}
-        words = %w{differently Cased words A a}
+    it "should correctly parse class references" do
+        %w{Many Different Words A Word}.each { |t| tokens_scanned_from(t).should be_like([:CLASSREF,t])}
+    end
 
-        names.each { |t|
-            @lexer.string = t
-            @lexer.fullscan.should be_like([[:NAME,t],[false,false]])
-        }
-        types.each { |t|
-            @lexer.string = t
-            @lexer.fullscan.should be_like([[:CLASSREF,t],[false,false]])
-        }
+    # #774
+    it "should correctly parse namespaced class refernces token" do
+        %w{Foo ::Foo Foo::Bar ::Foo::Bar}.each { |t| tokens_scanned_from(t).should be_like([:CLASSREF, t]) }
+    end
+
+    it "should correctly parse names" do
+        %w{this is a bunch of names}.each { |t| tokens_scanned_from(t).should be_like([:NAME,t]) }
     end
 
     it "should correctly parse names with numerals" do
-       string = %w{1name name1 11names names11}
-
-       string.each { |t|
-            @lexer.string = t
-            @lexer.fullscan.should be_like([[:NAME,t],[false,false]])
-       }
+        %w{1name name1 11names names11}.each { |t| tokens_scanned_from(t).should be_like([:NAME,t]) }
     end
 
     it "should correctly parse empty strings" do
-        bit = '$var = ""'
-
-        @lexer.string = bit
-
-        lambda { @lexer.fullscan }.should_not raise_error
+        lambda { tokens_scanned_from('$var = ""') }.should_not raise_error
     end
 
     it "should correctly parse virtual resources" do
-        string = "@type {"
-
-        @lexer.string = string
-
-        @lexer.fullscan.should be_like([[:AT, "@"], [:NAME, "type"], [:LBRACE, "{"], [false,false]])
+        tokens_scanned_from("@type {").should be_like([:AT, "@"], [:NAME, "type"], [:LBRACE, "{"])
     end
 
     it "should correctly deal with namespaces" do
         @lexer.string = %{class myclass}
-
         @lexer.fullscan
-
         @lexer.namespace.should == "myclass"
 
         @lexer.namepop
-
         @lexer.namespace.should == ""
 
         @lexer.string = "class base { class sub { class more"
-
         @lexer.fullscan
-
         @lexer.namespace.should == "base::sub::more"
 
         @lexer.namepop
-
         @lexer.namespace.should == "base::sub"
     end
 
     it "should correctly handle fully qualified names" do
         @lexer.string = "class base { class sub::more {"
-
         @lexer.fullscan
-
         @lexer.namespace.should == "base::sub::more"
 
         @lexer.namepop
-
         @lexer.namespace.should == "base"
     end
 
     it "should correctly lex variables" do
         ["$variable", "$::variable", "$qualified::variable", "$further::qualified::variable"].each do |string|
-            @lexer.string = string
-
-            @lexer.scan do |t, s|
-                t.should == :VARIABLE
-                string.sub(/^\$/, '').should == s[:value]
-                break
-            end
+            tokens_scanned_from(string).should be_like([:VARIABLE,string.sub(/^\$/,'')])
         end
     end
-
-    # #774
-    it "should correctly parse the CLASSREF token" do
-        string = ["Foo", "::Foo","Foo::Bar","::Foo::Bar"]
-
-        string.each do |foo|
-            @lexer.string = foo
-            @lexer.fullscan.should be_like([[:CLASSREF, foo],[false,false]])
-        end
-    end
-
 end
 
 require 'puppettest/support/utils'

@@ -4,7 +4,8 @@
 
 class Puppet::Parser::Parser
 
-token LBRACK DQTEXT SQTEXT RBRACK LBRACE RBRACE SYMBOL FARROW COMMA TRUE
+token STRING DQPRE DQMID DQPOST
+token LBRACK  RBRACK LBRACE RBRACE SYMBOL FARROW COMMA TRUE
 token FALSE EQUALS APPENDS LESSEQUAL NOTEQUAL DOT COLON LLCOLLECT RRCOLLECT
 token QMARK LPAREN RPAREN ISEQUAL GREATEREQUAL GREATERTHAN LESSTHAN
 token IF ELSE IMPORT DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN
@@ -428,11 +429,13 @@ funcrvalue:   NAME LPAREN funcvalues RPAREN {
         :ftype => :rvalue
 }
 
-quotedtext: DQTEXT {
-    result = ast AST::String, :value => val[0][:value], :line => val[0][:line]
-}           | SQTEXT {
-    result = ast AST::FlatString, :value => val[0][:value], :line => val[0][:line]
-}
+quotedtext: STRING       { result = ast AST::String, :value => val[0][:value],                  :line => val[0][:line] }           
+          | DQPRE dqrval { result = ast AST::Concat, :value => [ast(AST::String,val[0])]+val[1], :line => val[0][:line] }
+
+dqrval: expression dqtail { result = [val[0]] + val[1] }
+
+dqtail: DQPOST        { result = [ast(AST::String,val[0])]          }
+      | DQMID dqrval  { result = [ast(AST::String,val[0])] + val[1] }
 
 boolean:    BOOLEAN {
     result = ast AST::Boolean, :value => val[0][:value], :line => val[0][:line]
@@ -704,8 +707,7 @@ nodename: hostname {
 }
 
 hostname: NAME { result = val[0][:value] }
-        | SQTEXT { result = val[0][:value] }
-        | DQTEXT { result = val[0][:value] }
+        | STRING { result = val[0][:value] }
         | DEFAULT { result = val[0][:value] }
         | regex
 
