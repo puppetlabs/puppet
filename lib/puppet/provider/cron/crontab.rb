@@ -3,6 +3,8 @@ require 'puppet/provider/parsedfile'
 tab = case Facter.value(:operatingsystem)
     when "Solaris"
         :suntab
+    when "AIX"
+        :aixtab
     else
         :crontab
     end

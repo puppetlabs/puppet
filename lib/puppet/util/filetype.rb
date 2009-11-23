@@ -251,4 +251,50 @@ class Puppet::Util::FileType
             output_file.delete
         end
     end
+
+    #  Support for AIX crontab with output different than suntab's crontab command.
+    newfiletype(:aixtab) do
+        # Read a specific @path's cron tab.
+        def read
+            begin
+                output = Puppet::Util.execute(%w{crontab -l}, :uid => @path)
+                if output.include?("You are not authorized to use the cron command")
+                    raise Puppet::Error, "User %s not authorized to use cron" % @path 
+                end
+                return output
+            rescue => detail
+                raise Puppet::Error, "Could not read crontab for %s: %s" % [@path, detail]
+            end
+        end
+
+        # Remove a specific @path's cron tab.
+        def remove
+            begin
+                Puppet::Util.execute(%w{crontab -r}, :uid => @path)
+            rescue => detail
+                raise Puppet::Error, "Could not remove crontab for %s: %s" % [@path, detail]
+            end
+        end
+
+        # Overwrite a specific @path's cron tab; must be passed the @path name
+        # and the text with which to create the cron tab.
+        def write(text)
+            require "tempfile"
+            output_file = Tempfile.new("puppet")
+            fh = output_file.open
+            fh.print text
+            fh.close
+
+            # We have to chown the stupid file to the user.
+            File.chown(Puppet::Util.uid(@path), nil, output_file.path)
+
+            begin
+                Puppet::Util.execute(["crontab", output_file.path], :uid => @path)
+            rescue => detail
+                raise Puppet::Error, "Could not write crontab for %s: %s" % [@path, detail]
+            ensure
+                output_file.delete
+            end
+        end
+    end
 end
