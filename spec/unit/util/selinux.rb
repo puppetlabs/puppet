@@ -158,6 +158,12 @@ describe Puppet::Util::SELinux do
             set_selinux_context("/foo", "user_u:role_r:type_t:s0").should be_nil
         end
 
+        it "should return nil if selinux_label_support returns false" do
+            self.expects(:selinux_support?).returns true
+            self.expects(:selinux_label_support?).with("/foo").returns false
+            set_selinux_context("/foo", "user_u:role_r:type_t:s0").should be_nil
+        end
+
         it "should use lsetfilecon to set a context" do
             self.expects(:selinux_support?).returns true
             Selinux.expects(:lsetfilecon).with("/foo", "user_u:role_r:type_t:s0").returns 0

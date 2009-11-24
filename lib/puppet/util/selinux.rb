@@ -91,7 +91,7 @@ module Puppet::Util::SELinux
     # I believe that the OS should always provide at least a fall-through context
     # though on any well-running system.
     def set_selinux_context(file, value, component = false)
-        unless selinux_support?
+        unless selinux_support? && selinux_label_support?(file) 
             return nil
         end
 
