@@ -230,6 +230,16 @@ describe Puppet::Network::HTTP::Handler do
                 @handler.do_find(@irequest, @request, @response)
             end
 
+            it "should write a log message when no model instance can be found" do
+                @model_class.stubs(:name).returns "my name"
+                @model_class.stubs(:find).returns(nil)
+
+                Puppet.expects(:info).with("Could not find my_handler for 'my_result'")
+
+                @handler.do_find(@irequest, @request, @response)
+            end
+
+
             it "should serialize the result in with the appropriate format" do
                 @model_instance = stub('model instance')
 
