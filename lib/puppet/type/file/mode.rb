@@ -15,7 +15,7 @@ module Puppet
             can recursively make a directory and all of the files in it 
             world-readable by setting e.g.::
 
-                file { "/some/dir":
+                file { '/some/dir':
                   mode => 644,
                   recurse => true,
                 }
