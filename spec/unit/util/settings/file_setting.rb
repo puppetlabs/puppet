@@ -169,10 +169,26 @@ describe Puppet::Util::Settings::FileSetting do
             @file.to_resource[:mode].should == 0755
         end
 
+        it "should not set the mode on a the file if manage_internal_file_permissions is disabled" do
+            Puppet[:manage_internal_file_permissions] = false
+
+            @file.stubs(:mode).returns(0755)
+
+            @file.to_resource[:mode].should == nil
+        end
+
         it "should set the owner if running as root and the owner is provided" do
             Puppet.features.expects(:root?).returns true
             @file.stubs(:owner).returns "foo"
             @file.to_resource[:owner].should == "foo"
+        end
+
+        it "should not set the owner if manage_internal_file_permissions is disabled" do
+            Puppet[:manage_internal_file_permissions] = false
+            Puppet.features.stubs(:root?).returns true
+            @file.stubs(:owner).returns "foo"
+
+            @file.to_resource[:owner].should == nil
         end
 
         it "should set the group if running as root and the group is provided" do
@@ -180,6 +196,15 @@ describe Puppet::Util::Settings::FileSetting do
             @file.stubs(:group).returns "foo"
             @file.to_resource[:group].should == "foo"
         end
+
+        it "should not set the group if manage_internal_file_permissions is disabled" do
+            Puppet[:manage_internal_file_permissions] = false
+            Puppet.features.stubs(:root?).returns true
+            @file.stubs(:group).returns "foo"
+
+            @file.to_resource[:group].should == nil
+        end
+
 
         it "should not set owner if not running as root" do
             Puppet.features.expects(:root?).returns false
