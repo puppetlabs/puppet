@@ -119,7 +119,11 @@ module Puppet::Network::FormatHandler
                 format_handler.format(b).weight <=> format_handler.format(a).weight
             end
 
-            put_preferred_format_first(result)
+            result = put_preferred_format_first(result)
+
+            Puppet.debug "#{indirection.name} supports formats: #{result.sort.join(' ')}; using #{result.first}"
+
+            result
         end
 
         private
@@ -130,7 +134,7 @@ module Puppet::Network::FormatHandler
                 list.delete(preferred_format)
                 list.unshift(preferred_format)
             else
-                Puppet.warning "Value of 'preferred_serialization_format' ('#{preferred_format}') is invalid, using default ('#{list.first}')"
+                Puppet.warning "Value of 'preferred_serialization_format' (#{preferred_format}) is invalid for #{indirection.name}, using default (#{list.first})"
             end
             list
         end
