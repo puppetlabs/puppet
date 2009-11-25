@@ -89,11 +89,14 @@ class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::Setting
         return nil if path =~ /^\/dev/
 
         resource = Puppet::Resource.new(:file, path)
-        resource[:mode] = self.mode if self.mode
 
-        if Puppet.features.root?
-            resource[:owner] = self.owner if self.owner
-            resource[:group] = self.group if self.group
+        if Puppet[:manage_internal_file_permissions]
+            resource[:mode] = self.mode if self.mode
+
+            if Puppet.features.root?
+                resource[:owner] = self.owner if self.owner
+                resource[:group] = self.group if self.group
+            end
         end
 
         resource[:ensure] = type

@@ -86,6 +86,10 @@ module Puppet
         :mkusers => [false,
             "Whether to create the necessary user and group that puppetd will
             run as."],
+        :manage_internal_file_permissions => [true,
+            "Whether Puppet should manage the owner, group, and mode of files 
+            it uses internally"
+            ],
         :path => {:default => "none",
             :desc => "The shell search path.  Defaults to whatever is inherited
                 from the parent process.",
