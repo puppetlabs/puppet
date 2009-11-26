@@ -334,8 +334,8 @@ module Generators
         def build_referenced_list(list)
             res = []
             list.each do |i|
-                ref = @context.find_symbol(i.name)
-                ref = ref.viewer if ref
+                ref = AllReferences[i.name] || @context.find_symbol(i.name)
+                ref = ref.viewer if ref and ref.respond_to?(:viewer)
                 name = i.respond_to?(:full_name) ? i.full_name : i.name
                 h_name = CGI.escapeHTML(name)
                 if ref and ref.document_self
@@ -409,6 +409,9 @@ module Generators
             rl = build_require_list(@context)
             @values["requires"] = rl unless rl.empty?
 
+            rl = build_realize_list(@context)
+            @values["realizes"] = rl unless rl.empty?
+
             cl = build_child_list(@context)
             @values["childs"] = cl unless cl.empty?
 
@@ -417,6 +420,10 @@ module Generators
 
         def build_require_list(context)
             build_referenced_list(context.requires)
+        end
+
+        def build_realize_list(context)
+            build_referenced_list(context.realizes)
         end
 
         def build_child_list(context)
@@ -498,6 +505,9 @@ module Generators
 
             rl = build_require_list(@context)
             @values["requires"] = rl unless rl.empty?
+
+            rl = build_realize_list(@context)
+            @values["realizes"] = rl unless rl.empty?
 
             cl = build_child_list(@context)
             @values["childs"] = cl unless cl.empty?
@@ -606,6 +616,10 @@ module Generators
 
         def build_require_list(context)
             build_referenced_list(context.requires)
+        end
+
+        def build_realize_list(context)
+            build_referenced_list(context.realizes)
         end
 
         def build_child_list(context)

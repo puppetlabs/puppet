@@ -161,6 +161,22 @@ class Parser
         end
     end
 
+    # create documentation for realize statements we can find in +code+
+    # and associate it with +container+
+    def scan_for_realize(container, code)
+        code = [code] unless code.is_a?(Array)
+        code.each do |stmt|
+            scan_for_realize(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::ASTArray)
+
+            if stmt.is_a?(Puppet::Parser::AST::Function) and stmt.name == 'realize'
+                stmt.arguments.each do |realized|
+                    Puppet.debug "found #{stmt.name}: #{realized}"
+                    container.add_realize(Include.new(realized.to_s, stmt.doc))
+                end
+            end
+        end
+    end
+
     # create documentation for global variables assignements we can find in +code+
     # and associate it with +container+
     def scan_for_vardef(container, code)
@@ -184,25 +200,24 @@ class Parser
 
             if stmt.is_a?(Puppet::Parser::AST::Resource) and !stmt.type.nil?
                 begin
-                    type = stmt.type.split("::").collect { |s| s.capitalize }.join("::")
-                    title = stmt.title.is_a?(Puppet::Parser::AST::ASTArray) ? stmt.title.to_s.gsub(/\[(.*)\]/,'\1') : stmt.title.to_s
-                    Puppet.debug "rdoc: found resource: %s[%s]" % [type,title]
-
-                    param = []
-                    stmt.params.children.each do |p|
-                        res = {}
-                        res["name"] = p.param
-                        res["value"] = "#{p.value.to_s}" unless p.value.nil?
-
-                        param << res
-                    end
-
-                    container.add_resource(PuppetResource.new(type, title, stmt.doc, param))
+                    ref = resource_stmt_to_ref(stmt)
+                    Puppet.debug "rdoc: found resource: %s[%s]" % [ref.type, ref.title]
+                    container.add_resource(ref)
                 rescue => detail
                     raise Puppet::ParseError, "impossible to parse resource in #{stmt.file} at line #{stmt.line}: #{detail}"
                 end
             end
         end
+    end
+
+    def resource_stmt_to_ref(stmt)
+        type = stmt.type.split("::").collect { |s| s.capitalize }.join("::")
+        title = stmt.title.is_a?(Puppet::Parser::AST::ASTArray) ? stmt.title.to_s.gsub(/\[(.*)\]/,'\1') : stmt.title.to_s
+
+        param = stmt.params.children.collect do |p|
+            {"name" => p.param, "value" => p.value.to_s}
+        end
+        PuppetResource.new(type, title, stmt.doc, param)
     end
 
     # create documentation for a class named +name+
@@ -228,6 +243,7 @@ class Parser
         code ||= klass.code
         unless code.nil?
             scan_for_include_or_require(cls, code)
+            scan_for_realize(cls, code)
             scan_for_resource(cls, code) if Puppet.settings[:document_all]
         end
 
@@ -251,6 +267,7 @@ class Parser
         code ||= node.code
         unless code.nil?
             scan_for_include_or_require(n, code)
+            scan_for_realize(n, code)
             scan_for_vardef(n, code)
             scan_for_resource(n, code) if Puppet.settings[:document_all]
         end

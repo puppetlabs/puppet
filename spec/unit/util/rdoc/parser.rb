@@ -372,6 +372,36 @@ describe RDoc::Parser do
         end
     end
 
+    describe "when scanning for realized virtual resources" do
+
+        def create_stmt
+            stmt_value = stub "resource_ref", :to_s => "File[\"/tmp/a\"]"
+            stmt = stub_everything 'stmt', :name => "realize", :arguments => [stmt_value], :doc => "mydoc"
+            stmt.stubs(:is_a?).with(Puppet::Parser::AST::ASTArray).returns(false)
+            stmt.stubs(:is_a?).with(Puppet::Parser::AST::Function).returns(true)
+            stmt
+        end
+
+        before(:each) do
+            @class = stub_everything 'class'
+            @code = stub_everything 'code'
+            @code.stubs(:is_a?).with(Puppet::Parser::AST::ASTArray).returns(true)
+        end
+
+        it "should also scan mono-instruction code" do
+            @class.expects(:add_realize).with { |i| i.is_a?(RDoc::Include) and i.name == "File[\"/tmp/a\"]" and i.comment == "mydoc" }
+
+            @parser.scan_for_realize(@class,create_stmt())
+        end
+
+        it "should register recursively includes to the current container" do
+            @code.stubs(:children).returns([ create_stmt() ])
+
+            @class.expects(:add_realize).with { |i| i.is_a?(RDoc::Include) and i.name == "File[\"/tmp/a\"]" and i.comment == "mydoc" }
+            @parser.scan_for_realize(@class, [@code])
+        end
+    end
+
     describe "when scanning for variable definition" do
         before :each do
             @class = stub_everything 'class'
