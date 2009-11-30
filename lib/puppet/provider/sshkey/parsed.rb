@@ -19,11 +19,9 @@ Puppet::Type.type(:sshkey).provide(:parsed,
 
     record_line :parsed, :fields => %w{name type key},
         :post_parse => proc { |hash|
-            if hash[:name] =~ /,/
-                names = hash[:name].split(",")
-                hash[:name] = names.shift
-                hash[:alias] = names
-            end
+            names = hash[:name].split(",", -1)
+            hash[:name]  = names.shift
+            hash[:alias] = names
         },
         :pre_gen => proc { |hash|
             if hash[:alias]
