@@ -20,9 +20,9 @@ describe Puppet::Parser::AST do
         ast.should respond_to(:use_docs)
     end
 
-    [ Puppet::Parser::AST::Collection, Puppet::Parser::AST::Definition, Puppet::Parser::AST::Else,
-      Puppet::Parser::AST::Function, Puppet::Parser::AST::HostClass, Puppet::Parser::AST::IfStatement,
-      Puppet::Parser::AST::Node, Puppet::Parser::AST::Resource, Puppet::Parser::AST::ResourceDefaults,
+    [ Puppet::Parser::AST::Collection, Puppet::Parser::AST::Else,
+      Puppet::Parser::AST::Function, Puppet::Parser::AST::IfStatement,
+      Puppet::Parser::AST::Resource, Puppet::Parser::AST::ResourceDefaults,
       Puppet::Parser::AST::ResourceOverride, Puppet::Parser::AST::VarDef
     ].each do |k|
         it "#{k}.use_docs should return true" do

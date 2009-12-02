@@ -174,56 +174,62 @@ describe Puppet::Parser do
         end
     end
 
-    describe "when instantiating class of same name" do
-
-        before :each do
-            @one = stub 'one', :is_a? => true
-            @one.stubs(:is_a?).with(ast::ASTArray).returns(false)
-            @one.stubs(:is_a?).with(ast).returns(true)
-
-            @two = stub 'two'
-            @two.stubs(:is_a?).with(ast::ASTArray).returns(false)
-            @two.stubs(:is_a?).with(ast).returns(true)
+    describe "when providing AST context" do
+        before do
+            @lexer = stub 'lexer', :line => 50, :file => "/foo/bar", :getcomment => "whev"
+            @parser.stubs(:lexer).returns @lexer
         end
 
-        it "should return the first class" do
-
-            klass1 = @parser.newclass("one", { :code => @one })
-
-            @parser.newclass("one", { :code => @two }).should == klass1
+        it "should include the lexer's line" do
+            @parser.ast_context[:line].should == 50
         end
 
-        it "should concatenate code" do
-            klass1 = @parser.newclass("one", { :code => @one })
-
-            @parser.newclass("one", { :code => @two })
-
-            klass1.code.children.should == [@one,@two]
+        it "should include the lexer's file" do
+            @parser.ast_context[:file].should == "/foo/bar"
         end
-    end
 
-    describe "when parsing comments before statement" do
-        it "should associate the documentation to the statement AST node" do
-            ast = @parser.parse("""
-            # comment
-            class test {}
-            """)
+        it "should include the docs if directed to do so" do
+            @parser.ast_context(true)[:doc].should == "whev"
+        end
 
-            ast.hostclass("test").doc.should == "comment\n"
+        it "should not include the docs when told not to" do
+            @parser.ast_context(false)[:doc].should be_nil
+        end
+
+        it "should not include the docs by default" do
+            @parser.ast_context()[:doc].should be_nil
         end
     end
 
     describe "when building ast nodes" do
-        it "should get lexer comments if ast node declares use_docs" do
-            lexer = stub 'lexer'
-            ast = mock 'ast', :nil? => false, :use_docs => true, :doc => ""
-            @parser.stubs(:lexer).returns(lexer)
+        before do
+            @lexer = stub 'lexer', :line => 50, :file => "/foo/bar", :getcomment => "whev"
+            @parser.stubs(:lexer).returns @lexer
+            @class = stub 'class', :use_docs => false
+        end
 
-            Puppet::Parser::AST::Definition.expects(:new).returns(ast)
-            lexer.expects(:getcomment).returns("comment")
-            ast.expects(:doc=).with("comment")
+        it "should return a new instance of the provided class created with the provided options" do
+            @class.expects(:new).with { |opts| opts[:foo] == "bar" }
+            @parser.ast(@class, :foo => "bar")
+        end
 
-            @parser.ast(Puppet::Parser::AST::Definition)
+        it "should merge the ast context into the provided options" do
+            @class.expects(:new).with { |opts| opts[:file] == "/foo" }
+            @parser.expects(:ast_context).returns :file => "/foo"
+            @parser.ast(@class, :foo => "bar")
+        end
+
+        it "should prefer provided options over AST context" do
+            @class.expects(:new).with { |opts| opts[:file] == "/bar" }
+            @parser.expects(:ast_context).returns :file => "/foo"
+            @parser.ast(@class, :file => "/bar")
+        end
+
+        it "should include docs when the AST class uses them" do
+            @class.expects(:use_docs).returns true
+            @class.stubs(:new)
+            @parser.expects(:ast_context).with(true).returns({})
+            @parser.ast(@class, :file => "/bar")
         end
     end
 
@@ -233,59 +239,15 @@ describe Puppet::Parser do
             @lexer.stubs(:getcomment)
             @parser.stubs(:lexer).returns(@lexer)
             @node = stub_everything 'node'
-            @parser.stubs(:ast).returns(@node)
+            @parser.stubs(:ast_context).returns({})
             @parser.stubs(:node).returns(nil)
 
-            @nodename = stub 'nodename', :is_a? => false, :to_classname => "node"
+            @nodename = stub 'nodename', :is_a? => false, :value => "foo"
             @nodename.stubs(:is_a?).with(Puppet::Parser::AST::HostName).returns(true)
         end
 
-        it "should get the lexer stacked comments" do
-            @lexer.expects(:getcomment)
-
-            @parser.newnode(@nodename)
-        end
-
-        it "should create an HostName if needed" do
-            Puppet::Parser::AST::HostName.expects(:new).with(:value => "node").returns(@nodename)
-
-            @parser.newnode("node")
-        end
-
-        it "should raise an error if the node already exists" do
-            @loaded_code.stubs(:node_exists?).with(@nodename).returns(@node)
-
-            lambda { @parser.newnode(@nodename) }.should raise_error
-        end
-
-        it "should store the created node in the loaded code" do
-            @loaded_code.expects(:add_node).with(@nodename, @node)
-
-            @parser.newnode(@nodename)
-        end
-
-        it "should create the node with code if provided" do
-            @parser.stubs(:ast).with { |*args| args[1][:code] == :code }.returns(@node)
-
-            @parser.newnode(@nodename, :code => :code)
-        end
-
-        it "should create the node with a parentclass if provided" do
-            @parser.stubs(:ast).with { |*args| args[1][:parent] == :parent }.returns(@node)
-
-            @parser.newnode(@nodename, :parent => :parent)
-        end
-
-        it "should set the node classname from the HostName" do
-            @nodename.stubs(:to_classname).returns(:classname)
-
-            @node.expects(:classname=).with(:classname)
-
-            @parser.newnode(@nodename)
-        end
-
         it "should return an array of nodes" do
-            @parser.newnode(@nodename).should == [@node]
+            @parser.newnode(@nodename).should be_instance_of(Array)
         end
     end
 

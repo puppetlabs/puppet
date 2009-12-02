@@ -137,9 +137,9 @@ describe RDoc::Parser do
 
     describe "when parsing AST elements" do
         before :each do
-            @klass = stub_everything 'klass', :file => "module/manifests/init.pp", :classname => "myclass"
-            @definition = stub_everything 'definition', :file => "module/manifests/init.pp"
-            @node = stub_everything 'node', :file => "module/manifests/init.pp"
+            @klass = stub_everything 'klass', :file => "module/manifests/init.pp", :name => "myclass", :type => :hostclass
+            @definition = stub_everything 'definition', :file => "module/manifests/init.pp", :type => :definition, :name => "mydef"
+            @node = stub_everything 'node', :file => "module/manifests/init.pp", :type => :node, :name => "mynode"
 
             @loadedcode = Puppet::Parser::LoadedCode.new
             @parser.ast = @loadedcode
@@ -148,7 +148,7 @@ describe RDoc::Parser do
         end
 
         it "should document classes in the parsed file" do
-            @loadedcode.add_hostclass("myclass", @klass)
+            @loadedcode.add_hostclass(@klass)
 
             @parser.expects(:document_class).with("myclass", @klass, @container)
 
@@ -157,7 +157,7 @@ describe RDoc::Parser do
 
         it "should not document class parsed in an other file" do
             @klass.stubs(:file).returns("/not/same/path/file.pp")
-            @loadedcode.add_hostclass("myclass", @klass)
+            @loadedcode.add_hostclass(@klass)
 
             @parser.expects(:document_class).with("myclass", @klass, @container).never
 
@@ -165,10 +165,11 @@ describe RDoc::Parser do
         end
 
         it "should document vardefs for the main class" do
-            @loadedcode.add_hostclass(:main, @klass)
+            @klass.stubs(:name).returns :main
+            @loadedcode.add_hostclass(@klass)
 
             code = stub 'code', :is_a? => false
-            @klass.stubs(:classname).returns("")
+            @klass.stubs(:name).returns("")
             @klass.stubs(:code).returns(code)
 
             @parser.expects(:scan_for_vardef).with(@container, code)
@@ -177,7 +178,7 @@ describe RDoc::Parser do
         end
 
         it "should document definitions in the parsed file" do
-            @loadedcode.add_definition("mydef", @definition)
+            @loadedcode.add_definition(@definition)
 
             @parser.expects(:document_define).with("mydef", @definition, @container)
 
@@ -186,7 +187,7 @@ describe RDoc::Parser do
 
         it "should not document definitions parsed in an other file" do
             @definition.stubs(:file).returns("/not/same/path/file.pp")
-            @loadedcode.add_definition("mydef", @definition)
+            @loadedcode.add_definition(@definition)
 
             @parser.expects(:document_define).with("mydef", @definition, @container).never
 
@@ -194,7 +195,7 @@ describe RDoc::Parser do
         end
 
         it "should document nodes in the parsed file" do
-            @loadedcode.add_node("mynode", @node)
+            @loadedcode.add_node(@node)
 
             @parser.expects(:document_node).with("mynode", @node, @container)
 
@@ -203,7 +204,7 @@ describe RDoc::Parser do
 
         it "should not document node parsed in an other file" do
             @node.stubs(:file).returns("/not/same/path/file.pp")
-            @loadedcode.add_node("mynode", @node)
+            @loadedcode.add_node(@node)
 
             @parser.expects(:document_node).with("mynode", @node, @container).never
 

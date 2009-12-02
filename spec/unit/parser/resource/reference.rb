@@ -84,7 +84,7 @@ describe Puppet::Parser::Resource::Reference, " when modeling defined types" do
         scope = @compiler.topscope.class.new(:parent => @compiler.topscope, :namespace => "other", :parser => @parser)
 
         ref = @type.new(:type => "class", :title => "top", :scope => scope)
-        ref.definedtype.classname.should equal(top.classname)
+        ref.definedtype.name.should equal(top.name)
     end
 
     it "should only look for fully qualified definitions" do
@@ -94,6 +94,6 @@ describe Puppet::Parser::Resource::Reference, " when modeling defined types" do
         scope = @compiler.topscope.class.new(:parent => @compiler.topscope, :namespace => "other", :parser => @parser)
 
         ref = @type.new(:type => "top", :title => "foo", :scope => scope)
-        ref.definedtype.classname.should equal(top.classname)
+        ref.definedtype.name.should equal(top.name)
     end
 end

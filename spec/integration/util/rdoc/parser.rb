@@ -36,7 +36,7 @@ describe RDoc::Parser do
     end
 
     it "should parse to RDoc data structure" do
-        @parser.expects(:document_class).with { |n,k,c| n == "::test" and k.is_a?(Puppet::Parser::AST::HostClass) }
+        @parser.expects(:document_class).with { |n,k,c| n == "::test" and k.is_a?(Puppet::Parser::ResourceType) }
         @parser.scan
     end
 end

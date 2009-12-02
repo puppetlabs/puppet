@@ -51,7 +51,7 @@ describe Puppet::Parser::Compiler do
 
     it "should be able to retrieve class scopes by object" do
         klass = mock 'ast_class'
-        klass.expects(:classname).returns("myname")
+        klass.expects(:name).returns("myname")
         @compiler.class_set "myname", "myscope"
         @compiler.class_scope(klass).should == "myscope"
     end
@@ -153,8 +153,8 @@ describe Puppet::Parser::Compiler do
         it "should evaluate any existing classes named in the node" do
             classes = %w{one two three four}
             main = stub 'main'
-            one = stub 'one', :classname => "one"
-            three = stub 'three', :classname => "three"
+            one = stub 'one', :name => "one"
+            three = stub 'three', :name => "three"
             @node.stubs(:name).returns("whatever")
             @node.stubs(:classes).returns(classes)
 
@@ -396,7 +396,7 @@ describe Puppet::Parser::Compiler do
     describe "when evaluating found classes" do
 
         before do
-            @class = stub 'class', :classname => "my::class"
+            @class = stub 'class', :name => "my::class"
             @scope.stubs(:find_hostclass).with("myclass").returns(@class)
 
             @resource = stub 'resource', :ref => "Class[myclass]", :type => "file"
@@ -405,7 +405,7 @@ describe Puppet::Parser::Compiler do
         it "should evaluate each class" do
             @compiler.catalog.stubs(:tag)
 
-            @class.expects(:evaluate).with(@scope)
+            @class.expects(:mk_plain_resource).with(@scope)
 
             @compiler.evaluate_classes(%w{myclass}, @scope)
         end
@@ -415,7 +415,7 @@ describe Puppet::Parser::Compiler do
 
             @resource.expects(:evaluate).never
 
-            @class.expects(:evaluate).returns(@resource)
+            @class.expects(:mk_plain_resource).returns(@resource)
 
             @compiler.evaluate_classes(%w{myclass}, @scope)
         end
@@ -424,7 +424,7 @@ describe Puppet::Parser::Compiler do
             @compiler.catalog.stubs(:tag)
 
             @resource.expects(:evaluate)
-            @class.expects(:evaluate).returns(@resource)
+            @class.expects(:mk_plain_resource).returns(@resource)
 
             @compiler.evaluate_classes(%w{myclass}, @scope, false)
         end
@@ -459,7 +459,7 @@ describe Puppet::Parser::Compiler do
             @scope.stubs(:find_hostclass).with("notfound").returns(nil)
 
             Puppet::Parser::Resource.stubs(:new).returns(@resource)
-            @class.stubs :evaluate
+            @class.stubs :mk_plain_resource
             @compiler.evaluate_classes(%w{myclass notfound}, @scope).should == %w{myclass}
         end
     end
@@ -495,31 +495,31 @@ describe Puppet::Parser::Compiler do
         end
 
         it "should evaluate the first node class matching the node name" do
-            node_class = stub 'node', :classname => "c", :evaluate_code => nil
+            node_class = stub 'node', :name => "c", :evaluate_code => nil
             @compiler.parser.stubs(:node).with("c").returns(node_class)
 
             node_resource = stub 'node resource', :ref => "Node[c]", :evaluate => nil, :type => "node"
-            node_class.expects(:evaluate).returns(node_resource)
+            node_class.expects(:mk_plain_resource).returns(node_resource)
 
             @compiler.compile
         end
 
         it "should match the default node if no matching node can be found" do
-            node_class = stub 'node', :classname => "default", :evaluate_code => nil
+            node_class = stub 'node', :name => "default", :evaluate_code => nil
             @compiler.parser.stubs(:node).with("default").returns(node_class)
 
             node_resource = stub 'node resource', :ref => "Node[default]", :evaluate => nil, :type => "node"
-            node_class.expects(:evaluate).returns(node_resource)
+            node_class.expects(:mk_plain_resource).returns(node_resource)
 
             @compiler.compile
         end
 
         it "should evaluate the node resource immediately rather than using lazy evaluation" do
-            node_class = stub 'node', :classname => "c"
+            node_class = stub 'node', :name => "c"
             @compiler.parser.stubs(:node).with("c").returns(node_class)
 
             node_resource = stub 'node resource', :ref => "Node[c]", :type => "node"
-            node_class.expects(:evaluate).returns(node_resource)
+            node_class.expects(:mk_plain_resource).returns(node_resource)
 
             node_resource.expects(:evaluate)
 
@@ -528,13 +528,13 @@ describe Puppet::Parser::Compiler do
 
         it "should set the node's scope as the top scope" do
             node_resource = stub 'node resource', :ref => "Node[c]", :evaluate => nil, :type => "node"
-            node_class = stub 'node', :classname => "c", :evaluate => node_resource
+            node_class = stub 'node', :name => "c", :mk_plain_resource => node_resource
 
             @compiler.parser.stubs(:node).with("c").returns(node_class)
 
             # The #evaluate method normally does this.
             scope = stub 'scope', :source => "mysource"
-            @compiler.class_set(node_class.classname, scope)
+            @compiler.class_set(node_class.name, scope)
             node_resource.stubs(:evaluate)
 
             @compiler.compile

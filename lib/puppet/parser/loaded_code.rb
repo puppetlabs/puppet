@@ -8,44 +8,62 @@ class Puppet::Parser::LoadedCode
         @node_list = []
     end
 
-    def add_hostclass(name, code)
-        @hostclasses[munge_name(name)] = code
+    def <<(thing)
+        add(thing)
+        self
+    end
+
+    def add(instance)
+        method = "add_#{instance.type}"
+        send(method, instance)
+        instance.code_collection = self
+        instance
+    end
+
+    def add_hostclass(instance)
+        dupe_check(instance, @hostclasses) { |dupe| "Class #{instance.name} is already defined#{dupe.error_context}; cannot redefine" }
+        dupe_check(instance, @definitions) { |dupe| "Definition #{instance.name} is already defined#{dupe.error_context}; cannot be redefined as a class" }
+
+        @hostclasses[instance.name] = instance
+        instance
     end
 
     def hostclass(name)
         @hostclasses[munge_name(name)]
     end
 
-    def add_node(name, code)
-        name = check_name(name)
-        @node_list << name unless @node_list.include?(name)
-        @nodes[name] = code
+    def add_node(instance)
+        dupe_check(instance, @nodes) { |dupe| "Node #{instance.name} is already defined#{dupe.error_context}; cannot redefine" }
+
+        @node_list << instance
+        @nodes[instance.name] = instance
+        instance
     end
 
     def node(name)
-        name = check_name(name)
+        name = munge_name(name)
 
         if node = @nodes[name]
             return node
         end
 
-        @node_list.each do |nodename|
-            n = @nodes[nodename]
-            return n if nodename.regex? and nodename.match(name)
+        @node_list.each do |node|
+            next unless node.name_is_regex?
+            return node if node.match(name)
         end
         nil
     end
 
     def node_exists?(name)
-        @nodes[check_name(name)]
+        @nodes[munge_name(name)]
     end
 
     def nodes?
         @nodes.length > 0
     end
 
-    def add_definition(name, code)
-        @definitions[munge_name(name)] = code
+    def add_definition(code)
+        @definitions[code.name] = code
     end
 
     def definition(name)
@@ -108,12 +126,9 @@ class Puppet::Parser::LoadedCode
         name.to_s.downcase
     end
 
-    # Check that the given (node) name is an HostName instance
-    # We're doing this so that hashing of node in the @nodes hash
-    # is consistent (see AST::HostName#hash and AST::HostName#eql?)
-    # and that the @nodes hash still keep its O(1) get/put properties.
-    def check_name(name)
-        name = Puppet::Parser::AST::HostName.new(:value => name) unless name.is_a?(Puppet::Parser::AST::HostName)
-        name
+    def dupe_check(instance, hash)
+        return unless dupe = hash[instance.name]
+        message = yield dupe
+        instance.fail Puppet::ParseError, message
     end
 end

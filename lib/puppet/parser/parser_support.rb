@@ -4,6 +4,7 @@ class Puppet::Parser::Parser
     require 'puppet/parser/functions'
     require 'puppet/parser/files'
     require 'puppet/parser/loaded_code'
+    require 'puppet/parser/resource_type'
     require 'monitor'
 
     AST = Puppet::Parser::AST
@@ -42,17 +43,16 @@ class Puppet::Parser::Parser
     # Create an AST object, and automatically add the file and line information if
     # available.
     def ast(klass, hash = {})
-        hash[:line] = @lexer.line unless hash.include?(:line)
+        klass.new ast_context(klass.use_docs).merge(hash)
+    end
 
-        unless hash.include?(:file)
-            if file = @lexer.file
-                hash[:file] = file
-            end
-        end
-
-        k = klass.new(hash)
-        k.doc = lexer.getcomment(hash[:line]) if !k.nil? and k.use_docs and k.doc.empty?
-        return k
+    def ast_context(include_docs = false)
+        result = {
+            :line => lexer.line,
+            :file => lexer.file
+        }
+        result[:doc] = lexer.getcomment(result[:line]) if include_docs
+        result
     end
 
     # The fully qualifed name, with the full namespace.
@@ -276,126 +276,21 @@ class Puppet::Parser::Parser
 
     # Create a new class, or merge with an existing class.
     def newclass(name, options = {})
-        name = name.downcase
-
-        if @loaded_code.definition(name)
-            raise Puppet::ParseError, "Cannot redefine class %s as a definition" % name
-        end
-        code = options[:code]
-        parent = options[:parent]
-        doc = options[:doc]
-
-        # If the class is already defined, then add code to it.
-        if other = @loaded_code.hostclass(name) || @loaded_code.definition(name)
-            # Make sure the parents match
-            if parent and other.parentclass and (parent != other.parentclass)
-                error("Class %s is already defined at %s:%s; cannot redefine" % [name, other.file, other.line])
-            end
-
-            # This might be dangerous...
-            if parent and ! other.parentclass
-                other.parentclass = parent
-            end
-
-            # This might just be an empty, stub class.
-            if code
-                tmp = name
-                if tmp == ""
-                    tmp = "main"
-                end
-
-                Puppet.debug addcontext("Adding code to %s" % tmp)
-                # Else, add our code to it.
-                if other.code and code
-                    # promote if neededcodes to ASTArray so that we can append code
-                    # ASTArray knows how to evaluate its members.
-                    other.code = ast AST::ASTArray, :children => [other.code] unless other.code.is_a?(AST::ASTArray)
-                    code = ast AST::ASTArray, :children => [code] unless code.is_a?(AST::ASTArray)
-                    other.code.children += code.children
-                else
-                    other.code ||= code
-                end
-            end
-
-            if other.doc and doc
-                other.doc += doc
-            else
-                other.doc ||= doc
-            end
-        else
-            # Define it anew.
-            # Note we're doing something somewhat weird here -- we're setting
-            # the class's namespace to its fully qualified name.  This means
-            # anything inside that class starts looking in that namespace first.
-            args = {:namespace => name, :classname => name, :parser => self}
-            args[:code] = code if code
-            args[:parentclass] = parent if parent
-            args[:doc] = doc
-            args[:line] = options[:line]
-
-            @loaded_code.add_hostclass(name, ast(AST::HostClass, args))
-        end
-
-        return @loaded_code.hostclass(name)
+        @loaded_code.add Puppet::Parser::ResourceType.new(:hostclass, name, ast_context(true).merge(options))
     end
 
     # Create a new definition.
     def newdefine(name, options = {})
-        name = name.downcase
-        if @loaded_code.hostclass(name)
-            raise Puppet::ParseError, "Cannot redefine class %s as a definition" %
-                name
-        end
-        # Make sure our definition doesn't already exist
-        if other = @loaded_code.definition(name)
-            error("%s is already defined at %s:%s; cannot redefine" % [name, other.file, other.line])
-        end
-
-        ns, whatever = namesplit(name)
-        args = {
-            :namespace => ns,
-            :arguments => options[:arguments],
-            :code => options[:code],
-            :parser => self,
-            :classname => name,
-            :doc => options[:doc],
-            :line => options[:line]
-        }
-
-        [:code, :arguments].each do |param|
-            args[param] = options[param] if options[param]
-        end
-
-        @loaded_code.add_definition(name, ast(AST::Definition, args))
+        @loaded_code.add Puppet::Parser::ResourceType.new(:definition, name, ast_context(true).merge(options))
     end
 
     # Create a new node.  Nodes are special, because they're stored in a global
     # table, not according to namespaces.
     def newnode(names, options = {})
         names = [names] unless names.instance_of?(Array)
-        doc = lexer.getcomment
+        context = ast_context(true)
         names.collect do |name|
-            name = AST::HostName.new :value => name unless name.is_a?(AST::HostName)
-            if other = @loaded_code.node_exists?(name)
-                error("Node %s is already defined at %s:%s; cannot redefine" % [other.name, other.file, other.line])
-            end
-            name = name.to_s if name.is_a?(Symbol)
-            args = {
-                :name => name,
-                :parser => self,
-                :doc => doc,
-                :line => options[:line]
-            }
-            if options[:code]
-                args[:code] = options[:code]
-            end
-            if options[:parent]
-                args[:parentclass] = options[:parent]
-            end
-            node = ast(AST::Node, args)
-            node.classname = name.to_classname
-            @loaded_code.add_node(name, node)
-            node
+            @loaded_code.add(Puppet::Parser::ResourceType.new(:node, name, context.merge(options)))
         end
     end
 

@@ -44,7 +44,7 @@ class Puppet::Parser::AST
         def qualified_class(scope, title)
             # Look up the full path to the class
             if classobj = scope.find_hostclass(title)
-                title = classobj.classname
+                title = classobj.name
             else
                 raise Puppet::ParseError, "Could not find class %s" % title
             end
@@ -57,7 +57,7 @@ class Puppet::Parser::AST
             objtype = @type.downcase
             unless builtintype?(objtype)
                 if dtype = scope.find_definition(objtype)
-                    objtype = dtype.classname
+                    objtype = dtype.name
                 else
                     raise Puppet::ParseError, "Could not find resource type %s" % objtype
                 end

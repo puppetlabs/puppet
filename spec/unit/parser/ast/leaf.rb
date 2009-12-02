@@ -195,40 +195,6 @@ describe Puppet::Parser::AST::HostName do
         @host.evaluate(@scope).should == @value
     end
 
-    it "should implement to_classname" do
-        @host.should respond_to(:to_classname)
-    end
-
-    it "should return the downcased nodename as classname" do
-        host = Puppet::Parser::AST::HostName.new( :value => "KLASSNAME" )
-        host.to_classname.should == "klassname"
-    end
-
-    it "should preserve '_' in to_classname with a string nodename" do
-        host = Puppet::Parser::AST::HostName.new( :value => "node_with_underscore")
-        host.to_classname.should == "node_with_underscore"
-    end
-
-    it "should preserve '_' in to_classname with a regex nodename" do
-        host = Puppet::Parser::AST::HostName.new( :value => Puppet::Parser::AST::Regex.new(:value => "/\dnode_with_underscore\.+/") )
-        host.to_classname.should == "dnode_with_underscore."
-    end
-
-    it "should return a string usable as classname when calling to_classname" do
-        host = Puppet::Parser::AST::HostName.new( :value => Puppet::Parser::AST::Regex.new(:value => "/^this-is not@a classname$/") )
-        host.to_classname.should == "this-isnotaclassname"
-    end
-
-    it "should return a string usable as a tag when calling to_classname" do
-        host = Puppet::Parser::AST::HostName.new( :value => Puppet::Parser::AST::Regex.new(:value => "/.+.reductivelabs\.com/") )
-        host.to_classname.should == "reductivelabs.com"
-    end
-
-    it "should delegate 'match' to the underlying value if it is an HostName" do
-        @value.expects(:match).with("value")
-        @host.match("value")
-    end
-
     it "should delegate eql? to the underlying value if it is an HostName" do
         @value.expects(:eql?).with("value")
         @host.eql?("value")
@@ -243,43 +209,5 @@ describe Puppet::Parser::AST::HostName do
     it "should delegate hash to the underlying value" do
         @value.expects(:hash)
         @host.hash
-    end
-
-    it "should return true when regex? is called and value is a Regex" do
-        @value.expects(:is_a?).with(Puppet::Parser::AST::Regex).returns(true)
-        @host.regex?.should be_true
-    end
-
-    it "should return the results of comparing the regexes if asked whether a regex matches another regex" do
-        hosts = [1,2].collect do |num|
-            vreg = /vreg#{num}/
-            value = Puppet::Parser::AST::Regex.new(:value => vreg)
-            Puppet::Parser::AST::HostName.new(:value => value)
-        end
-
-        hosts[0].match(hosts[1]).should be_false
-        hosts[0].match(hosts[0]).should be_true
-    end
-
-    it "should return false when comparing a non-regex to a regex" do
-        vreg = /vreg/
-        value = Puppet::Parser::AST::Regex.new(:value => vreg)
-        regex = Puppet::Parser::AST::HostName.new(:value => value)
-
-        value = Puppet::Parser::AST::Regex.new(:value => "foo")
-        normal = Puppet::Parser::AST::HostName.new(:value => value)
-
-        normal.match(regex).should be_false
-    end
-
-    it "should true when a provided string matches a regex" do
-        vreg = /r/
-        value = Puppet::Parser::AST::Regex.new(:value => vreg)
-        regex = Puppet::Parser::AST::HostName.new(:value => value)
-
-        value = Puppet::Parser::AST::Leaf.new(:value => "bar")
-        normal = Puppet::Parser::AST::HostName.new(:value => value)
-
-        regex.match(normal).should be_true
     end
 end

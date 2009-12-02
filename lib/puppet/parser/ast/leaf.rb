@@ -94,15 +94,12 @@ class Puppet::Parser::AST
         def initialize(hash)
             super
 
+            # Note that this is an AST::Regex, not a Regexp
             @value = @value.to_s.downcase unless @value.is_a?(Regex)
             if @value =~ /[^-\w.]/
                 raise Puppet::DevError,
                     "'%s' is not a valid hostname" % @value
             end
-        end
-
-        def to_classname
-            to_s.downcase.gsub(/[^-\w:.]/,'').sub(/^\.+/,'')
         end
 
         # implementing eql? and hash so that when an HostName is stored
@@ -114,25 +111,6 @@ class Puppet::Parser::AST
 
         def hash
             return @value.hash
-        end
-
-        def match(value)
-            return @value.match(value) unless value.is_a?(HostName)
-
-            if value.regex? and self.regex?
-                # Wow this is some sweet design; maybe a touch of refactoring
-                # in order here.
-                return value.value.value == self.value.value
-            elsif value.regex? # we know if the existing name is not a regex, it won't match a regex
-                return false
-            else
-                # else, we could be either a regex or normal and it doesn't matter
-                return @value.match(value.value)
-            end
-        end
-
-        def regex?
-            @value.is_a?(Regex)
         end
 
         def to_s
