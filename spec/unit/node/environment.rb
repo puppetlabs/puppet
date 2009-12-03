@@ -171,7 +171,7 @@ describe Puppet::Node::Environment do
                 env.expects(:modulepath).returns %w{/a}
                 Dir.expects(:entries).with("/a").returns %w{foo}
 
-                env.modules.should be_all{|mod| mod.environment == "testing" }
+                env.modules.each {|mod| mod.environment.should == "testing" }
             end
 
             it "should cache the module list" do
