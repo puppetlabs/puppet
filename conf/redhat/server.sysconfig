@@ -28,4 +28,4 @@
 #PUPPETMASTER_PORTS=( 18140 18141 18142 18143 )
 
 # You may specify other parameters to the puppetmaster here
-#PUPPETMASTER_EXTRA_OPTS=--noca
+#PUPPETMASTER_EXTRA_OPTS=--no-ca
