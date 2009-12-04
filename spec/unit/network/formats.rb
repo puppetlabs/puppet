@@ -91,6 +91,9 @@ describe "Puppet Network Format" do
     end
 
     describe "base64 compressed yaml" do
+        yaml = Puppet::Network::FormatHandler.format(:b64_zlib_yaml)
+        confine "We must have zlib" => Puppet.features.zlib?
+
         before do
             @yaml = Puppet::Network::FormatHandler.format(:b64_zlib_yaml)
         end
@@ -173,6 +176,34 @@ describe "Puppet Network Format" do
         it "should fixup incorrect yaml to correct" do
             @yaml.fixup("&id004 !ruby/object:Puppet::Relationship ?").should == "? &id004 !ruby/object:Puppet::Relationship"
         end
+
+        describe "when zlib is disabled" do
+            before do
+                Puppet[:zlib] = false
+            end
+
+            it "use_zlib? should return false" do
+                @yaml.use_zlib?.should == false  
+            end
+
+            it "should refuse to encode" do
+                lambda{ @yaml.encode("foo") }.should raise_error
+            end
+
+            it "should refuse to decode" do
+                lambda{ @yaml.decode("foo") }.should raise_error
+            end
+        end
+
+        describe "when zlib is not installed" do
+            it "use_zlib? should return false" do
+                Puppet[:zlib] = true
+                Puppet.features.expects(:zlib?).returns(false)
+
+                @yaml.use_zlib?.should == false
+            end
+        end
+
     end
 
     it "should include a marshal format" do
