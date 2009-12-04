@@ -233,12 +233,14 @@ module Puppet
         end
 
         newparam(:name) do
-            desc "The name of the repository."
+            desc "The name of the repository.  This corresponds to the
+                  repositoryid parameter in yum.conf(5)."
             isnamevar
         end
 
         newproperty(:descr, :parent => Puppet::IniProperty) do
             desc "A human readable description of the repository.
+                  This corresponds to the name parameter in yum.conf(5).
                   #{ABSENT_DOC}"
             newvalue(:absent) { self.should = :absent }
             newvalue(/.*/) { }
