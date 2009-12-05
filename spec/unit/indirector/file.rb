@@ -25,7 +25,7 @@ describe Puppet::Indirector::File do
         @request = stub 'request', :key => @path
     end
 
-    describe Puppet::Indirector::File, " when finding files" do
+    describe "when finding files" do
         it "should provide a method to return file contents at a specified path" do
             @searcher.should respond_to(:find)
         end
@@ -76,7 +76,7 @@ describe Puppet::Indirector::File do
         end
     end
 
-    describe Puppet::Indirector::File, " when saving files" do
+    describe "when saving files" do
         before do
             @content = "my content"
             @file = stub 'file', :content => @content, :path => @path, :name => @path, :render => "mydata"
@@ -141,7 +141,7 @@ describe Puppet::Indirector::File do
         end
     end
 
-    describe Puppet::Indirector::File, " when removing files" do
+    describe "when removing files" do
         it "should provide a method to remove files" do
             @searcher.should respond_to(:destroy)
         end
