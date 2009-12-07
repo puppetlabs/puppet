@@ -18,7 +18,7 @@ end
 require 'puppettest'
 require 'puppettest/runnable_test'
 require 'mocha'
-gem 'rspec', '=1.2.2'
+gem 'rspec', '=1.2.9'
 require 'spec/autorun'
 
 # So everyone else doesn't have to include this base constant.
