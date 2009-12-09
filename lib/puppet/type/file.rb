@@ -31,7 +31,7 @@ module Puppet
 
             validate do |value|
                 unless value =~ /^#{File::SEPARATOR}/
-                    raise Puppet::Error, "File paths must be fully qualified, not '%s'" % value
+                    fail Puppet::Error,"File paths must be fully qualified, not '#{value}'"
                 end
             end
 
