@@ -237,6 +237,7 @@ describe "PuppetMaster" do
 
         it "should dispatch to parseonly if parseonly is set" do
             Puppet.stubs(:[]).with(:parseonly).returns(true)
+            @puppetmasterd.options[:node] = nil
 
             @puppetmasterd.get_command.should == :parseonly
         end
