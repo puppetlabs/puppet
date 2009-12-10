@@ -8,7 +8,7 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 require 'puppet/util/ldap/connection'
 
 # So our mocks and such all work, even when ldap isn't available.
-unless defined?(LDAP::Conn)
+unless Puppet.features.ldap?
     class LDAP
         class Conn
             def initialize(*args)
