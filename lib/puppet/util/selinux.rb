@@ -7,11 +7,7 @@
 # was abysmal.  At this time (2008-11-02) the only distribution providing
 # these Ruby SELinux bindings which I am aware of is Fedora (in libselinux-ruby).
 
-begin
-    require 'selinux'
-rescue LoadError
-    # Nothing
-end
+Puppet.warning "SELinux not installed" unless Puppet.features.selinux?
 
 require 'pathname'
 

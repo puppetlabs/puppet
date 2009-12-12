@@ -1,17 +1,8 @@
-begin
-    require 'rubygems'
-rescue LoadError
-    # Nothing; we were just doing this just in case
-end
-
-begin
-    require 'ldap'
-rescue LoadError
-    $stderr.puts "Failed to load ruby LDAP library. LDAP functionality will not be available"
-end
-
 require 'puppet'
 require 'puppet/application'
+
+Puppet.warning "RubyGems not installed" unless Puppet.features.rubygems?
+Puppet.warning "Failed to load ruby LDAP library. LDAP functionality will not be available" unless Puppet.features.ldap?
 
 Puppet::Application.new(:puppetrun) do
 
