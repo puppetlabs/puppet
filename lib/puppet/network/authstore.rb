@@ -221,11 +221,6 @@ module Puppet
             Octet = '(?:\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])'
             IPv4 = "#{Octet}\.#{Octet}\.#{Octet}\.#{Octet}" 
             def parse(value)
-                begin
-                    ipa = IPAddr.new(value)
-                rescue
-                    # Well, looks like that was a mistake
-                end
                 @name,@exact,@length,@pattern = *case value
                 when /^#{IPv4}\/(\d+)$/                                   # 12.34.56.78/24
                     [:ip,:inexact,$1.to_i,IPAddr.new(value)]
