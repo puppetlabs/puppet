@@ -218,14 +218,20 @@ module Puppet
 
             # Parse our input pattern and figure out what kind of allowal
             # statement it is.  The output of this is used for later matching.
-            Octet = '(?:\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])'
-            IPv4 = "#{Octet}\.#{Octet}\.#{Octet}\.#{Octet}" 
+            Octet = '(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])'
+            IPv4 = "#{Octet}\.#{Octet}\.#{Octet}\.#{Octet}"
+            IPv6_full    = "_:_:_:_:_:_:_:_|_:_:_:_:_:_::_?|_:_:_:_:_::((_:)?_)?|_:_:_:_::((_:){0,2}_)?|_:_:_::((_:){0,3}_)?|_:_::((_:){0,4}_)?|_::((_:){0,5}_)?|::((_:){0,6}_)?"
+            IPv6_partial = "_:_:_:_:_:_:|_:_:_:_::(_:)?|_:_::(_:){0,2}|_::(_:){0,3}"
+            # It should be:
+            #     IP = "#{IPv4}|#{IPv6_full}|(#{IPv6_partial}#{IPv4})".gsub(/_/,'([0-9a-fA-F]{1,4})').gsub(/\(/,'(?:')
+            # but ruby's ipaddr lib doesn't support the hybrid format
+            IP = "#{IPv4}|#{IPv6_full}".gsub(/_/,'([0-9a-fA-F]{1,4})').gsub(/\(/,'(?:')
             def parse(value)
                 @name,@exact,@length,@pattern = *case value
-                when /^#{IPv4}\/(\d+)$/                                   # 12.34.56.78/24
+                when /^(?:#{IP})\/(\d+)$/                                   # 12.34.56.78/24, a001:b002::efff/120, c444:1000:2000::9:192.168.0.1/112
                     [:ip,:inexact,$1.to_i,IPAddr.new(value)]
-                when /^#{IPv4}$/                                          # 10.20.30.40
-                    [:ip,:exact,32,IPAddr.new(value)]
+                when /^(#{IP})$/                                          # 10.20.30.40, 
+                    [:ip,:exact,nil,IPAddr.new(value)]
                 when /^(#{Octet}\.){1,3}\*$/                              # an ip address with a '*' at the end
                     segments = value.split(".")[0..-2]
                     bits = 8*segments.length
