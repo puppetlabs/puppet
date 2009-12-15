@@ -173,6 +173,7 @@ describe "puppetd" do
             Puppet.stubs(:info)
             FileTest.stubs(:exists?).returns(true)
             Puppet.stubs(:[])
+            Puppet.stubs(:[]).with(:libdir).returns("/dev/null/lib")
             Puppet.settings.stubs(:print_config?)
             Puppet.settings.stubs(:print_config)
             Puppet::SSL::Host.stubs(:ca_location=)
