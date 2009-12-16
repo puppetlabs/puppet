@@ -1,15 +1,17 @@
 puppet (0.25.1-3) unstable; urgency=low
 
   [ Nigel Kersten ]
+  * Require modification of /etc/default/puppet to start puppet client daemon.
+    (closes: #518831)
   * cherry pick upstream fix for puppetrun with tags (closes: #559092)
   * cherry pick upstream fix for supplementary groups not being reset.
     (CVE-2009-3564) (closes: #551073)
 
   [ Andrew Pollock ]
-  * debian/{puppet,puppetmaster}.pid: Correct the path to the pidfiles 
+  * debian/{puppet,puppetmaster}.pid: Correct the path to the pidfiles
     (closes: #561231)
 
- -- Andrew Pollock <apollock@debian.org>  Wed, 16 Dec 2009 11:23:31 -0800
+ -- Nigel Kersten <nigelk@google.com>  Wed, 16 Dec 2009 11:35:26 -0800
 
 puppet (0.25.1-2) unstable; urgency=low
 
