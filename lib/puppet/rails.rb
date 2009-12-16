@@ -29,7 +29,9 @@ module Puppet::Rails
         ActiveRecord::Base.verify_active_connections!
 
         begin
-            ActiveRecord::Base.establish_connection(database_arguments())
+            args = database_arguments
+            Puppet.info "Connecting to #{args[:adapter]} database: #{args[:database]}"
+            ActiveRecord::Base.establish_connection(args)
         rescue => detail
             if Puppet[:trace]
                 puts detail.backtrace
@@ -46,7 +48,7 @@ module Puppet::Rails
 
         case adapter
         when "sqlite3"
-            args[:dbfile] = Puppet[:dblocation]
+            args[:database] = Puppet[:dblocation]
         when "mysql", "postgresql"
             args[:host]     = Puppet[:dbserver] unless Puppet[:dbserver].empty?
             args[:username] = Puppet[:dbuser] unless Puppet[:dbuser].empty?
