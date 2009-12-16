@@ -13,6 +13,7 @@ DAEMON=/usr/sbin/puppetd
 DAEMON_OPTS=""
 NAME=puppetd
 DESC="puppet configuration management tool"
+PIDFILE="/var/run/${NAME}.pid"
 
 test -x $DAEMON || exit 0
 
@@ -29,12 +30,12 @@ is_true() {
 }
 
 reload_puppet() {
-	start-stop-daemon --stop --quiet --signal HUP --pidfile /var/run/puppet/$NAME.pid
+	start-stop-daemon --stop --quiet --signal HUP --pidfile $PIDFILE 
 }
 
 start_puppet() {
     if is_true "$START" ; then
-	start-stop-daemon --start --quiet --pidfile /var/run/puppet/$NAME.pid \
+	start-stop-daemon --start --quiet --pidfile $PIDFILE \
 	    --startas $DAEMON -- $DAEMON_OPTS
     else
 	echo ""
@@ -43,15 +44,8 @@ start_puppet() {
 }
 
 stop_puppet() {
-	start-stop-daemon --stop --quiet --pidfile /var/run/puppet/$NAME.pid
+	start-stop-daemon --stop --quiet --pidfile $PIDFILE
 }
-
-if [ ! -d /var/run/puppet ]; then
-	rm -rf /var/run/puppet
-	mkdir -p /var/run/puppet
-fi
-
-chown puppet:puppet /var/run/puppet
 
 case "$1" in
     start)
