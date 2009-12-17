@@ -54,6 +54,7 @@ module Puppet::Rails
             args[:username] = Puppet[:dbuser] unless Puppet[:dbuser].empty?
             args[:password] = Puppet[:dbpassword] unless Puppet[:dbpassword].empty?
             args[:database] = Puppet[:dbname]
+            args[:reconnect]= true
 
             socket          = Puppet[:dbsocket]
             args[:socket]   = socket unless socket.empty?
