@@ -278,12 +278,13 @@ class Puppet::SSLCertificates::CA
         host = thing2name(csr)
 
         csrfile = host2csrfile(host)
-        if File.exists?(csrfile)
-            raise Puppet::Error, "Certificate request for %s already exists" % host
-        end
+        raise Puppet::Error, "Certificate request for #{host} already exists" if File.exists?(csrfile)
+        Puppet.settings.writesub(:csrdir, csrfile) { |f| f.print csr.to_pem }
 
-        Puppet.settings.writesub(:csrdir, csrfile) do |f|
-            f.print csr.to_pem
+        certfile = host2certfile(host)
+        if File.exists?(certfile)
+            Puppet.notice "Removing previously signed certificate #{certfile} for #{host}"
+            Puppet::SSLCertificates::Inventory::rebuild
         end
     end
 

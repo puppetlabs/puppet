@@ -161,22 +161,19 @@ class Puppet::Indirector::Indirection
         end
     end
 
-    # Expire a cached object, if one is cached.  Note that we don't actually
-    # remove it, we expire it and write it back out to disk.  This way people
-    # can still use the expired object if they want.
+    # Expire a cached object, if one is cached.  Note that we now actually
+    # remove it if possible, and only mark it as expired if destroy isn't 
+    # supported.
     def expire(key, *args)
-        request = request(:expire, key, *args)
-
-        return nil unless cache?
-
-        return nil unless instance = cache.find(request(:find, key, *args))
-
-        Puppet.info "Expiring the %s cache of %s" % [self.name, instance.name]
-
-        # Set an expiration date in the past
-        instance.expiration = Time.now - 60
-
-        cache.save(request(:save, instance, *args))
+        if cache? and instance = cache.find(request(:find, key, *args))
+            Puppet.info "Expiring the #{name} cache of #{instance.name}"
+            if cache.respond_to? :destroy
+                cache.destroy(request(:destroy, instance, *args))
+            else
+                instance.expiration = Time.now - 1
+                cache.save(request(:save,instance,*args))
+            end
+        end
     end
 
     # Search for an instance in the appropriate terminus, caching the
@@ -216,7 +213,7 @@ class Puppet::Indirector::Indirection
             return nil
         end
 
-        Puppet.debug "Using cached %s for %s" % [self.name, request.key]
+        Puppet.debug "Using cached #{name} for #{request.key}, good until #{cached.expiration}"
         return cached
     end
 

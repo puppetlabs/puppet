@@ -94,12 +94,7 @@ class Puppet::SSL::Host
 
     # Remove all traces of a given host
     def self.destroy(name)
-        [Key, Certificate, CertificateRequest].inject(false) do |result, klass|
-            if klass.destroy(name)
-                result = true
-            end
-            result
-        end
+        [Key, Certificate, CertificateRequest].collect { |part| part.destroy(name) }.any? { |x| x }
     end
 
     # Search for more than one host, optionally only specifying
@@ -107,12 +102,7 @@ class Puppet::SSL::Host
     # This just allows our non-indirected class to have one of
     # indirection methods.
     def self.search(options = {})
-        classes = [Key, CertificateRequest, Certificate]
-        if klass = options[:for]
-            classlist = [klass].flatten
-        else
-            classlist = [Key, CertificateRequest, Certificate]
-        end
+        classlist = [options[:for] || [Key, CertificateRequest, Certificate]].flatten
 
         # Collect the results from each class, flatten them, collect all of the names, make the name list unique,
         # then create a Host instance for each one.
@@ -127,8 +117,7 @@ class Puppet::SSL::Host
     end
 
     def key
-        return nil unless @key ||= Key.find(name)
-        @key
+        @key ||= Key.find(name)
     end
 
     # This is the private key; we can create it from scratch
@@ -146,8 +135,7 @@ class Puppet::SSL::Host
     end
 
     def certificate_request
-        return nil unless @certificate_request ||= CertificateRequest.find(name)
-        @certificate_request
+        @certificate_request ||= CertificateRequest.find(name)
     end
 
     # Our certificate request requires the key but that's all.
@@ -166,26 +154,19 @@ class Puppet::SSL::Host
     end
 
     def certificate
-        unless @certificate
-            generate_key unless key
-
+        @certificate ||= (
             # get the CA cert first, since it's required for the normal cert
             # to be of any use.
-            return nil unless Certificate.find("ca") unless ca?
-            return nil unless @certificate = Certificate.find(name)
-
-            unless certificate_matches_key?
-                raise Puppet::Error, "Retrieved certificate does not match private key; please remove certificate from server and regenerate it with the current key"
+            if not (key or generate_key) or not (ca? or Certificate.find("ca")) or not (cert = Certificate.find(name)) or cert.expired?
+                nil
+            elsif not cert.content.check_private_key(key.content)
+                Certificate.expire(name)
+                Puppet.warning "Retrieved certificate does not match private key"
+                nil
+            else
+                cert
             end
-        end
-        @certificate
-    end
-
-    def certificate_matches_key?
-        return false unless key
-        return false unless certificate
-
-        return certificate.content.check_private_key(key.content)
+            )
     end
 
     # Generate all necessary parts of our ssl host.
