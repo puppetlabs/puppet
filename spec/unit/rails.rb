@@ -42,7 +42,7 @@ describe Puppet::Rails, "when initializing any connection" do
         ActiveRecord::Base.stubs(:allow_concurrency=)
         ActiveRecord::Base.stubs(:verify_active_connections!)
         ActiveRecord::Base.stubs(:establish_connection)
-        Puppet::Rails.stubs(:database_arguments)
+        Puppet::Rails.stubs(:database_arguments).returns({})
 
         Puppet::Rails.connect
     end
@@ -64,7 +64,7 @@ describe Puppet::Rails, "when initializing any connection" do
     end
 
     it "should call ActiveRecord::Base.establish_connection with database_arguments" do
-        Puppet::Rails.expects(:database_arguments)
+        Puppet::Rails.expects(:database_arguments).returns({})
         ActiveRecord::Base.expects(:establish_connection)
 
         Puppet::Rails.connect
@@ -80,9 +80,9 @@ describe Puppet::Rails, "when initializing a sqlite3 connection" do
         Puppet.settings.expects(:value).with(:dblocation).returns("testlocation")
 
         Puppet::Rails.database_arguments.should == {
-            :adapter => "sqlite3",
+            :adapter   => "sqlite3",
             :log_level => "testlevel",
-            :dbfile => "testlocation"
+            :database  => "testlocation"
         }
     end
 end
