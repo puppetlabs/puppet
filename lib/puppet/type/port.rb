@@ -57,11 +57,12 @@
 #            desc "The port description."
 #        end
 #
-#        newproperty(:alias) do
-#            desc "Any aliases the port might have.  Multiple values must be
-#                specified as an array.  Note that this property has the same name as
-#                one of the metaparams; using this property to set aliases will make
-#                those aliases available in your Puppet scripts and also on disk."
+#        newproperty(:port_aliases) do
+#            desc 'Any aliases the port might have.  Multiple values must be
+#                specified as an array.  Note that this property is not the same as
+#                the "alias" metaparam; use this property to add aliases to a port
+#                in the services file, and "alias" to aliases for use in your Puppet 
+#                scripts.'
 #
 #            # We actually want to return the whole array here, not just the first
 #            # value.
