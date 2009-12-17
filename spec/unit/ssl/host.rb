@@ -654,14 +654,14 @@ describe Puppet::SSL::Host do
 
         it "should catch and log errors during CSR saving" do
             @host.expects(:certificate).times(2).returns(nil).then.returns "foo"
-            @host.expects(:generate).times(2).raises(RuntimeError).then.returns nil
+            @host.expects(:generate).raises(RuntimeError)
             @host.stubs(:sleep)
             @host.wait_for_cert(1)
         end
 
         it "should sleep and retry after failures saving the CSR if waitforcert is enabled" do
             @host.expects(:certificate).times(2).returns(nil).then.returns "foo"
-            @host.expects(:generate).times(2).raises(RuntimeError).then.returns nil
+            @host.expects(:generate).raises(RuntimeError)
             @host.expects(:sleep).with(1)
             @host.wait_for_cert(1)
         end
