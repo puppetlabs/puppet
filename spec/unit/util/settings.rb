@@ -579,6 +579,25 @@ describe Puppet::Util::Settings do
             # and we should now have the new value in memory
             @settings[:two].should == "disk-replace"
         end
+
+        it "should retain in-memory values if the file has a syntax error" do
+            # Init the value
+            text = "[main]\none = initial-value\n"
+            @settings.expects(:read_file).returns(text)
+            @settings.parse
+            @settings[:one].should == "initial-value"
+
+            # Now replace the value with something bogus
+            text = "[main]\nkenny = killed-by-what-follows\n1 is 2, blah blah florp\n"
+            @settings.expects(:read_file).returns(text)
+            @settings.parse
+
+            # The originally-overridden value should not be replaced with the default
+            @settings[:one].should == "initial-value"
+
+            # and we should not have the new value in memory
+            @settings[:kenny].should be_nil
+        end
     end
 
     it "should provide a method for creating a catalog of resources from its configuration" do

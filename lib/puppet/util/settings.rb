@@ -64,20 +64,25 @@ class Puppet::Util::Settings
     # Remove all set values, potentially skipping cli values.
     def clear(exceptcli = false)
         @sync.synchronize do
-            @values.each do |name, values|
-                @values.delete(name) unless exceptcli and name == :cli
-            end
-
-            # Don't clear the 'used' in this case, since it's a config file reparse,
-            # and we want to retain this info.
-            unless exceptcli
-                @used = []
-            end
-
-            @cache.clear
-
-            @name = nil
+            unsafe_clear(exceptcli)
         end
+    end
+    
+    # Remove all set values, potentially skipping cli values.
+    def unsafe_clear(exceptcli = false)
+        @values.each do |name, values|
+            @values.delete(name) unless exceptcli and name == :cli
+        end
+
+        # Don't clear the 'used' in this case, since it's a config file reparse,
+        # and we want to retain this info.
+        unless exceptcli
+            @used = []
+        end
+
+        @cache.clear
+
+        @name = nil
     end
 
     # This is mostly just used for testing.
@@ -317,23 +322,25 @@ class Puppet::Util::Settings
         # and reparsed if necessary.
         set_filetimeout_timer()
 
-        # Retrieve the value now, so that we don't lose it in the 'clear' call.
-        file = self[:config]
-
-        return unless FileTest.exist?(file)
-
-        # We have to clear outside of the sync, because it's
-        # also using synchronize().
-        clear(true)
-
         @sync.synchronize do
-            unsafe_parse(file)
+            unsafe_parse(self[:config])
         end
     end
 
     # Unsafely parse the file -- this isn't thread-safe and causes plenty of problems if used directly.
     def unsafe_parse(file)
-        parse_file(file).each do |area, values|
+        return unless FileTest.exist?(file)
+        begin
+            data = parse_file(file)
+        rescue => details
+            puts details.backtrace if Puppet[:trace]
+            Puppet.err "Could not parse #{file}: #{details}"
+            return
+        end
+
+        unsafe_clear(true)
+
+        data.each do |area, values|
             @values[area] = values
         end
 
@@ -425,9 +432,7 @@ class Puppet::Util::Settings
     def reparse
         if file and file.changed?
             Puppet.notice "Reparsing %s" % file.file
-            @sync.synchronize do
-                parse
-            end
+            parse
             reuse()
         end
     end
