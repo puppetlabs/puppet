@@ -27,7 +27,12 @@ describe Puppet::Util::SELinux do
              Selinux.expects(:is_selinux_enabled).returns 0
              selinux_support?.should be_false
         end
-    end
+ 
+        it "should return nil if /proc/mounts does not exist" do
+            File.stubs(:open).with("/proc/mounts").raises("No such file or directory - /proc/mounts")
+            read_mounts.should == nil
+        end
+   end
 
     describe "filesystem detection" do
         before :each do
@@ -189,7 +194,19 @@ describe Puppet::Util::SELinux do
     end
 
     describe "set_selinux_context" do
-        it "should return nil if there is no SELinux support" do
+         before :each do
+            fh = stub 'fh', :close => nil
+            File.stubs(:open).with("/proc/mounts").returns fh
+            fh.stubs(:read_nonblock).returns(
+                "rootfs / rootfs rw 0 0\n"+
+                "/dev/root / ext3 rw,relatime,errors=continue,user_xattr,acl,data=ordered 0 0\n"+
+                "/dev /dev tmpfs rw,relatime,mode=755 0 0\n"+
+                "/proc /proc proc rw,relatime 0 0\n"+
+                "/sys /sys sysfs rw,relatime 0 0\n"
+                ).then.raises EOFError
+        end
+
+       it "should return nil if there is no SELinux support" do
             self.expects(:selinux_support?).returns false
             set_selinux_context("/foo", "user_u:role_r:type_t:s0").should be_nil
         end

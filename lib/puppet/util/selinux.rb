@@ -166,8 +166,8 @@ module Puppet::Util::SELinux
             # that's expected
         rescue
             return nil
-        ensure        
-            mountfh.close
+        ensure
+            mountfh.close if mountfh
         end
 
         mntpoint = {}
