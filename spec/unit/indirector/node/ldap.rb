@@ -38,7 +38,7 @@ describe Puppet::Node::Ldap do
         # This heavily tests our entry2hash method, so we don't have to stub out the stupid entry information any more.
         describe "when an ldap entry is found" do
             before do
-                @entry = stub 'entry', :dn => 'cn=mynode.domain.com,ou=hosts,dc=madstop,dc=com', :vals => %w{}, :to_hash => {}
+                @entry = stub 'entry', :dn => 'cn=mynode,ou=hosts,dc=madstop,dc=com', :vals => %w{}, :to_hash => {}
                 @searcher.stubs(:ldapsearch).yields @entry
             end
 
@@ -46,8 +46,12 @@ describe Puppet::Node::Ldap do
                 @searcher.entry2hash(@entry).should be_instance_of(Hash)
             end
 
-            it "should add the entry's common name to the hash" do
-                @searcher.entry2hash(@entry)[:name].should == "mynode.domain.com"
+            it "should add the entry's common name to the hash if fqdn if false" do
+                @searcher.entry2hash(@entry,fqdn = false)[:name].should == "mynode"
+            end
+
+            it "should add the entry's fqdn name to the hash if fqdn if true" do
+                @searcher.entry2hash(@entry,fqdn = true)[:name].should == "mynode.madstop.com"
             end
 
             it "should add all of the entry's classes to the hash" do
@@ -341,13 +345,13 @@ describe Puppet::Node::Ldap do
         it "should process each found entry" do
             # .yields can't be used to yield multiple values :/
             @searcher.expects(:ldapsearch).yields("one")
-            @searcher.expects(:entry2hash).with("one").returns(:name => "foo")
+            @searcher.expects(:entry2hash).with("one",nil).returns(:name => "foo")
             @searcher.search @request
         end
 
         it "should return a node for each processed entry with the name from the entry" do
             @searcher.expects(:ldapsearch).yields("whatever")
-            @searcher.expects(:entry2hash).with("whatever").returns(:name => "foo")
+            @searcher.expects(:entry2hash).with("whatever",nil).returns(:name => "foo")
             result = @searcher.search(@request)
             result[0].should be_instance_of(Puppet::Node)
             result[0].name.should == "foo"
@@ -358,7 +362,17 @@ describe Puppet::Node::Ldap do
             Puppet::Node.expects(:new).with("foo").returns node
             node.expects(:fact_merge)
             @searcher.stubs(:ldapsearch).yields("one")
-            @searcher.stubs(:entry2hash).with("one").returns(:name => "foo")
+            @searcher.stubs(:entry2hash).with("one",nil).returns(:name => "foo")
+            @searcher.search(@request)
+        end
+
+        it "should pass the request's fqdn option to entry2hash" do
+            node = mock 'node'
+            @options[:fqdn] = :hello
+            Puppet::Node.stubs(:new).with("foo").returns node
+            node.stubs(:fact_merge)
+            @searcher.stubs(:ldapsearch).yields("one")
+            @searcher.expects(:entry2hash).with("one",:hello).returns(:name => "foo")
             @searcher.search(@request)
         end
     end

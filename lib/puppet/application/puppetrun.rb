@@ -167,12 +167,12 @@ Puppet::Application.new(:puppetrun) do
 
         if Puppet[:node_terminus] == "ldap" and (options[:all] or @classes)
             if options[:all]
-                @hosts = Puppet::Node.search("whatever").collect { |node| node.name }
+                @hosts = Puppet::Node.search("whatever", :fqdn => options[:fqdn]).collect { |node| node.name }
                 puts "all: %s" % @hosts.join(", ")
             else
                 @hosts = []
                 @classes.each do |klass|
-                    list = Puppet::Node.search("whatever", :class => klass).collect { |node| node.name }
+                    list = Puppet::Node.search("whatever", :fqdn => options[:fqdn], :class => klass).collect { |node| node.name }
                     puts "%s: %s" % [klass, list.join(", ")]
 
                     @hosts += list
