@@ -74,7 +74,7 @@ end
 describe Puppet::Rails, "when initializing a sqlite3 connection" do
     confine "Cannot test without ActiveRecord" => Puppet.features.rails?
 
-    it "should provide the adapter, log_level, and dbfile arguments" do
+    it "should provide the adapter, log_level, and database arguments" do
         Puppet.settings.expects(:value).with(:dbadapter).returns("sqlite3")
         Puppet.settings.expects(:value).with(:rails_loglevel).returns("testlevel")
         Puppet.settings.expects(:value).with(:dblocation).returns("testlocation")
