@@ -114,7 +114,9 @@ Puppet::Application.new(:puppetd) do
             Puppet.err detail.to_s
         end
 
-        if not Puppet[:noop] and options[:detailed_exitcodes] then
+        if not report
+            exit(1)
+        elsif not Puppet[:noop] and options[:detailed_exitcodes] then
             exit(report.exit_status)
         else
             exit(0)
