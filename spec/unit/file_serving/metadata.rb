@@ -86,7 +86,7 @@ describe Puppet::FileServing::Metadata do
         end
 
         it "should pass the checksum in the hash as a nested hash" do
-            @metadata.to_pson_data_hash['data']['checksum'].should be_is_a Hash
+            @metadata.to_pson_data_hash['data']['checksum'].should be_is_a(Hash)
         end
 
         it "should pass the checksum_type in the hash verbatum as the checksum's type" do
