@@ -49,7 +49,7 @@ Puppet::Application.new(:puppet) do
         end
 
         begin
-            catalog = PSON.parse(text)
+            catalog = Puppet::Resource::Catalog.convert_from(Puppet::Resource::Catalog.default_format,text)
             unless catalog.is_a?(Puppet::Resource::Catalog)
                 catalog = Puppet::Resource::Catalog.pson_create(catalog)
             end
