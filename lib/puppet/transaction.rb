@@ -417,14 +417,8 @@ class Transaction
 
     # this should only be called by a Puppet::Type::Component resource now
     # and it should only receive an array
-    def initialize(resources)
-        if resources.is_a?(Puppet::Resource::Catalog)
-            @catalog = resources
-        elsif resources.is_a?(Puppet::SimpleGraph)
-            raise "Transactions should get catalogs now, not SimpleGraph"
-        else
-            raise "Transactions require catalogs"
-        end
+    def initialize(catalog)
+        @catalog = resources
 
         @resourcemetrics = {
             :total => @catalog.vertices.length,
