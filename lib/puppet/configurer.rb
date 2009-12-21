@@ -14,7 +14,6 @@ class Puppet::Configurer
     # For benchmarking
     include Puppet::Util
 
-    attr_accessor :catalog
     attr_reader :compile_time
 
     # Provide more helpful strings to the logging that the Agent does
@@ -32,11 +31,6 @@ class Puppet::Configurer
     # How to lock instances of this class.
     def self.lockfile_path
         Puppet[:puppetdlockfile]
-    end
-
-    def clear
-        @catalog.clear(true) if @catalog
-        @catalog = nil
     end
 
     # Initialize and load storage
