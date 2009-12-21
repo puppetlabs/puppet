@@ -236,15 +236,15 @@ module Puppet
                     segments = value.split(".")[0..-2]
                     bits = 8*segments.length
                     [:ip,:inexact,bits,IPAddr.new((segments+[0,0,0])[0,4].join(".") + "/#{bits}")]
-                when /^([a-zA-Z0-9][-\w]*\.)+[-\w]+$/                      # a full hostname
-                    # Change to /^([a-zA-Z][-\w]*\.)+[-\w]+\.?$/ for FQDN support
+                when /^(\w[-\w]*\.)+[-\w]+$/                              # a full hostname
+                    # Change to /^(\w[-\w]*\.)+[-\w]+\.?$/ for FQDN support
                     [:domain,:exact,nil,munge_name(value)]
-                when /^\*(\.([a-zA-Z][-\w]*)){1,}$/                        # *.domain.com
+                when /^\*(\.(\w[-\w]*)){1,}$/                             # *.domain.com
                     host_sans_star = munge_name(value)[1..-1]
                     [:domain,:inexact,host_sans_star.length,host_sans_star]
-                when /\$\d+/                                               # a backreference pattern ala $1.reductivelabs.com or 192.168.0.$1 or $1.$2
+                when /\$\d+/                                              # a backreference pattern ala $1.reductivelabs.com or 192.168.0.$1 or $1.$2
                     [:dynamic,:exact,nil,munge_name(value)]
-                when /^[a-zA-Z0-9][-.@\w]*$/                               # ? Just like a host name but allow '@'s and ending '.'s
+                when /^\w[-.@\w]*$/                                       # ? Just like a host name but allow '@'s and ending '.'s
                     [:opaque,:exact,nil,[value]]
                 else
                     raise AuthStoreError, "Invalid pattern %s" % value
