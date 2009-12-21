@@ -15,4 +15,21 @@ describe Puppet::Configurer do
             configurer.download_plugins
         end
     end
+
+    describe "when running" do
+        it "should send a transaction report with valid data" do
+            catalog = Puppet::Resource::Catalog.new
+            catalog.add_resource(Puppet::Type.type(:notify).new(:title => "testing"))
+
+            configurer = Puppet::Configurer.new
+
+            Puppet::Transaction::Report.indirection.expects(:save).with do |report|
+                report.time.class == Time and report.logs.length > 0
+            end
+
+            Puppet[:report] = true
+
+            configurer.run :catalog => catalog
+        end
+    end
 end

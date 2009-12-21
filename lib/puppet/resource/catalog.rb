@@ -135,7 +135,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         transaction.tags = options[:tags] if options[:tags]
         transaction.ignoreschedules = true if options[:ignoreschedules]
 
-        transaction.addtimes :config_retrieval => self.retrieval_duration
+        transaction.addtimes :config_retrieval => self.retrieval_duration || 0
 
 
         begin
@@ -153,8 +153,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         end
 
         yield transaction if block_given?
-
-        transaction.send_report if host_config and (Puppet[:report] or Puppet[:summarize])
 
         return transaction
     ensure

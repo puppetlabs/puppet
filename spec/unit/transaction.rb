@@ -18,6 +18,15 @@ describe Puppet::Transaction do
         @transaction.prefetch
     end
 
+    describe "when initializing" do
+        it "should accept a catalog and set an instance variable for it" do
+            catalog = stub 'catalog', :vertices => []
+
+            trans = Puppet::Transaction.new(catalog)
+            trans.catalog.should == catalog
+        end
+    end
+
     describe "when generating resources" do
         it "should finish all resources" do
             generator = stub 'generator', :depthfirst? => true, :tags => []
@@ -103,6 +112,28 @@ describe Puppet::Transaction do
         it "should skip virtual resource" do
             @resource.stubs(:virtual?).returns true
             @transaction.skip?(@resource).should be_true
+        end
+    end
+
+    describe "when adding metrics to a report" do
+        before do
+            @catalog = Puppet::Resource::Catalog.new
+            @transaction = Puppet::Transaction.new(@catalog)
+
+            @report = stub 'report', :newmetric => nil, :time= => nil
+        end
+
+        [:resources, :time, :changes].each do |metric|
+            it "should add times for '#{metric}'" do
+                @report.expects(:newmetric).with { |m, v| m == metric }
+                @transaction.add_metrics_to_report(@report)
+            end
+        end
+
+        it "should set the transaction time to the current time" do
+            Time.expects(:now).returns "now"
+            @report.expects(:time=).with("now")
+            @transaction.add_metrics_to_report(@report)
         end
     end
 end

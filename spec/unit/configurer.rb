@@ -21,16 +21,43 @@ describe Puppet::Configurer do
     end
 end
 
+describe Puppet::Configurer, "when initializing a report" do
+    it "should return an instance of a transaction report" do
+        Puppet.settings.stubs(:use).returns(true)
+        @agent = Puppet::Configurer.new
+        @agent.initialize_report.should be_instance_of(Puppet::Transaction::Report)
+    end
+end
+
 describe Puppet::Configurer, "when executing a catalog run" do
     before do
         Puppet.settings.stubs(:use).returns(true)
         @agent = Puppet::Configurer.new
         @agent.stubs(:facts_for_uploading).returns({})
         @agent.stubs(:retrieve_catalog).returns Puppet::Resource::Catalog.new
+
+        Puppet::Util::Log.stubs(:newdestination)
+        Puppet::Util::Log.stubs(:close)
     end
 
     it "should prepare for the run" do
         @agent.expects(:prepare)
+
+        @agent.run
+    end
+
+    it "should initialize a transaction report" do
+        report = stub 'report'
+        @agent.expects(:initialize_report).returns report
+
+        @agent.run
+    end
+
+    it "should set the report as a log destination" do
+        report = stub 'report'
+        @agent.expects(:initialize_report).returns report
+
+        Puppet::Util::Log.expects(:newdestination).with(report)
 
         @agent.run
     end
@@ -53,7 +80,7 @@ describe Puppet::Configurer, "when executing a catalog run" do
         catalog = stub 'catalog', :retrieval_duration= => nil
         @agent.expects(:retrieve_catalog).returns catalog
 
-        catalog.expects(:apply).with(:one => true)
+        catalog.expects(:apply).with { |args| args[:one] == true }
         @agent.run :one => true
     end
 
@@ -61,7 +88,7 @@ describe Puppet::Configurer, "when executing a catalog run" do
         catalog = stub 'catalog', :retrieval_duration= => nil
         @agent.expects(:retrieve_catalog).never
 
-        catalog.expects(:apply).with(:one => true)
+        catalog.expects(:apply)
         @agent.run :one => true, :catalog => catalog
     end
 
@@ -73,6 +100,126 @@ describe Puppet::Configurer, "when executing a catalog run" do
 
         catalog.expects(:apply).never # because we're not yielding
         @agent.run
+    end
+
+    it "should send the report" do
+        report = stub 'report'
+        @agent.expects(:initialize_report).returns report
+        @agent.expects(:send_report).with { |r, trans| r == report }
+
+        @agent.run
+    end
+
+    it "should send the transaction report with a reference to the transaction if a run was actually made" do
+        report = stub 'report'
+        @agent.expects(:initialize_report).returns report
+
+        catalog = stub 'catalog', :retrieval_duration= => nil
+
+        trans = stub 'transaction'
+        catalog.expects(:apply).returns trans
+
+        @agent.expects(:send_report).with { |r, t| t == trans }
+
+        @agent.run :catalog => catalog
+    end
+
+    it "should send the transaction report even if the catalog could not be retrieved" do
+        @agent.expects(:retrieve_catalog).returns nil
+
+        report = stub 'report'
+        @agent.expects(:initialize_report).returns report
+        @agent.expects(:send_report)
+
+        @agent.run
+    end
+
+    it "should send the transaction report even if there is a failure" do
+        @agent.expects(:retrieve_catalog).raises "whatever"
+
+        report = stub 'report'
+        @agent.expects(:initialize_report).returns report
+        @agent.expects(:send_report)
+
+        lambda { @agent.run }.should raise_error
+    end
+
+    it "should remove the report as a log destination when the run is finished" do
+        report = stub 'report'
+        @agent.expects(:initialize_report).returns report
+
+        Puppet::Util::Log.expects(:close).with(report)
+
+        @agent.run
+    end
+
+    it "should return the report as the result of the run" do
+        report = stub 'report'
+        @agent.expects(:initialize_report).returns report
+
+        @agent.run.should equal(report)
+    end
+end
+
+describe Puppet::Configurer, "when sending a report" do
+    before do
+        Puppet.settings.stubs(:use).returns(true)
+        @configurer = Puppet::Configurer.new
+
+        @report = stub 'report'
+        @trans = stub 'transaction'
+    end
+
+    it "should require a report" do
+        lambda { @configurer.send_report }.should raise_error(ArgumentError)
+    end
+
+    it "should allow specification of a transaction" do
+        lambda { @configurer.send_report(@report, @trans)  }.should_not raise_error(ArgumentError)
+    end
+
+    it "should use any provided transaction to add metrics to the report" do
+        @trans.expects(:add_metrics_to_report).with(@report)
+        @configurer.send_report(@report, @trans)
+    end
+
+    it "should print a report summary if configured to do so" do
+        Puppet.settings[:summarize] = true
+
+        @report.expects(:summary).returns "stuff"
+
+        @configurer.expects(:puts).with("stuff")
+        @configurer.send_report(@report)
+    end
+
+    it "should not print a report summary if not configured to do so" do
+        Puppet.settings[:summarize] = false
+
+        @configurer.expects(:puts).never
+        @configurer.send_report(@report)
+    end
+
+    it "should save the report if reporting is enabled" do
+        Puppet.settings[:report] = true
+
+        @report.expects(:save)
+        @configurer.send_report(@report)
+    end
+
+    it "should not save the report if reporting is disabled" do
+        Puppet.settings[:report] = false
+
+        @report.expects(:save).never
+        @configurer.send_report(@report)
+    end
+
+    it "should log but not fail if saving the report fails" do
+        Puppet.settings[:report] = true
+
+        @report.expects(:save).raises "whatever"
+
+        Puppet.expects(:err)
+        lambda { @configurer.send_report(@report) }.should_not raise_error
     end
 end
 

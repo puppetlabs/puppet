@@ -62,6 +62,10 @@ class Puppet::Configurer
         @splayed = false
     end
 
+    def initialize_report
+        Puppet::Transaction::Report.new
+    end
+
     # Prepare for catalog retrieval.  Downloads everything necessary, etc.
     def prepare
         dostorage()
@@ -135,6 +139,9 @@ class Puppet::Configurer
             Puppet.err "Failed to prepare catalog: %s" % detail
         end
 
+        report = initialize_report()
+        Puppet::Util::Log.newdestination(report)
+
         if catalog = options[:catalog]
             options.delete(:catalog)
         elsif ! catalog = retrieve_catalog
@@ -142,11 +149,11 @@ class Puppet::Configurer
             return
         end
 
+        transaction = nil
+
         begin
             benchmark(:notice, "Finished catalog run") do
                 transaction = catalog.apply(options)
-                transaction.generate_report
-                report = transaction.report
             end
             report
         rescue => detail
@@ -158,6 +165,19 @@ class Puppet::Configurer
         # Now close all of our existing http connections, since there's no
         # reason to leave them lying open.
         Puppet::Network::HttpPool.clear_http_instances
+
+        Puppet::Util::Log.close(report)
+
+        send_report(report, transaction)
+    end
+
+    def send_report(report, trans = nil)
+        trans.add_metrics_to_report(report) if trans
+        puts report.summary if Puppet[:summarize]
+        report.save() if Puppet[:report]
+    rescue => detail
+        puts detail.backtrace if Puppet[:trace]
+        Puppet.err "Could not send report: #{detail}"
     end
 
     private

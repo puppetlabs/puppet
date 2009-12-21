@@ -574,7 +574,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
         before :each do
             @catalog = Puppet::Resource::Catalog.new("host")
 
-            @catalog.retrieval_duration = Time.now
             @transaction = mock 'transaction'
             Puppet::Transaction.stubs(:new).returns(@transaction)
             @transaction.stubs(:evaluate)
@@ -587,11 +586,15 @@ describe Puppet::Resource::Catalog, "when compiling" do
             @catalog.apply
         end
 
-        it "should provide the catalog time to the transaction" do
-            @transaction.expects(:addtimes).with do |arg|
-                arg[:config_retrieval].should be_instance_of(Time)
-                true
-            end
+        it "should provide the catalog retrieval time to the transaction" do
+            @catalog.retrieval_duration = 5
+            @transaction.expects(:addtimes).with(:config_retrieval => 5)
+            @catalog.apply
+        end
+
+        it "should use a retrieval time of 0 if none is set in the catalog" do
+            @catalog.retrieval_duration = nil
+            @transaction.expects(:addtimes).with(:config_retrieval => 0)
             @catalog.apply
         end
 
@@ -668,20 +671,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
                 Puppet::Util::Storage.stubs(:store)
             end
 
-            it "should send a report if reporting is enabled" do
-                Puppet[:report] = true
-                @transaction.expects :send_report
-                @transaction.stubs :any_failed? => false
-                @catalog.apply
-            end
-
-            it "should send a report if report summaries are enabled" do
-                Puppet[:summarize] = true
-                @transaction.expects :send_report
-                @transaction.stubs :any_failed? => false
-                @catalog.apply
-            end
-
             it "should initialize the state database before applying a catalog" do
                 Puppet::Util::Storage.expects(:load)
 
@@ -708,7 +697,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
             it "should never send reports" do
                 Puppet[:report] = true
                 Puppet[:summarize] = true
-                @transaction.expects(:send_report).never
                 @catalog.apply
             end
 

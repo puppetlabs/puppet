@@ -2,9 +2,9 @@
 
 require File.dirname(__FILE__) + '/../lib/puppettest'
 
+require 'mocha'
 require 'puppet'
 require 'puppettest'
-require 'mocha'
 require 'puppettest/support/resources'
 require 'puppettest/support/utils'
 
@@ -75,48 +75,6 @@ class TestTransactions < Test::Unit::TestCase
         end
 
         return type
-    end
-
-    def test_reports
-        path1 = tempfile()
-        path2 = tempfile()
-        objects = []
-        objects << Puppet::Type.type(:file).new(
-            :path => path1,
-            :content => "yayness"
-        )
-        objects << Puppet::Type.type(:file).new(
-            :path => path2,
-            :content => "booness"
-        )
-
-        trans = assert_events([:file_created, :file_created], *objects)
-
-        report = nil
-
-        assert_nothing_raised {
-            report = trans.generate_report
-        }
-
-        # First test the report logs
-        assert(report.logs.length > 0, "Did not get any report logs")
-
-        report.logs.each do |obj|
-            assert_instance_of(Puppet::Util::Log, obj)
-        end
-
-        # Then test the metrics
-        metrics = report.metrics
-
-        assert(metrics, "Did not get any metrics")
-        assert(metrics.length > 0, "Did not get any metrics")
-
-        assert(metrics.has_key?("resources"), "Did not get object metrics")
-        assert(metrics.has_key?("changes"), "Did not get change metrics")
-
-        metrics.each do |name, metric|
-            assert_instance_of(Puppet::Util::Metric, metric)
-        end
     end
 
     def test_prefetch
@@ -574,7 +532,8 @@ class TestTransactions < Test::Unit::TestCase
     end
 
     def test_missing_tags?
-        resource = stub 'resource', :tagged? => true
+        resource = Puppet::Type.type(:notify).new :title => "foo"
+        resource.stubs(:tagged?).returns true
         config = Puppet::Resource::Catalog.new
 
         # Mark it as a host config so we don't care which test is first
