@@ -140,10 +140,12 @@ describe provider_class do
         end
 
         it "should write the mount to disk when :flush is called" do
+            old_text = @provider_class.target_object(@provider_class.default_target).read
+            
             @mount.flush
 
             text = @provider_class.target_object(@provider_class.default_target).read
-            text.should == @mount.class.to_line(@mount.property_hash) + "\n"
+            text.should == old_text + @mount.class.to_line(@mount.property_hash) + "\n"
         end
     end
 
