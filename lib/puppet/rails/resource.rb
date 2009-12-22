@@ -148,7 +148,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
 
         # Lastly, add any new parameters.
         catalog_params.each do |name, value|
-            next if db_params.include?(name)
+            next if db_params.include?(name) && ! db_params[name].find{ |val| deletions.include?( val["id"] ) }
             values = value.is_a?(Array) ? value : [value]
 
             values.each do |v|
