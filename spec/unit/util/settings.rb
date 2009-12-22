@@ -1018,4 +1018,27 @@ describe Puppet::Util::Settings do
 
         it "should cache the result"
     end
+
+    describe "#without_noop" do
+        before do
+            @settings = Puppet::Util::Settings.new
+            @settings.setdefaults :main, :noop => [true, ""]
+        end
+
+        it "should set noop to false for the duration of the block" do
+            @settings.without_noop { @settings.value(:noop, :cli).should be_false }
+        end
+
+        it "should ensure that noop is returned to its previous value" do
+            @settings.without_noop { raise } rescue nil
+            @settings.value(:noop, :cli).should be_true
+        end
+
+        it "should work even if no 'noop' setting is available" do
+            settings = Puppet::Util::Settings.new
+            stuff = nil
+            settings.without_noop { stuff = "yay" }
+            stuff.should == "yay"
+        end
+    end
 end

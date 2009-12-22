@@ -67,7 +67,7 @@ class Puppet::Util::Settings
             unsafe_clear(exceptcli)
         end
     end
-    
+
     # Remove all set values, potentially skipping cli values.
     def unsafe_clear(exceptcli = false)
         @values.each do |name, values|
@@ -160,6 +160,13 @@ class Puppet::Util::Settings
         end
 
         set_value(str, value, :cli)
+    end
+
+    def without_noop
+        old_noop = value(:noop,:cli) and set_value(:noop, false, :cli) if valid?(:noop)
+        yield
+    ensure
+        set_value(:noop, old_noop, :cli) if valid?(:noop)
     end
 
     def include?(name)
@@ -675,7 +682,7 @@ Generated on #{Time.now}.
             end
             throw :foundval, nil
         end
-        
+
         # If we didn't get a value, use the default
         val = @config[param].default if val.nil?
 
