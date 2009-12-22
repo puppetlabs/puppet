@@ -1034,5 +1034,12 @@ describe Puppet::Util::Settings do
             @settings.without_noop { raise } rescue nil
             @settings.value(:noop, :cli).should be_true
         end
+
+        it "should work even if no 'noop' setting is available" do
+            settings = Puppet::Util::Settings.new
+            stuff = nil
+            settings.without_noop { stuff = "yay" }
+            stuff.should == "yay"
+        end
     end
 end

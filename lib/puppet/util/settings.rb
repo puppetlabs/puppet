@@ -163,11 +163,10 @@ class Puppet::Util::Settings
     end
 
     def without_noop
-        old_noop = value(:noop,:cli)
-        set_value(:noop, false, :cli)
+        old_noop = value(:noop,:cli) and set_value(:noop, false, :cli) if valid?(:noop)
         yield
     ensure
-        set_value(:noop, old_noop, :cli)
+        set_value(:noop, old_noop, :cli) if valid?(:noop)
     end
 
     def include?(name)
