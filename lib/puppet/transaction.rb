@@ -2,6 +2,7 @@
 # and performs them
 
 require 'puppet'
+require 'puppet/util/tagging'
 
 module Puppet
 class Transaction
@@ -18,6 +19,7 @@ class Transaction
     attr_reader :events
 
     include Puppet::Util
+    include Puppet::Util::Tagging
 
     # Add some additional times for reporting
     def addtimes(hash)
@@ -353,6 +355,7 @@ class Transaction
         made = [made] unless made.is_a?(Array)
         made.uniq.find_all do |res|
             begin
+                res.tag(*resource.tags)
                 @catalog.add_resource(res) do |r|
                     r.finish
                     make_parent_child_relationship(resource, [r])
@@ -601,26 +604,26 @@ class Transaction
     # The tags we should be checking.
     def tags
         unless defined? @tags
-            tags = Puppet[:tags]
-            if tags.nil? or tags == ""
-                @tags = []
-            else
-                @tags = tags.split(/\s*,\s*/)
-            end
+            self.tags = Puppet[:tags]
         end
 
-        @tags
+        super
     end
 
-    def tags=(tags)
-        tags = [tags] unless tags.is_a?(Array)
-        @tags = tags
+    def handle_qualified_tags( qualified )
+        # The default behavior of Puppet::Util::Tagging is
+        # to split qualified tags into parts. That would cause
+        # qualified tags to match too broadly here.
+        return
     end
 
     # Is this resource tagged appropriately?
     def missing_tags?(resource)
-        return false if self.ignore_tags? or tags.empty?
-        return true unless resource.tagged?(tags)
+        not appropriately_tagged?(resource)
+    end
+
+    def appropriately_tagged?(resource)
+        self.ignore_tags? or tags.empty? or resource.tagged?(*tags)
     end
 
     # Are there any edges that target this resource?

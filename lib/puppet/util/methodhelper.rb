@@ -12,11 +12,10 @@ module Puppet::Util::MethodHelper
     def set_options(options)
         options.each do |param,value|
             method = param.to_s + "="
-            begin
+            if respond_to? method
                 self.send(method, value)
-            rescue NoMethodError
-                raise ArgumentError, "Invalid parameter %s to object class %s" %
-                        [param,self.class.to_s]
+            else
+                raise ArgumentError, "Invalid parameter #{param} to object class #{self.class}"
             end
         end
     end

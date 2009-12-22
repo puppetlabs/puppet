@@ -4,6 +4,36 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/network/authconfig'
 
+describe Puppet::Network::AuthStore do
+    describe "when checking if the acl has some entries" do
+        before :each do
+            @authstore = Puppet::Network::AuthStore.new
+        end
+
+        it "should be empty if no ACE have been entered" do
+            @authstore.should be_empty
+        end
+
+        it "should not be empty if it is a global allow" do
+            @authstore.allow('*')
+
+            @authstore.should_not be_empty
+        end
+
+        it "should not be empty if at least one allow has been entered" do
+            @authstore.allow('1.1.1.*')
+
+            @authstore.should_not be_empty
+        end
+
+        it "should not be empty if at least one deny has been entered" do
+            @authstore.deny('1.1.1.*')
+
+            @authstore.should_not be_empty
+        end
+    end
+end
+
 describe Puppet::Network::AuthStore::Declaration do
 
     ['100.101.99.98','100.100.100.100','1.2.3.4','11.22.33.44'].each { |ip|

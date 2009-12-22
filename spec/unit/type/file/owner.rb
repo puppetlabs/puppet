@@ -55,16 +55,22 @@ describe property do
 
     describe "when determining if the file is in sync" do
         describe "and not running as root" do
-            it "should warn and return true" do
-                @owner.should = 10
+            it "should warn once and return true" do
                 Puppet::Util::SUIDManager.expects(:uid).returns 1
-                @owner.expects(:warning)
-                @owner.must be_insync("whatever")
+
+                @owner.expects(:warnonce)
+
+                @owner.should = [10]
+                @owner.must be_insync(20)
             end
         end
 
         before do
             Puppet::Util::SUIDManager.stubs(:uid).returns 0
+        end
+
+        it "should be in sync if 'should' is not provided" do
+            @owner.must be_insync(10)
         end
 
         it "should directly compare the owner values if the desired owner is an integer" do

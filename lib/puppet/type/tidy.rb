@@ -247,8 +247,15 @@ Puppet::Type.newtype(:tidy) do
     def generate
         return [] unless stat(self[:path])
 
-        if self[:recurse]
-            files = Puppet::FileServing::Fileset.new(self[:path], :recurse => self[:recurse]).files.collect do |f|
+        case self[:recurse]
+        when Integer, Fixnum, Bignum, /^\d+$/
+            parameter = { :recurse => true, :recurselimit => self[:recurse] }
+        when true, :true, :inf
+            parameter = { :recurse => true }
+        end
+
+        if parameter
+            files = Puppet::FileServing::Fileset.new(self[:path], parameter).files.collect do |f|
                 f == "." ? self[:path] : File.join(self[:path], f)
             end
         else

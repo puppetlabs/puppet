@@ -13,6 +13,8 @@ rescue LoadError
     # Nothing
 end
 
+require 'pathname'
+
 module Puppet::Util::SELinux
 
     def selinux_support?
@@ -91,7 +93,7 @@ module Puppet::Util::SELinux
     # I believe that the OS should always provide at least a fall-through context
     # though on any well-running system.
     def set_selinux_context(file, value, component = false)
-        unless selinux_support?
+        unless selinux_support? && selinux_label_support?(file) 
             return nil
         end
 
@@ -185,9 +187,19 @@ module Puppet::Util::SELinux
         return mntpoint
     end
 
+    def realpath(path)
+        path, rest = Pathname.new(path), []
+        path, rest = path.dirname, [path.basename] + rest while ! path.exist?
+        File.join( path.realpath, *rest )
+    end
+
+    def parent_directory(path)
+        Pathname.new(path).dirname.to_s
+    end
+
     # Internal helper function to return which type of filesystem a
     # given file path resides on
-    def find_fs(file)
+    def find_fs(path)
         unless mnts = read_mounts()
             return nil
         end
@@ -198,13 +210,12 @@ module Puppet::Util::SELinux
         # Just in case: return something if you're down to "/" or ""
         # Remove the last slash and everything after it,
         #   and repeat with that as the file for the next loop through.
-        ary = file.split('/')
-        while not ary.empty? do
-            path = ary.join('/')
+        path = realpath(path)
+        while not path.empty? do
             if mnts.has_key?(path)
                 return mnts[path]
             end
-            ary.pop
+            path = parent_directory(path)
         end
         return mnts['/']
     end

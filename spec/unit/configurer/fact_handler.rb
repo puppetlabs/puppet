@@ -102,7 +102,7 @@ describe Puppet::Configurer::FactHandler do
 
         @facthandler.expects(:find_facts).returns facts
 
-        @facthandler.facts_for_uploading.should == {:facts_format => :yaml, :facts => text}
+        @facthandler.facts_for_uploading.should == {:facts_format => :b64_zlib_yaml, :facts => text}
     end
 
     it "should properly accept facts containing a '+'" do
@@ -112,12 +112,12 @@ describe Puppet::Configurer::FactHandler do
 
         @facthandler.expects(:find_facts).returns facts
 
-        @facthandler.facts_for_uploading.should == {:facts_format => :yaml, :facts => text}
+        @facthandler.facts_for_uploading.should == {:facts_format => :b64_zlib_yaml, :facts => text}
     end
 
     it "should hard-code yaml as the serialization" do
         facts = stub 'facts'
-        facts.expects(:render).with(:yaml).returns "my text"
+        facts.expects(:render).with(:b64_zlib_yaml).returns "my text"
         text = CGI.escape("my text")
 
         @facthandler.expects(:find_facts).returns facts

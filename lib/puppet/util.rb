@@ -55,10 +55,11 @@ module Util
             end
             unless Puppet::Util::SUIDManager.uid == user
                 begin
+                    Puppet::Util::SUIDManager.initgroups(user)
                     Puppet::Util::SUIDManager.uid = user
                     Puppet::Util::SUIDManager.euid = user
-                rescue
-                    $stderr.puts "could not change to user %s" % user
+                rescue => detail
+                    $stderr.puts "Could not change to user %s: %s" % [user, detail]
                     exit(74)
                 end
             end

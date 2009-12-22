@@ -43,7 +43,7 @@ Make sure puppetmasterd ran at least once, so the CA & SSL certificates
 got set up.
 
 Requirements:
-  Passenger version 2.2.2 or newer***
+  Passenger version 2.2.2 or 2.2.5 or newer***
   Rack version 1.0.0
   Apache 2.x
   SSL Module loaded
@@ -68,6 +68,6 @@ config.ru. Therefore, config.ru shall be owned by the puppet user.
 *** Important note about Passenger versions:
     2.2.2 is known to work.
     2.2.3-2.2.4 are known to *NOT* work.
-    2.2.5 (when it is released) is expected to work properly again.
+    2.2.5 works again when used with Puppet 0.25.2+.
     Passenger installation doc: http://www.modrails.com/install.html
 

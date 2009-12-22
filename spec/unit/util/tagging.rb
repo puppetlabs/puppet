@@ -89,4 +89,14 @@ describe Puppet::Util::Tagging, "when adding tags" do
     it "should indicate when the object is not tagged with a provided tag" do
         @tagger.should_not be_tagged("one")
     end
+
+    it "should indicate when the object is tagged with any tag in an array" do
+        @tagger.tag("one")
+        @tagger.should be_tagged("one","two","three")
+    end
+
+    it "should indicate when the object is not tagged with any tag in an array" do
+        @tagger.tag("one")
+        @tagger.should_not be_tagged("two","three")
+    end
 end

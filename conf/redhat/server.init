@@ -13,6 +13,7 @@ PATH=/usr/bin:/sbin:/bin:/usr/sbin
 export PATH
 
 lockfile=/var/lock/subsys/puppetmaster
+pidfile=/var/run/puppet/puppetmasterd.pid
 
 # Source function library.
 . /etc/rc.d/init.d/functions
@@ -71,8 +72,9 @@ stop() {
             ret=$?; [ $ret != 0 ] && RETVAL=$ret
         done
     else
-       killproc $PUPPETMASTER
-       RETVAL=$?
+        killproc | grep -q -- '-p' 2>/dev/null && killopts="-p $pidfile"
+        killproc $killopts $PUPPETMASTER
+        RETVAL=$?
     fi
     echo
     [ $RETVAL -eq 0 ] && rm -f "$lockfile"

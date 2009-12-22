@@ -46,18 +46,6 @@ describe Puppet::SSL::CertificateRevocationList do
         end
     end
 
-    describe "when initializing" do
-        it "should fail if :cacrl is set to false" do
-            Puppet.settings.expects(:value).with(:cacrl).returns false
-            lambda { @class.new("crl") }.should raise_error(Puppet::Error)
-        end
-
-        it "should fail if :cacrl is set to the string 'false'" do
-            Puppet.settings.expects(:value).with(:cacrl).returns "false"
-            lambda { @class.new("crl") }.should raise_error(Puppet::Error)
-        end
-    end
-
     describe "when generating the crl" do
         before do
             @real_crl = mock 'crl'

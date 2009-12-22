@@ -63,6 +63,11 @@ module Puppet
             @globalallow
         end
 
+        # does this auth store has any rules?
+        def empty?
+            @globalallow.nil? && @declarations.size == 0
+        end
+
         def initialize
             @globalallow = nil
             @declarations = []

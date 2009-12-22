@@ -43,11 +43,11 @@ class Puppet::Network::HTTP::RackXMLRPC < Puppet::Network::HTTP::RackHttpHandler
         ip = request.ip
 
         # if we find SSL info in the headers, use them to get a hostname.
-        # try this with :ssl_client_header.
-        # For Apache you need special configuration, see ext/rack/README.
-        if dn = ssl_client_header(request) and dn_matchdata = dn.match(/^.*?CN\s*=\s*(.*)/)
+        # try this with :ssl_client_header, which defaults should work for
+        # Apache with StdEnvVars.
+        if dn = request.env[Puppet[:ssl_client_header]] and dn_matchdata = dn.match(/^.*?CN\s*=\s*(.*)/)
             node = dn_matchdata[1].to_str
-            authenticated = (ssl_client_verify_header(request) == 'SUCCESS')
+            authenticated = (request.env[Puppet[:ssl_client_verify_header]] == 'SUCCESS')
         else
             begin
                 node = Resolv.getname(ip)

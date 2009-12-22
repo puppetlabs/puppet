@@ -25,7 +25,7 @@ Puppet::Type.type(:package).provide :up2date, :parent => :rpm, :source => :rpm d
         #up2date can only get a list of *all* available packages?
         output = up2date "--showall"
 
-        if output =~ /^#{@resource[:name]}-(\d+.*)\.\w+/
+        if output =~ /^#{Regexp.escape @resource[:name]}-(\d+.*)\.\w+/
             return $1
         else
             # up2date didn't find updates, pretend the current

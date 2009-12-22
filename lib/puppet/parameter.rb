@@ -293,6 +293,13 @@ class Puppet::Parameter
             define_method(:unmunge, &block)
         end
 
+        # Optionaly convert the value to a canonical form so that it will
+        # be found in hashes, etc.  Mostly useful for namevars.
+        def to_canonicalize(&block)
+            metaclass = (class << self; self; end)
+            metaclass.send(:define_method,:canonicalize,&block)
+        end
+
         # Mark whether we're the namevar.
         def isnamevar
             @isnamevar = true
@@ -464,10 +471,19 @@ class Puppet::Parameter
         value
     end
 
+    # Assume the value is already in canonical form by default
+    def self.canonicalize(value)
+        value
+    end
+
+    def canonicalize(value)
+        self.class.canonicalize(value)
+    end
+
     # A wrapper around our munging that makes sure we raise useful exceptions.
     def munge(value)
         begin
-            ret = unsafe_munge(value)
+            ret = unsafe_munge(canonicalize(value))
         rescue Puppet::Error => detail
             Puppet.debug "Reraising %s" % detail
             raise

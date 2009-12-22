@@ -282,9 +282,9 @@ class Puppet::Util::Log
 
         def colorize(level, str)
             case Puppet[:color]
-            when false; str
-            when true, :ansi, "ansi"; console_color(level, str)
+            when true, :ansi, "ansi", :yes, "yes"; console_color(level, str)
             when :html, "html"; html_color(level, str)
+            else str
             end
         end
 

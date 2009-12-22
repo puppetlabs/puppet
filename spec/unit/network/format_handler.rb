@@ -49,15 +49,35 @@ describe Puppet::Network::FormatHandler do
         FormatTester.supported_formats.should == [:four, :two, :three, :one]
     end
 
-    it "should always put the preferred serialization format first if it is supported" do
-        one = stub 'supported', :supported? => true, :name => :one, :weight => 1
-        two = stub 'supported', :supported? => true, :name => :two, :weight => 6
 
-        Puppet.settings.expects(:value).with(:preferred_serialization_format).returns :one
-        Puppet::Network::FormatHandler.stubs(:formats).returns [:one, :two]
-        Puppet::Network::FormatHandler.stubs(:format).with(:one).returns one
-        Puppet::Network::FormatHandler.stubs(:format).with(:two).returns two
-        FormatTester.supported_formats.should == [:one, :two]
+    describe "with a preferred serialization format setting" do
+        before do
+            one = stub 'supported', :supported? => true, :name => :one, :weight => 1
+            two = stub 'supported', :supported? => true, :name => :two, :weight => 6
+            Puppet::Network::FormatHandler.stubs(:formats).returns [:one, :two]
+            Puppet::Network::FormatHandler.stubs(:format).with(:one).returns one
+            Puppet::Network::FormatHandler.stubs(:format).with(:two).returns two
+        end
+        describe "that is supported" do
+            before do
+                Puppet.settings.expects(:value).with(:preferred_serialization_format).returns :one
+            end    
+            it "should return the preferred serialization format first" do
+                FormatTester.supported_formats.should == [:one, :two]
+            end
+        end
+        describe "that is not supported" do
+            before do
+                Puppet.settings.expects(:value).with(:preferred_serialization_format).returns :unsupported
+            end
+            it "should still return the default format first" do
+                FormatTester.supported_formats.should == [:two, :one]
+            end
+            it "should log a warning" do
+                Puppet.expects(:warning)
+                FormatTester.supported_formats
+            end
+        end
     end
 
     it "should return the first format as the default format" do

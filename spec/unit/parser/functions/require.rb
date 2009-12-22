@@ -31,6 +31,12 @@ describe "the require function" do
         @scope.function_require("myclass")
     end
 
+    it "should verify the 'include' function is loaded" do
+        Puppet::Parser::Functions.expects(:function).with(:include).returns(:function_include)
+        @scope.stubs(:function_include)
+        @scope.function_require("myclass")
+    end
+
     it "should include the class but not add a dependency if used on a client not at least version 0.25" do
         @resource.expects(:metaparam_compatibility_mode?).returns true
         @scope.expects(:warning)

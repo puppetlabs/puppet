@@ -11,14 +11,13 @@ module Puppet::Configurer::FactHandler
     end
 
     def find_facts
-        reload_facter()
-
         # This works because puppetd configures Facts to use 'facter' for
         # finding facts and the 'rest' terminus for caching them.  Thus, we'll
         # compile them and then "cache" them on the server.
         begin
+            reload_facter()
             Puppet::Node::Facts.find(Puppet[:certname])
-        rescue => detail
+        rescue Exception => detail
             puts detail.backtrace if Puppet[:trace]
             raise Puppet::Error, "Could not retrieve local facts: %s" % detail
         end
@@ -29,11 +28,11 @@ module Puppet::Configurer::FactHandler
         #format = facts.class.default_format
 
         # Hard-code yaml, because I couldn't get marshal to work.
-        format = :yaml
+        format = :b64_zlib_yaml
 
         text = facts.render(format)
 
-        return {:facts_format => format, :facts => CGI.escape(text)}
+        return {:facts_format => :b64_zlib_yaml, :facts => CGI.escape(text)}
     end
 
     # Retrieve facts from the central server.

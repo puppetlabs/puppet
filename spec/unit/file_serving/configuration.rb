@@ -104,13 +104,27 @@ describe Puppet::FileServing::Configuration do
 
         it "should allow all access to modules and plugins if no fileserver.conf exists" do
             FileTest.expects(:exists?).returns false # the file doesn't exist
-            modules = stub 'modules'
+            modules = stub 'modules', :empty? => true
             Puppet::FileServing::Mount::Modules.stubs(:new).returns(modules)
             modules.expects(:allow).with('*')
 
-            plugins = stub 'plugins'
+            plugins = stub 'plugins', :empty? => true
             Puppet::FileServing::Mount::Plugins.stubs(:new).returns(plugins)
             plugins.expects(:allow).with('*')
+
+            Puppet::FileServing::Configuration.create
+        end
+
+        it "should not allow access from all to modules and plugins if the fileserver.conf provided some rules" do
+            FileTest.expects(:exists?).returns false # the file doesn't exist
+
+            modules = stub 'modules', :empty? => false
+            Puppet::FileServing::Mount::Modules.stubs(:new).returns(modules)
+            modules.expects(:allow).with('*').never
+
+            plugins = stub 'plugins', :empty? => false
+            Puppet::FileServing::Mount::Plugins.stubs(:new).returns(plugins)
+            plugins.expects(:allow).with('*').never
 
             Puppet::FileServing::Configuration.create
         end

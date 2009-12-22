@@ -13,6 +13,42 @@ describe Puppet::Util::Log do
         Puppet::Util::Log.close_all
     end
 
+    describe Puppet::Util::Log::DestConsole do
+        before do
+            @console = Puppet::Util::Log::DestConsole.new 
+        end
+
+        it "should colorize if Puppet[:color] is :ansi" do
+            Puppet[:color] = :ansi
+
+            @console.colorize(:alert, "abc").should == "\e[0;31mabc\e[0m"
+        end
+
+        it "should colorize if Puppet[:color] is 'yes'" do
+            Puppet[:color] = "yes"
+
+            @console.colorize(:alert, "abc").should == "\e[0;31mabc\e[0m"
+        end
+
+        it "should htmlize if Puppet[:color] is :html" do
+            Puppet[:color] = :html
+
+            @console.colorize(:alert, "abc").should == "<span style=\"color: FFA0A0\">abc</span>"
+        end
+
+        it "should do nothing if Puppet[:color] is false" do
+            Puppet[:color] = false
+
+            @console.colorize(:alert, "abc").should == "abc"
+        end
+
+        it "should do nothing if Puppet[:color] is invalid" do
+            Puppet[:color] = "invalid option"
+
+            @console.colorize(:alert, "abc").should == "abc"
+        end
+    end
+
     describe "instances" do
         before do
             Puppet::Util::Log.stubs(:newmessage)
