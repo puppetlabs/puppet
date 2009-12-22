@@ -91,7 +91,7 @@ Puppet::Application.new(:ralsh) do
             transbucket.sort { |a,b| a.name <=> b.name }.collect(&format)
         else
             if name
-                obj = typeobj.new(:name => name, :check => properties)
+                obj = typeobj.instances.find { |o| o.name == name } || typeobj.new(:name => name, :check => properties)
                 vals = obj.retrieve
 
                 unless params.empty?
