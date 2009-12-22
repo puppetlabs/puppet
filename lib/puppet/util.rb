@@ -259,28 +259,17 @@ module Util
         @@os ||= Facter.value(:operatingsystem)
         output = nil
         child_pid, child_status = nil
-        # There are problems with read blocking with badly behaved children
-        # read.partialread doesn't seem to capture either stdout or stderr
-        # We hack around this using a temporary file
-
-        # The idea here is to avoid IO#read whenever possible.
-        output_file="/dev/null"
-        error_file="/dev/null"
-        if ! arguments[:squelch]
-            require "tempfile"
-            output_file = Tempfile.new("puppet")
-            if arguments[:combine]
-                error_file=output_file
-            end
-        end
+        output_read, output_write = IO.pipe
 
         oldverb = $VERBOSE
         $VERBOSE = nil
         child_pid = Kernel.fork
         $VERBOSE = oldverb
         if child_pid
+            output_write.close
             # Parent process executes this
-            child_status = (Process.waitpid2(child_pid)[1]).to_i >> 8
+            Process.waitpid(child_pid)
+            child_status = $?.exitstatus
         else
             # Child process executes this
             Process.setsid
@@ -288,10 +277,18 @@ module Util
                 if arguments[:stdinfile]
                     $stdin.reopen(arguments[:stdinfile])
                 else
-                    $stdin.reopen("/dev/null")
+                    $stdin.close
                 end
-                $stdout.reopen(output_file)
-                $stderr.reopen(error_file)
+                if arguments[:squelch]
+                    $stdout.close
+                else
+                    $stdout.reopen(output_write)
+                end
+                if arguments[:combine]
+                    $stderr.reopen(output_write)
+                else
+                    $stderr.close
+                end
 
                 3.upto(256){|fd| IO::new(fd).close rescue nil}
                 if arguments[:gid]
@@ -303,43 +300,17 @@ module Util
                     Process.uid = arguments[:uid] unless @@os == "Darwin"
                 end
                 ENV['LANG'] = ENV['LC_ALL'] = ENV['LC_MESSAGES'] = ENV['LANGUAGE'] = 'C'
-                if command.is_a?(Array)
-                    Kernel.exec(*command)
-                else
-                    Kernel.exec(command)
-                end
+                Kernel.exec(*command)
             rescue => detail
-                puts detail.to_s
+                puts detail
                 exit!(1)
-            end # begin; rescue
-        end # if child_pid
+            end
+        end
 
         # read output in if required
         if ! arguments[:squelch]
-
-            # Make sure the file's actually there.  This is
-            # basically a race condition, and is probably a horrible
-            # way to handle it, but, well, oh well.
-            unless FileTest.exists?(output_file.path)
-                Puppet.warning "sleeping"
-                sleep 0.5
-                unless FileTest.exists?(output_file.path)
-                    Puppet.warning "sleeping 2"
-                    sleep 1
-                    unless FileTest.exists?(output_file.path)
-                        Puppet.warning "Could not get output"
-                        output = ""
-                    end
-                end
-            end
-            unless output
-                # We have to explicitly open here, so that it reopens
-                # after the child writes.
-                output = output_file.open.read
-
-                # The 'true' causes the file to get unlinked right away.
-                output_file.close(true)
-            end
+            output = output_read.read
+            output_read.close
         end
 
         if arguments[:failonfail]
@@ -348,7 +319,7 @@ module Util
             end
         end
 
-        return output
+        output
     end
 
     module_function :execute
