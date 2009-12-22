@@ -149,6 +149,13 @@ describe provider do
             @provider.expects(:warning)
             @provider.latest
         end
+
+        it "should cope with names containing ++" do
+            @resource = stub 'resource', :[] => "asdf++"
+            @provider = provider.new(@resource)
+            @provider.expects(:dpkg_deb).returns "asdf++\t1.0"
+            @provider.latest.should == "1.0"
+        end
     end
 
     it "should use 'dpkg -r' to uninstall" do

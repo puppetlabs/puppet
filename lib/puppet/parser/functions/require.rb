@@ -27,7 +27,10 @@ Note that this function only works with clients 0.25 and later, and it will
 fail if used with earlier clients.
 
 ") do |vals|
-    send(:function_include, vals)
+    # Verify that the 'include' function is loaded
+    method = Puppet::Parser::Functions.function(:include)
+
+    send(method, vals)
     if resource.metaparam_compatibility_mode?
         warning "The 'require' function is only compatible with clients at 0.25 and above; including class but not adding dependency"
     else

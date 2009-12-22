@@ -101,6 +101,12 @@ describe Puppet::Property do
             @property.should.must == [:one, :two]
         end
 
+        it "should munge the canonicalization of the value" do
+            @property.class.to_canonicalize { |x| x.reverse }
+            @property.value = 'data'
+            @property.should.must == 'atad'
+        end
+
         it "should return any set value" do
             (@property.value = :one).should == :one
         end

@@ -137,7 +137,7 @@ Puppet::Application.new(:puppetd) do
         options[:verbose] = true
         options[:onetime] = true
         options[:detailed_exitcodes] = true
-        options[:waitforcert] = 0
+        options[:waitforcert] = 0 unless @explicit_waitforcert
     end
 
     # Handle the logging settings.
@@ -170,13 +170,6 @@ Puppet::Application.new(:puppetd) do
             Puppet.err "Will not start without authorization file %s" %
                 Puppet[:authconfig]
             exit(14)
-        end
-
-        # FIXME: we should really figure out how to distribute the CRL
-        # to clients. In the meantime, we just disable CRL checking if
-        # the CRL file doesn't exist
-        unless File::exist?(Puppet[:cacrl])
-            Puppet[:cacrl] = 'false'
         end
 
         handlers = nil

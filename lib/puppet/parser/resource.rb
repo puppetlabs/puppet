@@ -139,6 +139,12 @@ class Puppet::Parser::Resource
         if params = options[:params]
             options.delete(:params)
             params.each do |param|
+                # Don't set the same parameter twice
+                if @params[param.name]
+                    self.fail Puppet::ParseError, "Duplicate parameter '%s' for on %s" %
+                        [param.name, self.to_s]
+                end
+
                 set_parameter(param)
             end
         end

@@ -52,7 +52,7 @@ class Puppet::Agent
         with_client do |client|
             begin
                 sync.synchronize { lock { result = client.run(*args) } }
-            rescue => detail
+            rescue Exception => detail
                 puts detail.backtrace if Puppet[:trace]
                 Puppet.err "Could not run %s: %s" % [client_class, detail]
             end
@@ -124,7 +124,7 @@ class Puppet::Agent
     def with_client
         begin
             @client = client_class.new
-        rescue => detail
+        rescue Exception => detail
             puts detail.backtrace if Puppet[:trace]
             Puppet.err "Could not create instance of %s: %s" % [client_class, detail]
             return

@@ -7,7 +7,7 @@ module Puppet::Util::SUIDManager
     extend Forwardable
 
     to_delegate_to_process = [ :euid=, :euid, :egid=, :egid,
-                               :uid=, :uid, :gid=, :gid ]
+                               :uid=, :uid, :gid=, :gid, :groups=, :groups ]
 
     to_delegate_to_process.each do |method|
         def_delegator Process, method
@@ -26,13 +26,16 @@ module Puppet::Util::SUIDManager
         # We set both because some programs like to drop privs, i.e. bash.
         old_uid, old_gid = self.uid, self.gid
         old_euid, old_egid = self.euid, self.egid
+        old_groups = self.groups
         begin
             self.egid = convert_xid :gid, new_gid if new_gid
+            self.initgroups(convert_xid(:uid, new_uid)) if new_uid
             self.euid = convert_xid :uid, new_uid if new_uid
 
             yield
         ensure
             self.euid, self.egid = old_euid, old_egid
+            self.groups = old_groups
         end
     end
     module_function :asuser
@@ -49,6 +52,13 @@ module Puppet::Util::SUIDManager
     end
     module_function :convert_xid
 
+    # Initialize supplementary groups
+    def initgroups(user)
+        require 'etc'
+        Process.initgroups(Etc.getpwuid(user).name, Process.gid)
+    end
+
+    module_function :initgroups
 
     def run_and_capture(command, new_uid=nil, new_gid=nil)
         output = Puppet::Util.execute(command, :failonfail => false, :uid => new_uid, :gid => new_gid)

@@ -27,6 +27,9 @@ PUPPET_OPTS=""
 [ -n "$PUPPET_LOG" ] && PUPPET_OPTS="${PUPPET_OPTS} --logdest=${PUPPET_LOG}"
 [ -n "$PUPPET_PORT" ] && PUPPET_OPTS="${PUPPET_OPTS} --masterport=${PUPPET_PORT}"
 
+# Determine if we can use the -p option to killproc.  RHEL < 5 can't.
+killproc | grep -q -- '-p' 2>/dev/null && killopts="-p $pidfile"
+
 # Figure out if the system just booted. Let's assume
 # boot doesn't take longer than 5 minutes
 ## Not used for now
@@ -43,7 +46,7 @@ start() {
 
 stop() {
     echo -n $"Stopping puppet: "
-    killproc $puppetd
+    killproc $killopts $puppetd
     RETVAL=$?
     echo
     [ $RETVAL = 0 ] && rm -f ${lockfile} ${pidfile}
@@ -51,7 +54,7 @@ stop() {
 
 reload() {
     echo -n $"Restarting puppet: "
-    killproc $puppetd -HUP
+    killproc $killopts $puppetd -HUP
     RETVAL=$?
     echo
     return $RETVAL

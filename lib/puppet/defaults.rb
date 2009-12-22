@@ -527,6 +527,18 @@ module Puppet
             authority requests.  It's a separate server because it cannot
             and does not need to horizontally scale."],
         :ca_port => ["$masterport", "The port to use for the certificate authority."],
+        :catalog_format => {
+            :default => "",
+            :desc => "(Deprecated for 'preferred_serialization_format') What format to
+                     use to dump the catalog.  Only supports 'marshal' and 'yaml'.  Only
+                     matters on the client, since it asks the server for a specific format.",
+            :hook => proc { |value|
+                if value
+                    Puppet.warning "Setting 'catalog_format' is deprecated; use 'preferred_serialization_format' instead."
+                    Puppet.settings[:preferred_serialization_format] = value
+                end
+            }
+        },
         :preferred_serialization_format => ["pson", "The preferred means of serializing
             ruby instances for passing over the wire.  This won't guarantee that all
             instances will be serialized using this method, since not all classes

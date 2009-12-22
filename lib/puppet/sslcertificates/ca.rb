@@ -134,7 +134,7 @@ class Puppet::SSLCertificates::CA
 
     # List certificates waiting to be signed.  This returns a list of hostnames, not actual
     # files -- the names can be converted to full paths with host2csrfile.
-    def list
+    def list(dummy_argument=:work_arround_for_ruby_GC_bug)
         return Dir.entries(Puppet[:csrdir]).find_all { |file|
             file =~ /\.pem$/
         }.collect { |file|
@@ -144,7 +144,7 @@ class Puppet::SSLCertificates::CA
 
     # List signed certificates.  This returns a list of hostnames, not actual
     # files -- the names can be converted to full paths with host2csrfile.
-    def list_signed
+    def list_signed(dummy_argument=:work_arround_for_ruby_GC_bug)
         return Dir.entries(Puppet[:signeddir]).find_all { |file|
             file =~ /\.pem$/
         }.collect { |file|
@@ -194,9 +194,6 @@ class Puppet::SSLCertificates::CA
     # Revoke the certificate with serial number SERIAL issued by this
     # CA. The REASON must be one of the OpenSSL::OCSP::REVOKED_* reasons
     def revoke(serial, reason = OpenSSL::OCSP::REVOKED_STATUS_KEYCOMPROMISE)
-        if @config[:cacrl] == 'false'
-            raise Puppet::Error, "Revocation requires a CRL, but ca_crl is set to 'false'"
-        end
         time = Time.now
         revoked = OpenSSL::X509::Revoked.new
         revoked.serial = serial
@@ -344,8 +341,6 @@ class Puppet::SSLCertificates::CA
             @crl = OpenSSL::X509::CRL.new(
                 File.read(@config[:cacrl])
             )
-        elsif @config[:cacrl] == 'false'
-            @crl = nil
         else
             # Create new CRL
             @crl = OpenSSL::X509::CRL.new

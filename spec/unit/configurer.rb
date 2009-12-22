@@ -183,6 +183,12 @@ describe Puppet::Configurer, "when converting the catalog" do
         @agent.convert_catalog(@oldcatalog, 10).should equal(@catalog)
     end
 
+    it "should finalize the catalog" do
+        @catalog.expects(:finalize)
+
+        @agent.convert_catalog(@oldcatalog, 10)
+    end
+
     it "should record the passed retrieval time with the RAL catalog" do
         @catalog.expects(:retrieval_duration=).with 10
 
