@@ -278,6 +278,28 @@ describe Puppet::Network::AuthStore::Declaration do
         end
     }
 
+    ['abc.12seps.edu.phisher.biz','www.google.com','slashdot.org'].each { |host|
+        (1...(host.split('.').length)).each { |n|
+            describe "when the pattern is #{"*."+host.split('.')[-n,n].join('.')}" do
+                before :each do
+                    @pattern = "*."+host.split('.')[-n,n].join('.')
+                    @declaration = Puppet::Network::AuthStore::Declaration.new(:allow,@pattern)
+                end
+                it "should match #{host}" do
+                    @declaration.should be_match(host,'1.2.3.4')
+                end
+                it "should not match www.testsite.gov" do
+                    @declaration.should_not be_match('www.testsite.gov','200.101.99.98')
+                end
+                it "should not match hosts that differ in the first non-wildcard segment" do
+                    other = host.split('.')
+                    other[-n].succ!
+                    @declaration.should_not be_match(other.join('.'),'1.2.3.4')
+                end
+            end
+        }
+    }
+
     describe "when the pattern is a FQDN" do
         before :each do
             @host = 'spirit.mars.nasa.gov.'

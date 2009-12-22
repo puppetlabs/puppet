@@ -240,7 +240,7 @@ module Puppet
                     # Change to /^(\w[-\w]*\.)+[-\w]+\.?$/ for FQDN support
                     [:domain,:exact,nil,munge_name(value)]
                 when /^\*(\.(\w[-\w]*)){1,}$/                             # *.domain.com
-                    host_sans_star = munge_name(value)[1..-1]
+                    host_sans_star = munge_name(value)[0..-2]
                     [:domain,:inexact,host_sans_star.length,host_sans_star]
                 when /\$\d+/                                              # a backreference pattern ala $1.reductivelabs.com or 192.168.0.$1 or $1.$2
                     [:dynamic,:exact,nil,munge_name(value)]
