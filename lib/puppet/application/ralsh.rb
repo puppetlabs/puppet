@@ -42,7 +42,6 @@ Puppet::Application.new(:ralsh) do
         typeobj = Puppet::Type.type(type) or raise "Could not find type #{type}"
         name = ARGV.shift
         params = {}
-
         ARGV.each do |setting|
             if setting =~ /^(\w+)=(.+)$/
                 params[$1] = $2
