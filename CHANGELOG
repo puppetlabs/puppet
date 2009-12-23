@@ -1,5 +1,7 @@
-0.25.2rc1
+0.25.2rc2
 =========
+e4bb529  Fix for #2967 (RFC-1123 problem and regression on wildcarded domains)
+776be7c  Updated CHANGELOG
 a73f799  Updated version
 26e7486  Fixing failing tests
 05e897e  Fix for #2881 (ralsh doesn't find individual parsed resources)
@@ -118,45 +120,6 @@ b8470b8  Fix #2757 & CSR 92 (symlinks in recursively managed dirs)
 eca338c  Fix for #2772 (webrick test failures)
 b1c57e9  Al Hoang's patch for #2781, removing obsolete when/: syntax
 50e9c98  Follow-on for #2724 - Adding an external node classifier
-2f0b1e5  Updated CHANGELOG
-20e5222  Fixing #2689 - file owner warnings are reduced
-09fb3f7  Fixing #2752 - "require" loads "include"
-6846c32  Fixing some recently broken Scope tests
-0043392  Fixed typo in lib/puppet/indirector/ldap.rb
-6b254eb  Fix #2753 - Do not "global allow" plugins/modules mount if some rules have been parsed
-ff3a7bc  Re-fixed #2750 - Stop disabling the CRL or checking for a disabled CRL
-594c774  Revised partial fix for #2661 and related issues
-73d04c6  Bug #2534 Raise error if property appears twice
-7517572  Bug #1908 cron environment should allow empty vals
-febe707  Bug #1742 Invalid params to --color outputs 'nil'
-d383ab8  Use notice() in the versioncmp() docs
-9dff716  conf/redhat/*.init: Use -p option to killproc
-f47a70f  Ticket #2665: Regexp exception on ++ in package names
-b6e4ef3  Fixed #2750 - Set :cacrl to nil instead of 'false' in puppetd
-2b57e06  Fix #2691 - Collection AR request should not include params if querying with tags
-e8bce7a  Workaround #2668 - Compress facts so that the request size limit triggers less often
-e2ce790  Fixed #2737 - The zone provider needs to get acquainted with OpenSolaris
-aea1e5f  Update Red Hat spec file for 0.25.1
-fbdded7  Ticket #2685 (Type error in ssh_authorized_keys)
-4d9f76a  Fix for #2745 fakedata tests not working
-b4bcfe9  Fix for #2736, target doesn't work for ssh_authorized_keys
-ae528f6  Ticket #2734 PSON/JSON not serializing classes of a catalog
-f59f805  Bug #1900 Parsing of quoted $ in stdin
-6ba122f  Fixing #2735 - node classes are immed. added to classlist
-bca3b70  Bundling of pure ruby json lib as "pson"
-ce46be5  Proposed alternative solution for #2664 (REGEX / DIV lexing)
-b0518c3  Fix for #2681 (duplicate resource)
-8a73082  Fix #2707 config_version fails more helpfully
-54ded1b  Fixes #1719, this avoids calling the external binary *which* everytime we are looking for a binary
-4c3c279  Updated required Facter version in README
-fcce46a  Fixed #2702 - Set :outputdir to "doc" if not specified
-3940dfb  Fixed #2674 - createpackage.sh: problem finding install.rb
-3b548f4  Fix #2699 - Use --masterport for PUPPET_PORT variable
-a75bf50  This updates the portage provider in three ways:
-ad86e9e  Fixes #2688. Macauthorization provider now handles booleans internally correctly.
-d891f7a  Ticket #2676 (a typo)
-bfba2cd  Fix #2672 - Make sure nodenames keep their underscores when used as classname
-db67e5f  Added rcov exclusion to Rakefile
 
 0.25.1
 ======
@@ -185,6 +148,9 @@ b4bcfe9  Fix for #2736, target doesn't work for ssh_authorized_keys
 ae528f6  Ticket #2734 PSON/JSON not serializing classes of a catalog
 f59f805  Bug #1900 Parsing of quoted $ in stdin
 6ba122f  Fixing #2735 - node classes are immed. added to classlist
+
+0.25.1rc2
+=========
 bca3b70  Bundling of pure ruby json lib as "pson"
 ce46be5  Proposed alternative solution for #2664 (REGEX / DIV lexing)
 b0518c3  Fix for #2681 (duplicate resource)
@@ -199,6 +165,9 @@ ad86e9e  Fixes #2688. Macauthorization provider now handles booleans internally 
 d891f7a  Ticket #2676 (a typo)
 bfba2cd  Fix #2672 - Make sure nodenames keep their underscores when used as classname
 db67e5f  Added rcov exclusion to Rakefile
+
+0.25.1rc1
+=========
 6912a7e  Incremented version to 0.25.1
 fd322da  Fixes #1538 - Fixes the yumrepo backtrace in noop mode.
 6551e86  Fix #2664 - Mathematic expressions mis-lexed as Regex
@@ -309,6 +278,9 @@ b611c34  Updated fix for #2481
 f385072  Revert "Fxied #2481 - Added status and restart overrides for Red Hat service provider."
 cc379b6  Fixed #2498 - logcheck update
 85a3633  Removed extraneous debugging
+
+0.25.0rc1
+=========
 bf94de9  Updated two more tests
 5b87dba  Logs now assume resource params have metadata
 1410bed  Adding metadata delegation from param to resource
@@ -438,9 +410,6 @@ a6816ff  Set ENV['PATH'] to an empty string if non-existent
 603b9cf  Change the diff default output to "unified"
 9bc9b5c  Added missing colon to suntab
 0f2d70d  Fixed #2087 and refactored the code that gets the smf service state
-
-0.25.0beta2
-===========
 3f070c1  Using the logging utilities to clean up module warnings
 feb7f89  Fixing #1064 - Deprecating module 'plugins' directories
 ccf4e69  Removing deprecated :pluginpath setting
@@ -649,9 +618,6 @@ b611c34  Updated fix for #2481
 f385072  Revert "Fxied #2481 - Added status and restart overrides for Red Hat service provider."
 cc379b6  Fixed #2498 - logcheck update
 85a3633  Removed extraneous debugging
-
-0.25.0rc1
-=========
 bf94de9  Updated two more tests
 5b87dba  Logs now assume resource params have metadata
 1410bed  Adding metadata delegation from param to resource
@@ -1058,10 +1024,8 @@ edf00db  Adding environment support to the REST URI
 a064ed1  Moving the query_string method to Request
 ff9c3ca  Adding tests for the REST query string usage
 87ec08e  Fixing #2108 - pi should work again
-2c7e189  Fixes incorrect detail variable in OS X version check, re-patches ralsh to work with Facter values and adds error check for missing password hash files.
 af4455e  Fix #1088 - part2 - Add rspec tests
 b15028f  Fix #1088 - Collections overrides
-73a0757  Fix #1828 - Scope.number? wasn't strict enough and could produce wrong results
 b24b9f5  Fixed #2071 - Updated LDAP schema
 88aa1bc  Fixing tests broken in previous commits
 f8dea98  Fixing #1949 - relationships now use attributes instead of a label
@@ -1477,6 +1441,9 @@ d0bf26e  Fixed install.rb typo
 4cf7a89  Updated lib install permissions to 0644
 2c7e189  Fixes incorrect detail variable in OS X version check, re-patches ralsh to work with Facter values and adds error check for missing password hash files.
 73a0757  Fix #1828 - Scope.number? wasn't strict enough and could produce wrong results
+
+0.24.8rc1
+=========
 84d6637  Fixed #2000 - No default specified for checksum
 a3bb201  Fixing change printing when list properties are absent
 67fc394  Fixed #2026 - Red Hat ignoring stop method
