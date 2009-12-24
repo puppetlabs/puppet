@@ -119,7 +119,7 @@ case "$1" in
 	log_end_msg 0
 	;;
     *)
-	echo "Usage: $0 {start|stop|restart|force-reload}" >&2
+	echo "Usage: $0 {start|stop|status|restart|force-reload}" >&2
 	exit 1
 	;;
 esac
