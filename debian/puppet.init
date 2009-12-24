@@ -13,7 +13,7 @@ DAEMON=/usr/sbin/puppetd
 DAEMON_OPTS=""
 NAME=puppetd
 DESC="puppet configuration management tool"
-PIDFILE="/var/run/${NAME}.pid"
+PIDFILE="/var/run/puppet/${NAME}.pid"
 
 test -x $DAEMON || exit 0
 
@@ -47,6 +47,10 @@ stop_puppet() {
 	start-stop-daemon --stop --quiet --pidfile $PIDFILE
 }
 
+status_puppet() {
+	status_of_proc -p "${PIDFILE}" "${DAEMON}" "${NAME}"
+}
+
 case "$1" in
     start)
 	log_begin_msg "Starting $DESC"
@@ -63,6 +67,9 @@ case "$1" in
     	reload_puppet
     	log_end_msg 0
     	;;
+    status)
+	status_puppet
+	;;
     restart|force-reload)
 	log_begin_msg "Restarting $DESC"
 	stop_puppet

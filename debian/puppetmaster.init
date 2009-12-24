@@ -41,13 +41,13 @@ start_puppetmaster() {
 	    NUMSTART=0
 	    STARTPORT=$PORT
 	    while [ $NUMSTART -lt $PUPPETMASTERS ]; do 
-		start-stop-daemon --start --quiet --pidfile=/var/run/${NAME}-${STARTPORT}.pid \
-		    --startas $DAEMON -- $DAEMON_OPTS --masterport=$STARTPORT --pidfile=/var/run/${NAME}-${STARTPORT}.pid
+		start-stop-daemon --start --quiet --pidfile=/var/run/puppet/${NAME}-${STARTPORT}.pid \
+		    --startas $DAEMON -- $DAEMON_OPTS --masterport=$STARTPORT --pidfile=/var/run/puppet/${NAME}-${STARTPORT}.pid
 		STARTPORT=$(($STARTPORT + 1))
 		NUMSTART=$(($NUMSTART + 1))
 	    done
 	else
-	    start-stop-daemon --start --quiet --pidfile /var/run/${NAME}.pid \
+	    start-stop-daemon --start --quiet --pidfile /var/run/puppet/${NAME}.pid \
 		--startas $DAEMON -- $DAEMON_OPTS --masterport=$PORT
 	fi
     else
@@ -62,15 +62,37 @@ stop_puppetmaster() {
 	NUMSTART=0
 	STOPPORT=$PORT
 	while [ $NUMSTART -lt $PUPPETMASTERS ]; do 
-	    start-stop-daemon --stop --quiet --pidfile /var/run/${NAME}-${STOPPORT}.pid
-	    rm /var/run/${NAME}-${STOPPORT}.pid
+	    start-stop-daemon --stop --quiet --pidfile /var/run/puppet/${NAME}-${STOPPORT}.pid
+	    rm -f /var/run/puppet/${NAME}-${STOPPORT}.pid
 	    STOPPORT=$(($STOPPORT + 1))
 	    NUMSTART=$(($NUMSTART + 1))
 	done
     else
-	start-stop-daemon --stop --quiet --pidfile /var/run/${NAME}.pid
+	start-stop-daemon --stop --quiet --pidfile /var/run/puppet/${NAME}.pid
     fi
 }
+
+status_puppetmaster() {
+    if is_true "$START" ; then
+	if [ "$SERVERTYPE" = "mongrel" ]
+	then
+	    NUMSTART=0
+	    STARTPORT=$PORT
+	    while [ $NUMSTART -lt $PUPPETMASTERS ]; do 
+		status_of_proc -p "/var/run/puppet/${NAME}-${STARTPORT}.pid" \
+                    "${DAEMON}" "${NAME}-${STARTPORT}"
+		STARTPORT=$(($STARTPORT + 1))
+		NUMSTART=$(($NUMSTART + 1))
+	    done
+	else
+            status_of_proc -p "/var/run/puppet/${NAME}.pid" "${DAEMON}" "${NAME}"
+	fi
+    else
+	echo ""
+	echo "puppetmaster not configured to start"
+    fi
+}
+
 
 case "$1" in
     start)
@@ -85,6 +107,9 @@ case "$1" in
 	;;
     reload)
   	# Do nothing, as Puppetmaster rechecks its config automatically
+        ;;
+    status)
+	    status_puppetmaster
         ;;
     restart|force-reload)
 	log_begin_msg "Restarting $DESC"
