@@ -59,7 +59,7 @@ Puppet::Type.type(:host).provide(:parsed,
         str = "%s\t%s" % [hash[:ip], hash[:name]]
 
         if hash.include? :host_aliases
-            if hash[:alias].is_a? Array
+            if hash[:host_aliases].is_a? Array
                 str += "\t%s" % hash[:host_aliases].join("\t")
             else
                 raise ArgumentError, "Host aliases must be specified as an array"
