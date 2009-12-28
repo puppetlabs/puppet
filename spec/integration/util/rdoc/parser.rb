@@ -35,8 +35,25 @@ describe RDoc::Parser do
         File.unlink(@parsedfile)
     end
 
+    def get_test_class(toplevel)
+        # toplevel -> main -> test
+        toplevel.classes[0].classes[0]
+    end
+
     it "should parse to RDoc data structure" do
         @parser.expects(:document_class).with { |n,k,c| n == "::test" and k.is_a?(Puppet::Parser::ResourceType) }
         @parser.scan
+    end
+
+    it "should get a PuppetClass for the main class" do
+        @parser.scan.classes[0].should be_a RDoc::PuppetClass
+    end
+
+    it "should produce a PuppetClass whose name is test" do
+        get_test_class(@parser.scan).name.should == "test"
+    end
+
+    it "should produce a PuppetClass whose comment is 'comment'" do
+        get_test_class(@parser.scan).comment.should == "comment\n"
     end
 end

@@ -252,7 +252,7 @@ describe RDoc::Parser do
     describe "when documenting nodes" do
         before :each do
             @code = stub_everything 'code'
-            @node = stub_everything 'node', :doc => "mydoc", :parentclass => "parent", :code => @code, :file => "file", :line => 42
+            @node = stub_everything 'node', :doc => "mydoc", :parent => "parent", :code => @code, :file => "file", :line => 42
             @rdoc_node = stub_everything 'rdocnode'
 
             @class = stub_everything 'class'
@@ -295,7 +295,7 @@ describe RDoc::Parser do
     describe "when documenting classes" do
         before :each do
             @code = stub_everything 'code'
-            @class = stub_everything 'class', :doc => "mydoc", :parentclass => "parent", :code => @code, :file => "file", :line => 42
+            @class = stub_everything 'class', :doc => "mydoc", :parent => "parent", :code => @code, :file => "file", :line => 42
             @rdoc_class = stub_everything 'rdoc-class'
 
             @module = stub_everything 'class'

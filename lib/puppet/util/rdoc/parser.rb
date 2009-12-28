@@ -236,7 +236,7 @@ class Parser
         Puppet.debug "rdoc: found new class %s" % name
         container, name = get_class_or_module(container, name)
 
-        superclass = klass.parentclass
+        superclass = klass.parent
         superclass = "" if superclass.nil? or superclass.empty?
 
         @stats.num_classes += 1
@@ -266,7 +266,7 @@ class Parser
     # create documentation for a node
     def document_node(name, node, container)
         Puppet.debug "rdoc: found new node %s" % name
-        superclass = node.parentclass
+        superclass = node.parent
         superclass = "" if superclass.nil? or superclass.empty?
 
         comment = node.doc
@@ -294,7 +294,7 @@ class Parser
         # find superclas if any
         @stats.num_methods += 1
 
-        # find the parentclass
+        # find the parent
         # split define name by :: to find the complete module hierarchy
         container, name = get_class_or_module(container,name)
 
