@@ -10,7 +10,8 @@
 #
 #   puppetca [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
 #               [-g|--generate] [-l|--list] [-s|--sign] [-r|--revoke]
-#               [-p|--print] [-c|--clean] [--verify] [host]
+#               [-p|--print] [-c|--clean] [--verify] [--digest DIGEST]
+#               [--fingerprint] [host]
 #
 # = Description
 #
@@ -34,6 +35,11 @@
 # all::
 #   Operate on all items.  Currently only makes sense with '--sign',
 #   '--clean', or '--list'.
+#
+# digest::
+#   Set the digest for fingerprinting (defaults to md5). Valid values depends
+#   on your openssl and openssl ruby extension version, but should contain at
+#   least md5, sha1, md2, sha256.
 #
 # clean::
 #    Remove all files related to a host from puppetca's storage. This is
@@ -61,6 +67,9 @@
 #
 # print::
 #   Print the full-text version of a host's certificate.
+#
+# fingerprint::
+#   Print the DIGEST (defaults to md5) fingerprint of a host's certificate.
 #
 # revoke::
 #   Revoke the certificate of a client. The certificate can be specified
