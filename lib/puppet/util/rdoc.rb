@@ -23,6 +23,7 @@ module Puppet::Util::RDoc
             options = [ "--fmt", "puppet",
                         "--quiet",
                         "--force-update",
+                        "--exclude", "/modules/[^/]*/files/.*\.pp$",
                         "--op", outputdir ]
 
             options += files
