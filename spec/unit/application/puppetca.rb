@@ -138,5 +138,15 @@ describe "PuppetCA" do
             @puppetca.main
         end
 
+        it "should revoke cert if mode is clean" do
+            @puppetca.mode = :destroy
+            ARGV.stubs(:collect).returns(["host"])
+
+            @ca.expects(:apply).with { |mode,to| mode == :revoke }
+            @ca.expects(:apply).with { |mode,to| mode == :destroy }
+
+            @puppetca.main
+        end
+
     end
 end

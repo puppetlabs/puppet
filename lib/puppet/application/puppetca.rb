@@ -43,6 +43,7 @@ Puppet::Application.new(:puppetca) do
             hosts = ARGV.collect { |h| puts h; h.downcase }
         end
         begin
+            @ca.apply(:revoke, :to => hosts) if @mode == :destroy
             @ca.apply(@mode, :to => hosts)
         rescue => detail
             puts detail.backtrace if Puppet[:trace]
