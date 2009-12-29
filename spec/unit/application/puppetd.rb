@@ -457,6 +457,7 @@ describe "puppetd" do
         describe "with --onetime" do
 
             before :each do
+                @agent.stubs(:run).returns(:report)
                 @puppetd.options.stubs(:[]).with(:client).returns(:client)
                 @puppetd.options.stubs(:[]).with(:detailed_exitcodes).returns(false)
                 @puppetd.stubs(:exit).with(0)
@@ -479,7 +480,7 @@ describe "puppetd" do
             end
 
             it "should let the agent run" do
-                @agent.expects(:run)
+                @agent.expects(:run).returns(:report)
 
                 @puppetd.onetime
             end
