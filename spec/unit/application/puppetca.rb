@@ -39,6 +39,12 @@ describe "PuppetCA" do
         @puppetca.handle_debug(0)
     end
 
+    it "should set the fingerprint digest with the --digest option" do
+        @puppetca.handle_digest(:digest)
+
+        @puppetca.digest.should == :digest
+    end
+
     it "should set mode to :destroy for --clean" do
         @puppetca.handle_clean(0)
         @puppetca.mode.should == :destroy
@@ -125,6 +131,15 @@ describe "PuppetCA" do
             ARGV.stubs(:collect).returns(["host"])
 
             @ca.expects(:apply).with { |mode,to| to[:to] == ["host"]}
+
+            @puppetca.main
+        end
+
+        it "should send the currently set digest" do
+            ARGV.stubs(:collect).returns(["host"])
+            @puppetca.handle_digest(:digest)
+
+            @ca.expects(:apply).with { |mode,to| to[:digest] == :digest}
 
             @puppetca.main
         end

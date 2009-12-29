@@ -54,6 +54,23 @@ class Puppet::SSL::Base
         content.to_text
     end
 
+    def fingerprint(md = :MD5)
+        require 'openssl/digest'
+
+        # ruby 1.8.x openssl digest constants are string
+        # but in 1.9.x they are symbols
+        mds = md.to_s.upcase
+        if OpenSSL::Digest.constants.include?(mds)
+            md = mds
+        elsif OpenSSL::Digest.constants.include?(mds.to_sym)
+            md = mds.to_sym
+        else
+            raise ArgumentError, "#{md} is not a valid digest algorithm for fingerprinting certificate #{name}"
+        end
+
+        OpenSSL::Digest.hexdigest(md, content.to_der).scan(/../).join(':').upcase
+    end
+
     private
 
     def wrapped_class

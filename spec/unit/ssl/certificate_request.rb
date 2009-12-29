@@ -106,7 +106,7 @@ describe Puppet::SSL::CertificateRequest do
         end
 
         it "should log that it is creating a new certificate request" do
-            Puppet.expects(:info)
+            Puppet.expects(:info).twice
             @instance.generate(@key)
         end
 
@@ -162,6 +162,18 @@ describe Puppet::SSL::CertificateRequest do
             @request.expects(:verify).returns false
 
             lambda { @instance.generate(@key) }.should raise_error(Puppet::Error)
+        end
+
+        it "should fingerprint the request" do
+            @instance.expects(:fingerprint)
+            @instance.generate(@key)
+        end
+
+        it "should display the fingerprint" do
+            Puppet.stubs(:info)
+            @instance.stubs(:fingerprint).returns("FINGERPRINT")
+            Puppet.expects(:info).with { |s| s =~ /FINGERPRINT/ }
+            @instance.generate(@key)
         end
 
         it "should return the generated request" do

@@ -12,7 +12,8 @@
 #       [--detailed-exitcodes] [--disable] [--enable]
 #       [-h|--help] [--fqdn <host name>] [-l|--logdest syslog|<file>|console]
 #       [-o|--onetime] [--serve <handler>] [-t|--test] [--noop]
-#       [-V|--version] [-v|--verbose] [-w|--waitforcert <seconds>]
+#       [--digest <digest>] [--fingerprint] [-V|--version]
+#       [-v|--verbose] [-w|--waitforcert <seconds>]
 #
 # = Description
 #
@@ -35,7 +36,7 @@
 # configuration every 30 minutes.
 #
 # Some flags are meant specifically for interactive use -- in particular,
-# +test+ and +tags+ are useful.  +test+ enables verbose logging, causes
+# +test+, +tags+ or +fingerprint+ are useful. +test+ enables verbose logging, causes
 # the daemon to stay in the foreground, exits if the server's configuration is
 # invalid (this happens if, for instance, you've left a syntax error on the
 # server), and exits after running the configuration once (rather than hanging
@@ -50,6 +51,15 @@
 # the new elements into an +ntpd+ class, and call puppet with +--tags ntpd+,
 # which would only apply that small portion of the configuration during your
 # testing, rather than applying the whole thing.
+#
+# +fingerprint+ is a one-time flag. In this mode +puppetd+ will run once and
+# display on the console (and in the log) the current certificate (or certificate
+# request) fingerprint. Providing the +--digest+ option allows to use a different
+# digest algorithm to generate the fingerprint. The main use is to verify that
+# before signing a certificate request on the master, the certificate request the
+# master received is the same as the one the client sent (to prevent against
+# man-in-the-middle attacks when signing certificates).
+# 
 #
 # = Options
 #
@@ -71,6 +81,11 @@
 #
 # debug::
 #   Enable full debugging.
+#
+# digest::
+#   Change the certificate fingerprinting digest algorithm. The default is MD5.
+#   Valid values depends on the version of OpenSSL installed, but should always
+#   at least contain MD5, MD2, SHA1 and SHA256.
 #
 # detailed-exitcodes::
 #   Provide transaction information via exit codes.  If this is enabled, an
@@ -118,6 +133,10 @@
 # onetime::
 #   Run the configuration once, rather than as a long-running daemon.  This is
 #   useful for interactively running puppetd.
+#
+# fingerprint::
+#   Display the current certificate or certificate signing request fingerprint
+#   and then exit. Use the +--digest+ option to change the digest algorithm used.
 #
 # serve::
 #   Start another type of server.  By default, +puppetd+ will start

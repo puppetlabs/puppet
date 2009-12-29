@@ -2,11 +2,11 @@
 # on the CA.  It's only used by the 'puppetca' executable, and its
 # job is to provide a CLI-like interface to the CA class.
 class Puppet::SSL::CertificateAuthority::Interface
-    INTERFACE_METHODS = [:destroy, :list, :revoke, :generate, :sign, :print, :verify]
+    INTERFACE_METHODS = [:destroy, :list, :revoke, :generate, :sign, :print, :verify, :fingerprint]
 
     class InterfaceError < ArgumentError; end
 
-    attr_reader :method, :subjects
+    attr_reader :method, :subjects, :digest
 
     # Actually perform the work.
     def apply(ca)
@@ -38,9 +38,10 @@ class Puppet::SSL::CertificateAuthority::Interface
         end
     end
 
-    def initialize(method, subjects)
+    def initialize(method, options)
         self.method = method
-        self.subjects = subjects
+        self.subjects = options[:to]
+        @digest = options[:digest] || :MD5
     end
 
     # List the hosts.
@@ -67,11 +68,11 @@ class Puppet::SSL::CertificateAuthority::Interface
                 invalid = details.to_s
             end
             if not invalid and signed.include?(host)
-                puts "+ " + host
+                puts "+ #{host} (#{ca.fingerprint(host, @digest)})"
             elsif invalid
-                puts "- " + host + " (" + invalid + ")"
+                puts "- #{host} (#{ca.fingerprint(host, @digest)}) (#{invalid})"
             else
-                puts host
+                puts "#{host} (#{ca.fingerprint(host, @digest)})"
             end
         end
     end
@@ -84,9 +85,20 @@ class Puppet::SSL::CertificateAuthority::Interface
 
     # Print certificate information.
     def print(ca)
-        (subjects == :all ? ca.list : subjects).each do |host|
+        (subjects == :all ? ca.list  : subjects).each do |host|
             if value = ca.print(host)
                 puts value
+            else
+                Puppet.err "Could not find certificate for %s" % host
+            end
+        end
+    end
+
+    # Print certificate information.
+    def fingerprint(ca)
+        (subjects == :all ? ca.list + ca.waiting?: subjects).each do |host|
+            if value = ca.fingerprint(host, @digest)
+                puts "#{host} #{value}"
             else
                 Puppet.err "Could not find certificate for %s" % host
             end

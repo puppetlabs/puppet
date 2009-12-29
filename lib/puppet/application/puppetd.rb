@@ -9,7 +9,7 @@ Puppet::Application.new(:puppetd) do
 
     should_parse_config
 
-    attr_accessor :explicit_waitforcert, :args, :agent, :daemon
+    attr_accessor :explicit_waitforcert, :args, :agent, :daemon, :host
 
     preinit do
         # Do an initial trap, so that cancels don't get a stack trace.
@@ -30,7 +30,9 @@ Puppet::Application.new(:puppetd) do
             :disable => false,
             :client => true,
             :fqdn => nil,
-            :serve => []
+            :serve => [],
+            :digest => :MD5,
+            :fingerprint => false,
         }.each do |opt,val|
             options[opt] = val
         end
@@ -48,6 +50,9 @@ Puppet::Application.new(:puppetd) do
     option("--fqdn FQDN","-f")
     option("--test","-t")
     option("--verbose","-v")
+
+    option("--fingerprint")
+    option("--digest DIGEST")
 
     option("--serve HANDLER", "-s") do |arg|
         if Puppet::Network::Handler.handler(arg)
@@ -92,8 +97,18 @@ Puppet::Application.new(:puppetd) do
     end
 
     dispatch do
+        return :fingerprint if options[:fingerprint]
         return :onetime if options[:onetime]
         return :main
+    end
+
+    command(:fingerprint) do
+        unless cert = host.certificate || host.certificate_request
+           $stderr.puts "Fingerprint asked but no certificate nor certificate request have yet been issued"
+           exit(1)
+           return
+        end
+        Puppet.notice cert.fingerprint(options[:digest])
     end
 
     command(:onetime) do
@@ -220,10 +235,10 @@ Puppet::Application.new(:puppetd) do
 
         Puppet.settings.use :main, :puppetd, :ssl
 
-        # We need to specify a ca location for things to work, but
-        # until the REST cert transfers are working, it needs to
-        # be local.
-        Puppet::SSL::Host.ca_location = :remote
+        # We need to specify a ca location for things to work
+        # in fingerprint mode we just need access to the local files and
+        # we don't need a ca.
+        Puppet::SSL::Host.ca_location = options[:fingerprint] ? :none : :remote
 
         Puppet::Transaction::Report.terminus_class = :rest
 
@@ -246,8 +261,10 @@ Puppet::Application.new(:puppetd) do
             @daemon.daemonize
         end
 
-        host = Puppet::SSL::Host.new
-        cert = host.wait_for_cert(options[:waitforcert])
+        @host = Puppet::SSL::Host.new
+        unless options[:fingerprint]
+            cert = @host.wait_for_cert(options[:waitforcert])
+        end
 
         @objects = []
 

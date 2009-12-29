@@ -532,9 +532,9 @@ describe Puppet::SSL::CertificateAuthority do
                 lambda { @ca.apply(:generate) }.should raise_error(ArgumentError)
             end
 
-            it "should create an Interface instance with the specified method and the subjects" do
-                Puppet::SSL::CertificateAuthority::Interface.expects(:new).with(:generate, :hosts).returns(stub('applier', :apply => nil))
-                @ca.apply(:generate, :to => :hosts)
+            it "should create an Interface instance with the specified method and the options" do
+                Puppet::SSL::CertificateAuthority::Interface.expects(:new).with(:generate, :to => :host).returns(stub('applier', :apply => nil))
+                @ca.apply(:generate, :to => :host)
             end
 
             it "should apply the Interface with itself as the argument" do
@@ -580,6 +580,37 @@ describe Puppet::SSL::CertificateAuthority do
                 cert1 = stub 'cert1', :name => "cert1", :to_text => "mytext"
                 Puppet::SSL::Certificate.expects(:find).with("myhost").returns cert1
                 @ca.print("myhost").should == "mytext"
+            end
+        end
+
+        describe "and fingerprinting certificates" do
+            before :each do
+                @cert = stub 'cert', :name => "cert", :fingerprint => "DIGEST"
+                Puppet::SSL::Certificate.stubs(:find).with("myhost").returns @cert
+                Puppet::SSL::CertificateRequest.stubs(:find).with("myhost")
+            end
+
+            it "should raise an error if the certificate or CSR cannot be found" do
+                Puppet::SSL::Certificate.expects(:find).with("myhost").returns nil
+                Puppet::SSL::CertificateRequest.expects(:find).with("myhost").returns nil
+                lambda { @ca.fingerprint("myhost") }.should raise_error
+            end
+
+            it "should try to find a CSR if no certificate can be found" do
+                Puppet::SSL::Certificate.expects(:find).with("myhost").returns nil
+                Puppet::SSL::CertificateRequest.expects(:find).with("myhost").returns @cert
+                @cert.expects(:fingerprint)
+                @ca.fingerprint("myhost")
+            end
+
+            it "should delegate to the certificate fingerprinting" do
+                @cert.expects(:fingerprint)
+                @ca.fingerprint("myhost")
+            end
+
+            it "should propagate the digest algorithm to the certificate fingerprinting system" do
+                @cert.expects(:fingerprint).with(:digest)
+                @ca.fingerprint("myhost", :digest)
             end
         end
 

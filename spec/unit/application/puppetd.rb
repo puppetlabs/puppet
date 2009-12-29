@@ -34,6 +34,10 @@ describe "puppetd" do
         @puppetd.should respond_to(:onetime)
     end
 
+    it "should declare a fingerprint command" do
+        @puppetd.should respond_to(:fingerprint)
+    end
+
     it "should declare a preinit block" do
         @puppetd.should respond_to(:run_preinit)
     end
@@ -73,6 +77,17 @@ describe "puppetd" do
             @puppetd.options[:serve].should == []
         end
 
+        it "should use MD5 as default digest algorithm" do
+            @puppetd.run_preinit
+
+            @puppetd.options[:digest].should == :MD5
+        end
+
+        it "should not fingerprint by default" do
+            @puppetd.run_preinit
+
+            @puppetd.options[:fingerprint].should be_false
+        end
     end
 
     describe "when handling options" do
@@ -86,7 +101,7 @@ describe "puppetd" do
             @old_argv.each { |a| ARGV << a }
         end
 
-        [:centrallogging, :disable, :enable, :debug, :fqdn, :test, :verbose].each do |option|
+        [:centrallogging, :disable, :enable, :debug, :fqdn, :test, :verbose, :digest].each do |option|
             it "should declare handle_#{option} method" do
                 @puppetd.should respond_to("handle_#{option}".to_sym)
             end
@@ -299,6 +314,13 @@ describe "puppetd" do
             @puppetd.run_setup
         end
 
+        it "should install a none ca location in fingerprint mode" do
+            @puppetd.options.stubs(:[]).with(:fingerprint).returns(true)
+            Puppet::SSL::Host.expects(:ca_location=).with(:none)
+
+            @puppetd.run_setup
+        end
+
         it "should tell the report handler to use REST" do
             Puppet::Transaction::Report.expects(:terminus_class=).with(:rest)
 
@@ -382,6 +404,14 @@ describe "puppetd" do
             @puppetd.run_setup
         end
 
+        it "should not wait for a certificate in fingerprint mode" do
+            @puppetd.options.stubs(:[]).with(:fingerprint).returns(true)
+            @puppetd.options.stubs(:[]).with(:waitforcert).returns(123)
+            @host.expects(:wait_for_cert).never
+
+            @puppetd.run_setup
+        end
+
         it "should setup listen if told to and not onetime" do
             Puppet.stubs(:[]).with(:listen).returns(true)
             @puppetd.options.stubs(:[]).with(:onetime).returns(false)
@@ -440,6 +470,13 @@ describe "puppetd" do
         before :each do
             @puppetd.agent = @agent
             @puppetd.daemon = @daemon
+            @puppetd.options.stubs(:[]).with(:fingerprint).returns(false)
+        end
+
+        it "should dispatch to fingerprint if --fingerprint is used" do
+            @puppetd.options.stubs(:[]).with(:fingerprint).returns(true)
+
+            @puppetd.get_command.should == :fingerprint
         end
 
         it "should dispatch to onetime if --onetime is used" do
@@ -448,7 +485,7 @@ describe "puppetd" do
             @puppetd.get_command.should == :onetime
         end
 
-        it "should dispatch to main if --onetime is not used" do
+        it "should dispatch to main if --onetime and --fingerprint are not used" do
             @puppetd.options.stubs(:[]).with(:onetime).returns(false)
 
             @puppetd.get_command.should == :main
@@ -516,7 +553,39 @@ describe "puppetd" do
             end
         end
 
-        describe "without --onetime" do
+        describe "with --fingerprint" do
+            before :each do
+                @cert = stub_everything 'cert'
+                @puppetd.options.stubs(:[]).with(:fingerprint).returns(true)
+                @puppetd.options.stubs(:[]).with(:digest).returns(:MD5)
+                @host = stub_everything 'host'
+                @puppetd.stubs(:host).returns(@host)
+            end
+
+            it "should fingerprint the certificate if it exists" do
+                @host.expects(:certificate).returns(@cert)
+                @cert.expects(:fingerprint).with(:MD5)
+                @puppetd.fingerprint
+            end
+
+            it "should fingerprint the certificate request if no certificate have been signed" do
+                @host.expects(:certificate).returns(nil)
+                @host.expects(:certificate_request).returns(@cert)
+                @cert.expects(:fingerprint).with(:MD5)
+                @puppetd.fingerprint
+            end
+
+            it "should display the fingerprint" do
+                @host.stubs(:certificate).returns(@cert)
+                @cert.stubs(:fingerprint).with(:MD5).returns("DIGEST")
+
+                Puppet.expects(:notice).with("DIGEST")
+
+                @puppetd.fingerprint
+            end
+        end
+
+        describe "without --onetime and --fingerprint" do
             before :each do
                 Puppet.stubs(:notice)
                 @puppetd.options.stubs(:[]).with(:client)

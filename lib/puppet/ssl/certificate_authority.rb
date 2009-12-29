@@ -53,7 +53,7 @@ class Puppet::SSL::CertificateAuthority
         unless options[:to]
             raise ArgumentError, "You must specify the hosts to apply to; valid values are an array or the symbol :all"
         end
-        applier = Interface.new(method, options[:to])
+        applier = Interface.new(method, options)
 
         applier.apply(self)
     end
@@ -289,6 +289,13 @@ class Puppet::SSL::CertificateAuthority
         unless store.verify(cert.content)
             raise CertificateVerificationError.new(store.error), store.error_string
         end
+    end
+
+    def fingerprint(name, md = :MD5)
+        unless cert = Puppet::SSL::Certificate.find(name) || Puppet::SSL::CertificateRequest.find(name)
+            raise ArgumentError, "Could not find a certificate or csr for %s" % name
+        end
+        cert.fingerprint(md)
     end
 
     # List the waiting certificate requests.

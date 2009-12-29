@@ -43,6 +43,8 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
         raise Puppet::Error, "CSR sign verification failed; you need to clean the certificate request for %s on the server" % name unless csr.verify(key.public_key)
 
         @content = csr
+        Puppet.info "Certificate Request fingerprint (md5): #{fingerprint}"
+        @content
     end
 
     def save(args = {})
