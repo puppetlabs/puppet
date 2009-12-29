@@ -50,7 +50,7 @@ module PSON
         UTF16toUTF8 = swapper.new(UTF16toUTF8) # :nodoc:
       end
     rescue Errno::EINVAL, Iconv::InvalidEncoding
-      raise MissingUnicodeSupport, "iconv doesn't seem to support UTF-8/UTF-16 conversions"
+      Puppet.warning "iconv doesn't seem to support UTF-8/UTF-16 conversions"
     ensure
       $VERBOSE = old_verbose
     end
