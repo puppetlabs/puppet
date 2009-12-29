@@ -157,6 +157,20 @@ describe Puppet::Util::Log do
                 end
             end
 
+            it "should use the source_descriptors" do
+                source = stub "source"
+                source.stubs(:source_descriptors).returns(:tags => ["tag","tag2"], :path => "path", :version => 100)
+                
+                log = Puppet::Util::Log.new(:level => "notice", :message => :foo)
+                log.expects(:tag).with("tag")
+                log.expects(:tag).with("tag2")
+                log.expects(:version=).with(100)
+
+                log.source = source
+
+                log.source.should == "path"
+            end
+
             it "should copy over any version information" do
                 catalog = Puppet::Resource::Catalog.new
                 catalog.version = 25

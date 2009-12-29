@@ -89,6 +89,15 @@ describe Puppet::Type do
         Puppet::Type.type(:mount).new(:name => "foo").version.should == 0
     end
 
+    it "should provide source_descriptors" do
+        resource = Puppet::Type.type(:mount).new(:name => "foo")
+        catalog = Puppet::Resource::Catalog.new
+        catalog.version = 50
+        catalog.add_resource resource
+
+        resource.source_descriptors.should == {:version=>50, :tags=>["mount", "foo"], :path=>"/Mount[foo]"}
+    end
+
     describe "when choosing a default provider" do
         it "should choose the provider with the highest specificity" do
             # Make a fake type
