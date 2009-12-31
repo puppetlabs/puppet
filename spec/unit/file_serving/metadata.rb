@@ -230,23 +230,37 @@ describe Puppet::FileServing::Metadata, " when collecting attributes" do
 end
 
 describe Puppet::FileServing::Metadata, " when pointing to a link" do
-    it "should store the destination of the link in :destination if links are :manage" do
-        file = Puppet::FileServing::Metadata.new("/base/path/my/file", :links => :manage)
-
-        File.expects(:lstat).with("/base/path/my/file").returns stub("stat", :uid => 1, :gid => 2, :ftype => "link", :mode => 0755)
-        File.expects(:readlink).with("/base/path/my/file").returns "/some/other/path"
-
-        file.collect
-        file.destination.should == "/some/other/path"
+    describe "when links are managed" do
+        before do
+             @file = Puppet::FileServing::Metadata.new("/base/path/my/file", :links => :manage)
+             File.expects(:lstat).with("/base/path/my/file").returns stub("stat", :uid => 1, :gid => 2, :ftype => "link", :mode => 0755)
+             File.expects(:readlink).with("/base/path/my/file").returns "/some/other/path"
+        end
+        it "should store the destination of the link in :destination if links are :manage" do
+            @file.collect
+            @file.destination.should == "/some/other/path"
+        end
+        it "should not collect the checksum if links are :manage" do
+            @file.collect
+            @file.checksum.should be_nil
+        end
     end
 
-    it "should not collect the checksum" do
-        file = Puppet::FileServing::Metadata.new("/base/path/my/file", :links => :manage)
-
-        File.expects(:lstat).with("/base/path/my/file").returns stub("stat", :uid => 1, :gid => 2, :ftype => "link", :mode => 0755)
-        File.expects(:readlink).with("/base/path/my/file").returns "/some/other/path"
-
-        file.collect
-        file.checksum.should be_nil
+    describe "when links are followed" do
+        before do
+            @file = Puppet::FileServing::Metadata.new("/base/path/my/file", :links => :follow)
+            File.expects(:stat).with("/base/path/my/file").returns stub("stat", :uid => 1, :gid => 2, :ftype => "file", :mode => 0755)
+            File.expects(:readlink).with("/base/path/my/file").never
+            @checksum = Digest::MD5.hexdigest("some content\n")
+            @file.stubs(:md5_file).returns(@checksum)
+        end
+        it "should not store the destination of the link in :destination if links are :follow" do
+            @file.collect
+            @file.destination.should be_nil
+        end
+        it "should collect the checksum if links are :follow" do
+            @file.collect
+            @file.checksum.should == "{md5}#{@checksum}"
+        end
     end
 end

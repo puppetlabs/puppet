@@ -22,18 +22,15 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
     PARAM_ORDER = [:mode, :ftype, :owner, :group]
 
     def attributes_with_tabs
+        raise(ArgumentError, "Cannot manage files of type #{ftype}") unless ['file','directory','link'].include? ftype
         desc = []
         PARAM_ORDER.each { |check|
             check = :ftype if check == :type
             desc << send(check)
         }
 
-        case ftype
-        when "file", "directory"; desc << checksum
-        when "link"; desc << @destination
-        else
-            raise ArgumentError, "Cannot manage files of type %s" % ftype
-        end
+        desc << checksum     if ftype == 'file' or ftype == 'directory' or (ftype == 'link' and @links == :follow)
+        desc << @destination if                                             ftype == 'link' and @links != :follow
 
         return desc.join("\t")
     end
@@ -66,6 +63,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
             @checksum = ("{%s}" % @checksum_type) + send("%s_file" % @checksum_type, path).to_s
         when "link"
             @destination = File.readlink(real_path)
+            @checksum = ("{%s}" % @checksum_type) + send("%s_file" % @checksum_type, real_path).to_s if @links == :follow
         else
             raise ArgumentError, "Cannot manage files of type %s" % stat.ftype
         end
