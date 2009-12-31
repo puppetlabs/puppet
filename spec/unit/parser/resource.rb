@@ -101,6 +101,17 @@ describe Puppet::Parser::Resource do
         end
     end
 
+    describe "when refering to a resource with name canonicalization" do
+        before do
+            @arguments = {:type => "file", :title => "/path/", :scope => stub('scope', :source => mock('source'))}
+        end
+
+        it "should canonicalize its own name" do
+            res = Puppet::Parser::Resource.new(@arguments)
+            res.ref.should == "File[/path]"
+        end
+    end
+
     describe "when evaluating" do
         before do
             @type = Puppet::Parser::Resource
