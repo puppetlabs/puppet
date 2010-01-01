@@ -291,20 +291,23 @@ module Util
             begin
                 output_read.close
 
+                if arguments[:squelch]
+                    output_write.close
+                    $stdout.reopen('/dev/null', 'w')
+                    $stderr.reopen('/dev/null', 'w')
+                else
+                    $stdout.reopen(output_write)
+                    if arguments[:combine]
+                        $stderr.reopen(output_write)
+                    else
+                        $stderr.reopen('/dev/null', 'w')
+                    end
+                end
+
                 if arguments[:stdinfile]
                     $stdin.reopen(arguments[:stdinfile])
                 else
                     $stdin.close
-                end
-                if arguments[:squelch]
-                    $stdout.close
-                else
-                    $stdout.reopen(output_write)
-                end
-                if arguments[:combine]
-                    $stderr.reopen(output_write)
-                else
-                    $stderr.close
                 end
 
                 3.upto(256){|fd| IO::new(fd).close rescue nil}
