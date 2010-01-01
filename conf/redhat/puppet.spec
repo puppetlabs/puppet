@@ -5,7 +5,7 @@
 %define confdir conf/redhat
 
 Name:           puppet
-Version:        0.25.1
+Version:        0.25.2
 Release:        1%{?dist}
 Summary:        A network tool for managing many disparate systems
 License:        GPLv2+
@@ -82,6 +82,9 @@ chmod +x ext/puppetstoredconfigclean.rb
 find examples/ -type f -empty | xargs rm
 find examples/ -type f | xargs chmod a-x
 
+# puppet-queue.conf is more of an example, used for stompserver
+mv conf/puppet-queue.conf examples/etc/puppet/
+
 %install
 rm -rf %{buildroot}
 ruby install.rb --destdir=%{buildroot} --quick --no-rdoc
@@ -96,6 +99,7 @@ install -Dp -m0644 %{confdir}/server.sysconfig %{buildroot}%{_sysconfdir}/syscon
 install -Dp -m0755 %{confdir}/server.init %{buildroot}%{_initrddir}/puppetmaster
 install -Dp -m0644 %{confdir}/fileserver.conf %{buildroot}%{_sysconfdir}/puppet/fileserver.conf
 install -Dp -m0644 %{confdir}/puppet.conf %{buildroot}%{_sysconfdir}/puppet/puppet.conf
+install -Dp -m0644 conf/auth.conf %{buildroot}%{_sysconfdir}/puppet/auth.conf
 install -Dp -m0644 %{confdir}/logrotate %{buildroot}%{_sysconfdir}/logrotate.d/puppet
 
 # We need something for these ghosted files, otherwise rpmbuild
@@ -123,7 +127,7 @@ install -Dp -m0644 ext/vim/syntax/puppet.vim $vimdir/syntax/puppet.vim
 
 %files
 %defattr(-, root, root, 0755)
-%doc CHANGELOG COPYING LICENSE README examples
+%doc CHANGELOG COPYING LICENSE README README.queueing examples
 %{_bindir}/pi
 %{_bindir}/puppet
 %{_bindir}/ralsh
@@ -136,6 +140,7 @@ install -Dp -m0644 ext/vim/syntax/puppet.vim $vimdir/syntax/puppet.vim
 %dir %{_sysconfdir}/puppet
 %config(noreplace) %{_sysconfdir}/sysconfig/puppet
 %config(noreplace) %{_sysconfdir}/puppet/puppet.conf
+%config(noreplace) %{_sysconfdir}/puppet/auth.conf
 %ghost %config(noreplace,missingok) %{_sysconfdir}/puppet/puppetca.conf
 %ghost %config(noreplace,missingok) %{_sysconfdir}/puppet/puppetd.conf
 %config(noreplace) %{_sysconfdir}/logrotate.d/puppet
@@ -169,6 +174,7 @@ install -Dp -m0644 ext/vim/syntax/puppet.vim $vimdir/syntax/puppet.vim
 %{_mandir}/man8/filebucket.8.gz
 %{_mandir}/man8/puppetmasterd.8.gz
 %{_mandir}/man8/puppetrun.8.gz
+%{_mandir}/man8/puppetqd.8.gz
 
 # Fixed uid/gid were assigned in bz 472073 (Fedora), 471918 (RHEL-5),
 # and 471919 (RHEL-4)
@@ -214,6 +220,10 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Fri Jan 01 2010 Todd Zullinger <tmz@pobox.com> - 0.25.2-1
+- Update to 0.25.2
+- Install auth.conf, puppetqd manpage, and queuing examples/docs
+
 * Tue Oct 20 2009 Todd Zullinger <tmz@pobox.com> - 0.25.1-1
 - Update to 0.25.1
 - Include the pi program and man page (R.I.Pienaar)
