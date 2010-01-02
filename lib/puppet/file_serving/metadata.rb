@@ -29,8 +29,8 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
             desc << send(check)
         }
 
-        desc << checksum     if ftype == 'file' or ftype == 'directory' or (ftype == 'link' and @links == :follow)
-        desc << @destination if                                             ftype == 'link' and @links != :follow
+        desc << checksum
+        desc << @destination rescue nil if ftype == 'link'
 
         return desc.join("\t")
     end
@@ -63,7 +63,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
             @checksum = ("{%s}" % @checksum_type) + send("%s_file" % @checksum_type, path).to_s
         when "link"
             @destination = File.readlink(real_path)
-            @checksum = ("{%s}" % @checksum_type) + send("%s_file" % @checksum_type, real_path).to_s if @links == :follow
+            @checksum = ("{%s}" % @checksum_type) + send("%s_file" % @checksum_type, real_path).to_s rescue nil
         else
             raise ArgumentError, "Cannot manage files of type %s" % stat.ftype
         end
