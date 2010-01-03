@@ -160,7 +160,7 @@ module Puppet
         :http_proxy_port => [3128,
             "The HTTP proxy port to use for outgoing connections"],
         :http_enable_post_connection_check => [true,
-            "Boolean; wheter or not puppetd should validate the server
+            "Boolean; whether or not puppetd should validate the server
             SSL certificate against the request hostname."],
         :filetimeout => [ 15,
             "The minimum time to wait (in seconds) between checking for updates in
