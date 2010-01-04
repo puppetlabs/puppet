@@ -36,7 +36,7 @@ class Puppet::Util::Reference
 
     def self.pdf(text)
         puts "creating pdf"
-        File.open("/tmp/puppetdoc.txt", "w") do |f|
+        Puppet::Util.secure_open("/tmp/puppetdoc.txt", "w") do |f|
             f.puts text
         end
         rst2latex = %x{which rst2latex}
@@ -48,6 +48,9 @@ class Puppet::Util::Reference
         end
         rst2latex.chomp!
         cmd = %{#{rst2latex} /tmp/puppetdoc.txt > /tmp/puppetdoc.tex}
+        Puppet::Util.secure_open("/tmp/puppetdoc.tex","w") do |f|
+            # If we get here without an error, /tmp/puppetdoc.tex isn't a tricky cracker's symlink
+        end
         output = %x{#{cmd}}
         unless $? == 0
             $stderr.puts "rst2latex failed"
@@ -67,7 +70,7 @@ class Puppet::Util::Reference
         puts "Creating markdown for #{name} reference."
         dir = "/tmp/" + Puppet::PUPPETVERSION
         FileUtils.mkdir(dir) unless File.directory?(dir) 
-        File.open(dir + "/" + "#{name}.rst", "w") do |f|
+        Puppet::Util.secure_open(dir + "/" + "#{name}.rst", "w") do |f|
             f.puts text
         end
         pandoc = %x{which pandoc}
@@ -190,7 +193,7 @@ class Puppet::Util::Reference
     end
 
     def trac
-        File.open("/tmp/puppetdoc.txt", "w") do |f|
+        Puppet::Util.secure_open("/tmp/puppetdoc.txt", "w") do |f|
             f.puts self.to_trac
         end
 

@@ -64,6 +64,6 @@ module Puppet::Rails::Benchmark
             data = {}
         end
         data[branch] = $benchmarks
-        File.open(file, "w") { |f| f.print YAML.dump(data) }
+        Puppet::Util.secure_open(file, "w") { |f| f.print YAML.dump(data) }
     end
 end
