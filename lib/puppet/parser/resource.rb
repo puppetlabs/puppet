@@ -56,6 +56,10 @@ class Puppet::Parser::Resource
         end
     end
 
+    def []=(param, value)
+        set_parameter(param, value)
+    end
+
     def builtin=(bool)
         @ref.builtin = bool
     end

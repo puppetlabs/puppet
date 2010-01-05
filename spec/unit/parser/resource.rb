@@ -75,6 +75,16 @@ describe Puppet::Parser::Resource do
         @resource.to_ral.should == "yay"
     end
 
+    it "should be able to use the indexing operator to access parameters" do
+        resource = Puppet::Parser::Resource.new(:type => "resource", :title => "testing", :source => "source", :scope => "scope")
+        resource["foo"] = "bar"
+        resource["foo"].should == "bar"
+    end
+
+    it "should return the title when asked for a parameter named 'title'" do
+        Puppet::Parser::Resource.new(:type => "resource", :title => "testing", :source => "source", :scope => "scope")[:title].should == "testing"
+    end
+
     describe "when initializing" do
         before do
             @arguments = {:type => "resource", :title => "testing", :scope => stub('scope', :source => mock('source'))}
