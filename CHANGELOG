@@ -1,3 +1,6 @@
+0.24.9
+    Fix for temporary file issues (https://bugzilla.redhat.com/show_bug.cgi?id=502881)
+
 0.24.8
     Fixed #2077 - ralsh user broken on OSX
     
