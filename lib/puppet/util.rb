@@ -452,6 +452,7 @@ module Util
     end
     module_function :secure_open
 end
+end
 
 require 'puppet/util/errors'
 require 'puppet/util/methodhelper'
