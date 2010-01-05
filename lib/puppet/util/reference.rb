@@ -36,7 +36,7 @@ class Puppet::Util::Reference
 
     def self.pdf(text)
         puts "creating pdf"
-        File.open("/tmp/puppetdoc.txt", "w") do |f|
+        Puppet::Util.secure_open("/tmp/puppetdoc.txt", "w") do |f|
             f.puts text
         end
         rst2latex = %x{which rst2latex}
@@ -48,6 +48,7 @@ class Puppet::Util::Reference
         end
         rst2latex.chomp!
         cmd = %{#{rst2latex} /tmp/puppetdoc.txt > /tmp/puppetdoc.tex}
+        Puppet::Util.secure_open('/tmp/puppetdoc.tex','w') {}
         output = %x{#{cmd}}
         unless $? == 0
             $stderr.puts "rst2latex failed"
@@ -168,7 +169,7 @@ class Puppet::Util::Reference
     end
 
     def trac
-        File.open("/tmp/puppetdoc.txt", "w") do |f|
+        Puppet::Util.secure_open("/tmp/puppetdoc.txt", "w") do |f|
             f.puts self.to_trac
         end
 
