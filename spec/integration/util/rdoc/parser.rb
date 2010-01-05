@@ -2,7 +2,7 @@
 
 Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f) : Dir.chdir("..") { s.call(f) } }).call("spec/spec_helper.rb") }
 
-require 'puppet/parser/loaded_code'
+require 'puppet/parser/resource_type_collection'
 require 'puppet/util/rdoc/parser'
 require 'puppet/util/rdoc'
 require 'puppet/util/rdoc/code_objects'

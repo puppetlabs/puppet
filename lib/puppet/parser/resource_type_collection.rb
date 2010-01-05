@@ -1,11 +1,27 @@
-class Puppet::Parser::LoadedCode
-    def initialize
+class Puppet::Parser::ResourceTypeCollection
+    attr_reader :environment
+
+    @code = {}
+
+    def self.[]=(environment, code)
+        @code[environment] = code
+    end
+
+    def self.[](environment)
+        @code[environment]
+    end
+
+    def initialize(environment)
+        @environment = environment
         @hostclasses = {}
         @definitions = {}
         @nodes = {}
 
         # So we can keep a list and match the first-defined regex
         @node_list = []
+
+        # Store the most recently created code collection globally per environment.
+        self.class[self.environment] = self
     end
 
     def <<(thing)

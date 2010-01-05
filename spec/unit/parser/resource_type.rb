@@ -94,19 +94,19 @@ describe Puppet::Parser::ResourceType do
         end
 
         it "should return the name converted to a string when the name is not a regex" do
-            pending "Need to define LoadedCode behaviour first"
+            pending "Need to define ResourceTypeCollection behaviour first"
             name = Puppet::Parser::AST::HostName.new(:value => "foo")
             Puppet::Parser::ResourceType.new(:node, name).name.should == "foo"
         end
 
         it "should return the name converted to a string when the name is a regex" do
-            pending "Need to define LoadedCode behaviour first"
+            pending "Need to define ResourceTypeCollection behaviour first"
             name = Puppet::Parser::AST::HostName.new(:value => /regex/)
             Puppet::Parser::ResourceType.new(:node, name).name.should == /regex/.to_s
         end
 
         it "should mark any created scopes as a node scope" do
-            pending "Need to define LoadedCode behaviour first"
+            pending "Need to define ResourceTypeCollection behaviour first"
             name = Puppet::Parser::AST::HostName.new(:value => /regex/)
             Puppet::Parser::ResourceType.new(:node, name).name.should == /regex/.to_s
         end

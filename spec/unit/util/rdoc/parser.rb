@@ -2,7 +2,7 @@
 
 Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f) : Dir.chdir("..") { s.call(f) } }).call("spec/spec_helper.rb") }
 
-require 'puppet/parser/loaded_code'
+require 'puppet/parser/resource_type_collection'
 require 'puppet/util/rdoc/parser'
 require 'puppet/util/rdoc/code_objects'
 require 'rdoc/options'
@@ -47,8 +47,8 @@ describe RDoc::Parser do
 
     describe "when scanning top level entities" do
         before :each do
-            @loadedcode = stub_everything 'loadedcode'
-            @parser.ast = @loadedcode
+            @resource_type_collection = stub_everything 'resource_type_collection'
+            @parser.ast = @resource_type_collection
             @parser.stubs(:split_module).returns("module")
 
             @topcontainer = stub_everything 'topcontainer'
@@ -148,7 +148,7 @@ describe RDoc::Parser do
         end
 
         it "should document classes in the parsed file" do
-            @loadedcode.add_hostclass(@klass)
+            @resource_type_collection.add_hostclass(@klass)
 
             @parser.expects(:document_class).with("myclass", @klass, @container)
 
@@ -157,7 +157,7 @@ describe RDoc::Parser do
 
         it "should not document class parsed in an other file" do
             @klass.stubs(:file).returns("/not/same/path/file.pp")
-            @loadedcode.add_hostclass(@klass)
+            @resource_type_collection.add_hostclass(@klass)
 
             @parser.expects(:document_class).with("myclass", @klass, @container).never
 
@@ -166,7 +166,7 @@ describe RDoc::Parser do
 
         it "should document vardefs for the main class" do
             @klass.stubs(:name).returns :main
-            @loadedcode.add_hostclass(@klass)
+            @resource_type_collection.add_hostclass(@klass)
 
             code = stub 'code', :is_a? => false
             @klass.stubs(:name).returns("")
@@ -178,7 +178,7 @@ describe RDoc::Parser do
         end
 
         it "should document definitions in the parsed file" do
-            @loadedcode.add_definition(@definition)
+            @resource_type_collection.add_definition(@definition)
 
             @parser.expects(:document_define).with("mydef", @definition, @container)
 
@@ -187,7 +187,7 @@ describe RDoc::Parser do
 
         it "should not document definitions parsed in an other file" do
             @definition.stubs(:file).returns("/not/same/path/file.pp")
-            @loadedcode.add_definition(@definition)
+            @resource_type_collection.add_definition(@definition)
 
             @parser.expects(:document_define).with("mydef", @definition, @container).never
 
@@ -195,7 +195,7 @@ describe RDoc::Parser do
         end
 
         it "should document nodes in the parsed file" do
-            @loadedcode.add_node(@node)
+            @resource_type_collection.add_node(@node)
 
             @parser.expects(:document_node).with("mynode", @node, @container)
 
@@ -204,7 +204,7 @@ describe RDoc::Parser do
 
         it "should not document node parsed in an other file" do
             @node.stubs(:file).returns("/not/same/path/file.pp")
-            @loadedcode.add_node(@node)
+            @resource_type_collection.add_node(@node)
 
             @parser.expects(:document_node).with("mynode", @node, @container).never
 

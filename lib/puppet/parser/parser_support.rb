@@ -3,7 +3,7 @@
 class Puppet::Parser::Parser
     require 'puppet/parser/functions'
     require 'puppet/parser/files'
-    require 'puppet/parser/loaded_code'
+    require 'puppet/parser/resource_type_collection'
     require 'puppet/parser/resource_type'
     require 'puppet/dsl'
     require 'monitor'
@@ -101,7 +101,7 @@ class Puppet::Parser::Parser
 
     [:hostclass, :definition, :node, :nodes?].each do |method|
         define_method(method) do |*args|
-            @loaded_code.send(method, *args)
+            @resource_type_collection.send(method, *args)
         end
     end
 
@@ -134,7 +134,7 @@ class Puppet::Parser::Parser
             names_to_try.compact!
         end
 
-        until (result = @loaded_code.send(method, namespace, name)) or names_to_try.empty? do
+        until (result = @resource_type_collection.send(method, namespace, name)) or names_to_try.empty? do
             self.load(names_to_try.shift)
         end
         return result
@@ -174,7 +174,7 @@ class Puppet::Parser::Parser
         end
 
         files.collect { |file|
-            parser = Puppet::Parser::Parser.new(:loaded_code => @loaded_code, :environment => @environment)
+            parser = Puppet::Parser::Parser.new(:resource_type_collection => @resource_type_collection, :environment => @environment)
             parser.files = self.files
             Puppet.debug("importing '%s'" % file)
 
@@ -195,7 +195,7 @@ class Puppet::Parser::Parser
 
     def initialize(options = {})
         @environment = options[:environment]
-        @loaded_code = options[:loaded_code] || Puppet::Parser::LoadedCode.new(@environment)
+        @resource_type_collection = options[:resource_type_collection] || Puppet::Parser::ResourceTypeCollection.new(@environment)
         initvars()
     end
 
@@ -252,7 +252,7 @@ class Puppet::Parser::Parser
         end
         # We don't know whether we're looking for a class or definition, so we have
         # to test for both.
-        return @loaded_code.hostclass(classname) || @loaded_code.definition(classname)
+        return @resource_type_collection.hostclass(classname) || @resource_type_collection.definition(classname)
     end
 
     # Try to load a class, since we could not find it.
@@ -277,12 +277,12 @@ class Puppet::Parser::Parser
 
     # Create a new class, or merge with an existing class.
     def newclass(name, options = {})
-        @loaded_code.add Puppet::Parser::ResourceType.new(:hostclass, name, ast_context(true).merge(options))
+        @resource_type_collection.add Puppet::Parser::ResourceType.new(:hostclass, name, ast_context(true).merge(options))
     end
 
     # Create a new definition.
     def newdefine(name, options = {})
-        @loaded_code.add Puppet::Parser::ResourceType.new(:definition, name, ast_context(true).merge(options))
+        @resource_type_collection.add Puppet::Parser::ResourceType.new(:definition, name, ast_context(true).merge(options))
     end
 
     # Create a new node.  Nodes are special, because they're stored in a global
@@ -291,7 +291,7 @@ class Puppet::Parser::Parser
         names = [names] unless names.instance_of?(Array)
         context = ast_context(true)
         names.collect do |name|
-            @loaded_code.add(Puppet::Parser::ResourceType.new(:node, name, context.merge(options)))
+            @resource_type_collection.add(Puppet::Parser::ResourceType.new(:node, name, context.merge(options)))
         end
     end
 
@@ -355,7 +355,7 @@ class Puppet::Parser::Parser
             # Store the results as the top-level class.
             newclass("", :code => main)
         end
-        return @loaded_code
+        return @resource_type_collection
     ensure
         @lexer.clear
     end
