@@ -12,6 +12,29 @@ describe Puppet::Parser do
         @true_ast = Puppet::Parser::AST::Boolean.new :value => true
     end
 
+    describe "when parsing files" do
+        before do
+            FileTest.stubs(:exist?).returns true
+            File.stubs(:open)
+            @parser.stubs(:check_and_add_to_watched_files).returns true
+        end
+
+        it "should treat files ending in 'rb' as ruby files" do
+            @parser.expects(:parse_ruby_file)
+            @parser.file = "/my/file.rb"
+            @parser.parse
+        end
+
+        describe "in ruby" do
+            it "should use the ruby interpreter to load the file" do
+                @parser.file = "/my/file.rb"
+                @parser.expects(:require).with "/my/file.rb"
+
+                @parser.parse_ruby_file
+            end
+        end
+    end
+
     describe "when parsing append operator" do
 
         it "should not raise syntax errors" do

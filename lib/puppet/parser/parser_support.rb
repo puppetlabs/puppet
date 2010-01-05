@@ -5,6 +5,7 @@ class Puppet::Parser::Parser
     require 'puppet/parser/files'
     require 'puppet/parser/loaded_code'
     require 'puppet/parser/resource_type'
+    require 'puppet/dsl'
     require 'monitor'
 
     AST = Puppet::Parser::AST
@@ -83,11 +84,11 @@ class Puppet::Parser::Parser
     end
 
     def file=(file)
-        unless FileTest.exists?(file)
+        unless FileTest.exist?(file)
             unless file =~ /\.pp$/
                 file = file + ".pp"
             end
-            unless FileTest.exists?(file)
+            unless FileTest.exist?(file)
                 raise Puppet::Error, "Could not find file %s" % file
             end
         end
@@ -317,6 +318,7 @@ class Puppet::Parser::Parser
 
     # how should I do error handling here?
     def parse(string = nil)
+        return parse_ruby_file if self.file =~ /\.rb$/
         if string
             self.string = string
         end
@@ -356,6 +358,10 @@ class Puppet::Parser::Parser
         return @loaded_code
     ensure
         @lexer.clear
+    end
+
+    def parse_ruby_file
+        require self.file
     end
 
     # See if any of the files have changed.
