@@ -299,21 +299,21 @@ describe Puppet::Parser do
 
     end
 
-    describe Puppet::Parser,"when looking up definitions" do
+    describe "when looking up definitions" do
         it "should check for them by name" do
             @parser.stubs(:find_or_load).with("namespace","name",:definition).returns(:this_value)
             @parser.find_definition("namespace","name").should == :this_value
         end
     end
 
-    describe Puppet::Parser,"when looking up hostclasses" do
+    describe "when looking up hostclasses" do
         it "should check for them by name" do
             @parser.stubs(:find_or_load).with("namespace","name",:hostclass).returns(:this_value)
             @parser.find_hostclass("namespace","name").should == :this_value
         end
     end
 
-    describe Puppet::Parser,"when looking up names" do
+    describe "when looking up names" do
         before :each do
             @loaded_code = mock 'loaded code'
             @loaded_code.stubs(:find_my_type).with('loaded_namespace',  'loaded_name').returns(true)
@@ -366,7 +366,7 @@ describe Puppet::Parser do
         end
     end
 
-    describe Puppet::Parser,"when loading classnames" do
+    describe "when loading classnames" do
         before :each do
             @loaded_code = mock 'loaded code'
             @parser = Puppet::Parser::Parser.new :environment => "development",:loaded_code => @loaded_code
