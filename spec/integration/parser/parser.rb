@@ -4,8 +4,8 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 describe Puppet::Parser::Parser do
     before :each do
-        @loaded_code = Puppet::Parser::LoadedCode.new
-        @parser = Puppet::Parser::Parser.new :environment => "development", :loaded_code => @loaded_code
+        @resource_type_collection = Puppet::Parser::ResourceTypeCollection.new("env")
+        @parser = Puppet::Parser::Parser.new :environment => "development", :resource_type_collection => @resource_type_collection
     end
 
     describe "when parsing comments before statement" do

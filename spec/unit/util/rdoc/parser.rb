@@ -141,8 +141,8 @@ describe RDoc::Parser do
             @definition = stub_everything 'definition', :file => "module/manifests/init.pp", :type => :definition, :name => "mydef"
             @node = stub_everything 'node', :file => "module/manifests/init.pp", :type => :node, :name => "mynode"
 
-            @loadedcode = Puppet::Parser::LoadedCode.new
-            @parser.ast = @loadedcode
+            @resource_type_collection = Puppet::Parser::ResourceTypeCollection.new("env")
+            @parser.ast = @resource_type_collection
 
             @container = stub_everything 'container'
         end

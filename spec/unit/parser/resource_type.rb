@@ -275,7 +275,7 @@ describe Puppet::Parser::ResourceType do
 
     describe "when describing and managing parent classes" do
         before do
-            @code = Puppet::Parser::LoadedCode.new
+            @code = Puppet::Parser::ResourceTypeCollection.new("env")
             @parent = Puppet::Parser::ResourceType.new(:hostclass, "bar")
             @code.add @parent
 
@@ -369,7 +369,7 @@ describe Puppet::Parser::ResourceType do
             @top = Puppet::Parser::ResourceType.new :hostclass, "top"
             @middle = Puppet::Parser::ResourceType.new :hostclass, "middle", :parent => "top"
 
-            @code = Puppet::Parser::LoadedCode.new
+            @code = Puppet::Parser::ResourceTypeCollection.new("env")
             @code.add @top
             @code.add @middle
         end
@@ -460,7 +460,7 @@ describe Puppet::Parser::ResourceType do
         end
 
         it "should fail if both classes have different parent classes" do
-            code = Puppet::Parser::LoadedCode.new
+            code = Puppet::Parser::ResourceTypeCollection.new("env")
             {"a" => "b", "c" => "d"}.each do |parent, child|
                 code.add Puppet::Parser::ResourceType.new(:hostclass, parent)
                 code.add Puppet::Parser::ResourceType.new(:hostclass, child, :parent => parent)

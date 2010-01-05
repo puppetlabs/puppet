@@ -194,8 +194,8 @@ class Puppet::Parser::Parser
     end
 
     def initialize(options = {})
-        @loaded_code = options[:loaded_code] || Puppet::Parser::LoadedCode.new
         @environment = options[:environment]
+        @loaded_code = options[:loaded_code] || Puppet::Parser::LoadedCode.new(@environment)
         initvars()
     end
 
