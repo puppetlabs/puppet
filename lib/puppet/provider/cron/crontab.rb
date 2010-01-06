@@ -27,18 +27,13 @@ Puppet::Type.type(:cron).provide(:crontab,
 
     text_line :environment, :match => %r{^\w+=}
 
-    record_line :freebsd_special, :fields => %w{special command},
-        :match => %r{^@(\w+)\s+(.+)$}, :pre_gen => proc { |record|
-            record[:special] = "@" + record[:special]
-        }
-
-    crontab = record_line :crontab, :fields => %w{minute hour monthday month weekday command},
-        :match => %r{^\s*(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(.+)$},
-        :optional => %w{minute hour weekday month monthday}, :absent => "*"
+    crontab = record_line :crontab, :fields => %w{special minute hour monthday month weekday command},
+        :match => %r{^\s*(?:@(\w+)|(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+))\s+(.+)$},
+        :optional => %w{special minute hour weekday month monthday}, :absent => "*"
 
     class << crontab
         def numeric_fields
-            fields - [:command]
+            fields - [:command, :special]
         end
         # Do some post-processing of the parsed record.  Basically just
         # split the numeric fields on ','.
