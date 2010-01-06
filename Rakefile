@@ -20,6 +20,7 @@ FILES = FileList[
     'man/**/*',
     'examples/**/*',
     'ext/**/*',
+    'tasks/**/*',
     'test/**/*',
     'spec/**/*'
 ]
