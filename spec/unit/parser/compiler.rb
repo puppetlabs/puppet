@@ -33,7 +33,7 @@ end
 describe Puppet::Parser::Compiler do
     before :each do
         @node = Puppet::Node.new "testnode"
-        @parser = Puppet::Parser::Parser.new :environment => "development"
+        @parser = Puppet::Parser::Parser.new "development"
 
         @scope_resource = stub 'scope_resource', :builtin? => true, :finish => nil, :ref => 'Class[main]', :type => "class"
         @scope = stub 'scope', :resource => @scope_resource, :source => mock("source")
@@ -75,7 +75,6 @@ describe Puppet::Parser::Compiler do
             node = Puppet::Node.new("mynode")
             node.classes = %w{foo bar}
             compiler = Puppet::Parser::Compiler.new(node, @parser)
-            p compiler.classlist
 
             compiler.classlist.should include("foo")
             compiler.classlist.should include("bar")

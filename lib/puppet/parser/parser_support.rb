@@ -175,7 +175,7 @@ class Puppet::Parser::Parser
         end
 
         files.collect { |file|
-            parser = Puppet::Parser::Parser.new(:environment => @environment)
+            parser = Puppet::Parser::Parser.new(@environment)
             parser.files = self.files
             Puppet.debug("importing '%s'" % file)
 
@@ -195,8 +195,6 @@ class Puppet::Parser::Parser
     end
 
     def initialize(env)
-        puts caller and raise "fix your calling of Parser.new" if env.is_a?(Hash)
-
         # The environment is needed to know how to find the resource type collection.
         @environment = env.is_a?(String) ? Puppet::Node::Environment.new(env) : env
         initvars()

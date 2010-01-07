@@ -21,7 +21,7 @@ describe Puppet::Parser::Compiler do
 
         Puppet.settings[:config_version] = 'git rev-parse HEAD'
 
-        @parser = Puppet::Parser::Parser.new :environment => "development"
+        @parser = Puppet::Parser::Parser.new "development"
         @compiler = Puppet::Parser::Compiler.new(@node, @parser)
 
         @compiler.catalog.version.should == version

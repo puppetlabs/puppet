@@ -33,7 +33,7 @@ class Parser
     def scan
         Puppet.info "rdoc: scanning %s" % @input_file_name
         if @input_file_name =~ /\.pp$/
-            @parser = Puppet::Parser::Parser.new(:environment => Puppet[:environment])
+            @parser = Puppet::Parser::Parser.new(Puppet[:environment])
             @parser.file = @input_file_name
             @ast = @parser.parse
         end
