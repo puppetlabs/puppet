@@ -7,9 +7,9 @@ describe Puppet::Parser do
     ast = Puppet::Parser::AST
 
     before :each do
-        @resource_type_collection = Puppet::Parser::ResourceTypeCollection.new("development")
+        @known_resource_types = Puppet::Parser::ResourceTypeCollection.new("development")
         @parser = Puppet::Parser::Parser.new "development"
-        @parser.stubs(:resource_type_collection).returns @resource_type_collection
+        @parser.stubs(:known_resource_types).returns @known_resource_types
         @true_ast = Puppet::Parser::AST::Boolean.new :value => true
     end
 
@@ -30,7 +30,7 @@ describe Puppet::Parser do
     it "should be able to look up the environment-specific resource type collection" do
         rtc = Puppet::Node::Environment.new("development").known_resource_types
         parser = Puppet::Parser::Parser.new "development"
-        parser.resource_type_collection.should equal(rtc)
+        parser.known_resource_types.should equal(rtc)
     end
 
     describe "when parsing files" do
@@ -296,8 +296,8 @@ describe Puppet::Parser do
     end
 
     describe "when retrieving a specific node" do
-        it "should delegate to the resource_type_collection node" do
-            @resource_type_collection.expects(:node).with("node")
+        it "should delegate to the known_resource_types node" do
+            @known_resource_types.expects(:node).with("node")
 
             @parser.node("node")
         end
@@ -305,7 +305,7 @@ describe Puppet::Parser do
 
     describe "when retrieving a specific class" do
         it "should delegate to the loaded code" do
-            @resource_type_collection.expects(:hostclass).with("class")
+            @known_resource_types.expects(:hostclass).with("class")
 
             @parser.hostclass("class")
         end
@@ -313,7 +313,7 @@ describe Puppet::Parser do
 
     describe "when retrieving a specific definitions" do
         it "should delegate to the loaded code" do
-            @resource_type_collection.expects(:definition).with("define")
+            @known_resource_types.expects(:definition).with("define")
 
             @parser.definition("define")
         end
@@ -321,7 +321,7 @@ describe Puppet::Parser do
 
     describe "when determining the configuration version" do
         it "should determine it from the resource type collection" do
-            @parser.resource_type_collection.expects(:version).returns "foo"
+            @parser.known_resource_types.expects(:version).returns "foo"
             @parser.version.should == "foo"
         end
     end
@@ -342,11 +342,11 @@ describe Puppet::Parser do
 
     describe "when looking up names" do
         before :each do
-            @resource_type_collection = mock 'loaded code'
-            @resource_type_collection.stubs(:find_my_type).with('loaded_namespace',  'loaded_name').returns(true)
-            @resource_type_collection.stubs(:find_my_type).with('bogus_namespace',   'bogus_name' ).returns(false)
+            @known_resource_types = mock 'loaded code'
+            @known_resource_types.stubs(:find_my_type).with('loaded_namespace',  'loaded_name').returns(true)
+            @known_resource_types.stubs(:find_my_type).with('bogus_namespace',   'bogus_name' ).returns(false)
             @parser = Puppet::Parser::Parser.new "development"
-            @parser.stubs(:resource_type_collection).returns @resource_type_collection
+            @parser.stubs(:known_resource_types).returns @known_resource_types
         end
 
         describe "that are already loaded" do
@@ -361,20 +361,20 @@ describe Puppet::Parser do
 
         describe "that aren't already loaded" do
             it "should first attempt to load them with the all lowercase fully qualified name" do
-                @resource_type_collection.stubs(:find_my_type).with("foo_namespace","foo_name").returns(false,true,true)
+                @known_resource_types.stubs(:find_my_type).with("foo_namespace","foo_name").returns(false,true,true)
                 @parser.expects(:load).with("foo_namespace::foo_name").returns(true).then.raises(Exception)
                 @parser.find_or_load("Foo_namespace","Foo_name",:my_type).should == true
             end
 
             it "should next attempt to load them with the all lowercase namespace" do
-                @resource_type_collection.stubs(:find_my_type).with("foo_namespace","foo_name").returns(false,false,true,true)
+                @known_resource_types.stubs(:find_my_type).with("foo_namespace","foo_name").returns(false,false,true,true)
                 @parser.expects(:load).with("foo_namespace::foo_name").returns(false).then.raises(Exception)
                 @parser.expects(:load).with("foo_namespace"          ).returns(true ).then.raises(Exception)
                 @parser.find_or_load("Foo_namespace","Foo_name",:my_type).should == true
             end
 
             it "should finally attempt to load them with the all lowercase unqualified name" do
-                @resource_type_collection.stubs(:find_my_type).with("foo_namespace","foo_name").returns(false,false,false,true,true)
+                @known_resource_types.stubs(:find_my_type).with("foo_namespace","foo_name").returns(false,false,false,true,true)
                 @parser.expects(:load).with("foo_namespace::foo_name").returns(false).then.raises(Exception)
                 @parser.expects(:load).with("foo_namespace"          ).returns(false).then.raises(Exception)
                 @parser.expects(:load).with(               "foo_name").returns(true ).then.raises(Exception)
@@ -387,7 +387,7 @@ describe Puppet::Parser do
             end
 
             it "should directly look for fully qualified classes" do
-                @resource_type_collection.stubs(:find_hostclass).with("foo_namespace","::foo_name").returns(false, true)
+                @known_resource_types.stubs(:find_hostclass).with("foo_namespace","::foo_name").returns(false, true)
                 @parser.expects(:load).with("foo_name").returns true
                 @parser.find_or_load("foo_namespace","::foo_name",:hostclass)
             end
@@ -396,9 +396,9 @@ describe Puppet::Parser do
 
     describe "when loading classnames" do
         before :each do
-            @resource_type_collection = mock 'loaded code'
+            @known_resource_types = mock 'loaded code'
             @parser = Puppet::Parser::Parser.new "development"
-            @parser.stubs(:resource_type_collection).returns @resource_type_collection
+            @parser.stubs(:known_resource_types).returns @known_resource_types
         end
 
         it "should just return false if the classname is empty" do
