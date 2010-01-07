@@ -27,6 +27,7 @@ class Puppet::Parser::ResourceType
     def evaluate_code(resource)
         # Create a new scope.
         scope = subscope(resource.scope, resource)
+        scope.compiler.class_set(name, scope)
 
         set_resource_parameters(resource, scope)
 

@@ -327,24 +327,33 @@ describe Puppet::Parser::ResourceType do
 
     describe "when evaluating its code" do
         before do
-            @scope = stub 'scope', :newscope => nil, :setvar => nil
+            @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
+            @scope = Puppet::Parser::Scope.new :compiler => @compiler
             @resource = stub 'resource', :title => "yay", :name => "yea", :ref => "Foo[bar]", :scope => @scope
             @type = Puppet::Parser::ResourceType.new(:hostclass, "foo")
             @type.stubs(:set_resource_parameters)
         end
 
         it "should set all of its parameters in a subscope" do
-            subscope = stub 'subscope'
+            subscope = stub 'subscope', :compiler => @compiler
             @type.expects(:subscope).with(@scope, @resource).returns subscope
             @type.expects(:set_resource_parameters).with(@resource, subscope)
 
             @type.evaluate_code(@resource)
         end
 
+        it "should store the class scope" do
+            subscope = stub 'subscope', :compiler => @compiler
+            @type.expects(:subscope).with(@scope, @resource).returns subscope
+
+            @type.evaluate_code(@resource)
+            @compiler.class_scope(@type).should equal(subscope)
+        end
+
         it "should evaluate the code if any is provided" do
             code = stub 'code'
-            @type.expects(:code).returns code
-            @type.stubs(:subscope).returns stub("subscope")
+            @type.stubs(:code).returns code
+            @type.stubs(:subscope).returns stub("subscope", :compiler => @compiler)
             code.expects(:safeevaluate).with @type.subscope
 
             @type.evaluate_code(@resource)
@@ -352,7 +361,6 @@ describe Puppet::Parser::ResourceType do
 
         it "should noop if there is no code" do
             @type.expects(:code).returns nil
-            @type.stubs(:subscope).returns stub("subscope")
 
             @type.evaluate_code(@resource)
         end
@@ -360,11 +368,9 @@ describe Puppet::Parser::ResourceType do
 
     describe "when creating a resource" do
         before do
-            @catalog = Puppet::Resource::Catalog.new
-            @node = stub 'node', :name => "foo", :classes => []
-            @compiler = Puppet::Parser::Compiler.new(@node, @catalog)
-            @scope = Puppet::Parser::Scope.new
-            @scope.stubs(:compiler).returns @compiler
+            @node = Puppet::Node.new("foo")
+            @compiler = Puppet::Parser::Compiler.new(@node)
+            @scope = Puppet::Parser::Scope.new(:compiler => @compiler)
 
             @top = Puppet::Parser::ResourceType.new :hostclass, "top"
             @middle = Puppet::Parser::ResourceType.new :hostclass, "middle", :parent => "top"

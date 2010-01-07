@@ -3,12 +3,15 @@ require 'puppet/resource/reference'
 require 'puppet/file_collection/lookup'
 require 'puppet/parser/yaml_trimmer'
 
+require 'puppet/parser/resource_type_collection_helper'
+
 # A reference to a resource.  Mostly just the type and title.
 class Puppet::Parser::Resource::Reference < Puppet::Resource::Reference
     include Puppet::Parser::YamlTrimmer
     include Puppet::FileCollection::Lookup
     include Puppet::Util::MethodHelper
     include Puppet::Util::Errors
+    include Puppet::Parser::ResourceTypeCollectionHelper
 
     attr_accessor :builtin, :file, :line, :scope
 
@@ -39,21 +42,18 @@ class Puppet::Parser::Resource::Reference < Puppet::Resource::Reference
         unless defined? @definedtype
             case self.type
             when "Class" # look for host classes
-                if self.title == :main
-                    tmp = @scope.find_hostclass("")
-                else
-                    unless tmp = @scope.parser.hostclass(self.title)
-                        fail Puppet::ParseError, "Could not find class '%s'" % self.title
-                    end
+                name = self.title == :main ? "" : self.title
+                unless tmp = known_resource_types.find_hostclass("", name)
+                    fail Puppet::ParseError, "Could not find '#{title}' class"
                 end
             when "Node" # look for node definitions
-                unless tmp = @scope.parser.node(self.title)
+                unless tmp = known_resource_types.node(self.title)
                     fail Puppet::ParseError, "Could not find node '%s'" % self.title
                 end
             else # normal definitions
                 # The resource type is capitalized, so we have to downcase.  Really,
                 # we should have a better interface for finding these, but eh.
-                tmp = @scope.parser.definition(self.type.downcase)
+                tmp = known_resource_types.definition(self.type.downcase)
             end
 
             if tmp
@@ -64,6 +64,10 @@ class Puppet::Parser::Resource::Reference < Puppet::Resource::Reference
         end
 
         @definedtype
+    end
+
+    def environment
+        scope.environment
     end
 
     def initialize(hash)

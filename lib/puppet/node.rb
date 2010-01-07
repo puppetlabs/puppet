@@ -13,23 +13,8 @@ class Puppet::Node
     indirects :node, :terminus_setting => :node_terminus, :doc => "Where to find node information.
         A node is composed of its name, its facts, and its environment."
 
-    attr_accessor :name, :classes, :parameters, :source, :ipaddress
-    attr_reader :time
-    attr_writer :environment
-
-    # Do not return environments that are the empty string, and use
-    # explicitly set environments, then facts, then a central env
-    # value.
-    def environment
-        unless @environment
-            if env = parameters["environment"]
-                @environment = env
-            else
-                @environment = Puppet::Node::Environment.new.name.to_s
-            end
-        end
-        @environment
-    end
+    attr_accessor :name, :classes, :source, :ipaddress, :environment
+    attr_reader :time, :parameters
 
     def initialize(name, options = {})
         unless name
@@ -49,7 +34,8 @@ class Puppet::Node
 
         @parameters = options[:parameters] || {}
 
-        self.environment = options[:environment] if options[:environment]
+        env = options[:environment] || @parameters[:environment] || @parameters["environment"] || Puppet::Node::Environment.new
+        @environment = env.is_a?(String) ? Puppet::Node::Environment.new(env) : env
 
         @time = Time.now
     end
@@ -73,7 +59,7 @@ class Puppet::Node
             @parameters[name] = value unless @parameters.include?(name)
         end
 
-        @parameters["environment"] ||= self.environment if self.environment
+        @parameters["environment"] ||= self.environment.name.to_s if self.environment
     end
 
     # Calculate the list of names we might use for looking

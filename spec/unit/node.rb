@@ -44,29 +44,22 @@ describe Puppet::Node, "when initializing" do
         @node.classes.should == ["myclass"]
     end
 
-    it "should accept an environment value" do
-        Puppet.settings.stubs(:value).with(:environment).returns("myenv")
-        @node = Puppet::Node.new("testing", :environment => "myenv")
-        @node.environment.should == "myenv"
-    end
-end
+    it "should use any specified environment" do
+        env = Puppet::Node::Environment.new("foo")
 
-describe Puppet::Node, "when returning the environment" do
-    before do
-        Puppet.settings.stubs(:value).with(:environment).returns("one,two")
-        Puppet.settings.stubs(:value).with(:environment).returns("one")
-        @node = Puppet::Node.new("testnode")
+        Puppet::Node.new("testnode", :environment => env).environment.should equal(env)
     end
 
-    it "should return the 'environment' fact if present and there is no explicit environment" do
-        @node.parameters = {"environment" => "two"}
-        @node.environment.should == "two"
+    it "should convert an environment specified as a string into an Environment instance" do
+        Puppet::Node.new("testnode", :environment => "foo").environment.should be_instance_of(Puppet::Node::Environment)
+    end
+
+    it "should return the 'environment' parameter if present and there is no explicit environment" do
+        Puppet::Node.new("testnode", :parameters => {"environment" => "two"}).environment.name.should == Puppet::Node::Environment.new("two").name
     end
 
     it "should use the default environment if there is no environment fact nor explicit environment" do
-        env = mock 'environment', :name => :myenv
-        Puppet::Node::Environment.expects(:new).returns(env)
-        @node.environment.should == "myenv"
+        @node.environment.name.should == Puppet::Node::Environment.new.name
     end
 end
 
@@ -82,19 +75,19 @@ describe Puppet::Node, "when merging facts" do
     end
 
     it "should prefer parameters already set on the node over facts from the node" do
-        @node.parameters = {"one" => "a"}
+        @node = Puppet::Node.new("testnode", :parameters => {"one" => "a"})
         @node.fact_merge
         @node.parameters["one"].should == "a"
     end
 
     it "should add passed parameters to the parameter list" do
-        @node.parameters = {"one" => "a"}
+        @node = Puppet::Node.new("testnode", :parameters => {"one" => "a"})
         @node.fact_merge
         @node.parameters["two"].should == "b"
     end
 
     it "should accept arbitrary parameters to merge into its parameters" do
-        @node.parameters = {"one" => "a"}
+        @node = Puppet::Node.new("testnode", :parameters => {"one" => "a"})
         @node.merge "two" => "three"
         @node.parameters["two"].should == "three"
     end
@@ -139,8 +132,7 @@ end
 
 describe Puppet::Node, "when generating the list of names to search through" do
     before do
-        @node = Puppet::Node.new("foo.domain.com")
-        @node.parameters = {"hostname" => "yay", "domain" => "domain.com"}
+        @node = Puppet::Node.new("foo.domain.com", :parameters => {"hostname" => "yay", "domain" => "domain.com"})
     end
 
     it "should return an array of names" do

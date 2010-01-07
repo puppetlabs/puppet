@@ -5,12 +5,16 @@ require 'puppet/node'
 require 'puppet/resource/catalog'
 require 'puppet/util/errors'
 
+require 'puppet/parser/resource_type_collection_helper'
+
 # Maintain a graph of scopes, along with a bunch of data
 # about the individual catalog we're compiling.
 class Puppet::Parser::Compiler
     include Puppet::Util
     include Puppet::Util::Errors
-    attr_reader :parser, :node, :facts, :collections, :catalog, :node_scope, :resources
+    include Puppet::Parser::ResourceTypeCollectionHelper
+
+    attr_reader :node, :facts, :collections, :catalog, :node_scope, :resources
 
     # Add a collection to the global list.
     def add_collection(coll)
@@ -48,7 +52,7 @@ class Puppet::Parser::Compiler
 
     # Do we use nodes found in the code, vs. the external node sources?
     def ast_nodes?
-        parser.nodes?
+        known_resource_types.nodes?
     end
 
     # Store the fact that we've evaluated a class
@@ -138,13 +142,8 @@ class Puppet::Parser::Compiler
         @catalog.resource(*args)
     end
 
-    # Set up our compile.  We require a parser
-    # and a node object; the parser is so we can look up classes
-    # and AST nodes, and the node has all of the client's info,
-    # like facts and environment.
-    def initialize(node, parser, options = {})
+    def initialize(node, options = {})
         @node = node
-        @parser = parser
 
         options.each do |param, value|
             begin
@@ -163,7 +162,6 @@ class Puppet::Parser::Compiler
     def newscope(parent, options = {})
         parent ||= topscope
         options[:compiler] = self
-        options[:parser] ||= self.parser
         scope = Puppet::Parser::Scope.new(options)
         scope.parent = parent
         scope
@@ -189,10 +187,10 @@ class Puppet::Parser::Compiler
         # Now see if we can find the node.
         astnode = nil
         @node.names.each do |name|
-            break if astnode = @parser.node(name.to_s.downcase)
+            break if astnode = known_resource_types.node(name.to_s.downcase)
         end
 
-        unless (astnode ||= @parser.node("default"))
+        unless (astnode ||= known_resource_types.node("default"))
             raise Puppet::ParseError, "Could not find default node or by name with '%s'" % node.names.join(", ")
         end
 
@@ -270,7 +268,7 @@ class Puppet::Parser::Compiler
 
     # Find and evaluate our main object, if possible.
     def evaluate_main
-        @main = @parser.find_hostclass("", "") || @parser.newclass("")
+        @main = known_resource_types.find_hostclass("", "") || known_resource_types.add(Puppet::Parser::ResourceType.new(:hostclass, ""))
         @topscope.source = @main
         @main_resource = Puppet::Parser::Resource.new(:type => "class", :title => :main, :scope => @topscope, :source => @main)
         @topscope.resource = @main_resource
@@ -351,7 +349,7 @@ class Puppet::Parser::Compiler
     # Initialize the top-level scope, class, and resource.
     def init_main
         # Create our initial scope and a resource that will evaluate main.
-        @topscope = Puppet::Parser::Scope.new(:compiler => self, :parser => self.parser)
+        @topscope = Puppet::Parser::Scope.new(:compiler => self)
     end
 
     # Set up all of our internal variables.
@@ -371,7 +369,7 @@ class Puppet::Parser::Compiler
 
         # For maintaining the relationship between scopes and their resources.
         @catalog = Puppet::Resource::Catalog.new(@node.name)
-        @catalog.version = @parser.version
+        @catalog.version = known_resource_types.version
 
         # local resource array to maintain resource ordering
         @resources = []

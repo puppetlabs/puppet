@@ -4,9 +4,11 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 describe Puppet::Parser::TemplateWrapper do
     before(:each) do
-        compiler = stub('compiler', :environment => "foo")
-        parser = stub('parser', :watch_file => true)
-        @scope = stub('scope', :compiler => compiler, :parser => parser, :to_hash => {})
+        @known_resource_types = Puppet::Parser::ResourceTypeCollection.new("env")
+        @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
+        @compiler.environment.stubs(:known_resource_types).returns @known_resource_types
+        @scope = Puppet::Parser::Scope.new :compiler => @compiler
+
         @file = "fake_template"
         Puppet::Parser::Files.stubs(:find_template).returns("/tmp/fake_template")
         FileTest.stubs(:exists?).returns("true")
@@ -21,14 +23,22 @@ describe Puppet::Parser::TemplateWrapper do
     end
 
     it "should check template file existance and read its content" do
-        Puppet::Parser::Files.expects(:find_template).with("fake_template", "foo").returns("/tmp/fake_template")
+        Puppet::Parser::Files.expects(:find_template).with("fake_template", @scope.environment.to_s).returns("/tmp/fake_template")
         File.expects(:read).with("/tmp/fake_template").returns("template content")
 
         @tw.file = @file
     end
 
+    it "should mark the file for watching" do
+        Puppet::Parser::Files.expects(:find_template).returns("/tmp/fake_template")
+        File.stubs(:read)
+
+        @known_resource_types.expects(:watch_file).with("/tmp/fake_template")
+        @tw.file = @file
+    end
+
     it "should fail if a template cannot be found" do
-        Puppet::Parser::Files.expects(:find_template).with("fake_template", "foo").returns nil
+        Puppet::Parser::Files.expects(:find_template).returns nil
 
         lambda { @tw.file = @file }.should raise_error(Puppet::ParseError)
     end

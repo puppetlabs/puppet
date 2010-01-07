@@ -6,7 +6,10 @@ require 'puppet/parser/templatewrapper'
 require 'puppet/transportable'
 require 'strscan'
 
+require 'puppet/parser/resource_type_collection_helper'
+
 class Puppet::Parser::Scope
+    include Puppet::Parser::ResourceTypeCollectionHelper
     require 'puppet/parser/resource'
 
     AST = Puppet::Parser::AST
@@ -15,7 +18,7 @@ class Puppet::Parser::Scope
 
     include Enumerable
     include Puppet::Util::Errors
-    attr_accessor :level, :parser, :source, :resource
+    attr_accessor :level, :source, :resource
     attr_accessor :base, :keyword, :nodescope
     attr_accessor :top, :translated, :compiler
     attr_accessor :parent
@@ -25,13 +28,13 @@ class Puppet::Parser::Scope
         compiler.catalog
     end
 
+    def environment
+        compiler.environment
+    end
+
     # Proxy accessors
     def host
         @compiler.node.name
-    end
-
-    def interpreter
-        @compiler.interpreter
     end
 
     # Is the value true?  This allows us to control the definition of truth
@@ -84,7 +87,7 @@ class Puppet::Parser::Scope
 
     def find_hostclass(name)
         @namespaces.each do |namespace|
-            if r = parser.find_hostclass(namespace, name)
+            if r = known_resource_types.find_hostclass(namespace, name)
                 return r
             end
         end
@@ -93,7 +96,7 @@ class Puppet::Parser::Scope
 
     def find_definition(name)
         @namespaces.each do |namespace|
-            if r = parser.find_definition(namespace, name)
+            if r = known_resource_types.find_definition(namespace, name)
                 return r
             end
         end

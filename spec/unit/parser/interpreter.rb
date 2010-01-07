@@ -105,28 +105,20 @@ describe Puppet::Parser::Interpreter do
 
     describe "when compiling a catalog" do
         before do
-            @node = stub 'node', :environment => :myenv
+            @node = Puppet::Node.new("foo")
             @compiler = mock 'compile'
         end
 
-        it "should create a compile with the node and parser" do
+        it "should create a compile with the node" do
             catalog = stub 'catalog', :to_resource => nil
             @compiler.expects(:compile).returns(catalog)
-            @interp.expects(:parser).with(:myenv).returns(@parser)
-            Puppet::Parser::Compiler.expects(:new).with(@node, @parser).returns(@compiler)
+            Puppet::Parser::Compiler.expects(:new).with(@node).returns(@compiler)
             @interp.compile(@node)
-        end
-
-        it "should fail intelligently when no parser can be found" do
-            @node.stubs(:name).returns("whatever")
-            @interp.expects(:parser).with(:myenv).returns(nil)
-            proc { @interp.compile(@node) }.should raise_error(Puppet::ParseError)
         end
 
         it "should return the results of the compile, converted to a plain resource catalog" do
             catalog = mock 'catalog'
             @compiler.expects(:compile).returns(catalog)
-            @interp.stubs(:parser).returns(@parser)
             Puppet::Parser::Compiler.stubs(:new).returns(@compiler)
 
             catalog.expects(:to_resource).returns "my_resource_catalog"

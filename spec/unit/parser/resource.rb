@@ -7,10 +7,11 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 describe Puppet::Parser::Resource do
     before do
-        @parser = Puppet::Parser::Parser.new :Code => ""
-        @source = @parser.newclass ""
         @node = Puppet::Node.new("yaynode")
-        @compiler = Puppet::Parser::Compiler.new(@node, @parser)
+        @known_resource_types = Puppet::Parser::ResourceTypeCollection.new("env")
+        @compiler = Puppet::Parser::Compiler.new(@node)
+        @compiler.environment.stubs(:known_resource_types).returns @known_resource_types
+        @source = newclass ""
         @scope = @compiler.topscope
     end
 
@@ -44,6 +45,18 @@ describe Puppet::Parser::Resource do
         end
     end
 
+    def newclass(name)
+        @known_resource_types.add Puppet::Parser::ResourceType.new(:hostclass, name)
+    end
+
+    def newdefine(name)
+        @known_resource_types.add Puppet::Parser::ResourceType.new(:definition, name)
+    end
+
+    def newnode(name)
+        @known_resource_types.add Puppet::Parser::ResourceType.new(:node, name)
+    end
+
     it "should use the file lookup module" do
         Puppet::Parser::Resource.ancestors.should be_include(Puppet::FileCollection::Lookup)
     end
@@ -59,7 +72,7 @@ describe Puppet::Parser::Resource do
     end
 
     it "should be isomorphic if it is not builtin" do
-        @parser.newdefine "whatever"
+        newdefine "whatever"
         @resource = Puppet::Parser::Resource.new(:type => "whatever", :title => "whatever", :scope => @scope, :source => @source).isomorphic?.should be_true
     end
 
@@ -126,9 +139,9 @@ describe Puppet::Parser::Resource do
         before do
             @type = Puppet::Parser::Resource
 
-            @definition = @parser.newdefine "mydefine"
-            @class = @parser.newclass "myclass"
-            @nodedef = @parser.newnode("mynode")[0]
+            @definition = newdefine "mydefine"
+            @class = newclass "myclass"
+            @nodedef = newnode("mynode")
         end
 
         it "should evaluate the associated AST definition" do
@@ -153,8 +166,8 @@ describe Puppet::Parser::Resource do
 
     describe "when finishing" do
         before do
-            @class = @parser.newclass "myclass"
-            @nodedef = @parser.newnode("mynode")[0]
+            @class = newclass "myclass"
+            @nodedef = newnode("mynode")
 
             @resource = Puppet::Parser::Resource.new(:type => "file", :title => "whatever", :scope => @scope, :source => @source)
         end

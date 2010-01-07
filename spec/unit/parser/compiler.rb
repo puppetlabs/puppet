@@ -33,11 +33,20 @@ end
 describe Puppet::Parser::Compiler do
     before :each do
         @node = Puppet::Node.new "testnode"
-        @parser = Puppet::Parser::Parser.new "development"
+        @known_resource_types = Puppet::Parser::ResourceTypeCollection.new "development"
 
         @scope_resource = stub 'scope_resource', :builtin? => true, :finish => nil, :ref => 'Class[main]', :type => "class"
         @scope = stub 'scope', :resource => @scope_resource, :source => mock("source")
-        @compiler = Puppet::Parser::Compiler.new(@node, @parser)
+        @compiler = Puppet::Parser::Compiler.new(@node)
+        @compiler.environment.stubs(:known_resource_types).returns @known_resource_types
+    end
+
+    it "should use the node's environment as its environment" do
+        @compiler.environment.should equal(@node.environment)
+    end
+
+    it "should include the resource type collection helper" do
+        Puppet::Parser::Compiler.ancestors.should be_include(Puppet::Parser::ResourceTypeCollectionHelper)
     end
 
     it "should be able to return a class list containing all added classes" do
@@ -53,28 +62,23 @@ describe Puppet::Parser::Compiler do
         it "should set its node attribute" do
             @compiler.node.should equal(@node)
         end
-
-        it "should set its parser attribute" do
-            @compiler.parser.should equal(@parser)
-        end
-
         it "should detect when ast nodes are absent" do
             @compiler.ast_nodes?.should be_false
         end
 
         it "should detect when ast nodes are present" do
-            @parser.expects(:nodes?).returns true
+            @known_resource_types.expects(:nodes?).returns true
             @compiler.ast_nodes?.should be_true
         end
 
-        it "should copy the parser version to the catalog" do
-            @compiler.catalog.version.should == @parser.version
+        it "should copy the known_resource_types version to the catalog" do
+            @compiler.catalog.version.should == @known_resource_types.version
         end
 
         it "should copy any node classes into the class list" do
             node = Puppet::Node.new("mynode")
             node.classes = %w{foo bar}
-            compiler = Puppet::Parser::Compiler.new(node, @parser)
+            compiler = Puppet::Parser::Compiler.new(node)
 
             compiler.classlist.should include("foo")
             compiler.classlist.should include("bar")
@@ -157,9 +161,15 @@ describe Puppet::Parser::Compiler do
             main_class = mock 'main_class'
             main_class.expects(:evaluate_code).with { |r| r.is_a?(Puppet::Parser::Resource) }
             @compiler.topscope.expects(:source=).with(main_class)
-            @parser.stubs(:find_hostclass).with("", "").returns(main_class)
+            @known_resource_types.stubs(:find_hostclass).with("", "").returns(main_class)
 
             @compiler.compile
+        end
+
+        it "should create a new, empty 'main' if no main class exists" do
+            compile_stub(:evaluate_main)
+            @compiler.compile
+            @known_resource_types.find_hostclass("", "").should be_instance_of(Puppet::Parser::ResourceType)
         end
 
         it "should evaluate any node classes" do
@@ -462,7 +472,7 @@ describe Puppet::Parser::Compiler do
 
         it "should do nothing" do
             @compiler.expects(:ast_nodes?).returns(false)
-            @compiler.parser.expects(:nodes).never
+            @compiler.known_resource_types.expects(:nodes).never
             Puppet::Parser::Resource.expects(:new).never
 
             @compiler.send(:evaluate_ast_node)
@@ -472,16 +482,16 @@ describe Puppet::Parser::Compiler do
     describe "when evaluating AST nodes with AST nodes present" do
 
         before do
-            @compiler.parser.stubs(:nodes?).returns true
+            @compiler.known_resource_types.stubs(:nodes?).returns true
 
             # Set some names for our test
             @node.stubs(:names).returns(%w{a b c})
-            @compiler.parser.stubs(:node).with("a").returns(nil)
-            @compiler.parser.stubs(:node).with("b").returns(nil)
-            @compiler.parser.stubs(:node).with("c").returns(nil)
+            @compiler.known_resource_types.stubs(:node).with("a").returns(nil)
+            @compiler.known_resource_types.stubs(:node).with("b").returns(nil)
+            @compiler.known_resource_types.stubs(:node).with("c").returns(nil)
 
             # It should check this last, of course.
-            @compiler.parser.stubs(:node).with("default").returns(nil)
+            @compiler.known_resource_types.stubs(:node).with("default").returns(nil)
         end
 
         it "should fail if the named node cannot be found" do
@@ -490,7 +500,7 @@ describe Puppet::Parser::Compiler do
 
         it "should evaluate the first node class matching the node name" do
             node_class = stub 'node', :name => "c", :evaluate_code => nil
-            @compiler.parser.stubs(:node).with("c").returns(node_class)
+            @compiler.known_resource_types.stubs(:node).with("c").returns(node_class)
 
             node_resource = stub 'node resource', :ref => "Node[c]", :evaluate => nil, :type => "node"
             node_class.expects(:mk_plain_resource).returns(node_resource)
@@ -500,7 +510,7 @@ describe Puppet::Parser::Compiler do
 
         it "should match the default node if no matching node can be found" do
             node_class = stub 'node', :name => "default", :evaluate_code => nil
-            @compiler.parser.stubs(:node).with("default").returns(node_class)
+            @compiler.known_resource_types.stubs(:node).with("default").returns(node_class)
 
             node_resource = stub 'node resource', :ref => "Node[default]", :evaluate => nil, :type => "node"
             node_class.expects(:mk_plain_resource).returns(node_resource)
@@ -510,7 +520,7 @@ describe Puppet::Parser::Compiler do
 
         it "should evaluate the node resource immediately rather than using lazy evaluation" do
             node_class = stub 'node', :name => "c"
-            @compiler.parser.stubs(:node).with("c").returns(node_class)
+            @compiler.known_resource_types.stubs(:node).with("c").returns(node_class)
 
             node_resource = stub 'node resource', :ref => "Node[c]", :type => "node"
             node_class.expects(:mk_plain_resource).returns(node_resource)
@@ -524,7 +534,7 @@ describe Puppet::Parser::Compiler do
             node_resource = stub 'node resource', :ref => "Node[c]", :evaluate => nil, :type => "node"
             node_class = stub 'node', :name => "c", :mk_plain_resource => node_resource
 
-            @compiler.parser.stubs(:node).with("c").returns(node_class)
+            @compiler.known_resource_types.stubs(:node).with("c").returns(node_class)
 
             # The #evaluate method normally does this.
             scope = stub 'scope', :source => "mysource"
