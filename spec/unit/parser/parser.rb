@@ -8,15 +8,36 @@ describe Puppet::Parser do
 
     before :each do
         @resource_type_collection = Puppet::Parser::ResourceTypeCollection.new("development")
-        @parser = Puppet::Parser::Parser.new :environment => "development", :resource_type_collection => @resource_type_collection
+        @parser = Puppet::Parser::Parser.new "development"
+        @parser.stubs(:resource_type_collection).returns @resource_type_collection
         @true_ast = Puppet::Parser::AST::Boolean.new :value => true
+    end
+
+    it "should require an environment at initialization" do
+        lambda { Puppet::Parser::Parser.new }.should raise_error(ArgumentError)
+    end
+
+    it "should set the environment" do
+        env = Puppet::Node::Environment.new
+        Puppet::Parser::Parser.new(env).environment.should == env
+    end
+
+    it "should convert the environment into an environment instance if a string is provided" do
+        env = Puppet::Node::Environment.new("testing")
+        Puppet::Parser::Parser.new("testing").environment.should == env
+    end
+
+    it "should be able to look up the environment-specific resource type collection" do
+        rtc = Puppet::Node::Environment.new("development").known_resource_types
+        parser = Puppet::Parser::Parser.new "development"
+        parser.resource_type_collection.should equal(rtc)
     end
 
     describe "when parsing files" do
         before do
             FileTest.stubs(:exist?).returns true
             File.stubs(:open)
-            @parser.stubs(:check_and_add_to_watched_files).returns true
+            @parser.stubs(:watch_file)
         end
 
         it "should treat files ending in 'rb' as ruby files" do
@@ -299,27 +320,10 @@ describe Puppet::Parser do
     end
 
     describe "when determining the configuration version" do
-        it "should default to the current time" do
-            time = Time.now
-
-            Time.stubs(:now).returns time
-            @parser.version.should == time.to_i
+        it "should determine it from the resource type collection" do
+            @parser.resource_type_collection.expects(:version).returns "foo"
+            @parser.version.should == "foo"
         end
-
-        it "should use the output of the config_version setting if one is provided" do
-            Puppet.settings.stubs(:[]).with(:config_version).returns("/my/foo")
-
-            Puppet::Util.expects(:execute).with(["/my/foo"]).returns "output\n"
-            @parser.version.should == "output"
-        end
-
-        it "should raise a puppet parser error if executing config_version fails" do
-            Puppet.settings.stubs(:[]).with(:config_version).returns("test")
-            Puppet::Util.expects(:execute).raises(Puppet::ExecutionFailure.new("msg"))
-
-            lambda { @parser.version }.should raise_error(Puppet::ParseError)
-        end
-
     end
 
     describe "when looking up definitions" do
@@ -341,7 +345,8 @@ describe Puppet::Parser do
             @resource_type_collection = mock 'loaded code'
             @resource_type_collection.stubs(:find_my_type).with('loaded_namespace',  'loaded_name').returns(true)
             @resource_type_collection.stubs(:find_my_type).with('bogus_namespace',   'bogus_name' ).returns(false)
-            @parser = Puppet::Parser::Parser.new :environment => "development",:resource_type_collection => @resource_type_collection
+            @parser = Puppet::Parser::Parser.new "development"
+            @parser.stubs(:resource_type_collection).returns @resource_type_collection
         end
 
         describe "that are already loaded" do
@@ -392,7 +397,8 @@ describe Puppet::Parser do
     describe "when loading classnames" do
         before :each do
             @resource_type_collection = mock 'loaded code'
-            @parser = Puppet::Parser::Parser.new :environment => "development",:resource_type_collection => @resource_type_collection
+            @parser = Puppet::Parser::Parser.new "development"
+            @parser.stubs(:resource_type_collection).returns @resource_type_collection
         end
 
         it "should just return false if the classname is empty" do
