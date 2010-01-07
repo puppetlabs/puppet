@@ -838,7 +838,6 @@ require 'puppet'
 require 'puppet/util/loadedfile'
 require 'puppet/parser/lexer'
 require 'puppet/parser/ast'
-#require 'puppet/parser/interpreter'
 
 module Puppet
     class ParseError < Puppet::Error; end

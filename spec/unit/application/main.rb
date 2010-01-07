@@ -140,34 +140,28 @@ describe "Puppet" do
             before :each do
                 Puppet.stubs(:[]).with(:environment)
                 Puppet.stubs(:[]).with(:manifest).returns("site.pp")
-                @interpreter = stub_everything
                 Puppet.stubs(:err)
                 @main.stubs(:exit)
                 @main.options.stubs(:[]).with(:code).returns "some code"
-                Puppet::Parser::Interpreter.stubs(:new).returns(@interpreter)
+                @collection = stub_everything
+                Puppet::Parser::ResourceTypeCollection.stubs(:new).returns(@collection)
             end
 
-            it "should delegate to the Puppet Parser" do
-
-                @interpreter.expects(:parser)
-
+            it "should use a Puppet Resource Type Collection to parse the file" do
+                @collection.expects(:perform_initial_import)
                 @main.parseonly
             end
 
             it "should exit with exit code 0 if no error" do
                 @main.expects(:exit).with(0)
-
                 @main.parseonly
             end
 
             it "should exit with exit code 1 if error" do
-                @interpreter.stubs(:parser).raises(Puppet::ParseError)
-
+                @collection.stubs(:perform_initial_import).raises(Puppet::ParseError)
                 @main.expects(:exit).with(1)
-
                 @main.parseonly
             end
-
         end
 
         describe "the main command" do

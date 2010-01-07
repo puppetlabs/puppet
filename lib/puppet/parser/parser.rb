@@ -11,7 +11,6 @@ require 'puppet'
 require 'puppet/util/loadedfile'
 require 'puppet/parser/lexer'
 require 'puppet/parser/ast'
-#require 'puppet/parser/interpreter'
 
 module Puppet
     class ParseError < Puppet::Error; end
@@ -29,7 +28,7 @@ module Puppet
 
     class Parser < Racc::Parser
 
-module_eval <<'..end grammar.ra modeval..id884310a196', 'grammar.ra', 853
+module_eval <<'..end grammar.ra modeval..id8da59540c6', 'grammar.ra', 852
 
 # It got too annoying having code in a file that needs to be compiled.
 require 'puppet/parser/parser_support'
@@ -41,7 +40,7 @@ require 'puppet/parser/parser_support'
 
 # $Id$
 
-..end grammar.ra modeval..id884310a196
+..end grammar.ra modeval..id8da59540c6
 
 ##### racc 1.4.5 generates ###
 

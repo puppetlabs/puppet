@@ -41,6 +41,22 @@ describe Puppet::Parser::Compiler do
         @compiler.environment.stubs(:known_resource_types).returns @known_resource_types
     end
 
+    it "should have a class method that compiles, converts, and returns a catalog" do
+        compiler = stub 'compiler'
+        Puppet::Parser::Compiler.expects(:new).with(@node).returns compiler
+        catalog = stub 'catalog'
+        compiler.expects(:compile).returns catalog
+        converted_catalog = stub 'converted_catalog'
+        catalog.expects(:to_resource).returns converted_catalog
+
+        Puppet::Parser::Compiler.compile(@node).should equal(converted_catalog)
+    end
+
+    it "should fail intelligently when a class-level compile fails" do
+        Puppet::Parser::Compiler.expects(:new).raises ArgumentError
+        lambda { Puppet::Parser::Compiler.compile(@node) }.should raise_error(Puppet::Error)
+    end
+
     it "should use the node's environment as its environment" do
         @compiler.environment.should equal(@node.environment)
     end

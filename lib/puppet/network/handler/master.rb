@@ -1,6 +1,5 @@
 require 'openssl'
 require 'puppet'
-require 'puppet/parser/interpreter'
 require 'puppet/sslcertificates'
 require 'xmlrpc/server'
 require 'yaml'
@@ -43,8 +42,6 @@ class Puppet::Network::Handler
             else
                 @ca = nil
             end
-
-            Puppet.debug("Creating interpreter")
 
             # This is only used by the cfengine module, or if --loadclasses was
             # specified in +puppet+.

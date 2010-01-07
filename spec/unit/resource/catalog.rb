@@ -100,9 +100,8 @@ describe Puppet::Resource::Catalog, "when compiling" do
     describe "when extracting transobjects" do
 
         def mkscope
-            @parser = Puppet::Parser::Parser.new :Code => ""
             @node = Puppet::Node.new("mynode")
-            @compiler = Puppet::Parser::Compiler.new(@node, @parser)
+            @compiler = Puppet::Parser::Compiler.new(@node)
 
             # XXX This is ridiculous.
             @compiler.send(:evaluate_main)

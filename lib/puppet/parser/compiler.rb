@@ -14,6 +14,13 @@ class Puppet::Parser::Compiler
     include Puppet::Util::Errors
     include Puppet::Parser::ResourceTypeCollectionHelper
 
+    def self.compile(node)
+        new(node).compile.to_resource
+    rescue => detail
+        puts detail.backtrace if Puppet[:trace]
+        raise Puppet::Error, "#{detail} on node #{node.name}"
+    end
+
     attr_reader :node, :facts, :collections, :catalog, :node_scope, :resources
 
     # Add a collection to the global list.

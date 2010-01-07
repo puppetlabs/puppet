@@ -1,7 +1,6 @@
 require 'puppet/node'
 require 'puppet/resource/catalog'
 require 'puppet/indirector/code'
-require 'puppet/parser/interpreter'
 require 'yaml'
 
 class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
@@ -52,14 +51,6 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         setup_database_backend if Puppet[:storeconfigs]
     end
 
-    # Create/return our interpreter.
-    def interpreter
-        unless defined?(@interpreter) and @interpreter
-            @interpreter = create_interpreter
-        end
-        @interpreter
-    end
-
     # Is our compiler part of a network, or are we just local?
     def networked?
         $0 =~ /puppetmasterd/
@@ -75,7 +66,6 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
     # Compile the actual catalog.
     def compile(node)
-        # Ask the interpreter to compile the catalog.
         str = "Compiled catalog for %s" % node.name
         if node.environment
             str += " in environment %s" % node.environment
@@ -86,7 +76,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
         benchmark(loglevel, "Compiled catalog for %s" % node.name) do
             begin
-                config = interpreter.compile(node)
+                return Puppet::Parser::Compiler.compile(node)
             rescue Puppet::Error => detail
                 Puppet.err(detail.to_s) if networked?
                 raise
@@ -94,11 +84,6 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         end
 
         return config
-    end
-
-    # Create our interpreter object.
-    def create_interpreter
-        return Puppet::Parser::Interpreter.new
     end
 
     # Turn our host name into a node object.
