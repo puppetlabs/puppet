@@ -12,12 +12,13 @@ describe Puppet::Parser::ResourceTypeCollection do
     end
 
     it "should require an environment at initialization" do
-        Puppet::Parser::ResourceTypeCollection.new("foo").environment.should == "foo"
+        env = Puppet::Node::Environment.new("testing")
+        Puppet::Parser::ResourceTypeCollection.new(env).environment.should equal(env)
     end
 
-    it "should store itself as the environment-specific code collection in its class" do
-        code = Puppet::Parser::ResourceTypeCollection.new("foo")
-        Puppet::Parser::ResourceTypeCollection["foo"].should equal(code)
+    it "should convert the environment into an environment instance if a string is provided" do
+        env = Puppet::Node::Environment.new("testing")
+        Puppet::Parser::ResourceTypeCollection.new("testing").environment.should equal(env)
     end
 
     it "should be able to add a resource type" do
@@ -224,5 +225,116 @@ describe Puppet::Parser::ResourceTypeCollection do
 
             @loader.node("foo").should equal(node2)
         end
+    end
+
+    describe "when managing files" do
+        before do
+            @loader = Puppet::Parser::ResourceTypeCollection.new("env")
+            Puppet::Util::LoadedFile.stubs(:new).returns stub("watched_file")
+        end
+
+        it "should have a method for specifying a file should be watched" do
+            @loader.should respond_to(:watch_file)
+        end
+
+        it "should have a method for determining if a file is being watched" do
+            @loader.watch_file("/foo/bar")
+            @loader.should be_watching_file("/foo/bar")
+        end
+
+        it "should use LoadedFile to watch files" do
+            Puppet::Util::LoadedFile.expects(:new).with("/foo/bar").returns stub("watched_file")
+            @loader.watch_file("/foo/bar")
+        end
+
+        it "should be considered stale if any files have changed" do
+            file1 = stub 'file1', :changed? => false
+            file2 = stub 'file2', :changed? => true
+            Puppet::Util::LoadedFile.expects(:new).times(2).returns(file1).then.returns(file2)
+            @loader.watch_file("/foo/bar")
+            @loader.watch_file("/other/bar")
+
+            @loader.should be_stale
+        end
+
+        it "should not be considered stable if no files have changed" do
+            file1 = stub 'file1', :changed? => false
+            file2 = stub 'file2', :changed? => false
+            Puppet::Util::LoadedFile.expects(:new).times(2).returns(file1).then.returns(file2)
+            @loader.watch_file("/foo/bar")
+            @loader.watch_file("/other/bar")
+
+            @loader.should_not be_stale
+        end
+    end
+
+    describe "when performing initial import" do
+        before do
+            @parser = stub 'parser', :file= => nil, :string => nil, :parse => nil
+            Puppet::Parser::Parser.stubs(:new).returns @parser
+            @code = Puppet::Parser::ResourceTypeCollection.new("env")
+        end
+
+        it "should create a new parser instance" do
+            Puppet::Parser::Parser.expects(:new).returns @parser
+            @code.perform_initial_import
+        end
+
+        it "should set the parser's string to the 'code' setting and parse if code is available" do
+            Puppet.settings[:code] = "my code"
+            @parser.expects(:string=).with "my code"
+            @parser.expects(:parse)
+            @code.perform_initial_import
+        end
+
+        it "should set the parser's file to the 'manifest' setting and parse if no code is available and the manifest is available" do
+            File.expects(:exist?).with("/my/file").returns true
+            Puppet.settings[:manifest] = "/my/file"
+            @parser.expects(:file=).with "/my/file"
+            @parser.expects(:parse)
+            @code.perform_initial_import
+        end
+
+        it "should not attempt to load a manifest if none is present" do
+            File.expects(:exist?).with("/my/file").returns false
+            Puppet.settings[:manifest] = "/my/file"
+            @parser.expects(:file=).never
+            @parser.expects(:parse).never
+            @code.perform_initial_import
+        end
+
+        it "should fail helpfully if there is an error importing" do
+            File.stubs(:exist?).returns true
+            @parser.expects(:parse).raises ArgumentError
+            lambda { @code.perform_initial_import }.should raise_error(Puppet::Error)
+        end
+    end
+
+    describe "when determining the configuration version" do
+        before do
+            @code = Puppet::Parser::ResourceTypeCollection.new("env")
+        end
+
+        it "should default to the current time" do
+            time = Time.now
+
+            Time.stubs(:now).returns time
+            @code.version.should == time.to_i
+        end
+
+        it "should use the output of the environment's config_version setting if one is provided" do
+            @code.environment.stubs(:[]).with(:config_version).returns("/my/foo")
+
+            Puppet::Util.expects(:execute).with(["/my/foo"]).returns "output\n"
+            @code.version.should == "output"
+        end
+
+        it "should raise a puppet parser error if executing config_version fails" do
+            @code.environment.stubs(:[]).with(:config_version).returns("test")
+            Puppet::Util.expects(:execute).raises(Puppet::ExecutionFailure.new("msg"))
+
+            lambda { @code.version }.should raise_error(Puppet::ParseError)
+        end
+
     end
 end

@@ -43,6 +43,38 @@ describe Puppet::Node::Environment do
         Puppet::Node::Environment.new(:one).to_s.should == "one"
     end
 
+    describe "when managing known resource types" do
+        before do
+            @env = Puppet::Node::Environment.new("dev")
+            @collection = Puppet::Parser::ResourceTypeCollection.new(@env)
+            @collection.stubs(:perform_initial_import)
+        end
+
+        it "should create a resource type collection if none exists" do
+            Puppet::Parser::ResourceTypeCollection.expects(:new).with(@env).returns @collection
+            @env.known_resource_types.should equal(@collection)
+        end
+
+        it "should reuse any existing resource type collection" do
+            @env.known_resource_types.should equal(@env.known_resource_types)
+        end
+        
+        it "should perform the initial import when creating a new collection" do
+            @collection.expects(:perform_initial_import)
+            Puppet::Parser::ResourceTypeCollection.expects(:new).returns @collection
+
+            @env.known_resource_types
+        end
+
+        it "should create and return a new collection rather than returning a stale collection" do
+            @env.known_resource_types.expects(:stale?).returns true
+
+            Puppet::Parser::ResourceTypeCollection.expects(:new).returns @collection
+
+            @env.known_resource_types.should equal(@collection)
+        end
+    end
+
     [:modulepath, :manifestdir].each do |setting|
         it "should validate the #{setting} directories" do
             path = %w{/one /two}.join(File::PATH_SEPARATOR)

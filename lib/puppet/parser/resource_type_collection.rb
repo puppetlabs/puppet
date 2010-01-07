@@ -1,18 +1,8 @@
 class Puppet::Parser::ResourceTypeCollection
     attr_reader :environment
 
-    @code = {}
-
-    def self.[]=(environment, code)
-        @code[environment] = code
-    end
-
-    def self.[](environment)
-        @code[environment]
-    end
-
-    def initialize(environment)
-        @environment = environment
+    def initialize(env)
+        @environment = env.is_a?(String) ? Puppet::Node::Environment.new(env) : env
         @hostclasses = {}
         @definitions = {}
         @nodes = {}
@@ -20,8 +10,7 @@ class Puppet::Parser::ResourceTypeCollection
         # So we can keep a list and match the first-defined regex
         @node_list = []
 
-        # Store the most recently created code collection globally per environment.
-        self.class[self.environment] = self
+        @watched_files = {}
     end
 
     def <<(thing)
@@ -122,6 +111,49 @@ class Puppet::Parser::ResourceTypeCollection
         define_method(m) do
             instance_variable_get("@#{m}").dup
         end
+    end
+
+    def perform_initial_import
+        parser = Puppet::Parser::Parser.new(environment)
+        if code = Puppet.settings.uninterpolated_value(:code, environment.to_s) and code != ""
+            parser.string = code
+        else
+            file = Puppet.settings.value(:manifest, environment.to_s)
+            return unless File.exist?(file)
+            parser.file = file
+        end
+        parser.parse
+    rescue => detail
+        msg = "Could not parse for environment #{environment}: #{detail}"
+        error = Puppet::Error.new(msg)
+        error.set_backtrace(detail.backtrace)
+        raise error
+    end
+
+    def stale?
+        @watched_files.values.detect { |file| file.changed? }
+    end
+
+    def version
+        return @version if defined?(@version)
+
+        if environment[:config_version] == ""
+            @version = Time.now.to_i
+            return @version
+        end
+
+        @version = Puppet::Util.execute([environment[:config_version]]).strip
+
+    rescue Puppet::ExecutionFailure => e
+        raise Puppet::ParseError, "Unable to set config_version: #{e.message}"
+    end
+
+    def watch_file(file)
+        @watched_files[file] = Puppet::Util::LoadedFile.new(file)
+    end
+
+    def watching_file?(file)
+        @watched_files.include?(file)
     end
 
     private

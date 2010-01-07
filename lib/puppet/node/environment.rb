@@ -42,6 +42,14 @@ class Puppet::Node::Environment
         @name = name
     end
 
+    def known_resource_types
+        if @known_resource_types.nil? or @known_resource_types.stale?
+            @known_resource_types = Puppet::Parser::ResourceTypeCollection.new(self)
+            @known_resource_types.perform_initial_import
+        end
+        @known_resource_types
+    end
+
     def module(name)
         mod = Puppet::Module.new(name, self)
         return nil unless mod.exist?
