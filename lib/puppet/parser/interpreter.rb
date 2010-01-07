@@ -17,11 +17,6 @@ class Puppet::Parser::Interpreter
 
     include Puppet::Util::Errors
 
-    # Determine the configuration version for a given node's environment.
-    def configuration_version(node)
-        parser(node.environment).version
-    end
-
     # evaluate our whole tree
     def compile(node)
         raise Puppet::ParseError, "Could not parse configuration; cannot compile on node %s" % node.name unless env_parser = parser(node.environment)
@@ -35,15 +30,6 @@ class Puppet::Parser::Interpreter
 
     # create our interpreter
     def initialize
-        # The class won't always be defined during testing.
-        if Puppet[:storeconfigs]
-            if Puppet.features.rails?
-                Puppet::Rails.init
-            else
-                raise Puppet::Error, "Rails is missing; cannot store configurations"
-            end
-        end
-
         @parsers = {}
     end
 
@@ -61,7 +47,7 @@ class Puppet::Parser::Interpreter
     # Create a new parser object and pre-parse the configuration.
     def create_parser(environment)
         begin
-            parser = Puppet::Parser::Parser.new(:environment => environment)
+            parser = Puppet::Parser::Parser.new(environment)
             if code = Puppet.settings.uninterpolated_value(:code, environment) and code != ""
                 parser.string = code
             else

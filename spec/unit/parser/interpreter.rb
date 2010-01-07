@@ -13,7 +13,7 @@ describe Puppet::Parser::Interpreter do
             Puppet.settings.stubs(:uninterpolated_value).with(:code, :myenv).returns("mycode")
             @parser.expects(:string=).with("mycode")
             @parser.expects(:parse)
-            Puppet::Parser::Parser.expects(:new).with(:environment => :myenv).returns(@parser)
+            Puppet::Parser::Parser.expects(:new).with(:myenv).returns(@parser)
             @interp.send(:create_parser, :myenv).object_id.should equal(@parser.object_id)
         end
 
@@ -22,12 +22,12 @@ describe Puppet::Parser::Interpreter do
             Puppet.settings.stubs(:value).with(:manifest, :myenv).returns("/my/file")
             @parser.expects(:parse)
             @parser.expects(:file=).with("/my/file")
-            Puppet::Parser::Parser.expects(:new).with(:environment => :myenv).returns(@parser)
+            Puppet::Parser::Parser.expects(:new).with(:myenv).returns(@parser)
             @interp.send(:create_parser, :myenv).should equal(@parser)
         end
 
         it "should return nothing when new parsers fail" do
-            Puppet::Parser::Parser.expects(:new).with(:environment => :myenv).raises(ArgumentError)
+            Puppet::Parser::Parser.expects(:new).with(:myenv).raises(ArgumentError)
             proc { @interp.send(:create_parser, :myenv) }.should raise_error(Puppet::Error)
         end
 
@@ -40,13 +40,13 @@ describe Puppet::Parser::Interpreter do
             Puppet.settings.parse
 
             parser1 = mock 'parser1'
-            Puppet::Parser::Parser.expects(:new).with(:environment => :env1).returns(parser1)
+            Puppet::Parser::Parser.expects(:new).with(:env1).returns(parser1)
             parser1.expects(:file=).with("/t/env1.pp")
             parser1.expects(:parse)
             @interp.send(:create_parser, :env1)
 
             parser2 = mock 'parser2'
-            Puppet::Parser::Parser.expects(:new).with(:environment => :env2).returns(parser2)
+            Puppet::Parser::Parser.expects(:new).with(:env2).returns(parser2)
             parser2.expects(:file=).with("/t/env2.pp")
             parser2.expects(:parse)
             @interp.send(:create_parser, :env2)
@@ -131,17 +131,6 @@ describe Puppet::Parser::Interpreter do
 
             catalog.expects(:to_resource).returns "my_resource_catalog"
             @interp.compile(@node).should == "my_resource_catalog"
-        end
-    end
-
-    describe "when returning catalog version" do
-        it "should ask the appropriate parser for the catalog version" do
-            node = mock 'node'
-            node.expects(:environment).returns(:myenv)
-            parser = mock 'parser'
-            parser.expects(:version).returns(:myvers)
-            @interp.expects(:parser).with(:myenv).returns(parser)
-            @interp.configuration_version(node).should equal(:myvers)
         end
     end
 end

@@ -8,6 +8,12 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 require 'puppet/indirector/catalog/compiler'
 
 describe Puppet::Resource::Catalog::Compiler do
+    before do
+        Puppet::Rails.stubs(:init)
+        Facter.stubs(:to_hash).returns({})
+        Facter.stubs(:[]).returns(Facter::Util::Fact.new("something"))
+    end
+
     describe "when initializing" do
         before do
             Puppet.expects(:version).returns(1)
@@ -34,6 +40,24 @@ describe Puppet::Resource::Catalog::Compiler do
         it "should provide a method for determining if the catalog is networked" do
             compiler = Puppet::Resource::Catalog::Compiler.new
             compiler.should respond_to(:networked?)
+        end
+
+        describe "and storeconfigs is enabled" do
+            before do
+                Puppet.settings[:storeconfigs] = true
+            end
+
+            it "should initialize Rails if it is available" do
+                Puppet.features.expects(:rails?).returns true
+                Puppet::Rails.expects(:init)
+                Puppet::Resource::Catalog::Compiler.new
+            end
+
+            it "should fail if Rails is unavailable" do
+                Puppet.features.expects(:rails?).returns false
+                Puppet::Rails.expects(:init).never
+                lambda { Puppet::Resource::Catalog::Compiler.new }.should raise_error(Puppet::Error)
+            end
         end
     end
 
@@ -68,6 +92,7 @@ describe Puppet::Resource::Catalog::Compiler do
             @name = "me"
             @node = Puppet::Node.new @name
             @node.stubs(:merge)
+            Puppet::Node.stubs(:find).returns @node
             @request = stub 'request', :key => "does not matter", :node => @name, :options => {}
         end
 
@@ -143,6 +168,7 @@ describe Puppet::Resource::Catalog::Compiler do
             @request = stub 'request', :options => {}
 
             @facts = stub 'facts', :save => nil
+            Facter.stubs(:value).returns "something"
         end
 
         it "should do nothing if no facts are provided" do
@@ -227,6 +253,7 @@ describe Puppet::Resource::Catalog::Compiler do
 
     describe "when filtering resources" do
         before :each do
+            Facter.stubs(:value)
             @compiler = Puppet::Resource::Catalog::Compiler.new
             @catalog = stub_everything 'catalog'
             @catalog.stubs(:respond_to?).with(:filter).returns(true)
