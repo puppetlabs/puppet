@@ -69,6 +69,15 @@ describe Puppet::Parser::Resource do
         Puppet::Parser::Resource.new("file", "whatever", :scope => scope).namespaces.should == %w{one two}
     end
 
+    it "should use the resource type collection helper module" do
+        Puppet::Parser::Resource.ancestors.should be_include(Puppet::Resource::TypeCollectionHelper)
+    end
+
+    it "should use the scope's environment as its environment" do
+        @scope.expects(:environment).returns "myenv"
+        Puppet::Parser::Resource.new(:type => "file", :title => "whatever", :scope => @scope).environment.should == "myenv"
+    end
+
     it "should be isomorphic if it is builtin and models an isomorphic type" do
         Puppet::Type.type(:file).expects(:isomorphic?).returns(true)
         @resource = Puppet::Parser::Resource.new("file", "whatever", :scope => @scope, :source => @source).isomorphic?.should be_true
