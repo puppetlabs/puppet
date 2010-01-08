@@ -9,7 +9,7 @@ describe Puppet::Resource::Type do
         Puppet::Resource::Type.new(:hostclass, "foo").name.should == "foo"
     end
 
-    [:code, :doc, :line, :file, :code_collection].each do |attr|
+    [:code, :doc, :line, :file, :resource_type_collection, :ruby_code].each do |attr|
         it "should have a '#{attr}' attribute" do
             type = Puppet::Resource::Type.new(:hostclass, "foo")
             type.send(attr.to_s + "=", "yay")
@@ -94,19 +94,19 @@ describe Puppet::Resource::Type do
         end
 
         it "should return the name converted to a string when the name is not a regex" do
-            pending "Need to define ResourceTypeCollection behaviour first"
+            pending "Need to define LoadedCode behaviour first"
             name = Puppet::Parser::AST::HostName.new(:value => "foo")
             Puppet::Resource::Type.new(:node, name).name.should == "foo"
         end
 
         it "should return the name converted to a string when the name is a regex" do
-            pending "Need to define ResourceTypeCollection behaviour first"
+            pending "Need to define LoadedCode behaviour first"
             name = Puppet::Parser::AST::HostName.new(:value => /regex/)
             Puppet::Resource::Type.new(:node, name).name.should == /regex/.to_s
         end
 
         it "should mark any created scopes as a node scope" do
-            pending "Need to define ResourceTypeCollection behaviour first"
+            pending "Need to define LoadedCode behaviour first"
             name = Puppet::Parser::AST::HostName.new(:value => /regex/)
             Puppet::Resource::Type.new(:node, name).name.should == /regex/.to_s
         end
@@ -330,6 +330,8 @@ describe Puppet::Resource::Type do
             @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
             @scope = Puppet::Parser::Scope.new :compiler => @compiler
             @resource = Puppet::Parser::Resource.new(:foo, "yay", :scope => @scope)
+            @known_resource_types = stub 'known_resource_types'
+            @resource.stubs(:known_resource_types).returns @known_resource_types
             @type = Puppet::Resource::Type.new(:hostclass, "foo")
             @type.stubs(:set_resource_parameters)
         end
@@ -359,13 +361,40 @@ describe Puppet::Resource::Type do
             @compiler.class_scope(@type).should be_nil
         end
 
-        it "should evaluate the code if any is provided" do
+        it "should evaluate the AST code if any is provided" do
             code = stub 'code'
             @type.stubs(:code).returns code
             @type.stubs(:subscope).returns stub("subscope", :compiler => @compiler)
             code.expects(:safeevaluate).with @type.subscope
 
             @type.evaluate_code(@resource)
+        end
+
+        describe "and ruby code is provided" do
+            before do
+                @type.stubs(:ruby_code).returns(proc { "foo" })
+            end
+
+            it "should instance evaluate the ruby code on the resource" do
+                evaluated = false
+                @type.stubs(:ruby_code).returns(proc { evaluated = true })
+
+                @type.evaluate_code(@resource)
+
+                evaluated.should be_true
+            end
+
+            it "should include the DSL Resource Helper module in the provided resource" do
+                @type.evaluate_code(@resource)
+
+                @resource.metaclass.ancestors.should be_include(Puppet::DSL::ResourceHelper)
+            end
+
+            it "should convert the resource's parameters to instance variables" do
+                @resource.expects(:set_instance_variables)
+
+                @type.evaluate_code(@resource)
+            end
         end
 
         it "should noop if there is no code" do

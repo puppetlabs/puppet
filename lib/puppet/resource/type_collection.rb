@@ -31,7 +31,7 @@ class Puppet::Resource::TypeCollection
         end
         method = "add_#{instance.type}"
         send(method, instance)
-        instance.code_collection = self
+        instance.resource_type_collection = self
         instance
     end
 

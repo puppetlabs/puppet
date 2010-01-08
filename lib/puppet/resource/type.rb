@@ -3,6 +3,7 @@ require 'puppet/util/warnings'
 require 'puppet/util/errors'
 require 'puppet/util/inline_docs'
 require 'puppet/parser/ast/leaf'
+require 'puppet/dsl'
 
 class Puppet::Resource::Type
     include Puppet::Util::InlineDocs
@@ -11,7 +12,7 @@ class Puppet::Resource::Type
 
     RESOURCE_SUPERTYPES = [:hostclass, :node, :definition]
 
-    attr_accessor :file, :line, :doc, :code, :parent, :code_collection
+    attr_accessor :file, :line, :doc, :code, :ruby_code, :parent, :resource_type_collection
     attr_reader :type, :namespace, :arguments, :behaves_like
 
     # Are we a child of the passed class?  Do a recursive search up our
@@ -35,8 +36,9 @@ class Puppet::Resource::Type
 
         set_resource_parameters(resource, scope)
 
-        return nil unless c = self.code
-        return c.safeevaluate(scope)
+        code.safeevaluate(scope) if code
+
+        evaluate_ruby_code(resource, scope) if ruby_code
     end
 
     def initialize(type, name, options = {})
@@ -137,7 +139,7 @@ class Puppet::Resource::Type
     def parent_type
         return nil unless parent
 
-        unless @parent_type ||= code_collection.send(type, parent)
+        unless @parent_type ||= resource_type_collection.send(type, parent)
             fail Puppet::ParseError, "Could not find parent resource type '#{parent}'"
         end
 
@@ -215,6 +217,14 @@ class Puppet::Resource::Type
         return unless klass = parent_type and parent_resource = resource.scope.compiler.catalog.resource(:class, klass.name)
         parent_resource.evaluate unless parent_resource.evaluated?
         return parent_scope(resource.scope, klass)
+    end
+
+    def evaluate_ruby_code(resource, scope)
+        resource.extend(Puppet::DSL::ResourceHelper)
+
+        resource.set_instance_variables
+
+        resource.instance_eval(&ruby_code)
     end
 
     # Split an fq name into a namespace and name

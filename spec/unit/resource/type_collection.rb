@@ -40,7 +40,7 @@ describe Puppet::Resource::TypeCollection do
         @code.add(node)
         @code.node("foo").should equal(node)
 
-        node.code_collection.should equal(@code)
+        node.resource_type_collection.should equal(@code)
     end
 
     it "should store node resource types as nodes" do
