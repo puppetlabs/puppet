@@ -2,7 +2,7 @@
 
 Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f) : Dir.chdir("..") { s.call(f) } }).call("spec/spec_helper.rb") }
 
-require 'puppet/parser/resource_type_collection'
+require 'puppet/resource/type_collection'
 require 'puppet/util/rdoc/parser'
 require 'puppet/util/rdoc/code_objects'
 require 'rdoc/options'
@@ -141,7 +141,7 @@ describe RDoc::Parser do
             @definition = stub_everything 'definition', :file => "module/manifests/init.pp", :type => :definition, :name => "mydef"
             @node = stub_everything 'node', :file => "module/manifests/init.pp", :type => :node, :name => "mynode"
 
-            @resource_type_collection = Puppet::Parser::ResourceTypeCollection.new("env")
+            @resource_type_collection = Puppet::Resource::TypeCollection.new("env")
             @parser.ast = @resource_type_collection
 
             @container = stub_everything 'container'

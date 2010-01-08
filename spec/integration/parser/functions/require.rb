@@ -16,7 +16,7 @@ describe "The require function" do
     end
 
     it "should add a dependency between the 'required' class and our class" do
-        @compiler.known_resource_types.add Puppet::Parser::ResourceType.new(:hostclass, "requiredclass")
+        @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "requiredclass")
 
         @scope.function_require("requiredclass")
         @scope.resource["require"].should_not be_nil

@@ -72,7 +72,7 @@ Puppet::Application.new(:main) do
             Puppet[:manifest] = ARGV.shift
         end
         begin
-            Puppet::Parser::ResourceTypeCollection.new(Puppet[:environment]).perform_initial_import
+            Puppet::Resource::TypeCollection.new(Puppet[:environment]).perform_initial_import
         rescue => detail
             Puppet.err detail
             exit 1

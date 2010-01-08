@@ -44,7 +44,7 @@ class Puppet::Node::Environment
 
     def known_resource_types
         if @known_resource_types.nil? or @known_resource_types.stale?
-            @known_resource_types = Puppet::Parser::ResourceTypeCollection.new(self)
+            @known_resource_types = Puppet::Resource::TypeCollection.new(self)
             @known_resource_types.perform_initial_import
         end
         @known_resource_types

@@ -1,4 +1,4 @@
-class Puppet::Parser::ResourceTypeCollection
+class Puppet::Resource::TypeCollection
     attr_reader :environment
 
     def initialize(env)

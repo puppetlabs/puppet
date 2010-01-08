@@ -14,7 +14,7 @@ describe Puppet::Parser::Resource::Reference do
     end
 
     it "should use the resource type collection helper to find its known resource types" do
-        Puppet::Parser::Resource::Reference.ancestors.should include(Puppet::Parser::ResourceTypeCollectionHelper)
+        Puppet::Parser::Resource::Reference.ancestors.should include(Puppet::Resource::TypeCollectionHelper)
     end
 
     it "should use the file lookup module" do
@@ -70,21 +70,21 @@ end
 
 describe Puppet::Parser::Resource::Reference, " when modeling defined types" do
     def newclass(name)
-        @known_resource_types.add Puppet::Parser::ResourceType.new(:hostclass, name)
+        @known_resource_types.add Puppet::Resource::Type.new(:hostclass, name)
     end
 
     def newdefine(name)
-        @known_resource_types.add Puppet::Parser::ResourceType.new(:definition, name)
+        @known_resource_types.add Puppet::Resource::Type.new(:definition, name)
     end
 
     def newnode(name)
-        @known_resource_types.add Puppet::Parser::ResourceType.new(:node, name)
+        @known_resource_types.add Puppet::Resource::Type.new(:node, name)
     end
 
     before do
         @type = Puppet::Parser::Resource::Reference
 
-        @known_resource_types = Puppet::Parser::ResourceTypeCollection.new("myenv")
+        @known_resource_types = Puppet::Resource::TypeCollection.new("myenv")
         @definition = newdefine("mydefine")
         @class = newclass("myclass")
         @nodedef = newnode("mynode")

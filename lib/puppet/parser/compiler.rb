@@ -5,14 +5,14 @@ require 'puppet/node'
 require 'puppet/resource/catalog'
 require 'puppet/util/errors'
 
-require 'puppet/parser/resource_type_collection_helper'
+require 'puppet/resource/type_collection_helper'
 
 # Maintain a graph of scopes, along with a bunch of data
 # about the individual catalog we're compiling.
 class Puppet::Parser::Compiler
     include Puppet::Util
     include Puppet::Util::Errors
-    include Puppet::Parser::ResourceTypeCollectionHelper
+    include Puppet::Resource::TypeCollectionHelper
 
     def self.compile(node)
         new(node).compile.to_resource
@@ -275,7 +275,7 @@ class Puppet::Parser::Compiler
 
     # Find and evaluate our main object, if possible.
     def evaluate_main
-        @main = known_resource_types.find_hostclass("", "") || known_resource_types.add(Puppet::Parser::ResourceType.new(:hostclass, ""))
+        @main = known_resource_types.find_hostclass("", "") || known_resource_types.add(Puppet::Resource::Type.new(:hostclass, ""))
         @topscope.source = @main
         @main_resource = Puppet::Parser::Resource.new(:type => "class", :title => :main, :scope => @topscope, :source => @main)
         @topscope.resource = @main_resource

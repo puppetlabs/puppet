@@ -46,12 +46,12 @@ describe Puppet::Node::Environment do
     describe "when managing known resource types" do
         before do
             @env = Puppet::Node::Environment.new("dev")
-            @collection = Puppet::Parser::ResourceTypeCollection.new(@env)
+            @collection = Puppet::Resource::TypeCollection.new(@env)
             @collection.stubs(:perform_initial_import)
         end
 
         it "should create a resource type collection if none exists" do
-            Puppet::Parser::ResourceTypeCollection.expects(:new).with(@env).returns @collection
+            Puppet::Resource::TypeCollection.expects(:new).with(@env).returns @collection
             @env.known_resource_types.should equal(@collection)
         end
 
@@ -61,7 +61,7 @@ describe Puppet::Node::Environment do
         
         it "should perform the initial import when creating a new collection" do
             @collection.expects(:perform_initial_import)
-            Puppet::Parser::ResourceTypeCollection.expects(:new).returns @collection
+            Puppet::Resource::TypeCollection.expects(:new).returns @collection
 
             @env.known_resource_types
         end
@@ -69,7 +69,7 @@ describe Puppet::Node::Environment do
         it "should create and return a new collection rather than returning a stale collection" do
             @env.known_resource_types.expects(:stale?).returns true
 
-            Puppet::Parser::ResourceTypeCollection.expects(:new).returns @collection
+            Puppet::Resource::TypeCollection.expects(:new).returns @collection
 
             @env.known_resource_types.should equal(@collection)
         end

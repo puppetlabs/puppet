@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 describe Puppet::Parser::TemplateWrapper do
     before(:each) do
-        @known_resource_types = Puppet::Parser::ResourceTypeCollection.new("env")
+        @known_resource_types = Puppet::Resource::TypeCollection.new("env")
         @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
         @compiler.environment.stubs(:known_resource_types).returns @known_resource_types
         @scope = Puppet::Parser::Scope.new :compiler => @compiler

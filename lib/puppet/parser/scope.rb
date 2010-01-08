@@ -6,10 +6,10 @@ require 'puppet/parser/templatewrapper'
 require 'puppet/transportable'
 require 'strscan'
 
-require 'puppet/parser/resource_type_collection_helper'
+require 'puppet/resource/type_collection_helper'
 
 class Puppet::Parser::Scope
-    include Puppet::Parser::ResourceTypeCollectionHelper
+    include Puppet::Resource::TypeCollectionHelper
     require 'puppet/parser/resource'
 
     AST = Puppet::Parser::AST

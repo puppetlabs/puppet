@@ -8,7 +8,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 describe Puppet::Parser::Resource do
     before do
         @node = Puppet::Node.new("yaynode")
-        @known_resource_types = Puppet::Parser::ResourceTypeCollection.new("env")
+        @known_resource_types = Puppet::Resource::TypeCollection.new("env")
         @compiler = Puppet::Parser::Compiler.new(@node)
         @compiler.environment.stubs(:known_resource_types).returns @known_resource_types
         @source = newclass ""
@@ -46,15 +46,15 @@ describe Puppet::Parser::Resource do
     end
 
     def newclass(name)
-        @known_resource_types.add Puppet::Parser::ResourceType.new(:hostclass, name)
+        @known_resource_types.add Puppet::Resource::Type.new(:hostclass, name)
     end
 
     def newdefine(name)
-        @known_resource_types.add Puppet::Parser::ResourceType.new(:definition, name)
+        @known_resource_types.add Puppet::Resource::Type.new(:definition, name)
     end
 
     def newnode(name)
-        @known_resource_types.add Puppet::Parser::ResourceType.new(:node, name)
+        @known_resource_types.add Puppet::Resource::Type.new(:node, name)
     end
 
     it "should use the file lookup module" do

@@ -7,7 +7,7 @@ describe Puppet::Parser do
     ast = Puppet::Parser::AST
 
     before :each do
-        @known_resource_types = Puppet::Parser::ResourceTypeCollection.new("development")
+        @known_resource_types = Puppet::Resource::TypeCollection.new("development")
         @parser = Puppet::Parser::Parser.new "development"
         @parser.stubs(:known_resource_types).returns @known_resource_types
         @true_ast = Puppet::Parser::AST::Boolean.new :value => true

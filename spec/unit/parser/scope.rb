@@ -54,7 +54,7 @@ describe Puppet::Parser::Scope do
     end
 
     it "should use the resource type collection helper to find its known resource types" do
-        Puppet::Parser::Scope.ancestors.should include(Puppet::Parser::ResourceTypeCollectionHelper)
+        Puppet::Parser::Scope.ancestors.should include(Puppet::Resource::TypeCollectionHelper)
     end
 
     describe "when looking up a variable" do
@@ -99,7 +99,7 @@ describe Puppet::Parser::Scope do
             end
 
             def newclass(name)
-                @known_resource_types.add Puppet::Parser::ResourceType.new(:hostclass, name)
+                @known_resource_types.add Puppet::Resource::Type.new(:hostclass, name)
             end
 
             def create_class_scope(name)

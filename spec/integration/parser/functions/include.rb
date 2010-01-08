@@ -14,7 +14,7 @@ describe "The include function" do
     end
 
     it "should add a containment relationship between the 'included' class and our class" do
-        @compiler.known_resource_types.add Puppet::Parser::ResourceType.new(:hostclass, "includedclass")
+        @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "includedclass")
 
         @scope.function_include("includedclass")
 

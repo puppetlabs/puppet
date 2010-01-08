@@ -2,13 +2,13 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-require 'puppet/parser/resource_type_collection_helper'
+require 'puppet/resource/type_collection_helper'
 
 class RTCHelperTester
-    include Puppet::Parser::ResourceTypeCollectionHelper
+    include Puppet::Resource::TypeCollectionHelper
 end
 
-describe Puppet::Parser::ResourceTypeCollectionHelper do
+describe Puppet::Resource::TypeCollectionHelper do
     before do
         @helper = RTCHelperTester.new
     end

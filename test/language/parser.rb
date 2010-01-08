@@ -426,7 +426,7 @@ file { "/tmp/yayness":
         assert_nothing_raised do
             out = parser.parse ""
 
-            assert_instance_of(Puppet::Parser::ResourceTypeCollection, out)
+            assert_instance_of(Puppet::Resource::TypeCollection, out)
             assert_nil(parser.hostclass(""), "Got a 'main' class when we had no code")
         end
 
@@ -434,7 +434,7 @@ file { "/tmp/yayness":
         parser.initvars
         assert_nothing_raised do
             out = parser.parse "Exec { path => '/usr/bin:/usr/sbin' }"
-            assert_instance_of(Puppet::Parser::ResourceTypeCollection, out)
+            assert_instance_of(Puppet::Resource::TypeCollection, out)
             assert_equal("", parser.hostclass("").classname)
             assert_equal("", parser.hostclass("").namespace)
         end
@@ -801,7 +801,7 @@ file { "/tmp/yayness":
         assert_nothing_raised("Could not parse") do
             result = parser.parse(str)
         end
-        assert_instance_of(Puppet::Parser::ResourceTypeCollection, result, "Did not get a ASTSet back from parsing")
+        assert_instance_of(Puppet::Resource::TypeCollection, result, "Did not get a ASTSet back from parsing")
 
         assert_instance_of(AST::HostClass, result.hostclass("yay"), "Did not create 'yay' class")
         assert_instance_of(AST::HostClass, result.hostclass(""), "Did not create main class")

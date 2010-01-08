@@ -3,7 +3,7 @@ require 'puppet/resource/reference'
 require 'puppet/file_collection/lookup'
 require 'puppet/parser/yaml_trimmer'
 
-require 'puppet/parser/resource_type_collection_helper'
+require 'puppet/resource/type_collection_helper'
 
 # A reference to a resource.  Mostly just the type and title.
 class Puppet::Parser::Resource::Reference < Puppet::Resource::Reference
@@ -11,7 +11,7 @@ class Puppet::Parser::Resource::Reference < Puppet::Resource::Reference
     include Puppet::FileCollection::Lookup
     include Puppet::Util::MethodHelper
     include Puppet::Util::Errors
-    include Puppet::Parser::ResourceTypeCollectionHelper
+    include Puppet::Resource::TypeCollectionHelper
 
     attr_accessor :builtin, :file, :line, :scope
 

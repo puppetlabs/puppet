@@ -2,7 +2,7 @@
 
 Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f) : Dir.chdir("..") { s.call(f) } }).call("spec/spec_helper.rb") }
 
-require 'puppet/parser/resource_type_collection'
+require 'puppet/resource/type_collection'
 require 'puppet/util/rdoc/parser'
 require 'puppet/util/rdoc'
 require 'puppet/util/rdoc/code_objects'
@@ -41,7 +41,7 @@ describe RDoc::Parser do
     end
 
     it "should parse to RDoc data structure" do
-        @parser.expects(:document_class).with { |n,k,c| n == "::test" and k.is_a?(Puppet::Parser::ResourceType) }
+        @parser.expects(:document_class).with { |n,k,c| n == "::test" and k.is_a?(Puppet::Resource::Type) }
         @parser.scan
     end
 

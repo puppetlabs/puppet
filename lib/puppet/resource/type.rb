@@ -4,7 +4,7 @@ require 'puppet/util/errors'
 require 'puppet/util/inline_docs'
 require 'puppet/parser/ast/leaf'
 
-class Puppet::Parser::ResourceType
+class Puppet::Resource::Type
     include Puppet::Util::InlineDocs
     include Puppet::Util::Warnings
     include Puppet::Util::Errors

@@ -144,7 +144,7 @@ describe "Puppet" do
                 @main.stubs(:exit)
                 @main.options.stubs(:[]).with(:code).returns "some code"
                 @collection = stub_everything
-                Puppet::Parser::ResourceTypeCollection.stubs(:new).returns(@collection)
+                Puppet::Resource::TypeCollection.stubs(:new).returns(@collection)
             end
 
             it "should use a Puppet Resource Type Collection to parse the file" do

@@ -33,7 +33,7 @@ end
 describe Puppet::Parser::Compiler do
     before :each do
         @node = Puppet::Node.new "testnode"
-        @known_resource_types = Puppet::Parser::ResourceTypeCollection.new "development"
+        @known_resource_types = Puppet::Resource::TypeCollection.new "development"
 
         @scope_resource = stub 'scope_resource', :builtin? => true, :finish => nil, :ref => 'Class[main]', :type => "class"
         @scope = stub 'scope', :resource => @scope_resource, :source => mock("source")
@@ -62,7 +62,7 @@ describe Puppet::Parser::Compiler do
     end
 
     it "should include the resource type collection helper" do
-        Puppet::Parser::Compiler.ancestors.should be_include(Puppet::Parser::ResourceTypeCollectionHelper)
+        Puppet::Parser::Compiler.ancestors.should be_include(Puppet::Resource::TypeCollectionHelper)
     end
 
     it "should be able to return a class list containing all added classes" do
@@ -185,7 +185,7 @@ describe Puppet::Parser::Compiler do
         it "should create a new, empty 'main' if no main class exists" do
             compile_stub(:evaluate_main)
             @compiler.compile
-            @known_resource_types.find_hostclass("", "").should be_instance_of(Puppet::Parser::ResourceType)
+            @known_resource_types.find_hostclass("", "").should be_instance_of(Puppet::Resource::Type)
         end
 
         it "should evaluate any node classes" do

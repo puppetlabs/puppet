@@ -3,14 +3,14 @@
 class Puppet::Parser::Parser
     require 'puppet/parser/functions'
     require 'puppet/parser/files'
-    require 'puppet/parser/resource_type_collection'
-    require 'puppet/parser/resource_type_collection_helper'
-    require 'puppet/parser/resource_type'
+    require 'puppet/resource/type_collection'
+    require 'puppet/resource/type_collection_helper'
+    require 'puppet/resource/type'
     require 'monitor'
 
     AST = Puppet::Parser::AST
 
-    include Puppet::Parser::ResourceTypeCollectionHelper
+    include Puppet::Resource::TypeCollectionHelper
 
     attr_reader :version, :environment
     attr_accessor :files
@@ -278,12 +278,12 @@ class Puppet::Parser::Parser
 
     # Create a new class, or merge with an existing class.
     def newclass(name, options = {})
-        known_resource_types.add Puppet::Parser::ResourceType.new(:hostclass, name, ast_context(true).merge(options))
+        known_resource_types.add Puppet::Resource::Type.new(:hostclass, name, ast_context(true).merge(options))
     end
 
     # Create a new definition.
     def newdefine(name, options = {})
-        known_resource_types.add Puppet::Parser::ResourceType.new(:definition, name, ast_context(true).merge(options))
+        known_resource_types.add Puppet::Resource::Type.new(:definition, name, ast_context(true).merge(options))
     end
 
     # Create a new node.  Nodes are special, because they're stored in a global
@@ -292,7 +292,7 @@ class Puppet::Parser::Parser
         names = [names] unless names.instance_of?(Array)
         context = ast_context(true)
         names.collect do |name|
-            known_resource_types.add(Puppet::Parser::ResourceType.new(:node, name, context.merge(options)))
+            known_resource_types.add(Puppet::Resource::Type.new(:node, name, context.merge(options)))
         end
     end
 

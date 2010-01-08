@@ -262,7 +262,7 @@ describe "PuppetMaster" do
                 Puppet.stubs(:err)
                 @server_app.stubs(:exit)
                 @collection = stub_everything
-                Puppet::Parser::ResourceTypeCollection.stubs(:new).returns(@collection)
+                Puppet::Resource::TypeCollection.stubs(:new).returns(@collection)
             end
 
             it "should use a Puppet Resource Type Collection to parse the file" do
