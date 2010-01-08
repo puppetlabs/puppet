@@ -108,6 +108,15 @@ describe provider_class do
                 end
             Puppet::Type.type(:mount).provider(:parsed).default_target.should == should
         end
+
+        it "should not crash on incomplete lines in fstab" do
+            parse = @provider_class.parse <<-FSTAB
+/dev/incomplete
+/dev/device       name
+            FSTAB
+
+            lambda{ @provider_class.to_line(parse[0]) }.should_not raise_error
+        end
     end
 
     describe provider_class, " when mounting an absent filesystem" do
