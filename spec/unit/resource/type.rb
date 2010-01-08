@@ -343,11 +343,11 @@ describe Puppet::Resource::Type do
         end
 
         it "should store the class scope" do
-            subscope = stub 'subscope', :compiler => @compiler
+            subscope = stub 'subscope'
+            subscope.expects(:class_set).with('foo',subscope)
             @type.expects(:subscope).with(@scope, @resource).returns subscope
 
             @type.evaluate_code(@resource)
-            @compiler.class_scope(@type).should equal(subscope)
         end
 
         it "should evaluate the code if any is provided" do

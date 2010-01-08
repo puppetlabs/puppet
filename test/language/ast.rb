@@ -3,7 +3,6 @@
 require File.dirname(__FILE__) + '/../lib/puppettest'
 
 require 'puppettest'
-require 'puppet/parser/interpreter'
 require 'puppet/parser/parser'
 require 'puppettest/resourcetesting'
 require 'puppettest/parsertesting'

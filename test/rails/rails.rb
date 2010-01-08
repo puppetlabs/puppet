@@ -4,7 +4,6 @@ require File.dirname(__FILE__) + '/../lib/puppettest'
 
 require 'puppet'
 require 'puppet/rails'
-require 'puppet/parser/interpreter'
 require 'puppet/parser/parser'
 require 'puppet/network/client'
 require 'puppettest'
