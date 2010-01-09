@@ -220,7 +220,7 @@ class Puppet::Resource::Type
     end
 
     def evaluate_ruby_code(resource, scope)
-        resource.extend(Puppet::DSL::ResourceHelper)
+        resource.extend(Puppet::DSL::ResourceAPI)
 
         resource.set_instance_variables
 

@@ -387,7 +387,7 @@ describe Puppet::Resource::Type do
             it "should include the DSL Resource Helper module in the provided resource" do
                 @type.evaluate_code(@resource)
 
-                @resource.metaclass.ancestors.should be_include(Puppet::DSL::ResourceHelper)
+                @resource.metaclass.ancestors.should be_include(Puppet::DSL::ResourceAPI)
             end
 
             it "should convert the resource's parameters to instance variables" do

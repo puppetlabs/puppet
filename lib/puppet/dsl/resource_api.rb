@@ -3,7 +3,7 @@
 # hooking into the scope system.
 require 'puppet/resource/type_collection_helper'
 
-module Puppet::DSL::ResourceHelper
+module Puppet::DSL::ResourceAPI
     include Puppet::Resource::TypeCollectionHelper
 
     FUNCTION_MAP = {:acquire => :include}

@@ -2,22 +2,22 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-require 'puppet/dsl/resource_helper'
+require 'puppet/dsl/resource_api'
 
-class DSLResourceHelperTester
-    include Puppet::DSL::ResourceHelper
+class DSLResourceAPITester
+    include Puppet::DSL::ResourceAPI
 end
 
-describe Puppet::DSL::ResourceHelper do
+describe Puppet::DSL::ResourceAPI do
     before do
         @resource = Puppet::Parser::Resource.new(:type => :mytype, :title => "myresource", :scope => mock("scope"), :source => mock("source"))
         class << @resource
-            include Puppet::DSL::ResourceHelper
+            include Puppet::DSL::ResourceAPI
         end
     end
 
     it "should include the resource type collection helper" do
-        Puppet::DSL::ResourceHelper.ancestors.should be_include(Puppet::Resource::TypeCollectionHelper)
+        Puppet::DSL::ResourceAPI.ancestors.should be_include(Puppet::Resource::TypeCollectionHelper)
     end
 
     it "should be able to set all of its parameters as instance variables" do
