@@ -4,16 +4,10 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/dsl/resource_api'
 
-class DSLResourceAPITester
-    include Puppet::DSL::ResourceAPI
-end
-
 describe Puppet::DSL::ResourceAPI do
     before do
         @resource = Puppet::Parser::Resource.new(:type => :mytype, :title => "myresource", :scope => mock("scope"), :source => mock("source"))
-        class << @resource
-            include Puppet::DSL::ResourceAPI
-        end
+        @resource.extend Puppet::DSL::ResourceAPI
     end
 
     it "should include the resource type collection helper" do
