@@ -53,7 +53,7 @@ class Puppet::DSL::ResourceAPI
         raise ArgumentError, "Resource arguments must be provided as a hash" unless arguments.is_a?(Hash)
 
         names.collect do |name|
-            resource = Puppet::Parser::Resource.new(:type => type, :title => name, :scope => scope)
+            resource = Puppet::Parser::Resource.new(type, name, :scope => scope)
             arguments.each do |param, value|
                 resource[param] = value
             end

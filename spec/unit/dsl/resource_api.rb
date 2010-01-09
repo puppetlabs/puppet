@@ -6,9 +6,9 @@ require 'puppet/dsl/resource_api'
 
 describe Puppet::DSL::ResourceAPI do
     before do
-        @compiler = stub 'compiler', :add_resource => nil
-        @scope = stub 'scope', :source => stub("source"), :compiler => @compiler
-        @resource = Puppet::Parser::Resource.new(:type => :mytype, :title => "myresource", :scope => @scope)
+        @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
+        @scope = Puppet::Parser::Scope.new(:compiler => @compiler, :source => "foo")
+        @resource = Puppet::Parser::Resource.new(:mytype, "myresource", :scope => @scope)
         @api = Puppet::DSL::ResourceAPI.new(@resource, @scope, proc { })
     end
 
@@ -85,29 +85,29 @@ describe Puppet::DSL::ResourceAPI do
     describe "when creating a resource" do
         before do
             @api.scope.stubs(:source).returns stub("source")
-            @api.scope.stubs(:compiler).returns stub("compiler", :add_resource => nil)
-            @created_resource = Puppet::Parser::Resource.new(:title => "eh", :type => 'yay', :scope => @api.scope)
+            @api.scope.compiler.stubs(:add_resource)
+            @created_resource = Puppet::Parser::Resource.new("yay", "eh", :scope => @api.scope)
         end
 
         it "should create and return a resource of the type specified" do
-            Puppet::Parser::Resource.expects(:new).with { |args| args[:type] == "mytype" }.returns @created_resource
+            Puppet::Parser::Resource.expects(:new).with { |type, title, args| type == "mytype" }.returns @created_resource
             @api.create_resource("mytype", "myname", {:foo => "bar"}).should == [@created_resource]
         end
 
         it "should use the name from the first element of the provided argument array" do
-            Puppet::Parser::Resource.expects(:new).with { |args| args[:title] == "myname" }.returns @created_resource
+            Puppet::Parser::Resource.expects(:new).with { |type, title, args| title == "myname" }.returns @created_resource
             @api.create_resource("mytype", "myname", {:foo => "bar"})
         end
 
         it "should create multiple resources if the first element of the argument array is an array" do
-            second_resource = Puppet::Parser::Resource.new(:title => "eh", :type => 'yay', :scope => @api.scope)
-            Puppet::Parser::Resource.expects(:new).with { |args| args[:title] == "first" }.returns @created_resource
-            Puppet::Parser::Resource.expects(:new).with { |args| args[:title] == "second" }.returns @created_resource
+            second_resource = Puppet::Parser::Resource.new('yay', "eh", :scope => @api.scope)
+            Puppet::Parser::Resource.expects(:new).with { |type, title, args| title == "first" }.returns @created_resource
+            Puppet::Parser::Resource.expects(:new).with { |type, title, args| title == "second" }.returns @created_resource
             @api.create_resource("mytype", ["first", "second"], {:foo => "bar"})
         end
 
         it "should provide its scope as the scope" do
-            Puppet::Parser::Resource.expects(:new).with { |args| args[:scope] == @api.scope }.returns @created_resource
+            Puppet::Parser::Resource.expects(:new).with { |type, title, args| args[:scope] == @api.scope }.returns @created_resource
             @api.create_resource("mytype", "myname", {:foo => "bar"})
         end
 
