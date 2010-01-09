@@ -371,27 +371,13 @@ describe Puppet::Resource::Type do
         end
 
         describe "and ruby code is provided" do
-            before do
+            it "should create a DSL Resource API and evaluate it" do
                 @type.stubs(:ruby_code).returns(proc { "foo" })
-            end
-
-            it "should instance evaluate the ruby code on the resource" do
-                evaluated = false
-                @type.stubs(:ruby_code).returns(proc { evaluated = true })
-
-                @type.evaluate_code(@resource)
-
-                evaluated.should be_true
-            end
-
-            it "should include the DSL Resource Helper module in the provided resource" do
-                @type.evaluate_code(@resource)
-
-                @resource.metaclass.ancestors.should be_include(Puppet::DSL::ResourceAPI)
-            end
-
-            it "should convert the resource's parameters to instance variables" do
-                @resource.expects(:set_instance_variables)
+                scope = stub 'scope', :compiler => stub_everything
+                @type.expects(:subscope).returns(scope)
+                @api = stub 'api'
+                Puppet::DSL::ResourceAPI.expects(:new).with(@resource, scope, @type.ruby_code).returns @api
+                @api.expects(:evaluate)
 
                 @type.evaluate_code(@resource)
             end

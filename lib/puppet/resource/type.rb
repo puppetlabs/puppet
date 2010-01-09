@@ -220,11 +220,7 @@ class Puppet::Resource::Type
     end
 
     def evaluate_ruby_code(resource, scope)
-        resource.extend(Puppet::DSL::ResourceAPI)
-
-        resource.set_instance_variables
-
-        resource.instance_eval(&ruby_code)
+        Puppet::DSL::ResourceAPI.new(resource, scope, ruby_code).evaluate
     end
 
     # Split an fq name into a namespace and name
