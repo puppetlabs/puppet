@@ -31,10 +31,10 @@ class Puppet::Daemon
             $stderr.reopen $stdout
             Puppet::Util::Log.reopen
         rescue => detail
-            File.open("/tmp/daemonout", "w") { |f|
+            Puppet.err "Could not start %s: %s" % [Puppet[:name], detail]
+            Puppet::Util::secure_open("/tmp/daemonout", "w") { |f|
                 f.puts "Could not start %s: %s" % [Puppet[:name], detail]
             }
-            Puppet.err "Could not start %s: %s" % [Puppet[:name], detail]
             exit(12)
         end
     end

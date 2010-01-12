@@ -49,6 +49,13 @@ describe Puppet::Parser::Resource::Reference do
         ref = @type.new(:type => "file", :title => "/tmp/yay/")
         ref.to_s.should == "File[/tmp/yay]"
     end
+
+    it "should canonize resource reference values without order dependencies" do
+        args = [[:title, "/tmp/yay/"], [:type, "file"]]
+        ref = @type.new(args)
+        ref.to_s.should == "File[/tmp/yay]"
+    end
+
 end
 
 describe Puppet::Parser::Resource::Reference, " when modeling defined types" do

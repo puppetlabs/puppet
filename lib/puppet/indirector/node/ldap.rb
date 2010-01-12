@@ -55,7 +55,7 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
         end
 
         infos = []
-        ldapsearch(filter) { |entry| infos << entry2hash(entry) }
+        ldapsearch(filter) { |entry| infos << entry2hash(entry, request.options[:fqdn]) }
 
         return infos.collect do |info|
             info2node(info[:name], info)
@@ -78,9 +78,12 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
     end
 
     # Convert the found entry into a simple hash.
-    def entry2hash(entry)
+    def entry2hash(entry, fqdn = false)
         result = {}
-        result[:name] = entry.dn.split(',')[0].split("=")[1]
+
+        cn  = entry.dn[     /cn\s*=\s*([^,\s]+)/i,1]
+        dcs = entry.dn.scan(/dc\s*=\s*([^,\s]+)/i)
+        result[:name]    = fqdn ? ([cn]+dcs).join('.') : cn
         result[:parent] = get_parent_from_entry(entry) if parent_attribute
         result[:classes] = get_classes_from_entry(entry)
         result[:stacked] = get_stacked_values_from_entry(entry)

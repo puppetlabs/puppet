@@ -132,17 +132,34 @@ describe "ralsh" do
 
     describe "when running" do
 
+        def set_args(args)
+            (ARGV.clear << args).flatten!
+        end
+
+        def push_args(*args)
+            @args_stack ||= []
+            @args_stack << ARGV.dup
+            set_args(args)
+        end
+
+        def pop_args
+            set_args(@args_stack.pop)
+        end
+
         before :each do
             @type = stub_everything 'type', :properties => []
-            ARGV.stubs(:shift).returns("type")
-            ARGV.stubs(:length).returns(1).then.returns(0)
+            push_args('type')
             Puppet::Type.stubs(:type).returns(@type)
         end
 
-        it "should raise an error if no type is given" do
-            ARGV.stubs(:length).returns(0)
+        after :each do
+            pop_args
+        end
 
+        it "should raise an error if no type is given" do
+            push_args
             lambda { @ralsh.main }.should raise_error
+            pop_args
         end
 
         it "should raise an error when editing a remote host" do
@@ -186,11 +203,10 @@ describe "ralsh" do
             end
 
             it "should describe the given resource" do
-                ARGV.stubs(:shift).returns("type").then.returns('name')
-                ARGV.stubs(:length).returns(1).then.returns(1).then.returns(0)
+                push_args('type','name')
                 @client.expects(:describe).returns(stub_everything)
-
                 @ralsh.main
+                pop_args
             end
         end
 
@@ -208,30 +224,31 @@ describe "ralsh" do
 
             describe 'but with a given name' do
                 before :each do
-                    ARGV.stubs(:shift).returns("type").then.returns('name')
-                    ARGV.stubs(:length).returns(1).then.returns(1).then.returns(0)
-                    @object = stub_everything 'object', :to_trans => stub_everything('transportable')
-                    @type.stubs(:new).returns(@object)
-                    @object.stubs(:retrieve)
+                    push_args('type','name')
+                    @type.stubs(:new).returns(:bob)
                 end
 
-                it "should retrieve a specific instance" do
-                    @type.expects(:new).returns(@object)
-                    @object.expects(:retrieve)
-
-                    @ralsh.main
+                after :each do
+                    pop_args
                 end
 
-                it "should add given parameters to object" do
-                    ARGV.stubs(:each).yields('param=temp')
-                    ARGV.stubs(:length).returns(1).then.returns(1).then.returns(1)
-                    Puppet::Resource::Catalog.stubs(:new).returns(stub_everything)
+                it "should retrieve a specific instance if it exists" do
+                    pending
+                end
+
+
+                it "should create a stub instance if it doesn't exist" do
+                    pending
+                end
+
+                it "should add given parameters to the object" do
+                    push_args('type','name','param=temp')
+                    pending
                     @object.expects(:[]=).with('param','temp')
-
                     @ralsh.main
+                    pop_args
                 end
             end
         end
-
     end
 end

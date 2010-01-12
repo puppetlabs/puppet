@@ -9,4 +9,4 @@ PUPPETMASTER_PID_DIR="/var/run/puppet"
 #PUPPETMASTER_LOG="syslog"
 
 # You may specify other parameters to the puppetmaster here
-#PUPPETMASTER_EXTRA_OPTS="--noca"
+#PUPPETMASTER_EXTRA_OPTS="--no-ca"

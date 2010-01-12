@@ -50,6 +50,10 @@ class Puppet::Resource::Reference
             # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
             x = @type = value.to_s.split("::").collect { |s| s.capitalize }.join("::")
         end
+
+        if @title
+            self.title = @title
+        end
     end
 
     # Convert to the reference format that TransObject uses.  Yay backward

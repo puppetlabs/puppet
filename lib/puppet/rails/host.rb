@@ -172,11 +172,6 @@ class Puppet::Rails::Host < ActiveRecord::Base
     end
 
     def find_resources_parameters_tags(resources)
-        # initialize all resource parameters
-        resources.each do |key,resource|
-            resource.params_hash = []
-        end
-
         find_resources_parameters(resources)
         find_resources_tags(resources)
     end
@@ -294,7 +289,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
 
         # assign each loaded parameters/tags to the resource it belongs to
         params.each do |param|
-            resources[param['resource_id']].add_param_to_hash(param) if resources.include?(param['resource_id'])
+            resources[param['resource_id']].add_param_to_list(param) if resources.include?(param['resource_id'])
         end
     end
 
@@ -302,7 +297,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
         tags = Puppet::Rails::ResourceTag.find_all_tags_from_host(self)
 
         tags.each do |tag|
-            resources[tag['resource_id']].add_tag_to_hash(tag) if resources.include?(tag['resource_id'])
+            resources[tag['resource_id']].add_tag_to_list(tag) if resources.include?(tag['resource_id'])
         end
     end
 

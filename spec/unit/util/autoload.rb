@@ -111,6 +111,8 @@ describe Puppet::Util::Autoload do
         before do
             @autoload.stubs(:searchpath).returns %w{/a}
             Dir.stubs(:glob).returns "/path/to/file.rb"
+
+            @autoload.class.stubs(:loaded?).returns(false)
         end
 
         [RuntimeError, LoadError, SyntaxError].each do |error|

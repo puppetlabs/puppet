@@ -160,7 +160,7 @@ module Puppet
         :http_proxy_port => [3128,
             "The HTTP proxy port to use for outgoing connections"],
         :http_enable_post_connection_check => [true,
-            "Boolean; wheter or not puppetd should validate the server
+            "Boolean; whether or not puppetd should validate the server
             SSL certificate against the request hostname."],
         :filetimeout => [ 15,
             "The minimum time to wait (in seconds) between checking for updates in
@@ -196,7 +196,10 @@ module Puppet
         :config_version => ["", "How to determine the configuration version.  By default, it will be the
             time that the configuration is parsed, but you can provide a shell script to override how the
             version is determined.  The output of this script will be added to every log message in the
-            reports, allowing you to correlate changes on your hosts to the source version on the server."]
+            reports, allowing you to correlate changes on your hosts to the source version on the server."],
+        :zlib => [true, 
+            "Boolean; whether to use the zlib library",
+        ]
     )
 
     hostname = Facter["hostname"].value

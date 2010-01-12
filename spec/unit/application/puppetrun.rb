@@ -144,11 +144,21 @@ describe "puppetrun" do
                 Puppet.stubs(:[]).with(:node_terminus).returns("ldap")
             end
 
+            it "should pass the fqdn option to search" do
+                @puppetrun.options.stubs(:[]).with(:fqdn).returns(:something)
+                @puppetrun.options.stubs(:[]).with(:all).returns(true)
+                @puppetrun.stubs(:puts)
+
+                Puppet::Node.expects(:search).with("whatever",:fqdn => :something).returns([])
+
+                @puppetrun.run_setup
+            end
+
             it "should search for all nodes if --all" do
                 @puppetrun.options.stubs(:[]).with(:all).returns(true)
                 @puppetrun.stubs(:puts)
 
-                Puppet::Node.expects(:search).with("whatever").returns([])
+                Puppet::Node.expects(:search).with("whatever",:fqdn => nil).returns([])
 
                 @puppetrun.run_setup
             end
@@ -158,7 +168,7 @@ describe "puppetrun" do
                 @puppetrun.stubs(:puts)
                 @puppetrun.classes = ['class']
 
-                Puppet::Node.expects(:search).with("whatever", :class => "class").returns([])
+                Puppet::Node.expects(:search).with("whatever", :class => "class", :fqdn => nil).returns([])
 
                 @puppetrun.run_setup
             end

@@ -51,7 +51,8 @@ describe "puppetmasterd" do
         args = arguments + addl_args
 
         bin = File.join(File.dirname(__FILE__), "..", "..", "..", "sbin", "puppetmasterd")
-        output = %x{#{bin} #{args}}.chomp
+        lib = File.join(File.dirname(__FILE__), "..", "..", "..", "lib")
+        output = %x{/usr/bin/env ruby -I #{lib} #{bin} #{args}}.chomp
     end
 
     def stop
@@ -72,7 +73,7 @@ describe "puppetmasterd" do
     it "should be serving status information over xmlrpc" do
         start
 
-        sleep 0.5
+        sleep 5
 
         client = Puppet::Network::Client.status.new(:Server => "localhost", :Port => @@port)
 

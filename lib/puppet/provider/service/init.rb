@@ -70,8 +70,23 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
         @initscript ||= self.search(@resource[:name])
     end
 
+    def paths
+        @paths ||= @resource[:path].find_all do |path|
+            if File.directory?(path)
+                true
+            else
+                if File.exist?(path) and ! File.directory?(path)
+                    self.debug "Search path #{path} is not a directory"
+                else
+                    self.debug "Search path #{path} does not exist"
+                end
+                false
+            end
+        end
+    end
+
     def search(name)
-        @resource[:path].each { |path|
+        paths.each { |path|
             fqname = File.join(path,name)
             begin
                 stat = File.stat(fqname)
@@ -84,7 +99,8 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
             # if we've gotten this far, we found a valid script
             return fqname
         }
-        @resource[:path].each { |path|
+
+        paths.each { |path|
             fqname_sh = File.join(path,"#{name}.sh")
             begin
                 stat = File.stat(fqname_sh)

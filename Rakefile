@@ -20,6 +20,7 @@ FILES = FileList[
     'man/**/*',
     'examples/**/*',
     'ext/**/*',
+    'tasks/**/*',
     'test/**/*',
     'spec/**/*'
 ]
@@ -34,6 +35,7 @@ task :default do
     sh %{rake -T}
 end
 
+desc "Create the tarball and the gem - use when releasing"
 task :puppetpackages => [:create_gem, :package]
 
 desc "Run the specs under spec/"

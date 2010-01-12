@@ -68,7 +68,7 @@ Puppet::Application.new(:puppetdoc) do
         unless @manifest
             env = Puppet::Node::Environment.new
             files += env.modulepath
-            files += env.manifestdir
+            files << File.dirname(env[:manifest])
         end
         files += ARGV
         Puppet.info "scanning: %s" % files.inspect

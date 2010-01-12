@@ -11,5 +11,19 @@ module Puppet::Util::LogPaths
 
         return "/" + @path.join("/")
     end
+
+    def source_descriptors
+        descriptors = {}
+
+        descriptors[:tags] = tags
+
+        [:path, :file, :line, :version].each do |param|
+            next unless value = send(param)
+            descriptors[param] = value
+        end
+
+        return descriptors
+    end
+
 end
 

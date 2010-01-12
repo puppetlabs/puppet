@@ -6,8 +6,6 @@ module Puppet::Indirector::Envelope
     attr_accessor :expiration
 
     def expired?
-        return false unless expiration
-        return false if expiration >= Time.now
-        return true
+        expiration and expiration < Time.now
     end
 end

@@ -7,11 +7,7 @@
 # was abysmal.  At this time (2008-11-02) the only distribution providing
 # these Ruby SELinux bindings which I am aware of is Fedora (in libselinux-ruby).
 
-begin
-    require 'selinux'
-rescue LoadError
-    # Nothing
-end
+Puppet.features.selinux? # check, but continue even if it's not
 
 require 'pathname'
 
@@ -73,7 +69,7 @@ module Puppet::Util::SELinux
         if context.nil? or context == "unlabeled"
             return nil
         end
-        unless context =~ /^([a-z0-9_]+):([a-z0-9_]+):([a-z0-9_]+)(?::([a-zA-Z0-9:,._-]+))?/
+        unless context =~ /^([a-z0-9_]+):([a-z0-9_]+):([a-zA-Z0-9_]+)(?::([a-zA-Z0-9:,._-]+))?/
             raise Puppet::Error, "Invalid context to parse: #{context}"
         end
         ret = {
@@ -170,8 +166,8 @@ module Puppet::Util::SELinux
             # that's expected
         rescue
             return nil
-        ensure        
-            mountfh.close
+        ensure
+            mountfh.close if mountfh
         end
 
         mntpoint = {}

@@ -86,7 +86,7 @@ describe Puppet::FileServing::Metadata do
         end
 
         it "should pass the checksum in the hash as a nested hash" do
-            @metadata.to_pson_data_hash['data']['checksum'].should be_is_a Hash
+            @metadata.to_pson_data_hash['data']['checksum'].should be_is_a(Hash)
         end
 
         it "should pass the checksum_type in the hash verbatum as the checksum's type" do
@@ -107,6 +107,10 @@ describe Puppet::FileServing::Metadata, " when finding the file to use for setti
 
         # Use a link because it's easier to test -- no checksumming
         @stat = stub "stat", :uid => 10, :gid => 20, :mode => 0755, :ftype => "link"
+
+        # Not quite.  We don't want to checksum links, but we must because they might be being followed.
+        @checksum = Digest::MD5.hexdigest("some content\n") # Remove these when :managed links are no longer checksumed.
+        @metadata.stubs(:md5_file).returns(@checksum)           #
     end
 
     it "should accept a base path path to which the file should be relative" do
@@ -217,6 +221,9 @@ describe Puppet::FileServing::Metadata, " when collecting attributes" do
             @stat.stubs(:ftype).returns("link")
             File.expects(:readlink).with("/my/file").returns("/path/to/link")
             @metadata.collect
+ 
+            @checksum = Digest::MD5.hexdigest("some content\n") # Remove these when :managed links are no longer checksumed.
+            @file.stubs(:md5_file).returns(@checksum)           #
         end
 
         it "should read links instead of returning their checksums" do
@@ -224,29 +231,56 @@ describe Puppet::FileServing::Metadata, " when collecting attributes" do
         end
 
         it "should produce tab-separated mode, type, owner, group, and destination for xmlrpc" do
-            @metadata.attributes_with_tabs.should == "#{0755.to_s}\tlink\t10\t20\t/path/to/link"
+            pending "We'd like this to be true, but we need to always collect the checksum because in the server/client/server round trip we lose the distintion between manage and follow."
+            @metadata.attributes_with_tabs.should == "#{0755}\tlink\t10\t20\t/path/to/link"
+        end
+
+        it "should produce tab-separated mode, type, owner, group, checksum, and destination for xmlrpc" do
+            @metadata.attributes_with_tabs.should == "#{0755}\tlink\t10\t20\t{md5}eb9c2bf0eb63f3a7bc0ea37ef18aeba5\t/path/to/link"
         end
     end
 end
 
 describe Puppet::FileServing::Metadata, " when pointing to a link" do
-    it "should store the destination of the link in :destination if links are :manage" do
-        file = Puppet::FileServing::Metadata.new("/base/path/my/file", :links => :manage)
+    describe "when links are managed" do
+        before do
+            @file = Puppet::FileServing::Metadata.new("/base/path/my/file", :links => :manage)
+            File.expects(:lstat).with("/base/path/my/file").returns stub("stat", :uid => 1, :gid => 2, :ftype => "link", :mode => 0755)
+            File.expects(:readlink).with("/base/path/my/file").returns "/some/other/path"
 
-        File.expects(:lstat).with("/base/path/my/file").returns stub("stat", :uid => 1, :gid => 2, :ftype => "link", :mode => 0755)
-        File.expects(:readlink).with("/base/path/my/file").returns "/some/other/path"
-
-        file.collect
-        file.destination.should == "/some/other/path"
+            @checksum = Digest::MD5.hexdigest("some content\n") # Remove these when :managed links are no longer checksumed.
+            @file.stubs(:md5_file).returns(@checksum)           #
+        end
+        it "should store the destination of the link in :destination if links are :manage" do
+            @file.collect
+            @file.destination.should == "/some/other/path"
+        end
+        it "should not collect the checksum if links are :manage" do
+            pending "We'd like this to be true, but we need to always collect the checksum because in the server/client/server round trip we lose the distintion between manage and follow."
+            @file.collect
+            @file.checksum.should be_nil
+        end
+        it "should collect the checksum if links are :manage" do # see pending note above
+            @file.collect
+            @file.checksum.should == "{md5}#{@checksum}"
+        end
     end
 
-    it "should not collect the checksum" do
-        file = Puppet::FileServing::Metadata.new("/base/path/my/file", :links => :manage)
-
-        File.expects(:lstat).with("/base/path/my/file").returns stub("stat", :uid => 1, :gid => 2, :ftype => "link", :mode => 0755)
-        File.expects(:readlink).with("/base/path/my/file").returns "/some/other/path"
-
-        file.collect
-        file.checksum.should be_nil
+    describe "when links are followed" do
+        before do
+            @file = Puppet::FileServing::Metadata.new("/base/path/my/file", :links => :follow)
+            File.expects(:stat).with("/base/path/my/file").returns stub("stat", :uid => 1, :gid => 2, :ftype => "file", :mode => 0755)
+            File.expects(:readlink).with("/base/path/my/file").never
+            @checksum = Digest::MD5.hexdigest("some content\n")
+            @file.stubs(:md5_file).returns(@checksum)
+        end
+        it "should not store the destination of the link in :destination if links are :follow" do
+            @file.collect
+            @file.destination.should be_nil
+        end
+        it "should collect the checksum if links are :follow" do
+            @file.collect
+            @file.checksum.should == "{md5}#{@checksum}"
+        end
     end
 end

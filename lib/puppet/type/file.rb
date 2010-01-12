@@ -31,7 +31,7 @@ module Puppet
 
             validate do |value|
                 unless value =~ /^#{File::SEPARATOR}/
-                    raise Puppet::Error, "File paths must be fully qualified, not '%s'" % value
+                    fail Puppet::Error,"File paths must be fully qualified, not '#{value}'"
                 end
             end
 
@@ -147,7 +147,7 @@ module Puppet
                     resource[:recurselimit] = value
                     true
                 else
-                    raise ArgumentError, "Invalid recurse value %s" % value.inspect
+                    self.fail "Invalid recurse value #{value.inspect}"
                 end
             end
         end
@@ -163,7 +163,7 @@ module Puppet
                 when Integer, Fixnum, Bignum; value
                 when /^\d+$/; Integer(value)
                 else
-                    raise ArgumentError, "Invalid recurselimit value %s" % value.inspect
+                    self.fail "Invalid recurselimit value #{value.inspect}"
                 end
             end
         end

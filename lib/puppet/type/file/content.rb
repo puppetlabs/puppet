@@ -116,7 +116,7 @@ module Puppet
             return :absent unless stat = @resource.stat
             ftype = stat.ftype
             # Don't even try to manage the content on directories or links
-            return nil if ["directory","link"].include? ftype
+            return nil if ["directory","link"].include? ftype or checksum_type.nil?
 
             begin
                 "{#{checksum_type}}" + send(checksum_type.to_s + "_file", resource[:path]).to_s

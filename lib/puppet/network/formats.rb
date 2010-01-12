@@ -44,7 +44,18 @@ end
 # This format combines a yaml serialization, then zlib compression and base64 encoding.
 Puppet::Network::FormatHandler.create(:b64_zlib_yaml, :mime => "text/b64_zlib_yaml") do
     require 'base64'
-    require 'zlib'
+
+    def use_zlib?
+        Puppet.features.zlib? && Puppet[:zlib]
+    end
+
+    def requiring_zlib
+        if use_zlib?
+            yield
+        else
+            raise Puppet::Error, "the zlib library is not installed or is disabled."
+        end
+    end
 
     def intern(klass, text)
         decode(text)
@@ -70,7 +81,7 @@ Puppet::Network::FormatHandler.create(:b64_zlib_yaml, :mime => "text/b64_zlib_ya
 
     # Because of yaml issue in ruby 1.8.1...
     def supported?(klass)
-        RUBY_VERSION != '1.8.1'
+        RUBY_VERSION != '1.8.1' and use_zlib?
     end
 
     # fixup invalid yaml as per:
@@ -81,11 +92,15 @@ Puppet::Network::FormatHandler.create(:b64_zlib_yaml, :mime => "text/b64_zlib_ya
     end
 
     def encode(text)
-        Base64.encode64(Zlib::Deflate.deflate(text, Zlib::BEST_COMPRESSION))
+        requiring_zlib do 
+            Base64.encode64(Zlib::Deflate.deflate(text, Zlib::BEST_COMPRESSION))
+        end
     end
 
     def decode(yaml)
-        YAML.load(Zlib::Inflate.inflate(Base64.decode64(yaml)))
+        requiring_zlib do 
+            YAML.load(Zlib::Inflate.inflate(Base64.decode64(yaml)))
+        end
     end
 end
 

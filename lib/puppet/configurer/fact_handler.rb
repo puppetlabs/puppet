@@ -27,12 +27,15 @@ module Puppet::Configurer::FactHandler
         facts = find_facts
         #format = facts.class.default_format
 
-        # Hard-code yaml, because I couldn't get marshal to work.
-        format = :b64_zlib_yaml
+        if facts.support_format?(:b64_zlib_yaml)
+            format = :b64_zlib_yaml
+        else
+            format = :yaml
+        end
 
         text = facts.render(format)
 
-        return {:facts_format => :b64_zlib_yaml, :facts => CGI.escape(text)}
+        return {:facts_format => format, :facts => CGI.escape(text)}
     end
 
     # Retrieve facts from the central server.

@@ -119,10 +119,22 @@ module Puppet::Network::FormatHandler
                 format_handler.format(b).weight <=> format_handler.format(a).weight
             end
 
-            put_preferred_format_first(result)
+            result = put_preferred_format_first(result)
+
+            Puppet.debug "#{friendly_name} supports formats: #{result.map{ |f| f.to_s }.sort.join(' ')}; using #{result.first}"
+
+            result
         end
 
         private
+
+        def friendly_name
+            if self.respond_to? :indirection
+                indirection.name
+            else
+                self
+            end
+        end
 
         def put_preferred_format_first(list)
             preferred_format = Puppet.settings[:preferred_serialization_format].to_sym
@@ -130,7 +142,7 @@ module Puppet::Network::FormatHandler
                 list.delete(preferred_format)
                 list.unshift(preferred_format)
             else
-                Puppet.warning "Value of 'preferred_serialization_format' ('#{preferred_format}') is invalid, using default ('#{list.first}')"
+                Puppet.warning "Value of 'preferred_serialization_format' (#{preferred_format}) is invalid for #{friendly_name}, using default (#{list.first})"
             end
             list
         end

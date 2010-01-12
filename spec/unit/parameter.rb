@@ -44,6 +44,14 @@ describe Puppet::Parameter do
         @parameter.tags.should == %w{one two foo}
     end
 
+    it "should provide source_descriptors" do
+        @resource.expects(:line).returns 10
+        @resource.expects(:file).returns "file"
+        @resource.expects(:tags).returns %w{one two}
+        @resource.expects(:version).returns 50
+        @parameter.source_descriptors.should == {:tags=>["one", "two", "foo"], :path=>"//foo", :version=>50, :file => "file", :line => 10}
+    end
+
     describe "when returning the value" do
         it "should return nil if no value is set" do
             @parameter.value.should be_nil

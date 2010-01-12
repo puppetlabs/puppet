@@ -33,7 +33,7 @@ describe provider_class do
     end
 
     def genkey(key)
-        @provider.filetype = :ram
+        @provider.stubs(:filetype).returns(Puppet::Util::FileType::FileTypeRam)
         file = @provider.default_target
 
         key.flush
@@ -90,7 +90,9 @@ describe provider_class do
     before :each do
         @resource = stub("resource", :name => "foo")
         @resource.stubs(:[]).returns "foo"
+
         @provider = provider_class.new(@resource)
+        provider_class.stubs(:filetype).returns(Puppet::Util::FileType::FileTypeRam)
     end
 
     describe "when flushing" do

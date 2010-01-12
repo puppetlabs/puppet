@@ -22,7 +22,7 @@ class Puppet::Network::Server
             $stderr.reopen $stdout
             Puppet::Util::Log.reopen
         rescue => detail
-            File.open("/tmp/daemonout", "w") { |f|
+            Puppet::Util.secure_open("/tmp/daemonout", "w") { |f|
                 f.puts "Could not start %s: %s" % [Puppet[:name], detail]
             }
             raise "Could not start %s: %s" % [Puppet[:name], detail]

@@ -422,6 +422,28 @@ module Util
     end
 
     module_function :memory, :thinmark
+
+    def secure_open(file,must_be_w,&block)
+        raise Puppet::DevError,"secure_open only works with mode 'w'" unless must_be_w == 'w'
+        raise Puppet::DevError,"secure_open only requires a block"    unless block_given?
+        Puppet.warning "#{file} was a symlink to #{File.readlink(file)}" if File.symlink?(file)
+        if File.exists?(file) or File.symlink?(file)
+            wait = File.symlink?(file) ? 5.0 : 0.1
+            File.delete(file)
+            sleep wait # give it a chance to reappear, just in case someone is actively trying something.
+        end
+        begin
+            File.open(file,File::CREAT|File::EXCL|File::TRUNC|File::WRONLY,&block)
+        rescue Errno::EEXIST
+            desc = File.symlink?(file) ? "symlink to #{File.readlink(file)}" : File.stat(file).ftype
+            puts "Warning: #{file} was apparently created by another process (as"
+            puts "a #{desc}) as soon as it was deleted by this process.  Someone may be trying"
+            puts "to do something objectionable (such as tricking you into overwriting system"
+            puts "files if you are running as root)."
+            raise
+        end
+    end
+    module_function :secure_open
 end
 end
 

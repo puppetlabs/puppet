@@ -44,7 +44,8 @@ class Puppet::Network::HTTP::WEBrick
                     sock.accept
                     @server.run(sock)
                 }
-           }
+            }
+            sleep 0.1 until @server.status == :Running
         end
     end
 

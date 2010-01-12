@@ -84,4 +84,24 @@ describe "Puppet::Rails::Resource" do
             @resource.merge_parser_resource(@parser)
         end
     end
+
+    describe "merge_parameters" do
+        it "should replace values that have changed" do
+            @resource = Puppet::Rails::Resource.new
+            @resource.params_list = [{"name" => "replace", "value" => 1, "id" => 100 }]
+
+            Puppet::Rails::ParamValue.expects(:delete).with([100])
+            param_values = stub "param_values"
+            param_values.expects(:build).with({:value=>nil, :param_name=>nil, :line=>{"replace"=>2}})
+            @resource.stubs(:param_values).returns(param_values)
+
+            Puppet::Rails::ParamName.stubs(:accumulate_by_name)
+
+            merge_resource = stub "merge_resource"
+            merge_resource.expects(:line).returns({ "replace" => 2 })
+            merge_resource.stubs(:each).yields([["replace", 2]])
+
+            @resource.merge_parameters(merge_resource)
+        end
+    end
 end

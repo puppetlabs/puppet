@@ -2,11 +2,7 @@
 
 require 'puppet'
 
-begin
-    require 'openssl'
-rescue LoadError
-    raise Puppet::Error, "You must have the Ruby openssl library installed"
-end
+raise Puppet::Error, "You must have the Ruby openssl library installed" unless Puppet.features.openssl?
 
 module Puppet::SSLCertificates
     #def self.mkcert(type, name, dnsnames, ttl, issuercert, issuername, serial, publickey)

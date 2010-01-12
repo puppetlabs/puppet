@@ -5,7 +5,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/parser/lexer'
 
 # This is a special matcher to match easily lexer output
-Spec::Matchers.create :be_like do |ary|
+Spec::Matchers.define :be_like do |ary|
     match do |result|
         r = true
         result.zip(ary) do |a,b|
