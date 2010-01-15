@@ -45,7 +45,7 @@ class TestParsedHostProvider < Test::Unit::TestCase
         return {
             :name => "fakehost%s" % @hcount,
             :ip => "192.168.27.%s" % @hcount,
-            :alias => ["alias%s" % @hcount],
+            :host_aliases => ["alias%s" % @hcount],
             :ensure => :present
         }
     end
@@ -67,7 +67,7 @@ class TestParsedHostProvider < Test::Unit::TestCase
 
     # Make sure we convert both directlys correctly using a simple host.
     def test_basic_isomorphism
-        hash = {:record_type => :parsed, :name => "myhost", :ip => "192.168.43.56", :alias => %w{another host}}
+        hash = {:record_type => :parsed, :name => "myhost", :ip => "192.168.43.56", :host_aliases => %w{another host}}
 
         str = nil
         assert_nothing_raised do
@@ -103,7 +103,7 @@ class TestParsedHostProvider < Test::Unit::TestCase
         assert_equal([
             {:record_type => :comment, :line => "# comment one"},
             {:record_type => :blank, :line => ""},
-            {:record_type => :parsed, :name => "myhost", :ip => "192.168.43.56", :alias => %w{another host}},
+            {:record_type => :parsed, :name => "myhost", :ip => "192.168.43.56", :host_aliases => %w{another host}},
             {:record_type => :blank, :line => "    "},
             {:record_type => :comment, :line => "# another comment"},
             {:record_type => :parsed, :name => "anotherhost", :ip => "192.168.43.57"}
@@ -150,13 +150,13 @@ class TestParsedHostProvider < Test::Unit::TestCase
         }
 
         # Remove a single field and make sure it gets tossed
-        name = host.alias
-        host.alias = [:absent]
+        name = host.host_aliases
+        host.host_aliases = [:absent]
 
         assert_nothing_raised {
             host.flush
             assert(! file.read.include?(name[0]),
-                "Did not remove alias from disk")
+                "Did not remove host_aliases from disk")
         }
 
         # Make sure it throws up if we remove a required field

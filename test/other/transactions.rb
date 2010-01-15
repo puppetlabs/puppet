@@ -368,7 +368,7 @@ class TestTransactions < Test::Unit::TestCase
 
         # 'subscribe' expects an array of arrays
         #component[:require] = [[file.class.name,file.name]]
-        ecomp[:subscribe] = fcomp
+        ecomp[:subscribe] = fcomp.ref
         exec[:refreshonly] = true
 
         trans = assert_events([], config)

@@ -108,7 +108,7 @@ class TestHost < Test::Unit::TestCase
         # This was a hard bug to track down.
         assert_instance_of(String, current_values[host.property(:ip)])
 
-        host[:alias] = %w{madstop kirby yayness}
+        host[:host_aliases] = %w{madstop kirby yayness}
 
         assert_events([:host_changed], host)
 
@@ -117,7 +117,7 @@ class TestHost < Test::Unit::TestCase
         }
 
         assert_equal(%w{madstop kirby yayness},
-                     current_values[host.property(:alias)])
+                     current_values[host.property(:host_aliases)])
 
         host[:ensure] = :absent
         assert_events([:host_removed], host)
@@ -184,13 +184,13 @@ class TestHost < Test::Unit::TestCase
     end
 
     def test_aliasisproperty
-        assert_equal(:property, @hosttype.attrtype(:alias))
+        assert_equal(:property, @hosttype.attrtype(:host_aliases))
     end
 
     def test_multivalues
         host = mkhost
         assert_raise(Puppet::Error) {
-            host[:alias] = "puppetmasterd yayness"
+            host[:host_aliases] = "puppetmasterd yayness"
         }
     end
 
