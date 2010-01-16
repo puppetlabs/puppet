@@ -72,9 +72,9 @@ install: build
 
 	# Logcheck rules.  Gee I wish you could specify a file to source
 	# in dh_installlogcheck.
-	ln ext/logcheck/puppet debian/puppet.logcheck.ignore.server
+	ln ext/logcheck/puppet debian/puppet-common.logcheck.ignore.server
 	dh_installlogcheck
-	rm debian/puppet.logcheck.ignore.server
+	rm debian/puppet-common.logcheck.ignore.server
 
 # Build architecture-dependent files here.
 binary-arch: build install
