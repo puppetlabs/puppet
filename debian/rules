@@ -36,6 +36,8 @@ clean:
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp configure-stamp
+	rm -f debian/puppet-common.logcheck.ignore.server
+	rm -f debian/puppet-el.emacsen-startup
 	dh_clean 
 
 install: build
@@ -63,7 +65,7 @@ install: build
 		$(CURDIR)/debian/vim-puppet/usr/share/vim/registry/
 
 	# Emacs mode
-	$(INSTALL) -m0644 ext/emacs/puppet-mode-init.el			\
+	$(NSTALL) -m0644 ext/emacs/puppet-mode-init.el			\
 		$(CURDIR)/debian/puppet-el.emacsen-startup
 	$(INSTALL) -m0644 ext/emacs/puppet-mode.el			\
 		$(CURDIR)/debian/puppet-el/usr/share/emacs/site-lisp/puppet-mode.el
@@ -73,8 +75,6 @@ install: build
 	# Logcheck rules.  Gee I wish you could specify a file to source
 	# in dh_installlogcheck.
 	ln ext/logcheck/puppet debian/puppet-common.logcheck.ignore.server
-	dh_installlogcheck
-	rm debian/puppet-common.logcheck.ignore.server
 
 # Build architecture-dependent files here.
 binary-arch: build install
@@ -87,6 +87,7 @@ binary-indep: build install
 	dh_installchangelogs -i CHANGELOG
 	dh_installdocs -i
 	dh_installemacsen
+	dh_installlogcheck
 	dh_installman
 	dh_installinit -ppuppetmaster
 	dh_installinit -ppuppet --error-handler=true -- defaults 21 
