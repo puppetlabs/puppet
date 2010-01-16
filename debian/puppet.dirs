@@ -1,7 +1,1 @@
 usr/sbin
-usr/lib/ruby/1.8
-var/log/puppet
-etc/puppet/files
-usr/share/vim/addons/ftdetect
-usr/share/vim/addons/syntax
-var/lib/puppet

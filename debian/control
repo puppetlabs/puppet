@@ -46,3 +46,35 @@ Description: centralised configuration management control daemon
  .
  This package contains the manifest server, 'puppetmaster'.
 
+Package: puppet-common
+Architecture: all
+Depends: ruby1.8, libxmlrpc-ruby, libopenssl-ruby, libshadow-ruby1.8, adduser
+Conflicts: puppet (<< ${source:Version}), puppetmaster (<< ${source:Version})
+Description: common files for puppet and puppetmaster
+ Puppet lets you centrally manage every important aspect of your system
+ using a cross-platform specification language that manages all the
+ separate elements normally aggregated in different files, like users,
+ cron jobs, and hosts, along with obviously discrete elements like
+ packages, services, and files.
+ .
+ Puppet's simple declarative specification language provides powerful
+ classing abilities for drawing out the similarities between hosts while
+ allowing them to be as specific as necessary, and it handles dependency
+ and prerequisite relationships between objects clearly and explicitly.
+ .
+ This package contains the files common to the 'puppet' and
+ 'puppetmaster' packages.
+
+Package: vim-puppet
+Architecture: all
+Recommends: vim-addon-manager
+Conflicts: puppet (<< ${source:Version})
+Description: Vim syntax highlighting for puppet manifests
+ The vim-puppet package provides filetype detection and syntax highlighting for
+ puppet manifests (files ending with ".pp").
+
+Package: puppet-el
+Architecture: all
+Conflicts: puppet (<< ${source:Version})
+Description: Emacs syntax highlighting for puppet manifests
+ The puppet-el package provides syntax highlighting for puppet manifests

@@ -56,15 +56,17 @@ install: build
 
 	# Vim auto-syntax-highlighting stuff
 	$(INSTALL) -m0644 ext/vim/syntax/puppet.vim				\
-		$(CURDIR)/debian/puppet-common/usr/share/vim/addons/syntax/
+		$(CURDIR)/debian/vim-puppet/usr/share/vim/addons/syntax/
 	$(INSTALL) -m0644 ext/vim/ftdetect/puppet.vim				\
-		$(CURDIR)/debian/puppet-common/usr/share/vim/addons/ftdetect/
+		$(CURDIR)/debian/vim-puppet/usr/share/vim/addons/ftdetect/
+	$(INSTALL) -m0644 debian/vim-puppet.yaml				\
+		$(CURDIR)/debian/vim-puppet/usr/share/vim/registry/
 
 	# Emacs mode
 	$(INSTALL) -m0644 ext/emacs/puppet-mode-init.el			\
-		$(CURDIR)/debian/puppet-common/etc/emacs/site-start.d/50puppet-mode-init.el
+		$(CURDIR)/debian/puppet-el.emacsen-startup
 	$(INSTALL) -m0644 ext/emacs/puppet-mode.el			\
-		$(CURDIR)/debian/puppet-common/usr/share/emacs/site-lisp/puppet-mode.el
+		$(CURDIR)/debian/puppet-el/usr/share/emacs/site-lisp/puppet-mode.el
 
 	dh_installexamples examples/*
 
@@ -84,6 +86,7 @@ binary-indep: build install
 	dh_install -i
 	dh_installchangelogs -i CHANGELOG
 	dh_installdocs -i
+	dh_installemacsen
 	dh_installman
 	dh_installinit -ppuppetmaster
 	dh_installinit -ppuppet --error-handler=true -- defaults 21 
