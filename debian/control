@@ -12,7 +12,7 @@ Homepage: http://reductivelabs.com/trac/puppet
 
 Package: puppet
 Architecture: all
-Depends: ruby1.8, libxmlrpc-ruby, libopenssl-ruby, libshadow-ruby1.8, adduser, facter, lsb-base, puppet-common (= ${source:Version})
+Depends: ${misc:Depends}, ruby1.8, libxmlrpc-ruby, libopenssl-ruby, libshadow-ruby1.8, adduser, facter, lsb-base, puppet-common (= ${source:Version})
 Recommends: rdoc, libaugeas-ruby1.8
 Description: centralised configuration management for networks
  Puppet lets you centrally manage every important aspect of your system
@@ -28,7 +28,7 @@ Description: centralised configuration management for networks
 
 Package: puppetmaster
 Architecture: all
-Depends: ruby1.8, puppet-common (= ${source:Version}), facter, lsb-base
+Depends: ${misc:Depends}, ruby1.8, puppet-common (= ${source:Version}), facter, lsb-base
 Conflicts: puppet (<< 0.24.7-1)
 Recommends: rails (>= 1.2.3-2), rdoc, libldap-ruby1.8
 Suggests: apache2 | nginx, mongrel
@@ -48,7 +48,7 @@ Description: centralised configuration management control daemon
 
 Package: puppet-common
 Architecture: all
-Depends: ruby1.8, libxmlrpc-ruby, libopenssl-ruby, libshadow-ruby1.8, adduser
+Depends: ${misc:Depends}, ruby1.8, libxmlrpc-ruby, libopenssl-ruby, libshadow-ruby1.8, adduser
 Conflicts: puppet (<< ${source:Version}), puppetmaster (<< ${source:Version})
 Description: common files for puppet and puppetmaster
  Puppet lets you centrally manage every important aspect of your system
@@ -67,6 +67,7 @@ Description: common files for puppet and puppetmaster
 
 Package: vim-puppet
 Architecture: all
+Depends: ${misc:Depends}
 Recommends: vim-addon-manager
 Conflicts: puppet (<< ${source:Version})
 Description: Vim syntax highlighting for puppet manifests
@@ -75,6 +76,7 @@ Description: Vim syntax highlighting for puppet manifests
 
 Package: puppet-el
 Architecture: all
+Depends: ${misc:Depends}
 Conflicts: puppet (<< ${source:Version})
 Description: Emacs syntax highlighting for puppet manifests
  The puppet-el package provides syntax highlighting for puppet manifests
