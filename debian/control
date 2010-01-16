@@ -12,7 +12,7 @@ Homepage: http://reductivelabs.com/trac/puppet
 
 Package: puppet
 Architecture: all
-Depends: ruby1.8, libxmlrpc-ruby, libopenssl-ruby, libshadow-ruby1.8, adduser, facter, lsb-base
+Depends: ruby1.8, libxmlrpc-ruby, libopenssl-ruby, libshadow-ruby1.8, adduser, facter, lsb-base, puppet-common (= ${source:Version})
 Recommends: rdoc, libaugeas-ruby1.8
 Description: centralised configuration management for networks
  Puppet lets you centrally manage every important aspect of your system
@@ -28,7 +28,7 @@ Description: centralised configuration management for networks
 
 Package: puppetmaster
 Architecture: all
-Depends: ruby1.8, puppet (= ${source:Version}), facter, lsb-base
+Depends: ruby1.8, puppet-common (= ${source:Version}), facter, lsb-base
 Conflicts: puppet (<< 0.24.7-1)
 Recommends: rails (>= 1.2.3-2), rdoc, libldap-ruby1.8
 Suggests: apache2 | nginx, mongrel
