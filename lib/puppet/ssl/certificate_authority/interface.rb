@@ -2,11 +2,11 @@
 # on the CA.  It's only used by the 'puppetca' executable, and its
 # job is to provide a CLI-like interface to the CA class.
 class Puppet::SSL::CertificateAuthority::Interface
-    INTERFACE_METHODS = [:destroy, :list, :revoke, :generate, :sign, :print, :verify, :fingerprint]
+    INTERFACE_METHODS = [:destroy, :list, :revoke, :generate, :sign, :print, :verify]
 
     class InterfaceError < ArgumentError; end
 
-    attr_reader :method, :subjects, :digest
+    attr_reader :method, :subjects
 
     # Actually perform the work.
     def apply(ca)
@@ -38,10 +38,9 @@ class Puppet::SSL::CertificateAuthority::Interface
         end
     end
 
-    def initialize(method, options)
+    def initialize(method, subjects)
         self.method = method
-        self.subjects = options[:to]
-        @digest = options[:digest] || :MD5
+        self.subjects = subjects
     end
 
     # List the hosts.
@@ -68,9 +67,9 @@ class Puppet::SSL::CertificateAuthority::Interface
                 invalid = details.to_s
             end
             if not invalid and signed.include?(host)
-                puts "+ #{host} (#{ca.fingerprint(host, @digest)})"
+                puts "+ " + host
             elsif invalid
-                puts "- #{host} (#{ca.fingerprint(host, @digest)}) (#{invalid})"
+                puts "- " + host + " (" + invalid + ")"
             else
                 puts host
             end
@@ -88,17 +87,6 @@ class Puppet::SSL::CertificateAuthority::Interface
         (subjects == :all ? ca.list : subjects).each do |host|
             if value = ca.print(host)
                 puts value
-            else
-                Puppet.err "Could not find certificate for %s" % host
-            end
-        end
-    end
-
-    # Print certificate information.
-    def fingerprint(ca)
-        (subjects == :all ? ca.list : subjects).each do |host|
-            if value = ca.fingerprint(host, @digest)
-                puts "#{host} #{value}"
             else
                 Puppet.err "Could not find certificate for %s" % host
             end

@@ -532,9 +532,9 @@ describe Puppet::SSL::CertificateAuthority do
                 lambda { @ca.apply(:generate) }.should raise_error(ArgumentError)
             end
 
-            it "should create an Interface instance with the specified method and the options" do
-                Puppet::SSL::CertificateAuthority::Interface.expects(:new).with(:generate, :to => :host).returns(stub('applier', :apply => nil))
-                @ca.apply(:generate, :to => :host)
+            it "should create an Interface instance with the specified method and the subjects" do
+                Puppet::SSL::CertificateAuthority::Interface.expects(:new).with(:generate, :hosts).returns(stub('applier', :apply => nil))
+                @ca.apply(:generate, :to => :hosts)
             end
 
             it "should apply the Interface with itself as the argument" do
@@ -580,38 +580,6 @@ describe Puppet::SSL::CertificateAuthority do
                 cert1 = stub 'cert1', :name => "cert1", :to_text => "mytext"
                 Puppet::SSL::Certificate.expects(:find).with("myhost").returns cert1
                 @ca.print("myhost").should == "mytext"
-            end
-        end
-
-        describe "and fingerprinting certificates" do
-            before :each do
-                @der = stub 'der', :to_der => "DER"
-                @cert = stub 'cert', :name => "cert", :content => @der
-                Puppet::SSL::Certificate.stubs(:find).with("myhost").returns @cert
-                OpenSSL::Digest.stubs(:constants).returns ["MD5", "DIGEST"]
-            end
-
-            it "should raise an error if the certificate cannot be found" do
-                Puppet::SSL::Certificate.expects(:find).with("myhost").returns nil
-                lambda { @ca.fingerprint("myhost") }.should raise_error
-            end
-
-            it "should digest the certificate DER value and return a ':' seperated nibblet string" do
-                OpenSSL::Digest.expects(:hexdigest).with("MD5", "DER").returns "digest"
-
-                @ca.fingerprint("myhost").should == "DI:GE:ST"
-            end
-
-            it "should raise an error if the digest algorithm is not defined" do
-                OpenSSL::Digest.expects(:constants).returns []
-
-                lambda { @ca.fingerprint("myhost") }.should raise_error
-            end
-
-            it "should use the given digest algorithm" do
-                OpenSSL::Digest.expects(:hexdigest).with("DIGEST", "DER").returns "digest"
-
-                @ca.fingerprint("myhost", :digest).should == "DI:GE:ST"
             end
         end
 

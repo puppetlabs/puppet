@@ -53,7 +53,7 @@ class Puppet::SSL::CertificateAuthority
         unless options[:to]
             raise ArgumentError, "You must specify the hosts to apply to; valid values are an array or the symbol :all"
         end
-        applier = Interface.new(method, options)
+        applier = Interface.new(method, options[:to])
 
         applier.apply(self)
     end
@@ -289,27 +289,6 @@ class Puppet::SSL::CertificateAuthority
         unless store.verify(cert.content)
             raise CertificateVerificationError.new(store.error), store.error_string
         end
-    end
-
-    def fingerprint(name, md = :MD5)
-        unless cert = Puppet::SSL::Certificate.find(name)
-            raise ArgumentError, "Could not find a certificate for %s" % name
-        end
-
-        require 'openssl/digest'
-
-        # ruby 1.8.x openssl digest constants are string
-        # but in 1.9.x they are symbols
-        mds = md.to_s.upcase
-        if OpenSSL::Digest.constants.include?(mds)
-            md = mds
-        elsif OpenSSL::Digest.constants.include?(mds.to_sym)
-            md = mds.to_sym
-        else
-            raise ArgumentError, "#{md} is not a valid digest algorithm for fingerprinting certificate #{name}"
-        end
-
-        OpenSSL::Digest.hexdigest(md, cert.content.to_der).scan(/../).join(':').upcase
     end
 
     # List the waiting certificate requests.
