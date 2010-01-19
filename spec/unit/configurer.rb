@@ -7,6 +7,11 @@ require File.dirname(__FILE__) + '/../spec_helper'
 require 'puppet/configurer'
 
 describe Puppet::Configurer do
+    before do
+        Puppet.settings.stubs(:use).returns(true)
+        @agent = Puppet::Configurer.new
+    end
+
     it "should include the Plugin Handler module" do
         Puppet::Configurer.ancestors.should be_include(Puppet::Configurer::PluginHandler)
     end
@@ -18,6 +23,52 @@ describe Puppet::Configurer do
     it "should use the puppetdlockfile as its lockfile path" do
         Puppet.settings.expects(:value).with(:puppetdlockfile).returns("/my/lock")
         Puppet::Configurer.lockfile_path.should == "/my/lock"
+    end
+
+    describe "when executing a pre-run hook" do
+        it "should do nothing if the hook is set to an empty string" do
+            Puppet.settings[:prerun_command] = ""
+            Puppet::Util.expects(:exec).never
+
+            @agent.execute_prerun_command
+        end
+
+        it "should execute any pre-run command provided via the 'prerun_command' setting" do
+            Puppet.settings[:prerun_command] = "/my/command"
+            Puppet::Util.expects(:execute).with { |args| args[0] == "/my/command" }
+
+            @agent.execute_prerun_command
+        end
+
+        it "should fail if the command fails" do
+            Puppet.settings[:prerun_command] = "/my/command"
+            Puppet::Util.expects(:execute).raises Puppet::ExecutionFailure
+
+            lambda { @agent.execute_prerun_command }.should raise_error(Puppet::Configurer::CommandHookError)
+        end
+    end
+
+    describe "when executing a post-run hook" do
+        it "should do nothing if the hook is set to an empty string" do
+            Puppet.settings[:postrun_command] = ""
+            Puppet::Util.expects(:exec).never
+
+            @agent.execute_postrun_command
+        end
+
+        it "should execute any post-run command provided via the 'postrun_command' setting" do
+            Puppet.settings[:postrun_command] = "/my/command"
+            Puppet::Util.expects(:execute).with { |args| args[0] == "/my/command" }
+
+            @agent.execute_postrun_command
+        end
+
+        it "should fail if the command fails" do
+            Puppet.settings[:postrun_command] = "/my/command"
+            Puppet::Util.expects(:execute).raises Puppet::ExecutionFailure
+
+            lambda { @agent.execute_postrun_command }.should raise_error(Puppet::Configurer::CommandHookError)
+        end
     end
 end
 
@@ -72,6 +123,12 @@ describe Puppet::Configurer, "when executing a catalog run" do
         @agent.expects(:retrieve_catalog).returns catalog
 
         catalog.expects(:apply).never # because we're not yielding
+        @agent.run
+    end
+
+    it "should execute post-run hooks after the run" do
+        @agent.expects(:execute_postrun_command)
+
         @agent.run
     end
 end
@@ -213,6 +270,9 @@ describe Puppet::Configurer, "when preparing for a run" do
         Puppet.settings.stubs(:use).returns(true)
         @agent = Puppet::Configurer.new
         @agent.stubs(:dostorage)
+        @agent.stubs(:download_fact_plugins)
+        @agent.stubs(:download_plugins)
+        @agent.stubs(:execute_prerun_command)
         @facts = {"one" => "two", "three" => "four"}
     end
 
@@ -223,16 +283,19 @@ describe Puppet::Configurer, "when preparing for a run" do
     end
 
     it "should download fact plugins" do
-        @agent.stubs(:dostorage)
         @agent.expects(:download_fact_plugins)
 
         @agent.prepare
     end
 
     it "should download plugins" do
-        @agent.stubs(:dostorage)
         @agent.expects(:download_plugins)
 
+        @agent.prepare
+    end
+
+    it "should perform the pre-run commands" do
+        @agent.expects(:execute_prerun_command)
         @agent.prepare
     end
 end

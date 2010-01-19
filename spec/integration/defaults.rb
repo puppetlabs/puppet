@@ -215,4 +215,12 @@ describe "Puppet defaults" do
             Puppet.settings[:report_server].should == "report_server"
         end
     end
+
+    it "should have a 'prerun_command' that defaults to the empty string" do
+        Puppet.settings[:prerun_command].should == ""
+    end
+
+    it "should have a 'postrun_command' that defaults to the empty string" do
+        Puppet.settings[:postrun_command].should == ""
+    end
 end
