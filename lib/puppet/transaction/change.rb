@@ -6,15 +6,6 @@ require 'puppet/transaction/event'
 class Puppet::Transaction::Change
     attr_accessor :is, :should, :property, :proxy
 
-    # Switch the goals of the property, thus running the change in reverse.
-    def backward
-        @is, @should = @should, @is
-        @property.should = @should
-
-        @property.info "Reversing %s" % self
-        return self.go
-    end
-
     # Create our event object.
     def event
         result = property.event
@@ -32,9 +23,7 @@ class Puppet::Transaction::Change
         @changed = false
     end
 
-    # Perform the actual change.  This method can go either forward or
-    # backward, and produces an event.
-    def go
+    def apply
         return noop_event if noop?
 
         property.sync
@@ -54,10 +43,6 @@ class Puppet::Transaction::Change
         result.message = "change from #{is} to #{should} failed: #{detail}"
         result.send_log
         result
-    end
-
-    def forward
-        return self.go
     end
 
     # Is our property noop?  This is used for generating special events.

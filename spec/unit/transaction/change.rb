@@ -95,7 +95,7 @@ describe Puppet::Transaction::Change do
 
                     @event.expects(:message=).with { |msg| msg.include?("should be") }
 
-                    @change.forward
+                    @change.apply
                 end
 
                 it "should produce a :noop event and return" do
@@ -103,14 +103,14 @@ describe Puppet::Transaction::Change do
 
                     @event.expects(:status=).with("noop")
 
-                    @change.forward.should == @event
+                    @change.apply.should == @event
                 end
             end
 
             it "should sync the property" do
                 @property.expects(:sync)
 
-                @change.forward
+                @change.apply
             end
 
             it "should return the default event if syncing the property returns nil" do
@@ -118,7 +118,7 @@ describe Puppet::Transaction::Change do
 
                 @change.expects(:event).with(nil).returns @event
 
-                @change.forward.should == @event
+                @change.apply.should == @event
             end
 
             it "should return the default event if syncing the property returns an empty array" do
@@ -126,7 +126,7 @@ describe Puppet::Transaction::Change do
 
                 @change.expects(:event).with(nil).returns @event
 
-                @change.forward.should == @event
+                @change.apply.should == @event
             end
 
             it "should log the change" do
@@ -134,16 +134,16 @@ describe Puppet::Transaction::Change do
 
                 @event.expects(:send_log)
 
-                @change.forward
+                @change.apply
             end
 
             it "should set the event's message to the change log" do
                 @property.expects(:change_to_s).returns "my change"
-                @change.forward.message.should == "my change"
+                @change.apply.message.should == "my change"
             end
 
             it "should set the event's status to 'success'" do
-                @change.forward.status.should == "success"
+                @change.apply.status.should == "success"
             end
 
             describe "and the change fails" do
@@ -151,46 +151,15 @@ describe Puppet::Transaction::Change do
 
                 it "should catch the exception and log the err" do
                     @event.expects(:send_log)
-                    lambda { @change.forward }.should_not raise_error
+                    lambda { @change.apply }.should_not raise_error
                 end
 
                 it "should mark the event status as 'failure'" do
-                    @change.forward.status.should == "failure"
+                    @change.apply.status.should == "failure"
                 end
 
                 it "should set the event log to a failure log" do
-                    @change.forward.message.should be_include("failed")
-                end
-            end
-
-            describe "backward" do
-                before do
-                    @property = stub 'property'
-                    @property.stub_everything
-                    @property.stubs(:should).returns "shouldval"
-                    @change = Change.new(@property, "value")
-                    @change.stubs :go
-                end
-
-                it "should swap the 'is' and 'should' values" do
-                    @change.backward
-                    @change.is.should == "shouldval"
-                    @change.should.should == "value"
-                end
-
-                it "should set the 'should' value on the property to the previous 'is' value" do
-                    @property.expects(:should=).with "value"
-                    @change.backward
-                end
-
-                it "should log that it's reversing the change" do
-                    @property.expects(:info)
-                    @change.backward
-                end
-
-                it "should execute and return the resulting event" do
-                    @change.expects(:go).returns :myevent
-                    @change.backward.should == :myevent
+                    @change.apply.message.should be_include("failed")
                 end
             end
         end
