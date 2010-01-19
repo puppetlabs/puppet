@@ -1,3 +1,9 @@
+puppet (0.25.3-2) UNRELEASED; urgency=low
+
+  * NOT RELEASED YET
+
+ -- Stig Sandbeck Mathisen <ssm@debian.org>  Tue, 19 Jan 2010 16:08:16 +0100
+
 puppet (0.25.3-1) unstable; urgency=low
 
   * New upstream release
