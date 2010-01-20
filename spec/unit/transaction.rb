@@ -256,6 +256,28 @@ describe Puppet::Transaction do
             @transaction.prefetch
         end
     end
+
+    describe "when determining changed resources" do
+        before :each do
+            @catalog = Puppet::Resource::Catalog.new
+            @transaction = Puppet::Transaction.new(@catalog)
+        end
+
+        it "should return all resources for which the resource status indicates the resource has changed" do
+            names = []
+            2.times do |i|
+                name = "/my/file#{i}"
+                resource = Puppet::Type.type(:file).new :path => name
+                names << resource.to_s
+                @catalog.add_resource resource
+                @transaction.add_resource_status Puppet::Resource::Status.new(resource)
+            end
+
+            @transaction.resource_status(names[0]).changed = true
+
+            @transaction.changed?.should == [@catalog.resource(names[0])]
+        end
+    end
 end
 
 describe Puppet::Transaction, " when determining tags" do

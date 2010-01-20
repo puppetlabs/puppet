@@ -74,19 +74,9 @@ class Puppet::Transaction
         resource.err "Could not evaluate: #{detail}"
     end
 
-    # Apply each change in turn.
-    def apply_changes(resource, changes)
-        changes.each { |change| apply_change(resource, change) }
-    end
-
     # Find all of the changed resources.
     def changed?
-        @changes.find_all { |change| change.changed }.collect do |change|
-            unless change.property.resource
-                raise "No resource for %s" % change.inspect
-            end
-            change.property.resource
-        end.uniq
+        report.resource_statuses.values.find_all { |status| status.changed }.collect { |status| catalog.resource(status.resource) }
     end
 
     # Do any necessary cleanup.  If we don't get rid of the graphs, the
@@ -139,8 +129,6 @@ class Puppet::Transaction
     def eval_children_and_apply_resource(resource)
         @resourcemetrics[:scheduled] += 1
 
-        changecount = @changes.length
-
         # We need to generate first regardless, because the recursive
         # actions sometimes change how the top resource is applied.
         children = eval_generate(resource)
@@ -161,10 +149,6 @@ class Puppet::Transaction
             children.each do |child|
                 eval_resource(child)
             end
-        end
-
-        unless children.empty?
-            @changes[changecount..-1].each { |change| change.proxy = resource }
         end
 
         # Keep track of how long we spend in each type of resource
@@ -203,7 +187,7 @@ class Puppet::Transaction
             Puppet::Util::Log.close(@report)
         end
 
-        Puppet.debug "Finishing transaction #{object_id} with #{@changes.length} changes"
+        Puppet.debug "Finishing transaction #{object_id}"
     end
 
     def events
@@ -316,9 +300,6 @@ class Puppet::Transaction
         # Metrics for distributing times across the different types.
         @timemetrics = Hash.new(0)
 
-        # The changes we're performing
-        @changes = []
-
         # The resources that have failed and the number of failures each.  This
         # is used for skipping resources because of failed dependencies.
         @failures = Hash.new do |h, key|
@@ -402,33 +383,6 @@ class Puppet::Transaction
 
     def resource_status(resource)
         report.resource_statuses[resource.to_s]
-    end
-
-    # Roll all completed changes back.
-    def rollback
-        @changes.reverse.collect do |change|
-            begin
-                event = change.backward
-            rescue => detail
-                Puppet.err("%s rollback failed: %s" % [change,detail])
-                if Puppet[:trace]
-                    puts detail.backtrace
-                end
-                next
-                # at this point, we would normally do error handling
-                # but i haven't decided what to do for that yet
-                # so just record that a sync failed for a given resource
-                #@@failures[change.property.parent] += 1
-                # this still could get hairy; what if file contents changed,
-                # but a chmod failed?  how would i handle that error? dern
-            end
-
-            # And queue the events
-            event_manager.queue_event(change.resource, event)
-
-            # Now check to see if there are any events for this child.
-            event_manager.process_events(change.property.resource)
-        end
     end
 
     # Is the resource currently scheduled?
