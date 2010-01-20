@@ -38,9 +38,7 @@ class Puppet::Transaction::Change
         result = event()
         result.status = "failure"
 
-        is = property.is_to_s(is)
-        should = property.should_to_s(should)
-        result.message = "change from #{is} to #{should} failed: #{detail}"
+        result.message = "change from #{property.is_to_s(is)} to #{property.should_to_s(should)} failed: #{detail}"
         result.send_log
         result
     end
