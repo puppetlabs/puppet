@@ -74,7 +74,7 @@ module Manager
             Puppet.warning "'new#{name.to_s}' method already exists; skipping"
         else
             selfobj.send(:define_method, newmethod) do |*args|
-                klass.create(*args)
+                klass.new(*args)
             end
         end
 

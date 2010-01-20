@@ -47,68 +47,6 @@ class TestType < Test::Unit::TestCase
         }
     end
 
-    def test_stringvssymbols
-        file = nil
-        path = tempfile()
-        assert_nothing_raised() {
-            system("rm -f %s" % path)
-            file = Puppet::Type.type(:file).new(
-                :path => path,
-                :ensure => "file",
-                :recurse => true,
-                :checksum => "md5"
-            )
-        }
-        assert_nothing_raised() {
-            file.retrieve
-        }
-        assert_nothing_raised() {
-            file.evaluate
-        }
-        assert_nothing_raised() {
-            system("rm -f %s" % path)
-            file = Puppet::Type.type(:file).new(
-                "path" => path,
-                "ensure" => "file",
-                "recurse" => true,
-                "checksum" => "md5"
-            )
-        }
-        assert_nothing_raised() {
-            file.retrieve
-        }
-        assert_nothing_raised() {
-            file[:path]
-        }
-        assert_nothing_raised() {
-            file["path"]
-        }
-        assert_nothing_raised() {
-            file[:recurse]
-        }
-        assert_nothing_raised() {
-            file["recurse"]
-        }
-        assert_nothing_raised() {
-            file.evaluate
-        }
-    end
-
-    # This was supposed to test objects whose name was a property, but that
-    # fundamentally doesn't make much sense, and we now don't have any such
-    # types.
-    def disabled_test_nameasproperty
-        # currently groups are the only objects with the namevar as a property
-        group = nil
-        assert_nothing_raised {
-            group = Puppet::Type.type(:group).new(
-                :name => "testing"
-            )
-        }
-
-        assert_equal("testing", group.name, "Could not retrieve name")
-    end
-
     def test_aliases_are_added_to_catalog
         resource = Puppet::Type.type(:file).new(
             :name => "/path/to/some/missing/file",
@@ -485,18 +423,14 @@ class TestType < Test::Unit::TestCase
     def test_reschedule_when_noop
         Puppet::Type.type(:schedule).mkdefaultschedules
         file = Puppet::Type.type(:file).new(:path => "/tmp/whatever", :mode => "755", :noop => true, :schedule => :daily, :ensure => :file)
+        catalog = Puppet::Resource::Catalog.new
+        catalog.add_resource
 
         assert(file.noop?, "File not considered in noop")
         assert(file.scheduled?, "File is not considered scheduled")
 
-        file.evaluate
+        catalog.apply
 
-        assert_nil(file.cached(:checked), "Stored a checked time when running in noop mode when there were changes")
-        file.cache(:checked, nil)
-
-        file.stubs(:propertychanges).returns([])
-
-        file.evaluate
-        assert_instance_of(Time, file.cached(:checked), "Did not store a checked time when running in noop mode when there were no changes")
+        assert(file.scheduled?, "File is not considered scheduled even though only a noop run was made")
     end
 end

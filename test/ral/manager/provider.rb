@@ -82,26 +82,4 @@ class TestTypeProviders < Test::Unit::TestCase
         end
 
     end
-
-    # #571 -- so we can cause a provider to become suitable within
-    # a run.
-    def test_unsuitable_providers_should_not_fail_at_initialization
-        Puppet::Type.type(:user).provider(:useradd).stubs(:suitable?).returns false
-
-        assert_nothing_raised("Unsuitable providers failed at initialization") do
-            Puppet::Type.type(:user).new :name => "luke", :ensure => :present, :provider => :useradd
-        end
-    end
-
-    # #571 -- so we can cause a provider to become suitable within
-    # a run.
-    def test_unsuitable_providers_should_fail_at_evaluation
-        Puppet::Type.type(:user).provider(:useradd).stubs(:suitable?).returns false
-
-        user = Puppet::Type.type(:user).new :name => "luke", :ensure => :present, :provider => :useradd
-        assert_raise(Puppet::Error, "Unsuitable provider did not fail at evaluation") do
-            user.evaluate
-        end
-    end
 end
-
