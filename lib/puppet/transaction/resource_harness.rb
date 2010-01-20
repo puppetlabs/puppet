@@ -34,8 +34,10 @@ class Puppet::Transaction::ResourceHarness
             return [] if ensure_should_be_absent?(current, param)
         end
 
-        resource.properties.reject { |p| p.name == :ensure }.find_all do |param|
-            param_is_not_insync?(current, param)
+        resource.properties.reject { |p| p.name == :ensure }.reject do |param|
+            param.should.nil?
+        end.reject do |param|
+            param_is_insync?(current, param)
         end.collect do |param|
             Puppet::Transaction::Change.new(param, current[param.name])
         end
@@ -77,7 +79,7 @@ class Puppet::Transaction::ResourceHarness
         param.should == :absent
     end
 
-    def param_is_not_insync?(current, param)
-        ! param.insync?(current[param.name] || :absent)
+    def param_is_insync?(current, param)
+        param.insync?(current[param.name])
     end
 end

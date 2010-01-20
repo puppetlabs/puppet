@@ -113,6 +113,15 @@ describe Puppet::Transaction::ResourceHarness do
             @harness.changes_to_perform(@status, @resource)[0].should equal(change)
         end
 
+        it "should not attempt to manage properties that do not have desired values set" do
+            mode = @resource.newattr(:mode)
+            @current_state[:mode] = :absent
+
+            mode.expects(:insync?).never
+
+            @harness.changes_to_perform(@status, @resource)
+        end
+
         describe "and the 'ensure' parameter is present but not in sync" do
             it "should return a single change for the 'ensure' parameter" do
                 @resource[:ensure] = :present
