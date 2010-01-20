@@ -36,15 +36,15 @@ describe Puppet::Transaction::Report do
         end
     end
 
-    describe "when accepting events" do
+    describe "when accepting resource statuses" do
         before do
             @report = Puppet::Transaction::Report.new
         end
 
-        it "should add each event to its event list" do
-            event = stub 'event'
-            @report.register_event event
-            @report.events.should be_include(event)
+        it "should add each status to its status list" do
+            status = stub 'status', :resource => "foo"
+            @report.add_resource_status status
+            @report.resource_statuses["foo"].should equal(status)
         end
     end
 

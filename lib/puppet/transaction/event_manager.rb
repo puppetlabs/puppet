@@ -13,10 +13,6 @@ class Puppet::Transaction::EventManager
         transaction.relationship_graph
     end
 
-    def report
-        transaction.report
-    end
-
     # Respond to any queued events for this resource.
     def process_events(resource)
         restarted = false
@@ -36,8 +32,6 @@ class Puppet::Transaction::EventManager
     # to be from the same resource.
     def queue_event(resource, event)
         @events << event
-
-        report.register_event event
 
         # Collect the targets of any subscriptions to those events.  We pass
         # the parent resource in so it will override the source in the events,

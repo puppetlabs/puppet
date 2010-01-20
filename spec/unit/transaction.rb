@@ -29,6 +29,13 @@ describe Puppet::Transaction do
         @transaction.resource_status(resource.to_s).should equal(status)
     end
 
+    it "should add provided resource statuses to its report" do
+        resource = Puppet::Type.type(:notify).new :title => "foobar"
+        status = Puppet::Resource::Status.new(resource)
+        @transaction.add_resource_status(status)
+        @transaction.report.resource_statuses[resource.to_s].should equal(status)
+    end
+
     it "should return nil when asked for a status that has not been created" do
         @transaction.resource_status("File[/foo]").should be_nil
     end

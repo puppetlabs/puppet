@@ -330,8 +330,6 @@ class Puppet::Transaction
         @event_manager = Puppet::Transaction::EventManager.new(self)
 
         @resource_harness = Puppet::Transaction::ResourceHarness.new(self)
-
-        @resource_status = {}
     end
 
     # Prefetch any providers that support it.  We don't support prefetching
@@ -399,11 +397,11 @@ class Puppet::Transaction
     end
 
     def add_resource_status(status)
-        @resource_status[status.resource] = status
+        report.add_resource_status status
     end
 
     def resource_status(resource)
-        @resource_status[resource.to_s]
+        report.resource_statuses[resource.to_s]
     end
 
     # Roll all completed changes back.

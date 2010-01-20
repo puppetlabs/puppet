@@ -20,15 +20,6 @@ describe Puppet::Transaction::EventManager do
         manager.relationship_graph.should == "mygraph"
     end
 
-    it "should delegate its report to the transaction" do
-        transaction = stub 'transaction'
-        manager = Puppet::Transaction::EventManager.new(transaction)
-
-        transaction.expects(:report).returns "myreport"
-
-        manager.report.should == "myreport"
-    end
-
     describe "when queueing events" do
         before do
             @manager = Puppet::Transaction::EventManager.new(@transaction)
@@ -36,9 +27,7 @@ describe Puppet::Transaction::EventManager do
             @resource = stub("resource", :self_refresh? => false, :deleting => false)
 
             @graph = stub 'graph', :matching_edges => [], :resource => @resource
-            @report = stub 'report', :register_event => nil
             @manager.stubs(:relationship_graph).returns @graph
-            @manager.stubs(:report).returns @report
 
             @event = Puppet::Transaction::Event.new(:name => :foo, :resource => @resource)
         end
@@ -108,11 +97,6 @@ describe Puppet::Transaction::EventManager do
 
             @manager.expects(:queue_event_for_resource).never
 
-            @manager.queue_event(@resource, @event)
-        end
-
-        it "should add each event to the transaction report's event list" do
-            @manager.report.expects(:register_event).with(@event)
             @manager.queue_event(@resource, @event)
         end
     end

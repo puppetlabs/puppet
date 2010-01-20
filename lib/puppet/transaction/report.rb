@@ -10,7 +10,7 @@ class Puppet::Transaction::Report
 
     indirects :report, :terminus_class => :processor
 
-    attr_reader :events, :logs, :metrics, :host, :time
+    attr_reader :resource_statuses, :logs, :metrics, :host, :time
 
     # This is necessary since Marshall doesn't know how to
     # dump hash with default proc (see below @records)
@@ -23,10 +23,14 @@ class Puppet::Transaction::Report
         return self
     end
 
+    def add_resource_status(status)
+        @resource_statuses[status.resource] = status
+    end
+
     def initialize
         @metrics = {}
         @logs = []
-        @events = []
+        @resource_statuses = {}
         @host = Puppet[:certname]
         @time = Time.now
     end
@@ -44,10 +48,6 @@ class Puppet::Transaction::Report
         end
 
         @metrics[metric.name] = metric
-    end
-
-    def register_event(event)
-        @events << event
     end
 
     # Provide a summary of this report.
