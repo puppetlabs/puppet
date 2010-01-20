@@ -25,7 +25,7 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
 
         file = ::File.join(full_path, relative_path)
 
-        if !(FileTest.exist?(file) )# or FileTest.symlink?(file))
+        if !(FileTest.exist?(file) or FileTest.symlink?(file))
             Puppet.info("File does not exist or is not accessible: #{file}")
             return nil
         end
