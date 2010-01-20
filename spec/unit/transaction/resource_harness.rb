@@ -84,6 +84,17 @@ describe Puppet::Transaction::ResourceHarness do
             @harness.expects(:apply_changes).never
             @harness.evaluate(@resource).should_not be_out_of_sync
         end
+
+        it "should store the resource's evaluation time in the resource status" do
+            @harness.evaluate(@resource).evaluation_time.should be_instance_of(Float)
+        end
+
+        it "should set the change count to the total number of changes" do
+            changes = %w{a b c d}
+            @harness.expects(:changes_to_perform).returns changes
+            @harness.expects(:apply_changes).with(@status, changes)
+            @harness.evaluate(@resource).change_count.should == 4
+        end
     end
 
     describe "when creating changes" do

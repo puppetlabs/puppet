@@ -10,14 +10,14 @@ describe Puppet::Resource::Status do
         @status = Puppet::Resource::Status.new(@resource)
     end
 
-    [:node, :version, :file, :line, :current_values, :skipped_reason, :status, :evaluation_time].each do |attr|
+    [:node, :version, :file, :line, :current_values, :skipped_reason, :status, :evaluation_time, :change_count].each do |attr|
         it "should support #{attr}" do
             @status.send(attr.to_s + "=", "foo")
             @status.send(attr).should == "foo"
         end
     end
 
-    [:skipped, :failed, :changed, :out_of_sync, :scheduled].each do |attr|
+    [:skipped, :failed, :restarted, :failed_to_restart, :changed, :out_of_sync, :scheduled].each do |attr|
         it "should support #{attr}" do
             @status.send(attr.to_s + "=", "foo")
             @status.send(attr).should == "foo"

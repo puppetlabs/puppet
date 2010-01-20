@@ -17,9 +17,6 @@ class Puppet::Transaction
     # The report, once generated.
     attr_reader :report
 
-    # Mostly only used for tests
-    attr_reader :resourcemetrics, :changes
-
     # Routes and stores any events and subscriptions.
     attr_reader :event_manager
 
@@ -30,37 +27,15 @@ class Puppet::Transaction
     include Puppet::Util::Tagging
 
     # Add some additional times for reporting
-    def addtimes(hash)
+    def add_times(hash)
         hash.each do |name, num|
-            @timemetrics[name] = num
+            report.add_times(name, num)
         end
-    end
-
-    # Check to see if we should actually allow processing, but this really only
-    # matters when a resource is getting deleted.
-    def allow_processing?(resource, changes)
-        # If a resource is going to be deleted but it still has
-        # dependencies, then don't delete it unless it's implicit or the
-        # dependency is itself being deleted.
-        if resource.purging? and resource.deleting?
-            if deps = relationship_graph.dependents(resource) and ! deps.empty? and deps.detect { |d| ! d.deleting? }
-                resource.warning "%s still depend%s on me -- not purging" %
-                    [deps.collect { |r| r.ref }.join(","), deps.length > 1 ? "":"s"]
-                return false
-            end
-        end
-
-        return true
     end
 
     # Are there any failed resources in this transaction?
     def any_failed?
-        failures = @failures.inject(0) { |failures, array| failures += array[1]; failures }
-        if failures > 0
-            failures
-        else
-            false
-        end
+        report.resource_statuses.values.detect { |status| status.failed? }
     end
 
     # Apply all changes for a resource
@@ -116,7 +91,7 @@ class Puppet::Transaction
     # Evaluate a single resource.
     def eval_resource(resource)
         if skip?(resource)
-            @resourcemetrics[:skipped] += 1
+            resource_status(resource).skipped = true
             return
         end
 
@@ -127,7 +102,7 @@ class Puppet::Transaction
     end
 
     def eval_children_and_apply_resource(resource)
-        @resourcemetrics[:scheduled] += 1
+        resource_status(resource).scheduled = true
 
         # We need to generate first regardless, because the recursive
         # actions sometimes change how the top resource is applied.
@@ -141,18 +116,13 @@ class Puppet::Transaction
         end
 
         # Perform the actual changes
-        seconds = thinmark do
-            apply(resource)
-        end
+        apply(resource)
 
         if ! children.empty? and ! resource.depthfirst?
             children.each do |child|
                 eval_resource(child)
             end
         end
-
-        # Keep track of how long we spend in each type of resource
-        @timemetrics[resource.class.name] += seconds
     end
 
     # This method does all the actual work of running a transaction.  It
@@ -255,26 +225,10 @@ class Puppet::Transaction
         end
     end
 
-    def add_metrics_to_report(report)
-        @resourcemetrics[:failed] = @failures.find_all do |name, num|
-            num > 0
-        end.length
-
-        # Get the total time spent
-        @timemetrics[:total] = @timemetrics.inject(0) do |total, vals|
-            total += vals[1]
-            total
-        end
-
-        # Add all of the metrics related to resource count and status
-        report.newmetric(:resources, @resourcemetrics)
-
-        # Record the relative time spent in each resource.
-        report.newmetric(:time, @timemetrics)
-
-        # Then all of the change-related metrics
-        report.newmetric(:changes, :total => @changes.length)
-        return report
+    # Generate a transaction report.
+    def generate_report
+        @report.calculate_metrics
+        return @report
     end
 
     # Should we ignore tags?
@@ -286,25 +240,6 @@ class Puppet::Transaction
     # and it should only receive an array
     def initialize(catalog)
         @catalog = catalog
-
-        @resourcemetrics = {
-            :total => @catalog.vertices.length,
-            :out_of_sync => 0,    # The number of resources that had changes
-            :applied => 0,        # The number of resources fixed
-            :skipped => 0,      # The number of resources skipped
-            :restarted => 0,    # The number of resources triggered
-            :failed_restarts => 0, # The number of resources that fail a trigger
-            :scheduled => 0     # The number of resources scheduled
-        }
-
-        # Metrics for distributing times across the different types.
-        @timemetrics = Hash.new(0)
-
-        # The resources that have failed and the number of failures each.  This
-        # is used for skipping resources because of failed dependencies.
-        @failures = Hash.new do |h, key|
-            h[key] = 0
-        end
 
         @report = Report.new
 
@@ -382,7 +317,7 @@ class Puppet::Transaction
     end
 
     def resource_status(resource)
-        report.resource_statuses[resource.to_s]
+        report.resource_statuses[resource.to_s] || add_resource_status(Puppet::Resource::Status.new(resource))
     end
 
     # Is the resource currently scheduled?

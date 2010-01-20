@@ -578,7 +578,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
             Puppet::Transaction.stubs(:new).returns(@transaction)
             @transaction.stubs(:evaluate)
             @transaction.stubs(:cleanup)
-            @transaction.stubs(:addtimes)
+            @transaction.stubs(:add_times)
         end
 
         it "should create and evaluate a transaction" do
@@ -588,13 +588,13 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
         it "should provide the catalog retrieval time to the transaction" do
             @catalog.retrieval_duration = 5
-            @transaction.expects(:addtimes).with(:config_retrieval => 5)
+            @transaction.expects(:add_times).with(:config_retrieval => 5)
             @catalog.apply
         end
 
         it "should use a retrieval time of 0 if none is set in the catalog" do
             @catalog.retrieval_duration = nil
-            @transaction.expects(:addtimes).with(:config_retrieval => 0)
+            @transaction.expects(:add_times).with(:config_retrieval => 0)
             @catalog.apply
         end
 
@@ -634,7 +634,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
             Puppet::Transaction.stubs(:new).returns(@transaction)
             @transaction.stubs(:evaluate)
             @transaction.stubs(:cleanup)
-            @transaction.stubs(:addtimes)
+            @transaction.stubs(:add_times)
             Puppet::Type.type(:file).expects(:new).with(args).returns(resource)
             resource.expects :remove
             @catalog.apply do |trans|
@@ -649,7 +649,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
             Puppet::Transaction.stubs(:new).returns(@transaction)
             @transaction.stubs(:evaluate)
             @transaction.stubs(:cleanup)
-            @transaction.stubs(:addtimes)
+            @transaction.stubs(:add_times)
             file = Puppet::Type.type(:file).new(:name => "/yay", :ensure => :file)
             @catalog.apply do |trans|
                 @catalog.add_resource file

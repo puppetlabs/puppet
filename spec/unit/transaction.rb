@@ -15,6 +15,14 @@ describe Puppet::Transaction do
         @transaction.events.should == %w{my events}
     end
 
+    it "should delegate adding times to its report" do
+        @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
+        @transaction.report.expects(:add_times).with(:foo, 10)
+        @transaction.report.expects(:add_times).with(:bar, 20)
+
+        @transaction.add_times :foo => 10, :bar => 20
+    end
+
     it "should be able to accept resource status instances" do
         resource = Puppet::Type.type(:notify).new :title => "foobar"
         status = Puppet::Resource::Status.new(resource)
@@ -29,6 +37,12 @@ describe Puppet::Transaction do
         @transaction.resource_status(resource.to_s).should equal(status)
     end
 
+    # This will basically only ever be used during testing.
+    it "should automatically create resource statuses if asked for a non-existent status" do
+        resource = Puppet::Type.type(:notify).new :title => "foobar"
+        @transaction.resource_status(resource).should be_instance_of(Puppet::Resource::Status)
+    end
+
     it "should add provided resource statuses to its report" do
         resource = Puppet::Type.type(:notify).new :title => "foobar"
         status = Puppet::Resource::Status.new(resource)
@@ -36,8 +50,9 @@ describe Puppet::Transaction do
         @transaction.report.resource_statuses[resource.to_s].should equal(status)
     end
 
-    it "should return nil when asked for a status that has not been created" do
-        @transaction.resource_status("File[/foo]").should be_nil
+    it "should calculate metrics on and report the report when asked to generate a report" do
+        @transaction.report.expects(:calculate_metrics)
+        @transaction.generate_report.should equal(@transaction.report)
     end
 
     it "should consider a resource to be failed if a status instance exists for that resource and indicates it is failed" do
@@ -48,7 +63,29 @@ describe Puppet::Transaction do
         @transaction.should be_failed(resource)
     end
 
-   it "should consider a resource to have failed dependencies if any of its dependencies are failed"
+    it "should not consider a resource to be failed if a status instance exists for that resource but indicates it is not failed" do
+        resource = Puppet::Type.type(:notify).new :name => "yayness"
+        status = Puppet::Resource::Status.new(resource)
+        @transaction.add_resource_status(status)
+        @transaction.should_not be_failed(resource)
+    end
+
+    it "should consider there to be failed resources if any statuses are marked failed" do
+        resource = Puppet::Type.type(:notify).new :name => "yayness"
+        status = Puppet::Resource::Status.new(resource)
+        status.failed = "some message"
+        @transaction.add_resource_status(status)
+        @transaction.should be_any_failed
+    end
+    
+    it "should not consider there to be failed resources if no statuses are marked failed" do
+        resource = Puppet::Type.type(:notify).new :name => "yayness"
+        status = Puppet::Resource::Status.new(resource)
+        @transaction.add_resource_status(status)
+        @transaction.should_not be_any_failed
+    end
+
+    it "should consider a resource to have failed dependencies if any of its dependencies are failed"
 
     describe "when initializing" do
         it "should create an event manager" do
@@ -70,7 +107,7 @@ describe Puppet::Transaction do
             @transaction.stubs(:eval_children_and_apply_resource)
             @transaction.stubs(:skip?).returns false
 
-            @resource = stub("resource")
+            @resource = Puppet::Type.type(:file).new :path => "/my/file"
         end
 
         it "should check whether the resource should be skipped" do
@@ -96,9 +133,9 @@ describe Puppet::Transaction do
                 @transaction.expects(:skip?).with(@resource).returns true
             end
 
-            it "should increment the 'skipped' count" do
+            it "should mark the resource's status as skipped" do
                 @transaction.eval_resource(@resource)
-                @transaction.resourcemetrics[:skipped].should == 1
+                @transaction.resource_status(@resource).should be_skipped
             end
         end
     end
@@ -134,7 +171,7 @@ describe Puppet::Transaction do
             @transaction.resource_harness.expects(:evaluate).raises ArgumentError
             @resource.expects(:err)
             @transaction.apply(@resource)
-            @transaction.resource_status(@resource).should be_nil
+            @transaction.report.resource_statuses[@resource.to_s].should be_nil
         end
     end
 
@@ -226,22 +263,6 @@ describe Puppet::Transaction do
         end
     end
 
-    describe "when adding metrics to a report" do
-        before do
-            @catalog = Puppet::Resource::Catalog.new
-            @transaction = Puppet::Transaction.new(@catalog)
-
-            @report = stub 'report', :newmetric => nil, :time= => nil
-        end
-
-        [:resources, :time, :changes].each do |metric|
-            it "should add times for '#{metric}'" do
-                @report.expects(:newmetric).with { |m, v| m == metric }
-                @transaction.add_metrics_to_report(@report)
-            end
-        end
-    end
-
     describe "when prefetching" do
         it "should match resources by name, not title" do
             @catalog = Puppet::Resource::Catalog.new
@@ -257,26 +278,21 @@ describe Puppet::Transaction do
         end
     end
 
-    describe "when determining changed resources" do
-        before :each do
-            @catalog = Puppet::Resource::Catalog.new
-            @transaction = Puppet::Transaction.new(@catalog)
+    it "should return all resources for which the resource status indicates the resource has changed when determinig changed resources" do
+        @catalog = Puppet::Resource::Catalog.new
+        @transaction = Puppet::Transaction.new(@catalog)
+        names = []
+        2.times do |i|
+            name = "/my/file#{i}"
+            resource = Puppet::Type.type(:file).new :path => name
+            names << resource.to_s
+            @catalog.add_resource resource
+            @transaction.add_resource_status Puppet::Resource::Status.new(resource)
         end
 
-        it "should return all resources for which the resource status indicates the resource has changed" do
-            names = []
-            2.times do |i|
-                name = "/my/file#{i}"
-                resource = Puppet::Type.type(:file).new :path => name
-                names << resource.to_s
-                @catalog.add_resource resource
-                @transaction.add_resource_status Puppet::Resource::Status.new(resource)
-            end
+        @transaction.resource_status(names[0]).changed = true
 
-            @transaction.resource_status(names[0]).changed = true
-
-            @transaction.changed?.should == [@catalog.resource(names[0])]
-        end
+        @transaction.changed?.should == [@catalog.resource(names[0])]
     end
 end
 

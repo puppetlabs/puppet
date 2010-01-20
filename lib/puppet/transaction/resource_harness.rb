@@ -44,10 +44,12 @@ class Puppet::Transaction::ResourceHarness
     end
 
     def evaluate(resource)
+        start = Time.now
         status = Puppet::Resource::Status.new(resource)
 
         if changes = changes_to_perform(status, resource) and ! changes.empty?
             status.out_of_sync = true
+            status.change_count = changes.length
             apply_changes(status, changes)
             resource.cache(:synced, Time.now)
             resource.flush if resource.respond_to?(:flush)
@@ -59,6 +61,8 @@ class Puppet::Transaction::ResourceHarness
         resource.err "Could not evaluate: #{detail}"
         status.failed = true
         return status
+    ensure
+        (status.evaluation_time = Time.now - start) if status
     end
 
     def initialize(transaction)

@@ -23,24 +23,11 @@ class Puppet::Transaction::Report
         return self
     end
 
-    def add_resource_status(status)
-        @resource_statuses[status.resource] = status
+    def add_times(name, value)
+        @external_times[name] = value
     end
 
-    def initialize
-        @metrics = {}
-        @logs = []
-        @resource_statuses = {}
-        @host = Puppet[:certname]
-        @time = Time.now
-    end
-
-    def name
-        host
-    end
-
-    # Create a new metric.
-    def newmetric(name, hash)
+    def add_metric(name, hash)
         metric = Puppet::Util::Metric.new(name)
 
         hash.each do |name, value|
@@ -48,6 +35,31 @@ class Puppet::Transaction::Report
         end
 
         @metrics[metric.name] = metric
+        metric
+    end
+
+    def add_resource_status(status)
+        @resource_statuses[status.resource] = status
+    end
+
+    def calculate_metrics
+        calculate_resource_metrics
+        calculate_time_metrics
+        calculate_change_metrics
+        calculate_event_metrics
+    end
+
+    def initialize
+        @metrics = {}
+        @logs = []
+        @resource_statuses = {}
+        @external_times ||= {}
+        @host = Puppet[:certname]
+        @time = Time.now
+    end
+
+    def name
+        host
     end
 
     # Provide a summary of this report.
@@ -84,5 +96,56 @@ class Puppet::Transaction::Report
         status |= 2 if @metrics["changes"][:total] > 0
         status |= 4 if @metrics["resources"][:failed] > 0
         return status
+    end
+
+    private
+
+    def calculate_change_metrics
+        metrics = Hash.new(0)
+        resource_statuses.each do |name, status|
+            metrics[:total] += status.change_count if status.change_count
+        end
+
+        add_metric(:changes, metrics)
+    end
+
+    def calculate_event_metrics
+        metrics = Hash.new(0)
+        resource_statuses.each do |name, status|
+            metrics[:total] += status.events.length
+            status.events.each do |event|
+                metrics[event.status] += 1
+            end
+        end
+
+        add_metric(:events, metrics)
+    end
+
+    def calculate_resource_metrics
+        metrics = Hash.new(0)
+        metrics[:total] = resource_statuses.length
+
+        resource_statuses.each do |name, status|
+
+            Puppet::Resource::Status::STATES.each do |state|
+                metrics[state] += 1 if status.send(state)
+            end
+        end
+
+        add_metric(:resources, metrics)
+    end
+
+    def calculate_time_metrics
+        metrics = Hash.new(0)
+        resource_statuses.each do |name, status|
+            type = Puppet::Resource::Reference.new(name).type
+            metrics[type.to_s.downcase] += status.evaluation_time if status.evaluation_time
+        end
+
+        @external_times.each do |name, value|
+            metrics[name.to_s.downcase] = value
+        end
+
+        add_metric(:time, metrics)
     end
 end

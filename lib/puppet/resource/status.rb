@@ -2,10 +2,10 @@ class Puppet::Resource::Status
     include Puppet::Util::Tagging
     include Puppet::Util::Logging
 
-    ATTRIBUTES = [:resource, :node, :version, :file, :line, :current_values, :skipped_reason, :status, :evaluation_time]
+    ATTRIBUTES = [:resource, :node, :version, :file, :line, :current_values, :skipped_reason, :status, :evaluation_time, :change_count]
     attr_accessor *ATTRIBUTES
 
-    STATES = [:skipped, :failed, :changed, :out_of_sync, :scheduled]
+    STATES = [:skipped, :failed, :failed_to_restart, :restarted, :changed, :out_of_sync, :scheduled]
     attr_accessor *STATES
 
     attr_reader :source_description, :default_log_level, :time, :resource
